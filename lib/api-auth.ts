@@ -6,6 +6,7 @@ export type ApiResult<T> =
 
 async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(path, { ...init, credentials: 'same-origin' });
+  if (res.status === 204) return { ok: true, data: null as any };
   const j = await res.json();
   return j as ApiResult<T>;
 }

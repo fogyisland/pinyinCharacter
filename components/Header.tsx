@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { SafeModeToggle } from './SafeModeToggle';
 import { UserMenu } from './UserMenu';
 import { AuthModal } from './AuthModal';
@@ -10,6 +11,11 @@ export function Header() {
   const safeMode = useAppStore(s => s.safeMode);
   const user = useAppStore(s => s.user);
   const [authOpen, setAuthOpen] = useState(false);
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('auth') === 'login' && !user) setAuthOpen(true);
+  }, [searchParams, user]);
 
   return (
     <header className="border-b bg-white sticky top-0 z-10">
