@@ -337,11 +337,11 @@ git commit -m "feat(server): run initDb on server startup (Plan B)"
 
 ```ts
 import { cookies } from 'next/headers';
-import { SignJWT, jwtVerify, type JWTPayload } from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
 export interface User { id: number; username: string; }
-export interface SessionPayload extends JWTPayload {
+export interface SessionPayload extends JwtPayload {
   userId: number;
   username: string;
 }
@@ -366,20 +366,16 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 }
 
 export async function signSession(user: User): Promise<string> {
-  return new SignJWT({ userId: user.id, username: user.username })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(`${SESSION_DAYS}d`)
-    .sign(getSecretBytes());
-}
-
-function getSecretBytes(): Uint8Array {
-  return new TextEncoder().encode(getSecret());
+  return jwt.sign(
+    { userId: user.id, username: user.username },
+    getSecret(),
+    { algorithm: 'HS256', expiresIn: `${SESSION_DAYS}d` }
+  );
 }
 
 export async function verifySession(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, getSecretBytes());
+    const payload = jwt.verify(token, getSecret()) as JwtPayload;
     if (typeof payload.userId !== 'number' || typeof payload.username !== 'string') return null;
     return payload as SessionPayload;
   } catch {
@@ -635,11 +631,11 @@ export async function listHistory(opts: ListHistoryOptions): Promise<HistoryRow[
   const where = opts.favoriteOnly
     ? 'WHERE user_id = ? AND is_favorite = 1'
     : 'WHERE user_id = ?';
-  const [rows] = await pool.execute<HistoryRow[]>(
+  const [rows] = await pool.execute<any[]>(
     `SELECT * FROM history ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [opts.userId, limit, offset]
   );
-  return rows;
+  return rows as HistoryRow[];
 }
 
 export async function setFavorite(
