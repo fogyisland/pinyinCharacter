@@ -213,13 +213,15 @@ components/
 lib/
   auth.ts                        + (jwt 签/验、cookie 读写、getCurrentUser)
   db.ts                          + (mysql2 pool)
-  history.ts                     + (CRUD)
+  history.ts                     + (history CRUD)
   audit.ts                       + (writeAudit)
   store.ts                       ~ (加 user)
-  api.ts                         ~ (history 端点)
+  api-auth.ts                    + (login/register/logout/me fetch wrappers)
+  api-history.ts                 + (history list/create/patch/delete + stats fetch wrappers)
+  api.ts                         (不变，仍是 pinyin 端点)
 scripts/
   init-db.ts                     + (CREATE TABLE IF NOT EXISTS)
-instrumentation.ts               ~ (启动时 init DB pool + run init-db)
+instrumentation.ts               ~ (启动时 init DB pool + run init-db；注意 Next.js dev 模式下 hook 进程级只跑一次)
 .env.example                     ~ (DATABASE_URL, JWT_SECRET)
 README.md                        ~ (新增账号部分)
 ```
@@ -248,7 +250,7 @@ README.md                        ~ (新增账号部分)
 - `bcrypt` 密码 roundtrip
 - 用户名/密码校验函数
 
-**测试 DB**：dev/test 用同一个 MySQL 实例不同 schema。`init-db.ts` 加 `IF NOT EXISTS` schema_name 切换。
+**测试 DB**：集成测试需要本地 MySQL。CI / 本地开发用 `DATABASE_URL_TEST` env（schema 单独，例如 `pinyin_test`）。`init-db.ts` 接受可选 schema 名参数；测试 setup 钩子里传 `pinyin_test` 并先 `CREATE DATABASE IF NOT EXISTS pinyin_test`。**如果 `DATABASE_URL_TEST` 未设置，集成测试 skip**（不 fail），单元测试照常跑。这样 `pnpm test` 在没有 MySQL 的机器上也能过大部分。
 
 ### 7.2 集成测试
 - register → me → 拿到 user
