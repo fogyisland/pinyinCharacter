@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { filterCandidates } from './filter';
 
 export interface DictEntry { char: string; freq: number; }
 export type Script = 'simplified' | 'traditional';
@@ -33,10 +34,11 @@ export function normalizePinyin(s: string): string {
 
 export function getCandidates(
   pinyinStr: string,
-  _safeMode: boolean,   // 留作 Plan B 接入
+  safeMode: boolean,
   _script: Script       // 留作 Plan C 接入
 ): DictEntry[] {
   if (!loaded) loadDictionaries();
   const key = normalizePinyin(pinyinStr);
-  return dict[key] ?? [];
+  const raw = dict[key] ?? [];
+  return filterCandidates(raw, safeMode);
 }

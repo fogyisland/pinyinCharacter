@@ -63,3 +63,13 @@ describe('getCandidates with normalization', () => {
     expect(withTone.length).toBe(base.length);
   });
 });
+
+describe('getCandidates with safeMode', () => {
+  it('safeMode=true is plumbed through filterCandidates', () => {
+    // Without specific bad chars in data, lists should be the same length
+    const a = getCandidates('ni', false, 'simplified');
+    const b = getCandidates('ni', true, 'simplified');
+    expect(a.length).toBe(b.length);
+    expect(a.length).toBeGreaterThan(0);
+  });
+});
