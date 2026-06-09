@@ -34,6 +34,26 @@ pnpm test:watch       # 监听
 - 内存词典 + Viterbi（服务端拼音→字）
 - Tailwind CSS
 
+## 账号系统（v1 / Plan B）
+
+- 注册 / 登录：用户名 + 密码 (≥ 8 位)
+- 字↔拼音 转换自动入库历史
+- 收藏：历史列表上点 ⭐
+- 统计：profile 页看总字数 + 收藏字数
+- 审计日志：注册、登录、登出、history 创建/删除入 audit_log 表
+- safeMode / 简繁切换仍在客户端
+
+## 环境变量
+
+复制 `.env.example` 为 `.env` 并填入：
+
+| 变量 | 必填 | 说明 |
+|---|---|---|
+| `DATABASE_URL` | ✓ | MySQL 连接串，例 `mysql://root:pw@localhost:3306/pinyin` |
+| `JWT_SECRET` | ✓ | 32+ 字节随机串，例 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `DATABASE_URL_TEST` |   | 集成测试用，缺省时 skip |
+| `COOKIE_SECURE` |   | 生产环境设为 `true` 让 cookie 带 Secure 标志 |
+
 ## 路线图
 
 - Plan B：用户注册、历史、收藏、统计
