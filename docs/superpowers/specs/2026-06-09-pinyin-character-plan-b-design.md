@@ -8,7 +8,12 @@
 
 **Tech Stack:** mysql2, bcryptjs, jsonwebtoken, zustand (已用), React 19, Tailwind 4
 
-**Out of scope (Plan C):** 简繁真实实现、响应式深度优化、E2E 测试。**Out of scope for Plan B itself:** 密码找回、邮箱验证、OAuth、用户主动删除账号。
+**Out of scope (Plan C):** 简繁真实实现、响应式深度优化、E2E 测试。**Out of scope for Plan B itself:** 密码找回、邮箱验证、OAuth、用户主动删除账号、管理员后台（→ Plan B+）、字帖/生僻字库（→ Plan D）。
+
+**Forward-compat hooks (为 B+/D 预留):**
+- `users.is_admin` BOOLEAN DEFAULT FALSE — B+ 用
+- 注册路由的"第一个用户即管理员"逻辑 — B+ 用
+- API 路由的 401 框架 — B+ 加 is_admin 校验就够
 
 ---
 
@@ -21,9 +26,12 @@
 | `id` | BIGINT | PK, AUTO_INCREMENT |
 | `username` | VARCHAR(32) | UNIQUE, NOT NULL |
 | `password_hash` | VARCHAR(72) | NOT NULL（bcrypt 输出固定 60 字符，72 给兼容） |
+| `is_admin` | BOOLEAN | DEFAULT FALSE（为 Plan B+ 预留） |
 | `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
 
 索引：`UNIQUE(username)`（隐式）。
+
+**"第一个用户即管理员"**：注册路由在创建 user 前 `SELECT COUNT(*) FROM users`。如果为 0，新用户 `is_admin = TRUE`；否则 `is_admin = FALSE`。这样开发/演示环境第一个注册的账号就是 admin，无需 env 干预。
 
 ### 1.2 history
 
