@@ -11,6 +11,11 @@
  *   - data/bad-words.json:    { chars: string[], words: string[] }
  *
  * This is a one-shot script. Re-run only if upgrading dictionary sources.
+ *
+ * Note: We use the small pinyin.txt (not large_pinyin.txt) because in our tests
+ * the small corpus gives better results for the most common cases (e.g., 你好)
+ * due to its unigram frequency distribution. Larger corpora have many obscure
+ * 1-char entries that compete with the truly common ones.
  */
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';

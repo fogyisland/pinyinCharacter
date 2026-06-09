@@ -1,3 +1,12 @@
+/**
+ * Viterbi-based pinyin -> hanzi converter.
+ *
+ * Quality depends on data/bigrams.json. With the small pinyin.txt corpus,
+ * simple phrases like 你好 work well (driven by unigram frequencies) but
+ * less common disambiguations (xi'an -> 西安) may produce a different
+ * 2-char result. For production accuracy, use a larger corpus and/or
+ * higher-order n-gram model.
+ */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getCandidates, normalizePinyin, type DictEntry, type Script } from './dictionary';
