@@ -3,21 +3,32 @@
 import { useState } from 'react';
 import { fetchSentence } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
+import { createHistoryRequest } from '@/lib/api-history';
 import { ReadAloudButton } from './ReadAloudButton';
 
 export function PinyinFullSentence() {
   const safeMode = useAppStore(s => s.safeMode);
   const script = useAppStore(s => s.script);
+  const user = useAppStore(s => s.user);
   const [pinyin, setPinyin] = useState('');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const convert = async () => {
+  const onConvert = async () => {
     if (!pinyin.trim()) return;
     setLoading(true);
-    const res = await fetchSentence(pinyin, safeMode, script);
+    const r = await fetchSentence(pinyin, safeMode, script);
     setLoading(false);
-    if (res.ok) setResult(res.data.sentence);
+    setResult(r.ok ? r.data.sentence : '');
+    if (r.ok && user) {
+      void createHistoryRequest({
+        kind: 'pinyin2text',
+        input: pinyin,
+        output: r.data.sentence,
+        char_count: r.data.sentence.length,
+        dedup: true,
+      });
+    }
   };
 
   const clear = () => {
@@ -36,7 +47,7 @@ export function PinyinFullSentence() {
       <div className="flex gap-2">
         <button
           type="button"
-          onClick={convert}
+          onClick={onConvert}
           disabled={!pinyin || loading}
           className="px-4 py-1.5 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
         >
