@@ -5,10 +5,13 @@ import type { PinyinToken } from '@/lib/pinyin-client';
 
 interface Props {
   tokens: PinyinToken[];
+  withSpaces?: boolean;
 }
 
-export function PinyinOutput({ tokens }: Props) {
-  const [withSpaces, setWithSpaces] = useState(true);
+export function PinyinOutput({ tokens, withSpaces: withSpacesProp }: Props) {
+  const [internalWithSpaces, setInternalWithSpaces] = useState(true);
+  const controlled = withSpacesProp !== undefined;
+  const withSpaces = controlled ? withSpacesProp : internalWithSpaces;
   const [readings, setReadings] = useState<Record<number, number>>({});  // index -> reading index
 
   if (tokens.length === 0) {
@@ -34,23 +37,25 @@ export function PinyinOutput({ tokens }: Props) {
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-3 mb-2 text-sm">
-        <label className="flex items-center gap-1">
-          <input
-            type="checkbox"
-            checked={withSpaces}
-            onChange={e => setWithSpaces(e.target.checked)}
-          />
-          带空格
-        </label>
-        <button
-          type="button"
-          onClick={copy}
-          className="px-2 py-1 text-xs border rounded hover:bg-gray-100"
-        >
-          复制
-        </button>
-      </div>
+      {!controlled && (
+        <div className="flex flex-wrap items-center gap-3 mb-2 text-sm">
+          <label className="flex items-center gap-1">
+            <input
+              type="checkbox"
+              checked={withSpaces}
+              onChange={e => setInternalWithSpaces(e.target.checked)}
+            />
+            带空格
+          </label>
+          <button
+            type="button"
+            onClick={copy}
+            className="px-2 py-1 text-xs border rounded hover:bg-gray-100"
+          >
+            复制
+          </button>
+        </div>
+      )}
       <div className="p-3 bg-gray-50 rounded border min-h-[3rem] text-lg leading-relaxed">
         {tokens.map((t, i) => {
           const idx = readings[i] ?? 0;
