@@ -1,0 +1,47 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
+import { useAppStore } from '@/lib/store';
+import { logoutRequest } from '@/lib/api-auth';
+
+export function UserMenu() {
+  const user = useAppStore(s => s.user);
+  const setUser = useAppStore(s => s.setUser);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    if (open) document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [open]);
+
+  if (!user) return null;
+
+  async function logout() {
+    await logoutRequest();
+    setUser(null);
+    setOpen(false);
+    window.location.href = '/';
+  }
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
+        onClick={() => setOpen(o => !o)}
+      >{user.username} ⌄</button>
+      {open && (
+        <div className="absolute right-0 mt-1 w-44 bg-white border rounded shadow-lg py-1 z-20">
+          <a href="/profile" className="block px-3 py-1.5 hover:bg-gray-50">我的主页</a>
+          <a href="/history" className="block px-3 py-1.5 hover:bg-gray-50">历史记录</a>
+          <a href="/history?favorite=true" className="block px-3 py-1.5 hover:bg-gray-50">收藏夹</a>
+          <button type="button" onClick={logout} className="block w-full text-left px-3 py-1.5 hover:bg-gray-50 text-red-600">退出登录</button>
+        </div>
+      )}
+    </div>
+  );
+}
