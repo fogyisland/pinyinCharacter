@@ -1,10 +1,16 @@
 'use client';
 
+import { useState } from 'react';
 import { SafeModeToggle } from './SafeModeToggle';
+import { UserMenu } from './UserMenu';
+import { AuthModal } from './AuthModal';
 import { useAppStore } from '@/lib/store';
 
 export function Header() {
   const safeMode = useAppStore(s => s.safeMode);
+  const user = useAppStore(s => s.user);
+  const [authOpen, setAuthOpen] = useState(false);
+
   return (
     <header className="border-b bg-white sticky top-0 z-10">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -16,8 +22,18 @@ export function Header() {
             </span>
           )}
           <SafeModeToggle />
+          {user ? (
+            <UserMenu />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setAuthOpen(true)}
+              className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
+            >登录 / 注册</button>
+          )}
         </div>
       </div>
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </header>
   );
 }
