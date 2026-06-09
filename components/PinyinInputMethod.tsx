@@ -3,15 +3,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { fetchCandidates, type Candidate } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
+import { createHistoryRequest } from '@/lib/api-history';
 import { ReadAloudButton } from './ReadAloudButton';
 
 export function PinyinInputMethod() {
   const safeMode = useAppStore(s => s.safeMode);
   const script = useAppStore(s => s.script);
+  const user = useAppStore(s => s.user);
   const [buffer, setBuffer] = useState('');
   const [committed, setCommitted] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastSavedRef = useRef<{ input: string; ts: number } | null>(null);
 
   // Debounced candidate fetch
   useEffect(() => {
@@ -48,6 +52,29 @@ export function PinyinInputMethod() {
     setCommitted('');
     setCandidates([]);
   };
+
+  // Auto-save on 6s idle (or when committed becomes non-empty after a pause)
+  useEffect(() => {
+    if (!user) return;
+    if (idleRef.current) clearTimeout(idleRef.current);
+    if (!committed) return;
+    idleRef.current = setTimeout(() => {
+      if (committed.length >= 2) void saveHistory(committed);
+    }, 6000);
+    return () => { if (idleRef.current) clearTimeout(idleRef.current); };
+  }, [committed, user]);
+
+  async function saveHistory(input: string) {
+    if (!user) return;
+    const last = lastSavedRef.current;
+    if (last && last.input === input && Date.now() - last.ts < 60_000) return;
+    try {
+      await createHistoryRequest({
+        kind: 'pinyin2text', input, output: input, char_count: input.length, dedup: true,
+      });
+      lastSavedRef.current = { input, ts: Date.now() };
+    } catch (e) { console.error('history save failed', e); }
+  }
 
   return (
     <div className="space-y-3">
