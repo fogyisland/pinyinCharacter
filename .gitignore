@@ -1,0 +1,27 @@
+# dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# build output
+.next/
+out/
+build/
+dist/
+
+# env
+.env
+.env.local
+.env.*.local
+
+# runtime data
+data/runtime/
+*.log
+.DS_Store
+
+# editor
+.vscode/
+.idea/
+
+# tool caches
+.claude/
