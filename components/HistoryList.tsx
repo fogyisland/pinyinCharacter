@@ -4,7 +4,7 @@ import { useState } from 'react';
 import type { HistoryRow } from '@/lib/api-history';
 import { setFavoriteRequest, deleteHistoryRequest } from '@/lib/api-history';
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string | Date): string {
   const t = new Date(iso).getTime();
   const sec = Math.max(1, Math.floor((Date.now() - t) / 1000));
   if (sec < 60) return `${sec}秒前`;

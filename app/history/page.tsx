@@ -23,7 +23,7 @@ export default async function HistoryPage(props: { searchParams: Promise<{ favor
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-4">
         <h1 className="text-xl font-semibold">{favorite ? '收藏夹' : '历史记录'}</h1>
         <div className="bg-white border rounded-lg p-4">
-          <HistoryList rows={rows as unknown as Parameters<typeof HistoryList>[0]['rows']} />
+          <HistoryList rows={rows} />
         </div>
       </main>
     </>

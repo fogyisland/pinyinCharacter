@@ -11,7 +11,7 @@ export interface HistoryRow {
   output: string | null;
   is_favorite: 0 | 1;
   char_count: number;
-  created_at: string;
+  created_at: string | Date;
 }
 
 export interface Stats { total: number; favorites: number; }
