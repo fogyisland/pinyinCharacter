@@ -936,12 +936,6 @@ function collectCandidates(pinyinStr: string, safeMode: boolean, script: Script)
       cands = getCandidates(noTone, safeMode, script);
     }
   }
-  if (cands.length === 0) {
-    // Try splitting on apostrophe
-    if (pinyinStr.includes("'")) {
-      // Handled by tokenize skipping ' for candidate lookup
-    }
-  }
   return cands;
 }
 ```
@@ -1616,8 +1610,6 @@ import { useEffect, useRef, useState } from 'react';
 import { fetchCandidates, type Candidate } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { ReadAloudButton } from './ReadAloudButton';
-
-const TONE_RE = /[1-5]$/;
 
 export function PinyinInputMethod() {
   const safeMode = useAppStore(s => s.safeMode);
