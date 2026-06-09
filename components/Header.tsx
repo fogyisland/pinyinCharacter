@@ -1,3 +1,5 @@
+'use client';
+
 import { SafeModeToggle } from './SafeModeToggle';
 import { useAppStore } from '@/lib/store';
 
