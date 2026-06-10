@@ -32,3 +32,21 @@ export async function logoutRequest(): Promise<ApiResult<null>> {
 export async function meRequest(): Promise<ApiResult<{ user: User }>> {
   return call('/api/auth/me', { method: 'GET' });
 }
+
+export async function forgotPasswordRequest(username: string): Promise<ApiResult<null>> {
+  return call<null>('/api/auth/forgot', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ username }),
+  });
+}
+
+export async function getResetInfoRequest(token: string): Promise<ApiResult<{ username: string }>> {
+  return call(`/api/auth/reset-info?token=${encodeURIComponent(token)}`, { method: 'GET' });
+}
+
+export async function resetPasswordRequest(token: string, newPassword: string): Promise<ApiResult<{ user: User }>> {
+  return call('/api/auth/reset', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  });
+}
