@@ -1,5 +1,5 @@
 /**
- * Create the 3 plan-b tables (idempotent via IF NOT EXISTS).
+ * Create the 4 plan-b tables (idempotent via IF NOT EXISTS).
  * Run on first server start; safe to re-run.
  */
 import { getPool, closePool } from '../lib/db';
@@ -42,6 +42,20 @@ const DDL = [
      PRIMARY KEY (id),
      KEY idx_audit_user (user_id, created_at DESC),
      KEY idx_audit_event (event, created_at DESC)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS password_resets (
+     id BIGINT NOT NULL AUTO_INCREMENT,
+     user_id BIGINT NOT NULL,
+     token_hash CHAR(64) NOT NULL,
+     expires_at TIMESTAMP NOT NULL,
+     used_at TIMESTAMP NULL,
+     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (id),
+     KEY idx_pr_user (user_id),
+     KEY idx_pr_expires (expires_at),
+     CONSTRAINT fk_pr_user FOREIGN KEY (user_id)
+       REFERENCES users(id) ON DELETE CASCADE
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
