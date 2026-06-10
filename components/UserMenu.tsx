@@ -36,6 +36,9 @@ export function UserMenu() {
       >{user.username} ⌄</button>
       {open && (
         <div className="absolute right-0 mt-1 w-44 bg-white border rounded shadow-lg py-1 z-20">
+          {user.isAdmin && (
+            <a href="/admin/users" className="block px-3 py-1.5 hover:bg-gray-50 text-blue-600">管理后台</a>
+          )}
           <a href="/profile" className="block px-3 py-1.5 hover:bg-gray-50">我的主页</a>
           <a href="/history" className="block px-3 py-1.5 hover:bg-gray-50">历史记录</a>
           <a href="/history?favorite=true" className="block px-3 py-1.5 hover:bg-gray-50">收藏夹</a>
