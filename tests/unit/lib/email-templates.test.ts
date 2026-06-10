@@ -25,4 +25,13 @@ describe('passwordResetEmail', () => {
     expect(text).toContain('https://x.com/reset?token=abc');
     expect(text).toContain('15 分钟');
   });
+
+  it('escapes HTML in username to prevent XSS', () => {
+    const evil = '<script>alert(1)</script>';
+    const { html, text } = passwordResetEmail({ username: evil, resetUrl: 'https://x.com/r?token=t', expiresInMinutes: 15 });
+    expect(html).not.toContain('<script>alert(1)</script>');
+    expect(html).toContain('&lt;script&gt;');
+    // text body is plain text, not HTML, so the raw string is OK there
+    expect(text).toContain(evil);
+  });
 });

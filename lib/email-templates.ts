@@ -14,6 +14,10 @@ export interface EmailContent {
 export function passwordResetEmail(args: PasswordResetArgs): EmailContent {
   const subject = '重置密码 — 字 ↔ 拼音 工具';
   const safeUser = escapeHtml(args.username);
+  // NOTE: escapeAttr HTML-escapes & for safety. Our reset URLs only contain
+  // a single ?token=base64url query param (no &), so this is correct in
+  // practice. If we ever add multi-param URLs, switch safeUrl to a URL-safe
+  // escaper (only " and <) to avoid corrupting the href.
   const safeUrl = escapeAttr(args.resetUrl);
   const safeUrlText = escapeHtml(args.resetUrl);
   const mins = args.expiresInMinutes;
