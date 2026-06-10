@@ -77,6 +77,11 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
             {busy ? '...' : (mode === 'login' ? '登录' : '注册')}
           </button>
         </form>
+        {mode === 'login' && (
+          <p className="text-xs text-gray-500 mt-3 text-center">
+            <a href="/forgot-password" className="text-blue-600 hover:underline">忘记密码</a>
+          </p>
+        )}
       </div>
     </div>
   );
