@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { NextResponse } from 'next/server';
+import { getPool } from './db';
 
 export interface User { id: number; username: string; }
 export interface SessionPayload extends JwtPayload {
@@ -88,10 +90,6 @@ export function validatePassword(s: string): string | null {
   return null;
 }
 
-// 在现有 export 之后追加
-import { NextResponse } from 'next/server';
-import { getPool } from './db';
-
 export interface UserWithAdmin extends User { isAdmin: boolean; }
 
 /**
@@ -109,7 +107,7 @@ export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null> {
     [user.id]
   );
   if (rows.length === 0) return null;
-  return { ...user, isAdmin: Number(rows[0].is_admin) === 1 };
+  return { ...user, isAdmin: Boolean(rows[0].is_admin) };
 }
 
 export type RequireAdminResult =
