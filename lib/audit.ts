@@ -2,7 +2,10 @@ import { getPool } from './db';
 
 export type AuditEvent =
   | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete';
+  | 'history_create' | 'history_delete'
+  | 'password_reset_request' | 'password_reset_complete'
+  | 'admin_user_delete' | 'admin_user_password_reset'
+  | 'admin_user_promote' | 'admin_user_demote';
 
 export interface AuditEntry {
   userId: number | null;
