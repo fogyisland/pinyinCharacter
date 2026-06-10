@@ -9,3 +9,9 @@ export function validatePassword(s: string): string | null {
   if (s.length > 72) return '密码不能超过 72 位';
   return null;
 }
+
+/** 客户端再次输入密码校验（服务端仍是 source of truth） */
+export function validatePasswordConfirmation(pw: string, confirm: string): string | null {
+  if (pw !== confirm) return '两次输入不一致';
+  return null;
+}
