@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
@@ -19,7 +20,9 @@ export default async function HistoryPage(props: { searchParams: Promise<{ favor
 
   return (
     <>
-      <Header />
+      <Suspense>
+        <Header />
+      </Suspense>
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-4">
         <h1 className="text-xl font-semibold">{favorite ? '收藏夹' : '历史记录'}</h1>
         <div className="bg-white border rounded-lg p-4">

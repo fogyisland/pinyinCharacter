@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { Header } from '@/components/Header';
 import { TextToPinyin } from '@/components/TextToPinyin';
 import { PinyinInputMethod } from '@/components/PinyinInputMethod';
@@ -6,7 +7,9 @@ import { PinyinFullSentence } from '@/components/PinyinFullSentence';
 export default function Home() {
   return (
     <>
-      <Header />
+      <Suspense>
+        <Header />
+      </Suspense>
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <TextToPinyin />
 
