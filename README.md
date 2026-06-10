@@ -43,6 +43,21 @@ pnpm test:watch       # 监听
 - 审计日志：注册、登录、登出、history 创建/删除入 audit_log 表
 - safeMode / 简繁切换仍在客户端
 
+## 密码找回 + 管理员后台（v1 / Plan B+）
+
+- **密码找回**：在登录框或 `/forgot-password` 输入用户名 → 系统发送一封带 magic link 的邮件（15 分钟内有效）。开发模式下邮件内容打印到 server console；生产环境配置 SMTP 后真实发送。
+- **管理员后台**（首个注册的用户自动是 admin）：`/admin/users`、`/admin/audit`、`/admin/stats`
+  - 写操作：删除用户（需输入用户名确认）、重置密码（生成临时密码）、提升/撤销管理员
+  - 所有写操作都入审计日志
+- **首个用户自动为 admin**：注册时检查 `users` 表行数，第一个注册的用户 `is_admin=1`，后续都是 0。
+- **v1 限制**：密码重置成功后,旧会话的 JWT 仍有效至 7 天期满。如果需要立即失效所有旧会话,需在 `users` 表加 `token_version` 字段并在 `verifySession` 里比对 — 留待 Plan C。
+
+### 邮件配置
+
+`.env` 中：
+- `MAIL_TRANSPORT=console`（默认）：邮件打印到 server console，无需 SMTP
+- `MAIL_TRANSPORT=smtp`：启用真实 SMTP，需填 `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`
+
 ## 环境变量
 
 复制 `.env.example` 为 `.env` 并填入：
@@ -53,8 +68,14 @@ pnpm test:watch       # 监听
 | `JWT_SECRET` | ✓ | 32+ 字节随机串，例 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
 | `DATABASE_URL_TEST` |   | 集成测试用，缺省时 skip |
 | `COOKIE_SECURE` |   | 生产环境设为 `true` 让 cookie 带 Secure 标志 |
+| `MAIL_TRANSPORT` |   | `console`（默认，邮件打印到 console） 或 `smtp`（需配 SMTP_* / MAIL_FROM） |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` |   | `MAIL_TRANSPORT=smtp` 时填入 |
+| `MAIL_FROM` |   | `MAIL_TRANSPORT=smtp` 时填入（`noreply@example.com`） |
+| `MAIL_FROM_NAME` |   | 发件人显示名，缺省为空 |
+| `PUBLIC_BASE_URL` |   | 密码重置邮件里的链接域名，缺省取请求 host |
 
 ## 路线图
 
 - Plan B：用户注册、历史、收藏、统计
+- Plan B+：密码找回 + 管理员后台（用户、审计、统计）+ SMTP 邮件
 - Plan C：简繁真实实现、响应式优化、E2E 测试
