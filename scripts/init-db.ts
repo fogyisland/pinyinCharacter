@@ -53,6 +53,7 @@ const DDL = [
      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
      PRIMARY KEY (id),
      KEY idx_pr_user (user_id),
+     KEY idx_pr_token_hash (token_hash),
      KEY idx_pr_expires (expires_at),
      CONSTRAINT fk_pr_user FOREIGN KEY (user_id)
        REFERENCES users(id) ON DELETE CASCADE
