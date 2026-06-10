@@ -16,6 +16,7 @@
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.22.5",
     "next": "15.0.3",
+    "nodemailer": "^8.0.10",
     "opencc-js": "^1.0.5",
     "pinyin-pro": "^3.25.0",
     "react": "19.0.0-rc-66855b96-20241106",
