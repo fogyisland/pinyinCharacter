@@ -87,3 +87,71 @@ export function validatePassword(s: string): string | null {
   if (s.length > 72) return '密码不能超过 72 位';
   return null;
 }
+
+// 在现有 export 之后追加
+import { NextResponse } from 'next/server';
+import { getPool } from './db';
+
+export interface UserWithAdmin extends User { isAdmin: boolean; }
+
+/**
+ * Same as getCurrentUser, but also queries is_admin from DB.
+ * Use this whenever admin privileges need to be checked.
+ * Note: is_admin is NOT in the JWT — we re-query on every request so that
+ * a demoted admin loses access immediately, not at JWT expiry.
+ */
+export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const pool = getPool();
+  const [rows] = await pool.execute<any[]>(
+    `SELECT is_admin FROM users WHERE id = ? LIMIT 1`,
+    [user.id]
+  );
+  if (rows.length === 0) return null;
+  return { ...user, isAdmin: Number(rows[0].is_admin) === 1 };
+}
+
+export type RequireAdminResult =
+  | { ok: true; user: UserWithAdmin }
+  | { ok: false; reason: 'unauthenticated' | 'forbidden'; response: NextResponse };
+
+/**
+ * Discriminated guard for both API routes and server pages.
+ *
+ * API route usage:
+ *   const auth = await requireAdmin();
+ *   if (!auth.ok) return auth.response;
+ *   // auth.user.id, auth.user.username, auth.user.isAdmin are safe
+ *
+ * Server page usage:
+ *   const auth = await requireAdmin();
+ *   if (!auth.ok) {
+ *     if (auth.reason === 'unauthenticated') redirect('/?auth=login');
+ *     else redirect('/?error=forbidden');
+ *   }
+ */
+export async function requireAdmin(): Promise<RequireAdminResult> {
+  const user = await getCurrentUserWithAdmin();
+  if (!user) {
+    return {
+      ok: false,
+      reason: 'unauthenticated',
+      response: NextResponse.json(
+        { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+        { status: 401 }
+      ),
+    };
+  }
+  if (!user.isAdmin) {
+    return {
+      ok: false,
+      reason: 'forbidden',
+      response: NextResponse.json(
+        { ok: false, error: { code: 'forbidden', message: '需要管理员权限' } },
+        { status: 403 }
+      ),
+    };
+  }
+  return { ok: true, user };
+}
