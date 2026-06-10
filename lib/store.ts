@@ -5,7 +5,7 @@ import { persist } from 'zustand/middleware';
 
 export type Script = 'simplified' | 'traditional';
 
-export interface User { id: number; username: string; }
+export interface User { id: number; username: string; isAdmin?: boolean; }
 
 interface AppState {
   safeMode: boolean;
