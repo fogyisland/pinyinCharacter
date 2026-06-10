@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { validateUsername } from '@/lib/auth';
 import { findUserByUsername, generateResetToken, createResetRow, RESET_TTL_MINUTES } from '@/lib/password-reset';
 import { checkRateLimit } from '@/lib/ratelimit';
-import { sendEmail, EmailNotConfiguredError } from '@/lib/email';
+import { sendEmail } from '@/lib/email';
 import { passwordResetEmail } from '@/lib/email-templates';
 import { writeAudit } from '@/lib/audit';
 
@@ -45,15 +45,10 @@ export async function POST(req: NextRequest) {
   let emailError: string | null = null;
   try {
     const tpl = passwordResetEmail({ username, resetUrl, expiresInMinutes: RESET_TTL_MINUTES });
-    // v1: dev 模式 console 不关心 to 地址；SMTP 模式需 v2 加 users.email 列
+    // v1: 暂用 username 作为 to（dev console 模式不验证地址；SMTP 模式需 v2 加 users.email 列）。
+    // 任何邮件错误都吞掉，audit 记录，client 永远收到 ok:true 防用户名枚举。
     await sendEmail({ to: username, subject: tpl.subject, html: tpl.html, text: tpl.text });
   } catch (e) {
-    if (e instanceof EmailNotConfiguredError) {
-      return NextResponse.json(
-        { ok: false, error: { code: 'email_not_configured', message: '邮件服务未配置' } },
-        { status: 503 }
-      );
-    }
     emailError = e instanceof Error ? e.message : String(e);
     console.error('[forgot] email send failed', emailError);
   }
