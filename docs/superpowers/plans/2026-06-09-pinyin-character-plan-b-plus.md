@@ -405,9 +405,7 @@ export async function sendEmail(msg: EmailMessage): Promise<void> {
   const transport = (process.env.MAIL_TRANSPORT ?? 'console').toLowerCase();
 
   if (transport === 'console') {
-    console.log('[email] To:', msg.to);
-    console.log('[email] Subject:', msg.subject);
-    console.log('[email] Body:\n', msg.text);
+    console.log(`[email] To: ${msg.to} | Subject: ${msg.subject}\n${msg.text}`);
     return;
   }
 
