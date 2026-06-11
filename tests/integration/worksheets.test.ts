@@ -82,3 +82,65 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     expect(j.data.worksheets.length).toBeGreaterThanOrEqual(1);
   });
 });
+
+const { GET: getSheet, DELETE: delSheet } = await import('@/app/api/worksheets/[id]/route');
+
+integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
+  it('GET returns the worksheet for its owner', async () => {
+    const u = uniqueUsername('ws');
+    await regUser(u);
+    const { cookie } = await loginAndCookie(u);
+    const created = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+    })) as any);
+    const id = (await created.json()).data.id;
+    const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
+    const r = await getSheet(withCookie(cookie, new Request(`http://x/api/worksheets/${id}`)) as any, ctx);
+    const j = await r.json();
+    expect(r.status).toBe(200);
+    expect(j.data.id).toBe(id);
+  });
+
+  it('DELETE removes the worksheet', async () => {
+    const u = uniqueUsername('ws');
+    await regUser(u);
+    const { cookie } = await loginAndCookie(u);
+    const created = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+    })) as any);
+    const id = (await created.json()).data.id;
+    const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
+    const r = await delSheet(withCookie(cookie, new Request(`http://x/api/worksheets/${id}`, { method: 'DELETE' })) as any, ctx);
+    expect(r.status).toBe(204);
+    const r2 = await getSheet(withCookie(cookie, new Request(`http://x/api/worksheets/${id}`)) as any, ctx);
+    expect(r2.status).toBe(404);
+  });
+
+  it('returns 403 for other user', async () => {
+    const u1 = uniqueUsername('ws1');
+    const u2 = uniqueUsername('ws2');
+    await regUser(u1);
+    await regUser(u2);
+    const { cookie: c1 } = await loginAndCookie(u1);
+    const { cookie: c2 } = await loginAndCookie(u2);
+    const created = await createSheet(withCookie(c1, new Request('http://x/api/worksheets', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+    })) as any);
+    const id = (await created.json()).data.id;
+    const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
+    const r = await getSheet(withCookie(c2, new Request(`http://x/api/worksheets/${id}`)) as any, ctx);
+    expect(r.status).toBe(403);
+  });
+
+  it('returns 404 for unknown id', async () => {
+    const u = uniqueUsername('ws');
+    await regUser(u);
+    const { cookie } = await loginAndCookie(u);
+    const ctx = { params: Promise.resolve({ id: '9999999' }) } as any;
+    const r = await getSheet(withCookie(cookie, new Request('http://x/api/worksheets/9999999')) as any, ctx);
+    expect(r.status).toBe(404);
+  });
+});
