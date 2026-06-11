@@ -3,7 +3,11 @@ import { z } from 'zod';
 const SINGLE_CJK = /^[一-鿿]$/;
 
 export const searchQuerySchema = z.object({
-  q: z.string().max(32).optional(),
+  q: z
+    .string()
+    .max(32)
+    .transform((s) => s.trim())
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
 });
 
@@ -13,7 +17,7 @@ export const worksheetIdParamSchema = z.object({
 
 export const charParamSchema = z.object({
   char: z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
-    message: 'must be a single CJK char',
+    error: 'must be a single CJK char',
   }),
 });
 

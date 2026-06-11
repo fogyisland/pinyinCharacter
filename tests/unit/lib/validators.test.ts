@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { searchQuerySchema, saveWorksheetSchema } from '@/lib/validators';
+import {
+  searchQuerySchema,
+  worksheetIdParamSchema,
+  charParamSchema,
+  saveWorksheetSchema,
+} from '@/lib/validators';
 
 describe('validators', () => {
   describe('searchQuerySchema', () => {
@@ -15,12 +20,65 @@ describe('validators', () => {
       expect(r.page).toBe(3);
     });
 
+    it('trims surrounding whitespace from q', () => {
+      const r = searchQuerySchema.parse({ q: '  da  ' });
+      expect(r.q).toBe('da');
+    });
+
+    it('normalizes whitespace-only q to empty string', () => {
+      const r = searchQuerySchema.parse({ q: '   ' });
+      expect(r.q).toBe('');
+    });
+
     it('rejects q > 32 chars', () => {
       expect(() => searchQuerySchema.parse({ q: 'a'.repeat(33) })).toThrow();
     });
 
     it('rejects page < 1', () => {
       expect(() => searchQuerySchema.parse({ page: '0' })).toThrow();
+    });
+  });
+
+  describe('worksheetIdParamSchema', () => {
+    it('accepts a positive integer', () => {
+      const r = worksheetIdParamSchema.parse({ id: 42 });
+      expect(r.id).toBe(42);
+    });
+
+    it('coerces numeric string to integer', () => {
+      const r = worksheetIdParamSchema.parse({ id: '123' });
+      expect(r.id).toBe(123);
+    });
+
+    it('rejects zero', () => {
+      expect(() => worksheetIdParamSchema.parse({ id: 0 })).toThrow();
+    });
+
+    it('rejects negative integer', () => {
+      expect(() => worksheetIdParamSchema.parse({ id: -1 })).toThrow();
+    });
+
+    it('rejects non-numeric string', () => {
+      expect(() => worksheetIdParamSchema.parse({ id: 'abc' })).toThrow();
+    });
+  });
+
+  describe('charParamSchema', () => {
+    it('accepts a single CJK char', () => {
+      const r = charParamSchema.parse({ char: '你' });
+      expect(r.char).toBe('你');
+    });
+
+    it('rejects empty string', () => {
+      expect(() => charParamSchema.parse({ char: '' })).toThrow();
+    });
+
+    it('rejects multi-char string', () => {
+      expect(() => charParamSchema.parse({ char: '你好' })).toThrow();
+    });
+
+    it('rejects ASCII char', () => {
+      expect(() => charParamSchema.parse({ char: 'a' })).toThrow();
     });
   });
 

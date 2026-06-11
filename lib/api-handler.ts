@@ -9,22 +9,25 @@ export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T | Ne
     return await fn();
   } catch (err) {
     console.error('[api]', err);
-    return NextResponse.json({ ok: false, error: 'server' }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'server', message: 'server error' } },
+      { status: 500 }
+    );
   }
 }
 
-export function badRequest(message: string) {
-  return NextResponse.json({ ok: false, error: message }, { status: 400 });
+export function badRequest(code: string, message: string) {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 400 });
 }
 
-export function notFound(message = 'not_found') {
-  return NextResponse.json({ ok: false, error: message }, { status: 404 });
+export function notFound(code = 'not_found', message = 'not_found') {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 404 });
 }
 
-export function forbidden(message = 'forbidden') {
-  return NextResponse.json({ ok: false, error: message }, { status: 403 });
+export function forbidden(code = 'forbidden', message = 'forbidden') {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 403 });
 }
 
-export function unauthorized(message = 'unauthorized') {
-  return NextResponse.json({ ok: false, error: message }, { status: 401 });
+export function unauthorized(code = 'unauthorized', message = 'unauthorized') {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 401 });
 }
