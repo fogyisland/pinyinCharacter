@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     if (!user) return unauthorized();
     const body = await req.json();
     const parsed = saveWorksheetSchema.safeParse(body);
-    if (!parsed.success) return badRequest(parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const id = await saveWorksheet({
       userId: user.id,
       title: parsed.data.title,
