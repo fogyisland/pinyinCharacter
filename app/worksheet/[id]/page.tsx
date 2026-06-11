@@ -12,9 +12,9 @@ interface Props {
 }
 
 export default async function WorksheetDetailPage({ params }: Props) {
-  const user = await getCurrentUser();
-  if (!user) redirect('/?auth=login');
   const { id } = await params;
+  const user = await getCurrentUser();
+  if (!user) redirect(`/?auth=login&next=/worksheet/${id}`);
   const wid = Number(id);
   if (!Number.isInteger(wid)) notFound();
   const ws = await getWorksheet(wid);

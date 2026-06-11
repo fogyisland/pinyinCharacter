@@ -24,9 +24,6 @@ export function WorksheetHistoryList({ worksheets }: Props) {
               {new Date(w.createdAt).toLocaleString()}
             </div>
           </div>
-          <form action={`/api/worksheets/${w.id}`} method="post">
-            {/* DELETE via JS in parent; this is a placeholder */}
-          </form>
         </li>
       ))}
     </ul>
