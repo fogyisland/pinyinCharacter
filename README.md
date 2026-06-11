@@ -58,6 +58,22 @@ pnpm test:watch       # 监听
 - `MAIL_TRANSPORT=console`（默认）：邮件打印到 server console，无需 SMTP
 - `MAIL_TRANSPORT=smtp`：启用真实 SMTP，需填 `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`
 
+## 罕见字库 + 字帖生成器 + 识字游戏（v1 / Plan D）
+
+- **罕见字库**:从《通用规范汉字表》三级导入 ~1600 字,每字含拼音、释义、故事(AI 生成)。`/rare-chars` 浏览 + 搜索,`/rare-chars/[char]` 详情。
+- **字帖生成器**:`/worksheet` 支持自由输入或从字库选字,毛笔格/田字格两种样式,浏览器原生打印 → 另存为 PDF。登录用户可保存到 `/worksheet/history`。
+- **识字游戏**:`/game` 拖拽匹配字与拼音,8 张牌,计时计错配。
+
+### 数据初始化（一次性）
+
+```bash
+pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts
+pnpm tsx --env-file=.env scripts/generate-stories.ts --provider openai --model gpt-4o-mini
+pnpm tsx --env-file=.env scripts/show-stats.ts
+```
+
+需要 `LLM_API_KEY` 和 `LLM_BASE_URL` 在 `.env` 中。脚本可重复运行(已填的释义/故事不覆盖)。
+
 ## 环境变量
 
 复制 `.env.example` 为 `.env` 并填入：
