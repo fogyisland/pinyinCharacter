@@ -58,6 +58,32 @@ const DDL = [
      CONSTRAINT fk_pr_user FOREIGN KEY (user_id)
        REFERENCES users(id) ON DELETE CASCADE
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS rare_chars (
+     \`char\`        VARCHAR(1)     NOT NULL,
+     pinyin        VARCHAR(64)    NOT NULL,
+     meaning       TEXT           NOT NULL,
+     story         TEXT           NOT NULL,
+     needs_review  TINYINT(1)     NOT NULL DEFAULT 1,
+     generated_by  VARCHAR(64)    NULL,
+     generated_at  DATETIME       NULL,
+     created_at    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (\`char\`),
+     KEY idx_pinyin (pinyin)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS worksheets (
+     id          INT            NOT NULL AUTO_INCREMENT,
+     user_id     BIGINT         NOT NULL,
+     title       VARCHAR(80)    NOT NULL,
+     content     JSON           NOT NULL,
+     cell_style  ENUM('brush','square') NOT NULL,
+     created_at  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (id),
+     KEY idx_user_created (user_id, created_at DESC),
+     CONSTRAINT fk_worksheets_user FOREIGN KEY (user_id)
+       REFERENCES users(id) ON DELETE CASCADE
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 export async function initDb(): Promise<void> {

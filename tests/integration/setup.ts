@@ -23,10 +23,12 @@ export async function truncateAll(): Promise<void> {
   if (!HAS_DB) return;
   const pool = getPool();
   await pool.query('SET FOREIGN_KEY_CHECKS = 0');
+  await pool.query('TRUNCATE TABLE worksheets');
+  await pool.query('TRUNCATE TABLE rare_chars');
   await pool.query('TRUNCATE TABLE history');
-  await pool.query('TRUNCATE TABLE users');
-  await pool.query('TRUNCATE TABLE audit_log');
   await pool.query('TRUNCATE TABLE password_resets');
+  await pool.query('TRUNCATE TABLE audit_log');
+  await pool.query('TRUNCATE TABLE users');
   await pool.query('SET FOREIGN_KEY_CHECKS = 1');
 }
 
