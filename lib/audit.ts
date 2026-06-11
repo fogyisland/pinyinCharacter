@@ -5,7 +5,8 @@ export type AuditEvent =
   | 'history_create' | 'history_delete'
   | 'password_reset_request' | 'password_reset_complete'
   | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote';
+  | 'admin_user_promote' | 'admin_user_demote'
+  | 'worksheet_saved' | 'worksheet_deleted';
 
 export interface AuditEntry {
   userId: number | null;
