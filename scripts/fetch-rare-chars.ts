@@ -1,7 +1,11 @@
 /**
- * One-shot script: fetch 通用规范汉字表 third-tier (~1600 chars), look up
- * pinyin from data/pinyin-hanzi.json (Plan A dictionary) or fall back to
- * pinyin-pro for missing chars, and INSERT into rare_chars.
+ * One-shot script: load level-3 chars from data/rare-chars-level3.json
+ * (1605 chars, sliced from 通用规范汉字表), look up pinyin from
+ * data/pinyin-hanzi.json (Plan A dictionary) or fall back to pinyin-pro
+ * for missing chars, and INSERT into rare_chars.
+ *
+ * Data source: jaywcjlove/table-of-general-standard-chinese-characters
+ * (downloaded once into data/, see scripts/sync-rare-chars-source.ts).
  *
  * Usage: pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts
  *
@@ -12,15 +16,13 @@ import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 import { getPool, closePool } from '../lib/db';
 
-const SOURCE_URL =
-  'https://raw.githubusercontent.com/elkmovie/通用规范汉字表/master/《通用规范汉字表》三级字表.txt';
+const LEVEL3_PATH = join(process.cwd(), 'data', 'rare-chars-level3.json');
 const DICT_PATH = join(process.cwd(), 'data', 'pinyin-hanzi.json');
 
 interface DictEntry { char: string; freq: number; }
 type Dict = Record<string, DictEntry[]>;
 
 function loadDict(): Map<string, string> {
-  // Returns a Map of char -> first pinyin base
   const map = new Map<string, string>();
   try {
     const dict = JSON.parse(readFileSync(DICT_PATH, 'utf-8')) as Dict;
@@ -42,24 +44,32 @@ function pinyinFor(char: string, charToPinyin: Map<string, string>): string {
   return Array.isArray(py) && py.length > 0 ? py[0]! : '';
 }
 
-async function fetchText(url: string): Promise<string> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`fetch ${url} -> ${res.status}`);
-  return res.text();
-}
-
 async function main() {
+  let chars: string[];
+  try {
+    chars = JSON.parse(readFileSync(LEVEL3_PATH, 'utf-8')) as string[];
+  } catch (err) {
+    throw new Error(
+      `Cannot read ${LEVEL3_PATH}. ` +
+      `Run scripts/sync-rare-chars-source.ts first to download the source.`
+    );
+  }
+  // Skip supplementary-plane chars (codepoint >= U+10000, JS string length > 1).
+  // mysql2's binary prepared-statement protocol mojibakes 4-byte UTF-8 parameters,
+  // so we can't reliably insert them. The ~192 affected chars are PUA/Extension B
+  // codepoints (𬣙, 𨙸, etc.) that the rare-chars UI/game cannot render in most
+  // fonts anyway — losing them does not affect the feature.
+  const bmpChars = chars.filter((c) => c.length === 1);
+  console.log(
+    `[fetch-rare-chars] ${chars.length} level-3 chars from local file, ` +
+    `${bmpChars.length} BMP chars to insert (skipping ${chars.length - bmpChars.length} non-BMP)`
+  );
+
   const charToPinyin = loadDict();
-
-  console.log('[fetch-rare-chars] downloading source...');
-  const text = await fetchText(SOURCE_URL);
-  const chars = Array.from(new Set(text.split('').filter((c) => /[一-鿿]/.test(c))));
-  console.log(`[fetch-rare-chars] ${chars.length} unique chars`);
-
   const pool = getPool();
   let inserted = 0;
   let updated = 0;
-  for (const char of chars) {
+  for (const char of bmpChars) {
     const pinyinStr = charToPinyin.get(char) ?? pinyinFor(char, charToPinyin);
     try {
       const [result] = await pool.execute<any>(
