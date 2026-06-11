@@ -22,14 +22,20 @@ export async function fetchRareChars(opts: { q?: string; page?: number } = {}): 
   if (opts.page) params.set('page', String(opts.page));
   const res = await fetch(`/api/rare-chars?${params.toString()}`);
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error ?? 'fetch failed');
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    throw new Error(msg);
+  }
   return data.data;
 }
 
 export async function fetchRareChar(char: string): Promise<RareCharClient> {
   const res = await fetch(`/api/rare-chars/${encodeURIComponent(char)}`);
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error ?? 'fetch failed');
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    throw new Error(msg);
+  }
   return data.data;
 }
 
@@ -43,6 +49,9 @@ export async function fetchDailyChar(date?: string): Promise<{
   const url = date ? `/api/rare-chars/daily?date=${date}` : '/api/rare-chars/daily';
   const res = await fetch(url);
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error ?? 'fetch failed');
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    throw new Error(msg);
+  }
   return data.data;
 }

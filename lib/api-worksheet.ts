@@ -3,14 +3,20 @@ import { CellStyle, Worksheet } from './worksheet';
 export async function listWorksheets(): Promise<Worksheet[]> {
   const res = await fetch('/api/worksheets');
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error ?? 'fetch failed');
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    throw new Error(msg);
+  }
   return data.data.worksheets;
 }
 
 export async function fetchWorksheet(id: number): Promise<Worksheet> {
   const res = await fetch(`/api/worksheets/${id}`);
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error ?? 'fetch failed');
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    throw new Error(msg);
+  }
   return data.data;
 }
 
@@ -25,7 +31,10 @@ export async function saveWorksheetApi(input: {
     body: JSON.stringify(input),
   });
   const data = await res.json();
-  if (!data.ok) throw new Error(data.error ?? 'save failed');
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'save failed';
+    throw new Error(msg);
+  }
   return data.data;
 }
 
