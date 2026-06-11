@@ -69,17 +69,17 @@ export function DragMatchGame() {
 
   const handleDrop = (char: string, pinyin: string) => {
     if (pairs[char]) return; // already matched
-    if (pinyin === getPinyinFor(char)) {
-      setPairs((p) => ({ ...p, [char]: pinyin }));
-    } else {
+    if (pinyin !== getPinyinFor(char)) {
       setMismatches((m) => m + 1);
-      // briefly flash by not locking the pair
+      return;
     }
-    // Check if all matched
-    setTimeout(() => {
-      const allMatched = Object.keys(pairs).length + 1 >= chars.length;
-      if (allMatched) setPhase('finished');
-    }, 50);
+    setPairs((prev) => {
+      const next = { ...prev, [char]: pinyin };
+      if (Object.keys(next).length === chars.length) {
+        setPhase('finished');
+      }
+      return next;
+    });
   };
 
   const getPinyinFor = (char: string) => chars.find((c) => c.char === char)?.pinyin ?? '';
