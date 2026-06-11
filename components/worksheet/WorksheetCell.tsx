@@ -1,4 +1,4 @@
-import { CellStyle } from '@/lib/worksheet';
+import type { CellStyle } from '@/lib/worksheet-types';
 
 interface Props {
   char: string;

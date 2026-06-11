@@ -1,4 +1,4 @@
-import { CellStyle, Worksheet } from './worksheet';
+import type { CellStyle, Worksheet } from './worksheet-types';
 
 export async function listWorksheets(): Promise<Worksheet[]> {
   const res = await fetch('/api/worksheets');

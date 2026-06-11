@@ -1,6 +1,7 @@
 'use client';
 
-import { CellStyle, generateLayout } from '@/lib/worksheet';
+import type { CellStyle } from '@/lib/worksheet-types';
+import { generateLayout } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 
 interface BaseProps {

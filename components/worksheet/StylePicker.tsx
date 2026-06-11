@@ -1,6 +1,6 @@
 'use client';
 
-import { CellStyle } from '@/lib/worksheet';
+import type { CellStyle } from '@/lib/worksheet-types';
 
 interface Props {
   value: CellStyle;

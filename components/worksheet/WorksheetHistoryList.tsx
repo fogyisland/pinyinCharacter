@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Worksheet } from '@/lib/worksheet';
+import type { Worksheet } from '@/lib/worksheet-types';
 
 interface Props {
   worksheets: Worksheet[];

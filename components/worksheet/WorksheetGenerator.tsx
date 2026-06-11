@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { CellStyle } from '@/lib/worksheet';
+import type { CellStyle } from '@/lib/worksheet-types';
 import { TextInputTab } from './TextInputTab';
 import { LibrarySelectTab } from './LibrarySelectTab';
 import { StylePicker } from './StylePicker';
