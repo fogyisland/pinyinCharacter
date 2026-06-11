@@ -1,41 +1,68 @@
 'use client';
 
-import { CellStyle } from '@/lib/worksheet';
+import { CellStyle, generateLayout } from '@/lib/worksheet';
+import { WorksheetCell } from './WorksheetCell';
 
-interface Props {
-  title: string;
+interface BaseProps {
+  title?: string;
   content: string[];
   cellStyle: CellStyle;
+  showHeader?: boolean;
+}
+
+interface FormProps extends BaseProps {
   onBack: () => void;
   onSave: () => void;
   saving: boolean;
 }
 
-// Placeholder stub — will be replaced by Task 20's full implementation.
-// This stub exists so that WorksheetGenerator (Task 19) can typecheck.
-export function WorksheetPreview({ title, content, cellStyle, onBack, onSave, saving }: Props) {
+type Props = BaseProps | FormProps;
+
+export function WorksheetPreview(props: Props) {
+  const cells = generateLayout(props.content, props.cellStyle);
+  const isFormView = 'onBack' in props;
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-medium">预览(占位)</h2>
-      <p>标题: {title || '(无)'}</p>
-      <p>字数: {content.length}</p>
-      <p>样式: {cellStyle}</p>
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-50"
-        >
-          返回
-        </button>
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
-        >
-          {saving ? '保存中...' : '保存'}
-        </button>
+    <div>
+      {isFormView && props.showHeader !== false && (
+        <div className="worksheet-no-print mb-4 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={props.onBack}
+            className="rounded border px-3 py-1 hover:bg-gray-100"
+          >
+            ← 返回修改
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded border px-3 py-1 hover:bg-gray-100"
+            >
+              打印
+            </button>
+            <button
+              type="button"
+              onClick={props.onSave}
+              disabled={props.saving}
+              className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 disabled:bg-gray-300"
+            >
+              {props.saving ? '保存中...' : '保存'}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {props.title && (
+        <h1 className="worksheet-no-print mb-4 text-center text-2xl font-bold">{props.title}</h1>
+      )}
+
+      <div className="worksheet-grid mx-auto grid max-w-3xl grid-cols-8 gap-2 print:grid-cols-8">
+        {cells.map((cell) => (
+          <div key={cell.index} className="worksheet-cell">
+            <WorksheetCell char={cell.char} style={cell.style} />
+          </div>
+        ))}
       </div>
     </div>
   );
