@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorksheet } from '@/lib/worksheet';
 import { WorksheetPreview } from '@/components/worksheet/WorksheetPreview';
-import { DeleteWorksheetButton } from './DeleteWorksheetButton';
+import { DeleteWorksheetButton } from '@/components/worksheet/DeleteWorksheetButton';
 import { PrintButton } from './PrintButton';
 
 export const dynamic = 'force-dynamic';

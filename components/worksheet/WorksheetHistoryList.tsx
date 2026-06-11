@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Worksheet } from '@/lib/worksheet-types';
+import { DeleteWorksheetButton } from './DeleteWorksheetButton';
 
 interface Props {
   worksheets: Worksheet[];
@@ -24,6 +25,7 @@ export function WorksheetHistoryList({ worksheets }: Props) {
               {new Date(w.createdAt).toLocaleString()}
             </div>
           </div>
+          <DeleteWorksheetButton id={w.id} />
         </li>
       ))}
     </ul>

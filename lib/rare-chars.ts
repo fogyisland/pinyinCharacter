@@ -48,23 +48,28 @@ export function isSingleChar(s: string): boolean {
   return arr.length === 1 && arr[0]!.codePointAt(0)! >= 0x4e00;
 }
 
-export async function listChars(opts: { q?: string; page?: number } = {}): Promise<ListResult> {
+export async function listChars(opts: { q?: string; page?: number; minMeaning?: boolean } = {}): Promise<ListResult> {
   const pool = getPool();
   const page = Math.max(1, opts.page ?? 1);
   const pageSize = 80;
   const offset = (page - 1) * pageSize;
   const { where, params } = buildSearchWhere(opts.q ?? '');
 
+  const conditions: string[] = [];
+  if (where) conditions.push(where.replace(/^WHERE\s+/, ''));
+  if (opts.minMeaning) conditions.push("meaning <> ''");
+  const finalWhere = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin, meaning, story, needs_review, generated_by, generated_at, created_at
-     FROM rare_chars ${where}
+     FROM rare_chars ${finalWhere}
      ORDER BY \`char\` ASC
      LIMIT ? OFFSET ?`,
     [...params, pageSize, offset]
   );
 
   const [[{ total }]] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS total FROM rare_chars ${where}`,
+    `SELECT COUNT(*) AS total FROM rare_chars ${finalWhere}`,
     params
   );
 
@@ -84,14 +89,6 @@ export async function getChar(c: string): Promise<RareChar | null> {
     [c]
   );
   return rows.length > 0 ? mapRow(rows[0]) : null;
-}
-
-export async function getAllChars(): Promise<string[]> {
-  const pool = getPool();
-  const [rows] = await pool.query<any[]>(
-    `SELECT \`char\` FROM rare_chars WHERE meaning <> '' ORDER BY \`char\` ASC`
-  );
-  return rows.map((r) => r.char as string);
 }
 
 export async function getDailyChar(dateStr: string): Promise<{

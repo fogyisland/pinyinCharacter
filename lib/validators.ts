@@ -9,6 +9,7 @@ export const searchQuerySchema = z.object({
     .transform((s) => s.trim())
     .optional(),
   page: z.coerce.number().int().min(1).default(1),
+  minMeaning: z.coerce.boolean().optional(),
 });
 
 export const worksheetIdParamSchema = z.object({

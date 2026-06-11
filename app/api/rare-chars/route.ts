@@ -9,6 +9,7 @@ export async function GET(req: NextRequest) {
     const parsed = searchQuerySchema.safeParse({
       q: sp.get('q') ?? undefined,
       page: sp.get('page') ?? undefined,
+      minMeaning: sp.get('minMeaning') ?? undefined,
     });
     if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const result = await listChars(parsed.data);

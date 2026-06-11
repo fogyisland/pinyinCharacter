@@ -50,7 +50,7 @@ export function DragMatchGame() {
 
   const loadGame = async () => {
     setPhase('loading');
-    const res = await fetch('/api/rare-chars?page=1');
+    const res = await fetch('/api/rare-chars?page=1&minMeaning=true');
     const data = (await res.json()) as { ok: boolean; data: { chars: Char[] } };
     const filled = data.data.chars.filter((c) => c.meaning && c.pinyin);
     const picked = shuffle(filled).slice(0, 8);
