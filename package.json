@@ -10,7 +10,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dict:build": "tsx scripts/build-dict.ts",
-    "poetry:build": "tsx scripts/build-poems.ts"
+    "poetry:build": "tsx scripts/build-poems.ts",
+    "sutras:build": "tsx scripts/build-sutras.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
