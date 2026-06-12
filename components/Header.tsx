@@ -26,7 +26,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="border-b border-ink/10 bg-paper-soft/95 backdrop-blur sticky top-0 z-10">
+    <header className="border-b border-ink/10 bg-paper-soft/95">
       <div className="max-w-5xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
           <Link href="/" className="font-kai text-2xl text-ink tracking-wide hover:text-seal transition-colors">
