@@ -19,7 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       </Suspense>
       <div className="flex-1 flex">
         <AdminNav />
-        <main className="flex-1 p-6 bg-gray-50">{children}</main>
+        <main className="flex-1 p-6 bg-paper">{children}</main>
       </div>
     </div>
   );
