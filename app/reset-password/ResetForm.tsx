@@ -31,20 +31,20 @@ export function ResetForm({ token, username }: { token: string; username: string
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <p className="text-sm text-gray-700">你好,{username}。请输入新密码 (至少 8 位)。</p>
+      <p className="text-sm text-ink-soft">你好,{username}。请输入新密码 (至少 8 位)。</p>
       <div>
-        <label className="block text-sm mb-1">新密码</label>
+        <label className="block text-sm mb-1 text-ink">新密码</label>
         <input type="password" value={pw} onChange={e => setPw(e.target.value)}
-          className="w-full border rounded px-3 py-2" required minLength={8} maxLength={72} />
+          className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none" required minLength={8} maxLength={72} />
       </div>
       <div>
-        <label className="block text-sm mb-1">再次输入</label>
+        <label className="block text-sm mb-1 text-ink">再次输入</label>
         <input type="password" value={pw2} onChange={e => setPw2(e.target.value)}
-          className="w-full border rounded px-3 py-2" required minLength={8} maxLength={72} />
+          className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none" required minLength={8} maxLength={72} />
       </div>
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-seal">{error}</p>}
       <button type="submit" disabled={submitting}
-        className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-50">
+        className="w-full btn-seal disabled:opacity-50">
         {submitting ? '提交中…' : '重置密码'}
       </button>
     </form>

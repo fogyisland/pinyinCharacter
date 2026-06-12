@@ -1,3 +1,7 @@
+import { Suspense } from 'react';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { PageContainer } from '@/components/common/PageContainer';
 import { findValidResetRow } from '@/lib/password-reset';
 import { getPool } from '@/lib/db';
 import { ResetForm } from './ResetForm';
@@ -11,8 +15,8 @@ export default async function ResetPasswordPage({ searchParams }: {
   const sp = await searchParams;
   const token = sp.token ?? '';
   const expired = (
-    <p className="text-sm text-gray-700">
-      链接已失效,请返回 <a href="/forgot-password" className="text-blue-600 hover:underline">忘记密码</a> 重新申请。
+    <p className="text-sm text-ink-soft">
+      链接已失效,请返回 <a href="/forgot-password" className="text-seal hover:underline">忘记密码</a> 重新申请。
     </p>
   );
 
@@ -38,18 +42,19 @@ export default async function ResetPasswordPage({ searchParams }: {
 
 function Shell({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <header className="border-b bg-white">
-        <div className="max-w-5xl mx-auto px-4 py-3">
-          <h1 className="text-lg font-semibold">字 ↔ 拼音 工具</h1>
-        </div>
-      </header>
-      <main className="flex-1 flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white border rounded-lg p-6 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">重置密码</h2>
+    <>
+      <Suspense>
+        <Header />
+      </Suspense>
+      <PageContainer>
+        <div className="max-w-sm mx-auto card-paper p-6 mt-8">
+          <div className="font-kai text-center text-ink-faint tracking-[0.3em] text-xs mb-4">字 · 韵</div>
+          <h1 className="font-kai text-2xl text-center text-ink mb-2">重置密码</h1>
+          <div className="paper-rule w-12 mx-auto mb-6" />
           {children}
         </div>
-      </main>
-    </div>
+      </PageContainer>
+      <Footer />
+    </>
   );
 }
