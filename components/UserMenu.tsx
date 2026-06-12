@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { Shield } from 'lucide-react';
 import { useAppStore } from '@/lib/store';
 import { logoutRequest } from '@/lib/api-auth';
 
@@ -37,7 +38,13 @@ export function UserMenu() {
       {open && (
         <div className="absolute right-0 mt-1 w-44 card-paper rounded shadow-paper-md py-1 z-20">
           {user.isAdmin && (
-            <a href="/admin/users" className="block px-3 py-1.5 hover:bg-paper-deep text-seal">管理后台</a>
+            <a
+              href="/admin"
+              className="block px-3 py-1.5 hover:bg-paper-deep text-seal"
+            >
+              <Shield className="inline h-4 w-4 mr-2" />
+              后台管理
+            </a>
           )}
           <a href="/profile" className="block px-3 py-1.5 hover:bg-paper-deep text-ink">我的主页</a>
           <a href="/history" className="block px-3 py-1.5 hover:bg-paper-deep text-ink">历史记录</a>
