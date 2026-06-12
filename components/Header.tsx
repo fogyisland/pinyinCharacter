@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { SafeModeToggle } from './SafeModeToggle';
@@ -29,8 +30,9 @@ export function Header() {
     <header className="border-b border-ink/10 bg-paper-soft/95">
       <div className="max-w-5xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="font-kai text-2xl text-ink tracking-wide hover:text-seal transition-colors">
-            {BRAND.name}
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label={BRAND.name}>
+            <Image src="/logo.png" alt={BRAND.name} width={40} height={40} className="rounded-full" />
+            <span className="font-kai text-xl text-ink tracking-wide">{BRAND.name}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             {NAV_LINKS.map(link => (
@@ -79,7 +81,10 @@ export function Header() {
             onClick={e => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
-              <span className="font-kai text-xl">{BRAND.name}</span>
+              <span className="font-kai text-xl flex items-center gap-2">
+                <Image src="/logo.png" alt={BRAND.name} width={28} height={28} className="rounded-full" />
+                {BRAND.name}
+              </span>
               <button onClick={() => setMobileOpen(false)} aria-label="关闭菜单">
                 <X size={22} />
               </button>
