@@ -9,6 +9,7 @@ export const BRAND = {
 export const NAV_LINKS = [
   { href: '/rare-chars', label: '罕见字库' },
   { href: '/worksheet', label: '字帖' },
+  { href: '/poetry', label: '诗词' },
   { href: '/game', label: '游戏' },
   { href: '/profile', label: '我的' },
 ] as const;
