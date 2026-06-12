@@ -44,3 +44,13 @@ export const poemListQuerySchema = z.object({
 export const poemIdParamSchema = z.object({
   id: z.coerce.number().int().positive(),
 });
+
+export const sutraListQuerySchema = z.object({
+  q: z.string().optional(),
+  page: z.coerce.number().int().min(1).optional(),
+  pageSize: z.coerce.number().int().min(1).max(50).optional(),
+});
+
+export const sutraIdParamSchema = z.object({
+  id: z.coerce.number().int().min(1),
+});
