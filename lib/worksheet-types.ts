@@ -28,7 +28,8 @@ export type ValidationResult =
   | { ok: true; data: { title: string; content: string[]; cellStyle: CellStyle } }
   | { ok: false; error: string };
 
-const SINGLE_CJK = /^[一-鿿]$/;
+// 与 lib/validators.ts SINGLE_CJK 保持一致 (常用字 + 扩展A + 中文标点 + 全角)
+const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
 
 export function generateLayout(content: string[], style: CellStyle): Cell[] {
   return content.map((char, index) => ({ char, style, index }));

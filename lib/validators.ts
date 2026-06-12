@@ -1,6 +1,9 @@
 import { z } from 'zod';
 
-const SINGLE_CJK = /^[一-鿿]$/;
+// 常用汉字 (U+4E00–U+9FFF) + 扩展A 生僻字 (U+3400–U+4DBF, /rare-chars 用)
+// + CJK 标点 (U+3000–U+303F) + 全角符号 (U+FF00–U+FFEF)
+// 允许标点是关键: 过滤掉中文逗号会让 IME 句子的光标错位, 看起来像"字被覆盖"
+const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
 
 export const searchQuerySchema = z.object({
   q: z
