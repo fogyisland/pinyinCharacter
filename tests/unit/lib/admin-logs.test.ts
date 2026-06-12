@@ -39,9 +39,47 @@ d('listUnifiedLogs', () => {
     }
   });
 
-  it('type=download_logged returns only download rows', async () => {
-    const result = await listUnifiedLogs({ userId, type: 'download_logged' });
-    expect(result.items).toHaveLength(1);
-    expect(result.items[0].source).toBe('download');
+  it('source=download returns only download rows', async () => {
+    const result = await listUnifiedLogs({ userId, source: 'download' });
+    expect(result.items.length).toBeGreaterThanOrEqual(1);
+    for (const item of result.items) expect(item.source).toBe('download');
+  });
+
+  it('source=audit returns only audit rows', async () => {
+    const result = await listUnifiedLogs({ userId, source: 'audit' });
+    expect(result.items.length).toBeGreaterThanOrEqual(1);
+    for (const item of result.items) expect(item.source).toBe('audit');
+  });
+
+  it('source=ai_call returns only ai_call rows', async () => {
+    const result = await listUnifiedLogs({ userId, source: 'ai_call' });
+    expect(result.items.length).toBeGreaterThanOrEqual(1);
+    for (const item of result.items) expect(item.source).toBe('ai_call');
+  });
+
+  it('type=login matches audit event column (plain event match)', async () => {
+    const result = await listUnifiedLogs({ userId, source: 'audit', type: 'login' });
+    expect(result.items.length).toBeGreaterThanOrEqual(1);
+    for (const item of result.items) {
+      expect(item.source).toBe('audit');
+      expect(item.event).toBe('login');
+    }
+  });
+
+  it('type=download_logged with source=download matches all download rows', async () => {
+    const result = await listUnifiedLogs({ userId, source: 'download', type: 'download_logged' });
+    expect(result.items.length).toBeGreaterThanOrEqual(1);
+    for (const item of result.items) expect(item.source).toBe('download');
+  });
+
+  it('type=login with source=download returns 0 rows (no download row has event=login)', async () => {
+    const result = await listUnifiedLogs({ userId, source: 'download', type: 'login' });
+    expect(result.items).toHaveLength(0);
+  });
+
+  it('total is sum of accurate counts across included sources (regression for Bug 1)', async () => {
+    const result = await listUnifiedLogs({ userId });
+    // Each source has exactly 1 row for this user (inserted in beforeAll).
+    expect(result.total).toBe(3);
   });
 });

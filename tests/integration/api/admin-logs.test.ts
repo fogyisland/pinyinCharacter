@@ -57,7 +57,7 @@ d('admin/logs', () => {
   async function getLogs(query: string = '') {
     const req = new NextRequest(`http://localhost/api/admin/logs${query}`, { headers: { cookie: cookieValue } });
     const res = await GET(req);
-    return res.json();
+    return { status: res.status, body: await res.json() };
   }
 
   it('returns items from all 3 sources by default', async () => {
@@ -65,7 +65,7 @@ d('admin/logs', () => {
     await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'login')`, [userId]);
     await pool.query(`INSERT INTO downloads (user_id, format, source_type, source_id) VALUES (?, 'print', 'poem', '1')`, [userId]);
     await pool.query(`INSERT INTO ai_calls (user_id, feature, model, status) VALUES (?, 'rare-char-story', 'gpt-4o-mini', 'ok')`, [userId]);
-    const body = await getLogs();
+    const { body } = await getLogs();
     expect(body.ok).toBe(true);
     const sources = new Set(body.data.items.map((i: any) => i.source));
     expect(sources.has('audit')).toBe(true);
@@ -78,14 +78,63 @@ d('admin/logs', () => {
     }
   });
 
-  it('filters by type=download_logged', async () => {
+  it('total counts accurately when a source has many rows (regression for Bug 1)', async () => {
+    const pool = getPool();
+    // Insert 201 audit rows for the user (more than the old LIMIT 200).
+    const values: string[] = [];
+    const params: number[] = [];
+    for (let i = 0; i < 201; i++) {
+      values.push('(?, \'login\')');
+      params.push(userId);
+    }
+    await pool.query(`INSERT INTO audit_log (user_id, event) VALUES ${values.join(', ')}`, params);
+    const { body } = await getLogs(`?userId=${userId}`);
+    expect(body.ok).toBe(true);
+    expect(body.data.total).toBeGreaterThanOrEqual(201);
+  });
+
+  it('source=audit returns only audit rows', async () => {
     const pool = getPool();
     await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'login')`, [userId]);
     await pool.query(`INSERT INTO downloads (user_id, format, source_type, source_id) VALUES (?, 'print', 'poem', '1')`, [userId]);
-    const body = await getLogs('?type=download_logged');
+    await pool.query(`INSERT INTO ai_calls (user_id, feature, model, status) VALUES (?, 'rare-char-story', 'gpt-4o-mini', 'ok')`, [userId]);
+    const { body } = await getLogs(`?source=audit&userId=${userId}`);
+    expect(body.ok).toBe(true);
+    for (const item of body.data.items) expect(item.source).toBe('audit');
+  });
+
+  it('source=download returns only download rows', async () => {
+    const pool = getPool();
+    await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'login')`, [userId]);
+    await pool.query(`INSERT INTO downloads (user_id, format, source_type, source_id) VALUES (?, 'print', 'poem', '1')`, [userId]);
+    const { body } = await getLogs(`?source=download&userId=${userId}`);
     expect(body.ok).toBe(true);
     for (const item of body.data.items) expect(item.source).toBe('download');
+  });
+
+  it('source=ai_call returns only ai_call rows', async () => {
+    const pool = getPool();
+    await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'login')`, [userId]);
+    await pool.query(`INSERT INTO ai_calls (user_id, feature, model, status) VALUES (?, 'rare-char-story', 'gpt-4o-mini', 'ok')`, [userId]);
+    const { body } = await getLogs(`?source=ai_call&userId=${userId}`);
+    expect(body.ok).toBe(true);
+    for (const item of body.data.items) expect(item.source).toBe('ai_call');
+  });
+
+  it('source=foo returns 400', async () => {
+    const { status, body } = await getLogs('?source=foo');
+    expect(status).toBe(400);
+    expect(body.error.code).toBe('bad_source');
+  });
+
+  it('type=login matches plain event column on audit_log', async () => {
+    const pool = getPool();
+    await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'login')`, [userId]);
+    await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'logout')`, [userId]);
+    const { body } = await getLogs(`?source=audit&type=login&userId=${userId}`);
+    expect(body.ok).toBe(true);
     expect(body.data.items.length).toBeGreaterThanOrEqual(1);
+    for (const item of body.data.items) expect(item.event).toBe('login');
   });
 
   it('filters by userId', async () => {
@@ -93,7 +142,7 @@ d('admin/logs', () => {
     await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'login')`, [userId]);
     await pool.query(`INSERT INTO downloads (user_id, format, source_type, source_id) VALUES (?, 'print', 'poem', '1')`, [userId]);
     await pool.query(`INSERT INTO ai_calls (user_id, feature, model, status) VALUES (?, 'rare-char-story', 'gpt-4o-mini', 'ok')`, [userId]);
-    const body = await getLogs(`?userId=${userId}`);
+    const { body } = await getLogs(`?userId=${userId}`);
     expect(body.ok).toBe(true);
     for (const item of body.data.items) expect(item.userId).toBe(userId);
     expect(body.data.items.length).toBeGreaterThanOrEqual(3);
@@ -104,7 +153,7 @@ d('admin/logs', () => {
     // Old row from 2020 should be filtered out by ?from=2021-01-01
     await pool.query(`INSERT INTO audit_log (user_id, event, created_at) VALUES (?, 'old_evt', '2020-01-01 00:00:00')`, [userId]);
     await pool.query(`INSERT INTO audit_log (user_id, event) VALUES (?, 'new_evt')`, [userId]);
-    const body = await getLogs('?from=2021-01-01T00:00:00Z');
+    const { body } = await getLogs(`?from=2021-01-01T00:00:00Z`);
     expect(body.ok).toBe(true);
     // Only "new_evt" should be returned (not the 2020 row)
     const userRows = body.data.items.filter((i: any) => i.userId === userId);
@@ -114,7 +163,7 @@ d('admin/logs', () => {
   });
 
   it('empty result returns ok with empty items', async () => {
-    const body = await getLogs('?userId=99999999');
+    const { body } = await getLogs('?userId=99999999');
     expect(body.ok).toBe(true);
     expect(body.data.items).toEqual([]);
     expect(body.data.total).toBe(0);

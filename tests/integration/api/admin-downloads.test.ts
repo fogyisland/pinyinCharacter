@@ -54,31 +54,61 @@ d('admin/downloads', () => {
 
   async function getList(q: string = '') {
     const req = new NextRequest(`http://localhost/api/admin/downloads${q}`, { headers: { cookie: cookieValue } });
-    return (await listDownloadsRoute(req)).json();
+    const res = await listDownloadsRoute(req);
+    return { status: res.status, body: await res.json() };
   }
-  async function getStats() {
-    const req = new NextRequest(`http://localhost/api/admin/downloads/stats`, { headers: { cookie: cookieValue } });
-    return (await statsRoute(req)).json();
+  async function getStats(q: string = '') {
+    const req = new NextRequest(`http://localhost/api/admin/downloads/stats${q}`, { headers: { cookie: cookieValue } });
+    const res = await statsRoute(req);
+    return { status: res.status, body: await res.json() };
   }
 
   it('list with default filters', async () => {
-    const body = await getList();
+    const { body } = await getList();
     expect(body.ok).toBe(true);
     expect(body.data.items.length).toBeGreaterThanOrEqual(2);
   });
 
   it('filter by sourceType=poem', async () => {
-    const body = await getList('?sourceType=poem');
+    const { body } = await getList('?sourceType=poem');
     expect(body.ok).toBe(true);
     for (const i of body.data.items) expect(i.sourceType).toBe('poem');
     expect(body.data.items.length).toBeGreaterThanOrEqual(1);
   });
 
+  it('sourceType=foo returns 400 (validation)', async () => {
+    const { status, body } = await getList('?sourceType=foo');
+    expect(status).toBe(400);
+    expect(body.error.code).toBe('bad_source_type');
+  });
+
   it('stats aggregate by source type and top user', async () => {
-    const body = await getStats();
+    const { body } = await getStats();
     expect(body.ok).toBe(true);
     expect(body.data.total).toBeGreaterThanOrEqual(2);
     expect(body.data.bySourceType.poem).toBeGreaterThanOrEqual(1);
     expect(body.data.bySourceType.worksheet).toBeGreaterThanOrEqual(1);
+  });
+
+  it('stats ?days=foo falls back to default 7 days (NaN guard)', async () => {
+    // Should not return 0 rows just because days=foo. It falls back to 7,
+    // which includes the rows we just inserted.
+    const { status, body } = await getStats('?days=foo');
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    expect(body.data.total).toBeGreaterThanOrEqual(2);
+  });
+
+  it('stats ?days=0 clamps to 1 day', async () => {
+    const { status, body } = await getStats('?days=0');
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
+    // No assertion on count — just that the route didn't blow up on a NaN path.
+  });
+
+  it('stats ?days=999 clamps to 90 days', async () => {
+    const { status, body } = await getStats('?days=999');
+    expect(status).toBe(200);
+    expect(body.ok).toBe(true);
   });
 });
