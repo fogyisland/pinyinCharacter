@@ -21,6 +21,7 @@ export default function PoetryListPage() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -40,7 +41,7 @@ export default function PoetryListPage() {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(handle); };
-  }, [dynasty, q, page]);
+  }, [dynasty, q, page, tick]);
 
   return (
     <>
@@ -55,7 +56,7 @@ export default function PoetryListPage() {
           onQChange={(v) => { setQ(v); setPage(1); }}
         />
         {error ? (
-          <ErrorState message={error} onRetry={() => setPage((p) => p)} />
+          <ErrorState message={error} onRetry={() => setTick((t) => t + 1)} />
         ) : loading ? (
           <LoadingSpinner />
         ) : items.length === 0 ? (
