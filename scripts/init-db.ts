@@ -101,6 +101,17 @@ const DDL = [
      CONSTRAINT fk_worksheets_user FOREIGN KEY (user_id)
        REFERENCES users(id) ON DELETE CASCADE
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS sutras (
+     id          INT             NOT NULL AUTO_INCREMENT,
+     title       VARCHAR(80)     NOT NULL,
+     slug        VARCHAR(80)     NOT NULL,
+     chunks      JSON            NOT NULL,
+     source      VARCHAR(120)    NULL,
+     created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (id),
+     UNIQUE KEY uniq_sutra (slug)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 export async function initDb(): Promise<void> {
