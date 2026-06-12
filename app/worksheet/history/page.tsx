@@ -25,7 +25,7 @@ export default async function WorksheetHistoryPage() {
           <SectionTitle subtitle="保存的字帖，可继续编辑或打印">我的字帖</SectionTitle>
           <Link
             href="/worksheet"
-            className="shrink-0 rounded-md bg-ink-primary px-3 py-1.5 text-sm text-paper-base hover:bg-ink-deep"
+            className="btn-seal text-sm shrink-0"
           >
             新建字帖
           </Link>
