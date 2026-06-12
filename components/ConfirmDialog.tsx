@@ -26,15 +26,15 @@ export function ConfirmDialog({
   }
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-lg w-full max-w-sm p-5">
+      <div className="bg-paper rounded-lg shadow-lg w-full max-w-sm p-5">
         <h3 className="text-base font-semibold mb-2">{title}</h3>
-        <p className="text-sm text-gray-600 mb-4">{description}</p>
+        <p className="text-sm text-ink-soft mb-4">{description}</p>
         {children}
         <div className="flex justify-end gap-2 mt-4">
           <button type="button" onClick={onClose} disabled={busy}
-            className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50">{cancelLabel}</button>
+            className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep">{cancelLabel}</button>
           <button type="button" onClick={go} disabled={busy}
-            className={`px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 ${destructive ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+            className={`px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 ${destructive ? 'bg-seal hover:bg-seal/80' : 'bg-seal hover:bg-seal/80'}`}>
             {busy ? '处理中…' : confirmLabel}
           </button>
         </div>

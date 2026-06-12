@@ -17,7 +17,7 @@ export function ReadAloudButton({ text, label = '🔊 朗读' }: Props) {
         speak(text);
       }}
       onDoubleClick={() => stopSpeaking()}
-      className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+      className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep disabled:opacity-50 disabled:cursor-not-allowed"
       title="单击朗读，双击停止"
     >
       {label}

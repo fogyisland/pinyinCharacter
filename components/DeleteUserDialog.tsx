@@ -34,8 +34,8 @@ export function DeleteUserDialog({ userId, username, open, onClose }: {
         placeholder={`输入 ${username} 以确认`}
         className="w-full border rounded px-3 py-2 text-sm mb-1"
       />
-      {error && <p className="text-xs text-red-600 mb-2">{error}</p>}
-      {!match && confirm && <p className="text-xs text-gray-500">用户名不匹配</p>}
+      {error && <p className="text-xs text-seal mb-2">{error}</p>}
+      {!match && confirm && <p className="text-xs text-ink-faint">用户名不匹配</p>}
     </ConfirmDialog>
   );
 }

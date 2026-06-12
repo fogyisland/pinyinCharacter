@@ -69,14 +69,14 @@ export function WorksheetGenerator() {
         <button
           type="button"
           onClick={() => setTab('text')}
-          className={`px-4 py-2 ${tab === 'text' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-500'}`}
+          className={`px-4 py-2 ${tab === 'text' ? 'border-b-2 border-seal font-medium' : 'text-ink-faint'}`}
         >
           自由输入
         </button>
         <button
           type="button"
           onClick={() => setTab('library')}
-          className={`px-4 py-2 ${tab === 'library' ? 'border-b-2 border-blue-600 font-medium' : 'text-gray-500'}`}
+          className={`px-4 py-2 ${tab === 'library' ? 'border-b-2 border-seal font-medium' : 'text-ink-faint'}`}
         >
           从字库选
         </button>
@@ -90,18 +90,18 @@ export function WorksheetGenerator() {
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-gray-700">标题(可选)</label>
+          <label className="block text-sm font-medium text-ink-soft">标题(可选)</label>
           <input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={80}
             placeholder="给字帖起个名字..."
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2"
+            className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium text-gray-700">格子样式</label>
+          <label className="block text-sm font-medium text-ink-soft">格子样式</label>
           <div className="mt-2">
             <StylePicker value={cellStyle} onChange={setCellStyle} />
           </div>
@@ -113,7 +113,7 @@ export function WorksheetGenerator() {
           type="button"
           onClick={() => setView('preview')}
           disabled={!canPreview}
-          className="rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+          className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:cursor-not-allowed disabled:bg-ink/20"
         >
           生成字帖
         </button>

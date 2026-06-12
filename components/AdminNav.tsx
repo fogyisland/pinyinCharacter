@@ -11,14 +11,14 @@ const ITEMS = [
 export function AdminNav() {
   const pathname = usePathname() ?? '';
   return (
-    <nav className="w-48 border-r bg-white">
+    <nav className="w-48 border-r bg-paper">
       <ul className="py-4">
         {ITEMS.map(item => {
           const active = pathname.startsWith(item.href);
           return (
             <li key={item.href}>
               <a href={item.href}
-                className={`block px-4 py-2 text-sm ${active ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}>
+                className={`block px-4 py-2 text-sm ${active ? 'bg-seal/10 text-seal border-r-2 border-seal' : 'text-ink-soft hover:bg-paper-deep'}`}>
                 {item.label}
               </a>
             </li>

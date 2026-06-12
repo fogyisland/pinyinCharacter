@@ -105,12 +105,12 @@ export function PinyinInputMethod() {
           }
         }}
         placeholder="输入拼音 (如: nihao 或 ni3hao3)"
-        className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+        className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-seal/30"
       />
-      <div className="min-h-[2rem] p-2 bg-gray-50 rounded border text-lg">
+      <div className="min-h-[2rem] p-2 bg-paper-deep rounded border text-lg">
         {committed}
-        {buffer && <span className="text-blue-500 ml-1">|{buffer}</span>}
-        {!committed && !buffer && <span className="text-gray-400 text-sm">在上方输入拼音，选择候选字</span>}
+        {buffer && <span className="text-seal ml-1">|{buffer}</span>}
+        {!committed && !buffer && <span className="text-ink-faint text-sm">在上方输入拼音，选择候选字</span>}
       </div>
       {candidates.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -119,9 +119,9 @@ export function PinyinInputMethod() {
               key={c.char + i}
               type="button"
               onClick={() => pick(i)}
-              className="px-3 py-1 border rounded hover:bg-blue-50 text-base"
+              className="px-3 py-1 border rounded hover:bg-seal/10 text-base"
             >
-              <span className="text-gray-400 mr-1 text-xs">{i + 1}</span>
+              <span className="text-ink-faint mr-1 text-xs">{i + 1}</span>
               {c.char}
             </button>
           ))}
@@ -129,8 +129,8 @@ export function PinyinInputMethod() {
       )}
       <div className="flex gap-2">
         <ReadAloudButton text={committed} label="🔊 朗读" />
-        <button type="button" onClick={() => navigator.clipboard.writeText(committed)} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100" disabled={!committed}>复制</button>
-        <button type="button" onClick={clear} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100">清空</button>
+        <button type="button" onClick={() => navigator.clipboard.writeText(committed)} className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep" disabled={!committed}>复制</button>
+        <button type="button" onClick={clear} className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep">清空</button>
       </div>
     </div>
   );

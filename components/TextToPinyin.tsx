@@ -55,7 +55,7 @@ export function TextToPinyin() {
     : '';
 
   return (
-    <section className="bg-white border rounded-lg p-4 space-y-3">
+    <section className="card-paper p-4 space-y-3">
       <div className="flex items-center justify-between">
         <h2 className="text-base font-semibold">字 → 拼音</h2>
         <div className="flex items-center gap-3 text-sm">
@@ -78,12 +78,12 @@ export function TextToPinyin() {
             <ReadAloudButton text={text} />
             <button
               type="button"
-              className="text-sm px-3 py-1 border rounded hover:bg-gray-50"
+              className="text-sm px-3 py-1 border rounded hover:bg-paper-deep"
               onClick={async () => { await navigator.clipboard.writeText(rendered); }}
             >复制</button>
             <button
               type="button"
-              className="text-sm px-3 py-1 border rounded hover:bg-gray-50 ml-auto"
+              className="text-sm px-3 py-1 border rounded hover:bg-paper-deep ml-auto"
               onClick={() => setText('')}
             >清空</button>
           </div>

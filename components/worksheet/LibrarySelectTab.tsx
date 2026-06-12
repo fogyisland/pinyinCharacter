@@ -47,7 +47,7 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
         value={q}
         onChange={(e) => setQ(e.target.value)}
         placeholder="搜索生僻字..."
-        className="w-full rounded-md border border-gray-300 px-3 py-2"
+        className="w-full rounded-md border border-ink/20 px-3 py-2"
       />
       <div className="mt-3 grid max-h-96 grid-cols-6 gap-2 overflow-y-auto sm:grid-cols-8">
         {chars.map((c) => {
@@ -59,21 +59,21 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
               onClick={() => toggle(c.char)}
               className={`flex flex-col items-center rounded border p-2 text-center transition ${
                 isSelected
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-400'
+                  ? 'border-seal bg-seal/10'
+                  : 'border-ink/10 hover:border-ink/30'
               }`}
               title={c.meaning}
             >
               <span className="text-2xl">{c.char}</span>
-              <span className="mt-1 text-[10px] text-gray-500">{c.pinyin}</span>
+              <span className="mt-1 text-[10px] text-ink-faint">{c.pinyin}</span>
             </button>
           );
         })}
         {!loading && chars.length === 0 && (
-          <div className="col-span-full py-8 text-center text-sm text-gray-500">无匹配</div>
+          <div className="col-span-full py-8 text-center text-sm text-ink-faint">无匹配</div>
         )}
       </div>
-      <p className="mt-2 text-xs text-gray-500">已选 {selected.length} / 500</p>
+      <p className="mt-2 text-xs text-ink-faint">已选 {selected.length} / 500</p>
     </div>
   );
 }

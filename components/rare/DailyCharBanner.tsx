@@ -11,16 +11,16 @@ export function DailyCharBanner({ char, pinyin, meaning, date }: Props) {
   return (
     <Link
       href={`/rare-chars/${encodeURIComponent(char)}`}
-      className="block rounded-lg border-2 border-blue-200 bg-blue-50 p-6 transition hover:border-blue-400"
+      className="block rounded-lg border-2 border-seal/20 bg-seal/10 p-6 transition hover:border-seal"
     >
-      <div className="text-xs font-medium uppercase tracking-wide text-blue-600">
+      <div className="text-xs font-medium uppercase tracking-wide text-seal">
         今日一字 · {date}
       </div>
       <div className="mt-3 flex items-baseline gap-4">
-        <span className="text-6xl font-bold text-gray-900">{char}</span>
-        <span className="text-2xl text-gray-600">{pinyin}</span>
+        <span className="text-6xl font-bold text-ink">{char}</span>
+        <span className="text-2xl text-ink-soft">{pinyin}</span>
       </div>
-      <div className="mt-2 text-sm text-gray-700">{meaning}</div>
+      <div className="mt-2 text-sm text-ink-soft">{meaning}</div>
     </Link>
   );
 }

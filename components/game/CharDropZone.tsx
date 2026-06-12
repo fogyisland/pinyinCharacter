@@ -20,11 +20,11 @@ export function CharDropZone({ charId, char, matchedPinyin, onDrop }: Props) {
     <div
       onDragOver={(e) => e.preventDefault()}
       onDrop={handleDrop}
-      className="flex items-center gap-3 rounded border border-gray-300 bg-white p-3"
+      className="flex items-center gap-3 rounded border border-ink/20 bg-paper p-3"
     >
       <span className="text-3xl font-bold">{char}</span>
-      <span className="text-sm text-gray-500">→</span>
-      <span className="flex-1 rounded border border-dashed border-gray-300 px-3 py-1 text-sm text-gray-400">
+      <span className="text-sm text-ink-faint">→</span>
+      <span className="flex-1 rounded border border-dashed border-ink/20 px-3 py-1 text-sm text-ink-faint">
         {matchedPinyin ?? '拖动拼音到这里'}
       </span>
     </div>

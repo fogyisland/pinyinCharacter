@@ -14,11 +14,11 @@ export function RareCharCard({ char, pinyin, meaning }: Props) {
   return (
     <Link
       href={`/rare-chars/${encodeURIComponent(char)}`}
-      className="block rounded-lg border border-gray-200 p-4 transition hover:border-blue-500 hover:shadow"
+      className="block rounded-lg border border-ink/10 p-4 transition hover:border-seal hover:shadow"
     >
-      <div className="text-4xl font-bold text-gray-900">{char}</div>
-      <div className="mt-1 text-sm text-gray-600">{pinyin}</div>
-      <div className="mt-2 text-xs text-gray-500">{truncate(meaning, 30)}</div>
+      <div className="text-4xl font-bold text-ink">{char}</div>
+      <div className="mt-1 text-sm text-ink-soft">{pinyin}</div>
+      <div className="mt-2 text-xs text-ink-faint">{truncate(meaning, 30)}</div>
     </Link>
   );
 }

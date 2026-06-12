@@ -15,7 +15,7 @@ export function PinyinOutput({ tokens, withSpaces: withSpacesProp }: Props) {
   const [readings, setReadings] = useState<Record<number, number>>({});  // index -> reading index
 
   if (tokens.length === 0) {
-    return <div className="text-gray-400 text-sm">在上方输入汉字，拼音会显示在这里</div>;
+    return <div className="text-ink-faint text-sm">在上方输入汉字，拼音会显示在这里</div>;
   }
 
   const text = tokens.map((t, i) => {
@@ -50,31 +50,31 @@ export function PinyinOutput({ tokens, withSpaces: withSpacesProp }: Props) {
           <button
             type="button"
             onClick={copy}
-            className="px-2 py-1 text-xs border rounded hover:bg-gray-100"
+            className="px-2 py-1 text-xs border rounded hover:bg-paper-deep"
           >
             复制
           </button>
         </div>
       )}
-      <div className="p-3 bg-gray-50 rounded border min-h-[3rem] text-lg leading-relaxed">
+      <div className="p-3 bg-paper-deep rounded border min-h-[3rem] text-lg leading-relaxed">
         {tokens.map((t, i) => {
           const idx = readings[i] ?? 0;
           const r = t.readings[idx] ?? '?';
           const isPoly = t.readings.length > 1;
           return (
             <span key={i} className="inline-block mr-2 mb-1">
-              <span className="text-gray-700">{t.char}</span>
+              <span className="text-ink-soft">{t.char}</span>
               {isPoly ? (
                 <button
                   type="button"
                   onClick={() => cycleReading(i)}
-                  className="ml-1 text-blue-600 hover:underline"
+                  className="ml-1 text-seal hover:underline"
                   title="点击切换读音"
                 >
                   ({r})
                 </button>
               ) : (
-                <span className="ml-1 text-gray-500">[{r}]</span>
+                <span className="ml-1 text-ink-faint">[{r}]</span>
               )}
             </span>
           );

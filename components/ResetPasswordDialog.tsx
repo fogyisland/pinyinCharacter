@@ -40,16 +40,16 @@ export function ResetPasswordDialog({ userId, username, open, onClose }: {
       onClose={close}
       onConfirm={() => setHandedOff(true)}
     >
-      {error && <p className="text-sm text-red-600 mb-2">{error}</p>}
+      {error && <p className="text-sm text-seal mb-2">{error}</p>}
       {temp && (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono break-all">{temp}</code>
-            <button type="button" onClick={copy} className="text-sm px-2 py-1 border rounded hover:bg-gray-50">
+            <code className="flex-1 bg-paper-deep px-3 py-2 rounded text-sm font-mono break-all">{temp}</code>
+            <button type="button" onClick={copy} className="text-sm px-2 py-1 border rounded hover:bg-paper-deep">
               {copied ? '已复制' : '复制'}
             </button>
           </div>
-          <p className="text-xs text-gray-500">关闭此对话框后,临时密码不再可见。</p>
+          <p className="text-xs text-ink-faint">关闭此对话框后,临时密码不再可见。</p>
         </>
       )}
     </ConfirmDialog>

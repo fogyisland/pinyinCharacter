@@ -30,7 +30,7 @@ export function WorksheetPreview(props: Props) {
           <button
             type="button"
             onClick={props.onBack}
-            className="rounded border px-3 py-1 hover:bg-gray-100"
+            className="rounded border px-3 py-1 hover:bg-paper-deep"
           >
             ← 返回修改
           </button>
@@ -38,7 +38,7 @@ export function WorksheetPreview(props: Props) {
             <button
               type="button"
               onClick={() => window.print()}
-              className="rounded border px-3 py-1 hover:bg-gray-100"
+              className="rounded border px-3 py-1 hover:bg-paper-deep"
             >
               打印
             </button>
@@ -46,7 +46,7 @@ export function WorksheetPreview(props: Props) {
               type="button"
               onClick={props.onSave}
               disabled={props.saving}
-              className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-700 disabled:bg-gray-300"
+              className="rounded bg-seal px-3 py-1 text-white hover:bg-seal/80 disabled:bg-ink/20"
             >
               {props.saving ? '保存中...' : '保存'}
             </button>

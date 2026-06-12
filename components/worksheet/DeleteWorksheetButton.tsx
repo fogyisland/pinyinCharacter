@@ -23,7 +23,7 @@ export function DeleteWorksheetButton({ id }: { id: number }) {
       type="button"
       onClick={onClick}
       disabled={busy}
-      className="rounded border border-red-300 px-3 py-1 text-red-600 hover:bg-red-50 disabled:opacity-50"
+      className="rounded border border-seal/30 px-3 py-1 text-seal hover:bg-seal/10 disabled:opacity-50"
     >
       {busy ? '删除中...' : '删除'}
     </button>

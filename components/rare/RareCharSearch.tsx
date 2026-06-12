@@ -25,7 +25,7 @@ export function RareCharSearch() {
       value={value}
       onChange={(e) => setValue(e.target.value)}
       placeholder="按字或拼音搜索..."
-      className="w-full rounded-md border border-gray-300 px-4 py-2 focus:border-blue-500 focus:outline-none"
+      className="w-full rounded-md border border-ink/20 px-4 py-2 focus:border-seal focus:outline-none"
     />
   );
 }
