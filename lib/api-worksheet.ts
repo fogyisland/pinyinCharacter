@@ -42,3 +42,13 @@ export async function deleteWorksheetApi(id: number): Promise<void> {
   const res = await fetch(`/api/worksheets/${id}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('delete failed');
 }
+
+export async function printWorksheetRequest(id: number): Promise<{ id: number }> {
+  const res = await fetch(`/api/worksheets/${id}/print`, { method: 'POST' });
+  const data = await res.json();
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'print failed';
+    throw new Error(msg);
+  }
+  return data.data;
+}

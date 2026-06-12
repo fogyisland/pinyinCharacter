@@ -25,3 +25,10 @@ export async function getRandomPoemRequest(): Promise<PoemDetail | null> {
   if (!j.ok) throw new Error(j.error?.message ?? 'getRandomPoem failed');
   return j.data;
 }
+
+export async function printPoemRequest(id: number): Promise<{ id: number }> {
+  const res = await fetch(`/api/poetry/${id}/print`, { method: 'POST' });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error?.message ?? 'printPoem failed');
+  return j.data;
+}

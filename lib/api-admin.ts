@@ -82,3 +82,147 @@ export async function adminGetAudit(opts: {
 export async function adminGetStats(): Promise<ApiResult<SystemStats>> {
   return call('/api/admin/stats', { method: 'GET' });
 }
+
+// --- H7: user disable/enable -------------------------------------------
+
+export async function disableUserRequest(id: number): Promise<ApiResult<{ id: number; disabled: true }>> {
+  return call(`/api/admin/users/${id}/disable`, { method: 'POST' });
+}
+
+export async function enableUserRequest(id: number): Promise<ApiResult<{ id: number; disabled: false }>> {
+  return call(`/api/admin/users/${id}/enable`, { method: 'POST' });
+}
+
+// --- H8: user activity feed --------------------------------------------
+
+export interface UserActivityItem {
+  id: string;
+  source: 'audit' | 'download' | 'ai_call';
+  event: string;
+  userId: number;
+  username: string | null;
+  ip: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown>;
+}
+export interface UserActivityData { items: UserActivityItem[]; }
+
+export async function getUserActivityRequest(id: number, after?: string): Promise<ApiResult<UserActivityData>> {
+  const qs = after ? `?after=${encodeURIComponent(after)}` : '';
+  return call(`/api/admin/users/${id}/activity${qs}`, { method: 'GET' });
+}
+
+// --- H9: unified logs --------------------------------------------------
+
+export interface AdminLogRow {
+  id: string;
+  source: 'audit' | 'download' | 'ai_call';
+  event: string;
+  userId: number;
+  username: string | null;
+  ip: string | null;
+  createdAt: string;
+  metadata: Record<string, unknown>;
+}
+export interface AdminLogListData { rows: AdminLogRow[]; total: number; page: number; pageSize: number; }
+
+export async function listAdminLogsRequest(params: {
+  source?: string; type?: string; userId?: number; ip?: string;
+  from?: string; to?: string; page?: number; pageSize?: number;
+} = {}): Promise<ApiResult<AdminLogListData>> {
+  const sp = new URLSearchParams();
+  if (params.source) sp.set('source', params.source);
+  if (params.type) sp.set('type', params.type);
+  if (params.userId !== undefined) sp.set('userId', String(params.userId));
+  if (params.ip) sp.set('ip', params.ip);
+  if (params.from) sp.set('from', params.from);
+  if (params.to) sp.set('to', params.to);
+  if (params.page !== undefined) sp.set('page', String(params.page));
+  if (params.pageSize !== undefined) sp.set('pageSize', String(params.pageSize));
+  const qs = sp.toString();
+  return call(`/api/admin/logs${qs ? '?' + qs : ''}`, { method: 'GET' });
+}
+
+// --- H10: downloads ----------------------------------------------------
+
+export interface AdminDownloadRow {
+  id: number;
+  userId: number;
+  username: string | null;
+  sourceType: string;
+  sourceId: string;
+  format: string;
+  status: string;
+  durationMs: number | null;
+  ip: string | null;
+  createdAt: string;
+}
+export interface AdminDownloadListData { rows: AdminDownloadRow[]; total: number; page: number; pageSize: number; }
+
+export async function listAdminDownloadsRequest(params: {
+  userId?: number; sourceType?: string;
+  from?: string; to?: string; page?: number; pageSize?: number;
+} = {}): Promise<ApiResult<AdminDownloadListData>> {
+  const sp = new URLSearchParams();
+  if (params.userId !== undefined) sp.set('userId', String(params.userId));
+  if (params.sourceType) sp.set('sourceType', params.sourceType);
+  if (params.from) sp.set('from', params.from);
+  if (params.to) sp.set('to', params.to);
+  if (params.page !== undefined) sp.set('page', String(params.page));
+  if (params.pageSize !== undefined) sp.set('pageSize', String(params.pageSize));
+  const qs = sp.toString();
+  return call(`/api/admin/downloads${qs ? '?' + qs : ''}`, { method: 'GET' });
+}
+
+export async function getDownloadStatsRequest(days = 7): Promise<ApiResult<unknown>> {
+  return call(`/api/admin/downloads/stats?days=${days}`, { method: 'GET' });
+}
+
+// --- H11: AI calls + config -------------------------------------------
+
+export interface AdminAiCallRow {
+  id: number;
+  userId: number;
+  username: string | null;
+  feature: string;
+  model: string | null;
+  status: string;
+  durationMs: number | null;
+  error: string | null;
+  createdAt: string;
+}
+export interface AdminAiCallListData { rows: AdminAiCallRow[]; total: number; page: number; pageSize: number; }
+
+export async function listAiCallsRequest(params: {
+  feature?: string; status?: string; userId?: number;
+  from?: string; to?: string; page?: number; pageSize?: number;
+} = {}): Promise<ApiResult<AdminAiCallListData>> {
+  const sp = new URLSearchParams();
+  if (params.feature) sp.set('feature', params.feature);
+  if (params.status) sp.set('status', params.status);
+  if (params.userId !== undefined) sp.set('userId', String(params.userId));
+  if (params.from) sp.set('from', params.from);
+  if (params.to) sp.set('to', params.to);
+  if (params.page !== undefined) sp.set('page', String(params.page));
+  if (params.pageSize !== undefined) sp.set('pageSize', String(params.pageSize));
+  const qs = sp.toString();
+  return call(`/api/admin/ai/calls${qs ? '?' + qs : ''}`, { method: 'GET' });
+}
+
+export async function getAiStatsRequest(days = 7): Promise<ApiResult<unknown>> {
+  return call(`/api/admin/ai/stats?days=${days}`, { method: 'GET' });
+}
+
+export type AiConfigMap = Record<string, string>;
+
+export async function getAiConfigRequest(): Promise<ApiResult<AiConfigMap>> {
+  return call('/api/admin/ai/config', { method: 'GET' });
+}
+
+export async function updateAiConfigRequest(body: Record<string, string | number>): Promise<ApiResult<AiConfigMap>> {
+  return call('/api/admin/ai/config', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}

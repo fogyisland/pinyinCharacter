@@ -16,3 +16,14 @@ export async function getSutraRequest(id: number): Promise<SutraDetail> {
   if (!j.ok) throw new Error(j.error?.message ?? 'getSutra failed');
   return j.data;
 }
+
+export async function printSutraRequest(slug: string, chunkId: string): Promise<{ sourceId: string }> {
+  const res = await fetch(`/api/sutra/${slug}/print`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sourceId: `${slug}#${chunkId}` }),
+  });
+  const j = await res.json();
+  if (!j.ok) throw new Error(j.error?.message ?? 'printSutra failed');
+  return j.data;
+}

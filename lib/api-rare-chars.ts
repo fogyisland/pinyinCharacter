@@ -55,3 +55,13 @@ export async function fetchDailyChar(date?: string): Promise<{
   }
   return data.data;
 }
+
+export async function printRareCharRequest(char: string): Promise<{ char: string }> {
+  const res = await fetch(`/api/rare-chars/${encodeURIComponent(char)}/print`, { method: 'POST' });
+  const data = await res.json();
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'print failed';
+    throw new Error(msg);
+  }
+  return data.data;
+}
