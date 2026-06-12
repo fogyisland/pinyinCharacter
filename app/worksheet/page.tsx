@@ -1,15 +1,27 @@
 import { Suspense } from 'react';
 import { WorksheetGenerator } from '@/components/worksheet/WorksheetGenerator';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 
 export const dynamic = 'force-dynamic';
 
 export default function WorksheetPage() {
   return (
-    <div className="mx-auto max-w-3xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">字帖生成器</h1>
-      <Suspense fallback={<div>加载中...</div>}>
-        <WorksheetGenerator />
+    <>
+      <Suspense>
+        <Header />
       </Suspense>
-    </div>
+      <PageContainer>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <SectionTitle subtitle="毛笔格 · 田字格 · 打印友好">字帖生成</SectionTitle>
+        <div className="card-paper p-5">
+          <Suspense fallback={<div>加载中...</div>}>
+            <WorksheetGenerator />
+          </Suspense>
+        </div>
+      </PageContainer>
+      <Footer />
+    </>
   );
 }

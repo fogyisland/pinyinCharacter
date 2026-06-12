@@ -1,9 +1,13 @@
+import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorksheet } from '@/lib/worksheet';
 import { WorksheetPreview } from '@/components/worksheet/WorksheetPreview';
 import { DeleteWorksheetButton } from '@/components/worksheet/DeleteWorksheetButton';
 import { PrintButton } from './PrintButton';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,19 +25,28 @@ export default async function WorksheetDetailPage({ params }: Props) {
   if (!ws) notFound();
   if (ws.userId !== user.id) notFound();
   return (
-    <div className="p-4">
-      <div className="worksheet-no-print mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">{ws.title}</h1>
-        <div className="flex gap-2">
-          <PrintButton />
-          <DeleteWorksheetButton id={ws.id} />
+    <>
+      <Suspense>
+        <Header />
+      </Suspense>
+      <PageContainer>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <div className="worksheet-no-print mb-4 flex items-end justify-between gap-3">
+          <SectionTitle>{ws.title}</SectionTitle>
+          <div className="flex shrink-0 gap-2">
+            <PrintButton />
+            <DeleteWorksheetButton id={ws.id} />
+          </div>
         </div>
-      </div>
-      <p className="worksheet-no-print mb-4 text-sm text-gray-500">
-        {ws.content.length} 字 · {ws.cellStyle === 'brush' ? '毛笔格' : '田字格'} ·{' '}
-        {new Date(ws.createdAt).toLocaleString()}
-      </p>
-      <WorksheetPreview title={undefined} content={ws.content} cellStyle={ws.cellStyle} showHeader={false} />
-    </div>
+        <p className="worksheet-no-print mb-4 text-sm text-ink-faint">
+          {ws.content.length} 字 · {ws.cellStyle === 'brush' ? '毛笔格' : '田字格'} ·{' '}
+          {new Date(ws.createdAt).toLocaleString()}
+        </p>
+        <div className="card-paper p-5">
+          <WorksheetPreview title={undefined} content={ws.content} cellStyle={ws.cellStyle} showHeader={false} />
+        </div>
+      </PageContainer>
+      <Footer />
+    </>
   );
 }

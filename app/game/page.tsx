@@ -1,15 +1,25 @@
+import { Suspense } from 'react';
 import { DragMatchGame } from '@/components/game/DragMatchGame';
+import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
+import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 
 export const dynamic = 'force-dynamic';
 
 export default function GamePage() {
   return (
-    <div className="mx-auto max-w-4xl p-4">
-      <h1 className="mb-4 text-2xl font-bold">识字游戏</h1>
-      <p className="mb-4 text-sm text-gray-600">
-        从字库随机取 8 个字,把它们和对应的拼音配对。
-      </p>
-      <DragMatchGame />
-    </div>
+    <>
+      <Suspense>
+        <Header />
+      </Suspense>
+      <PageContainer>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <SectionTitle subtitle="把拼音拖到对应的字上">趣味识字</SectionTitle>
+        <div className="card-paper p-5">
+          <DragMatchGame />
+        </div>
+      </PageContainer>
+      <Footer />
+    </>
   );
 }
