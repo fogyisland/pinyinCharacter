@@ -3,15 +3,18 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
 import { SafeModeToggle } from './SafeModeToggle';
 import { UserMenu } from './UserMenu';
 import { AuthModal } from './AuthModal';
 import { useAppStore } from '@/lib/store';
+import { BRAND, NAV_LINKS } from '@/lib/design';
 
 export function Header() {
   const safeMode = useAppStore(s => s.safeMode);
   const user = useAppStore(s => s.user);
   const [authOpen, setAuthOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -19,25 +22,27 @@ export function Header() {
   }, [searchParams, user]);
 
   return (
-    <header className="border-b bg-white sticky top-0 z-10">
-      <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-6">
-          <h1 className="text-lg font-semibold">字 ↔ 拼音 工具</h1>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="/rare-chars" className="text-gray-700 hover:text-blue-600">
-              罕见字库
-            </Link>
-            <Link href="/worksheet" className="text-gray-700 hover:text-blue-600">
-              字帖
-            </Link>
-            <Link href="/game" className="text-gray-700 hover:text-blue-600">
-              游戏
-            </Link>
+    <header className="border-b border-ink/10 bg-paper-soft/95 backdrop-blur sticky top-0 z-10">
+      <div className="max-w-5xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
+        <div className="flex items-center gap-8">
+          <Link href="/" className="font-kai text-2xl text-ink tracking-wide hover:text-seal transition-colors">
+            {BRAND.name}
+          </Link>
+          <nav className="hidden md:flex items-center gap-6 text-sm">
+            {NAV_LINKS.map(link => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-ink-soft hover:text-seal transition-colors border-b-2 border-transparent hover:border-seal pb-0.5"
+              >
+                {link.label}
+              </Link>
+            ))}
           </nav>
         </div>
         <div className="flex items-center gap-3">
           {safeMode && (
-            <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">
+            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded bg-success/15 text-success">
               已开启儿童模式
             </span>
           )}
@@ -48,11 +53,48 @@ export function Header() {
             <button
               type="button"
               onClick={() => setAuthOpen(true)}
-              className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
-            >登录 / 注册</button>
+              className="btn-seal text-sm"
+            >
+              登录 / 注册
+            </button>
           )}
+          <button
+            type="button"
+            onClick={() => setMobileOpen(true)}
+            className="md:hidden p-1 text-ink"
+            aria-label="打开菜单"
+          >
+            <Menu size={22} />
+          </button>
         </div>
       </div>
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-20 bg-ink/40" onClick={() => setMobileOpen(false)}>
+          <div
+            className="absolute right-0 top-0 h-full w-64 bg-paper-soft p-4 shadow-paper-lg"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <span className="font-kai text-xl">{BRAND.name}</span>
+              <button onClick={() => setMobileOpen(false)} aria-label="关闭菜单">
+                <X size={22} />
+              </button>
+            </div>
+            <nav className="flex flex-col gap-3">
+              {NAV_LINKS.map(link => (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="text-base text-ink py-2 border-b border-ink/10"
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </div>
+      )}
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </header>
   );
