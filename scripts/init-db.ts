@@ -112,12 +112,84 @@ const DDL = [
      PRIMARY KEY (id),
      UNIQUE KEY uniq_sutra (slug)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS downloads (
+     id          BIGINT       NOT NULL AUTO_INCREMENT,
+     user_id     BIGINT       NOT NULL,
+     format      ENUM('pdf','print') NOT NULL,
+     source_type ENUM('worksheet','poem','sutra','rare-char-card') NOT NULL,
+     source_id   VARCHAR(64)  NULL,
+     status      ENUM('ok','error') NOT NULL DEFAULT 'ok',
+     duration_ms INT UNSIGNED NULL,
+     ip          VARCHAR(45)  NULL,
+     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (id),
+     KEY idx_user_created (user_id, created_at DESC),
+     KEY idx_source (source_type, source_id),
+     CONSTRAINT fk_downloads_user FOREIGN KEY (user_id)
+       REFERENCES users(id) ON DELETE CASCADE
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS ai_calls (
+     id          BIGINT       NOT NULL AUTO_INCREMENT,
+     user_id     BIGINT       NULL,
+     feature     VARCHAR(32)  NOT NULL,
+     model       VARCHAR(64)  NOT NULL,
+     status      ENUM('ok','error','rate-limited') NOT NULL,
+     prompt_tokens     INT UNSIGNED NULL,
+     completion_tokens INT UNSIGNED NULL,
+     duration_ms INT UNSIGNED NULL,
+     error       TEXT         NULL,
+     metadata    JSON         NULL,
+     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (id),
+     KEY idx_feature_created (feature, created_at DESC),
+     KEY idx_user_created (user_id, created_at DESC),
+     KEY idx_status (status, created_at DESC)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS app_config (
+     \`key\`       VARCHAR(64)  NOT NULL,
+     value       TEXT         NOT NULL,
+     updated_by  BIGINT       NULL,
+     updated_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP
+                   ON UPDATE CURRENT_TIMESTAMP,
+     PRIMARY KEY (\`key\`),
+     CONSTRAINT fk_app_config_user FOREIGN KEY (updated_by)
+       REFERENCES users(id) ON DELETE SET NULL
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 export async function initDb(): Promise<void> {
   const pool = getPool();
   for (const sql of DDL) {
     await pool.query(sql);
+  }
+  // Idempotent ALTER: only add disabled_at if it doesn't already exist
+  const [cols] = await pool.query<any[]>(
+    `SELECT COLUMN_NAME FROM information_schema.columns
+     WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'disabled_at'`,
+  );
+  if (cols.length === 0) {
+    await pool.query(`ALTER TABLE users ADD COLUMN disabled_at DATETIME NULL AFTER is_admin`);
+  }
+  // Seed app_config defaults
+  const [[{ count: cfgCount }]] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS count FROM app_config`,
+  );
+  if (Number(cfgCount) === 0) {
+    const defaults: Array<[string, string]> = [
+      ['ai.model', 'gpt-4o-mini'],
+      ['ai.rate_limit_per_user_per_day', '5'],
+      ['ai.timeout_ms', '30000'],
+      ['ai.temperature', '0.7'],
+    ];
+    for (const [k, v] of defaults) {
+      await pool.query(`INSERT INTO app_config (\`key\`, value) VALUES (?, ?)`, [k, v]);
+    }
+    console.log(`[initDb] seeded ${defaults.length} app_config defaults`);
+  } else {
+    console.log(`[initDb] app_config has ${cfgCount} rows, skip seed`);
   }
   // Auto-populate poems table if empty (fail-soft)
   try {
