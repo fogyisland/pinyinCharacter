@@ -8,6 +8,7 @@ import { PoemMeta } from '@/components/poetry/PoemMeta';
 import { PoemWorksheet } from '@/components/poetry/PoemWorksheet';
 import { AppreciationBlock } from '@/components/poetry/AppreciationBlock';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
+import { PrintButton } from './PrintButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,13 +42,7 @@ export default async function PoemDetailPage({ params }: Props) {
           </div>
         )}
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="rounded-md border border-ink/30 px-5 py-2 text-ink hover:bg-paper-deep"
-          >
-            打印本页
-          </button>
+          <PrintButton />
           <SaveAsWorksheetButton id={poem.id} title={poem.title} author={poem.author} content={poem.content} />
         </div>
       </PageContainer>
