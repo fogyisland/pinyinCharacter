@@ -116,3 +116,10 @@
     size: A4;
   }
 }
+
+/* Self-hosted Chinese fonts (replaces next/font/google) */
+:root {
+  --font-han-sans: 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-han-serif: 'Noto Serif SC', Georgia, 'Songti SC', 'SimSun', serif;
+  --font-wenkai: 'LXGW WenKai TC', 'Kaiti SC', 'KaiTi', 'STKaiti', serif;
+}
