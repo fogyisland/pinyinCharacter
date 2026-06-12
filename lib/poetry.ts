@@ -1,5 +1,5 @@
 import { getPool } from './db';
-import type { Dynasty, PoemListItem, PoemListResult } from './poetry-types';
+import type { Dynasty, PoemDetail, PoemListItem, PoemListResult } from './poetry-types';
 
 const PAGE_SIZE = 24;
 
@@ -55,4 +55,44 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
     page,
     pageSize,
   };
+}
+
+function parseJsonArray<T>(s: any, fallback: T): T {
+  if (typeof s !== 'string') return fallback;
+  try {
+    const v = JSON.parse(s);
+    return Array.isArray(v) ? (v as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function mapDetailRow(r: any): PoemDetail {
+  return {
+    ...mapRow(r),
+    content: parseJsonArray<string[]>(r.content, []),
+    pinyin: parseJsonArray<string[][]>(r.pinyin, []),
+    appreciation: r.appreciation ?? null,
+  };
+}
+
+export async function getPoem(id: number): Promise<PoemDetail | null> {
+  const pool = getPool();
+  const [rows] = await pool.execute<any[]>(
+    `SELECT id, title, author, dynasty, form, content, pinyin, appreciation
+     FROM poems WHERE id = ? LIMIT 1`,
+    [id]
+  );
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return mapDetailRow((rows as any[])[0]);
+}
+
+export async function getRandomPoem(): Promise<PoemDetail | null> {
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT id, title, author, dynasty, form, content, pinyin, appreciation
+     FROM poems ORDER BY RAND() LIMIT 1`
+  );
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  return mapDetailRow((rows as any[])[0]);
 }
