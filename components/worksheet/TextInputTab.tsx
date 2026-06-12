@@ -1,39 +1,24 @@
 'use client';
 
-import { useRef, useState } from 'react';
-
-// 允许的字符集: 常用汉字 + 扩展A 生僻字 + CJK 标点 + 全角符号 (与 lib/validators.ts 一致)
-const ALLOWED_CHAR = /[㐀-鿿　-〿＀-￯]/;
-
 interface Props {
   value: string[];
   onChange: (chars: string[]) => void;
 }
 
+const MAX_LEN = 500;
+
 export function TextInputTab({ value, onChange }: Props) {
   const text = value.join('');
-  // IME 拼音输入过程中不能过滤: 每次 onChange 都重设 controlled value 会把 IME 状态打断,
-  // 导致后输入的汉字插错位置, 看起来像"字被覆盖"。compositionend 时再统一过滤。
-  const [composing, setComposing] = useState(false);
-  const rawRef = useRef('');
-
-  const applyFilter = (raw: string) =>
-    Array.from(raw).filter((c) => ALLOWED_CHAR.test(c)).slice(0, 500);
-
   return (
     <div>
       <textarea
         value={text}
         onChange={(e) => {
-          rawRef.current = e.target.value;
-          if (composing) return;
-          onChange(applyFilter(e.target.value));
-        }}
-        onCompositionStart={() => setComposing(true)}
-        onCompositionEnd={(e) => {
-          setComposing(false);
-          rawRef.current = e.currentTarget.value;
-          onChange(applyFilter(e.currentTarget.value));
+          // 不在客户端过滤: React 19 之前的 controlled textarea 在 IME 组合中
+          // 重设 value 会打断拼音输入, 表现就是"输一个字后剩下的进不去"。
+          // 把验证完全交给服务端 saveWorksheetSchema, save 时如含非法字符会 400。
+          const chars = Array.from(e.target.value);
+          onChange(chars.length > MAX_LEN ? chars.slice(0, MAX_LEN) : chars);
         }}
         placeholder="输入或粘贴汉字,每个字一个格子..."
         rows={8}
