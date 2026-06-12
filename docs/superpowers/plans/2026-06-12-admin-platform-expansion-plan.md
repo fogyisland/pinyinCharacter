@@ -1096,25 +1096,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!Number.isInteger(userId) || userId <= 0) return badRequest('bad_id', 'invalid id');
 
     const url = new URL(req.url);
-    const after = url.searchParams.get('after'); // ISO timestamp for "load more"
+    const after = url.searchParams.get('after'); // ISO timestamp cursor — return rows NEWER than this (load more recent)
 
     const pool = getPool();
     const [audit, downloads, aiCalls] = await Promise.all([
       pool.query<any[]>(
         `SELECT id, event, metadata, ip, created_at FROM audit_log
-         WHERE user_id = ? ${after ? 'AND created_at < ?' : ''}
+         WHERE user_id = ? ${after ? 'AND created_at > ?' : ''}
          ORDER BY created_at DESC LIMIT 100`,
         after ? [userId, after] : [userId],
       ),
       pool.query<any[]>(
         `SELECT id, source_type, source_id, status, format, duration_ms, created_at
-         FROM downloads WHERE user_id = ? ${after ? 'AND created_at < ?' : ''}
+         FROM downloads WHERE user_id = ? ${after ? 'AND created_at > ?' : ''}
          ORDER BY created_at DESC LIMIT 100`,
         after ? [userId, after] : [userId],
       ),
       pool.query<any[]>(
         `SELECT id, feature, model, status, duration_ms, error, metadata, created_at
-         FROM ai_calls WHERE user_id = ? ${after ? 'AND created_at < ?' : ''}
+         FROM ai_calls WHERE user_id = ? ${after ? 'AND created_at > ?' : ''}
          ORDER BY created_at DESC LIMIT 100`,
         after ? [userId, after] : [userId],
       ),
