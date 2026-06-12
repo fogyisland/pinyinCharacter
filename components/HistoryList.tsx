@@ -17,7 +17,7 @@ export function HistoryList({ rows: initial }: { rows: HistoryRow[] }) {
   const [rows, setRows] = useState(initial);
 
   if (rows.length === 0) {
-    return <p className="text-sm text-gray-500 py-8 text-center">还没有记录，先去试试上面的工具。</p>;
+    return <p className="text-sm text-ink-soft py-8 text-center">还没有记录，先去试试上面的工具。</p>;
   }
 
   async function toggleFav(id: number, current: 0 | 1) {
@@ -41,27 +41,27 @@ export function HistoryList({ rows: initial }: { rows: HistoryRow[] }) {
   }
 
   return (
-    <ul className="divide-y">
+    <ul className="divide-y divide-ink/10">
       {rows.map(r => (
-        <li key={r.id} className="py-3 flex items-center gap-3">
-          <span className="text-xs text-gray-500 w-16 shrink-0">{r.kind === 'text2pinyin' ? '字→拼' : '拼→字'}</span>
+        <li key={r.id} className="py-3 flex items-center gap-3 hover:bg-paper-deep/40 transition-colors rounded-sm px-2 -mx-2">
+          <span className="text-xs text-ink-soft w-16 shrink-0">{r.kind === 'text2pinyin' ? '字→拼' : '拼→字'}</span>
           <div className="flex-1 min-w-0">
-            <div className="truncate text-sm">{r.input}</div>
-            {r.output && <div className="truncate text-xs text-gray-500">→ {r.output}</div>}
+            <div className="truncate text-sm text-ink">{r.input}</div>
+            {r.output && <div className="truncate text-xs text-ink-soft">→ {r.output}</div>}
           </div>
-          <span className="text-xs text-gray-500 shrink-0">{r.char_count} 字</span>
-          <span className="text-xs text-gray-400 shrink-0 w-16 text-right">{timeAgo(r.created_at)}</span>
+          <span className="text-xs text-ink-soft shrink-0">{r.char_count} 字</span>
+          <span className="text-xs text-ink-faint shrink-0 w-16 text-right">{timeAgo(r.created_at)}</span>
           <button
             type="button"
             onClick={() => toggleFav(r.id, r.is_favorite)}
-            className={`text-lg shrink-0 ${r.is_favorite ? 'text-yellow-500' : 'text-gray-300 hover:text-gray-400'}`}
+            className={`text-lg shrink-0 ${r.is_favorite ? 'text-seal' : 'text-ink-faint/40 hover:text-seal/60'}`}
             aria-label={r.is_favorite ? '取消收藏' : '收藏'}
             title={r.is_favorite ? '取消收藏' : '收藏'}
           >★</button>
           <button
             type="button"
             onClick={() => del(r.id)}
-            className="text-gray-400 hover:text-red-500 shrink-0"
+            className="text-ink-faint hover:text-seal shrink-0"
             aria-label="删除"
             title="删除"
           >🗑</button>

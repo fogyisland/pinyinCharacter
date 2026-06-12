@@ -4,7 +4,9 @@ import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { listHistory } from '@/lib/history';
 import { Header } from '@/components/Header';
+import { Footer } from '@/components/Footer';
 import { HistoryList } from '@/components/HistoryList';
+import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,12 +25,16 @@ export default async function HistoryPage(props: { searchParams: Promise<{ favor
       <Suspense>
         <Header />
       </Suspense>
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-4">
-        <h1 className="text-xl font-semibold">{favorite ? '收藏夹' : '历史记录'}</h1>
-        <div className="bg-white border rounded-lg p-4">
+      <PageContainer>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <SectionTitle subtitle="你的转换历史与收藏">
+          {favorite ? '收藏夹' : '历史记录'}
+        </SectionTitle>
+        <div className="card-paper p-4">
           <HistoryList rows={rows} />
         </div>
-      </main>
+      </PageContainer>
+      <Footer />
     </>
   );
 }
