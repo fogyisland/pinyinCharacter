@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import { HomePoemCard } from './HomePoemCard';
 
 type BentoItem = {
   char: string;
@@ -52,6 +53,7 @@ export function BentoGrid() {
             </div>
           </Link>
         ))}
+        <HomePoemCard />
       </div>
     </section>
   );
