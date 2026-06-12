@@ -15,6 +15,7 @@ const ITEMS: BentoItem[] = [
   { char: '库', title: '罕见字库', description: '1450 个生僻字查询', href: '/rare-chars', variant: 'accent' },
   { char: '帖', title: '字帖打印', description: '毛笔格/田字格 PDF', href: '/worksheet', variant: 'outline' },
   { char: '戏', title: '趣味识字游戏', description: '拼音与字配对', href: '/game', variant: 'outline' },
+  { char: '经', title: '佛经选读', description: '12 部经分品抄写', href: '/sutra', variant: 'outline' },
 ];
 
 const variantClass = {
