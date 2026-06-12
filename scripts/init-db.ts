@@ -108,6 +108,19 @@ export async function initDb(): Promise<void> {
   for (const sql of DDL) {
     await pool.query(sql);
   }
+  // Auto-populate poems table if empty (fail-soft)
+  try {
+    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM poems`);
+    if (Number(count) === 0) {
+      const { buildPoems } = await import('./build-poems');
+      const n = await buildPoems();
+      console.log(`[initDb] inserted ${n} poems (auto-populate)`);
+    } else {
+      console.log(`[initDb] poems table has ${count} rows, skip auto-populate`);
+    }
+  } catch (err) {
+    console.warn('[initDb] poems auto-populate failed (continuing):', (err as Error).message);
+  }
 }
 
 if (require.main === module) {
