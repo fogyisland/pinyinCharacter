@@ -4,6 +4,8 @@ import {
   worksheetIdParamSchema,
   charParamSchema,
   saveWorksheetSchema,
+  poemListQuerySchema,
+  poemIdParamSchema,
 } from '@/lib/validators';
 
 describe('validators', () => {
@@ -108,6 +110,36 @@ describe('validators', () => {
       expect(() =>
         saveWorksheetSchema.parse({ title: 't', content: ['你'], cellStyle: 'xyz' })
       ).toThrow();
+    });
+  });
+
+  describe('poemListQuerySchema', () => {
+    it('defaults dynasty to tang', () => {
+      expect(poemListQuerySchema.parse({}).dynasty).toBe('tang');
+    });
+
+    it('rejects unknown dynasty', () => {
+      expect(() => poemListQuerySchema.parse({ dynasty: 'yuan' })).toThrow();
+    });
+
+    it('trims q', () => {
+      const r = poemListQuerySchema.parse({ q: '  李白  ' });
+      expect(r.q).toBe('李白');
+    });
+
+    it('coerces page and pageSize', () => {
+      const r = poemListQuerySchema.parse({ page: '3', pageSize: '50' });
+      expect(r.page).toBe(3);
+      expect(r.pageSize).toBe(50);
+    });
+  });
+
+  describe('poemIdParamSchema', () => {
+    it('accepts positive int', () => {
+      expect(poemIdParamSchema.parse({ id: '5' }).id).toBe(5);
+    });
+    it('rejects non-positive', () => {
+      expect(() => poemIdParamSchema.parse({ id: '0' })).toThrow();
     });
   });
 });

@@ -30,3 +30,14 @@ export const saveWorksheetSchema = z.object({
     .max(500),
   cellStyle: z.enum(['brush', 'square']),
 });
+
+export const poemListQuerySchema = z.object({
+  dynasty: z.enum(['tang', 'song']).default('tang'),
+  q: z.string().max(64).transform((s) => s.trim()).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(100).default(24),
+});
+
+export const poemIdParamSchema = z.object({
+  id: z.coerce.number().int().positive(),
+});
