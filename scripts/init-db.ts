@@ -132,6 +132,20 @@ export async function initDb(): Promise<void> {
   } catch (err) {
     console.warn('[initDb] poems auto-populate failed (continuing):', (err as Error).message);
   }
+  // Auto-populate sutras table if empty (fail-soft)
+  try {
+    const [[{ count: sCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
+    if (Number(sCount) === 0) {
+      // @ts-expect-error -- build-sutras script created in Plan F Task 8 (out of scope here)
+      const { buildSutras } = await import('./build-sutras');
+      const n = await buildSutras();
+      console.log(`[initDb] inserted ${n} sutras (auto-populate)`);
+    } else {
+      console.log(`[initDb] sutras table has ${sCount} rows, skip auto-populate`);
+    }
+  } catch (err) {
+    console.warn('[initDb] sutras auto-populate failed (continuing):', (err as Error).message);
+  }
 }
 
 if (require.main === module) {
