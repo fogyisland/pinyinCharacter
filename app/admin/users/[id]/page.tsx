@@ -17,6 +17,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       user={detail.user}
       recentHistory={detail.recentHistory}
       isSelf={me?.id === id}
+      disabledAt={detail.user.disabledAt}
     />
   );
 }
