@@ -20,10 +20,13 @@ function AuthAutoOpen({ onOpen }: { onOpen: () => void }) {
   return null;
 }
 
+
+
 export function Header() {
   const safeMode = useAppStore(s => s.safeMode);
   const user = useAppStore(s => s.user);
-  const [authOpen, setAuthOpen] = useState(false);
+  const authOpen = useAppStore(s => s.authOpen);
+  const setAuthOpen = useAppStore(s => s.setAuthOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (

@@ -23,7 +23,7 @@ export function WorksheetCell({ char, style, size = 80 }: Props) {
       ) : (
         <line x1={2} y1={50} x2={98} y2={50} stroke={stroke} strokeWidth={0.5} />
       )}
-      {/* the char (faint guide) */}
+      {/* the char (faint guide) — 用 Noto Serif SC (SIL OFL) 避免 Times New Roman 侵权 */}
       <text
         x={50}
         y={50}
@@ -31,7 +31,7 @@ export function WorksheetCell({ char, style, size = 80 }: Props) {
         dominantBaseline="central"
         fontSize={60}
         fill={stroke}
-        fontFamily="serif"
+        style={{ fontFamily: 'var(--font-han-serif), "Noto Serif SC", serif' }}
       >
         {char}
       </text>

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/lib/store';
 
 interface Props {
   id: number;
@@ -12,10 +13,19 @@ interface Props {
 
 export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
   const router = useRouter();
+  const user = useAppStore(s => s.user);
+  const setAuthOpen = useAppStore(s => s.setAuthOpen);
   const [saving, setSaving] = useState(false);
+  const [hint, setHint] = useState<string | null>(null);
 
   const handleSave = async () => {
+    if (!user) {
+      setHint('需要登录才能保存');
+      setAuthOpen(true);
+      return;
+    }
     setSaving(true);
+    setHint(null);
     try {
       const chars = content.join('').split('');
       const res = await fetch('/api/worksheets', {
@@ -28,30 +38,36 @@ export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
         }),
       });
       const data = await res.json();
-      if (res.status === 401) {
-        router.push(`/?auth=login&next=/poetry/${id}`);
+      if (res.status === 401 || data.error?.code === 'unauthenticated') {
+        setHint('需要登录才能保存');
+        setAuthOpen(true);
         return;
       }
       if (!data.ok) {
-        alert('保存失败: ' + (data.error?.message ?? '未知错误'));
+        setHint(data.error?.message ?? '保存失败');
         return;
       }
       router.push(`/worksheet/${data.data.id}`);
     } catch (err) {
-      alert('保存失败: ' + (err as Error).message);
+      setHint((err as Error).message);
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <button
-      type="button"
-      onClick={handleSave}
-      disabled={saving}
-      className="rounded-md bg-seal px-5 py-2 text-white hover:bg-seal/80 disabled:bg-seal/40 disabled:cursor-not-allowed"
-    >
-      {saving ? '保存中…' : '保存到字帖'}
-    </button>
+    <div className="flex flex-col items-center gap-1">
+      <button
+        type="button"
+        onClick={handleSave}
+        disabled={saving}
+        className="rounded-md bg-seal px-5 py-2 text-white hover:bg-seal/80 disabled:bg-seal/40 disabled:cursor-not-allowed"
+      >
+        {saving ? '保存中…' : '保存到字帖'}
+      </button>
+      {hint && !user && (
+        <span className="text-xs text-ink-soft">{hint}</span>
+      )}
+    </div>
   );
 }

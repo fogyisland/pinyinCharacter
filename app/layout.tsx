@@ -11,7 +11,8 @@ const hanSans = Noto_Sans_SC({
 });
 
 const hanSerif = Noto_Serif_SC({
-  subsets: ['latin'],
+  // 不限 subsets: 让 next/font 把 Noto Serif SC 的全部字形 (含中文) 都打入构建。
+  // 字帖里会用到任意汉字, 不能限定到 latin
   weight: ['400', '600', '700'],
   display: 'swap',
   variable: '--font-han-serif',
