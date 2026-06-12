@@ -7,6 +7,8 @@ import { Footer } from '@/components/Footer';
 import { TextToPinyin } from '@/components/TextToPinyin';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 
+export const dynamic = 'force-dynamic';
+
 export default function Home() {
   return (
     <>
