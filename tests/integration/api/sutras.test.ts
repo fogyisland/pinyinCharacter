@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { NextRequest } from 'next/server';
 import { getPool, closePool } from '@/lib/db';
 import { GET as listRoute } from '@/app/api/sutras/route';
 import { GET as detailRoute } from '@/app/api/sutras/[id]/route';
@@ -30,7 +31,7 @@ afterAll(async () => {
 
 describe('GET /api/sutras', () => {
   it('returns list with our test sutra', async () => {
-    const req = new Request('http://test/api/sutras') as any;
+    const req = new NextRequest(new URL('http://test/api/sutras'));
     const res = await listRoute(req);
     const j = await res.json();
     expect(j.ok).toBe(true);
@@ -42,7 +43,7 @@ describe('GET /api/sutras', () => {
   });
 
   it('filters by q', async () => {
-    const req = new Request('http://test/api/sutras?q=心') as any;
+    const req = new NextRequest(new URL('http://test/api/sutras?q=心'));
     const res = await listRoute(req);
     const j = await res.json();
     expect(j.ok).toBe(true);
@@ -50,7 +51,7 @@ describe('GET /api/sutras', () => {
   });
 
   it('returns 400 on bad page', async () => {
-    const req = new Request('http://test/api/sutras?page=-1') as any;
+    const req = new NextRequest(new URL('http://test/api/sutras?page=-1'));
     const res = await listRoute(req);
     expect(res.status).toBe(400);
   });
