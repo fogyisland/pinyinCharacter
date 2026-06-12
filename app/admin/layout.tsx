@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
 import { requireAdmin } from '@/lib/auth';
 import { Header } from '@/components/Header';
-import { AdminNav } from '@/components/AdminNav';
+import { AdminShell } from '@/components/admin/AdminShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,9 +17,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <Suspense>
         <Header />
       </Suspense>
-      <div className="flex-1 flex">
-        <AdminNav />
-        <main className="flex-1 p-6 bg-paper">{children}</main>
+      <div className="flex-1 bg-paper-soft">
+        <AdminShell>{children}</AdminShell>
       </div>
     </div>
   );
