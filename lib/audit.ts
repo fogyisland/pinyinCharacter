@@ -8,7 +8,8 @@ export type AuditEvent =
   | 'admin_user_promote' | 'admin_user_demote'
   | 'user_disabled' | 'user_reenabled'
   | 'ai_config_updated' | 'ai_call_logged'
-  | 'worksheet_saved' | 'worksheet_deleted';
+  | 'worksheet_saved' | 'worksheet_deleted'
+  | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved';
 
 export interface AuditEntry {
   userId: number | null;

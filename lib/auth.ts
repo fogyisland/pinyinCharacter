@@ -161,3 +161,56 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
   }
   return { ok: true, user };
 }
+
+export type RequireUserResult =
+  | { ok: true; user: User }
+  | { ok: false; reason: 'unauthenticated' | 'account_disabled'; response: NextResponse };
+
+/**
+ * Discriminated guard for user-authenticated routes (not admin-only).
+ *
+ * Returns:
+ *  - 401 unauthenticated if no session cookie
+ *  - 403 account_disabled if the user has been disabled
+ *  - 200 ok on success
+ */
+export async function requireUser(): Promise<RequireUserResult> {
+  const token = (await cookies()).get(COOKIE_NAME)?.value;
+  if (!token) {
+    return {
+      ok: false,
+      reason: 'unauthenticated',
+      response: NextResponse.json(
+        { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+        { status: 401 }
+      ),
+    };
+  }
+  const session = await verifySession(token);
+  if (!session) {
+    return {
+      ok: false,
+      reason: 'unauthenticated',
+      response: NextResponse.json(
+        { ok: false, error: { code: 'unauthenticated', message: '会话无效' } },
+        { status: 401 }
+      ),
+    };
+  }
+  // Check disabled_at explicitly so the reason is 'account_disabled' (403), not 401
+  const [rows] = await getPool().query<any[]>(
+    `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
+    [session.userId]
+  );
+  if (rows.length === 0 || rows[0].disabled_at !== null) {
+    return {
+      ok: false,
+      reason: 'account_disabled',
+      response: NextResponse.json(
+        { ok: false, error: { code: 'account_disabled', message: '账户已停用' } },
+        { status: 403 }
+      ),
+    };
+  }
+  return { ok: true, user: { id: session.userId, username: session.username } };
+}
