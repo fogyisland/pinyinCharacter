@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
@@ -10,16 +10,20 @@ import { AuthModal } from './AuthModal';
 import { useAppStore } from '@/lib/store';
 import { BRAND, NAV_LINKS } from '@/lib/design';
 
+function AuthAutoOpen({ onOpen }: { onOpen: () => void }) {
+  const user = useAppStore(s => s.user);
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (searchParams.get('auth') === 'login' && !user) onOpen();
+  }, [searchParams, user, onOpen]);
+  return null;
+}
+
 export function Header() {
   const safeMode = useAppStore(s => s.safeMode);
   const user = useAppStore(s => s.user);
   const [authOpen, setAuthOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    if (searchParams.get('auth') === 'login' && !user) setAuthOpen(true);
-  }, [searchParams, user]);
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95 backdrop-blur sticky top-0 z-10">
@@ -95,6 +99,9 @@ export function Header() {
           </div>
         </div>
       )}
+      <Suspense fallback={null}>
+        <AuthAutoOpen onOpen={() => setAuthOpen(true)} />
+      </Suspense>
       <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </header>
   );
