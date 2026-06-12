@@ -18,7 +18,7 @@ export function RareCharDetail({ data }: Props) {
         <p className="mt-2 text-base text-gray-800">{data.meaning}</p>
       </section>
 
-      <section className="mt-4 rounded-lg bg-yellow-50 p-6">
+      <section className="mt-4 rounded-lg bg-yellow-50 p-6 border-l-4 border-seal pl-6">
         <h2 className="text-sm font-medium uppercase text-gray-500">故事 / 例句</h2>
         <p className="mt-2 whitespace-pre-line text-base text-gray-800">{data.story}</p>
       </section>
