@@ -52,6 +52,12 @@ export async function getCurrentUser(): Promise<User | null> {
   if (!token) return null;
   const session = await verifySession(token);
   if (!session) return null;
+  // Check disabled_at
+  const [rows] = await getPool().query<any[]>(
+    `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
+    [session.userId]
+  );
+  if (rows.length === 0 || rows[0].disabled_at !== null) return null;
   return { id: session.userId, username: session.username };
 }
 
@@ -103,10 +109,12 @@ export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null> {
   if (!user) return null;
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
-    `SELECT is_admin FROM users WHERE id = ? LIMIT 1`,
+    `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
     [user.id]
   );
   if (rows.length === 0) return null;
+  // If disabled since the last check (e.g. session was just created), return null
+  if (rows[0].disabled_at !== null) return null;
   return { ...user, isAdmin: Boolean(rows[0].is_admin) };
 }
 

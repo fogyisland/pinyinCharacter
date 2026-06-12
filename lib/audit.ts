@@ -6,6 +6,8 @@ export type AuditEvent =
   | 'password_reset_request' | 'password_reset_complete'
   | 'admin_user_delete' | 'admin_user_password_reset'
   | 'admin_user_promote' | 'admin_user_demote'
+  | 'user_disabled' | 'user_reenabled'
+  | 'ai_config_updated' | 'ai_call_logged'
   | 'worksheet_saved' | 'worksheet_deleted';
 
 export interface AuditEntry {
