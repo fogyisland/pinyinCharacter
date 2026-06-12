@@ -8,6 +8,7 @@ export interface AdminUserRow {
   username: string;
   isAdmin: boolean;
   createdAt: Date;
+  disabledAt: Date | null;
   historyCount: number;
   favoriteCount: number;
 }
@@ -15,6 +16,9 @@ export interface AdminUserRow {
 export interface ListUsersOptions {
   limit?: number;
   offset?: number;
+  q?: string;
+  isAdmin?: boolean;
+  disabled?: boolean;
 }
 export interface ListUsersResult {
   users: AdminUserRow[];
@@ -26,8 +30,23 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
   const offset = Math.max(opts.offset ?? 0, 0);
   const pool = getPool();
 
+  const where: string[] = [];
+  const params: any[] = [];
+  if (opts.q) {
+    where.push(`u.username LIKE ?`);
+    params.push(`%${opts.q}%`);
+  }
+  if (typeof opts.isAdmin === 'boolean') {
+    where.push(`u.is_admin = ?`);
+    params.push(opts.isAdmin ? 1 : 0);
+  }
+  if (typeof opts.disabled === 'boolean') {
+    where.push(opts.disabled ? `u.disabled_at IS NOT NULL` : `u.disabled_at IS NULL`);
+  }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
   const [rows] = await pool.execute<any[]>(
-    `SELECT u.id, u.username, u.is_admin, u.created_at,
+    `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at,
             COALESCE(h.total, 0) AS historyCount,
             COALESCE(h.fav, 0) AS favoriteCount
      FROM users u
@@ -37,23 +56,26 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
               SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) AS fav
        FROM history GROUP BY user_id
      ) h ON h.user_id = u.id
+     ${whereSql}
      ORDER BY u.created_at DESC
      LIMIT ? OFFSET ?`,
-    [limit, offset]
+    [...params, limit, offset]
   );
   const [countRows] = await pool.execute<any[]>(
-    `SELECT COUNT(*) AS n FROM users`
+    `SELECT COUNT(*) AS n FROM users u ${whereSql}`,
+    params
   );
 
   return {
     users: rows.map(r => ({
       id: Number(r.id),
       username: r.username,
-      isAdmin: Boolean(r.is_admin),
+      isAdmin: r.is_admin === 1 || r.is_admin === true,
       createdAt: r.created_at,
+      disabledAt: r.disabled_at,
       historyCount: Number(r.historyCount),
       favoriteCount: Number(r.favoriteCount),
-    })),
+    })) as any,
     total: Number(countRows[0]?.n ?? 0),
   };
 }
@@ -66,7 +88,7 @@ export interface UserDetail {
 export async function getUserDetail(id: number): Promise<UserDetail | null> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
-    `SELECT u.id, u.username, u.is_admin, u.created_at,
+    `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at,
             COALESCE(h.total, 0) AS historyCount,
             COALESCE(h.fav, 0) AS favoriteCount
      FROM users u
@@ -86,6 +108,7 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
     username: r.username,
     isAdmin: Boolean(r.is_admin),
     createdAt: r.created_at,
+    disabledAt: r.disabled_at,
     historyCount: Number(r.historyCount),
     favoriteCount: Number(r.favoriteCount),
   };
@@ -206,4 +229,31 @@ export async function setUserPasswordHash(id: number, hash: string): Promise<boo
 export function generateTempPassword(): string {
   // 16 字节随机 → base64url ≈ 22 字符；bcrypt 限 72 字节，无压力
   return randomBytes(16).toString('base64url');
+}
+
+// (Plan H: disable / enable helpers + isUserDisabled guard)
+
+export async function disableUser(id: number, byAdminId: number): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `UPDATE users SET disabled_at = NOW() WHERE id = ? AND disabled_at IS NULL`,
+    [id]
+  );
+}
+
+export async function enableUser(id: number, byAdminId: number): Promise<void> {
+  const pool = getPool();
+  await pool.query(
+    `UPDATE users SET disabled_at = NULL WHERE id = ?`,
+    [id]
+  );
+}
+
+export async function isUserDisabled(userId: number): Promise<boolean> {
+  const [rows] = await getPool().query<any[]>(
+    `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
+    [userId]
+  );
+  if (rows.length === 0) return false;
+  return rows[0].disabled_at !== null;
 }
