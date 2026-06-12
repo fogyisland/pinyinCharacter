@@ -36,23 +36,24 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
-        <div className="flex gap-2 mb-4 border-b">
+    <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center" onClick={onClose}>
+      <div className="card-paper rounded shadow-paper-lg w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
+        <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">字 · 韵</div>
+        <div className="flex gap-2 mb-4 border-b border-ink/10">
           <button
             type="button"
-            className={`px-3 py-2 ${mode === 'login' ? 'border-b-2 border-blue-500 font-semibold' : 'text-gray-500'}`}
+            className={`px-3 py-2 font-kai ${mode === 'login' ? 'border-b-2 border-seal text-ink font-semibold' : 'text-ink-faint'}`}
             onClick={() => setMode('login')}
           >登录</button>
           <button
             type="button"
-            className={`px-3 py-2 ${mode === 'register' ? 'border-b-2 border-blue-500 font-semibold' : 'text-gray-500'}`}
+            className={`px-3 py-2 font-kai ${mode === 'register' ? 'border-b-2 border-seal text-ink font-semibold' : 'text-ink-faint'}`}
             onClick={() => setMode('register')}
           >注册</button>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
             placeholder="用户名 (3-32 字符)"
             value={username}
             onChange={e => setUsername(e.target.value)}
@@ -60,7 +61,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
             disabled={busy}
           />
           <input
-            className="w-full border rounded px-3 py-2"
+            className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
             type="password"
             placeholder="密码 (≥ 8 字符)"
             value={password}
@@ -68,18 +69,18 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             disabled={busy}
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-seal">{error}</p>}
           <button
             type="submit"
             disabled={busy}
-            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50"
+            className="w-full btn-seal disabled:opacity-50"
           >
             {busy ? '...' : (mode === 'login' ? '登录' : '注册')}
           </button>
         </form>
         {mode === 'login' && (
-          <p className="text-xs text-gray-500 mt-3 text-center">
-            <a href="/forgot-password" className="text-blue-600 hover:underline">忘记密码</a>
+          <p className="text-xs text-ink-faint mt-3 text-center">
+            <a href="/forgot-password" className="text-seal hover:underline">忘记密码</a>
           </p>
         )}
       </div>
