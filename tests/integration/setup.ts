@@ -24,6 +24,7 @@ export async function truncateAll(): Promise<void> {
   const pool = getPool();
   await pool.query('SET FOREIGN_KEY_CHECKS = 0');
   await pool.query('TRUNCATE TABLE worksheets');
+  await pool.query('TRUNCATE TABLE poems');
   await pool.query('TRUNCATE TABLE rare_chars');
   await pool.query('TRUNCATE TABLE history');
   await pool.query('TRUNCATE TABLE password_resets');

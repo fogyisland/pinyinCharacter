@@ -72,6 +72,23 @@ const DDL = [
      KEY idx_pinyin (pinyin)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+  `CREATE TABLE IF NOT EXISTS poems (
+     id          INT             NOT NULL AUTO_INCREMENT,
+     dynasty     ENUM('tang','song') NOT NULL,
+     title       VARCHAR(80)     NOT NULL,
+     author      VARCHAR(40)     NOT NULL,
+     form        VARCHAR(20)     NULL,
+     content     JSON            NOT NULL,
+     pinyin      JSON            NOT NULL,
+     appreciation TEXT           NULL,
+     source      VARCHAR(120)    NULL,
+     created_at  DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     PRIMARY KEY (id),
+     UNIQUE KEY uniq_poem (dynasty, title, author),
+     KEY idx_author (author),
+     KEY idx_dynasty_author (dynasty, author)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
   `CREATE TABLE IF NOT EXISTS worksheets (
      id          INT            NOT NULL AUTO_INCREMENT,
      user_id     BIGINT         NOT NULL,

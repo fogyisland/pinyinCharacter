@@ -9,7 +9,8 @@
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "dict:build": "tsx scripts/build-dict.ts"
+    "dict:build": "tsx scripts/build-dict.ts",
+    "poetry:build": "tsx scripts/build-poems.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
