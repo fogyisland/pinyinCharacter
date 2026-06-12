@@ -136,7 +136,6 @@ export async function initDb(): Promise<void> {
   try {
     const [[{ count: sCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
     if (Number(sCount) === 0) {
-      // @ts-expect-error -- build-sutras script created in Plan F Task 8 (out of scope here)
       const { buildSutras } = await import('./build-sutras');
       const n = await buildSutras();
       console.log(`[initDb] inserted ${n} sutras (auto-populate)`);
