@@ -13,6 +13,12 @@ export interface SutraChunk {
   pinyin: string[][];
 }
 
+export interface SutraChunkNoPinyin {
+  id: number;
+  label: string;
+  content: string[];
+}
+
 export interface SutraDetail {
   id: number;
   title: string;

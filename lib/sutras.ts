@@ -1,5 +1,5 @@
 import { getPool } from './db';
-import type { SutraListItem, SutraListResult, SutraChunk, SutraDetail } from './sutra-types';
+import type { SutraListItem, SutraListResult, SutraChunk, SutraChunkNoPinyin, SutraDetail } from './sutra-types';
 
 const PIN_MARKER_RE = /第[一二三四五六七八九十百千零〇]+品|分第[一二三四五六七八九十百千零〇]+/;
 
@@ -8,10 +8,10 @@ const PIN_MARKER_RE = /第[一二三四五六七八九十百千零〇]+品|分�
  * - If a paragraph starts with "第X品..." (e.g. 法会因由分第一), a new chunk begins.
  * - Otherwise, all paragraphs fold into a single chunk labelled by the sutra title.
  */
-export function splitIntoChunks(title: string, paragraphs: string[]): SutraChunk[] {
+export function splitIntoChunks(title: string, paragraphs: string[]): SutraChunkNoPinyin[] {
   if (paragraphs.length === 0) return [];
 
-  const chunks: SutraChunk[] = [];
+  const chunks: SutraChunkNoPinyin[] = [];
   let current: { label: string; content: string[] } | null = null;
 
   const hasMarker = paragraphs.some((p) => PIN_MARKER_RE.test(p));
