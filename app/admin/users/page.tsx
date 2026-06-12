@@ -7,7 +7,7 @@ export default async function AdminUsersPage() {
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">用户管理 (共 {total})</h1>
-      <div className="card-paper rounded-lg overflow-hidden">
+      <div className="card-paper rounded-lg overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-paper-deep text-left">
             <tr>

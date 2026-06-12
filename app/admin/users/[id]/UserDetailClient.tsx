@@ -60,7 +60,7 @@ export function UserDetailClient({ user, recentHistory, isSelf }: {
         </div>
       </div>
 
-      <div className="card-paper rounded-lg overflow-hidden">
+      <div className="card-paper rounded-lg overflow-x-auto">
         <h2 className="px-4 py-2 text-sm font-semibold bg-paper-deep">最近 10 条历史</h2>
         <table className="w-full text-sm">
           <thead><tr className="text-left text-ink-soft">

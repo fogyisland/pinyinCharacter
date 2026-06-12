@@ -58,12 +58,14 @@ export function WorksheetPreview(props: Props) {
         <h1 className="worksheet-no-print mb-4 text-center text-2xl font-bold">{props.title}</h1>
       )}
 
-      <div className="worksheet-grid mx-auto grid max-w-3xl grid-cols-8 gap-2 print:grid-cols-8">
-        {cells.map((cell) => (
-          <div key={cell.index} className="worksheet-cell">
-            <WorksheetCell char={cell.char} style={cell.style} />
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <div className="worksheet-grid mx-auto grid min-w-[640px] max-w-3xl grid-cols-8 gap-2 print:min-w-0 print:grid-cols-8">
+          {cells.map((cell) => (
+            <div key={cell.index} className="worksheet-cell">
+              <WorksheetCell char={cell.char} style={cell.style} />
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

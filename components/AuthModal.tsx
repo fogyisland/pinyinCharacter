@@ -36,7 +36,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center" onClick={onClose}>
+    <div className="fixed inset-0 z-50 bg-ink/40 flex items-center justify-center p-4" onClick={onClose}>
       <div className="card-paper rounded shadow-paper-lg w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
         <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">字 · 韵</div>
         <div className="flex gap-2 mb-4 border-b border-ink/10">
