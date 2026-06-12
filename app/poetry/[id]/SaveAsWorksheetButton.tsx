@@ -29,7 +29,7 @@ export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
       });
       const data = await res.json();
       if (res.status === 401) {
-        router.push(`/login?next=/poetry/${id}`);
+        router.push(`/?auth=login&next=/poetry/${id}`);
         return;
       }
       if (!data.ok) {
