@@ -51,3 +51,38 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
   if (!content) throw new LLMError('LLM returned empty content');
   return { content };
 }
+
+/**
+ * Higher-level wrapper that hides the messages[] shape from callers
+ * (callers provide system + prompt instead of building the message array).
+ * Returns the trimmed content string of the first choice.
+ */
+export interface CallLlmArgs {
+  system: string;
+  prompt: string;
+  temperature?: number;
+  maxTokens?: number;
+  model?: string;
+  baseUrl?: string;
+  apiKey?: string;
+}
+
+export async function callLlm(args: CallLlmArgs): Promise<string> {
+  const apiKey = args.apiKey ?? process.env.LLM_API_KEY;
+  const baseUrl = args.baseUrl ?? process.env.LLM_BASE_URL;
+  const model = args.model ?? process.env.LLM_MODEL ?? 'gpt-4o-mini';
+  if (!apiKey) throw new LLMError('LLM_API_KEY is not set');
+  if (!baseUrl) throw new LLMError('LLM_BASE_URL is not set');
+  const res = await llmChat({
+    baseUrl,
+    apiKey,
+    model,
+    messages: [
+      { role: 'system', content: args.system },
+      { role: 'user', content: args.prompt },
+    ],
+    temperature: args.temperature,
+    maxTokens: args.maxTokens,
+  });
+  return res.content;
+}
