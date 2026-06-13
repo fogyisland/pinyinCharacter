@@ -10,7 +10,7 @@ interface Props {
 export function DailyCharBanner({ char, pinyin, meaning, date }: Props) {
   return (
     <Link
-      href={`/rare-chars/${encodeURIComponent(char)}`}
+      href={`/stories/${encodeURIComponent(char)}`}
       className="block rounded-lg border-2 border-seal/20 bg-seal/10 p-6 transition hover:border-seal"
     >
       <div className="text-xs font-medium uppercase tracking-wide text-seal">
