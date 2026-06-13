@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "dict:build": "tsx scripts/build-dict.ts",
     "poetry:build": "tsx scripts/build-poems.ts",
+    "radicals:build": "tsx scripts/build-radicals.ts",
     "sutras:build": "tsx scripts/build-sutras.ts"
   },
   "dependencies": {
@@ -37,6 +38,8 @@
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitest/ui": "^2.1.5",
+    "cnchar": "^3.2.6",
+    "cnchar-radical": "^3.2.6",
     "happy-dom": "^20.10.2",
     "postcss": "^8.4.49",
     "sharp": "0.33.5",
