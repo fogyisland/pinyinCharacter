@@ -32,12 +32,22 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
       // CJK punctuation + fullwidth) before sending.
       const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
       const chars = Array.from(chunk.content.join('')).filter(ch => SINGLE_CJK.test(ch));
+      // Schema max=500 chars per worksheet. Split long sutra chunks into
+      // multiple worksheets titled "《XXX》Y (1/3)" etc, so users can save
+      // the whole chunk instead of getting 400 "Invalid input".
+      const SLICE = 500;
+      const slices: string[][] = [];
+      for (let i = 0; i < chars.length; i += SLICE) {
+        slices.push(chars.slice(i, i + SLICE));
+      }
+      const baseTitle = `《${title}》${chunk.label}`;
+      const fullTitle = slices.length > 1 ? `${baseTitle} (1/${slices.length})` : baseTitle;
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: `《${title}》${chunk.label}`,
-          content: chars,
+          title: fullTitle,
+          content: slices[0],
           cellStyle: 'brush',
         }),
       });
@@ -51,7 +61,20 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
         setHint(data.error?.message ?? '保存失败');
         return;
       }
-      router.push(`/worksheet/${data.data.id}`);
+      // Save remaining slices sequentially in the background
+      const firstId = data.data.id as number;
+      for (let i = 1; i < slices.length; i++) {
+        await fetch('/api/worksheets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: `${baseTitle} (${i + 1}/${slices.length})`,
+            content: slices[i],
+            cellStyle: 'brush',
+          }),
+        });
+      }
+      router.push(`/worksheet/${firstId}`);
     } catch (err) {
       setHint((err as Error).message);
     } finally {

@@ -58,13 +58,18 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
 }
 
 function parseJsonArray<T>(s: any, fallback: T): T {
-  if (typeof s !== 'string') return fallback;
-  try {
-    const v = JSON.parse(s);
-    return Array.isArray(v) ? (v as T) : fallback;
-  } catch {
-    return fallback;
+  // mysql2 by default auto-parses JSON columns to JS values, so `s` may
+  // already be the parsed array (not a string). Accept both shapes.
+  if (Array.isArray(s)) return s as T;
+  if (typeof s === 'string') {
+    try {
+      const v = JSON.parse(s);
+      return Array.isArray(v) ? (v as T) : fallback;
+    } catch {
+      return fallback;
+    }
   }
+  return fallback;
 }
 
 function mapDetailRow(r: any): PoemDetail {

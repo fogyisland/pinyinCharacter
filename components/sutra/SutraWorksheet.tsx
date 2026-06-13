@@ -7,7 +7,7 @@ interface Props {
 
 export function SutraWorksheet({ chunk }: Props) {
   return (
-    <div className="space-y-5 print:space-y-3 max-w-3xl mx-auto">
+    <div className="worksheet-grid space-y-5 print:space-y-3 max-w-3xl mx-auto">
       {chunk.content.map((line, lineIdx) => (
         <div key={lineIdx} className="sutra-line flex flex-wrap items-end gap-2 justify-center">
           {Array.from(line).map((char, charIdx) => (

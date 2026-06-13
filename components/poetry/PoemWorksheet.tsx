@@ -7,7 +7,7 @@ interface Props {
 
 export function PoemWorksheet({ content, pinyin }: Props) {
   return (
-    <div className="space-y-6 print:space-y-4">
+    <div className="worksheet-grid space-y-6 print:space-y-4">
       {content.map((line, lineIdx) => (
         <div key={lineIdx} className="poem-line flex flex-wrap items-end gap-3 justify-center">
           {Array.from(line).map((char, charIdx) => (
