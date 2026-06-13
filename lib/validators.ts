@@ -59,3 +59,22 @@ export const gameRoundQuerySchema = z.object({
   count: z.coerce.number().int().min(1).max(8).default(4),
   seed: z.coerce.number().int().optional(),
 });
+
+export const charsListQuerySchema = z.object({
+  q: z.string().max(32).transform((s) => s.trim()).optional(),
+  letter: z.string().regex(/^[A-Z]$/).optional(),
+  radical: z.string().max(8).optional(),
+  level: z.coerce.number().int().min(1).max(3).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+});
+
+export const etymologyCharParamSchema = charParamSchema;
+
+export const adminGenerateEtymologySchema = z.object({
+  chars: z.array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s))).min(1).max(100),
+});
+
+export const adminCronConfigSchema = z.object({
+  enabled: z.boolean(),
+  perDay: z.number().int().min(1).max(1000),
+});
