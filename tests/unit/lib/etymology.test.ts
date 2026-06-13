@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { getEtymology } from '@/lib/etymology';
+import { getEtymology, getAdjacentChars } from '@/lib/etymology';
 
 vi.mock('@/lib/db', () => ({
   getPool: vi.fn(),
@@ -53,5 +53,35 @@ describe('getEtymology', () => {
     const result = await getEtymology('龘');
     expect(result?.eraGlyphs[0].hasGlyph).toBe(false);
     expect(result?.eraGlyphs[4].hasGlyph).toBe(true);
+  });
+});
+
+describe('getAdjacentChars', () => {
+  beforeEach(() => mockedQuery.mockReset());
+
+  it('returns prev and next by unicode codepoint order', async () => {
+    mockedQuery.mockResolvedValueOnce([[{ char: '丁' }]]); // prev
+    mockedQuery.mockResolvedValueOnce([[{ char: '七' }]]); // next
+
+    const result = await getAdjacentChars('一');
+    expect(result.prev).toBe('丁');
+    expect(result.next).toBe('七');
+  });
+
+  it('returns null prev when char is first', async () => {
+    mockedQuery.mockResolvedValueOnce([[]]);
+    mockedQuery.mockResolvedValueOnce([[{ char: '万' }]]);
+
+    const result = await getAdjacentChars('一');
+    expect(result.prev).toBeNull();
+    expect(result.next).toBe('万');
+  });
+
+  it('returns null next when char is last', async () => {
+    mockedQuery.mockResolvedValueOnce([[{ char: '万' }]]);
+    mockedQuery.mockResolvedValueOnce([[]]);
+
+    const result = await getAdjacentChars('蠼');
+    expect(result.next).toBeNull();
   });
 });

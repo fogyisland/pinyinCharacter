@@ -1,5 +1,10 @@
 import { getPool } from './db';
-import { ERAS, type Etymology, type EraGlyph } from './etymology-types';
+import {
+  ERAS,
+  type Etymology,
+  type EtymologyAdjacent,
+  type EraGlyph,
+} from './etymology-types';
 
 export async function getEtymology(char: string): Promise<Etymology | null> {
   const pool = getPool();
@@ -29,5 +34,30 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
     story: r.story,
     generatedBy: r.generated_by,
     generatedAt: r.generated_at ? r.generated_at.toISOString() : null,
+  };
+}
+
+export async function getAdjacentChars(char: string): Promise<EtymologyAdjacent> {
+  const pool = getPool();
+  // prev: char with smaller unicode_codepoint, closest
+  const [prevRows] = await pool.query<any[]>(
+    `SELECT c.\`char\`
+     FROM chars c
+     WHERE c.unicode_codepoint < (SELECT unicode_codepoint FROM chars WHERE \`char\` = ?)
+     ORDER BY c.unicode_codepoint DESC
+     LIMIT 1`,
+    [char]
+  );
+  const [nextRows] = await pool.query<any[]>(
+    `SELECT c.\`char\`
+     FROM chars c
+     WHERE c.unicode_codepoint > (SELECT unicode_codepoint FROM chars WHERE \`char\` = ?)
+     ORDER BY c.unicode_codepoint ASC
+     LIMIT 1`,
+    [char]
+  );
+  return {
+    prev: prevRows[0]?.char ?? null,
+    next: nextRows[0]?.char ?? null,
   };
 }
