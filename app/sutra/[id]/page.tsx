@@ -6,7 +6,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { SutraMeta } from '@/components/sutra/SutraMeta';
-import { SutraWorksheet } from '@/components/sutra/SutraWorksheet';
+import { SutraTextView } from '@/components/sutra/SutraTextView';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
@@ -48,7 +48,7 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
             <SutraChunkPickerClient sutraId={sutra.id} chunks={sutra.chunks as SutraChunk[]} activeId={activeChunkId} />
           </Suspense>
           <div className="flex-1 card-paper p-5 sm:p-8">
-            <SutraWorksheet chunk={activeChunk} />
+            <SutraTextView chunk={activeChunk} />
           </div>
         </div>
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">

@@ -21,7 +21,7 @@ export function WorksheetHistoryList({ worksheets }: Props) {
               {w.title}
             </Link>
             <div className="text-sm text-ink-faint">
-              {w.content.length} 字 · {w.cellStyle === 'brush' ? '毛笔格' : '田字格'} ·{' '}
+              {w.content.length} 字 · {w.cellStyle === 'brush' ? '毛笔格' : w.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
               {new Date(w.createdAt).toLocaleString()}
             </div>
           </div>

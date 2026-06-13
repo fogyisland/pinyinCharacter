@@ -1,4 +1,4 @@
-export type CellStyle = 'brush' | 'square';
+export type CellStyle = 'brush' | 'square' | 'pen';
 
 export interface Cell {
   char: string;
@@ -49,8 +49,8 @@ export function validateWorksheetInput(input: {
   if (!input.content.every((c) => typeof c === 'string' && SINGLE_CJK.test(c))) {
     return { ok: false, error: 'content must be CJK chars' };
   }
-  if (input.cellStyle !== 'brush' && input.cellStyle !== 'square') {
-    return { ok: false, error: 'cellStyle must be brush or square' };
+  if (input.cellStyle !== 'brush' && input.cellStyle !== 'square' && input.cellStyle !== 'pen') {
+    return { ok: false, error: 'cellStyle must be brush, square, or pen' };
   }
   return {
     ok: true,

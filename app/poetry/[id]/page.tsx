@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { PoemMeta } from '@/components/poetry/PoemMeta';
-import { PoemWorksheet } from '@/components/poetry/PoemWorksheet';
+import { PoemTextView } from '@/components/poetry/PoemTextView';
 import { AppreciationBlock } from '@/components/poetry/AppreciationBlock';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
@@ -34,7 +34,7 @@ export default async function PoemDetailPage({ params }: Props) {
           <PoemMeta title={poem.title} author={poem.author} dynasty={poem.dynasty} form={poem.form} />
         </div>
         <div className="card-paper p-5 sm:p-8">
-          <PoemWorksheet content={poem.content} pinyin={poem.pinyin} />
+          <PoemTextView content={poem.content} />
         </div>
         {poem.appreciation && (
           <div className="worksheet-no-print">

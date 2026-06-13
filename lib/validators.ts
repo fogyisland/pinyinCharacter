@@ -31,7 +31,7 @@ export const saveWorksheetSchema = z.object({
     .array(z.string().regex(SINGLE_CJK))
     .min(1)
     .max(500),
-  cellStyle: z.enum(['brush', 'square']),
+  cellStyle: z.enum(['brush', 'square', 'pen']),
 });
 
 export const poemListQuerySchema = z.object({

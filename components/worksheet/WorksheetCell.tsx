@@ -14,15 +14,15 @@ export function WorksheetCell({ char, style, size = 80 }: Props) {
       <rect x={2} y={2} width={96} height={96} fill="none" stroke={stroke} strokeWidth={1} />
       {/* common: vertical center */}
       <line x1={50} y1={2} x2={50} y2={98} stroke={stroke} strokeWidth={0.5} />
-      {/* brush: two diagonals; square: horizontal center */}
+      {/* brush: two diagonals; square: horizontal center; pen: no inner lines (clean box) */}
       {style === 'brush' ? (
         <>
           <line x1={2} y1={2} x2={98} y2={98} stroke={stroke} strokeWidth={0.5} />
           <line x1={98} y1={2} x2={2} y2={98} stroke={stroke} strokeWidth={0.5} />
         </>
-      ) : (
+      ) : style === 'square' ? (
         <line x1={2} y1={50} x2={98} y2={50} stroke={stroke} strokeWidth={0.5} />
-      )}
+      ) : null}
       {/* the char (faint guide) — 用 Noto Serif SC (SIL OFL) 避免 Times New Roman 侵权 */}
       <text
         x={50}

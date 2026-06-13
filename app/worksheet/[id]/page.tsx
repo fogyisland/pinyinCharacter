@@ -39,7 +39,7 @@ export default async function WorksheetDetailPage({ params }: Props) {
           </div>
         </div>
         <p className="worksheet-no-print mb-4 text-sm text-ink-faint">
-          {ws.content.length} 字 · {ws.cellStyle === 'brush' ? '毛笔格' : '田字格'} ·{' '}
+          {ws.content.length} 字 · {ws.cellStyle === 'brush' ? '毛笔格' : ws.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
           {new Date(ws.createdAt).toLocaleString()}
         </p>
         <div className="card-paper p-5">

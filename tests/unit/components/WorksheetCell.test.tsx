@@ -21,6 +21,13 @@ describe('WorksheetCell', () => {
     expect(lines.length).toBe(2);
   });
 
+  it('pen style has only vertical center, no diagonals or horizontal', () => {
+    const { container } = render(<WorksheetCell char="你" style="pen" />);
+    const lines = container.querySelectorAll('line');
+    // Pen: 1 vertical center = 1 <line> element (clean box, no grid)
+    expect(lines.length).toBe(1);
+  });
+
   it('brush has strictly more lines than square (proves diagonals are present)', () => {
     const brush = render(<WorksheetCell char="你" style="brush" />);
     const square = render(<WorksheetCell char="你" style="square" />);

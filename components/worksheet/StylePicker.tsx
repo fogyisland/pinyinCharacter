@@ -30,6 +30,16 @@ export function StylePicker({ value, onChange }: Props) {
         />
         <span>田字格</span>
       </label>
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="radio"
+          name="cellStyle"
+          value="pen"
+          checked={value === 'pen'}
+          onChange={() => onChange('pen')}
+        />
+        <span>钢笔格</span>
+      </label>
     </div>
   );
 }
