@@ -1,5 +1,5 @@
 import { getPool } from './db';
-import { llmChat, LLMError } from './llm';
+import { llmChat } from './llm';
 import { getConfig } from './config';
 import { withAiLogging } from './ai-calls';
 

@@ -64,7 +64,6 @@ export interface WithAiLoggingArgs {
 
 export async function withAiLogging<T>(args: WithAiLoggingArgs, fn: () => Promise<T>): Promise<T> {
   const start = Date.now();
-  let model = 'unknown';
   let status: AiCallStatus = 'ok';
   let error: string | undefined;
   let result: T;
