@@ -111,6 +111,16 @@ pnpm radicals:build        # 重新生成 data/radicals.json
 
 部首数据来自 `data/radicals.json` (由 `pnpm radicals:build` 从 `cnchar` + `cnchar-radical` npm 包生成, ~6920 简体汉字)。声调数据来自 pinyin-pro (内置)。
 
+## 读故事 (/stories)（v1 / Plan G）
+
+单字翻页阅读器, 从 `rare_chars` 表里随机抽一个有 AI 生成故事的字阅读. 支持:
+- 键盘快捷键 (→ 下一个 / ← 上一个 / L 朗读 / Esc 停止)
+- TTS 朗读 (Web Speech API)
+- localStorage 进度 ("已读 X 字" 持久化)
+- "加字帖" 快捷按钮
+
+入口: `/rare-chars` 页面的 "今日一字" banner (没有顶部 nav 链接 — 故意隐藏, 保持首页干净).
+
 ## 环境变量
 
 复制 `.env.example` 为 `.env` 并填入：
@@ -135,3 +145,4 @@ pnpm radicals:build        # 重新生成 data/radicals.json
 - Plan D: 罕见字库 + 字帖生成器 + 拼音·字 识字游戏
 - Plan H: admin 平台扩展（统一日志 / 下载 / AI 配置）
 - Plan I: 第二款识字游戏 — 声调 + 部首匹配 (复用 cnchar-radical 数据)
+- Plan G: 读故事 (/stories) — 单字翻页阅读器, TTS + localStorage 进度
