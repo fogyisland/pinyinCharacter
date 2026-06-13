@@ -25,6 +25,27 @@ const DDL = [
      KEY idx_stroke (stroke_count)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
+  `CREATE TABLE IF NOT EXISTS char_etymology (
+     \`char\` VARCHAR(4) NOT NULL,
+     era_jiaguwen_font VARCHAR(32) NOT NULL DEFAULT 'YinQiJiaGuWen',
+     era_jiaguwen_has TINYINT(1) NOT NULL DEFAULT 0,
+     era_jinwen_font VARCHAR(32) NOT NULL DEFAULT 'HanDianJinWen',
+     era_jinwen_has TINYINT(1) NOT NULL DEFAULT 0,
+     era_xiaozhuan_font VARCHAR(32) NOT NULL DEFAULT 'QuanZiKuShuoWen',
+     era_xiaozhuan_has TINYINT(1) NOT NULL DEFAULT 0,
+     era_lishu_font VARCHAR(32) NOT NULL DEFAULT 'QuanZiKuLiDing',
+     era_lishu_has TINYINT(1) NOT NULL DEFAULT 0,
+     era_kaishu_font VARCHAR(32) NOT NULL DEFAULT 'KaiTi',
+     era_kaishu_has TINYINT(1) NOT NULL DEFAULT 1,
+     story TEXT NULL,
+     generated_by VARCHAR(64) NULL,
+     generated_at TIMESTAMP NULL,
+     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     PRIMARY KEY (\`char\`),
+     KEY idx_generated (generated_at)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
   `CREATE TABLE IF NOT EXISTS users (
      id BIGINT NOT NULL AUTO_INCREMENT,
      username VARCHAR(32) NOT NULL,
