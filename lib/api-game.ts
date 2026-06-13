@@ -1,17 +1,6 @@
-import type { Tone } from './pinyin-tone';
+import type { GameRound } from './game-round-types';
 
-export interface RoundChar {
-  char: string;
-  pinyin: string;
-  meaning: string;
-}
-
-export interface GameRound {
-  chars: RoundChar[];
-  charToAnswer: Record<string, { tone: Tone; radical: string }>;
-  toneChoices: Tone[];
-  radicalChoices: string[];
-}
+export type { GameRound, RoundChar } from './game-round-types';
 
 export async function fetchGameRound(count = 4, seed?: number): Promise<GameRound> {
   const params = new URLSearchParams();

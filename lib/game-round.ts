@@ -1,19 +1,9 @@
 import { listChars } from './rare-chars';
 import { getRadical } from './radical';
 import { toneFromPinyin, type Tone } from './pinyin-tone';
+import type { RoundChar, GameRound } from './game-round-types';
 
-export interface RoundChar {
-  char: string;
-  pinyin: string;
-  meaning: string;
-}
-
-export interface RoundPayload {
-  chars: RoundChar[];
-  charToAnswer: Record<string, { tone: Tone; radical: string }>;
-  toneChoices: Tone[];
-  radicalChoices: string[];
-}
+export type { RoundChar, GameRound } from './game-round-types';
 
 function seededShuffle<T>(arr: T[], seed: number): T[] {
   const a = [...arr];
@@ -26,7 +16,7 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
   return a;
 }
 
-export async function buildRound(count: number, seed?: number): Promise<RoundPayload | null> {
+export async function buildRound(count: number, seed?: number): Promise<GameRound | null> {
   // Pull 1 page (80) of chars with meaning
   const page = await listChars({ minMeaning: true, page: 1 });
   const withAll = page.chars.filter((c) => {
@@ -39,7 +29,7 @@ export async function buildRound(count: number, seed?: number): Promise<RoundPay
   const shuffled = seededShuffle(withAll, actualSeed);
   const picked = shuffled.slice(0, count);
 
-  const charToAnswer: RoundPayload['charToAnswer'] = {};
+  const charToAnswer: GameRound['charToAnswer'] = {};
   const correctTones = new Set<Tone>();
   const correctRadicals = new Set<string>();
   for (const c of picked) {
