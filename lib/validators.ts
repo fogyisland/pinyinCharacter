@@ -54,3 +54,8 @@ export const sutraListQuerySchema = z.object({
 export const sutraIdParamSchema = z.object({
   id: z.coerce.number().int().min(1),
 });
+
+export const gameRoundQuerySchema = z.object({
+  count: z.coerce.number().int().min(1).max(8).default(4),
+  seed: z.coerce.number().int().optional(),
+});

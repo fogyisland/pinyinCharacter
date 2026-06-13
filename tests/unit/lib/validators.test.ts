@@ -6,6 +6,7 @@ import {
   saveWorksheetSchema,
   poemListQuerySchema,
   poemIdParamSchema,
+  gameRoundQuerySchema,
 } from '@/lib/validators';
 
 describe('validators', () => {
@@ -141,5 +142,29 @@ describe('validators', () => {
     it('rejects non-positive', () => {
       expect(() => poemIdParamSchema.parse({ id: '0' })).toThrow();
     });
+  });
+});
+
+describe('gameRoundQuerySchema', () => {
+  it('defaults count to 4 when missing', () => {
+    const r = gameRoundQuerySchema.parse({});
+    expect(r.count).toBe(4);
+  });
+  it('accepts count 1-8', () => {
+    for (const n of [1, 2, 4, 8]) {
+      expect(gameRoundQuerySchema.parse({ count: String(n) }).count).toBe(n);
+    }
+  });
+  it('rejects count 0 and count 9', () => {
+    expect(() => gameRoundQuerySchema.parse({ count: '0' })).toThrow();
+    expect(() => gameRoundQuerySchema.parse({ count: '9' })).toThrow();
+  });
+  it('parses seed as int when present', () => {
+    const r = gameRoundQuerySchema.parse({ seed: '42' });
+    expect(r.seed).toBe(42);
+  });
+  it('seed is optional', () => {
+    const r = gameRoundQuerySchema.parse({});
+    expect(r.seed).toBeUndefined();
   });
 });
