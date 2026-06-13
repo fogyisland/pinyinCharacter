@@ -31,3 +31,7 @@ export function forbidden(code = 'forbidden', message = 'forbidden') {
 export function unauthorized(code = 'unauthorized', message = 'unauthorized') {
   return NextResponse.json({ ok: false, error: { code, message } }, { status: 401 });
 }
+
+export function serviceUnavailable(code: string, message: string) {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 503 });
+}
