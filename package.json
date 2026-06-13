@@ -12,7 +12,8 @@
     "dict:build": "tsx scripts/build-dict.ts",
     "poetry:build": "tsx scripts/build-poems.ts",
     "radicals:build": "tsx scripts/build-radicals.ts",
-    "sutras:build": "tsx scripts/build-sutras.ts"
+    "sutras:build": "tsx scripts/build-sutras.ts",
+    "fonts:download": "tsx scripts/download-ancient-fonts.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
