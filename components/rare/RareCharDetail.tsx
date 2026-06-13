@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { RareChar } from '@/lib/rare-chars';
+import { PrintButton } from '@/components/common/PrintButton';
 
 interface Props {
   data: RareChar;
@@ -11,6 +12,9 @@ export function RareCharDetail({ data }: Props) {
       <header className="text-center">
         <div className="text-9xl font-bold text-ink">{data.char}</div>
         <div className="mt-4 text-3xl text-ink-soft">{data.pinyin}</div>
+        <div className="worksheet-no-print mt-4 flex justify-center">
+          <PrintButton endpoint={`/api/rare-chars/${encodeURIComponent(data.char)}/print`} label="打印本页" />
+        </div>
       </header>
 
       <section className="mt-8 rounded-lg bg-paper-deep p-6">

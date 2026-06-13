@@ -8,7 +8,7 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { SutraMeta } from '@/components/sutra/SutraMeta';
 import { SutraWorksheet } from '@/components/sutra/SutraWorksheet';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
-import { PrintButton } from '@/app/poetry/[id]/PrintButton';
+import { PrintButton } from '@/components/common/PrintButton';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
 
 export const dynamic = 'force-dynamic';
@@ -52,7 +52,7 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
           </div>
         </div>
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">
-          <PrintButton />
+          <PrintButton endpoint={`/api/sutra/${sutra.slug}/print`} sourceId={`${sutra.slug}#${activeChunkId}`} />
           <SaveAsWorksheetButton id={sutra.id} title={sutra.title} chunk={activeChunk} />
         </div>
       </PageContainer>

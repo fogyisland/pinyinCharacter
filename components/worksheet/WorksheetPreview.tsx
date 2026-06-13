@@ -3,6 +3,7 @@
 import type { CellStyle } from '@/lib/worksheet-types';
 import { generateLayout } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
+import { PrintButton } from '@/components/common/PrintButton';
 
 interface BaseProps {
   title?: string;
@@ -15,6 +16,7 @@ interface FormProps extends BaseProps {
   onBack: () => void;
   onSave: () => void;
   saving: boolean;
+  savedId?: number | null;
 }
 
 type Props = BaseProps | FormProps;
@@ -35,13 +37,17 @@ export function WorksheetPreview(props: Props) {
             ← 返回修改
           </button>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => window.print()}
-              className="rounded border px-3 py-1 hover:bg-paper-deep"
-            >
-              打印
-            </button>
+            {props.savedId ? (
+              <PrintButton endpoint={`/api/worksheets/${props.savedId}/print`} label="打印" />
+            ) : (
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="rounded border px-3 py-1 hover:bg-paper-deep"
+              >
+                打印
+              </button>
+            )}
             <button
               type="button"
               onClick={props.onSave}

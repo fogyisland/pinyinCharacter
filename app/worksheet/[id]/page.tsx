@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getWorksheet } from '@/lib/worksheet';
 import { WorksheetPreview } from '@/components/worksheet/WorksheetPreview';
 import { DeleteWorksheetButton } from '@/components/worksheet/DeleteWorksheetButton';
-import { PrintButton } from './PrintButton';
+import { PrintButton } from '@/components/common/PrintButton';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
@@ -34,7 +34,7 @@ export default async function WorksheetDetailPage({ params }: Props) {
         <div className="worksheet-no-print mb-4 flex items-end justify-between gap-3">
           <SectionTitle>{ws.title}</SectionTitle>
           <div className="flex shrink-0 gap-2">
-            <PrintButton />
+            <PrintButton endpoint={`/api/worksheets/${ws.id}/print`} />
             <DeleteWorksheetButton id={ws.id} />
           </div>
         </div>

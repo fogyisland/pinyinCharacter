@@ -27,6 +27,7 @@ export function WorksheetGenerator() {
   const [saving, setSaving] = useState(false);
   const [authHint, setAuthHint] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [savedId, setSavedId] = useState<number | null>(null);
 
   useEffect(() => {
     if (prefill) {
@@ -66,6 +67,7 @@ export function WorksheetGenerator() {
       });
       const data = await res.json();
       if (data.ok) {
+        setSavedId(data.data.id);
         router.push(`/worksheet/${data.data.id}`);
       } else if (res.status === 401 || data.error?.code === 'unauthenticated') {
         openLogin();
@@ -88,6 +90,7 @@ export function WorksheetGenerator() {
         onBack={() => setView('form')}
         onSave={handleSave}
         saving={saving}
+        savedId={savedId}
       />
     );
   }
