@@ -26,6 +26,8 @@ export async function truncateAll(): Promise<void> {
   await pool.query('TRUNCATE TABLE worksheets');
   await pool.query('TRUNCATE TABLE poems');
   await pool.query('TRUNCATE TABLE rare_chars');
+  await pool.query('TRUNCATE TABLE char_etymology');
+  await pool.query('TRUNCATE TABLE chars');
   await pool.query('TRUNCATE TABLE history');
   await pool.query('TRUNCATE TABLE password_resets');
   await pool.query('TRUNCATE TABLE audit_log');
