@@ -5,6 +5,26 @@
 import { getPool, closePool } from '../lib/db';
 
 const DDL = [
+  `CREATE TABLE IF NOT EXISTS chars (
+     \`char\` VARCHAR(4) NOT NULL,
+     level TINYINT NOT NULL,
+     pinyin VARCHAR(64) NOT NULL DEFAULT '',
+     pinyin_alt TEXT NULL,
+     radical VARCHAR(8) NOT NULL DEFAULT '',
+     stroke_count SMALLINT NOT NULL DEFAULT 0,
+     meaning_zh TEXT NULL,
+     meaning_en TEXT NULL,
+     unicode_codepoint VARCHAR(8) NOT NULL,
+     variants TEXT NULL,
+     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     PRIMARY KEY (\`char\`),
+     KEY idx_level (level),
+     KEY idx_radical (radical),
+     KEY idx_pinyin (pinyin),
+     KEY idx_stroke (stroke_count)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
   `CREATE TABLE IF NOT EXISTS users (
      id BIGINT NOT NULL AUTO_INCREMENT,
      username VARCHAR(32) NOT NULL,
