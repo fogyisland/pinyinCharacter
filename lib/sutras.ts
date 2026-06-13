@@ -104,7 +104,10 @@ export async function getSutra(id: number): Promise<SutraDetail | null> {
   const row = rows[0] as RawSutraRow | undefined;
   if (!row) return null;
 
-  const chunks = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
+  const rawChunks = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
+  // Persisted chunks may lack `id`; assign a 1-based sequential id so the
+  // SutraChunkPicker can use it as a stable React key.
+  const chunks: SutraChunk[] = rawChunks.map((c, i) => ({ ...c, id: c.id ?? i + 1 }));
   return {
     id: Number(row.id),
     title: row.title,
