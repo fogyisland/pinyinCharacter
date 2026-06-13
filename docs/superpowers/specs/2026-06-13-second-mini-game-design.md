@@ -58,8 +58,8 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 ## UI/UX
 
 `/game` 页加顶部 tab 切换 (使用现有 lucide-react icon)：
+- 「声调·部首」— 新 ToneRadicalGame (default)
 - 「拼音·字」— 现有 DragMatchGame
-- 「声调·部首」— 新 ToneRadicalGame
 
 **ToneRadicalGame 单局流程**：
 1. **加载** — 调 API 拿 4 chars
@@ -125,7 +125,7 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 - `pnpm tsc --noEmit` — 无错
 - `pnpm build` — 通过
 - 浏览器手测：
-  1. /game 默认 tab 仍是 DragMatchGame，可玩
+  1. /game 默认 tab 是 声调·部首，可玩
   2. 切到「声调·部首」tab，加载 4 chars
   3. Round 1 拖错声调 → 错误数 +1
   4. Round 1 全对 → 1s 后进 Round 2
@@ -154,6 +154,6 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 
 ## Open Questions (for user)
 
-1. **数据源** — npm `cjk-radicals` 包 (依赖 v0.4.0, ~10k chars) 是否可以接受？还是希望我手抓 Unihan 自建？
-2. **Round 数量** — 4 chars (8 round 总共 8 题) 是否合适，还是想 6 chars (12 题, ~2 倍时间)？
-3. **Tab 默认顺序** — 新游戏放第二个 tab，还是想放第一个 (成为默认)？
+1. **数据源** — ✅ npm `cjk-radicals` 包，bundled JSON
+2. **Round 数量** — ✅ 4 chars
+3. **Tab 默认顺序** — ✅ 声调·部首 作为默认 tab
