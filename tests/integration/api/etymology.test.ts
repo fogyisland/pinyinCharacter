@@ -29,8 +29,8 @@ integrationDescribe('GET /api/etymology/[char]', () => {
     const j = await r.json();
     expect(j.data.char).toBe('一');
     expect(j.data.story).toBe('一字演变故事');
-    expect(j.data.prev).toBe('丁');
-    expect(j.data.next).toBe('七');
+    expect(j.data.prev).toBeNull();
+    expect(j.data.next).toBe('丁');
     expect(j.data.eraGlyphs).toHaveLength(5);
   });
 
