@@ -124,11 +124,29 @@ function linePinyin(line: string): string[] {
 }
 
 function withPinyin(c: RawChunk) {
+  // mysql2 binary protocol mojibakes 4-byte UTF-8 (supp-plane) chars on
+  // parameter binding (see memory: mysql2-supp-plane-bug). Drop them at
+  // write time so all downstream consumers get clean text. Same for
+  // U+FFFD replacement chars and lone surrogate halves, in case the XML
+  // parser already normalised them.
+  const content = c.content.map(toBmp);
   return {
     label: c.label,
-    content: c.content,
-    pinyin: c.content.map(linePinyin),
+    content,
+    pinyin: content.map(linePinyin),
   };
+}
+
+function toBmp(s: string): string {
+  return Array.from(s)
+    .filter((ch) => {
+      const code = ch.codePointAt(0)!;
+      if (ch.length > 1) return false;             // 4-byte UTF-8 (surrogate pair)
+      if (code >= 0xD800 && code <= 0xDFFF) return false; // surrogate half
+      if (code === 0xFFFD) return false;                  // replacement char
+      return true;
+    })
+    .join('');
 }
 
 /**
