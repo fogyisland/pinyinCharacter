@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { listChars } from '@/lib/chars';
+import { listChars, getChar, getCharDetail } from '@/lib/chars';
 
 vi.mock('@/lib/db', () => ({
   getPool: vi.fn(),
@@ -67,5 +67,46 @@ describe('listChars', () => {
 
     expect(result.chars).toEqual([]);
     expect(result.total).toBe(0);
+  });
+});
+
+describe('getChar', () => {
+  beforeEach(() => mockedQuery.mockReset());
+
+  it('returns single char by string', async () => {
+    mockedQuery.mockResolvedValueOnce([[{ char: '一', level: 1, pinyin: 'yī', pinyin_alt: null, radical: '一', stroke_count: 1, meaning_zh: '数目字', meaning_en: 'one', unicode_codepoint: 'U+4E00', variants: null }]]);
+    const result = await getChar('一');
+    expect(result?.char).toBe('一');
+    expect(result?.strokeCount).toBe(1);
+  });
+
+  it('returns null when char not found', async () => {
+    mockedQuery.mockResolvedValueOnce([[]]);
+    const result = await getChar('X');
+    expect(result).toBeNull();
+  });
+});
+
+describe('getCharDetail', () => {
+  beforeEach(() => mockedQuery.mockReset());
+
+  it('returns char + related by radical + related by pinyin', async () => {
+    // getChar query
+    mockedQuery.mockResolvedValueOnce([[{ char: '一', level: 1, pinyin: 'yī', pinyin_alt: null, radical: '一', stroke_count: 1, meaning_zh: null, meaning_en: null, unicode_codepoint: 'U+4E00', variants: null }]]);
+    // relatedByRadical (limit 8)
+    mockedQuery.mockResolvedValueOnce([[{ char: '丁', level: 1, pinyin: 'dīng', pinyin_alt: null, radical: '一', stroke_count: 2, meaning_zh: null, meaning_en: null, unicode_codepoint: 'U+4E01', variants: null }]]);
+    // relatedByPinyin (limit 8)
+    mockedQuery.mockResolvedValueOnce([[{ char: '衣', level: 1, pinyin: 'yī', pinyin_alt: null, radical: '衤', stroke_count: 6, meaning_zh: null, meaning_en: null, unicode_codepoint: 'U+8863', variants: null }]]);
+
+    const result = await getCharDetail('一');
+    expect(result?.char).toBe('一');
+    expect(result?.relatedByRadical).toHaveLength(1);
+    expect(result?.relatedByPinyin).toHaveLength(1);
+  });
+
+  it('returns null when char not found', async () => {
+    mockedQuery.mockResolvedValueOnce([[]]);
+    const result = await getCharDetail('X');
+    expect(result).toBeNull();
   });
 });

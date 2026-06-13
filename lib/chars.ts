@@ -1,7 +1,8 @@
 import { getPool } from './db';
-import type { Char, CharListResult } from './chars-types';
+import type { Char, CharListResult, CharWithRelated } from './chars-types';
 
 const PAGE_SIZE = 80;
+const RELATED_LIMIT = 8;
 
 export interface ListCharsOpts {
   q?: string;
@@ -72,5 +73,44 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
     total: countRows[0].n,
     page,
     pageSize: PAGE_SIZE,
+  };
+}
+
+export async function getChar(char: string): Promise<Char | null> {
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT \`char\`, level, pinyin, pinyin_alt, radical, stroke_count, meaning_zh, meaning_en, unicode_codepoint, variants
+     FROM chars
+     WHERE \`char\` = ?
+     LIMIT 1`,
+    [char]
+  );
+  return rows.length > 0 ? mapRow(rows[0]) : null;
+}
+
+export async function getCharDetail(char: string): Promise<CharWithRelated | null> {
+  const base = await getChar(char);
+  if (!base) return null;
+  const pool = getPool();
+  const [radicalRows] = await pool.query<any[]>(
+    `SELECT \`char\`, level, pinyin, pinyin_alt, radical, stroke_count, meaning_zh, meaning_en, unicode_codepoint, variants
+     FROM chars
+     WHERE radical = ? AND \`char\` != ?
+     ORDER BY stroke_count
+     LIMIT ?`,
+    [base.radical, char, RELATED_LIMIT]
+  );
+  const [pinyinRows] = await pool.query<any[]>(
+    `SELECT \`char\`, level, pinyin, pinyin_alt, radical, stroke_count, meaning_zh, meaning_en, unicode_codepoint, variants
+     FROM chars
+     WHERE pinyin = ? AND \`char\` != ?
+     ORDER BY \`char\`
+     LIMIT ?`,
+    [base.pinyin, char, RELATED_LIMIT]
+  );
+  return {
+    ...base,
+    relatedByRadical: radicalRows.map(mapRow),
+    relatedByPinyin: pinyinRows.map(mapRow),
   };
 }
