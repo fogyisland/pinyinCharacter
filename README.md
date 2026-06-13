@@ -58,6 +58,32 @@ pnpm test:watch       # 监听
 - `MAIL_TRANSPORT=console`（默认）：邮件打印到 server console，无需 SMTP
 - `MAIL_TRANSPORT=smtp`：启用真实 SMTP，需填 `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`
 
+## 管理员后台扩展（v1 / Plan H）
+
+在 Plan B+ 的 `/admin/users`、`/admin/audit`、`/admin/stats` 基础上新增:
+
+- **`/admin/logs`** — 统一日志查看器 (audit + downloads + AI calls，可按 source / 用户 / IP / 时间筛选)
+- **`/admin/downloads`** — 用户生成字帖 / 打印 / 下载历史 (worksheet / poem / sutra / rare-char 分类)
+- **`/admin/ai`** — AI 调用记录 + 可编辑配置 (model, rate_limit_per_user_per_day, timeout_ms, temperature)
+
+新增管理员 API (需 `is_admin=1`):
+- `POST /api/admin/users/[id]/disable` — 软禁用用户
+- `POST /api/admin/users/[id]/enable` — 恢复
+- `GET  /api/admin/users/[id]/activity` — 最近 100 条用户事件
+- `GET  /api/admin/logs?source=&type=&userId=&ip=&from=&to=` — 统一日志查询
+- `GET  /api/admin/downloads?userId=&sourceType=&from=&to=` — 下载历史
+- `GET  /api/admin/downloads/stats?days=7` — 下载聚合
+- `GET  /api/admin/ai/calls?feature=&status=&userId=` — AI 调用记录
+- `GET  /api/admin/ai/stats?days=7` — AI 聚合
+- `GET  /api/admin/ai/config` — 当前 AI 配置
+- `PUT  /api/admin/ai/config` — 更新 AI 配置 (按字段校验)
+
+用户面 print 端点 (登录用户调用，记入 downloads 表):
+- `POST /api/worksheets/[id]/print`
+- `POST /api/poetry/[id]/print`
+- `POST /api/sutra/[slug]/print` — body: `{ sourceId: "{slug}#{chunkId}" }`
+- `POST /api/rare-chars/[char]/print`
+
 ## 罕见字库 + 字帖生成器 + 识字游戏（v1 / Plan D）
 
 - **罕见字库**:从《通用规范汉字表》三级导入 ~1600 字,每字含拼音、释义、故事(AI 生成)。`/rare-chars` 浏览 + 搜索,`/rare-chars/[char]` 详情。
@@ -95,3 +121,4 @@ pnpm tsx --env-file=.env scripts/show-stats.ts
 - Plan B：用户注册、历史、收藏、统计
 - Plan B+：密码找回 + 管理员后台（用户、审计、统计）+ SMTP 邮件
 - Plan C：简繁真实实现、响应式优化、E2E 测试
+- Plan H: admin 平台扩展（统一日志 / 下载 / AI 配置）
