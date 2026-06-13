@@ -27,7 +27,11 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
     setSaving(true);
     setHint(null);
     try {
-      const chars = chunk.content.join('').split('');
+      // chunk.content paragraphs are joined with '\n'; the API validator
+      // rejects non-CJK chars, so filter to SINGLE_CJK (CJK ideographs +
+      // CJK punctuation + fullwidth) before sending.
+      const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
+      const chars = Array.from(chunk.content.join('')).filter(ch => SINGLE_CJK.test(ch));
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
