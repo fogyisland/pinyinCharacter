@@ -13,7 +13,8 @@
     "poetry:build": "tsx scripts/build-poems.ts",
     "radicals:build": "tsx scripts/build-radicals.ts",
     "sutras:build": "tsx scripts/build-sutras.ts",
-    "fonts:download": "tsx scripts/download-ancient-fonts.ts"
+    "fonts:download": "tsx scripts/download-ancient-fonts.ts",
+    "chars:import": "tsx scripts/import-chars-data.ts"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
