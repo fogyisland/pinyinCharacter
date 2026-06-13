@@ -16,8 +16,9 @@
 
 ```bash
 pnpm install
-pnpm dict:build       # 生成词典文件
-pnpm dev              # http://localhost:3000
+pnpm dict:build         # 生成词典文件
+pnpm radicals:build     # 生成部首数据 (data/radicals.json, 一次性)
+pnpm dev                # http://localhost:4444
 ```
 
 ## 测试
@@ -88,7 +89,9 @@ pnpm test:watch       # 监听
 
 - **罕见字库**:从《通用规范汉字表》三级导入 ~1600 字,每字含拼音、释义、故事(AI 生成)。`/rare-chars` 浏览 + 搜索,`/rare-chars/[char]` 详情。
 - **字帖生成器**:`/worksheet` 支持自由输入或从字库选字,毛笔格/田字格两种样式,浏览器原生打印 → 另存为 PDF。登录用户可保存到 `/worksheet/history`。
-- **识字游戏**:`/game` 拖拽匹配字与拼音,8 张牌,计时计错配。
+- **识字游戏**:`/game` 提供两种玩法,拖拽匹配,计时计错配:
+  - **声调·部首** (默认,Plan I) — 给 4 个汉字,把对应的声调数字 (1-5) 和部首拖到字上
+  - **拼音·字** (Plan D) — 给 4 个汉字,把对应的拼音拖到字上
 
 ### 数据初始化（一次性）
 
@@ -99,6 +102,14 @@ pnpm tsx --env-file=.env scripts/show-stats.ts
 ```
 
 需要 `LLM_API_KEY` 和 `LLM_BASE_URL` 在 `.env` 中。脚本可重复运行(已填的释义/故事不覆盖)。
+
+### 部首数据生成（一次性）
+
+```bash
+pnpm radicals:build        # 重新生成 data/radicals.json
+```
+
+部首数据来自 `data/radicals.json` (由 `pnpm radicals:build` 从 `cnchar` + `cnchar-radical` npm 包生成, ~6920 简体汉字)。声调数据来自 pinyin-pro (内置)。
 
 ## 环境变量
 
@@ -121,4 +132,6 @@ pnpm tsx --env-file=.env scripts/show-stats.ts
 - Plan B：用户注册、历史、收藏、统计
 - Plan B+：密码找回 + 管理员后台（用户、审计、统计）+ SMTP 邮件
 - Plan C：简繁真实实现、响应式优化、E2E 测试
+- Plan D: 罕见字库 + 字帖生成器 + 拼音·字 识字游戏
 - Plan H: admin 平台扩展（统一日志 / 下载 / AI 配置）
+- Plan I: 第二款识字游戏 — 声调 + 部首匹配 (复用 cnchar-radical 数据)
