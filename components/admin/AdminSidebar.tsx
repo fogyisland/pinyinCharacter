@@ -4,6 +4,7 @@ import Link from 'next/link';
 const ITEMS = [
   { href: '/admin', label: '仪表盘', exact: true },
   { href: '/admin/users', label: '用户' },
+  { href: '/admin/chars', label: '字典 / 字源' },
   { href: '/admin/logs', label: '日志' },
   { href: '/admin/downloads', label: '下载' },
   { href: '/admin/ai', label: 'AI' },

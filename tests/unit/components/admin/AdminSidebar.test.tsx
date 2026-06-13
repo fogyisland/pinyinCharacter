@@ -5,10 +5,11 @@ import { describe, it, expect } from 'vitest';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 describe('AdminSidebar', () => {
-  it('renders 4 areas', () => {
+  it('renders all admin areas', () => {
     render(<AdminSidebar currentPath="/admin" />);
     expect(screen.getByText('仪表盘')).toBeInTheDocument();
     expect(screen.getByText('用户')).toBeInTheDocument();
+    expect(screen.getByText('字典 / 字源')).toBeInTheDocument();
     expect(screen.getByText('日志')).toBeInTheDocument();
     expect(screen.getByText('下载')).toBeInTheDocument();
     expect(screen.getByText('AI')).toBeInTheDocument();
