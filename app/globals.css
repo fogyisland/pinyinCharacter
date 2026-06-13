@@ -19,6 +19,11 @@
   --font-sans: var(--font-han-sans), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-han-serif), Georgia, serif;
   --font-kai: var(--font-wenkai), "LXGW WenKai", "Kaiti SC", serif;
+  /* Ancient scripts (Plan L) */
+  --font-jiaguwen: 'YinQiJiaGuWen', serif;
+  --font-jinwen: 'HanDianJinWen', serif;
+  --font-xiaozhuan: 'QuanZiKuShuoWen', serif;
+  --font-lishu: 'QuanZiKuLiDing', serif;
 
   /* Shadows */
   --shadow-paper: 0 1px 2px rgba(58, 42, 20, 0.06);
@@ -122,4 +127,31 @@
   --font-han-sans: 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-han-serif: 'Noto Serif SC', Georgia, 'Songti SC', 'SimSun', serif;
   --font-wenkai: 'LXGW WenKai TC', 'Kaiti SC', 'KaiTi', 'STKaiti', serif;
+}
+
+/* ============ Ancient-script fonts (Plan L) ============ */
+@font-face {
+  font-family: 'YinQiJiaGuWen';
+  src: url('/fonts/yinqi-jiaguwen.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'HanDianJinWen';
+  src: url('/fonts/handian-jinwen.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'QuanZiKuShuoWen';
+  src: url('/fonts/quanziku-shuowen.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'QuanZiKuLiDing';
+  src: url('/fonts/quanziku-liding.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'KaiTi';
+  src: local('KaiTi'), local('STKaiti'), local('BiauKai');
+  font-display: swap;
 }
