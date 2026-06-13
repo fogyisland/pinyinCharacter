@@ -28,6 +28,8 @@ export function Header() {
   const authOpen = useAppStore(s => s.authOpen);
   const setAuthOpen = useAppStore(s => s.setAuthOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
+  // 儿童模式默认隐藏佛经导航(佛经内容偏成人/宗教,不适合儿童);关闭儿童模式后恢复
+  const visibleNavLinks = safeMode ? NAV_LINKS.filter((l) => l.href !== '/sutra') : NAV_LINKS;
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
@@ -38,7 +40,7 @@ export function Header() {
             <span className="font-kai text-xl text-ink tracking-wide">{BRAND.name}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            {NAV_LINKS.map(link => (
+            {visibleNavLinks.map(link => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -93,7 +95,7 @@ export function Header() {
               </button>
             </div>
             <nav className="flex flex-col gap-3">
-              {NAV_LINKS.map(link => (
+              {visibleNavLinks.map(link => (
                 <Link
                   key={link.href}
                   href={link.href}
