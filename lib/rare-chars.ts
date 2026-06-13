@@ -128,3 +128,16 @@ function mapRow(r: any): RareChar {
     createdAt: r.created_at,
   };
 }
+
+export async function getRandomStoryChar(): Promise<RareChar | null> {
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT \`char\`, pinyin, meaning, story, needs_review, generated_by, generated_at, created_at
+     FROM rare_chars
+     WHERE story <> ''
+     ORDER BY RAND()
+     LIMIT ?`,
+    [1]
+  );
+  return rows.length > 0 ? mapRow(rows[0]) : null;
+}

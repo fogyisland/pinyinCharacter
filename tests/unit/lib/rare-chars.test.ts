@@ -1,5 +1,11 @@
-import { describe, it, expect } from 'vitest';
-import { pickDailyChar, buildSearchWhere, isSingleChar } from '@/lib/rare-chars';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+const queryMock = vi.fn();
+vi.mock('@/lib/db', () => ({
+  getPool: () => ({ query: (...a: unknown[]) => queryMock(...a) }),
+}));
+
+import { pickDailyChar, buildSearchWhere, isSingleChar, getRandomStoryChar } from '@/lib/rare-chars';
 
 describe('rare-chars pure helpers', () => {
   describe('pickDailyChar', () => {
@@ -55,5 +61,40 @@ describe('rare-chars pure helpers', () => {
       expect(isSingleChar('你好')).toBe(false);
       expect(isSingleChar('a')).toBe(false);
     });
+  });
+});
+
+describe('getRandomStoryChar', () => {
+  beforeEach(() => queryMock.mockReset());
+  afterEach(() => vi.restoreAllMocks());
+
+  it('returns null when no rows', async () => {
+    queryMock.mockResolvedValue([[]]);
+    const r = await getRandomStoryChar();
+    expect(r).toBeNull();
+  });
+
+  it('returns mapped RareChar when row exists', async () => {
+    queryMock.mockResolvedValue([[{
+      char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有龙',
+      needs_review: 1, generated_by: 'openai:gpt-4o-mini',
+      generated_at: new Date('2026-05-12T08:30:00Z'), created_at: new Date('2026-05-12T08:00:00Z'),
+    }]]);
+    const r = await getRandomStoryChar();
+    expect(r).toEqual({
+      char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有龙',
+      needsReview: true, generatedBy: 'openai:gpt-4o-mini',
+      generatedAt: new Date('2026-05-12T08:30:00Z'), createdAt: new Date('2026-05-12T08:00:00Z'),
+    });
+  });
+
+  it('queries with story <> "" filter', async () => {
+    queryMock.mockResolvedValue([[]]);
+    await getRandomStoryChar();
+    const [sql, params] = queryMock.mock.calls[0]!;
+    expect(String(sql)).toMatch(/FROM rare_chars/);
+    expect(String(sql)).toMatch(/story\s+<>\s*''/);
+    expect(String(sql)).toMatch(/ORDER BY RAND\(\)/);
+    expect(params).toEqual([1]);
   });
 });
