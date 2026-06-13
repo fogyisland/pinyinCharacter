@@ -20,7 +20,7 @@ async function main() {
     const char = chars[i];
     const level = i < 3500 ? 1 : i < 6500 ? 2 : 3;
     const unicodeCodepoint = `U+${char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
-    const radical = radicals[char] ?? '';
+    const radical = (radicals as Record<string, string>)[char] ?? '';
 
     await pool.execute(
       `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES (?, ?, ?, ?)`,
