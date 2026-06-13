@@ -22,6 +22,8 @@ describe('listChars', () => {
     expect(mockedQuery).toHaveBeenCalledTimes(2);
     expect(mockedQuery.mock.calls[0][0]).toContain('FROM chars');
     expect(mockedQuery.mock.calls[0][0]).toContain('LIKE');
+    expect(mockedQuery.mock.calls[0][0]).toContain('`char` = ?');
+    expect(mockedQuery.mock.calls[0][0]).toContain('meaning_en LIKE ?');
     expect(mockedQuery.mock.calls[0][1]).toEqual(['%ni%', 'ni', '%ni%', 80, 0]);
     expect(result.total).toBe(1);
     expect(result.chars[0].char).toBe('你');
