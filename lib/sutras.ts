@@ -107,11 +107,31 @@ export async function getSutra(id: number): Promise<SutraDetail | null> {
   const rawChunks = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
   // Persisted chunks may lack `id`; assign a 1-based sequential id so the
   // SutraChunkPicker can use it as a stable React key.
-  const chunks: SutraChunk[] = rawChunks.map((c, i) => ({ ...c, id: c.id ?? i + 1 }));
+  // Also strip mojibake left by mysql2 when binding 4-byte UTF-8 chars (see
+  // memory: mysql2-supp-plane-bug): orphan UTF-16 surrogate halves (length===2
+  // BMP chars that aren't valid CJK) and U+FFFD replacement chars.
+  const chunks: SutraChunk[] = rawChunks.map((c, i) => ({
+    ...c,
+    id: c.id ?? i + 1,
+    content: c.content.map(s => sanitizeMojibake(s)),
+  }));
   return {
     id: Number(row.id),
     title: row.title,
     slug: row.slug,
     chunks,
   };
+}
+
+function sanitizeMojibake(s: string): string {
+  // Drop lone UTF-16 surrogate halves (mysql2 corrupts 4-byte UTF-8 to these)
+  // and U+FFFD replacement chars that result. Length-1 BMP chars pass through.
+  return Array.from(s)
+    .filter(ch => {
+      const code = ch.codePointAt(0)!;
+      if (code >= 0xD800 && code <= 0xDFFF) return false; // surrogate half
+      if (code === 0xFFFD) return false;                  // replacement char
+      return true;
+    })
+    .join('');
 }
