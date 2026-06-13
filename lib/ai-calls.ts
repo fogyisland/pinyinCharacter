@@ -58,6 +58,7 @@ export class RateLimitError extends Error {
 export interface WithAiLoggingArgs {
   userId: number | null;
   feature: string;
+  model?: string;
   metadata?: Record<string, unknown>;
 }
 
@@ -79,7 +80,7 @@ export async function withAiLogging<T>(args: WithAiLoggingArgs, fn: () => Promis
     await logAiCall({
       userId: args.userId,
       feature: args.feature,
-      model,
+      model: args.model ?? 'unknown',
       status,
       durationMs: duration,
       error,

@@ -1,5 +1,7 @@
 import { getPool } from './db';
 import { llmChat, LLMError } from './llm';
+import { getConfig } from './config';
+import { withAiLogging } from './ai-calls';
 
 export interface BatchInput {
   char: string;
@@ -38,64 +40,78 @@ export async function batchGenerateStories(
   inputs: BatchInput[],
   options: GenerateOptions
 ): Promise<number> {
-  const apiKey = process.env.LLM_API_KEY;
-  const baseUrl = process.env.LLM_BASE_URL;
-  if (!apiKey) throw new Error('LLM_API_KEY is not set');
-  if (!baseUrl) throw new Error('LLM_BASE_URL is not set');
+  // Read the model from app_config so it flows into logAiCall.model.
+  // options.model is a fallback for tests / callers that don't want to read DB config.
+  const model = (await getConfig('ai.model')) ?? options.model ?? 'gpt-4o-mini';
 
-  const batchSize = options.batchSize ?? 50;
-  const sleepMs = options.sleepMs ?? 2000;
-  const maxAttempts = options.maxAttempts ?? 2;
-  const generatedBy = `${options.provider}:${options.model}`;
-  const pool = getPool();
+  return withAiLogging(
+    {
+      userId: null,
+      feature: 'rare-char-story-batch',
+      model,
+      metadata: { batchSize: inputs.length, provider: options.provider },
+    },
+    async () => {
+      const apiKey = process.env.LLM_API_KEY;
+      const baseUrl = process.env.LLM_BASE_URL;
+      if (!apiKey) throw new Error('LLM_API_KEY is not set');
+      if (!baseUrl) throw new Error('LLM_BASE_URL is not set');
 
-  let updated = 0;
-  for (let i = 0; i < inputs.length; i += batchSize) {
-    const batch = inputs.slice(i, i + batchSize);
-    const userPrompt = `汉字列表:\n${batch.map((b) => b.char).join('\n')}`;
-    let attempt = 0;
-    let success = false;
-    while (attempt < maxAttempts && !success) {
-      attempt++;
-      try {
-        const res = await llmChat({
-          baseUrl,
-          apiKey,
-          model: options.model,
-          messages: [
-            { role: 'system', content: SYSTEM_PROMPT },
-            { role: 'user', content: userPrompt },
-          ],
-        });
-        const parsed = parseJsonArray(res.content);
-        const conn = await pool.getConnection();
-        try {
-          for (const item of parsed) {
-            const match = batch.find((b) => b.char === item.char);
-            if (!match) continue;
-            await conn.execute(
-              `UPDATE rare_chars
-               SET meaning = ?, story = ?, generated_by = ?, generated_at = NOW(), needs_review = 1
-               WHERE \`char\` = ?`,
-              [item.meaning, item.story, generatedBy, item.char]
-            );
-            updated++;
+      const batchSize = options.batchSize ?? 50;
+      const sleepMs = options.sleepMs ?? 2000;
+      const maxAttempts = options.maxAttempts ?? 2;
+      const generatedBy = `${options.provider}:${model}`;
+      const pool = getPool();
+
+      let updated = 0;
+      for (let i = 0; i < inputs.length; i += batchSize) {
+        const batch = inputs.slice(i, i + batchSize);
+        const userPrompt = `汉字列表:\n${batch.map((b) => b.char).join('\n')}`;
+        let attempt = 0;
+        let success = false;
+        while (attempt < maxAttempts && !success) {
+          attempt++;
+          try {
+            const res = await llmChat({
+              baseUrl,
+              apiKey,
+              model,
+              messages: [
+                { role: 'system', content: SYSTEM_PROMPT },
+                { role: 'user', content: userPrompt },
+              ],
+            });
+            const parsed = parseJsonArray(res.content);
+            const conn = await pool.getConnection();
+            try {
+              for (const item of parsed) {
+                const match = batch.find((b) => b.char === item.char);
+                if (!match) continue;
+                await conn.execute(
+                  `UPDATE rare_chars
+                   SET meaning = ?, story = ?, generated_by = ?, generated_at = NOW(), needs_review = 1
+                   WHERE \`char\` = ?`,
+                  [item.meaning, item.story, generatedBy, item.char]
+                );
+                updated++;
+              }
+            } finally {
+              conn.release();
+            }
+            success = true;
+          } catch (err) {
+            if (attempt >= maxAttempts) {
+              options.onError?.(err, batch);
+            } else {
+              await sleep(1000);
+            }
           }
-        } finally {
-          conn.release();
         }
-        success = true;
-      } catch (err) {
-        if (attempt >= maxAttempts) {
-          options.onError?.(err, batch);
-        } else {
-          await sleep(1000);
-        }
+        if (i + batchSize < inputs.length) await sleep(sleepMs);
       }
-    }
-    if (i + batchSize < inputs.length) await sleep(sleepMs);
-  }
-  return updated;
+      return updated;
+    },
+  );
 }
 
 function parseJsonArray(content: string): BatchOutput[] {
