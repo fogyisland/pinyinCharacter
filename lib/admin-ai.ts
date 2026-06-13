@@ -26,7 +26,7 @@ export interface ListAiCallsOptions {
   pageSize?: number;
 }
 export interface ListAiCallsResult {
-  items: AiCallRow[];
+  rows: AiCallRow[];
   total: number;
   page: number;
   pageSize: number;
@@ -60,7 +60,7 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
     `SELECT COUNT(*) AS n FROM ai_calls a ${sql}`, params,
   );
   return {
-    items: rows.map(r => ({
+    rows: rows.map(r => ({
       id: Number(r.id), userId: r.user_id, username: r.username,
       feature: r.feature, model: r.model, status: r.status,
       promptTokens: r.prompt_tokens, completionTokens: r.completion_tokens,

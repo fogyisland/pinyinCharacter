@@ -57,7 +57,7 @@ d('admin-ai', () => {
 
   it('listAiCalls status=error returns only error rows', async () => {
     const result = await listAiCalls({ userId, status: 'error' });
-    expect(result.items.length).toBeGreaterThanOrEqual(1);
-    for (const i of result.items) expect(i.status).toBe('error');
+    expect(result.rows.length).toBeGreaterThanOrEqual(1);
+    for (const i of result.rows) expect(i.status).toBe('error');
   });
 });

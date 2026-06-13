@@ -93,7 +93,7 @@ d('admin/ai', () => {
     const { status, body } = await getList(`?userId=${userId}`);
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.data.items.length).toBeGreaterThanOrEqual(2);
+    expect(body.data.rows.length).toBeGreaterThanOrEqual(2);
   });
 
   it('?status=error returns only error rows', async () => {
@@ -109,8 +109,8 @@ d('admin/ai', () => {
     const { status, body } = await getList(`?userId=${userId}&status=error`);
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.data.items.length).toBeGreaterThanOrEqual(1);
-    for (const i of body.data.items) expect(i.status).toBe('error');
+    expect(body.data.rows.length).toBeGreaterThanOrEqual(1);
+    for (const i of body.data.rows) expect(i.status).toBe('error');
   });
 
   it('?feature=rare-char-story returns only that feature', async () => {
@@ -126,8 +126,8 @@ d('admin/ai', () => {
     const { status, body } = await getList(`?userId=${userId}&feature=rare-char-story`);
     expect(status).toBe(200);
     expect(body.ok).toBe(true);
-    expect(body.data.items.length).toBeGreaterThanOrEqual(1);
-    for (const i of body.data.items) expect(i.feature).toBe('rare-char-story');
+    expect(body.data.rows.length).toBeGreaterThanOrEqual(1);
+    for (const i of body.data.rows) expect(i.feature).toBe('rare-char-story');
   });
 
   it('stats aggregate returns expected shape with non-null p50/p95', async () => {
