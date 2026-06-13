@@ -111,6 +111,34 @@ pnpm radicals:build        # 重新生成 data/radicals.json
 
 部首数据来自 `data/radicals.json` (由 `pnpm radicals:build` 从 `cnchar` + `cnchar-radical` npm 包生成, ~6920 简体汉字)。声调数据来自 pinyin-pro (内置)。
 
+## 字典 + 字源（v1 / Plan L）
+
+- `/dictionary` — 完整字典浏览 (8105 字)
+  - 按拼音 A-Z 锚点 / 按部首 214 侧栏 (顶部 toggle)
+  - 搜索: 拼音 / 汉字 / 英文
+- `/dictionary/[char]` — 详情页 (4 tabs: 字典/字源/故事/+字帖)
+  - 7 字段: 拼音/部首/笔画/释义/英文/Unicode/异体字
+  - 相关字: 同部首 / 同拼音
+- `/etymology/[char]` — 沉浸式字源页
+  - 5 个时代字形: 甲骨文/金文/小篆/隶书/楷书
+  - 用专门古字字体渲染;字体未覆盖的字显示「暂无」
+  - 字源故事: LLM 生成 (管理员触发 + cron @50-100/天)
+  - 键盘 ←/→ 切换时代
+
+### Admin 字典
+
+- `/admin/chars` — 覆盖率 (按 level)
+- `/admin/chars/generate` — 手动批量生成字源
+
+### 字典数据初始化（一次性）
+
+```bash
+pnpm tsx --env-file=.env scripts/import-chars-data.ts    # 导入 8105 通用规范汉字到 chars 表
+pnpm radicals:build                                      # 重新生成 data/radicals.json（若尚未生成）
+```
+
+需要 `DATABASE_URL` 在 `.env` 中。脚本可重复运行（`INSERT IGNORE`，已存在不覆盖）。
+
 ## 读故事 (/stories)（v1 / Plan G）
 
 单字翻页阅读器, 从 `rare_chars` 表里随机抽一个有 AI 生成故事的字阅读. 支持:
@@ -146,3 +174,4 @@ pnpm radicals:build        # 重新生成 data/radicals.json
 - Plan H: admin 平台扩展（统一日志 / 下载 / AI 配置）
 - Plan I: 第二款识字游戏 — 声调 + 部首匹配 (复用 cnchar-radical 数据)
 - Plan G: 读故事 (/stories) — 单字翻页阅读器, TTS + localStorage 进度
+- Plan L: 完整字典（8105 通用规范汉字）+ 字源页（5 时代字形 + AI 故事）+ admin 字源批量生成
