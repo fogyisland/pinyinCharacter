@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
 
 interface Props {
@@ -13,15 +13,17 @@ interface Props {
 
 export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const user = useAppStore(s => s.user);
-  const setAuthOpen = useAppStore(s => s.setAuthOpen);
   const [saving, setSaving] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
+
+  const goLogin = () => router.push(`/login?next=${encodeURIComponent(pathname)}`);
 
   const handleSave = async () => {
     if (!user) {
       setHint('需要登录才能保存');
-      setAuthOpen(true);
+      goLogin();
       return;
     }
     setSaving(true);
@@ -40,7 +42,7 @@ export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
       const data = await res.json();
       if (res.status === 401 || data.error?.code === 'unauthenticated') {
         setHint('需要登录才能保存');
-        setAuthOpen(true);
+        goLogin();
         return;
       }
       if (!data.ok) {

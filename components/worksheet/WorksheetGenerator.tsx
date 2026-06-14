@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { CellStyle } from '@/lib/worksheet-types';
 import { useAppStore } from '@/lib/store';
 import { TextInputTab } from './TextInputTab';
@@ -14,10 +14,10 @@ type Tab = 'text' | 'library';
 export function WorksheetGenerator() {
   const sp = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const prefill = sp.get('prefill');
 
   const user = useAppStore(s => s.user);
-  const setAuthOpen = useAppStore(s => s.setAuthOpen);
 
   const [tab, setTab] = useState<Tab>(prefill ? 'library' : 'text');
   const [content, setContent] = useState<string[]>(prefill ? [prefill] : []);
@@ -49,7 +49,7 @@ export function WorksheetGenerator() {
   const openLogin = () => {
     setAuthHint(true);
     setErrorMsg(null);
-    setAuthOpen(true);
+    router.push(`/login?next=${encodeURIComponent(pathname)}`);
   };
 
   const handleSave = async () => {
