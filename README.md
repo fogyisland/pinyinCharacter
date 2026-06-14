@@ -158,6 +158,37 @@ pnpm strokes:build
 
 首次运行约 10-15 分钟,会写 ~30-50MB JSON 到 `public/strokes/`。该目录已在 `.gitignore` 中,需在每台 dev 机 / CI 上分别运行。
 
+## 识字游戏难度分级 + 独立登录注册 + 佛经阅读模式（v1 / Plan N）
+
+### 难度分级（3 级）
+
+两款识字游戏 + 拼音输入法都支持 3 级难度,设置存 localStorage 跨刷新保留：
+
+- **简单 (easy)** — 4 个选项 / 3 个候选字
+- **复杂 (medium)** — 4 个选项 / 5 个候选字
+- **超难 (hard)** — 4 个选项 / 9 个候选字
+
+入口 UI 共享 `DifficultyPicker` 组件 (`components/common/DifficultyPicker.tsx`),核心切片逻辑在 `lib/pinyin-input-difficulty.ts` (单测覆盖)。
+
+### 独立登录 / 注册页
+
+`/login` 和 `/register` 是独立路由,不再用 modal。
+
+- **注册**: 必填用户名 / 邮箱 / 密码 (≥ 8 位),邮箱必须合法格式,服务端用 `lib/validators.ts` 的 `registerSchema` 校验,重复邮箱返回 `email_taken`。
+- **登录**: 用户名 + 密码,支持 `?next=/foo/bar` 跳转回原页面。
+- **忘记密码**: `/forgot-password` 输入用户名 → 邮件 magic link → `/reset-password?token=...` 重置。
+- Header 已把原 modal 入口换成 `/login` + `/register` 两个按钮。所有「保存到字帖」按钮未登录时跳到 `/login?next=<current path>`。
+
+### 佛经阅读模式 (3 种)
+
+`/sutra/[id]` 详情页支持切换：
+
+- **横向** (默认) — 现代横排
+- **竖排从右到左** — 经典繁体竖排,符合古籍习惯
+- **竖排从左到右** — 部分日韩/海外版本习惯
+
+设置存 localStorage (`useSutraReading` hook),切换不刷新页面。
+
 ## 读故事 (/stories)（v1 / Plan G）
 
 单字翻页阅读器, 从 `rare_chars` 表里随机抽一个有 AI 生成故事的字阅读. 支持:
@@ -194,3 +225,5 @@ pnpm strokes:build
 - Plan I: 第二款识字游戏 — 声调 + 部首匹配 (复用 cnchar-radical 数据)
 - Plan G: 读故事 (/stories) — 单字翻页阅读器, TTS + localStorage 进度
 - Plan L: 完整字典（8105 通用规范汉字）+ 字源页（5 时代字形 + AI 故事）+ admin 字源批量生成
+- Plan M: 笔画顺序 / 动画（hanzi-writer 田字格笔顺,hanzi-writer-data 数据集）
+- Plan N: 难度分级（3 级,2 款游戏 + 拼音输入法）+ 独立登录/注册（必填邮箱）+ 佛经阅读模式（横/竖从右到左/竖从左到右）
