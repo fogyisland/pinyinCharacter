@@ -11,10 +11,14 @@ async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   return j as ApiResult<T>;
 }
 
-export async function registerRequest(username: string, password: string): Promise<ApiResult<{ user: User }>> {
+export async function registerRequest(
+  username: string,
+  email: string,
+  password: string,
+): Promise<ApiResult<{ user: User }>> {
   return call('/api/auth/register', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, email, password }),
   });
 }
 
