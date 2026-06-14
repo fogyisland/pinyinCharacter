@@ -59,7 +59,7 @@ export function StrokeOrderCard({ char, className }: Props) {
         const HanziWriter = HanziWriterMod.default;
         if (cancelled || !containerRef.current) return;
 
-        writer = HanziWriter.create(containerRef.current, {
+        writer = HanziWriter.create(containerRef.current, char, {
           width: SIZE,
           height: SIZE,
           padding: 8,
