@@ -20,6 +20,10 @@ data/runtime/
 *.log
 .DS_Store
 
+# build artifacts (regenerate with pnpm strokes:build)
+public/strokes/
+data/strokes-manifest.json
+
 # editor
 .vscode/
 .idea/
