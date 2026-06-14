@@ -56,7 +56,8 @@ export function StrokeOrderCard({ char, className }: Props) {
         const strokeData = await r.json();
 
         const HanziWriterMod = await import('hanzi-writer');
-        const HanziWriter = HanziWriterMod.default;
+        const HanziWriter: any =
+          (HanziWriterMod as { default?: { create?: unknown } }).default ?? HanziWriterMod;
         if (cancelled || !containerRef.current) return;
 
         writer = HanziWriter.create(containerRef.current, char, {
@@ -93,7 +94,7 @@ export function StrokeOrderCard({ char, className }: Props) {
         else writer.animateCharacter();
       } catch (e) {
         if (!cancelled) {
-          setError('init_failed');
+          setError(`init_failed: ${e instanceof Error ? e.message : String(e)}`);
           setIsLoading(false);
         }
       }
