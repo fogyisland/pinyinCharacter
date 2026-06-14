@@ -6,11 +6,11 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { SutraMeta } from '@/components/sutra/SutraMeta';
-import { SutraTextView } from '@/components/sutra/SutraTextView';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
+import { SutraReadingClient } from './SutraReadingClient';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +53,7 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
               <ReadAloudButton text={activeChunk.content.join('\n')} size="sm" variant="seal" />
             </div>
             <div className="card-paper p-5 sm:p-8">
-              <SutraTextView chunk={activeChunk} />
+              <SutraReadingClient chunk={activeChunk} />
             </div>
           </div>
         </div>
