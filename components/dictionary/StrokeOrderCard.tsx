@@ -136,7 +136,7 @@ export function StrokeOrderCard({ char, className }: Props) {
   if (error) {
     return (
       <article className={className}>
-        <p role="alert">暂无该字笔画数据</p>
+        <p role="alert">暂无该字笔画数据 <span className="text-xs text-ink-faint">[{error}]</span></p>
       </article>
     );
   }
