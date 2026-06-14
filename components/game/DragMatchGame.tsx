@@ -1,6 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { DifficultyPicker } from '@/components/common/DifficultyPicker';
+import { DRAG_MATCH_CONFIG, type Difficulty } from '@/lib/difficulty';
+import { useDifficulty } from '@/lib/use-difficulty';
+import { fetchChars } from '@/lib/api-chars';
 import { DraggablePinyin } from './DraggablePinyin';
 import { CharDropZone } from './CharDropZone';
 
@@ -27,6 +31,10 @@ function formatTime(ms: number): string {
   return `${String(m).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 }
 
+function toChar(c: { char: string; pinyin: string; meaningZh: string | null }): Char {
+  return { char: c.char, pinyin: c.pinyin, meaning: c.meaningZh ?? '' };
+}
+
 export function DragMatchGame() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [chars, setChars] = useState<Char[]>([]);
@@ -35,6 +43,7 @@ export function DragMatchGame() {
   const [mismatches, setMismatches] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const startedAt = useRef<number>(0);
+  const [difficulty, setDifficulty] = useDifficulty();
 
   useEffect(() => {
     loadGame();
@@ -48,12 +57,23 @@ export function DragMatchGame() {
     return () => clearInterval(handle);
   }, [phase]);
 
-  const loadGame = async () => {
+  const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
     setPhase('loading');
-    const res = await fetch('/api/rare-chars?page=1&minMeaning=true');
-    const data = (await res.json()) as { ok: boolean; data: { chars: Char[] } };
-    const filled = data.data.chars.filter((c) => c.meaning && c.pinyin);
-    const picked = shuffle(filled).slice(0, 8);
+    const cfg = DRAG_MATCH_CONFIG[forceDifficulty];
+
+    let chars: Char[] = [];
+    if (cfg.source === 'chars-level-1') {
+      const r = await fetchChars({ level: 1, page: 1 });
+      chars = r.chars.filter((c) => c.meaningZh).map(toChar);
+    } else if (cfg.source === 'chars-level-1-2') {
+      const r = await fetchChars({ page: 1 });
+      chars = r.chars.filter((c) => c.meaningZh && (c.level === 1 || c.level === 2)).map(toChar);
+    } else {
+      const r = await fetchChars({ page: 1 });
+      chars = r.chars.filter((c) => c.meaningZh).map(toChar);
+    }
+
+    const picked = shuffle(chars).slice(0, cfg.count);
     setChars(picked);
     setPinyinOrder(shuffle(picked.map((c) => c.pinyin)));
     setPairs({});
@@ -103,7 +123,7 @@ export function DragMatchGame() {
         <div className="mt-6 flex justify-center gap-2">
           <button
             type="button"
-            onClick={loadGame}
+            onClick={() => { void loadGame(); }}
             className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80"
           >
             再来一局
@@ -121,6 +141,9 @@ export function DragMatchGame() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-4">
+      <div className="flex items-center justify-between mb-2">
+        <DifficultyPicker value={difficulty} onChange={(d) => { setDifficulty(d); void loadGame(d); }} />
+      </div>
       <div className="flex items-center justify-between">
         <div className="text-sm text-ink-soft">用时: {formatTime(elapsedMs)}</div>
         <div className="text-sm text-ink-soft">错配: {mismatches}</div>
