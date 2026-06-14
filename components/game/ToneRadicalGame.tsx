@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchGameRound, type GameRound } from '@/lib/api-game';
+import { DifficultyPicker } from '@/components/common/DifficultyPicker';
+import { TONE_RADICAL_CONFIG, type Difficulty } from '@/lib/difficulty';
 import { ToneToken } from './ToneToken';
 import { RadicalToken } from './RadicalToken';
 import { ToneRadicalChar } from './ToneRadicalChar';
+import { useDifficulty } from '@/lib/use-difficulty';
 import type { Tone } from '@/lib/pinyin-tone';
 
 type Phase = 'loading' | 'round1' | 'round2' | 'finished';
@@ -36,8 +39,9 @@ export function ToneRadicalGame() {
   const startedAt = useRef(0);
   const [toneOrder, setToneOrder] = useState<Tone[]>([]);
   const [radicalOrder, setRadicalOrder] = useState<string[]>([]);
+  const [difficulty, setDifficulty] = useDifficulty();
 
-  const loadGame = async () => {
+  const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
     setPhase('loading');
     setToneMatches({});
     setRadicalMatches({});
@@ -45,7 +49,8 @@ export function ToneRadicalGame() {
     setElapsedMs(0);
     setError(null);
     try {
-      const r = await fetchGameRound(4);
+      const count = TONE_RADICAL_CONFIG[forceDifficulty].count;
+      const r = await fetchGameRound(count);
       setRound(r);
       setToneOrder(shuffle([...r.toneChoices] as Tone[]));
       setRadicalOrder(shuffle([...r.radicalChoices]));
@@ -157,6 +162,9 @@ export function ToneRadicalGame() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
+      <div className="flex items-center justify-between">
+        <DifficultyPicker value={difficulty} onChange={(d) => { setDifficulty(d); void loadGame(d); }} />
+      </div>
       <div className="flex items-center justify-between text-sm text-ink-soft">
         <div>用时: {formatTime(elapsedMs)}</div>
         <div>第 {phase === 'round1' ? '一' : '二'} 轮 · 错配: {mismatches}</div>
