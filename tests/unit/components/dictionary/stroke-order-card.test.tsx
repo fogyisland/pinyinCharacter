@@ -9,7 +9,6 @@ const mockWriter = {
   loopCharacterAnimation: vi.fn(),
   animateCharacter: vi.fn(),
   pauseAnimation: vi.fn(),
-  getNumStrokes: vi.fn(() => 1),
 };
 vi.mock('hanzi-writer', () => ({
   default: {
@@ -17,10 +16,11 @@ vi.mock('hanzi-writer', () => ({
   },
 }));
 
+const ONE_STROKE_DATA = { strokes: ['M0,0 L100,100'], medians: [] };
+
 describe('StrokeOrderCard', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockWriter.getNumStrokes.mockReturnValue(1);
   });
 
   afterEach(() => {
@@ -49,7 +49,7 @@ describe('StrokeOrderCard', () => {
   it('renders canvas + controls when fetch succeeds (Test 3)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ strokes: ['M0,0 L100,100'], medians: [] }),
+      json: () => Promise.resolve(ONE_STROKE_DATA),
     } as any);
 
     render(<StrokeOrderCard char="一" />);
@@ -66,7 +66,7 @@ describe('StrokeOrderCard', () => {
   it('reinitializes writer when char prop changes (Test 7)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ strokes: [], medians: [] }),
+      json: () => Promise.resolve(ONE_STROKE_DATA),
     } as any);
 
     const { rerender } = render(<StrokeOrderCard char="一" />);
@@ -85,7 +85,7 @@ describe('StrokeOrderCard', () => {
   it('replay button replays the animation (Test 4)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ strokes: [], medians: [] }),
+      json: () => Promise.resolve(ONE_STROKE_DATA),
     } as any);
 
     render(<StrokeOrderCard char="一" />);
@@ -109,7 +109,7 @@ describe('StrokeOrderCard', () => {
   it('loop toggle flips aria-pressed and pauses animation (Test 5)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ strokes: [], medians: [] }),
+      json: () => Promise.resolve(ONE_STROKE_DATA),
     } as any);
 
     render(<StrokeOrderCard char="一" />);
@@ -130,7 +130,7 @@ describe('StrokeOrderCard', () => {
   it('unmount calls writer.pauseAnimation (Test 6)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
-      json: () => Promise.resolve({ strokes: [], medians: [] }),
+      json: () => Promise.resolve(ONE_STROKE_DATA),
     } as any);
 
     const { unmount } = render(<StrokeOrderCard char="一" />);

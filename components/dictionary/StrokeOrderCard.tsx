@@ -15,10 +15,9 @@ type Props = {
 };
 
 interface HanziWriterLike {
-  loopCharacterAnimation: () => void;
-  animateCharacter: () => void;
-  pauseAnimation: () => void;
-  getNumStrokes: () => number;
+  loopCharacterAnimation: () => unknown;
+  animateCharacter: () => unknown;
+  pauseAnimation: () => unknown;
 }
 
 export function StrokeOrderCard({ char, className }: Props) {
@@ -54,6 +53,7 @@ export function StrokeOrderCard({ char, className }: Props) {
           return;
         }
         const strokeData = await r.json();
+        const strokeCount = Array.isArray(strokeData?.strokes) ? strokeData.strokes.length : 0;
 
         const HanziWriterMod = await import('hanzi-writer');
         const HanziWriter: any =
@@ -87,11 +87,11 @@ export function StrokeOrderCard({ char, className }: Props) {
           return;
         }
         writerRef.current = writer;
-        setTotalStrokes(writer.getNumStrokes());
+        setTotalStrokes(strokeCount);
         setIsReady(true);
         setIsLoading(false);
-        if (loopEnabled) writer.loopCharacterAnimation();
-        else writer.animateCharacter();
+        if (loopEnabled) void writer.loopCharacterAnimation();
+        else void writer.animateCharacter();
       } catch (e) {
         if (!cancelled) {
           setError(`init_failed: ${e instanceof Error ? e.message : String(e)}`);
