@@ -49,11 +49,13 @@ const DDL = [
   `CREATE TABLE IF NOT EXISTS users (
      id BIGINT NOT NULL AUTO_INCREMENT,
      username VARCHAR(32) NOT NULL,
+     email VARCHAR(255) NULL,
      password_hash VARCHAR(72) NOT NULL,
      is_admin TINYINT(1) NOT NULL DEFAULT 0,
      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
      PRIMARY KEY (id),
-     UNIQUE KEY uniq_username (username)
+     UNIQUE KEY uniq_username (username),
+     UNIQUE KEY uk_email (email)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
   `CREATE TABLE IF NOT EXISTS history (
@@ -213,6 +215,15 @@ export async function initDb(): Promise<void> {
   );
   if (cols.length === 0) {
     await pool.query(`ALTER TABLE users ADD COLUMN disabled_at DATETIME NULL AFTER is_admin`);
+  }
+  // Idempotent ALTER: only add email if it doesn't already exist
+  const [emailCols] = await pool.query<any[]>(
+    `SELECT COLUMN_NAME FROM information_schema.columns
+     WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'email'`,
+  );
+  if (emailCols.length === 0) {
+    await pool.query(`ALTER TABLE users ADD COLUMN email VARCHAR(255) NULL AFTER username`);
+    await pool.query(`ALTER TABLE users ADD UNIQUE KEY uk_email (email)`);
   }
   // Seed app_config defaults
   const [[{ count: cfgCount }]] = await pool.query<any[]>(
