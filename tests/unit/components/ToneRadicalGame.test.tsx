@@ -1,8 +1,17 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
+import { GlobalWindow } from 'happy-dom';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { ToneRadicalGame } from '@/components/game/ToneRadicalGame';
+
+beforeAll(() => {
+  const win = new GlobalWindow({ url: 'http://localhost:3000' });
+  Object.defineProperty(globalThis, 'localStorage', {
+    get: () => win.localStorage,
+    configurable: true,
+  });
+});
 
 vi.mock('@/lib/api-game', () => ({
   fetchGameRound: vi.fn(),
