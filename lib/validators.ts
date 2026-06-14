@@ -78,3 +78,14 @@ export const adminCronConfigSchema = z.object({
   enabled: z.boolean(),
   perDay: z.number().int().min(1).max(1000),
 });
+
+export const registerSchema = z.object({
+  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_\-]+$/, '用户名仅支持字母数字下划线短横'),
+  email: z.string().email('邮箱格式不正确'),
+  password: z.string().min(8).max(128),
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(1),
+  password: z.string().min(1),
+});
