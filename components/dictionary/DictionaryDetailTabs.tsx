@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { CharWithRelated } from '@/lib/chars-types';
+import { StrokeOrderCard } from './StrokeOrderCard';
 
 export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
   return (
@@ -42,6 +43,8 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
           )}
         </div>
       )}
+
+      {char.char.length === 1 && <StrokeOrderCard char={char.char} />}
     </div>
   );
 }
