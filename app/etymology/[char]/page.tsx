@@ -7,6 +7,7 @@ import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { getEtymology, getAdjacentChars } from '@/lib/etymology';
 import { EtymologyTimeline } from '@/components/etymology/EtymologyTimeline';
 import { EtymologyPrevNext } from '@/components/etymology/EtymologyPrevNext';
+import { ReadAloudButton } from '@/components/ReadAloudButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,8 @@ export default async function EtymologyPage({ params }: Props) {
           </span>
         </div>
         <SectionTitle subtitle={etymology.story ? '字形演变故事' : '字源即将生成'}>
-          字源
+          <span className="text-5xl sm:text-6xl font-serif text-ink mr-3 align-middle">{etymology.char}</span>
+          <ReadAloudButton text={etymology.char} size="sm" variant="seal" label="读字" className="align-middle" />
         </SectionTitle>
         <EtymologyTimeline
           char={etymology.char}

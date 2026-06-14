@@ -1,15 +1,20 @@
 import Link from 'next/link';
 import type { CharWithRelated } from '@/lib/chars-types';
 import { StrokeOrderCard } from './StrokeOrderCard';
+import { ReadAloudButton } from '@/components/ReadAloudButton';
 
 export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
   return (
     <div>
-      <div className="flex gap-0 border-b border-ink/30 mb-4">
+      <div className="flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-ink/30 mb-4">
         <span className="bg-ink text-paper px-3 py-2 rounded-t text-sm">字典</span>
         <Link href={`/etymology/${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">字源 →</Link>
         <Link href={`/stories/${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">故事 →</Link>
         <Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">+ 字帖</Link>
+        <span className="ml-auto flex items-center gap-2 pb-1">
+          <ReadAloudButton text={char.char} label="读字" size="sm" variant="seal" />
+          <ReadAloudButton text={char.pinyin} label="读音" size="sm" variant="paper" />
+        </span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">

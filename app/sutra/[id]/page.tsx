@@ -10,6 +10,7 @@ import { SutraTextView } from '@/components/sutra/SutraTextView';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
+import { ReadAloudButton } from '@/components/ReadAloudButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,8 +48,13 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
           <Suspense fallback={null}>
             <SutraChunkPickerClient sutraId={sutra.id} chunks={sutra.chunks as SutraChunk[]} activeId={activeChunkId} />
           </Suspense>
-          <div className="flex-1 card-paper p-5 sm:p-8">
-            <SutraTextView chunk={activeChunk} />
+          <div className="flex-1">
+            <div className="flex items-center justify-end mb-2 worksheet-no-print">
+              <ReadAloudButton text={activeChunk.content.join('\n')} size="sm" variant="seal" />
+            </div>
+            <div className="card-paper p-5 sm:p-8">
+              <SutraTextView chunk={activeChunk} />
+            </div>
           </div>
         </div>
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">

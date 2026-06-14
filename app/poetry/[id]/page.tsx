@@ -9,6 +9,7 @@ import { PoemTextView } from '@/components/poetry/PoemTextView';
 import { AppreciationBlock } from '@/components/poetry/AppreciationBlock';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
+import { ReadAloudButton } from '@/components/ReadAloudButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,6 +33,9 @@ export default async function PoemDetailPage({ params }: Props) {
         <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
         <div className="worksheet-no-print">
           <PoemMeta title={poem.title} author={poem.author} dynasty={poem.dynasty} form={poem.form} />
+        </div>
+        <div className="flex items-center justify-end mb-2 worksheet-no-print">
+          <ReadAloudButton text={`${poem.title}。${poem.author}。${poem.content}`} size="sm" variant="seal" />
         </div>
         <div className="card-paper p-5 sm:p-8">
           <PoemTextView content={poem.content} />

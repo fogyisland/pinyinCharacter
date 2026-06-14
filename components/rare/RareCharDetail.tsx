@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { RareChar } from '@/lib/rare-chars';
 import { PrintButton } from '@/components/common/PrintButton';
+import { ReadAloudButton } from '@/components/ReadAloudButton';
 
 interface Props {
   data: RareChar;
@@ -12,7 +13,9 @@ export function RareCharDetail({ data }: Props) {
       <header className="text-center">
         <div className="text-9xl font-bold text-ink">{data.char}</div>
         <div className="mt-4 text-3xl text-ink-soft">{data.pinyin}</div>
-        <div className="worksheet-no-print mt-4 flex justify-center">
+        <div className="worksheet-no-print mt-4 flex flex-wrap items-center justify-center gap-3">
+          <ReadAloudButton text={data.char} label="读字" variant="seal" />
+          <ReadAloudButton text={data.meaning} label="读释义" variant="paper" />
           <PrintButton endpoint={`/api/rare-chars/${encodeURIComponent(data.char)}/print`} label="打印本页" />
         </div>
       </header>
