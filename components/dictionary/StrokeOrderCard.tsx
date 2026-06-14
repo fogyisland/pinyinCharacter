@@ -71,7 +71,10 @@ export function StrokeOrderCard({ char, className }: Props) {
           outlineColor: OUTLINE_COLOR,
           charDataLoader: (cb: (data: unknown) => void) => cb(strokeData),
           onLoadCharDataError: () => {
-            if (!cancelled) setError('load_failed');
+            if (!cancelled) {
+              setError('load_failed');
+              setIsLoading(false);
+            }
           },
           onCompleteStroke: ({ strokeNum }: { strokeNum: number; strokeCount: number }) => {
             if (!cancelled) setCurrentStroke(strokeNum);
