@@ -10,7 +10,7 @@ export function AuthSync() {
     let cancelled = false;
     meRequest().then(r => {
       if (cancelled) return;
-      if (r.ok) setUser(r.data.user);
+      if (r.ok && r.data?.user) setUser(r.data.user);
       else setUser(null);
     }).catch(() => { /* 网络错误保持 store 原值 */ });
     return () => { cancelled = true; };

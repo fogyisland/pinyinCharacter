@@ -33,7 +33,7 @@ export async function logoutRequest(): Promise<ApiResult<null>> {
   return call<null>('/api/auth/logout', { method: 'POST' });
 }
 
-export async function meRequest(): Promise<ApiResult<{ user: User }>> {
+export async function meRequest(): Promise<ApiResult<{ user: User | null }>> {
   return call('/api/auth/me', { method: 'GET' });
 }
 
