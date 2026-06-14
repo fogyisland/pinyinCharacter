@@ -69,7 +69,7 @@ export function StrokeOrderCard({ char, className }: Props) {
           strokeColor: STROKE_COLOR,
           radicalColor: RADICAL_COLOR,
           outlineColor: OUTLINE_COLOR,
-          charDataLoader: (cb: (data: unknown) => void) => cb(strokeData),
+          charDataLoader: (_char: string, onLoad: (data: unknown) => void) => onLoad(strokeData),
           onLoadCharDataError: () => {
             if (!cancelled) {
               setError('load_failed');
