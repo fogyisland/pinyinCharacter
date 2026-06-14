@@ -139,6 +139,25 @@ pnpm radicals:build                                      # 重新生成 data/rad
 
 需要 `DATABASE_URL` 在 `.env` 中。脚本可重复运行（`INSERT IGNORE`，已存在不覆盖）。
 
+### 笔画顺序 (Stroke Order)
+
+字典详情页 (`/dictionary/[char]`) 卡片下方展示 280×280 田字格 + 浓墨笔顺动画。
+
+**特性**
+- 加载后自动循环播放笔画动画 (可手动关闭)
+- ⟲ 重播按钮
+- 笔数显示 (`N / M 画`) 实时更新
+- 覆盖 8105 通用规范汉字 (缺失的字 graceful hide)
+- 数据: `public/strokes/{char}.json` (build 阶段从 hanzi-writer-data 拉取)
+
+**数据初始化**
+
+```bash
+pnpm strokes:build
+```
+
+首次运行约 5-10 分钟,会写 ~50-150MB JSON 到 `public/strokes/`。该目录已在 `.gitignore` 中,需在每台 dev 机 / CI 上分别运行。
+
 ## 读故事 (/stories)（v1 / Plan G）
 
 单字翻页阅读器, 从 `rare_chars` 表里随机抽一个有 AI 生成故事的字阅读. 支持:
