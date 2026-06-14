@@ -1,32 +1,17 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useSearchParams } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { SafeModeToggle } from './SafeModeToggle';
 import { UserMenu } from './UserMenu';
-import { AuthModal } from './AuthModal';
 import { useAppStore } from '@/lib/store';
 import { BRAND, NAV_LINKS } from '@/lib/design';
-
-function AuthAutoOpen({ onOpen }: { onOpen: () => void }) {
-  const user = useAppStore(s => s.user);
-  const searchParams = useSearchParams();
-  useEffect(() => {
-    if (searchParams.get('auth') === 'login' && !user) onOpen();
-  }, [searchParams, user, onOpen]);
-  return null;
-}
-
-
 
 export function Header() {
   const safeMode = useAppStore(s => s.safeMode);
   const user = useAppStore(s => s.user);
-  const authOpen = useAppStore(s => s.authOpen);
-  const setAuthOpen = useAppStore(s => s.setAuthOpen);
   const [mobileOpen, setMobileOpen] = useState(false);
   // 儿童模式默认隐藏佛经导航(佛经内容偏成人/宗教,不适合儿童);关闭儿童模式后恢复
   const visibleNavLinks = safeMode ? NAV_LINKS.filter((l) => l.href !== '/sutra') : NAV_LINKS;
@@ -61,13 +46,10 @@ export function Header() {
           {user ? (
             <UserMenu />
           ) : (
-            <button
-              type="button"
-              onClick={() => setAuthOpen(true)}
-              className="btn-seal text-sm"
-            >
-              登录 / 注册
-            </button>
+            <>
+              <Link href="/login" className="btn-seal text-sm">登录</Link>
+              <Link href="/register" className="text-sm text-ink-soft hover:text-seal">注册</Link>
+            </>
           )}
           <button
             type="button"
@@ -105,14 +87,16 @@ export function Header() {
                   {link.label}
                 </Link>
               ))}
+              {!user && (
+                <>
+                  <Link href="/login" onClick={() => setMobileOpen(false)} className="text-base text-seal py-2 border-b border-ink/10">登录</Link>
+                  <Link href="/register" onClick={() => setMobileOpen(false)} className="text-base text-ink-soft py-2">注册</Link>
+                </>
+              )}
             </nav>
           </div>
         </div>
       )}
-      <Suspense fallback={null}>
-        <AuthAutoOpen onOpen={() => setAuthOpen(true)} />
-      </Suspense>
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </header>
   );
 }
