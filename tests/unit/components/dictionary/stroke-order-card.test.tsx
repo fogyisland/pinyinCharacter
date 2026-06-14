@@ -82,7 +82,7 @@ describe('StrokeOrderCard', () => {
     });
   });
 
-  it('replay button calls writer.animateCharacter when loop is off (Test 4)', async () => {
+  it('replay button replays the animation (Test 4)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ strokes: [], medians: [] }),
