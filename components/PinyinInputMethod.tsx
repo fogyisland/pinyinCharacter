@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import { fetchCandidates, type Candidate } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { createHistoryRequest } from '@/lib/api-history';
+import { useDifficulty } from '@/lib/use-difficulty';
+import { DifficultyPicker } from '@/components/common/DifficultyPicker';
+import { applyDifficulty } from '@/lib/pinyin-input-difficulty';
 import { ReadAloudButton } from './ReadAloudButton';
 
 export function PinyinInputMethod() {
@@ -13,6 +16,7 @@ export function PinyinInputMethod() {
   const [buffer, setBuffer] = useState('');
   const [committed, setCommitted] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [difficulty, setDifficulty] = useDifficulty();
   const inputRef = useRef<HTMLInputElement>(null);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<{ input: string; ts: number } | null>(null);
@@ -25,10 +29,10 @@ export function PinyinInputMethod() {
     }
     const timer = setTimeout(async () => {
       const res = await fetchCandidates(buffer, safeMode, script);
-      if (res.ok) setCandidates(res.data.candidates);
+      if (res.ok) setCandidates(applyDifficulty(res.data.candidates, difficulty));
     }, 80);
     return () => clearTimeout(timer);
-  }, [buffer, safeMode, script]);
+  }, [buffer, safeMode, script, difficulty]);
 
   const pick = (i: number) => {
     const c = candidates[i];
@@ -78,6 +82,9 @@ export function PinyinInputMethod() {
 
   return (
     <div className="space-y-3">
+      <div className="flex items-center justify-between mb-2">
+        <DifficultyPicker value={difficulty} onChange={setDifficulty} />
+      </div>
       <input
         ref={inputRef}
         value={buffer}
@@ -114,7 +121,7 @@ export function PinyinInputMethod() {
       </div>
       {candidates.length > 0 && (
         <div className="flex flex-wrap gap-2">
-          {candidates.slice(0, 9).map((c, i) => (
+          {candidates.map((c, i) => (
             <button
               key={c.char + i}
               type="button"
