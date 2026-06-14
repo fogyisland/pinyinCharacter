@@ -1,9 +1,13 @@
 /**
- * Pre-bundles hanzi-writer stroke data for our 8105 dict chars.
+ * Pre-bundles hanzi-writer stroke data for the 8105 dict chars.
  * Output: public/strokes/{char}.json (static files served by Next.js)
  *         data/strokes-manifest.json (build verification)
  *
- * Run: pnpm strokes:build (~5-10 min for full 8105)
+ * Coverage: hanzi-writer-data covers ~87% of our 8105 chars (~6866/7909 BMP).
+ * The 1239 missing are mostly rare/old forms not in the upstream library;
+ * StrokeOrderCard gracefully hides itself for those chars.
+ *
+ * Run: pnpm strokes:build (~10-15 min for full 8105)
  */
 import pLimit from 'p-limit';
 import { readFile, writeFile, mkdir } from 'fs/promises';
@@ -102,8 +106,8 @@ if (isMain) {
       console.log(`✓ ${supported.length} stroke files written`);
       console.log(`✗ ${missing.length} missing (${missingPct.toFixed(1)}%)`);
       console.log(`Manifest: ${MANIFEST_FILE}`);
-      if (missingPct > 5) {
-        console.error(`FATAL: >5% missing. Check CDN connectivity.`);
+      if (missingPct > 25) {
+        console.error(`FATAL: >25% missing. Likely CDN connectivity issue.`);
         process.exit(1);
       }
     })

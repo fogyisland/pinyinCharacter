@@ -44,7 +44,11 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
         </div>
       )}
 
-      {char.char.length === 1 && <StrokeOrderCard char={char.char} />}
+      {char.char.length === 1 && (
+        <div className="mt-6">
+          <StrokeOrderCard char={char.char} />
+        </div>
+      )}
     </div>
   );
 }

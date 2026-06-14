@@ -147,7 +147,7 @@ pnpm radicals:build                                      # 重新生成 data/rad
 - 加载后自动循环播放笔画动画 (可手动关闭)
 - ⟲ 重播按钮
 - 笔数显示 (`N / M 画`) 实时更新
-- 覆盖 8105 通用规范汉字 (缺失的字 graceful hide)
+- 覆盖 8105 通用规范汉字中约 6866 个 (87% BMP 覆盖率,hanzi-writer-data 不含的生僻字 graceful hide)
 - 数据: `public/strokes/{char}.json` (build 阶段从 hanzi-writer-data 拉取)
 
 **数据初始化**
@@ -156,7 +156,7 @@ pnpm radicals:build                                      # 重新生成 data/rad
 pnpm strokes:build
 ```
 
-首次运行约 5-10 分钟,会写 ~50-150MB JSON 到 `public/strokes/`。该目录已在 `.gitignore` 中,需在每台 dev 机 / CI 上分别运行。
+首次运行约 10-15 分钟,会写 ~30-50MB JSON 到 `public/strokes/`。该目录已在 `.gitignore` 中,需在每台 dev 机 / CI 上分别运行。
 
 ## 读故事 (/stories)（v1 / Plan G）
 
