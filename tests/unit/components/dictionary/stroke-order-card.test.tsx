@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import { StrokeOrderCard } from '@/components/dictionary/StrokeOrderCard';
 
 // Mock the heavy hanzi-writer module so tests don't load real lib
@@ -80,5 +80,67 @@ describe('StrokeOrderCard', () => {
       // New fetch for 丁 (URL-encoded by encodeURIComponent)
       expect(global.fetch).toHaveBeenCalledWith(expect.stringContaining('/strokes/%E4%B8%81.json'));
     });
+  });
+
+  it('replay button calls writer.animateCharacter when loop is off (Test 4)', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ strokes: [], medians: [] }),
+    } as any);
+
+    render(<StrokeOrderCard char="一" />);
+    await waitFor(() => {
+      expect(screen.getByText(/1 \/ 1 画/)).toBeInTheDocument();
+    });
+
+    // Clear the auto-play call (loop was on by default)
+    mockWriter.loopCharacterAnimation.mockClear();
+    mockWriter.animateCharacter.mockClear();
+    mockWriter.cancelAnimation.mockClear();
+
+    // Click replay
+    fireEvent.click(screen.getByRole('button', { name: /重新播放/ }));
+
+    expect(mockWriter.cancelAnimation).toHaveBeenCalled();
+    // loopEnabled is true by default, so loopCharacterAnimation is called
+    expect(mockWriter.loopCharacterAnimation).toHaveBeenCalled();
+  });
+
+  it('loop toggle flips aria-pressed and cancels animation (Test 5)', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ strokes: [], medians: [] }),
+    } as any);
+
+    render(<StrokeOrderCard char="一" />);
+    await waitFor(() => {
+      expect(screen.getByText(/1 \/ 1 画/)).toBeInTheDocument();
+    });
+
+    const loopBtn = screen.getByRole('button', { name: /循环播放/ });
+    expect(loopBtn).toHaveAttribute('aria-pressed', 'true');
+
+    mockWriter.cancelAnimation.mockClear();
+    fireEvent.click(loopBtn);
+
+    expect(loopBtn).toHaveAttribute('aria-pressed', 'false');
+    expect(mockWriter.cancelAnimation).toHaveBeenCalled();
+  });
+
+  it('unmount calls writer.cancelAnimation (Test 6)', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ strokes: [], medians: [] }),
+    } as any);
+
+    const { unmount } = render(<StrokeOrderCard char="一" />);
+    await waitFor(() => {
+      expect(screen.getByText(/1 \/ 1 画/)).toBeInTheDocument();
+    });
+
+    mockWriter.cancelAnimation.mockClear();
+    unmount();
+
+    expect(mockWriter.cancelAnimation).toHaveBeenCalled();
   });
 });
