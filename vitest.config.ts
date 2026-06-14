@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     passWithNoTests: true,
+    setupFiles: ['./tests/_setup/load-env.ts'],
     include: [
       'tests/**/*.test.ts',
       'tests/**/*.test.tsx',

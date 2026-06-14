@@ -5,8 +5,10 @@ import { GET as listRoute } from '@/app/api/sutras/route';
 import { GET as detailRoute } from '@/app/api/sutras/[id]/route';
 
 // MySQL cold-start + 855KB chunks JSON rows (楞严经 etc.) push first SELECT
-// past 5s even on warm pool. 30s gives cold + warm paths room to complete.
-vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
+// past 5s on a warm pool. Under parallel test load (many test files hit
+// MySQL at once) the cold start + slow path can take 30-60s before
+// anything comes back. 60s gives both headroom.
+vi.setConfig({ testTimeout: 60000, hookTimeout: 60000 });
 
 const TEST_SLUG = 'xinjing';
 let insertedId: number;

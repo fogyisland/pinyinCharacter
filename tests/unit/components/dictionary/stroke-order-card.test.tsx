@@ -8,7 +8,7 @@ import { StrokeOrderCard } from '@/components/dictionary/StrokeOrderCard';
 const mockWriter = {
   loopCharacterAnimation: vi.fn(),
   animateCharacter: vi.fn(),
-  cancelAnimation: vi.fn(),
+  pauseAnimation: vi.fn(),
   getNumStrokes: vi.fn(() => 1),
 };
 vi.mock('hanzi-writer', () => ({
@@ -96,17 +96,17 @@ describe('StrokeOrderCard', () => {
     // Clear the auto-play call (loop was on by default)
     mockWriter.loopCharacterAnimation.mockClear();
     mockWriter.animateCharacter.mockClear();
-    mockWriter.cancelAnimation.mockClear();
+    mockWriter.pauseAnimation.mockClear();
 
     // Click replay
     fireEvent.click(screen.getByRole('button', { name: /重新播放/ }));
 
-    expect(mockWriter.cancelAnimation).toHaveBeenCalled();
+    expect(mockWriter.pauseAnimation).toHaveBeenCalled();
     // loopEnabled is true by default, so loopCharacterAnimation is called
     expect(mockWriter.loopCharacterAnimation).toHaveBeenCalled();
   });
 
-  it('loop toggle flips aria-pressed and cancels animation (Test 5)', async () => {
+  it('loop toggle flips aria-pressed and pauses animation (Test 5)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ strokes: [], medians: [] }),
@@ -120,14 +120,14 @@ describe('StrokeOrderCard', () => {
     const loopBtn = screen.getByRole('button', { name: /循环播放/ });
     expect(loopBtn).toHaveAttribute('aria-pressed', 'true');
 
-    mockWriter.cancelAnimation.mockClear();
+    mockWriter.pauseAnimation.mockClear();
     fireEvent.click(loopBtn);
 
     expect(loopBtn).toHaveAttribute('aria-pressed', 'false');
-    expect(mockWriter.cancelAnimation).toHaveBeenCalled();
+    expect(mockWriter.pauseAnimation).toHaveBeenCalled();
   });
 
-  it('unmount calls writer.cancelAnimation (Test 6)', async () => {
+  it('unmount calls writer.pauseAnimation (Test 6)', async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: () => Promise.resolve({ strokes: [], medians: [] }),
@@ -138,9 +138,9 @@ describe('StrokeOrderCard', () => {
       expect(screen.getByText(/1 \/ 1 画/)).toBeInTheDocument();
     });
 
-    mockWriter.cancelAnimation.mockClear();
+    mockWriter.pauseAnimation.mockClear();
     unmount();
 
-    expect(mockWriter.cancelAnimation).toHaveBeenCalled();
+    expect(mockWriter.pauseAnimation).toHaveBeenCalled();
   });
 });

@@ -17,8 +17,10 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 }
 
 export async function buildRound(count: number, seed?: number): Promise<GameRound | null> {
-  // Pull 1 page (80) of chars with meaning
-  const page = await listChars({ minMeaning: true, page: 1 });
+  // The game only needs pinyin + radical; meaning is display-only and most
+  // imported chars don't have one (LLM generation is opt-in). Pull a page
+  // of any chars that have a radical lookup.
+  const page = await listChars({ page: 1 });
   const withAll = page.chars.filter((c) => {
     const rad = getRadical(c.char);
     return rad !== null;

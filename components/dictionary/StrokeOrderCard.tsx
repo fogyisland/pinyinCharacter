@@ -17,7 +17,7 @@ type Props = {
 interface HanziWriterLike {
   loopCharacterAnimation: () => void;
   animateCharacter: () => void;
-  cancelAnimation: () => void;
+  pauseAnimation: () => void;
   getNumStrokes: () => number;
 }
 
@@ -82,7 +82,7 @@ export function StrokeOrderCard({ char, className }: Props) {
         } as any) as unknown as HanziWriterLike;
 
         if (cancelled) {
-          writer.cancelAnimation();
+          writer.pauseAnimation();
           return;
         }
         writerRef.current = writer;
@@ -101,7 +101,7 @@ export function StrokeOrderCard({ char, className }: Props) {
 
     return () => {
       cancelled = true;
-      if (writer) writer.cancelAnimation();
+      if (writer) writer.pauseAnimation();
       writerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -114,7 +114,7 @@ export function StrokeOrderCard({ char, className }: Props) {
     if (loopEnabled) {
       w.loopCharacterAnimation();
     } else {
-      w.cancelAnimation();
+      w.pauseAnimation();
       setCurrentStroke(0);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,7 +123,7 @@ export function StrokeOrderCard({ char, className }: Props) {
   function replay() {
     const w = writerRef.current;
     if (!w) return;
-    w.cancelAnimation();
+    w.pauseAnimation();
     setCurrentStroke(0);
     if (loopEnabled) w.loopCharacterAnimation();
     else w.animateCharacter();

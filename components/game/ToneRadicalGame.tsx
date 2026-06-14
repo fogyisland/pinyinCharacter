@@ -27,6 +27,7 @@ function formatTime(ms: number): string {
 export function ToneRadicalGame() {
   const [phase, setPhase] = useState<Phase>('loading');
   const [round, setRound] = useState<GameRound | null>(null);
+  const [error, setError] = useState<string | null>(null);
   // char → matched tone (round 1) and radical (round 2)
   const [toneMatches, setToneMatches] = useState<Record<string, Tone>>({});
   const [radicalMatches, setRadicalMatches] = useState<Record<string, string>>({});
@@ -42,6 +43,7 @@ export function ToneRadicalGame() {
     setRadicalMatches({});
     setMismatches(0);
     setElapsedMs(0);
+    setError(null);
     try {
       const r = await fetchGameRound(4);
       setRound(r);
@@ -51,6 +53,7 @@ export function ToneRadicalGame() {
       setPhase('round1');
     } catch (e) {
       console.error('loadGame failed', e);
+      setError(e instanceof Error ? e.message : '加载失败');
     }
   };
 
@@ -103,6 +106,27 @@ export function ToneRadicalGame() {
     if (total === 0) return 1;
     return (Object.keys(toneMatches).length + Object.keys(radicalMatches).length) / total;
   }, [mismatches, toneMatches, radicalMatches]);
+
+  if (error) {
+    return (
+      <div className="mx-auto max-w-md rounded-lg border bg-paper p-8 text-center">
+        <h2 className="text-xl font-bold text-seal">出错了</h2>
+        <p className="mt-2 text-ink-soft">{error}</p>
+        <p className="mt-1 text-sm text-ink-faint">
+          如果提示「not enough rare chars」,请运行
+          <code className="mx-1 rounded bg-paper-deep px-1">pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts</code>
+          导入数据
+        </p>
+        <button
+          type="button"
+          onClick={() => void loadGame()}
+          className="mt-4 rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80"
+        >
+          重试
+        </button>
+      </div>
+    );
+  }
 
   if (phase === 'loading' || !round) {
     return <div className="py-12 text-center text-ink-faint">加载中...</div>;
