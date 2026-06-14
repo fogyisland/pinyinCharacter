@@ -1,8 +1,12 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 import { getPool, closePool } from '@/lib/db';
 import { GET as listRoute } from '@/app/api/sutras/route';
 import { GET as detailRoute } from '@/app/api/sutras/[id]/route';
+
+// MySQL cold-start + 855KB chunks JSON rows (楞严经 etc.) push first SELECT
+// past 5s even on warm pool. 30s gives cold + warm paths room to complete.
+vi.setConfig({ testTimeout: 30000, hookTimeout: 30000 });
 
 const TEST_SLUG = 'xinjing';
 let insertedId: number;
