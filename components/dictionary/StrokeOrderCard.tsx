@@ -141,15 +141,6 @@ export function StrokeOrderCard({ char, className }: Props) {
     );
   }
 
-  if (isLoading || !isReady) {
-    return (
-      <article className={className}>
-        <div role="status" aria-label="Loading" className="spinner" />
-        <div ref={containerRef} className="hidden" />
-      </article>
-    );
-  }
-
   return (
     <article className={className}>
       <header className="flex items-center justify-between mb-4">
@@ -170,30 +161,40 @@ export function StrokeOrderCard({ char, className }: Props) {
             <line x1="50" y1="0" x2="50" y2="100" stroke="#666" strokeWidth="0.4" />
             <line x1="0" y1="50" x2="100" y2="50" stroke="#666" strokeWidth="0.4" />
           </svg>
-          <div ref={containerRef} className="absolute inset-0" />
+          <div
+            ref={containerRef}
+            className={`absolute inset-0 ${isReady ? '' : 'invisible'}`}
+          />
+          {!isReady && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div role="status" aria-label="Loading" className="spinner" />
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-2">
-            <button
-              onClick={replay}
-              aria-label="重新播放笔画动画"
-              className="btn"
-            >
-              ⟲
-            </button>
-            <button
-              onClick={toggleLoop}
-              aria-pressed={loopEnabled}
-              aria-label="循环播放"
-              className="btn"
-            >
-              ♻
-            </button>
+        {isReady && (
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2">
+              <button
+                onClick={replay}
+                aria-label="重新播放笔画动画"
+                className="btn"
+              >
+                ⟲
+              </button>
+              <button
+                onClick={toggleLoop}
+                aria-pressed={loopEnabled}
+                aria-label="循环播放"
+                className="btn"
+              >
+                ♻
+              </button>
+            </div>
+            <span aria-live="polite" className="text-sm text-ink/70">
+              {currentStroke || totalStrokes} / {totalStrokes} 画
+            </span>
           </div>
-          <span aria-live="polite" className="text-sm text-ink/70">
-            {currentStroke || totalStrokes} / {totalStrokes} 画
-          </span>
-        </div>
+        )}
       </div>
     </article>
   );
