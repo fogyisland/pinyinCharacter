@@ -19,8 +19,11 @@ export default function ForgotPasswordPage() {
           <div className="paper-rule w-12 mx-auto mb-6" />
           <p className="text-sm text-ink-soft mb-4">输入你的用户名,我们会发送一封重置链接到你的注册邮箱。</p>
           <ForgotForm />
-          <p className="text-xs text-ink-faint mt-4">
-            想起密码了? <a href="/?auth=login" className="text-seal hover:underline">返回登录</a>
+          <p className="text-xs text-ink-faint mt-4 text-center">
+            想起密码了? <a href="/login" className="text-seal hover:underline">返回登录</a>
+          </p>
+          <p className="text-xs text-ink-faint mt-2 text-center">
+            没有账号? <a href="/register" className="text-seal hover:underline">去注册</a>
           </p>
         </div>
       </PageContainer>
