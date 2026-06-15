@@ -226,3 +226,13 @@ export async function updateAiConfigRequest(body: Record<string, string | number
     body: JSON.stringify(body),
   });
 }
+
+export async function getTtsConfigRequest(): Promise<ApiResult<Record<string, string>>> {
+  return call('/api/admin/config', { method: 'GET' });
+}
+
+export async function updateTtsConfigRequest(body: Record<string, string>): Promise<ApiResult<Record<string, string>>> {
+  return call('/api/admin/config', {
+    method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  });
+}
