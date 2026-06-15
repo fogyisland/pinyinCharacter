@@ -7,6 +7,10 @@ import { createHash, randomBytes } from 'node:crypto';
 const HAS_DB = !!process.env.DATABASE_URL_TEST;
 const TEST_JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
 
+// Re-exported for tests that prefer a typed constant over reading process.env directly.
+// Resolved lazily so importing this module does not require DATABASE_URL_TEST to be set.
+export const TEST_DATABASE_URL = process.env.DATABASE_URL_TEST ?? '';
+
 export function integrationTest(name: string, fn: () => Promise<void>) {
   return HAS_DB ? test(name, fn) : test.skip(name, fn);
 }
