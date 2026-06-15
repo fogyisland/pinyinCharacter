@@ -58,8 +58,7 @@ data/
 │   ├── 㐀.json                       (Ext A 罕用字,同目录)
 │   └── ...
 ├── content-manifest.json             [NEW] 字段覆盖率跟踪
-├── general-standard-chinese-characters.json   [已有] 8105 字符号源
-└── _archive/                         [可选] 旧批次不进 git,直接 git rm
+└── general-standard-chinese-characters.json   [已有] 8105 字符号源
 ```
 
 ### 2.2 读路径
@@ -133,7 +132,7 @@ const CharContentSchema = z.object({
 | `pinyin` | 全部 | 拼音字符串 | 必有 |
 | `meaning_zh` | 全部 8105 | ~30-50 字 | 跟 char-meaning 旧批次一致 (《说文》+ 引申) |
 | `etymology_story` | 仅基本字 6498 | 140-180 字 | 跟 etymology 旧批次一致 (甲骨文→楷书演变) |
-| `hanzi_story` | 仅异体字 1413 | 30-50 字 | 跟 story 旧批次一致 (出处 + 用途) |
+| `hanzi_story` | 仅异体字 1607 (level 3 全集) | 30-50 字 | 跟 story 旧批次一致 (出处 + 用途) |
 
 字段不写 = 没生成。**禁止存 `null` 噪声字段**。
 
@@ -174,7 +173,13 @@ const ContentManifestSchema = z.object({
 - 优先没在任何已写批次的字
 - 跳过 8105 字符号源外的字
 
-**辅助脚本** `scripts/select-next-chars.ts` 输出下一轮 30 字,人工/Claude 据此生成。
+**每轮"30 字"语义**:
+- 30 是去重后的 char 数,不是字段数
+- 一个 char 可在同轮填多个字段 (例: 「一」本轮同时补 meaning_zh + etymology_story)
+- 上限: 30 字 × 3 字段 = 90 字段-字 / 轮
+- 实际操作: 选题时按"field 缺口列表前 N 个 char"取并集去重,直到 30 个 char
+
+**辅助脚本** `scripts/select-next-chars.ts` 输出下一轮 30 字 (含每字该填的字段),人工/Claude 据此生成。
 
 ### 3.4 DB 表
 
@@ -288,7 +293,8 @@ async function getContentFromDb(char: string): Promise<CharContent | null> {
 - 浏览器访问 `/dictionary/一` 显示 meaning_zh (DB 回退)
 - 访问 `/dictionary/严` (刚生成) 显示新 meaning_zh (data/content/)
 - 访问 `/etymology/严` (刚生成) 显示 etymology_story
-- 访问 `/story/㐀` (刚生成) 显示 hanzi_story (前提是路由存在;否则先不验证)
+
+**范围外 (本 spec 不做)**: `/story/[char]` 路由 (HanziStory 详情页) — 仅产出 `hanzi_story` 数据,UI 由后续 spec 负责。
 
 ---
 
