@@ -1,23 +1,20 @@
 import { Suspense } from 'react';
 import { Header } from '@/components/Header';
-import { Hero } from '@/components/Hero';
-import { BentoGrid } from '@/components/BentoGrid';
-import { ValueProps } from '@/components/ValueProps';
+import { TextToPinyin } from '@/components/TextToPinyin';
 import { Footer } from '@/components/Footer';
-import { PageContainer } from '@/components/common/PageContainer';
+import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 
 export const dynamic = 'force-dynamic';
 
-export default function Home() {
+export default function PinyinPage() {
   return (
     <>
       <Suspense>
         <Header />
       </Suspense>
       <PageContainer>
-        <Hero />
-        <BentoGrid />
-        <ValueProps />
+        <SectionTitle subtitle="整句智能转换">字 → 拼音 互转</SectionTitle>
+        <TextToPinyin />
       </PageContainer>
       <Footer />
     </>
