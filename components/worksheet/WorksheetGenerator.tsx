@@ -6,10 +6,11 @@ import type { CellStyle } from '@/lib/worksheet-types';
 import { useAppStore } from '@/lib/store';
 import { TextInputTab } from './TextInputTab';
 import { LibrarySelectTab } from './LibrarySelectTab';
+import { RandomTab } from './RandomTab';
 import { StylePicker } from './StylePicker';
 import { WorksheetPreview } from './WorksheetPreview';
 
-type Tab = 'text' | 'library';
+type Tab = 'text' | 'library' | 'random';
 
 export function WorksheetGenerator() {
   const sp = useSearchParams();
@@ -112,12 +113,26 @@ export function WorksheetGenerator() {
         >
           从字库选
         </button>
+        <button
+          type="button"
+          onClick={() => setTab('random')}
+          className={`px-4 py-2 ${tab === 'random' ? 'border-b-2 border-seal font-medium' : 'text-ink-faint'}`}
+        >
+          随机生成
+        </button>
       </div>
 
       {tab === 'text' ? (
         <TextInputTab value={content} onChange={setContent} />
-      ) : (
+      ) : tab === 'library' ? (
         <LibrarySelectTab selected={content} onChange={setContent} />
+      ) : (
+        <RandomTab
+          onPicked={(chars) => {
+            setContent(chars);
+            setView('preview');
+          }}
+        />
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

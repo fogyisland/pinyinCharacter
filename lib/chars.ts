@@ -114,3 +114,32 @@ export async function getCharDetail(char: string): Promise<CharWithRelated | nul
     relatedByPinyin: pinyinRows.map(mapRow),
   };
 }
+
+const DIFFICULTY_LEVELS: Record<'easy' | 'medium' | 'hard', number[]> = {
+  easy: [1],
+  medium: [1, 2],
+  hard: [1, 2, 3],
+};
+
+export async function getRandomChars(opts: {
+  count: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+}): Promise<Pick<Char, 'char' | 'pinyin' | 'meaningZh'>[]> {
+  const levels = DIFFICULTY_LEVELS[opts.difficulty];
+  const placeholders = levels.map(() => '?').join(',');
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT \`char\`, pinyin, meaning_zh
+     FROM chars
+     WHERE level IN (${placeholders})
+       AND \`char\` REGEXP '^[一-鿿]$'
+     ORDER BY RAND()
+     LIMIT ?`,
+    [...levels, opts.count],
+  );
+  return rows.map(r => ({
+    char: r.char,
+    pinyin: r.pinyin ?? '',
+    meaningZh: r.meaning_zh,
+  }));
+}

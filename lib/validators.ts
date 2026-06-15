@@ -68,6 +68,11 @@ export const charsListQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
 });
 
+export const charsRandomQuerySchema = z.object({
+  count: z.coerce.number().int().min(1).max(100).default(20),
+  difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
+});
+
 export const etymologyCharParamSchema = charParamSchema;
 
 export const adminGenerateEtymologySchema = z.object({
