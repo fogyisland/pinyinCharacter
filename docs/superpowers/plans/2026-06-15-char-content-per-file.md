@@ -326,13 +326,10 @@ git commit -m "feat(content): zod schemas for CharContent + ContentManifest"
 `lib/content-types.ts`:
 
 ```typescript
-export interface CharContentFile {
-  char: string;
-  pinyin: string;
-  meaning_zh?: string;
-  etymology_story?: string;
-  hanzi_story?: string;
-}
+import type { CharContent } from '@/scripts/schemas/content';
+
+/** 重新导出 zod infer 的类型, 这样 lib/content.ts 和 test 都用同一份 */
+export type { CharContent } from '@/scripts/schemas/content';
 
 export interface GetContentOptions {
   /** 强制跳过文件层,只读 DB (用于测试 + admin) */
@@ -436,14 +433,15 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPool } from './db';
 import { CharContentSchema } from '@/scripts/schemas/content';
-import type { CharContentFile, GetContentOptions } from './content-types';
+import type { CharContent } from '@/scripts/schemas/content';
+import type { GetContentOptions } from './content-types';
 
 const CONTENT_DIR = join(process.cwd(), 'data', 'content');
 
 export async function getContent(
   char: string,
   opts: GetContentOptions = {}
-): Promise<CharContentFile | null> {
+): Promise<CharContent | null> {
   // 1. 读文件 (除非 dbOnly)
   if (!opts.dbOnly) {
     const filePath = join(CONTENT_DIR, `${char}.json`);
@@ -649,11 +647,11 @@ async function listCharsMissing(
   pool: any,
   field: 'meaning_zh' | 'etymology_story' | 'hanzi_story',
   limit: number,
-  existing: Map<string, ExistingFile>
+  existing: Map<string, ExistingFile>,
+  levels: Array<1 | 2 | 3>
 ): Promise<string[]> {
   const chars: string[] = [];
-  // 按 level 1 → 2 → 3 顺序查
-  for (const level of [1, 2, 3] as const) {
+  for (const level of levels) {
     if (chars.length >= limit) break;
     let sql: string;
     let params: any[];
@@ -665,7 +663,6 @@ async function listCharsMissing(
       params = [level, limit - chars.length];
     } else {
       // etymology_story / hanzi_story: chars 表里没字段, 用 char 集合
-      // level 1+2 = 6498 chars; level 3 = 1607
       sql = `SELECT \`char\` FROM chars WHERE level = ? ORDER BY \`char\` LIMIT ?`;
       params = [level, limit - chars.length];
     }
@@ -673,7 +670,6 @@ async function listCharsMissing(
     for (const r of rows) {
       const c: string = r.char;
       if (chars.includes(c)) continue;
-      // 跳过已有该字段的
       if (existing.get(c)?.[field]) continue;
       chars.push(c);
       if (chars.length >= limit) break;
@@ -696,7 +692,7 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
   const meaningGap = 8105 - Number(meaningInDb) - meaningInFiles;
 
   if (meaningGap > 0) {
-    const chars = await listCharsMissing(pool, 'meaning_zh', roundSize, existing);
+    const chars = await listCharsMissing(pool, 'meaning_zh', roundSize, existing, [1, 2, 3]);
     for (const c of chars) {
       if (seen.has(c)) continue;
       seen.add(c);
@@ -712,15 +708,9 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
 
   if (hanziGap > 0) {
     const remain = roundSize - result.length;
-    const chars = await listCharsMissing(pool, 'hanzi_story', remain, existing)
-      .then(chars => chars.filter(c => !seen.has(c)));
-    // 限制到 level 3
-    const level3 = await pool.query<any[]>(
-      `SELECT \`char\` FROM chars WHERE level = 3 ORDER BY \`char\` LIMIT ${hanziGap}`
-    );
-    const level3Set = new Set<string>((level3[0] as any[]).map(r => r.char));
+    const chars = await listCharsMissing(pool, 'hanzi_story', remain, existing, [3]);
     for (const c of chars) {
-      if (!level3Set.has(c)) continue;
+      if (seen.has(c)) continue;
       seen.add(c);
       result.push({ char: c, fieldsToFill: ['hanzi_story'] });
       if (result.length >= roundSize) return result;
@@ -734,7 +724,7 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
 
   if (etymGap > 0) {
     const remain = roundSize - result.length;
-    const chars = await listCharsMissing(pool, 'etymology_story', remain, existing);
+    const chars = await listCharsMissing(pool, 'etymology_story', remain, existing, [1, 2]);
     for (const c of chars) {
       if (seen.has(c)) continue;
       seen.add(c);
