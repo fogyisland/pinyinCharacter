@@ -12,8 +12,8 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
         <Link href={`/stories/${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">故事 →</Link>
         <Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">+ 字帖</Link>
         <span className="ml-auto flex items-center gap-2 pb-1">
-          <ReadAloudButton text={char.char} label="读字" size="sm" variant="seal" />
-          <ReadAloudButton text={char.pinyin} label="读音" size="sm" variant="paper" />
+          <ReadAloudButton text={char.char} label="读字" size="sm" variant="seal" voice="male" />
+          <ReadAloudButton text={char.pinyin} label="读音" size="sm" variant="paper" voice="female" />
         </span>
       </div>
 

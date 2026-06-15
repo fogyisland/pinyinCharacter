@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { speak, stopSpeaking } from '@/lib/tts';
+import { speak, stopSpeaking, type Voice } from '@/lib/tts';
 
 type Size = 'sm' | 'md' | 'lg';
 
@@ -12,6 +12,7 @@ interface Props {
   variant?: 'paper' | 'ink' | 'seal';
   className?: string;
   title?: string;
+  voice?: Voice;
 }
 
 const SIZE_CLASS: Record<Size, string> = {
@@ -36,17 +37,18 @@ export function ReadAloudButton({
   variant = 'paper',
   className = '',
   title = '单击朗读，双击停止',
+  voice = 'female',
 }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
-  function handleClick() {
+  async function handleClick() {
     if (!text) return;
     if (isSpeaking) {
       stopSpeaking();
       setIsSpeaking(false);
     } else {
-      speak(text, { onEnd: () => setIsSpeaking(false) });
       setIsSpeaking(true);
+      await speak(text, { voice, onEnd: () => setIsSpeaking(false) });
     }
   }
 
