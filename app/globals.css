@@ -88,7 +88,7 @@
     border-color: rgba(58, 42, 20, 0.40);
   }
   .card-paper {
-    background-color: #FFFAEE;
+    background: transparent;
     border: 1px solid rgba(58, 42, 20, 0.10);
     box-shadow: var(--shadow-paper);
     transition: box-shadow 200ms, border-color 200ms;
