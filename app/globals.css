@@ -100,6 +100,12 @@
 }
 
 /* ============ Print (worksheet) ============ */
+/* The @page size is set inline per worksheet (see WorksheetPreview), since CSS
+   has no per-element way to drive @page without Paged Media Level 3 support. */
+.worksheet-grid--a3 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+.worksheet-grid--a4 { grid-template-columns: repeat(8,  minmax(0, 1fr)); }
+.worksheet-grid--b5 { grid-template-columns: repeat(6,  minmax(0, 1fr)); }
+
 @media print {
   body * {
     visibility: hidden;
@@ -115,10 +121,6 @@
   }
   .worksheet-no-print {
     display: none !important;
-  }
-  @page {
-    margin: 1.5cm;
-    size: A4;
   }
 }
 

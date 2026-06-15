@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import type { CellStyle } from '@/lib/worksheet-types';
+import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
+import { paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
 import { useAppStore } from '@/lib/store';
 import { TextInputTab } from './TextInputTab';
 import { LibrarySelectTab } from './LibrarySelectTab';
 import { RandomTab } from './RandomTab';
 import { StylePicker } from './StylePicker';
+import { PaperSizePicker } from './PaperSizePicker';
+import { FontFamilyPicker } from './FontFamilyPicker';
 import { WorksheetPreview } from './WorksheetPreview';
 
 type Tab = 'text' | 'library' | 'random';
@@ -24,6 +27,8 @@ export function WorksheetGenerator() {
   const [content, setContent] = useState<string[]>(prefill ? [prefill] : []);
   const [title, setTitle] = useState('');
   const [cellStyle, setCellStyle] = useState<CellStyle>('brush');
+  const [paperSize, setPaperSize] = useState<PaperSize>('A4');
+  const [fontFamily, setFontFamily] = useState<FontFamily>('song');
   const [view, setView] = useState<'form' | 'preview'>('form');
   const [saving, setSaving] = useState(false);
   const [authHint, setAuthHint] = useState(false);
@@ -64,7 +69,7 @@ export function WorksheetGenerator() {
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title || `字帖 ${new Date().toLocaleDateString()}`, content, cellStyle }),
+        body: JSON.stringify({ title: title || `字帖 ${new Date().toLocaleDateString()}`, content, cellStyle, paperSize, fontFamily }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -88,6 +93,8 @@ export function WorksheetGenerator() {
         title={title}
         content={content}
         cellStyle={cellStyle}
+        paperSize={paperSize}
+        fontFamily={fontFamily}
         onBack={() => setView('form')}
         onSave={handleSave}
         saving={saving}
@@ -155,6 +162,23 @@ export function WorksheetGenerator() {
         </div>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label className="block text-sm font-medium text-ink-soft">
+            纸张尺寸 <span className="text-xs text-ink-faint">(决定每页字数)</span>
+          </label>
+          <div className="mt-2">
+            <PaperSizePicker value={paperSize} onChange={setPaperSize} />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-ink-soft">字体</label>
+          <div className="mt-2">
+            <FontFamilyPicker value={fontFamily} onChange={setFontFamily} />
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col items-end gap-2">
         {authHint && !user && (
           <p className="text-sm text-ink-soft">
@@ -171,6 +195,9 @@ export function WorksheetGenerator() {
         {errorMsg && (
           <p className="text-sm text-red-600">{errorMsg}</p>
         )}
+        <p className="text-xs text-ink-faint self-end">
+          预览: {paperSizeLabel(paperSize)} · {fontFamilyLabel(fontFamily)}
+        </p>
         <button
           type="button"
           onClick={() => setView('preview')}

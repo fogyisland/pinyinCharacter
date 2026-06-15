@@ -1,4 +1,6 @@
 export type CellStyle = 'brush' | 'square' | 'pen';
+export type PaperSize = 'A3' | 'A4' | 'B5';
+export type FontFamily = 'kai' | 'song' | 'hei';
 
 export interface Cell {
   char: string;
@@ -12,6 +14,8 @@ export interface Worksheet {
   title: string;
   content: string[];
   cellStyle: CellStyle;
+  paperSize: PaperSize;
+  fontFamily: FontFamily;
   createdAt: Date;
 }
 
@@ -20,8 +24,34 @@ export interface SaveWorksheetArgs {
   title: string;
   content: string[];
   cellStyle: CellStyle;
+  paperSize: PaperSize;
+  fontFamily: FontFamily;
   ip?: string | null;
   userAgent?: string | null;
+}
+
+// Cells-per-page is a rough heuristic for the UI hint; the actual layout
+// depends on the cell size in CSS and the printable area.
+export const PAPER_SIZES: { value: PaperSize; label: string; cols: number; cellsPerPage: number }[] = [
+  { value: 'A3', label: 'A3 · 大', cols: 12, cellsPerPage: 132 },
+  { value: 'A4', label: 'A4 · 标准', cols: 8,  cellsPerPage: 96 },
+  { value: 'B5', label: 'B5 · 小', cols: 6,  cellsPerPage: 66 },
+];
+
+export const FONT_FAMILIES: { value: FontFamily; label: string; cssVar: string }[] = [
+  { value: 'song', label: '宋体', cssVar: 'var(--font-han-serif)' },
+  { value: 'kai',  label: '楷体', cssVar: 'var(--font-wenkai)' },
+  { value: 'hei',  label: '黑体', cssVar: 'var(--font-han-sans)' },
+];
+
+export function paperSizeLabel(p: PaperSize): string {
+  return PAPER_SIZES.find((s) => s.value === p)?.label ?? p;
+}
+export function fontFamilyLabel(f: FontFamily): string {
+  return FONT_FAMILIES.find((x) => x.value === f)?.label ?? f;
+}
+export function fontFamilyCssVar(f: FontFamily): string {
+  return FONT_FAMILIES.find((x) => x.value === f)?.cssVar ?? 'var(--font-han-serif)';
 }
 
 export type ValidationResult =

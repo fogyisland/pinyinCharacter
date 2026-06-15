@@ -19,12 +19,18 @@ export async function POST(req: NextRequest) {
     if (!user) return unauthorized();
     const body = await req.json();
     const parsed = saveWorksheetSchema.safeParse(body);
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success) {
+      const issue = parsed.error.issues[0];
+      const path = issue?.path?.join('.') ?? '';
+      return badRequest('bad_input', `${path}: ${issue?.message ?? 'bad input'}`);
+    }
     const id = await saveWorksheet({
       userId: user.id,
       title: parsed.data.title,
       content: parsed.data.content,
       cellStyle: parsed.data.cellStyle,
+      paperSize: parsed.data.paperSize,
+      fontFamily: parsed.data.fontFamily,
     });
     return NextResponse.json({ ok: true, data: { id } });
   });

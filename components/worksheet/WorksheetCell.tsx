@@ -1,13 +1,16 @@
-import type { CellStyle } from '@/lib/worksheet-types';
+import type { CellStyle, FontFamily } from '@/lib/worksheet-types';
+import { fontFamilyCssVar } from '@/lib/worksheet-types';
 
 interface Props {
   char: string;
   style: CellStyle;
   size?: number;
+  fontFamily?: FontFamily;
 }
 
-export function WorksheetCell({ char, style, size = 80 }: Props) {
+export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: Props) {
   const stroke = '#bbb';
+  const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", serif`;
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" className="block">
       {/* outer border */}
@@ -23,7 +26,7 @@ export function WorksheetCell({ char, style, size = 80 }: Props) {
       ) : style === 'square' ? (
         <line x1={2} y1={50} x2={98} y2={50} stroke={stroke} strokeWidth={0.5} />
       ) : null}
-      {/* the char (faint guide) — 用 Noto Serif SC (SIL OFL) 避免 Times New Roman 侵权 */}
+      {/* the char (faint guide) — Chinese font chosen via fontFamily prop (default 宋) */}
       <text
         x={50}
         y={50}
@@ -31,7 +34,7 @@ export function WorksheetCell({ char, style, size = 80 }: Props) {
         dominantBaseline="central"
         fontSize={60}
         fill={stroke}
-        style={{ fontFamily: 'var(--font-han-serif), "Noto Serif SC", serif' }}
+        style={{ fontFamily: fontStack }}
       >
         {char}
       </text>

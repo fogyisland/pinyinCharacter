@@ -1,7 +1,7 @@
 'use client';
 
-import type { CellStyle } from '@/lib/worksheet-types';
-import { generateLayout } from '@/lib/worksheet-types';
+import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
+import { generateLayout, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PrintButton } from '@/components/common/PrintButton';
 
@@ -9,6 +9,8 @@ interface BaseProps {
   title?: string;
   content: string[];
   cellStyle: CellStyle;
+  paperSize: PaperSize;
+  fontFamily: FontFamily;
   showHeader?: boolean;
 }
 
@@ -24,9 +26,13 @@ type Props = BaseProps | FormProps;
 export function WorksheetPreview(props: Props) {
   const cells = generateLayout(props.content, props.cellStyle);
   const isFormView = 'onBack' in props;
+  const sizeClass = `worksheet-grid--${props.paperSize.toLowerCase()}`;
 
   return (
     <div>
+      {/* Inline @page rule so the printed sheet actually uses the selected size. */}
+      <style>{`@page { size: ${props.paperSize}; margin: 1.5cm; }`}</style>
+
       {isFormView && props.showHeader !== false && (
         <div className="worksheet-no-print mb-4 flex items-center justify-between">
           <button
@@ -65,10 +71,10 @@ export function WorksheetPreview(props: Props) {
       )}
 
       <div className="overflow-x-auto">
-        <div className="worksheet-grid mx-auto grid min-w-[640px] max-w-3xl grid-cols-8 gap-2 print:min-w-0 print:grid-cols-8">
+        <div className={`worksheet-grid mx-auto grid min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
           {cells.map((cell) => (
             <div key={cell.index} className="worksheet-cell">
-              <WorksheetCell char={cell.char} style={cell.style} />
+              <WorksheetCell char={cell.char} style={cell.style} fontFamily={props.fontFamily} />
             </div>
           ))}
         </div>

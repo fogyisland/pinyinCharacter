@@ -1,20 +1,20 @@
 import { getPool } from './db';
 import { writeAudit } from './audit';
-import type { SaveWorksheetArgs, Worksheet } from './worksheet-types';
+import type { PaperSize, FontFamily, SaveWorksheetArgs, Worksheet } from './worksheet-types';
 
 export * from './worksheet-types';
 
 export async function saveWorksheet(args: SaveWorksheetArgs): Promise<number> {
   const pool = getPool();
   const [result] = await pool.execute<any>(
-    `INSERT INTO worksheets (user_id, title, content, cell_style) VALUES (?, ?, ?, ?)`,
-    [args.userId, args.title, JSON.stringify(args.content), args.cellStyle]
+    `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family) VALUES (?, ?, ?, ?, ?, ?)`,
+    [args.userId, args.title, JSON.stringify(args.content), args.cellStyle, args.paperSize, args.fontFamily]
   );
   const id = result.insertId as number;
   await writeAudit({
     userId: args.userId,
     event: 'worksheet_saved',
-    metadata: { worksheetId: id, charCount: args.content.length, cellStyle: args.cellStyle },
+    metadata: { worksheetId: id, charCount: args.content.length, cellStyle: args.cellStyle, paperSize: args.paperSize, fontFamily: args.fontFamily },
     ip: args.ip,
     userAgent: args.userAgent,
   });
@@ -24,7 +24,7 @@ export async function saveWorksheet(args: SaveWorksheetArgs): Promise<number> {
 export async function listUserWorksheets(userId: number): Promise<Worksheet[]> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
-    `SELECT id, user_id, title, content, cell_style, created_at
+    `SELECT id, user_id, title, content, cell_style, paper_size, font_family, created_at
      FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
     [userId]
   );
@@ -34,7 +34,7 @@ export async function listUserWorksheets(userId: number): Promise<Worksheet[]> {
 export async function getWorksheet(id: number): Promise<Worksheet | null> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
-    `SELECT id, user_id, title, content, cell_style, created_at
+    `SELECT id, user_id, title, content, cell_style, paper_size, font_family, created_at
      FROM worksheets WHERE id = ? LIMIT 1`,
     [id]
   );
@@ -67,6 +67,8 @@ function mapRow(r: any): Worksheet {
     title: r.title,
     content,
     cellStyle: r.cell_style,
+    paperSize: r.paper_size as PaperSize,
+    fontFamily: r.font_family as FontFamily,
     createdAt: r.created_at,
   };
 }

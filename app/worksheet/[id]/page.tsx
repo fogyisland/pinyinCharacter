@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorksheet } from '@/lib/worksheet';
+import { paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
 import { WorksheetPreview } from '@/components/worksheet/WorksheetPreview';
 import { DeleteWorksheetButton } from '@/components/worksheet/DeleteWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
@@ -39,11 +40,19 @@ export default async function WorksheetDetailPage({ params }: Props) {
           </div>
         </div>
         <p className="worksheet-no-print mb-4 text-sm text-ink-faint">
-          {ws.content.length} 字 · {ws.cellStyle === 'brush' ? '毛笔格' : ws.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
+          {paperSizeLabel(ws.paperSize)} · {fontFamilyLabel(ws.fontFamily)} · {ws.content.length} 字 ·{' '}
+          {ws.cellStyle === 'brush' ? '毛笔格' : ws.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
           {new Date(ws.createdAt).toLocaleString()}
         </p>
         <div className="card-paper p-5">
-          <WorksheetPreview title={undefined} content={ws.content} cellStyle={ws.cellStyle} showHeader={false} />
+          <WorksheetPreview
+            title={undefined}
+            content={ws.content}
+            cellStyle={ws.cellStyle}
+            paperSize={ws.paperSize}
+            fontFamily={ws.fontFamily}
+            showHeader={false}
+          />
         </div>
       </PageContainer>
       <Footer />
