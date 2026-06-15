@@ -1,7 +1,9 @@
 import WebSocket from 'ws';
+import { randomBytes } from 'crypto';
 
 const ENDPOINT = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
 const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+const CRLF_CR_LF = Buffer.from('\r\n\r\n');
 
 export type AudioFormat =
   | 'audio-24khz-48kbitrate-mono-mp3'
@@ -25,20 +27,22 @@ export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
     const ws = new WebSocket(url);
     const chunks: Buffer[] = [];
     let timer: NodeJS.Timeout | null = null;
+    let settled = false;
+    const settle = (fn: () => void) => { if (settled) return; settled = true; fn(); };
 
     const cleanup = () => {
-      if (timer) clearTimeout(timer);
+      if (timer) { clearTimeout(timer); timer = null; }
       try { ws.close(); } catch {}
     };
 
     timer = setTimeout(() => {
       cleanup();
-      reject(new Error('Edge TTS timeout'));
+      settle(() => reject(new Error('Edge TTS timeout')));
     }, timeoutMs);
 
     ws.on('error', (err) => {
       cleanup();
-      reject(err);
+      settle(() => reject(err));
     });
 
     ws.on('open', () => {
@@ -49,31 +53,29 @@ export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
 
     ws.on('message', (data) => {
       const buf = data as Buffer;
-      // 二进制帧前 2 字节是 header length;切到 Path:audio 之后的部分累积
-      // 简化: 累积整个 buffer,然后后续解析 header
       // 协议: "X-RequestId:...<CRLF><CRLF>binary"
-      const sep = buf.indexOf(Buffer.from('\r\n\r\n'));
+      const sep = buf.indexOf(CRLF_CR_LF);
       if (sep < 0) return;
       const header = buf.subarray(0, sep).toString('utf8');
       if (!header.includes('Path:audio')) return;
       chunks.push(buf.subarray(sep + 4));
-      if (header.includes('Path:audio') && header.includes('X-StreamIndex')) {
-        // last frame has X-StreamIndex close
-        cleanup();
-        resolve(Buffer.concat(chunks));
-      }
+      // Note: X-StreamIndex appears on every audio frame, so we rely on 'close' as end-of-stream
     });
 
     ws.on('close', () => {
       if (timer) { clearTimeout(timer); timer = null; }
-      // edge case: close without last frame — reject if no audio
-      if (chunks.length === 0) reject(new Error('Edge TTS closed with no audio'));
+      if (chunks.length === 0) {
+        settle(() => reject(new Error('Edge TTS closed with no audio')));
+      } else {
+        settle(() => resolve(Buffer.concat(chunks)));
+      }
     });
   });
 }
 
 export function buildSsml(voiceName: string, format: string, text: string): string {
-  // escape XML
+  // Note: `voiceName` (validated via KEY_VALIDATORS regex) and `format` (AudioFormat union)
+  // are caller-validated and safe; only `text` needs XML escaping.
   const safe = text
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -91,5 +93,5 @@ function ts(): string {
 }
 
 function randomHex(len: number): string {
-  return Array.from({ length: len }, () => Math.floor(Math.random() * 16).toString(16)).join('');
+  return randomBytes(len).toString('hex');
 }
