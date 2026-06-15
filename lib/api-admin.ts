@@ -157,7 +157,7 @@ export interface AdminDownloadRow {
   ip: string | null;
   createdAt: string;
 }
-export interface AdminDownloadListData { rows: AdminDownloadRow[]; total: number; page: number; pageSize: number; }
+export interface AdminDownloadListData { items: AdminDownloadRow[]; total: number; page: number; pageSize: number; }
 
 export async function listAdminDownloadsRequest(params: {
   userId?: number; sourceType?: string;

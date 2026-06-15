@@ -67,7 +67,7 @@ export default function AdminDownloadsPage() {
         page, pageSize,
       });
       if (!r.ok) { setErr(r.error.message); return; }
-      setRows(r.data.rows);
+      setRows(r.data.items);
       setTotal(r.data.total);
     } finally { setBusy(false); }
   }, [sourceType, userQ, from, to, page, pageSize]);
