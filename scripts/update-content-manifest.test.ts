@@ -23,6 +23,7 @@ describe('updateContentManifest', () => {
   it('writes all-zero manifest when content dir is empty', async () => {
     vi.mocked(existsSync).mockReturnValue(false);
     vi.mocked(mkdirSync).mockReturnValue(undefined);
+    vi.mocked(readdirSync).mockReturnValue([] as any);
     vi.mocked(writeFileSync).mockReturnValue(undefined);
 
     const manifest = await updateContentManifest();

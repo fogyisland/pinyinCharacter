@@ -10,12 +10,10 @@ const CONTENT_DIR = join(process.cwd(), 'data', 'content');
 const MANIFEST_PATH = join(process.cwd(), 'data', 'content-manifest.json');
 
 export async function updateContentManifest(): Promise<ContentManifest> {
-  if (!existsSync(CONTENT_DIR)) {
-    mkdirSync(CONTENT_DIR, { recursive: true });
-  }
+  if (!existsSync(CONTENT_DIR)) mkdirSync(CONTENT_DIR, { recursive: true });
 
   const byField = { meaning_zh: 0, etymology_story: 0, hanzi_story: 0 };
-  const files = existsSync(CONTENT_DIR) ? readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json')) : [];
+  const files = readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json'));
 
   for (const f of files) {
     try {
