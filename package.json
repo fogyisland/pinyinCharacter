@@ -30,6 +30,7 @@
     "react": "19.0.0-rc-66855b96-20241106",
     "react-dom": "19.0.0-rc-66855b96-20241106",
     "server-only": "^0.0.1",
+    "ws": "^8.21.0",
     "zod": "^4.4.3",
     "zustand": "^5.0.1"
   },
@@ -42,6 +43,7 @@
     "@types/nodemailer": "^8.0.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/ws": "^8.18.1",
     "@vitest/ui": "^2.1.5",
     "cnchar": "^3.2.6",
     "cnchar-radical": "^3.2.6",
