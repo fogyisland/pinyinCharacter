@@ -236,3 +236,49 @@ export async function updateTtsConfigRequest(body: Record<string, string>): Prom
     method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
   });
 }
+
+// --- H12: Memberships (admin) ---------------------------------------
+
+export interface AdminMembershipRow {
+  id: number;
+  userId: number;
+  username: string | null;
+  planKey: string;
+  source: 'manual' | 'paypal';
+  amount: string | null;
+  currency: string | null;
+  grantedAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  note: string | null;
+  grantedBy: number | null;
+}
+export interface AdminMembershipListData { items: AdminMembershipRow[]; total: number; page: number; pageSize: number; }
+
+export async function listAdminMembershipsRequest(params: {
+  userId?: number; planKey?: string; page?: number; pageSize?: number;
+} = {}): Promise<ApiResult<AdminMembershipListData>> {
+  const sp = new URLSearchParams();
+  if (params.userId !== undefined) sp.set('userId', String(params.userId));
+  if (params.planKey) sp.set('planKey', params.planKey);
+  if (params.page !== undefined) sp.set('page', String(params.page));
+  if (params.pageSize !== undefined) sp.set('pageSize', String(params.pageSize));
+  const qs = sp.toString();
+  return call(`/api/admin/memberships${qs ? '?' + qs : ''}`, { method: 'GET' });
+}
+
+export async function grantAdminMembershipRequest(body: {
+  userId: number; planKey: string; note?: string;
+}): Promise<ApiResult<{ id: number; expiresAt: string }>> {
+  return call('/api/admin/memberships', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function revokeAdminMembershipRequest(id: number, reason?: string): Promise<ApiResult<AdminMembershipRow>> {
+  return call(`/api/admin/memberships/${id}/revoke`, {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ reason }),
+  });
+}
