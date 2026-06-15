@@ -10,7 +10,9 @@ export type AuditEvent =
   | 'ai_config_updated' | 'ai_call_logged'
   | 'tts_config_updated'
   | 'worksheet_saved' | 'worksheet_deleted'
-  | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved';
+  | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved'
+  | 'membership_granted' | 'membership_granted_paypal' | 'membership_revoked'
+  | 'paypal_config_updated' | 'paypal_webhook_received' | 'paypal_webhook_rejected';
 
 export interface AuditEntry {
   userId: number | null;
