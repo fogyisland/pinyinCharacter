@@ -507,4 +507,131 @@ export async function PUT(req: Request) {
 - Admin pattern:`app/admin/ai/page.tsx`,`lib/config.ts`,`lib/api-admin.ts`
 - 设计 token:`app/globals.css` `@theme { --color-* }` + `@layer utilities { .card-paper ... }`
 - Edge TTS 协议参考: github.com/rany2/edge-tts (Python 实现,翻译到 TS)
+
+---
+
+## 8. 随机字帖生成 (Random Worksheet)
+
+**追加需求 (2026-06-15)**: 用户想在「从字库选」tab 之后增加一个「随机生成」tab,选择字数 + 难度,系统随机抽字生成字帖。
+
+### 8.1 目标
+
+- 在 `WorksheetGenerator` 加第三个 tab「随机生成」,位于「从字库选」之后
+- 用户输入: 字数 (1-100) + 难度 (简单/中等/困难)
+- 难度映射到 `chars.level` (1/2/3):
+  - 简单 → level 1 (常用字, ~3500 字)
+  - 中等 → level 1+2 (~6500 字)
+  - 困难 → level 1+2+3 (全 8105 字)
+- 随机抽 N 个字,灌入 worksheet 内容,跳转预览
+- 复用现有 saveWorksheet 逻辑
+
+### 8.2 新增 API
+
+**`app/api/chars/random/route.ts`** (GET):
+
+```
+GET /api/chars/random?count=20&difficulty=medium
+```
+
+Query schema (`lib/validators.ts`):
+```typescript
+export const charsRandomQuerySchema = z.object({
+  count: z.coerce.number().int().min(1).max(100).default(20),
+  difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
+});
+```
+
+Response:
+```json
+{
+  "ok": true,
+  "data": {
+    "chars": [{ "char": "你", "pinyin": "nǐ", "meaning": "..." }]
+  }
+}
+```
+
+Lib (`lib/chars.ts` 扩展):
+```typescript
+export async function getRandomChars(opts: {
+  count: number;
+  difficulty: 'easy' | 'medium' | 'hard';
+}): Promise<Char[]>
+```
+
+SQL:
+```sql
+SELECT `char`, level, pinyin, meaning_zh
+FROM chars
+WHERE level IN (1)  -- easy
+   OR level IN (1, 2)  -- medium
+   OR level IN (1, 2, 3)  -- hard
+  AND `char` REGEXP '^[一-鿿]$'  -- BMP only (mysql2 mojibake safe)
+ORDER BY RAND()
+LIMIT ?
+```
+
+**不做**:
+- 不用 `rare_chars` 表 (它没 level 列, 也不全)
+- 不存 server-side seed (用户要的就是随机)
+- 不做去重/历史 (用户每次点都重抽)
+
+### 8.3 UI
+
+**新组件** `components/worksheet/RandomTab.tsx`:
+- 字数 input: number, min=1, max=100, default=20
+- 难度 select: easy/medium/hard, default=medium
+- "随机生成" 按钮 → fetch API → 跳到 preview
+- 错误态: API 失败显示红色提示
+
+**`WorksheetGenerator.tsx` 变更**:
+- `Tab = 'text' | 'library' | 'random'`
+- 增加第三个按钮「随机生成」
+- 选中 random tab 时渲染 `<RandomTab>`,RandomTab 内部 fetch 后回调 `onChange(chars)` 灌入 content,然后触发 `setView('preview')` (传 props)
+- 抽字后用 `useRouter` 跳转或 `setView('preview')` 内联触发,优先用内联 (无 URL 变化)
+
+### 8.4 风险
+
+| 风险 | 缓解 |
+|---|---|
+| 抽到 4-byte UTF-8 字 (mysql2 已知 bug) | SQL 过滤 `REGEXP '^[一-鿿]$'`,只返 BMP |
+| `ORDER BY RAND() LIMIT 100` 性能 | chars 表 8105 行,毫秒级;不优化 |
+| 用户连点抽到同样字 | 不去重,符合"随机"语义 |
+| 抽到 pinyin 为空的字 | 仍 OK,字帖只画字,读音由 preview 渲染层补 |
+
+---
+
+## 9. 字转拼音 移到独立页面 + nav 入口
+
+**追加需求 (2026-06-15)**: 当前首页 `TextToPinyin` 工具与 hero/价值主张挤在一起,应拆分到独立路由 `/pinyin`,并在顶部 nav 加入口。
+
+### 9.1 目标
+
+- 新建 `app/pinyin/page.tsx`,渲染 `<TextToPinyin />` (组件原样不动)
+- 首页 `app/page.tsx` 移除 `<TextToPinyin />` 和相关 import
+- `lib/design.ts` 的 `NAV_LINKS` 数组插入 `{ href: '/pinyin', label: '字转拼音' }` 位置在 `字帖` 之后
+- 移动端 menu 也用 `NAV_LINKS`,自动同步
+
+### 9.2 文件变更
+
+| 文件 | 变更 |
+|---|---|
+| `app/pinyin/page.tsx` | 新建 (15 行, 套 PageContainer 包装 TextToPinyin) |
+| `app/page.tsx` | 删 TextToPinyin import + 删 `<section>` (4 行删除) |
+| `lib/design.ts` | NAV_LINKS 插 1 行 |
+
+### 9.3 不做 (YAGNI)
+
+- 不改 TextToPinyin 组件内部
+- 不删 history 入库逻辑 (搬过去就用,不改)
+- 不做 /pinyin 的 hero / 价值主张
+- 不改 /dictionary 路由 (字典页 detail tabs 里的 PinyinOutput 是另一个东西)
+- 不加面包屑 (Header 已经有 nav)
+
+### 9.4 验证
+
+- 访问 `/pinyin` → 看到输入框 + 「字 → 拼音」标题 + 一致 UI
+- 首页不再有 TextToPinyin section
+- nav 出现「字转拼音」链接,点击跳转 /pinyin
+- mobile menu 同步出现
 - 白字 bug 复现:`components/BentoGrid.tsx:46,69,82` (`card-paper` + `bg-ink`)
