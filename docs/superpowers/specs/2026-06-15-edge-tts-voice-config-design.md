@@ -366,8 +366,8 @@ export default async function TtsConfigPage() {
 ```
 
 **Form 形态**:
-- 男声: `<select>` with 6 个 Edge voice (YunjianNeural / YunxiNeural / YunyangNeural)
-- 女声: `<select>` with 6 个 Edge voice (XiaoxiaoNeural / XiaoyiNeural / XiaomengNeural / XiaohanNeural / XiaomoNeural / XiaoruiNeural)
+- 男声: `<select>` with 3 个 Edge voice (YunjianNeural / YunxiNeural / YunyangNeural)
+- 女声: `<select>` with 3 个 Edge voice (XiaoxiaoNeural / XiaoyiNeural / XiaomengNeural)
 - Audio format: `<select>` with 4 个 mp3 bitrate
 - 提交按钮 → PUT /api/admin/config
 
@@ -478,7 +478,7 @@ export async function PUT(req: Request) {
 | Edge TTS 协议变化 (Microsoft 改 endpoint/token) | 用成熟的 edge-tts 开源协议参考;监测 fallback 到浏览器 speech |
 | WebSocket 在 Next.js dev/prod 行为差异 | 固定 `runtime = 'nodejs'`,不用 edge runtime |
 | 服务器 CPU/内存打满(高频朗读) | maxDuration=30s + text 长度上限 1000;后续加 rate limit |
-| Edge TTS 服务下线(地域限制) | 401/403 时降级到浏览器 `speechSynthesis` + 提示用户 |
+| Edge TTS 服务下线(地域限制) | 在 lib/tts.ts::speak() catch 块中,如果 status === 502/504 提示用户「请检查网络或稍后重试」;不自动降级到浏览器 speech(用户体验不一致) |
 | 浏览器 `new Audio()` autoplay 拦截(首次无用户手势) | ReadAloudButton 一定在点击事件触发,无 autoplay 问题 |
 | 儿童内容/版权文本被合成 | 仅合成用户主动点击的、站点内文本,无外部输入;无需额外过滤 |
 | `card-paper` 改 transparent 后其他页面 hover bg 变化 | 检查所有 `card-paper` 使用处;outline 卡片 (BentoGrid 第 3-5 张) 的 bg-paper-soft 会丢,补回 hover bg |
