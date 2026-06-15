@@ -19,8 +19,8 @@ const ITEMS: BentoItem[] = [
 ];
 
 const variantClass = {
-  primary: 'bg-ink text-paper-soft',
-  accent: 'bg-seal text-paper-soft',
+  primary: 'bg-paper-soft text-ink border border-ink/15',
+  accent: 'bg-paper-soft text-seal border border-seal/30',
   ink: 'bg-paper text-ink border border-ink/30',
   outline: 'bg-paper-soft border border-ink/15 text-ink hover:border-ink/40',
 } as const;

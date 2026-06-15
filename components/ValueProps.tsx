@@ -3,19 +3,19 @@ const PROPS = [
     title: '准',
     subtitle: '准确',
     body: '基于 16 万条语料统计的 Viterbi 整句智能转换',
-    accent: 'bg-ink text-paper-soft',
+    accent: 'bg-paper-soft text-ink border border-ink/15',
   },
   {
     title: '丰',
     subtitle: '丰富',
     body: '8105 个通用规范汉字 + 1412 个罕见字 + 历代字源',
-    accent: 'bg-seal text-paper-soft',
+    accent: 'bg-paper-soft text-seal border border-seal/30',
   },
   {
     title: '易',
     subtitle: '易用',
     body: '字帖一键打印，毛笔格 / 田字格 / 米字格全支持',
-    accent: 'bg-ink/85 text-paper-soft',
+    accent: 'bg-paper-soft text-ink-soft border border-ink/15',
   },
 ] as const;
 
