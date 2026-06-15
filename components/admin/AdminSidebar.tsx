@@ -8,6 +8,7 @@ const ITEMS = [
   { href: '/admin/logs', label: '日志' },
   { href: '/admin/downloads', label: '下载' },
   { href: '/admin/ai', label: 'AI' },
+  { href: '/admin/tts', label: '语音设置' },
 ];
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
