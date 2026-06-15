@@ -249,6 +249,12 @@ export async function initDb(): Promise<void> {
     for (const [k, v] of defaults) {
       await pool.query(`INSERT INTO app_config (\`key\`, value) VALUES (?, ?)`, [k, v]);
     }
+    await pool.query(
+      `INSERT IGNORE INTO app_config (\`key\`, value, updated_by) VALUES
+         ('tts.voice_male', 'zh-CN-YunjianNeural', NULL),
+         ('tts.voice_female', 'zh-CN-XiaoxiaoNeural', NULL),
+         ('tts.audio_format', 'audio-24khz-48kbitrate-mono-mp3', NULL)`
+    );
     console.log(`[initDb] seeded ${defaults.length} app_config defaults`);
   } else {
     console.log(`[initDb] app_config has ${cfgCount} rows, skip seed`);

@@ -14,6 +14,14 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
     const n = parseFloat(v);
     return !isNaN(n) && n >= 0 && n <= 2;
   },
+  'tts.voice_male': (v) => /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v),
+  'tts.voice_female': (v) => /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v),
+  'tts.audio_format': (v) => [
+    'audio-24khz-48kbitrate-mono-mp3',
+    'audio-24khz-96kbitrate-mono-mp3',
+    'audio-16khz-32kbitrate-mono-mp3',
+    'audio-16khz-128kbitrate-mono-mp3',
+  ].includes(v),
 };
 
 export async function getConfig(key: string): Promise<string | null> {
