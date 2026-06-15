@@ -119,8 +119,31 @@ export interface GrantMembershipArgs {
   grantedBy: number | null; source: GrantSource; sourcePaymentOrderId?: number | null;
 }
 export interface GrantedMembership { id: number; expiresAt: Date; }
-export async function grantMembership(_args: GrantMembershipArgs): Promise<GrantedMembership> {
-  throw new Error('grantMembership not yet implemented');
+export async function grantMembership(args: GrantMembershipArgs): Promise<GrantedMembership> {
+  const plan = await getPlanByKey(args.planKey);
+  if (!plan) throw new Error(`plan_not_found: ${args.planKey}`);
+  const pool = getPool();
+
+  // Renewal: extend from current active expires_at, else from NOW()
+  const [activeRows] = await pool.query<any[]>(
+    `SELECT id, expires_at FROM memberships
+     WHERE user_id = ? AND revoked_at IS NULL AND expires_at > NOW()
+     ORDER BY expires_at DESC LIMIT 1`,
+    [args.targetUserId],
+  );
+  const baseDate = activeRows.length > 0 ? new Date(activeRows[0].expires_at) : new Date();
+  const expiresAt = new Date(baseDate.getTime() + plan.durationDays * 86400_000);
+
+  const [res] = await pool.execute<any>(
+    `INSERT INTO memberships
+       (user_id, plan_key, source, amount, currency, source_payment_order_id, granted_by, note, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      args.targetUserId, args.planKey, args.source, plan.amount, plan.currency,
+      args.sourcePaymentOrderId ?? null, args.grantedBy, args.note ?? null, expiresAt,
+    ],
+  );
+  return { id: Number((res as any).insertId), expiresAt };
 }
 
 export interface MembershipRow {
@@ -131,12 +154,62 @@ export interface MembershipRow {
 }
 export interface ListMembershipsOpts { userId?: number; planKey?: string; page?: number; pageSize?: number; }
 export interface ListMembershipsResult { items: MembershipRow[]; total: number; page: number; pageSize: number; }
-export async function listMemberships(_opts: ListMembershipsOpts): Promise<ListMembershipsResult> {
-  throw new Error('listMemberships not yet implemented');
+export async function listMemberships(opts: ListMembershipsOpts): Promise<ListMembershipsResult> {
+  const page = Math.max(opts.page ?? 1, 1);
+  const pageSize = Math.min(Math.max(opts.pageSize ?? 50, 1), 200);
+  const offset = (page - 1) * pageSize;
+  const where: string[] = [];
+  const params: any[] = [];
+  if (opts.userId !== undefined) { where.push('m.user_id = ?'); params.push(opts.userId); }
+  if (opts.planKey) { where.push('m.plan_key = ?'); params.push(opts.planKey); }
+  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT m.id, m.user_id, u.username, m.plan_key, m.source, m.amount, m.currency,
+            m.granted_at, m.expires_at, m.revoked_at, m.note, m.granted_by
+     FROM memberships m LEFT JOIN users u ON u.id = m.user_id
+     ${whereSql}
+     ORDER BY m.granted_at DESC
+     LIMIT ? OFFSET ?`,
+    [...params, pageSize, offset],
+  );
+  const [[{ total }]] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS total FROM memberships m ${whereSql}`,
+    params,
+  );
+
+  return {
+    items: (rows as any[]).map(r => ({
+      id: Number(r.id), userId: Number(r.user_id), username: r.username,
+      planKey: r.plan_key, source: r.source as GrantSource,
+      amount: r.amount != null ? String(r.amount) : null,
+      currency: r.currency, grantedAt: new Date(r.granted_at).toISOString(),
+      expiresAt: new Date(r.expires_at).toISOString(),
+      revokedAt: r.revoked_at ? new Date(r.revoked_at).toISOString() : null,
+      note: r.note, grantedBy: r.granted_by != null ? Number(r.granted_by) : null,
+    })),
+    total: Number(total), page, pageSize,
+  };
 }
 
-export async function revokeMembership(_id: number, _by: number, _reason?: string): Promise<MembershipRow> {
-  throw new Error('revokeMembership not yet implemented');
+export async function revokeMembership(id: number, by: number, reason?: string): Promise<MembershipRow> {
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT id, revoked_at FROM memberships WHERE id = ? LIMIT 1`,
+    [id],
+  );
+  if (rows.length === 0) throw new Error('membership_not_found');
+  if (rows[0].revoked_at) throw new Error('already_revoked');
+
+  await pool.execute(
+    `UPDATE memberships SET revoked_at = NOW(), revoked_by = ?, revoke_reason = ? WHERE id = ?`,
+    [by, reason ?? null, id],
+  );
+  const refreshed = await listMemberships({ userId: undefined });
+  const found = refreshed.items.find(i => i.id === id);
+  if (!found) throw new Error('membership_not_found');
+  return found;
 }
 
 export type ActiveMembership =

@@ -1,9 +1,10 @@
 // @vitest-environment node
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
 import { getPool, closePool } from '@/lib/db';
 import {
   PLAN_KEYS, type PlanKey, type MembershipFeature,
   listPlans, getPlanByKey, getPlanById, seedDefaultPlans,
+  grantMembership, listMemberships, revokeMembership,
 } from '@/lib/membership';
 
 const HAS_DB = !!process.env.DATABASE_URL_TEST;
@@ -41,6 +42,20 @@ d('membership plans', () => {
     const pool = getPool();
     await pool.query('DELETE FROM membership_plan_features');
     await pool.query('DELETE FROM membership_plans');
+  });
+
+  let testUserId: number;
+  beforeEach(async () => {
+    const pool = getPool();
+    await pool.query(`INSERT INTO users (username, password_hash) VALUES ('mem_test_${Date.now()}', 'x')`);
+    const [r] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
+    testUserId = Number(r[0].id);
+  });
+
+  afterEach(async () => {
+    const pool = getPool();
+    await pool.query(`DELETE FROM memberships WHERE user_id = ?`, [testUserId]);
+    await pool.query(`DELETE FROM users WHERE id = ?`, [testUserId]);
   });
 
   afterAll(async () => { await closePool(); });
@@ -90,5 +105,52 @@ d('membership plans', () => {
     const byKey = await getPlanByKey('yearly_usd' as PlanKey);
     const byId = await getPlanById(byKey!.id);
     expect(byId!.planKey).toBe(byKey!.planKey);
+  });
+
+  // --- grant / list / revoke ---------------------------------------
+
+  it('grantMembership inserts row with expires_at = now + duration_days', async () => {
+    await seedDefaultPlans();
+    const result = await grantMembership({
+      targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual',
+    });
+    expect(result.id).toBeGreaterThan(0);
+    const days = Math.round((result.expiresAt.getTime() - Date.now()) / 86400_000);
+    expect(days).toBeGreaterThanOrEqual(29);
+    expect(days).toBeLessThanOrEqual(31);
+  });
+
+  it('grantMembership extends from current active expires_at (renewal)', async () => {
+    await seedDefaultPlans();
+    const first = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
+    const second = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
+    // Second expiry should be ~60 days from now (extends by 30)
+    const days = Math.round((second.expiresAt.getTime() - Date.now()) / 86400_000);
+    expect(days).toBeGreaterThanOrEqual(58);
+    expect(days).toBeLessThanOrEqual(62);
+  });
+
+  it('grantMembership with invalid planKey throws', async () => {
+    await expect(
+      grantMembership({ targetUserId: testUserId, planKey: 'nope' as any, grantedBy: null, source: 'manual' }),
+    ).rejects.toThrow();
+  });
+
+  it('listMemberships returns paginated rows joined with username', async () => {
+    await seedDefaultPlans();
+    await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
+    const result = await listMemberships({ userId: testUserId, pageSize: 10 });
+    expect(result.total).toBe(1);
+    expect(result.items[0].userId).toBe(testUserId);
+    expect(result.items[0].planKey).toBe('monthly_usd');
+    expect(result.items[0].source).toBe('manual');
+  });
+
+  it('revokeMembership sets revoked_at and is idempotent (second call throws already_revoked)', async () => {
+    await seedDefaultPlans();
+    const m = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
+    const r = await revokeMembership(m.id, testUserId, 'test reason');
+    expect(r.revokedAt).not.toBeNull();
+    await expect(revokeMembership(m.id, testUserId)).rejects.toThrow(/already_revoked/);
   });
 });
