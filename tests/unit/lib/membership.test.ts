@@ -5,6 +5,7 @@ import {
   PLAN_KEYS, type PlanKey, type MembershipFeature,
   listPlans, getPlanByKey, getPlanById, seedDefaultPlans,
   grantMembership, listMemberships, revokeMembership,
+  getMyActiveMembership, hasFeature, getMyFeatures,
 } from '@/lib/membership';
 
 const HAS_DB = !!process.env.DATABASE_URL_TEST;
@@ -152,5 +153,52 @@ d('membership plans', () => {
     const r = await revokeMembership(m.id, testUserId, 'test reason');
     expect(r.revokedAt).not.toBeNull();
     await expect(revokeMembership(m.id, testUserId)).rejects.toThrow(/already_revoked/);
+  });
+
+  // --- getMyActiveMembership + hasFeature + getMyFeatures -------
+
+  it('getMyActiveMembership returns active:false for user with no membership', async () => {
+    const r = await getMyActiveMembership(testUserId);
+    expect(r.active).toBe(false);
+  });
+
+  it('getMyActiveMembership returns active:true with expiresAt + planKey', async () => {
+    await seedDefaultPlans();
+    await grantMembership({ targetUserId: testUserId, planKey: 'yearly_usd', grantedBy: null, source: 'manual' });
+    const r = await getMyActiveMembership(testUserId);
+    expect(r.active).toBe(true);
+    if (r.active) {
+      expect(r.planKey).toBe('yearly_usd');
+      expect(r.expiresInDays).toBeGreaterThan(360);
+    }
+  });
+
+  it('getMyActiveMembership ignores revoked rows', async () => {
+    await seedDefaultPlans();
+    const m = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
+    await revokeMembership(m.id, testUserId);
+    const r = await getMyActiveMembership(testUserId);
+    expect(r.active).toBe(false);
+  });
+
+  it('hasFeature returns true for active plan that includes the feature', async () => {
+    await seedDefaultPlans();
+    await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
+    const ok = await hasFeature(testUserId, 'ai_calls');
+    expect(ok).toBe(true);
+  });
+
+  it('hasFeature returns false for user with no membership', async () => {
+    const ok = await hasFeature(testUserId, 'ai_calls');
+    expect(ok).toBe(false);
+  });
+
+  it('getMyFeatures returns a Set with 4 features for active plan', async () => {
+    await seedDefaultPlans();
+    await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
+    const set = await getMyFeatures(testUserId);
+    expect(set).toBeInstanceOf(Set);
+    expect(set.size).toBe(4);
+    expect(set.has('ai_calls')).toBe(true);
   });
 });

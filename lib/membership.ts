@@ -216,12 +216,44 @@ export type ActiveMembership =
   | { active: true; planKey: PlanKey; expiresAt: string; expiresInDays: number }
   | { active: false };
 export const getMyActiveMembership = cache(async (userId: number): Promise<ActiveMembership> => {
-  throw new Error('getMyActiveMembership not yet implemented');
+  const [rows] = await getPool().query<any[]>(
+    `SELECT plan_key, expires_at FROM memberships
+     WHERE user_id = ? AND revoked_at IS NULL AND expires_at > NOW()
+     ORDER BY expires_at DESC LIMIT 1`,
+    [userId],
+  );
+  if (rows.length === 0) return { active: false };
+  const r = rows[0];
+  const expiresAt = new Date(r.expires_at);
+  const expiresInDays = Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 86400_000));
+  return {
+    active: true,
+    planKey: r.plan_key as PlanKey,
+    expiresAt: expiresAt.toISOString(),
+    expiresInDays,
+  };
 });
 
-export const getMyFeatures = cache(async (_userId: number): Promise<Set<MembershipFeature>> => {
-  return new Set();
+export const getMyFeatures = cache(async (userId: number): Promise<Set<MembershipFeature>> => {
+  const [rows] = await getPool().query<any[]>(
+    `SELECT DISTINCT f.feature_key
+     FROM memberships m
+     JOIN membership_plans p ON p.plan_key = m.plan_key
+     JOIN membership_plan_features f ON f.plan_id = p.id
+     WHERE m.user_id = ? AND m.revoked_at IS NULL AND m.expires_at > NOW()`,
+    [userId],
+  );
+  return new Set(rows.map(r => r.feature_key as MembershipFeature));
 });
-export async function hasFeature(_userId: number, _feature: MembershipFeature): Promise<boolean> {
-  return false;
+
+export async function hasFeature(userId: number, feature: MembershipFeature): Promise<boolean> {
+  const [rows] = await getPool().query<any[]>(
+    `SELECT 1 FROM memberships m
+     JOIN membership_plans p ON p.plan_key = m.plan_key
+     JOIN membership_plan_features f ON f.plan_id = p.id
+     WHERE m.user_id = ? AND m.revoked_at IS NULL AND m.expires_at > NOW()
+       AND f.feature_key = ? LIMIT 1`,
+    [userId, feature],
+  );
+  return rows.length > 0;
 }
