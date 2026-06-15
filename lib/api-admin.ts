@@ -282,3 +282,16 @@ export async function revokeAdminMembershipRequest(id: number, reason?: string):
     body: JSON.stringify({ reason }),
   });
 }
+
+// --- H12: Admin plans (list only here; PATCH + seed in later tasks) ----
+
+export interface AdminPlanRow {
+  id: number; planKey: string; displayName: string;
+  durationDays: number; amount: string; currency: string;
+  enabled: boolean; displayOrder: number; features: string[];
+}
+export interface AdminPlanListData { items: AdminPlanRow[]; total: number; }
+
+export async function listAdminPlansRequest(): Promise<ApiResult<AdminPlanListData>> {
+  return call('/api/admin/memberships/plans', { method: 'GET' });
+}
