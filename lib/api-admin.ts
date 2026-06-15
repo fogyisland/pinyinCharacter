@@ -124,7 +124,7 @@ export interface AdminLogRow {
   createdAt: string;
   metadata: Record<string, unknown>;
 }
-export interface AdminLogListData { rows: AdminLogRow[]; total: number; page: number; pageSize: number; }
+export interface AdminLogListData { items: AdminLogRow[]; total: number; page: number; pageSize: number; }
 
 export async function listAdminLogsRequest(params: {
   source?: string; type?: string; userId?: number; ip?: string;

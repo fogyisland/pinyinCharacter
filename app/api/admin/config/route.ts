@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest) {
     }
     const updates: Record<string, string> = {};
     for (const [k, v] of Object.entries(body)) {
-      if (typeof v !== 'string') continue;
+      if (typeof v !== 'string' || v.length === 0) continue;
       if (k.startsWith('tts.')) updates[k] = v;
     }
     if (Object.keys(updates).length === 0) {

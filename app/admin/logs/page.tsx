@@ -61,7 +61,7 @@ export default function AdminLogsPage() {
         page, pageSize,
       });
       if (!r.ok) { setErr(r.error.message); return; }
-      setRows(r.data.rows);
+      setRows(r.data.items);
       setTotal(r.data.total);
     } finally { setBusy(false); }
   }, [source, type, userId, ip, from, to, page, pageSize]);
