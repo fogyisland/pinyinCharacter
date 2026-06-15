@@ -8,9 +8,17 @@ export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T | Ne
   try {
     return await fn();
   } catch (err) {
-    console.error('[api]', err);
+    const e = err as Error & { ttsErrorName?: string };
+    console.error('[api]', e.name, e.message);
     return NextResponse.json(
-      { ok: false, error: { code: 'server', message: 'server error' } },
+      {
+        ok: false,
+        error: {
+          code: 'server',
+          message: 'server error',
+          ...(e.ttsErrorName ? { ttsErrorName: e.ttsErrorName } : {}),
+        },
+      },
       { status: 500 }
     );
   }

@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   const ua = req.headers.get('user-agent') ?? null;
   await writeAudit({ userId, event: 'register', metadata: { isFirst, email }, ip, userAgent: ua });
 
-  const user = { id: userId, username };
+  const user = { id: userId, username, isAdmin: isFirst };
   const token = await signSession(user);
   await setSessionCookie(token, { secure: process.env.COOKIE_SECURE === 'true' });
   return NextResponse.json({ ok: true, data: { user } });

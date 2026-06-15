@@ -128,11 +128,14 @@ export async function getRandomChars(opts: {
   const levels = DIFFICULTY_LEVELS[opts.difficulty];
   const placeholders = levels.map(() => '?').join(',');
   const pool = getPool();
+  // Note: `LENGTH(char) = 3` filters to BMP-only chars (3 bytes in UTF-8).
+  // The previous `REGEXP '^[一-鿿]$'` filter failed because MySQL's REGEXP
+  // `$` anchor doesn't align with multi-byte char boundaries.
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin, meaning_zh
      FROM chars
      WHERE level IN (${placeholders})
-       AND \`char\` REGEXP '^[一-鿿]$'
+       AND LENGTH(\`char\`) = 3
      ORDER BY RAND()
      LIMIT ?`,
     [...levels, opts.count],

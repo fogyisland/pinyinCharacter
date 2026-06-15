@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
 
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
-    `SELECT id, username, password_hash, disabled_at FROM users WHERE username = ? LIMIT 1`,
+    `SELECT id, username, password_hash, is_admin, disabled_at FROM users WHERE username = ? LIMIT 1`,
     [username]
   );
   const row = rows[0];
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const user = { id: Number(row.id), username: row.username };
+  const user = { id: Number(row.id), username: row.username, isAdmin: Boolean(row.is_admin) };
   const token = await signSession(user);
   await setSessionCookie(token, { secure: process.env.COOKIE_SECURE === 'true' });
 
