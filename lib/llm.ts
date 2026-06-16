@@ -12,6 +12,14 @@ export interface LLMChatArgs {
   messages: LLMMessage[];
   temperature?: number;
   maxTokens?: number;
+  /**
+   * Pass `thinking: { type: 'disabled' }` to the API so MiniMax-M3 skips its
+   * chain-of-thought and answers directly. Without this, M3 spends the entire
+   * `max_tokens` budget on <think>...</think> and the actual response is empty
+   * (finish_reason: "length"). Default: true (we never want reasoning tokens
+   * for content generation tasks like dict entries or short stories).
+   */
+  noThinking?: boolean;
 }
 
 export interface LLMChatResponse {
@@ -45,6 +53,7 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
     .replace(/\/$/, '')
     .replace(/\/chat\/completions\/?$/, '');
   const url = `${stripped}/chat/completions`;
+  const noThinking = args.noThinking !== false; // default true
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -56,6 +65,7 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
       messages: args.messages,
       temperature: args.temperature ?? 0.3,
       max_tokens: args.maxTokens ?? 4096,
+      ...(noThinking ? { thinking: { type: 'disabled' } } : {}),
     }),
   });
   if (!res.ok) {
@@ -145,6 +155,8 @@ export interface CallLlmArgs {
   model?: string;
   baseUrl?: string;
   apiKey?: string;
+  /** Override the default noThinking=true. Set false to enable M3 reasoning. */
+  noThinking?: boolean;
 }
 
 export async function callLlm(args: CallLlmArgs): Promise<string> {
@@ -184,6 +196,7 @@ export async function callLlm(args: CallLlmArgs): Promise<string> {
     ],
     temperature: args.temperature,
     maxTokens: args.maxTokens,
+    noThinking: args.noThinking,
   });
   return res.content;
 }
