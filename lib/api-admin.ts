@@ -214,12 +214,13 @@ export async function getAiStatsRequest(days = 7): Promise<ApiResult<unknown>> {
 }
 
 export type AiConfigMap = Record<string, string>;
+export type AiConfigResponse = { config: AiConfigMap; hasApiKey: boolean };
 
-export async function getAiConfigRequest(): Promise<ApiResult<AiConfigMap>> {
+export async function getAiConfigRequest(): Promise<ApiResult<AiConfigResponse>> {
   return call('/api/admin/ai/config', { method: 'GET' });
 }
 
-export async function updateAiConfigRequest(body: Record<string, string | number>): Promise<ApiResult<AiConfigMap>> {
+export async function updateAiConfigRequest(body: Record<string, string | number>): Promise<ApiResult<AiConfigResponse>> {
   return call('/api/admin/ai/config', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },

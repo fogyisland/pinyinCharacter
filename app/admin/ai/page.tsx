@@ -96,6 +96,7 @@ export default function AdminAiPage() {
 
   // --- Config tab state ---
   const [config, setConfig] = useState<Record<string, string>>({});
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [configBusy, setConfigBusy] = useState(false);
   const [configMsg, setConfigMsg] = useState<string | null>(null);
   const [configErr, setConfigErr] = useState<string | null>(null);
@@ -105,17 +106,28 @@ export default function AdminAiPage() {
     setConfigMsg(null); setConfigErr(null);
     getAiConfigRequest().then(r => {
       if (!r.ok) setConfigErr(r.error.message);
-      else setConfig(r.data);
+      else { setConfig(r.data.config); setHasApiKey(r.data.hasApiKey); }
     });
   }, [tab]);
 
   async function saveConfig(e: React.FormEvent) {
     e.preventDefault();
     setConfigBusy(true); setConfigMsg(null); setConfigErr(null);
-    const r = await updateAiConfigRequest(config);
+    // Skip empty fields so admin doesn't accidentally clear a configured secret
+    // (ai.api_key is masked to '' in GET, would otherwise overwrite on save).
+    const body: Record<string, string> = {};
+    for (const [k, v] of Object.entries(config)) {
+      if (v !== '') body[k] = v;
+    }
+    if (Object.keys(body).length === 0) {
+      setConfigMsg('未修改任何字段');
+      setConfigBusy(false);
+      return;
+    }
+    const r = await updateAiConfigRequest(body);
     setConfigBusy(false);
     if (!r.ok) setConfigErr(r.error.message);
-    else { setConfig(r.data); setConfigMsg('配置已保存'); }
+    else { setConfig(r.data.config); setHasApiKey(r.data.hasApiKey); setConfigMsg('配置已保存'); }
   }
 
   const tabClass = (active: boolean) =>
@@ -250,22 +262,68 @@ export default function AdminAiPage() {
         <form onSubmit={saveConfig} className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
           {configErr && <p className="text-sm text-seal">{configErr}</p>}
           {configMsg && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{configMsg}</p>}
-          {(['ai.model', 'ai.rate_limit_per_user_per_day', 'ai.timeout_ms', 'ai.temperature'] as const).map(key => (
-            <div key={key}>
-              <label className="text-sm font-medium">{key}</label>
-              <input
-                value={config[key] ?? ''}
-                onChange={e => setConfig(c => ({ ...c, [key]: e.target.value }))}
-                className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-              />
-            </div>
-          ))}
+
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-ink">AI 连接配置</h2>
+            <p className="text-xs text-ink-soft">写入 <code>app_config</code> 表,优先级高于环境变量 <code>LLM_API_KEY</code> / <code>LLM_BASE_URL</code> / <code>LLM_MODEL</code>。</p>
+          </div>
+          <ConfigField label="端点 URL (Base URL)" hint="OpenAI 兼容 API 根地址" placeholder="https://api.openai.com/v1"
+            value={config['ai.base_url'] ?? ''}
+            onChange={v => setConfig(c => ({ ...c, 'ai.base_url': v }))} />
+          <ConfigField label="连接 KEY (API Key)" hint={hasApiKey ? '已配置,留空不改' : '尚未配置'}
+            type="password" value={config['ai.api_key'] ?? ''}
+            onChange={v => setConfig(c => ({ ...c, 'ai.api_key': v }))} />
+          <ConfigField label="模型" hint="模型标识,如 gpt-4o-mini" placeholder="gpt-4o-mini"
+            value={config['ai.model'] ?? ''}
+            onChange={v => setConfig(c => ({ ...c, 'ai.model': v }))} />
+
+          <div className="pt-2 space-y-1">
+            <h2 className="text-sm font-semibold text-ink">AI 运行参数</h2>
+            <p className="text-xs text-ink-soft">LLM 调用层面的限速/超时/采样。</p>
+          </div>
+          <ConfigField label="限速 (次/用户/日)" placeholder="20"
+            value={config['ai.rate_limit_per_user_per_day'] ?? ''}
+            onChange={v => setConfig(c => ({ ...c, 'ai.rate_limit_per_user_per_day': v }))} />
+          <ConfigField label="超时 (毫秒)" placeholder="30000"
+            value={config['ai.timeout_ms'] ?? ''}
+            onChange={v => setConfig(c => ({ ...c, 'ai.timeout_ms': v }))} />
+          <ConfigField label="温度" placeholder="0.3"
+            value={config['ai.temperature'] ?? ''}
+            onChange={v => setConfig(c => ({ ...c, 'ai.temperature': v }))} />
+
           <button type="submit" disabled={configBusy}
             className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
             {configBusy ? '保存中…' : '保存'}
           </button>
         </form>
       )}
+    </div>
+  );
+}
+
+function ConfigField({
+  label, hint, value, onChange, type = 'text', placeholder,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (v: string) => void;
+  type?: 'text' | 'password';
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className="text-sm font-medium">
+        {label}
+        {hint && <span className="ml-2 text-xs text-ink-soft">{hint}</span>}
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+      />
     </div>
   );
 }

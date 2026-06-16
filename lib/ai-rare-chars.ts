@@ -40,8 +40,9 @@ export async function batchGenerateStories(
   inputs: BatchInput[],
   options: GenerateOptions
 ): Promise<number> {
-  // Read the model from app_config so it flows into logAiCall.model.
-  // options.model is a fallback for tests / callers that don't want to read DB config.
+  // Read connection config from app_config (managed via /admin/ai) with env-var fallback.
+  const dbBaseUrl = await getConfig('ai.base_url');
+  const dbApiKey = await getConfig('ai.api_key');
   const model = (await getConfig('ai.model')) ?? options.model ?? 'gpt-4o-mini';
 
   return withAiLogging(
@@ -52,10 +53,10 @@ export async function batchGenerateStories(
       metadata: { batchSize: inputs.length, provider: options.provider },
     },
     async () => {
-      const apiKey = process.env.LLM_API_KEY;
-      const baseUrl = process.env.LLM_BASE_URL;
-      if (!apiKey) throw new Error('LLM_API_KEY is not set');
-      if (!baseUrl) throw new Error('LLM_BASE_URL is not set');
+      const apiKey = dbApiKey ?? process.env.LLM_API_KEY;
+      const baseUrl = dbBaseUrl ?? process.env.LLM_BASE_URL;
+      if (!apiKey) throw new Error('LLM api key not configured (set ai.api_key in /admin/ai or LLM_API_KEY env)');
+      if (!baseUrl) throw new Error('LLM base URL not configured (set ai.base_url in /admin/ai or LLM_BASE_URL env)');
 
       const batchSize = options.batchSize ?? 50;
       const sleepMs = options.sleepMs ?? 2000;

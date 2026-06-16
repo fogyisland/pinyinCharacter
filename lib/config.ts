@@ -1,6 +1,8 @@
 import { getPool } from './db';
 
 const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
+  'ai.base_url': (v) => v.length === 0 || (/^https?:\/\//.test(v) && v.length <= 256),
+  'ai.api_key': (v) => v.length <= 256,
   'ai.model': (v) => v.length > 0 && v.length <= 64,
   'ai.rate_limit_per_user_per_day': (v) => {
     const n = parseInt(v, 10);

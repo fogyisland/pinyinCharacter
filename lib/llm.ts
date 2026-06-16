@@ -1,3 +1,5 @@
+import { getConfig } from './config';
+
 export interface LLMMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
@@ -56,6 +58,10 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
  * Higher-level wrapper that hides the messages[] shape from callers
  * (callers provide system + prompt instead of building the message array).
  * Returns the trimmed content string of the first choice.
+ *
+ * Config resolution priority: explicit args > app_config > env vars.
+ * app_config is read from `ai.base_url`, `ai.api_key`, `ai.model` keys
+ * (managed via /admin/ai config tab).
  */
 export interface CallLlmArgs {
   system: string;
@@ -68,11 +74,14 @@ export interface CallLlmArgs {
 }
 
 export async function callLlm(args: CallLlmArgs): Promise<string> {
-  const apiKey = args.apiKey ?? process.env.LLM_API_KEY;
-  const baseUrl = args.baseUrl ?? process.env.LLM_BASE_URL;
-  const model = args.model ?? process.env.LLM_MODEL ?? 'gpt-4o-mini';
-  if (!apiKey) throw new LLMError('LLM_API_KEY is not set');
-  if (!baseUrl) throw new LLMError('LLM_BASE_URL is not set');
+  const dbBaseUrl = await getConfig('ai.base_url');
+  const dbApiKey = await getConfig('ai.api_key');
+  const dbModel = await getConfig('ai.model');
+  const apiKey = args.apiKey ?? dbApiKey ?? process.env.LLM_API_KEY;
+  const baseUrl = args.baseUrl ?? dbBaseUrl ?? process.env.LLM_BASE_URL;
+  const model = args.model ?? dbModel ?? process.env.LLM_MODEL ?? 'gpt-4o-mini';
+  if (!apiKey) throw new LLMError('LLM api key not configured (set ai.api_key in /admin/ai or LLM_API_KEY env)');
+  if (!baseUrl) throw new LLMError('LLM base URL not configured (set ai.base_url in /admin/ai or LLM_BASE_URL env)');
   const res = await llmChat({
     baseUrl,
     apiKey,

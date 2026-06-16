@@ -67,28 +67,56 @@ d('admin/ai/config', () => {
     });
   }
 
-  it('GET returns 4 keys (all strings)', async () => {
+  it('GET returns 6 keys with api_key masked + hasApiKey flag', async () => {
+    const pool = getPool();
+    await pool.query(`INSERT INTO app_config (\`key\`, value) VALUES ('ai.api_key', 'sk-secret') ON DUPLICATE KEY UPDATE value = VALUES(value)`);
+
     const res = await GET(getReq());
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.ok).toBe(true);
-    const expected = ['ai.model', 'ai.rate_limit_per_user_per_day', 'ai.timeout_ms', 'ai.temperature'];
+    expect(body.data.hasApiKey).toBe(true);
+    expect(body.data.config['ai.api_key']).toBe('');
+    const expected = ['ai.base_url', 'ai.api_key', 'ai.model', 'ai.rate_limit_per_user_per_day', 'ai.timeout_ms', 'ai.temperature'];
     for (const k of expected) {
-      expect(body.data).toHaveProperty(k);
-      expect(typeof body.data[k]).toBe('string');
+      expect(body.data.config).toHaveProperty(k);
+      expect(typeof body.data.config[k]).toBe('string');
     }
   });
 
-  it('PUT updates a key (subsequent GET returns the new value)', async () => {
+  it('GET hasApiKey=false when api_key not set', async () => {
+    const res = await GET(getReq());
+    const body = await res.json();
+    expect(body.data.hasApiKey).toBe(false);
+    expect(body.data.config['ai.api_key']).toBe('');
+  });
+
+  it('PUT updates ai.model and reads back the masked shape', async () => {
     const put = await PUT(putReq({ 'ai.model': 'gpt-4o' }));
     expect(put.status).toBe(200);
     const putBody = await put.json();
     expect(putBody.ok).toBe(true);
-    expect(putBody.data['ai.model']).toBe('gpt-4o');
+    expect(putBody.data.config['ai.model']).toBe('gpt-4o');
 
     const get = await GET(getReq());
     const getBody = await get.json();
-    expect(getBody.data['ai.model']).toBe('gpt-4o');
+    expect(getBody.data.config['ai.model']).toBe('gpt-4o');
+  });
+
+  it('PUT updates ai.base_url with valid https URL', async () => {
+    const put = await PUT(putReq({ 'ai.base_url': 'https://api.openai.com/v1' }));
+    expect(put.status).toBe(200);
+    const get = await GET(getReq());
+    const getBody = await get.json();
+    expect(getBody.data.config['ai.base_url']).toBe('https://api.openai.com/v1');
+  });
+
+  it('PUT validates bad ai.base_url (no http scheme) → 400', async () => {
+    const res = await PUT(putReq({ 'ai.base_url': 'ftp://example.com' }));
+    const body = await res.json();
+    expect(res.status).toBe(400);
+    expect(body.error.code).toBe('validation');
+    expect(String(body.error.message)).toMatch(/base_url/);
   });
 
   it('PUT validates bad value (timeout_ms=10 < 1000) → 400', async () => {
@@ -100,9 +128,9 @@ d('admin/ai/config', () => {
     expect(String(body.error.message)).toMatch(/timeout_ms/);
   });
 
-  it('PUT writes an ai_config_updated audit row for the admin user', async () => {
+  it('PUT writes an ai_config_updated audit row with secrets masked', async () => {
     const pool = getPool();
-    const put = await PUT(putReq({ 'ai.temperature': '0.5' }));
+    const put = await PUT(putReq({ 'ai.api_key': 'sk-newkey', 'ai.temperature': '0.5' }));
     expect(put.status).toBe(200);
     const [rows] = await pool.query<any[]>(
       `SELECT event, metadata FROM audit_log WHERE user_id = ? AND event = 'ai_config_updated'`,
@@ -110,6 +138,6 @@ d('admin/ai/config', () => {
     );
     expect(rows.length).toBeGreaterThan(0);
     const meta = typeof rows[0].metadata === 'string' ? JSON.parse(rows[0].metadata) : rows[0].metadata;
-    expect(meta).toMatchObject({ 'ai.temperature': '0.5' });
+    expect(meta).toMatchObject({ 'ai.temperature': '0.5', 'ai.api_key': '***' });
   });
 });
