@@ -65,7 +65,21 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
   const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
   const content = data.choices?.[0]?.message?.content;
   if (!content) throw new LLMError('LLM returned empty content');
-  return { content };
+  return { content: stripThinking(content) };
+}
+
+/**
+ * Strip <think>...</think> / <thinking>...</thinking> blocks from model output.
+ * MiniMax-M3 (and similar reasoning models) embed their chain-of-thought in the
+ * response body using these tags; downstream code (DB writes, UI display) only
+ * wants the final answer. Stripping at the LLM boundary keeps every caller clean.
+ */
+function stripThinking(content: string): string {
+  return content
+    .replace(/<think[^>]*>[\s\S]*?<\/think>/gi, '')
+    .replace(/<thinking[^>]*>[\s\S]*?<\/thinking>/gi, '')
+    .replace(/<reasoning[^>]*>[\s\S]*?<\/reasoning>/gi, '')
+    .trim();
 }
 
 /**
