@@ -64,17 +64,57 @@ export interface PayPalOrder {
   id: string; status: string;
   links: { href: string; rel: string }[];
 }
-export async function createPayPalOrder(_args: {
+export async function createPayPalOrder(args: {
   amount: string; currency: 'CNY' | 'USD'; description: string;
   returnUrl: string; cancelUrl: string;
 }): Promise<PayPalOrder> {
-  throw new Error('createPayPalOrder not yet implemented');
+  const cfg = await getPayPalConfig();
+  if (!cfg) throw new Error('paypal_not_configured');
+  const token = await getPayPalAccessToken(cfg);
+  const res = await fetch(`${BASE(cfg.mode)}/v2/checkout/orders`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      intent: 'CAPTURE',
+      purchase_units: [{
+        amount: { currency_code: args.currency, value: args.amount },
+        description: args.description,
+      }],
+      application_context: { return_url: args.returnUrl, cancel_url: args.cancelUrl },
+    }),
+  });
+  if (!res.ok) throw new Error(`paypal_create_failed: ${res.status} ${await res.text()}`);
+  return res.json() as Promise<PayPalOrder>;
 }
-export async function capturePayPalOrder(_orderId: string): Promise<unknown> {
-  throw new Error('capturePayPalOrder not yet implemented');
+export async function capturePayPalOrder(orderId: string): Promise<unknown> {
+  const cfg = await getPayPalConfig();
+  if (!cfg) throw new Error('paypal_not_configured');
+  const token = await getPayPalAccessToken(cfg);
+  const res = await fetch(`${BASE(cfg.mode)}/v2/checkout/orders/${orderId}/capture`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`paypal_capture_failed: ${res.status} ${await res.text()}`);
+  return res.json();
 }
-export async function verifyWebhookSignature(_args: {
-  rawBody: string; headers: Record<string, string>;
+export async function verifyWebhookSignature(args: {
+  cfg: PayPalConfig; rawBody: string; headers: Record<string, string>;
 }): Promise<boolean> {
-  throw new Error('verifyWebhookSignature not yet implemented');
+  const token = await getPayPalAccessToken(args.cfg);
+  const res = await fetch(`${BASE(args.cfg.mode)}/v1/notifications/verify-webhook-signature`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify({
+      auth_algo: args.headers['paypal-auth-algo'],
+      cert_url: args.headers['paypal-cert-url'],
+      transmission_id: args.headers['paypal-transmission-id'],
+      transmission_sig: args.headers['paypal-transmission-sig'],
+      transmission_time: args.headers['paypal-transmission-time'],
+      webhook_id: args.cfg.webhookId,
+      webhook_event: JSON.parse(args.rawBody),
+    }),
+  });
+  if (!res.ok) return false;
+  const j = await res.json() as { verification_status: string };
+  return j.verification_status === 'SUCCESS';
 }

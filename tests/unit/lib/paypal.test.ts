@@ -61,4 +61,119 @@ d('paypal', () => {
 
     vi.unstubAllGlobals();
   });
+
+  // --- createPayPalOrder / capturePayPalOrder ---------------------
+
+  async function seedPayPalConfig() {
+    const pool = getPool();
+    for (const [k, v] of [
+      ['paypal.mode', 'sandbox'], ['paypal.client_id', 'c'], ['paypal.client_secret', 's'], ['paypal.webhook_id', 'w'],
+    ]) {
+      await pool.query(`INSERT INTO app_config (\`key\`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value=VALUES(value)`, [k, v]);
+    }
+  }
+
+  it('createPayPalOrder posts to /v2/checkout/orders and returns id+approvalUrl', async () => {
+    await seedPayPalConfig();
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    }).mockResolvedValueOnce({
+      ok: true, json: async () => ({ id: 'PAY-123', status: 'CREATED', links: [
+        { rel: 'approve', href: 'https://www.sandbox.paypal.com/checkoutnow?token=PAY-123' },
+        { rel: 'self', href: 'https://api-m.sandbox.paypal.com/v2/checkout/orders/PAY-123' },
+      ] }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { createPayPalOrder } = await import('@/lib/paypal');
+    const order = await createPayPalOrder({
+      amount: '3.00', currency: 'USD', description: '月卡',
+      returnUrl: 'https://x.test/success', cancelUrl: 'https://x.test/cancel',
+    });
+    expect(order.id).toBe('PAY-123');
+    expect(order.links.find(l => l.rel === 'approve')?.href).toContain('PAY-123');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+
+  it('createPayPalOrder throws on non-2xx', async () => {
+    await seedPayPalConfig();
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    }).mockResolvedValueOnce({
+      ok: false, status: 422, text: async () => 'invalid',
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { createPayPalOrder } = await import('@/lib/paypal');
+    await expect(createPayPalOrder({
+      amount: '3.00', currency: 'USD', description: 'x',
+      returnUrl: 'https://x/s', cancelUrl: 'https://x/c',
+    })).rejects.toThrow(/paypal_create_failed/);
+    vi.unstubAllGlobals();
+  });
+
+  it('capturePayPalOrder posts to /capture and returns the response', async () => {
+    await seedPayPalConfig();
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    }).mockResolvedValueOnce({
+      ok: true, json: async () => ({ id: 'PAY-123', status: 'COMPLETED' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { capturePayPalOrder } = await import('@/lib/paypal');
+    const r = await capturePayPalOrder('PAY-123') as any;
+    expect(r.status).toBe('COMPLETED');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+
+  // --- verifyWebhookSignature -------------------------------------
+
+  it('verifyWebhookSignature posts to /v1/notifications/verify-webhook-signature', async () => {
+    await seedPayPalConfig();
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    }).mockResolvedValueOnce({
+      ok: true, json: async () => ({ verification_status: 'SUCCESS' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { verifyWebhookSignature } = await import('@/lib/paypal');
+    const ok = await verifyWebhookSignature({
+      cfg: { mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' },
+      rawBody: '{"id":"WH-1"}',
+      headers: {
+        'paypal-auth-algo': 'SHA256withRSA',
+        'paypal-cert-url': 'https://api.paypal.com/cert.pem',
+        'paypal-transmission-id': 'abc-123',
+        'paypal-transmission-sig': 'sig',
+        'paypal-transmission-time': '2026-06-15T00:00:00Z',
+      },
+    });
+    expect(ok).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.unstubAllGlobals();
+  });
+
+  it('verifyWebhookSignature returns false on FAILURE status', async () => {
+    await seedPayPalConfig();
+    const fetchMock = vi.fn().mockResolvedValueOnce({
+      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    }).mockResolvedValueOnce({
+      ok: true, json: async () => ({ verification_status: 'FAILURE' }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const { verifyWebhookSignature } = await import('@/lib/paypal');
+    const ok = await verifyWebhookSignature({
+      cfg: { mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' },
+      rawBody: '{}', headers: {
+        'paypal-auth-algo': 'SHA256withRSA',
+        'paypal-cert-url': 'https://x/cert.pem',
+        'paypal-transmission-id': 't',
+        'paypal-transmission-sig': 's',
+        'paypal-transmission-time': '2026-06-15T00:00:00Z',
+      },
+    });
+    expect(ok).toBe(false);
+    vi.unstubAllGlobals();
+  });
 });
