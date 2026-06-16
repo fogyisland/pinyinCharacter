@@ -391,6 +391,9 @@ function BatchTab() {
   const runner = useBatchRunner();
 
   const fieldLabels: Record<string, string> = Object.fromEntries(ALL_BATCH_FIELDS.map((f) => [f.key, f.label]));
+  const visibleFields = level === 3
+    ? ALL_BATCH_FIELDS
+    : ALL_BATCH_FIELDS.filter((f) => f.key !== 'rare_meaning' && f.key !== 'rare_story');
   const pct = runner.progress.totalChars > 0
     ? Math.round((runner.progress.processed / runner.progress.totalChars) * 100)
     : 0;
@@ -438,8 +441,10 @@ function BatchTab() {
       </div>
 
       <div>
-        <div className="text-sm font-semibold mb-2">字段(全默认勾选)</div>
-        <FieldCheckboxes options={ALL_BATCH_FIELDS} value={fields} onChange={setFields} />
+        <div className="text-sm font-semibold mb-2">
+          字段(全默认勾选){level !== 3 && <span className="text-xs text-ink-soft font-normal ml-2">L3 才会有"罕见字释义/故事"</span>}
+        </div>
+        <FieldCheckboxes options={visibleFields} value={fields} onChange={setFields} />
       </div>
 
       <div>
@@ -462,8 +467,12 @@ function BatchTab() {
       <div className="flex gap-2">
         {runner.status === 'idle' || runner.status === 'done' || runner.status === 'error' ? (
           <button type="button"
-            onClick={() => runner.start(level, fields, concurrency)}
-            disabled={!Object.values(fields).some(Boolean)}
+            onClick={() => {
+              const applicableFields: Record<string, boolean> = {};
+              for (const f of visibleFields) applicableFields[f.key] = !!fields[f.key];
+              runner.start(level, applicableFields, concurrency);
+            }}
+            disabled={!visibleFields.some((f) => fields[f.key])}
             className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50">
             ▶ 开始生成
           </button>
