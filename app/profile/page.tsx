@@ -9,6 +9,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { WorksheetHistoryList } from '@/components/worksheet/WorksheetHistoryList';
+import { MembershipStatusCard } from '@/components/membership/MembershipStatusCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,6 +42,9 @@ export default async function ProfilePage() {
               <div className="text-xs text-ink-soft mt-1">{s.label}</div>
             </div>
           ))}
+        </div>
+        <div className="mt-4">
+          <MembershipStatusCard userId={session.userId} />
         </div>
         <div className="mt-10 mb-4 flex items-end justify-between gap-3">
           <SectionTitle subtitle="保存的字帖，可继续编辑或打印">我的字帖</SectionTitle>

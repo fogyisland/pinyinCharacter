@@ -295,3 +295,48 @@ export interface AdminPlanListData { items: AdminPlanRow[]; total: number; }
 export async function listAdminPlansRequest(): Promise<ApiResult<AdminPlanListData>> {
   return call('/api/admin/memberships/plans', { method: 'GET' });
 }
+
+export interface UpdatePlanBody {
+  displayName?: string; durationDays?: number; amount?: string;
+  enabled?: boolean; displayOrder?: number;
+  features?: ('unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts')[];
+}
+
+export async function updateAdminPlanRequest(id: number, body: UpdatePlanBody): Promise<ApiResult<{ plan: AdminPlanRow }>> {
+  return call(`/api/admin/memberships/plans/${id}`, {
+    method: 'PATCH', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function seedAdminPlansRequest(): Promise<ApiResult<{ seeded: number }>> {
+  return call('/api/admin/memberships/plans/seed', { method: 'POST' });
+}
+
+// --- PayPal config -----------------------------------------------------
+
+export interface AdminPayPalConfig {
+  mode: 'sandbox' | 'live';
+  hasClientId: boolean;
+  hasSecret: boolean;
+  hasWebhookId: boolean;
+  webhookUrl: string;
+}
+
+export async function getAdminPayPalConfigRequest(): Promise<ApiResult<AdminPayPalConfig>> {
+  return call('/api/admin/paypal/config', { method: 'GET' });
+}
+
+export async function updateAdminPayPalConfigRequest(body: {
+  mode?: 'sandbox' | 'live';
+  clientId?: string; clientSecret?: string; webhookId?: string;
+}): Promise<ApiResult<{ mode: 'sandbox' | 'live'; changed: string[] }>> {
+  return call('/api/admin/paypal/config', {
+    method: 'PUT', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function testPayPalConnectionRequest(): Promise<ApiResult<{ ok: true; message: string }>> {
+  return call('/api/admin/paypal/test-connection', { method: 'POST' });
+}

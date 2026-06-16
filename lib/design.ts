@@ -15,6 +15,7 @@ export const NAV_LINKS = [
   { href: '/sutra', label: '佛经' },
   { href: '/game', label: '游戏' },
   { href: '/profile', label: '我的' },
+  { href: '/membership', label: '会员' },
 ] as const;
 
 export const FOOTER_LINKS = [

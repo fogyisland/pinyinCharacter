@@ -19,6 +19,8 @@ const EVENT_TYPES = [
   'worksheet_saved', 'worksheet_deleted',
   'poem_saved', 'sutra_saved', 'rare_char_card_saved',
   'download_logged',
+  'membership_granted', 'membership_granted_paypal', 'membership_revoked',
+  'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
 ];
 
 const SOURCE_TYPES = [

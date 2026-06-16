@@ -35,3 +35,14 @@ export async function generateEtymologyStory(input: EtymologyStoryInput): Promis
   });
   return text.trim();
 }
+
+export interface CharExplainInput { char: string; pinyin: string; }
+export async function explainChar(input: CharExplainInput): Promise<string> {
+  const text = await callLlm({
+    system: '你是一位汉语言文字学家,擅长简洁解释汉字。',
+    prompt: `请用 60-100 字简洁解释汉字「${input.char}」的形、义、用。\n\n直接输出解释,不要前缀。`,
+    temperature: 0.5,
+    maxTokens: 200,
+  });
+  return text.trim();
+}
