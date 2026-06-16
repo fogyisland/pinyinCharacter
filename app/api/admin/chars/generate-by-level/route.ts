@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     }
 
     const [chars] = await pool.query<any[]>(
-      `SELECT \`char\`, pinyin, meaning_zh FROM chars WHERE level = ? ORDER BY id LIMIT ? OFFSET ?`,
+      `SELECT \`char\`, pinyin, meaning_zh FROM chars WHERE level = ? ORDER BY \`char\` LIMIT ? OFFSET ?`,
       [level, limit, offset],
     );
 
