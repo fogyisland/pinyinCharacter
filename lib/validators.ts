@@ -81,6 +81,19 @@ export const adminGenerateEtymologySchema = z.object({
   chars: z.array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s))).min(1).max(100),
 });
 
+export const adminGenerateCharsSchema = z.object({
+  chars: z.array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s))).min(1).max(100),
+  fields: z.object({
+    pinyin_alt: z.boolean().optional(),
+    meaning_zh: z.boolean().optional(),
+    meaning_en: z.boolean().optional(),
+    variants: z.boolean().optional(),
+    etymology_story: z.boolean().optional(),
+    rare_meaning: z.boolean().optional(),
+    rare_story: z.boolean().optional(),
+  }).refine((o) => Object.values(o).some(Boolean), { message: 'at least one field required' }),
+});
+
 export const adminCronConfigSchema = z.object({
   enabled: z.boolean(),
   perDay: z.number().int().min(1).max(1000),

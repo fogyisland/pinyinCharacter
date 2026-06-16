@@ -129,3 +129,59 @@ function parseJsonArray(content: string): BatchOutput[] {
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
+
+export interface RareCharContentInput { char: string; pinyin: string; }
+export interface RareCharContent { meaning: string; story: string; }
+
+/**
+ * Single-char generator for the admin UI. Uses the same SYSTEM_PROMPT as the
+ * batch flow but returns the parsed JSON object instead of writing to DB.
+ *
+ * `fields` defaults to both; pass a single-field array to get a tighter LLM
+ * response (e.g. only meaning) — the prompt asks the model for that field.
+ */
+export async function generateRareCharContent(
+  input: RareCharContentInput,
+  options?: { fields?: Array<'meaning' | 'story'> },
+): Promise<RareCharContent> {
+  const fields = options?.fields ?? ['meaning', 'story'];
+  const wantMeaning = fields.includes('meaning');
+  const wantStory = fields.includes('story');
+  const model = (await getConfig('ai.model')) ?? 'gpt-4o-mini';
+  const apiKey = (await getConfig('ai.api_key')) ?? process.env.LLM_API_KEY;
+  const baseUrl = (await getConfig('ai.base_url')) ?? process.env.LLM_BASE_URL;
+  if (!apiKey) throw new Error('LLM api key not configured');
+  if (!baseUrl) throw new Error('LLM base URL not configured');
+
+  const singleLine = wantMeaning && wantStory
+    ? 'meaning (10-30 字) and story (50-200 字)'
+    : wantMeaning
+      ? 'meaning only (10-30 字)'
+      : 'story only (50-200 字)';
+
+  const userPrompt = `汉字:「${input.char}」(拼音: ${input.pinyin})\n请只返回 ${singleLine}。`;
+
+  return withAiLogging(
+    { userId: null, feature: 'rare-char-content', model, metadata: { char: input.char, fields } },
+    async () => {
+      const res = await llmChat({
+        baseUrl,
+        apiKey,
+        model,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: 0.5,
+        maxTokens: 600,
+      });
+      const arr = parseJsonArray(res.content);
+      const item = arr.find(x => x.char === input.char) ?? arr[0];
+      if (!item) throw new Error('LLM returned empty content');
+      return {
+        meaning: wantMeaning ? String(item.meaning ?? '') : '',
+        story: wantStory ? String(item.story ?? '') : '',
+      };
+    },
+  );
+}

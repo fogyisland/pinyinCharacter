@@ -21,9 +21,12 @@ describe('config', () => {
     expect(await getConfig('test.foo')).toBe('baz');
   });
 
-  it('getAllConfig returns the seeded AI keys', async () => {
+  it('getAllConfig returns all configured keys', async () => {
+    await setConfig('test.get_all', 'value-a', null);
+    await setConfig('test.get_all_2', 'value-b', null);
     const all = await getAllConfig();
-    expect(all['ai.model']).toBe('gpt-4o-mini');
+    expect(all['test.get_all']).toBe('value-a');
+    expect(all['test.get_all_2']).toBe('value-b');
   });
 
   it('setConfigBatch validates values', async () => {
