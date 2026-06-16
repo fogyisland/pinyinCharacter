@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, writeFileSync, mkdirSync, existsSync, readFileSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
+import type { SutraChunk } from '@/lib/sutra-types';
+type SutraChunkType = SutraChunk;
 
 // Mock process.cwd() to a temp dir so we don't pollute the real data/.
 // We override BEFORE importing the module under test so the SUTRAS_DIR
@@ -19,7 +21,6 @@ const {
   writeSutrasFs,
   sutraFsStats,
 } = await import('@/lib/sutras-fs');
-const sutraTypes = await import('@/lib/sutra-types');
 
 function seedFs() {
   const items = [
@@ -27,7 +28,7 @@ function seedFs() {
     { id: 2, slug: 'jingang', title: '金刚经', chunkCount: 32, charCount: 5000 },
     { id: 3, slug: 'yaoshi', title: '药师经', chunkCount: 1, charCount: 1500 },
   ];
-  const chunksBySlug: Record<string, sutraTypes.SutraChunk[]> = {
+  const chunksBySlug: Record<string, SutraChunkType[]> = {
     xinjing: [{ id: 1, label: '心经', content: ['观自在菩萨'], pinyin: [['guān']] }],
     jingang: [
       { id: 1, label: '法会因由分第一', content: ['如是我闻'], pinyin: [['rú']] },

@@ -1,6 +1,12 @@
 /**
  * Create the 4 plan-b tables (idempotent via IF NOT EXISTS).
  * Run on first server start; safe to re-run.
+ *
+ * Schema is slim: only structural columns. LLM-generated content (meanings,
+ * etymology stories, hanzi stories, rare_char meanings/stories) lives in
+ * data/content/<char>.json — see scripts/schemas/content.ts and
+ * lib/content.ts::getContent(). Read paths prefer JSON, fall back to legacy
+ * content columns during the migration window.
  */
 import { getPool, closePool } from '../lib/db';
 
@@ -9,15 +15,9 @@ const DDL = [
      \`char\` VARCHAR(4) NOT NULL,
      level TINYINT NOT NULL,
      pinyin VARCHAR(64) NOT NULL DEFAULT '',
-     pinyin_alt TEXT NULL,
      radical VARCHAR(8) NOT NULL DEFAULT '',
      stroke_count SMALLINT NOT NULL DEFAULT 0,
-     meaning_zh TEXT NULL,
-     meaning_en TEXT NULL,
      unicode_codepoint VARCHAR(8) NOT NULL,
-     variants TEXT NULL,
-     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
      PRIMARY KEY (\`char\`),
      KEY idx_level (level),
      KEY idx_radical (radical),
@@ -37,24 +37,9 @@ const DDL = [
      era_lishu_has TINYINT(1) NOT NULL DEFAULT 0,
      era_kaishu_font VARCHAR(32) NOT NULL DEFAULT 'KaiTi',
      era_kaishu_has TINYINT(1) NOT NULL DEFAULT 1,
-     story TEXT NULL,
-     generated_by VARCHAR(64) NULL,
-     generated_at TIMESTAMP NULL,
-     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-     PRIMARY KEY (\`char\`),
-     KEY idx_generated (generated_at)
-   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
-
-  `CREATE TABLE IF NOT EXISTS char_story (
-     \`char\` VARCHAR(4) NOT NULL,
-     story TEXT NOT NULL,
-     generated_by VARCHAR(64) NULL DEFAULT 'claude-handwritten',
-     generated_at TIMESTAMP NULL,
-     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
      PRIMARY KEY (\`char\`)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+  // char_story table dropped — story content now lives in data/content/<char>.json.
 
   `CREATE TABLE IF NOT EXISTS users (
      id BIGINT NOT NULL AUTO_INCREMENT,
@@ -115,12 +100,7 @@ const DDL = [
   `CREATE TABLE IF NOT EXISTS rare_chars (
      \`char\`        VARCHAR(1)     NOT NULL,
      pinyin        VARCHAR(64)    NOT NULL,
-     meaning       TEXT           NOT NULL,
-     story         TEXT           NOT NULL,
      needs_review  TINYINT(1)     NOT NULL DEFAULT 1,
-     generated_by  VARCHAR(64)    NULL,
-     generated_at  DATETIME       NULL,
-     created_at    DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
      PRIMARY KEY (\`char\`),
      KEY idx_pinyin (pinyin)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,

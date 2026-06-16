@@ -5,9 +5,13 @@ import {
   type EtymologyAdjacent,
   type EraGlyph,
 } from './etymology-types';
+import { getContent } from './content';
 
 export async function getEtymology(char: string): Promise<Etymology | null> {
   const pool = getPool();
+  // story/generation provenance is moving to data/content/<char>.json, but the
+  // column still exists in the DB for in-flight migrations. Read JSON first,
+  // fall back to the legacy column.
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`,
             era_jiaguwen_font, era_jiaguwen_has,
@@ -28,12 +32,17 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
     font: r[`era_${era}_font`],
     hasGlyph: Boolean(r[`era_${era}_has`]),
   }));
+  const content = await getContent(char);
+  const story = content?.etymology?.story ?? r.story ?? null;
+  const generatedBy = content?.etymology?.generated_by ?? r.generated_by ?? null;
+  const generatedAt = content?.etymology?.generated_at
+    ?? (r.generated_at ? r.generated_at.toISOString() : null);
   return {
     char: r.char,
     eraGlyphs,
-    story: r.story,
-    generatedBy: r.generated_by,
-    generatedAt: r.generated_at ? r.generated_at.toISOString() : null,
+    story,
+    generatedBy,
+    generatedAt,
   };
 }
 

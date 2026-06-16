@@ -1,8 +1,13 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
 import { getEtymology, getAdjacentChars } from '@/lib/etymology';
 
 vi.mock('@/lib/db', () => ({
   getPool: vi.fn(),
+}));
+vi.mock('node:fs', () => ({
+  existsSync: vi.fn(),
+  readFileSync: vi.fn(),
 }));
 
 import { getPool } from '@/lib/db';
@@ -10,9 +15,25 @@ import { getPool } from '@/lib/db';
 const mockedQuery = vi.fn();
 (getPool as any).mockReturnValue({ query: mockedQuery, execute: mockedQuery });
 
-describe('getEtymology', () => {
-  beforeEach(() => mockedQuery.mockReset());
+// Force getContent to fall back to DB by pretending the JSON file is missing.
+beforeEach(() => {
+  mockedQuery.mockReset();
+  vi.mocked(existsSync).mockReset();
+  vi.mocked(existsSync).mockReturnValue(false);
+  vi.mocked(readFileSync).mockReset();
+});
 
+// getContent() makes 4 DB queries (chars, char_etymology, char_story, rare_chars).
+// Mock all 4 with empty rows so getContent returns a content object whose
+// etymology block is empty (forcing fallback to legacy DB columns).
+const FOUR_EMPTY = [
+  [[]],  // chars
+  [[]],  // char_etymology
+  [[]],  // char_story
+  [[]],  // rare_chars
+];
+
+describe('getEtymology', () => {
   it('returns null when char not in char_etymology', async () => {
     mockedQuery.mockResolvedValueOnce([[]]);
     const result = await getEtymology('龘');
@@ -31,6 +52,8 @@ describe('getEtymology', () => {
       generated_by: 'gpt-4o',
       generated_at: new Date('2026-06-13T00:00:00Z'),
     }]]);
+    // getContent fallback chain
+    for (const r of FOUR_EMPTY) mockedQuery.mockResolvedValueOnce(r);
 
     const result = await getEtymology('一');
     expect(result?.char).toBe('一');
@@ -49,6 +72,7 @@ describe('getEtymology', () => {
       era_kaishu_font: 'KaiTi',
       story: null, generated_by: null, generated_at: null,
     }]]);
+    for (const r of FOUR_EMPTY) mockedQuery.mockResolvedValueOnce(r);
 
     const result = await getEtymology('龘');
     expect(result?.eraGlyphs[0].hasGlyph).toBe(false);

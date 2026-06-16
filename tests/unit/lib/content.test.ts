@@ -35,18 +35,19 @@ describe('getContent', () => {
     expect(mockedQuery).not.toHaveBeenCalled();
   });
 
-  it('falls back to DB when file missing, returns merged 3-table data', async () => {
+  it('falls back to DB when file missing, returns merged 4-table data', async () => {
     vi.mocked(existsSync).mockReturnValue(false);
     mockedQuery
       .mockResolvedValueOnce([[{ pinyin: 'yī', meaning_zh: '一,数之始。' }]]) // chars
       .mockResolvedValueOnce([[{ story: '甲骨文作一...' }]])                  // char_etymology
       .mockResolvedValueOnce([[]])                                            // char_story (no row)
+      .mockResolvedValueOnce([[]])                                            // rare_chars (no row)
 
     const result = await getContent('一');
     expect(result?.char).toBe('一');
     expect(result?.pinyin).toBe('yī');
-    expect(result?.meaning_zh).toBe('一,数之始。');
-    expect(result?.etymology_story).toBe('甲骨文作一...');
+    expect(result?.dict?.meaning_zh).toBe('一,数之始。');
+    expect(result?.etymology?.story).toBe('甲骨文作一...');
     expect(result?.hanzi_story).toBeUndefined();
   });
 
@@ -64,8 +65,10 @@ describe('getContent', () => {
       .mockResolvedValueOnce([[{ pinyin: 'yī', meaning_zh: null }]])
       .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[]])
 
     const result = await getContent('一');
+    expect(result?.dict?.meaning_zh).toBeUndefined();
     expect(result?.meaning_zh).toBeUndefined();
   });
 });
