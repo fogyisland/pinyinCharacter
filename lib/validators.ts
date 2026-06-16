@@ -81,17 +81,27 @@ export const adminGenerateEtymologySchema = z.object({
   chars: z.array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s))).min(1).max(100),
 });
 
+const adminGenerateFieldsSchema = z.object({
+  pinyin_alt: z.boolean().optional(),
+  meaning_zh: z.boolean().optional(),
+  meaning_en: z.boolean().optional(),
+  variants: z.boolean().optional(),
+  etymology_story: z.boolean().optional(),
+  rare_meaning: z.boolean().optional(),
+  rare_story: z.boolean().optional(),
+}).refine((o) => Object.values(o).some(Boolean), { message: 'at least one field required' });
+
 export const adminGenerateCharsSchema = z.object({
   chars: z.array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s))).min(1).max(100),
-  fields: z.object({
-    pinyin_alt: z.boolean().optional(),
-    meaning_zh: z.boolean().optional(),
-    meaning_en: z.boolean().optional(),
-    variants: z.boolean().optional(),
-    etymology_story: z.boolean().optional(),
-    rare_meaning: z.boolean().optional(),
-    rare_story: z.boolean().optional(),
-  }).refine((o) => Object.values(o).some(Boolean), { message: 'at least one field required' }),
+  fields: adminGenerateFieldsSchema,
+});
+
+export const adminGenerateByLevelSchema = z.object({
+  level: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  fields: adminGenerateFieldsSchema,
+  offset: z.number().int().min(0).default(0),
+  limit: z.number().int().min(1).max(100).default(30),
+  concurrency: z.number().int().min(1).max(8).default(4),
 });
 
 export const adminCronConfigSchema = z.object({
