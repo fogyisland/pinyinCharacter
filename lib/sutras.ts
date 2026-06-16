@@ -1,5 +1,9 @@
 import { getPool } from './db';
 import type { SutraListItem, SutraListResult, SutraChunk, SutraChunkNoPinyin, SutraDetail } from './sutra-types';
+import {
+  listSutrasFromFs,
+  getSutraByIdFromFs,
+} from './sutras-fs';
 
 const PIN_MARKER_RE = /第[一二三四五六七八九十百千零〇]+品|分第[一二三四五六七八九十百千零〇]+/;
 
@@ -71,6 +75,8 @@ function mapListRow(r: RawSutraRow): SutraListItem {
 }
 
 export async function listSutras(args: ListSutrasArgs = {}): Promise<SutraListResult> {
+  const fs = listSutrasFromFs(args);
+  if (fs) return fs;
   const pool = getPool();
   const page = Math.max(1, args.page ?? 1);
   const pageSize = Math.max(1, Math.min(PAGE_SIZE, args.pageSize ?? PAGE_SIZE));
@@ -96,6 +102,15 @@ export async function listSutras(args: ListSutrasArgs = {}): Promise<SutraListRe
 }
 
 export async function getSutra(id: number): Promise<SutraDetail | null> {
+  const fs = getSutraByIdFromFs(id);
+  if (fs) {
+    const chunks: SutraChunk[] = fs.chunks.map((c, i) => ({
+      ...c,
+      id: c.id ?? i + 1,
+      content: c.content.map(s => sanitizeMojibake(s)),
+    }));
+    return { id: fs.id, title: fs.title, slug: fs.slug, chunks };
+  }
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT id, title, slug, chunks FROM sutras WHERE id = ? LIMIT 1`,

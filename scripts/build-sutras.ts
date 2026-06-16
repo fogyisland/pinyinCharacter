@@ -17,6 +17,8 @@ import { join, dirname } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 import { getPool, closePool } from '../lib/db';
 import { parseCbetaXml } from './cbeta-parser';
+import { writeSutrasFs, type SutraManifestEntry } from '../lib/sutras-fs';
+import type { SutraChunk } from '../lib/sutra-types';
 
 // Local CBETA archive root. Override via env var if needed.
 const CBETA_ROOT =
@@ -245,6 +247,8 @@ export async function buildSutras(): Promise<number> {
   }
 
   const pool = getPool();
+  const chunksBySlug: Record<string, SutraChunk[]> = {};
+  const manifestItems: SutraManifestEntry[] = [];
   let inserted = 0;
   for (const entry of SLUGS) {
     try {
@@ -299,11 +303,42 @@ export async function buildSutras(): Promise<number> {
       console.log(
         `[build-sutras] upserted ${entry.slug} (${chunks.length} chunks, ${chunks.reduce((n, c) => n + c.content.length, 0)} paragraphs)`,
       );
+      chunksBySlug[entry.slug] = chunks.map((c, i) => ({ ...c, id: i + 1 }));
       inserted += 1;
     } catch (err) {
       console.warn(`[build-sutras] skip ${entry.slug}: ${(err as Error).message}`);
     }
   }
+
+  // After all DB upserts complete, read back id+slug+title+(chunkCount, charCount)
+  // for the manifest. INSERT...ON DUPLICATE preserves existing ids and assigns
+  // new ones for fresh inserts.
+  if (inserted > 0) {
+    const [idRows] = await pool.query<any[]>(
+      `SELECT id, slug, title, chunks FROM sutras WHERE slug IN (${SLUGS.map(() => '?').join(',')})`,
+      SLUGS.map((s) => s.slug),
+    );
+    for (const row of idRows as Array<{ id: number; slug: string; title: string; chunks: string | SutraChunk[] }>) {
+      const raw = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
+      const chunkCount = raw.length;
+      const charCount = raw.reduce(
+        (sum, c) => sum + c.content.reduce((s, line) => s + Array.from(line).length, 0),
+        0,
+      );
+      manifestItems.push({
+        id: Number(row.id),
+        slug: row.slug,
+        title: row.title,
+        chunkCount,
+        charCount,
+      });
+    }
+    const manifest = writeSutrasFs({ items: manifestItems, chunksBySlug });
+    console.log(
+      `[build-sutras] wrote ${Object.keys(chunksBySlug).length} files + manifest (${manifest.items.length} items) to data/sutras/`,
+    );
+  }
+
   return inserted;
 }
 
