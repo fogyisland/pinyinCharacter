@@ -104,6 +104,14 @@ export const adminGenerateByLevelSchema = z.object({
   concurrency: z.number().int().min(1).max(8).default(4),
 });
 
+export const adminInitMockSchema = z.object({
+  enabled: z.boolean(),
+});
+
+export const adminInitSeedSchema = z.object({
+  action: z.enum(['seed', 'clear']),
+});
+
 export const adminCronConfigSchema = z.object({
   enabled: z.boolean(),
   perDay: z.number().int().min(1).max(1000),

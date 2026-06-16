@@ -148,10 +148,11 @@ export async function generateRareCharContent(
   const wantMeaning = fields.includes('meaning');
   const wantStory = fields.includes('story');
   const model = (await getConfig('ai.model')) ?? 'gpt-4o-mini';
-  const apiKey = (await getConfig('ai.api_key')) ?? process.env.LLM_API_KEY;
-  const baseUrl = (await getConfig('ai.base_url')) ?? process.env.LLM_BASE_URL;
-  if (!apiKey) throw new Error('LLM api key not configured');
-  if (!baseUrl) throw new Error('LLM base URL not configured');
+  const mockMode = await getConfig('ai.mock_mode');
+  const apiKey = (await getConfig('ai.api_key')) ?? process.env.LLM_API_KEY ?? 'mock';
+  const baseUrl = (await getConfig('ai.base_url')) ?? process.env.LLM_BASE_URL ?? 'http://mock';
+  if (mockMode !== 'true' && !apiKey) throw new Error('LLM api key not configured');
+  if (mockMode !== 'true' && !baseUrl) throw new Error('LLM base URL not configured');
 
   const singleLine = wantMeaning && wantStory
     ? 'meaning (10-30 字) and story (50-200 字)'
