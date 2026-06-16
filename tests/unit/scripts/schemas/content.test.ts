@@ -24,16 +24,20 @@ describe('CharContentSchema', () => {
     expect(() => CharContentSchema.parse({ char: '丁七', pinyin: 'dīng' })).toThrow();
   });
 
-  it('rejects etymology_story too short', () => {
+  it('accepts legacy short etymology_story (hand-written files)', () => {
+    // 30 legacy files in data/content/ have single-sentence etymology_story;
+    // strict min-length was relaxed so they validate on import.
     expect(() => CharContentSchema.parse({
       char: '一', pinyin: 'yī', etymology_story: '短'
-    })).toThrow();
+    })).not.toThrow();
   });
 
-  it('rejects hanzi_story too long', () => {
+  it('accepts long hanzi_story (no upper bound)', () => {
+    // hanzi_story was originally capped at 80 chars; that was relaxed so
+    // generated stories (typically 100-400 chars) validate.
     expect(() => CharContentSchema.parse({
-      char: '一', pinyin: 'yī', hanzi_story: 'x'.repeat(81)
-    })).toThrow();
+      char: '一', pinyin: 'yī', hanzi_story: 'x'.repeat(400)
+    })).not.toThrow();
   });
 });
 
@@ -41,7 +45,10 @@ describe('ContentManifestSchema', () => {
   it('accepts initial all-zero manifest', () => {
     const r = ContentManifestSchema.parse({
       version: 1, totalChars: 8105,
-      byField: { meaning_zh: 0, etymology_story: 0, hanzi_story: 0 },
+      byField: {
+        meaning_zh: 0, meaning_en: 0, pinyin_alt: 0, variants: 0,
+        etymology_story: 0, hanzi_story: 0, rare_meaning: 0, rare_story: 0,
+      },
       generatedAt: '2026-06-15T10:00:00.000Z',
     });
     expect(r.totalChars).toBe(8105);
@@ -50,7 +57,10 @@ describe('ContentManifestSchema', () => {
   it('rejects wrong version', () => {
     expect(() => ContentManifestSchema.parse({
       version: 2, totalChars: 8105,
-      byField: { meaning_zh: 0, etymology_story: 0, hanzi_story: 0 },
+      byField: {
+        meaning_zh: 0, meaning_en: 0, pinyin_alt: 0, variants: 0,
+        etymology_story: 0, hanzi_story: 0, rare_meaning: 0, rare_story: 0,
+      },
       generatedAt: '2026-06-15T10:00:00.000Z',
     })).toThrow();
   });

@@ -11,6 +11,7 @@ vi.mock('fs/promises', () => ({
   readFile: vi.fn(),
   writeFile: vi.fn(),
   mkdir: vi.fn(),
+  readdir: vi.fn(),
 }));
 
 import * as fsPromises from 'fs/promises';
@@ -21,6 +22,7 @@ describe('buildStrokes', () => {
     vi.mocked(fsPromises.readFile).mockReset();
     vi.mocked(fsPromises.writeFile).mockReset();
     vi.mocked(fsPromises.mkdir).mockReset();
+    vi.mocked(fsPromises.readdir).mockReset();
   });
 
   it('writes one JSON per char and a manifest', async () => {
@@ -28,6 +30,7 @@ describe('buildStrokes', () => {
     vi.mocked(fsPromises.readFile).mockResolvedValue(JSON.stringify(['一', '丁']));
     vi.mocked(fsPromises.mkdir).mockResolvedValue(undefined);
     vi.mocked(fsPromises.writeFile).mockResolvedValue(undefined);
+    vi.mocked(fsPromises.readdir).mockResolvedValue([] as any);
 
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
@@ -59,6 +62,7 @@ describe('buildStrokes', () => {
     vi.mocked(fsPromises.readFile).mockResolvedValue(JSON.stringify(['X']));
     vi.mocked(fsPromises.mkdir).mockResolvedValue(undefined);
     vi.mocked(fsPromises.writeFile).mockResolvedValue(undefined);
+    vi.mocked(fsPromises.readdir).mockResolvedValue([] as any);
 
     const fetchImpl = vi.fn().mockRejectedValue(new Error('network'));
 
@@ -84,6 +88,7 @@ describe('buildStrokes', () => {
     vi.mocked(fsPromises.readFile).mockResolvedValue(JSON.stringify(['一']));
     vi.mocked(fsPromises.mkdir).mockResolvedValue(undefined);
     vi.mocked(fsPromises.writeFile).mockResolvedValue(undefined);
+    vi.mocked(fsPromises.readdir).mockResolvedValue([] as any);
 
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
