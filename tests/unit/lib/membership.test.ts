@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from
 import { getPool, closePool } from '@/lib/db';
 import {
   PLAN_KEYS, type PlanKey, type MembershipFeature,
-  listPlans, getPlanByKey, getPlanById, seedDefaultPlans,
+  listPlans, getPlanByKey, getPlanById, seedDefaultPlans, updatePlan,
   grantMembership, listMemberships, revokeMembership,
   getMyActiveMembership, hasFeature, getMyFeatures,
 } from '@/lib/membership';
@@ -200,5 +200,31 @@ d('membership plans', () => {
     expect(set).toBeInstanceOf(Set);
     expect(set.size).toBe(4);
     expect(set.has('ai_calls')).toBe(true);
+  });
+
+  // --- updatePlan ----------------------------------------------
+
+  it('updatePlan changes displayName, amount, enabled, displayOrder', async () => {
+    await seedDefaultPlans();
+    const p = await getPlanByKey('monthly_usd' as PlanKey);
+    const updated = await updatePlan(p!.id, { displayName: '月卡 (新)', amount: '3.50', enabled: false, displayOrder: 10 });
+    expect(updated.displayName).toBe('月卡 (新)');
+    expect(updated.amount).toBe('3.50');
+    expect(updated.enabled).toBe(false);
+    expect(updated.displayOrder).toBe(10);
+  });
+
+  it('updatePlan replaces feature set', async () => {
+    await seedDefaultPlans();
+    const p = await getPlanByKey('yearly_usd' as PlanKey);
+    const updated = await updatePlan(p!.id, { features: ['ai_calls'] });
+    expect(updated.features).toEqual(['ai_calls']);
+  });
+
+  it('updatePlan with empty patch returns the same plan', async () => {
+    await seedDefaultPlans();
+    const p = await getPlanByKey('monthly_usd' as PlanKey);
+    const updated = await updatePlan(p!.id, {});
+    expect(updated.displayName).toBe(p!.displayName);
   });
 });

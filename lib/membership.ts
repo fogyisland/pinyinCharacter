@@ -257,3 +257,38 @@ export async function hasFeature(userId: number, feature: MembershipFeature): Pr
   );
   return rows.length > 0;
 }
+
+export interface PlanPatch {
+  displayName?: string; durationDays?: number; amount?: string;
+  enabled?: boolean; displayOrder?: number;
+  features?: MembershipFeature[];
+}
+
+export async function updatePlan(id: number, patch: PlanPatch): Promise<MembershipPlanRow> {
+  const pool = getPool();
+  const sets: string[] = [];
+  const params: any[] = [];
+  if (patch.displayName !== undefined) { sets.push('display_name = ?'); params.push(patch.displayName); }
+  if (patch.durationDays !== undefined) { sets.push('duration_days = ?'); params.push(patch.durationDays); }
+  if (patch.amount !== undefined) { sets.push('amount = ?'); params.push(patch.amount); }
+  if (patch.enabled !== undefined) { sets.push('enabled = ?'); params.push(patch.enabled ? 1 : 0); }
+  if (patch.displayOrder !== undefined) { sets.push('display_order = ?'); params.push(patch.displayOrder); }
+
+  if (sets.length > 0) {
+    await pool.execute(
+      `UPDATE membership_plans SET ${sets.join(', ')} WHERE id = ?`,
+      [...params, id],
+    );
+  }
+
+  if (patch.features !== undefined) {
+    await pool.execute(`DELETE FROM membership_plan_features WHERE plan_id = ?`, [id]);
+    for (const f of patch.features) {
+      await pool.execute(`INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`, [id, f]);
+    }
+  }
+
+  const updated = await getPlanById(id);
+  if (!updated) throw new Error(`plan_not_found: ${id}`);
+  return updated;
+}
