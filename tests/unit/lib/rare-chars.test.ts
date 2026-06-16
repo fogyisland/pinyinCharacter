@@ -1,8 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
 
 const queryMock = vi.fn();
 vi.mock('@/lib/db', () => ({
-  getPool: () => ({ query: (...a: unknown[]) => queryMock(...a) }),
+  getPool: () => ({ query: (...a: unknown[]) => queryMock(...a), execute: (...a: unknown[]) => queryMock(...a) }),
+}));
+vi.mock('node:fs', () => ({
+  existsSync: vi.fn(),
+  readFileSync: vi.fn(),
 }));
 
 import { pickDailyChar, buildSearchWhere, isSingleChar, getRandomStoryChar } from '@/lib/rare-chars';
@@ -65,7 +70,11 @@ describe('rare-chars pure helpers', () => {
 });
 
 describe('getRandomStoryChar', () => {
-  beforeEach(() => queryMock.mockReset());
+  beforeEach(() => {
+    queryMock.mockReset();
+    vi.mocked(existsSync).mockReset();
+    vi.mocked(readFileSync).mockReset();
+  });
   afterEach(() => vi.restoreAllMocks());
 
   it('returns null when no rows', async () => {
@@ -74,12 +83,17 @@ describe('getRandomStoryChar', () => {
     expect(r).toBeNull();
   });
 
-  it('returns mapped RareChar when row exists', async () => {
-    queryMock.mockResolvedValue([[{
-      char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有龙',
-      needs_review: 1, generated_by: 'openai:gpt-4o-mini',
-      generated_at: new Date('2026-05-12T08:30:00Z'), created_at: new Date('2026-05-12T08:00:00Z'),
+  it('returns mapped RareChar when JSON has story', async () => {
+    // 1) initial SELECT random char (structural cols only)
+    queryMock.mockResolvedValueOnce([[{ char: '龘', pinyin: 'dá', needs_review: 1 }]]);
+    // 2) readRareContent DB fallback (cols still exist in test DB)
+    queryMock.mockResolvedValueOnce([[{
+      meaning: '古龙', story: '从前有龙',
+      generated_by: 'openai:gpt-4o-mini',
+      generated_at: new Date('2026-05-12T08:30:00Z'),
+      created_at: new Date('2026-05-12T08:00:00Z'),
     }]]);
+
     const r = await getRandomStoryChar();
     expect(r).toEqual({
       char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有龙',
@@ -88,13 +102,13 @@ describe('getRandomStoryChar', () => {
     });
   });
 
-  it('queries with story <> "" filter', async () => {
+  it('queries only structural cols + ORDER BY RAND()', async () => {
     queryMock.mockResolvedValue([[]]);
     await getRandomStoryChar();
     const [sql, params] = queryMock.mock.calls[0]!;
     expect(String(sql)).toMatch(/FROM rare_chars/);
-    expect(String(sql)).toMatch(/story\s+<>\s*''/);
     expect(String(sql)).toMatch(/ORDER BY RAND\(\)/);
+    expect(String(sql)).toMatch(/LIMIT\s+\?/);
     expect(params).toEqual([1]);
   });
 });

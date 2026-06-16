@@ -1,47 +1,69 @@
+import { readdirSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { getPool } from '@/lib/db';
 import { getConfig } from '@/lib/config';
 import { InitCharsPanel } from '@/components/admin/InitCharsPanel';
 import { GenerateCharsForm } from '@/components/admin/GenerateCharsForm';
+import { CharContentSchema } from '@/scripts/schemas/content';
 
 export const dynamic = 'force-dynamic';
+
+const CONTENT_DIR = join(process.cwd(), 'data', 'content');
+
+/**
+ * Read content coverage from data/content/<char>.json files.
+ * Single source of truth for all LLM-generated content (post-migration).
+ * Falls back gracefully when the dir is empty.
+ */
+function readContentCoverage() {
+  if (!existsSync(CONTENT_DIR)) {
+    return { zh: 0, en: 0, alt: 0, var: 0, etymology: 0, hanzi: 0, rareMeaning: 0, rareStory: 0 };
+  }
+  const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json'));
+  let zh = 0, en = 0, alt = 0, variants = 0, etymology = 0, hanzi = 0, rareMeaning = 0, rareStory = 0;
+  for (const f of files) {
+    try {
+      const raw = JSON.parse(require('node:fs').readFileSync(join(CONTENT_DIR, f), 'utf8'));
+      const c = CharContentSchema.parse(raw);
+      if (c.dict?.meaning_zh || c.meaning_zh) zh++;
+      if (c.dict?.meaning_en) en++;
+      if (c.dict?.pinyin_alt) alt++;
+      if (c.dict?.variants) variants++;
+      if (c.etymology?.story || c.etymology_story) etymology++;
+      if (c.hanzi_story) hanzi++;
+      if (c.rare?.meaning) rareMeaning++;
+      if (c.rare?.story) rareStory++;
+    } catch {
+      // skip malformed
+    }
+  }
+  return { zh, en, alt, var: variants, etymology, hanzi, rareMeaning, rareStory };
+}
 
 async function fetchDbStats() {
   const pool = getPool();
   const [chars] = await pool.query<any[]>(
     `SELECT level, COUNT(*) AS n FROM chars GROUP BY level ORDER BY level`,
   );
-  const [etym] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM char_etymology WHERE story IS NOT NULL AND story <> ''`,
+  const [rareTotal] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS total FROM rare_chars`,
   );
-  const [rare] = await pool.query<any[]>(
-    `SELECT
-       COUNT(*) AS total,
-       SUM(CASE WHEN meaning <> '' THEN 1 ELSE 0 END) AS with_meaning,
-       SUM(CASE WHEN story <> '' THEN 1 ELSE 0 END) AS with_story
-     FROM rare_chars`,
-  );
-  const [dict] = await pool.query<any[]>(
-    `SELECT
-       SUM(CASE WHEN meaning_zh IS NOT NULL AND meaning_zh <> '' THEN 1 ELSE 0 END) AS zh,
-       SUM(CASE WHEN meaning_en IS NOT NULL AND meaning_en <> '' THEN 1 ELSE 0 END) AS en,
-       SUM(CASE WHEN pinyin_alt IS NOT NULL THEN 1 ELSE 0 END) AS alt,
-       SUM(CASE WHEN variants IS NOT NULL THEN 1 ELSE 0 END) AS var
-     FROM chars`,
-  );
+  const cov = readContentCoverage();
   return {
     byLevel: chars.map((r) => ({ level: Number(r.level), n: Number(r.n) })),
-    withStory: Number(etym[0].n),
     rare: {
-      total: Number(rare[0].total),
-      withMeaning: Number(rare[0].with_meaning ?? 0),
-      withStory: Number(rare[0].with_story ?? 0),
+      total: Number(rareTotal[0].total),
+      withMeaning: cov.rareMeaning,
+      withStory: cov.rareStory,
     },
     dict: {
-      zh: Number(dict[0].zh ?? 0),
-      en: Number(dict[0].en ?? 0),
-      alt: Number(dict[0].alt ?? 0),
-      var: Number(dict[0].var ?? 0),
+      zh: cov.zh,
+      en: cov.en,
+      alt: cov.alt,
+      var: cov.var,
     },
+    withStory: cov.etymology,
+    hanzi: cov.hanzi,
   };
 }
 
