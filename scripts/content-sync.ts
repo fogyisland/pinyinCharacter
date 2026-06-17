@@ -301,9 +301,11 @@ function assembleContent(
     content.etymology = { story: existing.etymology_story, generated_by: 'claude-handwritten' };
   }
 
-  // rare block
-  const rareMeaning = (generated as any).rare_meaning;
-  const rareStory = (generated as any).rare_story;
+  // rare block — merge existing fields with newly generated ones so a
+  // partial run (e.g. rare_story only) doesn't drop a previously-written
+  // rare_meaning.
+  const rareMeaning = (generated as any).rare_meaning ?? existing?.rare?.meaning;
+  const rareStory = (generated as any).rare_story ?? existing?.rare?.story;
   if (rareMeaning || rareStory) {
     content.rare = {
       meaning: rareMeaning,
@@ -446,9 +448,16 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
       const etymRow = etymByChar.get(charRow.char) ?? null;
       const existing = loadExistingJson(charRow.char);
 
-      if (opts.missing && existingFiles.has(charRow.char)) {
-        stats.skipped++;
-        continue;
+      if (opts.missing) {
+        // Skip if all requested fields already present in existing JSON.
+        // Note: this intentionally does NOT gate on existingFiles.has() —
+        // a char with a partial JSON (e.g. only meaning_zh) should still
+        // be processed for missing fields like meaning_en / pinyin_alt.
+        const allPresent = fields.every(f => hasField(existing, f));
+        if (allPresent) {
+          stats.skipped++;
+          continue;
+        }
       }
       if (opts.outdated) {
         const allPresent = fields.every(f => hasField(existing, f));
