@@ -3,8 +3,9 @@
   "pinyin": "guī",
   "level": 1,
   "dict": {
-    "meaning_zh": "返回回到本处或归属某地"
+    "meaning_zh": "返回回到本处或归属某地",
+    "meaning_en": "return, go back, belong to"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:25:48.907Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

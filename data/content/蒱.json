@@ -3,8 +3,9 @@
   "pinyin": "pú",
   "level": 3,
   "dict": {
-    "meaning_zh": "古代一种掷骰子赌博的游戏，也指骰子"
+    "meaning_zh": "古代一种掷骰子赌博的游戏，也指骰子",
+    "meaning_en": "game of dice (an ancient game)"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T00:43:52.658Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

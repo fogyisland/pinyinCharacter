@@ -3,8 +3,9 @@
   "pinyin": "yàn",
   "level": 2,
   "dict": {
-    "meaning_zh": "审判定案，特指对案件作出最终判决"
+    "meaning_zh": "审判定案，特指对案件作出最终判决",
+    "meaning_en": "To decide a legal case; a judicial verdict."
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T00:43:52.658Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

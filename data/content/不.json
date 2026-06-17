@@ -3,8 +3,9 @@
   "pinyin": "bù",
   "level": 1,
   "dict": {
-    "meaning_zh": "表示否定，用于拒绝、禁止或对动作性状的否定"
+    "meaning_zh": "表示否定，用于拒绝、禁止或对动作性状的否定",
+    "meaning_en": "not, no, un- (negation)"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:18:14.572Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

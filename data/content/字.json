@@ -3,8 +3,9 @@
   "pinyin": "zì",
   "level": 1,
   "dict": {
-    "meaning_zh": "文字的单个形体，也指文字本身或人的别名"
+    "meaning_zh": "文字的单个形体，也指文字本身或人的别名",
+    "meaning_en": "character, written symbol, word"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:25:48.907Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

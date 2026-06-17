@@ -3,8 +3,9 @@
   "pinyin": "a",
   "level": 1,
   "dict": {
-    "meaning_zh": "表示惊讶、感叹、疑问等语气，用在句末或句中停顿处"
+    "meaning_zh": "表示惊讶、感叹、疑问等语气，用在句末或句中停顿处",
+    "meaning_en": "used at the end of a sentence to express exclamation, emphasis, or confirmation"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:25:48.907Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

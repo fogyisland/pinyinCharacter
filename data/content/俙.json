@@ -1,5 +1,11 @@
 {
   "char": "俙",
   "pinyin": "xī",
-  "meaning_zh": "俙同希,稀疏;仰望。《说文》「俙,俙望也」,谓仰望而慕。"
+  "level": 3,
+  "dict": {
+    "meaning_zh": "俙同希,稀疏;仰望。《说文》「俙,俙望也」,谓仰望而慕。",
+    "meaning_en": "rare; seldom; few and scattered"
+  },
+  "generated_by": "MiniMax-M3",
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

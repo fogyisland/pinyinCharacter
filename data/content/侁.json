@@ -1,5 +1,11 @@
 {
   "char": "侁",
   "pinyin": "shēn",
-  "meaning_zh": "众多貌。侁侁,众多行走貌,《诗》「侁侁征夫,每怀靡及」。"
+  "level": 3,
+  "dict": {
+    "meaning_zh": "众多貌。侁侁,众多行走貌,《诗》「侁侁征夫,每怀靡及」。",
+    "meaning_en": "many; numerous; a group of people walking together"
+  },
+  "generated_by": "MiniMax-M3",
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

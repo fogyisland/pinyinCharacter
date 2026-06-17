@@ -3,8 +3,9 @@
   "pinyin": "lā",
   "level": 1,
   "dict": {
-    "meaning_zh": "语气助词，表示感叹、肯定或语气停顿"
+    "meaning_zh": "语气助词，表示感叹、肯定或语气停顿",
+    "meaning_en": "sentence-final particle indicating exclamation or change"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:25:48.907Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

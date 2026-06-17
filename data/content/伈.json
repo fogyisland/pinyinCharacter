@@ -1,5 +1,11 @@
 {
   "char": "伈",
-  "pinyin": "xiǎn",
-  "meaning_zh": "怯懦貌。从人从心,表志意不展,《孟子」伈伈伣伣之貌。"
+  "pinyin": "xǐn",
+  "level": 3,
+  "dict": {
+    "meaning_zh": "怯懦貌。从人从心,表志意不展,《孟子」伈伈伣伣之貌。",
+    "meaning_en": "uncomfortable; restless; uneasy in manner"
+  },
+  "generated_by": "MiniMax-M3",
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

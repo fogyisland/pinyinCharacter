@@ -3,8 +3,9 @@
   "pinyin": "zhī",
   "level": 1,
   "dict": {
-    "meaning_zh": "代词，指代人或事物，相当于他、她、它、这、那。"
+    "meaning_zh": "代词，指代人或事物，相当于他、她、它、这、那。",
+    "meaning_en": "of it; him/her/it (classical possessive or object particle)"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:18:14.572Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

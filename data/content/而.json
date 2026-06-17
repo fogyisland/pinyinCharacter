@@ -3,8 +3,9 @@
   "pinyin": "ér",
   "level": 1,
   "dict": {
-    "meaning_zh": "连接词,表示并列、递进、转折等关系,也可用于古文中表语气"
+    "meaning_zh": "连接词,表示并列、递进、转折等关系,也可用于古文中表语气",
+    "meaning_en": "and; but; yet; also"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T00:43:52.658Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

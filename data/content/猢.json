@@ -3,8 +3,9 @@
   "pinyin": "hú",
   "level": 2,
   "dict": {
-    "meaning_zh": "猴的一种通称，常用于构成猢狲一词"
+    "meaning_zh": "猴的一种通称，常用于构成猢狲一词",
+    "meaning_en": "a kind of monkey (macaque)"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:25:48.907Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

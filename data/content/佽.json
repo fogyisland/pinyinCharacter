@@ -1,5 +1,11 @@
 {
   "char": "佽",
   "pinyin": "cì",
-  "meaning_zh": "助;佽飞,汉代武官名,主弋射,选六郡良家子为之。"
+  "level": 3,
+  "dict": {
+    "meaning_zh": "助;佽飞,汉代武官名,主弋射,选六郡良家子为之。",
+    "meaning_en": "aid; assist; helper"
+  },
+  "generated_by": "MiniMax-M3",
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

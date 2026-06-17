@@ -3,8 +3,9 @@
   "pinyin": "shāng",
   "level": 2,
   "dict": {
-    "meaning_zh": "表示系统混乱程度的热力学量，值越大越无序"
+    "meaning_zh": "表示系统混乱程度的热力学量，值越大越无序",
+    "meaning_en": "entropy (thermodynamics, information theory)"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:25:48.907Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

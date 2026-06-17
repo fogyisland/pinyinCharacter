@@ -1,5 +1,11 @@
 {
   "char": "伋",
   "pinyin": "jí",
-  "meaning_zh": "人名用字。孔伋,字子思,孔子之孙,《中庸》相传为其所述。"
+  "level": 3,
+  "dict": {
+    "meaning_zh": "人名用字。孔伋,字子思,孔子之孙,《中庸》相传为其所述。",
+    "meaning_en": "name of Confucius's grandson; to attain, reach"
+  },
+  "generated_by": "MiniMax-M3",
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

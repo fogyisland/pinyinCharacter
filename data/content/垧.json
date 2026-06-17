@@ -3,8 +3,9 @@
   "pinyin": "shǎng",
   "level": 2,
   "dict": {
-    "meaning_zh": "中国东北地区计量土地面积的单位，俗称晌，一垧约合一公顷"
+    "meaning_zh": "中国东北地区计量土地面积的单位，俗称晌，一垧约合一公顷",
+    "meaning_en": "A unit of land area in China."
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-16T14:25:48.907Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

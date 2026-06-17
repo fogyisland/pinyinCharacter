@@ -3,8 +3,9 @@
   "pinyin": "tóng",
   "level": 1,
   "dict": {
-    "meaning_zh": "瞳孔，眼睛中央能随光线强弱而调节大小的圆孔"
+    "meaning_zh": "瞳孔，眼睛中央能随光线强弱而调节大小的圆孔",
+    "meaning_en": "pupil of the eye"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T00:43:52.658Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }

@@ -3,8 +3,9 @@
   "pinyin": "wò",
   "level": 2,
   "dict": {
-    "meaning_zh": "有机化合物的一类，羟胺与醛或酮缩合而成的化合物，通式为RC=NOH"
+    "meaning_zh": "有机化合物的一类，羟胺与醛或酮缩合而成的化合物，通式为RC=NOH",
+    "meaning_en": "oxime (organic chemistry functional group)"
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T00:43:52.658Z"
+  "generated_at": "2026-06-17T02:17:19.345Z"
 }
