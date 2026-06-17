@@ -97,7 +97,18 @@ function parseJsonStringArray(content: string): string[] {
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```\s*$/, '')
     .trim();
-  const data = JSON.parse(stripped);
-  if (!Array.isArray(data)) throw new Error('expected JSON array');
-  return data.map(v => String(v));
+  try {
+    const data = JSON.parse(stripped);
+    if (!Array.isArray(data)) throw new Error('expected JSON array');
+    return data.map(v => String(v));
+  } catch (firstErr) {
+    // Try to extract the first [...] block (LLM sometimes adds prose around it).
+    const m = stripped.match(/\[[\s\S]*\]/);
+    if (m) {
+      const data = JSON.parse(m[0]);
+      if (!Array.isArray(data)) throw new Error('expected JSON array');
+      return data.map(v => String(v));
+    }
+    throw firstErr;
+  }
 }

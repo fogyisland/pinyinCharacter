@@ -116,14 +116,52 @@ export async function batchGenerateStories(
 }
 
 function parseJsonArray(content: string): BatchOutput[] {
-  // Strip markdown code fences if present
+  // 1. Strip markdown code fences if present.
   const stripped = content
     .replace(/^```(?:json)?\s*/i, '')
     .replace(/\s*```\s*$/, '')
     .trim();
-  const data = JSON.parse(stripped);
-  if (!Array.isArray(data)) throw new Error('expected JSON array');
-  return data as BatchOutput[];
+  // Try direct parse first.
+  try {
+    const data = JSON.parse(stripped);
+    if (Array.isArray(data)) return data as BatchOutput[];
+    if (typeof data === 'object' && data !== null) return [data as BatchOutput];
+    throw new Error('expected JSON array or object');
+  } catch {
+    // fall through to regex extraction
+  }
+  // 2. Extract the first [...] block (LLM sometimes adds prose around it).
+  const arrMatch = stripped.match(/\[[\s\S]*?\]/);
+  if (arrMatch) {
+    try {
+      const data = JSON.parse(arrMatch[0]);
+      if (Array.isArray(data)) return data as BatchOutput[];
+    } catch {
+      // continue
+    }
+  }
+  // 3. Extract the first {...} block.
+  const objMatch = stripped.match(/\{[\s\S]*?\}/);
+  if (objMatch) {
+    try {
+      const data = JSON.parse(objMatch[0]);
+      if (typeof data === 'object' && data !== null) return [data as BatchOutput];
+    } catch {
+      // continue
+    }
+  }
+  // 4. Last resort: assemble a synthetic object from key-value regex matches.
+  //    e.g. `"meaning":"...","story":"..."` → { meaning, story }
+  const kv: Record<string, string> = {};
+  const kvRe = /"(\w+)"\s*:\s*"((?:[^"\\]|\\.)*)"/g;
+  let m: RegExpExecArray | null;
+  while ((m = kvRe.exec(stripped)) !== null) {
+    if (!(m[1] in kv)) kv[m[1]] = m[2];
+  }
+  if (kv.meaning || kv.story) {
+    return [kv as unknown as BatchOutput];
+  }
+  throw new Error('LLM returned no parseable JSON: ' + stripped.slice(0, 80));
 }
 
 function sleep(ms: number) {
