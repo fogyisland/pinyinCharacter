@@ -29,6 +29,7 @@
  */
 import { readFileSync, writeFileSync, renameSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { pinyin } from 'pinyin-pro';
 import { getPool, closePool } from '../lib/db';
 import { getConfig, setConfig } from '../lib/config';
 import {
@@ -41,6 +42,21 @@ import {
 import { generateRareCharContent } from '../lib/ai-rare-chars';
 import { CharContentSchema, ContentManifestSchema } from './schemas/content';
 import type { CharContent } from './schemas/content';
+
+/**
+ * pinyin-pro fallback for chars where DB pinyin column is empty.
+ * Returns the char's pronunciation with tone marks (e.g. "yī").
+ * Cached per-script call to avoid repeated computation.
+ */
+const pinyinCache = new Map<string, string>();
+function getPinyinFor(char: string, dbPinyin: string | null): string {
+  if (dbPinyin && dbPinyin.trim()) return dbPinyin.trim();
+  const cached = pinyinCache.get(char);
+  if (cached) return cached;
+  const generated = pinyin(char, { toneType: 'symbol' }).trim();
+  pinyinCache.set(char, generated);
+  return generated;
+}
 
 const CONTENT_DIR = join(process.cwd(), 'data', 'content');
 const MANIFEST_FILE = join(process.cwd(), 'data', 'content-manifest.json');
@@ -184,36 +200,37 @@ async function generateForChar(
     }
     try {
       let value: string | string[] | null = null;
+      const pinyinStr = getPinyinFor(charRow.char, charRow.pinyin);
       switch (field) {
         case 'meaning_zh':
-          value = await generateMeaningZh({ char: charRow.char, pinyin: charRow.pinyin });
+          value = await generateMeaningZh({ char: charRow.char, pinyin: pinyinStr });
           break;
         case 'meaning_en':
           value = await generateMeaningEn({
             char: charRow.char,
-            pinyin: charRow.pinyin,
+            pinyin: pinyinStr,
             meaningZh: charRow.meaning_zh,
           });
           break;
         case 'pinyin_alt':
-          value = await generatePinyinAlt({ char: charRow.char, pinyin: charRow.pinyin });
+          value = await generatePinyinAlt({ char: charRow.char, pinyin: pinyinStr });
           break;
         case 'variants':
           value = await generateVariants({
             char: charRow.char,
-            pinyin: charRow.pinyin,
+            pinyin: pinyinStr,
             meaningZh: charRow.meaning_zh,
           });
           break;
         case 'etymology_story':
           // Only L1/L2 chars typically have etymology. Skip if char is in rare_chars only.
-          if (rareRow && !charRow.pinyin) {
+          if (rareRow && !pinyinStr) {
             result.skipped.push(field);
             return;
           }
           value = await generateEtymologyStory({
             char: charRow.char,
-            pinyin: charRow.pinyin,
+            pinyin: pinyinStr,
             meaningZh: charRow.meaning_zh,
           });
           break;
@@ -256,7 +273,7 @@ function assembleContent(
 ): CharContent {
   const content: CharContent = {
     char: charRow.char,
-    pinyin: charRow.pinyin,
+    pinyin: getPinyinFor(charRow.char, charRow.pinyin),
     level: charRow.level,
   };
 
@@ -420,6 +437,11 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
       const charRow = queue.shift();
       if (!charRow) break;
       stats.scanned++;
+      // Skip malformed entries (e.g. multi-char rows from a bad import).
+      if ([...charRow.char].length !== 1) {
+        stats.skipped++;
+        continue;
+      }
       const rareRow = rareByChar.get(charRow.char) ?? null;
       const etymRow = etymByChar.get(charRow.char) ?? null;
       const existing = loadExistingJson(charRow.char);

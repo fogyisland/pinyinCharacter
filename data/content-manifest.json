@@ -2,9 +2,14 @@
   "version": 1,
   "totalChars": 8105,
   "byField": {
-    "meaning_zh": 30,
-    "etymology_story": 0,
-    "hanzi_story": 0
+    "meaning_zh": 7909,
+    "meaning_en": 1,
+    "pinyin_alt": 1,
+    "variants": 1,
+    "etymology_story": 1,
+    "hanzi_story": 0,
+    "rare_meaning": 0,
+    "rare_story": 0
   },
-  "generatedAt": "2026-06-15T04:38:46.333Z"
+  "generatedAt": "2026-06-17T01:32:32.362Z"
 }
