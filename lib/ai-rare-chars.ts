@@ -161,6 +161,21 @@ function parseJsonArray(content: string): BatchOutput[] {
   if (kv.meaning || kv.story) {
     return [kv as unknown as BatchOutput];
   }
+  // 5. Last resort: LLM returned pure prose (no JSON at all).
+  //    For single-char calls (`generateRareCharContent`), the model often
+  //    just writes the field's text directly. Heuristically route the prose
+  //    to either `story` (long, multi-sentence) or `meaning` (short, single
+  //    phrase). Caller picks the appropriate field via `arr[0]`.
+  if (/[一-鿿]/.test(stripped)) {
+    const isLongStory = stripped.length >= 50;
+    return [
+      {
+        char: '',
+        meaning: isLongStory ? '' : stripped,
+        story: isLongStory ? stripped : '',
+      } as unknown as BatchOutput,
+    ];
+  }
   throw new Error('LLM returned no parseable JSON: ' + stripped.slice(0, 80));
 }
 
