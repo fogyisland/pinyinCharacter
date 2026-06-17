@@ -1,0 +1,10 @@
+{
+  "char": "幂",
+  "pinyin": "mì",
+  "level": 2,
+  "dict": {
+    "meaning_zh": "数学上指一个数自乘若干次的运算结果，如平方、立方皆称幂"
+  },
+  "generated_by": "MiniMax-M3",
+  "generated_at": "2026-06-16T14:25:48.907Z"
+}
