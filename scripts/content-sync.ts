@@ -92,26 +92,22 @@ interface SyncOptions {
   concurrency?: number;
 }
 
+// Slim DB schema (post 2026-06-17 migration): content columns live in JSON
+// only. The interfaces here reflect what the SELECT returns from DB; rich
+// content is loaded from existing JSON via loadExistingJson().
 interface CharRow {
   char: string;
   level: number;
   pinyin: string;
-  meaning_zh: string | null;
-  meaning_en: string | null;
-  pinyin_alt: string | null;
-  variants: string | null;
 }
 
 interface RareRow {
   char: string;
   pinyin: string;
-  meaning: string;
-  story: string;
 }
 
 interface EtymRow {
   char: string;
-  story: string;
 }
 
 function parseArgs(): SyncOptions {
@@ -201,6 +197,11 @@ async function generateForChar(
     try {
       let value: string | string[] | null = null;
       const pinyinStr = getPinyinFor(charRow.char, charRow.pinyin);
+      // meaningZh is no longer in DB (post 2026-06-17 migration) — pull it
+      // from the existing JSON instead so prompt-builders still get a
+      // Chinese meaning as cross-reference when generating meaning_en /
+      // variants / etymology_story.
+      const meaningZh = existing?.dict?.meaning_zh ?? existing?.meaning_zh;
       switch (field) {
         case 'meaning_zh':
           value = await generateMeaningZh({ char: charRow.char, pinyin: pinyinStr });
@@ -209,7 +210,7 @@ async function generateForChar(
           value = await generateMeaningEn({
             char: charRow.char,
             pinyin: pinyinStr,
-            meaningZh: charRow.meaning_zh,
+            meaningZh,
           });
           break;
         case 'pinyin_alt':
@@ -219,7 +220,7 @@ async function generateForChar(
           value = await generateVariants({
             char: charRow.char,
             pinyin: pinyinStr,
-            meaningZh: charRow.meaning_zh,
+            meaningZh,
           });
           break;
         case 'etymology_story':
@@ -231,7 +232,7 @@ async function generateForChar(
           value = await generateEtymologyStory({
             char: charRow.char,
             pinyin: pinyinStr,
-            meaningZh: charRow.meaning_zh,
+            meaningZh,
           });
           break;
         case 'rare_meaning':
@@ -403,8 +404,12 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
   const levelFilter = opts.level ? (opts.char ? 'AND c.level = ?' : 'WHERE c.level = ?') : '';
   const levelParams: unknown[] = opts.level ? [opts.level] : [];
 
+  // After 2026-06-17 migration, chars/char_etymology/rare_chars no longer
+  // carry LLM-generated content columns. content-sync now reads the JSON
+  // file for the existing values, so the DB SELECT only needs the slim
+  // schema columns (char, level, pinyin).
   const [chars] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, meaning_zh, meaning_en, pinyin_alt, variants FROM chars c
+    `SELECT \`char\`, level, pinyin FROM chars c
      ${charFilter} ${levelFilter}
      ORDER BY \`char\``,
     [...charParams, ...levelParams],
@@ -418,11 +423,11 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
   const charList = charRows.map(r => r.char);
   const placeholders = charList.map(() => '?').join(',');
   const [rareRows] = await pool.query<any[]>(
-    `SELECT \`char\`, pinyin, meaning, story FROM rare_chars WHERE \`char\` IN (${placeholders})`,
+    `SELECT \`char\`, pinyin FROM rare_chars WHERE \`char\` IN (${placeholders})`,
     charList,
   );
   const [etymRows] = await pool.query<any[]>(
-    `SELECT \`char\`, story FROM char_etymology WHERE \`char\` IN (${placeholders})`,
+    `SELECT \`char\` FROM char_etymology WHERE \`char\` IN (${placeholders})`,
     charList,
   );
   const rareByChar = new Map<string, RareRow>(rareRows.map(r => [r.char, r]));
