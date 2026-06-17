@@ -23,6 +23,7 @@
  */
 import { readFileSync, writeFileSync, renameSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { pinyin } from 'pinyin-pro';
 import { getPool, closePool } from '../lib/db';
 import { CharContentSchema, ContentManifestSchema } from './schemas/content';
 
@@ -235,13 +236,24 @@ export async function exportContent(opts: ExportOptions = {}): Promise<ExportSta
   for (const row of charsRows) {
     stats.scanned++;
     const char = row.char;
+    // Skip multi-char rows (data quality issue from import-chars-data.ts).
+    if ([...char].length !== 1) {
+      stats.errors.push({ char, error: 'multi-char row skipped' });
+      continue;
+    }
     const etym = etymByChar.get(char);
     const story = storyByChar.get(char);
     const rare = rareByChar.get(char);
 
+    // pinyin-pro fallback for chars where DB pinyin is empty (most L1/L2/L3).
+    const dbPinyin = rare?.pinyin ?? row.pinyin;
+    const resolvedPinyin = dbPinyin && dbPinyin.trim()
+      ? dbPinyin.trim()
+      : pinyin(char, { toneType: 'symbol' }).trim();
+
     const content: CharContentFull = {
       char,
-      pinyin: rare?.pinyin ?? row.pinyin ?? '',
+      pinyin: resolvedPinyin,
       level: row.level ?? undefined,
     };
     // dict block: only include fields that are non-empty in DB
