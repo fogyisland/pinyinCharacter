@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "明白、通晓、晓得，表示对事物有认识和了解",
-    "meaning_en": "to know; to be aware of"
+    "meaning_en": "to know; to be aware of",
+    "pinyin_alt": [
+      "zhī",
+      "zhì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

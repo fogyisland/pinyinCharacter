@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "物体的中心部分，常指灯芯或电子芯片",
-    "meaning_en": "core, center; wick; chip (semiconductor)"
+    "meaning_en": "core, center; wick; chip (semiconductor)",
+    "pinyin_alt": [
+      "xīn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

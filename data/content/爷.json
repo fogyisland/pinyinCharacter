@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "父亲的俗称，也指祖父辈年长男性",
-    "meaning_en": "grandfather; paternal grandfather; (colloquial) grandpa, old man, lord, master"
+    "meaning_en": "grandfather; paternal grandfather; (colloquial) grandpa, old man, lord, master",
+    "pinyin_alt": [
+      "yé"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

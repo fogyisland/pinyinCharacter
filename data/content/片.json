@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "扁而薄的东西，也指整体中的一部分或一小块",
-    "meaning_en": "slice, piece, sheet; a flat, thin object"
+    "meaning_en": "slice, piece, sheet; a flat, thin object",
+    "pinyin_alt": [
+      "piàn",
+      "piān",
+      "piàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

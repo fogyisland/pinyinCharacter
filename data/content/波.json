@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水面因振动而形成的起伏现象，也指类似波动传播的状态",
-    "meaning_en": "wave; ripple; undulation"
+    "meaning_en": "wave; ripple; undulation",
+    "pinyin_alt": [
+      "bō",
+      "bēi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

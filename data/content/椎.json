@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "脊椎骨，构成脊柱的骨骼单位",
-    "meaning_en": "vertebra; hammer; to strike"
+    "meaning_en": "vertebra; hammer; to strike",
+    "pinyin_alt": [
+      "zhuī",
+      "chuí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

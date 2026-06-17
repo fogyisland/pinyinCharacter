@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用弓或枪等器具发出弹丸或箭矢使之击中目标的动作",
-    "meaning_en": "to shoot; to emit; arrow"
+    "meaning_en": "to shoot; to emit; arrow",
+    "pinyin_alt": [
+      "shè",
+      "yè",
+      "shí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "地理或社会领域的分界线，也指一定的范围或领域",
-    "meaning_en": "boundary; realm; field; world; domain"
+    "meaning_en": "boundary; realm; field; world; domain",
+    "pinyin_alt": [
+      "jiè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

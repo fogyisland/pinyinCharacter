@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "因剧烈颤动而使物体发出响声，多指雷电或爆炸等引起的强烈震动",
-    "meaning_en": "shake; vibrate; shock; earthquake"
+    "meaning_en": "shake; vibrate; shock; earthquake",
+    "pinyin_alt": [
+      "zhèn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

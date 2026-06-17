@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示事情已完成或时间已过去，如已经、已婚",
-    "meaning_en": "already; finished; past; stop"
+    "meaning_en": "already; finished; past; stop",
+    "pinyin_alt": [
+      "yǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

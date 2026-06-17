@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水面微微动荡，也指液体溢出或飘荡的样子",
-    "meaning_en": "to ripple; to overflow; to float"
+    "meaning_en": "to ripple; to overflow; to float",
+    "pinyin_alt": [
+      "yàng",
+      "yáng",
+      "shāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

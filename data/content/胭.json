@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "胭脂，一种红色化妆品，涂于脸颊或嘴唇",
-    "meaning_en": "rouge (cosmetic)"
+    "meaning_en": "rouge (cosmetic)",
+    "pinyin_alt": [
+      "yān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

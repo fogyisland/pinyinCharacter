@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "哨子或哨兵，用于警戒或吹响发出信号的小型器具，也指巡逻放哨的人",
-    "meaning_en": "whistle; sentry post; to chirp"
+    "meaning_en": "whistle; sentry post; to chirp",
+    "pinyin_alt": [
+      "shào",
+      "sào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

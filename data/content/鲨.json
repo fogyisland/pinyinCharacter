@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鲨鱼，一种海洋肉食性鱼类，体型较大，性凶猛，鳍可制鱼翅",
-    "meaning_en": "shark"
+    "meaning_en": "shark",
+    "pinyin_alt": [
+      "shā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

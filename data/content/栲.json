@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "栲是一种常绿乔木，木材坚硬可制家具，树皮可提栲胶",
-    "meaning_en": "a type of tree (Castanopsis); durable wood"
+    "meaning_en": "a type of tree (Castanopsis); durable wood",
+    "pinyin_alt": [
+      "kǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "数词，意为三十，常用于书面或古文",
-    "meaning_en": "Thirty, the number 30 in Chinese."
+    "meaning_en": "Thirty, the number 30 in Chinese.",
+    "pinyin_alt": [
+      "sà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

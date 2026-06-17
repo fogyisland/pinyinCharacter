@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "雪地行驶的木制滑行工具，又称雪橇",
-    "meaning_en": "sled; sledge; toboggan"
+    "meaning_en": "sled; sledge; toboggan",
+    "pinyin_alt": [
+      "qiāo",
+      "qiǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

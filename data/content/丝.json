@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "蚕吐出的细长纤维，常用于织造丝绸",
-    "meaning_en": "silk; thread, fiber"
+    "meaning_en": "silk; thread, fiber",
+    "pinyin_alt": [
+      "sī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "渭河，发源于甘肃，流经陕西汇入黄河",
-    "meaning_en": "the Wei River (a tributary of the Yellow River)"
+    "meaning_en": "the Wei River (a tributary of the Yellow River)",
+    "pinyin_alt": [
+      "wèi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "构成岩石的坚硬矿物材料，也指石碑、石器等制品",
-    "meaning_en": "stone; rock"
+    "meaning_en": "stone; rock",
+    "pinyin_alt": [
+      "shí",
+      "dàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

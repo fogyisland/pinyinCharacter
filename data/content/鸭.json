@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鸭子，家禽，扁嘴短腿，趾间有蹼，羽毛可制羽绒",
-    "meaning_en": "duck"
+    "meaning_en": "duck",
+    "pinyin_alt": [
+      "yā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

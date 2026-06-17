@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "地势低洼易积水的地方多用于地名如夼沟]<]minimax[>[</s>",
-    "meaning_en": "low-lying area between hills; a depression or hollow in the land"
+    "meaning_en": "low-lying area between hills; a depression or hollow in the land",
+    "pinyin_alt": [
+      "kuǎng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

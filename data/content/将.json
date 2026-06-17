@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "将要,表示行为或情况在不久后发生",
-    "meaning_en": "will, shall, about to; general, commander"
+    "meaning_en": "will, shall, about to; general, commander",
+    "pinyin_alt": [
+      "jiāng",
+      "jiàng",
+      "qiāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

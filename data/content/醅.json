@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "未过滤的浊酒",
-    "meaning_en": "unfiltered fermented grain mash for wine"
+    "meaning_en": "unfiltered fermented grain mash for wine",
+    "pinyin_alt": [
+      "pēi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

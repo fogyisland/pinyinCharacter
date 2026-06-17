@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "测量以确定长度、数量或程度，也指推测估计",
-    "meaning_en": "to measure, test, or survey"
+    "meaning_en": "to measure, test, or survey",
+    "pinyin_alt": [
+      "cè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

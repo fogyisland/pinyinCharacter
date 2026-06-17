@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "禾本科植物的茎，特指稻麦等脱粒后剩下的茎杆",
-    "meaning_en": "stalk of grain or plant"
+    "meaning_en": "stalk of grain or plant",
+    "pinyin_alt": [
+      "gǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

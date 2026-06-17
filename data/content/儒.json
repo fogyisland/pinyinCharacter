@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "儒家学说，泛指读书人或学者",
-    "meaning_en": "Confucian scholar; Confucianism; learned person"
+    "meaning_en": "Confucian scholar; Confucianism; learned person",
+    "pinyin_alt": [
+      "rú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

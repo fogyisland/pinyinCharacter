@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人和动物由胚胎发育而成的活体，也泛指有生命的物体",
-    "meaning_en": "give birth; life; raw"
+    "meaning_en": "give birth; life; raw",
+    "pinyin_alt": [
+      "shēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

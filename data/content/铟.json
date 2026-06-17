@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种银白色软金属元素用于制造半导体和合金",
-    "meaning_en": "chemical element indium (In)"
+    "meaning_en": "chemical element indium (In)",
+    "pinyin_alt": [
+      "yīn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

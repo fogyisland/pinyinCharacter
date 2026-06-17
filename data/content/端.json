@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "事物的一头或长形物体的两头，也指正、端正",
-    "meaning_en": "end, extremity, beginning, proper, hold level"
+    "meaning_en": "end, extremity, beginning, proper, hold level",
+    "pinyin_alt": [
+      "duān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

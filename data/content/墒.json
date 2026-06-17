@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "土壤中适合种子发芽和作物生长的水分",
-    "meaning_en": "soil moisture content in a field"
+    "meaning_en": "soil moisture content in a field",
+    "pinyin_alt": [
+      "shāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

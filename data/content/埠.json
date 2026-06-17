@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "码头，多指有码头的城镇或港口",
-    "meaning_en": "port; wharf; trading post"
+    "meaning_en": "port; wharf; trading post",
+    "pinyin_alt": [
+      "bù",
+      "fù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

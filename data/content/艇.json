@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "轻便的小船，如快艇、游艇",
-    "meaning_en": "boat, vessel, small watercraft"
+    "meaning_en": "boat, vessel, small watercraft",
+    "pinyin_alt": [
+      "tǐng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

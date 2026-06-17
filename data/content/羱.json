@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "羱指大角野羊，即野生的大公羊",
-    "meaning_en": "large-horned wild goat (ibex)"
+    "meaning_en": "large-horned wild goat (ibex)",
+    "pinyin_alt": [
+      "yuán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

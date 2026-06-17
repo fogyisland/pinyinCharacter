@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "由肾脏产生并经尿道排出的液体",
-    "meaning_en": "to urinate; urine"
+    "meaning_en": "to urinate; urine",
+    "pinyin_alt": [
+      "niào",
+      "suī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

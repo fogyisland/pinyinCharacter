@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种非金属元素,呈灰色晶体状,常见化合物有毒,用于制农药和半导体材料",
-    "meaning_en": "arsenic (chemical element)"
+    "meaning_en": "arsenic (chemical element)",
+    "pinyin_alt": [
+      "shēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

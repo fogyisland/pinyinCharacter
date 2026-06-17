@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鸟展开翅膀在空中盘旋高飞",
-    "meaning_en": "to soar; to fly; to circle in the air"
+    "meaning_en": "to soar; to fly; to circle in the air",
+    "pinyin_alt": [
+      "xiáng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

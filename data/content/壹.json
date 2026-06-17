@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "壹是数字一的大写形式常用于正式票据和账目以防篡改",
-    "meaning_en": "Formal written form of the number one"
+    "meaning_en": "Formal written form of the number one",
+    "pinyin_alt": [
+      "yī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

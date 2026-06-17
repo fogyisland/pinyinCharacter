@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人和动物身体表面包住肌肉的组织，即皮肤",
-    "meaning_en": "skin; superficial"
+    "meaning_en": "skin; superficial",
+    "pinyin_alt": [
+      "fū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

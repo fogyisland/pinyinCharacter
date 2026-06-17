@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "数目，一万万，古代也指十万",
-    "meaning_en": "hundred million"
+    "meaning_en": "hundred million",
+    "pinyin_alt": [
+      "yì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

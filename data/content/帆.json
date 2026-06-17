@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "挂在桅杆上利用风力推动船前进的布篷",
-    "meaning_en": "sail of a ship"
+    "meaning_en": "sail of a ship",
+    "pinyin_alt": [
+      "fān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

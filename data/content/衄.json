@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鼻孔出血，俗称流鼻血",
-    "meaning_en": "nosebleed"
+    "meaning_en": "nosebleed",
+    "pinyin_alt": [
+      "nǜ",
+      "nòu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

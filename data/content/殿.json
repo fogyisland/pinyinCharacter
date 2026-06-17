@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "高大的房屋特指帝王办公或供奉神佛的厅堂",
-    "meaning_en": "hall; palace; temple"
+    "meaning_en": "hall; palace; temple",
+    "pinyin_alt": [
+      "diàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

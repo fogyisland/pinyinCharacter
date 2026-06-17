@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "不容易做或不容易解决",
-    "meaning_en": "difficult, hard; trouble, hardship"
+    "meaning_en": "difficult, hard; trouble, hardship",
+    "pinyin_alt": [
+      "nán",
+      "nàn",
+      "nuó"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

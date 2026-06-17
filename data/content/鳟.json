@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鳟鱼，一种背部有斑点的冷水鱼，常见于山间溪流，可食用",
-    "meaning_en": "trout (a type of fish)"
+    "meaning_en": "trout (a type of fish)",
+    "pinyin_alt": [
+      "zūn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

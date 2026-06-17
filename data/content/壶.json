@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "盛放液体或酒等的大口容器，通常有盖和提梁",
-    "meaning_en": "kettle, pot, or vase with a handle and spout"
+    "meaning_en": "kettle, pot, or vase with a handle and spout",
+    "pinyin_alt": [
+      "hú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

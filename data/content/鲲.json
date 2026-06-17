@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代传说中能变化的大鱼，寓言里可化为大鹏鸟。",
-    "meaning_en": "mythical giant fish (kun)"
+    "meaning_en": "mythical giant fish (kun)",
+    "pinyin_alt": [
+      "kūn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

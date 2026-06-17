@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "哑，不能说话",
-    "meaning_en": "mute; unable to speak; voiceless"
+    "meaning_en": "mute; unable to speak; voiceless",
+    "pinyin_alt": [
+      "yīn",
+      "yìn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

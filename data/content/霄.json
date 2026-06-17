@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "天空，云气，也指极高的空中",
-    "meaning_en": "the sky; high heavens; clouds and sky"
+    "meaning_en": "the sky; high heavens; clouds and sky",
+    "pinyin_alt": [
+      "xiāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

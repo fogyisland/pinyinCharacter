@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "隼 鸟纲隼科猛禽 飞行迅捷 善捕猎 古人常驯养助猎",
-    "meaning_en": "falcon; a bird of prey"
+    "meaning_en": "falcon; a bird of prey",
+    "pinyin_alt": [
+      "sǔn",
+      "zhǔn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

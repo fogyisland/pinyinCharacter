@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "小船，一般指有窗的小船",
-    "meaning_en": "covered boat with windows"
+    "meaning_en": "covered boat with windows",
+    "pinyin_alt": [
+      "líng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

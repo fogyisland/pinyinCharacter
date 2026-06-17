@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "测量物体轻重的器具或行为",
-    "meaning_en": "to weigh; to call; to name"
+    "meaning_en": "to weigh; to call; to name",
+    "pinyin_alt": [
+      "chēng",
+      "chèn",
+      "chèng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

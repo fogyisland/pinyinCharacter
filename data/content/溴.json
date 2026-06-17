@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "化学元素，符号Br，红棕色发烟液体，有刺激性气味",
-    "meaning_en": "bromine (chemical element)"
+    "meaning_en": "bromine (chemical element)",
+    "pinyin_alt": [
+      "xiù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

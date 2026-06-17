@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "小的液体或痕迹，如水点、斑点。",
-    "meaning_en": "dot; point; a little; to order (food)"
+    "meaning_en": "dot; point; a little; to order (food)",
+    "pinyin_alt": [
+      "diǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

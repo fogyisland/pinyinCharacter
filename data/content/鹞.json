@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种猛禽,羽色暗褐,捕食小鸟等小动物,也指纸鸢形状像鹰的玩具。",
-    "meaning_en": "a kind of sparrow hawk"
+    "meaning_en": "a kind of sparrow hawk",
+    "pinyin_alt": [
+      "yào",
+      "yāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "马鞍两旁供脚登的踏具",
-    "meaning_en": "stirrup (for a horse)"
+    "meaning_en": "stirrup (for a horse)",
+    "pinyin_alt": [
+      "dēng",
+      "dèng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

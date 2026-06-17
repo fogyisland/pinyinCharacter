@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鸟停留、居住，也泛指人或动物栖息安居",
-    "meaning_en": "to perch; to dwell; to rest"
+    "meaning_en": "to perch; to dwell; to rest",
+    "pinyin_alt": [
+      "qī",
+      "xī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "台阶或等级，指建筑物中供人上下踩踏的层级，也指地位、层次的区分",
-    "meaning_en": "stairs, rank, or step"
+    "meaning_en": "stairs, rank, or step",
+    "pinyin_alt": [
+      "jiē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "砝码的砝，天平上称量用的标准质量块",
-    "meaning_en": "a weight (as on a balance scale)"
+    "meaning_en": "a weight (as on a balance scale)",
+    "pinyin_alt": [
+      "fǎ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

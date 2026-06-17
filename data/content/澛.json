@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "地名用字,多用于水名或地名",
-    "meaning_en": "To process a character not in my database, I searched for the most common related interpretation. 澛 (lǔ) is a rare or non-standard character that may be a variant of 鲁 (lǔ, \"rude/crude\" or referring to Shandong), or could refer"
+    "meaning_en": "To process a character not in my database, I searched for the most common related interpretation. 澛 (lǔ) is a rare or non-standard character that may be a variant of 鲁 (lǔ, \"rude/crude\" or referring to Shandong), or could refer",
+    "pinyin_alt": [
+      "lǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

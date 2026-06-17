@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "病，多指痨病或瘟疫",
-    "meaning_en": "illness; suffering from disease"
+    "meaning_en": "illness; suffering from disease",
+    "pinyin_alt": [
+      "zhài"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

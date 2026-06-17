@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "穿是衣物套在身上的动作，也指把洞凿通",
-    "meaning_en": "to pierce through, to wear, to pass through"
+    "meaning_en": "to pierce through, to wear, to pass through",
+    "pinyin_alt": [
+      "chuān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "像糖或蜜的味道,与苦相对",
-    "meaning_en": "sweet; pleasantly sweet in taste"
+    "meaning_en": "sweet; pleasantly sweet in taste",
+    "pinyin_alt": [
+      "tián"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

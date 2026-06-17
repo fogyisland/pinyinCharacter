@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "我吴语地区自称，意为\"我\"",
-    "meaning_en": "you (in Wu dialect); I, me (in Classical Chinese)"
+    "meaning_en": "you (in Wu dialect); I, me (in Classical Chinese)",
+    "pinyin_alt": [
+      "nóng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

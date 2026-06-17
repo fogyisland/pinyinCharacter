@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "头脑昏沉，像周围景物在旋转的感觉",
-    "meaning_en": "dizzy, giddy, halo (around light)"
+    "meaning_en": "dizzy, giddy, halo (around light)",
+    "pinyin_alt": [
+      "yūn",
+      "yùn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

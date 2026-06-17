@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "雨后出现在太阳对面的彩色光弧,也称副虹",
-    "meaning_en": "secondary rainbow; arc with reversed colors"
+    "meaning_en": "secondary rainbow; arc with reversed colors",
+    "pinyin_alt": [
+      "ní"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

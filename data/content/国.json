@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "由领土、人民、政府等构成的政治实体，如中国、美国",
-    "meaning_en": "country; nation; state"
+    "meaning_en": "country; nation; state",
+    "pinyin_alt": [
+      "guó"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

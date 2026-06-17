@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "蕴藏并开采有用矿物的地方，如金矿、煤矿",
-    "meaning_en": "mine; mineral; ore deposit"
+    "meaning_en": "mine; mineral; ore deposit",
+    "pinyin_alt": [
+      "kuàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

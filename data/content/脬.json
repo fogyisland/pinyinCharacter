@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "膀胱的俗称，也指膀胱这一器官",
-    "meaning_en": "bladder; urinary bladder"
+    "meaning_en": "bladder; urinary bladder",
+    "pinyin_alt": [
+      "pāo",
+      "fǒu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

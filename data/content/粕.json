@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "渣滓，指糟粕，即豆类等榨油或酿酒后剩下的残渣",
-    "meaning_en": "dregs leftover from pressing or brewing"
+    "meaning_en": "dregs leftover from pressing or brewing",
+    "pinyin_alt": [
+      "pò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

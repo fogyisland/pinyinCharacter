@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "装殓死人的器具，多用木材制成",
-    "meaning_en": "coffin; casket for burial"
+    "meaning_en": "coffin; casket for burial",
+    "pinyin_alt": [
+      "guān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

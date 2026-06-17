@@ -4,8 +4,14 @@
   "level": 1,
   "dict": {
     "meaning_zh": "助词，附在句末表疑问语气，相当于\"呢\"",
-    "meaning_en": "used to emphasize or draw attention"
+    "meaning_en": "used to emphasize or draw attention",
+    "pinyin_alt": [
+      "lī",
+      "lǐ",
+      "li",
+      "lī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

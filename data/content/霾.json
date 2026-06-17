@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "空气中悬浮的大量烟尘等微粒,使天空浑浊的现象",
-    "meaning_en": "haze; dust in the air"
+    "meaning_en": "haze; dust in the air",
+    "pinyin_alt": [
+      "mái",
+      "lí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

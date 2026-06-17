@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "汕指汕头是广东港市名汕尾也是地名另指水边浅滩",
-    "meaning_en": "Shantou, a place name (潮汕 region)"
+    "meaning_en": "Shantou, a place name (潮汕 region)",
+    "pinyin_alt": [
+      "shàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

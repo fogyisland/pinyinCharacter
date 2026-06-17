@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "登记隶属关系的册子，也指个人对国家或组织的隶属关系，如户籍、学籍、国籍",
-    "meaning_en": "register; record; native place; book"
+    "meaning_en": "register; record; native place; book",
+    "pinyin_alt": [
+      "jí",
+      "jiè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

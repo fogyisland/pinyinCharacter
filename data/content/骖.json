@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代驾车时位于两旁的马",
-    "meaning_en": "The horse that pulls from the side of the central horse in a team."
+    "meaning_en": "The horse that pulls from the side of the central horse in a team.",
+    "pinyin_alt": [
+      "cān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

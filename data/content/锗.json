@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种灰白色金属元素，性质与锡相似，用于半导体材料和光纤通信",
-    "meaning_en": "germanium, a metallic chemical element"
+    "meaning_en": "germanium, a metallic chemical element",
+    "pinyin_alt": [
+      "zhě"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

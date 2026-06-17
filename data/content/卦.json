@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代占卜用的符号,八个一组,共六十四种组合",
-    "meaning_en": "divination symbol; trigram from the I Ching"
+    "meaning_en": "divination symbol; trigram from the I Ching",
+    "pinyin_alt": [
+      "guà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

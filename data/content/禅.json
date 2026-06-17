@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "佛教修行方法，强调静坐冥想以悟道，后也指与佛教相关的事物。",
-    "meaning_en": "Zen; meditation; deep contemplation in Buddhism."
+    "meaning_en": "Zen; meditation; deep contemplation in Buddhism.",
+    "pinyin_alt": [
+      "chán",
+      "shàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "把刀的刃部在布或皮革上反复摩擦使锋利",
-    "meaning_en": "engrave (a sword blade) with a chisel"
+    "meaning_en": "engrave (a sword blade) with a chisel",
+    "pinyin_alt": [
+      "bèi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

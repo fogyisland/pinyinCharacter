@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "糖浆或用米麦制成的糖，常作甜味调料",
-    "meaning_en": "Malt sugar; sweet syrup made from grain."
+    "meaning_en": "Malt sugar; sweet syrup made from grain.",
+    "pinyin_alt": [
+      "yí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

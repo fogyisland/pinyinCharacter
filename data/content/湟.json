@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "湟水河名,源于青海,流经甘肃;亦指湟源、湟中等地名",
-    "meaning_en": "Huang River; name of a river in Qinghai"
+    "meaning_en": "Huang River; name of a river in Qinghai",
+    "pinyin_alt": [
+      "huáng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

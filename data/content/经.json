@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "经典，特指儒家经典著作，如《诗》《书》《礼》等",
-    "meaning_en": "to pass through; scripture; classic; longitude; manage"
+    "meaning_en": "to pass through; scripture; classic; longitude; manage",
+    "pinyin_alt": [
+      "jīng",
+      "jìng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "进行某种活动的较大处所，如广场、市场、操场等",
-    "meaning_en": "field; place; site; gathering"
+    "meaning_en": "field; place; site; gathering",
+    "pinyin_alt": [
+      "chǎng",
+      "cháng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

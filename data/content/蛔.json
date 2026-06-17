@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "蛔虫的蛔 寄生在人肠道内的寄生虫会引起腹痛等症状",
-    "meaning_en": "roundworm, intestinal parasite (Ascaris)"
+    "meaning_en": "roundworm, intestinal parasite (Ascaris)",
+    "pinyin_alt": [
+      "huí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

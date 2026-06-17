@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "有机化合物吡啶的衍生物，常见的有尿嘧啶等。",
-    "meaning_en": "a chemical suffix indicating a six-membered nitrogen-containing ring compound"
+    "meaning_en": "a chemical suffix indicating a six-membered nitrogen-containing ring compound",
+    "pinyin_alt": [
+      "dìng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

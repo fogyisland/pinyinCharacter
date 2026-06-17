@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "暂时使用别人的钱物或经允许暂时使用别人的东西",
-    "meaning_en": "borrow; lend"
+    "meaning_en": "borrow; lend",
+    "pinyin_alt": [
+      "jiè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

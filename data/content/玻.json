@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "玻璃的主要原料,指质地硬脆透明的非晶体材料",
-    "meaning_en": "glass (as in 玻璃, glass)"
+    "meaning_en": "glass (as in 玻璃, glass)",
+    "pinyin_alt": [
+      "bō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

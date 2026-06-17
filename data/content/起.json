@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "由躺卧或较低位置向上升、站立或离开原处",
-    "meaning_en": "to rise, begin, start"
+    "meaning_en": "to rise, begin, start",
+    "pinyin_alt": [
+      "qǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

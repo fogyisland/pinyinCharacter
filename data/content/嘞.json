@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "语气助词，表示提醒、夸张或反问等语气，如走嘞、好嘞",
-    "meaning_en": "modal particle indicating assertion or new situation"
+    "meaning_en": "modal particle indicating assertion or new situation",
+    "pinyin_alt": [
+      "lē",
+      "lei"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

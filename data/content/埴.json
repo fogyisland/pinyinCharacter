@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "黏土，细腻可塑，常用于制陶",
-    "meaning_en": "clay (especially for making pottery)"
+    "meaning_en": "clay (especially for making pottery)",
+    "pinyin_alt": [
+      "zhí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

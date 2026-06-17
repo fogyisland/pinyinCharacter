@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古书上说的一种猴类动物也指传说中的一种大猴子",
-    "meaning_en": "an ancient name for a kind of monkey; surname"
+    "meaning_en": "an ancient name for a kind of monkey; surname",
+    "pinyin_alt": [
+      "yú",
+      "yù",
+      "ǒu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

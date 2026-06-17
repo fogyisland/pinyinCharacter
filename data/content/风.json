@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "空气流动形成的气流，也指风俗、风度等抽象含义",
-    "meaning_en": "wind; air current; style"
+    "meaning_en": "wind; air current; style",
+    "pinyin_alt": [
+      "fēng",
+      "fěng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

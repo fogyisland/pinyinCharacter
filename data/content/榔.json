@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "榔树,即槟榔树,果实可食,也可入药",
-    "meaning_en": "betel nut tree; hammer"
+    "meaning_en": "betel nut tree; hammer",
+    "pinyin_alt": [
+      "láng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

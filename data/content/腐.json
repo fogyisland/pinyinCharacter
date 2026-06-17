@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "有机物因微生物作用而分解变坏",
-    "meaning_en": "rotted, decayed; corrupt; tofu (bean curd)"
+    "meaning_en": "rotted, decayed; corrupt; tofu (bean curd)",
+    "pinyin_alt": [
+      "fǔ",
+      "fú",
+      "fù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

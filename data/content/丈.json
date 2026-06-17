@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "长度单位,十尺为一丈;也指对老年男子的称呼,如老丈",
-    "meaning_en": "a Chinese unit of length equal to 3.3 meters; husband"
+    "meaning_en": "a Chinese unit of length equal to 3.3 meters; husband",
+    "pinyin_alt": [
+      "zhàng",
+      "zháng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

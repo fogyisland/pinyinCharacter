@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "齿根部分的肉，即牙床，包裹牙齿的软组织",
-    "meaning_en": "gums (flesh around teeth)"
+    "meaning_en": "gums (flesh around teeth)",
+    "pinyin_alt": [
+      "yín",
+      "kěn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

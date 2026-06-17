@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鸨是一种比雁略大的水鸟，腿长善走，羽毛灰褐，常群居草原沼泽地带。",
-    "meaning_en": "bustard (a type of large bird)"
+    "meaning_en": "bustard (a type of large bird)",
+    "pinyin_alt": [
+      "bǎo",
+      "bū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

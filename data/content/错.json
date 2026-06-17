@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "不正确或不一致的状态，也可指交叉、磨砺等动作",
-    "meaning_en": "wrong, mistaken, error"
+    "meaning_en": "wrong, mistaken, error",
+    "pinyin_alt": [
+      "cuò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

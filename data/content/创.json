@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "开始做第一次做",
-    "meaning_en": "to create; to start; original"
+    "meaning_en": "to create; to start; original",
+    "pinyin_alt": [
+      "chuàng",
+      "chuāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

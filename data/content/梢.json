@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "树木的顶端或枝条末端",
-    "meaning_en": "tip of a branch; twig end"
+    "meaning_en": "tip of a branch; twig end",
+    "pinyin_alt": [
+      "shāo",
+      "sào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

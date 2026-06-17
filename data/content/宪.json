@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "宪法是国家根本大法，宪指法令、规章或效法",
-    "meaning_en": "constitution; statute; constitutional law"
+    "meaning_en": "constitution; statute; constitutional law",
+    "pinyin_alt": [
+      "xiàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,15 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示惊讶、感叹、疑问等语气，用在句末或句中停顿处",
-    "meaning_en": "used at the end of a sentence to express exclamation, emphasis, or confirmation"
+    "meaning_en": "used at the end of a sentence to express exclamation, emphasis, or confirmation",
+    "pinyin_alt": [
+      "ā",
+      "á",
+      "ǎ",
+      "à",
+      "a"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

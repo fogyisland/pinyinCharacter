@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "樱花树或樱桃树，也指其淡粉色的花",
-    "meaning_en": "cherry tree; cherry blossom"
+    "meaning_en": "cherry tree; cherry blossom",
+    "pinyin_alt": [
+      "yīng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

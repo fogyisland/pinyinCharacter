@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "田地中灌溉或排水的沟渠",
-    "meaning_en": "field irrigation furrow or channel between fields"
+    "meaning_en": "field irrigation furrow or channel between fields",
+    "pinyin_alt": [
+      "quǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

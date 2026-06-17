@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "干的常用义项是做事、从事,如干活,也指事物的主体部分",
-    "meaning_en": "dry, to do, shield"
+    "meaning_en": "dry, to do, shield",
+    "pinyin_alt": [
+      "gān",
+      "gàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

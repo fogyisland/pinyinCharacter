@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "房屋墙或顶上用以透光通风的洞口，通常装有窗扇或玻璃",
-    "meaning_en": "window (in a wall or vehicle)"
+    "meaning_en": "window (in a wall or vehicle)",
+    "pinyin_alt": [
+      "chuāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

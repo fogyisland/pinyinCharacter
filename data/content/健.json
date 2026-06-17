@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "体质强健有力，身体状况良好",
-    "meaning_en": "healthy, strong, robust"
+    "meaning_en": "healthy, strong, robust",
+    "pinyin_alt": [
+      "jiàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代传说中贪吃的怪兽，喻指贪吃的人。",
-    "meaning_en": "gluttonous mythological beast"
+    "meaning_en": "gluttonous mythological beast",
+    "pinyin_alt": [
+      "tiè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "水中小块陆地，亦指水边、沙洲",
-    "meaning_en": "A small islet or sandbar in a river."
+    "meaning_en": "A small islet or sandbar in a river.",
+    "pinyin_alt": [
+      "zhǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

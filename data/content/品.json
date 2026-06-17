@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "多个同类事物聚集在一起，泛指物品",
-    "meaning_en": "product, quality, or to sample/taste (noun/verb)"
+    "meaning_en": "product, quality, or to sample/taste (noun/verb)",
+    "pinyin_alt": [
+      "pǐn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

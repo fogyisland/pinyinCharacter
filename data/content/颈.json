@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "脖子，头与躯干相连接的部分",
-    "meaning_en": "neck (of the body)"
+    "meaning_en": "neck (of the body)",
+    "pinyin_alt": [
+      "jǐng",
+      "gěng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

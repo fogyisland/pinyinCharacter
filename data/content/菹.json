@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "腌菜或酸菜，古时也指肉酱",
-    "meaning_en": "chopped and pickled vegetables; minced and pickled meat or fish"
+    "meaning_en": "chopped and pickled vegetables; minced and pickled meat or fish",
+    "pinyin_alt": [
+      "zū",
+      "jū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

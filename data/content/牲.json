@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "指祭祀或食用的家畜，如牛羊猪等",
-    "meaning_en": "animal sacrifice; sacrificial animal"
+    "meaning_en": "animal sacrifice; sacrificial animal",
+    "pinyin_alt": [
+      "shēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

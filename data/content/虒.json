@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "古代兽名，似虎有角，一说为神兽",
-    "meaning_en": "A type of tiger or wild beast."
+    "meaning_en": "A type of tiger or wild beast.",
+    "pinyin_alt": [
+      "sī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种放射性惰性气体元素,无色无味,用于医疗和科研",
-    "meaning_en": "A radioactive chemical element; radon."
+    "meaning_en": "A radioactive chemical element; radon.",
+    "pinyin_alt": [
+      "dōng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

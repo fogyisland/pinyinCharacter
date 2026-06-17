@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "充满、满出，指容器内液体或气体等装满甚至溢出",
-    "meaning_en": "full, overflowing; surplus"
+    "meaning_en": "full, overflowing; surplus",
+    "pinyin_alt": [
+      "yíng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

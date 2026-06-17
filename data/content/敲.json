@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用手或工具击打物体发出声响",
-    "meaning_en": "knock, beat, strike"
+    "meaning_en": "knock, beat, strike",
+    "pinyin_alt": [
+      "qiāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

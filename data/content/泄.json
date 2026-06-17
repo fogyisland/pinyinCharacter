@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "液体或气体从封闭处排出，也指泄露、发出",
-    "meaning_en": "leak; discharge; vent; let out"
+    "meaning_en": "leak; discharge; vent; let out",
+    "pinyin_alt": [
+      "xiè",
+      "yì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

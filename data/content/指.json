@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "手指，也指人或事物的方向目标，或对事物进行指点说明",
-    "meaning_en": "finger; to point; to indicate"
+    "meaning_en": "finger; to point; to indicate",
+    "pinyin_alt": [
+      "zhǐ",
+      "zhī",
+      "zhí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

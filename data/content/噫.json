@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "表示悲痛、惊异或叹惋的语气词，类似于\"唉\"或\"哎呀\"",
-    "meaning_en": "an exclamation expressing grief or disgust"
+    "meaning_en": "an exclamation expressing grief or disgust",
+    "pinyin_alt": [
+      "yī",
+      "ǎi",
+      "wěi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

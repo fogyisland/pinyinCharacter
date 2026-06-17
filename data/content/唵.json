@@ -4,8 +4,14 @@
   "level": 2,
   "dict": {
     "meaning_zh": "佛教咒语用字，常用于六字真言起首，梵文om的音译",
-    "meaning_en": "Om; mystic syllable in Buddhism and Hinduism"
+    "meaning_en": "Om; mystic syllable in Buddhism and Hinduism",
+    "pinyin_alt": [
+      "ǎn",
+      "ān",
+      "nǒu",
+      "óng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

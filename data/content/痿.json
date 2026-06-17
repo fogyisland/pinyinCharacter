@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "身体某部分肌肉萎缩、软弱无力的病症",
-    "meaning_en": "withered; paralyzed; atrophy"
+    "meaning_en": "withered; paralyzed; atrophy",
+    "pinyin_alt": [
+      "wěi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

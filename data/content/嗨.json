@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "嗨打招呼时兴奋的呼喊声或招呼用语",
-    "meaning_en": "Hey!; used as an exclamation of greeting or excitement"
+    "meaning_en": "Hey!; used as an exclamation of greeting or excitement",
+    "pinyin_alt": [
+      "hēi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

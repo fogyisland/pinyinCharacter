@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "成群结队的獐子或鹿类动物",
-    "meaning_en": "a herd of deer or other animals"
+    "meaning_en": "a herd of deer or other animals",
+    "pinyin_alt": [
+      "jūn",
+      "qún"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

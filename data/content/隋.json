@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "中国朝代名，即隋朝，由杨坚建立，公元581至618年",
-    "meaning_en": "Sui dynasty (581-618 AD)"
+    "meaning_en": "Sui dynasty (581-618 AD)",
+    "pinyin_alt": [
+      "suí",
+      "duò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

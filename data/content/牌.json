@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "牌子用木板等做成的标志或凭证，也指商品的商标",
-    "meaning_en": "sign, card, brand, medal, plaque"
+    "meaning_en": "sign, card, brand, medal, plaque",
+    "pinyin_alt": [
+      "pái"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

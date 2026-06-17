@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "天干第三位，常用以表示第三或顺序的第三",
-    "meaning_en": "third of the ten Heavenly Stems"
+    "meaning_en": "third of the ten Heavenly Stems",
+    "pinyin_alt": [
+      "bǐng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

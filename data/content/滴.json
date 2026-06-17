@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "液体一点点落下，也指液体的小点状物",
-    "meaning_en": "drop; drip; droplet of liquid"
+    "meaning_en": "drop; drip; droplet of liquid",
+    "pinyin_alt": [
+      "dī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

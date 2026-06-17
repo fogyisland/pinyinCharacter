@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "解释古代词义，也指对古语词义的注释",
-    "meaning_en": "to explain ancient texts; interpret classical meanings"
+    "meaning_en": "to explain ancient texts; interpret classical meanings",
+    "pinyin_alt": [
+      "gǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

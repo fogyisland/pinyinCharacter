@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "较硬的片状物体，多指木板，也指板状器具或表情僵硬",
-    "meaning_en": "board, plank; stiff, rigid"
+    "meaning_en": "board, plank; stiff, rigid",
+    "pinyin_alt": [
+      "bǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

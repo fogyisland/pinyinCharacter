@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "芫指芜菁，一种根菜，也作芫花，指灌木植物",
-    "meaning_en": "stem of a plant, coriander"
+    "meaning_en": "stem of a plant, coriander",
+    "pinyin_alt": [
+      "yuán",
+      "yán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

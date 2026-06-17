@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水在零摄氏度以下凝结成的固体，也指寒冷",
-    "meaning_en": "ice; cold; frozen"
+    "meaning_en": "ice; cold; frozen",
+    "pinyin_alt": [
+      "bīng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

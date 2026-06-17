@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "动物身体末端突出的部分，也指事物的最后部分",
-    "meaning_en": "tail; end; rear; to follow"
+    "meaning_en": "tail; end; rear; to follow",
+    "pinyin_alt": [
+      "wěi",
+      "yǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

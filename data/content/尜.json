@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "尜是一种儿童玩具，两头尖中间大，形似哑铃，可两头抛耍或敲击出声",
-    "meaning_en": "a children's game with two sticks"
+    "meaning_en": "a children's game with two sticks",
+    "pinyin_alt": [
+      "gá",
+      "gē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "睡眠中大脑产生的幻象；也指幻想、愿望",
-    "meaning_en": "dream"
+    "meaning_en": "dream",
+    "pinyin_alt": [
+      "mèng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

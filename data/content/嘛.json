@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示语气或轻微停顿，常用于句末表示显而易见或舒缓语气",
-    "meaning_en": "particle indicating question, suggestion, or pause for emphasis"
+    "meaning_en": "particle indicating question, suggestion, or pause for emphasis",
+    "pinyin_alt": [
+      "ma",
+      "má"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

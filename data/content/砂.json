@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "细碎的石粒，颗粒比沙大而比砾石小",
-    "meaning_en": "coarse sand, gravel"
+    "meaning_en": "coarse sand, gravel",
+    "pinyin_alt": [
+      "shā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

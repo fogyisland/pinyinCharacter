@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "病好了，表示病情减轻或恢复",
-    "meaning_en": "more and more; to recover from illness"
+    "meaning_en": "more and more; to recover from illness",
+    "pinyin_alt": [
+      "yù",
+      "yú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

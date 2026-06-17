@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一类昆虫，形似苍蝇而大，雌虫吸食人畜血液",
-    "meaning_en": "gadfly, horsefly, a type of blood-sucking fly"
+    "meaning_en": "gadfly, horsefly, a type of blood-sucking fly",
+    "pinyin_alt": [
+      "méng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

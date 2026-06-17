@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鹧鸪鸟  一种似鸡的小鸟  常栖息于山地灌木丛中",
-    "meaning_en": "a type of partridge (bustard)"
+    "meaning_en": "a type of partridge (bustard)",
+    "pinyin_alt": [
+      "zhè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "较窄的街道，胡同，里弄",
-    "meaning_en": "lane, alley, narrow street"
+    "meaning_en": "lane, alley, narrow street",
+    "pinyin_alt": [
+      "xiàng",
+      "hàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

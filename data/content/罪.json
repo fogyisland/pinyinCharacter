@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "严重违反法律或道德的行为，犯法或有过失",
-    "meaning_en": "crime; sin; offense"
+    "meaning_en": "crime; sin; offense",
+    "pinyin_alt": [
+      "zuì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

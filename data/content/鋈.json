@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "镀金的金属或金属器具",
-    "meaning_en": "plated with gold or silver"
+    "meaning_en": "plated with gold or silver",
+    "pinyin_alt": [
+      "wù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

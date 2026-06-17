@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "物体受热后变得干燥发黄或发黑烧坏",
-    "meaning_en": "scorched; burnt; worried, anxious; focused (as in photography)"
+    "meaning_en": "scorched; burnt; worried, anxious; focused (as in photography)",
+    "pinyin_alt": [
+      "jiāo",
+      "jiū",
+      "qiáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

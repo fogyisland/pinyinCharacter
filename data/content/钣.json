@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "金属板，常用于机械制造和建筑领域",
-    "meaning_en": "metal plate; sheet metal"
+    "meaning_en": "metal plate; sheet metal",
+    "pinyin_alt": [
+      "bǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "有生命 能生存或活动",
-    "meaning_en": "alive, living; to live, to survive"
+    "meaning_en": "alive, living; to live, to survive",
+    "pinyin_alt": [
+      "huó",
+      "guō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水流清澈的样子也指姓氏",
-    "meaning_en": "clear; bright; (Liú) name of a river"
+    "meaning_en": "clear; bright; (Liú) name of a river",
+    "pinyin_alt": [
+      "liú",
+      "liǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

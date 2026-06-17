@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代城镇中的街市或作坊后泛指小手工业制作场所",
-    "meaning_en": "workshop; neighborhood; lane"
+    "meaning_en": "workshop; neighborhood; lane",
+    "pinyin_alt": [
+      "fāng",
+      "fáng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

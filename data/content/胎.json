@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人或哺乳动物母体内的幼体",
-    "meaning_en": "fetus; embryo; womb; tire casing"
+    "meaning_en": "fetus; embryo; womb; tire casing",
+    "pinyin_alt": [
+      "tāi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

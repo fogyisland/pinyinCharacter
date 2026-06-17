@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代一种两面有刃的兵器，后泛指各种长条形刃具",
-    "meaning_en": "double-edged sword; a weapon with a long blade"
+    "meaning_en": "double-edged sword; a weapon with a long blade",
+    "pinyin_alt": [
+      "jiàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

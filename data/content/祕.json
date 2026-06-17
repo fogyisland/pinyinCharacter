@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "同“秘”，指秘密、隐藏不外传",
-    "meaning_en": "rare; secret; variant of 秘 (mì) meaning secret/confidential"
+    "meaning_en": "rare; secret; variant of 秘 (mì) meaning secret/confidential",
+    "pinyin_alt": [
+      "bì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

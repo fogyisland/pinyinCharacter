@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "在斗争、竞争或比较中击败对方，也指超过或优越于",
-    "meaning_en": "to win; victory; to be superior to"
+    "meaning_en": "to win; victory; to be superior to",
+    "pinyin_alt": [
+      "shèng",
+      "shēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

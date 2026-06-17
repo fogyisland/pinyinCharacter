@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一类含有碳碳双键的烃类有机化合物，如乙烯",
-    "meaning_en": "alkene; unsaturated hydrocarbon with a carbon-carbon double bond"
+    "meaning_en": "alkene; unsaturated hydrocarbon with a carbon-carbon double bond",
+    "pinyin_alt": [
+      "xī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

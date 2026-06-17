@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "惊讶而发愣的样子",
-    "meaning_en": "stunned, shocked, astonished"
+    "meaning_en": "stunned, shocked, astonished",
+    "pinyin_alt": [
+      "è"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

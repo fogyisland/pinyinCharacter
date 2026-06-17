@@ -4,8 +4,14 @@
   "level": 2,
   "dict": {
     "meaning_zh": "象声词，模拟含糊不清的哼声或低语声",
-    "meaning_en": "sound expressing doubt or questioning (m, mm)"
+    "meaning_en": "sound expressing doubt or questioning (m, mm)",
+    "pinyin_alt": [
+      "wú",
+      "wù",
+      "Ǹg",
+      "ńg"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

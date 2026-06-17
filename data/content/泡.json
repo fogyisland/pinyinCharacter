@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "气体在液体中形成的球状或半固体状的细小集合体",
-    "meaning_en": "bubble, foam, soak, steep, dawdle, puffed-up"
+    "meaning_en": "bubble, foam, soak, steep, dawdle, puffed-up",
+    "pinyin_alt": [
+      "pào",
+      "pāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

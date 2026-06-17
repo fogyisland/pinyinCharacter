@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "血管，也指事物连贯的线索或波动的起伏",
-    "meaning_en": "pulse; blood vessels; mountain range ridge"
+    "meaning_en": "pulse; blood vessels; mountain range ridge",
+    "pinyin_alt": [
+      "mài",
+      "mò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

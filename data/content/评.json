@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "对事物进行判断、议论并给出评价",
-    "meaning_en": "to evaluate, review, comment on"
+    "meaning_en": "to evaluate, review, comment on",
+    "pinyin_alt": [
+      "píng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

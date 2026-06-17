@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "甘蔗的蔗，茎含糖汁，可生食或制糖",
-    "meaning_en": "sugarcane"
+    "meaning_en": "sugarcane",
+    "pinyin_alt": [
+      "zhè",
+      "zhē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "用手按压，常见于揿钉、揿钮等用法",
-    "meaning_en": "press down; to push a button"
+    "meaning_en": "press down; to push a button",
+    "pinyin_alt": [
+      "qìn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

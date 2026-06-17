@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "传说中能背负大山的大海龟或大鳖",
-    "meaning_en": "giant sea turtle; legendary giant turtle in Chinese mythology"
+    "meaning_en": "giant sea turtle; legendary giant turtle in Chinese mythology",
+    "pinyin_alt": [
+      "áo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

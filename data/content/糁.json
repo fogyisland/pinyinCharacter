@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "米粒；也指用碎米煮成的粥",
-    "meaning_en": "coarse grain; rice gruel with meat or vegetables"
+    "meaning_en": "coarse grain; rice gruel with meat or vegetables",
+    "pinyin_alt": [
+      "shēn",
+      "sǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

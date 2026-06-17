@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "性质或状态发生改变，如变化、转化。",
-    "meaning_en": "transform; change; chemistry; suffix for change or transformation"
+    "meaning_en": "transform; change; chemistry; suffix for change or transformation",
+    "pinyin_alt": [
+      "huà",
+      "huā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

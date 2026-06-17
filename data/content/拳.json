@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "拳头，屈指握紧的手；也指拳击等武术",
-    "meaning_en": "fist; boxing; martial arts"
+    "meaning_en": "fist; boxing; martial arts",
+    "pinyin_alt": [
+      "quán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

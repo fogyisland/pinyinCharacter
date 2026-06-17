@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鲷是一种生活在海洋中的硬骨鱼，体侧扁而高，肉味鲜美，是名贵的食用鱼。",
-    "meaning_en": "a type of sea bream (porgy) fish"
+    "meaning_en": "a type of sea bream (porgy) fish",
+    "pinyin_alt": [
+      "diāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

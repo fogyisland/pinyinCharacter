@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "恐惧、惊吓；也指恫吓，即以威胁的话或手段吓人",
-    "meaning_en": "frighten; intimidate; fearful, terrified"
+    "meaning_en": "frighten; intimidate; fearful, terrified",
+    "pinyin_alt": [
+      "dòng",
+      "tōng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

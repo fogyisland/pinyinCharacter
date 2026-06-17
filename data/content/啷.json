@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "象声词，形容金属器物碰撞或摇铃声",
-    "meaning_en": "clanging sound of metal or a bell"
+    "meaning_en": "clanging sound of metal or a bell",
+    "pinyin_alt": [
+      "lāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

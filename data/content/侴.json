@@ -4,8 +4,12 @@
   "level": 3,
   "dict": {
     "meaning_zh": "姓氏字。《通志·氏族略》载,今辽宁、山西等地有此姓。",
-    "meaning_en": "a rarely used Chinese surname; ancient tribal name"
+    "meaning_en": "a rarely used Chinese surname; ancient tribal name",
+    "pinyin_alt": [
+      "chǒu",
+      "qiào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

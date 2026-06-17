@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "蟏蛸，俗称蟢子，一种长脚的小蜘蛛，常在室内墙壁结网。",
-    "meaning_en": "spider, long-legged spider (Tetragnatha)"
+    "meaning_en": "spider, long-legged spider (Tetragnatha)",
+    "pinyin_alt": [
+      "xiāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

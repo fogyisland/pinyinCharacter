@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "古代占卜时用的器具，后指星盘或卜具",
-    "meaning_en": "divination board used in ancient Chinese rituals"
+    "meaning_en": "divination board used in ancient Chinese rituals",
+    "pinyin_alt": [
+      "shì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

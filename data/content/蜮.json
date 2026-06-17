@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "传说中一种能在水中含沙射人影致人生病的毒虫",
-    "meaning_en": "A mythical toad-like creature believed to harm people."
+    "meaning_en": "A mythical toad-like creature believed to harm people.",
+    "pinyin_alt": [
+      "yù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

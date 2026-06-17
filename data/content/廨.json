@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代称官署或官吏办公的房屋",
-    "meaning_en": "government office building"
+    "meaning_en": "government office building",
+    "pinyin_alt": [
+      "xiè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

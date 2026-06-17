@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "蘑菇的蘑 指食用菌如口蘑松蘑等",
-    "meaning_en": "mushroom (as in 蘑菇, mushroom)"
+    "meaning_en": "mushroom (as in 蘑菇, mushroom)",
+    "pinyin_alt": [
+      "mó"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

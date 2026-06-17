@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "身材异常矮小的人",
-    "meaning_en": "dwarf; short in stature"
+    "meaning_en": "dwarf; short in stature",
+    "pinyin_alt": [
+      "zhū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

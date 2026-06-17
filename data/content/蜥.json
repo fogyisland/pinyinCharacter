@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "蜥蜴的蜥，通称蜥蜴，俗称四脚蛇，是一类有鳞有爪能快速爬行的爬行动物",
-    "meaning_en": "a kind of lizard (lizard)"
+    "meaning_en": "a kind of lizard (lizard)",
+    "pinyin_alt": [
+      "xī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

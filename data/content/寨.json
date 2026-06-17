@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "村庄或防守用的栅栏围起来的地方",
-    "meaning_en": "Stockade; fortified village; mountain stronghold."
+    "meaning_en": "Stockade; fortified village; mountain stronghold.",
+    "pinyin_alt": [
+      "zhài"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

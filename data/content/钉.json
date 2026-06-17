@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "钉子，金属细杆形物件，一端有尖头用以固定或悬挂他物",
-    "meaning_en": "nail; to nail down, secure with nails"
+    "meaning_en": "nail; to nail down, secure with nails",
+    "pinyin_alt": [
+      "dīng",
+      "dìng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

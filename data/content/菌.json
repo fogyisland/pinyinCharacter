@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一类低等生物，如细菌、真菌等，能致病或发酵、制曲",
-    "meaning_en": "fungus, bacterium, germ; mushroom"
+    "meaning_en": "fungus, bacterium, germ; mushroom",
+    "pinyin_alt": [
+      "jūn",
+      "jùn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

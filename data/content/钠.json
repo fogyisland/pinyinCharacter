@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一种银白色金属元素，化学性质活泼，燃烧时发出黄色火焰",
-    "meaning_en": "sodium, chemical element (Na)"
+    "meaning_en": "sodium, chemical element (Na)",
+    "pinyin_alt": [
+      "nà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "房子，居住的建筑物，也指房间",
-    "meaning_en": "room; house; building"
+    "meaning_en": "room; house; building",
+    "pinyin_alt": [
+      "fáng",
+      "páng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

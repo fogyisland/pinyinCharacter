@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "混淆使界限或认识模糊不清",
-    "meaning_en": "confuse, mix up, blur (distinctions)"
+    "meaning_en": "confuse, mix up, blur (distinctions)",
+    "pinyin_alt": [
+      "xiáo",
+      "yáo",
+      "xiào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示如何、怎样、无奈等义，常见于无奈、怎奈等词",
-    "meaning_en": "What to do? how? unable to cope; what can (one) do?"
+    "meaning_en": "What to do? how? unable to cope; what can (one) do?",
+    "pinyin_alt": [
+      "nài",
+      "nà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

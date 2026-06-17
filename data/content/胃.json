@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人和动物消化器官的一部分，能分泌胃液消化食物",
-    "meaning_en": "stomach (digestive organ)"
+    "meaning_en": "stomach (digestive organ)",
+    "pinyin_alt": [
+      "wèi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "植物初生的小茎或嫩叶,通常从种子或枝条上长出,可发育成新枝或新叶。",
-    "meaning_en": "sprout, bud"
+    "meaning_en": "sprout, bud",
+    "pinyin_alt": [
+      "yá"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

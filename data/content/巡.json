@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "往来查看，如巡察、巡夜",
-    "meaning_en": "to patrol; to make one's rounds"
+    "meaning_en": "to patrol; to make one's rounds",
+    "pinyin_alt": [
+      "xún",
+      "shùn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

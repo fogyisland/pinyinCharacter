@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "时间靠前，日出前后或事件发生之前",
-    "meaning_en": "early; morning; in advance"
+    "meaning_en": "early; morning; in advance",
+    "pinyin_alt": [
+      "zǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

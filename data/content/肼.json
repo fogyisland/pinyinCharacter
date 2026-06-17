@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种含氮化合物，无色油状液体，可做火箭燃料",
-    "meaning_en": "hydrazine (a chemical compound)"
+    "meaning_en": "hydrazine (a chemical compound)",
+    "pinyin_alt": [
+      "jǐng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

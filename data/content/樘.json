@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "窗框或门框两侧的立木，亦指门框窗框整体",
-    "meaning_en": "window or door frame; crossbar of a door"
+    "meaning_en": "window or door frame; crossbar of a door",
+    "pinyin_alt": [
+      "chēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

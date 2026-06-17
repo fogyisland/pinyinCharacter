@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "农具，用耢平整土地或覆盖种子",
-    "meaning_en": "耢 (lào): a farming tool used to level soil and cover seeds."
+    "meaning_en": "耢 (lào): a farming tool used to level soil and cover seeds.",
+    "pinyin_alt": [
+      "lào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

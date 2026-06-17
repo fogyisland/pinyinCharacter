@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "洗涤身体，通常用清水或温水去除污垢",
-    "meaning_en": "to wash; to bathe; bathe oneself"
+    "meaning_en": "to wash; to bathe; bathe oneself",
+    "pinyin_alt": [
+      "zǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

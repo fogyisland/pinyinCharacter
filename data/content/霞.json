@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "日光斜照时由云滴或气溶胶散射形成的彩色光带，常见于日出日落时分",
-    "meaning_en": "rosy clouds at sunrise or sunset"
+    "meaning_en": "rosy clouds at sunrise or sunset",
+    "pinyin_alt": [
+      "xiá"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

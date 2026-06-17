@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "瓠瓜，一年生草本植物，果实长形可食，也叫葫芦的一种",
-    "meaning_en": "bottle gourd; gourd-shaped wine vessel"
+    "meaning_en": "bottle gourd; gourd-shaped wine vessel",
+    "pinyin_alt": [
+      "hù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

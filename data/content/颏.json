@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "下巴，俗称下巴颏儿，特指下颌的前端部位",
-    "meaning_en": "chin (the part of the face below the lower lip)"
+    "meaning_en": "chin (the part of the face below the lower lip)",
+    "pinyin_alt": [
+      "kē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

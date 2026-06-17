@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "母亲，对父母中女性一方的称呼",
-    "meaning_en": "mother; female parent; origin"
+    "meaning_en": "mother; female parent; origin",
+    "pinyin_alt": [
+      "mǔ",
+      "mú",
+      "wú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代炊具，似鼎而三足中空，用于煮食物",
-    "meaning_en": "ancient Chinese ritual vessel with three hollow legs"
+    "meaning_en": "ancient Chinese ritual vessel with three hollow legs",
+    "pinyin_alt": [
+      "gé",
+      "lì",
+      "è"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

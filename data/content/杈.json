@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "树木的分枝,即从主干上分出的枝条",
-    "meaning_en": "a fork of a tree; branch; fork-shaped"
+    "meaning_en": "a fork of a tree; branch; fork-shaped",
+    "pinyin_alt": [
+      "chā",
+      "chà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

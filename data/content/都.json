@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示全都，涵盖范围内的全部对象",
-    "meaning_en": "all, both, every; metropolis, capital"
+    "meaning_en": "all, both, every; metropolis, capital",
+    "pinyin_alt": [
+      "dōu",
+      "dū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "繇指用抽签或占卜来预测吉凶祸福的一种方式",
-    "meaning_en": "reason; cause; follow, trace to source"
+    "meaning_en": "reason; cause; follow, trace to source",
+    "pinyin_alt": [
+      "yáo",
+      "yóu",
+      "zhòu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

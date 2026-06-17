@@ -4,8 +4,14 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用力向自己方向牵引或拖拽",
-    "meaning_en": "pull, draw, drag"
+    "meaning_en": "pull, draw, drag",
+    "pinyin_alt": [
+      "lā",
+      "lá",
+      "lǎ",
+      "la"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

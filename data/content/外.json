@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "外面，与内相对；指事物或范围的外部",
-    "meaning_en": "outside, outer, foreign, other"
+    "meaning_en": "outside, outer, foreign, other",
+    "pinyin_alt": [
+      "wài"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

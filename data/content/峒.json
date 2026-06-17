@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "山洞或窑洞，亦指少数民族居住的寨子",
-    "meaning_en": "cave; cavern; large valley"
+    "meaning_en": "cave; cavern; large valley",
+    "pinyin_alt": [
+      "dòng",
+      "tóng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

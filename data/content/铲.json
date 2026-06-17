@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "铲子，一种带柄的铁制工具，用来削平或撮起东西",
-    "meaning_en": "shovel; to scoop up or remove"
+    "meaning_en": "shovel; to scoop up or remove",
+    "pinyin_alt": [
+      "chǎn",
+      "chǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

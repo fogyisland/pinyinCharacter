@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "天空高远辽阔的样子",
-    "meaning_en": "vault of heaven; dome-shaped sky"
+    "meaning_en": "vault of heaven; dome-shaped sky",
+    "pinyin_alt": [
+      "qióng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

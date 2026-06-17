@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鲻鱼，体长银灰，栖息近海，可食用，俗称乌头鱼",
-    "meaning_en": "mullet (a type of fish)"
+    "meaning_en": "mullet (a type of fish)",
+    "pinyin_alt": [
+      "zī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

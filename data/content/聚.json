@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "会合 集合 聚集到一起",
-    "meaning_en": "gather, assemble, collect together"
+    "meaning_en": "gather, assemble, collect together",
+    "pinyin_alt": [
+      "jù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

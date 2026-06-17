@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "心跳剧烈，紧张害怕时感到心脏不自主地颤动",
-    "meaning_en": "palpitation, throbbing of the heart"
+    "meaning_en": "palpitation, throbbing of the heart",
+    "pinyin_alt": [
+      "jì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

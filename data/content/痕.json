@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "伤疤或事物留下的印记",
-    "meaning_en": "scar; mark; trace"
+    "meaning_en": "scar; mark; trace",
+    "pinyin_alt": [
+      "hén"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种苦菜，也指茅草的白花，后借指荼毒之苦",
-    "meaning_en": "a kind of bitter herb; used in 荼蘼 (tú mí), a name for a plant (e.g., Rosa rubus)"
+    "meaning_en": "a kind of bitter herb; used in 荼蘼 (tú mí), a name for a plant (e.g., Rosa rubus)",
+    "pinyin_alt": [
+      "tú",
+      "shū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

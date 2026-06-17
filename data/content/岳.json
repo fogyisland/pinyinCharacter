@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "高大的山，也指对尊长或配偶的称呼，如岳父、岳母",
-    "meaning_en": "high mountain; wife's father"
+    "meaning_en": "high mountain; wife's father",
+    "pinyin_alt": [
+      "yuè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

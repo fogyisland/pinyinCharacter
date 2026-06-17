@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "懒惰，不努力，少勤奋",
-    "meaning_en": "lazy, sluggish, idle"
+    "meaning_en": "lazy, sluggish, idle",
+    "pinyin_alt": [
+      "duò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

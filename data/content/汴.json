@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "汴水河南古水名开封别称唐代汴州宋代汴京皆指今开封",
-    "meaning_en": "old name for Kaifeng, a city in Henan"
+    "meaning_en": "old name for Kaifeng, a city in Henan",
+    "pinyin_alt": [
+      "biàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

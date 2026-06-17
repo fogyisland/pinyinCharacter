@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "性质、状态、情况等发生改变",
-    "meaning_en": "to change, transform, or become different"
+    "meaning_en": "to change, transform, or become different",
+    "pinyin_alt": [
+      "biàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

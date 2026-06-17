@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代用竹管制成的吹奏乐器 由若干根长短不同的竹管并列插在锅形座子上制成",
-    "meaning_en": "reed pipe wind instrument"
+    "meaning_en": "reed pipe wind instrument",
+    "pinyin_alt": [
+      "shēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

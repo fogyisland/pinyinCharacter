@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "把液体或流质食物咽下去",
-    "meaning_en": "to drink"
+    "meaning_en": "to drink",
+    "pinyin_alt": [
+      "hē",
+      "hè",
+      "yè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

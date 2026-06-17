@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人或鸟兽的脚交互向前移动",
-    "meaning_en": "to walk; to go; to leave; to run"
+    "meaning_en": "to walk; to go; to leave; to run",
+    "pinyin_alt": [
+      "zǒu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

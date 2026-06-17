@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "热力学中表示物质系统能量总和的物理量",
-    "meaning_en": "enthalpy (thermodynamic quantity)"
+    "meaning_en": "enthalpy (thermodynamic quantity)",
+    "pinyin_alt": [
+      "hán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

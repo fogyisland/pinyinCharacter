@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "数量大，与少相对",
-    "meaning_en": "many, much, more; how many/much"
+    "meaning_en": "many, much, more; how many/much",
+    "pinyin_alt": [
+      "duō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

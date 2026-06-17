@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种金属元素，符号Ru，银白色，质硬脆，用于制造合金等",
-    "meaning_en": "ruthenium (chemical element)"
+    "meaning_en": "ruthenium (chemical element)",
+    "pinyin_alt": [
+      "liào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

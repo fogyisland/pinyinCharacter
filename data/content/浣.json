@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "洗涤衣物，后亦指洗其他东西",
-    "meaning_en": "to wash; to rinse (clothes)"
+    "meaning_en": "to wash; to rinse (clothes)",
+    "pinyin_alt": [
+      "huàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

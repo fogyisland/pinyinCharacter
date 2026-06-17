@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "草名,即芄兰,又称萝藦,藤本植物",
-    "meaning_en": "a type of plant (smartweed/knotweed)"
+    "meaning_en": "a type of plant (smartweed/knotweed)",
+    "pinyin_alt": [
+      "wán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

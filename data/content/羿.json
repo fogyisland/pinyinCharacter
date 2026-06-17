@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "后羿的羿，传说中善射的英雄，也指射箭技艺高超的人",
-    "meaning_en": "Hou Yi, the mythical Chinese archer who shot down nine suns."
+    "meaning_en": "Hou Yi, the mythical Chinese archer who shot down nine suns.",
+    "pinyin_alt": [
+      "yì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

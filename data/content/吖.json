@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "语气助词用于句末表示请求或提醒",
-    "meaning_en": "used in transliterations; exclamation particle"
+    "meaning_en": "used in transliterations; exclamation particle",
+    "pinyin_alt": [
+      "ā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

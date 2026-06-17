@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "询问或消息，也指审问",
-    "meaning_en": "inquire, interrogate; information, news, message"
+    "meaning_en": "inquire, interrogate; information, news, message",
+    "pinyin_alt": [
+      "xùn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

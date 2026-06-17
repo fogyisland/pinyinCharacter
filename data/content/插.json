@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "把细长或尖锐的东西放入、刺进或挤入物体中",
-    "meaning_en": "to insert; to stick in; to interpose"
+    "meaning_en": "to insert; to stick in; to interpose",
+    "pinyin_alt": [
+      "chā",
+      "chǎ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

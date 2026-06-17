@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "不公开的 隐藏不让人知道的",
-    "meaning_en": "secret; mysterious; confidential"
+    "meaning_en": "secret; mysterious; confidential",
+    "pinyin_alt": [
+      "mì",
+      "bì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

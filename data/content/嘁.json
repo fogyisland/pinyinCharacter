@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "象声词，形容小声说话的声音，常叠用",
-    "meaning_en": "to whisper; to mutter; to babble"
+    "meaning_en": "to whisper; to mutter; to babble",
+    "pinyin_alt": [
+      "qī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

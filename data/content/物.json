@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "事物，指客观存在的一切东西",
-    "meaning_en": "thing, object, matter, substance"
+    "meaning_en": "thing, object, matter, substance",
+    "pinyin_alt": [
+      "wù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

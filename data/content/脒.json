@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "有机化合物的一类，通式R-C(=NH)-NH2，含亚氨基的胺衍生物",
-    "meaning_en": "amidine group (chemistry)"
+    "meaning_en": "amidine group (chemistry)",
+    "pinyin_alt": [
+      "mǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

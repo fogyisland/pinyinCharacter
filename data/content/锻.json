@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "把金属加热后锤打成型",
-    "meaning_en": "forge; temper metal by heating and hammering"
+    "meaning_en": "forge; temper metal by heating and hammering",
+    "pinyin_alt": [
+      "duàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

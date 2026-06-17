@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一段路途或事情进展的顺序和限度，也指规章、规程和旅行的路途",
-    "meaning_en": "distance; procedure; rule; journey"
+    "meaning_en": "distance; procedure; rule; journey",
+    "pinyin_alt": [
+      "chéng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

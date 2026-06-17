@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "龅，俗称龅牙，指上下颌前突，牙齿向外突出，形容人嘴部前凸的样子",
-    "meaning_en": "protruding (buck) teeth"
+    "meaning_en": "protruding (buck) teeth",
+    "pinyin_alt": [
+      "bāo",
+      "bào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

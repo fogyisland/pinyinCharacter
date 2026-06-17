@@ -4,8 +4,15 @@
   "level": 1,
   "dict": {
     "meaning_zh": "胳膊上部靠肩的部位",
-    "meaning_en": "wing; shoulder; upper arm"
+    "meaning_en": "wing; shoulder; upper arm",
+    "pinyin_alt": [
+      "bǎng",
+      "pāng",
+      "páng",
+      "bāng",
+      "bàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

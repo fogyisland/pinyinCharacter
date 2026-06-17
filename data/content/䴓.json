@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "䴓鸟,形似山雀,常栖息于山林,尾羽较长,善攀爬树干。",
-    "meaning_en": "nuthatch (a type of small bird)"
+    "meaning_en": "nuthatch (a type of small bird)",
+    "pinyin_alt": [
+      "shī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

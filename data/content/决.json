@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "决定主意不再犹豫或犹豫不定的状态",
-    "meaning_en": "to decide; decisive; definitely"
+    "meaning_en": "to decide; decisive; definitely",
+    "pinyin_alt": [
+      "jué",
+      "xuè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

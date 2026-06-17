@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鲮鱼，身体延长，侧扁，生活在淡水中，是中国华南地区重要经济鱼类。",
-    "meaning_en": "dace-like fish; common carp variant"
+    "meaning_en": "dace-like fish; common carp variant",
+    "pinyin_alt": [
+      "líng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

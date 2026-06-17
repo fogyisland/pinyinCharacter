@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "速度低、费时久，与快相对",
-    "meaning_en": "slow; unhurried, not fast"
+    "meaning_en": "slow; unhurried, not fast",
+    "pinyin_alt": [
+      "màn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

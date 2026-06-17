@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "皮肤上突起的小硬块或小疙瘩",
-    "meaning_en": "pimple; a small lump or boil on the skin"
+    "meaning_en": "pimple; a small lump or boil on the skin",
+    "pinyin_alt": [
+      "da"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

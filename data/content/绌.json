@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "短缺不足多指经费或物力不够",
-    "meaning_en": "insufficient; lacking; shortfall in funds"
+    "meaning_en": "insufficient; lacking; shortfall in funds",
+    "pinyin_alt": [
+      "chù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

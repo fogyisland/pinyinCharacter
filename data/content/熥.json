@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "把食物放在锅内用微火慢慢加热或烘烤",
-    "meaning_en": "to heat something slightly; to warm over"
+    "meaning_en": "to heat something slightly; to warm over",
+    "pinyin_alt": [
+      "tēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

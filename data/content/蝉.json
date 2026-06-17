@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "昆虫，俗称知了，雄的腹部有发声器，夏天叫声响亮",
-    "meaning_en": "cicada (insect that emerges in summer)"
+    "meaning_en": "cicada (insect that emerges in summer)",
+    "pinyin_alt": [
+      "chán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种面制的食物，常见于北方口语",
-    "meaning_en": "crispy pastry; light, flaky baked good"
+    "meaning_en": "crispy pastry; light, flaky baked good",
+    "pinyin_alt": [
+      "bō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种体型较大的海洋鱼类，俗称炮弹鱼，常见于热带和温带海域",
-    "meaning_en": "skipjack tuna (fish)"
+    "meaning_en": "skipjack tuna (fish)",
+    "pinyin_alt": [
+      "jiān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

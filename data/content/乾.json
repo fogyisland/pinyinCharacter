@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "乾指八卦之一,代表天,也指男性、刚健,又读gān时意为干燥",
-    "meaning_en": "dry; the Creative (heaven, trigram)"
+    "meaning_en": "dry; the Creative (heaven, trigram)",
+    "pinyin_alt": [
+      "qián",
+      "gān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

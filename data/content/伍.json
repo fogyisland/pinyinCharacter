@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代军队编制五人为一伍后指军队也指同伴",
-    "meaning_en": "five; troop, group of five"
+    "meaning_en": "five; troop, group of five",
+    "pinyin_alt": [
+      "wǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

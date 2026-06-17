@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "修建房屋或道路等工程",
-    "meaning_en": "to build; construct; building (musical instrument)"
+    "meaning_en": "to build; construct; building (musical instrument)",
+    "pinyin_alt": [
+      "zhù",
+      "zhú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

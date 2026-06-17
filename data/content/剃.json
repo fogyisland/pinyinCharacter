@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用刀刮去毛发，特指理发刮脸等",
-    "meaning_en": "to shave (hair, beard, head)"
+    "meaning_en": "to shave (hair, beard, head)",
+    "pinyin_alt": [
+      "tì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

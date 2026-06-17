@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "石砌的瞭望或守备建筑，多建于高处",
-    "meaning_en": "a stone watchtower or fortified building"
+    "meaning_en": "a stone watchtower or fortified building",
+    "pinyin_alt": [
+      "diāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

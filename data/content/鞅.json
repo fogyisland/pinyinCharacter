@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "套在牛马颈上的皮带 一说指古代用马拉车时套在马颈上的皮带 用以控制马的速度",
-    "meaning_en": "leather strap restraining a horse's neck"
+    "meaning_en": "leather strap restraining a horse's neck",
+    "pinyin_alt": [
+      "yāng",
+      "yàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

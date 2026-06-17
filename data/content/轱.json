@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "车轮上安插辐条的圆筒形零件。",
-    "meaning_en": "wheel of a cart"
+    "meaning_en": "wheel of a cart",
+    "pinyin_alt": [
+      "gū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

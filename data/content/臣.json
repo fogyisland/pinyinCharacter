@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "君主制下供君主差遣、受其统辖治理的官员和百姓",
-    "meaning_en": "official; minister; loyal subject (of a ruler)"
+    "meaning_en": "official; minister; loyal subject (of a ruler)",
+    "pinyin_alt": [
+      "chén"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

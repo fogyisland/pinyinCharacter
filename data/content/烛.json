@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "蜡烛，用蜡或其他油脂制成的可燃照明物",
-    "meaning_en": "candle; to illuminate, light up"
+    "meaning_en": "candle; to illuminate, light up",
+    "pinyin_alt": [
+      "zhú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

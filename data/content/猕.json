@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "猕猴的猕字面指猕猴一种猴类",
-    "meaning_en": "macaque (as in 猕猴, macaque monkey)"
+    "meaning_en": "macaque (as in 猕猴, macaque monkey)",
+    "pinyin_alt": [
+      "mí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

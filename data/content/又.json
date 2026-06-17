@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示动作或情况的重复或继续相当于再",
-    "meaning_en": "again; also, in addition to"
+    "meaning_en": "again; also, in addition to",
+    "pinyin_alt": [
+      "yòu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

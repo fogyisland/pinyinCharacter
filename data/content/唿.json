@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "象声词，模拟呼喊或吹气声，如呜唿哀哉，也作“呼”",
-    "meaning_en": "exhale; to shout; to call out"
+    "meaning_en": "exhale; to shout; to call out",
+    "pinyin_alt": [
+      "hū",
+      "hù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

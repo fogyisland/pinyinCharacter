@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示否定，相当于不",
-    "meaning_en": "not; negation particle (literary)"
+    "meaning_en": "not; negation particle (literary)",
+    "pinyin_alt": [
+      "fú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

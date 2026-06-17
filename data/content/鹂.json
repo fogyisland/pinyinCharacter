@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "黄鹂，鸣禽，叫声婉转动听，常栖于林中",
-    "meaning_en": "a Chinese oriole; melodious songbird"
+    "meaning_en": "a Chinese oriole; melodious songbird",
+    "pinyin_alt": [
+      "lí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

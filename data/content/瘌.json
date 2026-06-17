@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "皮肤病，多长于头颈部，俗称瘌痢",
-    "meaning_en": "scabies; scabby skin disease"
+    "meaning_en": "scabies; scabby skin disease",
+    "pinyin_alt": [
+      "là"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

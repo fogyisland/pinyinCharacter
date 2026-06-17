@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代的一种打击乐器，常用于宫廷雅乐，形状似现在的云锣",
-    "meaning_en": "A type of ancient Chinese jade or stone chime."
+    "meaning_en": "A type of ancient Chinese jade or stone chime.",
+    "pinyin_alt": [
+      "áo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

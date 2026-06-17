@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "树木主干上分出的较粗的茎条",
-    "meaning_en": "branch (of a tree or plant)"
+    "meaning_en": "branch (of a tree or plant)",
+    "pinyin_alt": [
+      "zhī",
+      "qí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

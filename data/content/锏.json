@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代兵器，金属制成，有四棱，上端略小，下端有柄，类似鞭，可击打",
-    "meaning_en": "Mace (a weapon with a spiked or flanged head)"
+    "meaning_en": "Mace (a weapon with a spiked or flanged head)",
+    "pinyin_alt": [
+      "jiǎn",
+      "jiàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

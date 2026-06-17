@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "薯类植物的块根或块茎，可食用，如马铃薯、红薯",
-    "meaning_en": "tuber; potato, yam (potato family root vegetable)"
+    "meaning_en": "tuber; potato, yam (potato family root vegetable)",
+    "pinyin_alt": [
+      "shǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

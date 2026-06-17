@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "氢的一种同位素,原子核含一个质子,是氢的最轻最常见形式",
-    "meaning_en": "protium, the lightest isotope of hydrogen (hydrogen-1)"
+    "meaning_en": "protium, the lightest isotope of hydrogen (hydrogen-1)",
+    "pinyin_alt": [
+      "piē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

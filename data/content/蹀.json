@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "小步快走的样子，泛指行走徘徊",
-    "meaning_en": "to pace; to walk with small steps"
+    "meaning_en": "to pace; to walk with small steps",
+    "pinyin_alt": [
+      "dié",
+      "tiè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

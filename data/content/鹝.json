@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "鹝指一种长尾山雀般的鸟,亦称鹦,嘴尖尾长,羽毛美丽。",
-    "meaning_en": "A type of bird (likely a snipe or similar wading bird)"
+    "meaning_en": "A type of bird (likely a snipe or similar wading bird)",
+    "pinyin_alt": [
+      "yì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

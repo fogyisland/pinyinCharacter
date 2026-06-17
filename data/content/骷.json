@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "骷是骷髅的骷,指死人骨骼或头骨。",
-    "meaning_en": "skull; skeletal"
+    "meaning_en": "skull; skeletal",
+    "pinyin_alt": [
+      "kū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

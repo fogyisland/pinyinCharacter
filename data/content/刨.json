@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "挖掘或削刮物体表面",
-    "meaning_en": "dig, excavate; also a type of plane (tool)"
+    "meaning_en": "dig, excavate; also a type of plane (tool)",
+    "pinyin_alt": [
+      "páo",
+      "bào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "数字三的大写形式,常用于财务票据和正式文件中防止涂改",
-    "meaning_en": "three (financial numeral for 3)"
+    "meaning_en": "three (financial numeral for 3)",
+    "pinyin_alt": [
+      "sān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

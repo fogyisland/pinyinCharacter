@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "圆规，画圆的工具，也指规则、章程或劝告",
-    "meaning_en": "rule, regulation; compass"
+    "meaning_en": "rule, regulation; compass",
+    "pinyin_alt": [
+      "guī",
+      "guǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

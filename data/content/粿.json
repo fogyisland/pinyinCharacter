@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种用米或米粉制成的传统糕点，多见于南方地区",
-    "meaning_en": "Rice cake or rice flour pastry, often used in southern Chinese and Taiwanese cuisine."
+    "meaning_en": "Rice cake or rice flour pastry, often used in southern Chinese and Taiwanese cuisine.",
+    "pinyin_alt": [
+      "guǒ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

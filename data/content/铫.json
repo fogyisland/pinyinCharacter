@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "铫是一种有柄有嘴的烧水器具",
-    "meaning_en": "small pot or pan for boiling medicine"
+    "meaning_en": "small pot or pan for boiling medicine",
+    "pinyin_alt": [
+      "yáo",
+      "diào",
+      "tiáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

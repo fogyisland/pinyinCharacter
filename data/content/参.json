@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "加入或参与某项活动 如参赛 参观",
-    "meaning_en": "participate in, join, reference, or ginseng"
+    "meaning_en": "participate in, join, reference, or ginseng",
+    "pinyin_alt": [
+      "cān",
+      "cēn",
+      "shēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

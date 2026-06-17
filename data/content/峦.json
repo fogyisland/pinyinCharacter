@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "山连着山，常指高大或连绵的山峰",
-    "meaning_en": "mountain range"
+    "meaning_en": "mountain range",
+    "pinyin_alt": [
+      "luán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

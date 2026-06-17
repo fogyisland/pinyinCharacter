@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "军队驻守边疆或防守某地",
-    "meaning_en": "guard a border; garrison (troops)"
+    "meaning_en": "guard a border; garrison (troops)",
+    "pinyin_alt": [
+      "shù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

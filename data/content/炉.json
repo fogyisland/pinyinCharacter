@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "炉子，用于生火取暖或烹煮食物的器具",
-    "meaning_en": "furnace, stove, hearth"
+    "meaning_en": "furnace, stove, hearth",
+    "pinyin_alt": [
+      "lú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

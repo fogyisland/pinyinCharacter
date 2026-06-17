@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "河边或海边泥沙淤积形成的平坦地带，也指江河中水浅多石而流急的地方",
-    "meaning_en": "shoal, beach, rapids"
+    "meaning_en": "shoal, beach, rapids",
+    "pinyin_alt": [
+      "tān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

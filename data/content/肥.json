@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "脂肪多，与瘦相对",
-    "meaning_en": "fat; obese; rich, fertile (land)"
+    "meaning_en": "fat; obese; rich, fertile (land)",
+    "pinyin_alt": [
+      "féi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

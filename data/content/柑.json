@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "柑树常绿小乔木果实似橘味酸甜可食",
-    "meaning_en": "A type of citrus fruit; mandarin orange."
+    "meaning_en": "A type of citrus fruit; mandarin orange.",
+    "pinyin_alt": [
+      "gān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

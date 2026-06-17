@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "船的尾部，特指船尾后面靠近舵的部位",
-    "meaning_en": "stern (of a boat or ship)"
+    "meaning_en": "stern (of a boat or ship)",
+    "pinyin_alt": [
+      "wěi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

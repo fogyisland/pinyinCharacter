@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "事情的含义、情况或事件",
-    "meaning_en": "matter; affair; thing; business; event"
+    "meaning_en": "matter; affair; thing; business; event",
+    "pinyin_alt": [
+      "shì",
+      "zì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

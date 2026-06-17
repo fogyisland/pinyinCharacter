@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "写字绘画用的黑色颜料，也指这种颜色",
-    "meaning_en": "ink; black; black ink stick"
+    "meaning_en": "ink; black; black ink stick",
+    "pinyin_alt": [
+      "mò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

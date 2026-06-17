@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "很，相当，表示程度较大",
-    "meaning_en": "rather, quite; inclined to one side"
+    "meaning_en": "rather, quite; inclined to one side",
+    "pinyin_alt": [
+      "pō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

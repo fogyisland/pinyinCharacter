@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "数学上指一个数自乘若干次的运算结果，如平方、立方皆称幂",
-    "meaning_en": "Exponent; power (mathematical)"
+    "meaning_en": "Exponent; power (mathematical)",
+    "pinyin_alt": [
+      "mì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

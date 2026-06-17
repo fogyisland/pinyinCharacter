@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "箭，古代用弓发射的武器",
-    "meaning_en": "arrow; swear, vow"
+    "meaning_en": "arrow; swear, vow",
+    "pinyin_alt": [
+      "shǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

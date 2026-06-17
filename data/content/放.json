@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "释放或解除约束使之自由，也指不加拘束、任意行事",
-    "meaning_en": "release, let go, put, place"
+    "meaning_en": "release, let go, put, place",
+    "pinyin_alt": [
+      "fàng",
+      "fǎng",
+      "fāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

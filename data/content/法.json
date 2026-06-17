@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "由国家制定或认可并强制执行的行为规范的总和",
-    "meaning_en": "method, law, rule, way, dharma, French, magic"
+    "meaning_en": "method, law, rule, way, dharma, French, magic",
+    "pinyin_alt": [
+      "fǎ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "云在空中由水汽凝结成的白色或灰色飘浮物，也指说的话语",
-    "meaning_en": "cloud; to say, to speak"
+    "meaning_en": "cloud; to say, to speak",
+    "pinyin_alt": [
+      "yún"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

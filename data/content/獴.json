@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "獴是一种小型哺乳动物，擅长捕蛇，毛灰褐，尾长，多产于非洲亚洲。",
-    "meaning_en": "mongooses; small carnivorous mammals of family Herpestidae"
+    "meaning_en": "mongooses; small carnivorous mammals of family Herpestidae",
+    "pinyin_alt": [
+      "měng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

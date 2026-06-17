@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "侥幸指因偶然机会而免于不幸或获得好处",
-    "meaning_en": "rely on; lucky (as in 侥幸)"
+    "meaning_en": "rely on; lucky (as in 侥幸)",
+    "pinyin_alt": [
+      "jiǎo",
+      "yáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

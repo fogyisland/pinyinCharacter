@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "幼小的鸟，常指刚孵出不久的小鸡",
-    "meaning_en": "young bird; nestling; fledgling"
+    "meaning_en": "young bird; nestling; fledgling",
+    "pinyin_alt": [
+      "chú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

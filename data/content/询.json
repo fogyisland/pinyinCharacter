@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "询问，打听事情或征求意见",
-    "meaning_en": "to inquire; to ask; to consult"
+    "meaning_en": "to inquire; to ask; to consult",
+    "pinyin_alt": [
+      "xún"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

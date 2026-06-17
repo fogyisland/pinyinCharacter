@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "象声词，常用于招呼或引人注意",
-    "meaning_en": "hey; hello; sound of surprise or greeting"
+    "meaning_en": "hey; hello; sound of surprise or greeting",
+    "pinyin_alt": [
+      "hēi",
+      "mò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

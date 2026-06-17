@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "廊子，走廊，连接房屋可供通行的有顶过道",
-    "meaning_en": "covered corridor; verandah, porch"
+    "meaning_en": "covered corridor; verandah, porch",
+    "pinyin_alt": [
+      "láng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

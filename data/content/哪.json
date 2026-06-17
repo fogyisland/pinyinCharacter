@@ -4,8 +4,14 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示疑问，用于询问人或事物中的特定对象",
-    "meaning_en": "which; where; how (interrogative)"
+    "meaning_en": "which; where; how (interrogative)",
+    "pinyin_alt": [
+      "nǎ",
+      "něi",
+      "nà",
+      "na"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

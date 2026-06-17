@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "巯基指硫氢基,由硫和氢组成的有机化学官能团",
-    "meaning_en": "巯基, a chemical term meaning \"sulfhydryl group\" (-SH), a functional group in organic chemistry."
+    "meaning_en": "巯基, a chemical term meaning \"sulfhydryl group\" (-SH), a functional group in organic chemistry.",
+    "pinyin_alt": [
+      "qiú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

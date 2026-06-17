@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "锐利的工具，古代用于雕刻或医疗手术的尖细刀具",
-    "meaning_en": "sharp-pointed awl or surgical needle"
+    "meaning_en": "sharp-pointed awl or surgical needle",
+    "pinyin_alt": [
+      "chán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

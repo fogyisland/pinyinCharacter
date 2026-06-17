@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一种黑色固体矿物，主要由碳组成，可作燃料和工业原料",
-    "meaning_en": "coal (black mineral fuel)"
+    "meaning_en": "coal (black mineral fuel)",
+    "pinyin_alt": [
+      "méi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水上的主要交通工具，一般用木材、钢铁等制造，可载人运货",
-    "meaning_en": "boat; ship; vessel"
+    "meaning_en": "boat; ship; vessel",
+    "pinyin_alt": [
+      "chuán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "母乳或乳汁的通称 也指乳房或用于指代乳制品如牛奶",
-    "meaning_en": "milk; mother's milk; grandmother (paternal)"
+    "meaning_en": "milk; mother's milk; grandmother (paternal)",
+    "pinyin_alt": [
+      "nǎi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

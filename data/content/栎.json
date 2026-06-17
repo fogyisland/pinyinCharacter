@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "栎指栎树，壳斗科落叶乔木，木材坚韧可作建筑或家具用",
-    "meaning_en": "oak tree; oak (Quercus)"
+    "meaning_en": "oak tree; oak (Quercus)",
+    "pinyin_alt": [
+      "lì",
+      "yuè",
+      "lè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

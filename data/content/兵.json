@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "军队的战士或武装力量",
-    "meaning_en": "soldiers; military forces; weapons"
+    "meaning_en": "soldiers; military forces; weapons",
+    "pinyin_alt": [
+      "bīng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代弦乐器，形似琴，常用复数弦",
-    "meaning_en": "a stringed musical instrument; a zither-like lute"
+    "meaning_en": "a stringed musical instrument; a zither-like lute",
+    "pinyin_alt": [
+      "sè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

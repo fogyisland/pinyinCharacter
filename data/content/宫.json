@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代指房屋，后专指帝王的住所，也指神话中神仙的居所",
-    "meaning_en": "palace; residence; (music) note"
+    "meaning_en": "palace; residence; (music) note",
+    "pinyin_alt": [
+      "gōng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

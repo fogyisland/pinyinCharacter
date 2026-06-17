@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鹳是涉禽,形似鹤,嘴长而直,羽毛多为白色或灰色,常在湿地水边觅食鱼虾。",
-    "meaning_en": "a type of stork; a large wading bird"
+    "meaning_en": "a type of stork; a large wading bird",
+    "pinyin_alt": [
+      "guàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

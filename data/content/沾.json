@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "因接触而使液体附着在物体上",
-    "meaning_en": "to moisten; to touch lightly; to be touched by"
+    "meaning_en": "to moisten; to touch lightly; to be touched by",
+    "pinyin_alt": [
+      "zhān",
+      "tiān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

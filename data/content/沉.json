@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "重,没入水中,也可指程度深",
-    "meaning_en": "sink, submerge; heavy, deep; sink into"
+    "meaning_en": "sink, submerge; heavy, deep; sink into",
+    "pinyin_alt": [
+      "chén"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

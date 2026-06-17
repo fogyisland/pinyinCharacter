@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "母亲，对妈妈的口语称呼",
-    "meaning_en": "mother; mom; ma"
+    "meaning_en": "mother; mom; ma",
+    "pinyin_alt": [
+      "mā",
+      "mǎ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

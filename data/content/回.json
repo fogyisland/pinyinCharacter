@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "返回 环绕一圈或多次 也指答覆 另指回族",
-    "meaning_en": "return, turn around; also a time, a round"
+    "meaning_en": "return, turn around; also a time, a round",
+    "pinyin_alt": [
+      "huí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

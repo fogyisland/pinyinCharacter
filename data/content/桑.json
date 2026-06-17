@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "桑树，落叶乔木，叶可养蚕，树皮可造纸，果可食",
-    "meaning_en": "mulberry tree"
+    "meaning_en": "mulberry tree",
+    "pinyin_alt": [
+      "sāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

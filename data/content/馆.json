@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "供人居住、聚会、陈列或开展活动的房屋建筑",
-    "meaning_en": "building for public use, such as a library, museum, or guesthouse"
+    "meaning_en": "building for public use, such as a library, museum, or guesthouse",
+    "pinyin_alt": [
+      "guǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "地球绕太阳一周的时间，一岁；也表示岁数或每年的",
-    "meaning_en": "year; annual; age"
+    "meaning_en": "year; annual; age",
+    "pinyin_alt": [
+      "nián"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

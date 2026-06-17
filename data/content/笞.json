@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古代用竹板或荆条抽打身体的刑罚",
-    "meaning_en": "to whip, flog, beat with a stick"
+    "meaning_en": "to whip, flog, beat with a stick",
+    "pinyin_alt": [
+      "chī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

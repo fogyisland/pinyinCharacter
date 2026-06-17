@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人或动物骨头内部柔软含脂肪的组织，也指像骨髓一样的东西",
-    "meaning_en": "marrow; pith; essence; spinal cord"
+    "meaning_en": "marrow; pith; essence; spinal cord",
+    "pinyin_alt": [
+      "suǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

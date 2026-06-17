@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "水深而广，也指清水一道",
-    "meaning_en": "deep pool of water"
+    "meaning_en": "deep pool of water",
+    "pinyin_alt": [
+      "hóng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

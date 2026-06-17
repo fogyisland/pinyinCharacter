@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "地名用字 指颍河 发源于河南 流至安徽注入淮河",
-    "meaning_en": "Ying River; a river in Anhui Province, China."
+    "meaning_en": "Ying River; a river in Anhui Province, China.",
+    "pinyin_alt": [
+      "yǐng",
+      "yìng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

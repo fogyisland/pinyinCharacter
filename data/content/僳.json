@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "傈僳族，我国少数民族之一，主要分布在云南。",
-    "meaning_en": "used in \"Lisu\" (a Chinese ethnic group name)"
+    "meaning_en": "used in \"Lisu\" (a Chinese ethnic group name)",
+    "pinyin_alt": [
+      "sù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

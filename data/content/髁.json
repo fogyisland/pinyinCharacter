@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "膝关节处股骨下端两侧的圆形突起",
-    "meaning_en": "condyle (rounded end of a bone)"
+    "meaning_en": "condyle (rounded end of a bone)",
+    "pinyin_alt": [
+      "kē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

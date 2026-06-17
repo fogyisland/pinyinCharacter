@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "蚊蝇等昆虫的幼虫，体小而柔软，呈蠕虫状",
-    "meaning_en": "nymph (of an insect); larval stage"
+    "meaning_en": "nymph (of an insect); larval stage",
+    "pinyin_alt": [
+      "yòu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

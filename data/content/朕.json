@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "第一人称代词，秦始皇起专用为皇帝自称",
-    "meaning_en": "I, the emperor (royal first-person pronoun used by Chinese sovereigns)"
+    "meaning_en": "I, the emperor (royal first-person pronoun used by Chinese sovereigns)",
+    "pinyin_alt": [
+      "zhèn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

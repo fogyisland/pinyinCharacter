@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "山脊，指山的高耸部分或物体表面突起的条状隆起",
-    "meaning_en": "ridge; spine of a mountain or book"
+    "meaning_en": "ridge; spine of a mountain or book",
+    "pinyin_alt": [
+      "jí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

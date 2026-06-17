@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "道路或河流分出的分支",
-    "meaning_en": "fork (in a road); branch; diverge"
+    "meaning_en": "fork (in a road); branch; diverge",
+    "pinyin_alt": [
+      "chà",
+      "chā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

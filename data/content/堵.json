@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "阻塞不通，使通道或空间被封闭阻碍",
-    "meaning_en": "block up, obstruct, feel stuffed"
+    "meaning_en": "block up, obstruct, feel stuffed",
+    "pinyin_alt": [
+      "dǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

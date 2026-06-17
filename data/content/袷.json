@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "夹层有棉絮的双层衣物",
-    "meaning_en": "lined robe; a type of lined garment"
+    "meaning_en": "lined robe; a type of lined garment",
+    "pinyin_alt": [
+      "jiá",
+      "jiē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

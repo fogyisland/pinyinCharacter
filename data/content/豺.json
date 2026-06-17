@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一种形似狼的野兽，体黄褐色，性凶猛，常成群捕食其他动物",
-    "meaning_en": "carnivorous wild dog; jackal; dhole"
+    "meaning_en": "carnivorous wild dog; jackal; dhole",
+    "pinyin_alt": [
+      "chái"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

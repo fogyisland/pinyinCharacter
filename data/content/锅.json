@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "烹煮食物的圆形金属器具，中部凹陷有柄",
-    "meaning_en": "pot; cooking pot; boiler"
+    "meaning_en": "pot; cooking pot; boiler",
+    "pinyin_alt": [
+      "guō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

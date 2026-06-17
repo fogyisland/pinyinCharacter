@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "说出来或写出来的语言，也指说出来的内容",
-    "meaning_en": "speech; talk; words; language"
+    "meaning_en": "speech; talk; words; language",
+    "pinyin_alt": [
+      "huà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

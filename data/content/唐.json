@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "中国朝代名 也指唐朝 也作姓氏用",
-    "meaning_en": "Tang dynasty; Chinese surname; in vain."
+    "meaning_en": "Tang dynasty; Chinese surname; in vain.",
+    "pinyin_alt": [
+      "táng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

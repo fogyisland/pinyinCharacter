@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鹇是体型较大的雉类鸟类，常见的有白鹇和红鹇，雄鸟羽色艳丽，多分布于亚洲山林。",
-    "meaning_en": "A kind of pheasant, silver pheasant"
+    "meaning_en": "A kind of pheasant, silver pheasant",
+    "pinyin_alt": [
+      "xián"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

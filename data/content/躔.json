@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "日月星辰在天空运行的轨迹",
-    "meaning_en": "track of celestial bodies; course, orbit, or path of the sun or moon"
+    "meaning_en": "track of celestial bodies; course, orbit, or path of the sun or moon",
+    "pinyin_alt": [
+      "chán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "液体或气体所含的某种成分多，跟淡相反",
-    "meaning_en": "dense, thick; concentrated, strong (as in flavor or color)"
+    "meaning_en": "dense, thick; concentrated, strong (as in flavor or color)",
+    "pinyin_alt": [
+      "nóng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

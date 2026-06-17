@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "用于译音的字常见于佛经如迦叶亦作姓氏用",
-    "meaning_en": "used in transliterations, e.g., 释迦 (Shakyamuni)"
+    "meaning_en": "used in transliterations, e.g., 释迦 (Shakyamuni)",
+    "pinyin_alt": [
+      "jiā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

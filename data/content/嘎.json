@@ -4,8 +4,16 @@
   "level": 2,
   "dict": {
     "meaning_zh": "嘎 拟声词 形容短促清脆的声音 也指突然出声",
-    "meaning_en": "a sharp, high-pitched sound; clatter; to creak or screech"
+    "meaning_en": "a sharp, high-pitched sound; clatter; to creak or screech",
+    "pinyin_alt": [
+      "gā",
+      "gá",
+      "gǎ",
+      "gà",
+      "shà",
+      "zá"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

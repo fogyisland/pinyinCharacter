@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "粗糙不精细的米或事物",
-    "meaning_en": "coarse, rough, crude"
+    "meaning_en": "coarse, rough, crude",
+    "pinyin_alt": [
+      "cāo",
+      "cáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

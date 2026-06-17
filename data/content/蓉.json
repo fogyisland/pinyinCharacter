@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "莲花的别称,常指荷花,亦指成都的简称",
-    "meaning_en": "lotus; Chengdu (city)"
+    "meaning_en": "lotus; Chengdu (city)",
+    "pinyin_alt": [
+      "róng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

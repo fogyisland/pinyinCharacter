@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "敲打用的工具，俗称榔头",
-    "meaning_en": "mallet; wooden hammer; to beat with a mallet"
+    "meaning_en": "mallet; wooden hammer; to beat with a mallet",
+    "pinyin_alt": [
+      "chuí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "马、牛等动物脚趾末端的角质硬壳,也指带有这种角质壳的脚",
-    "meaning_en": "hoof; trotter"
+    "meaning_en": "hoof; trotter",
+    "pinyin_alt": [
+      "tí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

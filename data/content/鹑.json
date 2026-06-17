@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鹑鹑类鸟，形似小鸡，羽毛黄褐色，俗称鹌鹑",
-    "meaning_en": "quail (a small ground-nesting bird)"
+    "meaning_en": "quail (a small ground-nesting bird)",
+    "pinyin_alt": [
+      "chún"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

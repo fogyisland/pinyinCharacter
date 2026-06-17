@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "日落时的余光，傍晚昏黄的天色",
-    "meaning_en": "twilight; dusk; dim sunset light"
+    "meaning_en": "twilight; dusk; dim sunset light",
+    "pinyin_alt": [
+      "xūn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

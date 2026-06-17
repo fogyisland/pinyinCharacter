@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "蕈指野生或栽培的可食用真菌，如香菇等",
-    "meaning_en": "a kind of mushroom; fungus"
+    "meaning_en": "a kind of mushroom; fungus",
+    "pinyin_alt": [
+      "xùn",
+      "tán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

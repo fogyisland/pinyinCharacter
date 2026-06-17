@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用刀或斧等利器用力劈、斩",
-    "meaning_en": "to chop, hack, or cut with a blade"
+    "meaning_en": "to chop, hack, or cut with a blade",
+    "pinyin_alt": [
+      "kǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "骆驼或指驼背 形容背负重物时背部弯曲的状态",
-    "meaning_en": "camel; humped; hunchbacked"
+    "meaning_en": "camel; humped; hunchbacked",
+    "pinyin_alt": [
+      "tuó"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

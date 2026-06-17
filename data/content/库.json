@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "储存财物或物品的处所",
-    "meaning_en": "warehouse; storage; repository"
+    "meaning_en": "warehouse; storage; repository",
+    "pinyin_alt": [
+      "kù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

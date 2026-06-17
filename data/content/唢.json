@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种管身较细、管口较小的吹奏乐器，常与其他乐器合奏",
-    "meaning_en": "Suona, a traditional Chinese double-reed wind instrument."
+    "meaning_en": "Suona, a traditional Chinese double-reed wind instrument.",
+    "pinyin_alt": [
+      "suǒ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

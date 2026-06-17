@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "徒步过水，泛指经过或经历",
-    "meaning_en": "to wade; to be involved in; to concern"
+    "meaning_en": "to wade; to be involved in; to concern",
+    "pinyin_alt": [
+      "shè",
+      "dié"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

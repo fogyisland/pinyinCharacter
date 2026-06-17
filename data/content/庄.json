@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "村庄，泛指规模较大的聚落；也指庄重严肃",
-    "meaning_en": "village; manor; serious, solemn"
+    "meaning_en": "village; manor; serious, solemn",
+    "pinyin_alt": [
+      "zhuāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

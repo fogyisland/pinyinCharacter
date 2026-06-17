@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "果实的外壳，特指芍药等植物的蓇葖果",
-    "meaning_en": "seed pod, follicle, or fruit husk"
+    "meaning_en": "seed pod, follicle, or fruit husk",
+    "pinyin_alt": [
+      "gū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

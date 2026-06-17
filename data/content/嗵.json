@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "象声词，形容敲击或心跳等沉闷的声音",
-    "meaning_en": "onomatopoeia for a thumping or drumbeat sound"
+    "meaning_en": "onomatopoeia for a thumping or drumbeat sound",
+    "pinyin_alt": [
+      "tōng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

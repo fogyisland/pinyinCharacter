@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种烹饪方法，利用密闭环境使食物受热均匀并保留原味",
-    "meaning_en": "to bake or roast in a sealed container"
+    "meaning_en": "to bake or roast in a sealed container",
+    "pinyin_alt": [
+      "jú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

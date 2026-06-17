@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "指流行性急性传染病，病情重、传播快，如瘟疫",
-    "meaning_en": "epidemic; pestilence; plague"
+    "meaning_en": "epidemic; pestilence; plague",
+    "pinyin_alt": [
+      "wēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "抢 qiǎng 用力夺取，也指抢先做事",
-    "meaning_en": "to rob, snatch, or vie for"
+    "meaning_en": "to rob, snatch, or vie for",
+    "pinyin_alt": [
+      "qiǎng",
+      "chēng",
+      "qiāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种大型不会飞的鸟，颈长腿高，形似鸵鸟而较小",
-    "meaning_en": "emu (large flightless Australian bird)"
+    "meaning_en": "emu (large flightless Australian bird)",
+    "pinyin_alt": [
+      "miáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

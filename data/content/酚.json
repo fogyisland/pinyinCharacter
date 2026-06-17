@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一类有机化合物，苯环上羟基直接相连，如苯酚，常用于消毒和制塑料",
-    "meaning_en": "phenol (aromatic hydroxyl compound)"
+    "meaning_en": "phenol (aromatic hydroxyl compound)",
+    "pinyin_alt": [
+      "fēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

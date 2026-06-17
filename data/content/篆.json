@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "汉字字体之一 笔画圆转 用于篆刻和印章",
-    "meaning_en": "seal script (ancient Chinese character style)"
+    "meaning_en": "seal script (ancient Chinese character style)",
+    "pinyin_alt": [
+      "zhuàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

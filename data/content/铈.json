@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种稀土金属元素，银白色，用于合金和电子工业",
-    "meaning_en": "Cerium (chemical element, symbol Ce)"
+    "meaning_en": "Cerium (chemical element, symbol Ce)",
+    "pinyin_alt": [
+      "shì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

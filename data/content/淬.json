@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "把金属工件烧红后浸入水中急速冷却以增加硬度",
-    "meaning_en": "temper (metal) by quenching; to refine or sharpen"
+    "meaning_en": "temper (metal) by quenching; to refine or sharpen",
+    "pinyin_alt": [
+      "cuì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

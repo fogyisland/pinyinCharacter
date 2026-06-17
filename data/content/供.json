@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "供给财物或服务，也指祭祀时奉献的物品",
-    "meaning_en": "supply; provide; offer (to a superior or deity)"
+    "meaning_en": "supply; provide; offer (to a superior or deity)",
+    "pinyin_alt": [
+      "gōng",
+      "gòng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

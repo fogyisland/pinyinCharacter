@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "挖掘泥土用的工具，前端为铁制宽刃，后接长柄",
-    "meaning_en": "spade; shovel"
+    "meaning_en": "spade; shovel",
+    "pinyin_alt": [
+      "qiāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

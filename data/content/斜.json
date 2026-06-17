@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "不正，歪歪地偏离垂直或水平方向",
-    "meaning_en": "slanted; oblique; inclined"
+    "meaning_en": "slanted; oblique; inclined",
+    "pinyin_alt": [
+      "xié",
+      "xiá"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

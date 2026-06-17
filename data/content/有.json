@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示领有、存在或具有某事物",
-    "meaning_en": "to have; there is, there are; possess, exist"
+    "meaning_en": "to have; there is, there are; possess, exist",
+    "pinyin_alt": [
+      "yǒu",
+      "yòu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

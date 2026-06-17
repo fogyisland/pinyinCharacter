@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "需要使用劳动力的事，也指服兵役或被使唤",
-    "meaning_en": "serve as; corvée labor; military service"
+    "meaning_en": "serve as; corvée labor; military service",
+    "pinyin_alt": [
+      "yì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

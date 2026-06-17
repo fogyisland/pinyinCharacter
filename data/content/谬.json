@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "错误不合情理，如荒谬、谬论",
-    "meaning_en": "absurd; erroneous; mistaken"
+    "meaning_en": "absurd; erroneous; mistaken",
+    "pinyin_alt": [
+      "miù",
+      "miào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "第二人称敬称，称呼对方\"你\"时表示尊敬",
-    "meaning_en": "polite form of \"you\""
+    "meaning_en": "polite form of \"you\"",
+    "pinyin_alt": [
+      "nín"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

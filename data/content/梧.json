@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "梧桐树，落叶乔木，树皮青绿色，叶大，木材可制乐器",
-    "meaning_en": "phoenix tree; Chinese parasol tree"
+    "meaning_en": "phoenix tree; Chinese parasol tree",
+    "pinyin_alt": [
+      "wú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

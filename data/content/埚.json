@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "熔化金属或其他物质的器皿，俗称锅",
-    "meaning_en": "crucible; small pot used in metallurgy"
+    "meaning_en": "crucible; small pot used in metallurgy",
+    "pinyin_alt": [
+      "guō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

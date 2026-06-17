@@ -4,8 +4,15 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示方向、地区或方法，也指正方形或正四边形",
-    "meaning_en": "square; direction; method; square (unit of area)"
+    "meaning_en": "square; direction; method; square (unit of area)",
+    "pinyin_alt": [
+      "fāng",
+      "fáng",
+      "páng",
+      "wǎng",
+      "fǎng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

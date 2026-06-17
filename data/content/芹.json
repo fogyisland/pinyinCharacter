@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "芹菜，一种常见蔬菜，叶柄肥嫩可食",
-    "meaning_en": "celery (a type of Chinese herb)"
+    "meaning_en": "celery (a type of Chinese herb)",
+    "pinyin_alt": [
+      "qín"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

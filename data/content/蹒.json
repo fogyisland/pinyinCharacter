@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "形容走路缓慢摇摆不稳的样子",
-    "meaning_en": "to stagger; to limp; to totter"
+    "meaning_en": "to stagger; to limp; to totter",
+    "pinyin_alt": [
+      "pán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

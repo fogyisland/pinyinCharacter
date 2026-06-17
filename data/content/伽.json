@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "梵文译音字多用于佛经译名如伽蓝伽罗",
-    "meaning_en": "used in transliterations; often in \"伽蓝\" meaning Buddhist temple"
+    "meaning_en": "used in transliterations; often in \"伽蓝\" meaning Buddhist temple",
+    "pinyin_alt": [
+      "jiā",
+      "qié",
+      "gā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

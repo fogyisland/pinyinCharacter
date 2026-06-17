@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "尿素，存在于哺乳动物尿液中的有机化合物，用作肥料和化工原料",
-    "meaning_en": "urea (chemical compound)"
+    "meaning_en": "urea (chemical compound)",
+    "pinyin_alt": [
+      "niào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "教导他人或传授知识技能的人，如教师、师傅；也指军队的编制单位或某一领域的专家。",
-    "meaning_en": "teacher, master, expert; army unit"
+    "meaning_en": "teacher, master, expert; army unit",
+    "pinyin_alt": [
+      "shī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

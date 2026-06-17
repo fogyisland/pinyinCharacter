@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "气味或烟气接触物体，使其染上味道或颜色，也可指用烟火烤制食物",
-    "meaning_en": "smoke, cure, fume; to influence"
+    "meaning_en": "smoke, cure, fume; to influence",
+    "pinyin_alt": [
+      "xūn",
+      "xùn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

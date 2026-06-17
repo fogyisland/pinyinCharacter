@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "丆是古汉字，读yà，含义不详，见于字书记录",
-    "meaning_en": "variant form of 亟 (urgent, hasty)"
+    "meaning_en": "variant form of 亟 (urgent, hasty)",
+    "pinyin_alt": [
+      "yà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

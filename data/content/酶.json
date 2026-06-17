@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "酶是生物体内产生的蛋白质，能加速化学反应，俗称酵素",
-    "meaning_en": "enzyme (biological catalyst)"
+    "meaning_en": "enzyme (biological catalyst)",
+    "pinyin_alt": [
+      "méi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

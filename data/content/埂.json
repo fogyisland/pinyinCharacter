@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "田地里用泥土筑起的分界小路或矮墙",
-    "meaning_en": "raised field ridge between plots"
+    "meaning_en": "raised field ridge between plots",
+    "pinyin_alt": [
+      "gěng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

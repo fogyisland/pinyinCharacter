@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "滦河，水名，流经河北和内蒙古",
-    "meaning_en": "Luan River (name of a river in Hebei)"
+    "meaning_en": "Luan River (name of a river in Hebei)",
+    "pinyin_alt": [
+      "luán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

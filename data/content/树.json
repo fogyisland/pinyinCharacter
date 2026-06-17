@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "木本植物的通称，通常有主干和枝叶",
-    "meaning_en": "tree; to plant, establish"
+    "meaning_en": "tree; to plant, establish",
+    "pinyin_alt": [
+      "shù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

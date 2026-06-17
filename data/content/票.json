@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "票：用于选举、进出或付款的纸质凭证",
-    "meaning_en": "ballot, ticket, vote, banknote; certificate of ownership"
+    "meaning_en": "ballot, ticket, vote, banknote; certificate of ownership",
+    "pinyin_alt": [
+      "piào",
+      "piāo",
+      "biāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

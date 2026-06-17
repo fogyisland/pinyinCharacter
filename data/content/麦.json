@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一种重要的谷类作物，子实可磨成面粉，是面食的主要原料",
-    "meaning_en": "wheat"
+    "meaning_en": "wheat",
+    "pinyin_alt": [
+      "mài"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

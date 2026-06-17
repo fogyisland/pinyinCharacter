@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水边，泛指边际、尽头",
-    "meaning_en": "shore; boundary; limit"
+    "meaning_en": "shore; boundary; limit",
+    "pinyin_alt": [
+      "yá",
+      "yǎ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

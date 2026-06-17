@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "昆虫，会飞，有毒刺，常成群采蜜，常见的有蜜蜂、胡蜂等",
-    "meaning_en": "bee, wasp; honeycomb-like arrangement"
+    "meaning_en": "bee, wasp; honeycomb-like arrangement",
+    "pinyin_alt": [
+      "fēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

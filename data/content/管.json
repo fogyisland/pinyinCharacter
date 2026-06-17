@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "管子，用途广泛的细长筒状物",
-    "meaning_en": "manage, control, tube, pipe"
+    "meaning_en": "manage, control, tube, pipe",
+    "pinyin_alt": [
+      "guǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

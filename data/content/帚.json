@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "扫除尘土、垃圾的用具，用竹枝等绑成，也叫扫帚",
-    "meaning_en": "broom, broomstick"
+    "meaning_en": "broom, broomstick",
+    "pinyin_alt": [
+      "zhǒu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

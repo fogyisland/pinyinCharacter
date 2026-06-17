@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "利用时间或条件去做某事",
-    "meaning_en": "take advantage of an opportunity while it exists"
+    "meaning_en": "take advantage of an opportunity while it exists",
+    "pinyin_alt": [
+      "chèn",
+      "chēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

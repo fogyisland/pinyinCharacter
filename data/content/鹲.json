@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "一种海鸟，体型较大，嘴长而尖，栖息于热带海洋",
-    "meaning_en": "Tropic bird (Phaethon genus)"
+    "meaning_en": "Tropic bird (Phaethon genus)",
+    "pinyin_alt": [
+      "méng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

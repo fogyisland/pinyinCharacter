@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "开垦，翻耕荒地使之变为可耕种的田地",
-    "meaning_en": "reclaim land for cultivation; cultivate wasteland"
+    "meaning_en": "reclaim land for cultivation; cultivate wasteland",
+    "pinyin_alt": [
+      "kěn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

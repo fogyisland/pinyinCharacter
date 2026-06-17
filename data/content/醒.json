@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "睡眠状态结束，恢复知觉或意识",
-    "meaning_en": "to wake up; to sober up; to come to one's senses"
+    "meaning_en": "to wake up; to sober up; to come to one's senses",
+    "pinyin_alt": [
+      "xǐng",
+      "xīng",
+      "chéng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

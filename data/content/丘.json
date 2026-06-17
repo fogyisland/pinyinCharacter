@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "小土堆或自然隆起的高地，也指姓氏",
-    "meaning_en": "hill; mound; surname"
+    "meaning_en": "hill; mound; surname",
+    "pinyin_alt": [
+      "qiū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

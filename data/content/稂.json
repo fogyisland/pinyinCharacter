@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "稂是一种害草，多生于麦田中，形状似禾而难辨。",
-    "meaning_en": "type of weed grass; resembles sorghum"
+    "meaning_en": "type of weed grass; resembles sorghum",
+    "pinyin_alt": [
+      "láng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

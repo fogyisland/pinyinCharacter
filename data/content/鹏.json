@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代传说中由鲲变化而成的大鸟 背翼如云 可扶摇直上九万里 象征远大志向",
-    "meaning_en": "mythical giant bird; large roc"
+    "meaning_en": "mythical giant bird; large roc",
+    "pinyin_alt": [
+      "péng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

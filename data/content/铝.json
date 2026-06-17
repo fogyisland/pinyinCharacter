@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "金属元素，银白色，质轻，用于制造合金和包装材料",
-    "meaning_en": "aluminum (chemical element)"
+    "meaning_en": "aluminum (chemical element)",
+    "pinyin_alt": [
+      "lǚ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "闪电般突然出现或动作迅速如一道光掠过",
-    "meaning_en": "flash, lightning, dodge, shake off"
+    "meaning_en": "flash, lightning, dodge, shake off",
+    "pinyin_alt": [
+      "shǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

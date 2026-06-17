@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "印章古代专指帝王的印",
-    "meaning_en": "imperial seal"
+    "meaning_en": "imperial seal",
+    "pinyin_alt": [
+      "xǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

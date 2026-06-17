@@ -4,8 +4,12 @@
   "level": 3,
   "dict": {
     "meaning_zh": "我抬头仰望着天空",
-    "meaning_en": "high; lofty; to raise the head"
+    "meaning_en": "high; lofty; to raise the head",
+    "pinyin_alt": [
+      "áng",
+      "yǎng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

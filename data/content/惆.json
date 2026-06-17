@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "失意、伤感而难以排遣的心情",
-    "meaning_en": "sad and disconsolate; feeling melancholy and disappointed"
+    "meaning_en": "sad and disconsolate; feeling melancholy and disappointed",
+    "pinyin_alt": [
+      "chóu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

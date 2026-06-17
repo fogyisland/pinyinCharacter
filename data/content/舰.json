@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "大型军用船只，排水量大，装备武器，用于海上作战",
-    "meaning_en": "warship; naval vessel"
+    "meaning_en": "warship; naval vessel",
+    "pinyin_alt": [
+      "jiàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

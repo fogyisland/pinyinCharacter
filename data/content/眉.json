@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "眉毛，眼眶上方的弓形毛丛，也指书页上方的空白处",
-    "meaning_en": "eyebrow"
+    "meaning_en": "eyebrow",
+    "pinyin_alt": [
+      "méi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

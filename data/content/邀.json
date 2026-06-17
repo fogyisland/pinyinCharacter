@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "邀请约请，请人到自己的地方来或一起去某处",
-    "meaning_en": "to invite, to request, to solicit"
+    "meaning_en": "to invite, to request, to solicit",
+    "pinyin_alt": [
+      "yāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

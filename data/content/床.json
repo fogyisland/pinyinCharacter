@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "供人睡觉的家具，矩形平面上有床垫或铺垫",
-    "meaning_en": "bed; a piece of furniture for sleeping"
+    "meaning_en": "bed; a piece of furniture for sleeping",
+    "pinyin_alt": [
+      "chuáng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "肓指心脏与横膈膜之间的部位 中医称肓膜",
-    "meaning_en": "area between heart and diaphragm (in traditional Chinese medicine)"
+    "meaning_en": "area between heart and diaphragm (in traditional Chinese medicine)",
+    "pinyin_alt": [
+      "huāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

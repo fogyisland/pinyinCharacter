@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "日影，指日光照射物体形成的影子，也指古代测日影以定时刻的仪器",
-    "meaning_en": "shadow of sundial; sundial; measure time by sun"
+    "meaning_en": "shadow of sundial; sundial; measure time by sun",
+    "pinyin_alt": [
+      "guǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

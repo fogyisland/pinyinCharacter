@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "虾是一种水生甲壳动物，身体长，有须和带刺的外壳，可食用",
-    "meaning_en": "shrimp"
+    "meaning_en": "shrimp",
+    "pinyin_alt": [
+      "xiā",
+      "há"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

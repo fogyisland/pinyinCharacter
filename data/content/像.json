@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "相似 如他像他父亲  也指图像 如照片塑像",
-    "meaning_en": "resemble; image, likeness"
+    "meaning_en": "resemble; image, likeness",
+    "pinyin_alt": [
+      "xiàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

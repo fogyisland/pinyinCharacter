@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种稀有气体元素，无色无味，可用于制造特殊光源和电子器件",
-    "meaning_en": "xenon (a chemical element)"
+    "meaning_en": "xenon (a chemical element)",
+    "pinyin_alt": [
+      "xiān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

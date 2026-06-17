@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "休息 停止工作或活动 使身体恢复精力",
-    "meaning_en": "rest, stop, take a break"
+    "meaning_en": "rest, stop, take a break",
+    "pinyin_alt": [
+      "xiē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

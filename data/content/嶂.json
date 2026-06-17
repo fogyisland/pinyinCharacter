@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "高而险的山峰,泛指形势高峻的山",
-    "meaning_en": "A tall, steep mountain peak or cliff."
+    "meaning_en": "A tall, steep mountain peak or cliff.",
+    "pinyin_alt": [
+      "zhàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

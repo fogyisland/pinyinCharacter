@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示家族血统的称谓，如姓氏、姓名",
-    "meaning_en": "family name; surname; one's surname is"
+    "meaning_en": "family name; surname; one's surname is",
+    "pinyin_alt": [
+      "xìng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "穿在脚上、走路时着地的东西，通常有鞋底和鞋帮",
-    "meaning_en": "shoes; footwear worn on the feet"
+    "meaning_en": "shoes; footwear worn on the feet",
+    "pinyin_alt": [
+      "xié"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

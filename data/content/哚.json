@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "化学名词用字，指含氮杂环化合物中的特定结构单元",
-    "meaning_en": "Chemical term: indole (used in \"indole\")"
+    "meaning_en": "Chemical term: indole (used in \"indole\")",
+    "pinyin_alt": [
+      "duǒ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

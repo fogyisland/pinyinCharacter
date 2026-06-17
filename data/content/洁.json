@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "清洁干净，没有污垢和杂质",
-    "meaning_en": "clean; pure; spotless"
+    "meaning_en": "clean; pure; spotless",
+    "pinyin_alt": [
+      "jié",
+      "jiē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

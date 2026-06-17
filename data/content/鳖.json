@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鳖俗称甲鱼，爬行动物，状似龟，背甲无纹，生活在水中，肉可食用。",
-    "meaning_en": "soft-shelled turtle"
+    "meaning_en": "soft-shelled turtle",
+    "pinyin_alt": [
+      "biē",
+      "bié"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

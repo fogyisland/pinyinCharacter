@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "返回回到本处或归属某地",
-    "meaning_en": "return, go back, belong to"
+    "meaning_en": "return, go back, belong to",
+    "pinyin_alt": [
+      "guī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

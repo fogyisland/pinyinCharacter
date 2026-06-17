@@ -4,8 +4,14 @@
   "level": 1,
   "dict": {
     "meaning_zh": "介词，引出对象、处所或时间，相当于在、对、到、从等",
-    "meaning_en": "at; in; from; to"
+    "meaning_en": "at; in; from; to",
+    "pinyin_alt": [
+      "yú",
+      "yū",
+      "wū",
+      "xū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

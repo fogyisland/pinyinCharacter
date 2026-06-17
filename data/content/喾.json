@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "传说中上古帝王名即帝喾",
-    "meaning_en": "Name of Emperor Ku (a legendary sage king)"
+    "meaning_en": "Name of Emperor Ku (a legendary sage king)",
+    "pinyin_alt": [
+      "kù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

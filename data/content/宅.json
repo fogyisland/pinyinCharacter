@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "住所，多指家庭居住的房子",
-    "meaning_en": "Stay at home; residence, home, dwelling."
+    "meaning_en": "Stay at home; residence, home, dwelling.",
+    "pinyin_alt": [
+      "zhái"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

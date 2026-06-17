@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "发怒生气，也指责怪他人",
-    "meaning_en": "to be angry; to scold; anger, wrath"
+    "meaning_en": "to be angry; to scold; anger, wrath",
+    "pinyin_alt": [
+      "chēn",
+      "tián"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

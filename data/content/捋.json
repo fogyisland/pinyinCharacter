@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "用手指顺抹或收拢东西 如捋胡子 捋起袖子",
-    "meaning_en": "to smooth or arrange (hair, beard) with fingers"
+    "meaning_en": "to smooth or arrange (hair, beard) with fingers",
+    "pinyin_alt": [
+      "lǚ",
+      "luō"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

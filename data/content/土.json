@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "泥土，地面上的沙泥等物质，也指土地、地方",
-    "meaning_en": "earth, soil, land"
+    "meaning_en": "earth, soil, land",
+    "pinyin_alt": [
+      "tǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

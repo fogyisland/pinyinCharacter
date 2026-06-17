@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "药剂的剂，也指配合成的药",
-    "meaning_en": "medicinal preparation; chemical agent; measure word for doses of medicine"
+    "meaning_en": "medicinal preparation; chemical agent; measure word for doses of medicine",
+    "pinyin_alt": [
+      "jì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

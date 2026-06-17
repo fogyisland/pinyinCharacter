@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "衣服 穿在身上遮蔽身体保暖的服饰",
-    "meaning_en": "clothes; clothing; garment"
+    "meaning_en": "clothes; clothing; garment",
+    "pinyin_alt": [
+      "yī",
+      "yì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

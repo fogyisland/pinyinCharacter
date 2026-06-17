@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "旧时私人设立的教学场所，教人读书识字或准备科举考试",
-    "meaning_en": "private school; tutorial school"
+    "meaning_en": "private school; tutorial school",
+    "pinyin_alt": [
+      "shú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

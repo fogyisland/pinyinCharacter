@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "沾湿 浸湿 也指停留等待",
-    "meaning_en": "to moisten; to be immersed in; to delay"
+    "meaning_en": "to moisten; to be immersed in; to delay",
+    "pinyin_alt": [
+      "rú",
+      "ruán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

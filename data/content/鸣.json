@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鸟叫或发出声音，也泛指发声",
-    "meaning_en": "to cry; to sound; to call (of birds, animals)"
+    "meaning_en": "to cry; to sound; to call (of birds, animals)",
+    "pinyin_alt": [
+      "míng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

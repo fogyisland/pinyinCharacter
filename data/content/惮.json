@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "畏惧 害怕 多指有所顾忌而不敢做某事",
-    "meaning_en": "to fear; to dread; to shy away from"
+    "meaning_en": "to fear; to dread; to shy away from",
+    "pinyin_alt": [
+      "dàn",
+      "dá"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

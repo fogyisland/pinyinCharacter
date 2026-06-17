@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "家族或有共同特征的人群类别",
-    "meaning_en": "family, clan, ethnic group, race"
+    "meaning_en": "family, clan, ethnic group, race",
+    "pinyin_alt": [
+      "zú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

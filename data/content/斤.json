@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代称量重量的单位，约合五百克；也是砍伐树木用的斧头",
-    "meaning_en": "A Chinese unit of weight, approximately 500 grams (catty)"
+    "meaning_en": "A Chinese unit of weight, approximately 500 grams (catty)",
+    "pinyin_alt": [
+      "jīn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

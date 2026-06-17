@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "赏赐，上级或长辈给予下级财物等",
-    "meaning_en": "to bestow, confer, grant (by a superior)"
+    "meaning_en": "to bestow, confer, grant (by a superior)",
+    "pinyin_alt": [
+      "cì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

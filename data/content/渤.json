@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "渤海简称,也指水涌出的样子",
-    "meaning_en": "Bohai Sea (name of a gulf in northern China)"
+    "meaning_en": "Bohai Sea (name of a gulf in northern China)",
+    "pinyin_alt": [
+      "bó"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

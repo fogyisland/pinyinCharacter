@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "氨分子中氢原子被烃基取代后形成的化合物，通称胺类物质",
-    "meaning_en": "amine (chemical compound containing NH group)"
+    "meaning_en": "amine (chemical compound containing NH group)",
+    "pinyin_alt": [
+      "àn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

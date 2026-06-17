@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "烹指煮或用油炸炒等方法把食物做熟",
-    "meaning_en": "to cook; to boil, fry, or simmer food"
+    "meaning_en": "to cook; to boil, fry, or simmer food",
+    "pinyin_alt": [
+      "pēng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

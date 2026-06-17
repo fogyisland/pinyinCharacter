@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "用剪子剪东西，也指剪子状的刀具",
-    "meaning_en": "to hinge; scissors; to cut with scissors"
+    "meaning_en": "to hinge; scissors; to cut with scissors",
+    "pinyin_alt": [
+      "jiǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

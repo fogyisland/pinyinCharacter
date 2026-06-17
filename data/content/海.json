@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "与大洋相连的广阔咸水体,亦指大湖或比喻广大",
-    "meaning_en": "sea; ocean; vast body of water"
+    "meaning_en": "sea; ocean; vast body of water",
+    "pinyin_alt": [
+      "hǎi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

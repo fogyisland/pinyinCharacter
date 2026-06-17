@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "汉字笔画之一，从左上向右下斜出的一笔，如八字的左半",
-    "meaning_en": "Left-falling stroke (in calligraphy)"
+    "meaning_en": "Left-falling stroke (in calligraphy)",
+    "pinyin_alt": [
+      "piě"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

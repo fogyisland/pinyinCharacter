@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "拿、拿走的动作,也可指选择、获得或采用",
-    "meaning_en": "to take; to get; to fetch"
+    "meaning_en": "to take; to get; to fetch",
+    "pinyin_alt": [
+      "qǔ",
+      "qū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

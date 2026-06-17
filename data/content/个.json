@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "量词，用于没有专用量词的事物，也指单个的人或物",
-    "meaning_en": "general measure word; individual"
+    "meaning_en": "general measure word; individual",
+    "pinyin_alt": [
+      "gè"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

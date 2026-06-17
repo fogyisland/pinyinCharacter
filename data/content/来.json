@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "由别处到此地或由过去到现在与去相对",
-    "meaning_en": "come, to come; future; since"
+    "meaning_en": "come, to come; future; since",
+    "pinyin_alt": [
+      "lái"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

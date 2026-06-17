@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鼻子出声，表示不满、痛苦或轻蔑",
-    "meaning_en": "to hum; to snort; to groan"
+    "meaning_en": "to hum; to snort; to groan",
+    "pinyin_alt": [
+      "hēng",
+      "hng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,14 @@
   "level": 2,
   "dict": {
     "meaning_zh": "象声词,形容清脆短促的声响,如咯咯笑",
-    "meaning_en": "A sound produced in the throat"
+    "meaning_en": "A sound produced in the throat",
+    "pinyin_alt": [
+      "gē",
+      "kǎ",
+      "lo",
+      "luò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种烤制的面饼,维吾尔族等民族的传统主食,通常呈圆形,中间薄边缘厚",
-    "meaning_en": "Flat round leavened bread baked in a tandoor oven"
+    "meaning_en": "Flat round leavened bread baked in a tandoor oven",
+    "pinyin_alt": [
+      "náng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

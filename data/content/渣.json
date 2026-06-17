@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "渣：物质经过提炼或使用后留下的残渣，也指品质低劣的人",
-    "meaning_en": "dregs; sediment; scum; residue"
+    "meaning_en": "dregs; sediment; scum; residue",
+    "pinyin_alt": [
+      "zhā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

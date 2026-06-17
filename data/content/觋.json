@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "男巫师，即以舞蹈降神祝祷的男性宗教职业者",
-    "meaning_en": "shaman; male spirit medium who performs exorcisms"
+    "meaning_en": "shaman; male spirit medium who performs exorcisms",
+    "pinyin_alt": [
+      "xí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

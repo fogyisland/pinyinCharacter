@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "重叠的层次，引申为重复或分级",
-    "meaning_en": "layer; level; stratum; tier; floor (of a building)"
+    "meaning_en": "layer; level; stratum; tier; floor (of a building)",
+    "pinyin_alt": [
+      "céng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

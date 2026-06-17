@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "检查验证事物是否合乎标准或预期结果",
-    "meaning_en": "verify, test, examine; effective"
+    "meaning_en": "verify, test, examine; effective",
+    "pinyin_alt": [
+      "yàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "金枪鱼科大型海洋鱼类，体型粗壮，游泳速度快，是重要的经济鱼类",
-    "meaning_en": "tuna; specifically, a type of large tuna or bonito"
+    "meaning_en": "tuna; specifically, a type of large tuna or bonito",
+    "pinyin_alt": [
+      "wěi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

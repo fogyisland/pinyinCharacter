@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "存放货物或留宿旅客的场所，也指用木料等搭建的简易通道或支撑结构",
-    "meaning_en": "warehouse; storage shed or pen"
+    "meaning_en": "warehouse; storage shed or pen",
+    "pinyin_alt": [
+      "zhàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "中医指因风寒湿等侵入导致肢体疼痛麻木的病症",
-    "meaning_en": "numbness; pain or obstruction in the body (in TCM: Bi syndrome)"
+    "meaning_en": "numbness; pain or obstruction in the body (in TCM: Bi syndrome)",
+    "pinyin_alt": [
+      "bì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

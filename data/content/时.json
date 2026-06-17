@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "时间；某个特定的时候或季节；现在的；常常",
-    "meaning_en": "time; moment; current; hour; period"
+    "meaning_en": "time; moment; current; hour; period",
+    "pinyin_alt": [
+      "shí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

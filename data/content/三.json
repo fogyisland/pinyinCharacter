@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "数目字，二加一后所得，表示三这个数量",
-    "meaning_en": "the number three"
+    "meaning_en": "the number three",
+    "pinyin_alt": [
+      "sān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

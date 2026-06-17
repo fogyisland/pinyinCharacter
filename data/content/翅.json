@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鸟类和昆虫等动物的飞行器官，展开时像扇面",
-    "meaning_en": "wing (of a bird or insect)"
+    "meaning_en": "wing (of a bird or insect)",
+    "pinyin_alt": [
+      "chì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

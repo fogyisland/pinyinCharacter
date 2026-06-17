@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "宰杀牲畜 引申为大规模杀戮",
-    "meaning_en": "to slaughter; to butcher"
+    "meaning_en": "to slaughter; to butcher",
+    "pinyin_alt": [
+      "tú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

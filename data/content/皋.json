@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "水边的高地或岸旁土地，也指水田",
-    "meaning_en": "The marshy shore; a high riverbank."
+    "meaning_en": "The marshy shore; a high riverbank.",
+    "pinyin_alt": [
+      "gāo",
+      "háo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

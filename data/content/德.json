@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "道德品行高尚，恩惠恩德，中国传统核心价值之一",
-    "meaning_en": "virtue, morality, moral character"
+    "meaning_en": "virtue, morality, moral character",
+    "pinyin_alt": [
+      "dé",
+      "de"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示数字或符号的组合，用于计算或识别",
-    "meaning_en": "code; number; stack"
+    "meaning_en": "code; number; stack",
+    "pinyin_alt": [
+      "mǎ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

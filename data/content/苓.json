@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "茯苓，一种寄生在松树根部的真菌，可入药",
-    "meaning_en": "fungus; used in herb names (e.g., 茯苓 poria)"
+    "meaning_en": "fungus; used in herb names (e.g., 茯苓 poria)",
+    "pinyin_alt": [
+      "líng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

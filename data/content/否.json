@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "表示否定或不同意，相当于不",
-    "meaning_en": "to deny; no; not; negate"
+    "meaning_en": "to deny; no; not; negate",
+    "pinyin_alt": [
+      "fǒu",
+      "pǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

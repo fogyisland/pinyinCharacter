@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "蚁的通称，常见于蚂蚱、蚂蚁等词语中",
-    "meaning_en": "ant (as in ant or insect)"
+    "meaning_en": "ant (as in ant or insect)",
+    "pinyin_alt": [
+      "mǎ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

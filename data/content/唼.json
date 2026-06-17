@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鸟兽或虫类吃东西的声音",
-    "meaning_en": "the sound of birds eating or pecking; to peck at"
+    "meaning_en": "the sound of birds eating or pecking; to peck at",
+    "pinyin_alt": [
+      "shà",
+      "zā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

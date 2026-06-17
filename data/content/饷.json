@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "旧时指军警等的薪俸，现也指发给工作人员的报酬",
-    "meaning_en": "pay; salary; wages for soldiers"
+    "meaning_en": "pay; salary; wages for soldiers",
+    "pinyin_alt": [
+      "xiǎng",
+      "xiáng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

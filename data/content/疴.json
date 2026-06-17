@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "疾病义同\"病\"多用于书面如沉疴指重病",
-    "meaning_en": "illness; ailment; sickness"
+    "meaning_en": "illness; ailment; sickness",
+    "pinyin_alt": [
+      "kē"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

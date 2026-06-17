@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "水坑或田间用于蓄水、排水的小坑",
-    "meaning_en": "a deep pit or container; to soak"
+    "meaning_en": "a deep pit or container; to soak",
+    "pinyin_alt": [
+      "dàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

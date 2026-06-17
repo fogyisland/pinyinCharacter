@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "空闲没有事的时候",
-    "meaning_en": "free time; leisure; spare time"
+    "meaning_en": "free time; leisure; spare time",
+    "pinyin_alt": [
+      "xiá"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

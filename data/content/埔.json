@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "指平坦的地方，或指小城镇、村庄",
-    "meaning_en": "flat, level ground; used in place names"
+    "meaning_en": "flat, level ground; used in place names",
+    "pinyin_alt": [
+      "pǔ",
+      "bù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

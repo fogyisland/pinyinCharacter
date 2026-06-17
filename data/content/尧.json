@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "传说中上古帝王，贤明仁德，被后世尊为圣君典范",
-    "meaning_en": "Yao, legendary sage-emperor of ancient China"
+    "meaning_en": "Yao, legendary sage-emperor of ancient China",
+    "pinyin_alt": [
+      "yáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

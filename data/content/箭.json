@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一种用弓或弩发射的细长带尖头的兵器，也指形状或功能类似的东西，如箭头、火箭等",
-    "meaning_en": "arrow (a projectile shot from a bow)"
+    "meaning_en": "arrow (a projectile shot from a bow)",
+    "pinyin_alt": [
+      "jiàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

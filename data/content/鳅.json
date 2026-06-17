@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种体形细长的小鱼，生活在淡水底层，常见的有泥鳅",
-    "meaning_en": "loach (a type of small freshwater fish)"
+    "meaning_en": "loach (a type of small freshwater fish)",
+    "pinyin_alt": [
+      "qiū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

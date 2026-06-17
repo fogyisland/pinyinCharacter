@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "票据或凭证，证明持有者享有某种权利",
-    "meaning_en": "certificate, voucher, ticket, bond"
+    "meaning_en": "certificate, voucher, ticket, bond",
+    "pinyin_alt": [
+      "quàn",
+      "xuàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

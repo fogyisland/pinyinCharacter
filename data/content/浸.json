@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "泡在水或其他液体里，使东西湿透或渗入",
-    "meaning_en": "soak, immerse, steep, dip into liquid"
+    "meaning_en": "soak, immerse, steep, dip into liquid",
+    "pinyin_alt": [
+      "jìn",
+      "qīn",
+      "shēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

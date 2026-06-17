@@ -4,8 +4,14 @@
   "level": 1,
   "dict": {
     "meaning_zh": "我们 包括听话人在内 多用于口语",
-    "meaning_en": "we (including the speaker)"
+    "meaning_en": "we (including the speaker)",
+    "pinyin_alt": [
+      "zán",
+      "zá",
+      "zǎn",
+      "zan"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

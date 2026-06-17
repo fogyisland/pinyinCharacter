@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "文言叹词，表示应允或赞同，等于现代汉语的\"是\"\"对\"",
-    "meaning_en": "agree; surname; (in) harmony"
+    "meaning_en": "agree; surname; (in) harmony",
+    "pinyin_alt": [
+      "yú",
+      "yù",
+      "shū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

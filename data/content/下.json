@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "位置或等级在低处的，与上相对",
-    "meaning_en": "down, below, lower; to go down"
+    "meaning_en": "down, below, lower; to go down",
+    "pinyin_alt": [
+      "xià"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

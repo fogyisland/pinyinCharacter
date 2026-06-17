@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种金属元素,用于制造特种合金钢和催化剂",
-    "meaning_en": "molybdenum (chemical element)"
+    "meaning_en": "molybdenum (chemical element)",
+    "pinyin_alt": [
+      "mù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

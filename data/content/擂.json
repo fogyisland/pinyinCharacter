@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "打鼓或敲击的意思，也可指擂台比赛",
-    "meaning_en": "to beat; to pound; a drum (as a platform)"
+    "meaning_en": "to beat; to pound; a drum (as a platform)",
+    "pinyin_alt": [
+      "lèi",
+      "léi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

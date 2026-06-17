@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "蒸馏时利用沸点不同分离液体混合物的方法",
-    "meaning_en": "distill; distillation (of liquids)"
+    "meaning_en": "distill; distillation (of liquids)",
+    "pinyin_alt": [
+      "liú",
+      "liù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

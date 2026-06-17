@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "肌肉的简称，指身体中由肌纤维组成的组织",
-    "meaning_en": "flesh; muscle; skin (as in skin and flesh)"
+    "meaning_en": "flesh; muscle; skin (as in skin and flesh)",
+    "pinyin_alt": [
+      "jī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

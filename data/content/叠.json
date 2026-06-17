@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一层加一层地重复累积或铺展开来",
-    "meaning_en": "to fold; to pile up; overlapping"
+    "meaning_en": "to fold; to pile up; overlapping",
+    "pinyin_alt": [
+      "dié",
+      "diàn",
+      "zhé"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

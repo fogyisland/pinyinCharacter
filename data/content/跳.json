@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人用力蹬地使身体突然离开原位向上或向前移动",
-    "meaning_en": "to jump, leap, or skip"
+    "meaning_en": "to jump, leap, or skip",
+    "pinyin_alt": [
+      "tiào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

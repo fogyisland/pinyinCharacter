@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "声音，也指发出声音或声音大",
-    "meaning_en": "to ring; to sound; loud; to make noise"
+    "meaning_en": "to ring; to sound; loud; to make noise",
+    "pinyin_alt": [
+      "xiǎng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

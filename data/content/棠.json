@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "棠梨树，落叶乔木，果实可食，也指海棠类观赏树",
-    "meaning_en": "Crabapple tree (a type of wild apple tree)"
+    "meaning_en": "Crabapple tree (a type of wild apple tree)",
+    "pinyin_alt": [
+      "táng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

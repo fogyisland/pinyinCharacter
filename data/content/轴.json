@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "圆柱形的零件，用以支承或转动机械中其他旋转的部件",
-    "meaning_en": "axis, axle, spindle, roller"
+    "meaning_en": "axis, axle, spindle, roller",
+    "pinyin_alt": [
+      "zhóu",
+      "zhòu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

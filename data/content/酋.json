@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "酋长，部落或盗匪的首领",
-    "meaning_en": "chieftain; leader of a tribe or band"
+    "meaning_en": "chieftain; leader of a tribe or band",
+    "pinyin_alt": [
+      "qiú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

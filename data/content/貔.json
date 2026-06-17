@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古籍中的一种猛兽，传说似虎豹，多与貅连称貔貅",
-    "meaning_en": "a mythical fierce animal; tapir-like creature"
+    "meaning_en": "a mythical fierce animal; tapir-like creature",
+    "pinyin_alt": [
+      "pí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

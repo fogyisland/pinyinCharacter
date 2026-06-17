@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "互相，彼此",
-    "meaning_en": "mutual; each other; examine; appearance"
+    "meaning_en": "mutual; each other; examine; appearance",
+    "pinyin_alt": [
+      "xiāng",
+      "xiàng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

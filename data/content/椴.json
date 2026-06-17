@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "椴树 落叶乔木 木材优良 树皮可制绳",
-    "meaning_en": "linden tree; linden wood"
+    "meaning_en": "linden tree; linden wood",
+    "pinyin_alt": [
+      "duàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

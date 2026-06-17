@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "小心谨慎做事三思而后行",
-    "meaning_en": "careful, cautious, prudent"
+    "meaning_en": "careful, cautious, prudent",
+    "pinyin_alt": [
+      "shèn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

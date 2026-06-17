@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "车轮辐条插入车毂的插销，用以固定车轮。",
-    "meaning_en": "brake block; to stop a cart"
+    "meaning_en": "brake block; to stop a cart",
+    "pinyin_alt": [
+      "rèn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

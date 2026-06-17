@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "卖出货物",
-    "meaning_en": "to sell"
+    "meaning_en": "to sell",
+    "pinyin_alt": [
+      "shòu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

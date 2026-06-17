@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "岷山位于中国西南部，是长江与黄河水系的分水岭",
-    "meaning_en": "Name of a river in Sichuan and Gansu provinces."
+    "meaning_en": "Name of a river in Sichuan and Gansu provinces.",
+    "pinyin_alt": [
+      "mín"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

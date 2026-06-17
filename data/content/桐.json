@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "梧桐树落叶乔木木质轻韧可制乐器",
-    "meaning_en": "paulownia tree; Chinese parasol tree"
+    "meaning_en": "paulownia tree; Chinese parasol tree",
+    "pinyin_alt": [
+      "tóng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种面食，即馄饨，常用肉馅包成薄皮小卷煮食",
-    "meaning_en": "wonton, stuffed dumpling in soup"
+    "meaning_en": "wonton, stuffed dumpling in soup",
+    "pinyin_alt": [
+      "tún"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

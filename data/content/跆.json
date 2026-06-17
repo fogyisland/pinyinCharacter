@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "跆拳道是一种武术运动项目，跆字多用于此",
-    "meaning_en": "Tae Kwon Do; to step on; tramp"
+    "meaning_en": "Tae Kwon Do; to step on; tramp",
+    "pinyin_alt": [
+      "tái"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

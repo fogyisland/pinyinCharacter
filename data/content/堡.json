@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代指小城，现多用于地名，如堡子、吴堡",
-    "meaning_en": "fortress, castle, fortified town"
+    "meaning_en": "fortress, castle, fortified town",
+    "pinyin_alt": [
+      "bǎo",
+      "pù",
+      "bǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

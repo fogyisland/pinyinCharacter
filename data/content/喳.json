@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "象声词，形容鸟叫或细碎杂乱的说话声",
-    "meaning_en": "chatter; make noisy sounds"
+    "meaning_en": "chatter; make noisy sounds",
+    "pinyin_alt": [
+      "zhā"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

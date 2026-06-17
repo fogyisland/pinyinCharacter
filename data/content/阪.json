@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "山坡斜面，常用于地名，如大阪",
-    "meaning_en": "slope; hill, used in place names"
+    "meaning_en": "slope; hill, used in place names",
+    "pinyin_alt": [
+      "bǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

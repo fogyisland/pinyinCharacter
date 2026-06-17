@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "代词，用于询问某人或某些人身份",
-    "meaning_en": "who; which person"
+    "meaning_en": "who; which person",
+    "pinyin_alt": [
+      "shuí",
+      "shéi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

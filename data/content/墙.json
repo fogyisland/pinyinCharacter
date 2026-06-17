@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用砖石等砌成的屏障，用于隔断或围护",
-    "meaning_en": "wall; barrier made of bricks or stone"
+    "meaning_en": "wall; barrier made of bricks or stone",
+    "pinyin_alt": [
+      "qiáng",
+      "qiǎng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "抽屉  装在桌柜中可以拉出推进的匣形部件",
-    "meaning_en": "drawer (of a chest or cabinet)"
+    "meaning_en": "drawer (of a chest or cabinet)",
+    "pinyin_alt": [
+      "tì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

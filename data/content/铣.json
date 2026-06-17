@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种切削金属的机床，也指用铣床加工金属工件",
-    "meaning_en": "milling (machine); to mill"
+    "meaning_en": "milling (machine); to mill",
+    "pinyin_alt": [
+      "xiǎn",
+      "xǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

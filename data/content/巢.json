@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鸟或昆虫栖息的窝，也指盗贼或敌人聚集的地方",
-    "meaning_en": "nest, lair, or dwelling place"
+    "meaning_en": "nest, lair, or dwelling place",
+    "pinyin_alt": [
+      "cháo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

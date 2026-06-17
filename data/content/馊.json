@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "食物变质后发出酸臭味",
-    "meaning_en": "Spoiled, sour, or rancid (of food)."
+    "meaning_en": "Spoiled, sour, or rancid (of food).",
+    "pinyin_alt": [
+      "sōu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

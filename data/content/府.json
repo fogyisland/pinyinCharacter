@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "古代官署或贵族住宅，现指政府机关或储存财物的地方",
-    "meaning_en": "prefecture; government office; mansion"
+    "meaning_en": "prefecture; government office; mansion",
+    "pinyin_alt": [
+      "fǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

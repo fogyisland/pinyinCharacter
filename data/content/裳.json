@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "衣裳的下身部分,古指裙子一类的服饰",
-    "meaning_en": "skirt; lower garment; robe"
+    "meaning_en": "skirt; lower garment; robe",
+    "pinyin_alt": [
+      "shang",
+      "cháng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "物体宽而薄，厚度小于长度和宽度",
-    "meaning_en": "flat; rectangular; surname"
+    "meaning_en": "flat; rectangular; surname",
+    "pinyin_alt": [
+      "biǎn",
+      "piān",
+      "biàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

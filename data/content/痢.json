@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "一种肠道传染病，症状为腹泻、粪便带脓血等",
-    "meaning_en": "dysentery; diarrhea with blood/mucus"
+    "meaning_en": "dysentery; diarrhea with blood/mucus",
+    "pinyin_alt": [
+      "lì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

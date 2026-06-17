@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种矿物，成分为氯化物，常呈块状，白色或无色，遇水易潮解",
-    "meaning_en": "a kind of stone (used to make grinders)"
+    "meaning_en": "a kind of stone (used to make grinders)",
+    "pinyin_alt": [
+      "náo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

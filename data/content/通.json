@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "没有阻碍，可以穿过的",
-    "meaning_en": "pass through; understand; connect; communicate; be open"
+    "meaning_en": "pass through; understand; connect; communicate; be open",
+    "pinyin_alt": [
+      "tōng",
+      "tòng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

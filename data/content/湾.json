@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水流弯曲的水域或海岸凹入陆地的地方",
-    "meaning_en": "bay; curved area of water"
+    "meaning_en": "bay; curved area of water",
+    "pinyin_alt": [
+      "wān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "从地下涌出的水也指水从地下流出形成的水源",
-    "meaning_en": "spring; fountain; source of water"
+    "meaning_en": "spring; fountain; source of water",
+    "pinyin_alt": [
+      "quán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

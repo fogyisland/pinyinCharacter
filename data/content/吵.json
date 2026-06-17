@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "声音大而杂乱，不安宁；也指争执",
-    "meaning_en": "to make a noise; noisy; to quarrel"
+    "meaning_en": "to make a noise; noisy; to quarrel",
+    "pinyin_alt": [
+      "chǎo",
+      "chāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

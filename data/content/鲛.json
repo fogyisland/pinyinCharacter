@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鲨鱼一类的海鱼 皮可制革 亦指传说中能织绢的鲛人",
-    "meaning_en": "shark (a kind of fish)"
+    "meaning_en": "shark (a kind of fish)",
+    "pinyin_alt": [
+      "jiāo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

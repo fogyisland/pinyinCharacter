@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "谜语或难以理解的事物，指用暗示或描述让人猜测的题目",
-    "meaning_en": "riddle, mystery, puzzle"
+    "meaning_en": "riddle, mystery, puzzle",
+    "pinyin_alt": [
+      "mí",
+      "mèi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

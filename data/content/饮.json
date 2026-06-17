@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "喝液体，特指喝酒",
-    "meaning_en": "to drink; beverage"
+    "meaning_en": "to drink; beverage",
+    "pinyin_alt": [
+      "yǐn",
+      "yìn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

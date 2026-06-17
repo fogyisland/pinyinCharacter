@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "规定的时日或一段时间",
-    "meaning_en": "period of time; date; issue (of a publication)"
+    "meaning_en": "period of time; date; issue (of a publication)",
+    "pinyin_alt": [
+      "qī",
+      "jī"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

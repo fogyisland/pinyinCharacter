@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "鲴鱼一种淡水鱼体银白略侧扁以水底藻类为食",
-    "meaning_en": "A type of fish; gudgeon."
+    "meaning_en": "A type of fish; gudgeon.",
+    "pinyin_alt": [
+      "gù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "白蛉是一种像蚊子的吸血小虫，也指蜻蛉即蜻蜓的古称",
-    "meaning_en": "a dragonfly; lacewing insect"
+    "meaning_en": "a dragonfly; lacewing insect",
+    "pinyin_alt": [
+      "líng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

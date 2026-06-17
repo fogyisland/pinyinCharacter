@@ -3,8 +3,12 @@
   "pinyin": "cāo",
   "level": 1,
   "dict": {
-    "meaning_en": "to operate, manage, or conduct; also refers to physical exercise or vulgar language"
+    "meaning_en": "to operate, manage, or conduct; also refers to physical exercise or vulgar language",
+    "pinyin_alt": [
+      "cāo",
+      "cào"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T01:47:58.214Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

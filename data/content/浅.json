@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "水不深;程度不深;颜色淡;时间短",
-    "meaning_en": "shallow; superficial; light (color)"
+    "meaning_en": "shallow; superficial; light (color)",
+    "pinyin_alt": [
+      "qiǎn",
+      "jiān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

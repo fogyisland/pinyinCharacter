@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "滑稽有趣，常用于相声中引人发笑的情节或包袱",
-    "meaning_en": "funny; comedic; amusing (in jokes)"
+    "meaning_en": "funny; comedic; amusing (in jokes)",
+    "pinyin_alt": [
+      "gén",
+      "hěn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

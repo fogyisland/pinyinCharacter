@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "代词，对称代词，指称听话的对方，表示第二人称",
-    "meaning_en": "you (second person singular)"
+    "meaning_en": "you (second person singular)",
+    "pinyin_alt": [
+      "nǐ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

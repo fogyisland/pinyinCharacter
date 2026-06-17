@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "螨是蛛形纲小动物，体型极小，多寄生在人畜皮肤或植物上，可引起皮炎或农作物病害",
-    "meaning_en": "a type of mite or tick (arthropod parasite)"
+    "meaning_en": "a type of mite or tick (arthropod parasite)",
+    "pinyin_alt": [
+      "mǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

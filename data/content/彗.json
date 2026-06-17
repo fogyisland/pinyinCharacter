@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "彗星，俗称扫帚星，绕太阳运行的天体，形如扫帚",
-    "meaning_en": "broom (of a comet); comet"
+    "meaning_en": "broom (of a comet); comet",
+    "pinyin_alt": [
+      "huì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

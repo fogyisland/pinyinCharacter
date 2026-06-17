@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "肢体麻木或丧失活动能力的病症",
-    "meaning_en": "paralysis; numbness; to become disabled"
+    "meaning_en": "paralysis; numbness; to become disabled",
+    "pinyin_alt": [
+      "huàn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

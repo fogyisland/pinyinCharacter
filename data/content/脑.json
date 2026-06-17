@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "人和动物颅腔内的主要神经器官，负责思维、记忆和身体活动控制",
-    "meaning_en": "brain; cerebrum; mind"
+    "meaning_en": "brain; cerebrum; mind",
+    "pinyin_alt": [
+      "nǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

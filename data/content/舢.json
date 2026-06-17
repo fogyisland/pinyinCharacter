@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "舢板，一种用桨划行的小船",
-    "meaning_en": "sampan (a flat-bottomed Chinese boat)"
+    "meaning_en": "sampan (a flat-bottomed Chinese boat)",
+    "pinyin_alt": [
+      "shān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

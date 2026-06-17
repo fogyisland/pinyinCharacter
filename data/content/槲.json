@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "槲指柞树，俗称柞栎，叶大可饲柞蚕",
-    "meaning_en": "a type of oak tree (Quercus)"
+    "meaning_en": "a type of oak tree (Quercus)",
+    "pinyin_alt": [
+      "hú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

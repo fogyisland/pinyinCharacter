@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "光滑不粗涩或物体溜动无阻",
-    "meaning_en": "smooth, slippery, slide"
+    "meaning_en": "smooth, slippery, slide",
+    "pinyin_alt": [
+      "huá",
+      "gǔ"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

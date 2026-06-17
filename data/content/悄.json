@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "没有声音或声音很轻",
-    "meaning_en": "quietly; silently; quietly (qiǎo: sad, worried)"
+    "meaning_en": "quietly; silently; quietly (qiǎo: sad, worried)",
+    "pinyin_alt": [
+      "qiāo",
+      "qiǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

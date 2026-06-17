@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "湖南的别称，也指湘江流域",
-    "meaning_en": "name of the Xiang River in Hunan province; Hunan (abbreviation)"
+    "meaning_en": "name of the Xiang River in Hunan province; Hunan (abbreviation)",
+    "pinyin_alt": [
+      "xiāng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

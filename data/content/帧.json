@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一幅静止的画面，亦指动画或视频中的单个画面",
-    "meaning_en": "frame (as in video frame)"
+    "meaning_en": "frame (as in video frame)",
+    "pinyin_alt": [
+      "zhēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

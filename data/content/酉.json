@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "十二地支第十位,代表下午五点到七点,亦为酉时,常用于记时与生肖配对。",
-    "meaning_en": "tenth Earthly Branch; 5-7 PM; wine vessel radical"
+    "meaning_en": "tenth Earthly Branch; 5-7 PM; wine vessel radical",
+    "pinyin_alt": [
+      "yǒu"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

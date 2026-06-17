@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "睡卧，如就寝；也指卧室",
-    "meaning_en": "to sleep; rest; bedroom"
+    "meaning_en": "to sleep; rest; bedroom",
+    "pinyin_alt": [
+      "qǐn",
+      "qin"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

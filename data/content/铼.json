@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种稀有金属元素,银白色,用于制造高温合金等",
-    "meaning_en": "rhenium, chemical element 75"
+    "meaning_en": "rhenium, chemical element 75",
+    "pinyin_alt": [
+      "lái"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

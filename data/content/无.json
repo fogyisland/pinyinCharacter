@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "没有，与有相对",
-    "meaning_en": "not, without, none; no, not"
+    "meaning_en": "not, without, none; no, not",
+    "pinyin_alt": [
+      "wú",
+      "mó"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,13 @@
   "level": 2,
   "dict": {
     "meaning_zh": "象声词，模拟公鸡或乌鸦的叫声，亦作语气助词表示领会",
-    "meaning_en": "soft exclamation of surprise or understanding; \"oh\" or \"I see\""
+    "meaning_en": "soft exclamation of surprise or understanding; \"oh\" or \"I see\"",
+    "pinyin_alt": [
+      "wō",
+      "wǒ",
+      "wò"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

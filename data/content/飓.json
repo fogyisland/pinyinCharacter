@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "气象学上指中心风力达十二级或以上的热带气旋俗称风王",
-    "meaning_en": "hurricane, typhoon"
+    "meaning_en": "hurricane, typhoon",
+    "pinyin_alt": [
+      "jù"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

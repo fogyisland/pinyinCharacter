@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "金属元素，符号Ta，灰黑色，质硬耐腐蚀，用于电子工业和医疗器械",
-    "meaning_en": "tantalum (chemical element)"
+    "meaning_en": "tantalum (chemical element)",
+    "pinyin_alt": [
+      "tǎn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

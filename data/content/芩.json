@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "一种草本植物，即黄芩，根可入药，有清热燥湿的功效",
-    "meaning_en": "Scutellaria root (a medicinal herb)"
+    "meaning_en": "Scutellaria root (a medicinal herb)",
+    "pinyin_alt": [
+      "qín"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

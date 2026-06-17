@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "盛水或其他液体的器具，多为圆柱形或带柄",
-    "meaning_en": "cup, glass, or mug for drinking"
+    "meaning_en": "cup, glass, or mug for drinking",
+    "pinyin_alt": [
+      "bēi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

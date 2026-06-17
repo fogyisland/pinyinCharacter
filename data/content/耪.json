@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "用锄头翻松土地",
-    "meaning_en": "to hoe weeds; weed with a hoe"
+    "meaning_en": "to hoe weeds; weed with a hoe",
+    "pinyin_alt": [
+      "pǎng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

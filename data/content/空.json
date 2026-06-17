@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "天空中什么都没有，也指里面没有内容或未被占用",
-    "meaning_en": "empty, sky, hollow; unoccupied, free time"
+    "meaning_en": "empty, sky, hollow; unoccupied, free time",
+    "pinyin_alt": [
+      "kōng",
+      "kòng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

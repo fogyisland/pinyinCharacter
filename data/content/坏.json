@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "不完善的、有缺陷的；使原本完好的东西受到损害",
-    "meaning_en": "bad, broken, spoiled, to ruin"
+    "meaning_en": "bad, broken, spoiled, to ruin",
+    "pinyin_alt": [
+      "huài",
+      "pēi",
+      "péi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

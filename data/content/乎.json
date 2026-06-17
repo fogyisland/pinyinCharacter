@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用于句末表示疑问或推测，相当于“吗”“吧”",
-    "meaning_en": "(particle) in/at/to; question marker; archaic \"than\""
+    "meaning_en": "(particle) in/at/to; question marker; archaic \"than\"",
+    "pinyin_alt": [
+      "hū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

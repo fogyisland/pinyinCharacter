@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "加快速度追逐或前往某地",
-    "meaning_en": "to chase; to hurry; to drive away"
+    "meaning_en": "to chase; to hurry; to drive away",
+    "pinyin_alt": [
+      "gǎn",
+      "qián"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

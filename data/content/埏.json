@@ -4,8 +4,12 @@
   "level": 3,
   "dict": {
     "meaning_zh": "用水和泥制作陶器",
-    "meaning_en": "clay; pottery clay; earthenware material"
+    "meaning_en": "clay; pottery clay; earthenware material",
+    "pinyin_alt": [
+      "shān",
+      "yán"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

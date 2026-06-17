@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "物体突然爆裂或用高温油使食物熟透",
-    "meaning_en": "to explode; to deep-fry; to blow up"
+    "meaning_en": "to explode; to deep-fry; to blow up",
+    "pinyin_alt": [
+      "zhá",
+      "zhà"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

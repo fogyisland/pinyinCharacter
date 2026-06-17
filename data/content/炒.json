@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "把食物放在锅里用油加热翻搅使熟",
-    "meaning_en": "stir-fry; to fry; to hype up"
+    "meaning_en": "stir-fry; to fry; to hype up",
+    "pinyin_alt": [
+      "chǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

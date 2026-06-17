@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "罪过，过失，也指耽误错过",
-    "meaning_en": "overstep; fault; miss a deadline"
+    "meaning_en": "overstep; fault; miss a deadline",
+    "pinyin_alt": [
+      "qiān"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "各个，逐个，指全体中的任何一个或每一组",
-    "meaning_en": "each; every; per"
+    "meaning_en": "each; every; per",
+    "pinyin_alt": [
+      "měi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

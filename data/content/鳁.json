@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "鳁鱼，一种体长侧扁的小型海鱼，俗称沙丁鱼，可食用。",
-    "meaning_en": "a type of small fish (genus Sardinella)"
+    "meaning_en": "a type of small fish (genus Sardinella)",
+    "pinyin_alt": [
+      "wēn"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "骏马名，常用于骐骥一词指千里马",
-    "meaning_en": "A dark dappled horse; a legendary steed."
+    "meaning_en": "A dark dappled horse; a legendary steed.",
+    "pinyin_alt": [
+      "qí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

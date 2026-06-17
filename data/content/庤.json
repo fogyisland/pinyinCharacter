@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "储藏物品的库房",
-    "meaning_en": "Prepare; to set up; preliminary preparation"
+    "meaning_en": "Prepare; to set up; preliminary preparation",
+    "pinyin_alt": [
+      "zhì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

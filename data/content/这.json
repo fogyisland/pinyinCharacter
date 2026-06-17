@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "指代当前或较近的人或事物",
-    "meaning_en": "this, these; such"
+    "meaning_en": "this, these; such",
+    "pinyin_alt": [
+      "zhè",
+      "zhèi"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "骑坐车船或利用时机做某事",
-    "meaning_en": "ride; multiply; take advantage of"
+    "meaning_en": "ride; multiply; take advantage of",
+    "pinyin_alt": [
+      "chéng",
+      "shèng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "依照底样绘制或照着原样重复画",
-    "meaning_en": "trace, depict, copy (a drawing)"
+    "meaning_en": "trace, depict, copy (a drawing)",
+    "pinyin_alt": [
+      "miáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

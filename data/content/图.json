@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "用线条、颜色等表现的事物形象，也指地图、图表、图画等",
-    "meaning_en": "map, picture, plan; to seek, intend"
+    "meaning_en": "map, picture, plan; to seek, intend",
+    "pinyin_alt": [
+      "tú"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

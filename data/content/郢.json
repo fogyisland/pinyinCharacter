@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "古都城名,指春秋时期楚国都城郢,后泛指都城",
-    "meaning_en": "ancient capital of the Chu state"
+    "meaning_en": "ancient capital of the Chu state",
+    "pinyin_alt": [
+      "yǐng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

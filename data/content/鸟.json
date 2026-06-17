@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "鸟是脊椎动物的一类，恒温，体表有羽毛，前肢变成翼，大多能飞",
-    "meaning_en": "bird"
+    "meaning_en": "bird",
+    "pinyin_alt": [
+      "niǎo",
+      "diǎo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

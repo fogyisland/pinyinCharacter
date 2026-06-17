@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "呕吐，吐出胃里东西的意思",
-    "meaning_en": "to vomit; to retch"
+    "meaning_en": "to vomit; to retch",
+    "pinyin_alt": [
+      "ǒu",
+      "ōu",
+      "xū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

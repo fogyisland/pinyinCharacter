@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "敲打或锻造金属的工具,也指用锤敲击的动作",
-    "meaning_en": "hammer; mallet; to hammer"
+    "meaning_en": "hammer; mallet; to hammer",
+    "pinyin_alt": [
+      "chuí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

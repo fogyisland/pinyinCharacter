@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "怀疑，不能确定",
-    "meaning_en": "doubt, suspect, question"
+    "meaning_en": "doubt, suspect, question",
+    "pinyin_alt": [
+      "yí",
+      "nǐ",
+      "níng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

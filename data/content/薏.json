@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "薏苡的籽实,俗称薏米,可食用或入药",
-    "meaning_en": "Job's tears (a type of grain)"
+    "meaning_en": "Job's tears (a type of grain)",
+    "pinyin_alt": [
+      "yì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

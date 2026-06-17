@@ -4,8 +4,12 @@
   "level": 1,
   "dict": {
     "meaning_zh": "假如 如果 表示假设或可能性",
-    "meaning_en": "If; in case; supposing"
+    "meaning_en": "If; in case; supposing",
+    "pinyin_alt": [
+      "tǎng",
+      "cháng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,13 @@
   "level": 1,
   "dict": {
     "meaning_zh": "代词和语气词，指代某处或加强语气，常见于古文中，相当于于此、于是或啊的意思",
-    "meaning_en": "There; how; (final particle)"
+    "meaning_en": "There; how; (final particle)",
+    "pinyin_alt": [
+      "yān",
+      "yàn",
+      "yí"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 3,
   "dict": {
     "meaning_zh": "萩是一种蒿类植物，秋季开黄白花，常见于山野，也指日本地名",
-    "meaning_en": "bush clover (Lespedeza)"
+    "meaning_en": "bush clover (Lespedeza)",
+    "pinyin_alt": [
+      "qiū"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

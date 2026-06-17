@@ -4,8 +4,11 @@
   "level": 1,
   "dict": {
     "meaning_zh": "物体表面凸起的条状边缘",
-    "meaning_en": "edge; corner; ridge; angular"
+    "meaning_en": "edge; corner; ridge; angular",
+    "pinyin_alt": [
+      "léng"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "崤山,山名,在河南,古称崤坂,地势险要",
-    "meaning_en": "Mountain pass in Henan (Xiao Pass)"
+    "meaning_en": "Mountain pass in Henan (Xiao Pass)",
+    "pinyin_alt": [
+      "xiáo"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

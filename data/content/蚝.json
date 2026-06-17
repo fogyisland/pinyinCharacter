@@ -4,8 +4,12 @@
   "level": 2,
   "dict": {
     "meaning_zh": "蚝即牡蛎，一种海水双壳类软体动物，肉可食用，壳可入药",
-    "meaning_en": "oyster"
+    "meaning_en": "oyster",
+    "pinyin_alt": [
+      "háo",
+      "cì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }

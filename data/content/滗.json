@@ -4,8 +4,11 @@
   "level": 2,
   "dict": {
     "meaning_zh": "液体中的杂质或渣滓沉到底部，使上层液体流出以分离",
-    "meaning_en": "to decant; pour off liquid"
+    "meaning_en": "to decant; pour off liquid",
+    "pinyin_alt": [
+      "bì"
+    ]
   },
   "generated_by": "MiniMax-M3",
-  "generated_at": "2026-06-17T02:17:19.345Z"
+  "generated_at": "2026-06-17T04:09:46.279Z"
 }
