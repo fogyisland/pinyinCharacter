@@ -52,3 +52,20 @@ export async function printWorksheetRequest(id: number): Promise<{ id: number }>
   }
   return data.data;
 }
+
+export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksheetId: number; added: boolean }> {
+  const res = await fetch('/api/worksheets/append', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ char }),
+  });
+  if (res.status === 401) {
+    throw Object.assign(new Error('unauthorized'), { code: 'unauthorized' });
+  }
+  const data = await res.json();
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'add failed';
+    throw new Error(msg);
+  }
+  return data.data;
+}
