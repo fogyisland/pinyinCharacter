@@ -26,7 +26,7 @@ Naming chosen by user: enum value `cross` (display label 米字格). This deviat
   - vertical center line (existing — common to all)
   - horizontal center line (existing — currently under `square`)
   - both diagonals (existing — currently under `brush`)
-- Move the horizontal line out of the `square` branch into a `cross`-only line, since `cross` needs horizontal + vertical + diagonals and `square` needs only horizontal + vertical.
+- Keep the horizontal line under the `square` branch and render it again under the new `cross` branch (so `square` shows box + horizontal + vertical; `cross` shows box + horizontal + vertical + both diagonals). Vertical stays in the common block (already shared by all styles).
 
 Final SVG layout:
 
