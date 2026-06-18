@@ -39,7 +39,7 @@ export const saveWorksheetSchema = z.object({
     .array(z.string().regex(SINGLE_CJK))
     .min(1)
     .max(500),
-  cellStyle: z.enum(['brush', 'square', 'pen']),
+  cellStyle: z.enum(['brush', 'square', 'pen', 'cross']),
   paperSize: z.enum(['A3', 'A4', 'B5']).default('A4'),
   fontFamily: z.enum(['kai', 'song', 'hei']).default('song'),
 });
