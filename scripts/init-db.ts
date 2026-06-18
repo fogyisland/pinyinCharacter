@@ -127,7 +127,7 @@ const DDL = [
      user_id     BIGINT         NOT NULL,
      title       VARCHAR(80)    NOT NULL,
      content     JSON           NOT NULL,
-     cell_style  ENUM('brush','square') NOT NULL,
+     cell_style  ENUM('brush','square','pen','cross') NOT NULL,
      created_at  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
      PRIMARY KEY (id),
      KEY idx_user_created (user_id, created_at DESC),
