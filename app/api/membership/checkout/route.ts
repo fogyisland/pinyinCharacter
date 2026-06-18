@@ -5,6 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getPlanByKey, PLAN_KEYS } from '@/lib/membership';
 import { createPayPalOrder } from '@/lib/paypal';
 import { createPaymentOrder } from '@/lib/payment-orders';
+import { logUserAction } from '@/lib/audit';
 
 const Schema = z.object({ planKey: z.enum(PLAN_KEYS) });
 
@@ -33,6 +34,13 @@ export async function POST(req: NextRequest) {
     const orderId = await createPaymentOrder({
       userId: user.id, planId: plan.id, paypalOrderId: order.id,
       amount: plan.amount, currency: plan.currency, approvalUrl: approveLink?.href ?? null,
+    });
+
+    await logUserAction(req, user.id, 'membership_checkout_started', {
+      planKey: parsed.data.planKey,
+      planName: plan.displayName,
+      paypalOrderId: order.id,
+      paymentOrderId: orderId,
     });
 
     return NextResponse.json({

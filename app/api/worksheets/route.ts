@@ -3,6 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { listUserWorksheets, saveWorksheet } from '@/lib/worksheet';
 import { withErrorHandling, badRequest, unauthorized } from '@/lib/api-handler';
 import { saveWorksheetSchema } from '@/lib/validators';
+import { logUserAction } from '@/lib/audit';
 
 export async function GET(_req: NextRequest) {
   return withErrorHandling(async () => {
@@ -29,6 +30,13 @@ export async function POST(req: NextRequest) {
       title: parsed.data.title,
       content: parsed.data.content,
       cellStyle: parsed.data.cellStyle,
+      paperSize: parsed.data.paperSize,
+      fontFamily: parsed.data.fontFamily,
+    });
+    await logUserAction(req, user.id, 'worksheet_saved', {
+      action: 'save',
+      worksheetId: id,
+      title: parsed.data.title,
       paperSize: parsed.data.paperSize,
       fontFamily: parsed.data.fontFamily,
     });

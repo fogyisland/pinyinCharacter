@@ -5,6 +5,7 @@ import { getPool } from '@/lib/db';
 import { getConfig } from '@/lib/config';
 import { adminGenerateCharsSchema } from '@/lib/validators';
 import { processOneField, emptyPerField, ALL_FIELDS, type FieldName } from '@/lib/admin-char-gen';
+import { logUserAction } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,15 @@ export async function POST(req: NextRequest) {
       totals.skipped += r.skipped;
       totals.errors.push(...r.errors);
     }
+
+    await logUserAction(req, auth.user.id, 'admin_chars_generated', {
+      chars: parsed.data.chars,
+      fields: requested,
+      generated: totals.generated,
+      skipped: totals.skipped,
+      total: totals.generated + totals.skipped,
+      errors: totals.errors.length,
+    });
 
     return NextResponse.json({
       ok: true,

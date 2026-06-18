@@ -9,6 +9,7 @@ import {
   emptyPerField,
   type FieldName,
 } from '@/lib/admin-char-gen';
+import { logUserAction } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,6 +89,24 @@ export async function POST(req: NextRequest) {
     }
 
     const nextOffset = offset + chars.length;
+    let generatedTotal = 0, skippedTotal = 0, errorsTotal = 0;
+    for (const r of Object.values(perField)) {
+      generatedTotal += r.generated;
+      skippedTotal += r.skipped;
+      errorsTotal += r.errors.length;
+    }
+    await logUserAction(req, auth.user.id, 'admin_chars_generated', {
+      level,
+      fields: requested,
+      chars: chars.map((c: { char: string }) => c.char),
+      offset,
+      limit,
+      generated: generatedTotal,
+      skipped: skippedTotal,
+      total: generatedTotal + skippedTotal,
+      errors: errorsTotal,
+      durationMs: Date.now() - startMs,
+    });
     return NextResponse.json({
       ok: true,
       data: {

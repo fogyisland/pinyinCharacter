@@ -8,6 +8,7 @@ import { requireAdmin } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { adminInitSeedSchema } from '@/lib/validators';
+import { logUserAction } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
       await pool.query(`DELETE FROM chars WHERE \`char\` IN (${ALL.map(() => '?').join(',')})`, ALL);
       await pool.query(`DELETE FROM rare_chars WHERE \`char\` IN (${L3.map(() => '?').join(',')})`, L3);
       await pool.query(`DELETE FROM users WHERE username = ?`, [FIXTURE_USER]);
+      await logUserAction(req, auth.user.id, 'admin_chars_init_seed', { action, removed: ALL.length });
       return NextResponse.json({ ok: true, data: { action, removed: ALL.length } });
     }
 
@@ -72,6 +74,7 @@ export async function POST(req: NextRequest) {
         [c, `mock-L3-${c}`],
       );
     }
+    await logUserAction(req, auth.user.id, 'admin_chars_init_seed', { action, inserted: ALL.length });
     return NextResponse.json({
       ok: true,
       data: { action, inserted: ALL.length, adminUser: FIXTURE_USER, adminPass: FIXTURE_PASS },

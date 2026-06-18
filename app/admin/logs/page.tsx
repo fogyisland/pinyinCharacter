@@ -5,6 +5,7 @@ import { Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { LogRow } from '@/components/admin/LogRow';
 import { JsonPanel } from '@/components/admin/JsonPanel';
 import { listAdminLogsRequest, type AdminLogRow } from '@/lib/api-admin';
+import { formatLogMessage } from '@/lib/audit-format';
 
 // AuditEvent union from lib/audit.ts, plus synthetic events for download/ai_call.
 const EVENT_TYPES = [
@@ -16,11 +17,16 @@ const EVENT_TYPES = [
   'admin_user_promote', 'admin_user_demote',
   'user_disabled', 'user_reenabled',
   'ai_config_updated', 'ai_call_logged',
+  'tts_config_updated',
+  'scheduler_config_updated', 'scheduler_manual_trigger',
   'worksheet_saved', 'worksheet_deleted',
   'poem_saved', 'sutra_saved', 'rare_char_card_saved',
   'download_logged',
   'membership_granted', 'membership_granted_paypal', 'membership_revoked',
+  'membership_checkout_started',
   'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
+  'admin_chars_generated', 'admin_chars_init_seed',
+  'admin_membership_plans_seeded',
 ];
 
 const SOURCE_TYPES = [
@@ -183,12 +189,17 @@ export default function AdminLogsPage() {
               <button type="button" onClick={() => setSelected(null)} className="text-ink-faint hover:text-ink text-sm">关闭</button>
             </div>
             <div className="space-y-2 text-sm">
+              <p className="rounded bg-paper-deep px-3 py-2 text-ink">
+                {selected.source === 'audit'
+                  ? formatLogMessage(selected.event, selected.metadata)
+                  : selected.event}
+              </p>
               <p><span className="text-ink-soft">来源:</span> {selected.source}</p>
               <p><span className="text-ink-soft">时间:</span> {new Date(selected.createdAt).toLocaleString('zh-CN')}</p>
               {selected.username && <p><span className="text-ink-soft">用户:</span> {selected.username}</p>}
               {selected.ip && <p><span className="text-ink-soft">IP:</span> {selected.ip}</p>}
               <div>
-                <span className="text-ink-soft">元数据:</span>
+                <span className="text-ink-soft">元数据 (原始):</span>
                 <JsonPanel data={selected.metadata} />
               </div>
             </div>

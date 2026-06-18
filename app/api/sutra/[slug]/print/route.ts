@@ -3,8 +3,8 @@ import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
 import { requireUser } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 import { logDownload } from '@/lib/downloads';
-import { writeAudit } from '@/lib/audit';
-import { sutraExistsBySlug } from '@/lib/sutras-fs';
+import { logUserAction } from '@/lib/audit';
+import { sutraExistsBySlug, readSutraManifest } from '@/lib/sutras-fs';
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   return withErrorHandling(async () => {
@@ -24,13 +24,19 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       exists = rows.length > 0;
     }
     if (!exists) return notFound('not_found', 'sutra not found');
+    const manifest = readSutraManifest();
+    const sutraTitle = manifest?.items.find((i) => i.slug === slug)?.title ?? null;
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
-    const ua = req.headers.get('user-agent') ?? null;
     await logDownload({
       userId: auth.user.id, format: 'print', sourceType: 'sutra', sourceId,
       ip,
     });
-    await writeAudit({ userId: auth.user.id, event: 'sutra_saved', metadata: { action: 'print', sutraSlug: slug, chunkId }, ip, userAgent: ua });
+    await logUserAction(req, auth.user.id, 'sutra_saved', {
+      action: 'print',
+      slug,
+      title: sutraTitle,
+      chunkId,
+    });
     return NextResponse.json({ ok: true, data: { sourceId } });
   });
 }

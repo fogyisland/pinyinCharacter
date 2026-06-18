@@ -1,19 +1,7 @@
+import type { NextRequest } from 'next/server';
 import { getPool } from './db';
-
-export type AuditEvent =
-  | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete'
-  | 'password_reset_request' | 'password_reset_complete'
-  | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote'
-  | 'user_disabled' | 'user_reenabled'
-  | 'ai_config_updated' | 'ai_call_logged'
-  | 'tts_config_updated'
-  | 'scheduler_config_updated' | 'scheduler_manual_trigger'
-  | 'worksheet_saved' | 'worksheet_deleted'
-  | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved'
-  | 'membership_granted' | 'membership_granted_paypal' | 'membership_revoked'
-  | 'paypal_config_updated' | 'paypal_webhook_received' | 'paypal_webhook_rejected';
+import type { AuditEvent } from './audit-format';
+export type { AuditEvent } from './audit-format';
 
 export interface AuditEntry {
   userId: number | null;
@@ -36,4 +24,19 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
       entry.userAgent ?? null,
     ]
   );
+}
+
+/**
+ * Convenience wrapper: pulls IP + UA off a NextRequest and writes the audit
+ * row. Saves a few lines at every call site.
+ */
+export async function logUserAction(
+  req: NextRequest,
+  userId: number | null,
+  event: AuditEvent,
+  metadata: Record<string, unknown> | null = null,
+): Promise<void> {
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+  const ua = req.headers.get('user-agent') ?? null;
+  await writeAudit({ userId, event, metadata, ip, userAgent: ua });
 }
