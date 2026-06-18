@@ -973,7 +973,7 @@ import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
-import { sendEmail, EmailNotConfiguredError, EmailSendError } from '@/lib/email';
+import { sendEmail } from '@/lib/email';
 
 const TestSchema = z.object({ to: z.string().email() });
 
@@ -1012,11 +1012,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, data: { to } });
   });
 }
-
-// Avoid unused-import warning for EmailNotConfiguredError / EmailSendError;
-// these are caught by the generic `e` above but listed here for clarity.
-void EmailNotConfiguredError;
-void EmailSendError;
 ```
 
 ### Step 10 (3j): Add 邮件 entry to sidebar
