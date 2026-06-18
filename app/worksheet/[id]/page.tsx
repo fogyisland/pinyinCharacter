@@ -35,7 +35,7 @@ export default async function WorksheetDetailPage({ params }: Props) {
         <div className="worksheet-no-print mb-4 flex items-end justify-between gap-3">
           <SectionTitle>{ws.title}</SectionTitle>
           <div className="flex shrink-0 gap-2">
-            <PrintButton endpoint={`/api/worksheets/${ws.id}/print`} />
+            <PrintButton endpoint={`/api/worksheets/${ws.id}/print`} gate="multi_page" />
             <DeleteWorksheetButton id={ws.id} />
           </div>
         </div>

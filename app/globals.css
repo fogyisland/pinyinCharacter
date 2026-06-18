@@ -124,6 +124,13 @@
   }
 }
 
+/* ============ Batch print (Spec B / Task 8) ============ */
+.batch-print-area { position: absolute; left: -10000px; top: 0; width: 100%; }
+@media print {
+  .batch-print-area { position: static; left: 0; }
+  .print-page-break { page-break-after: always; break-after: page; }
+}
+
 /* Self-hosted Chinese fonts (replaces next/font/google) */
 :root {
   --font-han-sans: 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;

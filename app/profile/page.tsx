@@ -10,6 +10,7 @@ import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { WorksheetHistoryList } from '@/components/worksheet/WorksheetHistoryList';
 import { MembershipStatusCard } from '@/components/membership/MembershipStatusCard';
+import { hasFeature } from '@/lib/membership';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +21,7 @@ export default async function ProfilePage() {
 
   const stats = await getStats(session.userId);
   const worksheets = await listUserWorksheets(session.userId);
+  const hasMulti = await hasFeature(session.userId, 'multi_worksheet_print');
 
   const statCards = [
     { label: '总字数', value: stats.total },
@@ -53,7 +55,7 @@ export default async function ProfilePage() {
           </Link>
         </div>
         <div className="card-paper p-5">
-          <WorksheetHistoryList worksheets={worksheets} />
+          <WorksheetHistoryList worksheets={worksheets} hasMulti={hasMulti} />
         </div>
       </PageContainer>
       <Footer />

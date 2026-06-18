@@ -1,12 +1,47 @@
 'use client';
-import { useState } from 'react';
-import { Printer } from 'lucide-react';
 
-export function PrintButton({ endpoint, label = '打印', sourceId }: {
-  endpoint: string; label?: string; sourceId?: string;
-}) {
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Printer } from 'lucide-react';
+import { useToastStore } from '@/lib/toast-store';
+
+interface Props {
+  endpoint: string;
+  label?: string;
+  sourceId?: string;
+  gate?: 'multi_page' | null;
+}
+
+export function PrintButton({ endpoint, label = '打印', sourceId, gate = null }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [canPrint, setCanPrint] = useState<boolean | null>(null);
+  const push = useToastStore((s) => s.push);
+
+  useEffect(() => {
+    if (gate !== 'multi_page') return;
+    const m = endpoint.match(/\/api\/worksheets\/(\d+)\/print/);
+    if (!m) return;
+    const id = Number(m[1]);
+    if (!Number.isInteger(id) || id <= 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch(`/api/worksheets/${id}/can-print`);
+        const data = await r.json();
+        if (cancelled) return;
+        if (data?.ok && data?.data) {
+          setCanPrint(data.data.canPrint !== false);
+        } else {
+          setCanPrint(true);
+        }
+      } catch {
+        if (!cancelled) setCanPrint(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [endpoint, gate]);
+
   const onClick = async () => {
     setBusy(true);
     setError(null);
@@ -17,7 +52,12 @@ export function PrintButton({ endpoint, label = '打印', sourceId }: {
         body: JSON.stringify({ sourceId }),
       });
       const data = await res.json();
-      if (!data.ok) throw new Error(data.error?.message ?? 'print failed');
+      if (!res.ok) {
+        if (data?.error?.code === 'membership_required') {
+          push('error', '升级会员后可批量/多页打印');
+        }
+        throw new Error(data?.error?.message ?? 'print failed');
+      }
       window.print();
     } catch (e) {
       setError((e as Error).message);
@@ -25,6 +65,18 @@ export function PrintButton({ endpoint, label = '打印', sourceId }: {
       setBusy(false);
     }
   };
+
+  if (gate === 'multi_page' && canPrint === false) {
+    return (
+      <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+        本字帖超过 1 页，升级会员可打印全部页面 ·{' '}
+        <Link href="/membership" className="text-seal underline">
+          升级 →
+        </Link>
+      </div>
+    );
+  }
+
   return (
     <div className="inline-flex flex-col items-center gap-1">
       <button

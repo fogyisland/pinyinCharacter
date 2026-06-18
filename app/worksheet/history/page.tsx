@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { listUserWorksheets } from '@/lib/worksheet';
+import { hasFeature } from '@/lib/membership';
 import { WorksheetHistoryList } from '@/components/worksheet/WorksheetHistoryList';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -14,6 +15,7 @@ export default async function WorksheetHistoryPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/?auth=login&next=/worksheet/history');
   const worksheets = await listUserWorksheets(user.id);
+  const hasMulti = await hasFeature(user.id, 'multi_worksheet_print');
   return (
     <>
       <Suspense>
@@ -31,7 +33,7 @@ export default async function WorksheetHistoryPage() {
           </Link>
         </div>
         <div className="card-paper p-5">
-          <WorksheetHistoryList worksheets={worksheets} />
+          <WorksheetHistoryList worksheets={worksheets} hasMulti={hasMulti} />
         </div>
       </PageContainer>
       <Footer />
