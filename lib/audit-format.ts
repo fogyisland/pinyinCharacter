@@ -23,7 +23,8 @@ export type AuditEvent =
   | 'paypal_config_updated' | 'paypal_webhook_received' | 'paypal_webhook_rejected'
   | 'admin_chars_generated' | 'admin_chars_init_seed'
   | 'admin_membership_plans_seeded'
-  | 'admin_about_intro_regenerated';
+  | 'admin_about_intro_regenerated'
+  | 'smtp_config_updated' | 'smtp_test_sent';
 
 /**
  * Format an audit event + metadata into a short Chinese sentence for display
@@ -108,6 +109,11 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
 
     case 'admin_membership_plans_seeded': return `种子会员套餐 (${num(m.seeded) || '?'} 个)`;
     case 'admin_about_intro_regenerated': return `重新生成关于页介绍 (${num(m.charCount) || '?'} 字, ${num(m.durationMs) || '?'}ms, ${str(m.model) || '?'})`;
+
+    case 'smtp_config_updated':
+      return `更新邮件配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
+    case 'smtp_test_sent':
+      return `测试邮件发送 (to=${str(m.to) || '?'}, ok=${m.ok === true ? 'true' : m.ok === false ? 'false' : '?'}${str(m.error) ? `, error=${str(m.error)}` : ''})`;
 
     default: {
       const keys = Object.keys(m);

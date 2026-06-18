@@ -116,4 +116,16 @@ describe('formatLogMessage', () => {
     expect(formatLogMessage('admin_about_intro_regenerated', { charCount: 250, durationMs: 1200, model: 'gpt-4o-mini' }))
       .toBe('重新生成关于页介绍 (250 字, 1200ms, gpt-4o-mini)');
   });
+
+  it('formats smtp_config_updated with joined keys', () => {
+    expect(formatLogMessage('smtp_config_updated', { keys: ['smtp.host', 'smtp.port'] }))
+      .toBe('更新邮件配置(smtp.host、smtp.port)');
+  });
+
+  it('formats smtp_test_sent with to, ok, and error', () => {
+    expect(formatLogMessage('smtp_test_sent', { to: 'admin@x.com', ok: true }))
+      .toBe('测试邮件发送 (to=admin@x.com, ok=true)');
+    expect(formatLogMessage('smtp_test_sent', { to: 'admin@x.com', ok: false, error: 'connect refused' }))
+      .toBe('测试邮件发送 (to=admin@x.com, ok=false, error=connect refused)');
+  });
 });

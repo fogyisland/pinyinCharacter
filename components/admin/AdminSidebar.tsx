@@ -12,6 +12,7 @@ const ITEMS = [
   { href: '/admin/downloads', label: '下载' },
   { href: '/admin/ai', label: 'AI' },
   { href: '/admin/tts', label: '语音设置' },
+  { href: '/admin/email', label: '邮件' },
 ];
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {

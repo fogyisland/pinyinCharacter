@@ -24,6 +24,17 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
     'audio-16khz-32kbitrate-mono-mp3',
     'audio-16khz-128kbitrate-mono-mp3',
   ].includes(v),
+  'smtp.transport': (v) => v === 'console' || v === 'smtp',
+  'smtp.host': (v) => v.length === 0 || v.length <= 256,
+  'smtp.port': (v) => {
+    const n = parseInt(v, 10);
+    return Number.isInteger(n) && n >= 1 && n <= 65535;
+  },
+  'smtp.secure': (v) => v === 'true' || v === 'false',
+  'smtp.user': (v) => v.length <= 256,
+  'smtp.pass': (v) => v.length <= 256,
+  'smtp.from': (v) => v.length === 0 || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
+  'smtp.from_name': (v) => v.length <= 128,
 };
 
 export async function getConfig(key: string): Promise<string | null> {

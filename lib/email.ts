@@ -1,4 +1,5 @@
 import nodemailer, { type Transporter } from 'nodemailer';
+import { getMailTransport, getSmtpConfig } from './smtp-config';
 
 export interface EmailMessage {
   to: string;
@@ -16,40 +17,37 @@ export class EmailSendError extends Error {
 
 let cachedTransport: Transporter | null = null;
 
-function buildTransport(): Transporter {
+function buildTransport(cfg: NonNullable<Awaited<ReturnType<typeof getSmtpConfig>>>): Transporter {
   if (cachedTransport) return cachedTransport;
-  const host = process.env.SMTP_HOST;
-  const port = Number(process.env.SMTP_PORT ?? 587);
-  const secure = process.env.SMTP_SECURE === 'true';
-  const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
-  if (!host) throw new EmailNotConfiguredError('SMTP_HOST is not set');
   cachedTransport = nodemailer.createTransport({
-    host, port, secure,
-    auth: user && pass ? { user, pass } : undefined,
+    host: cfg.host,
+    port: cfg.port,
+    secure: cfg.secure,
+    auth: cfg.user && cfg.pass ? { user: cfg.user, pass: cfg.pass } : undefined,
   });
   return cachedTransport;
 }
 
 export async function sendEmail(msg: EmailMessage): Promise<void> {
-  const transport = (process.env.MAIL_TRANSPORT ?? 'console').toLowerCase();
+  const transport = await getMailTransport();
 
   if (transport === 'console') {
     console.log(`[email] To: ${msg.to} | Subject: ${msg.subject}\n${msg.text}`);
     return;
   }
 
-  if (transport !== 'smtp') {
-    throw new EmailNotConfiguredError(`Unknown MAIL_TRANSPORT: ${transport}`);
+  const cfg = await getSmtpConfig();
+  if (!cfg) {
+    throw new EmailNotConfiguredError('SMTP is not fully configured (set smtp.transport, smtp.host, smtp.from in app_config or SMTP_* in env)');
+  }
+  if (!cfg.from) {
+    throw new EmailNotConfiguredError('MAIL_FROM is not set');
   }
 
   try {
-    const tx = buildTransport();
-    const fromName = process.env.MAIL_FROM_NAME ?? '';
-    const fromAddr = process.env.MAIL_FROM;
-    if (!fromAddr) throw new EmailNotConfiguredError('MAIL_FROM is not set');
+    const tx = buildTransport(cfg);
     await tx.sendMail({
-      from: fromName ? `${fromName} <${fromAddr}>` : fromAddr,
+      from: cfg.fromName ? `${cfg.fromName} <${cfg.from}>` : cfg.from,
       to: msg.to,
       subject: msg.subject,
       html: msg.html,
