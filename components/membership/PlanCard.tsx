@@ -3,6 +3,7 @@ import { CheckoutButton } from './CheckoutButton';
 
 const FEATURE_LABELS: Record<string, string> = {
   unlimited_history: '无限历史记录', download_pdf: 'PDF 下载', ai_calls: 'AI 释义', priority_tts: '优先 TTS',
+  multi_worksheet_print: '批量 / 多页打印',
 };
 
 export function PlanCard({ plan, isLoggedIn }: {

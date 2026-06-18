@@ -6,7 +6,8 @@ export type PlanKey = typeof PLAN_KEYS[number];
 
 export type MembershipCurrency = 'CNY' | 'USD';
 export type MembershipFeature =
-  | 'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts';
+  | 'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts'
+  | 'multi_worksheet_print';
 
 export interface MembershipPlanRow {
   id: number;
@@ -85,7 +86,7 @@ const SEED_PLANS = [
   { plan_key: 'monthly_cny', display_name: '月度会员', duration_days: 30, amount: '15.00', currency: 'CNY', enabled: 0, display_order: 3 },
   { plan_key: 'yearly_cny', display_name: '年度会员', duration_days: 365, amount: '100.00', currency: 'CNY', enabled: 0, display_order: 4 },
 ];
-const ALL_FEATURES: MembershipFeature[] = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'];
+const ALL_FEATURES: MembershipFeature[] = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts', 'multi_worksheet_print'];
 
 export async function seedDefaultPlans(): Promise<number> {
   const pool = getPool();

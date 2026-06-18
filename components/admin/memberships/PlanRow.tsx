@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Save, RotateCcw, Check, AlertTriangle } from 'lucide-react';
 import { updateAdminPlanRequest, type AdminPlanRow as Plan } from '@/lib/api-admin';
 
-const ALL_FEATURES = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'] as const;
+const ALL_FEATURES = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts', 'multi_worksheet_print'] as const;
 const FEATURE_LABELS: Record<string, string> = {
   unlimited_history: '无限历史', download_pdf: 'PDF 下载', ai_calls: 'AI 调用', priority_tts: '优先 TTS',
+  multi_worksheet_print: '批量 / 多页打印',
 };
 
 export function PlanRow({ plan }: { plan: Plan }) {
