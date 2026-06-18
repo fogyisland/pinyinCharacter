@@ -6,6 +6,7 @@ const ITEMS = [
   { href: '/admin/users', label: '用户' },
   { href: '/admin/chars', label: '字典 / 字源' },
   { href: '/admin/chars/init', label: '⚙ 初始化', exact: true },
+  { href: '/admin/scheduler', label: '定期更新', exact: true },
   { href: '/admin/memberships', label: '会员' },
   { href: '/admin/logs', label: '日志' },
   { href: '/admin/downloads', label: '下载' },

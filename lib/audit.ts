@@ -9,6 +9,7 @@ export type AuditEvent =
   | 'user_disabled' | 'user_reenabled'
   | 'ai_config_updated' | 'ai_call_logged'
   | 'tts_config_updated'
+  | 'scheduler_config_updated' | 'scheduler_manual_trigger'
   | 'worksheet_saved' | 'worksheet_deleted'
   | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved'
   | 'membership_granted' | 'membership_granted_paypal' | 'membership_revoked'
