@@ -18,9 +18,13 @@ export const NAV_LINKS = [
   { href: '/membership', label: '会员' },
 ] as const;
 
+export const GITHUB_REPO_URL = 'https://github.com/fogyisland/pinyinCharacter';
+export const GITHUB_ISSUES_URL = `${GITHUB_REPO_URL}/issues`;
+export const GITHUB_NEW_ISSUE_URL = `${GITHUB_REPO_URL}/issues/new`;
+
 export const FOOTER_LINKS = [
   { href: '/about', label: '关于' },
   { href: '/guide', label: '使用指南' },
-  { href: 'https://github.com/your/repo', label: 'GitHub', external: true },
-  { href: '/feedback', label: '反馈' },
+  { href: GITHUB_REPO_URL, label: 'GitHub', external: true },
+  { href: GITHUB_ISSUES_URL, label: '反馈', external: true },
 ] as const;

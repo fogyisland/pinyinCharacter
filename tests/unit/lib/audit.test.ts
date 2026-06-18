@@ -112,4 +112,8 @@ describe('formatLogMessage', () => {
     expect(formatLogMessage('history_delete', undefined)).toBe('删除历史记录 #?');
     expect(formatLogMessage('login', null)).toBe('登录');
   });
+  it('formats admin_about_intro_regenerated', () => {
+    expect(formatLogMessage('admin_about_intro_regenerated', { charCount: 250, durationMs: 1200, model: 'gpt-4o-mini' }))
+      .toBe('重新生成关于页介绍 (250 字, 1200ms, gpt-4o-mini)');
+  });
 });

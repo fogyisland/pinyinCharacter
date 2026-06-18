@@ -22,7 +22,8 @@ export type AuditEvent =
   | 'membership_checkout_started'
   | 'paypal_config_updated' | 'paypal_webhook_received' | 'paypal_webhook_rejected'
   | 'admin_chars_generated' | 'admin_chars_init_seed'
-  | 'admin_membership_plans_seeded';
+  | 'admin_membership_plans_seeded'
+  | 'admin_about_intro_regenerated';
 
 /**
  * Format an audit event + metadata into a short Chinese sentence for display
@@ -106,6 +107,7 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
       return `${str(m.action) === 'clear' ? '清空' : '种子'} 测试数据${num(m.inserted) ? ` (${num(m.inserted)} 字)` : num(m.removed) ? ` (删除 ${num(m.removed)} 字)` : ''}`;
 
     case 'admin_membership_plans_seeded': return `种子会员套餐 (${num(m.seeded) || '?'} 个)`;
+    case 'admin_about_intro_regenerated': return `重新生成关于页介绍 (${num(m.charCount) || '?'} 字, ${num(m.durationMs) || '?'}ms, ${str(m.model) || '?'})`;
 
     default: {
       const keys = Object.keys(m);
