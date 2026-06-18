@@ -1,3 +1,5 @@
+import type { CharLevel } from '../components/etymology/era-dates';
+
 export const ERAS = ['jiaguwen', 'jinwen', 'xiaozhuan', 'lishu', 'kaishu'] as const;
 export type Era = (typeof ERAS)[number];
 
@@ -13,6 +15,7 @@ export interface Etymology {
   story: string | null;
   generatedBy: string | null;
   generatedAt: string | null;
+  level: CharLevel;
 }
 
 export interface EtymologyAdjacent {
@@ -26,6 +29,7 @@ export interface EtymologyClient {
   story: string | null;
   generatedBy: string | null;
   generatedAt: string | null;
+  level: CharLevel;
   prev: string | null;
   next: string | null;
 }

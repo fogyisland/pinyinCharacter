@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { getEtymology, getAdjacentChars } from '@/lib/etymology';
-import { EtymologyTimeline } from '@/components/etymology/EtymologyTimeline';
+import { EtymologyMorph } from '@/components/etymology/EtymologyMorph';
 import { EtymologyPrevNext } from '@/components/etymology/EtymologyPrevNext';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 
@@ -44,10 +44,11 @@ export default async function EtymologyPage({ params }: Props) {
           <span className="text-5xl sm:text-6xl font-serif text-ink mr-3 align-middle">{etymology.char}</span>
           <ReadAloudButton text={etymology.char} size="sm" variant="seal" label="读字" className="align-middle" />
         </SectionTitle>
-        <EtymologyTimeline
+        <EtymologyMorph
           char={etymology.char}
           eraGlyphs={etymology.eraGlyphs}
           story={etymology.story}
+          level={etymology.level}
         />
         <EtymologyPrevNext prev={adjacent.prev} next={adjacent.next} />
       </PageContainer>

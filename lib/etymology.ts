@@ -6,6 +6,24 @@ import {
   type EraGlyph,
 } from './etymology-types';
 import { getContent } from './content';
+import type { CharLevel } from '../components/etymology/era-dates';
+
+function toCharLevel(n: number | null | undefined): CharLevel {
+  if (n === 1 || n === 2 || n === 3) return n;
+  return 1;
+}
+
+async function readLevel(char: string): Promise<CharLevel> {
+  // File-first (post 2026-06-17 slim-DB)
+  const content = await getContent(char);
+  if (content?.level != null) return toCharLevel(content.level);
+  // DB fallback (legacy)
+  const [rows] = await getPool().query<any[]>(
+    `SELECT level FROM chars WHERE \`char\` = ? LIMIT 1`,
+    [char]
+  );
+  return toCharLevel(rows[0]?.level);
+}
 
 export async function getEtymology(char: string): Promise<Etymology | null> {
   const pool = getPool();
@@ -40,6 +58,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
       story: storyOnly,
       generatedBy: contentOnly?.etymology?.generated_by ?? null,
       generatedAt: contentOnly?.etymology?.generated_at ?? null,
+      level: await readLevel(char),
     };
   }
   const r = rows[0];
@@ -59,6 +78,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
     story,
     generatedBy,
     generatedAt,
+    level: await readLevel(char),
   };
 }
 
