@@ -5,6 +5,13 @@ import { PinyinAnchor } from './PinyinAnchor';
 import { RadicalSidebar, RADICALS } from './RadicalSidebar';
 import { DictionaryCharGrid } from './DictionaryCharGrid';
 
+const LEVELS: Array<{ value: undefined | 1 | 2 | 3; label: string }> = [
+  { value: undefined, label: '全部' },
+  { value: 1, label: '一级' },
+  { value: 2, label: '二级' },
+  { value: 3, label: '三级' },
+];
+
 interface Props {
   chars: Char[];
   total: number;
@@ -30,10 +37,36 @@ export function DictionaryClient({ chars, total, page, pageSize }: Props) {
     router.push(`/dictionary?${params.toString()}`);
   };
 
+  const activeLevel = sp.get('level');
+  const activeLevelNum = activeLevel === '1' ? 1 : activeLevel === '2' ? 2 : activeLevel === '3' ? 3 : undefined;
+
+  const switchLevel = (lvl: 1 | 2 | 3 | undefined) => {
+    const params = new URLSearchParams(sp.toString());
+    if (lvl === undefined) {
+      params.delete('level');
+    } else {
+      params.set('level', String(lvl));
+    }
+    router.push(`/dictionary?${params.toString()}`);
+  };
+
   return (
     <div>
       <div className="mb-4 flex items-center gap-2">
         <span className="text-xs text-ink-faint tracking-widest">字典 · {total} 字</span>
+        <div className="ml-4 flex gap-1">
+          {LEVELS.map((l) => (
+            <button
+              key={l.label}
+              onClick={() => switchLevel(l.value)}
+              className={`text-sm px-3 py-1 rounded ${
+                activeLevelNum === l.value ? 'bg-ink text-paper' : 'bg-paper-warm text-ink-soft border border-ink/20'
+              }`}
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
         <div className="ml-auto flex gap-1">
           <button
             onClick={() => switchView('pinyin')}
