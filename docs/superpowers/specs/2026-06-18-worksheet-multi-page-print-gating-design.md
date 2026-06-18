@@ -172,7 +172,7 @@ Free users can still `POST /api/worksheets` with any `content.length`. The save 
 - **R1 — paper-size enum drift.** Mitigation: `cellsPerPage` lives in one file; both backend gate and UI hint import from it.
 - **R2 — composite print CSS.** `@media print { .batch-print-area { position: static; } }` plus `page-break-after: always` between worksheets. Manual smoke required (no automated browser test infrastructure).
 - **R3 — orphan rows.** If a worksheet is deleted between fetch and render, UI silently drops it (acceptable; logged).
-- **R4 — batch cap of 50.** Documented in the validator message; UI shows hint when more are selected ("仅会打印前 50 张").
+- **R4 — batch cap of 50.** Validator enforces `.max(50)` strictly (request with 51+ IDs → 400 `bad_input`); UI shows hint "最多 50 张/批" near the batch button. No silent truncation.
 - **R5 — backfill migration.** `seedDefaultPlans` only runs on fresh `init-db.ts`; this migration inserts into existing plan rows.
 - **R6 — `hasFeature` cost.** `getMyFeatures` is `cache()`-wrapped; per-gate check is one cached query (or one direct query if cache miss). Acceptable.
 
