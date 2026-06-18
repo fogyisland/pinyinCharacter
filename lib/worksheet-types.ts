@@ -100,3 +100,5 @@ export function validateWorksheetInput(input: {
     data: { title: input.title, content: input.content as string[], cellStyle: input.cellStyle },
   };
 }
+
+export { cellsPerPage } from './worksheet-page-count';
