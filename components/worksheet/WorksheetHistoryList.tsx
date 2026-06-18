@@ -54,10 +54,13 @@ export function WorksheetHistoryList({ worksheets, hasMulti }: Props) {
             已选 <span className="font-medium text-ink">{selected.size}</span> / {worksheets.length}
           </span>
         </label>
-        <BatchPrintButton
-          selectedIds={Array.from(selected)}
-          hasFeature={hasMulti}
-        />
+        <div className="flex items-center gap-2">
+          <BatchPrintButton
+            selectedIds={Array.from(selected)}
+            hasFeature={hasMulti}
+          />
+          <span className="text-xs text-ink-faint">最多 50 张/批</span>
+        </div>
       </div>
       <ul className="divide-y rounded border">
         {worksheets.map((w) => (
