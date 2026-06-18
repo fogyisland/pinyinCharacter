@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { renderMarkdown } from '@/lib/markdown';
 import { GITHUB_REPO_URL } from '@/lib/design';
+import { filterUserReadme } from './filter';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,7 +29,7 @@ function readReadme(): string {
 }
 
 export default function GuidePage() {
-  const md = readReadme();
+  const md = filterUserReadme(readReadme());
   const html = renderMarkdown(md);
   return (
     <>
