@@ -127,25 +127,31 @@
   --font-wenkai: 'LXGW WenKai TC', 'Kaiti SC', 'KaiTi', 'STKaiti', serif;
 }
 
-/* ============ Ancient-script fonts (Plan L) ============ */
+/* ============ Ancient-script fonts (Plan L, refreshed 2026-06-18) ============ */
+/* Order of cascade: dedicated era font first, BabelStone Han as comprehensive
+   fallback for any glyph the dedicated font lacks. */
 @font-face {
   font-family: 'YinQiJiaGuWen';
-  src: url('/fonts/yinqi-jiaguwen.woff2') format('woff2');
+  src: url('/fonts/founder-jiaguwen.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'HanDianJinWen';
-  src: url('/fonts/handian-jinwen.woff2') format('woff2');
+  src: url('/fonts/BabelStoneHanBasic.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanExtra.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'QuanZiKuShuoWen';
-  src: url('/fonts/quanziku-shuowen.ttf') format('truetype');
+  src: url('/fonts/quanziku-shuowen.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'QuanZiKuLiDing';
-  src: url('/fonts/quanziku-liding.ttf') format('truetype');
+  src: url('/fonts/wang-hanzong-lishu.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
