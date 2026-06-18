@@ -16,10 +16,10 @@ export default async function StoriesPage() {
       <>
         <Suspense><Header /></Suspense>
         <PageContainer>
-          <SectionTitle subtitle="AI 生成的汉字故事">读故事</SectionTitle>
+          <SectionTitle subtitle="字源演变故事">读故事</SectionTitle>
           <EmptyState
             title="暂无可读的故事"
-            description="故事库还是空的,去字库逛逛看?"
+            description="字源故事还在生成中,稍后再来?"
           />
         </PageContainer>
         <Footer />
@@ -31,7 +31,7 @@ export default async function StoriesPage() {
       <Suspense><Header /></Suspense>
       <PageContainer>
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵 · 一日一读</div>
-        <SectionTitle subtitle="从 rare_chars 表中随机翻一个故事读">读故事</SectionTitle>
+        <SectionTitle subtitle="字源演变故事 · 任意字">读故事</SectionTitle>
         <StoryClient initialChar={initial as unknown as RareCharClient} />
       </PageContainer>
       <Footer />

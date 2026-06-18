@@ -84,8 +84,8 @@ describe('getRandomStoryChar', () => {
   });
 
   it('returns mapped RareChar when JSON has story', async () => {
-    // 1) initial SELECT random char (structural cols only)
-    queryMock.mockResolvedValueOnce([[{ char: '龘', pinyin: 'dá', needs_review: 1 }]]);
+    // 1) initial SELECT random char (LEFT JOIN chars+rare_chars)
+    queryMock.mockResolvedValueOnce([[{ char: '龘', c_pinyin: 'dá', r_pinyin: 'dá', level: 3 }]]);
     // 2) readRareContent DB fallback (cols still exist in test DB)
     queryMock.mockResolvedValueOnce([[{
       meaning: '古龙', story: '从前有龙',
@@ -97,7 +97,7 @@ describe('getRandomStoryChar', () => {
     const r = await getRandomStoryChar();
     expect(r).toEqual({
       char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有龙',
-      needsReview: true, generatedBy: 'openai:gpt-4o-mini',
+      needsReview: false, generatedBy: 'openai:gpt-4o-mini',
       generatedAt: new Date('2026-05-12T08:30:00Z'), createdAt: new Date('2026-05-12T08:00:00Z'),
     });
   });
@@ -106,7 +106,11 @@ describe('getRandomStoryChar', () => {
     queryMock.mockResolvedValue([[]]);
     await getRandomStoryChar();
     const [sql, params] = queryMock.mock.calls[0]!;
-    expect(String(sql)).toMatch(/FROM rare_chars/);
+    // /stories now sources from the universal chars table (etymology_story
+    // covers 7910 chars, not just L3). L3 pinyin comes via LEFT JOIN to
+    // rare_chars since chars.pinyin is empty for L3.
+    expect(String(sql)).toMatch(/FROM chars c/);
+    expect(String(sql)).toMatch(/LEFT JOIN rare_chars/);
     expect(String(sql)).toMatch(/ORDER BY RAND\(\)/);
     expect(String(sql)).toMatch(/LIMIT\s+\?/);
     expect(params).toEqual([1]);

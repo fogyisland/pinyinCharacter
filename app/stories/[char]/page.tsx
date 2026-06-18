@@ -37,7 +37,7 @@ export default async function StoryForCharPage({ params }: Props) {
       <Suspense><Header /></Suspense>
       <PageContainer>
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵 · 一日一读</div>
-        <SectionTitle subtitle="AI 生成的小故事">读故事</SectionTitle>
+        <SectionTitle subtitle="字源演变故事">读故事</SectionTitle>
         <StoryClient initialChar={adapted as any} />
       </PageContainer>
       <Footer />

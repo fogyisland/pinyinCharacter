@@ -64,8 +64,19 @@ interface DbContentRow {
  * post-migration DBs that no longer have the columns.
  */
 async function readRareContent(char: string): Promise<DbContentRow> {
-  // 1. JSON first
+  // 1. JSON first — universal etymology_story (covers all 7910 chars, primary
+  //    source for /stories as of 2026-06-18). Fall back to legacy L3-only
+  //    blocks for chars that don't have etymology yet.
   const content = readContentFromFs(char);
+  if (content?.etymology?.story) {
+    return {
+      meaning: content.rare?.meaning ?? null,
+      story: content.etymology.story,
+      generated_by: content.etymology.generated_by ?? null,
+      generated_at: content.etymology.generated_at ? new Date(content.etymology.generated_at) : null,
+      created_at: null,
+    };
+  }
   if (content?.rare) {
     return {
       meaning: content.rare.meaning ?? null,
@@ -187,16 +198,22 @@ export async function getDailyChar(dateStr: string): Promise<{
 }
 
 export async function getRandomStoryChar(): Promise<RareChar | null> {
+  // Pick a random char from the full chars table (any level). Story now comes
+  // from the universal etymology_story (7910/7910) rather than the L3-only
+  // rare_chars.story. L3 chars often have empty pinyin in chars table — left
+  // join rare_chars to fall back.
   const pool = getPool();
-  // Get a candidate (random) char, then check if it has a story in JSON/DB.
-  // Cheaper than scanning all 1412 chars for a story.
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, pinyin, needs_review FROM rare_chars ORDER BY RAND() LIMIT ?`,
+    `SELECT c.\`char\`, c.pinyin AS c_pinyin, r.pinyin AS r_pinyin, c.level
+     FROM chars c
+     LEFT JOIN rare_chars r ON c.\`char\` COLLATE utf8mb4_unicode_ci = r.\`char\` COLLATE utf8mb4_unicode_ci
+     ORDER BY RAND() LIMIT ?`,
     [1]
   );
   if (rows.length === 0) return null;
   const r = rows[0];
+  const pinyin = r.c_pinyin || r.r_pinyin || '';
   const db = await readRareContent(r.char);
   if (!db.story) return null;
-  return hydrate(r.char, r.pinyin, Boolean(r.needs_review), db);
+  return hydrate(r.char, pinyin, false, db);
 }
