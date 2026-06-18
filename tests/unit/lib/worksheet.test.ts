@@ -87,5 +87,29 @@ describe('worksheet pure helpers', () => {
       });
       expect(result.ok).toBe(false);
     });
+
+    it('accepts cellStyle="cross"', () => {
+      const result = validateWorksheetInput({
+        title: 'My worksheet',
+        content: ['你', '好'],
+        cellStyle: 'cross',
+      });
+      expect(result).toEqual({
+        ok: true,
+        data: { title: 'My worksheet', content: ['你', '好'], cellStyle: 'cross' },
+      });
+    });
+
+    it('rejects cellStyle="nonsense"', () => {
+      const result = validateWorksheetInput({
+        title: 'My worksheet',
+        content: ['你', '好'],
+        cellStyle: 'nonsense',
+      });
+      expect(result.ok).toBe(false);
+      if (!result.ok) {
+        expect(result.error).toBe('cellStyle must be brush, square, pen, or cross');
+      }
+    });
   });
 });

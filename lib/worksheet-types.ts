@@ -1,4 +1,4 @@
-export type CellStyle = 'brush' | 'square' | 'pen';
+export type CellStyle = 'brush' | 'square' | 'pen' | 'cross';
 export type PaperSize = 'A3' | 'A4' | 'B5';
 export type FontFamily = 'kai' | 'song' | 'hei';
 
@@ -79,8 +79,13 @@ export function validateWorksheetInput(input: {
   if (!input.content.every((c) => typeof c === 'string' && SINGLE_CJK.test(c))) {
     return { ok: false, error: 'content must be CJK chars' };
   }
-  if (input.cellStyle !== 'brush' && input.cellStyle !== 'square' && input.cellStyle !== 'pen') {
-    return { ok: false, error: 'cellStyle must be brush, square, or pen' };
+  if (
+    input.cellStyle !== 'brush' &&
+    input.cellStyle !== 'square' &&
+    input.cellStyle !== 'pen' &&
+    input.cellStyle !== 'cross'
+  ) {
+    return { ok: false, error: 'cellStyle must be brush, square, pen, or cross' };
   }
   return {
     ok: true,
