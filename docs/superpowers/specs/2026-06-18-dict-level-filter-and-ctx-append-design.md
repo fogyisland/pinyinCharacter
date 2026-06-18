@@ -1,14 +1,22 @@
-# 字典 level 筛选 + 右键追加到「我的字帖」 — 设计
+# 字典 level 筛选 + 右键追加到「我的字帖」 + 详情页 + JSON 解析修复 — 设计
 
 ## Context
 
 字典页面(`/dictionary`)目前:
 1. 没有 level 筛选 UI — 但后端 `listChars({ level })` 已支持,URL 传 `?level=1` 也能用,只是没暴露给用户
 2. 字符格是 server 渲染的 `<Link>`,无法触发右键菜单
+3. 详情页 (`/dictionary/<char>`) 上的「+ 字帖」是 `<Link>`,跳到 `/worksheet?text=...`,而不是直接 append
+
+字源 (`/etymology/<char>`) 和故事 (`/stories/<char>`) 页面 404,因为:
+- `getEtymology` 要求 `char_etymology` 表里有一行,大多数字(2026-06-17 slim migration 后)只有 JSON content
+- `getChar` (故事页用的) 读 `rare_chars` 表,大多数字没有 `rare_chars` 行
 
 用户希望:
 1. 字典页加 level 切换(全部 / 一级 / 二级 / 三级)
 2. 字符格右键 → 一项菜单「添加到我的字帖」→ 单字追加到一个属于当前用户的 worksheet 标题固定为「我的字帖」
+3. 详情页「+ 字帖」改成内联按钮,不跳页
+4. `/etymology/<char>` 从 JSON 读 etymology_story,不再 404
+5. `/stories/<char>` 从 JSON 读 hanzi_story,不再 404
 
 ## Goals
 
@@ -16,6 +24,9 @@
 - 右键追加走专用 endpoint,append 到每用户唯一的「我的字帖」(有就追加,没就建)
 - 反馈用全局 toast(新增基础设施),anonymous 用户也能看到菜单但 API 返 401 时给提示
 - 已存在的字不重复加,直接 toast「已存在」
+- 详情页「+ 字帖」inline 按钮直接调用同一 endpoint,不走跳转
+- 字源 / 故事 页面 JSON-first,DB 仅作 legacy fallback
+- 让 slim-migration 后没 DB 行的字也能正常访问字源和故事页面
 
 ## Non-Goals
 
@@ -24,6 +35,8 @@
 - 不做并发安全 DB 约束(下文风险部分说明)
 - 不做移动端长按弹出菜单(只桌面右键)
 - 不动其它页面的右键行为
+- 不做字源 / 故事页面的全新 UI 重设计 — 只改数据读取路径,渲染层尽量不动
+- 不迁移旧的 `char_story` 表(已 drop)
 
 ## 设计
 
@@ -266,6 +279,114 @@ if (e instanceof Error && 'code' in e && (e as any).code === 'unauthorized') {
 } else { ... }
 ```
 
+### 6. 详情页 inline +字帖 按钮
+
+**新文件 `components/dictionary/DictionaryDetailAddToWorksheet.tsx`**('use client'):
+
+```tsx
+'use client';
+import { useState } from 'react';
+import { useToastStore } from '@/lib/toast-store';
+import { appendCharToMyWorksheetApi } from '@/lib/api-worksheet';
+
+export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
+  const push = useToastStore((s) => s.push);
+  const [busy, setBusy] = useState(false);
+
+  const onClick = async () => {
+    setBusy(true);
+    try {
+      const { added } = await appendCharToMyWorksheetApi(char);
+      push(added ? 'success' : 'info', added ? `已添加「${char}」到「我的字帖」` : `「${char}」已经在「我的字帖」里了`);
+    } catch (e) {
+      const err = e as Error & { code?: string };
+      if (err.code === 'unauthorized') {
+        push('error', '请先登录后再添加');
+      } else {
+        push('error', '添加失败,请重试');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button onClick={onClick} disabled={busy} className="px-3 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-50">
+      {busy ? '添加中…' : '+ 字帖'}
+    </button>
+  );
+}
+```
+
+**修改 `components/dictionary/DictionaryDetailTabs.tsx`**: 把
+
+```tsx
+<Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="...">+ 字帖</Link>
+```
+
+替换为
+
+```tsx
+<DictionaryDetailAddToWorksheet char={char.char} />
+```
+
+不再跳页,跟右键菜单共用同一 API + toast 反馈路径。
+
+### 7. `/etymology/<char>` 不再 404 — JSON 优先
+
+**修改 `lib/etymology.ts`**: 当前 `getEtymology` 在 `char_etymology` 表没行时直接 return null → 页面 404。2026-06-17 slim migration 后大部分字没有该行,但 JSON 里有 `etymology.story`。
+
+新行为: 表没行时,如果 `data/content/<char>.json` 有 `etymology.story`,返回一个 minimal record (eraGlyphs 全 false,story 来自 JSON);都没有才 return null。
+
+```ts
+if (rows.length === 0) {
+  const contentOnly = await getContent(char);
+  const storyOnly = contentOnly?.etymology?.story ?? null;
+  if (!storyOnly) return null;
+  return {
+    char,
+    eraGlyphs: ERAS.map((era) => ({ era, font: '', hasGlyph: false })),
+    story: storyOnly,
+    generatedBy: contentOnly?.etymology?.generated_by ?? null,
+    generatedAt: contentOnly?.etymology?.generated_at ?? null,
+  };
+}
+```
+
+`EtymologyTimeline` 组件不用改 — 已有 eraGlyphs 空渲染 + story 区块渲染路径。
+
+### 8. `/stories/<char>` 不再 404 — JSON 优先
+
+**新文件 `lib/story.ts`**(server-only):
+
+```ts
+import 'server-only';
+import { getPool } from './db';
+import { getContent } from './content';
+
+export interface HanziStory {
+  char: string;
+  story: string;
+  pinyin?: string;
+}
+
+export async function getHanziStory(char: string): Promise<HanziStory | null> {
+  const content = await getContent(char);
+  if (content?.hanzi_story) {
+    return { char: content.char, story: content.hanzi_story, pinyin: content.pinyin };
+  }
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT \`char\`, pinyin, story FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
+    [char]
+  );
+  if (rows.length === 0 || !rows[0].story) return null;
+  return { char: rows[0].char, story: rows[0].story, pinyin: rows[0].pinyin };
+}
+```
+
+**修改 `app/stories/[char]/page.tsx`**: 用 `getHanziStory` 替换 `getChar`。`StoryClient` 的 props 形态需要适配 — 在写代码前先 `Read app/stories/StoryClient.tsx` 看它读哪些字段,做一个小的 inline adapter(类型上 `as any` 接受,HanziStory 子集够用)。
+
 ## 文件清单
 
 **新建:**
@@ -275,12 +396,17 @@ if (e instanceof Error && 'code' in e && (e as any).code === 'unauthorized') {
 - `components/common/Toast.tsx`(含 `ToastViewport`)
 - `components/dictionary/CharContextMenu.tsx`
 - `components/dictionary/DictionaryCharGridClient.tsx`
+- `components/dictionary/DictionaryDetailAddToWorksheet.tsx`
+- `lib/story.ts`
 - `tests/unit/lib/worksheet-append.test.ts`
 - `tests/integration/api/worksheets-append.test.ts`
 
 **修改:**
 - `components/dictionary/DictionaryClient.tsx` — 加 level 切换按钮
 - `components/dictionary/DictionaryCharGrid.tsx` — 改为薄壳 wrapper
+- `components/dictionary/DictionaryDetailTabs.tsx` — `+ 字帖` Link → button
+- `lib/etymology.ts` — JSON fallback 路径
+- `app/stories/[char]/page.tsx` — 用 `getHanziStory`
 - `lib/validators.ts` — 加 `appendToWorksheetSchema`
 - `lib/audit-format.ts` — 加 `worksheet_char_appended` 到 union + formatLogMessage case
 - `app/layout.tsx` — 挂 `<ToastViewport />`
@@ -327,6 +453,14 @@ if (e instanceof Error && 'code' in e && (e as any).code === 'unauthorized') {
 
 ToastViewport 是 client component,在 server layout 引用 OK(Next.js 15 允许 client component 嵌在 server tree)。无新坑。
 
+### R5:`/etymology/<char>` minimal-record 路径下 eraGlyphs 全 false
+
+JSON-only 路径返回的 record 里 `eraGlyphs` 全 `hasGlyph: false`,`EtymologyTimeline` 渲染时如果没 glyph 但有 story,渲染结果应是「故事 + 空白时间线」而不是 404。**实施时需确认 `EtymologyTimeline` 在 eraGlyphs 全 false 时不 crash**(读组件源码确认;若是严格依赖每个 era 有 glyph,需放宽条件)。
+
+### R6:`/stories/<char>` 的 `StoryClient` props 适配
+
+`StoryClient` 当前接受 `RareCharClient` 形态的 props。`HanziStory` 是其子集(`char`, `story`, `pinyin`),其它字段它可能不读,但如果类型严格的话需要 `as any` 适配。**实施时先 Read `app/stories/StoryClient.tsx` 看它读哪些字段**,只传它读的,其它字段用 `undefined` 兜底(或 `as any`)。
+
 ## Global Constraints
 
 - 跟 audit 审计偏好一致(每条 mutating endpoint 都走 `logUserAction`,见 `memory/user-action-audit-preference.md`)
@@ -340,10 +474,26 @@ ToastViewport 是 client component,在 server layout 引用 OK(Next.js 15 允许
 
 - `pnpm tsc --noEmit` — 干净
 - `pnpm build` — 干净(dev server 跑着时不要 build,先 tsc + tests)
-- `pnpm test tests/unit/lib/worksheet-append.test.ts` — 单元全过
-- `pnpm test tests/integration/api/worksheets-append.test.ts` — 集成全过
-- 浏览器人工冒烟:登录 → /dictionary 切 level → 右键 → toast → 跳 /worksheet/<id> 看到新字
+- `pnpm test tests/unit/lib/audit.test.ts` — 全过(含新事件)
+- `pnpm test tests/integration/api/worksheets-append.test.ts` — 5/5 集成全过
+- `pnpm test tests/unit/lib/worksheet-append.test.ts` — **本机跳过**:`piyin_test` DB 不存在(用户决策 2026-06-18),靠集成测试 + 浏览器冒烟验证
+- 浏览器人工冒烟:
+  - 登录 → /dictionary 切 level → URL `?level=N` 正确
+  - /dictionary 右键任意字 → 菜单 → 点 → toast 反馈
+  - /dictionary/<char> → 点 `+ 字帖` 按钮 → toast 反馈,不跳页
+  - /etymology/<char> → 200,显示 etymology_story
+  - /stories/<char> → 200,显示 hanzi_story
 
 ## 提交
 
-1 commit: `feat(dictionary): level filter + right-click append to 我的字帖`
+9 commits(每 task 1 个):
+
+1. `feat(worksheet-append): server lib for find-or-create 我的字帖 + append`
+2. `feat(audit): worksheet_char_appended event + appendToWorksheetSchema validator`
+3. `feat(worksheets-append): POST /api/worksheets/append endpoint + integration tests`
+4. `feat(toast): zustand store + ToastViewport mounted in root layout`
+5. `feat(dictionary): right-click '添加到我的字帖' menu + client wiring`
+6. `feat(dictionary): level filter buttons (全部/一级/二级/三级)`
+7. `feat(dictionary-detail): inline +字帖 button on char page (no nav)`
+8. `fix(etymology): read story from JSON when no char_etymology row (post slim-migration)`
+9. `fix(stories): read hanzi_story from JSON (slim-DB path) so /stories/<char> stops 404ing`

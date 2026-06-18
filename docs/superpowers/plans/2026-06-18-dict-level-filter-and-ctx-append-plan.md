@@ -41,6 +41,12 @@
 | `components/dictionary/DictionaryCharGridClient.tsx` (NEW) | Client: wraps char grid, handles onContextMenu + toast on add |
 | `components/dictionary/DictionaryCharGrid.tsx` (MODIFY) | Slim wrapper that delegates to `DictionaryCharGridClient` |
 | `components/dictionary/DictionaryClient.tsx` (MODIFY) | Add level filter buttons (全部 / 一级 / 二级 / 三级) |
+| `components/dictionary/DictionaryDetailAddToWorksheet.tsx` (NEW) | Client button on `/dictionary/<char>` calling append API |
+| `components/dictionary/DictionaryDetailTabs.tsx` (MODIFY) | Replace `+ 字帖` `<Link>` with the new client button |
+| `lib/etymology.ts` (MODIFY) | `getEtymology` reads from JSON when no `char_etymology` row exists; returns minimal record |
+| `components/etymology/EtymologyTimeline.tsx` (MODIFY) | Render story section even when eraGlyphs are empty (JSON-only path) |
+| `lib/story.ts` (NEW) | `getHanziStory(char)` reads from `data/content/<char>.json`, falls back to `rare_chars` |
+| `app/stories/[char]/page.tsx` (MODIFY) | Use `getHanziStory` instead of `getChar`; 404 only when no JSON + no rare_chars story |
 
 ---
 
@@ -962,6 +968,264 @@ git commit -m "feat(dictionary): level filter buttons (全部/一级/二级/三�
 
 ---
 
+## Task 7: Dictionary detail page — inline add-to-worksheet
+
+**Files:**
+- Create: `components/dictionary/DictionaryDetailAddToWorksheet.tsx`
+- Modify: `components/dictionary/DictionaryDetailTabs.tsx` (replace the `+ 字帖` `<Link>` with the new client button)
+
+**Interfaces:**
+- Consumes: `useToastStore` from `@/lib/toast-store`, `appendCharToMyWorksheetApi` from `@/lib/api-worksheet`
+- Produces: `<DictionaryDetailAddToWorksheet char={c.char} />` — client button that calls the append API and toasts feedback
+
+- [ ] **Step 1: Write the client component**
+
+Create `components/dictionary/DictionaryDetailAddToWorksheet.tsx`:
+
+```tsx
+'use client';
+
+import { useState } from 'react';
+import { useToastStore } from '@/lib/toast-store';
+import { appendCharToMyWorksheetApi } from '@/lib/api-worksheet';
+
+export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
+  const push = useToastStore((s) => s.push);
+  const [busy, setBusy] = useState(false);
+
+  const handleClick = async () => {
+    setBusy(true);
+    try {
+      const { added } = await appendCharToMyWorksheetApi(char);
+      if (added) {
+        push('success', `已添加「${char}」到「我的字帖」`);
+      } else {
+        push('info', `「${char}」已经在「我的字帖」里了`);
+      }
+    } catch (e) {
+      const err = e as Error & { code?: string };
+      if (err.code === 'unauthorized') {
+        push('error', '请先登录后再添加');
+      } else {
+        push('error', '添加失败,请重试');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={busy}
+      className="px-3 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-50"
+    >
+      {busy ? '添加中…' : '+ 字帖'}
+    </button>
+  );
+}
+```
+
+- [ ] **Step 2: Replace the existing `+ 字帖` link in DictionaryDetailTabs**
+
+Edit `components/dictionary/DictionaryDetailTabs.tsx`. 
+
+Add an import at the top alongside the other imports:
+
+```ts
+import { DictionaryDetailAddToWorksheet } from './DictionaryDetailAddToWorksheet';
+```
+
+Find the line:
+
+```tsx
+<Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">+ 字帖</Link>
+```
+
+Replace it with:
+
+```tsx
+<DictionaryDetailAddToWorksheet char={char.char} />
+```
+
+- [ ] **Step 3: Verify tsc**
+
+Run: `pnpm tsc --noEmit`
+Expected: clean.
+
+- [ ] **Step 4: Manual browser smoke**
+
+Open `http://localhost:4444/dictionary/<a-real-char>` (e.g. `/dictionary/不`). The `+ 字帖` button should now be a `<button>` not a `<Link>`. Click → toast appears, no navigation. Verify anonymous + logged-in flows.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add components/dictionary/DictionaryDetailAddToWorksheet.tsx components/dictionary/DictionaryDetailTabs.tsx
+git commit -m "feat(dictionary-detail): inline +字帖 button on char page (no nav)"
+```
+
+---
+
+## Task 8: Fix /etymology/<char> 404 — read etymology_story from JSON
+
+**Files:**
+- Modify: `lib/etymology.ts` — `getEtymology` returns minimal record when no `char_etymology` row exists but JSON content exists
+
+**Interfaces:**
+- Produces: `getEtymology(char): Promise<Etymology | null>` where the returned object has eraGlyphs defaulting to all `hasGlyph: false` and `story` from JSON when DB row is missing
+
+**Context:** Post 2026-06-17 slim migration, most chars have etymology_story in `data/content/<char>.json` only — no `char_etymology` row. The current `if (rows.length === 0) return null` makes `/etymology/<char>` 404 for them. Fix: if no row, return a minimal record so the page renders the JSON story.
+
+- [ ] **Step 1: Modify `getEtymology` to fall back to JSON-only path**
+
+Edit `lib/etymology.ts`. Find the line `if (rows.length === 0) return null;` and replace it with:
+
+```ts
+if (rows.length === 0) {
+  // Slim-DB path: no char_etymology row, but story may live in data/content/<char>.json.
+  const contentOnly = await getContent(char);
+  const storyOnly = contentOnly?.etymology?.story ?? null;
+  if (!storyOnly) return null;
+  return {
+    char,
+    eraGlyphs: ERAS.map((era) => ({
+      era,
+      font: '',
+      hasGlyph: false,
+    })),
+    story: storyOnly,
+    generatedBy: contentOnly?.etymology?.generated_by ?? null,
+    generatedAt: contentOnly?.etymology?.generated_at ?? null,
+  };
+}
+```
+
+- [ ] **Step 2: Verify tsc**
+
+Run: `pnpm tsc --noEmit`
+Expected: clean.
+
+- [ ] **Step 3: Manual browser smoke**
+
+- `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4444/etymology/不` — should be 200 (was 404)
+- `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4444/etymology/<a-char-with-no-content-json>` — should still 404 (genuine not-found)
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add lib/etymology.ts
+git commit -m "fix(etymology): read story from JSON when no char_etymology row (post slim-migration)"
+```
+
+---
+
+## Task 9: Fix /stories/<char> 404 — read hanzi_story from JSON
+
+**Files:**
+- Create: `lib/story.ts`
+- Modify: `app/stories/[char]/page.tsx` — use new `getHanziStory` instead of `getChar`
+
+**Interfaces:**
+- Produces: `getHanziStory(char): Promise<{ char: string; story: string; pinyin?: string } | null>` — reads from JSON first, falls back to `rare_chars`
+
+**Context:** Same root cause as Task 8. `/stories/<char>` reads from `rare_chars` table only — most chars don't have a rare_chars row, so the page 404s even though their `data/content/<char>.json` has a `hanzi_story` field.
+
+- [ ] **Step 1: Write `getHanziStory`**
+
+Create `lib/story.ts`:
+
+```ts
+import 'server-only';
+import { getPool } from './db';
+import { getContent } from './content';
+
+export interface HanziStory {
+  char: string;
+  story: string;
+  pinyin?: string;
+}
+
+/**
+ * Read a char's hanzi_story (汉字故事).
+ *
+ * Slim-DB order: data/content/<char>.json (preferred, post 2026-06-17
+ * migration), then rare_chars.story (legacy L3 fallback).
+ */
+export async function getHanziStory(char: string): Promise<HanziStory | null> {
+  const content = await getContent(char);
+  if (content?.hanzi_story) {
+    return { char: content.char, story: content.hanzi_story, pinyin: content.pinyin };
+  }
+
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT \`char\`, pinyin, story FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
+    [char]
+  );
+  if (rows.length === 0 || !rows[0].story) return null;
+  return { char: rows[0].char, story: rows[0].story, pinyin: rows[0].pinyin };
+}
+```
+
+- [ ] **Step 2: Update stories page**
+
+Edit `app/stories/[char]/page.tsx`. Replace the imports:
+
+```ts
+// before
+import { getChar } from '@/lib/rare-chars';
+import type { RareCharClient } from '@/lib/api-rare-chars';
+import { StoryClient } from '../StoryClient';
+
+// after
+import { getHanziStory } from '@/lib/story';
+import { StoryClient } from '../StoryClient';
+```
+
+Then in the page body, replace `const data = await getChar(decoded);` with:
+
+```ts
+const data = await getHanziStory(decoded);
+```
+
+And replace `if (!data || !data.story) notFound();` — keep as-is (data.story check still applies).
+
+Replace `<StoryClient initialChar={data as unknown as RareCharClient} />` with a wrapper that adapts the slimmer `HanziStory` shape to whatever `StoryClient` needs. **Action for implementer:** read `app/stories/StoryClient.tsx` to see what fields it reads from `initialChar`, then write a small adapter inline:
+
+```tsx
+{(() => {
+  const adapted = {
+    char: data.char,
+    story: data.story,
+    pinyin: data.pinyin ?? '',
+    // ... other fields StoryClient reads, with sensible defaults
+  };
+  return <StoryClient initialChar={adapted as any} />;
+})()}
+```
+
+The implementer MUST open `StoryClient.tsx` first to learn its actual prop shape, then write the adapter. (The dict-detail Tabs pattern; cannot be fully verbatim without seeing StoryClient.)
+
+- [ ] **Step 3: Verify tsc**
+
+Run: `pnpm tsc --noEmit`
+Expected: clean.
+
+- [ ] **Step 4: Manual browser smoke**
+
+- `curl -s -o /dev/null -w "%{http_code}\n" http://localhost:4444/stories/不` — should be 200 (was 404)
+- Page should render the hanzi_story from `data/content/不.json`
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add lib/story.ts app/stories/[char]/page.tsx
+git commit -m "fix(stories): read hanzi_story from JSON (slim-DB path) so /stories/<char> stops 404ing"
+```
+
+---
+
 ## Self-Review
 
 **Spec coverage:**
@@ -974,6 +1238,9 @@ git commit -m "feat(dictionary): level filter buttons (全部/一级/二级/三�
 - 401 handling ✓ (Task 5)
 - Concurrent risk acknowledged in lib comment ✓ (Task 1)
 - Validator with `SINGLE_CJK` reuse ✓ (Task 2)
+- Detail page inline add-to-worksheet ✓ (Task 7)
+- /etymology/<char> JSON fallback (no more 404) ✓ (Task 8)
+- /stories/<char> JSON fallback (no more 404) ✓ (Task 9)
 
 **Placeholder scan:** no TBD/TODO/FIXME; all steps have full code.
 
@@ -990,9 +1257,13 @@ git commit -m "feat(dictionary): level filter buttons (全部/一级/二级/三�
 
 After all tasks:
 1. `pnpm tsc --noEmit` clean
-2. `pnpm test tests/unit/lib/worksheet-append.test.ts` — 4/4
-3. `pnpm test tests/unit/lib/audit.test.ts` — all pass (count bumped to 34 + 2 new formatLogMessage cases)
-4. `pnpm test tests/integration/api/worksheets-append.test.ts` — 5/5
-5. Manual browser smoke: level filter + right-click + toast + `/worksheet/<id>` shows added char
+2. `pnpm test tests/unit/lib/audit.test.ts` — all pass (count bumped to 34 + 2 new formatLogMessage cases)
+3. `pnpm test tests/integration/api/worksheets-append.test.ts` — 5/5
+4. **Skipped:** `pnpm test tests/unit/lib/worksheet-append.test.ts` — `piyin_test` DB does not exist on this host (per user decision 2026-06-18); rely on integration test + browser smoke for behavior verification
+5. Manual browser smoke:
+   - `/dictionary` — level filter (全部/一级/二级/三级) works; URL has `?level=N`
+   - `/dictionary/<char>` — right-click any char → menu → toast feedback; click `+ 字帖` button (no nav)
+   - `/etymology/<char>` — 200 (was 404); renders etymology_story
+   - `/stories/<char>` — 200 (was 404); renders hanzi_story
 
 Do **NOT** run `pnpm build` while `pnpm dev` is alive on port 4444 — corrupts `.next/`. If you need build verification, kill dev first.
