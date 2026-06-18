@@ -7,10 +7,36 @@ import {
 } from './etymology-types';
 import { getContent } from './content';
 import type { CharLevel } from '../components/etymology/era-dates';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 function toCharLevel(n: number | null | undefined): CharLevel {
   if (n === 1 || n === 2 || n === 3) return n;
   return 1;
+}
+
+// Era → font-family name (must match globals.css @font-face declarations)
+const ERA_FONT: Record<string, string> = {
+  jiaguwen: 'YinQiJiaGuWen',
+  jinwen: 'HanDianJinWen',
+  xiaozhuan: 'QuanZiKuShuoWen',
+  lishu: 'QuanZiKuLiDing',
+  kaishu: 'KaiTi',
+};
+
+type EraCoverage = Record<'jiaguwen' | 'jinwen' | 'xiaozhuan' | 'lishu', boolean>;
+type CoverageMap = Record<string, EraCoverage>;
+let _coverageCache: CoverageMap | null = null;
+function getEraCoverage(char: string): EraCoverage | null {
+  if (_coverageCache) return _coverageCache[char] ?? null;
+  const path = join(process.cwd(), 'data', 'era-coverage.json');
+  if (!existsSync(path)) return null;
+  try {
+    _coverageCache = JSON.parse(readFileSync(path, 'utf8')) as CoverageMap;
+  } catch {
+    _coverageCache = {};
+  }
+  return _coverageCache[char] ?? null;
 }
 
 async function readLevel(char: string): Promise<CharLevel> {
@@ -45,15 +71,19 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
   );
   if (rows.length === 0) {
     // Slim-DB path: no char_etymology row, but story may live in data/content/<char>.json.
+    // Era glyph availability is filled from data/era-coverage.json (built by
+    // scripts/build-era-coverage.ts) so the morph component can render ancient
+    // forms even when the DB row is missing.
     const contentOnly = await getContent(char);
     const storyOnly = contentOnly?.etymology?.story ?? null;
     if (!storyOnly) return null;
+    const cov = getEraCoverage(char);
     return {
       char,
       eraGlyphs: ERAS.map((era) => ({
         era,
-        font: '',
-        hasGlyph: false,
+        font: ERA_FONT[era] ?? '',
+        hasGlyph: era === 'kaishu' ? true : cov?.[era as 'jiaguwen' | 'jinwen' | 'xiaozhuan' | 'lishu'] ?? false,
       })),
       story: storyOnly,
       generatedBy: contentOnly?.etymology?.generated_by ?? null,
