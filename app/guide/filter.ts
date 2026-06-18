@@ -16,7 +16,7 @@ export function filterUserReadme(md: string): string {
   let skip = false;
   for (const line of lines) {
     if (line.startsWith('## ')) {
-      skip = (BLOCKED_H2_SECTIONS as readonly string[]).includes(line);
+      skip = BLOCKED_H2_SECTIONS.some((prefix) => line.startsWith(prefix));
     }
     if (!skip) out.push(line);
   }

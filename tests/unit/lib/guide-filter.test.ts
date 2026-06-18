@@ -70,6 +70,30 @@ describe('filterUserReadme', () => {
     expect(out).not.toContain('后台管理用户');
   });
 
+  it('removes admin sections even when README heading has a parenthetical suffix (matches real README)', () => {
+    const real = `# 标题
+
+intro
+
+## 启动
+
+stuff
+
+## 管理员后台扩展（v1 / Plan H）
+
+admin stuff
+
+## 路线图
+
+roadmap
+`;
+    const out = filterUserReadme(real);
+    expect(out).not.toContain('## 管理员后台扩展');
+    expect(out).not.toContain('admin stuff');
+    expect(out).toContain('## 路线图'); // ensure startsWith doesn't break non-blocked sections
+    // The literal '## 管理员后台扩展（v1 / Plan H）' heading is dropped.
+  });
+
   it('removes 环境变量 section', () => {
     const out = filterUserReadme(SAMPLE);
     expect(out).not.toContain('## 环境变量');
