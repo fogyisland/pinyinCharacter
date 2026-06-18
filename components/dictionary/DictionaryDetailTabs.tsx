@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { CharWithRelated } from '@/lib/chars-types';
 import { StrokeOrderCard } from './StrokeOrderCard';
+import { DictionaryDetailAddToWorksheet } from './DictionaryDetailAddToWorksheet';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 
 export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
@@ -10,7 +11,7 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
         <span className="bg-ink text-paper px-3 py-2 rounded-t text-sm">字典</span>
         <Link href={`/etymology/${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">字源 →</Link>
         <Link href={`/stories/${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">故事 →</Link>
-        <Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">+ 字帖</Link>
+        <DictionaryDetailAddToWorksheet char={char.char} />
         <span className="ml-auto flex items-center gap-2 pb-1">
           <ReadAloudButton text={char.char} label="读字" size="sm" variant="seal" voice="male" />
           <ReadAloudButton text={char.pinyin} label="读音" size="sm" variant="paper" voice="female" />
