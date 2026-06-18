@@ -14,9 +14,9 @@ describe('toneFromPinyin', () => {
   it('returns 4 for à', () => {
     expect(toneFromPinyin('mà')).toBe(4);
   });
-  it('returns 5 for unmarked syllable', () => {
-    expect(toneFromPinyin('ma')).toBe(5);
-    expect(toneFromPinyin('a')).toBe(5);
+  it('returns null for unmarked syllable (neutral/轻声)', () => {
+    expect(toneFromPinyin('ma')).toBeNull();
+    expect(toneFromPinyin('a')).toBeNull();
   });
   it('handles compound syllables (ni3hao3 with diacritics)', () => {
     expect(toneFromPinyin('nǐ')).toBe(3);
@@ -25,10 +25,10 @@ describe('toneFromPinyin', () => {
   it('handles ü with tone mark (lǜ → 4)', () => {
     expect(toneFromPinyin('lǜ')).toBe(4);
   });
-  it('returns 5 for empty string', () => {
-    expect(toneFromPinyin('')).toBe(5);
+  it('returns null for empty string', () => {
+    expect(toneFromPinyin('')).toBeNull();
   });
-  it('returns 5 for v (ü placeholder) with no mark', () => {
-    expect(toneFromPinyin('lv')).toBe(5);
+  it('returns null for v (ü placeholder) with no mark', () => {
+    expect(toneFromPinyin('lv')).toBeNull();
   });
 });

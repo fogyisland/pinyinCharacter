@@ -1,4 +1,6 @@
+import { pinyin } from 'pinyin-pro';
 import { getPool } from './db';
+import { readContentFromFs } from './content';
 import type { Char, CharListResult, CharWithRelated } from './chars-types';
 
 const PAGE_SIZE = 80;
@@ -12,18 +14,65 @@ export interface ListCharsOpts {
   page?: number;
 }
 
-function mapRow(row: any): Char {
+interface DbRow {
+  char: string;
+  level: 1 | 2 | 3;
+  pinyin: string;
+  radical: string;
+  stroke_count: number;
+  unicode_codepoint: string;
+}
+
+const pinyinCache = new Map<string, string>();
+
+/**
+ * Resolve pinyin for a char, preferring the DB value (populated by the
+ * chars import). Falls back to pinyin-pro for chars with empty DB pinyin
+ * (most L1/L2/L3 chars after the 2026-06-17 migration dropped the
+ * LLM-generated pinyin_alt column). Cached per process to keep list pages
+ * cheap.
+ */
+function resolvePinyin(char: string, dbPinyin: string | null | undefined): string {
+  if (dbPinyin && dbPinyin.trim()) return dbPinyin.trim();
+  const cached = pinyinCache.get(char);
+  if (cached) return cached;
+  const generated = pinyin(char, { toneType: 'symbol' }).trim();
+  pinyinCache.set(char, generated);
+  return generated;
+}
+
+/**
+ * Convert a DB row + JSON content into the public Char shape. Post 2026-06-17
+ * migration the chars table only carries structural metadata; meaning /
+ * pinyin_alt / variants are read from data/content/<char>.json.
+ */
+function hydrateChar(row: DbRow): Char {
+  const content = readContentFromFs(row.char);
+  const resolvedPinyin = resolvePinyin(row.char, row.pinyin);
   return {
     char: row.char,
     level: row.level,
-    pinyin: row.pinyin ?? '',
-    pinyinAlt: row.pinyin_alt ? JSON.parse(row.pinyin_alt) : [],
+    pinyin: resolvedPinyin,
+    pinyinAlt: content?.dict?.pinyin_alt ?? [],
     radical: row.radical ?? '',
     strokeCount: row.stroke_count ?? 0,
-    meaningZh: row.meaning_zh,
-    meaningEn: row.meaning_en,
-    unicodeCodepoint: row.unicode_codepoint,
-    variants: row.variants ? JSON.parse(row.variants) : [],
+    meaningZh: content?.dict?.meaning_zh ?? content?.meaning_zh ?? null,
+    meaningEn: content?.dict?.meaning_en ?? null,
+    unicodeCodepoint: row.unicode_codepoint ?? '',
+    variants: content?.dict?.variants ?? [],
+  };
+}
+
+/**
+ * Like hydrateChar but only returns the fields the game needs. Used by
+ * getRandomChars which returns a smaller shape.
+ */
+function hydrateCharMinimal(row: DbRow): Pick<Char, 'char' | 'pinyin' | 'meaningZh'> {
+  const content = readContentFromFs(row.char);
+  return {
+    char: row.char,
+    pinyin: resolvePinyin(row.char, row.pinyin),
+    meaningZh: content?.dict?.meaning_zh ?? content?.meaning_zh ?? null,
   };
 }
 
@@ -35,9 +84,13 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
   const where: string[] = [];
   const params: any[] = [];
 
+  // After the 2026-06-17 migration `pinyin` is empty for most chars in DB,
+  // so the old `pinyin LIKE` search no longer returns anything useful.
+  // For now we only support exact single-char match. The `letter` filter
+  // (used by pinyin-bucketed dictionary views) is similarly degraded.
   if (opts.q) {
-    where.push('(pinyin LIKE ? OR `char` = ? OR meaning_en LIKE ?)');
-    params.push(`%${opts.q}%`, opts.q, `%${opts.q}%`);
+    where.push('`char` = ?');
+    params.push(opts.q);
   }
   if (opts.letter) {
     where.push('pinyin LIKE ?');
@@ -55,21 +108,21 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, pinyin_alt, radical, stroke_count, meaning_zh, meaning_en, unicode_codepoint, variants
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
      FROM chars
      ${whereSql}
      ORDER BY pinyin, \`char\`
      LIMIT ? OFFSET ?`,
-    [...params, PAGE_SIZE, offset]
+    [...params, PAGE_SIZE, offset],
   );
 
   const [countRows] = await pool.query<any[]>(
     `SELECT COUNT(*) AS n FROM chars ${whereSql}`,
-    params
+    params,
   );
 
   return {
-    chars: rows.map(mapRow),
+    chars: (rows as DbRow[]).map(hydrateChar),
     total: countRows[0].n,
     page,
     pageSize: PAGE_SIZE,
@@ -79,39 +132,39 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
 export async function getChar(char: string): Promise<Char | null> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, pinyin_alt, radical, stroke_count, meaning_zh, meaning_en, unicode_codepoint, variants
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
      FROM chars
      WHERE \`char\` = ?
      LIMIT 1`,
-    [char]
+    [char],
   );
-  return rows.length > 0 ? mapRow(rows[0]) : null;
+  if (rows.length === 0) return null;
+  return hydrateChar(rows[0] as DbRow);
 }
 
 export async function getCharDetail(char: string): Promise<CharWithRelated | null> {
   const base = await getChar(char);
   if (!base) return null;
   const pool = getPool();
+
+  // Related-by-radical uses DB radical, which is populated by chars import.
   const [radicalRows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, pinyin_alt, radical, stroke_count, meaning_zh, meaning_en, unicode_codepoint, variants
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
      FROM chars
      WHERE radical = ? AND \`char\` != ?
      ORDER BY stroke_count
      LIMIT ?`,
-    [base.radical, char, RELATED_LIMIT]
+    [base.radical, char, RELATED_LIMIT],
   );
-  const [pinyinRows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, pinyin_alt, radical, stroke_count, meaning_zh, meaning_en, unicode_codepoint, variants
-     FROM chars
-     WHERE pinyin = ? AND \`char\` != ?
-     ORDER BY \`char\`
-     LIMIT ?`,
-    [base.pinyin, char, RELATED_LIMIT]
-  );
+
+  // Related-by-pinyin: since most chars have empty DB pinyin, this would
+  // typically return nothing. Skip the SQL roundtrip — pinyin-bucketed
+  // "related" views are disabled for now.
+  void base.pinyin;
   return {
     ...base,
-    relatedByRadical: radicalRows.map(mapRow),
-    relatedByPinyin: pinyinRows.map(mapRow),
+    relatedByRadical: (radicalRows as DbRow[]).map(hydrateChar),
+    relatedByPinyin: [],
   };
 }
 
@@ -132,7 +185,7 @@ export async function getRandomChars(opts: {
   // The previous `REGEXP '^[一-鿿]$'` filter failed because MySQL's REGEXP
   // `$` anchor doesn't align with multi-byte char boundaries.
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, pinyin, meaning_zh
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
      FROM chars
      WHERE level IN (${placeholders})
        AND LENGTH(\`char\`) = 3
@@ -140,9 +193,5 @@ export async function getRandomChars(opts: {
      LIMIT ?`,
     [...levels, opts.count],
   );
-  return rows.map(r => ({
-    char: r.char,
-    pinyin: r.pinyin ?? '',
-    meaningZh: r.meaning_zh,
-  }));
+  return (rows as DbRow[]).map(hydrateCharMinimal);
 }

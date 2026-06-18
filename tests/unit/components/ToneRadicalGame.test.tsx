@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import { GlobalWindow } from 'happy-dom';
-import { render, fireEvent, waitFor, screen } from '@testing-library/react';
+import { render, waitFor, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { ToneRadicalGame } from '@/components/game/ToneRadicalGame';
 
@@ -20,7 +20,9 @@ vi.mock('@/lib/api-game', () => ({
 import { fetchGameRound } from '@/lib/api-game';
 const mockedFetch = fetchGameRound as unknown as ReturnType<typeof vi.fn>;
 
+// Mock round pinned to 'tone' mode so tests are deterministic.
 const ROUND = {
+  mode: 'tone' as const,
   chars: [
     { char: '妈', pinyin: 'mā', meaning: 'mother' },
     { char: '好', pinyin: 'hǎo', meaning: 'good' },
@@ -28,13 +30,14 @@ const ROUND = {
     { char: '你', pinyin: 'nǐ', meaning: 'you' },
   ],
   charToAnswer: {
-    '妈': { tone: 1, radical: '女' },
-    '好': { tone: 3, radical: '女' },
-    '花': { tone: 1, radical: '艹' },
-    '你': { tone: 3, radical: '亻' },
+    '妈': { tone: 1, radical: '女', pinyin: 'mā' },
+    '好': { tone: 3, radical: '女', pinyin: 'hǎo' },
+    '花': { tone: 1, radical: '艹', pinyin: 'huā' },
+    '你': { tone: 3, radical: '亻', pinyin: 'nǐ' },
   },
-  toneChoices: [1, 2, 3, 4, 5] as const,
+  toneChoices: [1, 2, 3, 4],
   radicalChoices: ['女', '艹', '亻'],
+  pinyinChoices: ['mā', 'hǎo', 'huā', 'nǐ'],
 };
 
 beforeEach(() => {
@@ -43,13 +46,13 @@ beforeEach(() => {
 });
 
 describe('ToneRadicalGame', () => {
-  it('starts in loading state, then shows round 1', async () => {
+  it('starts in loading state, then shows the tone-mode heading', async () => {
     render(<ToneRadicalGame />);
     expect(screen.getByText(/加载中/)).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText(/声调/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/把声调拖到对应的字上/)).toBeInTheDocument());
   });
 
-  it('renders 4 chars in round 1', async () => {
+  it('renders all 4 chars', async () => {
     render(<ToneRadicalGame />);
     await waitFor(() => {
       expect(screen.getByText('妈')).toBeInTheDocument();
@@ -59,10 +62,10 @@ describe('ToneRadicalGame', () => {
     });
   });
 
-  it('shows round 1 title in round 1 phase', async () => {
+  it('shows the mode subject badge (声调)', async () => {
     render(<ToneRadicalGame />);
     await waitFor(() => {
-      expect(screen.getByText(/把声调拖到对应的字上/)).toBeInTheDocument();
+      expect(screen.getByText(/本轮:声调/)).toBeInTheDocument();
     });
   });
 });

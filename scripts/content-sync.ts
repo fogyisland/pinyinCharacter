@@ -232,7 +232,7 @@ async function generateForChar(
           value = await generateEtymologyStory({
             char: charRow.char,
             pinyin: pinyinStr,
-            meaningZh,
+            meaningZh: meaningZh ?? null,
           });
           break;
         case 'rare_meaning':

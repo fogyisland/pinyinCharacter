@@ -13,18 +13,21 @@ const mockedQuery = vi.fn();
 describe('listChars', () => {
   beforeEach(() => mockedQuery.mockReset());
 
-  it('queries chars table with pinyin search', async () => {
-    mockedQuery.mockResolvedValueOnce([[{ char: '你', pinyin: 'nǐ', level: 1, radical: '亻', stroke_count: 7, pinyin_alt: null, meaning_zh: null, meaning_en: null, unicode_codepoint: 'U+4F60', variants: null }], []]);
+  it('queries chars table with char-exact search (pinyin-only search is post-migration-degraded)', async () => {
+    mockedQuery.mockResolvedValueOnce([[{ char: '你', pinyin: 'nǐ', level: 1, radical: '亻', stroke_count: 7, unicode_codepoint: 'U+4F60' }], []]);
     mockedQuery.mockResolvedValueOnce([[{ n: 1 }]]);
 
-    const result = await listChars({ q: 'ni', page: 1 });
+    const result = await listChars({ q: '你', page: 1 });
 
     expect(mockedQuery).toHaveBeenCalledTimes(2);
     expect(mockedQuery.mock.calls[0][0]).toContain('FROM chars');
-    expect(mockedQuery.mock.calls[0][0]).toContain('LIKE');
     expect(mockedQuery.mock.calls[0][0]).toContain('`char` = ?');
-    expect(mockedQuery.mock.calls[0][0]).toContain('meaning_en LIKE ?');
-    expect(mockedQuery.mock.calls[0][1]).toEqual(['%ni%', 'ni', '%ni%', 80, 0]);
+    // Post-migration: pinyin/meaning_en are no longer in DB so the old LIKE
+    // search is gone. The DB query is now slim.
+    expect(mockedQuery.mock.calls[0][0]).not.toContain('meaning_en');
+    expect(mockedQuery.mock.calls[0][0]).not.toContain('pinyin_alt');
+    expect(mockedQuery.mock.calls[0][0]).not.toContain('variants');
+    expect(mockedQuery.mock.calls[0][1]).toEqual(['你', 80, 0]);
     expect(result.total).toBe(1);
     expect(result.chars[0].char).toBe('你');
   });
@@ -74,7 +77,7 @@ describe('getChar', () => {
   beforeEach(() => mockedQuery.mockReset());
 
   it('returns single char by string', async () => {
-    mockedQuery.mockResolvedValueOnce([[{ char: '一', level: 1, pinyin: 'yī', pinyin_alt: null, radical: '一', stroke_count: 1, meaning_zh: '数目字', meaning_en: 'one', unicode_codepoint: 'U+4E00', variants: null }]]);
+    mockedQuery.mockResolvedValueOnce([[{ char: '一', level: 1, pinyin: 'yī', radical: '一', stroke_count: 1, unicode_codepoint: 'U+4E00' }]]);
     const result = await getChar('一');
     expect(result?.char).toBe('一');
     expect(result?.strokeCount).toBe(1);
@@ -90,18 +93,22 @@ describe('getChar', () => {
 describe('getCharDetail', () => {
   beforeEach(() => mockedQuery.mockReset());
 
-  it('returns char + related by radical + related by pinyin', async () => {
+  it('returns char + related by radical; related-by-pinyin is empty (post-migration pinyin DB col is empty)', async () => {
     // getChar query
-    mockedQuery.mockResolvedValueOnce([[{ char: '一', level: 1, pinyin: 'yī', pinyin_alt: null, radical: '一', stroke_count: 1, meaning_zh: null, meaning_en: null, unicode_codepoint: 'U+4E00', variants: null }]]);
+    mockedQuery.mockResolvedValueOnce([[{ char: '一', level: 1, pinyin: 'yī', radical: '一', stroke_count: 1, unicode_codepoint: 'U+4E00' }]]);
     // relatedByRadical (limit 8)
-    mockedQuery.mockResolvedValueOnce([[{ char: '丁', level: 1, pinyin: 'dīng', pinyin_alt: null, radical: '一', stroke_count: 2, meaning_zh: null, meaning_en: null, unicode_codepoint: 'U+4E01', variants: null }]]);
-    // relatedByPinyin (limit 8)
-    mockedQuery.mockResolvedValueOnce([[{ char: '衣', level: 1, pinyin: 'yī', pinyin_alt: null, radical: '衤', stroke_count: 6, meaning_zh: null, meaning_en: null, unicode_codepoint: 'U+8863', variants: null }]]);
+    mockedQuery.mockResolvedValueOnce([[{ char: '丁', level: 1, pinyin: 'dīng', radical: '一', stroke_count: 2, unicode_codepoint: 'U+4E01' }]]);
 
     const result = await getCharDetail('一');
     expect(result?.char).toBe('一');
     expect(result?.relatedByRadical).toHaveLength(1);
-    expect(result?.relatedByPinyin).toHaveLength(1);
+    // relatedByPinyin: not supported post-migration (DB pinyin is mostly
+    // empty for L1/L2/L3 chars, so the old `pinyin = ?` filter would
+    // return nothing). Returns [] until we re-derive pinyin via JSON or
+    // pinyin-pro in a separate index.
+    expect(result?.relatedByPinyin).toEqual([]);
+    // No third (pinyin) query should be issued.
+    expect(mockedQuery).toHaveBeenCalledTimes(2);
   });
 
   it('returns null when char not found', async () => {

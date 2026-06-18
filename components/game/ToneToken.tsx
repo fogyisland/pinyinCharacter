@@ -1,7 +1,9 @@
+import type { Tone } from '@/lib/pinyin-tone';
+
 interface Props {
-  tone: 1 | 2 | 3 | 4 | 5;
+  tone: Tone;
   matched: boolean;
-  onDragStart: (tone: 1 | 2 | 3 | 4 | 5) => void;
+  onDragStart: (tone: Tone) => void;
 }
 
 export function ToneToken({ tone, matched, onDragStart }: Props) {

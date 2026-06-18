@@ -29,8 +29,8 @@ integrationDescribe('GET /api/game/round (integration)', () => {
       expect(typeof j.data.charToAnswer[c.char].tone).toBe('number');
       expect(typeof j.data.charToAnswer[c.char].radical).toBe('string');
     }
-    // tone choices cover 1-5
-    expect(j.data.toneChoices).toEqual(expect.arrayContaining([1, 2, 3, 4, 5]));
+    // tone choices cover 1-4 (no neutral — neutral/轻声 is filtered out)
+    expect(j.data.toneChoices).toEqual([1, 2, 3, 4]);
   });
 
   it('returns 503 when no chars have radicals in JSON', async () => {
