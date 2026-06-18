@@ -2,28 +2,34 @@ import { describe, it, expect } from 'vitest';
 import { writeAudit } from '@/lib/audit';
 import { formatLogMessage, type AuditEvent } from '@/lib/audit-format';
 
+const EVENTS: AuditEvent[] = [
+  'register', 'login', 'logout',
+  'history_create', 'history_delete',
+  'password_reset_request', 'password_reset_complete',
+  'admin_user_delete', 'admin_user_password_reset',
+  'admin_user_promote', 'admin_user_demote',
+  'user_disabled', 'user_reenabled',
+  'ai_config_updated', 'ai_call_logged',
+  'tts_config_updated',
+  'scheduler_config_updated', 'scheduler_manual_trigger',
+  'worksheet_saved', 'worksheet_deleted',
+  'worksheet_char_appended',
+  'worksheet_batch_printed',
+  'poem_saved', 'sutra_saved', 'rare_char_card_saved',
+  'membership_granted', 'membership_granted_paypal', 'membership_revoked',
+  'membership_checkout_started',
+  'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
+  'admin_chars_generated', 'admin_chars_init_seed',
+  'admin_membership_plans_seeded',
+];
+
 describe('audit lib', () => {
   it('exports the 34 expected events', () => {
-    const events: AuditEvent[] = [
-      'register', 'login', 'logout',
-      'history_create', 'history_delete',
-      'password_reset_request', 'password_reset_complete',
-      'admin_user_delete', 'admin_user_password_reset',
-      'admin_user_promote', 'admin_user_demote',
-      'user_disabled', 'user_reenabled',
-      'ai_config_updated', 'ai_call_logged',
-      'tts_config_updated',
-      'scheduler_config_updated', 'scheduler_manual_trigger',
-      'worksheet_saved', 'worksheet_deleted',
-      'worksheet_char_appended',
-      'poem_saved', 'sutra_saved', 'rare_char_card_saved',
-      'membership_granted', 'membership_granted_paypal', 'membership_revoked',
-      'membership_checkout_started',
-      'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
-      'admin_chars_generated', 'admin_chars_init_seed',
-      'admin_membership_plans_seeded',
-    ];
-    expect(events).toHaveLength(34);
+    expect(EVENTS).toHaveLength(35);
+  });
+
+  it('counts worksheet_batch_printed in the AuditEvent union', () => {
+    expect(EVENTS).toContain('worksheet_batch_printed');
   });
 
   it('writeAudit is a function', () => {
@@ -138,5 +144,15 @@ describe('formatLogMessage', () => {
   it('formatLogMessage renders worksheet_char_appended when char already exists', () => {
     expect(formatLogMessage('worksheet_char_appended', { worksheetId: 42, char: '我', added: false }))
       .toBe('已存在「我」到「我的字帖」 (#42)');
+  });
+
+  it('formats worksheet_batch_printed with count and ids', () => {
+    expect(formatLogMessage('worksheet_batch_printed', { count: 3, ids: [1, 2, 3] }))
+      .toBe('批量打印 3 张字帖 (1, 2, 3)');
+  });
+
+  it('handles missing ids in worksheet_batch_printed metadata', () => {
+    expect(formatLogMessage('worksheet_batch_printed', { count: 2 }))
+      .toBe('批量打印 2 张字帖 (?)');
   });
 });

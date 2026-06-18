@@ -16,7 +16,7 @@ export type AuditEvent =
   | 'ai_config_updated' | 'ai_call_logged'
   | 'tts_config_updated'
   | 'scheduler_config_updated' | 'scheduler_manual_trigger'
-  | 'worksheet_saved' | 'worksheet_char_appended' | 'worksheet_deleted'
+  | 'worksheet_saved' | 'worksheet_char_appended' | 'worksheet_deleted' | 'worksheet_batch_printed'
   | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved'
   | 'membership_granted' | 'membership_granted_paypal' | 'membership_revoked'
   | 'membership_checkout_started'
@@ -72,6 +72,7 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
     case 'worksheet_char_appended':
       return `${m.added === false ? '已存在' : '追加'}「${str(m.char) || '?'}」到「我的字帖」 (#${num(m.worksheetId) || '?'})`;
     case 'worksheet_deleted':       return `删除字帖 #${num(m.worksheetId) || num(m.id) || '?'}${str(m.title) ? `「${str(m.title)}」` : ''}`;
+    case 'worksheet_batch_printed': return `批量打印 ${num(m.count) || '?'} 张字帖 (${Array.isArray(m.ids) ? m.ids.map(String).join(', ') || '?' : '?'})`;
     case 'poem_saved': {
       const action = str(m.action) === 'print' ? '打印古诗' : '保存古诗';
       return `${action}「${str(m.title) || str(m.poemId) || '?'}」`;
