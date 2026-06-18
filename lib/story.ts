@@ -11,13 +11,20 @@ export interface HanziStory {
 /**
  * Read a char's hanzi_story (汉字故事).
  *
- * Slim-DB order: data/content/<char>.json (preferred, post 2026-06-17
- * migration), then rare_chars.story (legacy L3 fallback).
+ * Slim-DB order:
+ *   1. data/content/<char>.json → content.hanzi_story (top-level)
+ *   2. data/content/<char>.json → content.rare.story (L3 rare-char story block)
+ *   3. rare_chars.story column (legacy DB fallback)
+ *
+ * If none of the above has a story, return null (page 404s).
  */
 export async function getHanziStory(char: string): Promise<HanziStory | null> {
   const content = await getContent(char);
   if (content?.hanzi_story) {
     return { char: content.char, story: content.hanzi_story, pinyin: content.pinyin };
+  }
+  if (content?.rare?.story) {
+    return { char: content.char, story: content.rare.story, pinyin: content.pinyin };
   }
 
   const pool = getPool();
