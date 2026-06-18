@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import type { Worksheet } from '@/lib/worksheet-types';
-import { paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import { paperSizeLabel, fontFamilyLabel, cellStyleLabel } from '@/lib/worksheet-types';
 import { DeleteWorksheetButton } from './DeleteWorksheetButton';
 
 interface Props {
@@ -23,7 +23,7 @@ export function WorksheetHistoryList({ worksheets }: Props) {
             </Link>
             <div className="text-sm text-ink-faint">
               {paperSizeLabel(w.paperSize)} · {fontFamilyLabel(w.fontFamily)} · {w.content.length} 字 ·{' '}
-              {w.cellStyle === 'brush' ? '毛笔格' : w.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
+              {cellStyleLabel(w.cellStyle)} ·{' '}
               {new Date(w.createdAt).toLocaleString()}
             </div>
           </div>

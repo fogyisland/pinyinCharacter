@@ -53,6 +53,14 @@ export function fontFamilyLabel(f: FontFamily): string {
 export function fontFamilyCssVar(f: FontFamily): string {
   return FONT_FAMILIES.find((x) => x.value === f)?.cssVar ?? 'var(--font-han-serif)';
 }
+export function cellStyleLabel(s: CellStyle): string {
+  switch (s) {
+    case 'brush': return '毛笔格';
+    case 'square': return '田字格';
+    case 'pen': return '钢笔格';
+    case 'cross': return '米字格';
+  }
+}
 
 export type ValidationResult =
   | { ok: true; data: { title: string; content: string[]; cellStyle: CellStyle } }

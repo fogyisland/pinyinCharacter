@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import { notFound, redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorksheet } from '@/lib/worksheet';
-import { paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import { paperSizeLabel, fontFamilyLabel, cellStyleLabel } from '@/lib/worksheet-types';
 import { WorksheetPreview } from '@/components/worksheet/WorksheetPreview';
 import { DeleteWorksheetButton } from '@/components/worksheet/DeleteWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
@@ -41,7 +41,7 @@ export default async function WorksheetDetailPage({ params }: Props) {
         </div>
         <p className="worksheet-no-print mb-4 text-sm text-ink-faint">
           {paperSizeLabel(ws.paperSize)} · {fontFamilyLabel(ws.fontFamily)} · {ws.content.length} 字 ·{' '}
-          {ws.cellStyle === 'brush' ? '毛笔格' : ws.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
+          {cellStyleLabel(ws.cellStyle)} ·{' '}
           {new Date(ws.createdAt).toLocaleString()}
         </p>
         <div className="card-paper p-5">
