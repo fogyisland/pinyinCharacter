@@ -40,6 +40,16 @@ export function StylePicker({ value, onChange }: Props) {
         />
         <span>钢笔格</span>
       </label>
+      <label className="flex cursor-pointer items-center gap-2">
+        <input
+          type="radio"
+          name="cellStyle"
+          value="cross"
+          checked={value === 'cross'}
+          onChange={() => onChange('cross')}
+        />
+        <span>米字格</span>
+      </label>
     </div>
   );
 }
