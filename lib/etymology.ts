@@ -25,7 +25,23 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
      LIMIT 1`,
     [char]
   );
-  if (rows.length === 0) return null;
+  if (rows.length === 0) {
+    // Slim-DB path: no char_etymology row, but story may live in data/content/<char>.json.
+    const contentOnly = await getContent(char);
+    const storyOnly = contentOnly?.etymology?.story ?? null;
+    if (!storyOnly) return null;
+    return {
+      char,
+      eraGlyphs: ERAS.map((era) => ({
+        era,
+        font: '',
+        hasGlyph: false,
+      })),
+      story: storyOnly,
+      generatedBy: contentOnly?.etymology?.generated_by ?? null,
+      generatedAt: contentOnly?.etymology?.generated_at ?? null,
+    };
+  }
   const r = rows[0];
   const eraGlyphs: EraGlyph[] = ERAS.map((era) => ({
     era,
