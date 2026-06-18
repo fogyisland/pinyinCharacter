@@ -17,6 +17,15 @@ export class EmailSendError extends Error {
 
 let cachedTransport: Transporter | null = null;
 
+/**
+ * Invalidate the cached nodemailer transporter so the next sendEmail() call
+ * rebuilds it from the current config. Call this from any code path that
+ * mutates SMTP config (e.g. the admin config update route).
+ */
+export function resetSmtpCache(): void {
+  cachedTransport = null;
+}
+
 function buildTransport(cfg: NonNullable<Awaited<ReturnType<typeof getSmtpConfig>>>): Transporter {
   if (cachedTransport) return cachedTransport;
   cachedTransport = nodemailer.createTransport({

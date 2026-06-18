@@ -4,6 +4,7 @@ import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getAllConfig, setConfigBatch } from '@/lib/config';
 import { writeAudit } from '@/lib/audit';
+import { resetSmtpCache } from '@/lib/email';
 
 const SmtpConfigSchema = z.object({
   'smtp.transport': z.enum(['console', 'smtp']).optional(),
@@ -34,10 +35,13 @@ export async function POST(req: NextRequest) {
     } catch (err) {
       return badRequest('validation', (err as Error).message);
     }
+    // Config values changed — invalidate cached nodemailer transporter so
+    // the next sendEmail() picks up the new credentials.
+    resetSmtpCache();
     await writeAudit({
       userId: auth.user.id,
       event: 'smtp_config_updated',
-      metadata: { keys: Object.keys(updates) },
+      metadata: { keys: Object.keys(updates).map((k) => SECRET_KEYS.has(k) ? '***' : k) },
     });
     const all = await getAllConfig();
     const config: Record<string, string | null> = {

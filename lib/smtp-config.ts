@@ -58,8 +58,12 @@ export async function getSmtpConfig(): Promise<SmtpConfig | null> {
     getConfig(KEYS.fromName),
   ]);
 
-  // DB transport must be 'smtp' to return a non-null config.
-  if (dbTransport !== 'smtp') return null;
+  // Effective transport: DB > env (mirrors getMailTransport). If neither
+  // says 'smtp', bail — this keeps getSmtpConfig() symmetric with
+  // getMailTransport() so a direct caller never gets a misleading null
+  // when env is fully configured.
+  const envTransport = (process.env.MAIL_TRANSPORT ?? '').toLowerCase();
+  if (dbTransport !== 'smtp' && envTransport !== 'smtp') return null;
 
   // Host: DB > env fallback
   const host = dbHost ?? process.env.SMTP_HOST ?? null;

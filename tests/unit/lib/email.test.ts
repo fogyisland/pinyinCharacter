@@ -59,8 +59,8 @@ describe('sendEmail', () => {
     await setConfig('smtp.host', 'localhost', null);
     await setConfig('smtp.from', 'test@local.test', null);
     // We expect it to TRY to send (not console.log). The send will fail
-    // because localhost:25 isn't real, but the failure mode is EmailSendError,
-    // not console output.
+    // because localhost isn't a real SMTP server, but the failure mode is
+    // EmailSendError, not console output.
     await expect(
       sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' })
     ).rejects.toBeInstanceOf(EmailSendError);
