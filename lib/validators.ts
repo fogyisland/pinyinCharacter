@@ -25,6 +25,14 @@ export const charParamSchema = z.object({
   }),
 });
 
+export const appendToWorksheetSchema = z.object({
+  char: z
+    .string()
+    .refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
+      error: 'must be a single CJK char',
+    }),
+});
+
 export const saveWorksheetSchema = z.object({
   title: z.string().min(1).max(80),
   content: z

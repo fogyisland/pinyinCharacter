@@ -3,7 +3,7 @@ import { writeAudit } from '@/lib/audit';
 import { formatLogMessage, type AuditEvent } from '@/lib/audit-format';
 
 describe('audit lib', () => {
-  it('exports the 33 expected events', () => {
+  it('exports the 34 expected events', () => {
     const events: AuditEvent[] = [
       'register', 'login', 'logout',
       'history_create', 'history_delete',
@@ -15,6 +15,7 @@ describe('audit lib', () => {
       'tts_config_updated',
       'scheduler_config_updated', 'scheduler_manual_trigger',
       'worksheet_saved', 'worksheet_deleted',
+      'worksheet_char_appended',
       'poem_saved', 'sutra_saved', 'rare_char_card_saved',
       'membership_granted', 'membership_granted_paypal', 'membership_revoked',
       'membership_checkout_started',
@@ -22,7 +23,7 @@ describe('audit lib', () => {
       'admin_chars_generated', 'admin_chars_init_seed',
       'admin_membership_plans_seeded',
     ];
-    expect(events).toHaveLength(33);
+    expect(events).toHaveLength(34);
   });
 
   it('writeAudit is a function', () => {
@@ -127,5 +128,15 @@ describe('formatLogMessage', () => {
       .toBe('测试邮件发送 (to=admin@x.com, ok=true)');
     expect(formatLogMessage('smtp_test_sent', { to: 'admin@x.com', ok: false, error: 'connect refused' }))
       .toBe('测试邮件发送 (to=admin@x.com, ok=false, error=connect refused)');
+  });
+
+  it('formatLogMessage renders worksheet_char_appended for new append', () => {
+    expect(formatLogMessage('worksheet_char_appended', { worksheetId: 42, char: '我', added: true }))
+      .toBe('追加「我」到「我的字帖」 (#42)');
+  });
+
+  it('formatLogMessage renders worksheet_char_appended when char already exists', () => {
+    expect(formatLogMessage('worksheet_char_appended', { worksheetId: 42, char: '我', added: false }))
+      .toBe('已存在「我」到「我的字帖」 (#42)');
   });
 });
