@@ -13,6 +13,7 @@ export const NAV_LINKS = [
   { href: '/pinyin', label: '字转拼音' },
   { href: '/poetry', label: '诗词' },
   { href: '/sutra', label: '佛经' },
+  { href: '/ancient-texts', label: '古籍' },
   { href: '/game', label: '游戏' },
   { href: '/profile', label: '我的' },
   { href: '/membership', label: '会员' },

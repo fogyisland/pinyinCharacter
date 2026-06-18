@@ -13,8 +13,10 @@ export function Header() {
   const safeMode = useAppStore(s => s.safeMode);
   const user = useAppStore(s => s.user);
   const [mobileOpen, setMobileOpen] = useState(false);
-  // 儿童模式默认隐藏佛经导航(佛经内容偏成人/宗教,不适合儿童);关闭儿童模式后恢复
-  const visibleNavLinks = safeMode ? NAV_LINKS.filter((l) => l.href !== '/sutra') : NAV_LINKS;
+  // 儿童模式默认隐藏佛经/古籍导航(古典/宗教内容偏成人);关闭儿童模式后恢复
+  const visibleNavLinks = safeMode
+    ? NAV_LINKS.filter((l) => l.href !== '/sutra' && l.href !== '/ancient-texts')
+    : NAV_LINKS;
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
