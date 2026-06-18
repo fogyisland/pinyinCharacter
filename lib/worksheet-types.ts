@@ -1,3 +1,5 @@
+import { cellsPerPage } from './worksheet-page-count';
+
 export type CellStyle = 'brush' | 'square' | 'pen' | 'cross';
 export type PaperSize = 'A3' | 'A4' | 'B5';
 export type FontFamily = 'kai' | 'song' | 'hei';
@@ -31,11 +33,12 @@ export interface SaveWorksheetArgs {
 }
 
 // Cells-per-page is a rough heuristic for the UI hint; the actual layout
-// depends on the cell size in CSS and the printable area.
+// depends on the cell size in CSS and the printable area. Sourced from
+// cellsPerPage() so the literal lives in one place (worksheet-page-count.ts).
 export const PAPER_SIZES: { value: PaperSize; label: string; cols: number; cellsPerPage: number }[] = [
-  { value: 'A3', label: 'A3 · 大', cols: 12, cellsPerPage: 132 },
-  { value: 'A4', label: 'A4 · 标准', cols: 8,  cellsPerPage: 96 },
-  { value: 'B5', label: 'B5 · 小', cols: 6,  cellsPerPage: 66 },
+  { value: 'A3', label: 'A3 · 大', cols: 12, cellsPerPage: cellsPerPage('A3') },
+  { value: 'A4', label: 'A4 · 标准', cols: 8,  cellsPerPage: cellsPerPage('A4') },
+  { value: 'B5', label: 'B5 · 小', cols: 6,  cellsPerPage: cellsPerPage('B5') },
 ];
 
 export const FONT_FAMILIES: { value: FontFamily; label: string; cssVar: string }[] = [
