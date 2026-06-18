@@ -214,8 +214,9 @@ export interface EtymologyResult {
   6. `/etymology/<char-with-no-etymology>` — fallback message visible.
   7. Toggle OS reduced-motion — animation doesn't auto-start.
 
-## Commit plan (3 logical commits)
+## Commit plan (2 logical commits + smoke)
 
 1. `feat(etymology): add EtymologyMorph component + era-dates constants` — new component, tests, era-dates file.
 2. `feat(etymology): extend getEtymology() with level field + page integration` — lib/etymology.ts level addition, page wiring, delete old EtymologyTimeline.
-3. (no third commit — Task 9 smoke doesn't commit)
+
+(Final smoke task — tsc + tests + HTTP probe — does not commit unless a fix is needed.)
