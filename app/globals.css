@@ -106,28 +106,17 @@
 .worksheet-grid--a4 { grid-template-columns: repeat(8,  minmax(0, 1fr)); }
 .worksheet-grid--b5 { grid-template-columns: repeat(6,  minmax(0, 1fr)); }
 
-@media print {
-  body * {
-    visibility: hidden;
-  }
-  .worksheet-grid, .worksheet-grid * {
-    visibility: visible;
-  }
-  .worksheet-grid {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-  }
-  .worksheet-no-print {
-    display: none !important;
-  }
-}
-
-/* ============ Batch print (Spec B / Task 8) ============ */
+/* Screen: hide batch area off-screen (Spec B / Task 8) */
 .batch-print-area { position: absolute; left: -10000px; top: 0; width: 100%; }
+
 @media print {
-  .batch-print-area { position: static; left: 0; }
+  /* Print: show only the printable areas; everything else hidden */
+  body * { visibility: hidden; }
+  .worksheet-grid, .worksheet-grid *,
+  .batch-print-area, .batch-print-area * { visibility: visible; }
+  .worksheet-grid,
+  .batch-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  .worksheet-no-print { display: none !important; }
   .print-page-break { page-break-after: always; break-after: page; }
 }
 
