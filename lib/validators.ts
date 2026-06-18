@@ -33,6 +33,10 @@ export const appendToWorksheetSchema = z.object({
     }),
 });
 
+export const printBatchSchema = z.object({
+  worksheetIds: z.array(z.number().int().positive()).min(1).max(50),
+});
+
 export const saveWorksheetSchema = z.object({
   title: z.string().min(1).max(80),
   content: z
