@@ -252,7 +252,7 @@ Create the file with this exact content:
 
 ```tsx
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Era, EraGlyph as EraGlyphType } from '@/lib/etymology-types';
 import { ERA_DATES, LEVEL_LABEL, coverageHint, type CharLevel } from './era-dates';
 
@@ -290,7 +290,6 @@ function prefersReducedMotion(): boolean {
 export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(() => !prefersReducedMotion());
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Filter to eras that have glyph data (skip missing per spec).
   const eras = eraGlyphs.filter((g) => g.hasGlyph);
@@ -348,7 +347,6 @@ export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
 
   return (
     <section
-      ref={containerRef}
       aria-label="字形演变"
       tabIndex={0}
       onKeyDown={onKeyDown}
@@ -420,6 +418,7 @@ export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
                 goTo(i);
               }}
               aria-current={isActive ? 'true' : 'false'}
+              aria-label={ERA_LABELS[era.era]}
               className={`px-3 py-1.5 rounded text-xs flex flex-col items-center
                           transition ${
                             isActive
@@ -527,10 +526,9 @@ export interface EtymologyClient {
 
 In `lib/etymology.ts`, the function has 2 return paths: (a) the slim-DB fallback at lines 33-43, (b) the DB+JSON merged path at lines 56-62. Both need `level` added.
 
-Add this helper just above the function (after the existing imports, around line 9):
+Add a `toCharLevel` helper + `readLevel` async helper just above the function (after the existing imports — `getPool` and `getContent` are already imported; do NOT add a duplicate import):
 
 ```ts
-import { getContent } from './content';
 import type { CharLevel } from '@/components/etymology/era-dates';
 
 function toCharLevel(n: number | null | undefined): CharLevel {
@@ -574,24 +572,7 @@ if (rows.length === 0) {
 }
 ```
 
-And in the merged-path return (lines 56-62), add `level` (and reuse the `content` variable already loaded at line 51):
-
-```ts
-return {
-  char: r.char,
-  eraGlyphs,
-  story,
-  generatedBy,
-  generatedAt,
-  level: toCharLevel(content?.level ?? r.level_from_chars ?? null),
-};
-```
-
-Wait — `r` (the row from `char_etymology`) doesn't have `level` since `char_etymology` table doesn't carry it. Either:
-- (a) read `level` separately in `getEtymology` (cleaner — single helper call)
-- (b) extend the `char_etymology` SELECT to JOIN `chars`
-
-Use (a). Replace the merged-path return with:
+And replace the merged-path return (lines 56-62) — the `r` row is from `char_etymology` which does not carry `level`, so delegate to `readLevel` for file-first / DB-fallback:
 
 ```ts
 return {
@@ -603,8 +584,6 @@ return {
   level: await readLevel(char),
 };
 ```
-
-(`readLevel` does its own file-first / DB fallback — no need to read `chars.level` again here.)
 
 - [ ] **Step 4: Update the etymology page to use EtymologyMorph**
 
