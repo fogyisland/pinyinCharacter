@@ -180,7 +180,8 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 **Files:**
 - Create: `tests/unit/lib/guide-filter.test.ts` (failing test first)
-- Edit: `app/guide/page.tsx` (export `filterUserReadme`, use it in render)
+- Create: `app/guide/filter.ts` (co-located filter — Next.js 15 forbids arbitrary named exports from `app/**/page.tsx`)
+- Edit: `app/guide/page.tsx` (import + use `filterUserReadme`)
 
 TDD: write the test, see it fail, implement, see it pass.
 
@@ -190,7 +191,7 @@ Create `tests/unit/lib/guide-filter.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { filterUserReadme } from '@/app/guide/page';
+import { filterUserReadme } from '@/app/guide/filter';
 
 // 简化版 README 用来验证 blocklist 行为;真实 README 在 lib/email.ts 测试中已覆盖结构。
 const SAMPLE = `# 字 ↔ 拼音 工具
@@ -291,16 +292,11 @@ Run:
 pnpm test tests/unit/lib/guide-filter.test.ts 2>&1 | tail -30
 ```
 
-Expected: FAIL with `filterUserReadme is not a function` (or similar). The import itself should resolve because the `@` alias points to the project root per `vitest.config.ts`.
+Expected: FAIL with `filterUserReadme is not a function` (or similar). The import path `@/app/guide/filter` resolves to `app/guide/filter.ts` per the `@` alias in `vitest.config.ts`. (The function is co-located, not exported from `app/guide/page.tsx`, because Next.js 15's page module type contract rejects arbitrary named exports from `app/**/page.tsx`.)
 
-### Step 3: Implement `filterUserReadme` in `app/guide/page.tsx`
+### Step 3: Implement `filterUserReadme` in `app/guide/filter.ts`
 
-The page currently lives in `app/guide/page.tsx`. Edit it to:
-
-1. Export a new top-level function `filterUserReadme(md: string): string`.
-2. Call it from the default export after `readReadme()`.
-
-Use the **plain** text blocklist (no Pinyin / parenthesis variations) to keep it readable. Match by exact H2 heading text since the README uses consistent wording:
+Next.js 15 forbids arbitrary named exports from `app/**/page.tsx` (the generated `.next/types/app/.../page.ts` type contract rejects them with a `checkFields` error). The filter must live in a co-located file. Create `app/guide/filter.ts`:
 
 ```ts
 const BLOCKED_H2_SECTIONS = [
@@ -329,7 +325,12 @@ export function filterUserReadme(md: string): string {
 }
 ```
 
-Then in the default export, change:
+Then in `app/guide/page.tsx`, add the import at the top:
+```ts
+import { filterUserReadme } from './filter';
+```
+
+And in the default export, change:
 ```ts
 const md = readReadme();
 const html = renderMarkdown(md);
@@ -364,10 +365,10 @@ Expected: H2 list contains `功能`, `技术栈`, `账号系统`, `密码找回 
 ### Step 6: Commit
 
 ```bash
-git add app/guide/page.tsx tests/unit/lib/guide-filter.test.ts
+git add app/guide/filter.ts app/guide/page.tsx tests/unit/lib/guide-filter.test.ts
 git commit -m "feat(guide): drop admin/deployment sections from /guide
 
-Code-level blocklist in app/guide/page.tsx drops these H2 sections:
+Code-level blocklist in app/guide/filter.ts drops these H2 sections:
 - ## 启动
 - ## 测试
 - ## 管理员后台扩展
