@@ -44,7 +44,7 @@ export function WorksheetPreview(props: Props) {
           </button>
           <div className="flex gap-2">
             {props.savedId ? (
-              <PrintButton endpoint={`/api/worksheets/${props.savedId}/print`} label="打印" />
+              <PrintButton endpoint={`/api/worksheets/${props.savedId}/print`} label="打印" gate="multi_page" />
             ) : (
               <button
                 type="button"
