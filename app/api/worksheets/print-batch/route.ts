@@ -6,7 +6,7 @@ import { hasFeature } from '@/lib/membership';
 import { logDownload } from '@/lib/downloads';
 import { logUserAction } from '@/lib/audit';
 import { printBatchSchema } from '@/lib/validators';
-import { pageCountFor, exceedsFreeLimit } from '@/lib/worksheet-page-count';
+import { exceedsFreeLimit } from '@/lib/worksheet-page-count';
 
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
