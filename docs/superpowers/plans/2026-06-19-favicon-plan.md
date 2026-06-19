@@ -383,7 +383,22 @@ git commit -m "feat(favicon): theme-color #5A4530 + manifest link in root layout
 
 ### Task 4: Final verification (tsc + build)
 
-**Files:** (no changes — verification only)
+**Files:**
+- Create: `scripts/to-ico.d.ts` (ambient module shim — `to-ico@1.x` ships no types and `@types/to-ico` is not on npm)
+
+- [ ] **Step 0: Add `to-ico` ambient type shim**
+
+Create `scripts/to-ico.d.ts` (follows the existing `scripts/fontkit.d.ts` pattern):
+
+```ts
+// to-ico 1.x ships without types. Minimal shim for our usage.
+declare module 'to-ico' {
+  function toIco(inputs: Buffer[]): Promise<Buffer>;
+  export default toIco;
+}
+```
+
+Without this shim, `pnpm tsc --noEmit` fails with `error TS7016: Could not find a declaration file for module 'to-ico'`.
 
 - [ ] **Step 1: Run TypeScript check**
 
@@ -399,6 +414,13 @@ Expected: an empty output OR a `next dev` PID. If a PID is found, kill it: `cmd.
 
 Run: `pnpm build`
 Expected: build succeeds. Verify the favicon files end up in `.next/`'s build manifest (Next.js will copy `app/icon.png` and `app/apple-icon.png` into the build output automatically).
+
+- [ ] **Step 4.5: Commit the type shim**
+
+```bash
+git add scripts/to-ico.d.ts
+git commit -m "fix(favicon): add to-ico.d.ts ambient shim (to-ico ships no types)"
+```
 
 - [ ] **Step 4: Manual browser smoke (for the human, not automated)**
 
