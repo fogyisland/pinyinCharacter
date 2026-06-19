@@ -5,24 +5,27 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { FontFamilyPicker } from '@/components/worksheet/FontFamilyPicker';
 
 describe('FontFamilyPicker', () => {
-  it('renders a <select> with 2 <optgroup>s: 系统字体 and 硬笔字体', () => {
+  it('renders a <select> with 3 <optgroup>s: 系统字体, 硬笔字体, 毛笔字体', () => {
     const { container } = render(<FontFamilyPicker value="song" onChange={vi.fn()} />);
     const select = container.querySelector('select');
     expect(select).toBeInTheDocument();
     const groups = container.querySelectorAll('optgroup');
-    expect(groups).toHaveLength(2);
+    expect(groups).toHaveLength(3);
     expect(groups[0]?.getAttribute('label')).toBe('系统字体');
     expect(groups[1]?.getAttribute('label')).toBe('硬笔字体');
+    expect(groups[2]?.getAttribute('label')).toBe('毛笔字体');
   });
 
-  it('renders 7 <option>s: 3 in system, 4 in hard-pen', () => {
+  it('renders 9 <option>s: 3 system + 4 hard-pen + 2 brush', () => {
     const { container } = render(<FontFamilyPicker value="song" onChange={vi.fn()} />);
     const options = container.querySelectorAll('option');
-    expect(options).toHaveLength(7);
+    expect(options).toHaveLength(9);
     const systemOptions = container.querySelectorAll('optgroup:nth-of-type(1) > option');
     const hardPenOptions = container.querySelectorAll('optgroup:nth-of-type(2) > option');
+    const brushOptions = container.querySelectorAll('optgroup:nth-of-type(3) > option');
     expect(systemOptions).toHaveLength(3);
     expect(hardPenOptions).toHaveLength(4);
+    expect(brushOptions).toHaveLength(2);
   });
 
   it('marks the current value as the selected option', () => {
@@ -41,9 +44,11 @@ describe('FontFamilyPicker', () => {
     expect(onChange).toHaveBeenCalledWith('wenkai-gb');
   });
 
-  it('shows each option label (e.g. 霞鹜文楷 GB for wenkai-gb)', () => {
+  it('shows brush font labels (马善政体 for ma-shan-zheng, 龙藏体 for long-cang)', () => {
     const { container } = render(<FontFamilyPicker value="song" onChange={vi.fn()} />);
-    const option = container.querySelector('option[value="wenkai-gb"]');
-    expect(option?.textContent).toBe('霞鹜文楷 GB');
+    const m1 = container.querySelector('option[value="ma-shan-zheng"]');
+    const m2 = container.querySelector('option[value="long-cang"]');
+    expect(m1?.textContent).toBe('马善政体 (毛笔正书)');
+    expect(m2?.textContent).toBe('龙藏体 (草书)');
   });
 });

@@ -11,6 +11,7 @@ interface Props {
 const GROUPS = [
   { key: 'system', label: '系统字体' },
   { key: 'hard-pen', label: '硬笔字体' },
+  { key: 'brush', label: '毛笔字体' },
 ] as const;
 
 export function FontFamilyPicker({ value, onChange }: Props) {
