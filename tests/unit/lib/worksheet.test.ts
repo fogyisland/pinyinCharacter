@@ -96,7 +96,7 @@ describe('worksheet pure helpers', () => {
       });
       expect(result).toEqual({
         ok: true,
-        data: { title: 'My worksheet', content: ['你', '好'], cellStyle: 'cross' },
+        data: { title: 'My worksheet', content: ['你', '好'], cellStyle: 'cross', paperSize: 'A4' },
       });
     });
 
