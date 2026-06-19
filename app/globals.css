@@ -159,3 +159,15 @@
   src: local('KaiTi'), local('STKaiti'), local('BiauKai');
   font-display: swap;
 }
+
+/* ============ Sutra Copy Mode ============ */
+.copy-view { transform-origin: center; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
+.copy-view--collapse { opacity: 0; }
+.copy-view--collapse[data-reading="horizontal"] { transform: scaleX(0); }
+.copy-view--collapse[data-reading="vertical-rtl"] { transform: scaleY(0); }
+.copy-view--collapse[data-reading="vertical-ltr"] { transform: scaleY(0); }
+.copy-view--collapsing { pointer-events: none; }
+.copy-seal { transition: transform 0.6s ease-out, opacity 0.6s ease-out; transform-origin: center; opacity: 0; transform: scale(0.5); }
+.copy-seal--enter { opacity: 1; transform: scale(1); }
+.copy-char { transition: color 0.4s ease-in-out; }
+.copy-char--disabled { pointer-events: none; }
