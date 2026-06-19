@@ -145,6 +145,8 @@ export function WorksheetGenerator() {
         <LibrarySelectTab selected={content} onChange={setContent} />
       ) : (
         <RandomTab
+          title={title}
+          onTitleChange={setTitle}
           onPicked={(chars) => {
             setContent(chars);
             setView('preview');

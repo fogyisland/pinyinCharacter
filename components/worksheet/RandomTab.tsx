@@ -9,6 +9,8 @@ interface RandomChar {
 }
 
 interface Props {
+  title: string;
+  onTitleChange: (v: string) => void;
   onPicked: (chars: string[]) => void;
 }
 
@@ -18,13 +20,17 @@ const DIFFICULTY_LABELS = {
   hard: '困难 (level 1+2+3 全字库)',
 } as const;
 
-export function RandomTab({ onPicked }: Props) {
+export function RandomTab({ title, onTitleChange, onPicked }: Props) {
   const [count, setCount] = useState(20);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
   async function handleGenerate() {
+    if (title.trim() === '') {
+      setErr('请先填写字帖标题');
+      return;
+    }
     setBusy(true); setErr(null);
     try {
       const res = await fetch(`/api/chars/random?count=${count}&difficulty=${difficulty}`);
@@ -42,6 +48,19 @@ export function RandomTab({ onPicked }: Props) {
   return (
     <div className="space-y-3">
       <p className="text-sm text-ink-soft">从字库随机抽字,自动填入字帖。</p>
+      <div>
+        <label className="text-sm font-medium text-ink-soft">
+          标题 <span className="text-red-600">*</span>
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={e => onTitleChange(e.target.value.slice(0, 80))}
+          maxLength={80}
+          placeholder="给字帖起个名字..."
+          className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
+        />
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-sm font-medium text-ink-soft">字数 (1-100)</label>
