@@ -13,6 +13,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="zh-CN">
       <head>
         <link rel="stylesheet" href="/font/fonts.css" />
+        <meta name="theme-color" content="#5A4530" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className="font-sans antialiased min-h-screen">
         <AuthSync />
