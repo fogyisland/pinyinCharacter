@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface RandomChar {
   char: string;
@@ -25,6 +25,10 @@ export function RandomTab({ title, onTitleChange, onPicked }: Props) {
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setErr(null);
+  }, [title]);
 
   async function handleGenerate() {
     if (title.trim() === '') {
