@@ -27,6 +27,21 @@ describe('pageCountFor', () => {
     expect(pageCountFor(200, 'A4')).toBe(3); // ceil(200/88) = 3
     expect(pageCountFor(500, 'A3')).toBe(4); // ceil(500/132) = 4
   });
+  it('returns 1 for empty content on brush modes', () => {
+    expect(pageCountFor(0, 'brush-12')).toBe(1);
+    expect(pageCountFor(0, 'brush-24')).toBe(1);
+    expect(pageCountFor(0, 'brush-28')).toBe(1);
+  });
+  it('returns 1 for exactly cellsPerPage chars on brush modes', () => {
+    expect(pageCountFor(12, 'brush-12')).toBe(1);
+    expect(pageCountFor(24, 'brush-24')).toBe(1);
+    expect(pageCountFor(28, 'brush-28')).toBe(1);
+  });
+  it('returns 2 for one over the threshold on brush modes', () => {
+    expect(pageCountFor(13, 'brush-12')).toBe(2);
+    expect(pageCountFor(25, 'brush-24')).toBe(2);
+    expect(pageCountFor(29, 'brush-28')).toBe(2);
+  });
 });
 
 describe('exceedsFreeLimit', () => {
