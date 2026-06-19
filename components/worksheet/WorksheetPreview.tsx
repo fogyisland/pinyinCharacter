@@ -72,6 +72,16 @@ export function WorksheetPreview(props: Props) {
 
       <div className="overflow-x-auto">
         <div className={`worksheet-grid mx-auto grid min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+          <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+            <div className="flex items-center gap-2">
+              <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+              <span className="font-kai text-base text-ink">字·韵</span>
+            </div>
+            <div className="text-sm text-ink-soft">
+              字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
+            </div>
+            <div className="text-xs text-ink-faint">公益网站，请多关注</div>
+          </div>
           {cells.map((cell) => (
             <div key={cell.index} className="worksheet-cell">
               <WorksheetCell char={cell.char} style={cell.style} fontFamily={props.fontFamily} />
