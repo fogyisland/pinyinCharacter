@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
 import { requireUser } from '@/lib/auth';
-import { getSutra } from '@/lib/sutras';
+import { getPool } from '@/lib/db';
 import {
   getProgress,
   upsertProgress,
@@ -17,41 +17,53 @@ function parseChunkIdx(url: string): number | null {
   return Number.isInteger(n) && n >= 0 ? n : null;
 }
 
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   return withErrorHandling(async () => {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { id: idStr } = await params;
-    const sutraId = Number(idStr);
-    if (!Number.isInteger(sutraId) || sutraId <= 0) return badRequest('bad_id', 'invalid sutra id');
+    const { slug } = await params;
+    if (!slug) return badRequest('bad_slug', 'slug required');
 
     const chunkIdx = parseChunkIdx(req.url);
     if (chunkIdx === null) return badRequest('bad_chunk', 'chunk query param required');
 
-    const sutra = await getSutra(sutraId);
-    if (!sutra) return notFound('sutra_not_found', 'sutra not found');
-    if (chunkIdx >= sutra.chunks.length) return badRequest('bad_chunk', 'chunk out of range');
+    const [rows] = await getPool().query<any[]>(
+      `SELECT id, chunks FROM sutras WHERE slug = ? LIMIT 1`,
+      [slug]
+    );
+    const row = rows[0];
+    if (!row) return notFound('sutra_not_found', 'sutra not found');
+    const rawChunks: any[] = typeof row.chunks === 'string' ? JSON.parse(row.chunks) : row.chunks;
+    const chunkCount = Array.isArray(rawChunks) ? rawChunks.length : 0;
+    const sutraId = Number(row.id);
+    if (chunkIdx >= chunkCount) return badRequest('bad_chunk', 'chunk out of range');
 
     const progress = await getProgress(auth.user.id, sutraId, chunkIdx);
     return NextResponse.json({ ok: true, data: { progress } });
   });
 }
 
-export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   return withErrorHandling(async () => {
     const auth = await requireUser();
     if (!auth.ok) return auth.response;
-    const { id: idStr } = await params;
-    const sutraId = Number(idStr);
-    if (!Number.isInteger(sutraId) || sutraId <= 0) return badRequest('bad_id', 'invalid sutra id');
+    const { slug } = await params;
+    if (!slug) return badRequest('bad_slug', 'slug required');
 
     const body = await req.json().catch(() => ({} as any));
     const chunkIdx = Number(body?.chunkIdx);
     if (!Number.isInteger(chunkIdx) || chunkIdx < 0) return badRequest('bad_chunk', 'chunkIdx invalid');
 
-    const sutra = await getSutra(sutraId);
-    if (!sutra) return notFound('sutra_not_found', 'sutra not found');
-    if (chunkIdx >= sutra.chunks.length) return badRequest('bad_chunk', 'chunk out of range');
+    const [rows] = await getPool().query<any[]>(
+      `SELECT id, chunks FROM sutras WHERE slug = ? LIMIT 1`,
+      [slug]
+    );
+    const row = rows[0];
+    if (!row) return notFound('sutra_not_found', 'sutra not found');
+    const rawChunks: any[] = typeof row.chunks === 'string' ? JSON.parse(row.chunks) : row.chunks;
+    const chunkCount = Array.isArray(rawChunks) ? rawChunks.length : 0;
+    const sutraId = Number(row.id);
+    if (chunkIdx >= chunkCount) return badRequest('bad_chunk', 'chunk out of range');
 
     if (body?.reset === true) {
       await deleteProgress(auth.user.id, sutraId, chunkIdx);

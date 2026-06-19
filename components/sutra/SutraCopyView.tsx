@@ -9,6 +9,7 @@ import { CopySeal } from './CopySeal';
 interface Props {
   chunk: SutraChunk;
   sutraId: number;
+  sutraSlug: string;
   userId: number | null;
   reading: SutraReading;
   onExit: () => void;
@@ -37,7 +38,7 @@ function charClass(idx: number, written: boolean, disabled: boolean): string {
     : `${base} text-[rgba(0,0,0,0.15)] hover:bg-[rgba(222,203,183,0.15)] cursor-pointer`;
 }
 
-export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props) {
+export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onExit }: Props) {
   const chars = flatChars(chunk);
   const total = chars.length;
   const [writtenChars, setWrittenChars] = useState<boolean[]>(() => new Array(total).fill(false));
@@ -50,7 +51,7 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const res = await fetch(`/api/sutra/${sutraId}/copy-progress?chunk=${chunk.id}`);
+      const res = await fetch(`/api/sutra/${sutraSlug}/copy-progress?chunk=${chunk.id}`);
       if (cancelled) return;
       if (res.status === 401 || !res.ok) {
         // Anonymous or failure: stay all-false
@@ -81,7 +82,7 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
     if (phase !== 'collapsing') return;
     collapseTimerRef.current = setTimeout(() => {
       setPhase('sealed');
-      void fetch(`/api/sutra/${sutraId}/copy-progress`, {
+      void fetch(`/api/sutra/${sutraSlug}/copy-progress`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ chunkIdx: chunk.id, writtenChars, completed: true }),
@@ -99,7 +100,7 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
     if (phase !== 'copying') return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      void fetch(`/api/sutra/${sutraId}/copy-progress`, {
+      void fetch(`/api/sutra/${sutraSlug}/copy-progress`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ chunkIdx: chunk.id, writtenChars }),
@@ -126,7 +127,7 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
     setWrittenChars(new Array(total).fill(false));
     setPhase('copying');
     if (userId) {
-      void fetch(`/api/sutra/${sutraId}/copy-progress`, {
+      void fetch(`/api/sutra/${sutraSlug}/copy-progress`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ chunkIdx: chunk.id, reset: true }),

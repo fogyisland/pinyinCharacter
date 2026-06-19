@@ -13,7 +13,7 @@ vi.mock('next/headers', () => ({
 }));
 
 import { getPool, closePool } from '@/lib/db';
-import { GET, POST } from '@/app/api/sutra/[id]/copy-progress/route';
+import { GET, POST } from '@/app/api/sutra/[slug]/copy-progress/route';
 import { signSession } from '@/lib/auth';
 import { NextRequest } from 'next/server';
 
@@ -22,7 +22,7 @@ const d = HAS_DB ? describe : describe.skip;
 
 let userId: number;
 let userToken: string;
-let sutraId: number;
+let sutraSlug: string;
 
 function req(method: string, path: string, body: object | null = null, cookie: string | null = userToken): NextRequest {
   const headers: Record<string, string> = { cookie: `auth_token=${cookie}` };
@@ -67,7 +67,7 @@ d('sutra copy-progress API', () => {
         { id: 0, label: '全段', content: ['观自在菩萨', '行深般若波罗蜜多时'], pinyin: [] },
       ])]
     );
-    sutraId = Number(s.insertId);
+    sutraSlug = 'copytest';
   });
 
   afterAll(async () => {
@@ -79,20 +79,20 @@ d('sutra copy-progress API', () => {
 
   it('GET 401 anonymous', async () => {
     delete testCookieStore['auth_token'];
-    const r = await GET(anonReq('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await GET(anonReq('GET', `/api/sutra/${sutraSlug}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     expect(r.status).toBe(401);
     testCookieStore['auth_token'] = { value: userToken };
   });
 
   it('POST 401 anonymous', async () => {
     delete testCookieStore['auth_token'];
-    const r = await POST(anonReq('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: [true] }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(anonReq('POST', `/api/sutra/${sutraSlug}/copy-progress`, { chunkIdx: 0, writtenChars: [true] }) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     expect(r.status).toBe(401);
     testCookieStore['auth_token'] = { value: userToken };
   });
 
   it('GET 200 with progress=null for fresh user', async () => {
-    const r = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await GET(req('GET', `/api/sutra/${sutraSlug}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.ok).toBe(true);
@@ -100,35 +100,35 @@ d('sutra copy-progress API', () => {
   });
 
   it('POST 200 upserts; subsequent GET returns same array', async () => {
-    const r1 = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: [true, false, true, true] }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r1 = await POST(req('POST', `/api/sutra/${sutraSlug}/copy-progress`, { chunkIdx: 0, writtenChars: [true, false, true, true] }) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     expect(r1.status).toBe(200);
-    const r2 = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r2 = await GET(req('GET', `/api/sutra/${sutraSlug}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     const body = await r2.json();
     expect(body.data.progress.writtenChars).toEqual([true, false, true, true]);
     expect(body.data.progress.completedAt).toBeNull();
   });
 
   it('POST 400 on out-of-range chunkIdx', async () => {
-    const r = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 99, writtenChars: [true] }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(req('POST', `/api/sutra/${sutraSlug}/copy-progress`, { chunkIdx: 99, writtenChars: [true] }) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     expect(r.status).toBe(400);
   });
 
   it('POST 400 on non-array writtenChars', async () => {
-    const r = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: 'nope' }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(req('POST', `/api/sutra/${sutraSlug}/copy-progress`, { chunkIdx: 0, writtenChars: 'nope' }) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     expect(r.status).toBe(400);
   });
 
   it('POST with completed=true sets completed_at when all true', async () => {
-    await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: [true, true, true, true], completed: true }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
-    const r = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    await POST(req('POST', `/api/sutra/${sutraSlug}/copy-progress`, { chunkIdx: 0, writtenChars: [true, true, true, true], completed: true }) as any, { params: Promise.resolve({ slug: sutraSlug }) });
+    const r = await GET(req('GET', `/api/sutra/${sutraSlug}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     const body = await r.json();
     expect(body.data.progress.completedAt).not.toBeNull();
   });
 
   it('POST reset=true deletes the row', async () => {
-    const r = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, reset: true }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(req('POST', `/api/sutra/${sutraSlug}/copy-progress`, { chunkIdx: 0, reset: true }) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     expect(r.status).toBe(200);
-    const r2 = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r2 = await GET(req('GET', `/api/sutra/${sutraSlug}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ slug: sutraSlug }) });
     const body = await r2.json();
     expect(body.data.progress).toBeNull();
   });

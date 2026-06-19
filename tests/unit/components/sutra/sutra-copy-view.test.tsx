@@ -34,7 +34,7 @@ beforeEach(() => {
 
 describe('SutraCopyView', () => {
   it('renders all chars unwritten by default (logged-in user)', async () => {
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
+    render(<SutraCopyView chunk={CHUNK} sutraId={1} sutraSlug="copytest" userId={42} reading="horizontal" onExit={() => {}} />);
     // Wait for the GET to resolve
     await act(async () => { await new Promise(r => setTimeout(r, 0)); });
     const written = getWrittenChars(screen.getByTestId('copy-body'));
@@ -46,14 +46,14 @@ describe('SutraCopyView', () => {
       ok: true, status: 200,
       json: async () => ({ ok: true, data: { progress: { writtenChars: [true, true, false, false, false, false, false, false, false, false, false, false, false, false], startedAt: new Date(), updatedAt: new Date(), completedAt: null } } }),
     });
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
+    render(<SutraCopyView chunk={CHUNK} sutraId={1} sutraSlug="copytest" userId={42} reading="horizontal" onExit={() => {}} />);
     await act(async () => { await new Promise(r => setTimeout(r, 0)); });
     const written = getWrittenChars(screen.getByTestId('copy-body'));
     expect(written).toEqual([true, true, false, false, false, false, false, false, false, false, false, false, false, false]);
   });
 
   it('clicking a char marks it written and triggers POST (after 500ms debounce)', async () => {
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
+    render(<SutraCopyView chunk={CHUNK} sutraId={1} sutraSlug="copytest" userId={42} reading="horizontal" onExit={() => {}} />);
     await act(async () => { await new Promise(r => setTimeout(r, 0)); });
 
     // Click the first char
@@ -67,13 +67,13 @@ describe('SutraCopyView', () => {
     // The POST call should be the 2nd fetch (1st was the GET)
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const [url, init] = fetchMock.mock.calls[1]!;
-    expect(String(url)).toBe('/api/sutra/1/copy-progress');
+    expect(String(url)).toBe('/api/sutra/copytest/copy-progress');
     const body = JSON.parse((init as RequestInit).body as string);
     expect(body).toEqual({ chunkIdx: 0, writtenChars: [true, false, false, false, false, false, false, false, false, false, false, false, false, false] });
   });
 
   it('anonymous user sees disabled view + banner', async () => {
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={null} reading="horizontal" onExit={() => {}} />);
+    render(<SutraCopyView chunk={CHUNK} sutraId={1} sutraSlug="copytest" userId={null} reading="horizontal" onExit={() => {}} />);
     await act(async () => { await new Promise(r => setTimeout(r, 0)); });
     expect(screen.getByText(/请登录后开始抄经/)).toBeInTheDocument();
     const spans = screen.getByTestId('copy-body').querySelectorAll<HTMLElement>('span[data-idx]');
@@ -89,7 +89,7 @@ describe('SutraCopyView', () => {
       ok: true, status: 200,
       json: async () => ({ ok: true, data: { progress: { writtenChars: new Array(14).fill(true), startedAt: new Date(), updatedAt: new Date(), completedAt: null } } }),
     });
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
+    render(<SutraCopyView chunk={CHUNK} sutraId={1} sutraSlug="copytest" userId={42} reading="horizontal" onExit={() => {}} />);
     // flush initial GET microtask
     await act(async () => { await vi.runAllTimersAsync(); });
     // Find the body — should already be in collapsing phase

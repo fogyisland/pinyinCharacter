@@ -45,6 +45,7 @@ export function SutraRightColumn({ sutraId, sutraSlug, sutraTitle, chunk, userId
             key={chunk.id}
             chunk={chunk}
             sutraId={sutraId}
+            sutraSlug={sutraSlug}
             userId={userId}
             reading={reading}
             onExit={() => setCopyMode(false)}
