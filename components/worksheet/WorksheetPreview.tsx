@@ -41,6 +41,7 @@ export function WorksheetPreview(props: Props) {
   return (
     <div>
       {/* Inline @page rule so the printed sheet actually uses the selected size. */}
+      {/* Brush sizes (brush-12/24/28) are not valid CSS @page values; browser falls back to printer default — this matches the "free-form page" intent in plan G3 R4. */}
       <style>{`@page { size: ${props.paperSize}; margin: 1.5cm; }`}</style>
 
       {isFormView && props.showHeader !== false && (

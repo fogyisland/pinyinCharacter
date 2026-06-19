@@ -27,7 +27,7 @@ export function WorksheetGenerator() {
   const [content, setContent] = useState<string[]>(prefill ? [prefill] : []);
   const [title, setTitle] = useState('');
   const [cellStyle, setCellStyle] = useState<CellStyle>('brush');
-  const [paperSize, setPaperSize] = useState<PaperSize>('A4');
+  const [paperSize, setPaperSize] = useState<PaperSize>('brush-12');
   const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor('brush'));
   const [view, setView] = useState<'form' | 'preview'>('form');
   const [saving, setSaving] = useState(false);
@@ -155,17 +155,19 @@ export function WorksheetGenerator() {
       )}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label className="block text-sm font-medium text-ink-soft">标题(可选)</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            maxLength={80}
-            placeholder="给字帖起个名字..."
-            className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
-          />
-        </div>
+        {tab !== 'random' && (
+          <div>
+            <label className="block text-sm font-medium text-ink-soft">标题(可选)</label>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              maxLength={80}
+              placeholder="给字帖起个名字..."
+              className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
+            />
+          </div>
+        )}
         <div>
           <label className="block text-sm font-medium text-ink-soft">格子样式</label>
           <div className="mt-2">
