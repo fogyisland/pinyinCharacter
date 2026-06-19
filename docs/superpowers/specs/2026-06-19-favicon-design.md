@@ -87,12 +87,12 @@ The `tsx` runner is already in the project (used by all other `scripts/*.ts` fil
 ### 6. `scripts/build-favicon.ts` behavior
 
 1. Read `public/logo.png` with `sharp`.
-2. Generate 5 outputs into 4 destinations:
+2. Generate 4 image outputs to 4 destinations (the manifest is hand-written, not generated):
    - `app/icon.png` — 32×32 PNG
    - `app/apple-icon.png` — 180×180 PNG
    - `app/favicon.ico` — 16+32+48 multi-size ICO (sharp's `.ico()` encoder)
-   - `public/favicon.ico` — same as the third output (write twice)
-3. Print a one-line summary (file path + size in bytes).
+   - `public/favicon.ico` — same as the third output (write the ICO buffer twice)
+3. Print a one-line summary (file path + size in bytes for each of the 4 outputs).
 4. `process.exit(0)` on success, `process.exit(1)` on error.
 
 The script does NOT modify the source `public/logo.png`. Idempotent — re-running produces the same outputs.
