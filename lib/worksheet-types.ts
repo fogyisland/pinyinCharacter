@@ -2,7 +2,9 @@ import { cellsPerPage } from './worksheet-page-count';
 
 export type CellStyle = 'brush' | 'square' | 'pen' | 'cross';
 export type PaperSize = 'A3' | 'A4' | 'B5';
-export type FontFamily = 'kai' | 'song' | 'hei';
+export type FontFamily =
+  | 'song' | 'kai' | 'hei'
+  | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin';
 
 export interface Cell {
   char: string;
@@ -41,10 +43,19 @@ export const PAPER_SIZES: { value: PaperSize; label: string; cols: number; cells
   { value: 'B5', label: 'B5 · 小', cols: 6,  cellsPerPage: cellsPerPage('B5') },
 ];
 
-export const FONT_FAMILIES: { value: FontFamily; label: string; cssVar: string }[] = [
-  { value: 'song', label: '宋体', cssVar: 'var(--font-han-serif)' },
-  { value: 'kai',  label: '楷体', cssVar: 'var(--font-wenkai)' },
-  { value: 'hei',  label: '黑体', cssVar: 'var(--font-han-sans)' },
+export const FONT_FAMILIES: {
+  value: FontFamily;
+  label: string;
+  cssVar: string;
+  group: 'system' | 'hard-pen';
+}[] = [
+  { value: 'song', label: '宋体',     cssVar: 'var(--font-han-serif)',     group: 'system' },
+  { value: 'kai',  label: '楷体',     cssVar: 'var(--font-wenkai)',        group: 'system' },
+  { value: 'hei',  label: '黑体',     cssVar: 'var(--font-han-sans)',      group: 'system' },
+  { value: 'wenkai-gb',     label: '霞鹜文楷 GB', cssVar: 'var(--font-lxgw-wenkai-gb)', group: 'hard-pen' },
+  { value: 'yozai',         label: '悠哉',         cssVar: 'var(--font-yozai)',         group: 'hard-pen' },
+  { value: 'iansui',        label: '芫荽',         cssVar: 'var(--font-iansui)',        group: 'hard-pen' },
+  { value: 'zen-kaku-thin', label: '思源极细黑',   cssVar: 'var(--font-zen-kaku-thin)', group: 'hard-pen' },
 ];
 
 export function paperSizeLabel(p: PaperSize): string {
