@@ -12,6 +12,7 @@ beforeAll(async () => {
 const { POST: register } = await import('@/app/api/auth/register/route');
 const { POST: login } = await import('@/app/api/auth/login/route');
 const { GET: listSheets, POST: createSheet } = await import('@/app/api/worksheets/route');
+const { GET: getSheet, DELETE: delSheet } = await import('@/app/api/worksheets/[id]/route');
 
 async function regUser(username: string) {
   return register(new Request('http://x/api/auth/register', {
@@ -68,6 +69,24 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     expect(r.status).toBe(400);
   });
 
+  it('saves brush paper size round-trip', async () => {
+    const u = uniqueUsername('ws');
+    await regUser(u);
+    const { cookie } = await loginAndCookie(u);
+    const r = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ title: 'brush-12 sheet', content: ['你', '好'], cellStyle: 'brush', paperSize: 'brush-12' }),
+    })) as any);
+    expect(r.status).toBe(200);
+    const id = (await r.json()).data.id as number;
+    // Read it back via the GET route and confirm paper_size='brush-12' round-trip
+    const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
+    const got = await getSheet(withCookie(cookie, new Request(`http://x/api/worksheets/${id}`)) as any, ctx);
+    const j = await got.json();
+    expect(got.status).toBe(200);
+    expect(j.data.paperSize).toBe('brush-12');
+  });
+
   it('GET list returns the user worksheets', async () => {
     const u = uniqueUsername('ws');
     await regUser(u);
@@ -82,8 +101,6 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     expect(j.data.worksheets.length).toBeGreaterThanOrEqual(1);
   });
 });
-
-const { GET: getSheet, DELETE: delSheet } = await import('@/app/api/worksheets/[id]/route');
 
 integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
   it('GET returns the worksheet for its owner', async () => {
