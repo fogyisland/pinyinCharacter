@@ -128,6 +128,8 @@ const DDL = [
      title       VARCHAR(80)    NOT NULL,
      content     JSON           NOT NULL,
      cell_style  ENUM('brush','square','pen','cross') NOT NULL,
+     paper_size  ENUM('A3','A4','B5','brush-12','brush-24','brush-28') NOT NULL,
+     font_family ENUM('song','kai','hei','wenkai-gb','yozai','iansui','zen-kaku-thin','ma-shan-zheng','long-cang') NOT NULL DEFAULT 'song',
      created_at  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
      PRIMARY KEY (id),
      KEY idx_user_created (user_id, created_at DESC),

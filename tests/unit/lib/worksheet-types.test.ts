@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FONT_FAMILIES, fontFamilyLabel, fontFamilyCssVar, BRUSH_PAPER_SIZES, isBrushSize } from '@/lib/worksheet-types';
+import { FONT_FAMILIES, fontFamilyLabel, fontFamilyCssVar, BRUSH_PAPER_SIZES, isBrushSize, validateWorksheetInput } from '@/lib/worksheet-types';
 import type { FontFamily } from '@/lib/worksheet-types';
 
 describe('FONT_FAMILIES (G3)', () => {
@@ -51,5 +51,30 @@ describe('isBrushSize + BRUSH_PAPER_SIZES (G3)', () => {
     expect(isBrushSize('A3')).toBe(false);
     expect(isBrushSize('A4')).toBe(false);
     expect(isBrushSize('B5')).toBe(false);
+  });
+});
+
+describe('validateWorksheetInput (G3 paperSize guard)', () => {
+  const base = { title: 't', content: ['不'], cellStyle: 'brush' as const };
+
+  it('accepts paperSize brush-12', () => {
+    const r = validateWorksheetInput({ ...base, paperSize: 'brush-12' });
+    expect(r.ok).toBe(true);
+  });
+
+  it('accepts paperSize brush-24', () => {
+    const r = validateWorksheetInput({ ...base, paperSize: 'brush-24' });
+    expect(r.ok).toBe(true);
+  });
+
+  it('accepts paperSize brush-28', () => {
+    const r = validateWorksheetInput({ ...base, paperSize: 'brush-28' });
+    expect(r.ok).toBe(true);
+  });
+
+  it('rejects paperSize "nonsense"', () => {
+    const r = validateWorksheetInput({ ...base, paperSize: 'nonsense' });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/paperSize must be/);
   });
 });

@@ -44,8 +44,12 @@ export const saveWorksheetSchema = z.object({
     .min(1)
     .max(500),
   cellStyle: z.enum(['brush', 'square', 'pen', 'cross']),
-  paperSize: z.enum(['A3', 'A4', 'B5']).default('A4'),
-  fontFamily: z.enum(['kai', 'song', 'hei']).default('song'),
+  paperSize: z.enum(['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']).default('A4'),
+  fontFamily: z.enum([
+    'song', 'kai', 'hei',
+    'wenkai-gb', 'yozai', 'iansui', 'zen-kaku-thin',
+    'ma-shan-zheng', 'long-cang',
+  ]).default('song'),
 });
 
 export const poemListQuerySchema = z.object({

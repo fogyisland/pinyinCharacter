@@ -90,11 +90,13 @@ export function cellStyleLabel(s: CellStyle): string {
 }
 
 export type ValidationResult =
-  | { ok: true; data: { title: string; content: string[]; cellStyle: CellStyle } }
+  | { ok: true; data: { title: string; content: string[]; cellStyle: CellStyle; paperSize: PaperSize } }
   | { ok: false; error: string };
 
 // 与 lib/validators.ts SINGLE_CJK 保持一致 (常用字 + 扩展A + 中文标点 + 全角)
 const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
+
+const VALID_PAPER_SIZES = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'] as const;
 
 export function generateLayout(content: string[], style: CellStyle): Cell[] {
   return content.map((char, index) => ({ char, style, index }));
@@ -104,6 +106,7 @@ export function validateWorksheetInput(input: {
   title: unknown;
   content: unknown;
   cellStyle: unknown;
+  paperSize?: unknown;
 }): ValidationResult {
   if (typeof input.title !== 'string' || input.title.length < 1 || input.title.length > 80) {
     return { ok: false, error: 'title must be 1-80 chars' };
@@ -122,9 +125,21 @@ export function validateWorksheetInput(input: {
   ) {
     return { ok: false, error: 'cellStyle must be brush, square, pen, or cross' };
   }
+  // paperSize is optional in input but defaults to 'A4' for non-brush; brush defaults to 'brush-12'
+  let paperSize: PaperSize;
+  if (input.paperSize === undefined) {
+    paperSize = input.cellStyle === 'brush' ? 'brush-12' : 'A4';
+  } else if (
+    typeof input.paperSize === 'string' &&
+    (VALID_PAPER_SIZES as readonly string[]).includes(input.paperSize)
+  ) {
+    paperSize = input.paperSize as PaperSize;
+  } else {
+    return { ok: false, error: 'paperSize must be A3, A4, B5, brush-12, brush-24, or brush-28' };
+  }
   return {
     ok: true,
-    data: { title: input.title, content: input.content as string[], cellStyle: input.cellStyle },
+    data: { title: input.title, content: input.content as string[], cellStyle: input.cellStyle, paperSize },
   };
 }
 
