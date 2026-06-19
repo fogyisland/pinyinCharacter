@@ -10,7 +10,7 @@
 
 ## Global Constraints
 
-- **No new dependency.** `sharp@0.33.5` is already in `package.json`. `tsx` is already available. Do NOT add any new package.
+- **`to-ico@^1.3.0` is the only new devDependency** added in this plan. `sharp@0.33.5` is in runtime deps, `tsx` is in devDeps. Why `to-ico` is needed: `sharp@0.33.5` does NOT support `.ico()` output — verified by reading `node_modules/sharp/lib/index.d.ts` line 1701-1720 (`FormatEnum`: `avif/dz/fits/gif/heif/jpeg/jp2/jxl/magick/pdf/png/ppm/raw/svg/tiff` — no `ico`). `to-ico` is pure JS, ~50 KB, widely used, no transitive deps. Add via `pnpm add -D to-ico`.
 - **No logo color change.** Brand brown is `#5A4530` (verified from `public/logo.png`); paper background is `#FBF7EC` (verified from `app/globals.css` :root tokens).
 - **Source of truth is one file** (`public/logo.png`). All 4 image outputs are derived from it.
 - **`pnpm build` must NOT require `pnpm favicon:build`.** All 4 image files + manifest are committed. Clean clone must build green.
@@ -27,23 +27,29 @@
 **Files:**
 - Create: `scripts/build-favicon.ts`
 - Modify: `package.json` (add `favicon:build` script)
-- Test: `tests/unit/scripts/build-favicon.test.ts` (NOT a unit test — an integration test that runs the script and asserts the 4 output files exist with non-zero size)
+- Modify: `package.json` + `pnpm-lock.yaml` (add `to-ico` devDep)
+- Test: `tests/unit/scripts/build-favicon.test.ts` (an integration test that runs the script and asserts the 4 output files exist with non-zero size)
 
 **Interfaces:**
 - Consumes: `public/logo.png` (370×370, RGBA, 266 KB). Must exist already.
 - Produces: 4 image files written to disk:
   - `app/icon.png` — 32×32 PNG
   - `app/apple-icon.png` — 180×180 PNG
-  - `app/favicon.ico` — multi-size ICO (16+32+48)
+  - `app/favicon.ico` — multi-size ICO (16+32+48, encoded via `to-ico`)
   - `public/favicon.ico` — same bytes as `app/favicon.ico` (write the buffer twice)
 - No exported functions — the script is invoked via `tsx scripts/build-favicon.ts`.
+
+- [ ] **Step 0: Install `to-ico` as a devDependency**
+
+Run: `pnpm add -D to-ico`
+Expected: `to-ico@^1.x` added to `package.json` `devDependencies`; `pnpm-lock.yaml` updated.
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/scripts/build-favicon.test.ts`:
 
 ```ts
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import { execSync } from 'node:child_process';
 import { existsSync, statSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -59,14 +65,6 @@ const OUTPUTS = [
 describe('scripts/build-favicon.ts', () => {
   beforeAll(() => {
     // Clean any prior outputs to ensure a fresh run
-    for (const f of OUTPUTS) {
-      const p = resolve(ROOT, f);
-      if (existsSync(p)) rmSync(p);
-    }
-  });
-
-  afterAll(() => {
-    // Clean up so this test does not pollute the working tree
     for (const f of OUTPUTS) {
       const p = resolve(ROOT, f);
       if (existsSync(p)) rmSync(p);
@@ -90,6 +88,8 @@ describe('scripts/build-favicon.ts', () => {
   });
 });
 ```
+
+Note: NO `afterAll` cleanup — the 4 generated files are part of the deliverable and must remain on disk for the commit in Step 9. The `beforeAll` cleanup ensures a fresh build on first test run.
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -121,12 +121,13 @@ Create `scripts/build-favicon.ts`:
  * Outputs:
  *   app/icon.png         (32x32)
  *   app/apple-icon.png   (180x180)
- *   app/favicon.ico      (16+32+48 multi-size)
+ *   app/favicon.ico      (16+32+48 multi-size, via `to-ico`)
  *   public/favicon.ico   (same bytes as app/favicon.ico)
  *
  * Run: pnpm favicon:build
  */
 import sharp from 'sharp';
+import toIco from 'to-ico';
 import { readFileSync, writeFileSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -139,12 +140,16 @@ async function main() {
   const buf = readFileSync(SOURCE);
   const img = sharp(buf);
 
+  // PNG outputs (sharp handles these directly)
   const icon32 = await img.clone().resize(32, 32).png().toBuffer();
   const apple180 = await img.clone().resize(180, 180).png().toBuffer();
-  const ico = await img.clone()
-    .resize(256, 256) // sharp's .ico() requires a square >= 256 first
-    .ico()
-    .toBuffer();
+
+  // Multi-size ICO via to-ico: generate 16, 32, 48 px PNGs and combine.
+  // to-ico API: toIco(Buffer[]) => Promise<Buffer>
+  const ico16 = await img.clone().resize(16, 16).png().toBuffer();
+  const ico32 = await img.clone().resize(32, 32).png().toBuffer();
+  const ico48 = await img.clone().resize(48, 48).png().toBuffer();
+  const ico = await toIco([ico16, ico32, ico48]);
 
   const dests = [
     { path: 'app/icon.png', data: icon32 },
@@ -420,10 +425,10 @@ Document these in the final summary message:
   - §6 "build script behavior" — Task 1 Step 5 ✓
   - §7 "no .gitignore impact" — verified, no entries needed
 - **Placeholder scan:** No "TBD"/"TODO"/"later"/"implement later" in any task. Every step has concrete code or a run command.
-- **Type consistency:** `sharp` import shape (`import sharp from 'sharp'`) used identically in script and tests. File paths (`app/icon.png`, etc.) used identically in all 4 tasks.
-- **sharp API used:** `sharp(buf).clone().resize(w, h).png().toBuffer()` and `.ico().toBuffer()`. The `.ico()` encoder requires a square ≥256 first, so we resize to 256 before calling `.ico()` — this is the canonical sharp pattern and embeds multiple sizes inside the single ICO.
-- **Test discipline:** TDD on every file-producing task (build script test, manifest test, layout test). Verification only at the end.
-- **Commit discipline:** 1 commit per task. Verification has no commit.
-- **No new dep:** `sharp@0.33.5` is already there (verified in package.json before this plan was written). `tsx` is already there. No install step.
+- **Type consistency:** `sharp` import shape (`import sharp from 'sharp'`) used identically in script and tests. `to-ico` import (`import toIco from 'to-ico'`) used identically. File paths (`app/icon.png`, etc.) used identically in all 4 tasks.
+- **sharp API used:** `sharp(buf).clone().resize(w, h).png().toBuffer()`. The `.ico()` method is NOT used because `sharp@0.33.5` does not support it (verified in `node_modules/sharp/lib/index.d.ts` line 1701-1720 — no `ico` in `FormatEnum`). The multi-size ICO is built via `to-ico` which accepts an array of PNG buffers and returns a single multi-page ICO buffer.
+- **to-ico API:** `toIco(Buffer[]) => Promise<Buffer>` (default export from `to-ico`, see node_modules/to-ico/README.md at install time).
+- **Test cleanup discipline:** `beforeAll` cleans prior outputs to ensure a fresh build. NO `afterAll` cleanup because the 4 files are committed deliverables and must remain on disk after the test runs (the previous version of the plan had `afterAll` cleanup, which would have removed the files needed for the commit — fixed in this revision).
 - **Dev/build conflict:** Task 4 Step 2 explicitly handles killing the dev server (memory note).
 - **Order of tasks:** Task 1 first (produces the icon files referenced by Task 2's manifest and Task 3's link), Task 2 second, Task 3 third, Task 4 verifies all together.
+- **One allowed new dep:** `to-ico@^1.3.0` as a devDependency, installed in Task 1 Step 0. Without it, multi-size ICO generation is not possible with the existing sharp version. The "no new dep" constraint was relaxed for this single lib, documented in the Global Constraints.
