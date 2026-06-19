@@ -1,28 +1,34 @@
 'use client';
 
 import type { FontFamily } from '@/lib/worksheet-types';
-import { FONT_FAMILIES } from '@/lib/worksheet-types';
+import { FONT_FAMILIES, fontFamilyLabel } from '@/lib/worksheet-types';
 
 interface Props {
   value: FontFamily;
   onChange: (v: FontFamily) => void;
 }
 
+const GROUPS = [
+  { key: 'system', label: '系统字体' },
+  { key: 'hard-pen', label: '硬笔字体' },
+] as const;
+
 export function FontFamilyPicker({ value, onChange }: Props) {
   return (
-    <div className="flex flex-wrap gap-x-4 gap-y-1">
-      {FONT_FAMILIES.map((f) => (
-        <label key={f.value} className="flex cursor-pointer items-center gap-2">
-          <input
-            type="radio"
-            name="fontFamily"
-            value={f.value}
-            checked={value === f.value}
-            onChange={() => onChange(f.value)}
-          />
-          <span style={{ fontFamily: f.cssVar }}>{f.label}</span>
-        </label>
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value as FontFamily)}
+      className="rounded border border-ink/20 bg-paper px-3 py-1.5 text-sm"
+    >
+      {GROUPS.map((g) => (
+        <optgroup key={g.key} label={g.label}>
+          {FONT_FAMILIES.filter((f) => f.group === g.key).map((f) => (
+            <option key={f.value} value={f.value} style={{ fontFamily: f.cssVar }}>
+              {fontFamilyLabel(f.value)}
+            </option>
+          ))}
+        </optgroup>
       ))}
-    </div>
+    </select>
   );
 }
