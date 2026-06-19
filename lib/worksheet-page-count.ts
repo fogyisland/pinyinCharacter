@@ -2,8 +2,8 @@ import type { PaperSize } from './worksheet-types';
 
 const CELLS_PER_PAGE: Record<PaperSize, number> = {
   A3: 132,
-  A4: 96,
-  B5: 66,
+  A4: 88,
+  B5: 60,
 };
 
 export function cellsPerPage(paperSize: PaperSize): number {
