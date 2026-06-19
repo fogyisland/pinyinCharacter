@@ -15,6 +15,9 @@
     "sutras:build": "tsx scripts/build-sutras.ts",
     "strokes:build": "tsx scripts/build-strokes.ts",
     "fonts:download": "tsx scripts/download-ancient-fonts.ts",
+    "fonts:download-hard-pen": "tsx scripts/fonts/download-hard-pen-fonts.ts",
+    "fonts:subset": "node scripts/fonts/subset-hard-pen-fonts.mjs",
+    "fonts:hard-pen": "pnpm fonts:download-hard-pen && pnpm fonts:subset",
     "chars:import": "tsx scripts/import-chars-data.ts"
   },
   "dependencies": {
@@ -53,6 +56,7 @@
     "p-limit": "^6.0.0",
     "postcss": "^8.4.49",
     "sharp": "0.33.5",
+    "subset-font": "^2.4.0",
     "tailwindcss": "^4.0.0-beta.3",
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
