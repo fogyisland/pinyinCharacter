@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSutra } from '@/lib/sutras';
 import { getCurrentUser } from '@/lib/auth';
@@ -9,12 +10,13 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { SutraMeta } from '@/components/sutra/SutraMeta';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
 import { SutraRightColumn } from './SutraRightColumn';
+import { getSutraBackLink } from './back-link';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ chunk?: string }>;
+  searchParams: Promise<{ chunk?: string; from?: string }>;
 }
 
 export default async function SutraDetailPage({ params, searchParams }: Props) {
@@ -32,12 +34,21 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
       ? requestedChunk
       : 0;
   const activeChunk = sutra.chunks[activeChunkId]!;
+  const backLink = getSutraBackLink(sp.from);
 
   return (
     <>
       <Suspense><Header /></Suspense>
       <PageContainer>
         <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <div className="worksheet-no-print mb-2">
+          <Link
+            href={backLink.href}
+            className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal transition-colors"
+          >
+            <span aria-hidden="true">←</span> {backLink.label}
+          </Link>
+        </div>
         <div className="worksheet-no-print">
           <SutraMeta title={sutra.title} chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null} />
         </div>

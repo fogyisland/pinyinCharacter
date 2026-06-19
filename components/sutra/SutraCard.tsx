@@ -4,7 +4,7 @@ import type { SutraListItem } from '@/lib/sutra-types';
 export function SutraCard({ sutra }: { sutra: SutraListItem }) {
   return (
     <Link
-      href={`/sutra/${sutra.id}`}
+      href={`/sutra/${sutra.id}?from=sutras`}
       className="card-paper p-4 flex flex-col gap-2 hover:border-seal transition-colors group"
     >
       <h3 className="font-kai text-lg text-ink leading-tight group-hover:text-seal transition-colors">

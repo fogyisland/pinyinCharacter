@@ -20,4 +20,12 @@ describe('SutraCard', () => {
     );
     expect(container.textContent).toContain('32 品');
   });
+
+  it('links to sutra detail with ?from=sutras so the back button works', () => {
+    const { container } = render(
+      <SutraCard sutra={{ id: 1, title: '心经', slug: 'xinjing', chunkCount: 1, charCount: 260 }} />
+    );
+    const link = container.querySelector('a');
+    expect(link?.getAttribute('href')).toBe('/sutra/1?from=sutras');
+  });
 });
