@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FONT_FAMILIES, fontFamilyLabel, fontFamilyCssVar } from '@/lib/worksheet-types';
+import { FONT_FAMILIES, fontFamilyLabel, fontFamilyCssVar, BRUSH_PAPER_SIZES, isBrushSize } from '@/lib/worksheet-types';
 import type { FontFamily } from '@/lib/worksheet-types';
 
 describe('FONT_FAMILIES (G3)', () => {
@@ -33,5 +33,23 @@ describe('FONT_FAMILIES (G3)', () => {
       expect(fontFamilyLabel(f.value)).toBe(f.label);
       expect(fontFamilyCssVar(f.value)).toBe(f.cssVar);
     }
+  });
+});
+
+describe('isBrushSize + BRUSH_PAPER_SIZES (G3)', () => {
+  it('BRUSH_PAPER_SIZES contains the 3 brush values in order', () => {
+    expect(BRUSH_PAPER_SIZES).toEqual(['brush-12', 'brush-24', 'brush-28']);
+  });
+
+  it('isBrushSize returns true for brush modes', () => {
+    expect(isBrushSize('brush-12')).toBe(true);
+    expect(isBrushSize('brush-24')).toBe(true);
+    expect(isBrushSize('brush-28')).toBe(true);
+  });
+
+  it('isBrushSize returns false for A3/A4/B5', () => {
+    expect(isBrushSize('A3')).toBe(false);
+    expect(isBrushSize('A4')).toBe(false);
+    expect(isBrushSize('B5')).toBe(false);
   });
 });

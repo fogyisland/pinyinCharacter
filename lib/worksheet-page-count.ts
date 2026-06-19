@@ -4,6 +4,9 @@ const CELLS_PER_PAGE: Record<PaperSize, number> = {
   A3: 132,
   A4: 88,
   B5: 60,
+  'brush-12': 12,
+  'brush-24': 24,
+  'brush-28': 28,
 };
 
 export function cellsPerPage(paperSize: PaperSize): number {

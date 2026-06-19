@@ -1,7 +1,7 @@
 import { cellsPerPage } from './worksheet-page-count';
 
 export type CellStyle = 'brush' | 'square' | 'pen' | 'cross';
-export type PaperSize = 'A3' | 'A4' | 'B5';
+export type PaperSize = 'A3' | 'A4' | 'B5' | 'brush-12' | 'brush-24' | 'brush-28';
 export type FontFamily =
   | 'song' | 'kai' | 'hei'
   | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin'
@@ -39,9 +39,12 @@ export interface SaveWorksheetArgs {
 // depends on the cell size in CSS and the printable area. Sourced from
 // cellsPerPage() so the literal lives in one place (worksheet-page-count.ts).
 export const PAPER_SIZES: { value: PaperSize; label: string; cols: number; cellsPerPage: number }[] = [
-  { value: 'A3', label: 'A3 · 大', cols: 12, cellsPerPage: cellsPerPage('A3') },
-  { value: 'A4', label: 'A4 · 标准', cols: 8,  cellsPerPage: cellsPerPage('A4') },
-  { value: 'B5', label: 'B5 · 小', cols: 6,  cellsPerPage: cellsPerPage('B5') },
+  { value: 'A3',       label: 'A3 · 大',       cols: 12, cellsPerPage: cellsPerPage('A3') },
+  { value: 'A4',       label: 'A4 · 标准',     cols: 8,  cellsPerPage: cellsPerPage('A4') },
+  { value: 'B5',       label: 'B5 · 小',       cols: 6,  cellsPerPage: cellsPerPage('B5') },
+  { value: 'brush-12', label: '12 字 · 毛笔',  cols: 4,  cellsPerPage: 12 },
+  { value: 'brush-24', label: '24 字 · 毛笔',  cols: 6,  cellsPerPage: 24 },
+  { value: 'brush-28', label: '28 字 · 毛笔',  cols: 7,  cellsPerPage: 28 },
 ];
 
 export const FONT_FAMILIES: {
@@ -60,6 +63,13 @@ export const FONT_FAMILIES: {
   { value: 'ma-shan-zheng', label: '马善政体 (毛笔正书)',  cssVar: 'var(--font-ma-shan-zheng)',     group: 'brush' },
   { value: 'long-cang',     label: '龙藏体 (草书)',        cssVar: 'var(--font-long-cang)',         group: 'brush' },
 ];
+
+export const BRUSH_PAPER_SIZES = ['brush-12', 'brush-24', 'brush-28'] as const;
+export type BrushPaperSize = typeof BRUSH_PAPER_SIZES[number];
+
+export function isBrushSize(p: PaperSize): p is BrushPaperSize {
+  return (BRUSH_PAPER_SIZES as readonly string[]).includes(p);
+}
 
 export function paperSizeLabel(p: PaperSize): string {
   return PAPER_SIZES.find((s) => s.value === p)?.label ?? p;

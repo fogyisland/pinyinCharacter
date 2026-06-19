@@ -39,3 +39,15 @@ describe('exceedsFreeLimit', () => {
     expect(exceedsFreeLimit(200, 'A4')).toBe(true);
   });
 });
+
+describe('cellsPerPage (G3 brush modes)', () => {
+  it('returns 12 for brush-12', () => {
+    expect(cellsPerPage('brush-12')).toBe(12);
+  });
+  it('returns 24 for brush-24', () => {
+    expect(cellsPerPage('brush-24')).toBe(24);
+  });
+  it('returns 28 for brush-28', () => {
+    expect(cellsPerPage('brush-28')).toBe(28);
+  });
+});
