@@ -1,0 +1,13 @@
+{
+  "name": "字·韵",
+  "short_name": "字·韵",
+  "description": "公益汉字工具：字↔拼音互转、千字罕见库、字帖打印、游戏识字。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FBF7EC",
+  "theme_color": "#5A4530",
+  "icons": [
+    { "src": "/icon.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/apple-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
