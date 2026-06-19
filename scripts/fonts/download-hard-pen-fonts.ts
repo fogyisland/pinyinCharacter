@@ -2,7 +2,8 @@
  * download-hard-pen-fonts.ts
  *
  * Plan G2 — Hard-pen font pipeline (download phase).
- * Pulls 4 source TTFs/OTFs from upstream releases into
+ * Plan G3 — Adds 2 brush fonts (Ma Shan Zheng + Long Cang).
+ * Pulls 6 source TTFs/OTFs from upstream releases into
  * scripts/fonts/staging/ (gitignored). Soft-fails on network errors.
  *
  * Run: pnpm fonts:download-hard-pen
@@ -52,6 +53,20 @@ const FONTS: FontEntry[] = [
       'https://github.com/googlefonts/zen-kakugothic/releases/download/v1.0.0/ZenKakuGothicNew-Thin.otf',
     ],
     label: 'Zen Kaku Gothic New Thin (思源极细黑)',
+  },
+  {
+    filename: 'MaShanZheng-Regular.ttf',
+    urls: [
+      'https://github.com/google/fonts/raw/main/ofl/mashanzheng/MaShanZheng-Regular.ttf',
+    ],
+    label: 'Ma Shan Zheng (马善政体)',
+  },
+  {
+    filename: 'LongCang-Regular.ttf',
+    urls: [
+      'https://github.com/google/fonts/raw/main/ofl/longcang/LongCang-Regular.ttf',
+    ],
+    label: 'Long Cang (龙藏体)',
   },
 ];
 

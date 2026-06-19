@@ -2,6 +2,7 @@
  * subset-hard-pen-fonts.mjs
  *
  * Plan G2 — Hard-pen font pipeline (subset phase).
+ * Plan G3 — Adds 2 brush fonts (Ma Shan Zheng + Long Cang).
  * Reads source TTF/OTF from scripts/fonts/staging/, subsets to
  * scripts/fonts/gb2312-7000.txt, writes WOFF2 to public/fonts/.
  * Warns on > 800 KB output.
@@ -31,6 +32,8 @@ const TARGETS = [
   { in: 'Yozai-Regular.ttf',          out: 'Yozai-Regular.woff2' },
   { in: 'Iansui-Regular.ttf',         out: 'Iansui-Regular.woff2' },
   { in: 'ZenKakuGothicNew-Thin.otf',  out: 'ZenKakuGothicNew-Thin.woff2' },
+  { in: 'MaShanZheng-Regular.ttf',    out: 'ma-shan-zheng.woff2' },
+  { in: 'LongCang-Regular.ttf',       out: 'long-cang.woff2' },
 ];
 
 const SIZE_WARN_KB = 800;

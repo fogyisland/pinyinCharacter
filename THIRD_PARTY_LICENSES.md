@@ -22,6 +22,16 @@ This project bundles the following fonts, all under the [SIL Open Font License 1
 - Copyright: © 2022 Adobe Inc., Google Inc.
 - License: SIL OFL 1.1
 
+## Ma Shan Zheng (马善政体) (Plan G3)
+- Upstream: https://github.com/google/fonts/tree/main/ofl/mashanzheng
+- Copyright: © 2024 The Ma Shan Zheng Project Authors.
+- License: SIL OFL 1.1
+
+## Long Cang (龙藏体) (Plan G3)
+- Upstream: https://github.com/google/fonts/tree/main/ofl/longcang
+- Copyright: © 2024 The Long Cang Project Authors.
+- License: SIL OFL 1.1
+
 ## BabelStone Han Basic + Extra (Plan L)
 - Upstream: https://www.babelstone.co.uk/Fonts/BabelStoneHan.html
 - Copyright: © 2019 BabelStone.

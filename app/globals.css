@@ -24,6 +24,9 @@
   --font-yozai: 'Yozai', serif;
   --font-iansui: 'Iansui', serif;
   --font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
+  /* Brush fonts (Plan G3) */
+  --font-ma-shan-zheng: 'MaShanZheng', serif;
+  --font-long-cang: 'LongCang', serif;
   /* Ancient scripts (Plan L) */
   --font-jiaguwen: 'YinQiJiaGuWen', serif;
   --font-jinwen: 'HanDianJinWen', serif;
@@ -135,6 +138,9 @@
   --font-yozai: 'Yozai', serif;
   --font-iansui: 'Iansui', serif;
   --font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
+  /* Brush fonts (Plan G3) */
+  --font-ma-shan-zheng: 'MaShanZheng', serif;
+  --font-long-cang: 'LongCang', serif;
 }
 
 /* ============ Ancient-script fonts (Plan L, refreshed 2026-06-18) ============ */
@@ -190,6 +196,18 @@
   font-family: 'Zen Kaku Gothic New';
   src: url('/fonts/ZenKakuGothicNew-Thin.woff2') format('woff2');
   font-weight: 100;
+  font-display: swap;
+}
+
+/* ============ Brush fonts (Plan G3) ============ */
+@font-face {
+  font-family: 'MaShanZheng';
+  src: url('/fonts/ma-shan-zheng.woff2') format('woff2');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'LongCang';
+  src: url('/fonts/long-cang.woff2') format('woff2');
   font-display: swap;
 }
 

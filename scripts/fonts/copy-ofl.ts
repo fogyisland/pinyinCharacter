@@ -2,6 +2,7 @@
  * copy-ofl.ts
  *
  * Plan G2 — Hard-pen font pipeline (license copy).
+ * Plan G3 — Adds 2 brush fonts (Ma Shan Zheng + Long Cang).
  * Copies each font's upstream OFL.txt from scripts/fonts/staging/
  * (if present) to public/fonts/<same-basename>.OFL.txt.
  * Skips fonts whose OFL.txt source is not in staging/.
@@ -14,6 +15,8 @@
  *   - Yozai-Regular.OFL.txt
  *   - Iansui-Regular.OFL.txt
  *   - ZenKakuGothicNew-Thin.OFL.txt
+ *   - MaShanZheng-Regular.OFL.txt
+ *   - LongCang-Regular.OFL.txt
  *
  * If an OFL.txt is missing, the script prints a SKIP line with the upstream
  * URL to fetch it from. The downstream consumer (browser/legal docs) should
@@ -33,6 +36,8 @@ const TARGETS = [
   { font: 'Yozai-Regular.ttf', ofl: 'Yozai-Regular.OFL.txt' },
   { font: 'Iansui-Regular.ttf', ofl: 'Iansui-Regular.OFL.txt' },
   { font: 'ZenKakuGothicNew-Thin.otf', ofl: 'ZenKakuGothicNew-Thin.OFL.txt' },
+  { font: 'MaShanZheng-Regular.ttf', ofl: 'MaShanZheng-Regular.OFL.txt' },
+  { font: 'LongCang-Regular.ttf', ofl: 'LongCang-Regular.OFL.txt' },
 ];
 
 async function main() {
