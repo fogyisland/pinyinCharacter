@@ -71,6 +71,15 @@ export function isBrushSize(p: PaperSize): p is BrushPaperSize {
   return (BRUSH_PAPER_SIZES as readonly string[]).includes(p);
 }
 
+export function defaultFontFor(cellStyle: CellStyle): FontFamily {
+  switch (cellStyle) {
+    case 'brush':  return 'ma-shan-zheng';
+    case 'pen':    return 'wenkai-gb';
+    case 'square': return 'song';
+    case 'cross':  return 'song';
+  }
+}
+
 export function paperSizeLabel(p: PaperSize): string {
   return PAPER_SIZES.find((s) => s.value === p)?.label ?? p;
 }

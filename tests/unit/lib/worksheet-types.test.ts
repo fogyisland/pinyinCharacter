@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { FONT_FAMILIES, fontFamilyLabel, fontFamilyCssVar, BRUSH_PAPER_SIZES, isBrushSize, validateWorksheetInput } from '@/lib/worksheet-types';
+import { FONT_FAMILIES, fontFamilyLabel, fontFamilyCssVar, BRUSH_PAPER_SIZES, isBrushSize, validateWorksheetInput, defaultFontFor } from '@/lib/worksheet-types';
 import type { FontFamily } from '@/lib/worksheet-types';
 
 describe('FONT_FAMILIES (G3)', () => {
@@ -76,5 +76,20 @@ describe('validateWorksheetInput (G3 paperSize guard)', () => {
     const r = validateWorksheetInput({ ...base, paperSize: 'nonsense' });
     expect(r.ok).toBe(false);
     if (!r.ok) expect(r.error).toMatch(/paperSize must be/);
+  });
+});
+
+describe('defaultFontFor (G3)', () => {
+  it('returns first brush font for brush', () => {
+    expect(defaultFontFor('brush')).toBe('ma-shan-zheng');
+  });
+  it('returns first hard-pen font for pen', () => {
+    expect(defaultFontFor('pen')).toBe('wenkai-gb');
+  });
+  it('returns first system font for square', () => {
+    expect(defaultFontFor('square')).toBe('song');
+  });
+  it('returns first system font for cross', () => {
+    expect(defaultFontFor('cross')).toBe('song');
   });
 });

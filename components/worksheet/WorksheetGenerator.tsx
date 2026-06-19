@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
-import { paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import { defaultFontFor, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
 import { useAppStore } from '@/lib/store';
 import { TextInputTab } from './TextInputTab';
 import { LibrarySelectTab } from './LibrarySelectTab';
@@ -28,7 +28,7 @@ export function WorksheetGenerator() {
   const [title, setTitle] = useState('');
   const [cellStyle, setCellStyle] = useState<CellStyle>('brush');
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
-  const [fontFamily, setFontFamily] = useState<FontFamily>('song');
+  const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor('brush'));
   const [view, setView] = useState<'form' | 'preview'>('form');
   const [saving, setSaving] = useState(false);
   const [authHint, setAuthHint] = useState(false);
@@ -49,6 +49,16 @@ export function WorksheetGenerator() {
       setErrorMsg(null);
     }
   }, [user]);
+
+  function handleCellStyleChange(next: CellStyle) {
+    setCellStyle(next);
+    if (next === 'brush' && !isBrushSize(paperSize)) {
+      setPaperSize('brush-12');
+    } else if (next !== 'brush' && isBrushSize(paperSize)) {
+      setPaperSize('A4');
+    }
+    setFontFamily(defaultFontFor(next));
+  }
 
   const canPreview = content.length > 0;
 
@@ -157,7 +167,7 @@ export function WorksheetGenerator() {
         <div>
           <label className="block text-sm font-medium text-ink-soft">格子样式</label>
           <div className="mt-2">
-            <StylePicker value={cellStyle} onChange={setCellStyle} />
+            <StylePicker value={cellStyle} onChange={handleCellStyleChange} />
           </div>
         </div>
       </div>
@@ -168,7 +178,7 @@ export function WorksheetGenerator() {
             纸张尺寸 <span className="text-xs text-ink-faint">(决定每页字数)</span>
           </label>
           <div className="mt-2">
-            <PaperSizePicker value={paperSize} onChange={setPaperSize} />
+            <PaperSizePicker value={paperSize} cellStyle={cellStyle} onChange={setPaperSize} />
           </div>
         </div>
         <div>
