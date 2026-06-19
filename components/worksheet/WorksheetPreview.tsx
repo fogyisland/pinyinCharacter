@@ -5,6 +5,15 @@ import { generateLayout, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet
 import { WorksheetCell } from './WorksheetCell';
 import { PrintButton } from '@/components/common/PrintButton';
 
+function cellSizeFor(p: PaperSize): number {
+  switch (p) {
+    case 'brush-12': return 200;
+    case 'brush-24': return 150;
+    case 'brush-28': return 120;
+    default:         return 80;   // A3/A4/B5 keep 80px (G2 default)
+  }
+}
+
 interface BaseProps {
   title?: string;
   content: string[];
@@ -27,6 +36,7 @@ export function WorksheetPreview(props: Props) {
   const cells = generateLayout(props.content, props.cellStyle);
   const isFormView = 'onBack' in props;
   const sizeClass = `worksheet-grid--${props.paperSize.toLowerCase()}`;
+  const cellSize = cellSizeFor(props.paperSize);
 
   return (
     <div>
@@ -84,7 +94,7 @@ export function WorksheetPreview(props: Props) {
           </div>
           {cells.map((cell) => (
             <div key={cell.index} className="worksheet-cell">
-              <WorksheetCell char={cell.char} style={cell.style} fontFamily={props.fontFamily} />
+              <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
             </div>
           ))}
         </div>

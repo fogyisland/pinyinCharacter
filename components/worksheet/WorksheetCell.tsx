@@ -11,6 +11,7 @@ interface Props {
 export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: Props) {
   const stroke = '#bbb';
   const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", serif`;
+  const guideFontSize = Math.round(size * 0.6);
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" className="block">
       {/* outer border */}
@@ -33,7 +34,7 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
         y={50}
         textAnchor="middle"
         dominantBaseline="central"
-        fontSize={60}
+        fontSize={guideFontSize}
         fill={stroke}
         style={{ fontFamily: fontStack }}
       >

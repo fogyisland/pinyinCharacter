@@ -113,6 +113,9 @@
 .worksheet-grid--a3 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
 .worksheet-grid--a4 { grid-template-columns: repeat(8,  minmax(0, 1fr)); }
 .worksheet-grid--b5 { grid-template-columns: repeat(6,  minmax(0, 1fr)); }
+.worksheet-grid--brush-12 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.worksheet-grid--brush-24 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.worksheet-grid--brush-28 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 
 /* Screen: hide batch area off-screen (Spec B / Task 8) */
 .batch-print-area { position: absolute; left: -10000px; top: 0; width: 100%; }
