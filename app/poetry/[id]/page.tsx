@@ -46,7 +46,7 @@ export default async function PoemDetailPage({ params }: Props) {
           </div>
         )}
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">
-          <PrintButton endpoint={`/api/poetry/${poem.id}/print`} />
+          <PrintButton endpoint={`/api/poetry/${poem.id}/print`} loginRedirect={`/poetry/${poem.id}`} />
           <SaveAsWorksheetButton id={poem.id} title={poem.title} author={poem.author} content={poem.content} />
         </div>
       </PageContainer>

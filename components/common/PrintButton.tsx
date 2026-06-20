@@ -4,18 +4,21 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Printer } from 'lucide-react';
 import { useToastStore } from '@/lib/toast-store';
+import { useAppStore } from '@/lib/store';
 
 interface Props {
   endpoint: string;
   label?: string;
   sourceId?: string;
   gate?: 'multi_page' | null;
+  loginRedirect?: string;
 }
 
-export function PrintButton({ endpoint, label = '打印', sourceId, gate = null }: Props) {
+export function PrintButton({ endpoint, label = '打印', sourceId, gate = null, loginRedirect }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [canPrint, setCanPrint] = useState<boolean | null>(null);
+  const user = useAppStore((s) => s.user);
   const push = useToastStore((s) => s.push);
 
   useEffect(() => {
@@ -74,6 +77,21 @@ export function PrintButton({ endpoint, label = '打印', sourceId, gate = null 
           升级 →
         </Link>
       </div>
+    );
+  }
+
+  if (!user) {
+    const href = loginRedirect
+      ? `/login?redirect=${encodeURIComponent(loginRedirect)}`
+      : '/login';
+    return (
+      <Link
+        href={href}
+        className="rounded-md border border-ink/20 bg-paper px-4 py-2 text-sm text-ink hover:bg-paper-warm inline-flex items-center gap-1.5"
+      >
+        <Printer className="h-4 w-4" />
+        登录后{label}
+      </Link>
     );
   }
 
