@@ -14,16 +14,110 @@
  */
 import { pinyin } from 'pinyin-pro';
 import * as OpenCC from 'opencc-js';
+import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 import { getPool, closePool } from '../lib/db';
 
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 
 const SOURCE_BASE = 'https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master';
 const SOURCE_TAG = 'chinese-poetry/chinese-poetry@master';
+const DATA_DIR = join(process.cwd(), 'data', 'classics');
+const MANIFEST_PATH = join(process.cwd(), 'data', 'classics-manifest.json');
 
 interface ChunkSeed {
   chapter: string;
   paragraphs: string[];
+}
+
+interface ChunkJson {
+  id: number;
+  label: string;
+  content: string[];
+  pinyin: string[][];
+}
+
+interface VolumeJson {
+  slug: string;
+  title: string;
+  category: string;
+  author: string | null;
+  era: string | null;
+  source: string;
+  bookId: string;
+  bookTitle: string;
+  chapterRange: { from: number; to: number };
+  chunks: ChunkJson[];
+}
+
+interface ManifestEntry {
+  slug: string;
+  title: string;
+  source: string;
+  category: string;
+  author: string | null;
+  era: string | null;
+  chapterCount: number;
+  charCount: number;
+  jsonFile: string;
+  jsonBytes: number;
+  bookId?: string;
+  bookTitle?: string;
+}
+
+interface Manifest {
+  version: 1;
+  updatedAt: string;
+  books: ManifestEntry[];
+}
+
+function countChars(chunks: ChunkJson[]): number {
+  return chunks.reduce((n, c) => n + c.content.reduce((s, p) => s + Array.from(p).length, 0), 0);
+}
+
+function writeVolumeJson(vol: VolumeJson): { path: string; bytes: number } {
+  if (!existsSync(DATA_DIR)) mkdirSync(DATA_DIR, { recursive: true });
+  const json = JSON.stringify(vol, null, 2);
+  const filePath = join(DATA_DIR, `${vol.slug}.json`);
+  writeFileSync(filePath, json, 'utf8');
+  return { path: filePath, bytes: json.length };
+}
+
+function buildManifestFromDisk(): Manifest {
+  const entries: ManifestEntry[] = [];
+  if (!existsSync(DATA_DIR)) {
+    return { version: 1, updatedAt: new Date().toISOString(), books: entries };
+  }
+  for (const name of readdirSync(DATA_DIR)) {
+    if (!name.endsWith('.json')) continue;
+    const filePath = join(DATA_DIR, name);
+    const stat = statSync(filePath);
+    const vol: VolumeJson = JSON.parse(readFileSync(filePath, 'utf8'));
+    entries.push({
+      slug: vol.slug,
+      title: vol.title,
+      source: vol.source,
+      category: vol.category,
+      author: vol.author,
+      era: vol.era,
+      chapterCount: vol.chunks.length,
+      charCount: countChars(vol.chunks),
+      jsonFile: `data/classics/${name}`,
+      jsonBytes: stat.size,
+      bookId: vol.bookId,
+      bookTitle: vol.bookTitle,
+    });
+  }
+  entries.sort((a, b) => (a.category < b.category ? -1 : a.category > b.category ? 1 : a.slug.localeCompare(b.slug)));
+  return { version: 1, updatedAt: new Date().toISOString(), books: entries };
+}
+
+function writeManifest(): Manifest {
+  const dataDir = join(process.cwd(), 'data');
+  if (!existsSync(dataDir)) mkdirSync(dataDir, { recursive: true });
+  const manifest = buildManifestFromDisk();
+  writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), 'utf8');
+  return manifest;
 }
 
 interface ClassicFile {
@@ -196,6 +290,21 @@ export async function buildClassics(): Promise<number> {
       console.warn(`[build-classics] skip ${file.slug}: no chapters after parsing`);
       continue;
     }
+    const jsonStr = JSON.stringify(chunks);
+    const volJson: VolumeJson = {
+      slug: file.slug,
+      title: file.title,
+      category: file.category,
+      author: file.author,
+      era: file.era,
+      source: SOURCE_TAG,
+      bookId: file.slug,
+      bookTitle: file.title,
+      chapterRange: { from: 1, to: chunks.length },
+      chunks,
+    };
+    const { path: jsonPath, bytes } = writeVolumeJson(volJson);
+    console.log(`[build-classics] ${file.slug}: ${chunks.length} chapters, ${Math.round(bytes / 1024)}KB JSON → ${jsonPath}`);
     await pool.execute(
       `INSERT INTO classics (slug, title, category, author, era, chunks, source)
        VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -206,11 +315,11 @@ export async function buildClassics(): Promise<number> {
          era = VALUES(era),
          chunks = VALUES(chunks),
          source = VALUES(source)`,
-      [file.slug, file.title, file.category, file.author, file.era, JSON.stringify(chunks), SOURCE_TAG],
+      [file.slug, file.title, file.category, file.author, file.era, jsonStr, SOURCE_TAG],
     );
     inserted++;
-    console.log(`[build-classics] ${file.slug}: ${chunks.length} chapters`);
   }
+  writeManifest();
   return inserted;
 }
 
@@ -218,6 +327,8 @@ if (require.main === module) {
   buildClassics()
     .then((n) => {
       console.log(`[build-classics] inserted/updated ${n} classics`);
+      const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as Manifest;
+      console.log(`[build-classics] manifest has ${manifest.books.length} books total`);
       return closePool();
     })
     .catch((err) => {
@@ -225,3 +336,5 @@ if (require.main === module) {
       process.exit(1);
     });
 }
+
+export { writeManifest, buildManifestFromDisk, MANIFEST_PATH, DATA_DIR };
