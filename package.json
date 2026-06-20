@@ -11,6 +11,7 @@
     "test:watch": "vitest",
     "dict:build": "tsx scripts/build-dict.ts",
     "poetry:build": "tsx scripts/build-poems.ts",
+    "build:classics": "tsx scripts/build-classics.ts",
     "radicals:build": "tsx scripts/build-radicals.ts",
     "sutras:build": "tsx scripts/build-sutras.ts",
     "strokes:build": "tsx scripts/build-strokes.ts",
