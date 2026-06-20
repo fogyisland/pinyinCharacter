@@ -16,6 +16,11 @@ const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 const SOURCE_BASE = 'https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master';
 const SOURCE_TAG = 'chinese-poetry/chinese-poetry@master';
 
+// IMPORTANT: All 17 paths below are GUESSES based on chinese-poetry repo structure.
+// Before running on a network host, verify each path via:
+//   curl -I https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master/<path>
+// Update this array with verified paths. Per-file soft-fail logs `skip <slug>` for any 404.
+
 // slug → (upstream path, title, category, author, era)
 const CLASSIC_FILES: Array<{
   path: string;
