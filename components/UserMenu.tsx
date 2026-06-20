@@ -47,6 +47,7 @@ export function UserMenu() {
             </a>
           )}
           <a href="/profile" className="block px-3 py-1.5 hover:bg-paper-deep text-ink">我的主页</a>
+          <a href="/membership" className="block px-3 py-1.5 hover:bg-paper-deep text-ink">我的会员</a>
           <a href="/history" className="block px-3 py-1.5 hover:bg-paper-deep text-ink">历史记录</a>
           <a href="/history?favorite=true" className="block px-3 py-1.5 hover:bg-paper-deep text-ink">收藏夹</a>
           <div className="border-t border-ink/10 my-1" />
