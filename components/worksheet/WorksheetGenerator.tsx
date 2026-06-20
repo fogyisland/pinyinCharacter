@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { PaperSize, FontFamily } from '@/lib/worksheet-types';
 import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
@@ -14,6 +14,8 @@ import { PresentationPicker } from './PresentationPicker';
 import { PaperSizePicker } from './PaperSizePicker';
 import { FontFamilyPicker } from './FontFamilyPicker';
 import { WorksheetPreview } from './WorksheetPreview';
+import type { ClassicDetail } from '@/lib/classics-types';
+import { stripPunct, buildBreakpoints } from '@/lib/punctuation';
 
 type Tab = 'text' | 'library' | 'random';
 
@@ -39,6 +41,14 @@ export function WorksheetGenerator() {
   const [authHint, setAuthHint] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
+  const [ancientBook, setAncientBook] = useState<ClassicDetail | null>(null);
+  const [chapterIdx, setChapterIdx] = useState<number>(
+    Number(sp.get('chapterIdx') ?? '0') || 0,
+  );
+
+  const source = sp.get('source');
+  const bookSlug = sp.get('book');
+  const isAncient = source === 'ancient' && !!bookSlug;
 
   useEffect(() => {
     if (prefill) {
@@ -54,6 +64,26 @@ export function WorksheetGenerator() {
       setErrorMsg(null);
     }
   }, [user]);
+
+  // Ancient mode: fetch book once, then update content on chapter change
+  useEffect(() => {
+    if (!isAncient || !bookSlug) return;
+    let cancelled = false;
+    (async () => {
+      const res = await fetch(`/api/classics/${bookSlug}`);
+      const data = await res.json();
+      if (cancelled || !data.ok) return;
+      const book: ClassicDetail = data.data;
+      setAncientBook(book);
+      const idx = Math.max(0, Math.min(chapterIdx, book.chunks.length - 1));
+      const chunk = book.chunks[idx]!;
+      const chars = chunk.content
+        .flatMap(line => Array.from(stripPunct(line)));
+      setContent(chars);
+      setTab('text');
+    })();
+    return () => { cancelled = true; };
+  }, [isAncient, bookSlug, chapterIdx]);
 
   // 改字体/工具/格子形式/纸张尺寸后，自动跳到预览页（已有内容时）
   // 跳过首次渲染，避免 prefill 时直接跳到预览
@@ -84,6 +114,13 @@ export function WorksheetGenerator() {
   }
 
   const canPreview = content.length > 0;
+
+  const breakpoints = useMemo(() => {
+    if (!isAncient || !ancientBook) return undefined;
+    const chunk = ancientBook.chunks[chapterIdx];
+    if (!chunk) return undefined;
+    return buildBreakpoints(chunk);
+  }, [isAncient, ancientBook, chapterIdx]);
 
   const openLogin = () => {
     setAuthHint(true);
@@ -129,6 +166,7 @@ export function WorksheetGenerator() {
         cellStyle={composeCellStyle(tool, presentation)}
         paperSize={paperSize}
         fontFamily={fontFamily}
+        breakpoints={breakpoints}
         onBack={() => setView('form')}
         onSave={handleSave}
         saving={saving}
@@ -224,6 +262,26 @@ export function WorksheetGenerator() {
       </div>
 
       <div className="flex flex-col items-end gap-2">
+        {isAncient && ancientBook && (
+          <div className="flex gap-2 self-end">
+            <button
+              type="button"
+              disabled={chapterIdx <= 0}
+              onClick={() => setChapterIdx(i => i - 1)}
+              className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
+            >
+              ← 上一章
+            </button>
+            <button
+              type="button"
+              disabled={chapterIdx >= ancientBook.chunks.length - 1}
+              onClick={() => setChapterIdx(i => i + 1)}
+              className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
+            >
+              下一章 →
+            </button>
+          </div>
+        )}
         {authHint && !user && (
           <p className="text-sm text-ink-soft">
             需要登录才能保存。已为你打开登录窗口 —

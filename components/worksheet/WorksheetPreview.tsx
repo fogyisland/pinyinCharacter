@@ -1,5 +1,6 @@
 'use client';
 
+import { Fragment } from 'react';
 import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
 import { generateLayout, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
@@ -21,6 +22,7 @@ interface BaseProps {
   paperSize: PaperSize;
   fontFamily: FontFamily;
   showHeader?: boolean;
+  breakpoints?: Set<number>;
 }
 
 interface FormProps extends BaseProps {
@@ -94,9 +96,16 @@ export function WorksheetPreview(props: Props) {
             <div className="text-xs text-ink-faint">公益网站，请多关注</div>
           </div>
           {cells.map((cell) => (
-            <div key={cell.index} className="worksheet-cell">
-              <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
-            </div>
+            <Fragment key={cell.index}>
+              {props.breakpoints?.has(cell.index) && (
+                <div className="worksheet-cell-sep col-span-full text-center text-xs text-ink-faint py-1 print:hidden" aria-hidden>
+                  · 句 ·
+                </div>
+              )}
+              <div className="worksheet-cell">
+                <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
+              </div>
+            </Fragment>
           ))}
         </div>
       </div>
