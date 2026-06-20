@@ -7,9 +7,9 @@ import { PrintButton } from '@/components/common/PrintButton';
 
 function cellSizeFor(p: PaperSize): number {
   switch (p) {
-    case 'brush-12': return 200;
-    case 'brush-24': return 150;
-    case 'brush-28': return 120;
+    case 'brush-12': return 140;  // 4×140=560px, fits screen 768 + A4 print 680
+    case 'brush-24': return 100;  // 6×100=600px, fits both
+    case 'brush-28': return 85;   // 7×85=595px, fits both
     default:         return 80;   // A3/A4/B5 keep 80px (G2 default)
   }
 }
