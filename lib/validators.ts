@@ -73,6 +73,17 @@ export const sutraIdParamSchema = z.object({
   id: z.coerce.number().int().min(1),
 });
 
+export const classicsListQuerySchema = z.object({
+  category: z.enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other']).optional(),
+  q: z.string().max(64).transform((s) => s.trim()).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(50).default(12),
+});
+
+export const classicSlugParamSchema = z.object({
+  slug: z.string().regex(/^[a-z0-9-]+$/).min(1).max(64),
+});
+
 export const gameRoundQuerySchema = z.object({
   count: z.coerce.number().int().min(1).max(8).default(4),
   seed: z.coerce.number().int().optional(),
