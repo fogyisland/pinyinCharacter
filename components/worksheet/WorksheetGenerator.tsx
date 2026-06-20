@@ -43,7 +43,7 @@ export function WorksheetGenerator() {
   const [savedId, setSavedId] = useState<number | null>(null);
   const [ancientBook, setAncientBook] = useState<ClassicDetail | null>(null);
   const [chapterIdx, setChapterIdx] = useState<number>(
-    Number(sp.get('chapterIdx') ?? '0') || 0,
+    Number(sp.get('chapterIdx')) || 0,
   );
 
   const source = sp.get('source');
@@ -65,7 +65,9 @@ export function WorksheetGenerator() {
     }
   }, [user]);
 
-  // Ancient mode: fetch book once, then update content on chapter change
+  // Ancient mode: fetch the book once when the book (or isAncient flag) changes.
+  // Chapter changes are handled by the next effect — they only re-derive content
+  // from the already-loaded book, no network call.
   useEffect(() => {
     if (!isAncient || !bookSlug) return;
     let cancelled = false;
@@ -73,17 +75,26 @@ export function WorksheetGenerator() {
       const res = await fetch(`/api/classics/${bookSlug}`);
       const data = await res.json();
       if (cancelled || !data.ok) return;
-      const book: ClassicDetail = data.data;
-      setAncientBook(book);
-      const idx = Math.max(0, Math.min(chapterIdx, book.chunks.length - 1));
-      const chunk = book.chunks[idx]!;
-      const chars = chunk.content
-        .flatMap(line => Array.from(stripPunct(line)));
-      setContent(chars);
+      setAncientBook(data.data as ClassicDetail);
       setTab('text');
     })();
     return () => { cancelled = true; };
-  }, [isAncient, bookSlug, chapterIdx]);
+  }, [isAncient, bookSlug]);
+
+  // Ancient mode: re-derive content + breakpoints when book or chapter changes.
+  // Clamps chapterIdx into [0, chunks.length-1] so an out-of-range param can't
+  // crash the render. No fetch here.
+  useEffect(() => {
+    if (!ancientBook) return;
+    let cancelled = false;
+    const idx = Math.max(0, Math.min(chapterIdx, ancientBook.chunks.length - 1));
+    const chunk = ancientBook.chunks[idx];
+    if (!chunk) return;
+    const chars = chunk.content.flatMap(line => Array.from(stripPunct(line)));
+    if (cancelled) return;
+    setContent(chars);
+    return () => { cancelled = true; };
+  }, [ancientBook, chapterIdx]);
 
   // 改字体/工具/格子形式/纸张尺寸后，自动跳到预览页（已有内容时）
   // 跳过首次渲染，避免 prefill 时直接跳到预览

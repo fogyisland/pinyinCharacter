@@ -80,4 +80,84 @@ describe('WorksheetGenerator with source=ancient', () => {
     await new Promise(r => setTimeout(r, 50));
     expect(screen.queryByRole('button', { name: /下一章/ })).toBeNull();
   });
+
+  it('loads non-punct chars from chunk into the textarea after fetch', async () => {
+    mockSearchParams.set('source', 'ancient');
+    mockSearchParams.set('book', 'lunyu');
+    mockSearchParams.set('chapterIdx', '0');
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        data: {
+          id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋',
+          chunks: [
+            { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [] },
+            { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [] },
+          ],
+        },
+      }),
+    });
+    render(<WorksheetGenerator />);
+    await new Promise(r => setTimeout(r, 50));
+    const textarea = screen.getByPlaceholderText(/输入或粘贴汉字/) as HTMLTextAreaElement;
+    // Punctuation stripped, only non-punct chars land in content.
+    expect(textarea.value).toBe('子曰学而时习之');
+  });
+
+  it('clicking 下一章 switches content to the next chapter WITHOUT re-fetching', async () => {
+    mockSearchParams.set('source', 'ancient');
+    mockSearchParams.set('book', 'lunyu');
+    mockSearchParams.set('chapterIdx', '0');
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        data: {
+          id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋',
+          chunks: [
+            { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [] },
+            { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [] },
+          ],
+        },
+      }),
+    });
+    render(<WorksheetGenerator />);
+    await new Promise(r => setTimeout(r, 50));
+    const textarea = screen.getByPlaceholderText(/输入或粘贴汉字/) as HTMLTextAreaElement;
+    expect(textarea.value).toBe('子曰学而时习之');
+    await userEvent.click(screen.getByRole('button', { name: /下一章/ }));
+    // Content should update to chapter 2's chars.
+    expect(textarea.value).toBe('子曰为政以德');
+    // CRITICAL: chapter change must NOT re-hit the network. Only one fetch total.
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('上一章 disabled at chapterIdx=0 and 下一章 disabled at last chapter', async () => {
+    mockSearchParams.set('source', 'ancient');
+    mockSearchParams.set('book', 'lunyu');
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        data: {
+          id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋',
+          chunks: [
+            { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [] },
+            { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [] },
+          ],
+        },
+      }),
+    });
+    render(<WorksheetGenerator />);
+    await new Promise(r => setTimeout(r, 50));
+    // chapterIdx starts at 0 → 上一章 disabled.
+    expect(screen.getByRole('button', { name: /上一章/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /下一章/ })).not.toBeDisabled();
+    // Advance to last chapter.
+    await userEvent.click(screen.getByRole('button', { name: /下一章/ }));
+    await new Promise(r => setTimeout(r, 20));
+    expect(screen.getByRole('button', { name: /下一章/ })).toBeDisabled();
+    expect(screen.getByRole('button', { name: /上一章/ })).not.toBeDisabled();
+  });
 });
