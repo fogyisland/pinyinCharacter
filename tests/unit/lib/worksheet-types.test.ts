@@ -1,5 +1,19 @@
 import { describe, it, expect } from 'vitest';
-import { FONT_FAMILIES, fontFamilyLabel, fontFamilyCssVar, BRUSH_PAPER_SIZES, isBrushSize, validateWorksheetInput, defaultFontFor } from '@/lib/worksheet-types';
+import {
+  FONT_FAMILIES,
+  fontFamilyLabel,
+  fontFamilyCssVar,
+  BRUSH_PAPER_SIZES,
+  isBrushSize,
+  validateWorksheetInput,
+  defaultFontFor,
+  composeCellStyle,
+  getTool,
+  getPresentation,
+  defaultToolFor,
+  defaultPresentationFor,
+  cellStyleLabel,
+} from '@/lib/worksheet-types';
 import type { FontFamily } from '@/lib/worksheet-types';
 
 describe('FONT_FAMILIES (G3)', () => {
@@ -79,17 +93,44 @@ describe('validateWorksheetInput (G3 paperSize guard)', () => {
   });
 });
 
-describe('defaultFontFor (G3)', () => {
-  it('returns first brush font for brush', () => {
+describe('defaultFontFor (G5)', () => {
+  it('brush tool → ma-shan-zheng', () => {
     expect(defaultFontFor('brush')).toBe('ma-shan-zheng');
   });
-  it('returns first hard-pen font for pen', () => {
+  it('pen tool → wenkai-gb', () => {
     expect(defaultFontFor('pen')).toBe('wenkai-gb');
   });
-  it('returns first system font for square', () => {
-    expect(defaultFontFor('square')).toBe('song');
+});
+
+describe('composeCellStyle / getTool / getPresentation (G5)', () => {
+  it('round-trips brush-square', () => {
+    const s = composeCellStyle('brush', 'square');
+    expect(s).toBe('brush-square');
+    expect(getTool(s)).toBe('brush');
+    expect(getPresentation(s)).toBe('square');
   });
-  it('returns first system font for cross', () => {
-    expect(defaultFontFor('cross')).toBe('song');
+  it('round-trips pen-cross', () => {
+    const s = composeCellStyle('pen', 'cross');
+    expect(s).toBe('pen-cross');
+    expect(getTool(s)).toBe('pen');
+    expect(getPresentation(s)).toBe('cross');
+  });
+});
+
+describe('defaultToolFor / defaultPresentationFor (G5)', () => {
+  it('defaultToolFor() returns brush (matches G3 default)', () => {
+    expect(defaultToolFor()).toBe('brush');
+  });
+  it('defaultPresentationFor() returns square', () => {
+    expect(defaultPresentationFor()).toBe('square');
+  });
+});
+
+describe('cellStyleLabel (G5)', () => {
+  it('renders brush-square as 毛笔·田字格', () => {
+    expect(cellStyleLabel('brush-square')).toBe('毛笔·田字格');
+  });
+  it('renders pen-cross as 钢笔·米字格', () => {
+    expect(cellStyleLabel('pen-cross')).toBe('钢笔·米字格');
   });
 });

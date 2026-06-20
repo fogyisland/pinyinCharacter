@@ -1,11 +1,45 @@
 import { cellsPerPage } from './worksheet-page-count';
 
-export type CellStyle = 'brush' | 'square' | 'pen' | 'cross';
+export type Tool = 'brush' | 'pen';
+export type Presentation = 'square' | 'cross';
+export type CellStyle = 'brush-square' | 'brush-cross' | 'pen-square' | 'pen-cross';
 export type PaperSize = 'A3' | 'A4' | 'B5' | 'brush-12' | 'brush-24' | 'brush-28';
 export type FontFamily =
   | 'song' | 'kai' | 'hei'
   | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin'
   | 'ma-shan-zheng' | 'long-cang';
+
+const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
+const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross'];
+const ALL_CELL_STYLES: readonly CellStyle[] = [
+  'brush-square', 'brush-cross', 'pen-square', 'pen-cross',
+] as const;
+
+// Compose / split helpers
+export function composeCellStyle(tool: Tool, presentation: Presentation): CellStyle {
+  return `${tool}-${presentation}` as CellStyle;
+}
+
+export function getTool(s: CellStyle): Tool {
+  return s.split('-')[0] as Tool;
+}
+
+export function getPresentation(s: CellStyle): Presentation {
+  return s.split('-')[1] as Presentation;
+}
+
+// Defaults
+export function defaultToolFor(): Tool {
+  return 'brush';  // matches G3 default
+}
+
+export function defaultPresentationFor(): Presentation {
+  return 'square';
+}
+
+export function defaultFontFor(tool: Tool): FontFamily {
+  return tool === 'brush' ? 'ma-shan-zheng' : 'wenkai-gb';
+}
 
 export interface Cell {
   char: string;
@@ -71,15 +105,6 @@ export function isBrushSize(p: PaperSize): p is BrushPaperSize {
   return (BRUSH_PAPER_SIZES as readonly string[]).includes(p);
 }
 
-export function defaultFontFor(cellStyle: CellStyle): FontFamily {
-  switch (cellStyle) {
-    case 'brush':  return 'ma-shan-zheng';
-    case 'pen':    return 'wenkai-gb';
-    case 'square': return 'song';
-    case 'cross':  return 'song';
-  }
-}
-
 export function paperSizeLabel(p: PaperSize): string {
   return PAPER_SIZES.find((s) => s.value === p)?.label ?? p;
 }
@@ -90,12 +115,9 @@ export function fontFamilyCssVar(f: FontFamily): string {
   return FONT_FAMILIES.find((x) => x.value === f)?.cssVar ?? 'var(--font-han-serif)';
 }
 export function cellStyleLabel(s: CellStyle): string {
-  switch (s) {
-    case 'brush': return '毛笔格';
-    case 'square': return '田字格';
-    case 'pen': return '钢笔格';
-    case 'cross': return '米字格';
-  }
+  const tool = getTool(s) === 'brush' ? '毛笔' : '钢笔';
+  const pres = getPresentation(s) === 'square' ? '田字格' : '米字格';
+  return `${tool}·${pres}`;
 }
 
 export type ValidationResult =
