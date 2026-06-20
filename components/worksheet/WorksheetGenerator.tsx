@@ -2,13 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
-import { defaultFontFor, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import type { PaperSize, FontFamily } from '@/lib/worksheet-types';
+import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import type { Tool, Presentation } from '@/lib/worksheet-types';
 import { useAppStore } from '@/lib/store';
 import { TextInputTab } from './TextInputTab';
 import { LibrarySelectTab } from './LibrarySelectTab';
 import { RandomTab } from './RandomTab';
-import { StylePicker } from './StylePicker';
+import { ToolPicker } from './ToolPicker';
+import { PresentationPicker } from './PresentationPicker';
 import { PaperSizePicker } from './PaperSizePicker';
 import { FontFamilyPicker } from './FontFamilyPicker';
 import { WorksheetPreview } from './WorksheetPreview';
@@ -26,9 +28,12 @@ export function WorksheetGenerator() {
   const [tab, setTab] = useState<Tab>(prefill ? 'library' : 'text');
   const [content, setContent] = useState<string[]>(prefill ? [prefill] : []);
   const [title, setTitle] = useState('');
-  const [cellStyle, setCellStyle] = useState<CellStyle>('brush');
-  const [paperSize, setPaperSize] = useState<PaperSize>('brush-12');
-  const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor('brush'));
+  const [tool, setTool] = useState<Tool>(defaultToolFor());
+  const [presentation, setPresentation] = useState<Presentation>(defaultPresentationFor());
+  const [paperSize, setPaperSize] = useState<PaperSize>(
+    defaultToolFor() === 'brush' ? 'brush-12' : 'A4',
+  );
+  const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor(defaultToolFor()));
   const [view, setView] = useState<'form' | 'preview'>('form');
   const [saving, setSaving] = useState(false);
   const [authHint, setAuthHint] = useState(false);
@@ -50,14 +55,19 @@ export function WorksheetGenerator() {
     }
   }, [user]);
 
-  function handleCellStyleChange(next: CellStyle) {
-    setCellStyle(next);
+  function handleToolChange(next: Tool) {
+    setTool(next);
     if (next === 'brush' && !isBrushSize(paperSize)) {
       setPaperSize('brush-12');
-    } else if (next !== 'brush' && isBrushSize(paperSize)) {
+    } else if (next === 'pen' && isBrushSize(paperSize)) {
       setPaperSize('A4');
     }
-    setFontFamily(defaultFontFor(next));
+    // fontFamily is preserved (user explicit decision 2026-06-20)
+  }
+
+  function handlePresentationChange(next: Presentation) {
+    setPresentation(next);
+    // paperSize unchanged
   }
 
   const canPreview = content.length > 0;
@@ -76,6 +86,7 @@ export function WorksheetGenerator() {
     setSaving(true);
     setErrorMsg(null);
     try {
+      const cellStyle = composeCellStyle(tool, presentation);
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -102,7 +113,7 @@ export function WorksheetGenerator() {
       <WorksheetPreview
         title={title}
         content={content}
-        cellStyle={cellStyle}
+        cellStyle={composeCellStyle(tool, presentation)}
         paperSize={paperSize}
         fontFamily={fontFamily}
         onBack={() => setView('form')}
@@ -169,9 +180,15 @@ export function WorksheetGenerator() {
           </div>
         )}
         <div>
-          <label className="block text-sm font-medium text-ink-soft">格子样式</label>
+          <label className="block text-sm font-medium text-ink-soft">工具</label>
           <div className="mt-2">
-            <StylePicker value={cellStyle} onChange={handleCellStyleChange} />
+            <ToolPicker value={tool} onChange={handleToolChange} />
+          </div>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-ink-soft">格子形式</label>
+          <div className="mt-2">
+            <PresentationPicker value={presentation} onChange={handlePresentationChange} />
           </div>
         </div>
       </div>
@@ -182,7 +199,7 @@ export function WorksheetGenerator() {
             纸张尺寸 <span className="text-xs text-ink-faint">(决定每页字数)</span>
           </label>
           <div className="mt-2">
-            <PaperSizePicker value={paperSize} cellStyle={cellStyle} onChange={setPaperSize} />
+            <PaperSizePicker value={paperSize} tool={tool} onChange={setPaperSize} />
           </div>
         </div>
         <div>

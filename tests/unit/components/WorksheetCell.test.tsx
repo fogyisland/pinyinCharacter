@@ -5,39 +5,36 @@ import '@testing-library/jest-dom/vitest';
 import { WorksheetCell } from '@/components/worksheet/WorksheetCell';
 
 describe('WorksheetCell', () => {
-  it('brush style has vertical center and diagonals (more lines than square)', () => {
-    const { container } = render(<WorksheetCell char="你" style="brush" />);
+  it('brush-cross has vertical center, horizontal, and diagonals (most lines)', () => {
+    const { container } = render(<WorksheetCell char="你" style="brush-cross" />);
     const lines = container.querySelectorAll('line');
-    // Brush: 1 vertical center + 2 diagonals = 3 <line> elements
-    // (The outer <rect> border is not a <line>, so the count is 3.)
-    // We assert >= 3 to keep the intent ("brush has more lines than square") clear.
-    expect(lines.length).toBeGreaterThanOrEqual(3);
+    // brush-cross: 1 vertical + 1 horizontal + 2 diagonals = 4 <line> elements
+    expect(lines.length).toBe(4);
   });
 
-  it('square style has vertical and horizontal center, no diagonals', () => {
-    const { container } = render(<WorksheetCell char="你" style="square" />);
+  it('pen-square has vertical and horizontal center, no diagonals', () => {
+    const { container } = render(<WorksheetCell char="你" style="pen-square" />);
     const lines = container.querySelectorAll('line');
-    // Square: 1 vertical center + 1 horizontal center = 2 <line> elements
+    // pen-square: 1 vertical + 1 horizontal = 2 <line> elements
     expect(lines.length).toBe(2);
   });
 
-  it('pen style has only vertical center, no diagonals or horizontal', () => {
-    const { container } = render(<WorksheetCell char="你" style="pen" />);
-    const lines = container.querySelectorAll('line');
-    // Pen: 1 vertical center = 1 <line> element (clean box, no grid)
-    expect(lines.length).toBe(1);
+  it('pen-square and brush-square have the same line count (presentation drives grid)', () => {
+    const pen = render(<WorksheetCell char="你" style="pen-square" />);
+    const brush = render(<WorksheetCell char="你" style="brush-square" />);
+    expect(pen.container.querySelectorAll('line').length).toBe(brush.container.querySelectorAll('line').length);
   });
 
-  it('brush has strictly more lines than square (proves diagonals are present)', () => {
-    const brush = render(<WorksheetCell char="你" style="brush" />);
-    const square = render(<WorksheetCell char="你" style="square" />);
-    const brushLines = brush.container.querySelectorAll('line').length;
+  it('cross has strictly more lines than square (proves diagonals are present)', () => {
+    const cross = render(<WorksheetCell char="你" style="brush-cross" />);
+    const square = render(<WorksheetCell char="你" style="pen-square" />);
+    const crossLines = cross.container.querySelectorAll('line').length;
     const squareLines = square.container.querySelectorAll('line').length;
-    expect(brushLines).toBeGreaterThan(squareLines);
+    expect(crossLines).toBeGreaterThan(squareLines);
   });
 
   it('renders the char as a text element', () => {
-    const { container } = render(<WorksheetCell char="好" style="brush" />);
+    const { container } = render(<WorksheetCell char="好" style="brush-cross" />);
     expect(container.querySelector('text')?.textContent).toBe('好');
   });
 });

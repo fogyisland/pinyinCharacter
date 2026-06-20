@@ -12,7 +12,7 @@ export function SutraWorksheet({ chunk }: Props) {
         <div key={lineIdx} className="sutra-line flex flex-wrap items-end gap-2 justify-center">
           {Array.from(line).map((char, charIdx) => (
             <div key={charIdx} className="sutra-char flex flex-col items-center">
-              <WorksheetCell char={char} style="brush" size={60} />
+              <WorksheetCell char={char} style="brush-cross" size={60} />
               {chunk.pinyin[lineIdx]?.[charIdx] && (
                 <span className="text-[10px] text-ink-faint mt-0.5 leading-none">
                   {chunk.pinyin[lineIdx][charIdx]}

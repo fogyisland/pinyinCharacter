@@ -9,7 +9,7 @@ describe('WorksheetPreview print header', () => {
     const { container } = render(
       <WorksheetPreview
         content={['一', '二', '三']}
-        cellStyle="pen"
+        cellStyle="pen-square"
         paperSize="A4"
         fontFamily="wenkai-gb"
       />,
@@ -31,18 +31,18 @@ describe('WorksheetPreview print header', () => {
 
   it('updates font name in header when fontFamily changes', () => {
     const { container: c1 } = render(
-      <WorksheetPreview content={['中']} cellStyle="pen" paperSize="A4" fontFamily="yozai" />,
+      <WorksheetPreview content={['中']} cellStyle="pen-square" paperSize="A4" fontFamily="yozai" />,
     );
     expect(c1.querySelector('.worksheet-grid')?.textContent).toContain('悠哉');
     const { container: c2 } = render(
-      <WorksheetPreview content={['中']} cellStyle="pen" paperSize="A4" fontFamily="hei" />,
+      <WorksheetPreview content={['中']} cellStyle="pen-square" paperSize="A4" fontFamily="hei" />,
     );
     expect(c2.querySelector('.worksheet-grid')?.textContent).toContain('黑体');
   });
 
   it('header sits inside .worksheet-grid (not outside, so @media print visibility-visible picks it up)', () => {
     const { container } = render(
-      <WorksheetPreview content={['一']} cellStyle="pen" paperSize="A4" fontFamily="song" />,
+      <WorksheetPreview content={['一']} cellStyle="pen-square" paperSize="A4" fontFamily="song" />,
     );
     // Find the header element by its text. It should be a descendant of .worksheet-grid.
     const grid = container.querySelector('.worksheet-grid');

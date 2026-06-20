@@ -40,7 +40,7 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
   it('POST requires auth', async () => {
     const r = await createSheet(new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush-cross' }),
     }) as any);
     expect(r.status).toBe(401);
   });
@@ -51,7 +51,7 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     const { cookie } = await loginAndCookie(u);
     const r = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'My sheet', content: ['你', '好'], cellStyle: 'brush' }),
+      body: JSON.stringify({ title: 'My sheet', content: ['你', '好'], cellStyle: 'brush-cross' }),
     })) as any);
     const j = await r.json();
     expect(r.status).toBe(200);
@@ -64,7 +64,7 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     const { cookie } = await loginAndCookie(u);
     const r = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: [], cellStyle: 'brush' }),
+      body: JSON.stringify({ title: 't', content: [], cellStyle: 'brush-cross' }),
     })) as any);
     expect(r.status).toBe(400);
   });
@@ -75,7 +75,7 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     const { cookie } = await loginAndCookie(u);
     const r = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'brush-12 sheet', content: ['你', '好'], cellStyle: 'brush', paperSize: 'brush-12' }),
+      body: JSON.stringify({ title: 'brush-12 sheet', content: ['你', '好'], cellStyle: 'brush-cross', paperSize: 'brush-12' }),
     })) as any);
     expect(r.status).toBe(200);
     const id = (await r.json()).data.id as number;
@@ -93,7 +93,7 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     const { cookie } = await loginAndCookie(u);
     await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'first', content: ['你'], cellStyle: 'brush' }),
+      body: JSON.stringify({ title: 'first', content: ['你'], cellStyle: 'brush-cross' }),
     })) as any);
     const r = await listSheets(withCookie(cookie, new Request('http://x/api/worksheets')) as any);
     const j = await r.json();
@@ -109,7 +109,7 @@ integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
     const { cookie } = await loginAndCookie(u);
     const created = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush-cross' }),
     })) as any);
     const id = (await created.json()).data.id;
     const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
@@ -125,7 +125,7 @@ integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
     const { cookie } = await loginAndCookie(u);
     const created = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush-cross' }),
     })) as any);
     const id = (await created.json()).data.id;
     const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
@@ -144,7 +144,7 @@ integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
     const { cookie: c2 } = await loginAndCookie(u2);
     const created = await createSheet(withCookie(c1, new Request('http://x/api/worksheets', {
       method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush-cross' }),
     })) as any);
     const id = (await created.json()).data.id;
     const ctx = { params: Promise.resolve({ id: String(id) }) } as any;

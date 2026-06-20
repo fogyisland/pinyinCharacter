@@ -50,7 +50,7 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
         body: JSON.stringify({
           title: fullTitle,
           content: slices[0],
-          cellStyle: 'brush',
+          cellStyle: 'brush-cross',
         }),
       });
       const data = await res.json();
@@ -72,7 +72,7 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
           body: JSON.stringify({
             title: `${baseTitle} (${i + 1}/${slices.length})`,
             content: slices[i],
-            cellStyle: 'brush',
+            cellStyle: 'brush-cross',
           }),
         });
       }

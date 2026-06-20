@@ -69,7 +69,7 @@ describe('isBrushSize + BRUSH_PAPER_SIZES (G3)', () => {
 });
 
 describe('validateWorksheetInput (G3 paperSize guard)', () => {
-  const base = { title: 't', content: ['不'], cellStyle: 'brush' as const };
+  const base = { title: 't', content: ['不'], cellStyle: 'brush-cross' as const };
 
   it('accepts paperSize brush-12', () => {
     const r = validateWorksheetInput({ ...base, paperSize: 'brush-12' });

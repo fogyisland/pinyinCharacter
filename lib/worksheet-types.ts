@@ -149,17 +149,17 @@ export function validateWorksheetInput(input: {
     return { ok: false, error: 'content must be CJK chars' };
   }
   if (
-    input.cellStyle !== 'brush' &&
-    input.cellStyle !== 'square' &&
-    input.cellStyle !== 'pen' &&
-    input.cellStyle !== 'cross'
+    input.cellStyle !== 'brush-square' &&
+    input.cellStyle !== 'brush-cross' &&
+    input.cellStyle !== 'pen-square' &&
+    input.cellStyle !== 'pen-cross'
   ) {
-    return { ok: false, error: 'cellStyle must be brush, square, pen, or cross' };
+    return { ok: false, error: 'cellStyle must be brush-square, brush-cross, pen-square, or pen-cross' };
   }
   // paperSize is optional in input but defaults to 'A4' for non-brush; brush defaults to 'brush-12'
   let paperSize: PaperSize;
   if (input.paperSize === undefined) {
-    paperSize = input.cellStyle === 'brush' ? 'brush-12' : 'A4';
+    paperSize = getTool(input.cellStyle) === 'brush' ? 'brush-12' : 'A4';
   } else if (
     typeof input.paperSize === 'string' &&
     (VALID_PAPER_SIZES as readonly string[]).includes(input.paperSize)

@@ -4,30 +4,30 @@ import { generateLayout, validateWorksheetInput } from '@/lib/worksheet';
 describe('worksheet pure helpers', () => {
   describe('generateLayout', () => {
     it('returns one cell per char in order', () => {
-      const cells = generateLayout(['你', '好', '世', '界'], 'brush');
+      const cells = generateLayout(['你', '好', '世', '界'], 'brush-cross');
       expect(cells).toEqual([
-        { char: '你', style: 'brush', index: 0 },
-        { char: '好', style: 'brush', index: 1 },
-        { char: '世', style: 'brush', index: 2 },
-        { char: '界', style: 'brush', index: 3 },
+        { char: '你', style: 'brush-cross', index: 0 },
+        { char: '好', style: 'brush-cross', index: 1 },
+        { char: '世', style: 'brush-cross', index: 2 },
+        { char: '界', style: 'brush-cross', index: 3 },
       ]);
     });
 
     it('returns empty array for empty content', () => {
-      expect(generateLayout([], 'square')).toEqual([]);
+      expect(generateLayout([], 'pen-square')).toEqual([]);
     });
 
     it('preserves duplicates', () => {
-      const cells = generateLayout(['你', '你', '你'], 'square');
+      const cells = generateLayout(['你', '你', '你'], 'pen-square');
       expect(cells).toHaveLength(3);
       expect(cells.every((c) => c.char === '你')).toBe(true);
     });
 
     it('passes through the style', () => {
-      const brush = generateLayout(['你'], 'brush');
-      const square = generateLayout(['你'], 'square');
-      expect(brush[0]!.style).toBe('brush');
-      expect(square[0]!.style).toBe('square');
+      const brush = generateLayout(['你'], 'brush-cross');
+      const square = generateLayout(['你'], 'pen-square');
+      expect(brush[0]!.style).toBe('brush-cross');
+      expect(square[0]!.style).toBe('pen-square');
     });
   });
 
@@ -36,13 +36,13 @@ describe('worksheet pure helpers', () => {
       const result = validateWorksheetInput({
         title: 'My worksheet',
         content: ['你', '好'],
-        cellStyle: 'brush',
+        cellStyle: 'brush-cross',
       });
       expect(result.ok).toBe(true);
     });
 
     it('rejects empty title', () => {
-      const result = validateWorksheetInput({ title: '', content: ['你'], cellStyle: 'brush' });
+      const result = validateWorksheetInput({ title: '', content: ['你'], cellStyle: 'brush-cross' });
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error).toMatch(/title/i);
     });
@@ -51,13 +51,13 @@ describe('worksheet pure helpers', () => {
       const result = validateWorksheetInput({
         title: 'a'.repeat(81),
         content: ['你'],
-        cellStyle: 'brush',
+        cellStyle: 'brush-cross',
       });
       expect(result.ok).toBe(false);
     });
 
     it('rejects empty content', () => {
-      const result = validateWorksheetInput({ title: 't', content: [], cellStyle: 'brush' });
+      const result = validateWorksheetInput({ title: 't', content: [], cellStyle: 'brush-cross' });
       expect(result.ok).toBe(false);
     });
 
@@ -65,7 +65,7 @@ describe('worksheet pure helpers', () => {
       const result = validateWorksheetInput({
         title: 't',
         content: Array(501).fill('你'),
-        cellStyle: 'brush',
+        cellStyle: 'brush-cross',
       });
       expect(result.ok).toBe(false);
     });
@@ -74,7 +74,7 @@ describe('worksheet pure helpers', () => {
       const result = validateWorksheetInput({
         title: 't',
         content: ['你', 'a'],
-        cellStyle: 'brush',
+        cellStyle: 'brush-cross',
       });
       expect(result.ok).toBe(false);
     });
@@ -88,15 +88,15 @@ describe('worksheet pure helpers', () => {
       expect(result.ok).toBe(false);
     });
 
-    it('accepts cellStyle="cross"', () => {
+    it('accepts cellStyle="pen-cross"', () => {
       const result = validateWorksheetInput({
         title: 'My worksheet',
         content: ['你', '好'],
-        cellStyle: 'cross',
+        cellStyle: 'pen-cross',
       });
       expect(result).toEqual({
         ok: true,
-        data: { title: 'My worksheet', content: ['你', '好'], cellStyle: 'cross', paperSize: 'A4' },
+        data: { title: 'My worksheet', content: ['你', '好'], cellStyle: 'pen-cross', paperSize: 'A4' },
       });
     });
 
@@ -108,7 +108,7 @@ describe('worksheet pure helpers', () => {
       });
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBe('cellStyle must be brush, square, pen, or cross');
+        expect(result.error).toBe('cellStyle must be brush-square, brush-cross, pen-square, or pen-cross');
       }
     });
   });

@@ -1,20 +1,18 @@
 'use client';
-import type { CellStyle, PaperSize } from '@/lib/worksheet-types';
+import type { Tool, PaperSize } from '@/lib/worksheet-types';
 import { PAPER_SIZES, isBrushSize } from '@/lib/worksheet-types';
 import { BrushModePicker } from './BrushModePicker';
 
 interface Props {
   value: PaperSize;
-  cellStyle: CellStyle;
+  tool: Tool;
   onChange: (v: PaperSize) => void;
 }
 
-export function PaperSizePicker({ value, cellStyle, onChange }: Props) {
-  if (cellStyle === 'brush') {
+export function PaperSizePicker({ value, tool, onChange }: Props) {
+  if (tool === 'brush') {
     if (!isBrushSize(value)) {
-      // Defensive: value should always be a brush size when cellStyle='brush',
-      // because WorksheetGenerator's handleCellStyleChange auto-flips paper size
-      // on cell-style change. If we land here, the parent forgot — self-heal.
+      // Defensive: same self-heal as before, just keyed on tool
       onChange('brush-12');
       return <BrushModePicker value="brush-12" onChange={onChange} />;
     }

@@ -36,7 +36,7 @@ export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
         body: JSON.stringify({
           title: `《${title}》${author}`,
           content: chars,
-          cellStyle: 'brush',
+          cellStyle: 'brush-cross',
         }),
       });
       const data = await res.json();
