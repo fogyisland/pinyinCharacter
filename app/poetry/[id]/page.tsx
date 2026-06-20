@@ -5,7 +5,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { PoemMeta } from '@/components/poetry/PoemMeta';
-import { PoemTextView } from '@/components/poetry/PoemTextView';
+import { PoemViewer } from '@/components/poetry/PoemViewer';
 import { AppreciationBlock } from '@/components/poetry/AppreciationBlock';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
@@ -38,7 +38,7 @@ export default async function PoemDetailPage({ params }: Props) {
           <ReadAloudButton text={`${poem.title}。${poem.author}。${poem.content}`} size="sm" variant="seal" />
         </div>
         <div className="card-paper p-5 sm:p-8">
-          <PoemTextView content={poem.content} />
+          <PoemViewer content={poem.content} />
         </div>
         {poem.appreciation && (
           <div className="worksheet-no-print">
