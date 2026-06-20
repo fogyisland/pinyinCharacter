@@ -15,7 +15,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   // 儿童模式默认隐藏佛经/古籍导航(古典/宗教内容偏成人);关闭儿童模式后恢复
   const visibleNavLinks = safeMode
-    ? NAV_LINKS.filter((l) => l.href !== '/sutra' && l.href !== '/ancient-texts')
+    ? NAV_LINKS.filter((l) => l.href !== '/sutra' && l.href !== '/ancient')
     : NAV_LINKS;
 
   return (
