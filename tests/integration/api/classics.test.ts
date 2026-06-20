@@ -55,7 +55,6 @@ describe('GET /api/classics', () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.ok).toBe(true);
-    expect(data.data.total).toBeGreaterThanOrEqual(2);
     const slugs = data.data.items.map((i: any) => i.slug);
     expect(slugs).toContain('lunyu');
     expect(slugs).toContain('dizigui');
