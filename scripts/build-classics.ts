@@ -6,6 +6,11 @@
  * Idempotent: safe to re-run. UPSERT by slug.
  * Network-bound: requires outbound HTTPS to raw.githubusercontent.com.
  * Fails soft on fetch error with a clear log + process.exit(1).
+ *
+ * All paths were verified 2026-06-20 against chinese-poetry/master via
+ * the recursive git tree. Eight paths from the original guess list
+ * (尚书/礼记/易经/春秋/道德经/庄子/列子/史记) DO NOT exist upstream and
+ * were dropped. Six bonus paths from 蒙学 + 楚辞/chuci.json were added.
  */
 import { pinyin } from 'pinyin-pro';
 import * as OpenCC from 'opencc-js';
@@ -16,42 +21,126 @@ const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 const SOURCE_BASE = 'https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master';
 const SOURCE_TAG = 'chinese-poetry/chinese-poetry@master';
 
-// IMPORTANT: All 17 paths below are GUESSES based on chinese-poetry repo structure.
-// Before running on a network host, verify each path via:
-//   curl -I https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master/<path>
-// Update this array with verified paths. Per-file soft-fail logs `skip <slug>` for any 404.
+interface ChunkSeed {
+  chapter: string;
+  paragraphs: string[];
+}
 
-// slug → (upstream path, title, category, author, era)
-const CLASSIC_FILES: Array<{
+interface ClassicFile {
   path: string;
   slug: string;
   title: string;
   category: 'four-books' | 'five-classics' | 'mengxue' | 'philosophy' | 'history' | 'other';
   author: string | null;
   era: string | null;
-}> = [
-  { path: '/古文/论语.json', slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋' },
-  { path: '/古文/孟子.json', slug: 'mengzi', title: '孟子', category: 'four-books', author: '孟子', era: '战国' },
-  { path: '/古文/大学.json', slug: 'daxue', title: '大学', category: 'four-books', author: '曾子', era: '春秋' },
-  { path: '/古文中庸.json', slug: 'zhongyong', title: '中庸', category: 'four-books', author: '子思', era: '战国' },
-  { path: '/古文/诗经.json', slug: 'shijing', title: '诗经', category: 'five-classics', author: null, era: '西周' },
-  { path: '/古文/尚书.json', slug: 'shangshu', title: '尚书', category: 'five-classics', author: null, era: '上古' },
-  { path: '/古文/礼记.json', slug: 'liji', title: '礼记', category: 'five-classics', author: null, era: '西汉' },
-  { path: '/古文/易经.json', slug: 'yijing', title: '易经', category: 'five-classics', author: null, era: '上古' },
-  { path: '/古文/春秋.json', slug: 'chunqiu', title: '春秋', category: 'five-classics', author: '孔子', era: '春秋' },
-  { path: '/古文/弟子规.json', slug: 'dizigui', title: '弟子规', category: 'mengxue', author: '李毓秀', era: '清' },
-  { path: '/古文/千字文.json', slug: 'qianziwen', title: '千字文', category: 'mengxue', author: '周兴嗣', era: '南朝' },
-  { path: '/古文/三字经.json', slug: 'sanzijing', title: '三字经', category: 'mengxue', author: '王应麟', era: '宋' },
-  { path: '/古文/百家姓.json', slug: 'baijiaxing', title: '百家姓', category: 'mengxue', author: null, era: '北宋' },
-  { path: '/古文/道德经.json', slug: 'daodejing', title: '道德经', category: 'philosophy', author: '老子', era: '春秋' },
-  { path: '/古文/庄子.json', slug: 'zhuangzi', title: '庄子', category: 'philosophy', author: '庄子', era: '战国' },
-  { path: '/古文/列子.json', slug: 'liezi', title: '列子', category: 'philosophy', author: '列御寇', era: '战国' },
-  { path: '/古文/史记.json', slug: 'shiji', title: '史记', category: 'history', author: '司马迁', era: '西汉' },
+}
+
+const CLASSIC_FILES: ClassicFile[] = [
+  // 四书 (Four Books)
+  { path: '/论语/lunyu.json', slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋' },
+  { path: '/四书五经/mengzi.json', slug: 'mengzi', title: '孟子', category: 'four-books', author: '孟子', era: '战国' },
+  { path: '/四书五经/daxue.json', slug: 'daxue', title: '大学', category: 'four-books', author: '曾子', era: '春秋' },
+  { path: '/四书五经/zhongyong.json', slug: 'zhongyong', title: '中庸', category: 'four-books', author: '子思', era: '战国' },
+  // 五经 (only 诗经 available; 尚书/礼记/易经/春秋 not in upstream repo)
+  { path: '/诗经/shijing.json', slug: 'shijing', title: '诗经', category: 'five-classics', author: null, era: '西周' },
+  // 蒙学 (Children's classics)
+  { path: '/蒙学/dizigui.json', slug: 'dizigui', title: '弟子规', category: 'mengxue', author: '李毓秀', era: '清' },
+  { path: '/蒙学/qianziwen.json', slug: 'qianziwen', title: '千字文', category: 'mengxue', author: '周兴嗣', era: '南朝' },
+  { path: '/蒙学/sanzijing-new.json', slug: 'sanzijing', title: '三字经', category: 'mengxue', author: '王应麟', era: '宋' },
+  { path: '/蒙学/baijiaxing.json', slug: 'baijiaxing', title: '百家姓', category: 'mengxue', author: null, era: '北宋' },
+  { path: '/蒙学/zengguangxianwen.json', slug: 'zengguangxianwen', title: '增广贤文', category: 'mengxue', author: null, era: '明清' },
+  { path: '/蒙学/youxueqionglin.json', slug: 'youxueqionglin', title: '幼学琼林', category: 'mengxue', author: '程登吉', era: '明' },
+  { path: '/蒙学/wenzimengqiu.json', slug: 'wenzimengqiu', title: '文字蒙求', category: 'mengxue', author: '王筠', era: '清' },
+  { path: '/蒙学/guwenguanzhi.json', slug: 'guwenguanzhi', title: '古文观止', category: 'other', author: '吴楚材/吴调侯', era: '清' },
+  // 楚辞 (Songs of Chu — poetry rather than prose, but tagged as a classic)
+  { path: '/楚辞/chuci.json', slug: 'chuci', title: '楚辞', category: 'other', author: '屈原等', era: '战国' },
 ];
 
-interface RawClassic {
-  chapter?: string;
-  paragraphs?: string[];
+function isStringArray(x: unknown): x is string[] {
+  return Array.isArray(x) && x.every((v) => typeof v === 'string');
+}
+
+function isStringArrayContainer(x: unknown): x is Record<string, unknown> & { content: string[] } {
+  return !!x && typeof x === 'object' && isStringArray((x as { content?: unknown }).content);
+}
+
+/**
+ * Normalize the upstream JSON (which uses 5 different shapes) into
+ * a uniform Array<{chapter, paragraphs}>.
+ *
+ * Observed shapes (verified 2026-06-20):
+ *   1. Array<{chapter, paragraphs[]}>     (lunyu, mengzi)
+ *   2. {chapter, paragraphs[]}            (daxue, zhongyong)
+ *   3. {title, ..., paragraphs[]}         (qianziwen, baijiaxing, zengguangxianwen, youxueqionglin)
+ *   4. {title, ..., content:[{chapter, paragraphs[]}]}  (dizigui, wenzimengqiu, guwenguanzhi)
+ *   5. Array<{title, content[]: string[]}>                (shijing, chuci)
+ */
+function normalize(raw: unknown): ChunkSeed[] {
+  const out: ChunkSeed[] = [];
+  const items: unknown[] = Array.isArray(raw) ? raw : [raw];
+
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    const obj = item as Record<string, unknown>;
+
+    // Form 1 & 2: {chapter?, paragraphs[]}
+    if (Array.isArray(obj.paragraphs) && isStringArray(obj.paragraphs)) {
+      out.push({
+        chapter: String(obj.chapter ?? obj.title ?? '').slice(0, 32),
+        paragraphs: obj.paragraphs,
+      });
+      continue;
+    }
+
+    // Form 5: {title, content: string[]}
+    if (isStringArrayContainer(obj)) {
+      out.push({
+        chapter: String(obj.chapter ?? obj.title ?? '').slice(0, 32),
+        paragraphs: obj.content,
+      });
+      continue;
+    }
+
+    // Form 3/4: content: [{chapter, paragraphs[]}]  (possibly nested)
+    if (Array.isArray(obj.content)) {
+      for (const c of obj.content) {
+        if (!c || typeof c !== 'object') continue;
+        const cObj = c as Record<string, unknown>;
+
+        if (Array.isArray(cObj.paragraphs) && isStringArray(cObj.paragraphs)) {
+          out.push({
+            chapter: String(cObj.chapter ?? cObj.title ?? obj.title ?? '').slice(0, 32),
+            paragraphs: cObj.paragraphs,
+          });
+          continue;
+        }
+
+        if (isStringArrayContainer(cObj)) {
+          out.push({
+            chapter: String(cObj.chapter ?? cObj.title ?? obj.title ?? '').slice(0, 32),
+            paragraphs: cObj.content,
+          });
+          continue;
+        }
+
+        // Deepest nesting: content: [{title, content: [{chapter, paragraphs[]}]}]
+        // e.g. guwenguanzhi.json
+        if (Array.isArray(cObj.content)) {
+          for (const cc of cObj.content) {
+            if (!cc || typeof cc !== 'object') continue;
+            const ccObj = cc as Record<string, unknown>;
+            if (Array.isArray(ccObj.paragraphs) && isStringArray(ccObj.paragraphs)) {
+              out.push({
+                chapter: String(ccObj.chapter ?? ccObj.title ?? cObj.title ?? obj.title ?? '').slice(0, 32),
+                paragraphs: ccObj.paragraphs,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  return out;
 }
 
 function charPinyin(ch: string): string {
@@ -69,35 +158,36 @@ function linePinyin(line: string): string[] {
   return Array.from(line).map(charPinyin);
 }
 
-async function fetchFile(path: string): Promise<RawClassic[]> {
+async function fetchFile(path: string): Promise<unknown> {
   const url = SOURCE_BASE + path;
   const res = await fetch(url, { headers: { 'User-Agent': 'pinyin-character-build/1.0' } });
   if (!res.ok) throw new Error(`fetch ${url} → ${res.status}`);
-  const data = await res.json();
-  if (!Array.isArray(data)) throw new Error(`unexpected JSON shape from ${url}`);
-  return data as RawClassic[];
+  const text = await res.text();
+  if (text.trim().length === 0) throw new Error(`empty body from ${url}`);
+  return JSON.parse(text);
 }
 
 export async function buildClassics(): Promise<number> {
   const pool = getPool();
   let inserted = 0;
   for (const file of CLASSIC_FILES) {
-    let raw: RawClassic[];
+    let raw: unknown;
     try {
       raw = await fetchFile(file.path);
     } catch (err) {
-      // Soft-fail: log and continue. File may not exist upstream (some are guesses).
+      // Soft-fail: log and continue. File may not exist upstream or be empty.
       console.warn(`[build-classics] skip ${file.slug}: ${(err as Error).message}`);
       continue;
     }
-    const chunks = raw
-      .filter((c) => Array.isArray(c.paragraphs) && c.paragraphs.length > 0)
-      .map((c, i) => {
-        const content = (c.paragraphs as string[]).map((s) => t2s(s));
+    const seeds = normalize(raw);
+    const chunks = seeds
+      .filter((s) => s.paragraphs.length > 0)
+      .map((s, i) => {
+        const content = s.paragraphs.map((p) => t2s(p));
         const pinyinArr = content.map(linePinyin);
         return {
           id: i + 1,
-          label: String(c.chapter ?? `第${i + 1}篇`).slice(0, 32),
+          label: (s.chapter || `第${i + 1}篇`).slice(0, 32),
           content,
           pinyin: pinyinArr,
         };
