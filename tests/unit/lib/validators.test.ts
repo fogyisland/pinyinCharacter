@@ -90,20 +90,20 @@ describe('validators', () => {
       const r = saveWorksheetSchema.parse({
         title: 'My',
         content: ['你', '好'],
-        cellStyle: 'brush',
+        cellStyle: 'brush-square',
       });
-      expect(r.cellStyle).toBe('brush');
+      expect(r.cellStyle).toBe('brush-square');
     });
 
     it('rejects empty content', () => {
       expect(() =>
-        saveWorksheetSchema.parse({ title: 't', content: [], cellStyle: 'brush' })
+        saveWorksheetSchema.parse({ title: 't', content: [], cellStyle: 'brush-square' })
       ).toThrow();
     });
 
     it('rejects non-CJK char', () => {
       expect(() =>
-        saveWorksheetSchema.parse({ title: 't', content: ['a'], cellStyle: 'brush' })
+        saveWorksheetSchema.parse({ title: 't', content: ['a'], cellStyle: 'brush-square' })
       ).toThrow();
     });
 
@@ -111,6 +111,33 @@ describe('validators', () => {
       expect(() =>
         saveWorksheetSchema.parse({ title: 't', content: ['你'], cellStyle: 'xyz' })
       ).toThrow();
+    });
+
+    it('accepts brush-square', () => {
+      const r = saveWorksheetSchema.safeParse({
+        title: 'test',
+        content: ['永', '字', '八', '法'],
+        cellStyle: 'brush-square',
+      });
+      expect(r.success).toBe(true);
+    });
+
+    it('rejects old cellStyle "brush"', () => {
+      const r = saveWorksheetSchema.safeParse({
+        title: 'test',
+        content: ['永'],
+        cellStyle: 'brush',
+      });
+      expect(r.success).toBe(false);
+    });
+
+    it('rejects unknown composite "pen-tracing"', () => {
+      const r = saveWorksheetSchema.safeParse({
+        title: 'test',
+        content: ['永'],
+        cellStyle: 'pen-tracing',
+      });
+      expect(r.success).toBe(false);
     });
   });
 
