@@ -17,7 +17,7 @@ export async function checkPoemsManifest(): Promise<{ ok: boolean; issues: strin
   const manifest = JSON.parse(raw) as PoemsManifest;
 
   const files = (await fs.readdir(DATA_DIR))
-    .filter(f => f.endsWith('.json') && f !== 'poems-manifest.json');
+    .filter(f => /^\d+\.json$/.test(f));
 
   const fileIds = new Set(files.map(f => Number(f.replace(/\.json$/, ''))));
   const manifestIds = new Set(manifest.items.map(i => i.id));
