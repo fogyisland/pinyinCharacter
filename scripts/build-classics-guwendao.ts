@@ -19,6 +19,7 @@ import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 import * as OpenCC from 'opencc-js';
 import { getPool, closePool } from '../lib/db';
+import { fetchChapterList, scrapeChapterContent } from '../lib/guwendao-scraper';
 
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 
@@ -1133,18 +1134,6 @@ function linePinyin(line: string): string[] {
   return Array.from(line).map(charPinyin);
 }
 
-function stripTags(s: string): string {
-  return s
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&ldquo;|&rdquo;/g, '"')
-    .replace(/&lsquo;|&rsquo;/g, "'")
-    .replace(/&mdash;|&ndash;/g, '—')
-    .replace(/&hellip;/g, '…')
-    .trim();
-}
-
 async function fetchHtml(path: string): Promise<string> {
   const url = SOURCE_BASE + path;
   const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: 'text/html' } });
@@ -1152,7 +1141,14 @@ async function fetchHtml(path: string): Promise<string> {
   return res.text();
 }
 
-/** Pull (path, label) pairs from a guwendao book index page. */
+/**
+ * Pull (path, label) pairs from a guwendao book index page.
+ *
+ * NOTE: `lib/guwendao-scraper.fetchChapterList` returns the same chapter
+ * IDs but without the human-readable label. The script stores the label
+ * as each chunk's display name, so we keep the inline label-extraction
+ * here rather than round-tripping through the lib.
+ */
 async function listChapters(bookId: string): Promise<ChapterRef[]> {
   const html = await fetchHtml(`/guwen/book_${bookId}.aspx`);
   const re = /href="(\/guwen\/bookv_[0-9a-f]+\.aspx)"[^>]*>([^<]+)/g;
@@ -1168,15 +1164,27 @@ async function listChapters(bookId: string): Promise<ChapterRef[]> {
   return out;
 }
 
-/** Extract paragraph array from a guwendao chapter page. */
+/**
+ * Extract paragraph array from a guwendao chapter page.
+ *
+ * Delegates HTML parsing to `scrapeChapterContent` from
+ * `lib/guwendao-scraper` (shared with the future poem scrapers T6/T7).
+ * We still apply the traditional→simplified conversion (`t2s`) here since
+ * OpenCC is a script-level concern, not a scraping primitive. The lib
+ * returns empty paragraphs when no `.contson` div is found, but the
+ * original behavior was to throw — preserved here so a missing div still
+ * skips the chapter (logged) instead of producing an empty chunk.
+ */
 async function fetchChapterParagraphs(chapterPath: string): Promise<string[]> {
-  const html = await fetchHtml(chapterPath);
-  const m = html.match(/<div\s+class="contson"[^>]*>([\s\S]*?)<\/div>/);
-  if (!m) throw new Error(`no .contson div in ${chapterPath}`);
-  const inner = m[1]!;
-  const blocks = inner.split(/<\/p>/i).map((b) => b.trim()).filter(Boolean);
-  return blocks
-    .map((b) => stripTags(b))
+  // chapterPath looks like /guwen/bookv_<hex>.aspx — pull the hex out.
+  const idMatch = chapterPath.match(/bookv_([0-9a-f]+)\.aspx/);
+  if (!idMatch) throw new Error(`unrecognized chapter path: ${chapterPath}`);
+  const chapterId = idMatch[1]!;
+  const { paragraphs } = await scrapeChapterContent('', chapterId);
+  if (paragraphs.length === 0) {
+    throw new Error(`no .contson div in ${chapterPath}`);
+  }
+  return paragraphs
     .map((p) => t2s(p))
     .filter((p) => p.length > 0);
 }
