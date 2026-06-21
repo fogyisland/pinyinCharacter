@@ -36,19 +36,49 @@ User decisions confirmed in brainstorm (2026-06-21):
 
 ### Part 1: Schema changes (poems)
 
-Add one column + one index to `poems` table:
-
+**Existing schema** (verified 2026-06-21 on prod `piyin`):
 ```sql
-ALTER TABLE poems
-  ADD COLUMN form VARCHAR(32) DEFAULT NULL AFTER content,
-  ADD INDEX idx_form (form);
+CREATE TABLE poems (
+  id INT(11) NOT NULL AUTO_INCREMENT,
+  dynasty ENUM('tang','song') NOT NULL,    -- ENUM, need to ALTER
+  title VARCHAR(80) NOT NULL,
+  author VARCHAR(40) NOT NULL,
+  form VARCHAR(20) DEFAULT NULL,           -- already exists; 189/624 filled (五言律诗/七言律诗/五言古诗/七言古诗), 435 NULL
+  content JSON NOT NULL,
+  pinyin JSON NOT NULL,
+  appreciation TEXT,
+  source VARCHAR(120),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_poem (dynasty, title, author),
+  KEY idx_author (author),
+  KEY idx_dynasty_author (dynasty, author)
+);
 ```
 
-- `VARCHAR(32)` accommodates `五言古风` / `水调歌头` / `小令` / `套数`.
-- DEFAULT NULL = backward compatible; existing rows unaffected until backfill.
-- Single-column index. With 8-cardinality on 190K rows, MySQL uses it for `WHERE form = ?` efficiently.
-- DDL is in-place + metadata-only in MySQL 5.7 (no table copy, near-instant on dev/prod).
-- No change to `classics` table. 骈文 uses existing schema with `category='pianwen'`.
+**Required changes**:
+```sql
+-- 1. dynasty ENUM -> VARCHAR(16) to support 乐府(汉/魏晋/南北朝), 纳兰性德(清), 曹操诗集(魏), 辞赋(mixed)
+ALTER TABLE poems MODIFY COLUMN dynasty VARCHAR(16) NOT NULL;
+
+-- 2. Add category column for grouping (existing 'tang'/'song' rows keep their dynasty; category added fresh)
+ALTER TABLE poems
+  ADD COLUMN category VARCHAR(32) DEFAULT NULL AFTER dynasty,
+  ADD INDEX idx_category (category);
+
+-- 3. Widen form column to accommodate 词牌名 (水调歌头 is 5 chars)
+ALTER TABLE poems MODIFY COLUMN form VARCHAR(32) DEFAULT NULL;
+
+-- 4. Add form index (existing PK only on id; no index on form)
+ALTER TABLE poems ADD INDEX idx_form (form);
+```
+
+- All 4 DDLs are in-place + metadata-only in MySQL 5.7 (no table copy).
+- `dynasty` values: 'tang', 'song' for existing; new values '汉', '魏', '魏晋', '南北朝', '汉末', '清', 'mixed' (for 辞赋).
+- `category` values: 'tang' (existing 唐诗 — backfilled), 'song' (existing 宋词 — backfilled), '汉乐府', '古诗十九首', '魏', 'qing' (for 纳兰性德), '骈文' (for 辞赋). Existing rows: 跑一次 backfill 把 dynasty=tang → category='tang', dynasty=song → category='song'.
+- `form` widening: 20→32 chars to fit `水调歌头` (5 chars), `贺新郎` (3 chars), `木兰花令` (4 chars), etc.
+- `idx_form` index: 19万行后单列 cardinality 8-100 仍能高效走 `WHERE form = ?`.
+- No change to `classics` table. 骈文 (训蒙骈句) uses existing schema with `category='pianwen'`.
 
 ### Part 2: Form inference algorithm
 
@@ -90,6 +120,13 @@ function mergeForm(structInferred: FormResult, sourceTag: FormResult): FormResul
 - If source-tag present and structural agrees → use source-tag, confidence=1.0
 - If source-tag present and structural disagrees → use source-tag, confidence=0.8
 - If source-tag absent → use structural, confidence=structural.confidence
+
+**Existing-form normalization** (run once before backfill):
+- 五言律诗 → 五律
+- 七言律诗 → 七律
+- 五言古诗 → 五言古风
+- 七言古诗 → 七言古风
+- This is a 1-pass UPDATE before the inference pass. Ensures the merged result uses canonical naming throughout the table.
 
 ### Part 3: Backfill script `scripts/build-form-tags.ts`
 
