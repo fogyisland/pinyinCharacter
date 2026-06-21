@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-20T15:06:37.449Z",
+  "updatedAt": "2026-06-21T01:21:08.046Z",
   "books": [
     {
       "slug": "erya",
@@ -110,7 +110,7 @@
       "chapterCount": 50,
       "charCount": 305771,
       "jsonFile": "data/classics/beiqishu.json",
-      "jsonBytes": 6321696,
+      "jsonBytes": 6321752,
       "bookId": "a64dac410659",
       "bookTitle": "北齐书"
     },
@@ -208,7 +208,7 @@
       "chapterCount": 35,
       "charCount": 271675,
       "jsonFile": "data/classics/hou-hanshu-3.json",
-      "jsonBytes": 5730762,
+      "jsonBytes": 5730846,
       "bookId": "62efc075fe05",
       "bookTitle": "后汉书"
     },
@@ -222,7 +222,7 @@
       "chapterCount": 30,
       "charCount": 106771,
       "jsonFile": "data/classics/hou-hanshu-4.json",
-      "jsonBytes": 2305261,
+      "jsonBytes": 2306034,
       "bookId": "62efc075fe05",
       "bookTitle": "后汉书"
     },
@@ -236,7 +236,7 @@
       "chapterCount": 30,
       "charCount": 186054,
       "jsonFile": "data/classics/liangshu-1.json",
-      "jsonBytes": 3894144,
+      "jsonBytes": 3894021,
       "bookId": "129e5598da43",
       "bookTitle": "梁书"
     },
@@ -250,7 +250,7 @@
       "chapterCount": 26,
       "charCount": 179993,
       "jsonFile": "data/classics/liangshu-2.json",
-      "jsonBytes": 3762747,
+      "jsonBytes": 3762570,
       "bookId": "129e5598da43",
       "bookTitle": "梁书"
     },
@@ -264,7 +264,7 @@
       "chapterCount": 33,
       "charCount": 261226,
       "jsonFile": "data/classics/sanguozhi-1.json",
-      "jsonBytes": 5492156,
+      "jsonBytes": 5492184,
       "bookId": "e905beeb5064",
       "bookTitle": "三国志"
     },
@@ -278,7 +278,7 @@
       "chapterCount": 32,
       "charCount": 183774,
       "jsonFile": "data/classics/sanguozhi-2.json",
-      "jsonBytes": 3869783,
+      "jsonBytes": 3869912,
       "bookId": "e905beeb5064",
       "bookTitle": "三国志"
     },
@@ -292,7 +292,7 @@
       "chapterCount": 37,
       "charCount": 148671,
       "jsonFile": "data/classics/xinwudaishi-1.json",
-      "jsonBytes": 3115298,
+      "jsonBytes": 3115124,
       "bookId": "b7efbbca5b32",
       "bookTitle": "新五代史"
     },
@@ -306,7 +306,7 @@
       "chapterCount": 37,
       "charCount": 208515,
       "jsonFile": "data/classics/xinwudaishi-2.json",
-      "jsonBytes": 4374143,
+      "jsonBytes": 4373701,
       "bookId": "b7efbbca5b32",
       "bookTitle": "新五代史"
     },
@@ -320,7 +320,7 @@
       "chapterCount": 50,
       "charCount": 318850,
       "jsonFile": "data/classics/zhoushu.json",
-      "jsonBytes": 6718339,
+      "jsonBytes": 6718154,
       "bookId": "65c8dcaf8257",
       "bookTitle": "周书"
     },
@@ -348,7 +348,7 @@
       "chapterCount": 5,
       "charCount": 13155,
       "jsonFile": "data/classics/caigentan.json",
-      "jsonBytes": 283509,
+      "jsonBytes": 283676,
       "bookId": "83c0c4f4b3a1",
       "bookTitle": "菜根谭"
     },
@@ -404,7 +404,7 @@
       "chapterCount": 4,
       "charCount": 11670,
       "jsonFile": "data/classics/liaofan-sixun.json",
-      "jsonBytes": 248363,
+      "jsonBytes": 248368,
       "bookId": "f4b9d6ab25d0",
       "bookTitle": "了凡四训"
     },
@@ -446,7 +446,7 @@
       "chapterCount": 4,
       "charCount": 2298,
       "jsonFile": "data/classics/mingxianji.json",
-      "jsonBytes": 54472,
+      "jsonBytes": 54473,
       "bookId": "863bfb5744b3",
       "bookTitle": "名贤集"
     },
@@ -516,7 +516,7 @@
       "chapterCount": 9,
       "charCount": 80798,
       "jsonFile": "data/classics/shenyinyu-1.json",
-      "jsonBytes": 1718481,
+      "jsonBytes": 1718541,
       "bookId": "e69b18701f00",
       "bookTitle": "呻吟语"
     },
@@ -530,7 +530,7 @@
       "chapterCount": 9,
       "charCount": 75472,
       "jsonFile": "data/classics/shenyinyu-2.json",
-      "jsonBytes": 1600778,
+      "jsonBytes": 1600841,
       "bookId": "e69b18701f00",
       "bookTitle": "呻吟语"
     },
@@ -558,7 +558,7 @@
       "chapterCount": 6,
       "charCount": 25243,
       "jsonFile": "data/classics/xiaochuang-youji-1.json",
-      "jsonBytes": 552011,
+      "jsonBytes": 552145,
       "bookId": "bbea3f5d2919",
       "bookTitle": "小窗幽记"
     },
@@ -572,7 +572,7 @@
       "chapterCount": 6,
       "charCount": 16313,
       "jsonFile": "data/classics/xiaochuang-youji-2.json",
-      "jsonBytes": 357535,
+      "jsonBytes": 357474,
       "bookId": "bbea3f5d2919",
       "bookTitle": "小窗幽记"
     },
@@ -586,7 +586,7 @@
       "chapterCount": 10,
       "charCount": 22219,
       "jsonFile": "data/classics/yanshi-jiaxun-1.json",
-      "jsonBytes": 466628,
+      "jsonBytes": 466672,
       "bookId": "e4d81a7d60bd",
       "bookTitle": "颜氏家训"
     },
@@ -740,7 +740,7 @@
       "chapterCount": 5,
       "charCount": 4402,
       "jsonFile": "data/classics/chajing-1.json",
-      "jsonBytes": 93752,
+      "jsonBytes": 93759,
       "bookId": "8d430e61b15e",
       "bookTitle": "茶经"
     },
@@ -754,7 +754,7 @@
       "chapterCount": 5,
       "charCount": 3865,
       "jsonFile": "data/classics/chajing-2.json",
-      "jsonBytes": 82934,
+      "jsonBytes": 82932,
       "bookId": "8d430e61b15e",
       "bookTitle": "茶经"
     },
@@ -768,7 +768,7 @@
       "chapterCount": 25,
       "charCount": 41984,
       "jsonFile": "data/classics/changsheng-dian-1.json",
-      "jsonBytes": 890998,
+      "jsonBytes": 891071,
       "bookId": "4f63ebb6a4c2",
       "bookTitle": "长生殿"
     },
@@ -782,7 +782,7 @@
       "chapterCount": 25,
       "charCount": 43954,
       "jsonFile": "data/classics/changsheng-dian-2.json",
-      "jsonBytes": 934167,
+      "jsonBytes": 934168,
       "bookId": "4f63ebb6a4c2",
       "bookTitle": "长生殿"
     },
@@ -880,7 +880,7 @@
       "chapterCount": 2,
       "charCount": 22596,
       "jsonFile": "data/classics/fusheng-liuji-2.json",
-      "jsonBytes": 473348,
+      "jsonBytes": 473445,
       "bookId": "ea10458ec235",
       "bookTitle": "浮生六记"
     },
@@ -908,7 +908,7 @@
       "chapterCount": 30,
       "charCount": 339123,
       "jsonFile": "data/classics/guanchang-xianxing-2.json",
-      "jsonBytes": 7103936,
+      "jsonBytes": 7103838,
       "bookId": "8dac137f5924",
       "bookTitle": "官场现形记"
     },
@@ -950,7 +950,7 @@
       "chapterCount": 13,
       "charCount": 25077,
       "jsonFile": "data/classics/jiandeng-xinhua-2.json",
-      "jsonBytes": 529671,
+      "jsonBytes": 529729,
       "bookId": "603e4859dbf7",
       "bookTitle": "剪灯新话"
     },
@@ -992,7 +992,7 @@
       "chapterCount": 13,
       "charCount": 18826,
       "jsonFile": "data/classics/jinkui-yaolve-1.json",
-      "jsonBytes": 409678,
+      "jsonBytes": 409718,
       "bookId": "edd0fc49a275",
       "bookTitle": "金匮要略"
     },
@@ -1020,7 +1020,7 @@
       "chapterCount": 5,
       "charCount": 26902,
       "jsonFile": "data/classics/jiuzhang-suanshu-1.json",
-      "jsonBytes": 564074,
+      "jsonBytes": 564044,
       "bookId": "88f34d00f98c",
       "bookTitle": "九章算术"
     },
@@ -1048,7 +1048,7 @@
       "chapterCount": 11,
       "charCount": 52389,
       "jsonFile": "data/classics/laocan-youji-1.json",
-      "jsonBytes": 1100073,
+      "jsonBytes": 1100217,
       "bookId": "904e1676744f",
       "bookTitle": "老残游记"
     },
@@ -1076,7 +1076,7 @@
       "chapterCount": 15,
       "charCount": 33639,
       "jsonFile": "data/classics/mengxi-bitan-1.json",
-      "jsonBytes": 707321,
+      "jsonBytes": 707385,
       "bookId": "076e2373fc61",
       "bookTitle": "梦溪笔谈"
     },
@@ -1090,7 +1090,7 @@
       "chapterCount": 15,
       "charCount": 22873,
       "jsonFile": "data/classics/mengxi-bitan-2.json",
-      "jsonBytes": 481740,
+      "jsonBytes": 481765,
       "bookId": "076e2373fc61",
       "bookTitle": "梦溪笔谈"
     },
@@ -1104,7 +1104,7 @@
       "chapterCount": 28,
       "charCount": 40609,
       "jsonFile": "data/classics/mudanting-1.json",
-      "jsonBytes": 857894,
+      "jsonBytes": 857884,
       "bookId": "a058bba88fd1",
       "bookTitle": "牡丹亭"
     },
@@ -1118,7 +1118,7 @@
       "chapterCount": 28,
       "charCount": 49759,
       "jsonFile": "data/classics/mudanting-2.json",
-      "jsonBytes": 1051320,
+      "jsonBytes": 1051222,
       "bookId": "a058bba88fd1",
       "bookTitle": "牡丹亭"
     },
@@ -1132,7 +1132,7 @@
       "chapterCount": 9,
       "charCount": 7019,
       "jsonFile": "data/classics/qijing-bamai-1.json",
-      "jsonBytes": 149671,
+      "jsonBytes": 149694,
       "bookId": "d8b854fd7143",
       "bookTitle": "奇经八脉考"
     },
@@ -1188,7 +1188,7 @@
       "chapterCount": 17,
       "charCount": 241488,
       "jsonFile": "data/classics/rizhi-lu-1.json",
-      "jsonBytes": 5049369,
+      "jsonBytes": 5049169,
       "bookId": "9bd135b79a36",
       "bookTitle": "日知录"
     },
@@ -1216,7 +1216,7 @@
       "chapterCount": 28,
       "charCount": 169416,
       "jsonFile": "data/classics/rulin-waishi-1.json",
-      "jsonBytes": 3550213,
+      "jsonBytes": 3550839,
       "bookId": "791063234900",
       "bookTitle": "儒林外史"
     },
@@ -1230,7 +1230,7 @@
       "chapterCount": 28,
       "charCount": 157182,
       "jsonFile": "data/classics/rulin-waishi-2.json",
-      "jsonBytes": 3296090,
+      "jsonBytes": 3295923,
       "bookId": "791063234900",
       "bookTitle": "儒林外史"
     },
@@ -1258,7 +1258,7 @@
       "chapterCount": 12,
       "charCount": 6610,
       "jsonFile": "data/classics/shanghan-lun-2.json",
-      "jsonBytes": 144041,
+      "jsonBytes": 144039,
       "bookId": "82865fcafa01",
       "bookTitle": "伤寒论"
     },
@@ -1272,7 +1272,7 @@
       "chapterCount": 9,
       "charCount": 28886,
       "jsonFile": "data/classics/shanhaijing-1.json",
-      "jsonBytes": 619826,
+      "jsonBytes": 620740,
       "bookId": "4e6b88d8a0bc",
       "bookTitle": "山海经"
     },
@@ -1286,7 +1286,7 @@
       "chapterCount": 9,
       "charCount": 8943,
       "jsonFile": "data/classics/shanhaijing-2.json",
-      "jsonBytes": 197608,
+      "jsonBytes": 197673,
       "bookId": "4e6b88d8a0bc",
       "bookTitle": "山海经"
     },
@@ -1300,7 +1300,7 @@
       "chapterCount": 5,
       "charCount": 18307,
       "jsonFile": "data/classics/shenxian-zhuan-1.json",
-      "jsonBytes": 384340,
+      "jsonBytes": 384308,
       "bookId": "ada8815b596b",
       "bookTitle": "神仙传"
     },
@@ -1314,7 +1314,7 @@
       "chapterCount": 5,
       "charCount": 19415,
       "jsonFile": "data/classics/shenxian-zhuan-2.json",
-      "jsonBytes": 408498,
+      "jsonBytes": 408540,
       "bookId": "ada8815b596b",
       "bookTitle": "神仙传"
     },
@@ -1328,7 +1328,7 @@
       "chapterCount": 18,
       "charCount": 51721,
       "jsonFile": "data/classics/shishuo-xinyu-1.json",
-      "jsonBytes": 1104503,
+      "jsonBytes": 1104475,
       "bookId": "bbf0d02a401c",
       "bookTitle": "世说新语"
     },
@@ -1342,7 +1342,7 @@
       "chapterCount": 18,
       "charCount": 25345,
       "jsonFile": "data/classics/shishuo-xinyu-2.json",
-      "jsonBytes": 539569,
+      "jsonBytes": 539570,
       "bookId": "bbf0d02a401c",
       "bookTitle": "世说新语"
     },
@@ -1356,7 +1356,7 @@
       "chapterCount": 10,
       "charCount": 66121,
       "jsonFile": "data/classics/shuoyuan-1.json",
-      "jsonBytes": 1378210,
+      "jsonBytes": 1378041,
       "bookId": "7f51e554e184",
       "bookTitle": "说苑"
     },
@@ -1370,7 +1370,7 @@
       "chapterCount": 10,
       "charCount": 67985,
       "jsonFile": "data/classics/shuoyuan-2.json",
-      "jsonBytes": 1416995,
+      "jsonBytes": 1417165,
       "bookId": "7f51e554e184",
       "bookTitle": "说苑"
     },
@@ -1384,7 +1384,7 @@
       "chapterCount": 5,
       "charCount": 8794,
       "jsonFile": "data/classics/soushen-houji-1.json",
-      "jsonBytes": 184977,
+      "jsonBytes": 184994,
       "bookId": "733130278115",
       "bookTitle": "搜神后记"
     },
@@ -1412,7 +1412,7 @@
       "chapterCount": 10,
       "charCount": 34061,
       "jsonFile": "data/classics/soushenji-1.json",
-      "jsonBytes": 718166,
+      "jsonBytes": 718216,
       "bookId": "f18dc4b6b06d",
       "bookTitle": "搜神记"
     },
@@ -1426,7 +1426,7 @@
       "chapterCount": 10,
       "charCount": 36528,
       "jsonFile": "data/classics/soushenji-2.json",
-      "jsonBytes": 766065,
+      "jsonBytes": 766060,
       "bookId": "f18dc4b6b06d",
       "bookTitle": "搜神记"
     },
@@ -1440,7 +1440,7 @@
       "chapterCount": 8,
       "charCount": 15349,
       "jsonFile": "data/classics/suiyuan-shidan-1.json",
-      "jsonBytes": 324224,
+      "jsonBytes": 324257,
       "bookId": "e61320980f9c",
       "bookTitle": "随园食单"
     },
@@ -1454,7 +1454,7 @@
       "chapterCount": 7,
       "charCount": 13145,
       "jsonFile": "data/classics/suiyuan-shidan-2.json",
-      "jsonBytes": 279756,
+      "jsonBytes": 279891,
       "bookId": "e61320980f9c",
       "bookTitle": "随园食单"
     },
@@ -1468,7 +1468,7 @@
       "chapterCount": 22,
       "charCount": 52286,
       "jsonFile": "data/classics/taohua-shan-1.json",
-      "jsonBytes": 1086674,
+      "jsonBytes": 1086717,
       "bookId": "953510d9231e",
       "bookTitle": "桃花扇"
     },
@@ -1482,7 +1482,7 @@
       "chapterCount": 22,
       "charCount": 58334,
       "jsonFile": "data/classics/taohua-shan-2.json",
-      "jsonBytes": 1212898,
+      "jsonBytes": 1212784,
       "bookId": "953510d9231e",
       "bookTitle": "桃花扇"
     },
@@ -1496,7 +1496,7 @@
       "chapterCount": 10,
       "charCount": 32643,
       "jsonFile": "data/classics/tiangong-kaiwu-1.json",
-      "jsonBytes": 692752,
+      "jsonBytes": 692758,
       "bookId": "289e1e12ab2a",
       "bookTitle": "天工开物"
     },
@@ -1524,7 +1524,7 @@
       "chapterCount": 25,
       "charCount": 25151,
       "jsonFile": "data/classics/wenxin-diaolong-1.json",
-      "jsonBytes": 529249,
+      "jsonBytes": 529224,
       "bookId": "5b87255cd674",
       "bookTitle": "文心雕龙"
     },
@@ -1538,7 +1538,7 @@
       "chapterCount": 25,
       "charCount": 22006,
       "jsonFile": "data/classics/wenxin-diaolong-2.json",
-      "jsonBytes": 463696,
+      "jsonBytes": 463654,
       "bookId": "5b87255cd674",
       "bookTitle": "文心雕龙"
     },
@@ -1552,7 +1552,7 @@
       "chapterCount": 6,
       "charCount": 33026,
       "jsonFile": "data/classics/xiaolin-guangji-1.json",
-      "jsonBytes": 707339,
+      "jsonBytes": 707278,
       "bookId": "9ec2c9145a8f",
       "bookTitle": "笑林广记"
     },
@@ -1566,7 +1566,7 @@
       "chapterCount": 6,
       "charCount": 26496,
       "jsonFile": "data/classics/xiaolin-guangji-2.json",
-      "jsonBytes": 568137,
+      "jsonBytes": 568282,
       "bookId": "9ec2c9145a8f",
       "bookTitle": "笑林广记"
     },
@@ -1608,7 +1608,7 @@
       "chapterCount": 13,
       "charCount": 133816,
       "jsonFile": "data/classics/xinqixie-1.json",
-      "jsonBytes": 2814160,
+      "jsonBytes": 2814147,
       "bookId": "dd3be015cff8",
       "bookTitle": "新齐谐"
     },
@@ -1622,7 +1622,7 @@
       "chapterCount": 12,
       "charCount": 132735,
       "jsonFile": "data/classics/xinqixie-2.json",
-      "jsonBytes": 2804021,
+      "jsonBytes": 2804055,
       "bookId": "dd3be015cff8",
       "bookTitle": "新齐谐"
     },
@@ -1636,7 +1636,7 @@
       "chapterCount": 13,
       "charCount": 22585,
       "jsonFile": "data/classics/xixiang-ji-1.json",
-      "jsonBytes": 476401,
+      "jsonBytes": 476450,
       "bookId": "b2730fddcac2",
       "bookTitle": "西厢记"
     },
@@ -1650,7 +1650,7 @@
       "chapterCount": 12,
       "charCount": 20894,
       "jsonFile": "data/classics/xixiang-ji-2.json",
-      "jsonBytes": 440250,
+      "jsonBytes": 440380,
       "bookId": "b2730fddcac2",
       "bookTitle": "西厢记"
     },
@@ -1748,7 +1748,7 @@
       "chapterCount": 16,
       "charCount": 65912,
       "jsonFile": "data/classics/yoyang-zazu-1.json",
-      "jsonBytes": 1388972,
+      "jsonBytes": 1388905,
       "bookId": "406ec46ca000",
       "bookTitle": "酉阳杂俎"
     },
@@ -1762,7 +1762,7 @@
       "chapterCount": 15,
       "charCount": 66762,
       "jsonFile": "data/classics/yoyang-zazu-2.json",
-      "jsonBytes": 1410007,
+      "jsonBytes": 1410019,
       "bookId": "406ec46ca000",
       "bookTitle": "酉阳杂俎"
     },
@@ -1790,7 +1790,7 @@
       "chapterCount": 6,
       "charCount": 43562,
       "jsonFile": "data/classics/yuanhai-ziping-2.json",
-      "jsonBytes": 977009,
+      "jsonBytes": 976850,
       "bookId": "fd1502b1700f",
       "bookTitle": "渊海子平"
     },
@@ -1832,7 +1832,7 @@
       "chapterCount": 2,
       "charCount": 11784,
       "jsonFile": "data/classics/zangshu-1.json",
-      "jsonBytes": 252298,
+      "jsonBytes": 252301,
       "bookId": "bd39fa6c6fb4",
       "bookTitle": "葬书"
     },
@@ -1860,7 +1860,7 @@
       "chapterCount": 21,
       "charCount": 54633,
       "jsonFile": "data/classics/zhenguan-zhengyao-1.json",
-      "jsonBytes": 1147408,
+      "jsonBytes": 1147356,
       "bookId": "bc2c2f3f76c5",
       "bookTitle": "贞观政要"
     },
@@ -1874,7 +1874,7 @@
       "chapterCount": 20,
       "charCount": 31684,
       "jsonFile": "data/classics/zhenguan-zhengyao-2.json",
-      "jsonBytes": 667092,
+      "jsonBytes": 667084,
       "bookId": "bc2c2f3f76c5",
       "bookTitle": "贞观政要"
     },
@@ -1888,7 +1888,7 @@
       "chapterCount": 35,
       "charCount": 114607,
       "jsonFile": "data/classics/baopuzi-1.json",
-      "jsonBytes": 2398616,
+      "jsonBytes": 2398541,
       "bookId": "79a6898275a2",
       "bookTitle": "抱朴子"
     },
@@ -1902,7 +1902,7 @@
       "chapterCount": 35,
       "charCount": 67949,
       "jsonFile": "data/classics/baopuzi-2.json",
-      "jsonBytes": 1429396,
+      "jsonBytes": 1429401,
       "bookId": "79a6898275a2",
       "bookTitle": "抱朴子"
     },
@@ -1930,7 +1930,7 @@
       "chapterCount": 10,
       "charCount": 2742,
       "jsonFile": "data/classics/bingfa-24-2.json",
-      "jsonBytes": 58252,
+      "jsonBytes": 58248,
       "bookId": "a8af31e22938",
       "bookTitle": "兵法二十四篇"
     },
@@ -1986,7 +1986,7 @@
       "chapterCount": 38,
       "charCount": 80118,
       "jsonFile": "data/classics/guanzi-1.json",
-      "jsonBytes": 1678996,
+      "jsonBytes": 1678974,
       "bookId": "4660f958c5cf",
       "bookTitle": "管子"
     },
@@ -2000,7 +2000,7 @@
       "chapterCount": 38,
       "charCount": 71369,
       "jsonFile": "data/classics/guanzi-2.json",
-      "jsonBytes": 1499064,
+      "jsonBytes": 1498977,
       "bookId": "4660f958c5cf",
       "bookTitle": "管子"
     },
@@ -2042,7 +2042,7 @@
       "chapterCount": 28,
       "charCount": 53548,
       "jsonFile": "data/classics/hanfeizi-1.json",
-      "jsonBytes": 1114972,
+      "jsonBytes": 1115320,
       "bookId": "3b6401758902",
       "bookTitle": "韩非子"
     },
@@ -2056,7 +2056,7 @@
       "chapterCount": 27,
       "charCount": 76510,
       "jsonFile": "data/classics/hanfeizi-2.json",
-      "jsonBytes": 1608056,
+      "jsonBytes": 1608075,
       "bookId": "3b6401758902",
       "bookTitle": "韩非子"
     },
@@ -2070,7 +2070,7 @@
       "chapterCount": 11,
       "charCount": 74252,
       "jsonFile": "data/classics/huainanzi-1.json",
-      "jsonBytes": 1552595,
+      "jsonBytes": 1552257,
       "bookId": "bfcc9d090ed5",
       "bookTitle": "淮南子"
     },
@@ -2084,7 +2084,7 @@
       "chapterCount": 10,
       "charCount": 83813,
       "jsonFile": "data/classics/huainanzi-2.json",
-      "jsonBytes": 1749192,
+      "jsonBytes": 1747647,
       "bookId": "bfcc9d090ed5",
       "bookTitle": "淮南子"
     },
@@ -2098,7 +2098,7 @@
       "chapterCount": 20,
       "charCount": 1808,
       "jsonFile": "data/classics/huangting-1.json",
-      "jsonBytes": 41226,
+      "jsonBytes": 41227,
       "bookId": "1ae31193f043",
       "bookTitle": "黄庭经"
     },
@@ -2126,7 +2126,7 @@
       "chapterCount": 25,
       "charCount": 3279,
       "jsonFile": "data/classics/jiangyuan-1.json",
-      "jsonBytes": 71965,
+      "jsonBytes": 71964,
       "bookId": "f85cbdb83bfd",
       "bookTitle": "将苑"
     },
@@ -2140,7 +2140,7 @@
       "chapterCount": 25,
       "charCount": 2729,
       "jsonFile": "data/classics/jiangyuan-2.json",
-      "jsonBytes": 60652,
+      "jsonBytes": 60655,
       "bookId": "f85cbdb83bfd",
       "bookTitle": "将苑"
     },
@@ -2182,7 +2182,7 @@
       "chapterCount": 30,
       "charCount": 11158,
       "jsonFile": "data/classics/liutao-1.json",
-      "jsonBytes": 240581,
+      "jsonBytes": 240584,
       "bookId": "1a363b21b83a",
       "bookTitle": "六韬"
     },
@@ -2224,7 +2224,7 @@
       "chapterCount": 13,
       "charCount": 78388,
       "jsonFile": "data/classics/lvshi-chunqiu-2.json",
-      "jsonBytes": 1641119,
+      "jsonBytes": 1641238,
       "bookId": "b59f91268b84",
       "bookTitle": "吕氏春秋"
     },
@@ -2238,7 +2238,7 @@
       "chapterCount": 27,
       "charCount": 45239,
       "jsonFile": "data/classics/mozi-1.json",
-      "jsonBytes": 947942,
+      "jsonBytes": 947962,
       "bookId": "1a02b10fe543",
       "bookTitle": "墨子"
     },
@@ -2252,7 +2252,7 @@
       "chapterCount": 26,
       "charCount": 47387,
       "jsonFile": "data/classics/mozi-2.json",
-      "jsonBytes": 995093,
+      "jsonBytes": 995101,
       "bookId": "1a02b10fe543",
       "bookTitle": "墨子"
     },
@@ -2266,7 +2266,7 @@
       "chapterCount": 7,
       "charCount": 6237,
       "jsonFile": "data/classics/renwuzhi-1.json",
-      "jsonBytes": 135084,
+      "jsonBytes": 135081,
       "bookId": "d4a32fe1cf13",
       "bookTitle": "人物志"
     },
@@ -2350,7 +2350,7 @@
       "chapterCount": 12,
       "charCount": 12239,
       "jsonFile": "data/classics/shangjunshu-1.json",
-      "jsonBytes": 258406,
+      "jsonBytes": 258412,
       "bookId": "fcb502e3f55d",
       "bookTitle": "商君书"
     },
@@ -2364,7 +2364,7 @@
       "chapterCount": 12,
       "charCount": 12098,
       "jsonFile": "data/classics/shangjunshu-2.json",
-      "jsonBytes": 254653,
+      "jsonBytes": 254678,
       "bookId": "fcb502e3f55d",
       "bookTitle": "商君书"
     },
@@ -2378,7 +2378,7 @@
       "chapterCount": 3,
       "charCount": 3085,
       "jsonFile": "data/classics/sima-fa-1.json",
-      "jsonBytes": 66199,
+      "jsonBytes": 66251,
       "bookId": "1695504e3fd0",
       "bookTitle": "司马法"
     },
@@ -2392,7 +2392,7 @@
       "chapterCount": 2,
       "charCount": 1205,
       "jsonFile": "data/classics/sima-fa-2.json",
-      "jsonBytes": 26506,
+      "jsonBytes": 26502,
       "bookId": "1695504e3fd0",
       "bookTitle": "司马法"
     },
@@ -2406,7 +2406,7 @@
       "chapterCount": 15,
       "charCount": 5364,
       "jsonFile": "data/classics/sunbin-bingfa-1.json",
-      "jsonBytes": 114103,
+      "jsonBytes": 114085,
       "bookId": "f053f6df717d",
       "bookTitle": "孙膑兵法"
     },
@@ -2420,7 +2420,7 @@
       "chapterCount": 15,
       "charCount": 5561,
       "jsonFile": "data/classics/sunbin-bingfa-2.json",
-      "jsonBytes": 118296,
+      "jsonBytes": 118286,
       "bookId": "f053f6df717d",
       "bookTitle": "孙膑兵法"
     },
@@ -2448,7 +2448,7 @@
       "chapterCount": 6,
       "charCount": 3961,
       "jsonFile": "data/classics/sunzi-bingfa-2.json",
-      "jsonBytes": 83886,
+      "jsonBytes": 83919,
       "bookId": "c412f1d0ea81",
       "bookTitle": "孙子兵法"
     },
@@ -2462,7 +2462,7 @@
       "chapterCount": 7,
       "charCount": 5476,
       "jsonFile": "data/classics/taiyi-jinhua-1.json",
-      "jsonBytes": 116275,
+      "jsonBytes": 116315,
       "bookId": "9dc165ae7405",
       "bookTitle": "太乙金华宗旨"
     },
@@ -2476,7 +2476,7 @@
       "chapterCount": 6,
       "charCount": 4757,
       "jsonFile": "data/classics/taiyi-jinhua-2.json",
-      "jsonBytes": 101561,
+      "jsonBytes": 101467,
       "bookId": "9dc165ae7405",
       "bookTitle": "太乙金华宗旨"
     },
@@ -2518,7 +2518,7 @@
       "chapterCount": 7,
       "charCount": 47339,
       "jsonFile": "data/classics/wenzi-1.json",
-      "jsonBytes": 987505,
+      "jsonBytes": 987411,
       "bookId": "8e814adbf214",
       "bookTitle": "文子"
     },
@@ -2560,7 +2560,7 @@
       "chapterCount": 4,
       "charCount": 6896,
       "jsonFile": "data/classics/wuzhenpian-2.json",
-      "jsonBytes": 146970,
+      "jsonBytes": 147016,
       "bookId": "56493ee72c23",
       "bookTitle": "悟真篇"
     },
@@ -2574,7 +2574,7 @@
       "chapterCount": 3,
       "charCount": 3535,
       "jsonFile": "data/classics/wuzi-1.json",
-      "jsonBytes": 75041,
+      "jsonBytes": 75033,
       "bookId": "3f426dfee2f8",
       "bookTitle": "吴子"
     },
@@ -2616,7 +2616,7 @@
       "chapterCount": 16,
       "charCount": 49942,
       "jsonFile": "data/classics/xunzi-1.json",
-      "jsonBytes": 1044228,
+      "jsonBytes": 1044227,
       "bookId": "e8bf28de6a4b",
       "bookTitle": "荀子"
     },
@@ -2630,7 +2630,7 @@
       "chapterCount": 16,
       "charCount": 40860,
       "jsonFile": "data/classics/xunzi-2.json",
-      "jsonBytes": 857796,
+      "jsonBytes": 857804,
       "bookId": "e8bf28de6a4b",
       "bookTitle": "荀子"
     },
@@ -2644,7 +2644,7 @@
       "chapterCount": 17,
       "charCount": 38179,
       "jsonFile": "data/classics/zhuangzi-1.json",
-      "jsonBytes": 796492,
+      "jsonBytes": 796609,
       "bookId": "f38f3b211c76",
       "bookTitle": "庄子"
     },
@@ -2658,7 +2658,7 @@
       "chapterCount": 16,
       "charCount": 42140,
       "jsonFile": "data/classics/zhuangzi-2.json",
-      "jsonBytes": 878039,
+      "jsonBytes": 877966,
       "bookId": "f38f3b211c76",
       "bookTitle": "庄子"
     }
