@@ -56,6 +56,8 @@ const SOURCE_TAG_MAP: Record<string, string> = {
   '七言绝句': '七绝',
   '五言律诗': '五律',
   '七言律诗': '七律',
+  '五言古诗': '五言古风',
+  '七言古诗': '七言古风',
 };
 
 export function resolveFormFromSource(type: string | null, rhythmic: string | null, category: string): FormResult {

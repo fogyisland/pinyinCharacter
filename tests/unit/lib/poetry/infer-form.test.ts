@@ -93,7 +93,7 @@ describe('resolveFormFromSource', () => {
 
   it('returns 五言古诗 from chinese-poetry type=五言古诗', () => {
     const r = resolveFormFromSource('五言古诗', null, 'tang');
-    expect(r.primary).toBe('五言古诗');
+    expect(r.primary).toBe('五言古风');
   });
 
   it('returns null for empty type', () => {
