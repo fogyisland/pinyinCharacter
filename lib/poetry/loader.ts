@@ -1,4 +1,8 @@
 import path from 'node:path';
+// Import from 'fs/promises' (not 'node:fs') intentionally: vitest's mock
+// registry does not dedupe these specifiers, so `vi.mock('fs/promises')`
+// would not intercept `node:fs/promises` reads in tests. Runtime behavior
+// is identical (Node treats both as the same module). Do NOT change back.
 import * as fs from 'fs/promises';
 import type { PoemDetail, PoemsManifest } from '../poetry-types';
 
