@@ -43,18 +43,20 @@ export async function importContent(): Promise<ImportResult> {
       const parsed = CharContentSchema.parse(raw);
       const char = parsed.char;
 
-      // meaning_zh: 不覆盖已有值
-      if (parsed.meaning_zh !== undefined) {
+      // meaning_zh: 不覆盖已有值 (legacy top-level + full-shape dict.meaning_zh)
+      const meaningZh = parsed.meaning_zh ?? parsed.dict?.meaning_zh;
+      if (meaningZh !== undefined) {
         const [r] = await pool.query<any>(
           `UPDATE chars SET meaning_zh = ?
            WHERE \`char\` = ? AND (meaning_zh IS NULL OR meaning_zh = '')`,
-          [parsed.meaning_zh, char]
+          [meaningZh, char]
         );
         if ((r as any).affectedRows > 0) result.imported.meaning_zh.push(char);
       }
 
-      // etymology_story: 整行 upsert, era_*_has 默认 0
-      if (parsed.etymology_story !== undefined) {
+      // etymology_story: 整行 upsert, era_*_has 默认 0 (legacy top-level + full-shape etymology.story)
+      const etymologyStory = parsed.etymology_story ?? parsed.etymology?.story;
+      if (etymologyStory !== undefined) {
         await pool.query(
           `INSERT INTO char_etymology
              (\`char\`, story, era_jiaguwen_has, era_jinwen_has,
@@ -64,7 +66,7 @@ export async function importContent(): Promise<ImportResult> {
              story = VALUES(story),
              generated_by = VALUES(generated_by),
              generated_at = VALUES(generated_at)`,
-          [char, parsed.etymology_story]
+          [char, etymologyStory]
         );
         result.imported.etymology_story.push(char);
       }
