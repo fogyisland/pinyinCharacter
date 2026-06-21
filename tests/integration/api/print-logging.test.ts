@@ -12,6 +12,18 @@ vi.mock('next/headers', () => ({
   }),
 }));
 
+const mockGetPoem = vi.fn();
+vi.mock('@/lib/poetry', () => ({
+  getPoem: (...args: any[]) => mockGetPoem(...args),
+  getRandomPoem: vi.fn(),
+  listPoems: vi.fn(),
+  listForms: vi.fn(),
+  listDynasties: vi.fn(),
+  loadManifest: vi.fn(),
+  loadPoem: vi.fn(),
+  invalidateManifestCache: vi.fn(),
+}));
+
 import { getPool, closePool } from '../../../lib/db';
 import { POST as printWorksheet } from '../../../app/api/worksheets/[id]/print/route';
 import { POST as printPoem } from '../../../app/api/poetry/[id]/print/route';
@@ -75,20 +87,14 @@ d('print logging', () => {
     );
     worksheetId = Number(w.insertId);
 
-    // 1 poem (use existing if present, else create a unique one)
+    // 1 poem (use a mock — no poems table after Task 5)
     sutraSlug = `xinjing-test-${Date.now()}`;
     rareChar = '禅';
-
-    // Try to reuse an existing poem; otherwise insert
-    const [existing] = await pool.query<any[]>(`SELECT id FROM poems LIMIT 1`);
-    if (existing.length > 0) {
-      poemId = Number(existing[0].id);
-    } else {
-      const [p] = await pool.query<any>(
-        `INSERT INTO poems (dynasty, title, author, content, pinyin) VALUES ('tang', '测试', '佚名', JSON.stringify(['床前明月光']), JSON.stringify([['chuáng']]))`,
-      );
-      poemId = Number(p.insertId);
-    }
+    poemId = 1;
+    mockGetPoem.mockResolvedValue({
+      id: poemId, title: 'mock title', author: 'X', dynasty: 'tang',
+      form: null, content: [], pinyin: [], appreciation: null,
+    });
 
     // 1 sutra with unique slug
     await pool.query(

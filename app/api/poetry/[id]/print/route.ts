@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
 import { requireUser } from '@/lib/auth';
-import { getPool } from '@/lib/db';
+import { getPoem } from '@/lib/poetry';
 import { logDownload } from '@/lib/downloads';
 import { logUserAction } from '@/lib/audit';
 
@@ -12,8 +12,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params;
     const pid = parseInt(id, 10);
     if (!Number.isInteger(pid) || pid <= 0) return badRequest('bad_id', 'invalid id');
-    const [rows] = await getPool().query<any[]>(`SELECT id, title FROM poems WHERE id = ? LIMIT 1`, [pid]);
-    if (rows.length === 0) return notFound('not_found', 'poem not found');
+    const poem = await getPoem(pid);
+    if (!poem) return notFound('not_found', 'poem not found');
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
     await logDownload({
       userId: auth.user.id, format: 'print', sourceType: 'poem', sourceId: String(pid),
@@ -22,7 +22,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await logUserAction(req, auth.user.id, 'poem_saved', {
       action: 'print',
       poemId: pid,
-      title: rows[0]?.title ?? null,
+      title: poem.title,
     });
     return NextResponse.json({ ok: true, data: { id: pid } });
   });
