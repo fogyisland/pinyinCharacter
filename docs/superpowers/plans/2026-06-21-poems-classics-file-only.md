@@ -469,10 +469,12 @@ describe('getPoem', () => {
 
 describe('getRandomPoem', () => {
   it('returns one item matching filters', async () => {
+    mockLoadPoem.mockResolvedValue({ id: 1, title: 'A', author: 'X', dynasty: 'tang', form: '五绝',
+      content: ['a'], pinyin: [['a']], appreciation: null });
     const { getRandomPoem } = await import('@/lib/poetry/queries');
     const p = await getRandomPoem({ dynasty: 'tang' });
     expect(p).not.toBeNull();
-    expect(p?.dynasty).toBe('唐');
+    expect(p?.dynasty).toBe('tang');
   });
 });
 
@@ -913,9 +915,11 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 
 ---
 
-### Task 5: DROP poems table + manifest consistency check script
+### Task 5: Convert print route + DROP poems table + manifest consistency check
 
 **Files:**
+- Modify: `app/api/poetry/[id]/print/route.ts` (replace raw SQL with `getPoem()` from `@/lib/poetry`)
+- Modify: `tests/integration/api/print-logging.test.ts` (replace `INSERT INTO poems` setup with mock-based fixture or file seed)
 - Create: `scripts/drop-poems-table.ts`
 - Create: `scripts/check-poems-manifest.ts`
 - Create: `tests/integration/scripts/check-poems-manifest.test.ts`
@@ -924,8 +928,75 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 - Produces:
   - `scripts/drop-poems-table.ts` exports `dropPoemsTable(): Promise<void>` — `DROP TABLE IF EXISTS poems`. Idempotent.
   - `scripts/check-poems-manifest.ts` exports `checkPoemsManifest(): Promise<{ ok: boolean; issues: string[] }>` — verifies `manifest.count === fs.readdir('data/poems').length - 1` (minus manifest), every manifest id has a file, every file is in manifest.
+- Consumes:
+  - `getPoem(pid: number): Promise<PoemDetail | null>` from `@/lib/poetry` (the new barrel from Task 2).
+  - Note: Task 3 left `app/api/poetry/[id]/print/route.ts` and `tests/integration/api/print-logging.test.ts` using raw SQL on `poems` because the table still existed. After Task 5's DROP, both break in prod. This task MUST convert them BEFORE Step 6 (DROP).
 
-- [ ] **Step 1: Write failing test for checkPoemsManifest**
+- [ ] **Step 1: Convert `app/api/poetry/[id]/print/route.ts` to file-based reads**
+
+Replace the raw SQL block (currently lines 4 + 15-16):
+
+```ts
+// FROM (lines 4, 15-16)
+import { getPool } from '@/lib/db';
+...
+const [rows] = await getPool().query<any[]>(`SELECT id, title FROM poems WHERE id = ? LIMIT 1`, [pid]);
+if (rows.length === 0) return notFound('not_found', 'poem not found');
+...
+title: rows[0]?.title ?? null,
+
+// TO
+import { getPoem } from '@/lib/poetry';
+...
+const poem = await getPoem(pid);
+if (!poem) return notFound('not_found', 'poem not found');
+...
+title: poem.title,
+```
+
+Drop the `getPool` import. Keep everything else (auth, audit log, downloads log) intact.
+
+- [ ] **Step 2: Convert `tests/integration/api/print-logging.test.ts` to mock `getPoem`**
+
+The test currently does `INSERT INTO poems (...)` in setup. After Task 5, no poems table exists. Two viable approaches:
+
+**Approach A (preferred): mock `@/lib/poetry`** for the print route import:
+
+```ts
+// At the top of the file, near the other vi.mock calls:
+const mockGetPoem = vi.fn();
+vi.mock('@/lib/poetry', () => ({
+  getPoem: (...args: any[]) => mockGetPoem(...args),
+  getRandomPoem: vi.fn(),
+  listPoems: vi.fn(),
+  listForms: vi.fn(),
+  listDynasties: vi.fn(),
+  loadManifest: vi.fn(),
+  loadPoem: vi.fn(),
+  invalidateManifestCache: vi.fn(),
+}));
+
+// In the test that exercises the poem print branch:
+mockGetPoem.mockResolvedValueOnce({ id: poemId, title: 'mock title', author: 'X', dynasty: 'tang', form: null, content: [], pinyin: [], appreciation: null });
+```
+
+Then remove the `INSERT INTO poems` line for the poem branch and remove `TRUNCATE TABLE poems` if present.
+
+**Approach B (fallback): write `data/poems/<poemId>.json` to disk in `beforeEach`** then call the route. Slower (real fs I/O per test), but mirrors how other tests work in this file.
+
+Pick Approach A. The test file already mocks `next/headers`; adding a `vi.mock('@/lib/poetry', ...)` follows the same pattern.
+
+- [ ] **Step 3: tsc + build + run the affected tests**
+
+Run:
+```bash
+pnpm tsc --noEmit
+pnpm test tests/integration/api/print-logging.test.ts
+pnpm build
+```
+Expected: tsc clean, print-logging test passes (mocked), build green.
+
+- [ ] **Step 4: Write failing test for checkPoemsManifest**
 
 ```ts
 // tests/integration/scripts/check-poems-manifest.test.ts
@@ -985,12 +1056,12 @@ describe('checkPoemsManifest', () => {
 });
 ```
 
-- [ ] **Step 2: Run, verify FAIL**
+- [ ] **Step 5: Run, verify FAIL**
 
 Run: `pnpm test tests/integration/scripts/check-poems-manifest.test.ts`
 Expected: FAIL "Cannot find module '@/scripts/check-poems-manifest'"
 
-- [ ] **Step 3: Implement check-poems-manifest.ts**
+- [ ] **Step 6: Implement check-poems-manifest.ts**
 
 Create `E:\ToolDevelop\PinYinCharacter\scripts\check-poems-manifest.ts`:
 
@@ -1038,12 +1109,12 @@ if (require.main === module) {
 }
 ```
 
-- [ ] **Step 4: Run, verify PASS**
+- [ ] **Step 7: Run, verify PASS**
 
 Run: `pnpm test tests/integration/scripts/check-poems-manifest.test.ts`
 Expected: 3/3 PASS
 
-- [ ] **Step 5: Live run on piyin_dev**
+- [ ] **Step 8: Live run on piyin_dev**
 
 Run:
 ```bash
@@ -1051,7 +1122,7 @@ pnpm tsx scripts/check-poems-manifest.ts
 ```
 Expected: `[check-poems-manifest] OK`
 
-- [ ] **Step 6: Implement drop-poems-table.ts**
+- [ ] **Step 9: Implement drop-poems-table.ts**
 
 Create `E:\ToolDevelop\PinYinCharacter\scripts\drop-poems-table.ts`:
 
@@ -1070,9 +1141,9 @@ if (require.main === module) {
 }
 ```
 
-(No test — this is a destructive op. Manual verification in Step 7.)
+(No test — this is a destructive op. Manual verification in Step 10.)
 
-- [ ] **Step 7: Run DROP on piyin_dev, then verify app still works**
+- [ ] **Step 10: Run DROP on piyin_dev, then verify app still works**
 
 Run:
 ```bash
@@ -1092,11 +1163,11 @@ kill %1 2>/dev/null
 ```
 Expected: both return 200 OK with valid JSON. App is fully file-only.
 
-- [ ] **Step 8: tsc + commit**
+- [ ] **Step 11: tsc + commit**
 
 ```bash
 pnpm tsc --noEmit
-git add scripts/drop-poems-table.ts scripts/check-poems-manifest.ts tests/integration/scripts/check-poems-manifest.test.ts
+git add app/api/poetry/\[id\]/print/route.ts tests/integration/api/print-logging.test.ts scripts/drop-poems-table.ts scripts/check-poems-manifest.ts tests/integration/scripts/check-poems-manifest.test.ts
 git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetry): drop poems table + manifest consistency check"
 ```
 
