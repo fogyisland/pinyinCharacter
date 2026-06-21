@@ -20,6 +20,9 @@ data/runtime/
 *.log
 .DS_Store
 
+# mysqldump / db backups (huge binary, regenerable)
+backups/
+
 # build artifacts (regenerate with pnpm strokes:build)
 public/strokes/
 data/strokes-manifest.json
