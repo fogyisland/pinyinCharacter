@@ -10,11 +10,22 @@ import { AppreciationBlock } from '@/components/poetry/AppreciationBlock';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
+import { buildPoemJsonLd } from './jsonld';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const poem = await getPoem(Number(id));
+  if (!poem) return {};
+  return {
+    title: `${poem.title} · ${poem.author}`,
+    description: poem.content.slice(0, 2).join(' / '),
+  };
 }
 
 export default async function PoemDetailPage({ params }: Props) {
@@ -26,6 +37,11 @@ export default async function PoemDetailPage({ params }: Props) {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildPoemJsonLd(poem)) }}
+      />
       <Suspense>
         <Header />
       </Suspense>
