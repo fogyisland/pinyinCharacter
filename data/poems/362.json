@@ -1,0 +1,52 @@
+{
+  "id": 362,
+  "title": "凉州词二首 一",
+  "author": "王之涣",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "黄河远上白云间，一片孤城万仞山。",
+    "羌笛何须怨杨柳，春光不度玉门关。"
+  ],
+  "pinyin": [
+    [
+      "huáng",
+      "hé",
+      "yuǎn",
+      "shàng",
+      "bái",
+      "yún",
+      "jiān",
+      "，",
+      "yī",
+      "piàn",
+      "gū",
+      "chéng",
+      "wàn",
+      "rèn",
+      "shān",
+      "。"
+    ],
+    [
+      "qiāng",
+      "dí",
+      "hé",
+      "xū",
+      "yuàn",
+      "yáng",
+      "liǔ",
+      "，",
+      "chūn",
+      "guāng",
+      "bù",
+      "dù",
+      "yù",
+      "mén",
+      "guān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

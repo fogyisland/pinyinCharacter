@@ -1,0 +1,79 @@
+{
+  "id": 781,
+  "title": "卜算子",
+  "author": "李之仪",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "我住长江头，君住长江尾。",
+    "日日思君不见君，共饮长江水。",
+    "此水几时休，此恨何时已。",
+    "只愿君心似我心，定不负相思意。"
+  ],
+  "pinyin": [
+    [
+      "wǒ",
+      "zhù",
+      "cháng",
+      "jiāng",
+      "tóu",
+      "，",
+      "jūn",
+      "zhù",
+      "cháng",
+      "jiāng",
+      "wěi",
+      "。"
+    ],
+    [
+      "rì",
+      "rì",
+      "sī",
+      "jūn",
+      "bù",
+      "jiàn",
+      "jūn",
+      "，",
+      "gòng",
+      "yǐn",
+      "cháng",
+      "jiāng",
+      "shuǐ",
+      "。"
+    ],
+    [
+      "cǐ",
+      "shuǐ",
+      "jǐ",
+      "shí",
+      "xiū",
+      "，",
+      "cǐ",
+      "hèn",
+      "hé",
+      "shí",
+      "yǐ",
+      "。"
+    ],
+    [
+      "zhī",
+      "yuàn",
+      "jūn",
+      "xīn",
+      "sì",
+      "wǒ",
+      "xīn",
+      "，",
+      "dìng",
+      "bù",
+      "fù",
+      "xiāng",
+      "sī",
+      "yì",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

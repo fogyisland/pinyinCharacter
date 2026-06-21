@@ -1,0 +1,74 @@
+{
+  "id": 120,
+  "title": "岁除夜有怀",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "迢递三巴路，羁危万里身。",
+    "乱山残雪夜，孤灯异乡人。",
+    "渐与骨肉远，转于奴仆亲。",
+    "那堪正飘泊，来日岁华新。"
+  ],
+  "pinyin": [
+    [
+      "tiáo",
+      "dì",
+      "sān",
+      "bā",
+      "lù",
+      "，",
+      "jī",
+      "wēi",
+      "wàn",
+      "lǐ",
+      "shēn",
+      "。"
+    ],
+    [
+      "luàn",
+      "shān",
+      "cán",
+      "xuě",
+      "yè",
+      "，",
+      "gū",
+      "dēng",
+      "yì",
+      "xiāng",
+      "rén",
+      "。"
+    ],
+    [
+      "jiàn",
+      "yǔ",
+      "gǔ",
+      "ròu",
+      "yuǎn",
+      "，",
+      "zhuǎn",
+      "yú",
+      "nú",
+      "pú",
+      "qīn",
+      "。"
+    ],
+    [
+      "nà",
+      "kān",
+      "zhèng",
+      "piāo",
+      "bó",
+      "，",
+      "lái",
+      "rì",
+      "suì",
+      "huá",
+      "xīn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

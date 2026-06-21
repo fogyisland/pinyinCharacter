@@ -1,0 +1,71 @@
+{
+  "id": 320,
+  "title": "金陵酒肆留别",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "七言古风",
+  "content": [
+    "风吹柳花满店香，吴姬压酒唤客尝。",
+    "金陵子弟来相送，欲行不行各尽觞。",
+    "请君试问东流水，别意与之谁短长。"
+  ],
+  "pinyin": [
+    [
+      "fēng",
+      "chuī",
+      "liǔ",
+      "huā",
+      "mǎn",
+      "diàn",
+      "xiāng",
+      "，",
+      "wú",
+      "jī",
+      "yā",
+      "jiǔ",
+      "huàn",
+      "kè",
+      "cháng",
+      "。"
+    ],
+    [
+      "jīn",
+      "líng",
+      "zǐ",
+      "dì",
+      "lái",
+      "xiāng",
+      "sòng",
+      "，",
+      "yù",
+      "xíng",
+      "bù",
+      "xíng",
+      "gè",
+      "jìn",
+      "shāng",
+      "。"
+    ],
+    [
+      "qǐng",
+      "jūn",
+      "shì",
+      "wèn",
+      "dōng",
+      "liú",
+      "shuǐ",
+      "，",
+      "bié",
+      "yì",
+      "yǔ",
+      "zhī",
+      "shuí",
+      "duǎn",
+      "cháng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,52 @@
+{
+  "id": 269,
+  "title": "金陵五题 乌衣巷",
+  "author": "刘禹锡",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "朱雀桥边野草花，乌衣巷口夕阳斜。",
+    "旧时王谢堂前燕，飞入寻常百姓家。"
+  ],
+  "pinyin": [
+    [
+      "zhū",
+      "què",
+      "qiáo",
+      "biān",
+      "yě",
+      "cǎo",
+      "huā",
+      "，",
+      "wū",
+      "yī",
+      "xiàng",
+      "kǒu",
+      "xī",
+      "yáng",
+      "xié",
+      "。"
+    ],
+    [
+      "jiù",
+      "shí",
+      "wáng",
+      "xiè",
+      "táng",
+      "qián",
+      "yàn",
+      "，",
+      "fēi",
+      "rù",
+      "xún",
+      "cháng",
+      "bǎi",
+      "xìng",
+      "jiā",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

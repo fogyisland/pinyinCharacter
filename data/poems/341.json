@@ -1,0 +1,59 @@
+{
+  "id": 341,
+  "title": "相和歌辞 子夜四时歌四首 春歌",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "秦地罗敷女，采桑绿水边。",
+    "素手青条上，红妆白日鲜。",
+    "蚕饥妾欲去，五马莫留连。"
+  ],
+  "pinyin": [
+    [
+      "qín",
+      "dì",
+      "luó",
+      "fū",
+      "nǚ",
+      "，",
+      "cǎi",
+      "sāng",
+      "lǜ",
+      "shuǐ",
+      "biān",
+      "。"
+    ],
+    [
+      "sù",
+      "shǒu",
+      "qīng",
+      "tiáo",
+      "shàng",
+      "，",
+      "hóng",
+      "zhuāng",
+      "bái",
+      "rì",
+      "xiān",
+      "。"
+    ],
+    [
+      "cán",
+      "jī",
+      "qiè",
+      "yù",
+      "qù",
+      "，",
+      "wǔ",
+      "mǎ",
+      "mò",
+      "liú",
+      "lián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

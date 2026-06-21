@@ -1,0 +1,74 @@
+{
+  "id": 126,
+  "title": "客夜与故人偶集",
+  "author": "戴叔伦",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "天秋月又满，城阙夜千重。",
+    "还作江南会，翻疑梦里逢。",
+    "风枝惊暗鹊，露草覆寒蛩。",
+    "羁旅长堪醉，相留畏晓钟。"
+  ],
+  "pinyin": [
+    [
+      "tiān",
+      "qiū",
+      "yuè",
+      "yòu",
+      "mǎn",
+      "，",
+      "chéng",
+      "quē",
+      "yè",
+      "qiān",
+      "zhòng",
+      "。"
+    ],
+    [
+      "hái",
+      "zuò",
+      "jiāng",
+      "nán",
+      "huì",
+      "，",
+      "fān",
+      "yí",
+      "mèng",
+      "lǐ",
+      "féng",
+      "。"
+    ],
+    [
+      "fēng",
+      "zhī",
+      "jīng",
+      "àn",
+      "què",
+      "，",
+      "lù",
+      "cǎo",
+      "fù",
+      "hán",
+      "qióng",
+      "。"
+    ],
+    [
+      "jī",
+      "lǚ",
+      "cháng",
+      "kān",
+      "zuì",
+      "，",
+      "xiāng",
+      "liú",
+      "wèi",
+      "xiǎo",
+      "zhōng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

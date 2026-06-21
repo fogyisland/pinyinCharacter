@@ -1,0 +1,52 @@
+{
+  "id": 357,
+  "title": "杂曲歌辞 秋夜曲",
+  "author": "王涯",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "桂魄初生秋露微，轻罗已薄未更衣。",
+    "银筝夜久殷勤弄，心怯空房不忍归。"
+  ],
+  "pinyin": [
+    [
+      "guì",
+      "pò",
+      "chū",
+      "shēng",
+      "qiū",
+      "lù",
+      "wēi",
+      "，",
+      "qīng",
+      "luó",
+      "yǐ",
+      "báo",
+      "wèi",
+      "gèng",
+      "yī",
+      "。"
+    ],
+    [
+      "yín",
+      "zhēng",
+      "yè",
+      "jiǔ",
+      "yīn",
+      "qín",
+      "nòng",
+      "，",
+      "xīn",
+      "qiè",
+      "kōng",
+      "fáng",
+      "bù",
+      "rěn",
+      "guī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

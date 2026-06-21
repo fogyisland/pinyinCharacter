@@ -1,0 +1,74 @@
+{
+  "id": 186,
+  "title": "送人东游",
+  "author": "温庭筠",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "荒戍落黄叶，浩然离故关。",
+    "高风汉阳渡，初日郢门山。",
+    "江上几人在，天涯孤櫂还。",
+    "何当重相见，尊酒慰离颜。"
+  ],
+  "pinyin": [
+    [
+      "huāng",
+      "shù",
+      "luò",
+      "huáng",
+      "yè",
+      "，",
+      "hào",
+      "rán",
+      "lí",
+      "gù",
+      "guān",
+      "。"
+    ],
+    [
+      "gāo",
+      "fēng",
+      "hàn",
+      "yáng",
+      "dù",
+      "，",
+      "chū",
+      "rì",
+      "yǐng",
+      "mén",
+      "shān",
+      "。"
+    ],
+    [
+      "jiāng",
+      "shàng",
+      "jǐ",
+      "rén",
+      "zài",
+      "，",
+      "tiān",
+      "yá",
+      "gū",
+      "zhào",
+      "hái",
+      "。"
+    ],
+    [
+      "hé",
+      "dāng",
+      "zhòng",
+      "xiāng",
+      "jiàn",
+      "，",
+      "zūn",
+      "jiǔ",
+      "wèi",
+      "lí",
+      "yán",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

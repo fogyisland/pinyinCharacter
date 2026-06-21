@@ -1,0 +1,74 @@
+{
+  "id": 330,
+  "title": "听蜀僧濬弹琴",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "蜀僧抱绿绮，西下峨眉峰。",
+    "为我一挥手，如听万壑松。",
+    "客心洗流水，余响入霜钟。",
+    "不觉碧山暮，秋云暗几重。"
+  ],
+  "pinyin": [
+    [
+      "shǔ",
+      "sēng",
+      "bào",
+      "lǜ",
+      "qǐ",
+      "，",
+      "xī",
+      "xià",
+      "é",
+      "méi",
+      "fēng",
+      "。"
+    ],
+    [
+      "wèi",
+      "wǒ",
+      "yī",
+      "huī",
+      "shǒu",
+      "，",
+      "rú",
+      "tīng",
+      "wàn",
+      "hè",
+      "sōng",
+      "。"
+    ],
+    [
+      "kè",
+      "xīn",
+      "xǐ",
+      "liú",
+      "shuǐ",
+      "，",
+      "yú",
+      "xiǎng",
+      "rù",
+      "shuāng",
+      "zhōng",
+      "。"
+    ],
+    [
+      "bù",
+      "jué",
+      "bì",
+      "shān",
+      "mù",
+      "，",
+      "qiū",
+      "yún",
+      "àn",
+      "jǐ",
+      "zhòng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,74 @@
+{
+  "id": 209,
+  "title": "春宿左省",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "花隐掖垣暮，啾啾栖鸟过。",
+    "星临万户动，月傍九霄多。",
+    "不寝听金钥，因风想玉珂。",
+    "明朝有封事，数问夜如何。"
+  ],
+  "pinyin": [
+    [
+      "huā",
+      "yǐn",
+      "yè",
+      "yuán",
+      "mù",
+      "，",
+      "jiū",
+      "jiū",
+      "qī",
+      "niǎo",
+      "guò",
+      "。"
+    ],
+    [
+      "xīng",
+      "lín",
+      "wàn",
+      "hù",
+      "dòng",
+      "，",
+      "yuè",
+      "bàng",
+      "jiǔ",
+      "xiāo",
+      "duō",
+      "。"
+    ],
+    [
+      "bù",
+      "qǐn",
+      "tīng",
+      "jīn",
+      "yào",
+      "，",
+      "yīn",
+      "fēng",
+      "xiǎng",
+      "yù",
+      "kē",
+      "。"
+    ],
+    [
+      "míng",
+      "cháo",
+      "yǒu",
+      "fēng",
+      "shì",
+      "，",
+      "shù",
+      "wèn",
+      "yè",
+      "rú",
+      "hé",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

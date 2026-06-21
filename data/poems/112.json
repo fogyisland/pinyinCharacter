@@ -1,0 +1,74 @@
+{
+  "id": 112,
+  "title": "秦中感秋寄远上人",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "一丘常欲卧，三径苦无资。",
+    "北土非吾愿，东林怀我师。",
+    "黄金然桂尽，壮志逐年衰。",
+    "日夕凉风至，闻蝉但益悲。"
+  ],
+  "pinyin": [
+    [
+      "yī",
+      "qiū",
+      "cháng",
+      "yù",
+      "wò",
+      "，",
+      "sān",
+      "jìng",
+      "kǔ",
+      "wú",
+      "zī",
+      "。"
+    ],
+    [
+      "běi",
+      "tǔ",
+      "fēi",
+      "wú",
+      "yuàn",
+      "，",
+      "dōng",
+      "lín",
+      "huái",
+      "wǒ",
+      "shī",
+      "。"
+    ],
+    [
+      "huáng",
+      "jīn",
+      "rán",
+      "guì",
+      "jìn",
+      "，",
+      "zhuàng",
+      "zhì",
+      "zhú",
+      "nián",
+      "shuāi",
+      "。"
+    ],
+    [
+      "rì",
+      "xī",
+      "liáng",
+      "fēng",
+      "zhì",
+      "，",
+      "wén",
+      "chán",
+      "dàn",
+      "yì",
+      "bēi",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

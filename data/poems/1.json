@@ -1,0 +1,74 @@
+{
+  "id": 1,
+  "title": "在岳咏蝉",
+  "author": "骆宾王",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "西陆蝉声唱，南冠客思侵。",
+    "那堪玄鬓影，来对白头吟。",
+    "露重飞难进，风多响易沈。",
+    "无人信高洁，谁为表予心。"
+  ],
+  "pinyin": [
+    [
+      "xī",
+      "lù",
+      "chán",
+      "shēng",
+      "chàng",
+      "，",
+      "nán",
+      "guān",
+      "kè",
+      "sī",
+      "qīn",
+      "。"
+    ],
+    [
+      "nà",
+      "kān",
+      "xuán",
+      "bìn",
+      "yǐng",
+      "，",
+      "lái",
+      "duì",
+      "bái",
+      "tóu",
+      "yín",
+      "。"
+    ],
+    [
+      "lù",
+      "zhòng",
+      "fēi",
+      "nán",
+      "jìn",
+      "，",
+      "fēng",
+      "duō",
+      "xiǎng",
+      "yì",
+      "shěn",
+      "。"
+    ],
+    [
+      "wú",
+      "rén",
+      "xìn",
+      "gāo",
+      "jié",
+      "，",
+      "shuí",
+      "wèi",
+      "biǎo",
+      "yǔ",
+      "xīn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

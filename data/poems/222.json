@@ -1,0 +1,74 @@
+{
+  "id": 222,
+  "title": "旅夜书怀",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "细草微风岸，危樯独夜舟。",
+    "星垂平野阔，月涌大江流。",
+    "名岂文章著，官因老病休。",
+    "飘飘何所似，天地一沙鸥。"
+  ],
+  "pinyin": [
+    [
+      "xì",
+      "cǎo",
+      "wēi",
+      "fēng",
+      "àn",
+      "，",
+      "wēi",
+      "qiáng",
+      "dú",
+      "yè",
+      "zhōu",
+      "。"
+    ],
+    [
+      "xīng",
+      "chuí",
+      "píng",
+      "yě",
+      "kuò",
+      "，",
+      "yuè",
+      "yǒng",
+      "dà",
+      "jiāng",
+      "liú",
+      "。"
+    ],
+    [
+      "míng",
+      "qǐ",
+      "wén",
+      "zhāng",
+      "zhù",
+      "，",
+      "guān",
+      "yīn",
+      "lǎo",
+      "bìng",
+      "xiū",
+      "。"
+    ],
+    [
+      "piāo",
+      "piāo",
+      "hé",
+      "suǒ",
+      "sì",
+      "，",
+      "tiān",
+      "dì",
+      "yī",
+      "shā",
+      "ōu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

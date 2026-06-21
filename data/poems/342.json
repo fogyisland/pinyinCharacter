@@ -1,0 +1,59 @@
+{
+  "id": 342,
+  "title": "相和歌辞 子夜四时歌四首 夏歌",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "镜湖三百里，菡萏发荷花。",
+    "五月西施采，人看隘若邪。",
+    "回舟不待月，归去越王家。"
+  ],
+  "pinyin": [
+    [
+      "jìng",
+      "hú",
+      "sān",
+      "bǎi",
+      "lǐ",
+      "，",
+      "hàn",
+      "dàn",
+      "fā",
+      "hé",
+      "huā",
+      "。"
+    ],
+    [
+      "wǔ",
+      "yuè",
+      "xī",
+      "shī",
+      "cǎi",
+      "，",
+      "rén",
+      "kàn",
+      "ài",
+      "ruò",
+      "xié",
+      "。"
+    ],
+    [
+      "huí",
+      "zhōu",
+      "bù",
+      "dài",
+      "yuè",
+      "，",
+      "guī",
+      "qù",
+      "yuè",
+      "wáng",
+      "jiā",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

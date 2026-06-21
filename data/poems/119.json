@@ -1,0 +1,74 @@
+{
+  "id": 119,
+  "title": "岁暮归南山",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "北阙休上书，南山归敝庐。",
+    "不才明主弃，多病故人疎。",
+    "白发催年老，青阳逼岁除。",
+    "永怀愁不寐，松月夜窗虚。"
+  ],
+  "pinyin": [
+    [
+      "běi",
+      "quē",
+      "xiū",
+      "shàng",
+      "shū",
+      "，",
+      "nán",
+      "shān",
+      "guī",
+      "bì",
+      "lú",
+      "。"
+    ],
+    [
+      "bù",
+      "cái",
+      "míng",
+      "zhǔ",
+      "qì",
+      "，",
+      "duō",
+      "bìng",
+      "gù",
+      "rén",
+      "shū",
+      "。"
+    ],
+    [
+      "bái",
+      "fā",
+      "cuī",
+      "nián",
+      "lǎo",
+      "，",
+      "qīng",
+      "yáng",
+      "bī",
+      "suì",
+      "chú",
+      "。"
+    ],
+    [
+      "yǒng",
+      "huái",
+      "chóu",
+      "bù",
+      "mèi",
+      "，",
+      "sōng",
+      "yuè",
+      "yè",
+      "chuāng",
+      "xū",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

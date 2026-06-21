@@ -1,0 +1,46 @@
+{
+  "id": 2,
+  "title": "登幽州台歌",
+  "author": "陈子昂",
+  "dynasty": "tang",
+  "category": null,
+  "form": "七言古风",
+  "content": [
+    "前不见古人，后不见来者。",
+    "念天地之悠悠，独怆然而涕下。"
+  ],
+  "pinyin": [
+    [
+      "qián",
+      "bù",
+      "jiàn",
+      "gǔ",
+      "rén",
+      "，",
+      "hòu",
+      "bù",
+      "jiàn",
+      "lái",
+      "zhě",
+      "。"
+    ],
+    [
+      "niàn",
+      "tiān",
+      "dì",
+      "zhī",
+      "yōu",
+      "yōu",
+      "，",
+      "dú",
+      "chuàng",
+      "rán",
+      "ér",
+      "tì",
+      "xià",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,52 @@
+{
+  "id": 270,
+  "title": "和乐天春词",
+  "author": "刘禹锡",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "新妆面面下朱楼，深锁春光一院愁。",
+    "行到中庭数花朵，蜻蜓飞上玉搔头。"
+  ],
+  "pinyin": [
+    [
+      "xīn",
+      "zhuāng",
+      "miàn",
+      "miàn",
+      "xià",
+      "zhū",
+      "lóu",
+      "，",
+      "shēn",
+      "suǒ",
+      "chūn",
+      "guāng",
+      "yī",
+      "yuàn",
+      "chóu",
+      "。"
+    ],
+    [
+      "xíng",
+      "dào",
+      "zhōng",
+      "tíng",
+      "shù",
+      "huā",
+      "duǒ",
+      "，",
+      "qīng",
+      "tíng",
+      "fēi",
+      "shàng",
+      "yù",
+      "sāo",
+      "tóu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

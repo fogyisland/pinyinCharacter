@@ -1,0 +1,74 @@
+{
+  "id": 50,
+  "title": "杂诗三首 三",
+  "author": "沈佺期",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "闻道黄龙戍，频年不解兵。",
+    "可怜闺里月，长在汉家营。",
+    "少妇今春意，良人昨夜情。",
+    "谁能将旗鼓，一为取龙城。"
+  ],
+  "pinyin": [
+    [
+      "wén",
+      "dào",
+      "huáng",
+      "lóng",
+      "shù",
+      "，",
+      "pín",
+      "nián",
+      "bù",
+      "jiě",
+      "bīng",
+      "。"
+    ],
+    [
+      "kě",
+      "lián",
+      "guī",
+      "lǐ",
+      "yuè",
+      "，",
+      "cháng",
+      "zài",
+      "hàn",
+      "jiā",
+      "yíng",
+      "。"
+    ],
+    [
+      "shǎo",
+      "fù",
+      "jīn",
+      "chūn",
+      "yì",
+      "，",
+      "liáng",
+      "rén",
+      "zuó",
+      "yè",
+      "qíng",
+      "。"
+    ],
+    [
+      "shuí",
+      "néng",
+      "jiāng",
+      "qí",
+      "gǔ",
+      "，",
+      "yī",
+      "wèi",
+      "qǔ",
+      "lóng",
+      "chéng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

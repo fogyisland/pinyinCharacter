@@ -1,0 +1,74 @@
+{
+  "id": 134,
+  "title": "山居秋暝",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "空山新雨后，天气晚来秋。",
+    "明月松间照，清泉石上流。",
+    "竹喧归浣女，莲动下渔舟。",
+    "随意春芳歇，王孙自可留。"
+  ],
+  "pinyin": [
+    [
+      "kōng",
+      "shān",
+      "xīn",
+      "yǔ",
+      "hòu",
+      "，",
+      "tiān",
+      "qì",
+      "wǎn",
+      "lái",
+      "qiū",
+      "。"
+    ],
+    [
+      "míng",
+      "yuè",
+      "sōng",
+      "jiān",
+      "zhào",
+      "，",
+      "qīng",
+      "quán",
+      "shí",
+      "shàng",
+      "liú",
+      "。"
+    ],
+    [
+      "zhú",
+      "xuān",
+      "guī",
+      "huàn",
+      "nǚ",
+      "，",
+      "lián",
+      "dòng",
+      "xià",
+      "yú",
+      "zhōu",
+      "。"
+    ],
+    [
+      "suí",
+      "yì",
+      "chūn",
+      "fāng",
+      "xiē",
+      "，",
+      "wáng",
+      "sūn",
+      "zì",
+      "kě",
+      "liú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,74 @@
+{
+  "id": 64,
+  "title": "送梓州李使君",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "万壑树参天，千山响杜鹃。",
+    "山中一夜雨，树杪百重泉。",
+    "汉女输橦布，巴人讼芋田。",
+    "文翁翻教授，不敢倚先贤。"
+  ],
+  "pinyin": [
+    [
+      "wàn",
+      "hè",
+      "shù",
+      "cān",
+      "tiān",
+      "，",
+      "qiān",
+      "shān",
+      "xiǎng",
+      "dù",
+      "juān",
+      "。"
+    ],
+    [
+      "shān",
+      "zhōng",
+      "yī",
+      "yè",
+      "yǔ",
+      "，",
+      "shù",
+      "miǎo",
+      "bǎi",
+      "zhòng",
+      "quán",
+      "。"
+    ],
+    [
+      "hàn",
+      "nǚ",
+      "shū",
+      "tóng",
+      "bù",
+      "，",
+      "bā",
+      "rén",
+      "sòng",
+      "yù",
+      "tián",
+      "。"
+    ],
+    [
+      "wén",
+      "wēng",
+      "fān",
+      "jiào",
+      "shòu",
+      "，",
+      "bù",
+      "gǎn",
+      "yǐ",
+      "xiān",
+      "xián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

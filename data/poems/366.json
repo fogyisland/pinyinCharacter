@@ -1,0 +1,52 @@
+{
+  "id": 366,
+  "title": "宫词五首 二",
+  "author": "顾况",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "玉楼天半起笙歌，风送宫嫔笑语和。",
+    "月殿影开闻夜漏，水精帘卷近银河。"
+  ],
+  "pinyin": [
+    [
+      "yù",
+      "lóu",
+      "tiān",
+      "bàn",
+      "qǐ",
+      "shēng",
+      "gē",
+      "，",
+      "fēng",
+      "sòng",
+      "gōng",
+      "pín",
+      "xiào",
+      "yǔ",
+      "hé",
+      "。"
+    ],
+    [
+      "yuè",
+      "diàn",
+      "yǐng",
+      "kāi",
+      "wén",
+      "yè",
+      "lòu",
+      "，",
+      "shuǐ",
+      "jīng",
+      "lián",
+      "juàn",
+      "jìn",
+      "yín",
+      "hé",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

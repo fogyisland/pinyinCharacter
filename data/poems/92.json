@@ -1,0 +1,74 @@
+{
+  "id": 92,
+  "title": "云阳馆与韩绅宿别",
+  "author": "司空曙",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "故人江海别，几度隔山川。",
+    "乍见翻疑梦，相悲各问年。",
+    "孤灯寒照雨，湿竹暗浮烟。",
+    "更有明朝恨，离杯惜共传。"
+  ],
+  "pinyin": [
+    [
+      "gù",
+      "rén",
+      "jiāng",
+      "hǎi",
+      "bié",
+      "，",
+      "jǐ",
+      "dù",
+      "gé",
+      "shān",
+      "chuān",
+      "。"
+    ],
+    [
+      "zhà",
+      "jiàn",
+      "fān",
+      "yí",
+      "mèng",
+      "，",
+      "xiāng",
+      "bēi",
+      "gè",
+      "wèn",
+      "nián",
+      "。"
+    ],
+    [
+      "gū",
+      "dēng",
+      "hán",
+      "zhào",
+      "yǔ",
+      "，",
+      "shī",
+      "zhú",
+      "àn",
+      "fú",
+      "yān",
+      "。"
+    ],
+    [
+      "gèng",
+      "yǒu",
+      "míng",
+      "cháo",
+      "hèn",
+      "，",
+      "lí",
+      "bēi",
+      "xī",
+      "gòng",
+      "chuán",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

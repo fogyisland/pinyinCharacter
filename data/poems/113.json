@@ -1,0 +1,74 @@
+{
+  "id": 113,
+  "title": "宿桐庐江寄广陵旧游",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "山暝闻猿愁，沧江急夜流。",
+    "风鸣两岸叶，月照一孤舟。",
+    "建德非吾土，维扬忆旧游。",
+    "还将两行泪，遥寄海西头。"
+  ],
+  "pinyin": [
+    [
+      "shān",
+      "míng",
+      "wén",
+      "yuán",
+      "chóu",
+      "，",
+      "cāng",
+      "jiāng",
+      "jí",
+      "yè",
+      "liú",
+      "。"
+    ],
+    [
+      "fēng",
+      "míng",
+      "liǎng",
+      "àn",
+      "yè",
+      "，",
+      "yuè",
+      "zhào",
+      "yī",
+      "gū",
+      "zhōu",
+      "。"
+    ],
+    [
+      "jiàn",
+      "dé",
+      "fēi",
+      "wú",
+      "tǔ",
+      "，",
+      "wéi",
+      "yáng",
+      "yì",
+      "jiù",
+      "yóu",
+      "。"
+    ],
+    [
+      "hái",
+      "jiāng",
+      "liǎng",
+      "xíng",
+      "lèi",
+      "，",
+      "yáo",
+      "jì",
+      "hǎi",
+      "xī",
+      "tóu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

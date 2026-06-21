@@ -1,0 +1,74 @@
+{
+  "id": 117,
+  "title": "与诸子登岘山",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "人事有代谢，往来成古今。",
+    "江山留胜迹，我辈复登临。",
+    "水落鱼梁浅，天寒梦泽深。",
+    "羊公碑字在，读罢泪沾襟。"
+  ],
+  "pinyin": [
+    [
+      "rén",
+      "shì",
+      "yǒu",
+      "dài",
+      "xiè",
+      "，",
+      "wǎng",
+      "lái",
+      "chéng",
+      "gǔ",
+      "jīn",
+      "。"
+    ],
+    [
+      "jiāng",
+      "shān",
+      "liú",
+      "shèng",
+      "jì",
+      "，",
+      "wǒ",
+      "bèi",
+      "fù",
+      "dēng",
+      "lín",
+      "。"
+    ],
+    [
+      "shuǐ",
+      "luò",
+      "yú",
+      "liáng",
+      "qiǎn",
+      "，",
+      "tiān",
+      "hán",
+      "mèng",
+      "zé",
+      "shēn",
+      "。"
+    ],
+    [
+      "yáng",
+      "gōng",
+      "bēi",
+      "zì",
+      "zài",
+      "，",
+      "dú",
+      "bà",
+      "lèi",
+      "zhān",
+      "jīn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

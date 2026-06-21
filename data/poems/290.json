@@ -1,0 +1,74 @@
+{
+  "id": 290,
+  "title": "夕次盱眙县",
+  "author": "韦应物",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "落帆逗淮镇，停舫临孤驿。",
+    "浩浩风起波，冥冥日沈夕。",
+    "人归山郭暗，雁下芦洲白。",
+    "独夜忆秦关，听钟未眠客。"
+  ],
+  "pinyin": [
+    [
+      "luò",
+      "fān",
+      "dòu",
+      "huái",
+      "zhèn",
+      "，",
+      "tíng",
+      "fǎng",
+      "lín",
+      "gū",
+      "yì",
+      "。"
+    ],
+    [
+      "hào",
+      "hào",
+      "fēng",
+      "qǐ",
+      "bō",
+      "，",
+      "míng",
+      "míng",
+      "rì",
+      "shěn",
+      "xī",
+      "。"
+    ],
+    [
+      "rén",
+      "guī",
+      "shān",
+      "guō",
+      "àn",
+      "，",
+      "yàn",
+      "xià",
+      "lú",
+      "zhōu",
+      "bái",
+      "。"
+    ],
+    [
+      "dú",
+      "yè",
+      "yì",
+      "qín",
+      "guān",
+      "，",
+      "tīng",
+      "zhōng",
+      "wèi",
+      "mián",
+      "kè",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

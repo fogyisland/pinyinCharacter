@@ -1,0 +1,74 @@
+{
+  "id": 328,
+  "title": "夜泊牛渚怀古",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "牛渚西江夜，青天无片云。",
+    "登舟望秋月，空忆谢将军。",
+    "余亦能高咏，斯人不可闻。",
+    "明朝挂帆席，枫叶落纷纷。"
+  ],
+  "pinyin": [
+    [
+      "niú",
+      "zhǔ",
+      "xī",
+      "jiāng",
+      "yè",
+      "，",
+      "qīng",
+      "tiān",
+      "wú",
+      "piàn",
+      "yún",
+      "。"
+    ],
+    [
+      "dēng",
+      "zhōu",
+      "wàng",
+      "qiū",
+      "yuè",
+      "，",
+      "kōng",
+      "yì",
+      "xiè",
+      "jiāng",
+      "jūn",
+      "。"
+    ],
+    [
+      "yú",
+      "yì",
+      "néng",
+      "gāo",
+      "yǒng",
+      "，",
+      "sī",
+      "rén",
+      "bù",
+      "kě",
+      "wén",
+      "。"
+    ],
+    [
+      "míng",
+      "cháo",
+      "guà",
+      "fān",
+      "xí",
+      "，",
+      "fēng",
+      "yè",
+      "luò",
+      "fēn",
+      "fēn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

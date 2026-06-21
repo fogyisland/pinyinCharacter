@@ -1,0 +1,74 @@
+{
+  "id": 116,
+  "title": "清明日宴梅道士房",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "林卧愁春尽，开轩览物华。",
+    "忽逢青鸟使，邀入赤松家。",
+    "丹灶初开火，仙桃正落花。",
+    "童颜若可驻，何惜醉流霞。"
+  ],
+  "pinyin": [
+    [
+      "lín",
+      "wò",
+      "chóu",
+      "chūn",
+      "jìn",
+      "，",
+      "kāi",
+      "xuān",
+      "lǎn",
+      "wù",
+      "huá",
+      "。"
+    ],
+    [
+      "hū",
+      "féng",
+      "qīng",
+      "niǎo",
+      "shǐ",
+      "，",
+      "yāo",
+      "rù",
+      "chì",
+      "sōng",
+      "jiā",
+      "。"
+    ],
+    [
+      "dān",
+      "zào",
+      "chū",
+      "kāi",
+      "huǒ",
+      "，",
+      "xiān",
+      "táo",
+      "zhèng",
+      "luò",
+      "huā",
+      "。"
+    ],
+    [
+      "tóng",
+      "yán",
+      "ruò",
+      "kě",
+      "zhù",
+      "，",
+      "hé",
+      "xī",
+      "zuì",
+      "liú",
+      "xiá",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

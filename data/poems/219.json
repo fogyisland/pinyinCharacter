@@ -1,0 +1,74 @@
+{
+  "id": 219,
+  "title": "别房太尉墓",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "他乡复行役，驻马别孤坟。",
+    "近泪无干土，低空有断云。",
+    "对碁陪谢傅，把劒觅徐君。",
+    "唯见林花落，鸎啼送客闻。"
+  ],
+  "pinyin": [
+    [
+      "tā",
+      "xiāng",
+      "fù",
+      "xíng",
+      "yì",
+      "，",
+      "zhù",
+      "mǎ",
+      "bié",
+      "gū",
+      "fén",
+      "。"
+    ],
+    [
+      "jìn",
+      "lèi",
+      "wú",
+      "gān",
+      "tǔ",
+      "，",
+      "dī",
+      "kōng",
+      "yǒu",
+      "duàn",
+      "yún",
+      "。"
+    ],
+    [
+      "duì",
+      "qí",
+      "péi",
+      "xiè",
+      "fù",
+      "，",
+      "bǎ",
+      "jiàn",
+      "mì",
+      "xú",
+      "jūn",
+      "。"
+    ],
+    [
+      "wéi",
+      "jiàn",
+      "lín",
+      "huā",
+      "luò",
+      "，",
+      "yīng",
+      "tí",
+      "sòng",
+      "kè",
+      "wén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

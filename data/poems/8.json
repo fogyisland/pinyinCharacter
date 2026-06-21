@@ -1,0 +1,44 @@
+{
+  "id": 8,
+  "title": "新嫁娘词三首 三",
+  "author": "王建",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "三日入厨下，洗手作羹汤。",
+    "未谙姑食性，先遣小姑尝。"
+  ],
+  "pinyin": [
+    [
+      "sān",
+      "rì",
+      "rù",
+      "chú",
+      "xià",
+      "，",
+      "xǐ",
+      "shǒu",
+      "zuò",
+      "gēng",
+      "tāng",
+      "。"
+    ],
+    [
+      "wèi",
+      "ān",
+      "gū",
+      "shí",
+      "xìng",
+      "，",
+      "xiān",
+      "qiǎn",
+      "xiǎo",
+      "gū",
+      "cháng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

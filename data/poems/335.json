@@ -1,0 +1,44 @@
+{
+  "id": 335,
+  "title": "相和歌辞 江南曲",
+  "author": "李益",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "嫁得瞿塘贾，朝朝误妾期。",
+    "早知潮有信，嫁与弄潮儿。"
+  ],
+  "pinyin": [
+    [
+      "jià",
+      "dé",
+      "qú",
+      "táng",
+      "jiǎ",
+      "，",
+      "cháo",
+      "cháo",
+      "wù",
+      "qiè",
+      "qī",
+      "。"
+    ],
+    [
+      "zǎo",
+      "zhī",
+      "cháo",
+      "yǒu",
+      "xìn",
+      "，",
+      "jià",
+      "yǔ",
+      "nòng",
+      "cháo",
+      "ér",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,52 @@
+{
+  "id": 292,
+  "title": "滁州西涧",
+  "author": "韦应物",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "独怜幽草涧边生，上有黄鹂深树鸣。",
+    "春潮带雨晚来急，野渡无人舟自横。"
+  ],
+  "pinyin": [
+    [
+      "dú",
+      "lián",
+      "yōu",
+      "cǎo",
+      "jiàn",
+      "biān",
+      "shēng",
+      "，",
+      "shàng",
+      "yǒu",
+      "huáng",
+      "lí",
+      "shēn",
+      "shù",
+      "míng",
+      "。"
+    ],
+    [
+      "chūn",
+      "cháo",
+      "dài",
+      "yǔ",
+      "wǎn",
+      "lái",
+      "jí",
+      "，",
+      "yě",
+      "dù",
+      "wú",
+      "rén",
+      "zhōu",
+      "zì",
+      "héng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

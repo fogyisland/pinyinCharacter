@@ -1,0 +1,74 @@
+{
+  "id": 167,
+  "title": "塞下曲四首 二",
+  "author": "王昌龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "饮马渡秋水，水寒风似刀。",
+    "平沙日未没，黯黯见临洮。",
+    "昔日长城战，咸言意气高。",
+    "黄尘足今古，白骨乱蓬蒿。"
+  ],
+  "pinyin": [
+    [
+      "yǐn",
+      "mǎ",
+      "dù",
+      "qiū",
+      "shuǐ",
+      "，",
+      "shuǐ",
+      "hán",
+      "fēng",
+      "sì",
+      "dāo",
+      "。"
+    ],
+    [
+      "píng",
+      "shā",
+      "rì",
+      "wèi",
+      "méi",
+      "，",
+      "àn",
+      "àn",
+      "jiàn",
+      "lín",
+      "táo",
+      "。"
+    ],
+    [
+      "xī",
+      "rì",
+      "cháng",
+      "chéng",
+      "zhàn",
+      "，",
+      "xián",
+      "yán",
+      "yì",
+      "qì",
+      "gāo",
+      "。"
+    ],
+    [
+      "huáng",
+      "chén",
+      "zú",
+      "jīn",
+      "gǔ",
+      "，",
+      "bái",
+      "gǔ",
+      "luàn",
+      "péng",
+      "hāo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,74 @@
+{
+  "id": 138,
+  "title": "汉江临泛",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "楚塞三湘接，荆门九派通。",
+    "江流天地外，山色有无中。",
+    "郡邑浮前浦，波澜动远空。",
+    "襄阳好风日，留醉与山翁。"
+  ],
+  "pinyin": [
+    [
+      "chǔ",
+      "sāi",
+      "sān",
+      "xiāng",
+      "jiē",
+      "，",
+      "jīng",
+      "mén",
+      "jiǔ",
+      "pài",
+      "tōng",
+      "。"
+    ],
+    [
+      "jiāng",
+      "liú",
+      "tiān",
+      "dì",
+      "wài",
+      "，",
+      "shān",
+      "sè",
+      "yǒu",
+      "wú",
+      "zhōng",
+      "。"
+    ],
+    [
+      "jùn",
+      "yì",
+      "fú",
+      "qián",
+      "pǔ",
+      "，",
+      "bō",
+      "lán",
+      "dòng",
+      "yuǎn",
+      "kōng",
+      "。"
+    ],
+    [
+      "xiāng",
+      "yáng",
+      "hǎo",
+      "fēng",
+      "rì",
+      "，",
+      "liú",
+      "zuì",
+      "yǔ",
+      "shān",
+      "wēng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

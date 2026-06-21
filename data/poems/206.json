@@ -1,0 +1,74 @@
+{
+  "id": 206,
+  "title": "蜀先主庙",
+  "author": "刘禹锡",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "天地英雄气，千秋尚凛然。",
+    "势分三足鼎，业复五铢钱。",
+    "得相能开国，生儿不象贤。",
+    "凄凉蜀故妓，来舞魏宫前。"
+  ],
+  "pinyin": [
+    [
+      "tiān",
+      "dì",
+      "yīng",
+      "xióng",
+      "qì",
+      "，",
+      "qiān",
+      "qiū",
+      "shàng",
+      "lǐn",
+      "rán",
+      "。"
+    ],
+    [
+      "shì",
+      "fēn",
+      "sān",
+      "zú",
+      "dǐng",
+      "，",
+      "yè",
+      "fù",
+      "wǔ",
+      "zhū",
+      "qián",
+      "。"
+    ],
+    [
+      "dé",
+      "xiāng",
+      "néng",
+      "kāi",
+      "guó",
+      "，",
+      "shēng",
+      "ér",
+      "bù",
+      "xiàng",
+      "xián",
+      "。"
+    ],
+    [
+      "qī",
+      "liáng",
+      "shǔ",
+      "gù",
+      "jì",
+      "，",
+      "lái",
+      "wǔ",
+      "wèi",
+      "gōng",
+      "qián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

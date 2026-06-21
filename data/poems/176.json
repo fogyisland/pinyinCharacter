@@ -1,0 +1,52 @@
+{
+  "id": 176,
+  "title": "清平调 三",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "名花倾国两相欢，常得君王带笑看。",
+    "解得春风无限恨，沈香亭北倚阑干。"
+  ],
+  "pinyin": [
+    [
+      "míng",
+      "huā",
+      "qīng",
+      "guó",
+      "liǎng",
+      "xiāng",
+      "huān",
+      "，",
+      "cháng",
+      "dé",
+      "jūn",
+      "wáng",
+      "dài",
+      "xiào",
+      "kàn",
+      "。"
+    ],
+    [
+      "jiě",
+      "dé",
+      "chūn",
+      "fēng",
+      "wú",
+      "xiàn",
+      "hèn",
+      "，",
+      "shěn",
+      "xiāng",
+      "tíng",
+      "běi",
+      "yǐ",
+      "lán",
+      "gān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

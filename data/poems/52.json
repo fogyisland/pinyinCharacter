@@ -1,0 +1,74 @@
+{
+  "id": 52,
+  "title": "次北固山下",
+  "author": "王湾",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "客路青山外，行舟绿水前。",
+    "潮平两岸阔，风正一帆悬。",
+    "海日生残夜，江春入旧年。",
+    "乡书何处达，归雁洛阳边。"
+  ],
+  "pinyin": [
+    [
+      "kè",
+      "lù",
+      "qīng",
+      "shān",
+      "wài",
+      "，",
+      "xíng",
+      "zhōu",
+      "lǜ",
+      "shuǐ",
+      "qián",
+      "。"
+    ],
+    [
+      "cháo",
+      "píng",
+      "liǎng",
+      "àn",
+      "kuò",
+      "，",
+      "fēng",
+      "zhèng",
+      "yī",
+      "fān",
+      "xuán",
+      "。"
+    ],
+    [
+      "hǎi",
+      "rì",
+      "shēng",
+      "cán",
+      "yè",
+      "，",
+      "jiāng",
+      "chūn",
+      "rù",
+      "jiù",
+      "nián",
+      "。"
+    ],
+    [
+      "xiāng",
+      "shū",
+      "hé",
+      "chù",
+      "dá",
+      "，",
+      "guī",
+      "yàn",
+      "luò",
+      "yáng",
+      "biān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

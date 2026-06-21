@@ -1,0 +1,74 @@
+{
+  "id": 363,
+  "title": "阙题",
+  "author": "刘眘虚",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "道由白云尽，春与青溪长。",
+    "时有落花至，远随流水香。",
+    "闲门向山路，深柳读书堂。",
+    "幽映每白日，清辉照衣裳。"
+  ],
+  "pinyin": [
+    [
+      "dào",
+      "yóu",
+      "bái",
+      "yún",
+      "jìn",
+      "，",
+      "chūn",
+      "yǔ",
+      "qīng",
+      "xī",
+      "cháng",
+      "。"
+    ],
+    [
+      "shí",
+      "yǒu",
+      "luò",
+      "huā",
+      "zhì",
+      "，",
+      "yuǎn",
+      "suí",
+      "liú",
+      "shuǐ",
+      "xiāng",
+      "。"
+    ],
+    [
+      "xián",
+      "mén",
+      "xiàng",
+      "shān",
+      "lù",
+      "，",
+      "shēn",
+      "liǔ",
+      "dú",
+      "shū",
+      "táng",
+      "。"
+    ],
+    [
+      "yōu",
+      "yìng",
+      "měi",
+      "bái",
+      "rì",
+      "，",
+      "qīng",
+      "huī",
+      "zhào",
+      "yī",
+      "shang",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

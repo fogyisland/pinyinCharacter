@@ -1,0 +1,74 @@
+{
+  "id": 62,
+  "title": "辋川闲居赠裴秀才迪",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "寒山转苍翠，秋水日潺湲。",
+    "倚杖柴门外，临风听暮蝉。",
+    "渡头余落日，墟里上孤烟。",
+    "复值接舆醉，狂歌五柳前。"
+  ],
+  "pinyin": [
+    [
+      "hán",
+      "shān",
+      "zhuǎn",
+      "cāng",
+      "cuì",
+      "，",
+      "qiū",
+      "shuǐ",
+      "rì",
+      "chán",
+      "yuán",
+      "。"
+    ],
+    [
+      "yǐ",
+      "zhàng",
+      "chái",
+      "mén",
+      "wài",
+      "，",
+      "lín",
+      "fēng",
+      "tīng",
+      "mù",
+      "chán",
+      "。"
+    ],
+    [
+      "dù",
+      "tóu",
+      "yú",
+      "luò",
+      "rì",
+      "，",
+      "xū",
+      "lǐ",
+      "shàng",
+      "gū",
+      "yān",
+      "。"
+    ],
+    [
+      "fù",
+      "zhí",
+      "jiē",
+      "yú",
+      "zuì",
+      "，",
+      "kuáng",
+      "gē",
+      "wǔ",
+      "liǔ",
+      "qián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

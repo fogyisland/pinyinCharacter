@@ -1,0 +1,44 @@
+{
+  "id": 65,
+  "title": "玉台体十二首 十一",
+  "author": "权德舆",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "昨夜裙带解，今朝蟢子飞。",
+    "铅华不可弃，莫是藁砧归。"
+  ],
+  "pinyin": [
+    [
+      "zuó",
+      "yè",
+      "qún",
+      "dài",
+      "jiě",
+      "，",
+      "jīn",
+      "cháo",
+      "xǐ",
+      "zǐ",
+      "fēi",
+      "。"
+    ],
+    [
+      "qiān",
+      "huá",
+      "bù",
+      "kě",
+      "qì",
+      "，",
+      "mò",
+      "shì",
+      "gǎo",
+      "zhēn",
+      "guī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

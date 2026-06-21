@@ -1,0 +1,52 @@
+{
+  "id": 49,
+  "title": "杂诗 十三",
+  "author": "无名氏",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "近寒食雨草萋萋，著麦苗风柳映堤。",
+    "早是有家归未得，杜鹃休向耳边啼。"
+  ],
+  "pinyin": [
+    [
+      "jìn",
+      "hán",
+      "shí",
+      "yǔ",
+      "cǎo",
+      "qī",
+      "qī",
+      "，",
+      "zhù",
+      "mài",
+      "miáo",
+      "fēng",
+      "liǔ",
+      "yìng",
+      "dī",
+      "。"
+    ],
+    [
+      "zǎo",
+      "shì",
+      "yǒu",
+      "jiā",
+      "guī",
+      "wèi",
+      "dé",
+      "，",
+      "dù",
+      "juān",
+      "xiū",
+      "xiàng",
+      "ěr",
+      "biān",
+      "tí",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

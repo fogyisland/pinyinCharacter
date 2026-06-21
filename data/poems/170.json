@@ -1,0 +1,52 @@
+{
+  "id": 170,
+  "title": "春宫曲",
+  "author": "王昌龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "昨夜风开露井桃，未央前殿月轮高。",
+    "平阳歌舞新承宠，帘外春寒赐锦袍。"
+  ],
+  "pinyin": [
+    [
+      "zuó",
+      "yè",
+      "fēng",
+      "kāi",
+      "lù",
+      "jǐng",
+      "táo",
+      "，",
+      "wèi",
+      "yāng",
+      "qián",
+      "diàn",
+      "yuè",
+      "lún",
+      "gāo",
+      "。"
+    ],
+    [
+      "píng",
+      "yáng",
+      "gē",
+      "wǔ",
+      "xīn",
+      "chéng",
+      "chǒng",
+      "，",
+      "lián",
+      "wài",
+      "chūn",
+      "hán",
+      "cì",
+      "jǐn",
+      "páo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

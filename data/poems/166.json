@@ -1,0 +1,74 @@
+{
+  "id": 166,
+  "title": "塞下曲四首 一",
+  "author": "王昌龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "蝉鸣空桑林，八月萧关道。",
+    "出塞入塞寒，处处黄芦草。",
+    "从来幽幷客，皆共尘沙老。",
+    "莫学游侠儿，矜夸紫骝好。"
+  ],
+  "pinyin": [
+    [
+      "chán",
+      "míng",
+      "kōng",
+      "sāng",
+      "lín",
+      "，",
+      "bā",
+      "yuè",
+      "xiāo",
+      "guān",
+      "dào",
+      "。"
+    ],
+    [
+      "chū",
+      "sāi",
+      "rù",
+      "sāi",
+      "hán",
+      "，",
+      "chù",
+      "chù",
+      "huáng",
+      "lú",
+      "cǎo",
+      "。"
+    ],
+    [
+      "cóng",
+      "lái",
+      "yōu",
+      "bìng",
+      "kè",
+      "，",
+      "jiē",
+      "gòng",
+      "chén",
+      "shā",
+      "lǎo",
+      "。"
+    ],
+    [
+      "mò",
+      "xué",
+      "yóu",
+      "xiá",
+      "ér",
+      "，",
+      "jīn",
+      "kuā",
+      "zǐ",
+      "liú",
+      "hǎo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

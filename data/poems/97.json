@@ -1,0 +1,74 @@
+{
+  "id": 97,
+  "title": "新年作",
+  "author": "刘长卿",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "乡心新岁切，天畔独潸然。",
+    "老至居人下，春归在客先。",
+    "岭猨同旦暮，江柳共风烟。",
+    "已是长沙傅，从今又几年。"
+  ],
+  "pinyin": [
+    [
+      "xiāng",
+      "xīn",
+      "xīn",
+      "suì",
+      "qiè",
+      "，",
+      "tiān",
+      "pàn",
+      "dú",
+      "shān",
+      "rán",
+      "。"
+    ],
+    [
+      "lǎo",
+      "zhì",
+      "jū",
+      "rén",
+      "xià",
+      "，",
+      "chūn",
+      "guī",
+      "zài",
+      "kè",
+      "xiān",
+      "。"
+    ],
+    [
+      "lǐng",
+      "yuán",
+      "tóng",
+      "dàn",
+      "mù",
+      "，",
+      "jiāng",
+      "liǔ",
+      "gòng",
+      "fēng",
+      "yān",
+      "。"
+    ],
+    [
+      "yǐ",
+      "shì",
+      "cháng",
+      "shā",
+      "fù",
+      "，",
+      "cóng",
+      "jīn",
+      "yòu",
+      "jǐ",
+      "nián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

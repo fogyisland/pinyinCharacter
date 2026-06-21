@@ -1,0 +1,44 @@
+{
+  "id": 154,
+  "title": "长干曲四首 一",
+  "author": "崔颢",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "君家何处住？妾住在横塘。",
+    "停船暂借问，或恐是同乡。"
+  ],
+  "pinyin": [
+    [
+      "jūn",
+      "jiā",
+      "hé",
+      "chù",
+      "zhù",
+      "？",
+      "qiè",
+      "zhù",
+      "zài",
+      "héng",
+      "táng",
+      "。"
+    ],
+    [
+      "tíng",
+      "chuán",
+      "zàn",
+      "jiè",
+      "wèn",
+      "，",
+      "huò",
+      "kǒng",
+      "shì",
+      "tóng",
+      "xiāng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

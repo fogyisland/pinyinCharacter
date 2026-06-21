@@ -1,0 +1,59 @@
+{
+  "id": 346,
+  "title": "杂曲歌辞 游子吟",
+  "author": "孟郊",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "慈母手中线，游子身上衣。",
+    "临行密密缝，意恐迟迟归。",
+    "谁言寸草心，报得三春晖。"
+  ],
+  "pinyin": [
+    [
+      "cí",
+      "mǔ",
+      "shǒu",
+      "zhōng",
+      "xiàn",
+      "，",
+      "yóu",
+      "zǐ",
+      "shēn",
+      "shàng",
+      "yī",
+      "。"
+    ],
+    [
+      "lín",
+      "xíng",
+      "mì",
+      "mì",
+      "fèng",
+      "，",
+      "yì",
+      "kǒng",
+      "chí",
+      "chí",
+      "guī",
+      "。"
+    ],
+    [
+      "shuí",
+      "yán",
+      "cùn",
+      "cǎo",
+      "xīn",
+      "，",
+      "bào",
+      "dé",
+      "sān",
+      "chūn",
+      "huī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

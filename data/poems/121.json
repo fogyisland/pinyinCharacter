@@ -1,0 +1,44 @@
+{
+  "id": 121,
+  "title": "春晓",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "春眠不觉晓，处处闻啼鸟。",
+    "夜来风雨声，花落知多少。"
+  ],
+  "pinyin": [
+    [
+      "chūn",
+      "mián",
+      "bù",
+      "jué",
+      "xiǎo",
+      "，",
+      "chù",
+      "chù",
+      "wén",
+      "tí",
+      "niǎo",
+      "。"
+    ],
+    [
+      "yè",
+      "lái",
+      "fēng",
+      "yǔ",
+      "shēng",
+      "，",
+      "huā",
+      "luò",
+      "zhī",
+      "duō",
+      "shǎo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

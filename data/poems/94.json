@@ -1,0 +1,44 @@
+{
+  "id": 94,
+  "title": "听弹琴",
+  "author": "刘长卿",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "泠泠七丝上，静听松风寒。",
+    "古调虽自爱，今人多不弹。"
+  ],
+  "pinyin": [
+    [
+      "líng",
+      "líng",
+      "qī",
+      "sī",
+      "shàng",
+      "，",
+      "jìng",
+      "tīng",
+      "sōng",
+      "fēng",
+      "hán",
+      "。"
+    ],
+    [
+      "gǔ",
+      "tiáo",
+      "suī",
+      "zì",
+      "ài",
+      "，",
+      "jīn",
+      "rén",
+      "duō",
+      "bù",
+      "tán",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

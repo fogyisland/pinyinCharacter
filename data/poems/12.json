@@ -1,0 +1,44 @@
+{
+  "id": 12,
+  "title": "乐游原",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "向晚意不适，驱车登古原。",
+    "夕阳无限好，只是近黄昏。"
+  ],
+  "pinyin": [
+    [
+      "xiàng",
+      "wǎn",
+      "yì",
+      "bù",
+      "shì",
+      "，",
+      "qū",
+      "chē",
+      "dēng",
+      "gǔ",
+      "yuán",
+      "。"
+    ],
+    [
+      "xī",
+      "yáng",
+      "wú",
+      "xiàn",
+      "hǎo",
+      "，",
+      "zhī",
+      "shì",
+      "jìn",
+      "huáng",
+      "hūn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

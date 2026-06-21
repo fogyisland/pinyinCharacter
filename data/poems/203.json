@@ -1,0 +1,74 @@
+{
+  "id": 203,
+  "title": "溪居",
+  "author": "柳宗元",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "久为簪组累，幸此南夷谪。",
+    "闲依农圃邻，偶似山林客。",
+    "晓耕翻露草，夜榜响溪石。",
+    "来往不逢人，长歌楚天碧。"
+  ],
+  "pinyin": [
+    [
+      "jiǔ",
+      "wèi",
+      "zān",
+      "zǔ",
+      "lèi",
+      "，",
+      "xìng",
+      "cǐ",
+      "nán",
+      "yí",
+      "zhé",
+      "。"
+    ],
+    [
+      "xián",
+      "yī",
+      "nóng",
+      "pǔ",
+      "lín",
+      "，",
+      "ǒu",
+      "sì",
+      "shān",
+      "lín",
+      "kè",
+      "。"
+    ],
+    [
+      "xiǎo",
+      "gēng",
+      "fān",
+      "lù",
+      "cǎo",
+      "，",
+      "yè",
+      "bǎng",
+      "xiǎng",
+      "xī",
+      "shí",
+      "。"
+    ],
+    [
+      "lái",
+      "wǎng",
+      "bù",
+      "féng",
+      "rén",
+      "，",
+      "cháng",
+      "gē",
+      "chǔ",
+      "tiān",
+      "bì",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

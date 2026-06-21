@@ -1,0 +1,74 @@
+{
+  "id": 173,
+  "title": "宿王昌龄隐居",
+  "author": "常建",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "清溪深不测，隐处唯孤云。",
+    "松际露微月，清光犹为君。",
+    "茅亭宿花影，药院滋苔纹。",
+    "余亦谢时去，西山鸾鹤群。"
+  ],
+  "pinyin": [
+    [
+      "qīng",
+      "xī",
+      "shēn",
+      "bù",
+      "cè",
+      "，",
+      "yǐn",
+      "chù",
+      "wéi",
+      "gū",
+      "yún",
+      "。"
+    ],
+    [
+      "sōng",
+      "jì",
+      "lù",
+      "wēi",
+      "yuè",
+      "，",
+      "qīng",
+      "guāng",
+      "yóu",
+      "wèi",
+      "jūn",
+      "。"
+    ],
+    [
+      "máo",
+      "tíng",
+      "sù",
+      "huā",
+      "yǐng",
+      "，",
+      "yào",
+      "yuàn",
+      "zī",
+      "tái",
+      "wén",
+      "。"
+    ],
+    [
+      "yú",
+      "yì",
+      "xiè",
+      "shí",
+      "qù",
+      "，",
+      "xī",
+      "shān",
+      "luán",
+      "hè",
+      "qún",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,44 @@
+{
+  "id": 54,
+  "title": "送别",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "山中相送罢，日暮掩柴扉。",
+    "春草明年绿，王孙归不归。"
+  ],
+  "pinyin": [
+    [
+      "shān",
+      "zhōng",
+      "xiāng",
+      "sòng",
+      "bà",
+      "，",
+      "rì",
+      "mù",
+      "yǎn",
+      "chái",
+      "fēi",
+      "。"
+    ],
+    [
+      "chūn",
+      "cǎo",
+      "míng",
+      "nián",
+      "lǜ",
+      "，",
+      "wáng",
+      "sūn",
+      "guī",
+      "bù",
+      "guī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

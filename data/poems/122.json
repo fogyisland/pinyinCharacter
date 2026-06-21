@@ -1,0 +1,44 @@
+{
+  "id": 122,
+  "title": "宿建德江",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "移舟泊烟渚，日暮客愁新。",
+    "野旷天低树，江清月近人。"
+  ],
+  "pinyin": [
+    [
+      "yí",
+      "zhōu",
+      "bó",
+      "yān",
+      "zhǔ",
+      "，",
+      "rì",
+      "mù",
+      "kè",
+      "chóu",
+      "xīn",
+      "。"
+    ],
+    [
+      "yě",
+      "kuàng",
+      "tiān",
+      "dī",
+      "shù",
+      "，",
+      "jiāng",
+      "qīng",
+      "yuè",
+      "jìn",
+      "rén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

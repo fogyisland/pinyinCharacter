@@ -1,0 +1,54 @@
+{
+  "id": 41,
+  "title": "马嵬坡",
+  "author": "郑畋",
+  "dynasty": "tang",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "[玄]宗回马杨妃死，云雨虽亡日月新。",
+    "终是圣明天子事，景阳宫井又何人。"
+  ],
+  "pinyin": [
+    [
+      "[",
+      "xuán",
+      "]",
+      "zōng",
+      "huí",
+      "mǎ",
+      "yáng",
+      "fēi",
+      "sǐ",
+      "，",
+      "yún",
+      "yǔ",
+      "suī",
+      "wáng",
+      "rì",
+      "yuè",
+      "xīn",
+      "。"
+    ],
+    [
+      "zhōng",
+      "shì",
+      "shèng",
+      "míng",
+      "tiān",
+      "zǐ",
+      "shì",
+      "，",
+      "jǐng",
+      "yáng",
+      "gōng",
+      "jǐng",
+      "yòu",
+      "hé",
+      "rén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

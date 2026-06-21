@@ -1,0 +1,52 @@
+{
+  "id": 34,
+  "title": "赤壁",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "折戟沈沙铁未销，自将磨洗认前朝。",
+    "东风不与周郎便，铜雀春深锁二乔。"
+  ],
+  "pinyin": [
+    [
+      "zhé",
+      "jǐ",
+      "shěn",
+      "shā",
+      "tiě",
+      "wèi",
+      "xiāo",
+      "，",
+      "zì",
+      "jiāng",
+      "mó",
+      "xǐ",
+      "rèn",
+      "qián",
+      "cháo",
+      "。"
+    ],
+    [
+      "dōng",
+      "fēng",
+      "bù",
+      "yǔ",
+      "zhōu",
+      "láng",
+      "biàn",
+      "，",
+      "tóng",
+      "què",
+      "chūn",
+      "shēn",
+      "suǒ",
+      "èr",
+      "qiáo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

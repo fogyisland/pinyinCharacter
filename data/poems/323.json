@@ -1,0 +1,74 @@
+{
+  "id": 323,
+  "title": "送友人",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "青山横北郭，白水遶东城。",
+    "此地一为别，孤蓬万里征。",
+    "浮云游子意，落日故人情。",
+    "挥手自兹去，萧萧班马鸣。"
+  ],
+  "pinyin": [
+    [
+      "qīng",
+      "shān",
+      "héng",
+      "běi",
+      "guō",
+      "，",
+      "bái",
+      "shuǐ",
+      "rào",
+      "dōng",
+      "chéng",
+      "。"
+    ],
+    [
+      "cǐ",
+      "dì",
+      "yī",
+      "wèi",
+      "bié",
+      "，",
+      "gū",
+      "péng",
+      "wàn",
+      "lǐ",
+      "zhēng",
+      "。"
+    ],
+    [
+      "fú",
+      "yún",
+      "yóu",
+      "zǐ",
+      "yì",
+      "，",
+      "luò",
+      "rì",
+      "gù",
+      "rén",
+      "qíng",
+      "。"
+    ],
+    [
+      "huī",
+      "shǒu",
+      "zì",
+      "zī",
+      "qù",
+      "，",
+      "xiāo",
+      "xiāo",
+      "bān",
+      "mǎ",
+      "míng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

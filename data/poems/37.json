@@ -1,0 +1,52 @@
+{
+  "id": 37,
+  "title": "台城",
+  "author": "韦庄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "江雨霏霏江草齐，六朝如梦鸟空啼。",
+    "无情最是台城柳，依旧烟笼十里堤。"
+  ],
+  "pinyin": [
+    [
+      "jiāng",
+      "yǔ",
+      "fēi",
+      "fēi",
+      "jiāng",
+      "cǎo",
+      "qí",
+      "，",
+      "liù",
+      "cháo",
+      "rú",
+      "mèng",
+      "niǎo",
+      "kōng",
+      "tí",
+      "。"
+    ],
+    [
+      "wú",
+      "qíng",
+      "zuì",
+      "shì",
+      "tái",
+      "chéng",
+      "liǔ",
+      "，",
+      "yī",
+      "jiù",
+      "yān",
+      "lóng",
+      "shí",
+      "lǐ",
+      "dī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

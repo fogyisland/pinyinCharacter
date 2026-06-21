@@ -1,0 +1,44 @@
+{
+  "id": 146,
+  "title": "杂诗三首 二",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "君自故乡来，应知故乡事。",
+    "来日绮窗前，寒梅着花未。"
+  ],
+  "pinyin": [
+    [
+      "jūn",
+      "zì",
+      "gù",
+      "xiāng",
+      "lái",
+      "，",
+      "yìng",
+      "zhī",
+      "gù",
+      "xiāng",
+      "shì",
+      "。"
+    ],
+    [
+      "lái",
+      "rì",
+      "qǐ",
+      "chuāng",
+      "qián",
+      "，",
+      "hán",
+      "méi",
+      "zhe",
+      "huā",
+      "wèi",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

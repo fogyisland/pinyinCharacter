@@ -1,0 +1,52 @@
+{
+  "id": 185,
+  "title": "瑶瑟怨",
+  "author": "温庭筠",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "冰簟银床梦不成，碧天如水夜云轻。",
+    "雁声远过潇湘去，十二楼中月自明。"
+  ],
+  "pinyin": [
+    [
+      "bīng",
+      "diàn",
+      "yín",
+      "chuáng",
+      "mèng",
+      "bù",
+      "chéng",
+      "，",
+      "bì",
+      "tiān",
+      "rú",
+      "shuǐ",
+      "yè",
+      "yún",
+      "qīng",
+      "。"
+    ],
+    [
+      "yàn",
+      "shēng",
+      "yuǎn",
+      "guò",
+      "xiāo",
+      "xiāng",
+      "qù",
+      "，",
+      "shí",
+      "èr",
+      "lóu",
+      "zhōng",
+      "yuè",
+      "zì",
+      "míng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

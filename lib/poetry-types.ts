@@ -41,3 +41,20 @@ export const POEM_FONT_LABEL: Record<PoemFont, string> = {
 
 export const POEM_FONT_STORAGE_KEY = 'pinyin:poem-font';
 export const DEFAULT_POEM_FONT: PoemFont = 'kai';
+
+export interface PoemManifestItem {
+  id: number;
+  title: string;
+  author: string;
+  dynasty: string;
+  category: string | null;
+  form: string | null;
+  contentLineCount: number;
+}
+
+export interface PoemsManifest {
+  version: 1;
+  updatedAt: string;
+  count: number;
+  items: PoemManifestItem[];
+}

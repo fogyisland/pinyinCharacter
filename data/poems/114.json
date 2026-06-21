@@ -1,0 +1,74 @@
+{
+  "id": 114,
+  "title": "早寒江上有怀",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "木落雁南度，北风江上寒。",
+    "我家襄水上，遥隔楚云端。",
+    "乡泪客中尽，孤帆天际看。",
+    "迷津欲有问，平海夕漫漫。"
+  ],
+  "pinyin": [
+    [
+      "mù",
+      "luò",
+      "yàn",
+      "nán",
+      "dù",
+      "，",
+      "běi",
+      "fēng",
+      "jiāng",
+      "shàng",
+      "hán",
+      "。"
+    ],
+    [
+      "wǒ",
+      "jiā",
+      "xiāng",
+      "shuǐ",
+      "shàng",
+      "，",
+      "yáo",
+      "gé",
+      "chǔ",
+      "yún",
+      "duān",
+      "。"
+    ],
+    [
+      "xiāng",
+      "lèi",
+      "kè",
+      "zhōng",
+      "jìn",
+      "，",
+      "gū",
+      "fān",
+      "tiān",
+      "jì",
+      "kàn",
+      "。"
+    ],
+    [
+      "mí",
+      "jīn",
+      "yù",
+      "yǒu",
+      "wèn",
+      "，",
+      "píng",
+      "hǎi",
+      "xī",
+      "màn",
+      "màn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

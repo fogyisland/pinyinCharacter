@@ -1,0 +1,74 @@
+{
+  "id": 192,
+  "title": "巴山道中除夜书怀",
+  "author": "崔涂",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "迢遰三巴路，羇危万里身。",
+    "乱山残雪夜，孤烛异乡春。",
+    "渐与骨肉远，转于僮仆亲。",
+    "那堪正漂泊，明日岁华新。"
+  ],
+  "pinyin": [
+    [
+      "tiáo",
+      "dì",
+      "sān",
+      "bā",
+      "lù",
+      "，",
+      "jī",
+      "wēi",
+      "wàn",
+      "lǐ",
+      "shēn",
+      "。"
+    ],
+    [
+      "luàn",
+      "shān",
+      "cán",
+      "xuě",
+      "yè",
+      "，",
+      "gū",
+      "zhú",
+      "yì",
+      "xiāng",
+      "chūn",
+      "。"
+    ],
+    [
+      "jiàn",
+      "yǔ",
+      "gǔ",
+      "ròu",
+      "yuǎn",
+      "，",
+      "zhuǎn",
+      "yú",
+      "tóng",
+      "pú",
+      "qīn",
+      "。"
+    ],
+    [
+      "nà",
+      "kān",
+      "zhèng",
+      "piāo",
+      "bó",
+      "，",
+      "míng",
+      "rì",
+      "suì",
+      "huá",
+      "xīn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,96 @@
+{
+  "id": 906,
+  "title": "玉楼春",
+  "author": "欧阳修",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "别后不知君远近。",
+    "触目凄凉多少闷。",
+    "渐行渐远渐无书，水阔鱼沈何处问。",
+    "夜深风竹敲秋韵。",
+    "万叶千声皆是恨。",
+    "故欹单枕梦中寻，梦又不成灯又尽。"
+  ],
+  "pinyin": [
+    [
+      "bié",
+      "hòu",
+      "bù",
+      "zhī",
+      "jūn",
+      "yuǎn",
+      "jìn",
+      "。"
+    ],
+    [
+      "chù",
+      "mù",
+      "qī",
+      "liáng",
+      "duō",
+      "shǎo",
+      "mēn",
+      "。"
+    ],
+    [
+      "jiàn",
+      "xíng",
+      "jiàn",
+      "yuǎn",
+      "jiàn",
+      "wú",
+      "shū",
+      "，",
+      "shuǐ",
+      "kuò",
+      "yú",
+      "shěn",
+      "hé",
+      "chù",
+      "wèn",
+      "。"
+    ],
+    [
+      "yè",
+      "shēn",
+      "fēng",
+      "zhú",
+      "qiāo",
+      "qiū",
+      "yùn",
+      "。"
+    ],
+    [
+      "wàn",
+      "yè",
+      "qiān",
+      "shēng",
+      "jiē",
+      "shì",
+      "hèn",
+      "。"
+    ],
+    [
+      "gù",
+      "qī",
+      "dān",
+      "zhěn",
+      "mèng",
+      "zhōng",
+      "xún",
+      "，",
+      "mèng",
+      "yòu",
+      "bù",
+      "chéng",
+      "dēng",
+      "yòu",
+      "jìn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,52 @@
+{
+  "id": 256,
+  "title": "杂曲歌辞 盖罗缝 一",
+  "author": "不详",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "秦时明月汉时关，万里征人尚未还。",
+    "但愿龙庭神将在，不教胡马渡阴山。"
+  ],
+  "pinyin": [
+    [
+      "qín",
+      "shí",
+      "míng",
+      "yuè",
+      "hàn",
+      "shí",
+      "guān",
+      "，",
+      "wàn",
+      "lǐ",
+      "zhēng",
+      "rén",
+      "shàng",
+      "wèi",
+      "hái",
+      "。"
+    ],
+    [
+      "dàn",
+      "yuàn",
+      "lóng",
+      "tíng",
+      "shén",
+      "jiāng",
+      "zài",
+      "，",
+      "bù",
+      "jiào",
+      "hú",
+      "mǎ",
+      "dù",
+      "yīn",
+      "shān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,74 @@
+{
+  "id": 289,
+  "title": "长安遇冯著",
+  "author": "韦应物",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "客从东方来，衣上灞陵雨。",
+    "问客何为来，采山因买斧。",
+    "冥冥花正开，飏飏燕新乳。",
+    "昨别今已春，鬓丝生几缕。"
+  ],
+  "pinyin": [
+    [
+      "kè",
+      "cóng",
+      "dōng",
+      "fāng",
+      "lái",
+      "，",
+      "yī",
+      "shàng",
+      "bà",
+      "líng",
+      "yǔ",
+      "。"
+    ],
+    [
+      "wèn",
+      "kè",
+      "hé",
+      "wèi",
+      "lái",
+      "，",
+      "cǎi",
+      "shān",
+      "yīn",
+      "mǎi",
+      "fǔ",
+      "。"
+    ],
+    [
+      "míng",
+      "míng",
+      "huā",
+      "zhèng",
+      "kāi",
+      "，",
+      "yáng",
+      "yáng",
+      "yàn",
+      "xīn",
+      "rǔ",
+      "。"
+    ],
+    [
+      "zuó",
+      "bié",
+      "jīn",
+      "yǐ",
+      "chūn",
+      "，",
+      "bìn",
+      "sī",
+      "shēng",
+      "jǐ",
+      "lǚ",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

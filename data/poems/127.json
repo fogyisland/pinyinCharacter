@@ -1,0 +1,44 @@
+{
+  "id": 127,
+  "title": "和张仆射塞下曲 一",
+  "author": "卢纶",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "鹫翎金仆姑，燕尾绣蝥弧。",
+    "独立扬新令，千营共一呼。"
+  ],
+  "pinyin": [
+    [
+      "jiù",
+      "líng",
+      "jīn",
+      "pú",
+      "gū",
+      "，",
+      "yàn",
+      "wěi",
+      "xiù",
+      "máo",
+      "hú",
+      "。"
+    ],
+    [
+      "dú",
+      "lì",
+      "yáng",
+      "xīn",
+      "lìng",
+      "，",
+      "qiān",
+      "yíng",
+      "gòng",
+      "yī",
+      "hū",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

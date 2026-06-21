@@ -1,0 +1,52 @@
+{
+  "id": 273,
+  "title": "度南涧",
+  "author": "蔡襄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "隠隠飞桥隔野烟，石矶西畔问渔船。",
+    "桃花尽日随流水，洞在清溪何处边。"
+  ],
+  "pinyin": [
+    [
+      "yǐn",
+      "yǐn",
+      "fēi",
+      "qiáo",
+      "gé",
+      "yě",
+      "yān",
+      "，",
+      "shí",
+      "jī",
+      "xī",
+      "pàn",
+      "wèn",
+      "yú",
+      "chuán",
+      "。"
+    ],
+    [
+      "táo",
+      "huā",
+      "jìn",
+      "rì",
+      "suí",
+      "liú",
+      "shuǐ",
+      "，",
+      "dòng",
+      "zài",
+      "qīng",
+      "xī",
+      "hé",
+      "chù",
+      "biān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

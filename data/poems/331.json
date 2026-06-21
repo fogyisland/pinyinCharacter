@@ -1,0 +1,44 @@
+{
+  "id": 331,
+  "title": "怨情",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "美人卷珠帘，深坐颦蛾眉。",
+    "但见泪痕湿，不知心恨谁。"
+  ],
+  "pinyin": [
+    [
+      "měi",
+      "rén",
+      "juàn",
+      "zhū",
+      "lián",
+      "，",
+      "shēn",
+      "zuò",
+      "pín",
+      "é",
+      "méi",
+      "。"
+    ],
+    [
+      "dàn",
+      "jiàn",
+      "lèi",
+      "hén",
+      "shī",
+      "，",
+      "bù",
+      "zhī",
+      "xīn",
+      "hèn",
+      "shuí",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,74 @@
+{
+  "id": 115,
+  "title": "留别王侍御维",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "寂寂竟何待，朝朝空自归。",
+    "欲寻芳草去，惜与故人违。",
+    "当路谁相假，知音世所稀。",
+    "秪应守索寞，还掩故园扉。"
+  ],
+  "pinyin": [
+    [
+      "jì",
+      "jì",
+      "jìng",
+      "hé",
+      "dài",
+      "，",
+      "cháo",
+      "cháo",
+      "kōng",
+      "zì",
+      "guī",
+      "。"
+    ],
+    [
+      "yù",
+      "xún",
+      "fāng",
+      "cǎo",
+      "qù",
+      "，",
+      "xī",
+      "yǔ",
+      "gù",
+      "rén",
+      "wéi",
+      "。"
+    ],
+    [
+      "dāng",
+      "lù",
+      "shuí",
+      "xiāng",
+      "jiǎ",
+      "，",
+      "zhī",
+      "yīn",
+      "shì",
+      "suǒ",
+      "xī",
+      "。"
+    ],
+    [
+      "dī",
+      "yìng",
+      "shǒu",
+      "suǒ",
+      "mò",
+      "，",
+      "hái",
+      "yǎn",
+      "gù",
+      "yuán",
+      "fēi",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

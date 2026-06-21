@@ -1,0 +1,52 @@
+{
+  "id": 24,
+  "title": "为有",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "为有云屏无限娇，凤城寒尽怕春宵。",
+    "无端嫁得金龟壻，辜负香衾事早朝。"
+  ],
+  "pinyin": [
+    [
+      "wèi",
+      "yǒu",
+      "yún",
+      "píng",
+      "wú",
+      "xiàn",
+      "jiāo",
+      "，",
+      "fèng",
+      "chéng",
+      "hán",
+      "jìn",
+      "pà",
+      "chūn",
+      "xiāo",
+      "。"
+    ],
+    [
+      "wú",
+      "duān",
+      "jià",
+      "dé",
+      "jīn",
+      "guī",
+      "xù",
+      "，",
+      "gū",
+      "fù",
+      "xiāng",
+      "qīn",
+      "shì",
+      "zǎo",
+      "cháo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

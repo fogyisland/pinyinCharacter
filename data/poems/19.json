@@ -1,0 +1,71 @@
+{
+  "id": 19,
+  "title": "无题二首 一",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "七律",
+  "content": [
+    "凤尾香罗薄几重，碧文圆顶夜深缝。",
+    "扇裁月魄羞难掩，车走雷声语未通。",
+    "曾是寂寥金烬暗，断无消息石榴红。"
+  ],
+  "pinyin": [
+    [
+      "fèng",
+      "wěi",
+      "xiāng",
+      "luó",
+      "báo",
+      "jǐ",
+      "zhòng",
+      "，",
+      "bì",
+      "wén",
+      "yuán",
+      "dǐng",
+      "yè",
+      "shēn",
+      "fèng",
+      "。"
+    ],
+    [
+      "shàn",
+      "cái",
+      "yuè",
+      "pò",
+      "xiū",
+      "nán",
+      "yǎn",
+      "，",
+      "chē",
+      "zǒu",
+      "léi",
+      "shēng",
+      "yǔ",
+      "wèi",
+      "tōng",
+      "。"
+    ],
+    [
+      "céng",
+      "shì",
+      "jì",
+      "liáo",
+      "jīn",
+      "jìn",
+      "àn",
+      "，",
+      "duàn",
+      "wú",
+      "xiāo",
+      "xī",
+      "shí",
+      "liú",
+      "hóng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

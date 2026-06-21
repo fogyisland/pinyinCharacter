@@ -1,0 +1,44 @@
+{
+  "id": 188,
+  "title": "渡汉江",
+  "author": "李频",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "岭外音书绝，经年复历春。",
+    "近乡情更怯，不敢问来人。"
+  ],
+  "pinyin": [
+    [
+      "lǐng",
+      "wài",
+      "yīn",
+      "shū",
+      "jué",
+      "，",
+      "jīng",
+      "nián",
+      "fù",
+      "lì",
+      "chūn",
+      "。"
+    ],
+    [
+      "jìn",
+      "xiāng",
+      "qíng",
+      "gèng",
+      "qiè",
+      "，",
+      "bù",
+      "gǎn",
+      "wèn",
+      "lái",
+      "rén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,44 @@
+{
+  "id": 157,
+  "title": "终南望余雪",
+  "author": "祖咏",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "终南阴岭秀，积雪浮云端。",
+    "林表明霁色，城中增暮寒。"
+  ],
+  "pinyin": [
+    [
+      "zhōng",
+      "nán",
+      "yīn",
+      "lǐng",
+      "xiù",
+      "，",
+      "jī",
+      "xuě",
+      "fú",
+      "yún",
+      "duān",
+      "。"
+    ],
+    [
+      "lín",
+      "biǎo",
+      "míng",
+      "jì",
+      "sè",
+      "，",
+      "chéng",
+      "zhōng",
+      "zēng",
+      "mù",
+      "hán",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

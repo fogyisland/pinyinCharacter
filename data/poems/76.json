@@ -1,0 +1,52 @@
+{
+  "id": 76,
+  "title": "赠别二首 二",
+  "author": "杜牧",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "多情却似总无情，唯觉尊前笑不成。",
+    "蜡烛有心还惜别，替人垂泪到天明。"
+  ],
+  "pinyin": [
+    [
+      "duō",
+      "qíng",
+      "què",
+      "sì",
+      "zǒng",
+      "wú",
+      "qíng",
+      "，",
+      "wéi",
+      "jué",
+      "zūn",
+      "qián",
+      "xiào",
+      "bù",
+      "chéng",
+      "。"
+    ],
+    [
+      "là",
+      "zhú",
+      "yǒu",
+      "xīn",
+      "hái",
+      "xī",
+      "bié",
+      "，",
+      "tì",
+      "rén",
+      "chuí",
+      "lèi",
+      "dào",
+      "tiān",
+      "míng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

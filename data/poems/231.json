@@ -1,0 +1,74 @@
+{
+  "id": 231,
+  "title": "登岳阳楼",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "昔闻洞庭水，今上岳阳楼。",
+    "吴楚东南坼，乾坤日夜浮。",
+    "亲朋无一字，老病有孤舟。",
+    "戎马关山北，凭轩涕泗流。"
+  ],
+  "pinyin": [
+    [
+      "xī",
+      "wén",
+      "dòng",
+      "tíng",
+      "shuǐ",
+      "，",
+      "jīn",
+      "shàng",
+      "yuè",
+      "yáng",
+      "lóu",
+      "。"
+    ],
+    [
+      "wú",
+      "chǔ",
+      "dōng",
+      "nán",
+      "chè",
+      "，",
+      "qián",
+      "kūn",
+      "rì",
+      "yè",
+      "fú",
+      "。"
+    ],
+    [
+      "qīn",
+      "péng",
+      "wú",
+      "yī",
+      "zì",
+      "，",
+      "lǎo",
+      "bìng",
+      "yǒu",
+      "gū",
+      "zhōu",
+      "。"
+    ],
+    [
+      "róng",
+      "mǎ",
+      "guān",
+      "shān",
+      "běi",
+      "，",
+      "píng",
+      "xuān",
+      "tì",
+      "sì",
+      "liú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

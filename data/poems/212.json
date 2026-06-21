@@ -1,0 +1,74 @@
+{
+  "id": 212,
+  "title": "天末忆李白",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "凉风起天末，君子意如何。",
+    "鸿雁几时到，江湖秋水多。",
+    "文章憎命达，魑魅喜人过。",
+    "应共冤魂语，投诗赠汩罗。"
+  ],
+  "pinyin": [
+    [
+      "liáng",
+      "fēng",
+      "qǐ",
+      "tiān",
+      "mò",
+      "，",
+      "jūn",
+      "zǐ",
+      "yì",
+      "rú",
+      "hé",
+      "。"
+    ],
+    [
+      "hóng",
+      "yàn",
+      "jǐ",
+      "shí",
+      "dào",
+      "，",
+      "jiāng",
+      "hú",
+      "qiū",
+      "shuǐ",
+      "duō",
+      "。"
+    ],
+    [
+      "wén",
+      "zhāng",
+      "zēng",
+      "mìng",
+      "dá",
+      "，",
+      "chī",
+      "mèi",
+      "xǐ",
+      "rén",
+      "guò",
+      "。"
+    ],
+    [
+      "yìng",
+      "gòng",
+      "yuān",
+      "hún",
+      "yǔ",
+      "，",
+      "tóu",
+      "shī",
+      "zèng",
+      "gǔ",
+      "luó",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

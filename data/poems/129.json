@@ -1,0 +1,44 @@
+{
+  "id": 129,
+  "title": "和张仆射塞下曲 三",
+  "author": "卢纶",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "月黑鴈飞高，单于夜遁逃。",
+    "欲将轻骑逐，大雪满弓刀。"
+  ],
+  "pinyin": [
+    [
+      "yuè",
+      "hēi",
+      "yàn",
+      "fēi",
+      "gāo",
+      "，",
+      "dān",
+      "yú",
+      "yè",
+      "dùn",
+      "táo",
+      "。"
+    ],
+    [
+      "yù",
+      "jiāng",
+      "qīng",
+      "qí",
+      "zhú",
+      "，",
+      "dà",
+      "xuě",
+      "mǎn",
+      "gōng",
+      "dāo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

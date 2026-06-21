@@ -1,0 +1,44 @@
+{
+  "id": 224,
+  "title": "八阵图",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "功盖三分国，名高八阵图。",
+    "江流石不转，遗恨失吞吴。"
+  ],
+  "pinyin": [
+    [
+      "gōng",
+      "gài",
+      "sān",
+      "fēn",
+      "guó",
+      "，",
+      "míng",
+      "gāo",
+      "bā",
+      "zhèn",
+      "tú",
+      "。"
+    ],
+    [
+      "jiāng",
+      "liú",
+      "shí",
+      "bù",
+      "zhuǎn",
+      "，",
+      "yí",
+      "hèn",
+      "shī",
+      "tūn",
+      "wú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

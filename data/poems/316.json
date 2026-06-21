@@ -1,0 +1,59 @@
+{
+  "id": 316,
+  "title": "子夜吴歌 冬歌",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "明朝驿使发，一夜絮征袍。",
+    "素手抽针冷，那堪把剪刀。",
+    "裁缝寄远道，几日到临洮。"
+  ],
+  "pinyin": [
+    [
+      "míng",
+      "cháo",
+      "yì",
+      "shǐ",
+      "fā",
+      "，",
+      "yī",
+      "yè",
+      "xù",
+      "zhēng",
+      "páo",
+      "。"
+    ],
+    [
+      "sù",
+      "shǒu",
+      "chōu",
+      "zhēn",
+      "lěng",
+      "，",
+      "nà",
+      "kān",
+      "bǎ",
+      "jiǎn",
+      "dāo",
+      "。"
+    ],
+    [
+      "cái",
+      "fèng",
+      "jì",
+      "yuǎn",
+      "dào",
+      "，",
+      "jǐ",
+      "rì",
+      "dào",
+      "lín",
+      "táo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

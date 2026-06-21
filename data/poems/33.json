@@ -1,0 +1,74 @@
+{
+  "id": 33,
+  "title": "北青萝",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "残阳西入崦，茅屋访孤僧。",
+    "落叶人何在，寒云路几层。",
+    "独敲初夜磬，闲倚一枝藤。",
+    "世界微尘里，吾宁爱与憎。"
+  ],
+  "pinyin": [
+    [
+      "cán",
+      "yáng",
+      "xī",
+      "rù",
+      "yān",
+      "，",
+      "máo",
+      "wū",
+      "fǎng",
+      "gū",
+      "sēng",
+      "。"
+    ],
+    [
+      "luò",
+      "yè",
+      "rén",
+      "hé",
+      "zài",
+      "，",
+      "hán",
+      "yún",
+      "lù",
+      "jǐ",
+      "céng",
+      "。"
+    ],
+    [
+      "dú",
+      "qiāo",
+      "chū",
+      "yè",
+      "qìng",
+      "，",
+      "xián",
+      "yǐ",
+      "yī",
+      "zhī",
+      "téng",
+      "。"
+    ],
+    [
+      "shì",
+      "jiè",
+      "wēi",
+      "chén",
+      "lǐ",
+      "，",
+      "wú",
+      "níng",
+      "ài",
+      "yǔ",
+      "zēng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

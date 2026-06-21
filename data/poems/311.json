@@ -1,0 +1,44 @@
+{
+  "id": 311,
+  "title": "静夜思",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "床前看月光，疑是地上霜。",
+    "举头望山月，低头思故乡。"
+  ],
+  "pinyin": [
+    [
+      "chuáng",
+      "qián",
+      "kàn",
+      "yuè",
+      "guāng",
+      "，",
+      "yí",
+      "shì",
+      "dì",
+      "shàng",
+      "shuāng",
+      "。"
+    ],
+    [
+      "jǔ",
+      "tóu",
+      "wàng",
+      "shān",
+      "yuè",
+      "，",
+      "dī",
+      "tóu",
+      "sī",
+      "gù",
+      "xiāng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

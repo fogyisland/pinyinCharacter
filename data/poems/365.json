@@ -1,0 +1,74 @@
+{
+  "id": 365,
+  "title": "送李端",
+  "author": "严维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "故关衰草遍，离别正堪悲。",
+    "路出寒云外，人归暮雪时。",
+    "少孤为客早，多难识君迟。",
+    "揜泣空相向，风尘何所期。"
+  ],
+  "pinyin": [
+    [
+      "gù",
+      "guān",
+      "shuāi",
+      "cǎo",
+      "biàn",
+      "，",
+      "lí",
+      "bié",
+      "zhèng",
+      "kān",
+      "bēi",
+      "。"
+    ],
+    [
+      "lù",
+      "chū",
+      "hán",
+      "yún",
+      "wài",
+      "，",
+      "rén",
+      "guī",
+      "mù",
+      "xuě",
+      "shí",
+      "。"
+    ],
+    [
+      "shǎo",
+      "gū",
+      "wèi",
+      "kè",
+      "zǎo",
+      "，",
+      "duō",
+      "nán",
+      "shí",
+      "jūn",
+      "chí",
+      "。"
+    ],
+    [
+      "yǎn",
+      "qì",
+      "kōng",
+      "xiāng",
+      "xiàng",
+      "，",
+      "fēng",
+      "chén",
+      "hé",
+      "suǒ",
+      "qī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

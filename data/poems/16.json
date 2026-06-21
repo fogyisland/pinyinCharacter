@@ -1,0 +1,52 @@
+{
+  "id": 16,
+  "title": "寄令狐郎中",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "嵩云秦树久离居，双鲤迢迢一纸书。",
+    "休问梁园旧宾客，茂陵秋雨病相如。"
+  ],
+  "pinyin": [
+    [
+      "sōng",
+      "yún",
+      "qín",
+      "shù",
+      "jiǔ",
+      "lí",
+      "jū",
+      "，",
+      "shuāng",
+      "lǐ",
+      "tiáo",
+      "tiáo",
+      "yī",
+      "zhǐ",
+      "shū",
+      "。"
+    ],
+    [
+      "xiū",
+      "wèn",
+      "liáng",
+      "yuán",
+      "jiù",
+      "bīn",
+      "kè",
+      "，",
+      "mào",
+      "líng",
+      "qiū",
+      "yǔ",
+      "bìng",
+      "xiāng",
+      "rú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

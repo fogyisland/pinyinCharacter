@@ -1,0 +1,44 @@
+{
+  "id": 235,
+  "title": "渡汉江",
+  "author": "宋之问",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "岭外音书断，经冬复历春。",
+    "近乡情更怯，不敢问来人。"
+  ],
+  "pinyin": [
+    [
+      "lǐng",
+      "wài",
+      "yīn",
+      "shū",
+      "duàn",
+      "，",
+      "jīng",
+      "dōng",
+      "fù",
+      "lì",
+      "chūn",
+      "。"
+    ],
+    [
+      "jìn",
+      "xiāng",
+      "qíng",
+      "gèng",
+      "qiè",
+      "，",
+      "bù",
+      "gǎn",
+      "wèn",
+      "lái",
+      "rén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

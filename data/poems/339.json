@@ -1,0 +1,52 @@
+{
+  "id": 339,
+  "title": "相和歌辞 长信怨 二",
+  "author": "王昌龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "奉帚平明金殿开，暂将团扇共裴回。",
+    "玉颜不及寒鵶色，犹带昭阳日影来。"
+  ],
+  "pinyin": [
+    [
+      "fèng",
+      "zhǒu",
+      "píng",
+      "míng",
+      "jīn",
+      "diàn",
+      "kāi",
+      "，",
+      "zàn",
+      "jiāng",
+      "tuán",
+      "shàn",
+      "gòng",
+      "péi",
+      "huí",
+      "。"
+    ],
+    [
+      "yù",
+      "yán",
+      "bù",
+      "jí",
+      "hán",
+      "yā",
+      "sè",
+      "，",
+      "yóu",
+      "dài",
+      "zhāo",
+      "yáng",
+      "rì",
+      "yǐng",
+      "lái",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

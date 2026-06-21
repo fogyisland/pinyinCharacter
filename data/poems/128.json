@@ -1,0 +1,44 @@
+{
+  "id": 128,
+  "title": "和张仆射塞下曲 二",
+  "author": "卢纶",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "林暗草惊风，将军夜引弓。",
+    "平明寻白羽，没在石棱中。"
+  ],
+  "pinyin": [
+    [
+      "lín",
+      "àn",
+      "cǎo",
+      "jīng",
+      "fēng",
+      "，",
+      "jiāng",
+      "jūn",
+      "yè",
+      "yǐn",
+      "gōng",
+      "。"
+    ],
+    [
+      "píng",
+      "míng",
+      "xún",
+      "bái",
+      "yǔ",
+      "，",
+      "méi",
+      "zài",
+      "shí",
+      "léng",
+      "zhōng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

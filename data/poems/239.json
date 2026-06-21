@@ -1,0 +1,44 @@
+{
+  "id": 239,
+  "title": "登楼",
+  "author": "朱斌",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "白日依山尽，黄河入海流。",
+    "欲穷千里目，更上一层楼。"
+  ],
+  "pinyin": [
+    [
+      "bái",
+      "rì",
+      "yī",
+      "shān",
+      "jìn",
+      "，",
+      "huáng",
+      "hé",
+      "rù",
+      "hǎi",
+      "liú",
+      "。"
+    ],
+    [
+      "yù",
+      "qióng",
+      "qiān",
+      "lǐ",
+      "mù",
+      "，",
+      "gèng",
+      "shàng",
+      "yī",
+      "céng",
+      "lóu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

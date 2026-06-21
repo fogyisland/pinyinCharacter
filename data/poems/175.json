@@ -1,0 +1,52 @@
+{
+  "id": 175,
+  "title": "清平调 二",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "一枝红艳露凝香，云雨巫山枉断肠。",
+    "借问汉宫谁得似，可怜飞燕倚新妆。"
+  ],
+  "pinyin": [
+    [
+      "yī",
+      "zhī",
+      "hóng",
+      "yàn",
+      "lù",
+      "níng",
+      "xiāng",
+      "，",
+      "yún",
+      "yǔ",
+      "wū",
+      "shān",
+      "wǎng",
+      "duàn",
+      "cháng",
+      "。"
+    ],
+    [
+      "jiè",
+      "wèn",
+      "hàn",
+      "gōng",
+      "shuí",
+      "dé",
+      "sì",
+      "，",
+      "kě",
+      "lián",
+      "fēi",
+      "yàn",
+      "yǐ",
+      "xīn",
+      "zhuāng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

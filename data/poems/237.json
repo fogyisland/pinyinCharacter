@@ -1,0 +1,74 @@
+{
+  "id": 237,
+  "title": "杜少府之任蜀州",
+  "author": "王勃",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "城阙辅三秦，风烟望五津。",
+    "与君离别意，同是宦游人。",
+    "海内存知己，天涯若比隣。",
+    "无为在岐路，儿女共沾巾。"
+  ],
+  "pinyin": [
+    [
+      "chéng",
+      "quē",
+      "fǔ",
+      "sān",
+      "qín",
+      "，",
+      "fēng",
+      "yān",
+      "wàng",
+      "wǔ",
+      "jīn",
+      "。"
+    ],
+    [
+      "yǔ",
+      "jūn",
+      "lí",
+      "bié",
+      "yì",
+      "，",
+      "tóng",
+      "shì",
+      "huàn",
+      "yóu",
+      "rén",
+      "。"
+    ],
+    [
+      "hǎi",
+      "nèi",
+      "cún",
+      "zhī",
+      "jǐ",
+      "，",
+      "tiān",
+      "yá",
+      "ruò",
+      "bǐ",
+      "lín",
+      "。"
+    ],
+    [
+      "wú",
+      "wèi",
+      "zài",
+      "qí",
+      "lù",
+      "，",
+      "ér",
+      "nǚ",
+      "gòng",
+      "zhān",
+      "jīn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

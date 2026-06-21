@@ -1,0 +1,52 @@
+{
+  "id": 28,
+  "title": "常娥",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "云母屏风烛影深，长河渐落晓星沈。",
+    "常娥应悔偷灵药，碧海青天夜夜心。"
+  ],
+  "pinyin": [
+    [
+      "yún",
+      "mǔ",
+      "píng",
+      "fēng",
+      "zhú",
+      "yǐng",
+      "shēn",
+      "，",
+      "cháng",
+      "hé",
+      "jiàn",
+      "luò",
+      "xiǎo",
+      "xīng",
+      "shěn",
+      "。"
+    ],
+    [
+      "cháng",
+      "é",
+      "yìng",
+      "huǐ",
+      "tōu",
+      "líng",
+      "yào",
+      "，",
+      "bì",
+      "hǎi",
+      "qīng",
+      "tiān",
+      "yè",
+      "yè",
+      "xīn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

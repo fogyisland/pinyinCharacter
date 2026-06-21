@@ -1,0 +1,52 @@
+{
+  "id": 232,
+  "title": "虢国夫人",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "虢国夫人承主恩，平明上马入宫门。",
+    "却嫌脂粉涴颜色，澹埽蛾眉朝至尊。"
+  ],
+  "pinyin": [
+    [
+      "guó",
+      "guó",
+      "fū",
+      "rén",
+      "chéng",
+      "zhǔ",
+      "ēn",
+      "，",
+      "píng",
+      "míng",
+      "shàng",
+      "mǎ",
+      "rù",
+      "gōng",
+      "mén",
+      "。"
+    ],
+    [
+      "què",
+      "xián",
+      "zhī",
+      "fěn",
+      "wò",
+      "yán",
+      "sè",
+      "，",
+      "dàn",
+      "sào",
+      "é",
+      "méi",
+      "cháo",
+      "zhì",
+      "zūn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

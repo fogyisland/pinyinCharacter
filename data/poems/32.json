@@ -1,0 +1,74 @@
+{
+  "id": 32,
+  "title": "凉思",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "客去波平槛，蝉休露满枝。",
+    "永怀当此节，倚立自移时。",
+    "北斗兼春远，南陵寓使迟。",
+    "天涯占梦数，疑误有新知。"
+  ],
+  "pinyin": [
+    [
+      "kè",
+      "qù",
+      "bō",
+      "píng",
+      "kǎn",
+      "，",
+      "chán",
+      "xiū",
+      "lù",
+      "mǎn",
+      "zhī",
+      "。"
+    ],
+    [
+      "yǒng",
+      "huái",
+      "dāng",
+      "cǐ",
+      "jié",
+      "，",
+      "yǐ",
+      "lì",
+      "zì",
+      "yí",
+      "shí",
+      "。"
+    ],
+    [
+      "běi",
+      "dòu",
+      "jiān",
+      "chūn",
+      "yuǎn",
+      "，",
+      "nán",
+      "líng",
+      "yù",
+      "shǐ",
+      "chí",
+      "。"
+    ],
+    [
+      "tiān",
+      "yá",
+      "zhàn",
+      "mèng",
+      "shù",
+      "，",
+      "yí",
+      "wù",
+      "yǒu",
+      "xīn",
+      "zhī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

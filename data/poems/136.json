@@ -1,0 +1,74 @@
+{
+  "id": 136,
+  "title": "归嵩山作",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "清川带长薄，车马去闲闲。",
+    "流水如有意，暮禽相与还。",
+    "荒城临古渡，落日满秋山。",
+    "迢递嵩高下，归来且闭关。"
+  ],
+  "pinyin": [
+    [
+      "qīng",
+      "chuān",
+      "dài",
+      "cháng",
+      "báo",
+      "，",
+      "chē",
+      "mǎ",
+      "qù",
+      "xián",
+      "xián",
+      "。"
+    ],
+    [
+      "liú",
+      "shuǐ",
+      "rú",
+      "yǒu",
+      "yì",
+      "，",
+      "mù",
+      "qín",
+      "xiāng",
+      "yǔ",
+      "hái",
+      "。"
+    ],
+    [
+      "huāng",
+      "chéng",
+      "lín",
+      "gǔ",
+      "dù",
+      "，",
+      "luò",
+      "rì",
+      "mǎn",
+      "qiū",
+      "shān",
+      "。"
+    ],
+    [
+      "tiáo",
+      "dì",
+      "sōng",
+      "gāo",
+      "xià",
+      "，",
+      "guī",
+      "lái",
+      "qiě",
+      "bì",
+      "guān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

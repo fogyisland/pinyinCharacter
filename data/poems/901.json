@@ -1,0 +1,95 @@
+{
+  "id": 901,
+  "title": "玉楼春",
+  "author": "宋祁",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "东城渐觉风光好。",
+    "皱波纹迎客棹。",
+    "绿杨烟外晓寒轻，红杏枝头春意闹。",
+    "浮生长恨欢娱少。",
+    "肯爱千金轻一笑。",
+    "为君持酒劝斜阳，且向花间留晚照。"
+  ],
+  "pinyin": [
+    [
+      "dōng",
+      "chéng",
+      "jiàn",
+      "jué",
+      "fēng",
+      "guāng",
+      "hǎo",
+      "。"
+    ],
+    [
+      "zhòu",
+      "bō",
+      "wén",
+      "yíng",
+      "kè",
+      "zhào",
+      "。"
+    ],
+    [
+      "lǜ",
+      "yáng",
+      "yān",
+      "wài",
+      "xiǎo",
+      "hán",
+      "qīng",
+      "，",
+      "hóng",
+      "xìng",
+      "zhī",
+      "tóu",
+      "chūn",
+      "yì",
+      "nào",
+      "。"
+    ],
+    [
+      "fú",
+      "shēng",
+      "cháng",
+      "hèn",
+      "huān",
+      "yú",
+      "shǎo",
+      "。"
+    ],
+    [
+      "kěn",
+      "ài",
+      "qiān",
+      "jīn",
+      "qīng",
+      "yī",
+      "xiào",
+      "。"
+    ],
+    [
+      "wèi",
+      "jūn",
+      "chí",
+      "jiǔ",
+      "quàn",
+      "xié",
+      "yáng",
+      "，",
+      "qiě",
+      "xiàng",
+      "huā",
+      "jiān",
+      "liú",
+      "wǎn",
+      "zhào",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

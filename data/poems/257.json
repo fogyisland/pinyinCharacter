@@ -1,0 +1,52 @@
+{
+  "id": 257,
+  "title": "杂曲歌辞 婆罗门",
+  "author": "杨敬述进",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "回乐峰前沙似雪，受降城外月如霜。",
+    "不知何处吹芦管？一夜征人尽望乡。"
+  ],
+  "pinyin": [
+    [
+      "huí",
+      "lè",
+      "fēng",
+      "qián",
+      "shā",
+      "sì",
+      "xuě",
+      "，",
+      "shòu",
+      "jiàng",
+      "chéng",
+      "wài",
+      "yuè",
+      "rú",
+      "shuāng",
+      "。"
+    ],
+    [
+      "bù",
+      "zhī",
+      "hé",
+      "chù",
+      "chuī",
+      "lú",
+      "guǎn",
+      "？",
+      "yī",
+      "yè",
+      "zhēng",
+      "rén",
+      "jìn",
+      "wàng",
+      "xiāng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

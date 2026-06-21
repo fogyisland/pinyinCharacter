@@ -1,0 +1,52 @@
+{
+  "id": 78,
+  "title": "秋夕",
+  "author": "杜牧",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "红烛秋光冷画屏，轻罗小扇扑流萤。",
+    "天阶夜色凉如水，坐看牵牛织女星。"
+  ],
+  "pinyin": [
+    [
+      "hóng",
+      "zhú",
+      "qiū",
+      "guāng",
+      "lěng",
+      "huà",
+      "píng",
+      "，",
+      "qīng",
+      "luó",
+      "xiǎo",
+      "shàn",
+      "pū",
+      "liú",
+      "yíng",
+      "。"
+    ],
+    [
+      "tiān",
+      "jiē",
+      "yè",
+      "sè",
+      "liáng",
+      "rú",
+      "shuǐ",
+      "，",
+      "zuò",
+      "kàn",
+      "qiān",
+      "niú",
+      "zhī",
+      "nǚ",
+      "xīng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

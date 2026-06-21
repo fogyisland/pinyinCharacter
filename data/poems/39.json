@@ -1,0 +1,74 @@
+{
+  "id": 39,
+  "title": "楚江怀古三首 一",
+  "author": "马戴",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "露气寒光集，微阳下楚丘。",
+    "猨啼洞庭树，人在木兰舟。",
+    "广泽生明月，苍山夹乱流。",
+    "云中君不降，竟夕自悲秋。"
+  ],
+  "pinyin": [
+    [
+      "lù",
+      "qì",
+      "hán",
+      "guāng",
+      "jí",
+      "，",
+      "wēi",
+      "yáng",
+      "xià",
+      "chǔ",
+      "qiū",
+      "。"
+    ],
+    [
+      "yuán",
+      "tí",
+      "dòng",
+      "tíng",
+      "shù",
+      "，",
+      "rén",
+      "zài",
+      "mù",
+      "lán",
+      "zhōu",
+      "。"
+    ],
+    [
+      "guǎng",
+      "zé",
+      "shēng",
+      "míng",
+      "yuè",
+      "，",
+      "cāng",
+      "shān",
+      "jiá",
+      "luàn",
+      "liú",
+      "。"
+    ],
+    [
+      "yún",
+      "zhōng",
+      "jūn",
+      "bù",
+      "jiàng",
+      "，",
+      "jìng",
+      "xī",
+      "zì",
+      "bēi",
+      "qiū",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

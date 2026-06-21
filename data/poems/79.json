@@ -1,0 +1,52 @@
+{
+  "id": 79,
+  "title": "金谷园",
+  "author": "杜牧",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "繁华事散逐香尘，流水无情草自春。",
+    "日暮东风怨啼鸟，落花犹似堕楼人。"
+  ],
+  "pinyin": [
+    [
+      "fán",
+      "huá",
+      "shì",
+      "sàn",
+      "zhú",
+      "xiāng",
+      "chén",
+      "，",
+      "liú",
+      "shuǐ",
+      "wú",
+      "qíng",
+      "cǎo",
+      "zì",
+      "chūn",
+      "。"
+    ],
+    [
+      "rì",
+      "mù",
+      "dōng",
+      "fēng",
+      "yuàn",
+      "tí",
+      "niǎo",
+      "，",
+      "luò",
+      "huā",
+      "yóu",
+      "sì",
+      "duò",
+      "lóu",
+      "rén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

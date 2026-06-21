@@ -1,0 +1,52 @@
+{
+  "id": 77,
+  "title": "遣怀",
+  "author": "杜牧",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "落魄江南载酒行，楚腰肠断掌中轻。",
+    "十年一觉扬州梦，赢得青楼薄幸名。"
+  ],
+  "pinyin": [
+    [
+      "luò",
+      "pò",
+      "jiāng",
+      "nán",
+      "zǎi",
+      "jiǔ",
+      "xíng",
+      "，",
+      "chǔ",
+      "yāo",
+      "cháng",
+      "duàn",
+      "zhǎng",
+      "zhōng",
+      "qīng",
+      "。"
+    ],
+    [
+      "shí",
+      "nián",
+      "yī",
+      "jué",
+      "yáng",
+      "zhōu",
+      "mèng",
+      "，",
+      "yíng",
+      "dé",
+      "qīng",
+      "lóu",
+      "báo",
+      "xìng",
+      "míng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

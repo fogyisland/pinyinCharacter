@@ -1,0 +1,44 @@
+{
+  "id": 143,
+  "title": "辋川集 鹿柴",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "空山不见人，但闻人语响。",
+    "返景入深林，复照青苔上。"
+  ],
+  "pinyin": [
+    [
+      "kōng",
+      "shān",
+      "bù",
+      "jiàn",
+      "rén",
+      "，",
+      "dàn",
+      "wén",
+      "rén",
+      "yǔ",
+      "xiǎng",
+      "。"
+    ],
+    [
+      "fǎn",
+      "jǐng",
+      "rù",
+      "shēn",
+      "lín",
+      "，",
+      "fù",
+      "zhào",
+      "qīng",
+      "tái",
+      "shàng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

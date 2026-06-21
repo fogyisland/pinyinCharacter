@@ -1,0 +1,52 @@
+{
+  "id": 327,
+  "title": "早发白帝城",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "朝辞白帝彩云间，千里江陵一日还。",
+    "两岸猨声啼不尽，轻舟已过万重山。"
+  ],
+  "pinyin": [
+    [
+      "cháo",
+      "cí",
+      "bái",
+      "dì",
+      "cǎi",
+      "yún",
+      "jiān",
+      "，",
+      "qiān",
+      "lǐ",
+      "jiāng",
+      "líng",
+      "yī",
+      "rì",
+      "hái",
+      "。"
+    ],
+    [
+      "liǎng",
+      "àn",
+      "yuán",
+      "shēng",
+      "tí",
+      "bù",
+      "jìn",
+      "，",
+      "qīng",
+      "zhōu",
+      "yǐ",
+      "guò",
+      "wàn",
+      "zhòng",
+      "shān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

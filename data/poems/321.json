@@ -1,0 +1,52 @@
+{
+  "id": 321,
+  "title": "黄鹤楼送孟浩然之广陵",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "故人西辞黄鹤楼，烟花三月下扬州。",
+    "孤帆远影碧山尽，唯见长江天际流。"
+  ],
+  "pinyin": [
+    [
+      "gù",
+      "rén",
+      "xī",
+      "cí",
+      "huáng",
+      "hè",
+      "lóu",
+      "，",
+      "yān",
+      "huā",
+      "sān",
+      "yuè",
+      "xià",
+      "yáng",
+      "zhōu",
+      "。"
+    ],
+    [
+      "gū",
+      "fān",
+      "yuǎn",
+      "yǐng",
+      "bì",
+      "shān",
+      "jìn",
+      "，",
+      "wéi",
+      "jiàn",
+      "cháng",
+      "jiāng",
+      "tiān",
+      "jì",
+      "liú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

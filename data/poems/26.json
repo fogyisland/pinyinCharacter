@@ -1,0 +1,52 @@
+{
+  "id": 26,
+  "title": "瑶池",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "瑶池阿母绮窗开，黄竹歌声动地哀。",
+    "八骏日行三万里，穆王何事不重来。"
+  ],
+  "pinyin": [
+    [
+      "yáo",
+      "chí",
+      "ā",
+      "mǔ",
+      "qǐ",
+      "chuāng",
+      "kāi",
+      "，",
+      "huáng",
+      "zhú",
+      "gē",
+      "shēng",
+      "dòng",
+      "dì",
+      "āi",
+      "。"
+    ],
+    [
+      "bā",
+      "jùn",
+      "rì",
+      "xíng",
+      "sān",
+      "wàn",
+      "lǐ",
+      "，",
+      "mù",
+      "wáng",
+      "hé",
+      "shì",
+      "bù",
+      "zhòng",
+      "lái",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

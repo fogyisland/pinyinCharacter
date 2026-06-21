@@ -1,0 +1,74 @@
+{
+  "id": 111,
+  "title": "望洞庭湖赠张丞相",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "八月湖水平，涵虚混太清。",
+    "气蒸云梦泽，波撼岳阳城。",
+    "欲济无舟楫，端居耻圣明。",
+    "坐观垂钓者，空有羡鱼情。"
+  ],
+  "pinyin": [
+    [
+      "bā",
+      "yuè",
+      "hú",
+      "shuǐ",
+      "píng",
+      "，",
+      "hán",
+      "xū",
+      "hùn",
+      "tài",
+      "qīng",
+      "。"
+    ],
+    [
+      "qì",
+      "zhēng",
+      "yún",
+      "mèng",
+      "zé",
+      "，",
+      "bō",
+      "hàn",
+      "yuè",
+      "yáng",
+      "chéng",
+      "。"
+    ],
+    [
+      "yù",
+      "jì",
+      "wú",
+      "zhōu",
+      "jí",
+      "，",
+      "duān",
+      "jū",
+      "chǐ",
+      "shèng",
+      "míng",
+      "。"
+    ],
+    [
+      "zuò",
+      "guān",
+      "chuí",
+      "diào",
+      "zhě",
+      "，",
+      "kōng",
+      "yǒu",
+      "xiàn",
+      "yú",
+      "qíng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

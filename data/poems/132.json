@@ -1,0 +1,74 @@
+{
+  "id": 132,
+  "title": "李端公",
+  "author": "卢纶",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "故关衰草遍，离别自堪悲。",
+    "路出寒云外，人归暮雪时。",
+    "少孤为客早，多难识君迟。",
+    "掩泪空相向，风尘何处期。"
+  ],
+  "pinyin": [
+    [
+      "gù",
+      "guān",
+      "shuāi",
+      "cǎo",
+      "biàn",
+      "，",
+      "lí",
+      "bié",
+      "zì",
+      "kān",
+      "bēi",
+      "。"
+    ],
+    [
+      "lù",
+      "chū",
+      "hán",
+      "yún",
+      "wài",
+      "，",
+      "rén",
+      "guī",
+      "mù",
+      "xuě",
+      "shí",
+      "。"
+    ],
+    [
+      "shǎo",
+      "gū",
+      "wèi",
+      "kè",
+      "zǎo",
+      "，",
+      "duō",
+      "nán",
+      "shí",
+      "jūn",
+      "chí",
+      "。"
+    ],
+    [
+      "yǎn",
+      "lèi",
+      "kōng",
+      "xiāng",
+      "xiàng",
+      "，",
+      "fēng",
+      "chén",
+      "hé",
+      "chù",
+      "qī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

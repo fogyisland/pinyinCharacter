@@ -1,0 +1,74 @@
+{
+  "id": 11,
+  "title": "蝉",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "本以高难饱，徒劳恨费声。",
+    "五更疎欲断，一树碧无情。",
+    "薄宦梗犹泛，故园芜已平。",
+    "烦君最相警，我亦举家清。"
+  ],
+  "pinyin": [
+    [
+      "běn",
+      "yǐ",
+      "gāo",
+      "nán",
+      "bǎo",
+      "，",
+      "tú",
+      "láo",
+      "hèn",
+      "fèi",
+      "shēng",
+      "。"
+    ],
+    [
+      "wǔ",
+      "gèng",
+      "shū",
+      "yù",
+      "duàn",
+      "，",
+      "yī",
+      "shù",
+      "bì",
+      "wú",
+      "qíng",
+      "。"
+    ],
+    [
+      "báo",
+      "huàn",
+      "gěng",
+      "yóu",
+      "fàn",
+      "，",
+      "gù",
+      "yuán",
+      "wú",
+      "yǐ",
+      "píng",
+      "。"
+    ],
+    [
+      "fán",
+      "jūn",
+      "zuì",
+      "xiāng",
+      "jǐng",
+      "，",
+      "wǒ",
+      "yì",
+      "jǔ",
+      "jiā",
+      "qīng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

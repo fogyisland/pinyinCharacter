@@ -1,0 +1,74 @@
+{
+  "id": 63,
+  "title": "酬张少府",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "晚年唯好静，万事不关心。",
+    "自顾无长策，空知返旧林。",
+    "松风吹解带，山月照弹琴。",
+    "君问穷通理，渔歌入浦深。"
+  ],
+  "pinyin": [
+    [
+      "wǎn",
+      "nián",
+      "wéi",
+      "hǎo",
+      "jìng",
+      "，",
+      "wàn",
+      "shì",
+      "bù",
+      "guān",
+      "xīn",
+      "。"
+    ],
+    [
+      "zì",
+      "gù",
+      "wú",
+      "cháng",
+      "cè",
+      "，",
+      "kōng",
+      "zhī",
+      "fǎn",
+      "jiù",
+      "lín",
+      "。"
+    ],
+    [
+      "sōng",
+      "fēng",
+      "chuī",
+      "jiě",
+      "dài",
+      "，",
+      "shān",
+      "yuè",
+      "zhào",
+      "tán",
+      "qín",
+      "。"
+    ],
+    [
+      "jūn",
+      "wèn",
+      "qióng",
+      "tōng",
+      "lǐ",
+      "，",
+      "yú",
+      "gē",
+      "rù",
+      "pǔ",
+      "shēn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

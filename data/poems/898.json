@@ -1,0 +1,98 @@
+{
+  "id": 898,
+  "title": "踏莎行",
+  "author": "晏殊",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "小径红稀，芳郊绿遍。",
+    "高台树色阴阴见。",
+    "春风不解禁杨花，乱扑行人面。",
+    "翠叶藏莺，朱帘隔燕。",
+    "炉香静逐游丝转。",
+    "一场愁梦酒醒时，斜阳却照深深院。"
+  ],
+  "pinyin": [
+    [
+      "xiǎo",
+      "jìng",
+      "hóng",
+      "xī",
+      "，",
+      "fāng",
+      "jiāo",
+      "lǜ",
+      "biàn",
+      "。"
+    ],
+    [
+      "gāo",
+      "tái",
+      "shù",
+      "sè",
+      "yīn",
+      "yīn",
+      "jiàn",
+      "。"
+    ],
+    [
+      "chūn",
+      "fēng",
+      "bù",
+      "jiě",
+      "jìn",
+      "yáng",
+      "huā",
+      "，",
+      "luàn",
+      "pū",
+      "xíng",
+      "rén",
+      "miàn",
+      "。"
+    ],
+    [
+      "cuì",
+      "yè",
+      "cáng",
+      "yīng",
+      "，",
+      "zhū",
+      "lián",
+      "gé",
+      "yàn",
+      "。"
+    ],
+    [
+      "lú",
+      "xiāng",
+      "jìng",
+      "zhú",
+      "yóu",
+      "sī",
+      "zhuǎn",
+      "。"
+    ],
+    [
+      "yī",
+      "chǎng",
+      "chóu",
+      "mèng",
+      "jiǔ",
+      "xǐng",
+      "shí",
+      "，",
+      "xié",
+      "yáng",
+      "què",
+      "zhào",
+      "shēn",
+      "shēn",
+      "yuàn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

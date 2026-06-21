@@ -1,0 +1,44 @@
+{
+  "id": 204,
+  "title": "江雪",
+  "author": "柳宗元",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "千山鸟飞绝，万迳人踪灭。",
+    "孤舟蓑笠翁，独钓寒江雪。"
+  ],
+  "pinyin": [
+    [
+      "qiān",
+      "shān",
+      "niǎo",
+      "fēi",
+      "jué",
+      "，",
+      "wàn",
+      "jìng",
+      "rén",
+      "zōng",
+      "miè",
+      "。"
+    ],
+    [
+      "gū",
+      "zhōu",
+      "suō",
+      "lì",
+      "wēng",
+      "，",
+      "dú",
+      "diào",
+      "hán",
+      "jiāng",
+      "xuě",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

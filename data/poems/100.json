@@ -1,0 +1,74 @@
+{
+  "id": 100,
+  "title": "饯别王十一南游",
+  "author": "刘长卿",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "望君烟水阔，挥手泪沾巾。",
+    "飞鸟没何处，青山空向人。",
+    "长江一帆远，落日五湖春。",
+    "谁见汀洲上，相思愁白苹。"
+  ],
+  "pinyin": [
+    [
+      "wàng",
+      "jūn",
+      "yān",
+      "shuǐ",
+      "kuò",
+      "，",
+      "huī",
+      "shǒu",
+      "lèi",
+      "zhān",
+      "jīn",
+      "。"
+    ],
+    [
+      "fēi",
+      "niǎo",
+      "méi",
+      "hé",
+      "chù",
+      "，",
+      "qīng",
+      "shān",
+      "kōng",
+      "xiàng",
+      "rén",
+      "。"
+    ],
+    [
+      "cháng",
+      "jiāng",
+      "yī",
+      "fān",
+      "yuǎn",
+      "，",
+      "luò",
+      "rì",
+      "wǔ",
+      "hú",
+      "chūn",
+      "。"
+    ],
+    [
+      "shuí",
+      "jiàn",
+      "tīng",
+      "zhōu",
+      "shàng",
+      "，",
+      "xiāng",
+      "sī",
+      "chóu",
+      "bái",
+      "píng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

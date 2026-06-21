@@ -1,0 +1,74 @@
+{
+  "id": 3,
+  "title": "经邹鲁祭孔子而叹之",
+  "author": "明皇帝",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "夫子何为者？栖栖一代中。",
+    "地犹鄹氏邑，宅即鲁王宫。",
+    "叹凤嗟身否，伤麟怨道穷。",
+    "今看两楹奠，当与梦时同。"
+  ],
+  "pinyin": [
+    [
+      "fū",
+      "zǐ",
+      "hé",
+      "wèi",
+      "zhě",
+      "？",
+      "qī",
+      "qī",
+      "yī",
+      "dài",
+      "zhōng",
+      "。"
+    ],
+    [
+      "dì",
+      "yóu",
+      "zōu",
+      "shì",
+      "yì",
+      "，",
+      "zhái",
+      "jí",
+      "lǔ",
+      "wáng",
+      "gōng",
+      "。"
+    ],
+    [
+      "tàn",
+      "fèng",
+      "jiē",
+      "shēn",
+      "fǒu",
+      "，",
+      "shāng",
+      "lín",
+      "yuàn",
+      "dào",
+      "qióng",
+      "。"
+    ],
+    [
+      "jīn",
+      "kàn",
+      "liǎng",
+      "yíng",
+      "diàn",
+      "，",
+      "dāng",
+      "yǔ",
+      "mèng",
+      "shí",
+      "tóng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

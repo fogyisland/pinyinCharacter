@@ -1,0 +1,52 @@
+{
+  "id": 300,
+  "title": "逢入京使",
+  "author": "岑参",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "故园东望路漫漫，双袖龙钟泪不干。",
+    "马上相逢无纸笔，凭君传语报平安。"
+  ],
+  "pinyin": [
+    [
+      "gù",
+      "yuán",
+      "dōng",
+      "wàng",
+      "lù",
+      "màn",
+      "màn",
+      "，",
+      "shuāng",
+      "xiù",
+      "lóng",
+      "zhōng",
+      "lèi",
+      "bù",
+      "gān",
+      "。"
+    ],
+    [
+      "mǎ",
+      "shàng",
+      "xiāng",
+      "féng",
+      "wú",
+      "zhǐ",
+      "bǐ",
+      "，",
+      "píng",
+      "jūn",
+      "chuán",
+      "yǔ",
+      "bào",
+      "píng",
+      "ān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

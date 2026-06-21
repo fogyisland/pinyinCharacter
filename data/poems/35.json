@@ -1,0 +1,74 @@
+{
+  "id": 35,
+  "title": "章台夜思",
+  "author": "韦庄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "清瑟怨遥夜，遶弦风雨哀。",
+    "孤灯闻楚角，残月下章台。",
+    "芳草已云暮，故人殊未来。",
+    "乡书不可寄，秋雁又南回。"
+  ],
+  "pinyin": [
+    [
+      "qīng",
+      "sè",
+      "yuàn",
+      "yáo",
+      "yè",
+      "，",
+      "rào",
+      "xián",
+      "fēng",
+      "yǔ",
+      "āi",
+      "。"
+    ],
+    [
+      "gū",
+      "dēng",
+      "wén",
+      "chǔ",
+      "jiǎo",
+      "，",
+      "cán",
+      "yuè",
+      "xià",
+      "zhāng",
+      "tái",
+      "。"
+    ],
+    [
+      "fāng",
+      "cǎo",
+      "yǐ",
+      "yún",
+      "mù",
+      "，",
+      "gù",
+      "rén",
+      "shū",
+      "wèi",
+      "lái",
+      "。"
+    ],
+    [
+      "xiāng",
+      "shū",
+      "bù",
+      "kě",
+      "jì",
+      "，",
+      "qiū",
+      "yàn",
+      "yòu",
+      "nán",
+      "huí",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

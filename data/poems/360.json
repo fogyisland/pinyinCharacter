@@ -1,0 +1,52 @@
+{
+  "id": 360,
+  "title": "春怨",
+  "author": "刘方平",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "纱窗日落渐黄昏，金屋无人见泪痕。",
+    "寂寞空庭春欲晚，梨花满地不开门。"
+  ],
+  "pinyin": [
+    [
+      "shā",
+      "chuāng",
+      "rì",
+      "luò",
+      "jiàn",
+      "huáng",
+      "hūn",
+      "，",
+      "jīn",
+      "wū",
+      "wú",
+      "rén",
+      "jiàn",
+      "lèi",
+      "hén",
+      "。"
+    ],
+    [
+      "jì",
+      "mò",
+      "kōng",
+      "tíng",
+      "chūn",
+      "yù",
+      "wǎn",
+      "，",
+      "lí",
+      "huā",
+      "mǎn",
+      "dì",
+      "bù",
+      "kāi",
+      "mén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

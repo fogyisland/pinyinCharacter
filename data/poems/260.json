@@ -1,0 +1,52 @@
+{
+  "id": 260,
+  "title": "杂曲歌辞 清平调 三",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "名花倾国两相欢，长得君王带笑看。",
+    "解释春风无限恨，沈香亭北倚阑干。"
+  ],
+  "pinyin": [
+    [
+      "míng",
+      "huā",
+      "qīng",
+      "guó",
+      "liǎng",
+      "xiāng",
+      "huān",
+      "，",
+      "cháng",
+      "dé",
+      "jūn",
+      "wáng",
+      "dài",
+      "xiào",
+      "kàn",
+      "。"
+    ],
+    [
+      "jiě",
+      "shì",
+      "chūn",
+      "fēng",
+      "wú",
+      "xiàn",
+      "hèn",
+      "，",
+      "shěn",
+      "xiāng",
+      "tíng",
+      "běi",
+      "yǐ",
+      "lán",
+      "gān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

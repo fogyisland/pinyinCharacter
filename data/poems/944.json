@@ -1,0 +1,90 @@
+{
+  "id": 944,
+  "title": "菩萨蛮",
+  "author": "辛弃疾",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "郁孤台下清江水。",
+    "中间多少行人泪。",
+    "西北是长安。",
+    "可怜无数山。",
+    "青山遮不住。",
+    "毕竟江流去。",
+    "江晚正愁予。",
+    "山深闻鹧鸪。"
+  ],
+  "pinyin": [
+    [
+      "yù",
+      "gū",
+      "tái",
+      "xià",
+      "qīng",
+      "jiāng",
+      "shuǐ",
+      "。"
+    ],
+    [
+      "zhōng",
+      "jiān",
+      "duō",
+      "shǎo",
+      "xíng",
+      "rén",
+      "lèi",
+      "。"
+    ],
+    [
+      "xī",
+      "běi",
+      "shì",
+      "cháng",
+      "ān",
+      "。"
+    ],
+    [
+      "kě",
+      "lián",
+      "wú",
+      "shù",
+      "shān",
+      "。"
+    ],
+    [
+      "qīng",
+      "shān",
+      "zhē",
+      "bù",
+      "zhù",
+      "。"
+    ],
+    [
+      "bì",
+      "jìng",
+      "jiāng",
+      "liú",
+      "qù",
+      "。"
+    ],
+    [
+      "jiāng",
+      "wǎn",
+      "zhèng",
+      "chóu",
+      "yǔ",
+      "。"
+    ],
+    [
+      "shān",
+      "shēn",
+      "wén",
+      "zhè",
+      "gū",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

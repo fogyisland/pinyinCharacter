@@ -1,0 +1,74 @@
+{
+  "id": 322,
+  "title": "渡荆门送别",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "渡远荆门外，来从楚国游。",
+    "山随平野尽，江入大荒流。",
+    "月下飞天镜，云生结海楼。",
+    "仍连故乡水，万里送行舟。"
+  ],
+  "pinyin": [
+    [
+      "dù",
+      "yuǎn",
+      "jīng",
+      "mén",
+      "wài",
+      "，",
+      "lái",
+      "cóng",
+      "chǔ",
+      "guó",
+      "yóu",
+      "。"
+    ],
+    [
+      "shān",
+      "suí",
+      "píng",
+      "yě",
+      "jìn",
+      "，",
+      "jiāng",
+      "rù",
+      "dà",
+      "huāng",
+      "liú",
+      "。"
+    ],
+    [
+      "yuè",
+      "xià",
+      "fēi",
+      "tiān",
+      "jìng",
+      "，",
+      "yún",
+      "shēng",
+      "jié",
+      "hǎi",
+      "lóu",
+      "。"
+    ],
+    [
+      "réng",
+      "lián",
+      "gù",
+      "xiāng",
+      "shuǐ",
+      "，",
+      "wàn",
+      "lǐ",
+      "sòng",
+      "xíng",
+      "zhōu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

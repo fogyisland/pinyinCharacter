@@ -1,0 +1,52 @@
+{
+  "id": 177,
+  "title": "还乡偶书  其二",
+  "author": "黄拱",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "少小离家老大回，乡音难改鬓毛衰。",
+    "儿童相见不相识，借问客从何处来。"
+  ],
+  "pinyin": [
+    [
+      "shǎo",
+      "xiǎo",
+      "lí",
+      "jiā",
+      "lǎo",
+      "dà",
+      "huí",
+      "，",
+      "xiāng",
+      "yīn",
+      "nán",
+      "gǎi",
+      "bìn",
+      "máo",
+      "shuāi",
+      "。"
+    ],
+    [
+      "ér",
+      "tóng",
+      "xiāng",
+      "jiàn",
+      "bù",
+      "xiāng",
+      "shí",
+      "，",
+      "jiè",
+      "wèn",
+      "kè",
+      "cóng",
+      "hé",
+      "chù",
+      "lái",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

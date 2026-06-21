@@ -1,0 +1,44 @@
+{
+  "id": 308,
+  "title": "玉阶怨",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "玉阶生白露，夜久侵罗袜。",
+    "却下水晶帘，玲珑望秋月。"
+  ],
+  "pinyin": [
+    [
+      "yù",
+      "jiē",
+      "shēng",
+      "bái",
+      "lù",
+      "，",
+      "yè",
+      "jiǔ",
+      "qīn",
+      "luó",
+      "wà",
+      "。"
+    ],
+    [
+      "què",
+      "xià",
+      "shuǐ",
+      "jīng",
+      "lián",
+      "，",
+      "líng",
+      "lóng",
+      "wàng",
+      "qiū",
+      "yuè",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

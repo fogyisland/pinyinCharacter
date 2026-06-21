@@ -1,0 +1,77 @@
+{
+  "id": 785,
+  "title": "生查子",
+  "author": "刘克庄",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "繁灯夺霁华。",
+    "戏鼓侵明发。",
+    "物色旧时同，情味中年别。",
+    "浅画镜中眉，深拜楼西月。",
+    "人散市声收，渐入愁时节。"
+  ],
+  "pinyin": [
+    [
+      "fán",
+      "dēng",
+      "duó",
+      "jì",
+      "huá",
+      "。"
+    ],
+    [
+      "xì",
+      "gǔ",
+      "qīn",
+      "míng",
+      "fā",
+      "。"
+    ],
+    [
+      "wù",
+      "sè",
+      "jiù",
+      "shí",
+      "tóng",
+      "，",
+      "qíng",
+      "wèi",
+      "zhōng",
+      "nián",
+      "bié",
+      "。"
+    ],
+    [
+      "qiǎn",
+      "huà",
+      "jìng",
+      "zhōng",
+      "méi",
+      "，",
+      "shēn",
+      "bài",
+      "lóu",
+      "xī",
+      "yuè",
+      "。"
+    ],
+    [
+      "rén",
+      "sàn",
+      "shì",
+      "shēng",
+      "shōu",
+      "，",
+      "jiàn",
+      "rù",
+      "chóu",
+      "shí",
+      "jié",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

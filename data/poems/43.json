@@ -1,0 +1,44 @@
+{
+  "id": 43,
+  "title": "春怨",
+  "author": "金昌绪",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "打起黄莺儿，莫教枝上啼。",
+    "啼时惊妾梦，不得到辽西。"
+  ],
+  "pinyin": [
+    [
+      "dǎ",
+      "qǐ",
+      "huáng",
+      "yīng",
+      "ér",
+      "，",
+      "mò",
+      "jiào",
+      "zhī",
+      "shàng",
+      "tí",
+      "。"
+    ],
+    [
+      "tí",
+      "shí",
+      "jīng",
+      "qiè",
+      "mèng",
+      "，",
+      "bù",
+      "dé",
+      "dào",
+      "liáo",
+      "xī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,52 @@
+{
+  "id": 86,
+  "title": "后宫词",
+  "author": "白居易",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "泪湿罗巾梦不成，夜深前殿按歌声。",
+    "红颜未老恩先断，斜倚薰笼坐到明。"
+  ],
+  "pinyin": [
+    [
+      "lèi",
+      "shī",
+      "luó",
+      "jīn",
+      "mèng",
+      "bù",
+      "chéng",
+      "，",
+      "yè",
+      "shēn",
+      "qián",
+      "diàn",
+      "àn",
+      "gē",
+      "shēng",
+      "。"
+    ],
+    [
+      "hóng",
+      "yán",
+      "wèi",
+      "lǎo",
+      "ēn",
+      "xiān",
+      "duàn",
+      "，",
+      "xié",
+      "yǐ",
+      "xūn",
+      "lóng",
+      "zuò",
+      "dào",
+      "míng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

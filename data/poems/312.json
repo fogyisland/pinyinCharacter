@@ -1,0 +1,59 @@
+{
+  "id": 312,
+  "title": "春思",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "燕草如碧丝，秦桑低绿枝。",
+    "当君怀归日，是妾断肠时。",
+    "春风不相识，何事入罗帏。"
+  ],
+  "pinyin": [
+    [
+      "yàn",
+      "cǎo",
+      "rú",
+      "bì",
+      "sī",
+      "，",
+      "qín",
+      "sāng",
+      "dī",
+      "lǜ",
+      "zhī",
+      "。"
+    ],
+    [
+      "dāng",
+      "jūn",
+      "huái",
+      "guī",
+      "rì",
+      "，",
+      "shì",
+      "qiè",
+      "duàn",
+      "cháng",
+      "shí",
+      "。"
+    ],
+    [
+      "chūn",
+      "fēng",
+      "bù",
+      "xiāng",
+      "shí",
+      "，",
+      "hé",
+      "shì",
+      "rù",
+      "luó",
+      "wéi",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

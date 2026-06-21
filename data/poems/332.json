@@ -1,0 +1,74 @@
+{
+  "id": 332,
+  "title": "淮上喜会梁川故人",
+  "author": "韦应物",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "江汉曾为客，相逢每醉还。",
+    "浮云一别后，流水十年间。",
+    "欢笑情如旧，萧疎鬓已斑。",
+    "何因北归去，淮上对秋山。"
+  ],
+  "pinyin": [
+    [
+      "jiāng",
+      "hàn",
+      "céng",
+      "wèi",
+      "kè",
+      "，",
+      "xiāng",
+      "féng",
+      "měi",
+      "zuì",
+      "hái",
+      "。"
+    ],
+    [
+      "fú",
+      "yún",
+      "yī",
+      "bié",
+      "hòu",
+      "，",
+      "liú",
+      "shuǐ",
+      "shí",
+      "nián",
+      "jiān",
+      "。"
+    ],
+    [
+      "huān",
+      "xiào",
+      "qíng",
+      "rú",
+      "jiù",
+      "，",
+      "xiāo",
+      "shū",
+      "bìn",
+      "yǐ",
+      "bān",
+      "。"
+    ],
+    [
+      "hé",
+      "yīn",
+      "běi",
+      "guī",
+      "qù",
+      "，",
+      "huái",
+      "shàng",
+      "duì",
+      "qiū",
+      "shān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

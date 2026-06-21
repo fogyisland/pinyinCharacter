@@ -1,0 +1,52 @@
+{
+  "id": 75,
+  "title": "赠别二首 一",
+  "author": "杜牧",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "娉娉褭褭十三余，豆蔻梢头二月初。",
+    "春风十里扬州路，卷上珠帘总不如。"
+  ],
+  "pinyin": [
+    [
+      "pīng",
+      "pīng",
+      "niǎo",
+      "niǎo",
+      "shí",
+      "sān",
+      "yú",
+      "，",
+      "dòu",
+      "kòu",
+      "shāo",
+      "tóu",
+      "èr",
+      "yuè",
+      "chū",
+      "。"
+    ],
+    [
+      "chūn",
+      "fēng",
+      "shí",
+      "lǐ",
+      "yáng",
+      "zhōu",
+      "lù",
+      "，",
+      "juàn",
+      "shàng",
+      "zhū",
+      "lián",
+      "zǒng",
+      "bù",
+      "rú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,74 @@
+{
+  "id": 241,
+  "title": "望岳",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "岱宗夫如何，齐鲁青未了。",
+    "造化钟神秀，阴阳割昏晓。",
+    "荡胷生曾云，决眦入归鸟。",
+    "会当凌绝顶，一览众山小。"
+  ],
+  "pinyin": [
+    [
+      "dài",
+      "zōng",
+      "fū",
+      "rú",
+      "hé",
+      "，",
+      "qí",
+      "lǔ",
+      "qīng",
+      "wèi",
+      "liǎo",
+      "。"
+    ],
+    [
+      "zào",
+      "huà",
+      "zhōng",
+      "shén",
+      "xiù",
+      "，",
+      "yīn",
+      "yáng",
+      "gē",
+      "hūn",
+      "xiǎo",
+      "。"
+    ],
+    [
+      "dàng",
+      "xiōng",
+      "shēng",
+      "céng",
+      "yún",
+      "，",
+      "jué",
+      "zì",
+      "rù",
+      "guī",
+      "niǎo",
+      "。"
+    ],
+    [
+      "huì",
+      "dāng",
+      "líng",
+      "jué",
+      "dǐng",
+      "，",
+      "yī",
+      "lǎn",
+      "zhòng",
+      "shān",
+      "xiǎo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

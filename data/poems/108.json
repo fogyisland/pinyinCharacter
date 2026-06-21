@@ -1,0 +1,89 @@
+{
+  "id": 108,
+  "title": "夏日南亭怀辛大",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "山光忽西落，池月渐东上。",
+    "散发乘夕凉，开轩卧闲敞。",
+    "荷风送香气，竹露滴清响。",
+    "欲取鸣琴弹，恨无知音赏。",
+    "感此怀故人，中宵劳梦想。"
+  ],
+  "pinyin": [
+    [
+      "shān",
+      "guāng",
+      "hū",
+      "xī",
+      "luò",
+      "，",
+      "chí",
+      "yuè",
+      "jiàn",
+      "dōng",
+      "shàng",
+      "。"
+    ],
+    [
+      "sàn",
+      "fā",
+      "chéng",
+      "xī",
+      "liáng",
+      "，",
+      "kāi",
+      "xuān",
+      "wò",
+      "xián",
+      "chǎng",
+      "。"
+    ],
+    [
+      "hé",
+      "fēng",
+      "sòng",
+      "xiāng",
+      "qì",
+      "，",
+      "zhú",
+      "lù",
+      "dī",
+      "qīng",
+      "xiǎng",
+      "。"
+    ],
+    [
+      "yù",
+      "qǔ",
+      "míng",
+      "qín",
+      "tán",
+      "，",
+      "hèn",
+      "wú",
+      "zhī",
+      "yīn",
+      "shǎng",
+      "。"
+    ],
+    [
+      "gǎn",
+      "cǐ",
+      "huái",
+      "gù",
+      "rén",
+      "，",
+      "zhōng",
+      "xiāo",
+      "láo",
+      "mèng",
+      "xiǎng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

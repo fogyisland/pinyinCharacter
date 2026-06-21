@@ -1,0 +1,44 @@
+{
+  "id": 182,
+  "title": "问刘十九",
+  "author": "白居易",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "绿螘新醅酒，红泥小火垆。",
+    "晚来天欲雪，能饮一杯无。"
+  ],
+  "pinyin": [
+    [
+      "lǜ",
+      "yǐ",
+      "xīn",
+      "pēi",
+      "jiǔ",
+      "，",
+      "hóng",
+      "ní",
+      "xiǎo",
+      "huǒ",
+      "lú",
+      "。"
+    ],
+    [
+      "wǎn",
+      "lái",
+      "tiān",
+      "yù",
+      "xuě",
+      "，",
+      "néng",
+      "yǐn",
+      "yī",
+      "bēi",
+      "wú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

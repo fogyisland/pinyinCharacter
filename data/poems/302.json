@@ -1,0 +1,74 @@
+{
+  "id": 302,
+  "title": "书边事",
+  "author": "张乔",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "调角断清秋，征人倚戍楼。",
+    "春风对青冢，白日落梁州。",
+    "大汉无兵阻，穷边有客游。",
+    "蕃情似此水，长愿向南流。"
+  ],
+  "pinyin": [
+    [
+      "tiáo",
+      "jiǎo",
+      "duàn",
+      "qīng",
+      "qiū",
+      "，",
+      "zhēng",
+      "rén",
+      "yǐ",
+      "shù",
+      "lóu",
+      "。"
+    ],
+    [
+      "chūn",
+      "fēng",
+      "duì",
+      "qīng",
+      "zhǒng",
+      "，",
+      "bái",
+      "rì",
+      "luò",
+      "liáng",
+      "zhōu",
+      "。"
+    ],
+    [
+      "dà",
+      "hàn",
+      "wú",
+      "bīng",
+      "zǔ",
+      "，",
+      "qióng",
+      "biān",
+      "yǒu",
+      "kè",
+      "yóu",
+      "。"
+    ],
+    [
+      "fān",
+      "qíng",
+      "sì",
+      "cǐ",
+      "shuǐ",
+      "，",
+      "cháng",
+      "yuàn",
+      "xiàng",
+      "nán",
+      "liú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

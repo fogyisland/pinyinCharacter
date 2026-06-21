@@ -1,0 +1,44 @@
+{
+  "id": 90,
+  "title": "听筝",
+  "author": "李端",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "鸣筝金粟柱，素手玉房前。",
+    "欲得周郎顾，时时误拂弦。"
+  ],
+  "pinyin": [
+    [
+      "míng",
+      "zhēng",
+      "jīn",
+      "sù",
+      "zhù",
+      "，",
+      "sù",
+      "shǒu",
+      "yù",
+      "fáng",
+      "qián",
+      "。"
+    ],
+    [
+      "yù",
+      "dé",
+      "zhōu",
+      "láng",
+      "gù",
+      "，",
+      "shí",
+      "shí",
+      "wù",
+      "fú",
+      "xián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

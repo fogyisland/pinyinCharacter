@@ -1,0 +1,52 @@
+{
+  "id": 283,
+  "title": "寒食",
+  "author": "韩翃",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "春城无处不飞花，寒食东风御柳斜。",
+    "日暮汉宫传蜡烛，轻烟散入五侯家。"
+  ],
+  "pinyin": [
+    [
+      "chūn",
+      "chéng",
+      "wú",
+      "chù",
+      "bù",
+      "fēi",
+      "huā",
+      "，",
+      "hán",
+      "shí",
+      "dōng",
+      "fēng",
+      "yù",
+      "liǔ",
+      "xié",
+      "。"
+    ],
+    [
+      "rì",
+      "mù",
+      "hàn",
+      "gōng",
+      "chuán",
+      "là",
+      "zhú",
+      "，",
+      "qīng",
+      "yān",
+      "sàn",
+      "rù",
+      "wǔ",
+      "hóu",
+      "jiā",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

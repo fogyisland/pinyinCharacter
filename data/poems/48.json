@@ -1,0 +1,44 @@
+{
+  "id": 48,
+  "title": "哥舒歌",
+  "author": "西鄙人",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "北斗七星高，哥舒夜带刀。",
+    "至今窥牧马，不敢过临洮。"
+  ],
+  "pinyin": [
+    [
+      "běi",
+      "dòu",
+      "qī",
+      "xīng",
+      "gāo",
+      "，",
+      "gē",
+      "shū",
+      "yè",
+      "dài",
+      "dāo",
+      "。"
+    ],
+    [
+      "zhì",
+      "jīn",
+      "kuī",
+      "mù",
+      "mǎ",
+      "，",
+      "bù",
+      "gǎn",
+      "guò",
+      "lín",
+      "táo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

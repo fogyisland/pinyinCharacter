@@ -1,0 +1,73 @@
+{
+  "id": 205,
+  "title": "渔翁",
+  "author": "柳宗元",
+  "dynasty": "tang",
+  "category": null,
+  "form": "七言古风",
+  "content": [
+    "渔翁夜傍西岩宿，晓汲清湘燃楚竹。",
+    "烟销日出不见人，[欸]乃一声山水绿。",
+    "回看天际下中流，岩上无心云相逐。"
+  ],
+  "pinyin": [
+    [
+      "yú",
+      "wēng",
+      "yè",
+      "bàng",
+      "xī",
+      "yán",
+      "sù",
+      "，",
+      "xiǎo",
+      "jí",
+      "qīng",
+      "xiāng",
+      "rán",
+      "chǔ",
+      "zhú",
+      "。"
+    ],
+    [
+      "yān",
+      "xiāo",
+      "rì",
+      "chū",
+      "bù",
+      "jiàn",
+      "rén",
+      "，",
+      "[",
+      "ǎi",
+      "]",
+      "nǎi",
+      "yī",
+      "shēng",
+      "shān",
+      "shuǐ",
+      "lǜ",
+      "。"
+    ],
+    [
+      "huí",
+      "kàn",
+      "tiān",
+      "jì",
+      "xià",
+      "zhōng",
+      "liú",
+      "，",
+      "yán",
+      "shàng",
+      "wú",
+      "xīn",
+      "yún",
+      "xiāng",
+      "zhú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

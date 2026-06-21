@@ -1,0 +1,74 @@
+{
+  "id": 207,
+  "title": "月夜",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "今夜鄜州月，闺中只独看。",
+    "遥怜小儿女，未解忆长安。",
+    "香雾云鬟湿，清辉玉臂寒。",
+    "何时倚虚幌，双照泪痕干。"
+  ],
+  "pinyin": [
+    [
+      "jīn",
+      "yè",
+      "fū",
+      "zhōu",
+      "yuè",
+      "，",
+      "guī",
+      "zhōng",
+      "zhī",
+      "dú",
+      "kàn",
+      "。"
+    ],
+    [
+      "yáo",
+      "lián",
+      "xiǎo",
+      "ér",
+      "nǚ",
+      "，",
+      "wèi",
+      "jiě",
+      "yì",
+      "cháng",
+      "ān",
+      "。"
+    ],
+    [
+      "xiāng",
+      "wù",
+      "yún",
+      "huán",
+      "shī",
+      "，",
+      "qīng",
+      "huī",
+      "yù",
+      "bì",
+      "hán",
+      "。"
+    ],
+    [
+      "hé",
+      "shí",
+      "yǐ",
+      "xū",
+      "huǎng",
+      "，",
+      "shuāng",
+      "zhào",
+      "lèi",
+      "hén",
+      "gān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

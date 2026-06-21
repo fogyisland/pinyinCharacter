@@ -1,0 +1,52 @@
+{
+  "id": 197,
+  "title": "题金陵渡",
+  "author": "张祜",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "金陵津渡小山楼，一宿行人自可愁。",
+    "潮落夜江斜月里，两三星火是瓜州。"
+  ],
+  "pinyin": [
+    [
+      "jīn",
+      "líng",
+      "jīn",
+      "dù",
+      "xiǎo",
+      "shān",
+      "lóu",
+      "，",
+      "yī",
+      "sù",
+      "xíng",
+      "rén",
+      "zì",
+      "kě",
+      "chóu",
+      "。"
+    ],
+    [
+      "cháo",
+      "luò",
+      "yè",
+      "jiāng",
+      "xié",
+      "yuè",
+      "lǐ",
+      "，",
+      "liǎng",
+      "sān",
+      "xīng",
+      "huǒ",
+      "shì",
+      "guā",
+      "zhōu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

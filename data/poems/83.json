@@ -1,0 +1,52 @@
+{
+  "id": 83,
+  "title": "寄人 一",
+  "author": "张泌",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "别梦依依到谢家，小廊回合曲阑斜。",
+    "多情只有春庭月，犹为离人照落花。"
+  ],
+  "pinyin": [
+    [
+      "bié",
+      "mèng",
+      "yī",
+      "yī",
+      "dào",
+      "xiè",
+      "jiā",
+      "，",
+      "xiǎo",
+      "láng",
+      "huí",
+      "hé",
+      "qǔ",
+      "lán",
+      "xié",
+      "。"
+    ],
+    [
+      "duō",
+      "qíng",
+      "zhī",
+      "yǒu",
+      "chūn",
+      "tíng",
+      "yuè",
+      "，",
+      "yóu",
+      "wèi",
+      "lí",
+      "rén",
+      "zhào",
+      "luò",
+      "huā",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

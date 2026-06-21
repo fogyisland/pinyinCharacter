@@ -1,0 +1,89 @@
+{
+  "id": 57,
+  "title": "渭川田家",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "斜阳照墟落，穷巷牛羊归。",
+    "野老念牧童，倚杖候荆扉。",
+    "雉雊麦苗秀，蚕眠桑叶稀。",
+    "田夫荷锄至，相见语依依。",
+    "即此羡闲逸，怅然吟式微。"
+  ],
+  "pinyin": [
+    [
+      "xié",
+      "yáng",
+      "zhào",
+      "xū",
+      "luò",
+      "，",
+      "qióng",
+      "xiàng",
+      "niú",
+      "yáng",
+      "guī",
+      "。"
+    ],
+    [
+      "yě",
+      "lǎo",
+      "niàn",
+      "mù",
+      "tóng",
+      "，",
+      "yǐ",
+      "zhàng",
+      "hòu",
+      "jīng",
+      "fēi",
+      "。"
+    ],
+    [
+      "zhì",
+      "gòu",
+      "mài",
+      "miáo",
+      "xiù",
+      "，",
+      "cán",
+      "mián",
+      "sāng",
+      "yè",
+      "xī",
+      "。"
+    ],
+    [
+      "tián",
+      "fū",
+      "hé",
+      "chú",
+      "zhì",
+      "，",
+      "xiāng",
+      "jiàn",
+      "yǔ",
+      "yī",
+      "yī",
+      "。"
+    ],
+    [
+      "jí",
+      "cǐ",
+      "xiàn",
+      "xián",
+      "yì",
+      "，",
+      "chàng",
+      "rán",
+      "yín",
+      "shì",
+      "wēi",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

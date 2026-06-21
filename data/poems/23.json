@@ -1,0 +1,74 @@
+{
+  "id": 23,
+  "title": "落花",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "高阁客竟去，小园花乱飞。",
+    "参差连曲陌，迢遰送斜晖。",
+    "肠断未忍扫，眼穿仍欲归。",
+    "芳心向春尽，所得是沾衣。"
+  ],
+  "pinyin": [
+    [
+      "gāo",
+      "gé",
+      "kè",
+      "jìng",
+      "qù",
+      "，",
+      "xiǎo",
+      "yuán",
+      "huā",
+      "luàn",
+      "fēi",
+      "。"
+    ],
+    [
+      "cān",
+      "chà",
+      "lián",
+      "qǔ",
+      "mò",
+      "，",
+      "tiáo",
+      "dì",
+      "sòng",
+      "xié",
+      "huī",
+      "。"
+    ],
+    [
+      "cháng",
+      "duàn",
+      "wèi",
+      "rěn",
+      "sǎo",
+      "，",
+      "yǎn",
+      "chuān",
+      "réng",
+      "yù",
+      "guī",
+      "。"
+    ],
+    [
+      "fāng",
+      "xīn",
+      "xiàng",
+      "chūn",
+      "jìn",
+      "，",
+      "suǒ",
+      "dé",
+      "shì",
+      "zhān",
+      "yī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

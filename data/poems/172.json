@@ -1,0 +1,52 @@
+{
+  "id": 172,
+  "title": "芙蓉楼送辛渐二首 一",
+  "author": "王昌龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "寒雨连天夜入湖，平明送客楚山孤。",
+    "洛阳亲友如相问，一片冰心在玉壶。"
+  ],
+  "pinyin": [
+    [
+      "hán",
+      "yǔ",
+      "lián",
+      "tiān",
+      "yè",
+      "rù",
+      "hú",
+      "，",
+      "píng",
+      "míng",
+      "sòng",
+      "kè",
+      "chǔ",
+      "shān",
+      "gū",
+      "。"
+    ],
+    [
+      "luò",
+      "yáng",
+      "qīn",
+      "yǒu",
+      "rú",
+      "xiāng",
+      "wèn",
+      "，",
+      "yī",
+      "piàn",
+      "bīng",
+      "xīn",
+      "zài",
+      "yù",
+      "hú",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

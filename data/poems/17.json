@@ -1,0 +1,52 @@
+{
+  "id": 17,
+  "title": "隋宫",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "乘兴南游不戒严，九重谁省谏书函。",
+    "春风举国裁宫锦，半作障泥半作帆。"
+  ],
+  "pinyin": [
+    [
+      "chéng",
+      "xīng",
+      "nán",
+      "yóu",
+      "bù",
+      "jiè",
+      "yán",
+      "，",
+      "jiǔ",
+      "zhòng",
+      "shuí",
+      "shěng",
+      "jiàn",
+      "shū",
+      "hán",
+      "。"
+    ],
+    [
+      "chūn",
+      "fēng",
+      "jǔ",
+      "guó",
+      "cái",
+      "gōng",
+      "jǐn",
+      "，",
+      "bàn",
+      "zuò",
+      "zhàng",
+      "ní",
+      "bàn",
+      "zuò",
+      "fān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

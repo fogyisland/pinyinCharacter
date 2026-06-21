@@ -1,0 +1,74 @@
+{
+  "id": 236,
+  "title": "新年作",
+  "author": "宋之问",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "乡心新岁切，天畔独澘然。",
+    "老至居人下，春归在客先。",
+    "岭猨同旦暮，江柳共风烟。",
+    "已似长沙傅，从今又几年。"
+  ],
+  "pinyin": [
+    [
+      "xiāng",
+      "xīn",
+      "xīn",
+      "suì",
+      "qiè",
+      "，",
+      "tiān",
+      "pàn",
+      "dú",
+      "shān",
+      "rán",
+      "。"
+    ],
+    [
+      "lǎo",
+      "zhì",
+      "jū",
+      "rén",
+      "xià",
+      "，",
+      "chūn",
+      "guī",
+      "zài",
+      "kè",
+      "xiān",
+      "。"
+    ],
+    [
+      "lǐng",
+      "yuán",
+      "tóng",
+      "dàn",
+      "mù",
+      "，",
+      "jiāng",
+      "liǔ",
+      "gòng",
+      "fēng",
+      "yān",
+      "。"
+    ],
+    [
+      "yǐ",
+      "sì",
+      "cháng",
+      "shā",
+      "fù",
+      "，",
+      "cóng",
+      "jīn",
+      "yòu",
+      "jǐ",
+      "nián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

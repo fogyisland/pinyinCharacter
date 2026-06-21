@@ -1,0 +1,74 @@
+{
+  "id": 263,
+  "title": "感遇十二首 一",
+  "author": "张九龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "兰叶春葳蕤，桂华秋皎洁。",
+    "欣欣此生意，自尔为佳节。",
+    "谁知林栖者，闻风坐相悦。",
+    "草木有本心，何求美人折。"
+  ],
+  "pinyin": [
+    [
+      "lán",
+      "yè",
+      "chūn",
+      "wēi",
+      "ruí",
+      "，",
+      "guì",
+      "huá",
+      "qiū",
+      "jiǎo",
+      "jié",
+      "。"
+    ],
+    [
+      "xīn",
+      "xīn",
+      "cǐ",
+      "shēng",
+      "yì",
+      "，",
+      "zì",
+      "ěr",
+      "wèi",
+      "jiā",
+      "jié",
+      "。"
+    ],
+    [
+      "shuí",
+      "zhī",
+      "lín",
+      "qī",
+      "zhě",
+      "，",
+      "wén",
+      "fēng",
+      "zuò",
+      "xiāng",
+      "yuè",
+      "。"
+    ],
+    [
+      "cǎo",
+      "mù",
+      "yǒu",
+      "běn",
+      "xīn",
+      "，",
+      "hé",
+      "qiú",
+      "měi",
+      "rén",
+      "zhé",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

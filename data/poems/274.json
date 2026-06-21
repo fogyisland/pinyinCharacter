@@ -1,0 +1,74 @@
+{
+  "id": 274,
+  "title": "谷口书斋寄杨补阙",
+  "author": "钱起",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "泉壑带茅茨，云霞生薜帷。",
+    "竹怜新雨后，山爱夕阳时。",
+    "闲鹭栖常早，秋花落更迟。",
+    "家童扫萝迳，昨与故人期。"
+  ],
+  "pinyin": [
+    [
+      "quán",
+      "hè",
+      "dài",
+      "máo",
+      "cí",
+      "，",
+      "yún",
+      "xiá",
+      "shēng",
+      "bì",
+      "wéi",
+      "。"
+    ],
+    [
+      "zhú",
+      "lián",
+      "xīn",
+      "yǔ",
+      "hòu",
+      "，",
+      "shān",
+      "ài",
+      "xī",
+      "yáng",
+      "shí",
+      "。"
+    ],
+    [
+      "xián",
+      "lù",
+      "qī",
+      "cháng",
+      "zǎo",
+      "，",
+      "qiū",
+      "huā",
+      "luò",
+      "gèng",
+      "chí",
+      "。"
+    ],
+    [
+      "jiā",
+      "tóng",
+      "sǎo",
+      "luó",
+      "jìng",
+      "，",
+      "zuó",
+      "yǔ",
+      "gù",
+      "rén",
+      "qī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

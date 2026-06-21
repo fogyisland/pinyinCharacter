@@ -1,0 +1,74 @@
+{
+  "id": 233,
+  "title": "望月怀远",
+  "author": "张九龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "海上生明月，天涯共此时。",
+    "情人怨遥夜，竟夕起相思。",
+    "灭烛怜光满，披衣觉露滋。",
+    "不堪盈手赠，还寝梦佳期。"
+  ],
+  "pinyin": [
+    [
+      "hǎi",
+      "shàng",
+      "shēng",
+      "míng",
+      "yuè",
+      "，",
+      "tiān",
+      "yá",
+      "gòng",
+      "cǐ",
+      "shí",
+      "。"
+    ],
+    [
+      "qíng",
+      "rén",
+      "yuàn",
+      "yáo",
+      "yè",
+      "，",
+      "jìng",
+      "xī",
+      "qǐ",
+      "xiāng",
+      "sī",
+      "。"
+    ],
+    [
+      "miè",
+      "zhú",
+      "lián",
+      "guāng",
+      "mǎn",
+      "，",
+      "pī",
+      "yī",
+      "jué",
+      "lù",
+      "zī",
+      "。"
+    ],
+    [
+      "bù",
+      "kān",
+      "yíng",
+      "shǒu",
+      "zèng",
+      "，",
+      "hái",
+      "qǐn",
+      "mèng",
+      "jiā",
+      "qī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

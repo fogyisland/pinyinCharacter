@@ -1,0 +1,74 @@
+{
+  "id": 137,
+  "title": "终南山",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "太乙近天都，连山接海隅。",
+    "白云回望合，青霭入看无。",
+    "分野中峰变，阴晴众壑殊。",
+    "欲投人处宿，隔水问樵夫。"
+  ],
+  "pinyin": [
+    [
+      "tài",
+      "yǐ",
+      "jìn",
+      "tiān",
+      "dōu",
+      "，",
+      "lián",
+      "shān",
+      "jiē",
+      "hǎi",
+      "yú",
+      "。"
+    ],
+    [
+      "bái",
+      "yún",
+      "huí",
+      "wàng",
+      "hé",
+      "，",
+      "qīng",
+      "ǎi",
+      "rù",
+      "kàn",
+      "wú",
+      "。"
+    ],
+    [
+      "fēn",
+      "yě",
+      "zhōng",
+      "fēng",
+      "biàn",
+      "，",
+      "yīn",
+      "qíng",
+      "zhòng",
+      "hè",
+      "shū",
+      "。"
+    ],
+    [
+      "yù",
+      "tóu",
+      "rén",
+      "chù",
+      "sù",
+      "，",
+      "gé",
+      "shuǐ",
+      "wèn",
+      "qiáo",
+      "fū",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

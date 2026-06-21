@@ -1,0 +1,74 @@
+{
+  "id": 70,
+  "title": "春宫怨",
+  "author": "杜荀鹤",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "早被婵娟误，欲妆临镜慵。",
+    "承恩不在貌，教妾若为容。",
+    "风暖鸟声碎，日高花影重。",
+    "年年越溪女，相忆采芙蓉。"
+  ],
+  "pinyin": [
+    [
+      "zǎo",
+      "bèi",
+      "chán",
+      "juān",
+      "wù",
+      "，",
+      "yù",
+      "zhuāng",
+      "lín",
+      "jìng",
+      "yōng",
+      "。"
+    ],
+    [
+      "chéng",
+      "ēn",
+      "bù",
+      "zài",
+      "mào",
+      "，",
+      "jiào",
+      "qiè",
+      "ruò",
+      "wèi",
+      "róng",
+      "。"
+    ],
+    [
+      "fēng",
+      "nuǎn",
+      "niǎo",
+      "shēng",
+      "suì",
+      "，",
+      "rì",
+      "gāo",
+      "huā",
+      "yǐng",
+      "zhòng",
+      "。"
+    ],
+    [
+      "nián",
+      "nián",
+      "yuè",
+      "xī",
+      "nǚ",
+      "，",
+      "xiāng",
+      "yì",
+      "cǎi",
+      "fú",
+      "róng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

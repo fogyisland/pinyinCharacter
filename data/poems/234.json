@@ -1,0 +1,71 @@
+{
+  "id": 234,
+  "title": "题大庾岭北驿",
+  "author": "宋之问",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "阳月南飞雁，传闻至此回。",
+    "我行殊未已，何日复归来？江静潮初落，林昏瘴不开。",
+    "明朝望乡处，应见陇头梅。"
+  ],
+  "pinyin": [
+    [
+      "yáng",
+      "yuè",
+      "nán",
+      "fēi",
+      "yàn",
+      "，",
+      "chuán",
+      "wén",
+      "zhì",
+      "cǐ",
+      "huí",
+      "。"
+    ],
+    [
+      "wǒ",
+      "xíng",
+      "shū",
+      "wèi",
+      "yǐ",
+      "，",
+      "hé",
+      "rì",
+      "fù",
+      "guī",
+      "lái",
+      "？",
+      "jiāng",
+      "jìng",
+      "cháo",
+      "chū",
+      "luò",
+      "，",
+      "lín",
+      "hūn",
+      "zhàng",
+      "bù",
+      "kāi",
+      "。"
+    ],
+    [
+      "míng",
+      "cháo",
+      "wàng",
+      "xiāng",
+      "chù",
+      "，",
+      "yìng",
+      "jiàn",
+      "lǒng",
+      "tóu",
+      "méi",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

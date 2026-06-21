@@ -1,0 +1,74 @@
+{
+  "id": 99,
+  "title": "寻南溪常山道人隐居",
+  "author": "刘长卿",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "一路经行处，莓苔见履痕。",
+    "白云依静渚，春草闭闲门。",
+    "过雨看松色，随山到水源。",
+    "溪花与禅意，相对亦忘言。"
+  ],
+  "pinyin": [
+    [
+      "yī",
+      "lù",
+      "jīng",
+      "xíng",
+      "chù",
+      "，",
+      "méi",
+      "tái",
+      "jiàn",
+      "lǚ",
+      "hén",
+      "。"
+    ],
+    [
+      "bái",
+      "yún",
+      "yī",
+      "jìng",
+      "zhǔ",
+      "，",
+      "chūn",
+      "cǎo",
+      "bì",
+      "xián",
+      "mén",
+      "。"
+    ],
+    [
+      "guò",
+      "yǔ",
+      "kàn",
+      "sōng",
+      "sè",
+      "，",
+      "suí",
+      "shān",
+      "dào",
+      "shuǐ",
+      "yuán",
+      "。"
+    ],
+    [
+      "xī",
+      "huā",
+      "yǔ",
+      "chán",
+      "yì",
+      "，",
+      "xiāng",
+      "duì",
+      "yì",
+      "wàng",
+      "yán",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

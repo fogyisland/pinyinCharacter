@@ -1,0 +1,59 @@
+{
+  "id": 345,
+  "title": "琴曲歌辞 列女操",
+  "author": "孟郊",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "梧桐相待老，鸳鸯会双死。",
+    "贞妇贵徇夫，舍生亦如此。",
+    "波澜誓不起，妾心井中水。"
+  ],
+  "pinyin": [
+    [
+      "wú",
+      "tóng",
+      "xiāng",
+      "dài",
+      "lǎo",
+      "，",
+      "yuān",
+      "yāng",
+      "huì",
+      "shuāng",
+      "sǐ",
+      "。"
+    ],
+    [
+      "zhēn",
+      "fù",
+      "guì",
+      "xùn",
+      "fū",
+      "，",
+      "shè",
+      "shēng",
+      "yì",
+      "rú",
+      "cǐ",
+      "。"
+    ],
+    [
+      "bō",
+      "lán",
+      "shì",
+      "bù",
+      "qǐ",
+      "，",
+      "qiè",
+      "xīn",
+      "jǐng",
+      "zhōng",
+      "shuǐ",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

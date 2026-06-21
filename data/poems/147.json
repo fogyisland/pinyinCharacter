@@ -1,0 +1,44 @@
+{
+  "id": 147,
+  "title": "相思",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "红豆生南国，秋来发故枝。",
+    "愿君多采撷，此物最相思。"
+  ],
+  "pinyin": [
+    [
+      "hóng",
+      "dòu",
+      "shēng",
+      "nán",
+      "guó",
+      "，",
+      "qiū",
+      "lái",
+      "fā",
+      "gù",
+      "zhī",
+      "。"
+    ],
+    [
+      "yuàn",
+      "jūn",
+      "duō",
+      "cǎi",
+      "xié",
+      "，",
+      "cǐ",
+      "wù",
+      "zuì",
+      "xiāng",
+      "sī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

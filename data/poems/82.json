@@ -1,0 +1,74 @@
+{
+  "id": 82,
+  "title": "秋日赴阙题潼关驿楼",
+  "author": "许浑",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "红叶晚萧萧，长亭酒一瓢。",
+    "残云归太华，疎雨过中条。",
+    "树色随山迥，河声入海遥。",
+    "帝乡明日到，犹自梦渔樵。"
+  ],
+  "pinyin": [
+    [
+      "hóng",
+      "yè",
+      "wǎn",
+      "xiāo",
+      "xiāo",
+      "，",
+      "cháng",
+      "tíng",
+      "jiǔ",
+      "yī",
+      "piáo",
+      "。"
+    ],
+    [
+      "cán",
+      "yún",
+      "guī",
+      "tài",
+      "huá",
+      "，",
+      "shū",
+      "yǔ",
+      "guò",
+      "zhōng",
+      "tiáo",
+      "。"
+    ],
+    [
+      "shù",
+      "sè",
+      "suí",
+      "shān",
+      "jiǒng",
+      "，",
+      "hé",
+      "shēng",
+      "rù",
+      "hǎi",
+      "yáo",
+      "。"
+    ],
+    [
+      "dì",
+      "xiāng",
+      "míng",
+      "rì",
+      "dào",
+      "，",
+      "yóu",
+      "zì",
+      "mèng",
+      "yú",
+      "qiáo",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

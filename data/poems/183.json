@@ -1,0 +1,44 @@
+{
+  "id": 183,
+  "title": "寻隐者不遇",
+  "author": "贾岛",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "松下问童子，言师采药去。",
+    "只在此山中，云深不知处。"
+  ],
+  "pinyin": [
+    [
+      "sōng",
+      "xià",
+      "wèn",
+      "tóng",
+      "zǐ",
+      "，",
+      "yán",
+      "shī",
+      "cǎi",
+      "yào",
+      "qù",
+      "。"
+    ],
+    [
+      "zhī",
+      "zài",
+      "cǐ",
+      "shān",
+      "zhōng",
+      "，",
+      "yún",
+      "shēn",
+      "bù",
+      "zhī",
+      "chù",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

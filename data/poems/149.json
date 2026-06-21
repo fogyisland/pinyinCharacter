@@ -1,0 +1,52 @@
+{
+  "id": 149,
+  "title": "渭城曲",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "渭城朝雨浥轻尘，客舍青青杨柳春。",
+    "劝君更尽一杯酒，西出阳关无故人。"
+  ],
+  "pinyin": [
+    [
+      "wèi",
+      "chéng",
+      "cháo",
+      "yǔ",
+      "yì",
+      "qīng",
+      "chén",
+      "，",
+      "kè",
+      "shè",
+      "qīng",
+      "qīng",
+      "yáng",
+      "liǔ",
+      "chūn",
+      "。"
+    ],
+    [
+      "quàn",
+      "jūn",
+      "gèng",
+      "jìn",
+      "yī",
+      "bēi",
+      "jiǔ",
+      "，",
+      "xī",
+      "chū",
+      "yáng",
+      "guān",
+      "wú",
+      "gù",
+      "rén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

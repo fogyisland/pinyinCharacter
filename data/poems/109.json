@@ -1,0 +1,74 @@
+{
+  "id": 109,
+  "title": "宿业师山房期丁大不至",
+  "author": "孟浩然",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五言古风",
+  "content": [
+    "夕阳度西岭，群壑倏已暝。",
+    "松月生夜凉，风泉满清听。",
+    "樵人归欲尽，烟鸟栖初定。",
+    "之子期宿来，孤琴候萝迳。"
+  ],
+  "pinyin": [
+    [
+      "xī",
+      "yáng",
+      "dù",
+      "xī",
+      "lǐng",
+      "，",
+      "qún",
+      "hè",
+      "shū",
+      "yǐ",
+      "míng",
+      "。"
+    ],
+    [
+      "sōng",
+      "yuè",
+      "shēng",
+      "yè",
+      "liáng",
+      "，",
+      "fēng",
+      "quán",
+      "mǎn",
+      "qīng",
+      "tīng",
+      "。"
+    ],
+    [
+      "qiáo",
+      "rén",
+      "guī",
+      "yù",
+      "jìn",
+      "，",
+      "yān",
+      "niǎo",
+      "qī",
+      "chū",
+      "dìng",
+      "。"
+    ],
+    [
+      "zhī",
+      "zǐ",
+      "qī",
+      "sù",
+      "lái",
+      "，",
+      "gū",
+      "qín",
+      "hòu",
+      "luó",
+      "jìng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

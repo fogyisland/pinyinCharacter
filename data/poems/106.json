@@ -1,0 +1,52 @@
+{
+  "id": 106,
+  "title": "凉州词二首 一",
+  "author": "王翰",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "葡萄美酒夜光杯，欲饮琵琶马上催。",
+    "醉卧沙场君莫笑，古来征战几人回。"
+  ],
+  "pinyin": [
+    [
+      "pú",
+      "táo",
+      "měi",
+      "jiǔ",
+      "yè",
+      "guāng",
+      "bēi",
+      "，",
+      "yù",
+      "yǐn",
+      "pí",
+      "pá",
+      "mǎ",
+      "shàng",
+      "cuī",
+      "。"
+    ],
+    [
+      "zuì",
+      "wò",
+      "shā",
+      "chǎng",
+      "jūn",
+      "mò",
+      "xiào",
+      "，",
+      "gǔ",
+      "lái",
+      "zhēng",
+      "zhàn",
+      "jǐ",
+      "rén",
+      "huí",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

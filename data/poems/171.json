@@ -1,0 +1,52 @@
+{
+  "id": 171,
+  "title": "闺怨",
+  "author": "王昌龄",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "闺中少妇不曾愁，春日凝妆上翠楼。",
+    "忽见陌头杨柳色，悔教夫壻觅封侯。"
+  ],
+  "pinyin": [
+    [
+      "guī",
+      "zhōng",
+      "shǎo",
+      "fù",
+      "bù",
+      "céng",
+      "chóu",
+      "，",
+      "chūn",
+      "rì",
+      "níng",
+      "zhuāng",
+      "shàng",
+      "cuì",
+      "lóu",
+      "。"
+    ],
+    [
+      "hū",
+      "jiàn",
+      "mò",
+      "tóu",
+      "yáng",
+      "liǔ",
+      "sè",
+      "，",
+      "huǐ",
+      "jiào",
+      "fū",
+      "xù",
+      "mì",
+      "fēng",
+      "hóu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

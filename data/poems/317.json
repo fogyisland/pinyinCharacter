@@ -1,0 +1,74 @@
+{
+  "id": 317,
+  "title": "赠孟浩然",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "吾爱孟夫子，风流天下闻。",
+    "红颜弃轩冕，白首卧松云。",
+    "醉月频中圣，迷花不事君。",
+    "高山安可仰，徒此揖清芬。"
+  ],
+  "pinyin": [
+    [
+      "wú",
+      "ài",
+      "mèng",
+      "fū",
+      "zǐ",
+      "，",
+      "fēng",
+      "liú",
+      "tiān",
+      "xià",
+      "wén",
+      "。"
+    ],
+    [
+      "hóng",
+      "yán",
+      "qì",
+      "xuān",
+      "miǎn",
+      "，",
+      "bái",
+      "shǒu",
+      "wò",
+      "sōng",
+      "yún",
+      "。"
+    ],
+    [
+      "zuì",
+      "yuè",
+      "pín",
+      "zhōng",
+      "shèng",
+      "，",
+      "mí",
+      "huā",
+      "bù",
+      "shì",
+      "jūn",
+      "。"
+    ],
+    [
+      "gāo",
+      "shān",
+      "ān",
+      "kě",
+      "yǎng",
+      "，",
+      "tú",
+      "cǐ",
+      "yī",
+      "qīng",
+      "fēn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

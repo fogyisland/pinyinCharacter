@@ -1,0 +1,52 @@
+{
+  "id": 262,
+  "title": "杂曲歌辞 金缕衣",
+  "author": "不详",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "劝君莫惜金缕衣，劝君惜取少年时。",
+    "花开堪折直须折，莫待无花空折枝。"
+  ],
+  "pinyin": [
+    [
+      "quàn",
+      "jūn",
+      "mò",
+      "xī",
+      "jīn",
+      "lǚ",
+      "yī",
+      "，",
+      "quàn",
+      "jūn",
+      "xī",
+      "qǔ",
+      "shǎo",
+      "nián",
+      "shí",
+      "。"
+    ],
+    [
+      "huā",
+      "kāi",
+      "kān",
+      "zhé",
+      "zhí",
+      "xū",
+      "zhé",
+      "，",
+      "mò",
+      "dài",
+      "wú",
+      "huā",
+      "kōng",
+      "zhé",
+      "zhī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,74 @@
+{
+  "id": 208,
+  "title": "春望",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "国破山河在，城春草木深。",
+    "感时花溅泪，恨别鸟惊心。",
+    "烽火连三月，家书抵万金。",
+    "白头搔更短，浑欲不胜簪。"
+  ],
+  "pinyin": [
+    [
+      "guó",
+      "pò",
+      "shān",
+      "hé",
+      "zài",
+      "，",
+      "chéng",
+      "chūn",
+      "cǎo",
+      "mù",
+      "shēn",
+      "。"
+    ],
+    [
+      "gǎn",
+      "shí",
+      "huā",
+      "jiàn",
+      "lèi",
+      "，",
+      "hèn",
+      "bié",
+      "niǎo",
+      "jīng",
+      "xīn",
+      "。"
+    ],
+    [
+      "fēng",
+      "huǒ",
+      "lián",
+      "sān",
+      "yuè",
+      "，",
+      "jiā",
+      "shū",
+      "dǐ",
+      "wàn",
+      "jīn",
+      "。"
+    ],
+    [
+      "bái",
+      "tóu",
+      "sāo",
+      "gèng",
+      "duǎn",
+      "，",
+      "hún",
+      "yù",
+      "bù",
+      "shèng",
+      "zān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

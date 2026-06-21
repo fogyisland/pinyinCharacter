@@ -1,0 +1,44 @@
+{
+  "id": 96,
+  "title": "送灵澈上人",
+  "author": "刘长卿",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "苍苍竹林寺，杳杳钟声晚。",
+    "荷笠带夕阳，青山独归远。"
+  ],
+  "pinyin": [
+    [
+      "cāng",
+      "cāng",
+      "zhú",
+      "lín",
+      "sì",
+      "，",
+      "yǎo",
+      "yǎo",
+      "zhōng",
+      "shēng",
+      "wǎn",
+      "。"
+    ],
+    [
+      "hé",
+      "lì",
+      "dài",
+      "xī",
+      "yáng",
+      "，",
+      "qīng",
+      "shān",
+      "dú",
+      "guī",
+      "yuǎn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

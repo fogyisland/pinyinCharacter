@@ -1,0 +1,52 @@
+{
+  "id": 230,
+  "title": "江南逢李龟年",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "歧王宅里寻常见，崔九堂前几度闻。",
+    "正是江南好风景，落花时节又逢君。"
+  ],
+  "pinyin": [
+    [
+      "qí",
+      "wáng",
+      "zhái",
+      "lǐ",
+      "xún",
+      "cháng",
+      "jiàn",
+      "，",
+      "cuī",
+      "jiǔ",
+      "táng",
+      "qián",
+      "jǐ",
+      "dù",
+      "wén",
+      "。"
+    ],
+    [
+      "zhèng",
+      "shì",
+      "jiāng",
+      "nán",
+      "hǎo",
+      "fēng",
+      "jǐng",
+      "，",
+      "luò",
+      "huā",
+      "shí",
+      "jié",
+      "yòu",
+      "féng",
+      "jūn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

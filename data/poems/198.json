@@ -1,0 +1,52 @@
+{
+  "id": 198,
+  "title": "宫词",
+  "author": "朱庆余",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "寂寂花时闭院门，美人相并立琼轩。",
+    "含情欲说宫中事，鹦鹉前头不敢言。"
+  ],
+  "pinyin": [
+    [
+      "jì",
+      "jì",
+      "huā",
+      "shí",
+      "bì",
+      "yuàn",
+      "mén",
+      "，",
+      "měi",
+      "rén",
+      "xiāng",
+      "bìng",
+      "lì",
+      "qióng",
+      "xuān",
+      "。"
+    ],
+    [
+      "hán",
+      "qíng",
+      "yù",
+      "shuō",
+      "gōng",
+      "zhōng",
+      "shì",
+      "，",
+      "yīng",
+      "wǔ",
+      "qián",
+      "tóu",
+      "bù",
+      "gǎn",
+      "yán",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,44 @@
+{
+  "id": 193,
+  "title": "宫词二首 一",
+  "author": "张祜",
+  "dynasty": "tang",
+  "category": null,
+  "form": "10言古风",
+  "content": [
+    "故国三千里，深宫二十年。",
+    "一声河满子，双泪落君前。"
+  ],
+  "pinyin": [
+    [
+      "gù",
+      "guó",
+      "sān",
+      "qiān",
+      "lǐ",
+      "，",
+      "shēn",
+      "gōng",
+      "èr",
+      "shí",
+      "nián",
+      "。"
+    ],
+    [
+      "yī",
+      "shēng",
+      "hé",
+      "mǎn",
+      "zǐ",
+      "，",
+      "shuāng",
+      "lèi",
+      "luò",
+      "jūn",
+      "qián",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

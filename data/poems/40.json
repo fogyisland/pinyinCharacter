@@ -1,0 +1,74 @@
+{
+  "id": 40,
+  "title": "灞上秋居",
+  "author": "马戴",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "灞原风雨定，晚见鴈行频。",
+    "落叶他乡树，寒灯独夜人。",
+    "空园白露滴，孤壁野僧隣。",
+    "寄卧郊扉久，何门致此身。"
+  ],
+  "pinyin": [
+    [
+      "bà",
+      "yuán",
+      "fēng",
+      "yǔ",
+      "dìng",
+      "，",
+      "wǎn",
+      "jiàn",
+      "yàn",
+      "xíng",
+      "pín",
+      "。"
+    ],
+    [
+      "luò",
+      "yè",
+      "tā",
+      "xiāng",
+      "shù",
+      "，",
+      "hán",
+      "dēng",
+      "dú",
+      "yè",
+      "rén",
+      "。"
+    ],
+    [
+      "kōng",
+      "yuán",
+      "bái",
+      "lù",
+      "dī",
+      "，",
+      "gū",
+      "bì",
+      "yě",
+      "sēng",
+      "lín",
+      "。"
+    ],
+    [
+      "jì",
+      "wò",
+      "jiāo",
+      "fēi",
+      "jiǔ",
+      "，",
+      "hé",
+      "mén",
+      "zhì",
+      "cǐ",
+      "shēn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

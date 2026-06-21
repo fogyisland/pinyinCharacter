@@ -1,0 +1,74 @@
+{
+  "id": 180,
+  "title": "赋得古原草送别",
+  "author": "白居易",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "离离原上草，一岁一枯荣。",
+    "野火烧不尽，春风吹又生。",
+    "远芳侵古道，晴翠接荒城。",
+    "又送王孙去，萋萋满别情。"
+  ],
+  "pinyin": [
+    [
+      "lí",
+      "lí",
+      "yuán",
+      "shàng",
+      "cǎo",
+      "，",
+      "yī",
+      "suì",
+      "yī",
+      "kū",
+      "róng",
+      "。"
+    ],
+    [
+      "yě",
+      "huǒ",
+      "shāo",
+      "bù",
+      "jìn",
+      "，",
+      "chūn",
+      "fēng",
+      "chuī",
+      "yòu",
+      "shēng",
+      "。"
+    ],
+    [
+      "yuǎn",
+      "fāng",
+      "qīn",
+      "gǔ",
+      "dào",
+      "，",
+      "qíng",
+      "cuì",
+      "jiē",
+      "huāng",
+      "chéng",
+      "。"
+    ],
+    [
+      "yòu",
+      "sòng",
+      "wáng",
+      "sūn",
+      "qù",
+      "，",
+      "qī",
+      "qī",
+      "mǎn",
+      "bié",
+      "qíng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

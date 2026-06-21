@@ -1,0 +1,74 @@
+{
+  "id": 81,
+  "title": "早秋三首 一",
+  "author": "许浑",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "遥夜泛清瑟，西风生翠萝。",
+    "残萤委玉露，早鴈拂银河。",
+    "高树晓还密，远山晴更多。",
+    "淮南一叶下，自觉老烟波。"
+  ],
+  "pinyin": [
+    [
+      "yáo",
+      "yè",
+      "fàn",
+      "qīng",
+      "sè",
+      "，",
+      "xī",
+      "fēng",
+      "shēng",
+      "cuì",
+      "luó",
+      "。"
+    ],
+    [
+      "cán",
+      "yíng",
+      "wěi",
+      "yù",
+      "lù",
+      "，",
+      "zǎo",
+      "yàn",
+      "fú",
+      "yín",
+      "hé",
+      "。"
+    ],
+    [
+      "gāo",
+      "shù",
+      "xiǎo",
+      "hái",
+      "mì",
+      "，",
+      "yuǎn",
+      "shān",
+      "qíng",
+      "gèng",
+      "duō",
+      "。"
+    ],
+    [
+      "huái",
+      "nán",
+      "yī",
+      "yè",
+      "xià",
+      "，",
+      "zì",
+      "jué",
+      "lǎo",
+      "yān",
+      "bō",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

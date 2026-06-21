@@ -1,0 +1,74 @@
+{
+  "id": 133,
+  "title": "过香积寺",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "不知香积寺，数里入云峰。",
+    "古木无人迳，深山何处钟。",
+    "泉声咽危石，日色冷青松。",
+    "薄暮空潭曲，安禅制毒龙。"
+  ],
+  "pinyin": [
+    [
+      "bù",
+      "zhī",
+      "xiāng",
+      "jī",
+      "sì",
+      "，",
+      "shù",
+      "lǐ",
+      "rù",
+      "yún",
+      "fēng",
+      "。"
+    ],
+    [
+      "gǔ",
+      "mù",
+      "wú",
+      "rén",
+      "jìng",
+      "，",
+      "shēn",
+      "shān",
+      "hé",
+      "chù",
+      "zhōng",
+      "。"
+    ],
+    [
+      "quán",
+      "shēng",
+      "yàn",
+      "wēi",
+      "shí",
+      "，",
+      "rì",
+      "sè",
+      "lěng",
+      "qīng",
+      "sōng",
+      "。"
+    ],
+    [
+      "báo",
+      "mù",
+      "kōng",
+      "tán",
+      "qǔ",
+      "，",
+      "ān",
+      "chán",
+      "zhì",
+      "dú",
+      "lóng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

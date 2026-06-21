@@ -1,0 +1,52 @@
+{
+  "id": 174,
+  "title": "清平调 一",
+  "author": "李白",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "云想衣裳花想容，春风拂槛露华浓。",
+    "若非群玉山头见，会向瑶台月下逢。"
+  ],
+  "pinyin": [
+    [
+      "yún",
+      "xiǎng",
+      "yī",
+      "shang",
+      "huā",
+      "xiǎng",
+      "róng",
+      "，",
+      "chūn",
+      "fēng",
+      "fú",
+      "kǎn",
+      "lù",
+      "huá",
+      "nóng",
+      "。"
+    ],
+    [
+      "ruò",
+      "fēi",
+      "qún",
+      "yù",
+      "shān",
+      "tóu",
+      "jiàn",
+      "，",
+      "huì",
+      "xiàng",
+      "yáo",
+      "tái",
+      "yuè",
+      "xià",
+      "féng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

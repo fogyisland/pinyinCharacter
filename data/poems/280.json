@@ -1,0 +1,52 @@
+{
+  "id": 280,
+  "title": "枫桥夜泊",
+  "author": "张继",
+  "dynasty": "tang",
+  "category": null,
+  "form": "14言古风",
+  "content": [
+    "月落乌啼霜满天，江枫渔父对愁眠。",
+    "姑苏城外寒山寺，夜半钟声到客船。"
+  ],
+  "pinyin": [
+    [
+      "yuè",
+      "luò",
+      "wū",
+      "tí",
+      "shuāng",
+      "mǎn",
+      "tiān",
+      "，",
+      "jiāng",
+      "fēng",
+      "yú",
+      "fù",
+      "duì",
+      "chóu",
+      "mián",
+      "。"
+    ],
+    [
+      "gū",
+      "sū",
+      "chéng",
+      "wài",
+      "hán",
+      "shān",
+      "sì",
+      "，",
+      "yè",
+      "bàn",
+      "zhōng",
+      "shēng",
+      "dào",
+      "kè",
+      "chuán",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

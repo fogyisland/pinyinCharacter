@@ -1,0 +1,74 @@
+{
+  "id": 15,
+  "title": "风雨",
+  "author": "李商隐",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "凄凉宝剑篇，羁泊欲穷年。",
+    "黄叶仍风雨，青楼自管弦。",
+    "新知遭薄俗，旧好隔良缘。",
+    "心断新丰酒，销愁斗几千。"
+  ],
+  "pinyin": [
+    [
+      "qī",
+      "liáng",
+      "bǎo",
+      "jiàn",
+      "piān",
+      "，",
+      "jī",
+      "bó",
+      "yù",
+      "qióng",
+      "nián",
+      "。"
+    ],
+    [
+      "huáng",
+      "yè",
+      "réng",
+      "fēng",
+      "yǔ",
+      "，",
+      "qīng",
+      "lóu",
+      "zì",
+      "guǎn",
+      "xián",
+      "。"
+    ],
+    [
+      "xīn",
+      "zhī",
+      "zāo",
+      "báo",
+      "sú",
+      "，",
+      "jiù",
+      "hǎo",
+      "gé",
+      "liáng",
+      "yuán",
+      "。"
+    ],
+    [
+      "xīn",
+      "duàn",
+      "xīn",
+      "fēng",
+      "jiǔ",
+      "，",
+      "xiāo",
+      "chóu",
+      "dòu",
+      "jǐ",
+      "qiān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

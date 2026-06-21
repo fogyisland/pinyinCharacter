@@ -1,0 +1,74 @@
+{
+  "id": 135,
+  "title": "终南别业",
+  "author": "王维",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "中岁颇好道，晚家南山陲。",
+    "兴来每独往，胜事空自知。",
+    "行到水穷处，坐看云起时。",
+    "偶然值林叟，谈笑无还期。"
+  ],
+  "pinyin": [
+    [
+      "zhōng",
+      "suì",
+      "pō",
+      "hǎo",
+      "dào",
+      "，",
+      "wǎn",
+      "jiā",
+      "nán",
+      "shān",
+      "chuí",
+      "。"
+    ],
+    [
+      "xīng",
+      "lái",
+      "měi",
+      "dú",
+      "wǎng",
+      "，",
+      "shèng",
+      "shì",
+      "kōng",
+      "zì",
+      "zhī",
+      "。"
+    ],
+    [
+      "xíng",
+      "dào",
+      "shuǐ",
+      "qióng",
+      "chù",
+      "，",
+      "zuò",
+      "kàn",
+      "yún",
+      "qǐ",
+      "shí",
+      "。"
+    ],
+    [
+      "ǒu",
+      "rán",
+      "zhí",
+      "lín",
+      "sǒu",
+      "，",
+      "tán",
+      "xiào",
+      "wú",
+      "hái",
+      "qī",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

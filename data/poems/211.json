@@ -1,0 +1,74 @@
+{
+  "id": 211,
+  "title": "月夜忆舍弟",
+  "author": "杜甫",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "戍鼓断人行，秋边一雁声。",
+    "露从今夜白，月是故乡明。",
+    "有弟皆分散，无家问死生。",
+    "寄书长不避，况乃未休兵。"
+  ],
+  "pinyin": [
+    [
+      "shù",
+      "gǔ",
+      "duàn",
+      "rén",
+      "xíng",
+      "，",
+      "qiū",
+      "biān",
+      "yī",
+      "yàn",
+      "shēng",
+      "。"
+    ],
+    [
+      "lù",
+      "cóng",
+      "jīn",
+      "yè",
+      "bái",
+      "，",
+      "yuè",
+      "shì",
+      "gù",
+      "xiāng",
+      "míng",
+      "。"
+    ],
+    [
+      "yǒu",
+      "dì",
+      "jiē",
+      "fēn",
+      "sàn",
+      "，",
+      "wú",
+      "jiā",
+      "wèn",
+      "sǐ",
+      "shēng",
+      "。"
+    ],
+    [
+      "jì",
+      "shū",
+      "cháng",
+      "bù",
+      "bì",
+      "，",
+      "kuàng",
+      "nǎi",
+      "wèi",
+      "xiū",
+      "bīng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

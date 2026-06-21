@@ -1,0 +1,74 @@
+{
+  "id": 98,
+  "title": "秋日登吴公台上寺远眺寺即陈将吴明彻战场",
+  "author": "刘长卿",
+  "dynasty": "tang",
+  "category": null,
+  "form": "五律",
+  "content": [
+    "古台摇落后，秋日望乡心。",
+    "野寺人来少，云峰水隔深。",
+    "夕阳依旧垒，寒磬满空林。",
+    "惆怅南朝事，长江独至今。"
+  ],
+  "pinyin": [
+    [
+      "gǔ",
+      "tái",
+      "yáo",
+      "luò",
+      "hòu",
+      "，",
+      "qiū",
+      "rì",
+      "wàng",
+      "xiāng",
+      "xīn",
+      "。"
+    ],
+    [
+      "yě",
+      "sì",
+      "rén",
+      "lái",
+      "shǎo",
+      "，",
+      "yún",
+      "fēng",
+      "shuǐ",
+      "gé",
+      "shēn",
+      "。"
+    ],
+    [
+      "xī",
+      "yáng",
+      "yī",
+      "jiù",
+      "lěi",
+      "，",
+      "hán",
+      "qìng",
+      "mǎn",
+      "kōng",
+      "lín",
+      "。"
+    ],
+    [
+      "chóu",
+      "chàng",
+      "nán",
+      "cháo",
+      "shì",
+      "，",
+      "cháng",
+      "jiāng",
+      "dú",
+      "zhì",
+      "jīn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}
