@@ -61,15 +61,63 @@ export async function migratePoemsToFiles(): Promise<{ written: number; skipped:
     });
   }
 
-  const manifest: PoemsManifest = {
+  // Build candidate manifest with a placeholder updatedAt; we may reuse the
+  // existing manifest's updatedAt if the content is unchanged.
+  const candidate: PoemsManifest = {
     version: 1,
-    updatedAt: new Date().toISOString(),
+    updatedAt: '',
     count: manifestItems.length,
     items: manifestItems,
   };
-  await fs.writeFile(MANIFEST_PATH, JSON.stringify(manifest, null, 2), 'utf8');
 
-  return { written, skipped, manifestWritten: true };
+  // Try to read the existing manifest for structural comparison.
+  let existingManifest: PoemsManifest | null = null;
+  try {
+    const raw = await fs.readFile(MANIFEST_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && Array.isArray(parsed.items)) {
+      existingManifest = parsed as PoemsManifest;
+    }
+  } catch { /* no existing manifest or unreadable */ }
+
+  // Structural equality: compare count + items, ignoring updatedAt.
+  // Items are compared field-by-field to avoid byte-order or key-order false negatives.
+  const itemsEqual = (a: PoemManifestItem[], b: PoemManifestItem[]): boolean => {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+      const x = a[i];
+      const y = b[i];
+      if (
+        x.id !== y.id ||
+        x.title !== y.title ||
+        x.author !== y.author ||
+        x.dynasty !== y.dynasty ||
+        x.category !== y.category ||
+        x.form !== y.form ||
+        x.contentLineCount !== y.contentLineCount
+      ) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const contentUnchanged =
+    existingManifest !== null &&
+    existingManifest.count === candidate.count &&
+    itemsEqual(existingManifest.items, candidate.items);
+
+  let manifestWritten = false;
+  if (contentUnchanged) {
+    // Don't touch the file on disk — preserve existing updatedAt.
+    manifestWritten = false;
+  } else {
+    candidate.updatedAt = new Date().toISOString();
+    await fs.writeFile(MANIFEST_PATH, JSON.stringify(candidate, null, 2), 'utf8');
+    manifestWritten = true;
+  }
+
+  return { written, skipped, manifestWritten };
 }
 
 if (require.main === module) {

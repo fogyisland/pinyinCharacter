@@ -48,7 +48,7 @@ describe('migratePoemsToFiles', () => {
     expect(manifest.items[0]).toMatchObject({ id: 1, title: '静夜思', form: '五绝', contentLineCount: 1 });
   });
 
-  it('idempotent re-run with all files present returns skipped=2 manifestWritten=false', async () => {
+  it('idempotent re-run with all files present returns skipped=1 manifestWritten=false', async () => {
     // First query: SELECT rows
     mockQuery.mockResolvedValueOnce([[
       { id: 1, dynasty: '唐', category: 'tang', title: 'A', author: 'X', form: '五绝',
@@ -56,8 +56,18 @@ describe('migratePoemsToFiles', () => {
     ]]);
     // readdir for existing files (all poem files exist with matching content)
     mockReaddir.mockResolvedValueOnce(['1.json']);
+    // First readFile: per-poem file content (matches DB row exactly → skipped++)
     mockReadFile.mockResolvedValueOnce(JSON.stringify({ id: 1, title: 'A', author: 'X', dynasty: '唐',
       category: 'tang', form: '五绝', content: ['a'], pinyin: [['a']], appreciation: null, source: 's' }));
+    // Second readFile: existing manifest on disk — structurally identical to the candidate
+    // (same count + same items), so the script must NOT rewrite it.
+    mockReadFile.mockResolvedValueOnce(JSON.stringify({
+      version: 1,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      count: 1,
+      items: [{ id: 1, title: 'A', author: 'X', dynasty: '唐',
+        category: 'tang', form: '五绝', contentLineCount: 1 }],
+    }));
     mockMkdir.mockResolvedValueOnce(undefined);
 
     const { migratePoemsToFiles } = await import('@/scripts/migrate-poems-to-files');
@@ -65,6 +75,8 @@ describe('migratePoemsToFiles', () => {
 
     expect(r.written).toBe(0);
     expect(r.skipped).toBe(1);
-    expect(r.manifestWritten).toBe(true);
+    expect(r.manifestWritten).toBe(false);
+    // 1 poem file (skipped, no write) + 0 manifest writes → only 0 writeFile calls
+    expect(mockWriteFile).not.toHaveBeenCalled();
   });
 });
