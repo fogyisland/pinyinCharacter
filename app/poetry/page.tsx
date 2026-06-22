@@ -10,7 +10,8 @@ import { ErrorState } from '@/components/common/ErrorState';
 import { PoemSearch } from '@/components/poetry/PoemSearch';
 import { PoemCard } from '@/components/poetry/PoemCard';
 import { PoemPagination } from '@/components/poetry/PoemPagination';
-import { listPoemsRequest } from '@/lib/api-poetry';
+import { FormFilterBar } from '@/components/poetry/FormFilterBar';
+import { getAvailableFormsRequest, listPoemsRequest } from '@/lib/api-poetry';
 import type { Dynasty, PoemListItem } from '@/lib/poetry-types';
 
 export default function PoetryListPage() {
@@ -22,6 +23,25 @@ export default function PoetryListPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tick, setTick] = useState(0);
+  const [selectedForms, setSelectedForms] = useState<string[]>([]);
+  const [availableForms, setAvailableForms] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const formParam = params.get('form');
+    if (formParam) {
+      setSelectedForms(formParam.split(',').filter(Boolean));
+    }
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAvailableFormsRequest(dynasty).then((forms) => {
+      if (!cancelled) setAvailableForms(forms);
+    });
+    return () => { cancelled = true; };
+  }, [dynasty]);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,7 +49,12 @@ export default function PoetryListPage() {
     setError(null);
     const handle = setTimeout(async () => {
       try {
-        const r = await listPoemsRequest({ dynasty, q: q || undefined, page });
+        const r = await listPoemsRequest({
+          dynasty,
+          q: q || undefined,
+          forms: selectedForms.length > 0 ? selectedForms : undefined,
+          page,
+        });
         if (!cancelled) {
           setItems(r.items);
           setTotal(r.total);
@@ -41,7 +66,7 @@ export default function PoetryListPage() {
       }
     }, 300);
     return () => { cancelled = true; clearTimeout(handle); };
-  }, [dynasty, q, page, tick]);
+  }, [dynasty, q, page, tick, selectedForms]);
 
   return (
     <>
@@ -54,6 +79,12 @@ export default function PoetryListPage() {
           q={q}
           onDynastyChange={(d) => { setDynasty(d); setPage(1); }}
           onQChange={(v) => { setQ(v); setPage(1); }}
+        />
+        <FormFilterBar
+          category={dynasty}
+          availableForms={availableForms}
+          selectedForms={selectedForms}
+          onChange={(forms) => { setSelectedForms(forms); setPage(1); }}
         />
         {error ? (
           <ErrorState message={error} onRetry={() => setTick((t) => t + 1)} />
