@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-21T14:25:40.114Z",
+  "updatedAt": "2026-06-22T05:09:59.623Z",
   "books": [
     {
       "slug": "baijiaxing",
@@ -2325,6 +2325,20 @@
       "jsonBytes": 378747,
       "bookId": "b2730fddcac2",
       "bookTitle": "西厢记"
+    },
+    {
+      "slug": "xunmeng-pianju",
+      "title": "训蒙骈句",
+      "source": "guwendao.net/训蒙骈句",
+      "category": "pianwen",
+      "author": "萧良有/司祢",
+      "era": "明/清",
+      "chapterCount": 30,
+      "charCount": 6480,
+      "jsonFile": "data/classics/xunmeng-pianju.json",
+      "jsonBytes": 23456,
+      "bookId": "427c5eea5943",
+      "bookTitle": "训蒙骈句"
     },
     {
       "slug": "xunzi-1",
