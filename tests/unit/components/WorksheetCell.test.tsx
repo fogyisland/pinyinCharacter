@@ -5,11 +5,11 @@ import '@testing-library/jest-dom/vitest';
 import { WorksheetCell } from '@/components/worksheet/WorksheetCell';
 
 describe('WorksheetCell', () => {
-  it('brush-cross has vertical center, horizontal, and diagonals (most lines)', () => {
+  it('brush-cross has vertical center, horizontal, diagonals, and baseline guide (most lines)', () => {
     const { container } = render(<WorksheetCell char="你" style="brush-cross" />);
     const lines = container.querySelectorAll('line');
-    // brush-cross: 1 vertical + 1 horizontal + 2 diagonals = 4 <line> elements
-    expect(lines.length).toBe(4);
+    // brush-cross: 1 vertical + 1 horizontal-mid + 2 diagonals + 1 baseline (y=90) = 5 <line> elements
+    expect(lines.length).toBe(5);
   });
 
   it('pen-square has vertical and horizontal center, no diagonals', () => {

@@ -108,7 +108,7 @@ describe('worksheet pure helpers', () => {
       });
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBe('cellStyle must be brush-square, brush-cross, pen-square, or pen-cross');
+        expect(result.error).toBe('cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross');
       }
     });
   });
