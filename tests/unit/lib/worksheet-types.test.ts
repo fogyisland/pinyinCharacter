@@ -10,6 +10,7 @@ import {
   composeCellStyle,
   getTool,
   getPresentation,
+  getIsTrace,
   defaultToolFor,
   defaultPresentationFor,
   cellStyleLabel,
@@ -132,5 +133,68 @@ describe('cellStyleLabel (G5)', () => {
   });
   it('renders pen-cross as 钢笔·米字格', () => {
     expect(cellStyleLabel('pen-cross')).toBe('钢笔·米字格');
+  });
+});
+
+// ============================================================================
+// Task 2 of 描红 feature: brush-trace-{square,cross} cell styles + helpers
+// ============================================================================
+
+describe('composeCellStyle with trace (Task 2)', () => {
+  it('returns trace variant when tool=brush and trace=true', () => {
+    expect(composeCellStyle('brush', 'square', true)).toBe('brush-trace-square');
+    expect(composeCellStyle('brush', 'cross', true)).toBe('brush-trace-cross');
+  });
+  it('returns non-trace variant when trace=false (default)', () => {
+    expect(composeCellStyle('brush', 'square')).toBe('brush-square');
+    expect(composeCellStyle('brush', 'square', false)).toBe('brush-square');
+  });
+  it('ignores trace=true when tool=pen (pen has no trace mode)', () => {
+    expect(composeCellStyle('pen', 'square', true)).toBe('pen-square');
+    expect(composeCellStyle('pen', 'cross', true)).toBe('pen-cross');
+  });
+});
+
+describe('getIsTrace (Task 2)', () => {
+  it('returns true for brush-trace-*', () => {
+    expect(getIsTrace('brush-trace-square')).toBe(true);
+    expect(getIsTrace('brush-trace-cross')).toBe(true);
+  });
+  it('returns false for non-trace styles', () => {
+    expect(getIsTrace('brush-square')).toBe(false);
+    expect(getIsTrace('brush-cross')).toBe(false);
+    expect(getIsTrace('pen-square')).toBe(false);
+    expect(getIsTrace('pen-cross')).toBe(false);
+  });
+});
+
+describe('getPresentation with trace styles (Task 2)', () => {
+  it('returns square for *-square (including trace)', () => {
+    expect(getPresentation('brush-square')).toBe('square');
+    expect(getPresentation('brush-trace-square')).toBe('square');
+    expect(getPresentation('pen-square')).toBe('square');
+  });
+  it('returns cross for *-cross (including trace)', () => {
+    expect(getPresentation('brush-cross')).toBe('cross');
+    expect(getPresentation('brush-trace-cross')).toBe('cross');
+    expect(getPresentation('pen-cross')).toBe('cross');
+  });
+});
+
+describe('cellStyleLabel with trace (Task 2)', () => {
+  it('appends ·描红 for brush-trace-*', () => {
+    expect(cellStyleLabel('brush-trace-square')).toBe('毛笔·田字格·描红');
+    expect(cellStyleLabel('brush-trace-cross')).toBe('毛笔·米字格·描红');
+  });
+  it('omits ·描红 for non-trace styles (backward compat)', () => {
+    expect(cellStyleLabel('brush-square')).toBe('毛笔·田字格');
+    expect(cellStyleLabel('pen-cross')).toBe('钢笔·米字格');
+  });
+});
+
+describe('getTool unchanged for trace (Task 2)', () => {
+  it('returns brush for brush-trace-*', () => {
+    expect(getTool('brush-trace-square')).toBe('brush');
+    expect(getTool('brush-trace-cross')).toBe('brush');
   });
 });

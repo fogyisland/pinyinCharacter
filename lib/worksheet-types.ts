@@ -2,7 +2,10 @@ import { cellsPerPage } from './worksheet-page-count';
 
 export type Tool = 'brush' | 'pen';
 export type Presentation = 'square' | 'cross';
-export type CellStyle = 'brush-square' | 'brush-cross' | 'pen-square' | 'pen-cross';
+export type CellStyle =
+  | 'brush-square' | 'brush-cross'
+  | 'pen-square'   | 'pen-cross'
+  | 'brush-trace-square' | 'brush-trace-cross';
 export type PaperSize = 'A3' | 'A4' | 'B5' | 'brush-12' | 'brush-24' | 'brush-28';
 export type FontFamily =
   | 'song' | 'kai' | 'hei'
@@ -13,10 +16,14 @@ const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
 const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross'];
 const ALL_CELL_STYLES: readonly CellStyle[] = [
   'brush-square', 'brush-cross', 'pen-square', 'pen-cross',
+  'brush-trace-square', 'brush-trace-cross',
 ] as const;
 
 // Compose / split helpers
-export function composeCellStyle(tool: Tool, presentation: Presentation): CellStyle {
+export function composeCellStyle(tool: Tool, presentation: Presentation, trace: boolean = false): CellStyle {
+  if (tool === 'brush' && trace) {
+    return `brush-trace-${presentation}` as CellStyle;
+  }
   return `${tool}-${presentation}` as CellStyle;
 }
 
@@ -25,7 +32,12 @@ export function getTool(s: CellStyle): Tool {
 }
 
 export function getPresentation(s: CellStyle): Presentation {
-  return s.split('-')[1] as Presentation;
+  if (s.includes('cross')) return 'cross';
+  return 'square';
+}
+
+export function getIsTrace(s: CellStyle): boolean {
+  return s.includes('-trace-');
 }
 
 // Defaults
@@ -117,7 +129,7 @@ export function fontFamilyCssVar(f: FontFamily): string {
 export function cellStyleLabel(s: CellStyle): string {
   const tool = getTool(s) === 'brush' ? '毛笔' : '钢笔';
   const pres = getPresentation(s) === 'square' ? '田字格' : '米字格';
-  return `${tool}·${pres}`;
+  return getIsTrace(s) ? `${tool}·${pres}·描红` : `${tool}·${pres}`;
 }
 
 export type ValidationResult =
@@ -148,18 +160,14 @@ export function validateWorksheetInput(input: {
   if (!input.content.every((c) => typeof c === 'string' && SINGLE_CJK.test(c))) {
     return { ok: false, error: 'content must be CJK chars' };
   }
-  if (
-    input.cellStyle !== 'brush-square' &&
-    input.cellStyle !== 'brush-cross' &&
-    input.cellStyle !== 'pen-square' &&
-    input.cellStyle !== 'pen-cross'
-  ) {
-    return { ok: false, error: 'cellStyle must be brush-square, brush-cross, pen-square, or pen-cross' };
+  if (!(ALL_CELL_STYLES as readonly string[]).includes(input.cellStyle as string)) {
+    return { ok: false, error: 'cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross' };
   }
+  const cellStyle = input.cellStyle as CellStyle;
   // paperSize is optional in input but defaults to 'A4' for non-brush; brush defaults to 'brush-12'
   let paperSize: PaperSize;
   if (input.paperSize === undefined) {
-    paperSize = getTool(input.cellStyle) === 'brush' ? 'brush-12' : 'A4';
+    paperSize = getTool(cellStyle) === 'brush' ? 'brush-12' : 'A4';
   } else if (
     typeof input.paperSize === 'string' &&
     (VALID_PAPER_SIZES as readonly string[]).includes(input.paperSize)
@@ -170,7 +178,7 @@ export function validateWorksheetInput(input: {
   }
   return {
     ok: true,
-    data: { title: input.title, content: input.content as string[], cellStyle: input.cellStyle, paperSize },
+    data: { title: input.title, content: input.content as string[], cellStyle, paperSize },
   };
 }
 
