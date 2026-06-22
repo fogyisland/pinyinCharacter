@@ -14,6 +14,8 @@ vi.mock('@/lib/poetry', () => ({
   getRandomPoem: (...args: unknown[]) => mockGetRandomPoem(...args),
   listForms: vi.fn(),
   listDynasties: vi.fn(),
+  getAvailableForms: vi.fn(),
+  SHI_FORMS: ['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '杂言古风', '乐府'],
   loadManifest: vi.fn(),
   loadPoem: vi.fn(),
   invalidateManifestCache: vi.fn(),
@@ -68,10 +70,18 @@ describe('GET /api/poetry', () => {
     expect(j.data.total).toBe(0);
   });
 
-  it('rejects unknown dynasty with 400', async () => {
+  it('rejects dynasty over 32 chars with 400', async () => {
     const { GET } = await import('@/app/api/poetry/route');
-    const r = await GET(req('http://x/api/poetry?dynasty=yuan'));
+    const r = await GET(req(`http://x/api/poetry?dynasty=${'x'.repeat(33)}`));
     expect(r.status).toBe(400);
     expect(mockListPoems).not.toHaveBeenCalled();
+  });
+
+  it('accepts non-tang/song dynasty values', async () => {
+    mockListPoems.mockResolvedValueOnce({ items: [], total: 0, page: 1, pageSize: 24 });
+    const { GET } = await import('@/app/api/poetry/route');
+    const r = await GET(req('http://x/api/poetry?dynasty=yuan'));
+    expect(r.status).toBe(200);
+    expect(mockListPoems).toHaveBeenCalledWith(expect.objectContaining({ dynasty: 'yuan' }));
   });
 });

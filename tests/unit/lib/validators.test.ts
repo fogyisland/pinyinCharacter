@@ -146,8 +146,13 @@ describe('validators', () => {
       expect(poemListQuerySchema.parse({}).dynasty).toBe('tang');
     });
 
-    it('rejects unknown dynasty', () => {
-      expect(() => poemListQuerySchema.parse({ dynasty: 'yuan' })).toThrow();
+    it('rejects dynasty over 32 chars', () => {
+      expect(() => poemListQuerySchema.parse({ dynasty: 'x'.repeat(33) })).toThrow();
+    });
+
+    it('accepts non-tang/song dynasty values', () => {
+      expect(poemListQuerySchema.parse({ dynasty: 'yuan' }).dynasty).toBe('yuan');
+      expect(poemListQuerySchema.parse({ dynasty: '汉' }).dynasty).toBe('汉');
     });
 
     it('trims q', () => {

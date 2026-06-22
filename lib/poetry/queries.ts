@@ -6,6 +6,8 @@ const MAX_PAGE_SIZE = 100;
 
 export interface ListPoemsArgs {
   dynasty: Dynasty;
+  category?: string | null;
+  forms?: string[] | null;
   q?: string;
   form?: string | null;
   page?: number;
@@ -31,6 +33,8 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
   const pageSize = Math.max(1, Math.min(MAX_PAGE_SIZE, args.pageSize ?? DEFAULT_PAGE_SIZE));
   const filtered = manifest.items.filter(i =>
     i.dynasty === args.dynasty &&
+    (args.category == null || i.dynasty === args.category) &&
+    (args.forms == null || args.forms.length === 0 || (i.form != null && args.forms.includes(i.form))) &&
     (args.form == null || i.form === args.form) &&
     matchesQ({ title: i.title, author: i.author }, args.q ?? '')
   );
@@ -74,4 +78,26 @@ export async function listDynasties(): Promise<string[]> {
   const set = new Set<string>();
   for (const i of manifest.items) set.add(i.dynasty);
   return Array.from(set).sort();
+}
+
+export const SHI_FORMS = ['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '杂言古风', '乐府'] as const;
+const YUAN_FORMS = ['小令', '套数'] as const;
+const SHI_CATEGORIES = new Set(['tang', '汉乐府', '古诗十九首', '魏', '骈文']);
+
+export async function getAvailableForms(category: string): Promise<string[]> {
+  if (category === 'yuan') return [...YUAN_FORMS];
+  if (SHI_CATEGORIES.has(category)) return [...SHI_FORMS];
+  if (category === 'song' || category === 'qing') {
+    const manifest = await loadManifest();
+    const counts = new Map<string, number>();
+    for (const i of manifest.items) {
+      if (i.dynasty !== category || !i.form) continue;
+      counts.set(i.form, (counts.get(i.form) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 30)
+      .map(([form]) => form);
+  }
+  return [];
 }

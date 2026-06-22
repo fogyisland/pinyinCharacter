@@ -1,4 +1,4 @@
-export type Dynasty = 'tang' | 'song';
+export type Dynasty = string;
 
 export interface PoemListItem {
   id: number;

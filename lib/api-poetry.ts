@@ -1,8 +1,10 @@
 import type { Dynasty, PoemListResult, PoemDetail } from './poetry-types';
 
-export async function listPoemsRequest(args: { dynasty: Dynasty; q?: string; page?: number }): Promise<PoemListResult> {
+export async function listPoemsRequest(args: { dynasty: Dynasty; category?: string; q?: string; forms?: string[]; page?: number; pageSize?: number }): Promise<PoemListResult> {
   const sp = new URLSearchParams();
   sp.set('dynasty', args.dynasty);
+  if (args.category) sp.set('category', args.category);
+  if (args.forms && args.forms.length > 0) sp.set('forms', args.forms.join(','));
   if (args.q) sp.set('q', args.q);
   if (args.page) sp.set('page', String(args.page));
   const res = await fetch(`/api/poetry?${sp.toString()}`);
@@ -31,4 +33,11 @@ export async function printPoemRequest(id: number): Promise<{ id: number }> {
   const j = await res.json();
   if (!j.ok) throw new Error(j.error?.message ?? 'printPoem failed');
   return j.data;
+}
+
+export async function getAvailableFormsRequest(category: string): Promise<string[]> {
+  const res = await fetch(`/api/poetry/forms?category=${encodeURIComponent(category)}`);
+  if (!res.ok) return [];
+  const j = await res.json();
+  return j.forms ?? [];
 }
