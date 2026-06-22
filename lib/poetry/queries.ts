@@ -27,6 +27,23 @@ function matchesQ(item: { title: string; author: string }, q: string): boolean {
   return item.title.includes(trimmed) || item.author.includes(trimmed) || (first.length > 0 && item.title.includes(first));
 }
 
+/**
+ * Filter semantics:
+ * - `dynasty`: required. Item must have `dynasty === args.dynasty`.
+ * - `category`: optional synonym for `dynasty`. When set, item must also
+ *   have `dynasty === args.category`. This is intentional and exists
+ *   because manifest items for the 5 new collections have their `dynasty`
+ *   set to the collection label (e.g. `汉`, `魏`, `汉末`, `汉乐府`,
+ *   `古诗十九首`, `骈文`, `yuan`, `qing`, `mixed`) — so a caller asking
+ *   for `category='tang'` with `dynasty='song'` will match nothing, since
+ *   both filters apply as an AND. Future callers should pass the same
+ *   value to both `dynasty` and `category` (or omit `category`).
+ * - `forms`: optional array filter, independent of `dynasty`/`category`.
+ *   Item must have a non-null `form` AND that form must appear in the
+ *   array. Empty array is treated as "no filter".
+ * - `form`: optional single-form filter. Same semantics as `forms`
+ *   but for one value. Exists for legacy callers.
+ */
 export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
   const manifest = await loadManifest();
   const page = Math.max(1, args.page ?? 1);

@@ -54,7 +54,7 @@ export const saveWorksheetSchema = z.object({
 
 export const poemListQuerySchema = z.object({
   dynasty: z.string().min(1).max(32).default('tang'),
-  category: z.string().max(32).optional(),
+  category: z.string().min(1).max(32).optional(),
   forms: z.string().max(256).optional(),
   q: z.string().max(64).transform((s) => s.trim()).optional(),
   page: z.coerce.number().int().min(1).default(1),

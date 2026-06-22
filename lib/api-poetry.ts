@@ -39,5 +39,5 @@ export async function getAvailableFormsRequest(category: string): Promise<string
   const res = await fetch(`/api/poetry/forms?category=${encodeURIComponent(category)}`);
   if (!res.ok) return [];
   const j = await res.json();
-  return j.forms ?? [];
+  return j.data?.forms ?? [];
 }
