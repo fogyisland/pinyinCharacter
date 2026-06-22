@@ -306,16 +306,15 @@ export async function buildClassics(): Promise<number> {
     const { path: jsonPath, bytes } = writeVolumeJson(volJson);
     console.log(`[build-classics] ${file.slug}: ${chunks.length} chapters, ${Math.round(bytes / 1024)}KB JSON → ${jsonPath}`);
     await pool.execute(
-      `INSERT INTO classics (slug, title, category, author, era, chunks, source)
-       VALUES (?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO classics (slug, title, category, author, era, source)
+       VALUES (?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          title = VALUES(title),
          category = VALUES(category),
          author = VALUES(author),
          era = VALUES(era),
-         chunks = VALUES(chunks),
          source = VALUES(source)`,
-      [file.slug, file.title, file.category, file.author, file.era, jsonStr, SOURCE_TAG],
+      [file.slug, file.title, file.category, file.author, file.era, SOURCE_TAG],
     );
     inserted++;
   }

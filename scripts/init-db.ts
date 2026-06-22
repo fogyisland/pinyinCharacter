@@ -155,8 +155,6 @@ const DDL = [
      category ENUM('four-books','five-classics','mengxue','philosophy','history','other') NOT NULL DEFAULT 'other',
      author VARCHAR(64) NULL,
      era VARCHAR(16) NULL,
-     chunks JSON NOT NULL,
-     chunk_count INT UNSIGNED GENERATED ALWAYS AS (JSON_LENGTH(chunks)) STORED,
      source VARCHAR(64) NOT NULL DEFAULT 'chinese-poetry@master',
      created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
      updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,

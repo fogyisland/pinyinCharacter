@@ -1,90 +1,88 @@
-import { describe, it, expect, beforeEach, afterAll, beforeAll } from 'vitest';
-import { readFileSync, existsSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { getPool, closePool } from '@/lib/db';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 
-const BASE = process.env.TEST_BASE_URL ?? 'http://localhost:4444';
+// Mock the classics barrel BEFORE importing the route handler.
+const mockListClassics = vi.fn();
+const mockGetClassicBySlug = vi.fn();
+const mockCountByCategory = vi.fn();
+const mockLoadManifest = vi.fn();
+const mockLoadClassicFile = vi.fn();
 
-// This test fetches against a live Next.js dev server (port 4444). The dev
-// server reads DATABASE_URL from .env.local (piyin_dev on local MySQL).
-// load-env.ts only reads .env (DATABASE_URL = piyin on remote), so we'd seed
-// the wrong DB. Override DATABASE_URL here so test seed and dev server hit
-// the same database.
-const envLocalPath = resolve(__dirname, '..', '..', '..', '.env.local');
-if (existsSync(envLocalPath) && !process.env.DATABASE_URL_OVERRIDE_DONE) {
-  const content = readFileSync(envLocalPath, 'utf8');
-  for (const line of content.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const eq = trimmed.indexOf('=');
-    if (eq === -1) continue;
-    const key = trimmed.slice(0, eq).trim();
-    if (key !== 'DATABASE_URL') continue;
-    process.env.DATABASE_URL = trimmed.slice(eq + 1).trim().replace(/^["']|["']$/g, '');
-    process.env.DATABASE_URL_OVERRIDE_DONE = '1';
-    break;
-  }
+vi.mock('@/lib/classics', () => ({
+  listClassics: (...args: unknown[]) => mockListClassics(...args),
+  getClassicBySlug: (...args: unknown[]) => mockGetClassicBySlug(...args),
+  countByCategory: (...args: unknown[]) => mockCountByCategory(...args),
+  loadManifest: () => mockLoadManifest(),
+  loadClassicFile: (slug: string) => mockLoadClassicFile(slug),
+  invalidateManifestCache: vi.fn(),
+}));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
+function req(url: string): NextRequest {
+  return new NextRequest(url);
 }
 
-beforeAll(async () => {
-  const pool = getPool();
-  // NOTE: use pool.query, NOT pool.execute — mysql2's binary protocol
-  // (execute) corrupts multi-byte UTF-8 strings on the parameter path.
-  await pool.query(`DELETE FROM classics WHERE slug IN ('lunyu', 'dizigui')`);
-  await pool.query(
-    `INSERT INTO classics (slug, title, category, author, era, chunks) VALUES
-     ('lunyu', '论语', 'four-books', '孔子', '春秋', ?),
-     ('dizigui', '弟子规', 'mengxue', NULL, '清', ?)`,
-    [
-      JSON.stringify([{ id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [[]] }]),
-      JSON.stringify([{ id: 1, label: '总叙', content: ['弟子规圣人训。'], pinyin: [[]] }]),
-    ],
-  );
-});
-afterAll(async () => {
-  // Clean up the seed rows so other tests / pages don't see them.
-  const pool = getPool();
-  await pool.query(`DELETE FROM classics WHERE slug IN ('lunyu', 'dizigui')`);
-  await closePool();
-});
-beforeEach(async () => {});
-
 describe('GET /api/classics', () => {
-  it('returns list', async () => {
-    const res = await fetch(`${BASE}/api/classics`);
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.ok).toBe(true);
-    const slugs = data.data.items.map((i: any) => i.slug);
-    expect(slugs).toContain('lunyu');
-    expect(slugs).toContain('dizigui');
+  it('returns 200 with items array', async () => {
+    mockListClassics.mockResolvedValueOnce({
+      items: [{ id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋', chunkCount: 20, charCount: 12000 }],
+      total: 1,
+      page: 1,
+      pageSize: 12,
+    });
+    const { GET } = await import('@/app/api/classics/route');
+    const r = await GET(req('http://x/api/classics'));
+    const j = await r.json();
+    expect(r.status).toBe(200);
+    expect(j.ok).toBe(true);
+    expect(j.data.items).toHaveLength(1);
+    expect(j.data.items[0].slug).toBe('lunyu');
   });
 
-  it('filters by category', async () => {
-    const res = await fetch(`${BASE}/api/classics?category=four-books`);
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.data.items.map((i: any) => i.slug)).toEqual(['lunyu']);
+  it('passes category / q / page through to listClassics', async () => {
+    mockListClassics.mockResolvedValueOnce({
+      items: [], total: 0, page: 2, pageSize: 24,
+    });
+    const { GET } = await import('@/app/api/classics/route');
+    const r = await GET(req('http://x/api/classics?category=philosophy&q=论&page=2&pageSize=24'));
+    expect(r.status).toBe(200);
+    expect(mockListClassics).toHaveBeenCalledWith({ category: 'philosophy', q: '论', page: 2, pageSize: 24 });
   });
 
-  it('rejects bad category', async () => {
-    const res = await fetch(`${BASE}/api/classics?category=bogus`);
-    expect(res.status).toBe(400);
+  it('rejects invalid category', async () => {
+    const { GET } = await import('@/app/api/classics/route');
+    const r = await GET(req('http://x/api/classics?category=bogus'));
+    expect(r.status).toBe(400);
+    expect(mockListClassics).not.toHaveBeenCalled();
   });
 });
 
 describe('GET /api/classics/[slug]', () => {
-  it('returns detail', async () => {
-    const res = await fetch(`${BASE}/api/classics/lunyu`);
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.data.title).toBe('论语');
-    expect(data.data.author).toBe('孔子');
-    expect(data.data.chunks).toHaveLength(1);
+  it('returns 200 with detail when found', async () => {
+    mockGetClassicBySlug.mockResolvedValueOnce({
+      id: 0,
+      slug: 'lunyu',
+      title: '论语',
+      category: 'four-books',
+      author: '孔子',
+      era: '春秋',
+      chunks: [{ id: 1, label: '学而第一', content: ['子曰。'], pinyin: [[]] }],
+    });
+    const { GET } = await import('@/app/api/classics/[slug]/route');
+    const r = await GET(req('http://x/api/classics/lunyu'), { params: Promise.resolve({ slug: 'lunyu' }) });
+    const j = await r.json();
+    expect(r.status).toBe(200);
+    expect(j.data.title).toBe('论语');
+    expect(j.data.chunks).toHaveLength(1);
   });
 
-  it('404 for missing', async () => {
-    const res = await fetch(`${BASE}/api/classics/nope`);
-    expect(res.status).toBe(404);
+  it('404 when slug missing', async () => {
+    mockGetClassicBySlug.mockResolvedValueOnce(null);
+    const { GET } = await import('@/app/api/classics/[slug]/route');
+    const r = await GET(req('http://x/api/classics/nope'), { params: Promise.resolve({ slug: 'nope' }) });
+    expect(r.status).toBe(404);
   });
 });

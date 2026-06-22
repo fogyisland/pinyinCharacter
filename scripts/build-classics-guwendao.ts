@@ -1303,16 +1303,15 @@ export async function buildClassicsGuwendao(): Promise<{ volumes: number; manife
       console.log(`[guwendao] ${vol.slug}: ${chunks.length} chapters, ${kb}KB JSON → ${jsonPath}`);
 
       await pool.execute(
-        `INSERT INTO classics (slug, title, category, author, era, chunks, source)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
+        `INSERT INTO classics (slug, title, category, author, era, source)
+         VALUES (?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
            title = VALUES(title),
            category = VALUES(category),
            author = VALUES(author),
            era = VALUES(era),
-           chunks = VALUES(chunks),
            source = VALUES(source)`,
-        [vol.slug, vol.title, file.category, file.author, file.era, json, sourceTag],
+        [vol.slug, vol.title, file.category, file.author, file.era, sourceTag],
       );
       volumeCount++;
       console.log(`[guwendao] ${vol.slug}: written to DB`);

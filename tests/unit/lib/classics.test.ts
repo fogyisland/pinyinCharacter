@@ -1,120 +1,170 @@
-import { describe, it, expect, beforeEach, afterAll } from 'vitest';
-import { getPool, closePool } from '@/lib/db';
-import { listClassics, getClassicBySlug, countByCategory } from '@/lib/classics';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-async function reset() {
-  const pool = getPool();
-  await pool.execute('DELETE FROM classics');
-}
+const mockManifest = {
+  version: 1 as const,
+  updatedAt: '2026-06-21',
+  books: [
+    {
+      slug: 'lunyu',
+      title: '论语',
+      source: 'chinese-poetry/chinese-poetry@master',
+      category: 'four-books' as const,
+      author: '孔子',
+      era: '春秋',
+      chapterCount: 2,
+      charCount: 13,
+      jsonFile: 'data/classics/lunyu.json',
+      jsonBytes: 1024,
+    },
+    {
+      slug: 'dizigui',
+      title: '弟子规',
+      source: 'chinese-poetry/chinese-poetry@master',
+      category: 'mengxue' as const,
+      author: '李毓秀',
+      era: '清',
+      chapterCount: 1,
+      charCount: 7,
+      jsonFile: 'data/classics/dizigui.json',
+      jsonBytes: 512,
+    },
+    {
+      slug: 'erya',
+      title: '尔雅',
+      source: 'guwendao.net/尔雅',
+      category: 'five-classics' as const,
+      author: null,
+      era: '战国',
+      chapterCount: 19,
+      charCount: 16990,
+      jsonFile: 'data/classics/erya.json',
+      jsonBytes: 345204,
+    },
+  ],
+};
 
-async function insertFixture(slug: string, title: string, category: string, chunks: unknown[], author: string | null = null, era: string | null = null) {
-  const pool = getPool();
-  await pool.execute(
-    'INSERT INTO classics (slug, title, category, author, era, chunks) VALUES (?, ?, ?, ?, ?, ?)',
-    [slug, title, category, author, era, JSON.stringify(chunks)]
-  );
-}
+const lunyuFile = {
+  slug: 'lunyu',
+  title: '论语',
+  category: 'four-books' as const,
+  author: '孔子',
+  era: '春秋',
+  source: 'chinese-poetry/chinese-poetry@master',
+  bookId: 'lunyu',
+  bookTitle: '论语',
+  chapterRange: { from: 1, to: 2 },
+  chunks: [
+    { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [[]] },
+    { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [[]] },
+  ],
+};
+
+const mockLoadManifest = vi.fn().mockResolvedValue(mockManifest);
+const mockLoadClassicFile = vi.fn();
+vi.mock('@/lib/classics/loader', () => ({
+  loadManifest: () => mockLoadManifest(),
+  loadClassicFile: (slug: string) => mockLoadClassicFile(slug),
+  invalidateManifestCache: vi.fn(),
+}));
 
 describe('listClassics', () => {
-  beforeEach(async () => {
-    await reset();
-    await insertFixture('lunyu', '论语', 'four-books', [
-      { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [[]] },
-      { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [[]] },
-    ], '孔子', '春秋');
-    await insertFixture('dizigui', '弟子规', 'mengxue', [
-      { id: 1, label: '总叙', content: ['弟子规圣人训。'], pinyin: [[]] },
-    ]);
+  beforeEach(() => {
+    mockLoadManifest.mockClear();
+    mockLoadClassicFile.mockClear();
   });
-  afterAll(async () => { await closePool(); });
 
   it('returns all classics when no filter', async () => {
+    const { listClassics } = await import('@/lib/classics/queries');
     const r = await listClassics({});
-    expect(r.total).toBe(2);
-    expect(r.items.map(i => i.slug)).toEqual(['lunyu', 'dizigui']);
+    expect(r.total).toBe(3);
+    expect(r.items.map((i) => i.slug)).toEqual(['lunyu', 'dizigui', 'erya']);
   });
 
   it('filters by category', async () => {
+    const { listClassics } = await import('@/lib/classics/queries');
     const r = await listClassics({ category: 'four-books' });
-    expect(r.items.map(i => i.slug)).toEqual(['lunyu']);
+    expect(r.items.map((i) => i.slug)).toEqual(['lunyu']);
   });
 
   it('filters by q (title match)', async () => {
+    const { listClassics } = await import('@/lib/classics/queries');
     const r = await listClassics({ q: '弟子' });
-    expect(r.items.map(i => i.slug)).toEqual(['dizigui']);
+    expect(r.items.map((i) => i.slug)).toEqual(['dizigui']);
   });
 
   it('paginates', async () => {
+    const { listClassics } = await import('@/lib/classics/queries');
     const r = await listClassics({ page: 1, pageSize: 1 });
     expect(r.items).toHaveLength(1);
-    expect(r.total).toBe(2);
+    expect(r.items[0]!.slug).toBe('lunyu');
+    expect(r.total).toBe(3);
     expect(r.page).toBe(1);
     expect(r.pageSize).toBe(1);
   });
 
-  it('computes chunkCount from JSON_LENGTH', async () => {
+  it('passes chunkCount and charCount through from manifest', async () => {
+    const { listClassics } = await import('@/lib/classics/queries');
     const r = await listClassics({});
-    const lunyu = r.items.find(i => i.slug === 'lunyu')!;
+    const lunyu = r.items.find((i) => i.slug === 'lunyu')!;
     expect(lunyu.chunkCount).toBe(2);
-  });
-
-  it('computes charCount from chunk content (excludes punctuation)', async () => {
-    const r = await listClassics({});
-    const lunyu = r.items.find(i => i.slug === 'lunyu')!;
-    // Fixture lines: '子曰学而时习之。' and '子曰为政以德。'
-    // After stripPunct removes '。': 7 + 6 = 13 non-punct chars
     expect(lunyu.charCount).toBe(13);
   });
 });
 
 describe('getClassicBySlug', () => {
-  beforeEach(async () => {
-    await reset();
-    await insertFixture('lunyu', '论语', 'four-books', [
-      { id: 1, label: '学而第一', content: ['子曰学而时习之。', '有朋自远方来。'], pinyin: [[], []] },
-    ], '孔子', '春秋');
+  beforeEach(() => {
+    mockLoadManifest.mockClear();
+    mockLoadClassicFile.mockClear();
   });
-  afterAll(async () => { await closePool(); });
 
   it('returns full detail with chunks parsed', async () => {
+    mockLoadClassicFile.mockResolvedValueOnce(lunyuFile);
+    const { getClassicBySlug } = await import('@/lib/classics/queries');
     const c = await getClassicBySlug('lunyu');
     expect(c).not.toBeNull();
     expect(c!.title).toBe('论语');
     expect(c!.author).toBe('孔子');
     expect(c!.era).toBe('春秋');
-    expect(c!.chunks).toHaveLength(1);
+    expect(c!.chunks).toHaveLength(2);
     expect(c!.chunks[0]!.label).toBe('学而第一');
-    expect(c!.chunks[0]!.content).toEqual(['子曰学而时习之。', '有朋自远方来。']);
+    expect(c!.chunks[0]!.content).toEqual(['子曰学而时习之。']);
   });
 
   it('returns null for nonexistent slug', async () => {
+    mockLoadClassicFile.mockResolvedValueOnce(null);
+    const { getClassicBySlug } = await import('@/lib/classics/queries');
     const c = await getClassicBySlug('nonexistent');
     expect(c).toBeNull();
   });
 
   it('assigns sequential chunk ids when missing', async () => {
-    await reset();
-    await insertFixture('shijing', '诗经', 'five-classics', [
-      { label: '关雎', content: ['关关雎鸠。'], pinyin: [[]] },
-      { label: '蒹葭', content: ['蒹葭苍苍。'], pinyin: [[]] },
-    ]);
+    mockLoadClassicFile.mockResolvedValueOnce({
+      ...lunyuFile,
+      chunks: [
+        { label: '关雎', content: ['关关雎鸠。'], pinyin: [[]] },
+        { label: '蒹葭', content: ['蒹葭苍苍。'], pinyin: [[]] },
+      ],
+    });
+    const { getClassicBySlug } = await import('@/lib/classics/queries');
     const c = await getClassicBySlug('shijing');
-    expect(c!.chunks.map(x => x.id)).toEqual([1, 2]);
+    expect(c!.chunks.map((x) => x.id)).toEqual([1, 2]);
   });
 });
 
 describe('countByCategory', () => {
-  beforeEach(async () => {
-    await reset();
-    await insertFixture('lunyu', '论语', 'four-books', [{ id: 1, label: 'x', content: [], pinyin: [] }]);
-    await insertFixture('dizigui', '弟子规', 'mengxue', [{ id: 1, label: 'x', content: [], pinyin: [] }]);
+  beforeEach(() => {
+    mockLoadManifest.mockClear();
+    mockLoadClassicFile.mockClear();
   });
-  afterAll(async () => { await closePool(); });
 
   it('returns counts keyed by category', async () => {
+    const { countByCategory } = await import('@/lib/classics/queries');
     const counts = await countByCategory();
     expect(counts['four-books']).toBe(1);
     expect(counts.mengxue).toBe(1);
-    expect(counts['five-classics']).toBe(0);
+    expect(counts['five-classics']).toBe(1);
+    expect(counts.philosophy).toBe(0);
+    expect(counts.history).toBe(0);
+    expect(counts.other).toBe(0);
   });
 });
