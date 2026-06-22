@@ -1,29 +1,25 @@
 // scripts/build-pianwen.ts
-import { writeFileSync, readFileSync, readdirSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { writeFileSync, readFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPool, closePool } from '../lib/db';
 import { fetchChapterList, scrapeChapterContent } from '../lib/guwendao-scraper';
-import type { ClassicChunk } from '../lib/classics-types';
+import type { ClassicCategory, ClassicChunk, ClassicFile } from '../lib/classics-types';
 
 const DATA_DIR = join(process.cwd(), 'data', 'classics');
 const MANIFEST_PATH = join(process.cwd(), 'data', 'classics-manifest.json');
 const BOOK_ID = '427c5eea5943';
 const SLUG = 'xunmeng-pianju';
 const SOURCE = 'guwendao.net/训蒙骈句';
-const PIANWEN_CATEGORY = 'pianwen';
+const PIANWEN_CATEGORY: ClassicCategory = 'pianwen';
+const PIANWEN_RHYME_TITLES = [
+  '一东','二冬','三江','四支','五微','六鱼','七虞','八齐','九佳','十灰',
+  '十一真','十二文','十三元','十四寒','十五删','十六先','十七萧','十八肴','十九豪','二十歌',
+  '二十一麻','二十二阳','二十三庚','二十四青','二十五蒸','二十六尤','二十七侵','二十八覃','二十九盐','三十咸',
+];
+const VERBOSE = process.env.BUILD_VERBOSE === '1';
+const log = (msg: string) => { if (VERBOSE) console.log(msg); };
 
-interface VolumeJson {
-  slug: string;
-  title: string;
-  category: string;
-  author: string | null;
-  era: string | null;
-  source: string;
-  bookId: string;
-  bookTitle: string;
-  chapterRange: { from: number; to: number };
-  chunks: ClassicChunk[];
-}
+type VolumeJson = ClassicFile;
 
 async function ensurePianwenCategory(pool: any): Promise<'widened' | 'already'> {
   const rows: any[] = (await pool.query(
@@ -37,7 +33,7 @@ async function ensurePianwenCategory(pool: any): Promise<'widened' | 'already'> 
      ENUM('four-books','five-classics','mengxue','philosophy','history','other','pianwen')
      NOT NULL DEFAULT 'other'`
   );
-  console.log('[build-pianwen] widened classics.category ENUM to include pianwen');
+  log('[build-pianwen] widened classics.category ENUM to include pianwen');
   return 'widened';
 }
 
@@ -61,7 +57,7 @@ export async function buildPianwen(): Promise<PianwenResult> {
   if (existsSync(filePath)) {
     const rows: any[] = (await pool.query(`SELECT 1 FROM classics WHERE slug = ? LIMIT 1`, [SLUG]))[0] as any[];
     if (rows.length > 0) {
-      console.log(`[build-pianwen] ${SLUG} already on disk + DB, skipping`);
+      log(`[build-pianwen] ${SLUG} already on disk + DB, skipping`);
       return { chapters: 0, bytes: 0, categoryStatus };
     }
   }
@@ -70,9 +66,10 @@ export async function buildPianwen(): Promise<PianwenResult> {
   const chunks: ClassicChunk[] = [];
   for (let i = 0; i < chapterIds.length; i++) {
     const { title, paragraphs } = await scrapeChapterContent(BOOK_ID, chapterIds[i]!);
+    const label = title?.trim() || PIANWEN_RHYME_TITLES[i] || `第${i + 1}篇`;
     chunks.push({
       id: i + 1,
-      label: title,
+      label,
       content: paragraphs,
       pinyin: paragraphs.map(() => []),
     });
@@ -129,13 +126,13 @@ export async function buildPianwen(): Promise<PianwenResult> {
   writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), 'utf8');
 
   const result: PianwenResult = { chapters: chunks.length, bytes: json.length, categoryStatus };
-  console.log(`[build-pianwen] ${SLUG}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB -> ${filePath}`);
+  log(`[build-pianwen] ${SLUG}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB -> ${filePath}`);
   return result;
 }
 
 if (require.main === module) {
   buildPianwen()
-    .then((r) => console.log(`[done] chapters=${r.chapters} bytes=${r.bytes} categoryStatus=${r.categoryStatus}`))
+    .then((r) => log(`[done] chapters=${r.chapters} bytes=${r.bytes} categoryStatus=${r.categoryStatus}`))
     .catch((err) => { console.error(err); process.exit(1); })
     .finally(() => closePool());
 }

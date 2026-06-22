@@ -15,11 +15,9 @@ vi.mock('../../../lib/guwendao-scraper', () => mockScraper);
 
 const mockWriteFile = vi.fn();
 const mockReadFile = vi.fn();
-const mockReadDir = vi.fn();
 vi.mock('node:fs', () => ({
   writeFileSync: (...a: any[]) => mockWriteFile(...a),
   readFileSync: (...a: any[]) => mockReadFile(...a),
-  readdirSync: (...a: any[]) => mockReadDir(...a),
   existsSync: vi.fn().mockReturnValue(true),
   mkdirSync: vi.fn(),
   statSync: vi.fn().mockReturnValue({ size: 1000 }),
@@ -34,7 +32,6 @@ describe('buildPianwen', () => {
       .mockResolvedValueOnce({ title: '一东', paragraphs: ['天上双星会', '人间此夜同'] })
       .mockResolvedValueOnce({ title: '二冬', paragraphs: ['春光正好', '花影重重'] });
     mockQuery.mockResolvedValue([[]]);
-    mockReadDir.mockReturnValue([]);
     mockReadFile.mockImplementation((p: string) => {
       if (p.endsWith('classics-manifest.json')) {
         return JSON.stringify({ version: 1, updatedAt: '2026-06-22', books: [] });
