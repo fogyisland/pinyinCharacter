@@ -29,7 +29,7 @@ export function FormFilterBar({ category, availableForms, selectedForms, onChang
             className={`text-sm px-3 h-8 rounded-full border transition-colors ${
               isSelected
                 ? 'bg-ink text-paper border-ink'
-                : 'bg-paper text-ink border-ink-faint hover:bg-mist'
+                : 'bg-paper text-ink border-ink-faint hover:bg-paper-deep'
             }`}
           >
             {form}

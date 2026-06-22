@@ -38,7 +38,9 @@ export default function PoetryListPage() {
   useEffect(() => {
     let cancelled = false;
     getAvailableFormsRequest(dynasty).then((forms) => {
-      if (!cancelled) setAvailableForms(forms);
+      if (cancelled) return;
+      setAvailableForms(forms);
+      setSelectedForms((prev) => prev.filter((f) => forms.includes(f)));
     });
     return () => { cancelled = true; };
   }, [dynasty]);
@@ -77,7 +79,7 @@ export default function PoetryListPage() {
         <PoemSearch
           dynasty={dynasty}
           q={q}
-          onDynastyChange={(d) => { setDynasty(d); setPage(1); }}
+          onDynastyChange={(d) => { setDynasty(d); setSelectedForms([]); setPage(1); }}
           onQChange={(v) => { setQ(v); setPage(1); }}
         />
         <FormFilterBar
