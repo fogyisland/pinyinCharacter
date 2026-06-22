@@ -10,7 +10,8 @@ import { AppreciationBlock } from '@/components/poetry/AppreciationBlock';
 import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
-import { buildPoemJsonLd } from './jsonld';
+import { buildMetadata } from '@/lib/seo/metadata';
+import { buildCreativeWork, buildBreadcrumbList } from '@/lib/seo/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,13 +20,18 @@ interface Props {
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const poem = await getPoem(Number(id));
+  const { id: idStr } = await params;
+  const id = Number(idStr);
+  if (!Number.isInteger(id) || id <= 0) return {};
+  const poem = await getPoem(id);
   if (!poem) return {};
-  return {
-    title: `${poem.title} · ${poem.author}`,
-    description: poem.content.slice(0, 2).join(' / '),
-  };
+  const excerpt = poem.content.slice(0, 2).join(' / ').slice(0, 80);
+  return buildMetadata({
+    title: `${poem.title} - ${poem.author}`,
+    description: `${poem.author}《${poem.title}》: ${excerpt}`,
+    path: `/poetry/${id}`,
+    ogType: 'article',
+  });
 }
 
 export default async function PoemDetailPage({ params }: Props) {
@@ -40,7 +46,20 @@ export default async function PoemDetailPage({ params }: Props) {
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildPoemJsonLd(poem)) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildCreativeWork(poem)) }}
+      />
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            buildBreadcrumbList([
+              { name: '首页', url: '/' },
+              { name: '诗词', url: '/poetry' },
+              { name: poem.title, url: `/poetry/${poem.id}` },
+            ])
+          ),
+        }}
       />
       <Suspense>
         <Header />
