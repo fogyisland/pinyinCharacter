@@ -74,7 +74,7 @@ export const sutraIdParamSchema = z.object({
 });
 
 export const classicsListQuerySchema = z.object({
-  category: z.enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other']).optional(),
+  category: z.enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other', 'pianwen']).optional(),
   q: z.string().max(64).transform((s) => s.trim()).optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(12),

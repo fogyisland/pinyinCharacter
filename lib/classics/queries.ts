@@ -83,6 +83,7 @@ export async function countByCategory(): Promise<Record<ClassicCategory, number>
     philosophy: 0,
     history: 0,
     other: 0,
+    pianwen: 0,
   };
   for (const b of manifest.books) {
     map[b.category] = (map[b.category] ?? 0) + 1;

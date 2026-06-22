@@ -4,7 +4,8 @@ export type ClassicCategory =
   | 'mengxue'
   | 'philosophy'
   | 'history'
-  | 'other';
+  | 'other'
+  | 'pianwen';
 
 export interface ClassicChunk {
   id: number;          // 1-based, contiguous within book
