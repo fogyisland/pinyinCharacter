@@ -11,6 +11,7 @@ import { LibrarySelectTab } from './LibrarySelectTab';
 import { RandomTab } from './RandomTab';
 import { ToolPicker } from './ToolPicker';
 import { PresentationPicker } from './PresentationPicker';
+import { TraceToggle } from './TraceToggle';
 import { PaperSizePicker } from './PaperSizePicker';
 import { FontFamilyPicker } from './FontFamilyPicker';
 import { WorksheetPreview } from './WorksheetPreview';
@@ -36,6 +37,7 @@ export function WorksheetGenerator() {
     defaultToolFor() === 'brush' ? 'brush-12' : 'A4',
   );
   const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor(defaultToolFor()));
+  const [trace, setTrace] = useState<boolean>(false);
   const [view, setView] = useState<'form' | 'preview'>('form');
   const [saving, setSaving] = useState(false);
   const [authHint, setAuthHint] = useState(false);
@@ -107,7 +109,7 @@ export function WorksheetGenerator() {
     if (view === 'form' && canPreview) {
       setView('preview');
     }
-  }, [fontFamily, tool, presentation, paperSize]);
+  }, [fontFamily, tool, presentation, paperSize, trace]);
 
   function handleToolChange(next: Tool) {
     setTool(next);
@@ -115,6 +117,7 @@ export function WorksheetGenerator() {
       setPaperSize('brush-12');
     } else if (next === 'pen' && isBrushSize(paperSize)) {
       setPaperSize('A4');
+      setTrace(false);  // pen has no trace mode
     }
     // fontFamily is preserved (user explicit decision 2026-06-20)
   }
@@ -147,7 +150,7 @@ export function WorksheetGenerator() {
     setSaving(true);
     setErrorMsg(null);
     try {
-      const cellStyle = composeCellStyle(tool, presentation);
+      const cellStyle = composeCellStyle(tool, presentation, trace);
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -174,7 +177,7 @@ export function WorksheetGenerator() {
       <WorksheetPreview
         title={title}
         content={content}
-        cellStyle={composeCellStyle(tool, presentation)}
+        cellStyle={composeCellStyle(tool, presentation, trace)}
         paperSize={paperSize}
         fontFamily={fontFamily}
         breakpoints={breakpoints}
@@ -253,6 +256,14 @@ export function WorksheetGenerator() {
             <PresentationPicker value={presentation} onChange={handlePresentationChange} />
           </div>
         </div>
+        {tool === 'brush' && (
+          <div>
+            <label className="block text-sm font-medium text-ink-soft">描红</label>
+            <div className="mt-2">
+              <TraceToggle value={trace} onChange={setTrace} />
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
