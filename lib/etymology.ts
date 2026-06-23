@@ -39,6 +39,47 @@ function getEraCoverage(char: string): EraCoverage | null {
   return _coverageCache[char] ?? null;
 }
 
+interface DbEtymologyRow {
+  era_jiaguwen_font?: string | null;
+  era_jinwen_font?: string | null;
+  era_xiaozhuan_font?: string | null;
+  era_lishu_font?: string | null;
+  era_kaishu_font?: string | null;
+  era_jiaguwen_has?: number | null;
+  era_jinwen_has?: number | null;
+  era_xiaozhuan_has?: number | null;
+  era_lishu_has?: number | null;
+  era_kaishu_has?: number | null;
+}
+
+/**
+ * Build the per-era glyph list shown by EtymologyMorph. The `hasGlyph` flag
+ * is sourced from data/era-coverage.json when available (post-2026-06-18
+ * source of truth); the DB char_etymology.era_*_has columns are only used
+ * for chars missing from the JSON. Kaishu is always available. Fonts come
+ * from DB columns if present, else fall back to the hardcoded ERA_FONT map.
+ */
+function buildEraGlyphs(
+  char: string,
+  cov: EraCoverage | null,
+  row: DbEtymologyRow | null
+): EraGlyph[] {
+  return ERAS.map((era) => {
+    const font = (row?.[`era_${era}_font`] ?? null) || ERA_FONT[era] || '';
+    let hasGlyph: boolean;
+    if (era === 'kaishu') {
+      hasGlyph = true;
+    } else if (cov) {
+      hasGlyph = cov[era as 'jiaguwen' | 'jinwen' | 'xiaozhuan' | 'lishu'];
+    } else if (row) {
+      hasGlyph = Boolean(row[`era_${era}_has`]);
+    } else {
+      hasGlyph = false;
+    }
+    return { era, font, hasGlyph };
+  });
+}
+
 async function readLevel(char: string): Promise<CharLevel> {
   // File-first (post 2026-06-17 slim-DB)
   const content = await getContent(char);
@@ -80,11 +121,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
     const cov = getEraCoverage(char);
     return {
       char,
-      eraGlyphs: ERAS.map((era) => ({
-        era,
-        font: ERA_FONT[era] ?? '',
-        hasGlyph: era === 'kaishu' ? true : cov?.[era as 'jiaguwen' | 'jinwen' | 'xiaozhuan' | 'lishu'] ?? false,
-      })),
+      eraGlyphs: buildEraGlyphs(char, cov, null),
       story: storyOnly,
       generatedBy: contentOnly?.etymology?.generated_by ?? null,
       generatedAt: contentOnly?.etymology?.generated_at ?? null,
@@ -92,11 +129,13 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
     };
   }
   const r = rows[0];
-  const eraGlyphs: EraGlyph[] = ERAS.map((era) => ({
-    era,
-    font: r[`era_${era}_font`],
-    hasGlyph: Boolean(r[`era_${era}_has`]),
-  }));
+  // Era glyph availability comes from data/era-coverage.json (the post-2026-06-18
+  // source of truth). The char_etymology.era_*_has columns are stale — they
+  // were never backfilled after the refactor that moved era coverage to JSON,
+  // and trust them here and the morph component renders only kaishu for every
+  // char. Fall back to the DB column only if the JSON has no entry.
+  const cov = getEraCoverage(char);
+  const eraGlyphs: EraGlyph[] = buildEraGlyphs(char, cov, r);
   const content = await getContent(char);
   const story = content?.etymology?.story ?? r.story ?? null;
   const generatedBy = content?.etymology?.generated_by ?? r.generated_by ?? null;
