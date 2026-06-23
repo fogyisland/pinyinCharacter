@@ -42,8 +42,9 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
       </div>
 
       <div className="card-paper rounded-lg p-3 flex flex-wrap gap-2 items-end text-sm">
-        <FilterChip active={!userId && !planKey} href="/admin/memberships">全部</FilterChip>
-        <FilterChip active={!!userId} href={userId ? '/admin/memberships' : `/admin/memberships?userId=${userId ?? ''}`}>{userId ? `用户 #${userId}` : '按用户'}</FilterChip>
+        <FilterChip active={!userId && !planKey} href={buildHref({ userId, planKey })}>全部</FilterChip>
+        {userId && <FilterChip active={true} href={buildHref({ userId, planKey }, { userId: null })}>{`用户 #${userId} ×`}</FilterChip>}
+        {planKey && <FilterChip active={true} href={buildHref({ userId, planKey }, { planKey: null })}>{`套餐 ${planKey} ×`}</FilterChip>}
       </div>
 
       <div className="card-paper rounded-lg overflow-x-auto">
@@ -95,9 +96,9 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
       <div className="flex items-center justify-between text-xs text-ink-faint">
         <span>共 {list.total} 条 · 第 {page} / {totalPages} 页</span>
         <div className="flex gap-2">
-          <Link href={`/admin/memberships?page=${Math.max(1, page - 1)}`}
+          <Link href={buildHref({ userId, planKey }, { page: String(Math.max(1, page - 1)) })}
             className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page <= 1 ? 'opacity-50 pointer-events-none' : ''}`}>上一页</Link>
-          <Link href={`/admin/memberships?page=${Math.min(totalPages, page + 1)}`}
+          <Link href={buildHref({ userId, planKey }, { page: String(Math.min(totalPages, page + 1)) })}
             className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page >= totalPages ? 'opacity-50 pointer-events-none' : ''}`}>下一页</Link>
         </div>
       </div>
@@ -123,4 +124,21 @@ function FilterChip({ active, href, children }: { active: boolean; href: string;
       active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
     }`}>{children}</Link>
   );
+}
+
+function buildHref(
+  base: { userId?: number; planKey?: string },
+  override: { userId?: string | null; planKey?: string | null; page?: string } = {},
+) {
+  // Active filters flow into every nav link. `override` only changes fields
+  // explicitly passed; null means "remove this field", undefined means
+  // "inherit from base".
+  const params = new URLSearchParams();
+  const u = override.userId !== undefined ? override.userId : base.userId !== undefined ? String(base.userId) : null;
+  const p = override.planKey !== undefined ? override.planKey : base.planKey ?? null;
+  if (u) params.set('userId', u);
+  if (p) params.set('planKey', p);
+  if (override.page) params.set('page', override.page);
+  const qs = params.toString();
+  return qs ? `/admin/memberships?${qs}` : '/admin/memberships';
 }
