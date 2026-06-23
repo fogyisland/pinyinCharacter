@@ -14,7 +14,7 @@
  * For serverless / Vercel deployments, callers should hit the
  * /api/admin/scheduler/trigger endpoint via external cron.
  */
-import { readSchedulerConfig, recordSchedulerRun, type SchedulerConfig } from './scheduler-config';
+import { readSchedulerConfig, recordSchedulerRun, recordTaskRun, newRunId, type SchedulerConfig } from './scheduler-config';
 import { ALL_TASKS, runTask, type TaskName, type TaskResult } from './scheduler-tasks';
 
 declare global {
@@ -54,18 +54,33 @@ async function runTick(cfg: SchedulerConfig): Promise<void> {
     await recordSchedulerRun('no tasks enabled — skipped');
     return;
   }
+  const runId = newRunId();
   const results: TaskResult[] = [];
   for (const name of tasks) {
+    const startedAt = new Date();
+    let result: TaskResult;
     try {
-      results.push(await runTask(name));
+      result = await runTask(name);
     } catch (e) {
-      results.push({
+      result = {
         name,
         ok: false,
         summary: 'unhandled exception',
         error: e instanceof Error ? e.message : String(e),
-      });
+      };
     }
+    results.push(result);
+    try {
+      await recordTaskRun({
+        runId,
+        taskName: name,
+        startedAt,
+        finishedAt: new Date(),
+        ok: result.ok,
+        summary: result.summary,
+        error: result.error ?? null,
+      });
+    } catch { /* swallow — history is best-effort */ }
   }
   const summary = results
     .map((r) => `${r.ok ? '✓' : '✗'} ${r.name}: ${r.summary}`)
@@ -132,18 +147,33 @@ export async function runSchedulerNow(cfg?: SchedulerConfig): Promise<TaskResult
   globalThis.__pinYinSchedulerState = state;
   const useCfg = cfg ?? state.config;
   const tasks = enabledTasks(useCfg);
+  const runId = newRunId();
   const results: TaskResult[] = [];
   for (const name of tasks) {
+    const startedAt = new Date();
+    let result: TaskResult;
     try {
-      results.push(await runTask(name));
+      result = await runTask(name);
     } catch (e) {
-      results.push({
+      result = {
         name,
         ok: false,
         summary: 'unhandled exception',
         error: e instanceof Error ? e.message : String(e),
-      });
+      };
     }
+    results.push(result);
+    try {
+      await recordTaskRun({
+        runId,
+        taskName: name,
+        startedAt,
+        finishedAt: new Date(),
+        ok: result.ok,
+        summary: result.summary,
+        error: result.error ?? null,
+      });
+    } catch { /* swallow — history is best-effort */ }
   }
   const summary = results
     .map((r) => `${r.ok ? '✓' : '✗'} ${r.name}: ${r.summary}`)

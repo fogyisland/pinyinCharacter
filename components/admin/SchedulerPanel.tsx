@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useCallback, useTransition } from 'react';
+import { useState, useCallback, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Power, Play, Check, AlertTriangle, Clock } from 'lucide-react';
-import type { SchedulerConfig } from '@/lib/scheduler-config';
+import { Power, Play, Check, AlertTriangle, Clock, History } from 'lucide-react';
+import type { SchedulerConfig, SchedulerRunGroup } from '@/lib/scheduler-config';
 
 const INTERVAL_OPTIONS = [
   { value: 5,    label: '5 分钟' },
@@ -30,10 +30,25 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const [triggerResults, setTriggerResults] = useState<null | Array<{ name: string; ok: boolean; summary: string; error?: string }>>(null);
+  const [history, setHistory] = useState<SchedulerRunGroup[] | null>(null);
+  const [historyErr, setHistoryErr] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
     startTransition(() => router.refresh());
   }, [router]);
+
+  const fetchHistory = useCallback(async () => {
+    try {
+      const r = await fetch('/api/admin/scheduler/history?limit=5');
+      const j = await r.json();
+      if (j?.ok) { setHistory(j.data.runs); setHistoryErr(null); }
+      else { setHistoryErr(j?.error?.message ?? '加载失败'); }
+    } catch (e) {
+      setHistoryErr(e instanceof Error ? e.message : '加载失败');
+    }
+  }, []);
+
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
   async function postJson<T>(url: string, body: object): Promise<T> {
     const res = await fetch(url, {
@@ -74,6 +89,8 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
         if (refreshed.ok) setCfg(refreshed.data);
       } catch { /* swallow */ }
       refresh();
+      // Reload per-task history so the table reflects the new run.
+      void fetchHistory();
     } catch (e) {
       setMsg({ kind: 'err', text: (e as Error).message });
     } finally {
@@ -198,6 +215,59 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
           </ul>
         </div>
       )}
+
+      {/* Per-task history */}
+      <div className="card-paper rounded-lg p-4 space-y-2">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-ink-soft inline-flex items-center gap-1">
+            <History className="h-3.5 w-3.5" />最近执行历史
+          </h2>
+          <button type="button" onClick={() => void fetchHistory()} disabled={busy !== null}
+            className="text-xs text-ink-soft hover:text-ink disabled:opacity-50">
+            刷新
+          </button>
+        </div>
+        {historyErr && <p className="text-xs text-seal">{historyErr}</p>}
+        {history === null && !historyErr && <p className="text-xs text-ink-faint">加载中…</p>}
+        {history !== null && history.length === 0 && (
+          <p className="text-xs text-ink-faint">暂无历史记录 — 触发或自动跑过一次后会出现。</p>
+        )}
+        {history && history.length > 0 && (
+          <ul className="space-y-2 text-sm">
+            {history.map(run => {
+              const anyFail = run.tasks.some(t => !t.ok);
+              return (
+                <li key={run.runId} className="border border-paper-warm rounded p-2">
+                  <div className="flex items-center justify-between text-xs text-ink-soft">
+                    <span className="font-mono">{run.runId}</span>
+                    <span>{new Date(run.startedAt).toLocaleString('zh-CN')}</span>
+                  </div>
+                  <ul className="mt-1 space-y-0.5">
+                    {run.tasks.map(t => (
+                      <li key={t.id} className="font-mono text-xs flex items-start gap-1">
+                        <span className={t.ok ? 'text-green-700' : 'text-seal'}>{t.ok ? '✓' : '✗'}</span>
+                        <span className="text-ink-soft shrink-0">{t.taskName}:</span>
+                        <span className="text-ink break-all flex-1">
+                          {t.summary}
+                          {t.error && <span className="text-seal"> — {t.error}</span>}
+                        </span>
+                        <span className="text-ink-faint shrink-0">
+                          {t.startedAt && t.finishedAt
+                            ? `${new Date(t.finishedAt).getTime() - new Date(t.startedAt).getTime()}ms`
+                            : ''}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  {anyFail && (
+                    <p className="text-xs text-seal mt-1">本轮有任务失败,见上方行内错误。</p>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       {/* External cron hint */}
       <div className="card-paper rounded-lg p-4 space-y-1 text-xs text-ink-soft">
