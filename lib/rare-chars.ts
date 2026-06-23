@@ -160,6 +160,10 @@ export async function listChars(opts: { q?: string; page?: number; minMeaning?: 
 }
 
 export async function getChar(c: string): Promise<RareChar | null> {
+  // Filter to BMP-only at the application boundary: mysql2 binary protocol
+  // corrupts 4-byte UTF-8 params (supp-plane chars). Returning null here
+  // means the corrupted value never reaches the driver.
+  if (!c || (c.codePointAt(0) ?? 0) > 0xFFFF) return null;
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT \`char\`, pinyin, needs_review FROM rare_chars WHERE \`char\` = ? LIMIT 1`,

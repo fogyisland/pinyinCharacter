@@ -130,6 +130,10 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
 }
 
 export async function getChar(char: string): Promise<Char | null> {
+  // Filter to BMP-only at the application boundary: mysql2 binary protocol
+  // corrupts 4-byte UTF-8 params (supp-plane chars). Returning null here
+  // means the corrupted value never reaches the driver.
+  if (!char || (char.codePointAt(0) ?? 0) > 0xFFFF) return null;
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint

@@ -88,6 +88,17 @@ describe('getChar', () => {
     const result = await getChar('X');
     expect(result).toBeNull();
   });
+
+  it('returns null for supp-plane char (4-byte UTF-8) without querying DB', async () => {
+    // mysql2 binary protocol corrupts 4-byte UTF-8 params. The defensive
+    // filter rejects supp-plane chars at the boundary so they never reach
+    // the driver. U+1F600 (😀) is supp-plane; U+4E00 (一) is BMP for control.
+    const supp = String.fromCodePoint(0x1F600);
+    expect(supp.codePointAt(0)).toBeGreaterThan(0xFFFF);
+    const result = await getChar(supp);
+    expect(result).toBeNull();
+    expect(mockedQuery).not.toHaveBeenCalled();
+  });
 });
 
 describe('getCharDetail', () => {
