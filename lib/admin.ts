@@ -33,8 +33,10 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
   const where: string[] = [];
   const params: any[] = [];
   if (opts.q) {
-    where.push(`u.username LIKE ?`);
-    params.push(`%${opts.q}%`);
+    // Match username OR email. Email is nullable; u.email LIKE ? returns
+    // null which is falsy in WHERE so non-email users still match username.
+    where.push(`(u.username LIKE ? OR u.email LIKE ?)`);
+    params.push(`%${opts.q}%`, `%${opts.q}%`);
   }
   if (typeof opts.isAdmin === 'boolean') {
     where.push(`u.is_admin = ?`);
