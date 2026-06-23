@@ -4,7 +4,9 @@ import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
+import { EmptyState } from '@/components/common/EmptyState';
 import { getEtymology, getAdjacentChars } from '@/lib/etymology';
+import { getChar } from '@/lib/chars';
 import { EtymologyMorph } from '@/components/etymology/EtymologyMorph';
 import { EtymologyPrevNext } from '@/components/etymology/EtymologyPrevNext';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
@@ -18,11 +20,14 @@ interface Props {
 export default async function EtymologyPage({ params }: Props) {
   const { char } = await params;
   const decoded = decodeURIComponent(char);
-  const [etymology, adjacent] = await Promise.all([
+  // Three parallel reads: char row (to distinguish "no such char" 404 from
+  // "char exists but no etymology" empty state), etymology data, prev/next.
+  const [charRow, etymology, adjacent] = await Promise.all([
+    getChar(decoded),
     getEtymology(decoded),
     getAdjacentChars(decoded),
   ]);
-  if (!etymology) notFound();
+  if (!charRow) notFound();
   return (
     <>
       <Suspense>
@@ -40,16 +45,35 @@ export default async function EtymologyPage({ params }: Props) {
             字 · 韵 · 字源
           </span>
         </div>
-        <SectionTitle subtitle={etymology.story ? '字形演变故事' : '字源即将生成'}>
-          <span className="text-5xl sm:text-6xl font-serif text-ink mr-3 align-middle">{etymology.char}</span>
-          <ReadAloudButton text={etymology.char} size="sm" variant="seal" label="读字" className="align-middle" />
+        <SectionTitle subtitle={etymology?.story ? '字形演变故事' : '字源即将生成'}>
+          <span className="text-5xl sm:text-6xl font-serif text-ink mr-3 align-middle">{decoded}</span>
+          <ReadAloudButton text={decoded} size="sm" variant="seal" label="读字" className="align-middle" />
         </SectionTitle>
-        <EtymologyMorph
-          char={etymology.char}
-          eraGlyphs={etymology.eraGlyphs}
-          story={etymology.story}
-          level={etymology.level}
-        />
+        {etymology ? (
+          <EtymologyMorph
+            char={etymology.char}
+            eraGlyphs={etymology.eraGlyphs}
+            story={etymology.story}
+            level={etymology.level}
+          />
+        ) : (
+          // Char is in the chars table but no etymology row + no content JSON
+          // story. Show a soft empty state instead of 404 — the route works,
+          // we just don't have data for this char yet. (404 would suggest
+          // the page is broken or the char doesn't exist anywhere.)
+          <EmptyState
+            title="字库中无字源"
+            description={`「${decoded}」尚未收录字源数据,可在字典查看基本释义。`}
+            action={
+              <Link
+                href={`/dictionary/${encodeURIComponent(decoded)}`}
+                className="btn-seal text-sm"
+              >
+                查看「{decoded}」字典释义 →
+              </Link>
+            }
+          />
+        )}
         <EtymologyPrevNext prev={adjacent.prev} next={adjacent.next} />
       </PageContainer>
       <Footer />
