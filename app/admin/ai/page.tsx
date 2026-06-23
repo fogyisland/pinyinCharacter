@@ -35,7 +35,7 @@ function truncate(s: string | null, n = 100): string {
   return s.length > n ? s.slice(0, n) + '…' : s;
 }
 
-type Tab = 'calls' | 'config';
+type Tab = 'calls' | 'config' | 'mock';
 
 export default function AdminAiPage() {
   const [tab, setTab] = useState<Tab>('calls');
@@ -130,6 +130,45 @@ export default function AdminAiPage() {
     else { setConfig(r.data.config); setHasApiKey(r.data.hasApiKey); setConfigMsg('配置已保存'); }
   }
 
+  // --- Mock tab state ---
+  const [mockEnabled, setMockEnabled] = useState(false);
+  const [mockBusy, setMockBusy] = useState(false);
+  const [mockMsg, setMockMsg] = useState<string | null>(null);
+  const [mockErr, setMockErr] = useState<string | null>(null);
+
+  const fetchMock = useCallback(async () => {
+    const r = await fetch('/api/admin/ai/mock');
+    const j = await r.json();
+    if (j?.ok) setMockEnabled(Boolean(j.data?.enabled));
+  }, []);
+
+  useEffect(() => {
+    if (tab === 'mock') {
+      setMockMsg(null); setMockErr(null);
+      fetchMock();
+    }
+  }, [tab, fetchMock]);
+
+  async function toggleMock() {
+    setMockBusy(true); setMockMsg(null); setMockErr(null);
+    const next = !mockEnabled;
+    try {
+      const r = await fetch('/api/admin/ai/mock', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ enabled: next }),
+      });
+      const j = await r.json();
+      if (!j?.ok) throw new Error(j?.error?.message ?? 'toggle failed');
+      setMockEnabled(Boolean(j.data?.enabled));
+      setMockMsg(next ? '已开启 Mock 模式' : '已关闭 Mock 模式');
+    } catch (e: any) {
+      setMockErr(e?.message ?? 'toggle failed');
+    } finally {
+      setMockBusy(false);
+    }
+  }
+
   const tabClass = (active: boolean) =>
     `px-4 py-2 text-sm border-b-2 -mb-px ${
       active ? 'border-ink text-ink font-semibold' : 'border-transparent text-ink-soft hover:text-ink'
@@ -142,6 +181,7 @@ export default function AdminAiPage() {
       <div className="flex border-b border-paper-warm">
         <button type="button" onClick={() => setTab('calls')} className={tabClass(tab === 'calls')}>调用记录</button>
         <button type="button" onClick={() => setTab('config')} className={tabClass(tab === 'config')}>配置</button>
+        <button type="button" onClick={() => setTab('mock')} className={tabClass(tab === 'mock')}>Mock 模式</button>
       </div>
 
       {tab === 'calls' && (
@@ -296,6 +336,35 @@ export default function AdminAiPage() {
             {configBusy ? '保存中…' : '保存'}
           </button>
         </form>
+      )}
+
+      {tab === 'mock' && (
+        <div className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
+          {mockErr && <p className="text-sm text-seal">{mockErr}</p>}
+          {mockMsg && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{mockMsg}</p>}
+
+          <div className="space-y-1">
+            <h2 className="text-sm font-semibold text-ink">AI Mock 模式</h2>
+            <p className="text-xs text-ink-soft">
+              开启后所有 LLM 调用会短路返回固定占位文本（MOCK-*），不再消耗真实 API 配额。
+              适合本地开发、批量生成调试、限速回避。
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 pt-2">
+            <span className={`text-sm font-medium ${mockEnabled ? 'text-seal' : 'text-ink-soft'}`}>
+              {mockEnabled ? '已开启' : '已关闭'}
+            </span>
+            <button type="button" onClick={toggleMock} disabled={mockBusy}
+              className={`text-sm px-4 py-1.5 rounded disabled:opacity-50 ${
+                mockEnabled
+                  ? 'bg-paper-deep text-ink hover:bg-paper-warm'
+                  : 'bg-ink text-paper hover:bg-ink/80'
+              }`}>
+              {mockBusy ? '切换中…' : mockEnabled ? '关闭 Mock' : '开启 Mock'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
