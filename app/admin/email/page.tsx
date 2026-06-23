@@ -1,5 +1,6 @@
 import { getAllConfig } from '@/lib/config';
 import { SmtpConfigForm } from '@/components/admin/SmtpConfigForm';
+import { EmailHistory } from '@/components/admin/EmailHistory';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +25,7 @@ export default async function AdminEmailPage() {
         在 <code>smtp.transport=console</code> 时只把邮件内容打印到服务器日志(开发用)。
       </p>
       <SmtpConfigForm initial={initial} />
+      <EmailHistory />
     </div>
   );
 }

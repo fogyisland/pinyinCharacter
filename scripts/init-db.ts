@@ -213,6 +213,20 @@ const DDL = [
      KEY idx_task_started (task_name, started_at DESC)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+  `CREATE TABLE IF NOT EXISTS email_send_history (
+     id          BIGINT       NOT NULL AUTO_INCREMENT,
+     to_addr     VARCHAR(254) NOT NULL,
+     subject     VARCHAR(512) NOT NULL,
+     template    VARCHAR(64)  NULL,
+     status      ENUM('sent','failed','console') NOT NULL,
+     error       VARCHAR(1024) NULL,
+     sent_at     DATETIME(3)  NOT NULL,
+     PRIMARY KEY (id),
+     KEY idx_sent_at (sent_at DESC),
+     KEY idx_status (status, sent_at DESC),
+     KEY idx_to (to_addr, sent_at DESC)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
   `CREATE TABLE IF NOT EXISTS app_config (
      \`key\`       VARCHAR(64)  NOT NULL,
      value       TEXT         NOT NULL,
