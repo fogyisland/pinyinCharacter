@@ -172,6 +172,7 @@ const DDL = [
      status      ENUM('ok','error') NOT NULL DEFAULT 'ok',
      duration_ms INT UNSIGNED NULL,
      ip          VARCHAR(45)  NULL,
+     user_agent  VARCHAR(512) NULL,
      created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
      PRIMARY KEY (id),
      KEY idx_user_created (user_id, created_at DESC),

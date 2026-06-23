@@ -22,9 +22,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return forbidden('membership_required', 'multi-page print requires membership');
     }
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+    const userAgent = req.headers.get('user-agent') ?? null;
     await logDownload({
       userId: auth.user.id, format: 'print', sourceType: 'worksheet', sourceId: String(wid),
-      ip,
+      ip, userAgent,
     });
     await logUserAction(req, auth.user.id, 'worksheet_saved', {
       action: 'print',

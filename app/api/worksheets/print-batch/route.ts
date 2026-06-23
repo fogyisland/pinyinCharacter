@@ -37,9 +37,10 @@ export async function POST(req: NextRequest) {
     }
 
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+    const userAgent = req.headers.get('user-agent') ?? null;
     for (const ws of rows) {
       await logDownload({
-        userId: auth.user.id, format: 'print', sourceType: 'worksheet', sourceId: String(ws.id), ip,
+        userId: auth.user.id, format: 'print', sourceType: 'worksheet', sourceId: String(ws.id), ip, userAgent,
       });
     }
     await logUserAction(req, auth.user.id, 'worksheet_batch_printed', {

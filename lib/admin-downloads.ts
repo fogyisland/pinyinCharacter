@@ -10,6 +10,8 @@ export interface DownloadRow {
   sourceId: string | null;
   status: 'ok' | 'error';
   durationMs: number | null;
+  ip: string | null;
+  userAgent: string | null;
   createdAt: string;
 }
 
@@ -41,7 +43,7 @@ export async function listDownloads(opts: ListDownloadsOptions = {}): Promise<Li
   const sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
-    `SELECT d.id, d.user_id, u.username, d.format, d.source_type, d.source_id, d.status, d.duration_ms, d.created_at
+    `SELECT d.id, d.user_id, u.username, d.format, d.source_type, d.source_id, d.status, d.duration_ms, d.ip, d.user_agent, d.created_at
      FROM downloads d LEFT JOIN users u ON u.id = d.user_id
      ${sql} ORDER BY d.created_at DESC LIMIT ? OFFSET ?`,
     [...params, pageSize, offset],
@@ -54,7 +56,7 @@ export async function listDownloads(opts: ListDownloadsOptions = {}): Promise<Li
     items: rows.map(r => ({
       id: Number(r.id), userId: Number(r.user_id), username: r.username,
       format: r.format, sourceType: r.source_type, sourceId: r.source_id,
-      status: r.status, durationMs: r.duration_ms,
+      status: r.status, durationMs: r.duration_ms, ip: r.ip, userAgent: r.user_agent,
       createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
     })),
     total: Number(countRows[0].n), page, pageSize,

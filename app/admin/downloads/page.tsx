@@ -165,6 +165,7 @@ export default function AdminDownloadsPage() {
               <th className="px-3 py-2">格式</th>
               <th className="px-3 py-2">状态</th>
               <th className="px-3 py-2">耗时</th>
+              <th className="px-3 py-2">IP</th>
               <th className="px-3 py-2">资源</th>
             </tr>
           </thead>
@@ -183,6 +184,10 @@ export default function AdminDownloadsPage() {
                   <td className="px-3 py-2"><span className="text-xs px-2 py-0.5 rounded bg-paper-deep">{r.format}</span></td>
                   <td className="px-3 py-2">{statusBadge(r.status)}</td>
                   <td className="px-3 py-2 text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</td>
+                  <td className="px-3 py-2 text-xs text-ink-faint font-mono max-w-[160px] truncate"
+                      title={r.userAgent ? `IP: ${r.ip ?? '—'}\nUA: ${r.userAgent}` : r.ip ?? ''}>
+                    {r.ip ?? '—'}
+                  </td>
                   <td className="px-3 py-2 text-xs">
                     {r.sourceId
                       ? href
@@ -194,10 +199,10 @@ export default function AdminDownloadsPage() {
               );
             })}
             {rows.length === 0 && !busy && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-ink-faint">无数据</td></tr>
+              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">无数据</td></tr>
             )}
             {busy && rows.length === 0 && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-ink-faint">加载中…</td></tr>
+              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">加载中…</td></tr>
             )}
           </tbody>
         </table>

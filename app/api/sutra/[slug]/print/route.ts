@@ -27,9 +27,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     const manifest = readSutraManifest();
     const sutraTitle = manifest?.items.find((i) => i.slug === slug)?.title ?? null;
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+    const userAgent = req.headers.get('user-agent') ?? null;
     await logDownload({
       userId: auth.user.id, format: 'print', sourceType: 'sutra', sourceId,
-      ip,
+      ip, userAgent,
     });
     await logUserAction(req, auth.user.id, 'sutra_saved', {
       action: 'print',

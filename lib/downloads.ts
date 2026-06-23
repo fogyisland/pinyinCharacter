@@ -12,6 +12,7 @@ export interface LogDownloadArgs {
   status?: DownloadStatus;
   durationMs?: number;
   ip?: string | null;
+  userAgent?: string | null;
 }
 
 /** Fire-and-forget. Never throws. */
@@ -19,8 +20,8 @@ export async function logDownload(args: LogDownloadArgs): Promise<void> {
   try {
     await getPool().query(
       `INSERT INTO downloads
-         (user_id, format, source_type, source_id, status, duration_ms, ip)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+         (user_id, format, source_type, source_id, status, duration_ms, ip, user_agent)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         args.userId,
         args.format,
@@ -29,6 +30,7 @@ export async function logDownload(args: LogDownloadArgs): Promise<void> {
         args.status ?? 'ok',
         args.durationMs ?? null,
         args.ip ?? null,
+        args.userAgent ?? null,
       ],
     );
   } catch (err) {

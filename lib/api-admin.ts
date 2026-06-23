@@ -131,6 +131,7 @@ export interface AdminDownloadRow {
   status: string;
   durationMs: number | null;
   ip: string | null;
+  userAgent: string | null;
   createdAt: string;
 }
 export interface AdminDownloadListData { items: AdminDownloadRow[]; total: number; page: number; pageSize: number; }
