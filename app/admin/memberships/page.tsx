@@ -29,6 +29,7 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
         <h1 className="text-xl font-semibold">会员</h1>
         <div className="flex gap-2">
           <ManualGrantDrawer />
+          <Link href="/admin/memberships/orders" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">PayPal 订单</Link>
           <Link href="/admin/memberships/plans" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">套餐设置</Link>
           <Link href="/admin/memberships/config" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">支付配置</Link>
         </div>
