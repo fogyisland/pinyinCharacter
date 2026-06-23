@@ -6,7 +6,9 @@
  *   app/icon.png         (32x32)
  *   app/apple-icon.png   (180x180)
  *   app/favicon.ico      (16+32+48 multi-size, via `to-ico`)
- *   public/favicon.ico   (same bytes as app/favicon.ico)
+ *
+ * Note: do NOT also write to public/favicon.ico — Next.js 15 500s when both
+ * an app/ route and a public/ asset resolve to the same path.
  *
  * Run: pnpm favicon:build
  */
@@ -39,7 +41,6 @@ async function main() {
     { path: 'app/icon.png', data: icon32 },
     { path: 'app/apple-icon.png', data: apple180 },
     { path: 'app/favicon.ico', data: ico },
-    { path: 'public/favicon.ico', data: ico },
   ];
 
   for (const d of dests) {

@@ -19,7 +19,7 @@ const DDL = [
      granted_by BIGINT NULL,
      note VARCHAR(255) NULL,
      granted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-     expires_at TIMESTAMP NOT NULL,
+     expires_at TIMESTAMP NOT NULL DEFAULT '2038-01-19 03:14:07',
      revoked_at TIMESTAMP NULL,
      revoked_by BIGINT NULL,
      revoke_reason VARCHAR(255) NULL,

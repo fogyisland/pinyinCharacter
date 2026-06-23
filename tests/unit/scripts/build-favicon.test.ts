@@ -4,11 +4,13 @@ import { existsSync, statSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const ROOT = resolve(__dirname, '..', '..', '..');
+// Only app/-routed files. We do NOT also write public/favicon.ico — Next.js
+// 15 500s when both an app/ route and a public/ asset resolve to /favicon.ico
+// ("conflicting public file and page file").
 const OUTPUTS = [
   'app/icon.png',
   'app/apple-icon.png',
   'app/favicon.ico',
-  'public/favicon.ico',
 ];
 
 describe('scripts/build-favicon.ts', () => {
@@ -18,9 +20,13 @@ describe('scripts/build-favicon.ts', () => {
       const p = resolve(ROOT, f);
       if (existsSync(p)) rmSync(p);
     }
+    // If a stale public/favicon.ico exists from an older build, delete it
+    // too so we don't leave conflicting state on disk between runs.
+    const legacy = resolve(ROOT, 'public/favicon.ico');
+    if (existsSync(legacy)) rmSync(legacy);
   });
 
-  it('produces 4 favicon files at expected paths with non-zero size', () => {
+  it('produces 3 favicon files at expected paths with non-zero size', () => {
     execSync('pnpm favicon:build', { cwd: ROOT, stdio: 'pipe' });
     for (const f of OUTPUTS) {
       const p = resolve(ROOT, f);
@@ -29,10 +35,7 @@ describe('scripts/build-favicon.ts', () => {
     }
   });
 
-  it('favicon.ico bytes are identical at app/ and public/ paths', () => {
-    const a = statSync(resolve(ROOT, 'app/favicon.ico')).size;
-    const b = statSync(resolve(ROOT, 'public/favicon.ico')).size;
-    expect(a).toBe(b);
-    expect(a).toBeGreaterThan(0);
+  it('does NOT write a public/favicon.ico (would conflict with app/favicon.ico in Next.js 15)', () => {
+    expect(existsSync(resolve(ROOT, 'public/favicon.ico'))).toBe(false);
   });
 });
