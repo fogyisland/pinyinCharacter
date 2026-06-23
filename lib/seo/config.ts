@@ -1,14 +1,39 @@
+/**
+ * Site URL helpers for canonical links, sitemaps, and JSON-LD.
+ *
+ * `getSiteUrl()` reads NEXT_PUBLIC_SITE_URL (set from the admin backend UI,
+ * not from .env — see memory `next-public-site-url-from-admin`). In dev /
+ * test it falls back to http://localhost:3000 so local dev works without
+ * any config. In production it throws if the env var is missing, because
+ * emitting `localhost:3000` canonicals into Google Search Console would
+ * be a real SEO bug — and we already have validateEnv() boot-checking
+ * JWT_SECRET, COOKIE_SECURE, and DATABASE_URL; this extends the same
+ * fail-fast pattern to SEO.
+ *
+ * `env` parameter is injectable for testability; production callers always
+ * use the default (process.env).
+ */
 export const SITE_NAME = '字·韵';
 export const SITE_LOCALE = 'zh_CN';
 const FALLBACK = 'http://localhost:3000';
 
-export function getSiteUrl(): string {
-  const raw = process.env.NEXT_PUBLIC_SITE_URL || FALLBACK;
+function isProd(env: NodeJS.ProcessEnv): boolean {
+  return env.NODE_ENV === 'production';
+}
+
+export function getSiteUrl(env: NodeJS.ProcessEnv = process.env): string {
+  const raw = env.NEXT_PUBLIC_SITE_URL || FALLBACK;
+  if (!env.NEXT_PUBLIC_SITE_URL && isProd(env)) {
+    throw new Error(
+      'NEXT_PUBLIC_SITE_URL is not set in production — canonical URLs and sitemaps would emit localhost:3000. ' +
+        'Set it via the admin backend UI (Settings → Site URL), not by editing .env.',
+    );
+  }
   return raw.replace(/\/+$/, '');
 }
 
-export function buildCanonicalUrl(path: string): string {
+export function buildCanonicalUrl(path: string, env: NodeJS.ProcessEnv = process.env): string {
   if (/^https?:\/\//.test(path)) return path;
   const leading = path.startsWith('/') ? path : `/${path}`;
-  return `${getSiteUrl()}${leading}`;
+  return `${getSiteUrl(env)}${leading}`;
 }
