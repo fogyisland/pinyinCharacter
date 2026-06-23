@@ -13,10 +13,6 @@ export interface AuditLogRow {
 }
 export interface AuditLogData { rows: AuditLogRow[]; total: number; }
 
-export interface SystemStats {
-  users: number; admins: number; history: number; favorites: number; audit: number;
-}
-
 export interface UserDetailData {
   user: AdminUserRow;
   recentHistory: Array<{
@@ -77,10 +73,6 @@ export async function adminGetAudit(opts: {
   if (opts.offset !== undefined) sp.set('offset', String(opts.offset));
   const qs = sp.toString();
   return call(`/api/admin/audit${qs ? '?' + qs : ''}`, { method: 'GET' });
-}
-
-export async function adminGetStats(): Promise<ApiResult<SystemStats>> {
-  return call('/api/admin/stats', { method: 'GET' });
 }
 
 // --- H7: user disable/enable -------------------------------------------
