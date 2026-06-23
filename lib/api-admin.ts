@@ -11,7 +11,6 @@ export interface AuditLogRow {
   id: number; user_id: number | null; event: string;
   metadata: any; ip: string | null; user_agent: string | null; created_at: string | Date;
 }
-export interface AuditLogData { rows: AuditLogRow[]; total: number; }
 
 export interface UserDetailData {
   user: AdminUserRow;
@@ -58,21 +57,6 @@ export async function adminPromoteUser(id: number): Promise<ApiResult<{ id: numb
 
 export async function adminDemoteUser(id: number): Promise<ApiResult<{ id: number; isAdmin: false }>> {
   return call(`/api/admin/users/${id}/demote`, { method: 'POST' });
-}
-
-export async function adminGetAudit(opts: {
-  userId?: number; event?: string; from?: string; to?: string;
-  limit?: number; offset?: number;
-} = {}): Promise<ApiResult<AuditLogData>> {
-  const sp = new URLSearchParams();
-  if (opts.userId !== undefined) sp.set('userId', String(opts.userId));
-  if (opts.event) sp.set('event', opts.event);
-  if (opts.from) sp.set('from', opts.from);
-  if (opts.to) sp.set('to', opts.to);
-  if (opts.limit !== undefined) sp.set('limit', String(opts.limit));
-  if (opts.offset !== undefined) sp.set('offset', String(opts.offset));
-  const qs = sp.toString();
-  return call(`/api/admin/audit${qs ? '?' + qs : ''}`, { method: 'GET' });
 }
 
 // --- H7: user disable/enable -------------------------------------------
