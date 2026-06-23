@@ -96,13 +96,6 @@ describe('listDynasties', () => {
 });
 
 describe('getAvailableForms', () => {
-  it('returns SHI_FORMS for 诗类 categories (tang, 汉乐府, 古诗十九首, 魏, 骈文)', async () => {
-    const { getAvailableForms } = await import('@/lib/poetry/queries');
-    expect(await getAvailableForms('tang')).toEqual(expect.arrayContaining(['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '杂言古风', '乐府']));
-    expect(await getAvailableForms('汉乐府')).toEqual(expect.arrayContaining(['五绝', '乐府']));
-    expect(await getAvailableForms('骈文')).toEqual(expect.arrayContaining(['五绝']));
-  });
-
   it('returns top N forms from manifest for song', async () => {
     mockLoadManifest.mockResolvedValueOnce({
       version: 1,
@@ -120,11 +113,6 @@ describe('getAvailableForms', () => {
     expect(forms).toContain('水调歌头');
     expect(forms).toContain('浣溪沙');
     expect(forms[0]).toBe('水调歌头');
-  });
-
-  it('returns 元曲 fixed forms for yuan', async () => {
-    const { getAvailableForms } = await import('@/lib/poetry/queries');
-    expect(await getAvailableForms('yuan')).toEqual(['小令', '套数']);
   });
 
   it('returns empty for unknown category', async () => {
@@ -167,5 +155,44 @@ describe('listPoems with category filter', () => {
     const { listPoems } = await import('@/lib/poetry/queries');
     const r = await listPoems({ dynasty: 'tang', forms: ['五绝', '七绝'] });
     expect(r.items.map(i => i.id)).toEqual([1, 2]);
+  });
+});
+
+describe('getAvailableForms dynamic (post-fix)', () => {
+  it('derives 诗类 forms from manifest counts (not hardcoded) — drops forms with 0 poems and includes forms with poems', async () => {
+    mockLoadManifest.mockResolvedValueOnce({
+      version: 1,
+      updatedAt: '2026-06-23',
+      count: 5,
+      items: [
+        { id: 1, title: 'a', author: 'x', dynasty: 'tang', category: null, form: '五律', contentLineCount: 4 },
+        { id: 2, title: 'b', author: 'x', dynasty: 'tang', category: null, form: '五律', contentLineCount: 4 },
+        { id: 3, title: 'c', author: 'x', dynasty: 'tang', category: null, form: '五律', contentLineCount: 4 },
+        { id: 4, title: 'd', author: 'x', dynasty: 'tang', category: null, form: '七律', contentLineCount: 4 },
+        { id: 5, title: 'e', author: 'x', dynasty: 'tang', category: null, form: '14言古风', contentLineCount: 4 },
+      ],
+    });
+    const { getAvailableForms } = await import('@/lib/poetry/queries');
+    const forms = await getAvailableForms('tang');
+    expect(forms).toEqual(['五律', '七律', '14言古风']);
+    expect(forms).not.toContain('五绝');
+    expect(forms).not.toContain('七绝');
+    expect(forms).not.toContain('乐府');
+  });
+
+  it('derives yuan forms from manifest counts (not hardcoded YUAN_FORMS)', async () => {
+    mockLoadManifest.mockResolvedValueOnce({
+      version: 1,
+      updatedAt: '2026-06-23',
+      count: 3,
+      items: [
+        { id: 1, title: 'a', author: 'x', dynasty: 'yuan', category: null, form: '小令', contentLineCount: 4 },
+        { id: 2, title: 'b', author: 'x', dynasty: 'yuan', category: null, form: '小令', contentLineCount: 4 },
+        { id: 3, title: 'c', author: 'x', dynasty: 'yuan', category: null, form: '套数', contentLineCount: 4 },
+      ],
+    });
+    const { getAvailableForms } = await import('@/lib/poetry/queries');
+    const forms = await getAvailableForms('yuan');
+    expect(forms).toEqual(['小令', '套数']);
   });
 });
