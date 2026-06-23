@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { listChars, getChar, getCharDetail } from '@/lib/chars';
+import { listChars, getChar, getCharDetail, isSuppPlaneChar } from '@/lib/chars';
 
 vi.mock('@/lib/db', () => ({
   getPool: vi.fn(),
@@ -126,5 +126,48 @@ describe('getCharDetail', () => {
     mockedQuery.mockResolvedValueOnce([[]]);
     const result = await getCharDetail('X');
     expect(result).toBeNull();
+  });
+});
+
+describe('isSuppPlaneChar', () => {
+  it('returns false for empty string', () => {
+    expect(isSuppPlaneChar('')).toBe(false);
+  });
+
+  it('returns false for ASCII', () => {
+    expect(isSuppPlaneChar('a')).toBe(false);
+    expect(isSuppPlaneChar('Z')).toBe(false);
+  });
+
+  it('returns false for common CJK BMP chars (U+4E00–U+9FFF)', () => {
+    expect(isSuppPlaneChar('永')).toBe(false);
+    expect(isSuppPlaneChar('中')).toBe(false);
+    expect(isSuppPlaneChar('国')).toBe(false);
+  });
+
+  it('returns false for BMP edge case (U+FFFF)', () => {
+    expect(isSuppPlaneChar('￿')).toBe(false);
+  });
+
+  it('returns true for CJK Extension B (U+20000+)', () => {
+    // 𠀀 = U+20000
+    expect(isSuppPlaneChar('𠀀')).toBe(true);
+  });
+
+  it('returns true for 𬀩 (U+2C029)', () => {
+    expect(isSuppPlaneChar('𬀩')).toBe(true);
+  });
+
+  it('returns true for emoji supp-plane (U+1F600 = 😀)', () => {
+    expect(isSuppPlaneChar('😀')).toBe(true);
+  });
+
+  it('returns false for null/undefined (treated as empty)', () => {
+    expect(isSuppPlaneChar(null as any)).toBe(false);
+    expect(isSuppPlaneChar(undefined as any)).toBe(false);
+  });
+
+  it('only checks the first codepoint (BMP first + supp-plane second = BMP)', () => {
+    expect(isSuppPlaneChar('永𠀀')).toBe(false);
   });
 });

@@ -132,7 +132,9 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
 export async function getChar(char: string): Promise<Char | null> {
   // Filter to BMP-only at the application boundary: mysql2 binary protocol
   // corrupts 4-byte UTF-8 params (supp-plane chars). Returning null here
-  // means the corrupted value never reaches the driver.
+  // means the corrupted value never reaches the driver. Callers that need
+  // to distinguish "supp-plane unsupported" from "genuinely missing" should
+  // check `isSuppPlaneChar(char)` first.
   if (!char || (char.codePointAt(0) ?? 0) > 0xFFFF) return null;
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
@@ -144,6 +146,18 @@ export async function getChar(char: string): Promise<Char | null> {
   );
   if (rows.length === 0) return null;
   return hydrateChar(rows[0] as DbRow);
+}
+
+/**
+ * True if the input is a non-empty 4-byte UTF-8 character (codepoint > U+FFFF,
+ * e.g. CJK Extension B/C/D…). These cannot be queried through the mysql2
+ * binary protocol without corruption, so getChar() returns null for them.
+ * Pages can use this to show a soft empty state instead of a generic 404.
+ */
+export function isSuppPlaneChar(char: string): boolean {
+  if (!char) return false;
+  const cp = char.codePointAt(0);
+  return cp !== undefined && cp > 0xFFFF;
 }
 
 export async function getCharDetail(char: string): Promise<CharWithRelated | null> {
