@@ -47,7 +47,7 @@ pnpm test:watch       # 监听
 ## 密码找回 + 管理员后台（v1 / Plan B+）
 
 - **密码找回**：在登录框或 `/forgot-password` 输入用户名 → 系统发送一封带 magic link 的邮件（15 分钟内有效）。开发模式下邮件内容打印到 server console；生产环境配置 SMTP 后真实发送。
-- **管理员后台**（首个注册的用户自动是 admin）：`/admin/users`、`/admin/audit`、`/admin/stats`
+- **管理员后台**（首个注册的用户自动是 admin）：`/admin/users`、`/admin/logs`
   - 写操作：删除用户（需输入用户名确认）、重置密码（生成临时密码）、提升/撤销管理员
   - 所有写操作都入审计日志
 - **首个用户自动为 admin**：注册时检查 `users` 表行数，第一个注册的用户 `is_admin=1`，后续都是 0。
