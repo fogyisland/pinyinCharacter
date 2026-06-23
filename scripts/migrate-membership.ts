@@ -116,7 +116,7 @@ export async function migrateMembership(): Promise<{ created: number; seeded: nu
 
 async function main() {
   const r = await migrateMembership();
-  console.error(`[migrate-membership] tables=4, plans seeded=${r.seeded}, feature_rows=${r.featureRows}`);
+  console.log(`[migrate-membership] tables=4, plans seeded=${r.seeded}, feature_rows=${r.featureRows}`);
   await closePool();
 }
 
