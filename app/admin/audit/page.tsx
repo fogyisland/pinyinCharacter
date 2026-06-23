@@ -1,17 +1,8 @@
 import Link from 'next/link';
 import { getAuditLog, type AuditLogOptions } from '@/lib/admin';
-import type { AuditEvent } from '@/lib/audit';
+import { AUDIT_EVENTS, EVENT_LABEL, type AuditEvent } from '@/lib/audit-format';
 
 export const dynamic = 'force-dynamic';
-
-const EVENT_LABEL: Record<string, string> = {
-  register: '注册', login: '登录', logout: '登出',
-  history_create: '历史创建', history_delete: '历史删除',
-  password_reset_request: '密码重置申请', password_reset_complete: '密码重置完成',
-  admin_user_delete: '管理员删除用户',
-  admin_user_password_reset: '管理员重置密码',
-  admin_user_promote: '管理员提升', admin_user_demote: '管理员撤销',
-};
 
 export default async function AdminAuditPage({ searchParams }: {
   searchParams: Promise<{ user_id?: string; event?: string; from?: string; to?: string; page?: string }>;
@@ -35,7 +26,7 @@ export default async function AdminAuditPage({ searchParams }: {
           className="border border-ink/20 rounded px-2 py-1 w-24 bg-paper-soft" />
         <select name="event" defaultValue={sp.event ?? ''} className="border border-ink/20 rounded px-2 py-1 bg-paper-soft">
           <option value="">全部事件</option>
-          {Object.entries(EVENT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {AUDIT_EVENTS.map((k) => <option key={k} value={k}>{EVENT_LABEL[k]}</option>)}
         </select>
         <input type="date" name="from" defaultValue={sp.from ?? ''} className="border border-ink/20 rounded px-2 py-1 bg-paper-soft" />
         <input type="date" name="to" defaultValue={sp.to ?? ''} className="border border-ink/20 rounded px-2 py-1 bg-paper-soft" />
@@ -62,7 +53,7 @@ export default async function AdminAuditPage({ searchParams }: {
               <tr key={r.id} className="border-t">
                 <td className="px-3 py-2 text-ink-soft whitespace-nowrap">{new Date(r.created_at).toLocaleString('zh-CN')}</td>
                 <td className="px-3 py-2">{r.user_id ?? '—'}</td>
-                <td className="px-3 py-2">{EVENT_LABEL[r.event] ?? r.event}</td>
+                <td className="px-3 py-2">{(EVENT_LABEL as Record<string, string>)[r.event] ?? r.event}</td>
                 <td className="px-3 py-2 text-ink-faint">{r.ip ?? '—'}</td>
                 <td className="px-3 py-2 text-xs text-ink-faint font-mono max-w-md truncate">{r.metadata ? JSON.stringify(r.metadata) : '—'}</td>
               </tr>

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { writeAudit } from '@/lib/audit';
-import { formatLogMessage, type AuditEvent } from '@/lib/audit-format';
+import { formatLogMessage, AUDIT_EVENTS, EVENT_LABEL, type AuditEvent } from '@/lib/audit-format';
 
 const EVENTS: AuditEvent[] = [
   'register', 'login', 'logout',
@@ -154,5 +154,38 @@ describe('formatLogMessage', () => {
   it('handles missing ids in worksheet_batch_printed metadata', () => {
     expect(formatLogMessage('worksheet_batch_printed', { count: 2 }))
       .toBe('批量打印 2 张字帖 (?)');
+  });
+});
+
+describe('EVENT_LABEL coverage', () => {
+  it('covers every AuditEvent in the union', () => {
+    const missing = AUDIT_EVENTS.filter((e) => !(e in EVENT_LABEL));
+    expect(missing).toEqual([]);
+  });
+
+  it('has no extra keys beyond the union', () => {
+    const extra = Object.keys(EVENT_LABEL).filter((k) => !(AUDIT_EVENTS as readonly string[]).includes(k));
+    expect(extra).toEqual([]);
+  });
+
+  it('all labels are non-empty Chinese strings', () => {
+    for (const ev of AUDIT_EVENTS) {
+      expect(EVENT_LABEL[ev].length, `label for ${ev} must be non-empty`).toBeGreaterThan(0);
+      // quick smoke: must contain at least one CJK char or ASCII (avoid empty / whitespace only)
+      expect(EVENT_LABEL[ev].trim(), `label for ${ev} must not be blank`).not.toBe('');
+    }
+  });
+
+  it('covers the high-frequency events that the audit page previously missed', () => {
+    // These were absent from the original hardcoded 11-event dict.
+    expect(EVENT_LABEL['membership_granted']).toBeDefined();
+    expect(EVENT_LABEL['membership_revoked']).toBeDefined();
+    expect(EVENT_LABEL['paypal_webhook_received']).toBeDefined();
+    expect(EVENT_LABEL['paypal_webhook_rejected']).toBeDefined();
+    expect(EVENT_LABEL['ai_call_logged']).toBeDefined();
+    expect(EVENT_LABEL['scheduler_manual_trigger']).toBeDefined();
+    expect(EVENT_LABEL['worksheet_saved']).toBeDefined();
+    expect(EVENT_LABEL['worksheet_deleted']).toBeDefined();
+    expect(EVENT_LABEL['smtp_test_sent']).toBeDefined();
   });
 });

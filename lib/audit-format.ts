@@ -27,6 +27,79 @@ export type AuditEvent =
   | 'smtp_config_updated' | 'smtp_test_sent';
 
 /**
+ * Tuple form of the union. Order matches the union declaration so the admin
+ * audit filter dropdown groups related events together. Add new events here
+ * AND in the union AND in EVENT_LABEL below — tests assert coverage.
+ */
+export const AUDIT_EVENTS = [
+  'register', 'login', 'logout',
+  'history_create', 'history_delete',
+  'password_reset_request', 'password_reset_complete',
+  'admin_user_delete', 'admin_user_password_reset',
+  'admin_user_promote', 'admin_user_demote',
+  'user_disabled', 'user_reenabled',
+  'ai_config_updated', 'ai_call_logged',
+  'tts_config_updated',
+  'scheduler_config_updated', 'scheduler_manual_trigger',
+  'worksheet_saved', 'worksheet_char_appended', 'worksheet_deleted', 'worksheet_batch_printed',
+  'poem_saved', 'sutra_saved', 'rare_char_card_saved',
+  'membership_granted', 'membership_granted_paypal', 'membership_revoked',
+  'membership_checkout_started',
+  'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
+  'admin_chars_generated', 'admin_chars_init_seed',
+  'admin_membership_plans_seeded',
+  'admin_about_intro_regenerated',
+  'smtp_config_updated', 'smtp_test_sent',
+] as const satisfies readonly AuditEvent[];
+
+/**
+ * Short Chinese labels for use in admin filter dropdowns. Distinct from
+ * `formatLogMessage`, which produces long detail-rich sentences for log
+ * rows. Both are derived from the same union so adding a new event in one
+ * place forces a label here too (covered by tests/unit/lib/audit.test.ts).
+ */
+export const EVENT_LABEL: Record<AuditEvent, string> = {
+  register: '注册',
+  login: '登录',
+  logout: '登出',
+  history_create: '历史创建',
+  history_delete: '历史删除',
+  password_reset_request: '密码重置申请',
+  password_reset_complete: '密码重置完成',
+  admin_user_delete: '管理员删除用户',
+  admin_user_password_reset: '管理员重置密码',
+  admin_user_promote: '管理员提升',
+  admin_user_demote: '管理员降级',
+  user_disabled: '禁用用户',
+  user_reenabled: '重新启用用户',
+  ai_config_updated: '更新 AI 配置',
+  ai_call_logged: 'AI 调用',
+  tts_config_updated: '更新 TTS 配置',
+  scheduler_config_updated: '更新定时器配置',
+  scheduler_manual_trigger: '手动触发定时器',
+  worksheet_saved: '保存字帖',
+  worksheet_char_appended: '字帖追加字符',
+  worksheet_deleted: '删除字帖',
+  worksheet_batch_printed: '批量打印字帖',
+  poem_saved: '保存古诗',
+  sutra_saved: '保存佛经',
+  rare_char_card_saved: '保存生字卡',
+  membership_granted: '管理员开通会员',
+  membership_granted_paypal: 'PayPal 开通会员',
+  membership_revoked: '撤销会员',
+  membership_checkout_started: '开始结账',
+  paypal_config_updated: '更新 PayPal 配置',
+  paypal_webhook_received: 'PayPal 回调收到',
+  paypal_webhook_rejected: 'PayPal 回调拒绝',
+  admin_chars_generated: '批量生成字',
+  admin_chars_init_seed: '初始化种子字',
+  admin_membership_plans_seeded: '种子会员套餐',
+  admin_about_intro_regenerated: '重新生成关于页',
+  smtp_config_updated: '更新邮件配置',
+  smtp_test_sent: '测试邮件发送',
+};
+
+/**
  * Format an audit event + metadata into a short Chinese sentence for display
  * in the admin log UI. Keep one branch per event so changes stay localized.
  */
