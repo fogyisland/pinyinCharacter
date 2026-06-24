@@ -44,6 +44,7 @@ export default function InitPage() {
   // Seed progress
   const [seedStatus, setSeedStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
   const [seedLog, setSeedLog] = useState<string[]>([]);
+  const [seedStats, setSeedStats] = useState<{ migrations: number; statements: number } | null>(null);
 
   async function handleDbSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -107,6 +108,7 @@ export default function InitPage() {
         return;
       }
       setSeedLog((log) => [...log, '✓ 表结构已创建 (15 张)', '✓ app_config 默认值已 seed', '✓ poems 已 auto-populate', '✓ sutras 已 auto-populate', '✓ chars 已 auto-populate (7909 行)', '✓ setup.completed 标记已写入']);
+      setSeedStats({ migrations: data.data.migrationsApplied, statements: data.data.statementsApplied });
       setSeedStatus('done');
       setStep('done');
     } catch (e) {
@@ -270,7 +272,7 @@ export default function InitPage() {
         <div className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6">
           <h2 className="text-lg font-medium text-ink">第 3 步 — 写入种子数据</h2>
           <p className="text-sm text-ink-soft">
-            点击下方按钮开始初始化。系统会:创建 15 张表 → seed app_config 默认值 → 自动导入古诗/佛经/字典数据。
+            点击下方按钮开始初始化。系统会:运行 migrations.sql → 创建 15 张表 → seed app_config 默认值 → 自动导入古诗/佛经/字典数据。
           </p>
           {seedStatus === 'idle' && (
             <button
