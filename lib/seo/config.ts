@@ -46,7 +46,16 @@ export async function getRuntimeSiteUrl(env: NodeJS.ProcessEnv = process.env): P
   if (override && override.length > 0) {
     return override.replace(/\/+$/, '');
   }
-  return getSiteUrl(env);
+  // No app_config entry. Fall back to env, but if env is also empty, return
+  // the localhost FALLBACK rather than throwing — that way the static
+  // prerender at build time succeeds. The strict prod-throw lives in
+  // getSiteUrl() for direct callers (tests + any future code that wants it).
+  // validateEnv() in lib/env.ts still warns at boot when the env var is
+  // missing in production, which is the right "fail-loud" channel.
+  if (env.NEXT_PUBLIC_SITE_URL) {
+    return env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, '');
+  }
+  return FALLBACK.replace(/\/+$/, '');
 }
 
 export function buildCanonicalUrl(path: string, env: NodeJS.ProcessEnv = process.env): string {
