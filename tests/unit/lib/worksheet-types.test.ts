@@ -18,8 +18,8 @@ import {
 import type { FontFamily } from '@/lib/worksheet-types';
 
 describe('FONT_FAMILIES (G3)', () => {
-  it('has 9 entries: 3 system + 4 hard-pen + 2 brush', () => {
-    expect(FONT_FAMILIES).toHaveLength(9);
+  it('has 12 entries: 3 system + 3 hard-pen + 6 brush', () => {
+    expect(FONT_FAMILIES).toHaveLength(12);
   });
 
   it('groups entries by system, hard-pen, or brush', () => {
@@ -29,21 +29,22 @@ describe('FONT_FAMILIES (G3)', () => {
     const hardPen = FONT_FAMILIES.filter((f) => f.group === 'hard-pen').map((f) => f.value);
     const brush = FONT_FAMILIES.filter((f) => f.group === 'brush').map((f) => f.value);
     expect(system).toEqual(['song', 'kai', 'hei']);
-    expect(hardPen).toEqual(['wenkai-gb', 'yozai', 'iansui', 'zen-kaku-thin']);
-    expect(brush).toEqual(['ma-shan-zheng', 'long-cang']);
+    expect(hardPen).toEqual(['wenkai-gb', 'yozai', 'zen-kaku-thin']);
+    expect(brush).toEqual(['iansui', 'ma-shan-zheng', 'long-cang', 'liu-jian-mao-cao', 'zcool-xiaowei', 'zhi-mang-xing']);
   });
 
   it('covers the FontFamily union', () => {
     const values = new Set(FONT_FAMILIES.map((f) => f.value));
     const expected: FontFamily[] = [
       'song', 'kai', 'hei',
-      'wenkai-gb', 'yozai', 'iansui', 'zen-kaku-thin',
-      'ma-shan-zheng', 'long-cang',
+      'wenkai-gb', 'yozai', 'zen-kaku-thin',
+      'iansui', 'ma-shan-zheng', 'long-cang',
+      'liu-jian-mao-cao', 'zcool-xiaowei', 'zhi-mang-xing',
     ];
     for (const e of expected) expect(values.has(e)).toBe(true);
   });
 
-  it('label/cssVar lookups still work for all 9 values', () => {
+  it('label/cssVar lookups still work for all 12 values', () => {
     for (const f of FONT_FAMILIES) {
       expect(fontFamilyLabel(f.value)).toBe(f.label);
       expect(fontFamilyCssVar(f.value)).toBe(f.cssVar);

@@ -24,9 +24,12 @@
   --font-yozai: 'Yozai', serif;
   --font-iansui: 'Iansui', serif;
   --font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
-  /* Brush fonts (Plan G3) */
+  /* Brush fonts (Plan G3 + G3+ 2026-06-24) */
   --font-ma-shan-zheng: 'MaShanZheng', serif;
   --font-long-cang: 'LongCang', serif;
+  --font-liu-jian-mao-cao: 'LiuJianMaoCao', serif;
+  --font-zcool-xiaowei: 'ZCOOLXiaoWei', serif;
+  --font-zhi-mang-xing: 'ZhiMangXing', serif;
   /* Ancient scripts (Plan L) */
   --font-jiaguwen: 'YinQiJiaGuWen', serif;
   --font-jinwen: 'HanDianJinWen', serif;
@@ -141,9 +144,12 @@
   --font-yozai: 'Yozai', serif;
   --font-iansui: 'Iansui', serif;
   --font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
-  /* Brush fonts (Plan G3) */
+  /* Brush fonts (Plan G3 + G3+ 2026-06-24) */
   --font-ma-shan-zheng: 'MaShanZheng', serif;
   --font-long-cang: 'LongCang', serif;
+  --font-liu-jian-mao-cao: 'LiuJianMaoCao', serif;
+  --font-zcool-xiaowei: 'ZCOOLXiaoWei', serif;
+  --font-zhi-mang-xing: 'ZhiMangXing', serif;
 }
 
 /* ============ Ancient-script fonts (Plan L, refreshed 2026-06-18) ============ */
@@ -211,6 +217,26 @@
 @font-face {
   font-family: 'LongCang';
   src: url('/fonts/long-cang.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* ============ Brush fonts added 2026-06-24 ============ */
+/* Liu Jian Mao Cao — 柳健毛草, very cursive brush, strong stroke contrast.
+   ZCOOL XiaoWei — 站酷小薇, softer regular brush, clean strokes.
+   Zhi Mang Xing — 志莽星, dramatic flowing cursive brush. */
+@font-face {
+  font-family: 'LiuJianMaoCao';
+  src: url('/fonts/liu-jian-mao-cao.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ZCOOLXiaoWei';
+  src: url('/fonts/zcool-xiaowei.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'ZhiMangXing';
+  src: url('/fonts/zhi-mang-xing.ttf') format('truetype');
   font-display: swap;
 }
 

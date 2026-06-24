@@ -10,7 +10,8 @@ export type PaperSize = 'A3' | 'A4' | 'B5' | 'brush-12' | 'brush-24' | 'brush-28
 export type FontFamily =
   | 'song' | 'kai' | 'hei'
   | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin'
-  | 'ma-shan-zheng' | 'long-cang';
+  | 'ma-shan-zheng' | 'long-cang'
+  | 'liu-jian-mao-cao' | 'zcool-xiaowei' | 'zhi-mang-xing';
 
 const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
 const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross'];
@@ -104,10 +105,13 @@ export const FONT_FAMILIES: {
   { value: 'hei',           label: '黑体',                 cssVar: 'var(--font-han-sans)',          group: 'system' },
   { value: 'wenkai-gb',     label: '霞鹜文楷 GB',          cssVar: 'var(--font-lxgw-wenkai-gb)',    group: 'hard-pen' },
   { value: 'yozai',         label: '悠哉',                 cssVar: 'var(--font-yozai)',             group: 'hard-pen' },
-  { value: 'iansui',        label: '芫荽',                 cssVar: 'var(--font-iansui)',            group: 'hard-pen' },
   { value: 'zen-kaku-thin', label: '思源极细黑',           cssVar: 'var(--font-zen-kaku-thin)',     group: 'hard-pen' },
+  { value: 'iansui',        label: '芫荽 (行书毛笔)',      cssVar: 'var(--font-iansui)',            group: 'brush' },
   { value: 'ma-shan-zheng', label: '马善政体 (毛笔正书)',  cssVar: 'var(--font-ma-shan-zheng)',     group: 'brush' },
   { value: 'long-cang',     label: '龙藏体 (草书)',        cssVar: 'var(--font-long-cang)',         group: 'brush' },
+  { value: 'liu-jian-mao-cao', label: '柳健毛草 (狂草)',    cssVar: 'var(--font-liu-jian-mao-cao)',  group: 'brush' },
+  { value: 'zcool-xiaowei', label: '站酷小薇 (毛笔楷书)',  cssVar: 'var(--font-zcool-xiaowei)',     group: 'brush' },
+  { value: 'zhi-mang-xing', label: '志莽星 (行草)',        cssVar: 'var(--font-zhi-mang-xing)',     group: 'brush' },
 ];
 
 export const BRUSH_PAPER_SIZES = ['brush-12', 'brush-24', 'brush-28'] as const;

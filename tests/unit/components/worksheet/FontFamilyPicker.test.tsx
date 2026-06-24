@@ -16,16 +16,16 @@ describe('FontFamilyPicker', () => {
     expect(groups[2]?.getAttribute('label')).toBe('毛笔字体');
   });
 
-  it('renders 9 <option>s: 3 system + 4 hard-pen + 2 brush', () => {
+  it('renders 12 <option>s: 3 system + 3 hard-pen + 6 brush', () => {
     const { container } = render(<FontFamilyPicker value="song" onChange={vi.fn()} />);
     const options = container.querySelectorAll('option');
-    expect(options).toHaveLength(9);
+    expect(options).toHaveLength(12);
     const systemOptions = container.querySelectorAll('optgroup:nth-of-type(1) > option');
     const hardPenOptions = container.querySelectorAll('optgroup:nth-of-type(2) > option');
     const brushOptions = container.querySelectorAll('optgroup:nth-of-type(3) > option');
     expect(systemOptions).toHaveLength(3);
-    expect(hardPenOptions).toHaveLength(4);
-    expect(brushOptions).toHaveLength(2);
+    expect(hardPenOptions).toHaveLength(3);
+    expect(brushOptions).toHaveLength(6);
   });
 
   it('marks the current value as the selected option', () => {
@@ -50,5 +50,12 @@ describe('FontFamilyPicker', () => {
     const m2 = container.querySelector('option[value="long-cang"]');
     expect(m1?.textContent).toBe('马善政体 (毛笔正书)');
     expect(m2?.textContent).toBe('龙藏体 (草书)');
+  });
+
+  it('lists all 6 brush font values in the brush optgroup', () => {
+    const { container } = render(<FontFamilyPicker value="song" onChange={vi.fn()} />);
+    const brushGroup = container.querySelectorAll('optgroup:nth-of-type(3) > option');
+    const values = Array.from(brushGroup).map((o) => o.getAttribute('value'));
+    expect(values).toEqual(['iansui', 'ma-shan-zheng', 'long-cang', 'liu-jian-mao-cao', 'zcool-xiaowei', 'zhi-mang-xing']);
   });
 });
