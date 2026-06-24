@@ -5,6 +5,7 @@ import { getConfig } from '@/lib/config';
 import { InitCharsPanel } from '@/components/admin/InitCharsPanel';
 import { GenerateCharsForm } from '@/components/admin/GenerateCharsForm';
 import { CharContentSchema } from '@/scripts/schemas/content';
+import { readPreservedStats } from './preserved-stats';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,8 +69,9 @@ async function fetchDbStats() {
 }
 
 export default async function InitCharsPage() {
-  const [stats, mockMode, model, baseUrl] = await Promise.all([
+  const [stats, preserved, mockMode, model, baseUrl] = await Promise.all([
     fetchDbStats(),
+    readPreservedStats(),
     getConfig('ai.mock_mode'),
     getConfig('ai.model'),
     getConfig('ai.base_url'),
@@ -85,6 +87,7 @@ export default async function InitCharsPage() {
         initialModel={model ?? ''}
         initialBaseUrl={baseUrl ?? ''}
         stats={stats}
+        preserved={preserved}
       />
       <div className="mt-8">
         <h2 className="text-base font-semibold mb-2">批量生成 (走种子数据)</h2>

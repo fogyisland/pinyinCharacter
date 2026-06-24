@@ -8,6 +8,30 @@
  *
  * Idempotent: re-running wipes the previous fixture rows first.
  */
+
+/**
+ * PRESERVE — categories that this script MUST NOT touch.
+ *
+ * The seed script only DELETEs from these 4 places (see step 1 below):
+ *   1. chars           (20 fixed seed BMP chars)
+ *   2. char_etymology  (the same 20 seed chars)
+ *   3. rare_chars      (the 5 L3 seed chars)
+ *   4. users           (the 'admin' fixture user)
+ *
+ * Everything else is preserved by exclusion — DO NOT add DELETEs targeting:
+ *   - data/content/*.json            (LLM-generated per-char content)
+ *   - data/poems/*.json              (poem corpus — also has slug collections
+ *                                    in .gitignore: yuefu/shijiu/cifu/caocao/nalan)
+ *   - data/classics/*.json           (classic literature)
+ *   - the chars / char_etymology /
+ *     rare_chars tables for any char
+ *     NOT in the 20 seed BMP chars
+ *     listed below
+ *   - the users table for any user
+ *     other than 'admin'
+ *   - app_config, audit_log, sessions,
+ *     downloads, jobs, etc.
+ */
 import { getPool, closePool } from '../lib/db';
 import { hashPassword } from '../lib/auth';
 

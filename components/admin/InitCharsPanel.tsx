@@ -9,16 +9,27 @@ interface DbStats {
   dict: { zh: number; en: number; alt: number; var: number };
 }
 
+interface PreservedStats {
+  contentFiles: number;
+  poemFiles: number;
+  classicFiles: number;
+  charRows: number;
+  charEtymologyRows: number;
+  rareCharRows: number;
+}
+
 export function InitCharsPanel({
   initialMock,
   initialModel,
   initialBaseUrl,
   stats,
+  preserved,
 }: {
   initialMock: boolean;
   initialModel: string;
   initialBaseUrl: string;
   stats: DbStats;
+  preserved: PreservedStats;
 }) {
   const [mockOn, setMockOn] = useState(initialMock);
   const [busy, setBusy] = useState<string | null>(null);
@@ -124,6 +135,48 @@ export function InitCharsPanel({
           <div>多音: {stats.dict.alt}</div>
           <div>异体: {stats.dict.var}</div>
           <div>罕见字: {stats.rare.total} (释义 {stats.rare.withMeaning} / 故事 {stats.rare.withStory})</div>
+        </div>
+      </div>
+
+      {/* Preserved data (not touched by seed/clear) */}
+      <div className="card-paper rounded-lg p-4">
+        <div className="mb-2">
+          <h3 className="text-sm font-semibold text-ink-soft">已保留 (种子/清空不会触碰)</h3>
+          <p className="text-xs text-ink-soft mt-1">
+            下面的真实数据 <code>scripts/seed-mini.ts</code> 不会删除。种子仅命中 20 个固定 BMP 字符 + 1 个 admin 用户。
+          </p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
+          <div className="border border-paper-warm rounded p-2">
+            <div className="text-xs text-ink-soft">文字</div>
+            <div className="text-lg font-serif">{preserved.charRows - 20}</div>
+            <div className="text-[10px] text-ink-soft/70">20 种子已排除</div>
+          </div>
+          <div className="border border-paper-warm rounded p-2">
+            <div className="text-xs text-ink-soft">字形/字源</div>
+            <div className="text-lg font-serif">{preserved.charEtymologyRows}</div>
+            <div className="text-[10px] text-ink-soft/70">char_etymology 行数</div>
+          </div>
+          <div className="border border-paper-warm rounded p-2">
+            <div className="text-xs text-ink-soft">罕见字</div>
+            <div className="text-lg font-serif">{preserved.rareCharRows}</div>
+            <div className="text-[10px] text-ink-soft/70">rare_chars 行数</div>
+          </div>
+          <div className="border border-paper-warm rounded p-2">
+            <div className="text-xs text-ink-soft">故事+字典 (JSON)</div>
+            <div className="text-lg font-serif">{preserved.contentFiles}</div>
+            <div className="text-[10px] text-ink-soft/70">data/content/*.json</div>
+          </div>
+          <div className="border border-paper-warm rounded p-2">
+            <div className="text-xs text-ink-soft">诗</div>
+            <div className="text-lg font-serif">{preserved.poemFiles}</div>
+            <div className="text-[10px] text-ink-soft/70">data/poems/*.json</div>
+          </div>
+          <div className="border border-paper-warm rounded p-2">
+            <div className="text-xs text-ink-soft">文/经典</div>
+            <div className="text-lg font-serif">{preserved.classicFiles}</div>
+            <div className="text-[10px] text-ink-soft/70">data/classics/*.json</div>
+          </div>
         </div>
       </div>
 
