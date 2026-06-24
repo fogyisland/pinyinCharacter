@@ -10,12 +10,14 @@ interface Props {
 
 export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: Props) {
   const isTrace = getIsTrace(style);
-  // Trace mode (传统描红): the character itself is rendered solid red so the
-  // user has a clear brush-stroke template to ink over. The cell outline and
-  // internal guide lines stay light gray to keep the cell structure readable.
+  // Trace mode (传统描红): the character is filled light gray with a red
+  // outline (字体的外边缘是红色). The user traces over the red outline
+  // with ink. Cell border and guide lines stay light gray.
   const guideStroke = '#bbb';
   const borderStroke = '#bbb';
-  const charFill = isTrace ? '#c0392b' : '#bbb';
+  const charFill = isTrace ? '#ddd' : '#bbb';
+  const charStroke = isTrace ? '#c0392b' : 'none';
+  const charStrokeWidth = isTrace ? 1.5 : 0;
   const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", serif`;
   const guideFontSize = isTrace ? size : Math.round(size * 0.6);
   const presentation = getPresentation(style);
@@ -45,6 +47,8 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
         dominantBaseline="central"
         fontSize={guideFontSize}
         fill={charFill}
+        stroke={charStroke}
+        strokeWidth={charStrokeWidth}
         style={{ fontFamily: fontStack }}
       >
         {char}
