@@ -12,20 +12,20 @@ describe('WorksheetCell', () => {
     expect(text.getAttribute('fill')).toBe('#bbb');
   });
 
-  it('renders char at 100% size in #666 for brush-trace-square', () => {
+  it('renders char at 100% size in #333 for brush-trace-square (visible template)', () => {
     const { container } = render(<WorksheetCell char="永" style="brush-trace-square" size={100} />);
     const text = container.querySelector('text')!;
     expect(text.getAttribute('font-size')).toBe('100');
-    expect(text.getAttribute('fill')).toBe('#666');
+    expect(text.getAttribute('fill')).toBe('#333');
   });
 
-  it('renders char at 100% size in #666 for brush-trace-cross (with diagonals)', () => {
+  it('renders char at 100% size in #333 for brush-trace-cross (with diagonals)', () => {
     const { container } = render(<WorksheetCell char="永" style="brush-trace-cross" size={100} />);
     const lines = container.querySelectorAll('line');
     expect(lines.length).toBe(5);
     const text = container.querySelector('text')!;
     expect(text.getAttribute('font-size')).toBe('100');
-    expect(text.getAttribute('fill')).toBe('#666');
+    expect(text.getAttribute('fill')).toBe('#333');
   });
 
   it('preserves cross diagonals for brush-cross (non-trace)', () => {
@@ -36,10 +36,10 @@ describe('WorksheetCell', () => {
     expect(text.getAttribute('font-size')).toBe('60');
   });
 
-  it('uses #666 stroke for trace outline (rect)', () => {
+  it('uses #333 stroke for trace outline (rect) — visible template', () => {
     const { container } = render(<WorksheetCell char="永" style="brush-trace-square" size={100} />);
     const rect = container.querySelector('rect')!;
-    expect(rect.getAttribute('stroke')).toBe('#666');
+    expect(rect.getAttribute('stroke')).toBe('#333');
   });
 
   it('uses #bbb stroke for non-trace outline (rect)', () => {

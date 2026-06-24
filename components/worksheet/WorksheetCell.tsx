@@ -10,7 +10,7 @@ interface Props {
 
 export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: Props) {
   const isTrace = getIsTrace(style);
-  const stroke = isTrace ? '#666' : '#bbb';
+  const stroke = isTrace ? '#333' : '#bbb';
   const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", serif`;
   const guideFontSize = isTrace ? size : Math.round(size * 0.6);
   const presentation = getPresentation(style);
