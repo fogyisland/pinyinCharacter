@@ -12,7 +12,16 @@
  *
  * `env` parameter is injectable for testability; production callers always
  * use the default (process.env).
+ *
+ * `getRuntimeSiteUrl()` is the async variant that should be used by
+ * runtime callers (sitemaps, robots, JSON-LD, metadata). It first checks
+ * `app_config.site.url` (set via the admin UI at /admin/settings/site-url)
+ * and falls back to the sync `getSiteUrl(env)` if not configured. The
+ * sync `getSiteUrl` is kept for testability and for any code path that
+ * truly cannot be async.
  */
+import { getConfig } from '@/lib/config';
+
 export const SITE_NAME = '字·韵';
 export const SITE_LOCALE = 'zh_CN';
 const FALLBACK = 'http://localhost:3000';
@@ -30,6 +39,14 @@ export function getSiteUrl(env: NodeJS.ProcessEnv = process.env): string {
     );
   }
   return raw.replace(/\/+$/, '');
+}
+
+export async function getRuntimeSiteUrl(env: NodeJS.ProcessEnv = process.env): Promise<string> {
+  const override = await getConfig('site.url');
+  if (override && override.length > 0) {
+    return override.replace(/\/+$/, '');
+  }
+  return getSiteUrl(env);
 }
 
 export function buildCanonicalUrl(path: string, env: NodeJS.ProcessEnv = process.env): string {

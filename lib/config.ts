@@ -35,6 +35,7 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'smtp.pass': (v) => v.length <= 256,
   'smtp.from': (v) => v.length === 0 || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
   'smtp.from_name': (v) => v.length <= 128,
+  'site.url': (v) => /^https?:\/\//.test(v) && v.length <= 256,
 };
 
 export async function getConfig(key: string): Promise<string | null> {

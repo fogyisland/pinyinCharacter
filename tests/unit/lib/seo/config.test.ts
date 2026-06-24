@@ -1,4 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/lib/config', () => ({
+  getConfig: vi.fn(),
+}));
+
+import { getConfig } from '@/lib/config';
 
 describe('getSiteUrl', () => {
   it('returns env value when set, stripping trailing slash', async () => {
@@ -56,5 +62,31 @@ describe('buildCanonicalUrl', () => {
     const m = await import('@/lib/seo/config');
     expect(() => m.buildCanonicalUrl('/poetry/1', { NODE_ENV: 'production' } as unknown as NodeJS.ProcessEnv))
       .toThrow(/NEXT_PUBLIC_SITE_URL/);
+  });
+});
+
+describe('getRuntimeSiteUrl', () => {
+  it('reads from app_config when set', async () => {
+    vi.mocked(getConfig).mockReset();
+    vi.mocked(getConfig).mockResolvedValue('https://override.example.com');
+    const m = await import('@/lib/seo/config');
+    expect(await m.getRuntimeSiteUrl()).toBe('https://override.example.com');
+  });
+
+  it('falls back to env when app_config is null', async () => {
+    vi.mocked(getConfig).mockReset();
+    vi.mocked(getConfig).mockResolvedValue(null);
+    const m = await import('@/lib/seo/config');
+    const result = await m.getRuntimeSiteUrl(
+      { NEXT_PUBLIC_SITE_URL: 'https://env.example.com' } as unknown as NodeJS.ProcessEnv,
+    );
+    expect(result).toBe('https://env.example.com');
+  });
+
+  it('strips trailing slash from app_config value', async () => {
+    vi.mocked(getConfig).mockReset();
+    vi.mocked(getConfig).mockResolvedValue('https://x.com/');
+    const m = await import('@/lib/seo/config');
+    expect(await m.getRuntimeSiteUrl()).toBe('https://x.com');
   });
 });
