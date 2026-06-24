@@ -8,9 +8,10 @@ describe('AdminSidebar', () => {
   afterEach(() => { vi.unstubAllEnvs(); });
 
   it('renders all admin areas', () => {
-    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('NODE_ENV', 'production');
     render(<AdminSidebar currentPath="/admin" />);
     expect(screen.getByText('仪表盘')).toBeInTheDocument();
+    expect(screen.getByText('初始化检查')).toBeInTheDocument();
     expect(screen.getByText('用户')).toBeInTheDocument();
     expect(screen.getByText('字典 / 字源')).toBeInTheDocument();
     expect(screen.getByText('日志')).toBeInTheDocument();
@@ -19,21 +20,18 @@ describe('AdminSidebar', () => {
   });
 
   it('highlights the active link', () => {
-    vi.stubEnv('NODE_ENV', 'development');
+    vi.stubEnv('NODE_ENV', 'production');
     render(<AdminSidebar currentPath="/admin/logs" />);
     const link = screen.getByText('日志').closest('a');
     expect(link).toHaveClass('bg-ink');
   });
 
-  it('shows ⚙ 初始化 link in development', () => {
-    vi.stubEnv('NODE_ENV', 'development');
-    render(<AdminSidebar currentPath="/admin" />);
-    expect(screen.getByText('⚙ 初始化')).toBeInTheDocument();
-  });
-
-  it('hides ⚙ 初始化 link in production (dev-only panel)', () => {
+  it('exact match only highlights /admin (not /admin/init)', () => {
     vi.stubEnv('NODE_ENV', 'production');
-    render(<AdminSidebar currentPath="/admin" />);
-    expect(screen.queryByText('⚙ 初始化')).not.toBeInTheDocument();
+    render(<AdminSidebar currentPath="/admin/init" />);
+    const dash = screen.getByText('仪表盘').closest('a');
+    const init = screen.getByText('初始化检查').closest('a');
+    expect(dash).not.toHaveClass('bg-ink');
+    expect(init).toHaveClass('bg-ink');
   });
 });
