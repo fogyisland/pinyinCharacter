@@ -278,7 +278,7 @@ export function WorksheetGenerator() {
         <div>
           <label className="block text-sm font-medium text-ink-soft">字体</label>
           <div className="mt-2">
-            <FontFamilyPicker value={fontFamily} onChange={setFontFamily} />
+            <FontFamilyPicker tool={tool} value={fontFamily} onChange={setFontFamily} />
           </div>
         </div>
       </div>
