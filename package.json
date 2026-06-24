@@ -16,7 +16,7 @@
     "fonts:download": "tsx scripts/download-ancient-fonts.ts",
     "fonts:download-hard-pen": "tsx scripts/fonts/download-hard-pen-fonts.ts",
     "fonts:subset": "node scripts/fonts/subset-hard-pen-fonts.mjs",
-    "fonts:hard-pen": "pnpm fonts:download-hard-pen && pnpm fonts:subset",
+    "fonts:hard-pen": "npm run fonts:download-hard-pen && npm run fonts:subset",
     "chars:import": "tsx scripts/import-chars-data.ts",
     "favicon:build": "tsx scripts/build-favicon.ts"
   },

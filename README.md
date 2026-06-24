@@ -15,17 +15,37 @@
 ## 启动
 
 ```bash
+# 推荐使用 npm (生产部署)
+npm install
+npm run dict:build         # 生成词典文件
+npm run radicals:build     # 生成部首数据 (data/radicals.json, 一次性)
+npm run dev                # http://localhost:4444
+
+# 也可使用 pnpm (开发环境)
 pnpm install
-pnpm dict:build         # 生成词典文件
-pnpm radicals:build     # 生成部首数据 (data/radicals.json, 一次性)
-pnpm dev                # http://localhost:4444
+pnpm dict:build
+pnpm radicals:build
+pnpm dev
 ```
+
+## 生产部署
+
+```bash
+npm install
+npm run build
+npm run start              # 跑在 :4444
+```
+
+首次部署访问 `http://localhost:4444/` 会被中间件重定向到 `/init`,按向导完成 DB 连接、管理员账号、seed 数据三步即可。
 
 ## 测试
 
+> ⚠️ 本项目已移除测试基础设施 (vitest + 175 个测试文件)。所有测试由人工浏览器烟测替代。
+
 ```bash
-pnpm test             # 一次性
-pnpm test:watch       # 监听
+# 历史命令 (不再可用)
+# pnpm test
+# pnpm test:watch
 ```
 
 ## 技术栈
