@@ -27,6 +27,14 @@ backups/
 public/strokes/
 data/strokes-manifest.json
 
+# poems build artifacts (regenerate with pnpm tsx scripts/build-poems-extra.ts)
+# These are collection files (slug-named), not individual poem files (id-named).
+data/poems/yuefu.json
+data/poems/shijiu.json
+data/poems/cifu.json
+data/poems/caocao.json
+data/poems/nalan.json
+
 # font staging (regenerate with pnpm fonts:download-hard-pen)
 scripts/fonts/staging/
 
