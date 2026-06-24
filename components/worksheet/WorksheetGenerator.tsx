@@ -212,6 +212,7 @@ export function WorksheetGenerator() {
         <RandomTab
           title={title}
           onTitleChange={setTitle}
+          hasContent={content.length > 0}
           onPicked={(chars) => {
             setContent(chars);
             setView('preview');

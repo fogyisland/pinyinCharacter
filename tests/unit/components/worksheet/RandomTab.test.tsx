@@ -63,3 +63,17 @@ describe('RandomTab (G3 title required)', () => {
     expect(onTitleChange).toHaveBeenCalledWith('a'.repeat(80));
   });
 });
+
+describe('RandomTab button label (hasContent)', () => {
+  it('renders label 随机生成 when hasContent=false', () => {
+    render(<RandomTab title="t" onTitleChange={vi.fn()} onPicked={vi.fn()} hasContent={false} />);
+    expect(screen.getByRole('button', { name: /随机生成/ })).toBeInTheDocument();
+  });
+
+  it('renders label 重新生成 when hasContent=true', () => {
+    render(<RandomTab title="t" onTitleChange={vi.fn()} onPicked={vi.fn()} hasContent={true} />);
+    expect(screen.getByRole('button', { name: /重新生成/ })).toBeInTheDocument();
+    // Should NOT also show 随机生成 when content exists
+    expect(screen.queryByText('随机生成')).toBeNull();
+  });
+});

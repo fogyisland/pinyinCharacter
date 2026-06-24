@@ -12,6 +12,9 @@ interface Props {
   title: string;
   onTitleChange: (v: string) => void;
   onPicked: (chars: string[]) => void;
+  /** When true, the action button relabels to 重新生成 to indicate it'll
+   *  replace existing content. Defaults to false (label is 随机生成). */
+  hasContent?: boolean;
 }
 
 const DIFFICULTY_LABELS = {
@@ -20,7 +23,7 @@ const DIFFICULTY_LABELS = {
   hard: '困难 (level 1+2+3 全字库)',
 } as const;
 
-export function RandomTab({ title, onTitleChange, onPicked }: Props) {
+export function RandomTab({ title, onTitleChange, onPicked, hasContent = false }: Props) {
   const [count, setCount] = useState(20);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [busy, setBusy] = useState(false);
@@ -91,7 +94,7 @@ export function RandomTab({ title, onTitleChange, onPicked }: Props) {
         type="button" onClick={handleGenerate} disabled={busy}
         className="rounded-md bg-ink px-4 py-2 text-paper-soft hover:bg-ink/80 disabled:opacity-50"
       >
-        {busy ? '抽字中…' : '随机生成'}
+        {busy ? '抽字中…' : (hasContent ? '重新生成' : '随机生成')}
       </button>
     </div>
   );
