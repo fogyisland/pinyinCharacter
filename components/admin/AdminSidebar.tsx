@@ -10,6 +10,7 @@ interface NavItem {
 
 const ITEMS: NavItem[] = [
   { href: '/admin', label: '仪表盘', exact: true },
+  { href: '/admin/init', label: '初始化检查' },
   { href: '/admin/users', label: '用户' },
   { href: '/admin/chars', label: '字典 / 字源' },
   // devOnly: 本地开发用的初始化面板(seed/mocked LLM/DDL),prod 不暴露
