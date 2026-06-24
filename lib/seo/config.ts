@@ -42,7 +42,18 @@ export function getSiteUrl(env: NodeJS.ProcessEnv = process.env): string {
 }
 
 export async function getRuntimeSiteUrl(env: NodeJS.ProcessEnv = process.env): Promise<string> {
-  const override = await getConfig('site.url');
+  // Try reading from app_config first (admin UI override). Wrap in try/catch
+  // because this is called during `next build` prerender (e.g. /robots.txt,
+  // /sitemap.xml) when DATABASE_URL is not yet set — the pool init throws,
+  // and we want the build to succeed with a sensible fallback rather than
+  // failing the whole build. At runtime (Next.js server start), DATABASE_URL
+  // is set and the override works as designed.
+  let override: string | null = null;
+  try {
+    override = await getConfig('site.url');
+  } catch {
+    override = null;
+  }
   if (override && override.length > 0) {
     return override.replace(/\/+$/, '');
   }
