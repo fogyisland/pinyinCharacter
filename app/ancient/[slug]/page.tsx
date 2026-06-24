@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props) {
   const c = await getClassicBySlug(slug);
   if (!c) return { title: '古籍 · 字·韵' };
   const desc = `${c.title}${c.author ? ` - ${c.author}` : ''} (${c.era || ''}) 全文带拼音注音`;
-  return buildMetadata({
+  return await buildMetadata({
     title: `${c.title} (${c.era || '古代'}) 全文 拼音 | 字·韵`,
     description: desc,
     path: `/ancient/${slug}`,
@@ -50,7 +50,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildBreadcrumbList([
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(await buildBreadcrumbList([
           { name: '首页', url: '/' },
           { name: '古籍', url: '/ancient' },
           { name: book.title, url: `/ancient/${book.slug}` },

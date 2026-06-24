@@ -42,7 +42,7 @@ describe('buildDefinedTerm', () => {
 describe('buildBreadcrumbList', () => {
   it('maps items to ListItem with absolute URL', async () => {
     const { buildBreadcrumbList } = await import('@/lib/seo/jsonld');
-    const j = buildBreadcrumbList([{ name: '首页', url: '/' }, { name: '字典', url: '/chars' }]);
+    const j = await buildBreadcrumbList([{ name: '首页', url: '/' }, { name: '字典', url: '/chars' }]);
     expect(j.itemListElement.length).toBe(2);
     expect(j.itemListElement[0].item).toBe('https://x.com/');
     expect(j.itemListElement[1].position).toBe(2);
@@ -52,7 +52,7 @@ describe('buildBreadcrumbList', () => {
 describe('buildWebSite', () => {
   it('includes SearchAction with target template', async () => {
     const { buildWebSite } = await import('@/lib/seo/jsonld');
-    const j = buildWebSite();
+    const j = await buildWebSite();
     expect(j.potentialAction['@type']).toBe('SearchAction');
     expect(j.potentialAction.target.urlTemplate).toContain('{search_term_string}');
   });

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { buildCanonicalUrl } from './config';
+import { getRuntimeSiteUrl } from './config';
 
 export interface BuildMetadataArgs {
   title: string;
@@ -9,8 +9,13 @@ export interface BuildMetadataArgs {
   image?: string;
 }
 
-export function buildMetadata(args: BuildMetadataArgs): Metadata {
-  const canonical = buildCanonicalUrl(args.path);
+export async function buildMetadata(args: BuildMetadataArgs): Promise<Metadata> {
+  // Honor the admin-configured site URL override so canonical + og:url use
+  // the real production domain instead of localhost.
+  const base = await getRuntimeSiteUrl();
+  const canonical = /^https?:\/\//.test(args.path)
+    ? args.path
+    : `${base}${args.path.startsWith('/') ? args.path : `/${args.path}`}`;
   const ogType = args.ogType ?? 'website';
   return {
     title: args.title,

@@ -1,4 +1,4 @@
-import { getSiteUrl, SITE_NAME } from './config';
+import { getRuntimeSiteUrl, SITE_NAME } from './config';
 
 export interface PoemForJsonLd {
   title: string;
@@ -50,7 +50,8 @@ export function buildDefinedTerm(t: TermForJsonLd) {
   };
 }
 
-export function buildBreadcrumbList(items: Array<{ name: string; url: string }>) {
+export async function buildBreadcrumbList(items: Array<{ name: string; url: string }>) {
+  const base = await getRuntimeSiteUrl();
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
@@ -58,32 +59,34 @@ export function buildBreadcrumbList(items: Array<{ name: string; url: string }>)
       '@type': 'ListItem',
       position: idx + 1,
       name: item.name,
-      item: `${getSiteUrl()}${item.url.startsWith('/') ? item.url : '/' + item.url}`,
+      item: `${base}${item.url.startsWith('/') ? item.url : '/' + item.url}`,
     })),
   };
 }
 
-export function buildOrganization() {
+export async function buildOrganization() {
+  const base = await getRuntimeSiteUrl();
   return {
     '@context': 'https://schema.org',
     '@type': 'Organization',
     name: SITE_NAME,
-    url: getSiteUrl(),
-    logo: `${getSiteUrl()}/logo.png`,
+    url: base,
+    logo: `${base}/logo.png`,
   };
 }
 
-export function buildWebSite() {
+export async function buildWebSite() {
+  const base = await getRuntimeSiteUrl();
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: SITE_NAME,
-    url: getSiteUrl(),
+    url: base,
     potentialAction: {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${getSiteUrl()}/search?q={search_term_string}`,
+        urlTemplate: `${base}/search?q={search_term_string}`,
       },
       'query-input': 'required name=search_term_string',
     },

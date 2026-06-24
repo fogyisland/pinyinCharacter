@@ -1,6 +1,6 @@
 // app/sitemap/chars.xml/route.ts
 import { getPool } from '@/lib/db';
-import { getSiteUrl } from '@/lib/seo/config';
+import { getRuntimeSiteUrl } from '@/lib/seo/config';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -9,7 +9,7 @@ export const revalidate = 3600;
 export async function GET() {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(`SELECT \`char\` FROM chars ORDER BY \`char\``);
-  const base = getSiteUrl();
+  const base = await getRuntimeSiteUrl();
   // Use content-manifest.generatedAt as the lastmod for every char URL —
   // the chars table + content JSONs are updated together by the bulk-gen
   // pipeline, so all chars share the same effective mtime. Avoids emitting

@@ -24,7 +24,8 @@ export type AuditEvent =
   | 'admin_chars_generated' | 'admin_chars_init_seed'
   | 'admin_membership_plans_seeded'
   | 'admin_about_intro_regenerated'
-  | 'smtp_config_updated' | 'smtp_test_sent';
+  | 'smtp_config_updated' | 'smtp_test_sent'
+  | 'site_url_updated';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -50,6 +51,7 @@ export const AUDIT_EVENTS = [
   'admin_membership_plans_seeded',
   'admin_about_intro_regenerated',
   'smtp_config_updated', 'smtp_test_sent',
+  'site_url_updated',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -97,6 +99,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   admin_about_intro_regenerated: '重新生成关于页',
   smtp_config_updated: '更新邮件配置',
   smtp_test_sent: '测试邮件发送',
+  site_url_updated: '更新站点 URL',
 };
 
 /**
@@ -190,6 +193,8 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
       return `更新邮件配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
     case 'smtp_test_sent':
       return `测试邮件发送 (to=${str(m.to) || '?'}, ok=${m.ok === true ? 'true' : m.ok === false ? 'false' : '?'}${str(m.error) ? `, error=${str(m.error)}` : ''})`;
+    case 'site_url_updated':
+      return `更新站点 URL 为 ${str(m.url) || '?'}`;
 
     default: {
       const keys = Object.keys(m);

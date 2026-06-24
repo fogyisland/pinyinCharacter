@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ char: str
   const charInfo = await getChar(ch);
   if (!charInfo) return { title: `${ch} | 字·韵` };
   const meaning = (charInfo.meaningZh ?? '').slice(0, 80);
-  return buildMetadata({
+  return await buildMetadata({
     title: `${ch} - 拼音 ${charInfo.pinyin} - 释义 | 字·韵`,
     description: `汉字「${ch}」的拼音 ${charInfo.pinyin}，释义：${meaning}`,
     path: `/dictionary/${encoded}`,
@@ -86,7 +86,7 @@ export default async function DictionaryDetailPage({ params }: Props) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
-            buildBreadcrumbList([
+            await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '字典', url: '/dictionary' },
               { name: data.char, url: `/dictionary/${encodeURIComponent(data.char)}` },

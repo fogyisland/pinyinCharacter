@@ -3,7 +3,7 @@ import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { getPool } from '@/lib/db';
 import { loadManifest } from '@/lib/poetry';
-import { getSiteUrl } from '@/lib/seo/config';
+import { getRuntimeSiteUrl } from '@/lib/seo/config';
 
 interface ClassicsManifest { updatedAt: string; books: Array<{ slug: string }>; }
 interface ContentManifest { generatedAt: string; }
@@ -17,7 +17,7 @@ function loadJsonSync<T>(p: string): T | null {
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const base = getSiteUrl();
+  const base = await getRuntimeSiteUrl();
   const [manifest, classics, content, sutras] = await Promise.all([
     loadManifest(),
     Promise.resolve(loadJsonSync<ClassicsManifest>('data/classics-manifest.json')),

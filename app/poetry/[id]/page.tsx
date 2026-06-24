@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const poem = await getPoem(id);
   if (!poem) return {};
   const excerpt = poem.content.slice(0, 2).join(' / ').slice(0, 80);
-  return buildMetadata({
+  return await buildMetadata({
     title: `${poem.title} - ${poem.author}`,
     description: `${poem.author}《${poem.title}》: ${excerpt}`,
     path: `/poetry/${id}`,
@@ -53,7 +53,7 @@ export default async function PoemDetailPage({ params }: Props) {
         // eslint-disable-next-line react/no-danger
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
-            buildBreadcrumbList([
+            await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '诗词', url: '/poetry' },
               { name: poem.title, url: `/poetry/${poem.id}` },

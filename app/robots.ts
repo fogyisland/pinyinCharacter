@@ -1,10 +1,11 @@
 // app/robots.ts
 import type { MetadataRoute } from 'next';
-import { getSiteUrl } from '@/lib/seo/config';
+import { getRuntimeSiteUrl } from '@/lib/seo/config';
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
+  const base = await getRuntimeSiteUrl();
   return {
     rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api', '/account'] }],
-    sitemap: `${getSiteUrl()}/sitemap.xml`,
+    sitemap: `${base}/sitemap.xml`,
   };
 }
