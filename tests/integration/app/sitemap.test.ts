@@ -22,6 +22,13 @@ const mockQuery = vi.fn();
 vi.mock('../../../lib/db', () => ({
   getPool: () => ({ query: mockQuery, execute: vi.fn() }),
 }));
+// Root sitemap calls getRuntimeSiteUrl() → getConfig('site.url') → DB. We want
+// the site.url lookup to MISS (return null) so getRuntimeSiteUrl falls back to
+// process.env.NEXT_PUBLIC_SITE_URL, leaving the per-test mockQuery mocks for
+// the real data queries (sutras etc.).
+vi.mock('../../../lib/config', () => ({
+  getConfig: vi.fn().mockResolvedValue(null),
+}));
 
 describe('sub-sitemap routes', () => {
   beforeEach(() => vi.clearAllMocks());
