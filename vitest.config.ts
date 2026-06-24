@@ -10,6 +10,10 @@ export default defineConfig({
     globals: true,
     passWithNoTests: true,
     setupFiles: ['./tests/_setup/load-env.ts'],
+    // Run test files sequentially to avoid UNIQUE-constraint races between
+    // files that hardcode the same test user (e.g. 'dl_test', 'ext_test') in
+    // beforeAll. Default worker pool runs files in parallel; same DB → race.
+    fileParallelism: false,
     include: [
       'tests/**/*.test.ts',
       'tests/**/*.test.tsx',
