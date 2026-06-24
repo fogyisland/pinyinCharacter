@@ -25,7 +25,8 @@ export type AuditEvent =
   | 'admin_membership_plans_seeded'
   | 'admin_about_intro_regenerated'
   | 'smtp_config_updated' | 'smtp_test_sent'
-  | 'site_url_updated';
+  | 'site_url_updated'
+  | 'setup_route_enable' | 'setup_route_disable';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -52,6 +53,7 @@ export const AUDIT_EVENTS = [
   'admin_about_intro_regenerated',
   'smtp_config_updated', 'smtp_test_sent',
   'site_url_updated',
+  'setup_route_enable', 'setup_route_disable',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -100,6 +102,8 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   smtp_config_updated: '更新邮件配置',
   smtp_test_sent: '测试邮件发送',
   site_url_updated: '更新站点 URL',
+  setup_route_enable: '开启 /init 路由',
+  setup_route_disable: '关闭 /init 路由',
 };
 
 /**
@@ -195,6 +199,10 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
       return `测试邮件发送 (to=${str(m.to) || '?'}, ok=${m.ok === true ? 'true' : m.ok === false ? 'false' : '?'}${str(m.error) ? `, error=${str(m.error)}` : ''})`;
     case 'site_url_updated':
       return `更新站点 URL 为 ${str(m.url) || '?'}`;
+    case 'setup_route_enable':
+      return `开启 /init 路由`;
+    case 'setup_route_disable':
+      return `关闭 /init 路由`;
 
     default: {
       const keys = Object.keys(m);

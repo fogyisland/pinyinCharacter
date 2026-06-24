@@ -4,12 +4,13 @@
  * The app uses custom JWT auth (lib/auth.ts), not next-auth. The cookie is
  * signed with JWT_SECRET, marked secure only when COOKIE_SECURE=true, and
  * DATABASE_URL points to the prod DB. If any of these regress in production,
- * we want to refuse to boot, not silently serve unsafe traffic.
+ * we want to surface the issue clearly, not silently serve unsafe traffic.
  *
- * `validateEnv` is called once at startup from `instrumentation.ts`. In
- * production it throws on any error; in development it returns warnings so
- * local-dev quirks (HTTP, localhost DB, dev-default JWT secret) don't break
- * the day-to-day loop.
+ * `validateEnv` is called once at startup from `instrumentation.ts`. It
+ * NEVER throws — production deployments that haven't completed `/init` yet
+ * (no DB, no JWT_SECRET) need the server to boot far enough to serve the
+ * setup wizard. Instead it logs warnings/errors and returns the issue list,
+ * which `isReady()` reduces to a single boolean for /admin/init's checklist.
  *
  * Why this is a separate module rather than inline checks:
  *   - Pure function with `env` parameter → trivial to unit test without
@@ -80,10 +81,10 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
     });
   }
 
-  // Rule 3: DATABASE_URL — must exist, and must not point at a dev/local DB
-  // (127.0.0.1, localhost, or a schema literally named piyin_dev). Catching
-  // this at boot is cheaper than discovering it from corrupted user state
-  // six hours later.
+  // Rule 3: DATABASE_URL — must exist for any data-driven feature (auth,
+  // worksheets, history, audit log, AI config). Without it the server can
+  // still serve static pages + /init wizard, so we surface as an error
+  // for /admin/init's checklist but do NOT block startup.
   const dbUrl = env.DATABASE_URL;
   if (!dbUrl) {
     issues.push({ level: 'error', var: 'DATABASE_URL', message: 'DATABASE_URL is not set' });
@@ -114,17 +115,26 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
     });
   }
 
+  // Always log warnings (best-effort signal for operators tailing logs).
+  // Errors are NOT thrown — the server must boot far enough to serve /init.
+  // Callers that need a hard gate (e.g. /admin/init checklist) should call
+  // isReady() to collapse the issue list into a single ok boolean.
   for (const i of issues) {
-    if (i.level === 'warn') console.warn(`[env] WARN [${i.var}] ${i.message}`);
-  }
-  const errors = issues.filter((i) => i.level === 'error');
-  if (errors.length > 0) {
-    const msgs = errors.map((i) => `  - [${i.var}] ${i.message}`).join('\n');
-    throw new Error(`Production environment validation failed:\n${msgs}`);
+    const tag = i.level === 'error' ? 'ERROR' : 'WARN';
+    console.warn(`[env] ${tag} [${i.var}] ${i.message}`);
   }
 
+  const errors = issues.filter((i) => i.level === 'error');
   return {
     ok: errors.length === 0,
     issues,
   };
+}
+
+/**
+ * Convenience: only true when validateEnv returned zero error-level issues.
+ * Used by /admin/init checklist to gate "prod-ready" status.
+ */
+export function isReady(env: NodeJS.ProcessEnv = process.env): boolean {
+  return validateEnv(env).ok;
 }
