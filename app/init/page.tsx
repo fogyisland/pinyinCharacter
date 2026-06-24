@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Check, Database, User, Rocket } from 'lucide-react';
+import { Check, X, Loader2, Database, User, Rocket } from 'lucide-react';
 
 type Step = 'db' | 'admin' | 'seed' | 'done';
+type StepStatus = 'idle' | 'running' | 'done' | 'failed';
 
 interface DbConfig {
   host: string;
@@ -22,10 +23,29 @@ const DEFAULT_DB: DbConfig = {
   database: 'pinyin',
 };
 
-const STEPS: { id: Step; label: string; icon: React.ReactNode }[] = [
+const TOP_STEPS: { id: Step; label: string; icon: React.ReactNode }[] = [
   { id: 'db', label: '数据库', icon: <Database className="h-4 w-4" /> },
   { id: 'admin', label: '管理员', icon: <User className="h-4 w-4" /> },
   { id: 'seed', label: '初始化数据', icon: <Rocket className="h-4 w-4" /> },
+];
+
+// Sub-steps shown live during /init step 3. Each maps to one API call so the
+// UI can flip its color the moment the server confirms success.
+interface SubStep {
+  id: string;
+  label: string;
+  status: StepStatus;
+  detail?: string;
+}
+
+const INITIAL_SUB_STEPS: SubStep[] = [
+  { id: 'migrate', label: '运行 SQL migrations', status: 'idle' },
+  { id: 'tables', label: '创建表结构 (15 张)', status: 'idle' },
+  { id: 'app_config', label: '写入 app_config 默认值', status: 'idle' },
+  { id: 'poems', label: '导入古诗 (从 data/poems/)', status: 'idle' },
+  { id: 'sutras', label: '导入佛经 (从 data/sutras/)', status: 'idle' },
+  { id: 'chars', label: '导入字典 (7909 字)', status: 'idle' },
+  { id: 'mark_complete', label: '标记 setup.completed', status: 'idle' },
 ];
 
 export default function InitPage() {
@@ -36,15 +56,16 @@ export default function InitPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // Admin form
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
 
-  // Seed progress
-  const [seedStatus, setSeedStatus] = useState<'idle' | 'running' | 'done' | 'error'>('idle');
-  const [seedLog, setSeedLog] = useState<string[]>([]);
-  const [seedStats, setSeedStats] = useState<{ migrations: number; statements: number } | null>(null);
+  // Sub-step state for /init step 3 live progress.
+  const [subSteps, setSubSteps] = useState<SubStep[]>(INITIAL_SUB_STEPS);
+
+  function updateSubStep(id: string, patch: Partial<SubStep>) {
+    setSubSteps((steps) => steps.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }
 
   async function handleDbSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -95,32 +116,80 @@ export default function InitPage() {
 
   async function handleSeed() {
     setBusy(true);
-    setSeedStatus('running');
-    setSeedLog(['开始初始化...']);
     setErr(null);
+    // Reset all sub-steps to idle so the user sees a clean progress run.
+    setSubSteps(INITIAL_SUB_STEPS.map((s) => ({ ...s, status: 'idle', detail: undefined })));
+
+    // Phase 1: migrate
+    updateSubStep('migrate', { status: 'running' });
     try {
-      const res = await fetch('/api/init/run-seed', { method: 'POST' });
-      const data = await res.json();
-      if (!data.ok) {
-        setSeedStatus('error');
-        setSeedLog((log) => [...log, `✗ 失败: ${data.error?.message ?? 'unknown error'}`]);
-        setErr(data.error?.message ?? '初始化失败');
+      const r = await fetch('/api/init/migrate', { method: 'POST' });
+      const d = await r.json();
+      if (!d.ok) {
+        updateSubStep('migrate', { status: 'failed', detail: d.error?.message ?? '失败' });
+        setErr(d.error?.message ?? 'migrate 失败');
+        setBusy(false);
         return;
       }
-      setSeedLog((log) => [...log, '✓ 表结构已创建 (15 张)', '✓ app_config 默认值已 seed', '✓ poems 已 auto-populate', '✓ sutras 已 auto-populate', '✓ chars 已 auto-populate (7909 行)', '✓ setup.completed 标记已写入']);
-      setSeedStats({ migrations: data.data.migrationsApplied, statements: data.data.statementsApplied });
-      setSeedStatus('done');
+      updateSubStep('migrate', { status: 'done', detail: `${d.data.files} 文件,${d.data.statements} 语句` });
+    } catch (e) {
+      updateSubStep('migrate', { status: 'failed', detail: (e as Error).message });
+      setErr((e as Error).message);
+      setBusy(false);
+      return;
+    }
+
+    // Phase 2: initDb (which covers tables + app_config + poems/sutras/chars auto-populate)
+    const initDbSteps = ['tables', 'app_config', 'poems', 'sutras', 'chars'];
+    for (const id of initDbSteps) updateSubStep(id, { status: 'running' });
+    try {
+      const r = await fetch('/api/init/init-db', { method: 'POST' });
+      const d = await r.json();
+      if (!d.ok) {
+        const detail = d.error?.message ?? '失败';
+        // Mark all initDb sub-steps as failed since we don't know how far it got.
+        for (const id of initDbSteps) updateSubStep(id, { status: 'failed', detail });
+        setErr(detail);
+        setBusy(false);
+        return;
+      }
+      // All initDb sub-steps succeeded.
+      updateSubStep('tables', { status: 'done' });
+      updateSubStep('app_config', { status: 'done' });
+      updateSubStep('poems', { status: 'done' });
+      updateSubStep('sutras', { status: 'done' });
+      updateSubStep('chars', { status: 'done' });
+    } catch (e) {
+      const detail = (e as Error).message;
+      for (const id of initDbSteps) updateSubStep(id, { status: 'failed', detail });
+      setErr(detail);
+      setBusy(false);
+      return;
+    }
+
+    // Phase 3: mark complete
+    updateSubStep('mark_complete', { status: 'running' });
+    try {
+      const r = await fetch('/api/init/mark-complete', { method: 'POST' });
+      const d = await r.json();
+      if (!d.ok) {
+        updateSubStep('mark_complete', { status: 'failed', detail: d.error?.message ?? '失败' });
+        setErr(d.error?.message ?? 'mark-complete 失败');
+        setBusy(false);
+        return;
+      }
+      updateSubStep('mark_complete', { status: 'done' });
       setStep('done');
     } catch (e) {
-      setSeedStatus('error');
-      setSeedLog((log) => [...log, `✗ ${(e as Error).message}`]);
+      updateSubStep('mark_complete', { status: 'failed', detail: (e as Error).message });
       setErr((e as Error).message);
     } finally {
       setBusy(false);
     }
   }
 
-  const currentIdx = STEPS.findIndex((s) => s.id === step);
+  const currentIdx = TOP_STEPS.findIndex((s) => s.id === step);
+  const allSubDone = subSteps.every((s) => s.status === 'done');
 
   return (
     <div className="mx-auto max-w-2xl py-8">
@@ -132,9 +201,9 @@ export default function InitPage() {
         </p>
       </div>
 
-      {/* Step indicator */}
+      {/* Top-level step indicator */}
       <div className="mb-8 flex items-center gap-2">
-        {STEPS.map((s, i) => {
+        {TOP_STEPS.map((s, i) => {
           const completed = i < currentIdx || step === 'done';
           const active = s.id === step;
           return (
@@ -151,7 +220,7 @@ export default function InitPage() {
               <span className={`text-sm ${active || completed ? 'text-ink font-medium' : 'text-ink-faint'}`}>
                 {s.label}
               </span>
-              {i < STEPS.length - 1 && <span className="mx-2 text-ink-faint">→</span>}
+              {i < TOP_STEPS.length - 1 && <span className="mx-2 text-ink-faint">→</span>}
             </div>
           );
         })}
@@ -267,14 +336,64 @@ export default function InitPage() {
         </form>
       )}
 
-      {/* Step 3: Seed */}
+      {/* Step 3: Seed — live progress with green/red cards per sub-step */}
       {step === 'seed' && (
         <div className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6">
           <h2 className="text-lg font-medium text-ink">第 3 步 — 写入种子数据</h2>
           <p className="text-sm text-ink-soft">
-            点击下方按钮开始初始化。系统会:运行 migrations.sql → 创建 15 张表 → seed app_config 默认值 → 自动导入古诗/佛经/字典数据。
+            点击下方按钮开始初始化。系统会依次执行以下步骤,每步状态实时显示。
           </p>
-          {seedStatus === 'idle' && (
+
+          <div className="space-y-2">
+            {subSteps.map((s) => (
+              <div
+                key={s.id}
+                className={`flex items-center gap-3 rounded-md border-2 p-3 transition-colors ${
+                  s.status === 'done' ? 'border-green-300 bg-green-50'
+                    : s.status === 'failed' ? 'border-red-300 bg-red-50'
+                    : s.status === 'running' ? 'border-blue-300 bg-blue-50'
+                    : 'border-ink/15 bg-paper-soft'
+                }`}
+              >
+                <div className="flex h-6 w-6 items-center justify-center">
+                  {s.status === 'done' && <Check className="h-5 w-5 text-green-700" />}
+                  {s.status === 'failed' && <X className="h-5 w-5 text-red-700" />}
+                  {s.status === 'running' && <Loader2 className="h-5 w-5 animate-spin text-blue-600" />}
+                  {s.status === 'idle' && <span className="h-2 w-2 rounded-full bg-ink/20" />}
+                </div>
+                <div className="flex-1">
+                  <div className={`text-sm font-medium ${
+                    s.status === 'done' ? 'text-green-900'
+                      : s.status === 'failed' ? 'text-red-900'
+                      : s.status === 'running' ? 'text-blue-900'
+                      : 'text-ink-soft'
+                  }`}>
+                    {s.label}
+                  </div>
+                  {s.detail && (
+                    <div className={`mt-0.5 text-xs ${
+                      s.status === 'failed' ? 'text-red-700' : 'text-ink-faint'
+                    }`}>
+                      {s.detail}
+                    </div>
+                  )}
+                </div>
+                <span className={`text-xs ${
+                  s.status === 'done' ? 'text-green-700'
+                    : s.status === 'failed' ? 'text-red-700'
+                    : s.status === 'running' ? 'text-blue-600'
+                    : 'text-ink-faint'
+                }`}>
+                  {s.status === 'done' && '完成'}
+                  {s.status === 'failed' && '失败'}
+                  {s.status === 'running' && '进行中'}
+                  {s.status === 'idle' && '等待'}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {!allSubDone && subSteps.every((s) => s.status === 'idle') && (
             <button
               type="button" onClick={handleSeed} disabled={busy}
               className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
@@ -282,16 +401,15 @@ export default function InitPage() {
               开始初始化
             </button>
           )}
-          {seedStatus !== 'idle' && (
-            <div className="space-y-1 rounded-md bg-ink/5 p-4 font-mono text-xs">
-              {seedLog.map((line, i) => (
-                <div key={i} className={seedStatus === 'error' && i === seedLog.length - 1 ? 'text-seal' : 'text-ink-soft'}>
-                  {line}
-                </div>
-              ))}
-            </div>
+          {!allSubDone && subSteps.some((s) => s.status === 'failed') && (
+            <button
+              type="button" onClick={handleSeed} disabled={busy}
+              className="rounded-md bg-amber-600 px-6 py-2 text-white hover:bg-amber-700 disabled:opacity-50"
+            >
+              {busy ? '重试中…' : '重试失败步骤'}
+            </button>
           )}
-          {seedStatus === 'done' && (
+          {allSubDone && (
             <button
               type="button" onClick={() => router.push('/login')}
               className="rounded-md bg-green-700 px-6 py-2 text-white hover:bg-green-800"
