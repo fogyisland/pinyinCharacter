@@ -9,6 +9,8 @@
  * content columns during the migration window.
  */
 import { getPool, closePool } from '../lib/db';
+import charsData from '../data/general-standard-chinese-characters.json';
+import radicalsData from '../data/radicals.json';
 
 const DDL = [
   `CREATE TABLE IF NOT EXISTS chars (
@@ -310,6 +312,35 @@ export async function initDb(): Promise<void> {
     }
   } catch (err) {
     console.warn('[initDb] sutras auto-populate failed (continuing):', (err as Error).message);
+  }
+  // Auto-populate chars table if empty (fail-soft)
+  // Seed 8105 chars with level + unicode_codepoint + radical from JSON files.
+  // Pinyin/meaning/stroke_count are filled by admin tools or content-refresh scheduler.
+  // Filter to BMP-only — mysql2 binary protocol mojibakes supp-plane chars (length > 1).
+  try {
+    const [[{ count: cCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM chars`);
+    if (Number(cCount) === 0) {
+      const charsArr = (charsData as string[]).filter((c) => c.length === 1);
+      const radicalsMap = radicalsData as Record<string, string>;
+      let imported = 0;
+      let idx = 0;
+      for (const ch of charsArr) {
+        const level = idx < 3500 ? 1 : idx < 6500 ? 2 : 3;
+        const cp = `U+${ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+        const radical = radicalsMap[ch] ?? '';
+        await pool.execute(
+          `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES (?, ?, ?, ?)`,
+          [ch, level, radical, cp]
+        );
+        imported++;
+        idx++;
+      }
+      console.log(`[initDb] inserted ${imported} chars (auto-populate)`);
+    } else {
+      console.log(`[initDb] chars table has ${cCount} rows, skip auto-populate`);
+    }
+  } catch (err) {
+    console.warn('[initDb] chars auto-populate failed (continuing):', (err as Error).message);
   }
 }
 
