@@ -35,7 +35,11 @@ const FOUR_EMPTY = [
 
 describe('getEtymology', () => {
   it('returns null when char not in char_etymology', async () => {
-    mockedQuery.mockResolvedValueOnce([[]]);
+    // char_etymology lookup returns empty (char not there) → triggers
+    // getContent() fallback. getContent's chars-table query also returns
+    // empty so it short-circuits at lib/content.ts:47 with null.
+    mockedQuery.mockResolvedValueOnce([[]]);  // char_etymology
+    mockedQuery.mockResolvedValueOnce([[]]);  // chars (inside getContent)
     const result = await getEtymology('龘');
     expect(result).toBeNull();
   });
