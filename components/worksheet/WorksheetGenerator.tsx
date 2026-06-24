@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { PaperSize, FontFamily } from '@/lib/worksheet-types';
 import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
@@ -98,19 +98,8 @@ export function WorksheetGenerator() {
     return () => { cancelled = true; };
   }, [ancientBook, chapterIdx]);
 
-  // 改字体/工具/格子形式/纸张尺寸后，自动跳到预览页（已有内容时）
-  // 跳过首次渲染，避免 prefill 时直接跳到预览
-  const isFirstSettingsRender = useRef(true);
-  useEffect(() => {
-    if (isFirstSettingsRender.current) {
-      isFirstSettingsRender.current = false;
-      return;
-    }
-    if (view === 'form' && canPreview) {
-      setView('preview');
-    }
-  }, [fontFamily, tool, presentation, paperSize, trace]);
-
+  // 改字体/工具/格子形式/纸张尺寸/描红 后, 不再自动跳到预览页.
+  // 预览仅在用户点 "生成字帖" 按钮 (或 RandomTab 的 "随机生成/重新生成" 按钮) 时进入.
   function handleToolChange(next: Tool) {
     setTool(next);
     if (next === 'brush' && !isBrushSize(paperSize)) {
