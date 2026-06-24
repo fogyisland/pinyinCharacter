@@ -14,24 +14,22 @@ describe('WorksheetCell', () => {
     expect(rect.getAttribute('stroke')).toBe('#bbb');
   });
 
-  it('renders char at 100% size in #ddd for brush-trace-square (light char + red border)', () => {
+  it('trace mode: full-size char filled in red (#c0392b), border stays light', () => {
     const { container } = render(<WorksheetCell char="永" style="brush-trace-square" size={100} />);
     const text = container.querySelector('text')!;
     const rect = container.querySelector('rect')!;
-    expect(text.getAttribute('font-size')).toBe('100');
-    expect(text.getAttribute('fill')).toBe('#ddd');        // light gray for the trace char
-    expect(rect.getAttribute('stroke')).toBe('#c0392b');   // red border marks the trace cell
+    expect(text.getAttribute('font-size')).toBe('100');   // full size as the brush template
+    expect(text.getAttribute('fill')).toBe('#c0392b');     // solid red for traditional 描红
+    expect(rect.getAttribute('stroke')).toBe('#bbb');      // border stays light gray
   });
 
-  it('renders char at 100% size in #ddd for brush-trace-cross (with diagonals)', () => {
+  it('trace mode cross: same red char + diagonals', () => {
     const { container } = render(<WorksheetCell char="永" style="brush-trace-cross" size={100} />);
     const lines = container.querySelectorAll('line');
     expect(lines.length).toBe(5);
     const text = container.querySelector('text')!;
-    const rect = container.querySelector('rect')!;
     expect(text.getAttribute('font-size')).toBe('100');
-    expect(text.getAttribute('fill')).toBe('#ddd');
-    expect(rect.getAttribute('stroke')).toBe('#c0392b');
+    expect(text.getAttribute('fill')).toBe('#c0392b');
   });
 
   it('preserves cross diagonals for brush-cross (non-trace)', () => {
@@ -40,9 +38,10 @@ describe('WorksheetCell', () => {
     expect(lines.length).toBe(5);
     const text = container.querySelector('text')!;
     expect(text.getAttribute('font-size')).toBe('60');
+    expect(text.getAttribute('fill')).toBe('#bbb');
   });
 
-  it('uses #bbb stroke for non-trace outline (pen)', () => {
+  it('uses #bbb stroke for pen outline (no trace)', () => {
     const { container } = render(<WorksheetCell char="永" style="pen-square" size={100} />);
     const rect = container.querySelector('rect')!;
     expect(rect.getAttribute('stroke')).toBe('#bbb');
