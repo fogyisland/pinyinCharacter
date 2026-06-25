@@ -124,6 +124,44 @@ export function writeEnvVars(updates: Record<string, string>): void {
 }
 
 /**
+ * Parse project-root .env into a record. Skips blank lines and comments
+ * (`#`). Splits on the first `=` per line, trims whitespace, and preserves
+ * the value verbatim (no quote-stripping — writeEnvVar writes unquoted).
+ *
+ * Used by /api/init/db-config after writeEnvVars() to refresh process.env
+ * in the running Next.js process (Node doesn't auto-reload .env after
+ * startup, so subsequent requests in the same process would otherwise
+ * still see the pre-init DATABASE_URL=undefined).
+ */
+export function loadEnvFromFile(): Record<string, string> {
+  if (!existsSync(ENV_PATH)) return {};
+  const content = readFileSync(ENV_PATH, 'utf8');
+  const out: Record<string, string> = {};
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eq = trimmed.indexOf('=');
+    if (eq <= 0) continue;
+    const key = trimmed.slice(0, eq).trim();
+    const value = trimmed.slice(eq + 1);
+    if (key) out[key] = value;
+  }
+  return out;
+}
+
+/**
+ * Re-read .env from disk and merge into process.env. Called by /init
+ * step 1 after writing DATABASE_URL/JWT_SECRET/COOKIE_SECURE so the
+ * running process picks up the new values without a restart.
+ */
+export function reloadProcessEnvFromFile(): void {
+  const fromFile = loadEnvFromFile();
+  for (const [k, v] of Object.entries(fromFile)) {
+    process.env[k] = v;
+  }
+}
+
+/**
  * Check whether the system has been initialized. We use the app_config flag
  * `setup.completed` set at the end of /init step 3. This is the source of
  * truth — middleware redirects to /init when false.

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
-import { testDbConnection, buildDatabaseUrl, writeEnvVars, generateJwtSecret, isSetupRouteEnabled } from '@/lib/setup';
+import { testDbConnection, buildDatabaseUrl, writeEnvVars, generateJwtSecret, reloadProcessEnvFromFile, isSetupRouteEnabled } from '@/lib/setup';
 import { closePool } from '@/lib/db';
 
 const dbConfigSchema = z.object({
@@ -45,6 +45,10 @@ export async function POST(req: NextRequest) {
       JWT_SECRET: jwtSecret,
       COOKIE_SECURE: cookieSecure,
     });
+    // Next.js loads .env once at startup — writeEnvVars() above only writes
+    // to disk. Reload process.env in the running process so step 2/3 of
+    // /init can use the new DATABASE_URL/JWT_SECRET without a restart.
+    reloadProcessEnvFromFile();
     // Close the (potentially stale) pool. Next getPool() call will pick up
     // the new DATABASE_URL from process.env on next request.
     await closePool().catch(() => undefined);
