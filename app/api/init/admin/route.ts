@@ -32,6 +32,20 @@ export async function POST(req: NextRequest) {
     }
     const { username, password, email } = parsed.data;
     const pool = getPool();
+    // Step 2 runs BEFORE step 3 (init-db), so the users table may not exist
+    // yet on a fresh DB. Run initDb() first — it's idempotent (CREATE IF
+    // NOT EXISTS, skip-if-non-empty for seeds) and guarantees the schema is
+    // in place before we INSERT. The visible "创建表结构" sub-step in step 3
+    // will then re-run initDb (still idempotent) and report tables present.
+    await pool.query(`SELECT 1`);
+    const [tbls] = await pool.query<any[]>(
+      `SELECT TABLE_NAME FROM information_schema.tables
+       WHERE table_schema = DATABASE() AND table_name = 'users' LIMIT 1`,
+    );
+    if (tbls.length === 0) {
+      const { initDb } = await import('@/scripts/init-db');
+      await initDb();
+    }
     // Defensive: refuse if a user with this username already exists (so
     // /init step 2 can be safely re-run during a multi-attempt session).
     const [existing] = await pool.query<any[]>(

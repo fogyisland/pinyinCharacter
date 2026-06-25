@@ -129,7 +129,10 @@ const DDL = [
      user_id     BIGINT         NOT NULL,
      title       VARCHAR(80)    NOT NULL,
      content     JSON           NOT NULL,
-     cell_style  ENUM('brush','square','pen','cross','brush-square','brush-cross','pen-square','pen-cross') NOT NULL,
+     -- Latest ENUM (matches what migrations would converge to). init-db
+     -- creates the final state; migrations exist only for upgrading
+     -- older DBs and must NOT be run after a fresh initDb().
+     cell_style  ENUM('brush','square','pen','cross','brush-square','brush-cross','pen-square','pen-cross','brush-trace-square','brush-trace-cross') NOT NULL,
      paper_size  ENUM('A3','A4','B5','brush-12','brush-24','brush-28') NOT NULL,
      font_family ENUM('song','kai','hei','wenkai-gb','yozai','iansui','zen-kaku-thin','ma-shan-zheng','long-cang') NOT NULL DEFAULT 'song',
      created_at  DATETIME       NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -240,6 +243,18 @@ const DDL = [
        REFERENCES users(id) ON DELETE SET NULL
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+  `CREATE TABLE IF NOT EXISTS sutra_copy_progress (
+     user_id INT UNSIGNED NOT NULL,
+     sutra_id INT UNSIGNED NOT NULL,
+     chunk_idx INT UNSIGNED NOT NULL,
+     written_chars JSON NOT NULL,
+     started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     completed_at DATETIME NULL,
+     PRIMARY KEY (user_id, sutra_id, chunk_idx),
+     INDEX idx_user_completed (user_id, completed_at)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
   `CREATE TABLE IF NOT EXISTS activate (
      id                 BIGINT       NOT NULL AUTO_INCREMENT,
      short_name         VARCHAR(64)  NOT NULL,
@@ -334,25 +349,34 @@ export async function initDb(): Promise<void> {
   // Seed 8105 chars with level + unicode_codepoint + radical from JSON files.
   // Pinyin/meaning/stroke_count are filled by admin tools or content-refresh scheduler.
   // Filter to BMP-only — mysql2 binary protocol mojibakes supp-plane chars (length > 1).
+  // Bulk insert in batches of 500 to avoid per-row roundtrips (~3min → <10s).
   try {
     const [[{ count: cCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM chars`);
     if (Number(cCount) === 0) {
       const charsArr = (charsData as string[]).filter((c) => c.length === 1);
       const radicalsMap = radicalsData as Record<string, string>;
-      let imported = 0;
+      const rows: Array<[string, number, string, string]> = [];
       let idx = 0;
       for (const ch of charsArr) {
         const level = idx < 3500 ? 1 : idx < 6500 ? 2 : 3;
         const cp = `U+${ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
         const radical = radicalsMap[ch] ?? '';
-        await pool.execute(
-          `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES (?, ?, ?, ?)`,
-          [ch, level, radical, cp]
-        );
-        imported++;
+        rows.push([ch, level, radical, cp]);
         idx++;
       }
-      console.log(`[initDb] inserted ${imported} chars (auto-populate)`);
+      const BATCH = 500;
+      let imported = 0;
+      for (let off = 0; off < rows.length; off += BATCH) {
+        const batch = rows.slice(off, off + BATCH);
+        const placeholders = batch.map(() => '(?, ?, ?, ?)').join(', ');
+        const params = batch.flat();
+        await pool.execute(
+          `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES ${placeholders}`,
+          params
+        );
+        imported += batch.length;
+      }
+      console.log(`[initDb] inserted ${imported} chars (bulk auto-populate)`);
     } else {
       console.log(`[initDb] chars table has ${cCount} rows, skip auto-populate`);
     }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check, X, Loader2, Database, User, Rocket } from 'lucide-react';
 
@@ -39,8 +39,7 @@ interface SubStep {
 }
 
 const INITIAL_SUB_STEPS: SubStep[] = [
-  { id: 'migrate', label: '运行 SQL migrations', status: 'idle' },
-  { id: 'tables', label: '创建表结构 (15 张)', status: 'idle' },
+  { id: 'tables', label: '创建表结构 (18 张)', status: 'idle' },
   { id: 'app_config', label: '写入 app_config 默认值', status: 'idle' },
   { id: 'poems', label: '导入古诗 (从 data/poems/)', status: 'idle' },
   { id: 'sutras', label: '导入佛经 (从 data/sutras/)', status: 'idle' },
@@ -55,6 +54,24 @@ export default function InitPage() {
   const [dbInfo, setDbInfo] = useState<{ host: string; database: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // null = unknown (still probing), true = setup is locked, false = fresh
+  const [alreadyDone, setAlreadyDone] = useState<boolean | null>(null);
+
+  // On mount, check whether /init is enabled. If setup is complete and the
+  // wizard is locked out, show a "go to login" card instead of the form
+  // (the API would reject any submission anyway with setup_disabled).
+  useEffect(() => {
+    fetch('/api/init/status', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.ok && d.data?.setupComplete && !d.data?.routeEnabled) {
+          setAlreadyDone(true);
+        } else {
+          setAlreadyDone(false);
+        }
+      })
+      .catch(() => setAlreadyDone(false));
+  }, []);
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -120,26 +137,9 @@ export default function InitPage() {
     // Reset all sub-steps to idle so the user sees a clean progress run.
     setSubSteps(INITIAL_SUB_STEPS.map((s) => ({ ...s, status: 'idle', detail: undefined })));
 
-    // Phase 1: migrate
-    updateSubStep('migrate', { status: 'running' });
-    try {
-      const r = await fetch('/api/init/migrate', { method: 'POST' });
-      const d = await r.json();
-      if (!d.ok) {
-        updateSubStep('migrate', { status: 'failed', detail: d.error?.message ?? '失败' });
-        setErr(d.error?.message ?? 'migrate 失败');
-        setBusy(false);
-        return;
-      }
-      updateSubStep('migrate', { status: 'done', detail: `${d.data.files} 文件,${d.data.statements} 语句` });
-    } catch (e) {
-      updateSubStep('migrate', { status: 'failed', detail: (e as Error).message });
-      setErr((e as Error).message);
-      setBusy(false);
-      return;
-    }
-
-    // Phase 2: initDb (which covers tables + app_config + poems/sutras/chars auto-populate)
+    // initDb creates the full schema (latest ENUM values, all tables) in
+    // one shot. Migrations are for upgrading older DBs and are NOT run
+    // during /init — they reference tables that may not exist yet.
     const initDbSteps = ['tables', 'app_config', 'poems', 'sutras', 'chars'];
     for (const id of initDbSteps) updateSubStep(id, { status: 'running' });
     try {
@@ -167,7 +167,7 @@ export default function InitPage() {
       return;
     }
 
-    // Phase 3: mark complete
+    // Mark setup complete.
     updateSubStep('mark_complete', { status: 'running' });
     try {
       const r = await fetch('/api/init/mark-complete', { method: 'POST' });
@@ -190,6 +190,39 @@ export default function InitPage() {
 
   const currentIdx = TOP_STEPS.findIndex((s) => s.id === step);
   const allSubDone = subSteps.every((s) => s.status === 'done');
+
+  // While probing setup status, show a neutral loader to avoid a brief
+  // flash of the wizard form when setup is actually already complete.
+  if (alreadyDone === null) {
+    return (
+      <div className="mx-auto max-w-2xl py-8 text-center text-sm text-ink-soft">
+        检查初始化状态…
+      </div>
+    );
+  }
+
+  // Locked state: setup is complete and the route is disabled. Show a
+  // "go to login" card instead of the wizard — submitting any step would
+  // fail with setup_disabled anyway.
+  if (alreadyDone === true) {
+    return (
+      <div className="mx-auto max-w-2xl py-8">
+        <div className="rounded-md border border-green-300 bg-green-50 p-6 text-center">
+          <Check className="mx-auto h-12 w-12 text-green-700" />
+          <h2 className="mt-3 text-lg font-medium text-ink">系统已初始化完成</h2>
+          <p className="mt-1 text-sm text-ink-soft">
+            首次部署已完成,此页面已自动锁定。
+          </p>
+          <button
+            type="button" onClick={() => router.push('/login')}
+            className="mt-4 rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80"
+          >
+            前往登录 →
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl py-8">

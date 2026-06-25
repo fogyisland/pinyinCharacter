@@ -16,14 +16,19 @@ import { getPool, closePool } from '../lib/db';
 const MIGRATIONS_DIR = join(process.cwd(), 'scripts', 'migrations');
 
 function splitStatements(sql: string): string[] {
-  // Naive splitter: split on `;` at end of line, drop empty/comment-only chunks.
-  // Migrations are written without stored procedures / DELIMITER tricks, so
-  // a single split is enough. If we ever need DELIMITER, replace with a real
-  // SQL parser.
+  // Naive splitter: split on `;` at end of line, drop empty / comment-only
+  // chunks. Migrations are written without stored procedures / DELIMITER
+  // tricks, so a single split is enough. If we ever need DELIMITER, replace
+  // with a real SQL parser.
+  //
+  // IMPORTANT: strip leading `--` comment lines from each chunk — many
+  // migrations start with a header comment (e.g. "G5+: add trace variants")
+  // followed by the actual ALTER/CREATE. Without stripping, the comment
+  // makes the whole chunk look like a pure comment and gets dropped.
   return sql
     .split(/;\s*(?:\r?\n|$)/)
-    .map((s) => s.trim())
-    .filter((s) => s.length > 0 && !s.match(/^\s*--/));
+    .map((s) => s.replace(/^\s*(?:--[^\n]*\n)+/, '').trim())
+    .filter((s) => s.length > 0 && !/^\s*--/.test(s));
 }
 
 export async function runMigrations(): Promise<{ files: number; statements: number }> {

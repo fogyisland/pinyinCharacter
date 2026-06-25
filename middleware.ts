@@ -29,8 +29,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Fresh deploy: no DATABASE_URL yet → /init. The actual setup-completed
-  // check (app_config flag) lives in /init's API routes.
+  // If this browser completed setup, trust the cookie. Edge runtime
+  // doesn't see runtime .env writes, so the cookie is the only way for
+  // middleware to learn setup is done before the next server restart.
+  if (req.cookies.get('setup_completed')?.value === '1') {
+    return NextResponse.next();
+  }
+
+  // Fresh deploy: no DATABASE_URL yet at startup → /init. The actual
+  // setup-completed check (app_config flag) lives in /init's API routes.
   if (!process.env.DATABASE_URL) {
     const url = req.nextUrl.clone();
     url.pathname = '/init';
