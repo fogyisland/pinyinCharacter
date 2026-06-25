@@ -31,12 +31,18 @@ pnpm dev
 ## 生产部署
 
 ```bash
-npm install
+npm install --omit=dev
 npm run build
-npm run start              # 跑在 :4444
+HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 ```
 
-首次部署访问 `http://localhost:4444/` 会被中间件重定向到 `/init`,按向导完成 DB 连接、管理员账号、seed 数据三步即可。
+首次部署访问 `http://your-server/` 会被中间件重定向到 `/init`,按向导完成 DB 连接、管理员账号、seed 数据三步即可。
+
+> **生产环境请配合反向代理 (Nginx / Caddy / Cloudflare) 使用。** 完整配置见 [`DEPLOY.md`](DEPLOY.md),关键点:
+> - 后端 Node **只** listen 在 `127.0.0.1:4444`
+> - 反代做 TLS 终止 + `client_max_body_size 500m` (必须,见 DEPLOY.md §3.3 原因)
+> - WebSocket `Upgrade` 头必须透传 (字帖打印页用)
+> - 静态资源 (笔顺/笔刷字体) 必须由反代直接 serve 并加 `expires 1y`
 
 ## 测试
 
