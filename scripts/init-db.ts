@@ -239,6 +239,23 @@ const DDL = [
      CONSTRAINT fk_app_config_user FOREIGN KEY (updated_by)
        REFERENCES users(id) ON DELETE SET NULL
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `CREATE TABLE IF NOT EXISTS activate (
+     id                 BIGINT       NOT NULL AUTO_INCREMENT,
+     short_name         VARCHAR(64)  NOT NULL,
+     installation_data  JSON         NULL,
+     is_activated       TINYINT(1)   NOT NULL DEFAULT 0,
+     activated_at       TIMESTAMP    NULL,
+     is_expired         TINYINT(1)   NOT NULL DEFAULT 0,
+     expire_date        TIMESTAMP    NULL,
+     \`lock\`             TINYINT(1)   NOT NULL DEFAULT 0,
+     last_heartbeat_at  TIMESTAMP    NULL,
+     last_cloud_sync_at TIMESTAMP    NULL,
+     cloud_endpoint     VARCHAR(255) NULL DEFAULT 'https://www.booming.one',
+     created_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     PRIMARY KEY (id)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 ];
 
 export async function initDb(): Promise<void> {
@@ -341,6 +358,29 @@ export async function initDb(): Promise<void> {
     }
   } catch (err) {
     console.warn('[initDb] chars auto-populate failed (continuing):', (err as Error).message);
+  }
+  // Seed activate singleton (id=1) — platform instance monitoring row.
+  // short_name defaults to OS hostname; cloud_endpoint is the future
+  // reporting target. installationData is left NULL until the cloud
+  // daemon populates it on first heartbeat.
+  try {
+    const os = await import('node:os');
+    const hostname = os.hostname().slice(0, 64);
+    const installationData = JSON.stringify({
+      hostname,
+      platform: os.platform(),
+      arch: os.arch(),
+      cpus: os.cpus().length,
+      totalMem: os.totalmem(),
+      nodeVersion: process.version,
+    });
+    await pool.execute(
+      `INSERT IGNORE INTO activate (id, short_name, installation_data) VALUES (1, ?, ?)`,
+      [hostname, installationData]
+    );
+    console.log(`[initDb] activate singleton ready (short_name=${hostname})`);
+  } catch (err) {
+    console.warn('[initDb] activate singleton seed failed (continuing):', (err as Error).message);
   }
 }
 

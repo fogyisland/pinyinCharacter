@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Setup wizard gate.
+ * Fresh-deploy gate only.
  *
- * When the system is fresh (DATABASE_URL not set OR app_config.setup.completed
- * missing), redirect all traffic to /init. After setup completes, this becomes
- * a no-op and the normal auth flow takes over.
- *
- * The check runs in the edge runtime (middleware cannot use mysql2 directly),
- * so we just probe for DATABASE_URL presence in process.env. The deeper check
- * (app_config flag) lives in /init's API routes and /admin/init's checklist.
+ * When the system is fresh (DATABASE_URL not set), redirect all traffic
+ * to /init. The activation lock check (lib/activation) lives in a server
+ * component guard, not here, because middleware runs in the edge runtime
+ * and can't import mysql2.
  *
  * Allow-list: /init itself, Next.js internals (_next/, api/init/*), and
  * static assets. Everything else redirects to /init on a fresh deploy.
@@ -32,9 +29,8 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Detect fresh deploy: no DATABASE_URL yet, or app hasn't been initialized.
-  // We can't query DB from middleware, so we just check process.env. The
-  // actual /init form will discover the missing tables on its own.
+  // Fresh deploy: no DATABASE_URL yet → /init. The actual setup-completed
+  // check (app_config flag) lives in /init's API routes.
   if (!process.env.DATABASE_URL) {
     const url = req.nextUrl.clone();
     url.pathname = '/init';
