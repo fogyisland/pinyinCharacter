@@ -149,7 +149,7 @@ async function main() {
   `);
   const chi = charRows[0];
   console.log(`  总数: ${chi.total}, level 数: ${chi.levels}`);
-  console.log(`  无 char: ${chi.no_char}, 无 level: ${chi.no_level}, 无 radical: ${chi.no_radical} (data/radicals.json 覆盖 6747/7910), 无 stroke: ${chi.no_stroke}, 无 codepoint: ${chi.no_codepoint}`);
+  console.log(`  无 char: ${chi.no_char}, 无 level: ${chi.no_level}, 无 radical: ${chi.no_radical} (data/radicals.json 覆盖 7906/7910; 剩 4 个 CJK Ext B/C 超生僻字无 kRSUnicode), 无 stroke: ${chi.no_stroke}, 无 codepoint: ${chi.no_codepoint}`);
   console.log(`  level 分布:`);
   const [levels] = await conn.query(`SELECT level, COUNT(*) AS n FROM chars GROUP BY level ORDER BY level`);
   for (const r of levels) console.log(`    level ${r.level}  ${r.n}`);

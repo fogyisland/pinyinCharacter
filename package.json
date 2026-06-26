@@ -11,6 +11,7 @@
     "poetry:build": "tsx scripts/build-poems.ts",
     "build:classics": "tsx scripts/build-classics.ts",
     "radicals:build": "tsx scripts/build-radicals.ts",
+    "radicals:import": "tsx --env-file=.env scripts/import-radicals.ts",
     "sutras:build": "tsx scripts/build-sutras.ts",
     "strokes:build": "tsx scripts/build-strokes.ts",
     "fonts:download": "tsx scripts/download-ancient-fonts.ts",
