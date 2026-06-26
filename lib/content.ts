@@ -37,23 +37,32 @@ export async function getContent(
     }
   }
 
-  // 2. Legacy fallback: aggregate from 4 DB tables
+  // 2. Legacy fallback: aggregate from DB tables. Schema can be "slim"
+  //    (6 cols in chars, no separate char_story) or "rich" (16+ cols +
+  //    char_story table). Read the slim shape first, opportunistically
+  //    upgrade to rich cols when present so neither schema breaks us.
   const pool = getPool();
   const [charRows] = await pool.query<any[]>(
     `SELECT level, pinyin, meaning_zh, meaning_en, pinyin_alt, variants
      FROM chars WHERE \`char\` = ? LIMIT 1`,
     [char]
-  );
+  ).catch(() => {
+    // Slim schema — meaning_zh etc. don't exist; fall back to bare cols.
+    return pool.query<any[]>(
+      `SELECT level, pinyin FROM chars WHERE \`char\` = ? LIMIT 1`,
+      [char]
+    ).then(([rows]) => [rows] as any);
+  });
   if (charRows.length === 0) return null;
 
   const [etymRows] = await pool.query<any[]>(
     `SELECT story, generated_by, generated_at FROM char_etymology WHERE \`char\` = ? LIMIT 1`,
     [char]
-  );
+  ).catch(() => [[] as any[]]);
   const [storyRows] = await pool.query<any[]>(
     `SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`,
     [char]
-  );
+  ).catch(() => [[] as any[]]);
   const [rareRows] = await pool.query<any[]>(
     `SELECT pinyin, meaning, story, generated_by, generated_at FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
     [char]
