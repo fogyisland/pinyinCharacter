@@ -1,22 +1,44 @@
 {
   "id": 1462,
-  "title": "昭君怨·深禁好春谁惜",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "杂言古风",
+  "title": "静夜思",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "10言古风",
   "content": [
-    "深禁好春谁惜，薄暮瑶阶伫立",
-    "别院管弦声，不分明",
-    "又是梨花欲谢，绣被春寒今夜",
-    "寂寞锁朱门，梦承恩"
+    "床前明月光，疑是地上霜。",
+    "举头望明月，低头思故乡。"
   ],
   "pinyin": [
-    [],
-    [],
-    [],
-    []
+    [
+      "chuáng",
+      "qián",
+      "míng",
+      "yuè",
+      "guāng",
+      "，",
+      "yí",
+      "shì",
+      "dì",
+      "shàng",
+      "shuāng",
+      "。"
+    ],
+    [
+      "jǔ",
+      "tóu",
+      "wàng",
+      "míng",
+      "yuè",
+      "，",
+      "dī",
+      "tóu",
+      "sī",
+      "gù",
+      "xiāng",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

@@ -1,20 +1,52 @@
 {
   "id": 1437,
-  "title": "浣溪沙·已惯天涯莫浪愁",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "杂言古风",
+  "title": "送元二使安西",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "14言古风",
   "content": [
-    "已惯天涯莫浪愁，寒云衰草渐成秋",
-    "漫因睡起又登楼",
-    "伴我萧萧惟代马，笑人寂寂有牵牛，劳人只合一生休"
+    "渭城朝雨浥轻尘，客舍青青柳色新。",
+    "劝君更尽一杯酒，西出阳关无故人。"
   ],
   "pinyin": [
-    [],
-    [],
-    []
+    [
+      "wèi",
+      "chéng",
+      "cháo",
+      "yǔ",
+      "yì",
+      "qīng",
+      "chén",
+      "，",
+      "kè",
+      "shè",
+      "qīng",
+      "qīng",
+      "liǔ",
+      "sè",
+      "xīn",
+      "。"
+    ],
+    [
+      "quàn",
+      "jūn",
+      "gèng",
+      "jìn",
+      "yī",
+      "bēi",
+      "jiǔ",
+      "，",
+      "xī",
+      "chū",
+      "yáng",
+      "guān",
+      "wú",
+      "gù",
+      "rén",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

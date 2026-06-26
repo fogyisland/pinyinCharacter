@@ -1,20 +1,74 @@
 {
   "id": 1314,
-  "title": "赤枣子·惊晓漏",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "杂言古风",
+  "title": "折杨柳",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "10言古风",
   "content": [
-    "惊晓漏，护春眠",
-    "格外娇慵只自怜",
-    "寄语酿花风日好，绿窗来与上琴弦"
+    "垂杨拂绿水，摇艳东风年。",
+    "花明玉关雪，叶暖金窗烟。",
+    "美人结长想，对此心凄然。",
+    "攀条折春色，远寄龙庭前。"
   ],
   "pinyin": [
-    [],
-    [],
-    []
+    [
+      "chuí",
+      "yáng",
+      "fú",
+      "lǜ",
+      "shuǐ",
+      "，",
+      "yáo",
+      "yàn",
+      "dōng",
+      "fēng",
+      "nián",
+      "。"
+    ],
+    [
+      "huā",
+      "míng",
+      "yù",
+      "guān",
+      "xuě",
+      "，",
+      "yè",
+      "nuǎn",
+      "jīn",
+      "chuāng",
+      "yān",
+      "。"
+    ],
+    [
+      "měi",
+      "rén",
+      "jié",
+      "cháng",
+      "xiǎng",
+      "，",
+      "duì",
+      "cǐ",
+      "xīn",
+      "qī",
+      "rán",
+      "。"
+    ],
+    [
+      "pān",
+      "tiáo",
+      "zhé",
+      "chūn",
+      "sè",
+      "，",
+      "yuǎn",
+      "jì",
+      "lóng",
+      "tíng",
+      "qián",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

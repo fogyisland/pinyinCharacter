@@ -1,22 +1,44 @@
 {
   "id": 1374,
-  "title": "减字木兰花·新月",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "11言古风",
+  "title": "七日夜女歌·其二",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "10言古风",
   "content": [
-    "晚妆欲罢，更把纤眉临镜画",
-    "准待分明，和雨和烟两不胜",
-    "莫教星替，守取团圆终必遂",
-    "此夜红楼，天上人间一样愁"
+    "长河起秋云，汉渚风凉发。",
+    "含欣出霄路，可笑向明月。"
   ],
   "pinyin": [
-    [],
-    [],
-    [],
-    []
+    [
+      "cháng",
+      "hé",
+      "qǐ",
+      "qiū",
+      "yún",
+      "，",
+      "hàn",
+      "zhǔ",
+      "fēng",
+      "liáng",
+      "fā",
+      "。"
+    ],
+    [
+      "hán",
+      "xīn",
+      "chū",
+      "xiāo",
+      "lù",
+      "，",
+      "kě",
+      "xiào",
+      "xiàng",
+      "míng",
+      "yuè",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

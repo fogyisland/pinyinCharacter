@@ -1,22 +1,44 @@
 {
   "id": 1373,
-  "title": "相见欢·微云一抹遥峰",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "9言古风",
+  "title": "七日夜女歌·其一",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "10言古风",
   "content": [
-    "微云一抹遥峰，冷溶溶",
-    "恰与个人清晓，画眉同",
-    "红蜡泪，青绫被，水沉浓",
-    "却与黄茅野店，听西风"
+    "三春怨离泣，九秋欣期歌。",
+    "驾鸾行日时，月明济长河。"
   ],
   "pinyin": [
-    [],
-    [],
-    [],
-    []
+    [
+      "sān",
+      "chūn",
+      "yuàn",
+      "lí",
+      "qì",
+      "，",
+      "jiǔ",
+      "qiū",
+      "xīn",
+      "qī",
+      "gē",
+      "。"
+    ],
+    [
+      "jià",
+      "luán",
+      "xíng",
+      "rì",
+      "shí",
+      "，",
+      "yuè",
+      "míng",
+      "jì",
+      "cháng",
+      "hé",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

@@ -1,0 +1,65 @@
+{
+  "id": 477,
+  "title": "忆王孙",
+  "author": "李重元",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "萋萋芳草忆王孙。",
+    "柳外楼高空断魂。",
+    "杜宇声声不忍闻。",
+    "欲黄昏。",
+    "雨打梨花深闭门。"
+  ],
+  "pinyin": [
+    [
+      "qī",
+      "qī",
+      "fāng",
+      "cǎo",
+      "yì",
+      "wáng",
+      "sūn",
+      "。"
+    ],
+    [
+      "liǔ",
+      "wài",
+      "lóu",
+      "gāo",
+      "kōng",
+      "duàn",
+      "hún",
+      "。"
+    ],
+    [
+      "dù",
+      "yǔ",
+      "shēng",
+      "shēng",
+      "bù",
+      "rěn",
+      "wén",
+      "。"
+    ],
+    [
+      "yù",
+      "huáng",
+      "hūn",
+      "。"
+    ],
+    [
+      "yǔ",
+      "dǎ",
+      "lí",
+      "huā",
+      "shēn",
+      "bì",
+      "mén",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

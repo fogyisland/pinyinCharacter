@@ -1,0 +1,70 @@
+{
+  "id": 1820,
+  "title": "景山",
+  "author": "纳兰性德",
+  "dynasty": "清",
+  "category": "qing",
+  "form": "10言古风",
+  "content": [
+    "雪里瑶华岛，云端白玉京",
+    "削成千仞势，高出九重城",
+    "绣陌回环绕，红楼宛转迎",
+    "近天多雨露，草木每先荣"
+  ],
+  "pinyin": [
+    [
+      "xuě",
+      "lǐ",
+      "yáo",
+      "huá",
+      "dǎo",
+      "，",
+      "yún",
+      "duān",
+      "bái",
+      "yù",
+      "jīng"
+    ],
+    [
+      "xiāo",
+      "chéng",
+      "qiān",
+      "rèn",
+      "shì",
+      "，",
+      "gāo",
+      "chū",
+      "jiǔ",
+      "zhòng",
+      "chéng"
+    ],
+    [
+      "xiù",
+      "mò",
+      "huí",
+      "huán",
+      "rào",
+      "，",
+      "hóng",
+      "lóu",
+      "wǎn",
+      "zhuǎn",
+      "yíng"
+    ],
+    [
+      "jìn",
+      "tiān",
+      "duō",
+      "yǔ",
+      "lù",
+      "，",
+      "cǎo",
+      "mù",
+      "měi",
+      "xiān",
+      "róng"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+}

@@ -1,0 +1,70 @@
+{
+  "id": 1800,
+  "title": "盛京",
+  "author": "纳兰性德",
+  "dynasty": "清",
+  "category": "qing",
+  "form": "10言古风",
+  "content": [
+    "拔地蛟龙宅，当关虎豹城",
+    "山连长白秀，江入混同清",
+    "庙社灵风肃，豪强右族更",
+    "明明开创业，休拟作陪京"
+  ],
+  "pinyin": [
+    [
+      "bá",
+      "dì",
+      "jiāo",
+      "lóng",
+      "zhái",
+      "，",
+      "dāng",
+      "guān",
+      "hǔ",
+      "bào",
+      "chéng"
+    ],
+    [
+      "shān",
+      "lián",
+      "cháng",
+      "bái",
+      "xiù",
+      "，",
+      "jiāng",
+      "rù",
+      "hùn",
+      "tóng",
+      "qīng"
+    ],
+    [
+      "miào",
+      "shè",
+      "líng",
+      "fēng",
+      "sù",
+      "，",
+      "háo",
+      "qiáng",
+      "yòu",
+      "zú",
+      "gèng"
+    ],
+    [
+      "míng",
+      "míng",
+      "kāi",
+      "chuàng",
+      "yè",
+      "，",
+      "xiū",
+      "nǐ",
+      "zuò",
+      "péi",
+      "jīng"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+}

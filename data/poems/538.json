@@ -1,0 +1,100 @@
+{
+  "id": 538,
+  "title": "踏莎行",
+  "author": "欧阳修",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "候馆梅残，溪桥柳细。",
+    "草熏风暖摇征辔。",
+    "离愁渐远渐无穷，迢迢不断如春水。",
+    "寸寸柔肠，盈盈粉泪。",
+    "楼高莫近危阑倚。",
+    "平芜尽处是春山，行人更在春山外。"
+  ],
+  "pinyin": [
+    [
+      "hòu",
+      "guǎn",
+      "méi",
+      "cán",
+      "，",
+      "xī",
+      "qiáo",
+      "liǔ",
+      "xì",
+      "。"
+    ],
+    [
+      "cǎo",
+      "xūn",
+      "fēng",
+      "nuǎn",
+      "yáo",
+      "zhēng",
+      "pèi",
+      "。"
+    ],
+    [
+      "lí",
+      "chóu",
+      "jiàn",
+      "yuǎn",
+      "jiàn",
+      "wú",
+      "qióng",
+      "，",
+      "tiáo",
+      "tiáo",
+      "bù",
+      "duàn",
+      "rú",
+      "chūn",
+      "shuǐ",
+      "。"
+    ],
+    [
+      "cùn",
+      "cùn",
+      "róu",
+      "cháng",
+      "，",
+      "yíng",
+      "yíng",
+      "fěn",
+      "lèi",
+      "。"
+    ],
+    [
+      "lóu",
+      "gāo",
+      "mò",
+      "jìn",
+      "wēi",
+      "lán",
+      "yǐ",
+      "。"
+    ],
+    [
+      "píng",
+      "wú",
+      "jìn",
+      "chù",
+      "shì",
+      "chūn",
+      "shān",
+      "，",
+      "xíng",
+      "rén",
+      "gèng",
+      "zài",
+      "chūn",
+      "shān",
+      "wài",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

@@ -1,0 +1,78 @@
+{
+  "id": 380,
+  "title": "卜算子",
+  "author": "陆游",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "驿外断桥边，寂寞开无主。",
+    "已是黄昏独自愁，更著风和雨。",
+    "无意苦争春，一任群芳妒。",
+    "零落成泥碾作尘，只有香如故。"
+  ],
+  "pinyin": [
+    [
+      "yì",
+      "wài",
+      "duàn",
+      "qiáo",
+      "biān",
+      "，",
+      "jì",
+      "mò",
+      "kāi",
+      "wú",
+      "zhǔ",
+      "。"
+    ],
+    [
+      "yǐ",
+      "shì",
+      "huáng",
+      "hūn",
+      "dú",
+      "zì",
+      "chóu",
+      "，",
+      "gèng",
+      "zhù",
+      "fēng",
+      "hé",
+      "yǔ",
+      "。"
+    ],
+    [
+      "wú",
+      "yì",
+      "kǔ",
+      "zhēng",
+      "chūn",
+      "，",
+      "yī",
+      "rèn",
+      "qún",
+      "fāng",
+      "dù",
+      "。"
+    ],
+    [
+      "líng",
+      "luò",
+      "chéng",
+      "ní",
+      "niǎn",
+      "zuò",
+      "chén",
+      "，",
+      "zhī",
+      "yǒu",
+      "xiāng",
+      "rú",
+      "gù",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

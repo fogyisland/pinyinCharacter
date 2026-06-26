@@ -1,0 +1,59 @@
+{
+  "id": 1788,
+  "title": "玉连环影",
+  "author": "纳兰性德",
+  "dynasty": "清",
+  "category": "qing",
+  "form": "杂言古风",
+  "content": [
+    "何处几叶萧萧雨",
+    "湿尽檐花，花底人无语",
+    "掩屏山，玉炉寒",
+    "谁见两眉愁聚倚阑干"
+  ],
+  "pinyin": [
+    [
+      "hé",
+      "chù",
+      "jǐ",
+      "yè",
+      "xiāo",
+      "xiāo",
+      "yǔ"
+    ],
+    [
+      "shī",
+      "jìn",
+      "yán",
+      "huā",
+      "，",
+      "huā",
+      "dǐ",
+      "rén",
+      "wú",
+      "yǔ"
+    ],
+    [
+      "yǎn",
+      "píng",
+      "shān",
+      "，",
+      "yù",
+      "lú",
+      "hán"
+    ],
+    [
+      "shuí",
+      "jiàn",
+      "liǎng",
+      "méi",
+      "chóu",
+      "jù",
+      "yǐ",
+      "lán",
+      "gān"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+}

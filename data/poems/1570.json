@@ -1,0 +1,44 @@
+{
+  "id": 1570,
+  "title": "谣俗词",
+  "author": "佚名",
+  "dynasty": "三国",
+  "category": "魏",
+  "form": "10言古风",
+  "content": [
+    "瓮中无斗储，发箧无尺缯。",
+    "友来从我贷，不知所以应。"
+  ],
+  "pinyin": [
+    [
+      "wèng",
+      "zhōng",
+      "wú",
+      "dòu",
+      "chǔ",
+      "，",
+      "fā",
+      "qiè",
+      "wú",
+      "chǐ",
+      "zēng",
+      "。"
+    ],
+    [
+      "yǒu",
+      "lái",
+      "cóng",
+      "wǒ",
+      "dài",
+      "，",
+      "bù",
+      "zhī",
+      "suǒ",
+      "yǐ",
+      "yìng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry:/曹操诗集/caocao.json"
+}

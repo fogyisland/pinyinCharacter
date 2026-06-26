@@ -1,18 +1,63 @@
 {
   "id": 1442,
-  "title": "望江南·咏弦月",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
+  "title": "宫中调笑·团扇",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
   "form": "杂言古风",
   "content": [
-    "初八月，半镜上青霄",
-    "斜倚画阑娇不语，暗移梅影过红桥，裙带北风飘"
+    "团扇，团扇，美人病来遮面。",
+    "玉颜憔悴三年，谁复商量管弦。",
+    "弦管，弦管，春草昭阳路断。"
   ],
   "pinyin": [
-    [],
-    []
+    [
+      "tuán",
+      "shàn",
+      "，",
+      "tuán",
+      "shàn",
+      "，",
+      "měi",
+      "rén",
+      "bìng",
+      "lái",
+      "zhē",
+      "miàn",
+      "。"
+    ],
+    [
+      "yù",
+      "yán",
+      "qiáo",
+      "cuì",
+      "sān",
+      "nián",
+      "，",
+      "shuí",
+      "fù",
+      "shāng",
+      "liáng",
+      "guǎn",
+      "xián",
+      "。"
+    ],
+    [
+      "xián",
+      "guǎn",
+      "，",
+      "xián",
+      "guǎn",
+      "，",
+      "chūn",
+      "cǎo",
+      "zhāo",
+      "yáng",
+      "lù",
+      "duàn",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

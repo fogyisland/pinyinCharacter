@@ -1,0 +1,50 @@
+{
+  "id": 1775,
+  "title": "柳枝词",
+  "author": "纳兰性德",
+  "dynasty": "清",
+  "category": "qing",
+  "form": "14言古风",
+  "content": [
+    "池上闲房碧树围，帘纹如彀上斜晖",
+    "生憎飞絮吹难定，一出红窗便不归"
+  ],
+  "pinyin": [
+    [
+      "chí",
+      "shàng",
+      "xián",
+      "fáng",
+      "bì",
+      "shù",
+      "wéi",
+      "，",
+      "lián",
+      "wén",
+      "rú",
+      "gòu",
+      "shàng",
+      "xié",
+      "huī"
+    ],
+    [
+      "shēng",
+      "zēng",
+      "fēi",
+      "xù",
+      "chuī",
+      "nán",
+      "dìng",
+      "，",
+      "yī",
+      "chū",
+      "hóng",
+      "chuāng",
+      "biàn",
+      "bù",
+      "guī"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+}

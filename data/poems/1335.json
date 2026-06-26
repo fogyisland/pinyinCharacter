@@ -1,22 +1,52 @@
 {
   "id": 1335,
-  "title": "浣溪沙·姜女庙",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "杂言古风",
+  "title": "从军行二首·其二",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "14言古风",
   "content": [
-    "海色残阳影断霓，寒涛日夜女郎祠",
-    "翠钿尘网上蛛丝",
-    "澄海楼高空极目，望夫石在且留题",
-    "六王如梦祖龙非"
+    "百战沙场碎铁衣，城南已合数重围。",
+    "突营射杀呼延将，独领残兵千骑归。"
   ],
   "pinyin": [
-    [],
-    [],
-    [],
-    []
+    [
+      "bǎi",
+      "zhàn",
+      "shā",
+      "chǎng",
+      "suì",
+      "tiě",
+      "yī",
+      "，",
+      "chéng",
+      "nán",
+      "yǐ",
+      "hé",
+      "shù",
+      "zhòng",
+      "wéi",
+      "。"
+    ],
+    [
+      "tū",
+      "yíng",
+      "shè",
+      "shā",
+      "hū",
+      "yán",
+      "jiāng",
+      "，",
+      "dú",
+      "lǐng",
+      "cán",
+      "bīng",
+      "qiān",
+      "qí",
+      "guī",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

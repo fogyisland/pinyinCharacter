@@ -1,0 +1,96 @@
+{
+  "id": 452,
+  "title": "鹧鸪天",
+  "author": "吴文英",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "池上红衣伴倚阑。",
+    "栖鸦常带夕阳还。",
+    "殷云度雨疏桐落，明月生凉宝扇闲。",
+    "乡梦窄，水天宽。",
+    "小窗愁黛澹秋山。",
+    "吴鸿好为传归信，杨柳阊门屋数间。"
+  ],
+  "pinyin": [
+    [
+      "chí",
+      "shàng",
+      "hóng",
+      "yī",
+      "bàn",
+      "yǐ",
+      "lán",
+      "。"
+    ],
+    [
+      "qī",
+      "yā",
+      "cháng",
+      "dài",
+      "xī",
+      "yáng",
+      "hái",
+      "。"
+    ],
+    [
+      "yīn",
+      "yún",
+      "dù",
+      "yǔ",
+      "shū",
+      "tóng",
+      "luò",
+      "，",
+      "míng",
+      "yuè",
+      "shēng",
+      "liáng",
+      "bǎo",
+      "shàn",
+      "xián",
+      "。"
+    ],
+    [
+      "xiāng",
+      "mèng",
+      "zhǎi",
+      "，",
+      "shuǐ",
+      "tiān",
+      "kuān",
+      "。"
+    ],
+    [
+      "xiǎo",
+      "chuāng",
+      "chóu",
+      "dài",
+      "dàn",
+      "qiū",
+      "shān",
+      "。"
+    ],
+    [
+      "wú",
+      "hóng",
+      "hǎo",
+      "wèi",
+      "chuán",
+      "guī",
+      "xìn",
+      "，",
+      "yáng",
+      "liǔ",
+      "chāng",
+      "mén",
+      "wū",
+      "shù",
+      "jiān",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

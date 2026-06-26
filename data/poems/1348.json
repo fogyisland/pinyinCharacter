@@ -1,20 +1,44 @@
 {
   "id": 1348,
-  "title": "昭君怨·暮雨丝丝吹湿",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "杂言古风",
+  "title": "蜀道难·其二",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "10言古风",
   "content": [
-    "暮雨丝丝吹湿，倦柳愁荷风急",
-    "瘦骨不禁秋，总成愁",
-    "别有心情怎说，未是诉愁时节，谯鼓已三更，梦须成"
+    "巫山七百里，巴水三回曲。",
+    "笛声下复高，猿啼断还续。"
   ],
   "pinyin": [
-    [],
-    [],
-    []
+    [
+      "wū",
+      "shān",
+      "qī",
+      "bǎi",
+      "lǐ",
+      "，",
+      "bā",
+      "shuǐ",
+      "sān",
+      "huí",
+      "qǔ",
+      "。"
+    ],
+    [
+      "dí",
+      "shēng",
+      "xià",
+      "fù",
+      "gāo",
+      "，",
+      "yuán",
+      "tí",
+      "duàn",
+      "hái",
+      "xù",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }

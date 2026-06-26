@@ -1,0 +1,77 @@
+{
+  "id": 435,
+  "title": "浣溪沙",
+  "author": "秦观",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "漠漠轻寒上小楼。",
+    "晓阴无赖似穷秋。",
+    "淡烟流水画屏幽。",
+    "自在飞花轻似梦，无边丝雨细如愁。",
+    "宝帘闲挂小银钩。"
+  ],
+  "pinyin": [
+    [
+      "mò",
+      "mò",
+      "qīng",
+      "hán",
+      "shàng",
+      "xiǎo",
+      "lóu",
+      "。"
+    ],
+    [
+      "xiǎo",
+      "yīn",
+      "wú",
+      "lài",
+      "sì",
+      "qióng",
+      "qiū",
+      "。"
+    ],
+    [
+      "dàn",
+      "yān",
+      "liú",
+      "shuǐ",
+      "huà",
+      "píng",
+      "yōu",
+      "。"
+    ],
+    [
+      "zì",
+      "zài",
+      "fēi",
+      "huā",
+      "qīng",
+      "sì",
+      "mèng",
+      "，",
+      "wú",
+      "biān",
+      "sī",
+      "yǔ",
+      "xì",
+      "rú",
+      "chóu",
+      "。"
+    ],
+    [
+      "bǎo",
+      "lián",
+      "xián",
+      "guà",
+      "xiǎo",
+      "yín",
+      "gōu",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

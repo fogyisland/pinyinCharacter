@@ -1,0 +1,84 @@
+{
+  "id": 536,
+  "title": "采桑子",
+  "author": "欧阳修",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "群芳过后西湖好，狼籍残红。",
+    "飞絮蒙蒙。",
+    "垂柳阑干尽日风。",
+    "笙歌散尽游人去，始觉春空。",
+    "垂下帘栊。",
+    "双燕归来细雨中。"
+  ],
+  "pinyin": [
+    [
+      "qún",
+      "fāng",
+      "guò",
+      "hòu",
+      "xī",
+      "hú",
+      "hǎo",
+      "，",
+      "láng",
+      "jí",
+      "cán",
+      "hóng",
+      "。"
+    ],
+    [
+      "fēi",
+      "xù",
+      "méng",
+      "méng",
+      "。"
+    ],
+    [
+      "chuí",
+      "liǔ",
+      "lán",
+      "gān",
+      "jìn",
+      "rì",
+      "fēng",
+      "。"
+    ],
+    [
+      "shēng",
+      "gē",
+      "sàn",
+      "jìn",
+      "yóu",
+      "rén",
+      "qù",
+      "，",
+      "shǐ",
+      "jué",
+      "chūn",
+      "kōng",
+      "。"
+    ],
+    [
+      "chuí",
+      "xià",
+      "lián",
+      "lóng",
+      "。"
+    ],
+    [
+      "shuāng",
+      "yàn",
+      "guī",
+      "lái",
+      "xì",
+      "yǔ",
+      "zhōng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

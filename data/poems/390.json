@@ -1,0 +1,96 @@
+{
+  "id": 390,
+  "title": "鹧鸪天",
+  "author": "晏几道",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "彩袖殷勤捧玉锺。",
+    "当年拼却醉颜红。",
+    "舞低杨柳楼心月，歌尽桃花扇影风。",
+    "从别后，忆相逢。",
+    "几回魂梦与君同。",
+    "今宵剩把银釭照，犹恐相逢是梦中。"
+  ],
+  "pinyin": [
+    [
+      "cǎi",
+      "xiù",
+      "yīn",
+      "qín",
+      "pěng",
+      "yù",
+      "zhōng",
+      "。"
+    ],
+    [
+      "dāng",
+      "nián",
+      "pīn",
+      "què",
+      "zuì",
+      "yán",
+      "hóng",
+      "。"
+    ],
+    [
+      "wǔ",
+      "dī",
+      "yáng",
+      "liǔ",
+      "lóu",
+      "xīn",
+      "yuè",
+      "，",
+      "gē",
+      "jìn",
+      "táo",
+      "huā",
+      "shàn",
+      "yǐng",
+      "fēng",
+      "。"
+    ],
+    [
+      "cóng",
+      "bié",
+      "hòu",
+      "，",
+      "yì",
+      "xiāng",
+      "féng",
+      "。"
+    ],
+    [
+      "jǐ",
+      "huí",
+      "hún",
+      "mèng",
+      "yǔ",
+      "jūn",
+      "tóng",
+      "。"
+    ],
+    [
+      "jīn",
+      "xiāo",
+      "shèng",
+      "bǎ",
+      "yín",
+      "gāng",
+      "zhào",
+      "，",
+      "yóu",
+      "kǒng",
+      "xiāng",
+      "féng",
+      "shì",
+      "mèng",
+      "zhōng",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

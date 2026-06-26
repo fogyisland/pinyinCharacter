@@ -1,0 +1,96 @@
+{
+  "id": 418,
+  "title": "玉楼春",
+  "author": "严仁",
+  "dynasty": "song",
+  "category": null,
+  "form": "杂言古风",
+  "content": [
+    "春风只在园西畔。",
+    "荠菜花繁胡蝶乱。",
+    "冰池晴绿照还空，香径落红吹已断。",
+    "意长翻恨游丝短。",
+    "尽日相思罗带缓。",
+    "宝奁明月不欺人，明日归来君试看。"
+  ],
+  "pinyin": [
+    [
+      "chūn",
+      "fēng",
+      "zhī",
+      "zài",
+      "yuán",
+      "xī",
+      "pàn",
+      "。"
+    ],
+    [
+      "qí",
+      "cài",
+      "huā",
+      "fán",
+      "hú",
+      "dié",
+      "luàn",
+      "。"
+    ],
+    [
+      "bīng",
+      "chí",
+      "qíng",
+      "lǜ",
+      "zhào",
+      "hái",
+      "kōng",
+      "，",
+      "xiāng",
+      "jìng",
+      "luò",
+      "hóng",
+      "chuī",
+      "yǐ",
+      "duàn",
+      "。"
+    ],
+    [
+      "yì",
+      "cháng",
+      "fān",
+      "hèn",
+      "yóu",
+      "sī",
+      "duǎn",
+      "。"
+    ],
+    [
+      "jìn",
+      "rì",
+      "xiāng",
+      "sī",
+      "luó",
+      "dài",
+      "huǎn",
+      "。"
+    ],
+    [
+      "bǎo",
+      "lián",
+      "míng",
+      "yuè",
+      "bù",
+      "qī",
+      "rén",
+      "，",
+      "míng",
+      "rì",
+      "guī",
+      "lái",
+      "jūn",
+      "shì",
+      "kàn",
+      "。"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry/chinese-poetry@master"
+}

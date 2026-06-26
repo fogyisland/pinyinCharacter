@@ -1,0 +1,50 @@
+{
+  "id": 1804,
+  "title": "玉泉",
+  "author": "纳兰性德",
+  "dynasty": "清",
+  "category": "qing",
+  "form": "14言古风",
+  "content": [
+    "芙蓉殿俯御河寒，残月西风并马看",
+    "十里松杉清绝处，不知晓雪在西山"
+  ],
+  "pinyin": [
+    [
+      "fú",
+      "róng",
+      "diàn",
+      "fǔ",
+      "yù",
+      "hé",
+      "hán",
+      "，",
+      "cán",
+      "yuè",
+      "xī",
+      "fēng",
+      "bìng",
+      "mǎ",
+      "kàn"
+    ],
+    [
+      "shí",
+      "lǐ",
+      "sōng",
+      "shān",
+      "qīng",
+      "jué",
+      "chù",
+      "，",
+      "bù",
+      "zhī",
+      "xiǎo",
+      "xuě",
+      "zài",
+      "xī",
+      "shān"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+}

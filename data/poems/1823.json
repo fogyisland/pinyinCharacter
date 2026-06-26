@@ -1,0 +1,50 @@
+{
+  "id": 1823,
+  "title": "密云",
+  "author": "纳兰性德",
+  "dynasty": "清",
+  "category": "qing",
+  "form": "14言古风",
+  "content": [
+    "白檀山下水声秋，地踞潮河最上流",
+    "日暮行人寻堠馆，凉砧一片古檀州"
+  ],
+  "pinyin": [
+    [
+      "bái",
+      "tán",
+      "shān",
+      "xià",
+      "shuǐ",
+      "shēng",
+      "qiū",
+      "，",
+      "dì",
+      "jù",
+      "cháo",
+      "hé",
+      "zuì",
+      "shàng",
+      "liú"
+    ],
+    [
+      "rì",
+      "mù",
+      "xíng",
+      "rén",
+      "xún",
+      "hòu",
+      "guǎn",
+      "，",
+      "liáng",
+      "zhēn",
+      "yī",
+      "piàn",
+      "gǔ",
+      "tán",
+      "zhōu"
+    ]
+  ],
+  "appreciation": null,
+  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+}

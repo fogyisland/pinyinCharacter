@@ -1,22 +1,52 @@
 {
   "id": 1439,
-  "title": "眼儿媚·中元夜有感",
-  "author": "纳兰性德",
-  "dynasty": "清",
-  "category": "qing",
-  "form": "12言古风",
+  "title": "诏取永丰柳植禁苑感赋",
+  "author": "",
+  "dynasty": "汉",
+  "category": "汉乐府",
+  "form": "14言古风",
   "content": [
-    "手写香台金字经，惟愿结来生",
-    "莲花漏转，杨枝露滴，想鉴微诚",
-    "欲知奉倩神伤极，凭诉与秋擎",
-    "西风不管，一池萍水，几点荷灯"
+    "一树衰残委泥土，双枝荣耀植天庭。",
+    "定知玄象今春后，柳宿光中添两星。"
   ],
   "pinyin": [
-    [],
-    [],
-    [],
-    []
+    [
+      "yī",
+      "shù",
+      "shuāi",
+      "cán",
+      "wěi",
+      "ní",
+      "tǔ",
+      "，",
+      "shuāng",
+      "zhī",
+      "róng",
+      "yào",
+      "zhí",
+      "tiān",
+      "tíng",
+      "。"
+    ],
+    [
+      "dìng",
+      "zhī",
+      "xuán",
+      "xiàng",
+      "jīn",
+      "chūn",
+      "hòu",
+      "，",
+      "liǔ",
+      "sù",
+      "guāng",
+      "zhōng",
+      "tiān",
+      "liǎng",
+      "xīng",
+      "。"
+    ]
   ],
   "appreciation": null,
-  "source": "chinese-poetry:/纳兰性德/纳兰性德诗集.json"
+  "source": "guwendao:yuefu"
 }
