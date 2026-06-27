@@ -15,6 +15,13 @@ export interface EmailVerificationArgs {
   expiresInHours: number;
 }
 
+export interface CampaignEmailArgs {
+  username: string;
+  bodyHtml: string;
+  bodyText: string;
+  unsubscribeUrl: string;
+}
+
 export interface EmailContent {
   subject: string;
   html: string;
@@ -191,6 +198,45 @@ export function emailVerificationEmail(args: EmailVerificationArgs): EmailConten
   ].join('\n');
 
   return { subject, html, text };
+}
+
+// Marketing campaign email — wraps an admin-authored HTML body with the
+// site chrome + footer unsubscribe link. The body is trusted (admin only)
+// but we still escape any {username} interpolation defensively.
+export function campaignEmail(args: CampaignEmailArgs): EmailContent {
+  const safeUser = escapeHtml(args.username);
+  const safeUnsub = escapeAttr(args.unsubscribeUrl);
+  const html = `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1f2937;">
+  <div style="max-width:560px;margin:24px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <div style="background:#f9fafb;padding:20px 24px;border-bottom:1px solid #e5e7eb;">
+      <div style="font-size:20px;font-weight:600;color:#111827;">字 ↔ 拼音 工具</div>
+    </div>
+    <div style="padding:24px;font-size:15px;line-height:1.7;color:#1f2937;">
+      <p style="margin:0 0 12px 0;">你好 ${safeUser},</p>
+      ${args.bodyHtml}
+    </div>
+    <div style="background:#f9fafb;padding:16px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">
+      <p style="margin:0 0 6px 0;">© ${new Date().getFullYear()} 字 ↔ 拼音 工具</p>
+      <p style="margin:0;">
+        <a href="${safeUnsub}" style="color:#6b7280;text-decoration:underline;">退订邮件通知</a>
+      </p>
+    </div>
+  </div>
+</body></html>`;
+
+  const text = [
+    `你好 ${args.username},`,
+    '',
+    args.bodyText,
+    '',
+    '—',
+    `退订邮件通知: ${args.unsubscribeUrl}`,
+  ].join('\n');
+
+  // Subject is decided by the campaign, not the template.
+  return { subject: '', html, text };
 }
 
 function escapeHtml(s: string): string {

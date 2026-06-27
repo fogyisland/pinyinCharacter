@@ -14,6 +14,7 @@ export const SCHEDULER_KEYS = {
   taskContentRefresh: 'scheduler.task_content_refresh',
   taskDailyChar: 'scheduler.task_daily_char',
   taskStatsRefresh: 'scheduler.task_stats_refresh',
+  taskEmailCampaign: 'scheduler.task_email_campaign',
 } as const;
 
 export interface SchedulerConfig {
@@ -24,6 +25,7 @@ export interface SchedulerConfig {
   taskContentRefresh: boolean;
   taskDailyChar: boolean;
   taskStatsRefresh: boolean;
+  taskEmailCampaign: boolean;
 }
 
 export const DEFAULT_CONFIG: SchedulerConfig = {
@@ -34,6 +36,7 @@ export const DEFAULT_CONFIG: SchedulerConfig = {
   taskContentRefresh: true,
   taskDailyChar: true,
   taskStatsRefresh: true,
+  taskEmailCampaign: true,
 };
 
 const DEFAULTS: Record<string, string> = {
@@ -42,6 +45,7 @@ const DEFAULTS: Record<string, string> = {
   [SCHEDULER_KEYS.taskContentRefresh]: '1',
   [SCHEDULER_KEYS.taskDailyChar]: '1',
   [SCHEDULER_KEYS.taskStatsRefresh]: '1',
+  [SCHEDULER_KEYS.taskEmailCampaign]: '1',
 };
 
 export async function readSchedulerConfig(): Promise<SchedulerConfig> {
@@ -58,11 +62,12 @@ export async function readSchedulerConfig(): Promise<SchedulerConfig> {
     taskContentRefresh: out[SCHEDULER_KEYS.taskContentRefresh] !== '0',
     taskDailyChar: out[SCHEDULER_KEYS.taskDailyChar] !== '0',
     taskStatsRefresh: out[SCHEDULER_KEYS.taskStatsRefresh] !== '0',
+    taskEmailCampaign: out[SCHEDULER_KEYS.taskEmailCampaign] !== '0',
   };
 }
 
 export async function writeSchedulerConfig(
-  updates: Partial<Pick<SchedulerConfig, 'enabled' | 'intervalMin' | 'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh'>>,
+  updates: Partial<Pick<SchedulerConfig, 'enabled' | 'intervalMin' | 'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh' | 'taskEmailCampaign'>>,
   byUserId: number | null,
 ): Promise<void> {
   const pool = getPool();
@@ -80,6 +85,7 @@ export async function writeSchedulerConfig(
   if (updates.taskContentRefresh !== undefined) await set(SCHEDULER_KEYS.taskContentRefresh, updates.taskContentRefresh ? '1' : '0');
   if (updates.taskDailyChar !== undefined) await set(SCHEDULER_KEYS.taskDailyChar, updates.taskDailyChar ? '1' : '0');
   if (updates.taskStatsRefresh !== undefined) await set(SCHEDULER_KEYS.taskStatsRefresh, updates.taskStatsRefresh ? '1' : '0');
+  if (updates.taskEmailCampaign !== undefined) await set(SCHEDULER_KEYS.taskEmailCampaign, updates.taskEmailCampaign ? '1' : '0');
 }
 
 export async function recordSchedulerRun(summary: string, at: Date = new Date()): Promise<void> {
@@ -98,7 +104,7 @@ export async function recordSchedulerRun(summary: string, at: Date = new Date())
 
 // Per-task history. Each task in a run gets its own row; run_id groups them.
 
-export type SchedulerHistoryTaskName = 'content-refresh' | 'daily-char' | 'stats-refresh';
+export type SchedulerHistoryTaskName = 'content-refresh' | 'daily-char' | 'stats-refresh' | 'email-campaign-send';
 
 export interface SchedulerHistoryRow {
   id: number;

@@ -37,6 +37,7 @@ function defaultConfig(): SchedulerConfig {
     taskContentRefresh: true,
     taskDailyChar: true,
     taskStatsRefresh: true,
+    taskEmailCampaign: true,
   };
 }
 
@@ -45,6 +46,7 @@ function enabledTasks(cfg: SchedulerConfig): TaskName[] {
   if (cfg.taskContentRefresh) out.push('content-refresh');
   if (cfg.taskDailyChar) out.push('daily-char');
   if (cfg.taskStatsRefresh) out.push('stats-refresh');
+  if (cfg.taskEmailCampaign) out.push('email-campaign-send');
   return out;
 }
 

@@ -20,6 +20,7 @@ const ITEMS: NavItem[] = [
   { href: '/admin/ai', label: 'AI' },
   { href: '/admin/tts', label: '语音设置' },
   { href: '/admin/email', label: '邮件' },
+  { href: '/admin/email/campaigns', label: '营销邮件' },
   { href: '/admin/settings/site-url', label: '站点设置' },
   { href: '/admin/settings/setup', label: '初始化路由' },
 ];

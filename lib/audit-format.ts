@@ -29,6 +29,8 @@ export type AuditEvent =
   | 'verification_email_sent' | 'verification_email_failed'
   | 'verification_resent' | 'verification_resend_failed'
   | 'email_verified'
+  | 'campaign_created' | 'campaign_armed' | 'campaign_preview_sent'
+  | 'marketing_unsubscribed'
   | 'site_url_updated'
   | 'setup_route_enable' | 'setup_route_disable'
   | 'activation_lock' | 'activation_unlock';
@@ -61,6 +63,8 @@ export const AUDIT_EVENTS = [
   'verification_email_sent', 'verification_email_failed',
   'verification_resent', 'verification_resend_failed',
   'email_verified',
+  'campaign_created', 'campaign_armed', 'campaign_preview_sent',
+  'marketing_unsubscribed',
   'site_url_updated',
   'setup_route_enable', 'setup_route_disable',
   'activation_lock', 'activation_unlock',
@@ -118,6 +122,10 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   verification_resent: '重发验证邮件',
   verification_resend_failed: '重发验证邮件失败',
   email_verified: '邮箱已验证',
+  campaign_created: '新建营销邮件',
+  campaign_armed: '营销邮件入队',
+  campaign_preview_sent: '预览营销邮件',
+  marketing_unsubscribed: '用户退订营销',
   site_url_updated: '更新站点 URL',
   setup_route_enable: '开启 /init 路由',
   setup_route_disable: '关闭 /init 路由',
