@@ -43,3 +43,7 @@ export function unauthorized(code = 'unauthorized', message = 'unauthorized') {
 export function serviceUnavailable(code: string, message: string) {
   return NextResponse.json({ ok: false, error: { code, message } }, { status: 503 });
 }
+
+export function conflict(code: string, message: string) {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 409 });
+}

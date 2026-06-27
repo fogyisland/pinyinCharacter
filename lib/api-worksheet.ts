@@ -60,6 +60,23 @@ export async function deleteWorksheetApi(id: number): Promise<void> {
   if (!res.ok) throw new Error('delete failed');
 }
 
+export async function renameWorksheetApi(id: number, title: string): Promise<{ title: string }> {
+  const res = await fetch(`/api/worksheets/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+  if (res.status === 401) {
+    throw Object.assign(new Error('unauthorized'), { code: 'unauthorized' });
+  }
+  const data = await res.json();
+  if (!data.ok) {
+    const code = data.error?.code ?? 'rename_failed';
+    throw Object.assign(new Error(data.error?.message ?? 'rename failed'), { code });
+  }
+  return data.data;
+}
+
 export async function printWorksheetRequest(id: number): Promise<{ id: number }> {
   const res = await fetch(`/api/worksheets/${id}/print`, { method: 'POST' });
   const data = await res.json();

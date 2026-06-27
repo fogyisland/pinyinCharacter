@@ -44,6 +44,12 @@ export const printBatchSchema = z.object({
   worksheetIds: z.array(z.number().int().positive()).min(1).max(50),
 });
 
+export const renameWorksheetSchema = z.object({
+  title: z.string().min(1).max(80).transform((s) => s.trim()).refine((s) => s.length >= 1, {
+    error: 'title must be 1-80 non-blank chars',
+  }),
+});
+
 export const saveWorksheetSchema = z.object({
   title: z.string().min(1).max(80),
   content: z

@@ -82,6 +82,38 @@ export async function deleteWorksheet(id: number, userId: number): Promise<boole
   return affected > 0;
 }
 
+export type RenameResult =
+  | { ok: true; title: string }
+  | { ok: false; code: 'not_found' | 'not_owner' | 'duplicate' };
+
+export async function renameWorksheet(
+  id: number,
+  userId: number,
+  newTitle: string
+): Promise<RenameResult> {
+  const pool = getPool();
+  // Ownership check first (avoids leaking existence via duplicate detection).
+  const [own] = await pool.execute<any[]>(
+    `SELECT id, user_id FROM worksheets WHERE id = ? LIMIT 1`,
+    [id]
+  );
+  if (own.length === 0) return { ok: false, code: 'not_found' };
+  if (own[0].user_id !== userId) return { ok: false, code: 'not_owner' };
+
+  // Reject duplicate title for same user (keep selector results stable).
+  const [dup] = await pool.execute<any[]>(
+    `SELECT id FROM worksheets WHERE user_id = ? AND title = ? AND id <> ? LIMIT 1`,
+    [userId, newTitle, id]
+  );
+  if (dup.length > 0) return { ok: false, code: 'duplicate' };
+
+  await pool.execute<any>(
+    `UPDATE worksheets SET title = ? WHERE id = ?`,
+    [newTitle, id]
+  );
+  return { ok: true, title: newTitle };
+}
+
 function mapRow(r: any): Worksheet {
   let content: string[];
   if (typeof r.content === 'string') {
