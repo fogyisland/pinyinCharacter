@@ -75,7 +75,14 @@ export async function backfillForm(args: BackfillArgs = {}): Promise<BackfillRes
       scanned++;
       const paragraphs = parseJsonArray(row.content ?? row.paragraphs);
       const struct = inferFormFromParagraphs(paragraphs);
-      const source = resolveFormFromSource(row.type, row.rhythmic, row.category || row.dynasty);
+      // SELECT (line 69) does not fetch `type` / `rhythmic` — rows have neither.
+      // Guard explicitly: only call resolveFormFromSource when at least one is
+      // present, so a future maintainer who adds them to the SELECT sees the
+      // inference change become intentional (audit §4.3).
+      const hasSourceTag = typeof row.type === 'string' || typeof row.rhythmic === 'string';
+      const source = hasSourceTag
+        ? resolveFormFromSource(row.type, row.rhythmic, row.category || row.dynasty)
+        : { primary: null, source: 'source-tag' as const, confidence: 0 };
       const merged = mergeForm(struct, source);
       if (merged.primary === null) {
         formNull++;

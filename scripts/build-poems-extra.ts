@@ -147,6 +147,10 @@ export async function buildPoemsExtra({ onlyCategory }: { onlyCategory?: string 
         result.skipped++;
         continue;
       }
+      // Pass null for type/rhythmic: guwendao + chinese-poetry sources for these
+      // 5 collections don't carry per-poem 词牌/套数/小令 tags. resolveFormFromSource
+      // early-returns {primary: null} on null type, so the merge falls through to
+      // structural inference from paragraph lengths. See audit §4.4.
       const form = mergeForm(
         inferFormFromParagraphs(p.paragraphs),
         resolveFormFromSource(null, null, col.category),
