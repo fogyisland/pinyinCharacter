@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 export default async function ProfilePage() {
   const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
   const session = token ? await verifySession(token) : null;
-  if (!session) redirect('/?auth=login');
+  if (!session) redirect(`/login?next=${encodeURIComponent('/profile')}`);
 
   const stats = await getStats(session.userId);
   const worksheets = await listUserWorksheets(session.userId);

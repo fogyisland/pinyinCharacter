@@ -5,6 +5,7 @@ import Link from 'next/link';
 import type { Worksheet } from '@/lib/worksheet-types';
 import { paperSizeLabel, fontFamilyLabel, cellStyleLabel } from '@/lib/worksheet-types';
 import { DeleteWorksheetButton } from './DeleteWorksheetButton';
+import { RenameWorksheetButton } from './RenameWorksheetButton';
 import { BatchPrintButton } from './BatchPrintButton';
 
 interface Props {
@@ -84,7 +85,10 @@ export function WorksheetHistoryList({ worksheets, hasMulti }: Props) {
                 </div>
               </div>
             </div>
-            <DeleteWorksheetButton id={w.id} />
+            <div className="flex items-center gap-1 shrink-0">
+              <RenameWorksheetButton id={w.id} currentTitle={w.title} />
+              <DeleteWorksheetButton id={w.id} />
+            </div>
           </li>
         ))}
       </ul>
