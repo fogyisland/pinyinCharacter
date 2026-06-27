@@ -7,7 +7,9 @@ import { listWorksheetsLightweight, appendCharToWorksheetApi, type WorksheetSumm
 
 interface Props {
   open: boolean;
-  char: string;
+  chars: string[];
+  /** Optional header override; defaults to "添加 X 个字到字帖" or single-char variant. */
+  title?: string;
   onClose: () => void;
   /** Called when the append succeeds so the parent can refresh its state. */
   onAdded?: (result: { worksheetId: number; title: string; added: boolean; created: boolean }) => void;
@@ -15,7 +17,7 @@ interface Props {
 
 type Mode = 'existing' | 'new';
 
-export function AddToWorksheetDialog({ open, char, onClose, onAdded }: Props) {
+export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const [items, setItems] = useState<WorksheetSummary[]>([]);
@@ -57,6 +59,10 @@ export function AddToWorksheetDialog({ open, char, onClose, onAdded }: Props) {
 
   if (!open) return null;
 
+  const defaultHeader = chars.length === 1
+    ? `添加「${chars[0]}」到字帖`
+    : `添加 ${chars.length} 个字到字帖`;
+
   async function go() {
     setErr(null);
     setSuccess(null);
@@ -71,16 +77,23 @@ export function AddToWorksheetDialog({ open, char, onClose, onAdded }: Props) {
     setBusy(true);
     try {
       const result = await appendCharToWorksheetApi({
-        char,
+        chars,
         worksheetId: mode === 'existing' ? Number(selectedId) : undefined,
         newTitle: mode === 'new' ? newTitle.trim() : undefined,
       });
-      const msg = result.added
-        ? `已添加到「${result.title}」`
-        : `「${char}」已在「${result.title}」中`;
+      let msg: string;
+      if (chars.length === 1) {
+        msg = result.added
+          ? `已添加到「${result.title}」`
+          : `「${chars[0]}」已在「${result.title}」中`;
+      } else {
+        msg = result.added
+          ? `已添加 ${result.addedCount} 个字到「${result.title}」${result.skipped > 0 ? `（${result.skipped} 个已存在）` : ''}`
+          : `所有字都已在「${result.title}」中`;
+      }
       setSuccess(msg);
       onAdded?.(result);
-      setTimeout(onClose, 700);
+      setTimeout(onClose, 900);
     } catch (e: any) {
       if (e?.code === 'unauthorized') {
         router.push(`/login?next=${encodeURIComponent(pathname)}`);
@@ -103,7 +116,7 @@ export function AddToWorksheetDialog({ open, char, onClose, onAdded }: Props) {
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-paper rounded-lg shadow-lg w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-base font-semibold">添加「{char}」到字帖</h3>
+          <h3 className="text-base font-semibold">{title ?? defaultHeader}</h3>
           <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink">
             <X className="h-4 w-4" />
           </button>

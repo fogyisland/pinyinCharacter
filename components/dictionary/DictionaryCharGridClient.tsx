@@ -47,7 +47,7 @@ export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
       )}
       <AddToWorksheetDialog
         open={!!dialogChar}
-        char={dialogChar ?? ''}
+        chars={dialogChar ? [dialogChar] : []}
         onClose={() => setDialogChar(null)}
       />
     </>

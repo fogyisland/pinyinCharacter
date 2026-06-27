@@ -28,6 +28,8 @@ interface BaseProps {
 interface FormProps extends BaseProps {
   onBack: () => void;
   onSave: () => void;
+  /** Open the "append this content to an existing worksheet" dialog. */
+  onAppend?: () => void;
   saving: boolean;
   savedId?: number | null;
 }
@@ -75,6 +77,16 @@ export function WorksheetPreview(props: Props) {
             >
               {props.saving ? '保存中...' : '保存'}
             </button>
+            {props.onAppend && (
+              <button
+                type="button"
+                onClick={props.onAppend}
+                disabled={props.saving}
+                className="rounded border border-ink/30 px-3 py-1 hover:bg-paper-deep disabled:opacity-50"
+              >
+                追加到现有
+              </button>
+            )}
           </div>
         </div>
       )}

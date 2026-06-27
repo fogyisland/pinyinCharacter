@@ -31,13 +31,25 @@ export const appendToWorksheetSchema = z
       .string()
       .refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
         error: 'must be a single CJK char',
-      }),
+      })
+      .optional(),
+    chars: z
+      .array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
+        error: 'each entry must be a single CJK char',
+      }))
+      .min(1)
+      .max(500)
+      .optional(),
     worksheetId: z.coerce.number().int().positive().optional(),
     newTitle: z.string().min(1).max(80).optional(),
   })
   .refine((v) => !(v.worksheetId && v.newTitle), {
     error: 'worksheetId and newTitle are mutually exclusive',
     path: ['newTitle'],
+  })
+  .refine((v) => !!(v.char || v.chars), {
+    error: 'either char or chars is required',
+    path: ['char'],
   });
 
 export const printBatchSchema = z.object({

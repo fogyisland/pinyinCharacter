@@ -15,6 +15,7 @@ import { TraceToggle } from './TraceToggle';
 import { PaperSizePicker } from './PaperSizePicker';
 import { FontFamilyPicker } from './FontFamilyPicker';
 import { WorksheetPreview } from './WorksheetPreview';
+import { AddToWorksheetDialog } from './AddToWorksheetDialog';
 import type { ClassicDetail } from '@/lib/classics-types';
 import { stripPunct, buildBreakpoints } from '@/lib/punctuation';
 
@@ -47,6 +48,7 @@ export function WorksheetGenerator() {
   const [chapterIdx, setChapterIdx] = useState<number>(
     Number(sp.get('chapterIdx')) || 0,
   );
+  const [appendDialogOpen, setAppendDialogOpen] = useState(false);
 
   const source = sp.get('source');
   const bookSlug = sp.get('book');
@@ -163,18 +165,27 @@ export function WorksheetGenerator() {
 
   if (view === 'preview') {
     return (
-      <WorksheetPreview
-        title={title}
-        content={content}
-        cellStyle={composeCellStyle(tool, presentation, trace)}
-        paperSize={paperSize}
-        fontFamily={fontFamily}
-        breakpoints={breakpoints}
-        onBack={() => setView('form')}
-        onSave={handleSave}
-        saving={saving}
-        savedId={savedId}
-      />
+      <>
+        <WorksheetPreview
+          title={title}
+          content={content}
+          cellStyle={composeCellStyle(tool, presentation, trace)}
+          paperSize={paperSize}
+          fontFamily={fontFamily}
+          breakpoints={breakpoints}
+          onBack={() => setView('form')}
+          onSave={handleSave}
+          onAppend={user ? () => setAppendDialogOpen(true) : undefined}
+          saving={saving}
+          savedId={savedId}
+        />
+        <AddToWorksheetDialog
+          open={appendDialogOpen}
+          chars={content}
+          title="追加到现有字帖"
+          onClose={() => setAppendDialogOpen(false)}
+        />
+      </>
     );
   }
 

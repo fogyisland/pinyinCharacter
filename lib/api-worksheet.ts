@@ -88,7 +88,8 @@ export async function printWorksheetRequest(id: number): Promise<{ id: number }>
 }
 
 export interface AppendCharToWorksheetInput {
-  char: string;
+  char?: string;
+  chars?: string[];
   worksheetId?: number;
   newTitle?: string;
 }
@@ -97,6 +98,8 @@ export interface AppendCharToWorksheetResult {
   worksheetId: number;
   title: string;
   added: boolean;
+  addedCount: number;
+  skipped: number;
   charCount: number;
   created: boolean;
 }

@@ -17,7 +17,7 @@ export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
       </button>
       <AddToWorksheetDialog
         open={open}
-        char={char}
+        chars={[char]}
         onClose={() => setOpen(false)}
       />
     </>

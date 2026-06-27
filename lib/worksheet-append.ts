@@ -22,8 +22,12 @@ const DEFAULT_FONT_FAMILY = 'song';
 export interface AppendResult {
   worksheetId: number;
   title: string;
-  /** True if the char was new in the worksheet's content; false if already present. */
+  /** True if any char was newly added; false if all were already present. */
   added: boolean;
+  /** Number of chars newly appended in this call. */
+  addedCount: number;
+  /** Number of chars skipped (already in worksheet). */
+  skipped: number;
   /** Number of chars in the worksheet AFTER this call. */
   charCount: number;
   /** True if a new worksheet row was created (only when newTitle had no match). */
@@ -31,7 +35,10 @@ export interface AppendResult {
 }
 
 export interface AppendArgs {
-  char: string;
+  /** Single char (right-click "add this char"). Use either char OR chars, not both. */
+  char?: string;
+  /** Multiple chars (generator "append to existing" flow). */
+  chars?: string[];
   worksheetId?: number;
   newTitle?: string;
 }
@@ -46,16 +53,23 @@ export async function appendCharToWorksheet(
   userId: number,
   args: AppendArgs
 ): Promise<AppendResult> {
+  const chars = normalizeChars(args);
   if (args.worksheetId) {
-    return appendById(userId, args.worksheetId, args.char);
+    return appendById(userId, args.worksheetId, chars);
   }
   if (args.newTitle) {
-    return appendByTitle(userId, args.newTitle, args.char);
+    return appendByTitle(userId, args.newTitle, chars);
   }
-  return appendByTitle(userId, MY_WORKSHEET_TITLE, args.char);
+  return appendByTitle(userId, MY_WORKSHEET_TITLE, chars);
 }
 
-async function appendById(userId: number, worksheetId: number, char: string): Promise<AppendResult> {
+function normalizeChars(args: AppendArgs): string[] {
+  if (args.chars && args.chars.length > 0) return args.chars;
+  if (args.char) return [args.char];
+  throw new Error('appendCharToWorksheet: char or chars required');
+}
+
+async function appendById(userId: number, worksheetId: number, chars: string[]): Promise<AppendResult> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, title, content FROM worksheets WHERE id = ? LIMIT 1`,
@@ -64,28 +78,31 @@ async function appendById(userId: number, worksheetId: number, char: string): Pr
   if (rows.length === 0) throw new WorksheetAccessError('not_found');
   const ws = rows[0];
   if (ws.user_id !== userId) throw new WorksheetAccessError('not_owner');
-  return applyAppend(ws.id, ws.title, ws.content, char, false);
+  return applyAppend(ws.id, ws.title, ws.content, chars, false);
 }
 
-async function appendByTitle(userId: number, title: string, char: string): Promise<AppendResult> {
+async function appendByTitle(userId: number, title: string, chars: string[]): Promise<AppendResult> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, title, content FROM worksheets WHERE user_id = ? AND title = ? LIMIT 1`,
     [userId, title]
   );
   if (rows.length > 0) {
-    return applyAppend(rows[0].id, rows[0].title, rows[0].content, char, false);
+    return applyAppend(rows[0].id, rows[0].title, rows[0].content, chars, false);
   }
+  // Brand new worksheet: store all chars at once via JSON_ARRAY of N elements.
   const [ins] = await pool.execute<any>(
     `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family)
-     VALUES (?, ?, JSON_ARRAY(?), ?, ?, ?)`,
-    [userId, title, char, DEFAULT_CELL_STYLE, DEFAULT_PAPER_SIZE, DEFAULT_FONT_FAMILY]
+     VALUES (?, ?, CAST(? AS JSON), ?, ?, ?)`,
+    [userId, title, JSON.stringify(chars), DEFAULT_CELL_STYLE, DEFAULT_PAPER_SIZE, DEFAULT_FONT_FAMILY]
   );
   return {
     worksheetId: ins.insertId as number,
     title,
     added: true,
-    charCount: 1,
+    addedCount: chars.length,
+    skipped: 0,
+    charCount: chars.length,
     created: true,
   };
 }
@@ -94,19 +111,37 @@ async function applyAppend(
   worksheetId: number,
   title: string,
   contentRaw: unknown,
-  char: string,
+  chars: string[],
   created: boolean
 ): Promise<AppendResult> {
   const pool = getPool();
   const content: string[] = typeof contentRaw === 'string'
     ? JSON.parse(contentRaw)
     : (contentRaw as string[]);
-  if (content.includes(char)) {
-    return { worksheetId, title, added: false, charCount: content.length, created };
+  const existing = new Set(content);
+  const toAdd = chars.filter((c) => !existing.has(c));
+  if (toAdd.length === 0) {
+    return {
+      worksheetId, title, added: false, addedCount: 0, skipped: chars.length,
+      charCount: content.length, created,
+    };
   }
-  await pool.execute<any>(
-    `UPDATE worksheets SET content = JSON_ARRAY_APPEND(content, '$', ?) WHERE id = ?`,
-    [char, worksheetId]
-  );
-  return { worksheetId, title, added: true, charCount: content.length + 1, created };
+  if (toAdd.length === 1) {
+    await pool.execute<any>(
+      `UPDATE worksheets SET content = JSON_ARRAY_APPEND(content, '$', ?) WHERE id = ?`,
+      [toAdd[0], worksheetId]
+    );
+  } else {
+    // Bulk path: rebuild content as existing + toAdd, write as JSON.
+    const merged = [...content, ...toAdd];
+    await pool.execute<any>(
+      `UPDATE worksheets SET content = CAST(? AS JSON) WHERE id = ?`,
+      [JSON.stringify(merged), worksheetId]
+    );
+  }
+  return {
+    worksheetId, title, added: true, addedCount: toAdd.length,
+    skipped: chars.length - toAdd.length,
+    charCount: content.length + toAdd.length, created,
+  };
 }
