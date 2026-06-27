@@ -21,7 +21,9 @@
  *   --mock           Force mock LLM (no API calls).
  *   --dry-run        Report what would happen; don't write files or DB.
  *   --write-db       Also UPDATE the chars/char_etymology/rare_chars rows.
- *                    Default: true.
+ *                    Default: auto-detect — true if DB has rich columns
+ *                    (chars.meaning_zh), false if schema is slim (post
+ *                    2026-06-17 migration). Use --no-write-db to force off.
  *   --no-write-db    Only write JSON, don't touch DB.
  *   --concurrency N  Parallel LLM calls (default 4).
  *
@@ -110,8 +112,26 @@ interface EtymRow {
   char: string;
 }
 
+/**
+ * Returns true if the connected DB still has the rich (pre-2026-06-17)
+ * content columns. Slim schema: chars has only (char, level, pinyin,
+ * radical, stroke_count, unicode_codepoint). Rich schema additionally
+ * has meaning_zh, meaning_en, pinyin_alt, variants. We probe meaning_zh
+ * as the canonical marker.
+ */
+async function dbHasRichContentColumns(pool: ReturnType<typeof getPool>): Promise<boolean> {
+  const [rows] = await pool.query<any[]>(
+    `SELECT 1 FROM information_schema.columns
+     WHERE table_schema = DATABASE()
+       AND table_name = 'chars'
+       AND column_name = 'meaning_zh'
+     LIMIT 1`,
+  );
+  return Array.isArray(rows) && rows.length > 0;
+}
+
 function parseArgs(): SyncOptions {
-  const opts: SyncOptions = { writeDb: true, concurrency: 4 };
+  const opts: SyncOptions = { concurrency: 4 };
   const args = process.argv.slice(2);
   for (let i = 0; i < args.length; i++) {
     const a = args[i];
@@ -375,6 +395,14 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
   const fields = opts.fields ?? ALL_FIELDS;
   const concurrency = opts.concurrency ?? 4;
 
+  // Auto-detect --write-db default from schema: rich columns present → write,
+  // slim schema → skip. Caller can override with --write-db / --no-write-db.
+  if (opts.writeDb === undefined) {
+    const rich = await dbHasRichContentColumns(pool);
+    opts.writeDb = rich;
+    console.log(`[sync] --write-db auto-detected: ${rich ? 'ON (rich schema)' : 'OFF (slim schema)'}`);
+  }
+
   // Force mock mode if --mock, or if ai.mock_mode is already on.
   if (opts.mock) {
     await setConfig('ai.mock_mode', 'true', null);
@@ -562,6 +590,11 @@ async function main() {
   const opts = parseArgs();
   if (opts.dryRun) console.log('[sync] DRY RUN — no files or DB will be touched');
   if (opts.mock) console.log('[sync] mock mode forced');
+  if (opts.writeDb === undefined) {
+    // Defer auto-detect to contentSync() so the message prints in a consistent place.
+  } else {
+    console.log(`[sync] --write-db explicit: ${opts.writeDb ? 'ON' : 'OFF'}`);
+  }
   const t0 = Date.now();
   const stats = await contentSync(opts);
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
