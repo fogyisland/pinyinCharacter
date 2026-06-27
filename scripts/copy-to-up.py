@@ -16,6 +16,13 @@ EXCLUDE_DIRS = {
     'backups',
     'data/runtime',
     'Up',                # Don't recurse into the output dir
+    'public/strokes',    # Regenerable via pnpm strokes:build
+    'playwright-report',
+    'test-results',
+    'coverage',
+    '.turbo',
+    '.vscode',
+    '.idea',
 }
 
 # Path-relative excludes (matched against relative path from SRC).
@@ -38,8 +45,14 @@ EXCLUDE_FILES = {
 # Explicit files to always include at root (overrides EXCLUDE_FILES if matched)
 ALWAYS_INCLUDE_ROOT = {'.env.example'}  # Server template — safe to upload
 
-def should_exclude_dir(name):
-    return name in EXCLUDE_DIRS
+def should_exclude_dir(name, rel_path=None):
+    if name in EXCLUDE_DIRS:
+        return True
+    if rel_path:
+        rel_norm = rel_path.replace(os.sep, '/')
+        if rel_norm in EXCLUDE_DIRS or any(rel_norm == ex or rel_norm.startswith(ex + '/') for ex in EXCLUDE_DIRS):
+            return True
+    return False
 
 def should_exclude_path(rel):
     """Match a relative path against EXCLUDE_PATHS (exact or subpath).
@@ -51,15 +64,29 @@ def should_exclude_path(rel):
             return True
     return False
 
-def should_exclude_file(name):
+# Specific files to always exclude by full relative path
+EXCLUDE_FILE_PATHS = {
+    'data/strokes-manifest.json',                 # Regenerable via pnpm strokes:build
+    'data/poems/yuefu.json',                      # Collection files (regenerable)
+    'data/poems/shijiu.json',
+    'data/poems/cifu.json',
+    'data/poems/caocao.json',
+    'data/poems/nalan.json',
+}
+
+def should_exclude_file(name, rel_path=None):
     if name in ALWAYS_INCLUDE_ROOT:
         return False
     if name in EXCLUDE_FILES:
+        return True
+    if rel_path and rel_path.replace(os.sep, '/') in EXCLUDE_FILE_PATHS:
         return True
     # glob-like patterns
     if name.startswith('.env.') and name.endswith('.local'):
         return True
     if name.endswith('.tsbuildinfo'):
+        return True
+    if name.endswith('.log'):
         return True
     if name in ('Thumbs.db', '.DS_Store'):
         return True
@@ -72,13 +99,14 @@ for root, dirs, files in os.walk(SRC):
     rel_root = os.path.relpath(root, SRC)
     dirs[:] = [
         d for d in dirs
-        if not should_exclude_dir(d)
+        if not should_exclude_dir(d, d if rel_root == '.' else os.path.join(rel_root, d))
         and not should_exclude_path(d if rel_root == '.' else os.path.join(rel_root, d))
     ]
     rel = rel_root
     target_dir = os.path.join(DST, rel) if rel != '.' else DST
     for f in files:
-        if should_exclude_file(f):
+        rel_file = os.path.join(rel, f) if rel != '.' else f
+        if should_exclude_file(f, rel_file):
             continue
         src_path = os.path.join(root, f)
         dst_path = os.path.join(target_dir, f)
