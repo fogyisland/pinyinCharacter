@@ -10,6 +10,23 @@ export async function listWorksheets(): Promise<Worksheet[]> {
   return data.data.worksheets;
 }
 
+export interface WorksheetSummary {
+  id: number;
+  title: string;
+  charCount: number;
+  createdAt: string;
+}
+
+export async function listWorksheetsLightweight(): Promise<WorksheetSummary[]> {
+  const res = await fetch('/api/worksheets/lightweight');
+  const data = await res.json();
+  if (!data.ok) {
+    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    throw new Error(msg);
+  }
+  return data.data.items;
+}
+
 export async function fetchWorksheet(id: number): Promise<Worksheet> {
   const res = await fetch(`/api/worksheets/${id}`);
   const data = await res.json();

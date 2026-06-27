@@ -31,6 +31,34 @@ export async function listUserWorksheets(userId: number): Promise<Worksheet[]> {
   return rows.map(mapRow);
 }
 
+export interface WorksheetSummary {
+  id: number;
+  title: string;
+  /** Char count from JSON_LENGTH(content) — no row data shipped. */
+  charCount: number;
+  createdAt: Date;
+}
+
+/**
+ * Lightweight list for selectors/dialogs: id, title, charCount, createdAt only.
+ * Skips content/paperSize/fontFamily to keep payload small when the user
+ * has many worksheets with 500-char content each.
+ */
+export async function listUserWorksheetsLightweight(userId: number): Promise<WorksheetSummary[]> {
+  const pool = getPool();
+  const [rows] = await pool.execute<any[]>(
+    `SELECT id, title, JSON_LENGTH(content) AS char_count, created_at
+     FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
+    [userId]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    charCount: Number(r.char_count ?? 0),
+    createdAt: r.created_at,
+  }));
+}
+
 export async function getWorksheet(id: number): Promise<Worksheet | null> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
