@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "updatedAt": "2026-06-26T13:00:50.736Z",
-  "count": 1161,
+  "updatedAt": "2026-06-27T01:19:10.032Z",
+  "count": 1160,
   "items": [
     {
       "id": 1,
@@ -6905,15 +6905,6 @@
       "category": "汉乐府",
       "form": "杂言古风",
       "contentLineCount": 2
-    },
-    {
-      "id": 1436,
-      "title": "",
-      "author": "",
-      "dynasty": "汉",
-      "category": "汉乐府",
-      "form": null,
-      "contentLineCount": 0
     },
     {
       "id": 1437,
