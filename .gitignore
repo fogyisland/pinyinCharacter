@@ -45,3 +45,6 @@ scripts/fonts/staging/
 # tool caches
 .claude/
 .superpowers/
+
+# deploy bundle — regenerated with scripts/copy-to-up.py
+Up/
