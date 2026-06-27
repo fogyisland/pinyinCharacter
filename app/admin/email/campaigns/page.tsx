@@ -41,28 +41,29 @@ export default async function CampaignsPage() {
         rowKey={(c) => c.id}
         emptyMessage="还没有营销邮件"
         columns={[
-          { key: 'id', header: 'ID', render: (c) => <span className="text-ink-soft">#{c.id}</span>, mobileHide: true },
-          {
-            key: 'subject',
-            header: '主题',
-            mobileTitle: true,
-            render: (c) => <Link href={`/admin/email/campaigns/${c.id}`} className="text-ink hover:underline">{c.subject}</Link>,
-          },
-          { key: 'audience', header: '受众', render: (c) => <span className="text-ink-soft">{c.audience}</span> },
-          {
-            key: 'status',
-            header: '状态',
-            render: (c) => (
-              <span className={'px-2 py-0.5 rounded text-xs ' + (STATUS_COLOR[c.status] ?? '')}>
-                {STATUS_LABEL[c.status] ?? c.status}
-              </span>
-            ),
-          },
-          { key: 'total', header: '收件人', className: 'text-right tabular-nums', headerClassName: 'text-right', render: (c) => c.total_recipients },
-          { key: 'sent', header: '成功/失败', className: 'text-right tabular-nums', headerClassName: 'text-right', render: (c) => `${c.sent_count}/${c.failed_count}` },
-          { key: 'createdAt', header: '创建时间', render: (c) => <span className="text-ink-soft text-xs">{new Date(c.created_at).toLocaleString('zh-CN')}</span>, mobileHide: true },
+          { key: 'id', header: 'ID', mobileHide: true },
+          { key: 'subject', header: '主题', mobileTitle: true },
+          { key: 'audience', header: '受众' },
+          { key: 'status', header: '状态' },
+          { key: 'total', header: '收件人', headerClassName: 'text-right' },
+          { key: 'sent', header: '成功/失败', headerClassName: 'text-right' },
+          { key: 'createdAt', header: '创建时间', mobileHide: true },
         ]}
-      />
+      >
+        {(c) => (
+          <>
+            <span className="text-ink-soft">#{c.id}</span>
+            <Link href={`/admin/email/campaigns/${c.id}`} className="text-ink hover:underline">{c.subject}</Link>
+            <span className="text-ink-soft">{c.audience}</span>
+            <span className={'px-2 py-0.5 rounded text-xs ' + (STATUS_COLOR[c.status] ?? '')}>
+              {STATUS_LABEL[c.status] ?? c.status}
+            </span>
+            <span className="text-right tabular-nums block">{c.total_recipients}</span>
+            <span className="text-right tabular-nums block">{`${c.sent_count}/${c.failed_count}`}</span>
+            <span className="text-ink-soft text-xs">{new Date(c.created_at).toLocaleString('zh-CN')}</span>
+          </>
+        )}
+      </ResponsiveTable>
     </div>
   );
 }

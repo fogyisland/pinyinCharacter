@@ -161,38 +161,35 @@ export default function AdminDownloadsPage() {
         rowKey={(r) => r.id}
         emptyMessage={busy ? '加载中…' : '无数据'}
         columns={[
-          {
-            key: 'source',
-            header: '资源',
-            mobileTitle: true,
-            render: (r) => {
-              const href = sourceHref(r.sourceType, r.sourceId);
-              return r.sourceId
-                ? href
-                  ? <a href={href} className="text-seal hover:underline text-sm">{r.sourceType}#{r.sourceId}</a>
-                  : <span className="text-sm">{r.sourceType}#{r.sourceId}</span>
-                : <span className="text-ink-faint">—</span>;
-            },
-          },
-          {
-            key: 'user',
-            header: '用户',
-            render: (r) => r.username
-              ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
-              : <span className="text-ink-faint">#{r.userId}</span>,
-            mobileHide: true,
-          },
-          { key: 'format', header: '格式', render: (r) => <span className="text-xs px-2 py-0.5 rounded bg-paper-deep">{r.format}</span>, mobileHide: true },
-          { key: 'status', header: '状态', render: (r) => statusBadge(r.status) },
-          { key: 'duration', header: '耗时', render: (r) => <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>, mobileHide: true },
-          {
-            key: 'createdAt',
-            header: '时间',
-            render: (r) => <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>,
-            mobileHide: true,
-          },
+          { key: 'source', header: '资源', mobileTitle: true },
+          { key: 'user', header: '用户', mobileHide: true },
+          { key: 'format', header: '格式', mobileHide: true },
+          { key: 'status', header: '状态' },
+          { key: 'duration', header: '耗时', mobileHide: true },
+          { key: 'createdAt', header: '时间', mobileHide: true },
         ]}
-      />
+      >
+        {(r) => {
+          const href = sourceHref(r.sourceType, r.sourceId);
+          const sourceCell = r.sourceId
+            ? href
+              ? <a href={href} className="text-seal hover:underline text-sm">{r.sourceType}#{r.sourceId}</a>
+              : <span className="text-sm">{r.sourceType}#{r.sourceId}</span>
+            : <span className="text-ink-faint">—</span>;
+          return (
+            <>
+              {sourceCell}
+              {r.username
+                ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
+                : <span className="text-ink-faint">#{r.userId}</span>}
+              <span className="text-xs px-2 py-0.5 rounded bg-paper-deep">{r.format}</span>
+              {statusBadge(r.status)}
+              <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
+              <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>
+            </>
+          );
+        }}
+      </ResponsiveTable>
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-ink-faint inline-flex items-center gap-1"><Search className="h-3.5 w-3.5" />共 {total} 条 · 第 {page} / {totalPages} 页</span>

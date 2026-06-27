@@ -69,48 +69,37 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         rowKey={(u) => u.id}
         emptyMessage="暂无用户"
         columns={[
-          {
-            key: 'username',
-            header: '用户名',
-            mobileTitle: true,
-            render: (u) => <Link href={`/admin/users/${u.id}`} className="text-seal hover:underline">{u.username}</Link>,
-          },
-          {
-            key: 'createdAt',
-            header: '注册时间',
-            render: (u) => <span className="text-ink-soft text-xs">{new Date(u.createdAt).toLocaleString('zh-CN')}</span>,
-          },
-          { key: 'historyCount', header: '历史', render: (u) => u.historyCount },
-          { key: 'favoriteCount', header: '收藏', render: (u) => u.favoriteCount },
-          {
-            key: 'isAdmin',
-            header: '角色',
-            render: (u) => u.isAdmin
+          { key: 'username', header: '用户名', mobileTitle: true },
+          { key: 'createdAt', header: '注册时间' },
+          { key: 'historyCount', header: '历史' },
+          { key: 'favoriteCount', header: '收藏' },
+          { key: 'isAdmin', header: '角色' },
+          { key: 'status', header: '状态' },
+          { key: 'actions', header: '操作', mobileHide: true },
+        ]}
+      >
+        {(u) => (
+          <>
+            <Link href={`/admin/users/${u.id}`} className="text-seal hover:underline">{u.username}</Link>
+            <span className="text-ink-soft text-xs">{new Date(u.createdAt).toLocaleString('zh-CN')}</span>
+            <span>{u.historyCount}</span>
+            <span>{u.favoriteCount}</span>
+            {u.isAdmin
               ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">管理员</span>
-              : <span className="text-xs text-ink-faint">用户</span>,
-          },
-          {
-            key: 'status',
-            header: '状态',
-            render: (u) => u.disabledAt != null
+              : <span className="text-xs text-ink-faint">用户</span>}
+            {u.disabledAt != null
               ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">禁用</span>
-              : <span className="text-xs text-ink-faint">正常</span>,
-          },
-          {
-            key: 'actions',
-            header: '操作',
-            render: (u) => (
-              <UserActions
-                userId={u.id}
-                username={u.username}
-                isAdmin={u.isAdmin}
-                isSelf={false}
-                isDisabled={u.disabledAt != null}
-              />
-            ),
-          },
-        ] satisfies ResponsiveColumn<typeof users[number]>[]}
-      />
+              : <span className="text-xs text-ink-faint">正常</span>}
+            <UserActions
+              userId={u.id}
+              username={u.username}
+              isAdmin={u.isAdmin}
+              isSelf={false}
+              isDisabled={u.disabledAt != null}
+            />
+          </>
+        )}
+      </ResponsiveTable>
     </div>
   );
 }

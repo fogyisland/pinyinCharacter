@@ -49,16 +49,21 @@ export default async function AdminCharsPage() {
           rowKey={(r) => r.level}
           emptyMessage="暂无数据"
           columns={[
-            { key: 'level', header: '级别', mobileTitle: true, render: (r) => `${r.level} 级` },
-            { key: 'total', header: '总数', render: (r) => r.total },
-            { key: 'with_story', header: '有字源', render: (r) => r.with_story },
-            {
-              key: 'pct',
-              header: '覆盖率',
-              render: (r) => `${r.total > 0 ? Math.round((r.with_story / r.total) * 1000) / 10 : 0}%`,
-            },
+            { key: 'level', header: '级别', mobileTitle: true },
+            { key: 'total', header: '总数' },
+            { key: 'with_story', header: '有字源' },
+            { key: 'pct', header: '覆盖率' },
           ]}
-        />
+        >
+          {(r) => (
+            <>
+              <span>{r.level} 级</span>
+              <span>{r.total}</span>
+              <span>{r.with_story}</span>
+              <span>{`${r.total > 0 ? Math.round((r.with_story / r.total) * 1000) / 10 : 0}%`}</span>
+            </>
+          )}
+        </ResponsiveTable>
       </div>
 
       <Link

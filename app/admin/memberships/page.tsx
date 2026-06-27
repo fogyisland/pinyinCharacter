@@ -54,40 +54,33 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
         rowKey={(r) => r.id}
         emptyMessage="暂无会员"
         columns={[
-          {
-            key: 'user',
-            header: '用户',
-            mobileTitle: true,
-            render: (r) => r.username
-              ? <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</Link>
-              : <span className="text-ink-faint">#{r.userId}</span>,
-          },
-          { key: 'planKey', header: '套餐', render: (r) => <span className="text-xs">{r.planKey}</span> },
-          {
-            key: 'source',
-            header: '来源',
-            render: (r) => (
-              <span className={`text-xs px-2 py-0.5 rounded ${r.source === 'paypal' ? 'bg-green-100 text-green-800' : 'bg-paper-deep text-ink-soft'}`}>{r.source}</span>
-            ),
-          },
-          { key: 'amount', header: '金额', render: (r) => <span className="text-xs">{r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}</span> },
-          { key: 'grantedAt', header: '开通时间', render: (r) => <span className="text-xs text-ink-soft">{new Date(r.grantedAt).toLocaleString('zh-CN')}</span>, mobileHide: true },
-          { key: 'expiresAt', header: '到期', render: (r) => <span className="text-xs">{new Date(r.expiresAt).toLocaleDateString('zh-CN')}</span>, mobileHide: true },
-          {
-            key: 'status',
-            header: '状态',
-            render: (r) => r.revokedAt
-              ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
-              : <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">活跃</span>,
-          },
-          {
-            key: 'actions',
-            header: '操作',
-            render: (r) => !r.revokedAt ? <RevokeButton membershipId={r.id} /> : null,
-            mobileHide: true,
-          },
+          { key: 'user', header: '用户', mobileTitle: true },
+          { key: 'planKey', header: '套餐' },
+          { key: 'source', header: '来源' },
+          { key: 'amount', header: '金额' },
+          { key: 'grantedAt', header: '开通时间', mobileHide: true },
+          { key: 'expiresAt', header: '到期', mobileHide: true },
+          { key: 'status', header: '状态' },
+          { key: 'actions', header: '操作', mobileHide: true },
         ]}
-      />
+      >
+        {(r) => (
+          <>
+            {r.username
+              ? <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</Link>
+              : <span className="text-ink-faint">#{r.userId}</span>}
+            <span className="text-xs">{r.planKey}</span>
+            <span className={`text-xs px-2 py-0.5 rounded ${r.source === 'paypal' ? 'bg-green-100 text-green-800' : 'bg-paper-deep text-ink-soft'}`}>{r.source}</span>
+            <span className="text-xs">{r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}</span>
+            <span className="text-xs text-ink-soft">{new Date(r.grantedAt).toLocaleString('zh-CN')}</span>
+            <span className="text-xs">{new Date(r.expiresAt).toLocaleDateString('zh-CN')}</span>
+            {r.revokedAt
+              ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
+              : <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">活跃</span>}
+            {!r.revokedAt ? <RevokeButton membershipId={r.id} /> : null}
+          </>
+        )}
+      </ResponsiveTable>
 
       <div className="flex items-center justify-between text-xs text-ink-faint">
         <span>共 {list.total} 条 · 第 {page} / {totalPages} 页</span>

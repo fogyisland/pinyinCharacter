@@ -234,33 +234,26 @@ export default function AdminAiPage() {
             rowKey={(r) => r.id}
             emptyMessage={busy ? '加载中…' : '无数据'}
             columns={[
-              {
-                key: 'feature',
-                header: '功能',
-                mobileTitle: true,
-                render: (r) => <span className="text-sm">{r.feature}</span>,
-              },
-              { key: 'status', header: '状态', render: (r) => <StatusBadge status={r.status} /> },
-              {
-                key: 'user',
-                header: '用户',
-                render: (r) => r.username
+              { key: 'feature', header: '功能', mobileTitle: true },
+              { key: 'status', header: '状态' },
+              { key: 'user', header: '用户', mobileHide: true },
+              { key: 'model', header: '模型', mobileHide: true },
+              { key: 'duration', header: '耗时', mobileHide: true },
+              { key: 'createdAt', header: '时间', mobileHide: true },
+              { key: 'error', header: '错误', mobileHide: true },
+            ]}
+          >
+            {(r) => (
+              <>
+                <span className="text-sm">{r.feature}</span>
+                <StatusBadge status={r.status} />
+                {r.username
                   ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
-                  : <span className="text-ink-faint">#{r.userId}</span>,
-                mobileHide: true,
-              },
-              { key: 'model', header: '模型', render: (r) => <span className="text-xs text-ink-soft">{r.model ?? '—'}</span>, mobileHide: true },
-              { key: 'duration', header: '耗时', render: (r) => <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>, mobileHide: true },
-              {
-                key: 'createdAt',
-                header: '时间',
-                render: (r) => <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>,
-                mobileHide: true,
-              },
-              {
-                key: 'error',
-                header: '错误',
-                render: (r) => r.error
+                  : <span className="text-ink-faint">#{r.userId}</span>}
+                <span className="text-xs text-ink-soft">{r.model ?? '—'}</span>
+                <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
+                <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>
+                {r.error
                   ? <>
                       <span className="text-seal">{truncate(r.error, 100)}</span>
                       {r.error.length > 100 && (
@@ -273,11 +266,10 @@ export default function AdminAiPage() {
                         <div className="mt-1"><JsonPanel data={r.error} /></div>
                       )}
                     </>
-                  : '—',
-                mobileHide: true,
-              },
-            ]}
-          />
+                  : '—'}
+              </>
+            )}
+          </ResponsiveTable>
 
           <div className="flex items-center justify-between">
             <span className="text-xs text-ink-faint">共 {total} 条 · 第 {page} / {totalPages} 页</span>

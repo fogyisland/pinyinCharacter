@@ -148,46 +148,32 @@ export default function AdminLogsPage() {
         rows={rows}
         rowKey={(r) => r.id}
         emptyMessage={busy ? '加载中…' : '无数据'}
-        onRowClick={(r) => setSelected(r as AdminLogRow)}
         columns={[
-          {
-            key: 'event',
-            header: '事件',
-            mobileTitle: true,
-            render: (r) => <span className="text-sm">{r.event}</span>,
-          },
-          {
-            key: 'source',
-            header: '来源',
-            render: (r) => <SourceBadge source={r.source as any} />,
-          },
-          {
-            key: 'createdAt',
-            header: '时间',
-            render: (r) => <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>,
-            mobileHide: true,
-          },
-          {
-            key: 'user',
-            header: '用户',
-            render: (r) => r.username
-              ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
-              : <span className="text-ink-faint">—</span>,
-            mobileHide: true,
-          },
-          {
-            key: 'summary',
-            header: '元数据',
-            render: (r) => {
-              const summary = r.source === 'audit'
-                ? formatLogMessage(r.event, r.metadata)
-                : r.event;
-              return <span className="text-sm text-ink max-w-md block truncate" title={JSON.stringify(r.metadata)}>{summary}</span>;
-            },
-            mobileHide: true,
-          },
+          { key: 'event', header: '事件', mobileTitle: true },
+          { key: 'source', header: '来源' },
+          { key: 'createdAt', header: '时间', mobileHide: true },
+          { key: 'user', header: '用户', mobileHide: true },
+          { key: 'summary', header: '元数据', mobileHide: true },
         ]}
-      />
+      >
+        {(r) => {
+          const summary = r.source === 'audit'
+            ? formatLogMessage(r.event, r.metadata)
+            : r.event;
+          const open = () => setSelected(r as AdminLogRow);
+          return (
+            <>
+              <button type="button" onClick={open} className="text-sm text-seal hover:underline text-left">{r.event}</button>
+              <div onClick={open} className="cursor-pointer"><SourceBadge source={r.source as any} /></div>
+              <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>
+              {r.username
+                ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
+                : <span className="text-ink-faint">—</span>}
+              <span className="text-sm text-ink max-w-md block truncate" title={JSON.stringify(r.metadata)}>{summary}</span>
+            </>
+          );
+        }}
+      </ResponsiveTable>
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-ink-faint">共 {total} 条 · 第 {page} / {totalPages} 页</span>
