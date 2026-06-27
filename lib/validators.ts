@@ -25,13 +25,20 @@ export const charParamSchema = z.object({
   }),
 });
 
-export const appendToWorksheetSchema = z.object({
-  char: z
-    .string()
-    .refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
-      error: 'must be a single CJK char',
-    }),
-});
+export const appendToWorksheetSchema = z
+  .object({
+    char: z
+      .string()
+      .refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
+        error: 'must be a single CJK char',
+      }),
+    worksheetId: z.coerce.number().int().positive().optional(),
+    newTitle: z.string().min(1).max(80).optional(),
+  })
+  .refine((v) => !(v.worksheetId && v.newTitle), {
+    error: 'worksheetId and newTitle are mutually exclusive',
+    path: ['newTitle'],
+  });
 
 export const printBatchSchema = z.object({
   worksheetIds: z.array(z.number().int().positive()).min(1).max(50),

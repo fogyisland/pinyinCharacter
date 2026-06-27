@@ -53,11 +53,27 @@ export async function printWorksheetRequest(id: number): Promise<{ id: number }>
   return data.data;
 }
 
-export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksheetId: number; added: boolean }> {
+export interface AppendCharToWorksheetInput {
+  char: string;
+  worksheetId?: number;
+  newTitle?: string;
+}
+
+export interface AppendCharToWorksheetResult {
+  worksheetId: number;
+  title: string;
+  added: boolean;
+  charCount: number;
+  created: boolean;
+}
+
+export async function appendCharToWorksheetApi(
+  input: AppendCharToWorksheetInput
+): Promise<AppendCharToWorksheetResult> {
   const res = await fetch('/api/worksheets/append', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ char }),
+    body: JSON.stringify(input),
   });
   if (res.status === 401) {
     throw Object.assign(new Error('unauthorized'), { code: 'unauthorized' });
@@ -68,4 +84,10 @@ export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksh
     throw new Error(msg);
   }
   return data.data;
+}
+
+/** @deprecated use appendCharToWorksheetApi — kept for callers that only need legacy "我的字帖" mode. */
+export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksheetId: number; added: boolean }> {
+  const r = await appendCharToWorksheetApi({ char });
+  return { worksheetId: r.worksheetId, added: r.added };
 }

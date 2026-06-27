@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { withErrorHandling, badRequest, unauthorized } from '@/lib/api-handler';
+import { withErrorHandling, badRequest, unauthorized, notFound, forbidden } from '@/lib/api-handler';
 import { appendToWorksheetSchema } from '@/lib/validators';
-import { appendCharToMyWorksheet } from '@/lib/worksheet-append';
+import { appendCharToWorksheet, WorksheetAccessError } from '@/lib/worksheet-append';
 import { logUserAction } from '@/lib/audit';
 
 export async function POST(req: NextRequest) {
@@ -16,11 +16,28 @@ export async function POST(req: NextRequest) {
       const issue = parsed.error.issues[0];
       return badRequest('bad_input', issue?.message ?? 'bad input');
     }
-    const result = await appendCharToMyWorksheet(user.id, parsed.data.char);
+    const { char, worksheetId, newTitle } = parsed.data;
+    const mode = worksheetId ? 'append_existing' : newTitle ? 'create_or_append' : 'append_default';
+
+    let result;
+    try {
+      result = await appendCharToWorksheet(user.id, { char, worksheetId, newTitle });
+    } catch (e) {
+      if (e instanceof WorksheetAccessError) {
+        if (e.code === 'not_found') return notFound();
+        if (e.code === 'not_owner') return forbidden();
+      }
+      throw e;
+    }
+
     await logUserAction(req, user.id, 'worksheet_char_appended', {
+      mode,
       worksheetId: result.worksheetId,
-      char: parsed.data.char,
+      title: result.title,
+      char,
       added: result.added,
+      charCount: result.charCount,
+      created: result.created,
     });
     return NextResponse.json({ ok: true, data: result });
   });
