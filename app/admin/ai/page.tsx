@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Bot, AlertTriangle, ChevronLeft, ChevronRight, Filter, Check } from 'lucide-react';
 import { StatCard } from '@/components/admin/StatCard';
 import { JsonPanel } from '@/components/admin/JsonPanel';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import {
   listAiCallsRequest, getAiStatsRequest,
   getAiConfigRequest, updateAiConfigRequest,
@@ -228,59 +229,55 @@ export default function AdminAiPage() {
 
           {err && <p className="text-sm text-seal">{err}</p>}
 
-          <div className="card-paper rounded-lg overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-paper-deep text-left">
-                <tr>
-                  <th className="px-3 py-2">时间</th>
-                  <th className="px-3 py-2">用户</th>
-                  <th className="px-3 py-2">功能</th>
-                  <th className="px-3 py-2">模型</th>
-                  <th className="px-3 py-2">状态</th>
-                  <th className="px-3 py-2">耗时</th>
-                  <th className="px-3 py-2">错误</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map(r => (
-                  <tr key={r.id} className="border-t">
-                    <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">{new Date(r.createdAt).toLocaleString('zh-CN')}</td>
-                    <td className="px-3 py-2">
-                      {r.username
-                        ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
-                        : <span className="text-ink-faint">#{r.userId}</span>}
-                    </td>
-                    <td className="px-3 py-2">{r.feature}</td>
-                    <td className="px-3 py-2 text-xs text-ink-soft">{r.model ?? '—'}</td>
-                    <td className="px-3 py-2"><StatusBadge status={r.status} /></td>
-                    <td className="px-3 py-2 text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</td>
-                    <td className="px-3 py-2 text-xs max-w-md">
-                      {r.error
-                        ? <>
-                            <span className="text-seal">{truncate(r.error, 100)}</span>
-                            {r.error.length > 100 && (
-                              <button type="button" onClick={() => setExpandedErr(expandedErr === String(r.id) ? null : String(r.id))}
-                                className="ml-2 text-seal hover:underline">
-                                {expandedErr === String(r.id) ? '收起' : '展开'}
-                              </button>
-                            )}
-                            {expandedErr === String(r.id) && (
-                              <div className="mt-1"><JsonPanel data={r.error} /></div>
-                            )}
-                          </>
-                        : '—'}
-                    </td>
-                  </tr>
-                ))}
-                {rows.length === 0 && !busy && (
-                  <tr><td colSpan={7} className="px-3 py-6 text-center text-ink-faint">无数据</td></tr>
-                )}
-                {busy && rows.length === 0 && (
-                  <tr><td colSpan={7} className="px-3 py-6 text-center text-ink-faint">加载中…</td></tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <ResponsiveTable
+            rows={rows}
+            rowKey={(r) => r.id}
+            emptyMessage={busy ? '加载中…' : '无数据'}
+            columns={[
+              {
+                key: 'feature',
+                header: '功能',
+                mobileTitle: true,
+                render: (r) => <span className="text-sm">{r.feature}</span>,
+              },
+              { key: 'status', header: '状态', render: (r) => <StatusBadge status={r.status} /> },
+              {
+                key: 'user',
+                header: '用户',
+                render: (r) => r.username
+                  ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
+                  : <span className="text-ink-faint">#{r.userId}</span>,
+                mobileHide: true,
+              },
+              { key: 'model', header: '模型', render: (r) => <span className="text-xs text-ink-soft">{r.model ?? '—'}</span>, mobileHide: true },
+              { key: 'duration', header: '耗时', render: (r) => <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>, mobileHide: true },
+              {
+                key: 'createdAt',
+                header: '时间',
+                render: (r) => <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>,
+                mobileHide: true,
+              },
+              {
+                key: 'error',
+                header: '错误',
+                render: (r) => r.error
+                  ? <>
+                      <span className="text-seal">{truncate(r.error, 100)}</span>
+                      {r.error.length > 100 && (
+                        <button type="button" onClick={() => setExpandedErr(expandedErr === String(r.id) ? null : String(r.id))}
+                          className="ml-2 text-seal hover:underline">
+                          {expandedErr === String(r.id) ? '收起' : '展开'}
+                        </button>
+                      )}
+                      {expandedErr === String(r.id) && (
+                        <div className="mt-1"><JsonPanel data={r.error} /></div>
+                      )}
+                    </>
+                  : '—',
+                mobileHide: true,
+              },
+            ]}
+          />
 
           <div className="flex items-center justify-between">
             <span className="text-xs text-ink-faint">共 {total} 条 · 第 {page} / {totalPages} 页</span>

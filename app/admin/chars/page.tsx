@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getPool } from '@/lib/db';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,31 +42,23 @@ export default async function AdminCharsPage() {
         <Stat label="覆盖率" value={`${pct}%`} />
       </div>
 
-      <div className="card-paper rounded-lg p-4 mb-6 overflow-x-auto">
+      <div className="card-paper rounded-lg p-4 mb-6">
         <h3 className="text-sm font-semibold mb-3 text-ink-soft">按级别</h3>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-ink-soft">
-              <th className="py-1">级别</th>
-              <th className="py-1">总数</th>
-              <th className="py-1">有字源</th>
-              <th className="py-1">覆盖率</th>
-            </tr>
-          </thead>
-          <tbody>
-            {cov.byLevel.map((r) => {
-              const levelPct = r.total > 0 ? Math.round((r.with_story / r.total) * 1000) / 10 : 0;
-              return (
-                <tr key={r.level} className="border-t border-ink/10">
-                  <td className="py-2">{r.level} 级</td>
-                  <td>{r.total}</td>
-                  <td>{r.with_story}</td>
-                  <td>{levelPct}%</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <ResponsiveTable
+          rows={cov.byLevel}
+          rowKey={(r) => r.level}
+          emptyMessage="暂无数据"
+          columns={[
+            { key: 'level', header: '级别', mobileTitle: true, render: (r) => `${r.level} 级` },
+            { key: 'total', header: '总数', render: (r) => r.total },
+            { key: 'with_story', header: '有字源', render: (r) => r.with_story },
+            {
+              key: 'pct',
+              header: '覆盖率',
+              render: (r) => `${r.total > 0 ? Math.round((r.with_story / r.total) * 1000) / 10 : 0}%`,
+            },
+          ]}
+        />
       </div>
 
       <Link

@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react';
 import { Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
 import { LogRow } from '@/components/admin/LogRow';
 import { JsonPanel } from '@/components/admin/JsonPanel';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { SourceBadge } from '@/components/admin/SourceBadge';
 import { listAdminLogsRequest, type AdminLogRow } from '@/lib/api-admin';
 import { formatLogMessage } from '@/lib/audit-format';
 
@@ -142,30 +144,50 @@ export default function AdminLogsPage() {
 
       {err && <p className="text-sm text-seal">{err}</p>}
 
-      <div className="card-paper rounded-lg overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-paper-deep text-left">
-            <tr>
-              <th className="px-3 py-2">时间</th>
-              <th className="px-3 py-2">来源</th>
-              <th className="px-3 py-2">事件</th>
-              <th className="px-3 py-2">用户</th>
-              <th className="px-3 py-2">元数据</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(r => (
-              <LogRow key={r.id} entry={r as any} onClick={setSelected as any} />
-            ))}
-            {rows.length === 0 && !busy && (
-              <tr><td colSpan={5} className="px-3 py-6 text-center text-ink-faint">无数据</td></tr>
-            )}
-            {busy && rows.length === 0 && (
-              <tr><td colSpan={5} className="px-3 py-6 text-center text-ink-faint">加载中…</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        emptyMessage={busy ? '加载中…' : '无数据'}
+        onRowClick={(r) => setSelected(r as AdminLogRow)}
+        columns={[
+          {
+            key: 'event',
+            header: '事件',
+            mobileTitle: true,
+            render: (r) => <span className="text-sm">{r.event}</span>,
+          },
+          {
+            key: 'source',
+            header: '来源',
+            render: (r) => <SourceBadge source={r.source as any} />,
+          },
+          {
+            key: 'createdAt',
+            header: '时间',
+            render: (r) => <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>,
+            mobileHide: true,
+          },
+          {
+            key: 'user',
+            header: '用户',
+            render: (r) => r.username
+              ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
+              : <span className="text-ink-faint">—</span>,
+            mobileHide: true,
+          },
+          {
+            key: 'summary',
+            header: '元数据',
+            render: (r) => {
+              const summary = r.source === 'audit'
+                ? formatLogMessage(r.event, r.metadata)
+                : r.event;
+              return <span className="text-sm text-ink max-w-md block truncate" title={JSON.stringify(r.metadata)}>{summary}</span>;
+            },
+            mobileHide: true,
+          },
+        ]}
+      />
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-ink-faint">共 {total} 条 · 第 {page} / {totalPages} 页</span>

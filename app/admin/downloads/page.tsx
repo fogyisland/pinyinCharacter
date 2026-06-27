@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Download, ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react';
 import { StatCard } from '@/components/admin/StatCard';
 import { SourceBadge } from '@/components/admin/SourceBadge';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { listAdminDownloadsRequest, getDownloadStatsRequest, type AdminDownloadRow } from '@/lib/api-admin';
 
 const SOURCE_TYPES = [
@@ -155,58 +156,43 @@ export default function AdminDownloadsPage() {
 
       {err && <p className="text-sm text-seal">{err}</p>}
 
-      <div className="card-paper rounded-lg overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-paper-deep text-left">
-            <tr>
-              <th className="px-3 py-2">时间</th>
-              <th className="px-3 py-2">用户</th>
-              <th className="px-3 py-2">来源</th>
-              <th className="px-3 py-2">格式</th>
-              <th className="px-3 py-2">状态</th>
-              <th className="px-3 py-2">耗时</th>
-              <th className="px-3 py-2">IP</th>
-              <th className="px-3 py-2">资源</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(r => {
+      <ResponsiveTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        emptyMessage={busy ? '加载中…' : '无数据'}
+        columns={[
+          {
+            key: 'source',
+            header: '资源',
+            mobileTitle: true,
+            render: (r) => {
               const href = sourceHref(r.sourceType, r.sourceId);
-              return (
-                <tr key={r.id} className="border-t">
-                  <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">{new Date(r.createdAt).toLocaleString('zh-CN')}</td>
-                  <td className="px-3 py-2">
-                    {r.username
-                      ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
-                      : <span className="text-ink-faint">#{r.userId}</span>}
-                  </td>
-                  <td className="px-3 py-2"><SourceBadge source="download" /></td>
-                  <td className="px-3 py-2"><span className="text-xs px-2 py-0.5 rounded bg-paper-deep">{r.format}</span></td>
-                  <td className="px-3 py-2">{statusBadge(r.status)}</td>
-                  <td className="px-3 py-2 text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</td>
-                  <td className="px-3 py-2 text-xs text-ink-faint font-mono max-w-[160px] truncate"
-                      title={r.userAgent ? `IP: ${r.ip ?? '—'}\nUA: ${r.userAgent}` : r.ip ?? ''}>
-                    {r.ip ?? '—'}
-                  </td>
-                  <td className="px-3 py-2 text-xs">
-                    {r.sourceId
-                      ? href
-                        ? <a href={href} className="text-seal hover:underline">{r.sourceType}#{r.sourceId}</a>
-                        : <span>{r.sourceType}#{r.sourceId}</span>
-                      : <span className="text-ink-faint">—</span>}
-                  </td>
-                </tr>
-              );
-            })}
-            {rows.length === 0 && !busy && (
-              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">无数据</td></tr>
-            )}
-            {busy && rows.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">加载中…</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              return r.sourceId
+                ? href
+                  ? <a href={href} className="text-seal hover:underline text-sm">{r.sourceType}#{r.sourceId}</a>
+                  : <span className="text-sm">{r.sourceType}#{r.sourceId}</span>
+                : <span className="text-ink-faint">—</span>;
+            },
+          },
+          {
+            key: 'user',
+            header: '用户',
+            render: (r) => r.username
+              ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
+              : <span className="text-ink-faint">#{r.userId}</span>,
+            mobileHide: true,
+          },
+          { key: 'format', header: '格式', render: (r) => <span className="text-xs px-2 py-0.5 rounded bg-paper-deep">{r.format}</span>, mobileHide: true },
+          { key: 'status', header: '状态', render: (r) => statusBadge(r.status) },
+          { key: 'duration', header: '耗时', render: (r) => <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>, mobileHide: true },
+          {
+            key: 'createdAt',
+            header: '时间',
+            render: (r) => <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>,
+            mobileHide: true,
+          },
+        ]}
+      />
 
       <div className="flex items-center justify-between">
         <span className="text-xs text-ink-faint inline-flex items-center gap-1"><Search className="h-3.5 w-3.5" />共 {total} 条 · 第 {page} / {totalPages} 页</span>

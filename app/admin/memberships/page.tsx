@@ -3,6 +3,7 @@ import { listMemberships } from '@/lib/membership';
 import { getMembershipStats } from '@/lib/membership-stats';
 import { ManualGrantDrawer } from '@/components/admin/memberships/ManualGrantDrawer';
 import { RevokeButton } from '@/components/admin/memberships/RevokeButton';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { Crown, Users, TrendingUp, DollarSign } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -48,51 +49,45 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
         {planKey && <FilterChip active={true} href={buildHref({ userId, planKey }, { planKey: null })}>{`套餐 ${planKey} ×`}</FilterChip>}
       </div>
 
-      <div className="card-paper rounded-lg overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-paper-deep text-left">
-            <tr>
-              <th className="px-3 py-2">开通时间</th>
-              <th className="px-3 py-2">用户</th>
-              <th className="px-3 py-2">套餐</th>
-              <th className="px-3 py-2">来源</th>
-              <th className="px-3 py-2">金额</th>
-              <th className="px-3 py-2">到期</th>
-              <th className="px-3 py-2">状态</th>
-              <th className="px-3 py-2">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.items.map(r => (
-              <tr key={r.id} className="border-t">
-                <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">{new Date(r.grantedAt).toLocaleString('zh-CN')}</td>
-                <td className="px-3 py-2">
-                  {r.username
-                    ? <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</Link>
-                    : <span className="text-ink-faint">#{r.userId}</span>}
-                </td>
-                <td className="px-3 py-2 text-xs">{r.planKey}</td>
-                <td className="px-3 py-2">
-                  <span className={`text-xs px-2 py-0.5 rounded ${r.source === 'paypal' ? 'bg-green-100 text-green-800' : 'bg-paper-deep text-ink-soft'}`}>{r.source}</span>
-                </td>
-                <td className="px-3 py-2 text-xs">{r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}</td>
-                <td className="px-3 py-2 text-xs">{new Date(r.expiresAt).toLocaleDateString('zh-CN')}</td>
-                <td className="px-3 py-2">
-                  {r.revokedAt
-                    ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
-                    : <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">活跃</span>}
-                </td>
-                <td className="px-3 py-2">
-                  {!r.revokedAt && <RevokeButton membershipId={r.id} />}
-                </td>
-              </tr>
-            ))}
-            {list.items.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">暂无会员</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveTable
+        rows={list.items}
+        rowKey={(r) => r.id}
+        emptyMessage="暂无会员"
+        columns={[
+          {
+            key: 'user',
+            header: '用户',
+            mobileTitle: true,
+            render: (r) => r.username
+              ? <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</Link>
+              : <span className="text-ink-faint">#{r.userId}</span>,
+          },
+          { key: 'planKey', header: '套餐', render: (r) => <span className="text-xs">{r.planKey}</span> },
+          {
+            key: 'source',
+            header: '来源',
+            render: (r) => (
+              <span className={`text-xs px-2 py-0.5 rounded ${r.source === 'paypal' ? 'bg-green-100 text-green-800' : 'bg-paper-deep text-ink-soft'}`}>{r.source}</span>
+            ),
+          },
+          { key: 'amount', header: '金额', render: (r) => <span className="text-xs">{r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}</span> },
+          { key: 'grantedAt', header: '开通时间', render: (r) => <span className="text-xs text-ink-soft">{new Date(r.grantedAt).toLocaleString('zh-CN')}</span>, mobileHide: true },
+          { key: 'expiresAt', header: '到期', render: (r) => <span className="text-xs">{new Date(r.expiresAt).toLocaleDateString('zh-CN')}</span>, mobileHide: true },
+          {
+            key: 'status',
+            header: '状态',
+            render: (r) => r.revokedAt
+              ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
+              : <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">活跃</span>,
+          },
+          {
+            key: 'actions',
+            header: '操作',
+            render: (r) => !r.revokedAt ? <RevokeButton membershipId={r.id} /> : null,
+            mobileHide: true,
+          },
+        ]}
+      />
 
       <div className="flex items-center justify-between text-xs text-ink-faint">
         <span>共 {list.total} 条 · 第 {page} / {totalPages} 页</span>

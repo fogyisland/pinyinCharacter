@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { listUsers } from '@/lib/admin';
 import { UserActions } from './UsersActions';
+import { ResponsiveTable, type ResponsiveColumn } from '@/components/admin/ResponsiveTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,58 +64,53 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         <Link href={chipHref({ disabled: '1' })} className={chipClass(disabled)}>禁用 ({totalDisabled})</Link>
       </div>
 
-      <div className="card-paper rounded-lg overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-paper-deep text-left">
-            <tr>
-              <th className="px-3 py-2">用户名</th>
-              <th className="px-3 py-2">注册时间</th>
-              <th className="px-3 py-2">历史</th>
-              <th className="px-3 py-2">收藏</th>
-              <th className="px-3 py-2">角色</th>
-              <th className="px-3 py-2">状态</th>
-              <th className="px-3 py-2">操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map(u => {
-              const isDisabled = u.disabledAt != null;
-              return (
-                <tr key={u.id} className="border-t">
-                  <td className="px-3 py-2">
-                    <Link href={`/admin/users/${u.id}`} className="text-seal hover:underline">{u.username}</Link>
-                  </td>
-                  <td className="px-3 py-2 text-ink-soft">{new Date(u.createdAt).toLocaleString('zh-CN')}</td>
-                  <td className="px-3 py-2">{u.historyCount}</td>
-                  <td className="px-3 py-2">{u.favoriteCount}</td>
-                  <td className="px-3 py-2">
-                    {u.isAdmin
-                      ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">管理员</span>
-                      : <span className="text-xs text-ink-faint">用户</span>}
-                  </td>
-                  <td className="px-3 py-2">
-                    {isDisabled
-                      ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">禁用</span>
-                      : <span className="text-xs text-ink-faint">正常</span>}
-                  </td>
-                  <td className="px-3 py-2">
-                    <UserActions
-                      userId={u.id}
-                      username={u.username}
-                      isAdmin={u.isAdmin}
-                      isSelf={false}
-                      isDisabled={isDisabled}
-                    />
-                  </td>
-                </tr>
-              );
-            })}
-            {users.length === 0 && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-ink-faint">暂无用户</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveTable
+        rows={users}
+        rowKey={(u) => u.id}
+        emptyMessage="暂无用户"
+        columns={[
+          {
+            key: 'username',
+            header: '用户名',
+            mobileTitle: true,
+            render: (u) => <Link href={`/admin/users/${u.id}`} className="text-seal hover:underline">{u.username}</Link>,
+          },
+          {
+            key: 'createdAt',
+            header: '注册时间',
+            render: (u) => <span className="text-ink-soft text-xs">{new Date(u.createdAt).toLocaleString('zh-CN')}</span>,
+          },
+          { key: 'historyCount', header: '历史', render: (u) => u.historyCount },
+          { key: 'favoriteCount', header: '收藏', render: (u) => u.favoriteCount },
+          {
+            key: 'isAdmin',
+            header: '角色',
+            render: (u) => u.isAdmin
+              ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">管理员</span>
+              : <span className="text-xs text-ink-faint">用户</span>,
+          },
+          {
+            key: 'status',
+            header: '状态',
+            render: (u) => u.disabledAt != null
+              ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">禁用</span>
+              : <span className="text-xs text-ink-faint">正常</span>,
+          },
+          {
+            key: 'actions',
+            header: '操作',
+            render: (u) => (
+              <UserActions
+                userId={u.id}
+                username={u.username}
+                isAdmin={u.isAdmin}
+                isSelf={false}
+                isDisabled={u.disabledAt != null}
+              />
+            ),
+          },
+        ] satisfies ResponsiveColumn<typeof users[number]>[]}
+      />
     </div>
   );
 }

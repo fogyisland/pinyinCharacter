@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { listCampaigns } from '@/lib/email-campaigns';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,49 +36,33 @@ export default async function CampaignsPage() {
         群发营销通知给订阅用户。默认所有用户都收(底部退订链接一键取消)。
         发送走 scheduler 异步任务,单次 tick 处理 50 封,可放心发万级邮件。
       </p>
-      <div className="border border-paper-warm rounded-md overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-paper-warm text-ink-soft">
-            <tr>
-              <th className="text-left px-3 py-2 font-medium">ID</th>
-              <th className="text-left px-3 py-2 font-medium">主题</th>
-              <th className="text-left px-3 py-2 font-medium">受众</th>
-              <th className="text-left px-3 py-2 font-medium">状态</th>
-              <th className="text-right px-3 py-2 font-medium">收件人</th>
-              <th className="text-right px-3 py-2 font-medium">成功/失败</th>
-              <th className="text-left px-3 py-2 font-medium">创建时间</th>
-              <th className="text-right px-3 py-2 font-medium"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">还没有营销邮件</td></tr>
-            )}
-            {rows.map((c) => (
-              <tr key={c.id} className="border-t border-paper-warm hover:bg-paper-warm/30">
-                <td className="px-3 py-2 text-ink-soft">#{c.id}</td>
-                <td className="px-3 py-2">{c.subject}</td>
-                <td className="px-3 py-2 text-ink-soft">{c.audience}</td>
-                <td className="px-3 py-2">
-                  <span className={'px-2 py-0.5 rounded text-xs ' + (STATUS_COLOR[c.status] ?? '')}>
-                    {STATUS_LABEL[c.status] ?? c.status}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-right tabular-nums">{c.total_recipients}</td>
-                <td className="px-3 py-2 text-right tabular-nums">
-                  {c.sent_count}/{c.failed_count}
-                </td>
-                <td className="px-3 py-2 text-ink-soft text-xs">
-                  {new Date(c.created_at).toLocaleString('zh-CN')}
-                </td>
-                <td className="px-3 py-2 text-right">
-                  <Link href={`/admin/email/campaigns/${c.id}`} className="text-ink hover:underline">详情 →</Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <ResponsiveTable
+        rows={rows}
+        rowKey={(c) => c.id}
+        emptyMessage="还没有营销邮件"
+        columns={[
+          { key: 'id', header: 'ID', render: (c) => <span className="text-ink-soft">#{c.id}</span>, mobileHide: true },
+          {
+            key: 'subject',
+            header: '主题',
+            mobileTitle: true,
+            render: (c) => <Link href={`/admin/email/campaigns/${c.id}`} className="text-ink hover:underline">{c.subject}</Link>,
+          },
+          { key: 'audience', header: '受众', render: (c) => <span className="text-ink-soft">{c.audience}</span> },
+          {
+            key: 'status',
+            header: '状态',
+            render: (c) => (
+              <span className={'px-2 py-0.5 rounded text-xs ' + (STATUS_COLOR[c.status] ?? '')}>
+                {STATUS_LABEL[c.status] ?? c.status}
+              </span>
+            ),
+          },
+          { key: 'total', header: '收件人', className: 'text-right tabular-nums', headerClassName: 'text-right', render: (c) => c.total_recipients },
+          { key: 'sent', header: '成功/失败', className: 'text-right tabular-nums', headerClassName: 'text-right', render: (c) => `${c.sent_count}/${c.failed_count}` },
+          { key: 'createdAt', header: '创建时间', render: (c) => <span className="text-ink-soft text-xs">{new Date(c.created_at).toLocaleString('zh-CN')}</span>, mobileHide: true },
+        ]}
+      />
     </div>
   );
 }
