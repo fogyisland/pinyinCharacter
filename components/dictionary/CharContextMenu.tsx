@@ -47,7 +47,7 @@ export function CharContextMenu({ x, y, char, onAdd, onClose }: Props) {
         onClick={() => { onAdd(char); onClose(); }}
         className="block w-full text-left px-4 py-2 hover:bg-paper text-ink"
       >
-        添加到「我的字帖」
+        添加到字帖…
       </button>
     </div>
   );

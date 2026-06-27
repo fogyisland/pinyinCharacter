@@ -3,37 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Char } from '@/lib/chars-types';
-import { useToastStore } from '@/lib/toast-store';
-import { appendCharToMyWorksheetApi } from '@/lib/api-worksheet';
 import { CharContextMenu } from './CharContextMenu';
+import { AddToWorksheetDialog } from '@/components/worksheet/AddToWorksheetDialog';
 
 interface MenuState { x: number; y: number; char: string; }
 
 export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
   const [menu, setMenu] = useState<MenuState | null>(null);
-  const push = useToastStore((s) => s.push);
+  const [dialogChar, setDialogChar] = useState<string | null>(null);
 
   const onContextMenu = (e: React.MouseEvent, c: string) => {
     e.preventDefault();
     setMenu({ x: e.clientX, y: e.clientY, char: c });
-  };
-
-  const handleAdd = async (char: string) => {
-    try {
-      const { added } = await appendCharToMyWorksheetApi(char);
-      if (added) {
-        push('success', `已添加「${char}」到「我的字帖」`);
-      } else {
-        push('info', `「${char}」已经在「我的字帖」里了`);
-      }
-    } catch (e) {
-      const err = e as Error & { code?: string };
-      if (err.code === 'unauthorized') {
-        push('error', '请先登录后再添加');
-      } else {
-        push('error', '添加失败,请重试');
-      }
-    }
   };
 
   if (chars.length === 0) {
@@ -60,10 +41,15 @@ export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
           x={menu.x}
           y={menu.y}
           char={menu.char}
-          onAdd={handleAdd}
+          onAdd={(c) => setDialogChar(c)}
           onClose={() => setMenu(null)}
         />
       )}
+      <AddToWorksheetDialog
+        open={!!dialogChar}
+        char={dialogChar ?? ''}
+        onClose={() => setDialogChar(null)}
+      />
     </>
   );
 }
