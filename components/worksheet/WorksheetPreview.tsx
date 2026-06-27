@@ -83,8 +83,8 @@ export function WorksheetPreview(props: Props) {
         <h1 className="worksheet-no-print mb-4 text-center text-2xl font-bold">{props.title}</h1>
       )}
 
-      <div className="overflow-x-auto">
-        <div className={`worksheet-grid mx-auto grid min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+      <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+        <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
           <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
             <div className="flex items-center gap-2">
               <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />

@@ -21,10 +21,10 @@ export function Header() {
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
       <div className="max-w-5xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
-        <div className="flex items-center gap-8">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" aria-label={BRAND.name}>
-            <Image src="/logo.png" alt={BRAND.name} width={40} height={40} className="rounded-full" />
-            <span className="font-kai text-xl text-ink tracking-wide">{BRAND.name}</span>
+        <div className="flex items-center gap-4 md:gap-8 min-w-0">
+          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0" aria-label={BRAND.name}>
+            <Image src="/logo.png" alt={BRAND.name} width={40} height={40} className="rounded-full shrink-0" />
+            <span className="font-kai text-xl text-ink tracking-wide truncate">{BRAND.name}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
             {visibleNavLinks.map(link => (
