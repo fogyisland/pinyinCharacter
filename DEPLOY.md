@@ -15,18 +15,23 @@
 ## 2. 部署步骤
 
 ```bash
-# 1. 解压
-unzip Up.zip
-cd Up   # 或 mv Up pinyin-character
+# 1. 在**开发机**生成部署包 (排除 node_modules / .next / .git / .env / Up/ 等)
+python scripts/copy-to-up.py
+# 输出 ./Up/ 目录,约 387 MB / 10k 文件
+# (旧版 Up.zip 已废弃;如需 zip 可在 Up/ 目录上自行 zip -r)
 
-# 2. 装依赖
+# 2. 上传 Up/ 到服务器
+rsync -avz --progress Up/ user@server:/opt/pinyin-character/
+
+# 3. 在服务器装依赖
+cd /opt/pinyin-character
 npm install --omit=dev
 
-# 3. 配置 .env (先复制模板)
+# 4. 配置 .env (先复制模板)
 cp .env.example .env
 nano .env    # 至少改 DATABASE_URL / JWT_SECRET / COOKIE_SECURE
 
-# 4. 构建 + 启动
+# 5. 构建 + 启动
 npm run build
 HOST=127.0.0.1 npm start    # 只 listen 在 127.0.0.1,反代访问
 ```
@@ -123,6 +128,8 @@ location /api/auth/ { limit_req zone=auth burst=5 nodelay; proxy_pass http://127
 location /api/init/ { limit_req zone=auth burst=5 nodelay; proxy_pass http://127.0.0.1:4444; }
 ```
 
+> **生产域名 `ziyun.pudafo.com` 的具体反代配置见 [`deploy/nginx.ziyun.pudafo.com.conf`](deploy/nginx.ziyun.pudafo.com.conf)** —— 已包含 Let's Encrypt 路径、TLS 协议套件、Cloudflare CDN 真实 IP 段占位、HTTPS→HTTP 重定向,直接 `cp` 到 `/etc/nginx/sites-available/` 即可。配套流程见 [`deploy/README.md`](deploy/README.md)。
+
 ## 4. 完整 Nginx 示例
 
 ```nginx
@@ -203,11 +210,12 @@ server {
 # 1. 备份
 mysqldump -uroot -p pinyin > backup-$(date +%F).sql
 
-# 2. 拉新代码
+# 2. 拉新代码 (开发机或服务器上都行)
 git pull origin main
 
 # 3. 重新打包部署
-#    (或者直接覆盖 Up/ 目录的对应文件,因为是单仓部署)
+#    开发机: python scripts/copy-to-up.py 然后 rsync Up/ 到服务器
+#    或者:   直接覆盖服务器上 Up/ 目录的对应文件(单仓部署,git pull 后 up-to-date)
 
 # 4. 装新依赖 + 重新构建
 npm install --omit=dev
@@ -218,8 +226,35 @@ pm2 restart pinyin
 # 或
 systemctl restart pinyin
 
-# 6. 如果有 schema 变更,跑一次手动 migrate
+# 6. **必跑** schema 迁移 — scripts/migrate.ts 跑 scripts/migrations/ 下所有 SQL,
+#    每个文件幂等 (MODIFY COLUMN / CREATE IF NOT EXISTS / 条件 ALTER),
+#    即使没新迁移也是 no-op,可以每次升级都跑一次
 npx tsx scripts/migrate.ts
 ```
 
-**注意**: `/init` 走完后会自动锁住 (`setup.route_enabled=false`)。下次再想跑 `/init` (例如全新 DB 恢复),需要 admin 登录后到 `/admin/settings/setup` 把它打开,或者直接清掉 `app_config` 里的 `setup.completed` flag。
+**注意 1**: `/init` 走完后会自动锁住 (`setup.route_enabled=false`)。下次再想跑 `/init` (例如全新 DB 恢复),需要 admin 登录后到 `/admin/settings/setup` 把它打开,或者直接清掉 `app_config` 里的 `setup.completed` flag。
+
+**注意 2 (schema 兼容)**: `scripts/init-db.ts` 已切换为 **slim schema** —— `chars` 表只有结构列 (`char` / `level` / `pinyin` / `radical` / `stroke_count` / `unicode_codepoint`),LLM 生成的内容 (meaning_zh / meaning_en / pinyin_alt / variants / etymology_story) 已迁到 `data/content/<char>.json` 文件。`lib/content.ts` 读路径优先 JSON、legacy fallback 仍兼容老 rich schema (16+ 列),所以**老库不用迁移也能跑**,但建议跑一次 `scripts/migrate.ts` + 重导 `data/content/` 以彻底对齐。
+
+## 8. 近期 schema 变更清单 (运维参考)
+
+升级后如果遇到字段缺失 / ENUM 报错,对照下表确认是否缺迁移。所有迁移在 `scripts/migrations/` 下,文件名前缀是日期 (YYYY-MM-DD-...):
+
+| 日期 | 文件 | 内容 | 影响 |
+|---|---|---|---|
+| 2026-06-18 | `...-cell-style-cross.sql` | `worksheets.cell_style` 加 `cross` | 老库保存 worksheet 时 ENUM 报错 |
+| 2026-06-18 | `...-multi-worksheet-print-feature.sql` | 字帖批量打印相关 | 不跑功能缺失 |
+| 2026-06-19 | `...-brush-paper-size.sql` | `worksheets.paper_size` 加 brush-12/24/28 | 选毛笔纸型保存失败 |
+| 2026-06-19 | `...-sutra-copy-progress.sql` | 新增 `sutra_copy_progress` 表 | 抄经模式进度保存失败 |
+| 2026-06-20 | `...-classics.sql` | `classics` 加 category/era/source 列 | 古籍列表缺失分类 |
+| 2026-06-20 | `...-worksheet-tool-presentation-split.sql` | cell_style ENUM 加 brush-/pen-square/cross | 选新格子样式保存失败 |
+| 2026-06-22 | `...-cell-style-trace.sql` | cell_style ENUM 加 brush-trace-square/cross | 描红模式保存失败 |
+
+**不在 SQL 迁移里的变更** (运行时行为变化,不需要 SQL):
+- `data/content/<char>.json` 成为内容单一来源 (取代 chars 表的内容列)
+- `classics` 表的 `chunks` / `chunk_count` 列已 drop,内容迁到 `data/classics/<slug>.json`
+- `poems` 表同样迁到 `data/poems/<id>.json`(不影响字段,只是数据物理位置变化)
+- 新增 SEO 路由:`/sitemap.xml`、`/sitemap-poetry.xml`、`/sitemap-ancient.xml`、`/sitemap-chars.xml`、`/robots.txt`(反代无需变更,Next.js 自动 serve)
+- 新增 `deploy/nginx.ziyun.pudafo.com.conf`(具体域名配置模板)
+- 新增 `scripts/copy-to-up.py`(取代旧的 `Up.zip` 打包流程)
+- 新增 `scripts/audit/seed-check.js`、`scripts/audit/db.js`(运维检查工具)
