@@ -5,12 +5,12 @@
     "meaning_zh": 7905,
     "meaning_en": 7905,
     "pinyin_alt": 7905,
-    "variants": 6496,
+    "variants": 6494,
     "etymology_story": 7905,
     "hanzi_story": 0,
     "rare_meaning": 1412,
     "rare_story": 1412
   },
   "generatedAt": "2026-06-17T16:10:58.056Z",
-  "note": "byField counts dropped 5 (2026-06-27 cleanup: deleted orphan content JSONs 丂/丄/丅/丆/龘 that had no matching DB row)"
+  "note": "byField counts dropped 5 (2026-06-27 cleanup: deleted orphan content JSONs 丂/丄/丅/丆/龘 that had no matching DB row); variants 6496→6494 (recomputed from JSONs, manifest was stale by 2)"
 }
