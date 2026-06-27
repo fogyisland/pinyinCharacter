@@ -25,6 +25,7 @@ export type AuditEvent =
   | 'admin_membership_plans_seeded'
   | 'admin_about_intro_regenerated'
   | 'smtp_config_updated' | 'smtp_test_sent'
+  | 'welcome_email_sent' | 'welcome_email_failed'
   | 'site_url_updated'
   | 'setup_route_enable' | 'setup_route_disable'
   | 'activation_lock' | 'activation_unlock';
@@ -53,6 +54,7 @@ export const AUDIT_EVENTS = [
   'admin_membership_plans_seeded',
   'admin_about_intro_regenerated',
   'smtp_config_updated', 'smtp_test_sent',
+  'welcome_email_sent', 'welcome_email_failed',
   'site_url_updated',
   'setup_route_enable', 'setup_route_disable',
   'activation_lock', 'activation_unlock',
@@ -103,6 +105,8 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   admin_about_intro_regenerated: '重新生成关于页',
   smtp_config_updated: '更新邮件配置',
   smtp_test_sent: '测试邮件发送',
+  welcome_email_sent: '发送欢迎邮件',
+  welcome_email_failed: '欢迎邮件发送失败',
   site_url_updated: '更新站点 URL',
   setup_route_enable: '开启 /init 路由',
   setup_route_disable: '关闭 /init 路由',

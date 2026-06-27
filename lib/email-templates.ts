@@ -4,6 +4,11 @@ export interface PasswordResetArgs {
   expiresInMinutes: number;
 }
 
+export interface WelcomeEmailArgs {
+  username: string;
+  loginUrl: string;
+}
+
 export interface EmailContent {
   subject: string;
   html: string;
@@ -60,6 +65,69 @@ export function passwordResetEmail(args: PasswordResetArgs): EmailContent {
     `链接将在 ${mins} 分钟后失效。`,
     '',
     '如果你没有申请重置,请忽略此邮件,你的账号仍然安全。',
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
+// Welcome email — sent right after registration completes.
+// Includes a direct login link and a brief feature tour. Soft by design:
+// no verification gating. The login link is optional (the user already has
+// a session cookie), but providing it makes the welcome useful even when
+// the user opens the email on a different device.
+export function welcomeEmail(args: WelcomeEmailArgs): EmailContent {
+  const subject = '欢迎加入字 ↔ 拼音 工具';
+  const safeUser = escapeHtml(args.username);
+  const safeUrl = escapeAttr(args.loginUrl);
+  const safeUrlText = escapeHtml(args.loginUrl);
+
+  const html = `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1f2937;">
+  <div style="max-width:560px;margin:24px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <div style="background:#f9fafb;padding:20px 24px;border-bottom:1px solid #e5e7eb;">
+      <div style="font-size:20px;font-weight:600;color:#111827;">字 ↔ 拼音 工具</div>
+    </div>
+    <div style="padding:24px;">
+      <p style="margin:0 0 16px 0;font-size:15px;">你好 ${safeUser},</p>
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+        欢迎加入字 ↔ 拼音 工具!你的账号已创建成功,可以开始使用了。
+      </p>
+      <p style="text-align:center;margin:24px 0;">
+        <a href="${safeUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:500;">前往登录</a>
+      </p>
+      <h3 style="margin:24px 0 8px 0;font-size:15px;color:#111827;">你可以试试这些功能</h3>
+      <ul style="margin:0;padding-left:20px;font-size:14px;line-height:1.8;color:#374151;">
+        <li>字典 — 查询 8105 个规范汉字的拼音、释义、字源</li>
+        <li>字帖 — 自定义生成田字格/米字格/描红练习</li>
+        <li>经典 — 诵读《诗经》《论语》等蒙学经典</li>
+        <li>诗词 — 浏览唐诗宋词,带拼音对照</li>
+      </ul>
+      <p style="margin:24px 0 8px 0;font-size:13px;color:#6b7280;">如果按钮无法点击,请复制此链接到浏览器:</p>
+      <p style="margin:0;font-family:Menlo,Monaco,Consolas,monospace;font-size:12px;color:#2563eb;word-break:break-all;background:#f9fafb;padding:10px;border-radius:4px;">${safeUrlText}</p>
+    </div>
+    <div style="background:#f9fafb;padding:16px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;">
+      © ${new Date().getFullYear()} 字 ↔ 拼音 工具
+    </div>
+  </div>
+</body></html>`;
+
+  const text = [
+    '字 ↔ 拼音 工具 — 欢迎加入',
+    '',
+    `你好 ${args.username},`,
+    '',
+    '欢迎加入字 ↔ 拼音 工具!你的账号已创建成功,可以开始使用了。',
+    '',
+    `登录链接: ${args.loginUrl}`,
+    '',
+    '你可以试试这些功能:',
+    '  · 字典 — 查询 8105 个规范汉字的拼音、释义、字源',
+    '  · 字帖 — 自定义生成田字格/米字格/描红练习',
+    '  · 经典 — 诵读《诗经》《论语》等蒙学经典',
+    '  · 诗词 — 浏览唐诗宋词,带拼音对照',
+    '',
+    '如果你没有注册此账号,请忽略此邮件。',
   ].join('\n');
 
   return { subject, html, text };

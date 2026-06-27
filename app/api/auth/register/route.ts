@@ -5,6 +5,9 @@ import {
 } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
 import { registerSchema } from '@/lib/validators';
+import { sendEmail } from '@/lib/email';
+import { welcomeEmail } from '@/lib/email-templates';
+import { getRuntimeSiteUrl } from '@/lib/seo/config';
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -43,6 +46,20 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
   await writeAudit({ userId, event: 'register', metadata: { isFirst, email }, ip, userAgent: ua });
+
+  // Send a welcome email — failures here MUST NOT block registration.
+  // The user already has a session cookie + the audit row; if SMTP is
+  // misconfigured we want them in, with email_send_history recording the
+  // failure for the admin to spot from /admin/email.
+  try {
+    const siteUrl = await getRuntimeSiteUrl();
+    const tpl = welcomeEmail({ username, loginUrl: `${siteUrl}/login` });
+    await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text, template: 'welcome' });
+    await writeAudit({ userId, event: 'welcome_email_sent', metadata: { to: email }, ip, userAgent: ua });
+  } catch (e) {
+    const err = e instanceof Error ? e.message : String(e);
+    await writeAudit({ userId, event: 'welcome_email_failed', metadata: { to: email, error: err }, ip, userAgent: ua });
+  }
 
   const user = { id: userId, username, isAdmin: isFirst };
   const token = await signSession(user);
