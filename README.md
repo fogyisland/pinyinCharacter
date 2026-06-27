@@ -122,12 +122,11 @@ HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 ### 数据初始化（一次性）
 
 ```bash
-pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts
-pnpm tsx --env-file=.env scripts/generate-stories.ts --provider openai --model gpt-4o-mini
-pnpm tsx --env-file=.env scripts/show-stats.ts
+pnpm tsx scripts/init-db.ts   # 建表 + 种子 activate singleton + app_config 默认值
+pnpm tsx scripts/migrate.ts   # 应用 scripts/migrations/*.sql
 ```
 
-需要 `LLM_API_KEY` 和 `LLM_BASE_URL` 在 `.env` 中。脚本可重复运行(已填的释义/故事不覆盖)。
+字符和诗文的初始内容来自 `data/` 目录 (见 `data/content-manifest.json` + `data/poems-manifest.json` + `data/classics-manifest.json`)。这些 manifest 在导入时由 `init-db.ts` 和 `scripts/build-*.ts` 自动生成。
 
 ### 部首数据生成（一次性）
 
