@@ -6,7 +6,8 @@ import {
 import { writeAudit } from '@/lib/audit';
 import { registerSchema } from '@/lib/validators';
 import { sendEmail } from '@/lib/email';
-import { welcomeEmail } from '@/lib/email-templates';
+import { welcomeEmail, emailVerificationEmail } from '@/lib/email-templates';
+import { issueVerificationToken } from '@/lib/email-verification';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
 
 export async function POST(req: NextRequest) {
@@ -59,6 +60,23 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     const err = e instanceof Error ? e.message : String(e);
     await writeAudit({ userId, event: 'welcome_email_failed', metadata: { to: email, error: err }, ip, userAgent: ua });
+  }
+
+  // Issue email verification token + send a verification email (soft — UI
+  // just shows "未验证" if ignored; site is fully usable either way).
+  try {
+    const { rawToken } = await issueVerificationToken(userId);
+    const siteUrl = await getRuntimeSiteUrl();
+    const tpl = emailVerificationEmail({
+      username,
+      verifyUrl: `${siteUrl}/api/auth/verify-email?token=${encodeURIComponent(rawToken)}`,
+      expiresInHours: 24,
+    });
+    await sendEmail({ to: email, subject: tpl.subject, html: tpl.html, text: tpl.text, template: 'email_verification' });
+    await writeAudit({ userId, event: 'verification_email_sent', metadata: { to: email }, ip, userAgent: ua });
+  } catch (e) {
+    const err = e instanceof Error ? e.message : String(e);
+    await writeAudit({ userId, event: 'verification_email_failed', metadata: { to: email, error: err }, ip, userAgent: ua });
   }
 
   const user = { id: userId, username, isAdmin: isFirst };

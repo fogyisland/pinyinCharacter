@@ -9,6 +9,12 @@ export interface WelcomeEmailArgs {
   loginUrl: string;
 }
 
+export interface EmailVerificationArgs {
+  username: string;
+  verifyUrl: string;
+  expiresInHours: number;
+}
+
 export interface EmailContent {
   subject: string;
   html: string;
@@ -126,6 +132,60 @@ export function welcomeEmail(args: WelcomeEmailArgs): EmailContent {
     '  · 字帖 — 自定义生成田字格/米字格/描红练习',
     '  · 经典 — 诵读《诗经》《论语》等蒙学经典',
     '  · 诗词 — 浏览唐诗宋词,带拼音对照',
+    '',
+    '如果你没有注册此账号,请忽略此邮件。',
+  ].join('\n');
+
+  return { subject, html, text };
+}
+
+// Email verification — single-purpose email for confirming the user's
+// address. Soft verification: no auth gating, just an admin-visible
+// "未验证" badge on /admin/users/[id]. The user can still use the site
+// even if they ignore this email.
+export function emailVerificationEmail(args: EmailVerificationArgs): EmailContent {
+  const subject = '请验证你的邮箱 — 字 ↔ 拼音 工具';
+  const safeUser = escapeHtml(args.username);
+  const safeUrl = escapeAttr(args.verifyUrl);
+  const safeUrlText = escapeHtml(args.verifyUrl);
+  const hours = args.expiresInHours;
+
+  const html = `<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1f2937;">
+  <div style="max-width:560px;margin:24px auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+    <div style="background:#f9fafb;padding:20px 24px;border-bottom:1px solid #e5e7eb;">
+      <div style="font-size:20px;font-weight:600;color:#111827;">字 ↔ 拼音 工具</div>
+    </div>
+    <div style="padding:24px;">
+      <p style="margin:0 0 16px 0;font-size:15px;">你好 ${safeUser},</p>
+      <p style="margin:0 0 16px 0;font-size:15px;line-height:1.6;">
+        感谢你注册字 ↔ 拼音 工具。请点击下面的按钮验证你的邮箱(可选,但有助于账号安全):
+      </p>
+      <p style="text-align:center;margin:24px 0;">
+        <a href="${safeUrl}" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;padding:12px 28px;border-radius:6px;font-size:15px;font-weight:500;">验证邮箱</a>
+      </p>
+      <p style="margin:16px 0 8px 0;font-size:13px;color:#6b7280;">如果按钮无法点击,请复制此链接到浏览器:</p>
+      <p style="margin:0;font-family:Menlo,Monaco,Consolas,monospace;font-size:12px;color:#2563eb;word-break:break-all;background:#f9fafb;padding:10px;border-radius:4px;">${safeUrlText}</p>
+      <p style="margin:24px 0 0 0;font-size:13px;color:#6b7280;">链接将在 ${hours} 小时后失效。</p>
+      <p style="margin:16px 0 0 0;font-size:13px;color:#6b7280;">即使不验证,你也已经可以正常使用网站。如果你没有注册此账号,请忽略此邮件。</p>
+    </div>
+    <div style="background:#f9fafb;padding:16px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;">
+      © ${new Date().getFullYear()} 字 ↔ 拼音 工具
+    </div>
+  </div>
+</body></html>`;
+
+  const text = [
+    '字 ↔ 拼音 工具 — 请验证你的邮箱',
+    '',
+    `你好 ${args.username},`,
+    '',
+    `感谢你注册字 ↔ 拼音 工具。请在 ${hours} 小时内访问下面的链接验证邮箱(可选):`,
+    '',
+    args.verifyUrl,
+    '',
+    '即使不验证,你也可以正常使用网站。',
     '',
     '如果你没有注册此账号,请忽略此邮件。',
   ].join('\n');
