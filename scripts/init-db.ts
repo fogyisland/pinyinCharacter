@@ -347,6 +347,14 @@ const DDL = [
      updated_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
      PRIMARY KEY (id)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+  `INSERT INTO app_config (\`key\`, value, updated_by) VALUES
+     ('era.jiaguwen.font', 'Oracular',          NULL),
+     ('era.jinwen.font',    'WangHanzongWeibei', NULL),
+     ('era.xiaozhuan.font', 'QuanZiKuShuoWen',   NULL),
+     ('era.lishu.font',     'WangHanzongLishu',  NULL),
+     ('era.kaishu.font',    'ZCOOLXiaoWei',      NULL)
+   ON DUPLICATE KEY UPDATE value = VALUES(value)`,
 ];
 
 export async function initDb(): Promise<void> {

@@ -36,6 +36,11 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'smtp.from': (v) => v.length === 0 || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
   'smtp.from_name': (v) => v.length <= 128,
   'site.url': (v) => /^https?:\/\//.test(v) && v.length <= 256,
+  'era.jiaguwen.font': (v) => ['Oracular', 'OracularInverted', 'YinQiJiaGuWen'].includes(v),
+  'era.jinwen.font':    (v) => ['WangHanzongWeibei', 'HanDianJinWen'].includes(v),
+  'era.xiaozhuan.font': (v) => ['QuanZiKuShuoWen', 'HanDianJinWen'].includes(v),
+  'era.lishu.font':     (v) => ['WangHanzongLishu', 'ZCOOLXiaoWei'].includes(v),
+  'era.kaishu.font':    (v) => ['ZCOOLXiaoWei', 'KaiTi', 'Iansui', 'MaShanZheng'].includes(v),
 };
 
 export async function getConfig(key: string): Promise<string | null> {
