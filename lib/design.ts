@@ -10,6 +10,7 @@ export const NAV_LINKS = [
   { href: '/rare-chars', label: '罕见字库' },
   { href: '/dictionary', label: '字典' },
   { href: '/worksheet', label: '字帖' },
+  { href: '/worksheet/practice', label: '练字模板' },
   { href: '/pinyin', label: '字转拼音' },
   { href: '/poetry', label: '诗词' },
   { href: '/sutra', label: '佛经' },
