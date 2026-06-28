@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
-import { PAPER_SIZES, cellsPerPage, cellStyleLabel, getTool, isBrushSize } from '@/lib/worksheet-types';
+import { PAPER_SIZES, PRACTICE_LAYOUT, cellsPerPage, cellStyleLabel, getTool, isBrushSize } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 
 const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = [
@@ -22,15 +22,6 @@ function availablePaperSizes(tool: Tool): readonly PaperSize[] {
   return tool === 'brush' ? BRUSH_PAPERS : PEN_PAPERS;
 }
 
-function cellSizeFor(p: PaperSize): number {
-  switch (p) {
-    case 'brush-12': return 140;
-    case 'brush-24': return 100;
-    case 'brush-28': return 85;
-    default:         return 80;
-  }
-}
-
 // Host-only display for the footer line: strip protocol + path so the
 // printed page shows e.g. "fogyisland.github.io" instead of the full URL.
 function hostOf(raw: string): string {
@@ -43,7 +34,7 @@ function hostOf(raw: string): string {
 }
 
 export function PracticeTemplate() {
-  // Defaults: 钢笔·田字格 · A4 · 88 cells/page (auto-fitted by paper size).
+  // Defaults: 钢笔·田字格 · A4 · 80 cells/page (auto-fitted by paper size).
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
   const [cellStyle, setCellStyle] = useState<CellStyle>('pen-square');
 
@@ -60,7 +51,9 @@ export function PracticeTemplate() {
   }
 
   const sizeClass = `worksheet-grid--${paperSize.toLowerCase()}`;
-  const cellSize = cellSizeFor(paperSize);
+  // cellSize comes from PRACTICE_LAYOUT (per-paper, sized to fit the
+  // printable area: 70px for A3 so 12 cols fit, 80px for A4/B5).
+  const cellSize = PRACTICE_LAYOUT[paperSize].cellSize;
   // Auto-fit: cellsPerPage gives the count that fits one page at the
   // chosen paper size. No count selector — switching paper size reflows
   // the grid to fill exactly one sheet.
@@ -104,20 +97,29 @@ export function PracticeTemplate() {
             </select>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex items-center justify-between gap-2">
           <p className="text-xs text-ink-faint">
             {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} 格 / 页
           </p>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="rounded bg-seal px-4 py-1.5 text-white text-sm hover:bg-seal/80"
-          >
-            打印模板
-          </button>
+          <div className="flex gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
+            >
+              下载 PDF
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="rounded bg-seal px-4 py-1.5 text-white text-sm hover:bg-seal/80"
+            >
+              打印模板
+            </button>
+          </div>
         </div>
         <p className="mt-2 text-xs text-ink-faint">
-          提示：Chrome 打印对话框「更多设置」里取消「页眉和页脚」，可避免浏览器自动添加 URL 和日期。
+          提示：Chrome 打印对话框「更多设置」里取消「页眉和页脚」；目标选「另存为 PDF」保存文件，或选打印机直接打印。
         </p>
       </div>
 

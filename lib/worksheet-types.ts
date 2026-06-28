@@ -94,6 +94,19 @@ export const PAPER_SIZES: { value: PaperSize; label: string; cols: number; cells
   { value: 'brush-28', label: '28 字 · 毛笔',  cols: 7,  cellsPerPage: 28 },
 ];
 
+// PracticeTemplate per-paper cell size. Cols come from CSS
+// (app/globals.css worksheet-grid--*), rows = cellsPerPage / cols.
+// cellSize varies per paper so the grid fills the printable area without
+// overflowing horizontally (12 × 80px overflows A3 inner width).
+export const PRACTICE_LAYOUT: Record<PaperSize, { cellSize: number }> = {
+  A3:         { cellSize: 70  },
+  A4:         { cellSize: 80  },
+  B5:         { cellSize: 80  },
+  'brush-12': { cellSize: 140 },
+  'brush-24': { cellSize: 100 },
+  'brush-28': { cellSize: 85  },
+};
+
 export const FONT_FAMILIES: {
   value: FontFamily;
   label: string;

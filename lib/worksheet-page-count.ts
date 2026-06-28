@@ -1,14 +1,15 @@
 import type { PaperSize } from './worksheet-types';
 
-// Conservative real-print capacity (verified by hand: A4 fits 10 rows × 8 cols
-// = 80 cells; the prior 88 overflowed one row onto a 2nd sheet). All non-brush
-// papers lose one row to leave headroom for the column header + footer line
-// rendered inside .worksheet-grid (not visible in the per-cell size calc).
-// brush-12/24/28 are fixed (the brush literal is the spec, not a heuristic).
+// Verified real-print capacity per paper size. Each row keeps headroom for
+// the column header + footer line rendered inside .worksheet-grid (~80px),
+// which the per-cell size calc alone can't see. The cell size used to render
+// is in PRACTICE_LAYOUT (lib/worksheet-types.ts) and varies per paper so
+// each fits its printable area cleanly. brush-12/24/28 are fixed literals
+// (the brush spec, not a heuristic).
 const CELLS_PER_PAGE: Record<PaperSize, number> = {
-  A3: 120,        // 12 × 10
-  A4: 80,         // 8 × 10
-  B5: 54,         // 6 × 9
+  A3: 168,        // 12 cols × 14 rows, 70px cells (fills the bigger paper)
+  A4: 80,         // 8 cols × 10 rows,  80px cells (verified by hand-print)
+  B5: 48,         // 6 cols × 8 rows,   80px cells (54 overflowed one row)
   'brush-12': 12,
   'brush-24': 24,
   'brush-28': 28,
