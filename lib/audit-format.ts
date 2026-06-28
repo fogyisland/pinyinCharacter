@@ -33,7 +33,8 @@ export type AuditEvent =
   | 'marketing_unsubscribed'
   | 'site_url_updated'
   | 'setup_route_enable' | 'setup_route_disable'
-  | 'activation_lock' | 'activation_unlock';
+  | 'activation_lock' | 'activation_unlock'
+  | 'admin.font_config.update';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -68,6 +69,7 @@ export const AUDIT_EVENTS = [
   'site_url_updated',
   'setup_route_enable', 'setup_route_disable',
   'activation_lock', 'activation_unlock',
+  'admin.font_config.update',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -131,6 +133,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   setup_route_disable: '关闭 /init 路由',
   activation_lock: '锁定平台实例',
   activation_unlock: '解锁平台实例',
+  'admin.font_config.update': '更新字源字体配置',
 };
 
 /**
@@ -234,6 +237,8 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
       return `云端/管理员锁定平台实例 ${str(m.shortName) ? `「${str(m.shortName)}」` : ''}`;
     case 'activation_unlock':
       return `解锁平台实例 ${str(m.shortName) ? `「${str(m.shortName)}」` : ''}${str(m.source) ? ` (${str(m.source)})` : ''}`;
+    case 'admin.font_config.update':
+      return `更新字源字体配置${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
 
     default: {
       const keys = Object.keys(m);
