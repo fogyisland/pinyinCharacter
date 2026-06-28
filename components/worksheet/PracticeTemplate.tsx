@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import type { CellStyle, PaperSize } from '@/lib/worksheet-types';
-import { PAPER_SIZES, cellStyleLabel } from '@/lib/worksheet-types';
+import { PAPER_SIZES, cellsPerPage, cellStyleLabel } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 
 const PRACTICE_CELL_STYLES: { value: CellStyle; label: string }[] = [
@@ -11,8 +11,6 @@ const PRACTICE_CELL_STYLES: { value: CellStyle; label: string }[] = [
   { value: 'pen-square', label: '钢笔 · 田字格' },
   { value: 'pen-cross', label: '钢笔 · 米字格' },
 ];
-
-const PRACTICE_COUNTS = [50, 100, 200, 500] as const;
 
 function cellSizeFor(p: PaperSize): number {
   switch (p) {
@@ -23,15 +21,30 @@ function cellSizeFor(p: PaperSize): number {
   }
 }
 
+// Host-only display for the footer line: strip protocol + path so the
+// printed page shows e.g. "fogyisland.github.io" instead of the full URL.
+function hostOf(raw: string): string {
+  if (!raw) return '';
+  try {
+    return new URL(raw).host;
+  } catch {
+    return raw;
+  }
+}
+
 export function PracticeTemplate() {
-  // Defaults: 钢笔·田字格 · A4 · 100 cells — the most common practice setup.
+  // Defaults: 钢笔·田字格 · A4 · 88 cells/page (auto-fitted by paper size).
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
   const [cellStyle, setCellStyle] = useState<CellStyle>('pen-square');
-  const [count, setCount] = useState<number>(100);
 
   const sizeClass = `worksheet-grid--${paperSize.toLowerCase()}`;
   const cellSize = cellSizeFor(paperSize);
+  // Auto-fit: cellsPerPage gives the count that fits one page at the
+  // chosen paper size. No count selector — switching paper size reflows
+  // the grid to fill exactly one sheet.
+  const count = cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
+  const siteHost = hostOf(process.env.NEXT_PUBLIC_SITE_URL ?? '');
 
   return (
     <div>
@@ -42,7 +55,7 @@ export function PracticeTemplate() {
       {/* Form: hidden in print. */}
       <div className="worksheet-no-print card-paper rounded-lg p-4 mb-4">
         <h2 className="text-sm font-semibold text-ink mb-3">练字模板设置</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="block text-xs text-ink-soft mb-1">格子形式</label>
             <select
@@ -67,22 +80,10 @@ export function PracticeTemplate() {
               ))}
             </select>
           </div>
-          <div>
-            <label className="block text-xs text-ink-soft mb-1">格数</label>
-            <select
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-            >
-              {PRACTICE_COUNTS.map((n) => (
-                <option key={n} value={n}>{n} 格</option>
-              ))}
-            </select>
-          </div>
         </div>
         <div className="mt-3 flex items-center justify-between">
           <p className="text-xs text-ink-faint">
-            {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · {count} 格
+            {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} 格 / 页
           </p>
           <button
             type="button"
@@ -102,7 +103,7 @@ export function PracticeTemplate() {
               <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
               <span className="font-kai text-base text-ink">字·韵</span>
             </div>
-            <div className="text-sm text-ink-soft">练字模板</div>
+            <div className="text-sm text-ink-soft">空白字帖</div>
             <div className="text-xs text-ink-faint">公益网站，请多关注</div>
           </div>
           {cells.map((i) => (
@@ -110,6 +111,11 @@ export function PracticeTemplate() {
               <WorksheetCell char="" style={cellStyle} size={cellSize} />
             </div>
           ))}
+          {siteHost && (
+            <div className="col-span-full text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
+              {siteHost}
+            </div>
+          )}
         </div>
       </div>
     </div>

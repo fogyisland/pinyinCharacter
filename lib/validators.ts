@@ -5,6 +5,11 @@ import { z } from 'zod';
 // 允许标点是关键: 过滤掉中文逗号会让 IME 句子的光标错位, 看起来像"字被覆盖"
 const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
 
+// 保存到字帖的字符: 只保留 BMP 汉字, 过滤标点/全角空格/全角符号.
+// 与 SINGLE_CJK 的区别: SINGLE_CJK 接受标点 (IME 友好), WORKSHEET_CHAR 用于
+// 实际写入 DB content 前的过滤 (一个字一个格子, 标点不应放进格子里).
+const WORKSHEET_CHAR = /^[㐀-鿿]$/;
+
 export const searchQuerySchema = z.object({
   q: z
     .string()
@@ -39,6 +44,8 @@ export const appendToWorksheetSchema = z
       }))
       .min(1)
       .max(500)
+      .transform((arr) => arr.filter((c) => WORKSHEET_CHAR.test(c)))
+      .refine((arr) => arr.length >= 1, { message: 'at least one CJK char required after filtering punctuation' })
       .optional(),
     worksheetId: z.coerce.number().int().positive().optional(),
     newTitle: z.string().min(1).max(80).optional(),
@@ -67,7 +74,9 @@ export const saveWorksheetSchema = z.object({
   content: z
     .array(z.string().regex(SINGLE_CJK))
     .min(1)
-    .max(500),
+    .max(500)
+    .transform((arr) => arr.filter((c) => WORKSHEET_CHAR.test(c)))
+    .refine((arr) => arr.length >= 1, { message: 'at least one CJK char required after filtering punctuation' }),
   cellStyle: z.enum([
     'brush-square', 'brush-cross',
     'pen-square',   'pen-cross',
