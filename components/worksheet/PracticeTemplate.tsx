@@ -116,6 +116,9 @@ export function PracticeTemplate() {
             打印模板
           </button>
         </div>
+        <p className="mt-2 text-xs text-ink-faint">
+          提示：Chrome 打印对话框「更多设置」里取消「页眉和页脚」，可避免浏览器自动添加 URL 和日期。
+        </p>
       </div>
 
       {/* Template grid: matches WorksheetPreview layout but with empty cells. */}
@@ -127,7 +130,6 @@ export function PracticeTemplate() {
               <span className="font-kai text-base text-ink">字·韵</span>
             </div>
             <div className="text-sm text-ink-soft">空白字帖</div>
-            <div className="text-xs text-ink-faint">公益网站，请多关注</div>
           </div>
           {cells.map((i) => (
             <div key={i} className="worksheet-cell">
