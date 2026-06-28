@@ -3,20 +3,25 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Era, EraGlyph as EraGlyphType } from '@/lib/etymology-types';
 import { ERA_DATES, LEVEL_LABEL, coverageHint, type CharLevel } from './era-dates';
 
+// NOTE: Mirrors lib/era-fonts.ts DEFAULT_ERA_FONTS. We cannot import from
+// lib/era-fonts.ts here because it transitively pulls in mysql2 via
+// getAllConfig, which webpack cannot bundle into a client chunk.
+// The RSC page always passes an explicit eraFonts prop; this constant is
+// only used as a fallback when the prop is omitted (e.g. unit tests).
+const DEFAULT_ERA_FONTS: Record<Era, string> = {
+  jiaguwen: 'Oracular',
+  jinwen: 'WangHanzongWeibei',
+  xiaozhuan: 'QuanZiKuShuoWen',
+  lishu: 'WangHanzongLishu',
+  kaishu: 'ZCOOLXiaoWei',
+};
+
 const ERA_LABELS: Record<Era, string> = {
   jiaguwen: '甲骨文',
   jinwen: '金文',
   xiaozhuan: '小篆',
   lishu: '隶书',
   kaishu: '楷书',
-};
-
-const ERA_FONT_FAMILY: Record<Era, string> = {
-  jiaguwen: 'YinQiJiaGuWen',
-  jinwen: 'HanDianJinWen',
-  xiaozhuan: 'QuanZiKuShuoWen',
-  lishu: 'QuanZiKuLiDing',
-  kaishu: 'KaiTi',
 };
 
 const ERA_FONT_CLASS: Record<Era, string> = {
@@ -32,6 +37,9 @@ interface Props {
   eraGlyphs: EraGlyphType[];
   story: string | null;
   level: CharLevel;
+  /** Active era→font-family mapping resolved server-side from app_config.
+   *  Defaults to DEFAULT_ERA_FONTS if omitted (e.g. in tests). */
+  eraFonts?: Record<Era, string>;
 }
 
 const AUTOPLAY_INTERVAL_MS = 1200;
@@ -42,7 +50,7 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
+export function EtymologyMorph({ char, eraGlyphs, story, level, eraFonts = DEFAULT_ERA_FONTS }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(() => !prefersReducedMotion());
 
@@ -130,7 +138,7 @@ export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
                         motion-reduce:transition-none
                         ${ERA_FONT_CLASS[era.era]}
                         ${i === currentIndex ? 'opacity-100' : 'opacity-0'}`}
-            style={{ fontFamily: ERA_FONT_FAMILY[era.era] }}
+            style={{ fontFamily: eraFonts[era.era] }}
           >
             {char}
           </span>

@@ -10,6 +10,7 @@ import { getChar } from '@/lib/chars';
 import { EtymologyMorph } from '@/components/etymology/EtymologyMorph';
 import { EtymologyPrevNext } from '@/components/etymology/EtymologyPrevNext';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
+import { getActiveEraFonts } from '@/lib/era-fonts';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +21,15 @@ interface Props {
 export default async function EtymologyPage({ params }: Props) {
   const { char } = await params;
   const decoded = decodeURIComponent(char);
-  // Three parallel reads: char row (to distinguish "no such char" 404 from
-  // "char exists but no etymology" empty state), etymology data, prev/next.
-  const [charRow, etymology, adjacent] = await Promise.all([
+  // Four parallel reads: char row (to distinguish "no such char" 404 from
+  // "char exists but no etymology" empty state), etymology data, prev/next,
+  // and active era→font mapping (resolved from app_config so admin changes
+  // take effect on next request).
+  const [charRow, etymology, adjacent, eraFonts] = await Promise.all([
     getChar(decoded),
     getEtymology(decoded),
     getAdjacentChars(decoded),
+    getActiveEraFonts(),
   ]);
   if (!charRow) notFound();
   return (
@@ -55,6 +59,7 @@ export default async function EtymologyPage({ params }: Props) {
             eraGlyphs={etymology.eraGlyphs}
             story={etymology.story}
             level={etymology.level}
+            eraFonts={eraFonts}
           />
         ) : (
           // Char is in the chars table but no etymology row + no content JSON
