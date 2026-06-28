@@ -324,7 +324,7 @@ export async function getActiveEraFonts(): Promise<Record<Era, string>> {
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `pnpm test tests/unit/lib/era-fonts.test.ts`
-Expected: PASS (all 9 tests).
+Expected: PASS (all 8 tests: 3 ERA_FONTS registry + 1 DEFAULT_ERA_FONTS + 4 getActiveEraFonts).
 
 - [ ] **Step 6: Commit**
 
@@ -1159,7 +1159,7 @@ type: project
 8 commits on local main (intentional deferred fill — run `git log --oneline -8` after Step 6 to capture):
 
 1. CSS @font-face for Oracular/OracularInverted/WangHanzongWeibei/WangHanzongXingshu + download-ancient-fonts.ts entries
-2. lib/era-fonts.ts curated registry + DEFAULT_ERA_FONTS + getActiveEraFonts (9 tests)
+2. lib/era-fonts.ts curated registry + DEFAULT_ERA_FONTS + getActiveEraFonts (8 tests)
 3. 5 KEY_VALIDATORS + SQL seed migration + init-db.ts inline INSERTs
 4. EtymologyMorph accepts eraFonts prop; /etymology/[char] RSC fetches via getActiveEraFonts
 5. GET/PUT /api/admin/font-config with audit log (6 tests)
