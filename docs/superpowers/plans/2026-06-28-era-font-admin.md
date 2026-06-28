@@ -1045,7 +1045,7 @@ import { DEFAULT_ERA_FONTS, getActiveEraFonts } from '@/lib/era-fonts';
 
 describe('Integration: /etymology reflects app_config era fonts', () => {
   const testKey = 'era.jiaguwen.font';
-  const originalValue: string | null = null;
+  let originalValue: string | null = null;
 
   beforeAll(async () => {
     // Capture existing value so we can restore after the test
@@ -1053,7 +1053,7 @@ describe('Integration: /etymology reflects app_config era fonts', () => {
       `SELECT value FROM app_config WHERE \`key\` = ? LIMIT 1`,
       [testKey],
     );
-    if (rows.length) (originalValue as any) = rows[0].value;
+    if (rows.length) originalValue = rows[0].value;
   });
 
   afterAll(async () => {
