@@ -1,9 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ComponentType, type ReactElement, type ReactNode } from 'react';
+import dynamic from 'next/dynamic';
+import type { DocumentProps } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
 import { PAPER_SIZES, PRACTICE_LAYOUT, cellsPerPage, cellStyleLabel, getTool, isBrushSize } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
+import { PracticePDF } from './PracticePDF';
+
+// @react-pdf/renderer's main entry is the Node build, which throws when
+// PDFDownloadLink is instantiated on the server. Dynamic import with
+// ssr: false skips the server bundle entirely — only loads in the browser.
+// Cast through `unknown` because next/dynamic's prop inference fights
+// react-pdf's overloaded children (ReactNode | render-prop).
+const PDFDownloadLink = dynamic(
+  () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
+  { ssr: false, loading: () => <span className="rounded border border-seal px-4 py-1.5 text-seal/60 text-sm">…</span> }
+) as unknown as ComponentType<{
+  document: ReactElement<DocumentProps>;
+  fileName?: string;
+  className?: string;
+  children?: ReactNode | ((state: { loading: boolean }) => ReactNode);
+}>;
 
 const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = [
   { value: 'brush-square', label: '毛笔 · 田字格', tool: 'brush' },
@@ -102,13 +120,13 @@ export function PracticeTemplate() {
             {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} 格 / 页
           </p>
           <div className="flex gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => window.print()}
+            <PDFDownloadLink
+              document={<PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />}
+              fileName={`练字模板-${paperSize}.pdf`}
               className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
             >
-              下载 PDF
-            </button>
+              {({ loading }) => (loading ? '生成中…' : '下载 PDF')}
+            </PDFDownloadLink>
             <button
               type="button"
               onClick={() => window.print()}
@@ -119,7 +137,7 @@ export function PracticeTemplate() {
           </div>
         </div>
         <p className="mt-2 text-xs text-ink-faint">
-          提示：Chrome 打印对话框「更多设置」里取消「页眉和页脚」；目标选「另存为 PDF」保存文件，或选打印机直接打印。
+          提示：点「下载 PDF」直接获得自定义排版的 PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。
         </p>
       </div>
 

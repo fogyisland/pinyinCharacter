@@ -16,6 +16,12 @@ const config: NextConfig = {
     'cross-fetch',
     'xml-escape',
   ],
+  // @react-pdf/renderer ships ESM-only ("type":"module") and imports
+  // Node-only modules in its main entry. transpilePackages lets webpack
+  // handle the ESM imports; combined with `dynamic({ ssr: false })` for
+  // PDFDownloadLink in PracticeTemplate, this avoids the "PDFDownloadLink
+  // is a web specific API" throw on SSR.
+  transpilePackages: ['@react-pdf/renderer'],
 };
 
 export default config;
