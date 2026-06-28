@@ -69,6 +69,26 @@ const FONTS: FontEntry[] = [
     ],
     label: '王漢宗中隸書繁 (Wang Hanzong Lishu, 隶书)',
   },
+  {
+    filename: 'Oracular-Regular.ttf',
+    urls: ['https://cdn.jsdelivr.net/gh/jamshidh/Oracular@master/Oracular-Regular.ttf'],
+    label: 'Oracular (甲骨文)',
+  },
+  {
+    filename: 'Oracular-Inverted.ttf',
+    urls: ['https://cdn.jsdelivr.net/gh/jamshidh/Oracular@master/Oracular-Inverted.ttf'],
+    label: 'Oracular Inverted (甲骨文 阴文)',
+  },
+  {
+    filename: 'wang-hanzong-weibei.ttf',
+    urls: ['https://cdn.jsdelivr.net/gh/wordshub/free-font@master/assets/font/%E4%B8%AD%E6%96%87/%E7%8E%8B%E6%B1%89%E5%AE%97%E5%AD%97%E4%BD%93%E7%B3%BB%E5%88%97/%E7%8E%8B%E6%BC%A2%E5%AE%97%E4%B8%AD%E9%AD%9A%E9%9A%86%E7%A2%91.ttf'],
+    label: '王漢宗魏碑 (Wang Hanzong WeiBei, 金文近似)',
+  },
+  {
+    filename: 'wang-hanzong-xingshu.ttf',
+    urls: ['https://cdn.jsdelivr.net/gh/wordshub/free-font@master/assets/font/%E4%B8%AD%E6%96%87/%E7%8E%8B%E6%B1%89%E5%AE%97%E5%AD%97%E4%BD%93%E7%B3%BB%E5%88%97/%E7%8E%8B%E6%BC%A2%E5%AE%97%E8%A1%8C%E6%9B%B8%E7%B9%81.ttf'],
+    label: '王漢宗行書繁 (Wang Hanzong XingShu)',
+  },
 ];
 
 async function downloadOnce(url: string, dest: string, timeoutMs = 30000): Promise<boolean> {

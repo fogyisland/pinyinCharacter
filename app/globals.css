@@ -203,6 +203,32 @@
   font-display: swap;
 }
 
+/* ============ Era font alternatives (added 2026-06-28) ============ */
+@font-face {
+  font-family: 'Oracular';
+  src: url('/fonts/Oracular-Regular.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'OracularInverted';
+  src: url('/fonts/Oracular-Inverted.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'WangHanzongWeibei';
+  src: url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  font-display: swap;
+}
+@font-face {
+  font-family: 'WangHanzongXingshu';
+  src: url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
+       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  font-display: swap;
+}
+
 /* ============ Hard-pen fonts (Plan G2) ============ */
 @font-face {
   font-family: 'LXGW WenKai GB';
