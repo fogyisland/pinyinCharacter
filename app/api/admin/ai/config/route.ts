@@ -11,6 +11,8 @@ const CONFIG_KEYS = [
   'ai.rate_limit_per_user_per_day',
   'ai.timeout_ms',
   'ai.temperature',
+  'ai.thinking',
+  'ai.max_completion_tokens',
 ] as const;
 type AiConfigKey = typeof CONFIG_KEYS[number];
 const SECRET_KEYS: ReadonlySet<AiConfigKey> = new Set(['ai.api_key']);

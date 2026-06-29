@@ -13,13 +13,14 @@ export interface LLMChatArgs {
   temperature?: number;
   maxTokens?: number;
   /**
-   * Pass `thinking: { type: 'disabled' }` to the API so MiniMax-M3 skips its
-   * chain-of-thought and answers directly. Without this, M3 spends the entire
-   * `max_tokens` budget on <think>...</think> and the actual response is empty
-   * (finish_reason: "length"). Default: true (we never want reasoning tokens
-   * for content generation tasks like dict entries or short stories).
+   * Thinking mode for reasoning models (e.g. MiniMax-M3):
+   *   - 'disabled' — skip chain-of-thought, answer directly
+   *   - 'adaptive' — let the model reason first, then answer
+   * Default: 'disabled' (we never want reasoning tokens for content-gen tasks
+   * like dict entries or short stories — otherwise M3 spends the whole
+   * `max_completion_tokens` budget on <think>...</think> and returns empty).
    */
-  noThinking?: boolean;
+  thinking?: 'disabled' | 'adaptive';
 }
 
 export interface LLMChatResponse {
@@ -53,7 +54,7 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
     .replace(/\/$/, '')
     .replace(/\/chat\/completions\/?$/, '');
   const url = `${stripped}/chat/completions`;
-  const noThinking = args.noThinking !== false; // default true
+  const thinking = args.thinking ?? 'disabled';
   const res = await fetch(url, {
     method: 'POST',
     headers: {
@@ -64,8 +65,8 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
       model: args.model,
       messages: args.messages,
       temperature: args.temperature ?? 0.3,
-      max_tokens: args.maxTokens ?? 4096,
-      ...(noThinking ? { thinking: { type: 'disabled' } } : {}),
+      max_completion_tokens: args.maxTokens ?? 4096,
+      thinking: { type: thinking },
     }),
   });
   if (!res.ok) {
@@ -155,8 +156,8 @@ export interface CallLlmArgs {
   model?: string;
   baseUrl?: string;
   apiKey?: string;
-  /** Override the default noThinking=true. Set false to enable M3 reasoning. */
-  noThinking?: boolean;
+  /** Override the default thinking mode (which itself falls back to ai.thinking config, then 'disabled'). */
+  thinking?: 'disabled' | 'adaptive';
 }
 
 export async function callLlm(args: CallLlmArgs): Promise<string> {
@@ -181,9 +182,12 @@ export async function callLlm(args: CallLlmArgs): Promise<string> {
   const dbBaseUrl = await getConfig('ai.base_url');
   const dbApiKey = await getConfig('ai.api_key');
   const dbModel = await getConfig('ai.model');
+  const dbThinking = await getConfig('ai.thinking');
   const apiKey = args.apiKey ?? dbApiKey ?? process.env.LLM_API_KEY;
   const baseUrl = args.baseUrl ?? dbBaseUrl ?? process.env.LLM_BASE_URL;
   const model = args.model ?? dbModel ?? process.env.LLM_MODEL ?? 'gpt-4o-mini';
+  const thinking: 'disabled' | 'adaptive' =
+    args.thinking ?? ((dbThinking === 'adaptive' || dbThinking === 'disabled') ? dbThinking : 'disabled');
   if (!apiKey) throw new LLMError('LLM api key not configured (set ai.api_key in /admin/ai or LLM_API_KEY env)');
   if (!baseUrl) throw new LLMError('LLM base URL not configured (set ai.base_url in /admin/ai or LLM_BASE_URL env)');
   const res = await llmChat({
@@ -196,7 +200,7 @@ export async function callLlm(args: CallLlmArgs): Promise<string> {
     ],
     temperature: args.temperature,
     maxTokens: args.maxTokens,
-    noThinking: args.noThinking,
+    thinking,
   });
   return res.content;
 }

@@ -302,7 +302,7 @@ export default function AdminAiPage() {
           <ConfigField label="连接 KEY (API Key)" hint={hasApiKey ? '已配置,留空不改' : '尚未配置'}
             type="password" value={config['ai.api_key'] ?? ''}
             onChange={v => setConfig(c => ({ ...c, 'ai.api_key': v }))} />
-          <ConfigField label="模型" hint="模型标识,如 gpt-4o-mini" placeholder="gpt-4o-mini"
+          <ConfigField label="模型" hint="MiniMax-M3 / MiniMax-M2.7 / MiniMax-M2.7-highspeed / MiniMax-M2.5 / MiniMax-M2.5-highspeed / MiniMax-M2.1 / MiniMax-M2.1-highspeed / MiniMax-M2" placeholder="MiniMax-M3"
             value={config['ai.model'] ?? ''}
             onChange={v => setConfig(c => ({ ...c, 'ai.model': v }))} />
 
@@ -319,6 +319,13 @@ export default function AdminAiPage() {
           <ConfigField label="温度" placeholder="0.3"
             value={config['ai.temperature'] ?? ''}
             onChange={v => setConfig(c => ({ ...c, 'ai.temperature': v }))} />
+          <ConfigSelectField label="思考模式 (thinking)" hint="MiniMax-M3 等推理模型:disabled 直接作答;adaptive 先推理再作答(可能更准但会占用 token 预算)"
+            value={config['ai.thinking'] ?? 'disabled'}
+            options={[{ value: 'disabled', label: 'disabled' }, { value: 'adaptive', label: 'adaptive' }]}
+            onChange={v => setConfig(c => ({ ...c, 'ai.thinking': v }))} />
+          <ConfigField label="最大输出 token (max_completion_tokens)" hint="M3 推荐 131072,M2.x 推荐 65536;上限 524288" placeholder="4096"
+            value={config['ai.max_completion_tokens'] ?? ''}
+            onChange={v => setConfig(c => ({ ...c, 'ai.max_completion_tokens': v }))} />
 
           <button type="submit" disabled={configBusy}
             className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
@@ -382,6 +389,32 @@ function ConfigField({
         placeholder={placeholder}
         className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
       />
+    </div>
+  );
+}
+
+function ConfigSelectField({
+  label, hint, value, options, onChange,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="text-sm font-medium">
+        {label}
+        {hint && <span className="ml-2 text-xs text-ink-soft">{hint}</span>}
+      </label>
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+      >
+        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
     </div>
   );
 }
