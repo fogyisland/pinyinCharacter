@@ -106,7 +106,12 @@ export async function getSutra(id: number): Promise<SutraDetail | null> {
   if (fs) {
     const chunks: SutraChunk[] = fs.chunks.map((c, i) => ({
       ...c,
-      id: c.id ?? i + 1,
+      // 0-based to match the ?chunk=N URL convention used by app/sutra/[id]
+      // and the copy-progress API. Persisted 1-based ids (e.g. xinjing.json's
+      // `id: 1` for its only chunk) are ignored — they were a stale convention
+      // that mismatched the rest of the sutra stack and caused 400s on the
+      // first chunk of any single-chunk sutra.
+      id: i,
       content: c.content.map(s => sanitizeMojibake(s)),
     }));
     return { id: fs.id, title: fs.title, slug: fs.slug, chunks };
@@ -120,14 +125,12 @@ export async function getSutra(id: number): Promise<SutraDetail | null> {
   if (!row) return null;
 
   const rawChunks = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
-  // Persisted chunks may lack `id`; assign a 1-based sequential id so the
-  // SutraChunkPicker can use it as a stable React key.
-  // Also strip mojibake left by mysql2 when binding 4-byte UTF-8 chars (see
-  // memory: mysql2-supp-plane-bug): orphan UTF-16 surrogate halves (length===2
-  // BMP chars that aren't valid CJK) and U+FFFD replacement chars.
+  // See FS branch above for why we force 0-based ids. Also strip mojibake left
+  // by mysql2 when binding 4-byte UTF-8 chars (see memory: mysql2-supp-plane-bug):
+  // orphan UTF-16 surrogate halves and U+FFFD replacement chars.
   const chunks: SutraChunk[] = rawChunks.map((c, i) => ({
     ...c,
-    id: c.id ?? i + 1,
+    id: i,
     content: c.content.map(s => sanitizeMojibake(s)),
   }));
   return {
