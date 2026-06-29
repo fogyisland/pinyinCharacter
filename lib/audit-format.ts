@@ -35,7 +35,9 @@ export type AuditEvent =
   | 'setup_route_enable' | 'setup_route_disable'
   | 'activation_lock' | 'activation_unlock'
   | 'admin.font_config.update'
-  | 'admin.audio.upload' | 'admin.audio.update' | 'admin.audio.delete';
+  | 'admin.audio.upload' | 'admin.audio.update' | 'admin.audio.delete'
+  | 'admin.playlist.create' | 'admin.playlist.update' | 'admin.playlist.delete'
+  | 'admin.playlist.add_track' | 'admin.playlist.remove_track' | 'admin.playlist.reorder';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -72,6 +74,8 @@ export const AUDIT_EVENTS = [
   'activation_lock', 'activation_unlock',
   'admin.font_config.update',
   'admin.audio.upload', 'admin.audio.update', 'admin.audio.delete',
+  'admin.playlist.create', 'admin.playlist.update', 'admin.playlist.delete',
+  'admin.playlist.add_track', 'admin.playlist.remove_track', 'admin.playlist.reorder',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -139,6 +143,12 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   'admin.audio.upload': '上传音频',
   'admin.audio.update': '更新音频',
   'admin.audio.delete': '删除音频',
+  'admin.playlist.create': '新建播放列表',
+  'admin.playlist.update': '更新播放列表',
+  'admin.playlist.delete': '删除播放列表',
+  'admin.playlist.add_track': '向播放列表添加曲目',
+  'admin.playlist.remove_track': '从播放列表移除曲目',
+  'admin.playlist.reorder': '重排播放列表',
 };
 
 /**
@@ -247,6 +257,12 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
     case 'admin.audio.upload':       return `上传音频「${str(m.title) || '?'}」(${str(m.filename) || '?'}, ${num(m.sizeBytes) || '?'} bytes)`;
     case 'admin.audio.update':       return `更新音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
     case 'admin.audio.delete':       return `删除音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」(${str(m.filename) || '?'})`;
+    case 'admin.playlist.create':    return `新建播放列表「${str(m.title) || '?'}」${m.isDefault === true ? ' (设为默认)' : ''}`;
+    case 'admin.playlist.update':    return `更新播放列表 #${num(m.id) || '?'}「${str(m.title) || '?'}」${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
+    case 'admin.playlist.delete':    return `删除播放列表 #${num(m.id) || '?'}「${str(m.title) || '?'}」`;
+    case 'admin.playlist.add_track': return `向播放列表「${str(m.playlistTitle) || '?'}」添加曲目「${str(m.trackTitle) || '?'}」`;
+    case 'admin.playlist.remove_track': return `从播放列表「${str(m.playlistTitle) || '?'}」移除曲目「${str(m.trackTitle) || '?'}」`;
+    case 'admin.playlist.reorder':   return `重排播放列表「${str(m.playlistTitle) || '?'}」(${num(m.trackCount) || '?'} 首)`;
 
     default: {
       const keys = Object.keys(m);
