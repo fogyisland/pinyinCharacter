@@ -2,52 +2,7 @@
 
 import { useState } from 'react';
 import { ERAS, type Era } from '@/lib/etymology-types';
-
-// NOTE: Mirrors lib/era-fonts.ts. We cannot import from lib/era-fonts.ts here
-// because it transitively pulls in mysql2 via getAllConfig, which webpack
-// cannot bundle into a client chunk. The RSC page always passes an explicit
-// initial prop; these constants are only used as a fallback (e.g. unit tests)
-// and to determine the "非默认" indicator under each dropdown.
-
-interface EraFontOption {
-  id: string;
-  label: string;
-  desc: string;
-}
-
-const ERA_FONTS: Record<Era, EraFontOption[]> = {
-  jiaguwen: [
-    { id: 'Oracular',         label: 'Oracular (默认)',         desc: '32MB, 甲骨文, 1531 BMP chars' },
-    { id: 'OracularInverted', label: 'Oracular 阴文',           desc: '白底黑字, 类似真实甲骨' },
-    { id: 'YinQiJiaGuWen',    label: 'Founder 甲骨文',          desc: '方正甲骨文, 旧默认, 2.7MB' },
-  ],
-  jinwen: [
-    { id: 'WangHanzongWeibei', label: '王汉宗魏碑 (默认)',     desc: '10MB, 魏碑 ≈ 金文风格' },
-    { id: 'HanDianJinWen',     label: 'BabelStone Han',         desc: '25MB, 通用甲骨/金文/简帛 fallback' },
-  ],
-  xiaozhuan: [
-    { id: 'QuanZiKuShuoWen',   label: '全字庫說文解字 (默认)', desc: '10MB, 专用小篆' },
-    { id: 'HanDianJinWen',     label: 'BabelStone Han',         desc: '25MB, 通用 fallback' },
-  ],
-  lishu: [
-    { id: 'WangHanzongLishu',  label: '王漢宗中隸書繁 (默认)', desc: '8.1MB, 专用隶书' },
-    { id: 'ZCOOLXiaoWei',      label: '站酷小薇',              desc: '6.1MB, 现代隶书感' },
-  ],
-  kaishu: [
-    { id: 'ZCOOLXiaoWei',      label: '站酷小薇 (默认)',       desc: '6.1MB, react-pdf 兼容' },
-    { id: 'KaiTi',             label: '系统楷体',              desc: 'local(KaiTi) / STKaiti / BiauKai' },
-    { id: 'Iansui',            label: '汉仪润圆',              desc: '1.2MB, 圆润楷书' },
-    { id: 'MaShanZheng',       label: '马善政',                desc: '3.2MB, 楷书带毛笔感' },
-  ],
-};
-
-const DEFAULT_ERA_FONTS: Record<Era, string> = {
-  jiaguwen: 'Oracular',
-  jinwen: 'WangHanzongWeibei',
-  xiaozhuan: 'QuanZiKuShuoWen',
-  lishu: 'WangHanzongLishu',
-  kaishu: 'ZCOOLXiaoWei',
-};
+import { ERA_FONTS, DEFAULT_ERA_FONTS } from '@/lib/era-fonts-data';
 
 const ERA_LABEL: Record<Era, string> = {
   jiaguwen: '甲骨文',

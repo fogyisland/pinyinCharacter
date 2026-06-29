@@ -1,20 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import type { Era, EraGlyph as EraGlyphType } from '@/lib/etymology-types';
+import { DEFAULT_ERA_FONTS } from '@/lib/era-fonts-data';
 import { ERA_DATES, LEVEL_LABEL, coverageHint, type CharLevel } from './era-dates';
-
-// NOTE: Mirrors lib/era-fonts.ts DEFAULT_ERA_FONTS. We cannot import from
-// lib/era-fonts.ts here because it transitively pulls in mysql2 via
-// getAllConfig, which webpack cannot bundle into a client chunk.
-// The RSC page always passes an explicit eraFonts prop; this constant is
-// only used as a fallback when the prop is omitted (e.g. unit tests).
-const DEFAULT_ERA_FONTS: Record<Era, string> = {
-  jiaguwen: 'Oracular',
-  jinwen: 'WangHanzongWeibei',
-  xiaozhuan: 'QuanZiKuShuoWen',
-  lishu: 'WangHanzongLishu',
-  kaishu: 'ZCOOLXiaoWei',
-};
 
 const ERA_LABELS: Record<Era, string> = {
   jiaguwen: '甲骨文',
