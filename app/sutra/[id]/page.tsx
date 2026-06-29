@@ -8,6 +8,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { SutraMeta } from '@/components/sutra/SutraMeta';
+import { SutraAudioPlayer } from '@/components/sutra/SutraAudioPlayer';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
 import { SutraRightColumn } from './SutraRightColumn';
 import { getSutraBackLink } from './back-link';
@@ -69,6 +70,7 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
         </div>
       </PageContainer>
       <Footer />
+      <SutraAudioPlayer src="/audio/dabei.mp3" title={sutra.title} />
     </>
   );
 }

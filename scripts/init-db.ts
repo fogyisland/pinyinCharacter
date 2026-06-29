@@ -331,6 +331,21 @@ const DDL = [
      INDEX idx_user_completed (user_id, completed_at)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
 
+  `CREATE TABLE IF NOT EXISTS audio_tracks (
+     id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+     title       VARCHAR(128) NOT NULL,
+     filename    VARCHAR(255) NOT NULL,
+     size_bytes  INT UNSIGNED NOT NULL DEFAULT 0,
+     is_default  TINYINT(1)   NOT NULL DEFAULT 0,
+     uploaded_by BIGINT       NULL,
+     created_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+     PRIMARY KEY (id),
+     KEY idx_audio_default (is_default),
+     CONSTRAINT fk_audio_uploaded_by FOREIGN KEY (uploaded_by)
+       REFERENCES users(id) ON DELETE SET NULL
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
   `CREATE TABLE IF NOT EXISTS activate (
      id                 BIGINT       NOT NULL AUTO_INCREMENT,
      short_name         VARCHAR(64)  NOT NULL,
