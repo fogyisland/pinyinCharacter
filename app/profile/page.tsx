@@ -10,6 +10,7 @@ import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { WorksheetHistoryList } from '@/components/worksheet/WorksheetHistoryList';
 import { MembershipStatusCard } from '@/components/membership/MembershipStatusCard';
+import { PinyinToggle } from '@/components/PinyinToggle';
 import { hasFeature } from '@/lib/membership';
 
 export const dynamic = 'force-dynamic';
@@ -47,6 +48,13 @@ export default async function ProfilePage() {
         </div>
         <div className="mt-4">
           <MembershipStatusCard userId={session.userId} />
+        </div>
+        <div className="mt-4 card-paper p-4 flex items-center justify-between gap-4">
+          <div>
+            <div className="text-sm font-medium text-ink">显示拼音</div>
+            <div className="text-xs text-ink-faint mt-0.5">仅作用于古诗与佛经的字帖视图</div>
+          </div>
+          <PinyinToggle />
         </div>
         <div className="mt-10 mb-4 flex items-end justify-between gap-3">
           <SectionTitle subtitle="保存的字帖，可继续编辑或打印">我的字帖</SectionTitle>
