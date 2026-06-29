@@ -48,3 +48,6 @@ scripts/fonts/staging/
 
 # deploy bundle — regenerated with scripts/copy-to-up.py
 Up/
+
+# throwaway working files (font-comparison screenshots, scratch)
+.tmp/
