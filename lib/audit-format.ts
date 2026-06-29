@@ -34,7 +34,8 @@ export type AuditEvent =
   | 'site_url_updated'
   | 'setup_route_enable' | 'setup_route_disable'
   | 'activation_lock' | 'activation_unlock'
-  | 'admin.font_config.update';
+  | 'admin.font_config.update'
+  | 'admin.audio.upload' | 'admin.audio.update' | 'admin.audio.delete';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -70,6 +71,7 @@ export const AUDIT_EVENTS = [
   'setup_route_enable', 'setup_route_disable',
   'activation_lock', 'activation_unlock',
   'admin.font_config.update',
+  'admin.audio.upload', 'admin.audio.update', 'admin.audio.delete',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -134,6 +136,9 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   activation_lock: '锁定平台实例',
   activation_unlock: '解锁平台实例',
   'admin.font_config.update': '更新字源字体配置',
+  'admin.audio.upload': '上传音频',
+  'admin.audio.update': '更新音频',
+  'admin.audio.delete': '删除音频',
 };
 
 /**
@@ -239,6 +244,9 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
       return `解锁平台实例 ${str(m.shortName) ? `「${str(m.shortName)}」` : ''}${str(m.source) ? ` (${str(m.source)})` : ''}`;
     case 'admin.font_config.update':
       return `更新字源字体配置${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
+    case 'admin.audio.upload':       return `上传音频「${str(m.title) || '?'}」(${str(m.filename) || '?'}, ${num(m.sizeBytes) || '?'} bytes)`;
+    case 'admin.audio.update':       return `更新音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
+    case 'admin.audio.delete':       return `删除音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」(${str(m.filename) || '?'})`;
 
     default: {
       const keys = Object.keys(m);

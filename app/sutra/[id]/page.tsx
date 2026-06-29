@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSutra } from '@/lib/sutras';
 import { getCurrentUser } from '@/lib/auth';
+import { getActiveTrack } from '@/lib/audio-tracks';
 import type { SutraChunk } from '@/lib/sutra-types';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -28,6 +29,7 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
   const sutra = await getSutra(id);
   if (!sutra) notFound();
   const user = await getCurrentUser();
+  const activeTrack = await getActiveTrack();
 
   const requestedChunk = Number(sp.chunk ?? '0');
   const activeChunkId =
@@ -70,7 +72,9 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
         </div>
       </PageContainer>
       <Footer />
-      <SutraAudioPlayer src="/audio/dabei.mp3" title={sutra.title} />
+      {activeTrack && (
+        <SutraAudioPlayer src={activeTrack.src} title={activeTrack.title} />
+      )}
     </>
   );
 }

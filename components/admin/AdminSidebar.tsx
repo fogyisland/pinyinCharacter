@@ -25,6 +25,7 @@ const ITEMS: NavItem[] = [
   { href: '/admin/email/campaigns', label: '营销邮件' },
   { href: '/admin/settings/site-url', label: '站点设置' },
   { href: '/admin/settings/fonts', label: '字源字体' },
+  { href: '/admin/settings/audio', label: '佛经音频' },
   { href: '/admin/settings/setup', label: '初始化路由' },
 ];
 
