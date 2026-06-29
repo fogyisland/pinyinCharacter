@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Children } from 'react';
+import { Fragment, isValidElement } from 'react';
 
 export interface ResponsiveColumn {
   /** Unique key for the column. */
@@ -14,6 +14,22 @@ export interface ResponsiveColumn {
   headerClassName?: string;
   /** Optional CSS class for the desktop <td>. */
   className?: string;
+}
+
+/**
+ * `Children.toArray(<><a/><b/></>)` returns 1 element (the Fragment itself) —
+ * Fragments are NOT flattened. That made the entire `ResponsiveTable` body
+ * collapse to a single <td> per row, leaving the other columns empty. We
+ * walk Fragments and nested arrays explicitly so callers can keep returning
+ * a Fragment from the children function (the natural JSX shape).
+ */
+function flattenCells(node: ReactNode): ReactNode[] {
+  if (node == null || typeof node === 'boolean') return [];
+  if (Array.isArray(node)) return node.flatMap(flattenCells);
+  if (isValidElement(node) && node.type === Fragment) {
+    return flattenCells((node.props as { children: ReactNode }).children);
+  }
+  return [node];
 }
 
 interface Props<T> {
@@ -64,7 +80,7 @@ export function ResponsiveTable<T>({
           </thead>
           <tbody>
             {rows.map(r => {
-              const cells = Children.toArray(children(r));
+              const cells = flattenCells(children(r));
               return (
                 <tr key={rowKey(r)} className="border-t">
                   {cells.map((cell, i) => (
@@ -82,7 +98,7 @@ export function ResponsiveTable<T>({
       {/* Mobile cards (<md) */}
       <div className={`md:hidden space-y-2 ${className}`}>
         {rows.map(r => {
-          const cells = Children.toArray(children(r));
+          const cells = flattenCells(children(r));
           return (
             <div key={rowKey(r)} className="card-paper rounded-lg p-3">
               {titleIdx >= 0 && (
