@@ -1,44 +1,20 @@
 import Link from 'next/link';
-import { getPool } from '@/lib/db';
+import { getContentCoverage } from '@/lib/content';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 
 export const dynamic = 'force-dynamic';
 
-async function fetchCoverage() {
-  const pool = getPool();
-  const [totals] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM chars`);
-  const [withStory] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM char_etymology WHERE story IS NOT NULL AND story <> ''`
-  );
-  const [byLevel] = await pool.query<any[]>(
-    `SELECT level, COUNT(*) AS total,
-            SUM(CASE WHEN ce.story IS NOT NULL AND ce.story <> '' THEN 1 ELSE 0 END) AS with_story
-     FROM chars c
-     LEFT JOIN char_etymology ce ON c.\`char\` = ce.\`char\`
-     GROUP BY level ORDER BY level`
-  );
-  return {
-    total: Number(totals[0].n),
-    withStory: Number(withStory[0].n),
-    byLevel: byLevel.map((r) => ({
-      level: r.level,
-      total: Number(r.total),
-      with_story: Number(r.with_story ?? 0),
-    })),
-  };
-}
-
 export default async function AdminCharsPage() {
-  const cov = await fetchCoverage();
-  const pct = cov.total > 0 ? Math.round((cov.withStory / cov.total) * 1000) / 10 : 0;
+  const cov = await getContentCoverage();
+  const pct = cov.totalChars > 0 ? Math.round((cov.withStory / cov.totalChars) * 1000) / 10 : 0;
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">字典 / 字源</h1>
-      <p className="text-sm text-ink-soft mb-4">字典 + 字源 数据覆盖</p>
+      <p className="text-sm text-ink-soft mb-4">字典 + 字源 数据覆盖(数据源:<code className="text-xs">data/content/</code> JSON 文件)</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <Stat label="总字符" value={cov.total} />
-        <Stat label="已生成字源" value={cov.withStory} />
+        <Stat label="总字符 (chars 表)" value={cov.totalChars} />
+        <Stat label="已生成字源 (JSON)" value={cov.withStory} />
         <Stat label="覆盖率" value={`${pct}%`} />
       </div>
 

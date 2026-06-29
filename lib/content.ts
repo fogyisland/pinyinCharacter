@@ -1,12 +1,13 @@
 import 'server-only';
-import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPool } from './db';
-import { CharContentSchema } from '@/scripts/schemas/content';
+import { CharContentSchema, ContentManifestSchema } from '@/scripts/schemas/content';
 import type { CharContent } from '@/scripts/schemas/content';
 import type { GetContentOptions } from './content-types';
 
 const CONTENT_DIR = join(process.cwd(), 'data', 'content');
+const MANIFEST_FILE = join(process.cwd(), 'data', 'content-manifest.json');
 
 function stripThinking(s: string): string {
   return s
@@ -164,4 +165,82 @@ export function writeContent(
   writeFileSync(tmp, JSON.stringify(validated, null, 2) + '\n', 'utf8');
   renameSync(tmp, filePath);
   return validated;
+}
+
+export interface ContentCoverageByLevel {
+  level: number;
+  total: number;
+  with_story: number;
+}
+
+export interface ContentCoverage {
+  totalChars: number;
+  withStory: number;
+  byLevel: ContentCoverageByLevel[];
+}
+
+/**
+ * Coverage stats aligned to DB chars as the anchor. A char "has story"
+ * iff it exists in `chars` AND `data/content/<char>.json` has a non-empty
+ * `etymology.story`. The `char_etymology` table is intentionally NOT used
+ * (legacy cache, empty on slim-schema installs); JSON is the source of
+ * truth per Plan content-bulk-gen (2026-06-17).
+ *
+ * Why anchored to DB: the manifest counts JSON files (incl. orphan files
+ * whose char was dropped from DB), so manifest.byField.etymology_story can
+ * drift from the per-DB-char coverage we actually want. Iterating
+ * DB-side gives a self-consistent numerator + denominator.
+ */
+export async function getContentCoverage(): Promise<ContentCoverage> {
+  const pool = getPool();
+  const [charRows] = await pool.query<any[]>(
+    `SELECT \`char\`, level FROM chars ORDER BY level`,
+  );
+  const totalChars = charRows.length;
+
+  // Manifest is only used as a hint for the global "已生成字源" stat when
+  // the DB is empty (e.g. fresh deploy before any chars are seeded). When
+  // DB has chars, we always count from JSON files anchored to those chars.
+  let manifestTotal = 0;
+  if (totalChars === 0 && existsSync(MANIFEST_FILE)) {
+    try {
+      const manifest = ContentManifestSchema.parse(JSON.parse(readFileSync(MANIFEST_FILE, 'utf8')));
+      manifestTotal = manifest.byField.etymology_story;
+    } catch {
+      // ignore
+    }
+  }
+
+  let withStory = 0;
+  const byLevelMap = new Map<number, number>();
+  for (const row of charRows) {
+    const filePath = join(CONTENT_DIR, `${row.char}.json`);
+    if (!existsSync(filePath)) continue;
+    try {
+      const raw = JSON.parse(readFileSync(filePath, 'utf8'));
+      if (!raw.etymology?.story) continue;
+      withStory++;
+      byLevelMap.set(Number(row.level), (byLevelMap.get(Number(row.level)) ?? 0) + 1);
+    } catch {
+      continue;
+    }
+  }
+
+  const byLevelTotals = new Map<number, number>();
+  for (const row of charRows) {
+    byLevelTotals.set(Number(row.level), (byLevelTotals.get(Number(row.level)) ?? 0) + 1);
+  }
+  const byLevel: ContentCoverageByLevel[] = [...byLevelTotals.entries()]
+    .sort(([a], [b]) => a - b)
+    .map(([level, total]) => ({
+      level,
+      total,
+      with_story: byLevelMap.get(level) ?? 0,
+    }));
+
+  return {
+    totalChars,
+    withStory: totalChars > 0 ? withStory : manifestTotal,
+    byLevel,
+  };
 }
