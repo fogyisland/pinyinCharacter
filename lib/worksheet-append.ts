@@ -4,17 +4,18 @@
  * Three modes (mutually exclusive in body):
  *   1. worksheetId  — append to an existing worksheet the user owns
  *   2. newTitle     — find-or-create a worksheet by title for this user
- *   3. neither      — legacy default: find-or-create "我的字帖" (preserves
- *                      prior behavior for any caller that didn't migrate)
+ *   3. neither      — find-or-create "默认字帖" — the user's default
+ *                      worksheet. Auto-created on first add. Subsequent
+ *                      single-char adds go to the same one. Rename freely.
  *
  * Concurrency note: this is a read-then-write. Under concurrent appends there's
- * a small window where two "我的字帖" rows could be created for one user.
+ * a small window where two "默认字帖" rows could be created for one user.
  * Mitigated by the fact that all callers are browser-initiated user clicks, not
  * bulk jobs. If observed in production, add UNIQUE(user_id, title) via migration.
  */
 import { getPool } from './db';
 
-const MY_WORKSHEET_TITLE = '我的字帖';
+const DEFAULT_WORKSHEET_TITLE = '默认字帖';
 const DEFAULT_CELL_STYLE = 'brush-square';
 const DEFAULT_PAPER_SIZE = 'A4';
 const DEFAULT_FONT_FAMILY = 'song';
@@ -60,7 +61,7 @@ export async function appendCharToWorksheet(
   if (args.newTitle) {
     return appendByTitle(userId, args.newTitle, chars);
   }
-  return appendByTitle(userId, MY_WORKSHEET_TITLE, chars);
+  return appendByTitle(userId, DEFAULT_WORKSHEET_TITLE, chars);
 }
 
 function normalizeChars(args: AppendArgs): string[] {

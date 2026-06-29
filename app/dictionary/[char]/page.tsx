@@ -96,6 +96,12 @@ export default async function DictionaryDetailPage({ params }: Props) {
       />
       <Suspense><Header /></Suspense>
       <PageContainer>
+        <div className="flex items-center justify-between mb-4">
+          <Link href="/dictionary" className="text-sm text-ink-soft hover:text-ink">
+            ← 返回字典
+          </Link>
+          <span className="text-xs text-ink-faint tracking-widest">字 · 韵 · 字典</span>
+        </div>
         <SectionTitle subtitle={`${data.unicodeCodepoint} · 通用规范 ${data.level} 级`}>
           <span className="text-7xl font-serif text-ink mr-3">{data.char}</span>
         </SectionTitle>

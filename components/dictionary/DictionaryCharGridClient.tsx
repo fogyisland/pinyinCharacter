@@ -1,20 +1,42 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Char } from '@/lib/chars-types';
 import { CharContextMenu } from './CharContextMenu';
-import { AddToWorksheetDialog } from '@/components/worksheet/AddToWorksheetDialog';
+import { appendCharToWorksheetApi } from '@/lib/api-worksheet';
+import { useToastStore } from '@/lib/toast-store';
 
 interface MenuState { x: number; y: number; char: string; }
 
 export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const pushToast = useToastStore((s) => s.push);
   const [menu, setMenu] = useState<MenuState | null>(null);
-  const [dialogChar, setDialogChar] = useState<string | null>(null);
 
   const onContextMenu = (e: React.MouseEvent, c: string) => {
     e.preventDefault();
     setMenu({ x: e.clientX, y: e.clientY, char: c });
+  };
+
+  // Silent add to default worksheet (auto-created as "默认字帖" on first call).
+  // No dialog, no redirect — matches the bulk flow's UX expectation.
+  const handleAdd = async (c: string) => {
+    try {
+      const result = await appendCharToWorksheetApi({ char: c });
+      pushToast(
+        'success',
+        result.added ? `已添加到「${result.title}」` : `「${c}」已在「${result.title}」中`,
+      );
+    } catch (e: any) {
+      if (e?.code === 'unauthorized') {
+        router.push(`/login?next=${encodeURIComponent(pathname)}`);
+        return;
+      }
+      pushToast('error', e?.message ?? '添加失败');
+    }
   };
 
   if (chars.length === 0) {
@@ -41,15 +63,10 @@ export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
           x={menu.x}
           y={menu.y}
           char={menu.char}
-          onAdd={(c) => setDialogChar(c)}
+          onAdd={handleAdd}
           onClose={() => setMenu(null)}
         />
       )}
-      <AddToWorksheetDialog
-        open={!!dialogChar}
-        chars={dialogChar ? [dialogChar] : []}
-        onClose={() => setDialogChar(null)}
-      />
     </>
   );
 }
