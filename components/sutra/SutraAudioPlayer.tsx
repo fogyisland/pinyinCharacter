@@ -4,21 +4,33 @@ import { useEffect, useRef, useState } from 'react';
 
 export type SutraAudioLoopMode = 'single' | 'list' | 'none';
 
-export interface SutraAudioPlayerProps {
+export interface SutraAudioTrackRef {
+  id: number;
+  title: string;
   src: string;
-  title?: string;
+  position: number;
+}
+
+export interface SutraAudioPlayerProps {
+  /** Ordered list of tracks (1..N). At least one required. */
+  tracks: SutraAudioTrackRef[];
+  /** Display title for the playlist (shown above the current track). */
+  playlistTitle?: string;
   className?: string;
 }
 
-export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraAudioPlayerProps) {
+export function SutraAudioPlayer({ tracks, playlistTitle, className }: SutraAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [trackIndex, setTrackIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(0.7);
-  const [loopMode, setLoopMode] = useState<SutraAudioLoopMode>('single');
+  const [loopMode, setLoopMode] = useState<SutraAudioLoopMode>('list');
   const [expanded, setExpanded] = useState(false);
   const [errored, setErrored] = useState(false);
+
+  const currentTrack = tracks[trackIndex];
 
   const loopModeRef = useRef<SutraAudioLoopMode>(loopMode);
   useEffect(() => {
@@ -34,8 +46,21 @@ export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraA
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.loop = loopMode === 'single';
-  }, [loopMode]);
+    audio.loop = loopMode === 'single' && tracks.length === 1;
+  }, [loopMode, tracks.length]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    setCurrentTime(0);
+    setDuration(0);
+    setErrored(false);
+    audio.load();
+    if (playing) {
+      audio.play().catch(() => setErrored(true));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackIndex]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -46,10 +71,11 @@ export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraA
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
     const onEnded = () => {
-      setPlaying(false);
-      if (loopModeRef.current === 'list') {
-        audio.currentTime = 0;
-        audio.play().catch(() => setErrored(true));
+      if (loopModeRef.current === 'single' && tracks.length === 1) return; // browser handles loop
+      if (loopModeRef.current === 'list' || trackIndex < tracks.length - 1) {
+        setTrackIndex((i) => (i + 1) % tracks.length);
+      } else {
+        setPlaying(false);
       }
     };
     const onError = () => setErrored(true);
@@ -69,7 +95,7 @@ export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraA
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
     };
-  }, []);
+  }, [trackIndex, tracks.length]);
 
   useEffect(() => {
     return () => {
@@ -103,15 +129,39 @@ export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraA
     setLoopMode((m) => (m === 'single' ? 'list' : m === 'list' ? 'none' : 'single'));
   }
 
+  function next() {
+    setTrackIndex((i) => (i + 1) % tracks.length);
+  }
+
+  function prev() {
+    setTrackIndex((i) => (i - 1 + tracks.length) % tracks.length);
+  }
+
+  const singleTrack = tracks.length === 1;
+  const headerTitle = singleTrack ? (currentTrack?.title ?? playlistTitle ?? '') : (playlistTitle ?? '');
+  const showPlaylist = tracks.length > 1;
+
   return (
     <div
       className={`fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2 select-none ${className ?? ''}`}
     >
-      <audio ref={audioRef} src={src} preload="metadata" />
+      <audio ref={audioRef} src={currentTrack?.src} preload="metadata" />
       {expanded ? (
         <div className="bg-paper-warm/95 border border-ink/20 rounded-lg shadow-lg p-3 w-72 backdrop-blur-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-medium text-ink truncate pr-2">{title}</span>
+            <div className="min-w-0 pr-2">
+              {showPlaylist && (
+                <div className="text-[10px] text-ink-faint truncate">{headerTitle}</div>
+              )}
+              <div className="text-sm font-medium text-ink truncate">
+                {currentTrack?.title ?? '—'}
+                {showPlaylist && (
+                  <span className="text-[10px] text-ink-soft ml-1.5 tabular-nums">
+                    {trackIndex + 1}/{tracks.length}
+                  </span>
+                )}
+              </div>
+            </div>
             <button
               type="button"
               onClick={() => setExpanded(false)}
@@ -122,6 +172,16 @@ export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraA
             </button>
           </div>
           <div className="flex items-center gap-2">
+            {showPlaylist && (
+              <button
+                type="button"
+                onClick={prev}
+                aria-label="上一曲"
+                className="w-8 h-8 rounded-full text-ink-soft hover:text-ink flex items-center justify-center flex-shrink-0"
+              >
+                <PrevIcon />
+              </button>
+            )}
             <button
               type="button"
               onClick={togglePlay}
@@ -130,6 +190,16 @@ export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraA
             >
               {playing ? <PauseIcon /> : <PlayIcon />}
             </button>
+            {showPlaylist && (
+              <button
+                type="button"
+                onClick={next}
+                aria-label="下一曲"
+                className="w-8 h-8 rounded-full text-ink-soft hover:text-ink flex items-center justify-center flex-shrink-0"
+              >
+                <NextIcon />
+              </button>
+            )}
             <div className="flex-1 flex flex-col gap-1 min-w-0">
               <input
                 type="range"
@@ -186,7 +256,7 @@ export function SutraAudioPlayer({ src, title = '大悲咒', className }: SutraA
           type="button"
           onClick={() => setExpanded(true)}
           aria-label={errored ? '展开播放器（音频文件未找到）' : '展开播放器'}
-          title={errored ? '音频文件未找到' : title}
+          title={errored ? '音频文件未找到' : (currentTrack?.title ?? playlistTitle ?? '')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-colors ${
             errored
               ? 'bg-ink-soft/70 text-paper-warm hover:bg-ink-soft'
@@ -241,6 +311,24 @@ function AlertIcon() {
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
       <circle cx="8" cy="8" r="6.5" stroke="currentColor" strokeWidth="1.2" />
       <path d="M8 5v4M8 11v.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PrevIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+      <path d="M11 2.5v9L4 7z" />
+      <rect x="2" y="2.5" width="1.5" height="9" rx="0.5" />
+    </svg>
+  );
+}
+
+function NextIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
+      <path d="M3 2.5v9l7-4.5z" />
+      <rect x="10.5" y="2.5" width="1.5" height="9" rx="0.5" />
     </svg>
   );
 }
