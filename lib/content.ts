@@ -5,6 +5,7 @@ import { getPool } from './db';
 import { CharContentSchema, ContentManifestSchema } from '@/scripts/schemas/content';
 import type { CharContent } from '@/scripts/schemas/content';
 import type { GetContentOptions } from './content-types';
+import { readJsonAutoCached, invalidateJsonCache } from './json-fs';
 
 const CONTENT_DIR = join(process.cwd(), 'data', 'content');
 const MANIFEST_FILE = join(process.cwd(), 'data', 'content-manifest.json');
@@ -29,11 +30,13 @@ export async function getContent(
   char: string,
   opts: GetContentOptions = {}
 ): Promise<CharContent | null> {
-  // 1. Read from data/content/<char>.json (preferred)
+  // 1. Read from data/content/<char>.json (preferred). The Up/ deploy bundle
+  //    ships .json.gz for these; readJsonAutoCached tries .json then .json.gz
+  //    and memoizes the parsed result in memory.
   if (!opts.dbOnly) {
     const filePath = join(CONTENT_DIR, `${char}.json`);
-    if (existsSync(filePath)) {
-      const raw = JSON.parse(readFileSync(filePath, 'utf8'));
+    const raw = readJsonAutoCached(filePath);
+    if (raw) {
       return CharContentSchema.parse(raw);
     }
   }
@@ -124,9 +127,10 @@ export async function getContent(
  */
 export function readContentFromFs(char: string): CharContent | null {
   const filePath = join(CONTENT_DIR, `${char}.json`);
-  if (!existsSync(filePath)) return null;
+  const raw = readJsonAutoCached(filePath);
+  if (!raw) return null;
   try {
-    return CharContentSchema.parse(JSON.parse(readFileSync(filePath, 'utf8')));
+    return CharContentSchema.parse(raw);
   } catch {
     return null;
   }
@@ -164,6 +168,7 @@ export function writeContent(
   const tmp = `${filePath}.tmp`;
   writeFileSync(tmp, JSON.stringify(validated, null, 2) + '\n', 'utf8');
   renameSync(tmp, filePath);
+  invalidateJsonCache(filePath);
   return validated;
 }
 
