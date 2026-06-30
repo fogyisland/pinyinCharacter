@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-30T04:48:22.059Z",
+  "generatedAt": "2026-06-30T05:27:36.798Z",
   "items": [
     {
       "id": 1,
@@ -49,28 +49,28 @@
       "slug": "lengyan",
       "title": "楞严经",
       "chunkCount": 1,
-      "charCount": 81094
+      "charCount": 7556
     },
     {
       "id": 8,
       "slug": "weimo",
       "title": "维摩诘经",
       "chunkCount": 1,
-      "charCount": 33550
+      "charCount": 11961
     },
     {
       "id": 9,
       "slug": "liuzu",
       "title": "六祖坛经",
       "chunkCount": 1,
-      "charCount": 32635
+      "charCount": 32637
     },
     {
       "id": 10,
       "slug": "dabei",
       "title": "大悲咒",
       "chunkCount": 1,
-      "charCount": 9578
+      "charCount": 9580
     },
     {
       "id": 11,
