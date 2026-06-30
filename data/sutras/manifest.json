@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-25T07:08:32.995Z",
+  "generatedAt": "2026-06-30T04:48:22.059Z",
   "items": [
     {
       "id": 1,
@@ -13,7 +13,7 @@
       "id": 2,
       "slug": "jingang",
       "title": "金刚经",
-      "chunkCount": 32,
+      "chunkCount": 1,
       "charCount": 6859
     },
     {
@@ -48,14 +48,14 @@
       "id": 7,
       "slug": "lengyan",
       "title": "楞严经",
-      "chunkCount": 10,
+      "chunkCount": 1,
       "charCount": 81094
     },
     {
       "id": 8,
       "slug": "weimo",
       "title": "维摩诘经",
-      "chunkCount": 3,
+      "chunkCount": 1,
       "charCount": 33550
     },
     {

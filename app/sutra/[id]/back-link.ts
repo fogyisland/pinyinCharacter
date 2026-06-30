@@ -3,7 +3,7 @@ export type SutraBackSource = 'dictionary' | 'rare-chars' | 'sutras';
 const BACK_LINKS: Record<SutraBackSource, { href: string; label: string }> = {
   dictionary: { href: '/dictionary', label: '返回字典' },
   'rare-chars': { href: '/rare-chars', label: '返回罕见字库' },
-  sutras: { href: '/sutras', label: '返回经文目录' },
+  sutras: { href: '/sutra', label: '返回经文目录' },
 };
 
 export function getSutraBackLink(from: string | undefined): { href: string; label: string } {
