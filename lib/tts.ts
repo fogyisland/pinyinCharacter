@@ -21,6 +21,23 @@ interface ActivePlayback {
 
 let active: ActivePlayback | null = null;
 
+// Module-level pagehide/visibilitychange listeners stop speak() when the user
+// navigates away. React doesn't own the Audio instance created in speak() (it
+// lives outside the component tree), so component unmount cleanup alone won't
+// fire — and a still-playing new Audio(src) keeps playing after the page
+// detaches from the DOM. These listeners are the safety net for soft
+// navigations, BFCache, tab switches, and component unmounts. Installed once
+// on module load (browser only); no-op on the server.
+if (typeof window !== 'undefined') {
+  const stop = () => {
+    if (active) clearActive();
+  };
+  window.addEventListener('pagehide', stop);
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') stop();
+  });
+}
+
 function splitBatches(text: string): string[] {
   const paragraphs = text.split(/\n+/).map((p) => p.trim()).filter((p) => p.length > 0);
   const batches: string[] = [];

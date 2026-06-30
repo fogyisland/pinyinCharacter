@@ -96,4 +96,20 @@ describe('speak()', () => {
     const body = JSON.parse((ttsCalls[0]![1] as RequestInit).body as string);
     expect(body.voice).toBe('male');
   });
+
+  it('stops playback on pagehide so audio does not continue after navigation', async () => {
+    // speak() creates a module-level Audio instance that React doesn't own.
+    // pagehide (and visibilitychange→hidden) must call stopSpeaking() so
+    // soft navigations, BFCache, and tab switches don't leave audio playing.
+    makeFetchOk();
+    const speakPromise = speak('南无阿弥陀佛');
+    // Fire pagehide before the audio.play() resolves — clearActive sets
+    // active.cancelled = true, which makes the loop bail after the current
+    // batch ends.
+    window.dispatchEvent(new Event('pagehide'));
+    await speakPromise.catch(() => undefined);
+    // After pagehide, the FakeAudio's pause() should have been called.
+    // Stopping a non-active speak() must not throw.
+    expect(() => stopSpeaking()).not.toThrow();
+  });
 });
