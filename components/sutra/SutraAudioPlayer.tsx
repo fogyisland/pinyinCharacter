@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { getCachedTts, putCachedTts } from '@/lib/tts-cache';
 
 export type SutraAudioLoopMode = 'single' | 'list' | 'none';
 
@@ -80,16 +81,23 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
       const batches = chunkToBatches(chunk.text);
       const batchText = batches[batchIdx];
       if (!batchText) return;
-      const res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: batchText, voice: 'female' }),
-      });
-      if (!res.ok) {
-        setErrored(true);
-        return;
+
+      let blob: Blob | null = await getCachedTts('female', batchText);
+      if (!blob) {
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: batchText, voice: 'female' }),
+        });
+        if (!res.ok) {
+          setErrored(true);
+          return;
+        }
+        blob = await res.blob();
+        // Best-effort cache write; failure (quota / private mode) doesn't break playback.
+        await putCachedTts('female', batchText, blob);
       }
-      const blob = await res.blob();
+
       // Revoke previous blob to free memory
       if (currentBlobRef.current) URL.revokeObjectURL(currentBlobRef.current);
       const url = URL.createObjectURL(blob);

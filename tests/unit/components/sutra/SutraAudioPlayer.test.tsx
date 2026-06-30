@@ -327,4 +327,68 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     // UI should now show 2/N
     expect(screen.getByText(/^\s*2\/\d+$/)).toBeInTheDocument();
   });
+
+  it('serves the second playback from cache without hitting /api/tts again', async () => {
+    // Stub Cache API so happy-dom has something to talk to
+    const store = new Map<string, Response>();
+    const cache = {
+      match: vi.fn(async (req: RequestInfo) => {
+        const k = typeof req === 'string' ? req : (req as Request).url;
+        const found = store.has(k);
+        console.log(`[cache.match] key=${k} found=${found} storeSize=${store.size}`);
+        return store.get(k) ?? null;
+      }),
+      put: vi.fn(async (req: RequestInfo, res: Response) => {
+        const k = typeof req === 'string' ? req : (req as Request).url;
+        console.log(`[cache.put] key=${k}`);
+        store.set(k, res);
+      }),
+    };
+    (global as unknown as { caches: unknown }).caches = {
+      open: async () => cache,
+    };
+
+    // Sanity-check crypto.subtle works in happy-dom
+    const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('female|观自在菩萨行深般若波罗蜜多时'));
+    const hashHex = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    console.log('hash hex:', hashHex);
+
+    const chunk: SutraAudioChunk[] = [{ id: 1, title: '心经', text: '观自在菩萨行深般若波罗蜜多时' }];
+    const fetchMock = makeFetchMock();
+
+    const { unmount } = render(<SutraAudioPlayer chunks={chunk} />);
+    fireEvent.click(screen.getByRole('button', { name: '展开播放器' }));
+    fireEvent.click(screen.getByRole('button', { name: '播放' }));
+
+    // Wait for first fetch
+    await waitFor(() => {
+      const calls = fetchMock.mock.calls.filter((c) => {
+        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        return url.endsWith('/api/tts');
+      });
+      expect(calls.length).toBeGreaterThanOrEqual(1);
+    });
+    // Cache should have been written
+    expect(cache.put).toHaveBeenCalledTimes(1);
+
+    // Unmount + remount simulates a fresh component (the cache survives)
+    unmount();
+    const fetchMock2 = makeFetchMock();
+    render(<SutraAudioPlayer chunks={chunk} />);
+    fireEvent.click(screen.getByRole('button', { name: '展开播放器' }));
+    fireEvent.click(screen.getByRole('button', { name: '播放' }));
+
+    // Give the component a generous window to fetch — if cache works, no fetch
+    await new Promise((r) => setTimeout(r, 200));
+    const ttsCalls2 = fetchMock2.mock.calls.filter((c) => {
+      const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+      return url.endsWith('/api/tts');
+    });
+    expect(ttsCalls2.length).toBe(0);
+    // Cache match should have been called at least once during the second playback
+    expect(cache.match.mock.calls.length).toBeGreaterThanOrEqual(1);
+
+    // Restore
+    delete (global as unknown as { caches?: unknown }).caches;
+  });
 });
