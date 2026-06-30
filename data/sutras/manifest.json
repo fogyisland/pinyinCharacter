@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-30T05:27:36.798Z",
+  "generatedAt": "2026-06-30T09:40:25.418Z",
   "items": [
     {
       "id": 1,
       "slug": "xinjing",
       "title": "心经",
       "chunkCount": 1,
-      "charCount": 1305
+      "charCount": 357
     },
     {
       "id": 2,
@@ -21,7 +21,7 @@
       "slug": "yaoshi",
       "title": "药师经",
       "chunkCount": 1,
-      "charCount": 5941
+      "charCount": 5484
     },
     {
       "id": 4,
@@ -70,7 +70,7 @@
       "slug": "dabei",
       "title": "大悲咒",
       "chunkCount": 1,
-      "charCount": 9580
+      "charCount": 9153
     },
     {
       "id": 11,

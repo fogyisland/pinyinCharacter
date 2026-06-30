@@ -35,6 +35,12 @@ interface SlugEntry {
   keepMulu?: string;
   /** Specific juan file to load (for pumen, only the 卷 7 file) */
   juanFile?: number;
+  /**
+   * Drop the first N paragraphs of body text. Use when the CBETA juan starts
+   * with 御制序 / 讲经记 / 译经记 before the actual sutra body — see
+   * memory/cbeta-sutra-intros.md.
+   */
+  skipIntro?: number;
 }
 
 // 11 target sutras (miaofa is dropped — pumen covers the 普门品 sub-section).
@@ -42,9 +48,9 @@ interface SlugEntry {
 // single chunk. The runtime is graceful when chunkCount === 1, and most 品
 // of multi-juan sutras are single-sentence chapters that aren't useful.
 const SLUGS: SlugEntry[] = [
-  { slug: 'xinjing', title: '心经', cbeta: 'T08n0251' },
+  { slug: 'xinjing', title: '心经', cbeta: 'T08n0251', skipIntro: 2 },
   { slug: 'jingang', title: '金刚经', cbeta: 'T08n0235' },
-  { slug: 'yaoshi', title: '药师经', cbeta: 'T14n0449' },
+  { slug: 'yaoshi', title: '药师经', cbeta: 'T14n0449', skipIntro: 4 },
   { slug: 'amituo', title: '阿弥陀经', cbeta: 'T12n0366' },
   {
     slug: 'pumen',
@@ -58,7 +64,7 @@ const SLUGS: SlugEntry[] = [
   { slug: 'lengyan', title: '楞严经', cbeta: 'T19n0945' },
   { slug: 'weimo', title: '维摩诘经', cbeta: 'T14n0475' },
   { slug: 'liuzu', title: '六祖坛经', cbeta: 'T48n2008' },
-  { slug: 'dabei', title: '大悲咒', cbeta: 'T20n1060' },
+  { slug: 'dabei', title: '大悲咒', cbeta: 'T20n1060', skipIntro: 12 },
   { slug: 'shishan', title: '十善业道经', cbeta: 'T15n0600' },
 ];
 
@@ -191,7 +197,12 @@ export async function buildSutras(): Promise<number> {
         console.warn(`[build-sutras] skip ${entry.slug}: no paragraphs in ${file}`);
         continue;
       }
-      const rawChunks: RawChunk[] = [{ label: entry.title, content: sutra.paragraphs }];
+      const skip = entry.skipIntro ?? 0;
+      const trimmed = skip > 0 ? sutra.paragraphs.slice(skip) : sutra.paragraphs;
+      if (skip > 0) {
+        console.log(`[build-sutras] ${entry.slug}: skipIntro=${skip} (${sutra.paragraphs.length} → ${trimmed.length} paragraphs)`);
+      }
+      const rawChunks: RawChunk[] = [{ label: entry.title, content: trimmed }];
 
       const chunks = rawChunks
         .filter((c) => c.content.length > 0)
