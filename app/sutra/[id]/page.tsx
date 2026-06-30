@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSutra } from '@/lib/sutras';
 import { getCurrentUser } from '@/lib/auth';
-import { getActivePlaylist } from '@/lib/playlists';
 import type { SutraChunk } from '@/lib/sutra-types';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -29,7 +28,6 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
   const sutra = await getSutra(id);
   if (!sutra) notFound();
   const user = await getCurrentUser();
-  const activePlaylist = await getActivePlaylist();
 
   const requestedChunk = Number(sp.chunk ?? '0');
   const activeChunkId =
@@ -38,6 +36,11 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
       : 0;
   const activeChunk = sutra.chunks[activeChunkId]!;
   const backLink = getSutraBackLink(sp.from);
+  const audioChunks = sutra.chunks.map((c, i) => ({
+    id: i,
+    title: c.label,
+    text: c.content.join('\n'),
+  }));
 
   return (
     <>
@@ -72,9 +75,7 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
         </div>
       </PageContainer>
       <Footer />
-      {activePlaylist && activePlaylist.tracks.length > 0 && (
-        <SutraAudioPlayer tracks={activePlaylist.tracks} playlistTitle={activePlaylist.title} />
-      )}
+      <SutraAudioPlayer chunks={audioChunks} playlistTitle={sutra.title} />
     </>
   );
 }
