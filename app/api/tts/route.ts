@@ -8,7 +8,7 @@ export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 const schema = z.object({
-  text: z.string().min(1).max(1000),
+  text: z.string().min(1).max(10000),
   voice: z.enum(['male', 'female']).default('female'),
 });
 

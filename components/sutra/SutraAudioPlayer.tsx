@@ -14,11 +14,35 @@ interface Props {
   className?: string;
 }
 
+/**
+ * Max chars per /api/tts request. Server schema caps at 10000 but Edge TTS is
+ * much slower + flaky past ~800, and SutraAudioPlayer wants each batch to
+ * stream into the <audio> element quickly. 800 chars ≈ ~3s synthesis, which
+ * keeps audio.play() almost instant and avoids the 30s route timeout.
+ */
+const BATCH_MAX_CHARS = 800;
+
+function chunkToBatches(text: string): string[] {
+  const paragraphs = text.split(/\n+/).filter((p) => p.trim().length > 0);
+  const batches: string[] = [];
+  let buf = '';
+  for (const p of paragraphs) {
+    if (buf.length > 0 && buf.length + 1 + p.length > BATCH_MAX_CHARS) {
+      batches.push(buf);
+      buf = '';
+    }
+    buf = buf.length === 0 ? p : `${buf} ${p}`;
+  }
+  if (buf.length > 0) batches.push(buf);
+  return batches;
+}
+
 export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentBlobRef = useRef<string | null>(null);
   const fetchingRef = useRef(false);
   const [trackIndex, setTrackIndex] = useState(0);
+  const [batchIndex, setBatchIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [volume, setVolume] = useState(0.7);
   const [loopMode, setLoopMode] = useState<SutraAudioLoopMode>('list');
@@ -45,18 +69,21 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
     }
   }, [loopMode, chunks.length]);
 
-  // Synthesize current chunk and set audio src
-  async function loadAndPlay(idx: number) {
+  // Synthesize current chunk's current batch and set audio src
+  async function loadAndPlay(chunkIdx: number, batchIdx: number) {
     if (fetchingRef.current) return;
     fetchingRef.current = true;
     setErrored(false);
     try {
-      const c = chunks[idx];
-      if (!c) return;
+      const chunk = chunks[chunkIdx];
+      if (!chunk) return;
+      const batches = chunkToBatches(chunk.text);
+      const batchText = batches[batchIdx];
+      if (!batchText) return;
       const res = await fetch('/api/tts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: c.text, voice: 'female' }),
+        body: JSON.stringify({ text: batchText, voice: 'female' }),
       });
       if (!res.ok) {
         setErrored(true);
@@ -81,14 +108,23 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
     }
   }
 
-  // When trackIndex changes, load new chunk
+  // When trackIndex changes, reset batchIndex to 0 and load
   useEffect(() => {
     if (chunks.length === 0) return;
-    loadAndPlay(trackIndex);
+    setBatchIndex(0);
+    loadAndPlay(trackIndex, 0);
     // eslint-disable-next-line react-hooks/disable-exhaustive-deps
   }, [trackIndex]);
 
-  // Audio event listeners — ended → advance (list/single modes)
+  // When batchIndex changes, load next batch (only after trackIndex init)
+  useEffect(() => {
+    if (chunks.length === 0) return;
+    if (batchIndex === 0) return; // handled by trackIndex effect
+    loadAndPlay(trackIndex, batchIndex);
+    // eslint-disable-next-line react-hooks/disable-dehaustive-deps
+  }, [batchIndex]);
+
+  // Audio event listeners — ended → next batch (or next chunk)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -96,7 +132,15 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
     const onPause = () => setPlaying(false);
     const onEnded = () => {
       if (loopModeRef.current === 'single' && chunks.length === 1) return; // browser loops
-      if (loopModeRef.current === 'list' || trackIndex < chunks.length - 1) {
+      const chunk = chunks[trackIndex];
+      if (!chunk) {
+        setPlaying(false);
+        return;
+      }
+      const totalBatches = chunkToBatches(chunk.text).length;
+      if (batchIndex < totalBatches - 1) {
+        setBatchIndex((i) => i + 1);
+      } else if (loopModeRef.current === 'list' || trackIndex < chunks.length - 1) {
         setTrackIndex((i) => (i + 1) % chunks.length);
       } else {
         setPlaying(false);
@@ -113,7 +157,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
       audio.removeEventListener('ended', onEnded);
       audio.removeEventListener('error', onError);
     };
-  }, [trackIndex, chunks.length]);
+  }, [trackIndex, batchIndex, chunks]);
 
   // Cleanup blob on unmount
   useEffect(() => {
@@ -153,6 +197,10 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
   const headerTitle = singleChunk ? (currentChunk?.title ?? playlistTitle ?? '') : (playlistTitle ?? '');
   const showPlaylist = chunks.length > 1;
 
+  // Compute current batch progress for the single-chunk UI
+  const totalBatches = currentChunk ? chunkToBatches(currentChunk.text).length : 1;
+  const batchLabel = totalBatches > 1 ? ` ${batchIndex + 1}/${totalBatches}` : '';
+
   return (
     <div
       className={`fixed bottom-6 right-6 z-40 flex flex-col items-end gap-2 select-none ${className ?? ''}`}
@@ -167,9 +215,13 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
               )}
               <div className="text-sm font-medium text-ink truncate">
                 {currentChunk?.title ?? '—'}
-                {showPlaylist && (
+                {showPlaylist ? (
                   <span className="text-[10px] text-ink-soft ml-1.5 tabular-nums">
                     {trackIndex + 1}/{chunks.length}
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-ink-soft ml-1.5 tabular-nums">
+                    {batchLabel.trim()}
                   </span>
                 )}
               </div>

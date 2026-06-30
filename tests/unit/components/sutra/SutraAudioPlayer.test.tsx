@@ -242,4 +242,89 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     const callsAfter = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.length;
     expect(callsAfter).toBe(callsBefore);
   });
+
+  it('splits a long single-chunk text into multiple TTS batches under 800 chars', async () => {
+    // 12 paragraphs of ~200 chars each → at least 3 batches
+    const para = '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法。';
+    const longChunk: SutraAudioChunk[] = [
+      { id: 1, title: '长经', text: Array(12).fill(para).join('\n') },
+    ];
+    render(<SutraAudioPlayer chunks={longChunk} />);
+    fireEvent.click(screen.getByRole('button', { name: '展开播放器' }));
+    fireEvent.click(screen.getByRole('button', { name: '播放' }));
+
+    await waitFor(() => {
+      const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => {
+        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        return url.endsWith('/api/tts');
+      });
+      expect(calls.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Fire ended a few times to trigger more batches
+    const audio = getAudio();
+    for (let i = 0; i < 4; i++) {
+      act(() => { audio.dispatchEvent(new Event('ended')); });
+    }
+    await waitFor(() => {
+      const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => {
+        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        return url.endsWith('/api/tts');
+      });
+      expect(calls.length).toBeGreaterThanOrEqual(2);
+    });
+
+    const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls;
+    const ttsCalls = calls.filter((c) => {
+      const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+      return url.endsWith('/api/tts');
+    });
+    const bodies = ttsCalls.map((c) => JSON.parse((c[1] as RequestInit).body as string));
+    // Every batch body should be under the 800 char cap so /api/tts doesn't 400
+    for (const b of bodies) {
+      expect(b.text.length).toBeLessThanOrEqual(800);
+      expect(b.voice).toBe('female');
+    }
+    // And there should be more than one batch for ~2400 chars of input
+    expect(bodies.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it('shows batch progress 1/N for a single long chunk and advances N→2 on next-batch ended', async () => {
+    const para = '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法。';
+    const longChunk: SutraAudioChunk[] = [
+      { id: 1, title: '长经', text: Array(12).fill(para).join('\n') },
+    ];
+    render(<SutraAudioPlayer chunks={longChunk} />);
+    fireEvent.click(screen.getByRole('button', { name: '展开播放器' }));
+    fireEvent.click(screen.getByRole('button', { name: '播放' }));
+
+    // Wait for first batch fetch to flush
+    await waitFor(() => {
+      const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => {
+        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        return url.endsWith('/api/tts');
+      });
+      expect(calls.length).toBeGreaterThanOrEqual(1);
+    });
+
+    // Single-chunk UI shows "1/N" not "1/1"
+    expect(screen.queryByText('1/1')).toBeNull();
+    // batch position format is " 1/N" per the trim() in the UI; query by regex
+    expect(screen.getByText(/^\s*1\/\d+$/)).toBeInTheDocument();
+
+    // Fire ended → should advance batch (still single chunk, list mode default)
+    const callsBefore = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.length;
+    const audio = getAudio();
+    act(() => {
+      audio.dispatchEvent(new Event('ended'));
+    });
+
+    // Second batch fetch happens
+    await waitFor(() => {
+      const callsAfter = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.length;
+      expect(callsAfter).toBeGreaterThan(callsBefore);
+    });
+    // UI should now show 2/N
+    expect(screen.getByText(/^\s*2\/\d+$/)).toBeInTheDocument();
+  });
 });
