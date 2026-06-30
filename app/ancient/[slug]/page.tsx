@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { ClassicChunkPicker } from '@/components/classics/ClassicChunkPicker';
 import { ClassicReader } from '@/components/classics/ClassicReader';
+import { SutraAudioPlayer } from '@/components/sutra/SutraAudioPlayer';
 import { getClassicBySlug } from '@/lib/classics';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { buildBook, buildBreadcrumbList } from '@/lib/seo/jsonld';
@@ -39,6 +40,16 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
   const requested = Number(sp.chunk ?? '0');
   const activeIdx = Number.isInteger(requested) && requested >= 0 && requested < book.chunks.length ? requested : 0;
   const activeChunk = book.chunks[activeIdx]!;
+
+  // Audio: feed every chapter (chunk) to SutraAudioPlayer. SutraAudioPlayer
+  // tracks its own play position via /api/tts per chunk; the page-level
+  // ?chunk=N URL still controls the visible chapter. They are intentionally
+  // independent — switching chapter does not interrupt audio.
+  const audioChunks = book.chunks.map((c, i) => ({
+    id: i,
+    title: c.label,
+    text: c.content.join('\n'),
+  }));
 
   return (
     <>
@@ -87,6 +98,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
         </div>
       </PageContainer>
       <Footer />
+      <SutraAudioPlayer chunks={audioChunks} playlistTitle={book.title} />
     </>
   );
 }
