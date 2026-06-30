@@ -12,5 +12,10 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    // Up/ is a gitignored snapshot of the repo used by the deploy bundle;
+    // its tests reference the pre-TTS SutraAudioPlayer API and pollute
+    // every vitest run with 17 stale failures. Excluded so the Up/ snapshot
+    // stays intact for `git bundle` consumers.
+    exclude: ['node_modules/**', 'Up/**', 'dist/**'],
   },
 });

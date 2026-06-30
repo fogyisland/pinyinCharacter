@@ -138,11 +138,9 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
   }
 
   function next() {
+    // The [trackIndex] effect re-runs loadAndPlay, which fetches /api/tts
+    // and (if playing) kicks off playback. No manual call needed here.
     setTrackIndex((i) => (i + 1) % chunks.length);
-    // Also kick off playback if user was playing
-    if (playing) {
-      // loadAndPlay will be triggered by useEffect
-    }
   }
 
   function prev() {
