@@ -24,7 +24,7 @@ export interface SynthesizeOpts {
  * keep-alive and the WebSocket `ws.send` masking interact in that runtime.
  */
 export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
-  const timeoutMs = opts.timeoutMs ?? 10_000;
+  const timeoutMs = opts.timeoutMs ?? 25_000;
   const communicate = new Communicate(opts.text, {
     voice: opts.voiceName,
   });

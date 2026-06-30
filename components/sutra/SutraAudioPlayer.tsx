@@ -167,11 +167,41 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
     };
   }, [trackIndex, batchIndex, chunks]);
 
-  // Cleanup blob on unmount
+  // Cleanup on unmount: stop audio + release blob URL. React doesn't auto-pause
+  // <audio> when the component unmounts, and a still-playing src keeps playing
+  // after the element is detached from the DOM — so we have to pause, clear src,
+  // and call load() to force the element back to its initial state.
   useEffect(() => {
     return () => {
       if (currentBlobRef.current) URL.revokeObjectURL(currentBlobRef.current);
-      audioRef.current?.pause();
+      currentBlobRef.current = null;
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.removeAttribute('src');
+        audio.load();
+      }
+    };
+  }, []);
+
+  // Also stop on pagehide / visibilitychange — covers cases where React hasn't
+  // unmounted yet (BFCache, soft navigations, browser tab switches on some
+  // platforms). Best-effort; React unmount cleanup is the primary path.
+  useEffect(() => {
+    function stop() {
+      const audio = audioRef.current;
+      if (audio && !audio.paused) {
+        audio.pause();
+      }
+    }
+    window.addEventListener('pagehide', stop);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') stop();
+    });
+    return () => {
+      window.removeEventListener('pagehide', stop);
+      document.removeEventListener('visibilitychange', () => {});
     };
   }, []);
 

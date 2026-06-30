@@ -334,13 +334,10 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     const cache = {
       match: vi.fn(async (req: RequestInfo) => {
         const k = typeof req === 'string' ? req : (req as Request).url;
-        const found = store.has(k);
-        console.log(`[cache.match] key=${k} found=${found} storeSize=${store.size}`);
         return store.get(k) ?? null;
       }),
       put: vi.fn(async (req: RequestInfo, res: Response) => {
         const k = typeof req === 'string' ? req : (req as Request).url;
-        console.log(`[cache.put] key=${k}`);
         store.set(k, res);
       }),
     };
@@ -349,9 +346,7 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     };
 
     // Sanity-check crypto.subtle works in happy-dom
-    const hashBuf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('female|观自在菩萨行深般若波罗蜜多时'));
-    const hashHex = Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    console.log('hash hex:', hashHex);
+    await crypto.subtle.digest('SHA-256', new TextEncoder().encode('female|观自在菩萨行深般若波罗蜜多时'));
 
     const chunk: SutraAudioChunk[] = [{ id: 1, title: '心经', text: '观自在菩萨行深般若波罗蜜多时' }];
     const fetchMock = makeFetchMock();
