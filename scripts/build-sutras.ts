@@ -61,9 +61,9 @@ const SLUGS: SlugEntry[] = [
   },
   // 普贤行愿品 is the 40th juan of 華嚴經 T10n0293 — pull only that juan.
   { slug: 'puxian', title: '普贤行愿品', cbeta: 'T10n0293', juanFile: 40 },
-  { slug: 'lengyan', title: '楞严经', cbeta: 'T19n0945' },
+  { slug: 'lengyan', title: '楞严经', cbeta: 'T19n0945', skipIntro: 3 },
   { slug: 'weimo', title: '维摩诘经', cbeta: 'T14n0475' },
-  { slug: 'liuzu', title: '六祖坛经', cbeta: 'T48n2008' },
+  { slug: 'liuzu', title: '六祖坛经', cbeta: 'T48n2008', skipIntro: 11 },
   { slug: 'dabei', title: '大悲咒', cbeta: 'T20n1060', skipIntro: 12 },
   { slug: 'shishan', title: '十善业道经', cbeta: 'T15n0600' },
 ];

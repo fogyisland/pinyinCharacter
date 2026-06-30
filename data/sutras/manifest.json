@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-30T09:40:25.418Z",
+  "generatedAt": "2026-06-30T09:46:40.250Z",
   "items": [
     {
       "id": 1,
@@ -49,7 +49,7 @@
       "slug": "lengyan",
       "title": "楞严经",
       "chunkCount": 1,
-      "charCount": 7556
+      "charCount": 6494
     },
     {
       "id": 8,
@@ -63,7 +63,7 @@
       "slug": "liuzu",
       "title": "六祖坛经",
       "chunkCount": 1,
-      "charCount": 32637
+      "charCount": 28761
     },
     {
       "id": 10,
