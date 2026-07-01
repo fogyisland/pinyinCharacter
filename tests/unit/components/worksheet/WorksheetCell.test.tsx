@@ -47,9 +47,9 @@ describe('WorksheetCell — square/cross branches unchanged (regression)', () =>
     const rects = container.querySelectorAll('rect');
     expect(rects.length).toBe(1);
   });
-  it('pen-cross renders 4 <line> elements (vertical + horizontal + 2 diagonals)', () => {
+  it('pen-cross renders 5 <line> elements (vertical + horizontal + 2 diagonals + y=90 baseline guide)', () => {
     const { container } = render(<WorksheetCell char="一" style="pen-cross" size={80} />);
     const lines = container.querySelectorAll('line');
-    expect(lines.length).toBe(4);
+    expect(lines.length).toBe(5);
   });
 });
