@@ -30,6 +30,45 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
     );
   }
 
+  // Four-line (英文描红): 4 horizontal rules — top solid + upper-mid dashed +
+  // lower-mid dashed + bottom solid. Letter is rendered in the middle (between
+  // upper-mid and lower-mid, the x-height band) in light gray with a red
+  // outline, so the user can trace over it. Cell is taller than wide (height
+  // = size × 1.25) because descenders need room below the baseline.
+  const presentation = getPresentation(style);
+  if (presentation === 'four-line') {
+    const cellHeight = Math.round(size * 1.25);
+    const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", "Times New Roman", serif`;
+    return (
+      <svg width={size} height={cellHeight} viewBox={`0 0 100 125`} className="block">
+        {/* Top solid line (capital cap height) */}
+        <line x1={0} y1={10} x2={100} y2={10} stroke="#999" strokeWidth={1} />
+        {/* Upper-mid dashed (x-height for lowercase) */}
+        <line x1={0} y1={45} x2={100} y2={45} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
+        {/* Lower-mid dashed (baseline) */}
+        <line x1={0} y1={95} x2={100} y2={95} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
+        {/* Bottom solid (descender line) */}
+        <line x1={0} y1={115} x2={100} y2={115} stroke="#999" strokeWidth={1} />
+        {/* Letter — trace styling: light gray fill + red outline (consistent with brush-trace-*) */}
+        {char ? (
+          <text
+            x={50}
+            y={70}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={56}
+            fill="#ddd"
+            stroke="#c0392b"
+            strokeWidth={1.2}
+            style={{ fontFamily: fontStack }}
+          >
+            {char}
+          </text>
+        ) : null}
+      </svg>
+    );
+  }
+
   const isTrace = getIsTrace(style);
   // Trace mode (传统描红): the character is filled light gray with a red
   // outline (字体的外边缘是红色). The user traces over the red outline
@@ -41,7 +80,6 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
   const charStrokeWidth = isTrace ? 1.5 : 0;
   const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", serif`;
   const guideFontSize = isTrace ? size : Math.round(size * 0.6);
-  const presentation = getPresentation(style);
   const showDiagonals = presentation === 'cross';
   const showHorizontal = true;
   return (
@@ -59,7 +97,7 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
       ) : null}
       {/* Baseline guide for cross presentation (米字格 lower bound) */}
       {showDiagonals ? (
-        <line x1={2} y1={90} x2={98} y2={90} stroke={guideStroke} strokeWidth={0.5} />
+        <line x1={2} y1={90} x2={98} y2={98} stroke={guideStroke} strokeWidth={0.5} />
       ) : null}
       <text
         x={50}

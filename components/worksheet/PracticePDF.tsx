@@ -1,8 +1,8 @@
 'use client';
 
-import { Document, Page, View, Text, Svg, Rect, Line, StyleSheet, Font } from '@react-pdf/renderer';
+import { Document, Page, View, Text, Image, Svg, Rect, Line, StyleSheet, Font } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize } from '@/lib/worksheet-types';
-import { PRACTICE_LAYOUT, cellsPerPage, getPresentation, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import { PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, getPresentation, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
 
 // Register one CJK TTF for header/footer text. react-pdf subsets the font
 // to only the glyphs we use ("字·韵", "空白字帖", domain), so the PDF stays
@@ -68,6 +68,15 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     marginBottom: 14,
   },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  brandLogo: {
+    width: 18,
+    height: 18,
+    marginRight: 6,
+  },
   brand: {
     fontSize: 14,
   },
@@ -78,25 +87,29 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    gap: 8,
   },
   linedStack: {
     flexDirection: 'column',
     alignItems: 'flex-start',
   },
   footer: {
+    marginTop: 14,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#3a2a141a',
+  },
+  footerText: {
     fontSize: 9,
     color: '#999',
     textAlign: 'center',
-    marginTop: 14,
-    paddingTop: 8,
-    borderTopWidth: 0.5,
-    borderTopColor: '#3a2a141a',
   },
 });
 
 // One empty cell rendered as inline SVG. Mirrors WorksheetCell's geometry:
 // outer border + vertical/horizontal center lines (田字格) + 2 diagonals
-// (米字格). The character itself is omitted (practice template is blank).
+// (米字格) + 4 horizontal rules (four-line English). The character itself
+// is omitted (practice template is blank).
 function PracticeCell({ size, paperSize, style }: { size: number; paperSize: PaperSize; style: CellStyle }) {
   const presentation = getPresentation(style);
   const width = PAGE_INNER_WIDTH_PT[paperSize];
@@ -105,6 +118,25 @@ function PracticeCell({ size, paperSize, style }: { size: number; paperSize: Pap
     return (
       <Svg width={width} height={size}>
         <Line x1={0} y1={size - 0.5} x2={width} y2={size - 0.5} stroke="#bbb" strokeWidth={1} />
+      </Svg>
+    );
+  }
+  if (presentation === 'four-line') {
+    // Four-line (English trace): 4 horizontal rules — top + upper-mid dashed
+    // + lower-mid dashed + bottom. Cell is taller than wide (height = size ×
+    // 1.25) so descenders fit. Coordinates match WorksheetCell's viewBox 0..100
+    // × 0..125, but rescaled to actual size for the PDF.
+    const cellH = size * 1.25;
+    const yTop = cellH * (10 / 125);
+    const yUpper = cellH * (45 / 125);
+    const yLower = cellH * (95 / 125);
+    const yBottom = cellH * (115 / 125);
+    return (
+      <Svg width={size} height={cellH}>
+        <Line x1={0} y1={yTop} x2={size} y2={yTop} stroke="#999" strokeWidth={1} />
+        <Line x1={0} y1={yUpper} x2={size} y2={yUpper} stroke="#bbb" strokeWidth={0.6} />
+        <Line x1={0} y1={yLower} x2={size} y2={yLower} stroke="#bbb" strokeWidth={0.6} />
+        <Line x1={0} y1={yBottom} x2={size} y2={yBottom} stroke="#999" strokeWidth={1} />
       </Svg>
     );
   }
@@ -132,7 +164,12 @@ interface Props {
 export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
   const isLined = getPresentation(cellStyle) === 'lined';
   // Lined mode: cellSize = row height in pt (CSS px × 72/96). Grid mode: cell side in pt.
-  const cellSize = (isLined ? linedHeightPx(paperSize) : PRACTICE_LAYOUT[paperSize].cellSize) * PX_TO_PT;
+// Brush papers fall back to PRACTICE_LAYOUT (they don't need the practice-grid
+// adjustment — they already fit and have their own per-paper sizing).
+  const cellSize = (isLined
+    ? linedHeightPx(paperSize)
+    : (PRACTICE_GRID_CELL_SIZE[paperSize] ?? PRACTICE_LAYOUT[paperSize].cellSize)
+  ) * PX_TO_PT;
   // Lined mode: count = lines per page. Grid mode: count = cells per page.
   const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
@@ -142,8 +179,11 @@ export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
     <Document>
       <Page size={PAGE_DIMENSIONS[paperSize]} style={styles.page}>
         <View style={styles.header}>
-          <Text style={styles.brand}>字·韵</Text>
-          <Text style={styles.subtitle}>空白字帖</Text>
+          <View style={styles.brandRow}>
+            <Image src="/logo.png" style={styles.brandLogo} />
+            <Text style={styles.brand}>字·韵 · {cellStyleLabel(cellStyle)}</Text>
+          </View>
+          <Text style={styles.subtitle}>空白字帖 · 公益网站，多多支持</Text>
         </View>
         <View style={isLined ? styles.linedStack : styles.grid}>
           {cells.map((i) => (
@@ -152,7 +192,11 @@ export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
             </View>
           ))}
         </View>
-        {siteHost ? <Text style={styles.footer}>{siteHost}</Text> : null}
+        {siteHost ? (
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>{siteHost}</Text>
+          </View>
+        ) : null}
       </Page>
     </Document>
   );
