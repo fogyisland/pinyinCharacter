@@ -9,6 +9,27 @@ interface Props {
 }
 
 export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: Props) {
+  // Lined mode (钢笔·横线): render a stretched SVG with a single 1px bottom
+  // rule. `vectorEffect="non-scaling-stroke"` keeps the stroke 1px regardless
+  // of how the container scales the SVG; `viewBox="0 0 100 ${size}"` +
+  // `preserveAspectRatio="none"` lets the line stretch to fill any width.
+  // No character is rendered — lined is blank ruled paper.
+  if (style === 'pen-lined') {
+    return (
+      <svg width="100%" height={size} viewBox={`0 0 100 ${size}`} preserveAspectRatio="none" className="block">
+        <line
+          x1={0}
+          y1={size - 0.5}
+          x2={100}
+          y2={size - 0.5}
+          stroke="#bbb"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+    );
+  }
+
   const isTrace = getIsTrace(style);
   // Trace mode (传统描红): the character is filled light gray with a red
   // outline (字体的外边缘是红色). The user traces over the red outline
