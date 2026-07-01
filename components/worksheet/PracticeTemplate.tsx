@@ -28,7 +28,7 @@ const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = 
   { value: 'brush-cross', label: '毛笔 · 米字格', tool: 'brush' },
   { value: 'pen-square', label: '钢笔 · 田字格', tool: 'pen' },
   { value: 'pen-cross', label: '钢笔 · 米字格', tool: 'pen' },
-  { value: 'pen-lined', label: '钢笔·横线', tool: 'pen' },
+  { value: 'pen-lined', label: '钢笔 · 横线', tool: 'pen' },
 ];
 
 // 毛笔 ↔ brush-12/24/28; 钢笔 ↔ A3/A4/B5. Selecting a cell style whose

@@ -34,7 +34,7 @@ describe('PracticeTemplate — pen-lined option', () => {
     const select = screen.getByLabelText('格子形式') as HTMLSelectElement;
     const options = within(select).getAllByRole('option');
     const labels = options.map((o) => o.textContent);
-    expect(labels).toContain('钢笔·横线');
+    expect(labels).toContain('钢笔 · 横线');
   });
 
   it('defaults to pen-square (regression: lined does not change default)', () => {
