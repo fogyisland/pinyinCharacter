@@ -1,11 +1,12 @@
 import { cellsPerPage } from './worksheet-page-count';
 
 export type Tool = 'brush' | 'pen';
-export type Presentation = 'square' | 'cross';
+export type Presentation = 'square' | 'cross' | 'lined';
 export type CellStyle =
   | 'brush-square' | 'brush-cross'
   | 'pen-square'   | 'pen-cross'
-  | 'brush-trace-square' | 'brush-trace-cross';
+  | 'brush-trace-square' | 'brush-trace-cross'
+  | 'pen-lined';
 export type PaperSize = 'A3' | 'A4' | 'B5' | 'brush-12' | 'brush-24' | 'brush-28';
 export type FontFamily =
   | 'song' | 'kai' | 'hei'
@@ -14,10 +15,11 @@ export type FontFamily =
   | 'liu-jian-mao-cao' | 'zcool-xiaowei' | 'zhi-mang-xing';
 
 const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
-const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross'];
+const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross', 'lined'];
 const ALL_CELL_STYLES: readonly CellStyle[] = [
   'brush-square', 'brush-cross', 'pen-square', 'pen-cross',
   'brush-trace-square', 'brush-trace-cross',
+  'pen-lined',
 ] as const;
 
 // Compose / split helpers
@@ -34,6 +36,7 @@ export function getTool(s: CellStyle): Tool {
 
 export function getPresentation(s: CellStyle): Presentation {
   if (s.includes('cross')) return 'cross';
+  if (s.includes('lined')) return 'lined';
   return 'square';
 }
 
@@ -107,6 +110,36 @@ export const PRACTICE_LAYOUT: Record<PaperSize, { cellSize: number }> = {
   'brush-28': { cellSize: 85  },
 };
 
+// Lined-paper row height in CSS px (1px = 1/96in). Picked so the printable
+// area fits a whole number of rows: A4 inner 267mm × 38px = 1010px ≈ 24 rows;
+// A3 inner 390mm × 66px = 2592px ≈ 36 rows; B5 inner 220mm × 44px = 915px ≈
+// 14 rows. 1.0cm row height is the standard 作文本 / 信纸 convention.
+const PRACTICE_LINED_HEIGHT: Record<PaperSize, number> = {
+  A3: 66,
+  A4: 38,
+  B5: 44,
+  'brush-12': 0,
+  'brush-24': 0,
+  'brush-28': 0,
+};
+
+export function linedHeightPx(paperSize: PaperSize): number {
+  return PRACTICE_LINED_HEIGHT[paperSize];
+}
+
+const LINES_PER_PAGE: Record<PaperSize, number> = {
+  A3: 36,
+  A4: 24,
+  B5: 14,
+  'brush-12': 0,
+  'brush-24': 0,
+  'brush-28': 0,
+};
+
+export function linesPerPage(paperSize: PaperSize): number {
+  return LINES_PER_PAGE[paperSize];
+}
+
 export const FONT_FAMILIES: {
   value: FontFamily;
   label: string;
@@ -145,8 +178,10 @@ export function fontFamilyCssVar(f: FontFamily): string {
 }
 export function cellStyleLabel(s: CellStyle): string {
   const tool = getTool(s) === 'brush' ? '毛笔' : '钢笔';
-  const pres = getPresentation(s) === 'square' ? '田字格' : '米字格';
-  return getIsTrace(s) ? `${tool}·${pres}·描红` : `${tool}·${pres}`;
+  const pres = getPresentation(s);
+  if (pres === 'lined') return `${tool}·横线`;
+  const label = pres === 'cross' ? '米字格' : '田字格';
+  return getIsTrace(s) ? `${tool}·${label}·描红` : `${tool}·${label}`;
 }
 
 export type ValidationResult =
@@ -178,7 +213,7 @@ export function validateWorksheetInput(input: {
     return { ok: false, error: 'content must be CJK chars' };
   }
   if (!(ALL_CELL_STYLES as readonly string[]).includes(input.cellStyle as string)) {
-    return { ok: false, error: 'cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross' };
+    return { ok: false, error: 'cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross, pen-lined' };
   }
   const cellStyle = input.cellStyle as CellStyle;
   // paperSize is optional in input but defaults to 'A4' for non-brush; brush defaults to 'brush-12'
