@@ -4,6 +4,7 @@ import {
   cellStyleLabel,
   linedHeightPx,
   linesPerPage,
+  PRACTICE_GRID_CELL_SIZE,
   validateWorksheetInput,
 } from '@/lib/worksheet-types';
 
@@ -20,6 +21,18 @@ describe('getPresentation — lined branch', () => {
     expect(getPresentation('pen-cross')).toBe('cross');
     expect(getPresentation('brush-cross')).toBe('cross');
     expect(getPresentation('brush-trace-cross')).toBe('cross');
+  });
+});
+
+describe('getPresentation — four-line branch (English trace)', () => {
+  it('returns "four-line" for pen-english', () => {
+    expect(getPresentation('pen-english')).toBe('four-line');
+  });
+});
+
+describe('cellStyleLabel — four-line branch (English trace)', () => {
+  it('labels pen-english as "钢笔·英文描红"', () => {
+    expect(cellStyleLabel('pen-english')).toBe('钢笔·英文描红');
   });
 });
 
@@ -84,5 +97,60 @@ describe('validateWorksheetInput — accepts pen-lined', () => {
       cellStyle: 'pen-cursive',
     });
     expect(r.ok).toBe(false);
+  });
+});
+
+describe('validateWorksheetInput — accepts pen-english (ASCII letters only)', () => {
+  it('accepts cellStyle="pen-english" with A-Z/a-z letters', () => {
+    const r = validateWorksheetInput({
+      title: 'English practice',
+      content: ['A', 'b', 'C'],
+      cellStyle: 'pen-english',
+    });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.data.cellStyle).toBe('pen-english');
+      expect(r.data.paperSize).toBe('A4');
+    }
+  });
+  it('rejects pen-english with space content', () => {
+    const r = validateWorksheetInput({
+      title: 'sp',
+      content: ['A', ' '],
+      cellStyle: 'pen-english',
+    });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/A-Z\/a-z/);
+  });
+  it('rejects CJK chars when cellStyle is pen-english', () => {
+    const r = validateWorksheetInput({
+      title: 'x',
+      content: ['A', '你'],
+      cellStyle: 'pen-english',
+    });
+    expect(r.ok).toBe(false);
+  });
+  it('still rejects ASCII letters when cellStyle is CJK (e.g. brush-square)', () => {
+    const r = validateWorksheetInput({
+      title: 'x',
+      content: ['一', 'A'],
+      cellStyle: 'brush-square',
+    });
+    expect(r.ok).toBe(false);
+  });
+});
+
+describe('PRACTICE_GRID_CELL_SIZE — grid mode cell sizing', () => {
+  it('A4 = 70px so 8 cells × 70 + 7 × 8px gap fits A4 printable width AND 11 rows fit height', () => {
+    // Width: 8 × 70 + 7 × 8 = 616 CSS px → 462pt (≤ 510pt ✓)
+    // Height: 11 × 52.5pt + 10 × 8pt + 73pt header+footer = 730.5pt ≤ 757pt ✓
+    // (75px cells would overflow A4 PDF by ~5mm; dropped to 70px for 11 rows = 88 cells)
+    expect(PRACTICE_GRID_CELL_SIZE['A4']).toBe(70);
+  });
+  it('A3 stays at 70px (12 × 70 + 11 × 8 = 928 ≤ 1010 A3 inner)', () => {
+    expect(PRACTICE_GRID_CELL_SIZE['A3']).toBe(70);
+  });
+  it('B5 stays at 80px (6 × 80 + 5 × 8 = 520 ≈ 540 B5 inner)', () => {
+    expect(PRACTICE_GRID_CELL_SIZE['B5']).toBe(80);
   });
 });

@@ -1,12 +1,13 @@
 import { cellsPerPage } from './worksheet-page-count';
 
 export type Tool = 'brush' | 'pen';
-export type Presentation = 'square' | 'cross' | 'lined';
+export type Presentation = 'square' | 'cross' | 'lined' | 'four-line';
 export type CellStyle =
   | 'brush-square' | 'brush-cross'
   | 'pen-square'   | 'pen-cross'
   | 'brush-trace-square' | 'brush-trace-cross'
-  | 'pen-lined';
+  | 'pen-lined'
+  | 'pen-english';
 export type PaperSize = 'A3' | 'A4' | 'B5' | 'brush-12' | 'brush-24' | 'brush-28';
 export type FontFamily =
   | 'song' | 'kai' | 'hei'
@@ -15,11 +16,11 @@ export type FontFamily =
   | 'liu-jian-mao-cao' | 'zcool-xiaowei' | 'zhi-mang-xing';
 
 const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
-const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross', 'lined'];
+const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross', 'lined', 'four-line'];
 const ALL_CELL_STYLES: readonly CellStyle[] = [
   'brush-square', 'brush-cross', 'pen-square', 'pen-cross',
   'brush-trace-square', 'brush-trace-cross',
-  'pen-lined',
+  'pen-lined', 'pen-english',
 ] as const;
 
 // Compose / split helpers
@@ -37,6 +38,7 @@ export function getTool(s: CellStyle): Tool {
 export function getPresentation(s: CellStyle): Presentation {
   if (s.includes('cross')) return 'cross';
   if (s.includes('lined')) return 'lined';
+  if (s.includes('english')) return 'four-line';
   return 'square';
 }
 
@@ -110,6 +112,22 @@ export const PRACTICE_LAYOUT: Record<PaperSize, { cellSize: number }> = {
   'brush-28': { cellSize: 85  },
 };
 
+// Practice template grid mode uses slightly smaller cells than PRACTICE_LAYOUT
+// so the 8pt grid gap fits A4's printable width (8 cells × size + 7 × 8pt
+// ≤ 510pt → size ≤ 56.75pt → 75px). A4 dropped to 70px so 11 rows
+// (cellsPerPage['A4']=88) still fit A4 PDF's 757pt inner height
+// (11 × 52.5pt + 10 × 8pt + 73pt header+footer = 730.5pt ≤ 757pt).
+// Lined and brush modes still use PRACTICE_LAYOUT — only pen-{square,cross}
+// reads from this map.
+export const PRACTICE_GRID_CELL_SIZE: Record<PaperSize, number> = {
+  A3: 70,
+  A4: 70,
+  B5: 80,
+  'brush-12': 140,
+  'brush-24': 100,
+  'brush-28': 85,
+};
+
 // Lined-paper row height in CSS px (1px = 1/96in). Picked so the printable
 // area fits linesPerPage lines: A4 24×38=912 ≤ 1010; A3 36×38=1368 ≤ 1474;
 // B5 14×44=616 ≤ 832. All three use the 1.0cm standard 作文本 / 信纸 row
@@ -180,6 +198,7 @@ export function cellStyleLabel(s: CellStyle): string {
   const tool = getTool(s) === 'brush' ? '毛笔' : '钢笔';
   const pres = getPresentation(s);
   if (pres === 'lined') return `${tool}·横线`;
+  if (pres === 'four-line') return `${tool}·英文描红`;
   const label = pres === 'cross' ? '米字格' : '田字格';
   return getIsTrace(s) ? `${tool}·${label}·描红` : `${tool}·${label}`;
 }
@@ -190,6 +209,8 @@ export type ValidationResult =
 
 // 与 lib/validators.ts SINGLE_CJK 保持一致 (常用字 + 扩展A + 中文标点 + 全角)
 const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
+// 英文描红允许 ASCII 字母 (A-Z / a-z);空格、标点、其他字符统统过滤掉
+const SINGLE_LATIN = /^[A-Za-z]$/;
 
 const VALID_PAPER_SIZES = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'] as const;
 
@@ -209,13 +230,14 @@ export function validateWorksheetInput(input: {
   if (!Array.isArray(input.content) || input.content.length < 1 || input.content.length > 500) {
     return { ok: false, error: 'content must be 1-500 chars' };
   }
-  if (!input.content.every((c) => typeof c === 'string' && SINGLE_CJK.test(c))) {
-    return { ok: false, error: 'content must be CJK chars' };
-  }
   if (!(ALL_CELL_STYLES as readonly string[]).includes(input.cellStyle as string)) {
-    return { ok: false, error: 'cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross, pen-lined' };
+    return { ok: false, error: 'cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross, pen-lined, pen-english' };
   }
   const cellStyle = input.cellStyle as CellStyle;
+  const allowLatin = cellStyle === 'pen-english';
+  if (!input.content.every((c) => typeof c === 'string' && (allowLatin ? SINGLE_LATIN.test(c) : SINGLE_CJK.test(c)))) {
+    return { ok: false, error: allowLatin ? 'content must be A-Z/a-z letters (no spaces or punctuation) when cellStyle=pen-english' : 'content must be CJK chars' };
+  }
   // paperSize is optional in input but defaults to 'A4' for non-brush; brush defaults to 'brush-12'
   let paperSize: PaperSize;
   if (input.paperSize === undefined) {
