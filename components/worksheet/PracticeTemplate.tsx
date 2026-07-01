@@ -4,7 +4,7 @@ import { useState, type ComponentType, type ReactElement, type ReactNode } from 
 import dynamic from 'next/dynamic';
 import type { DocumentProps } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
-import { PAPER_SIZES, PRACTICE_LAYOUT, cellsPerPage, cellStyleLabel, getTool, getPresentation, isBrushSize, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import { PAPER_SIZES, PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, getTool, getPresentation, isBrushSize, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PracticePDF } from './PracticePDF';
 
@@ -29,6 +29,7 @@ const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = 
   { value: 'pen-square', label: '钢笔 · 田字格', tool: 'pen' },
   { value: 'pen-cross', label: '钢笔 · 米字格', tool: 'pen' },
   { value: 'pen-lined', label: '钢笔 · 横线', tool: 'pen' },
+  { value: 'pen-english', label: '钢笔 · 英文描红', tool: 'pen' },
 ];
 
 // 毛笔 ↔ brush-12/24/28; 钢笔 ↔ A3/A4/B5. Selecting a cell style whose
@@ -72,8 +73,12 @@ export function PracticeTemplate() {
   const isLined = getPresentation(cellStyle) === 'lined';
   const sizeClass = isLined ? `worksheet-grid--${paperSize.toLowerCase()}-lined` : `worksheet-grid--${paperSize.toLowerCase()}`;
   // Lined mode: cellSize = row height in CSS px (e.g. A4 = 38px ≈ 1.0cm).
-  // Grid mode: cellSize = cell side in CSS px (e.g. A4 = 80px).
-  const cellSize = isLined ? linedHeightPx(paperSize) : PRACTICE_LAYOUT[paperSize].cellSize;
+  // Grid mode: cellSize = cell side in CSS px (e.g. A4 = 75px — slightly smaller
+  // than PRACTICE_LAYOUT so the 8px grid gap fits A4's printable width).
+  // Brush papers fall back to PRACTICE_LAYOUT (they have their own sizing).
+  const cellSize = isLined
+    ? linedHeightPx(paperSize)
+    : (PRACTICE_GRID_CELL_SIZE[paperSize] ?? PRACTICE_LAYOUT[paperSize].cellSize);
   // Lined mode: count = lines per page (A4=24). Grid mode: count = cells per page.
   const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
@@ -150,9 +155,9 @@ export function PracticeTemplate() {
             <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
                 <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-                <span className="font-kai text-base text-ink">字·韵</span>
+                <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
               </div>
-              <div className="text-sm text-ink-soft">空白字帖</div>
+              <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
             </div>
             {cells.map((i) => (
               <div key={i} className="lined-paper-row" style={{ height: `${cellSize}px` }}>
@@ -170,9 +175,9 @@ export function PracticeTemplate() {
             <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
                 <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-                <span className="font-kai text-base text-ink">字·韵</span>
+                <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
               </div>
-              <div className="text-sm text-ink-soft">空白字帖</div>
+              <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
             </div>
             {cells.map((i) => (
               <div key={i} className="worksheet-cell">

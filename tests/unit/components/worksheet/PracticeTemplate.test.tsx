@@ -80,3 +80,40 @@ describe('PracticeTemplate — lined render branch', () => {
     expect(document.querySelector('.worksheet-grid')).not.toBeNull();
   });
 });
+
+describe('PracticeTemplate — pen-english option (four-line English trace)', () => {
+  it('renders a 钢笔·英文描红 option in the 格子形式 select', () => {
+    render(<PracticeTemplate />);
+    const select = screen.getByLabelText('格子形式') as HTMLSelectElement;
+    const labels = within(select).getAllByRole('option').map((o) => o.textContent);
+    expect(labels).toContain('钢笔 · 英文描红');
+  });
+
+  it('selecting 钢笔·英文描红 renders 4-line cells via .worksheet-grid (not .lined-paper)', async () => {
+    const user = userEvent.setup();
+    render(<PracticeTemplate />);
+    await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-english');
+    // 4-line is a grid (not lined flex); SVG cells render 4 horizontal rules
+    expect(document.querySelector('.lined-paper')).toBeNull();
+    expect(document.querySelector('.worksheet-grid')).not.toBeNull();
+    const cells = document.querySelectorAll('.worksheet-cell');
+    expect(cells.length).toBe(88); // A4 cellsPerPage
+    // Each cell should be a 4-line SVG: viewBox 0 0 100 125
+    const firstCell = cells[0]?.querySelector('svg');
+    expect(firstCell?.getAttribute('viewBox')).toBe('0 0 100 125');
+    // 4 horizontal lines + no letter (empty template)
+    const lines = firstCell?.querySelectorAll('line');
+    expect(lines?.length).toBe(4);
+    expect(firstCell?.querySelector('text')).toBeNull();
+  });
+
+  it('switching pen-english → pen-square restores the 田字格 border (regression)', async () => {
+    const user = userEvent.setup();
+    render(<PracticeTemplate />);
+    await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-english');
+    await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-square');
+    const firstCell = document.querySelector('.worksheet-cell svg');
+    // 田字格 uses viewBox 0 0 100 100, not 0 0 100 125
+    expect(firstCell?.getAttribute('viewBox')).toBe('0 0 100 100');
+  });
+});
