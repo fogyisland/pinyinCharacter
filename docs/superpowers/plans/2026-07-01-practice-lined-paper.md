@@ -791,13 +791,11 @@ describe('PracticePDF — pen-lined branch', () => {
     const buf = Buffer.from(await blob.arrayBuffer());
     const text = buf.toString('binary');
     // Each lined cell renders one <Line> for the bottom rule. We expect
-    // exactly 24 of them, matching linesPerPage('A4') = 24. Count by
-    // matching "/L " (the PDF operator followed by a length value) is
-    // fragile, so we just count the literal "m" before " l" — every line
-    // segment produces a `m` (moveTo) and `l` (lineTo) pair. Use a simpler
-    // heuristic: count the unique pattern "0 37.5 l" which is the
-    // y-coordinate pair for A4 lined cells (size=38, y=37.5).
-    const matches = text.match(/0 37\.5 l/g) || [];
+    // exactly 24 of them, matching linesPerPage('A4') = 24. The PDF cellSize
+    // is `linedHeightPx('A4') * PX_TO_PT` = 38 * 0.75 = 28.5pt; the line y
+    // = 28.5 - 0.5 = 28. Count occurrences of the PDF moveTo+lineTo pattern
+    // "0 28 l" emitted by @react-pdf for the bottom rule.
+    const matches = text.match(/0 28 l/g) || [];
     expect(matches.length).toBe(24);
   });
 
