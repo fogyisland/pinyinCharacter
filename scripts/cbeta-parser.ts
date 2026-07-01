@@ -64,38 +64,75 @@ function firstAttr(xml: string, tag: string, attr: string): string {
 /**
  * Strip all CBETA inline markup from a piece of text:
  *  - <lb .../> self-closing line-break tags
- *  - <note ...>...</note> blocks (with their text)
+ *  - <note ...>...</note> blocks (with their text) — including NESTED notes
+ *    (CBETA does nest <note> inside <app> inside <note> for sub-variants)
  *  - <g ref="..."/> gaiji references
  *  - All <cb:...> opening/closing tags, but keep their inner text
- *  - <app>, <rdg>, <lem> apparatus criticus — strip tag, keep text
+ *  - <app>...</app> apparatus criticus — keep only the <lem> (base) reading;
+ *    discard all <rdg> variants. Nested <app> inside <lem> is resolved
+ *    recursively so the base reading has no variant markers in it.
  *  - <space .../> whitespace markers
  *
  * Returns plain simplified text with no markup.
  */
 function stripMarkup(text: string): string {
-  return (
-    text
-      // 1) Remove <note>...</note> blocks (footnotes, including their text)
-      .replace(/<note\b[^>]*>[\s\S]*?<\/note>/g, '')
-      // 2) Remove <lb .../> self-closing tags
-      .replace(/<lb\b[^>]*\/?>/g, '')
-      // 3) Remove <g .../> gaiji
-      .replace(/<g\b[^>]*\/?>/g, '')
-      // 4) Remove <space .../> whitespace markers
-      .replace(/<space\b[^>]*\/?>/g, '')
-      // 5) Strip <cb:...> and </cb:...> tag wrappers (keep content)
-      .replace(/<\/?cb:[^>]+>/g, '')
-      // 6) Strip <app>, <rdg>, <lem>, <anchor>, <w>, <tt>, <t> (keep text)
-      .replace(/<\/?(?:app|rdg|lem|anchor|w|tt|t|pb|milestone)\b[^>]*>/g, '')
-      // 7) Remove any remaining empty/self-closing tags (catch-all)
-      .replace(/<[a-z]+:[^>]+\/>/gi, '')
-      .replace(/<[a-z]+:[^>]+><\/?[a-z]+:[^>]+>/gi, '')
-      // 8) Convert any remaining numeric character references that survived
-      .replace(/&#xFE0F;?/g, '')
-      // 9) Collapse whitespace
-      .replace(/\s+/g, ' ')
-      .trim()
-  );
+  // Handle nested <note>/<app> by a multi-pass loop. Each pass removes the
+  // INNERMOST pair (the negative lookahead `(?!<tag\b)` blocks the regex
+  // from crossing another open tag, so the match stops at the matching
+  // close — the engine can no longer greedily eat through an inner close
+  // tag and leave trailing note text orphaned). Repeat until stable.
+  const stripInnermost = (tag: string, replacer: (m: string) => string) => {
+    const re = new RegExp(`<${tag}\\b[^>]*>((?:(?!<${tag}\\b)[\\s\\S])*?)<\\/${tag}>`, 'g');
+    let prev: string;
+    do {
+      prev = text;
+      text = text.replace(re, replacer);
+    } while (text !== prev);
+  };
+
+  // 1) Remove all <note>...</note> blocks (innermost first). Notes contain
+  //    editorial apparatus (variant markers like ＝【宮】) that's not part
+  //    of the sutra text.
+  stripInnermost('note', () => '');
+  // 2) Remove orphan <note>/</note> tags left over when an inner note was
+  //    removed before the outer one (non-greedy regex nested edge case).
+  text = text.replace(/<\/?note\b[^>]*>/g, '');
+
+  // 3) Remove <lb .../>, <g .../>, <space .../> self-closing tags.
+  text = text
+    .replace(/<lb\b[^>]*\/?>/g, '')
+    .replace(/<g\b[^>]*\/?>/g, '')
+    .replace(/<space\b[^>]*\/?>/g, '');
+
+  // 4) Strip <cb:...> tag wrappers (keep content).
+  text = text.replace(/<\/?cb:[^>]+>/g, '');
+
+  // 5) Resolve <app>...</app> blocks: keep only the <lem> (base) reading,
+  //    dropping all <rdg> variants. Innermost-first so nested apps
+  //    resolve before their parent.
+  stripInnermost('app', (m) => {
+    const lem = m.match(/<lem\b[^>]*>([\s\S]*?)<\/lem>/);
+    return lem ? lem[1]! : '';
+  });
+  // 6) Strip orphan <app>/<rdg>/<lem>/etc. wrappers.
+  text = text.replace(/<\/?(?:app|rdg|lem|anchor|w|tt|t|pb|milestone)\b[^>]*>/g, '');
+
+  // 7) Remove any remaining empty/self-closing tags (catch-all).
+  text = text
+    .replace(/<[a-z]+:[^>]+\/>/gi, '')
+    .replace(/<[a-z]+:[^>]+><\/?[a-z]+:[^>]+>/gi, '');
+
+  // 8) Convert any remaining numeric character references that survived.
+  text = text.replace(/&#xFE0F;?/g, '');
+
+  // 9) Defense in depth: strip any CBETA apparatus witness markers that
+  //    leaked through. If regex stripping ever fails on a deeply nested
+  //    structure, we'd rather drop the markers than ship 【大】/【甲】/【CB】
+  //    in the canonical text. See memory: cbeta-sutra-intros.
+  text = text.replace(/【[一-鿿]+】/g, '');
+
+  // 10) Collapse whitespace.
+  return text.replace(/\s+/g, ' ').trim();
 }
 
 /**

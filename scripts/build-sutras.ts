@@ -41,6 +41,26 @@ interface SlugEntry {
    * memory/cbeta-sutra-intros.md.
    */
   skipIntro?: number;
+  /**
+   * Load all juan files of this cbeta id and concatenate paragraphs in
+   * juan-order. Use for multi-juan sutras (楞严 10 卷, 维摩 3 卷) — without
+   * this, only juan 1 is loaded and the bulk of the sutra is missing.
+   */
+  allJuan?: boolean;
+  /**
+   * Drop the last N paragraphs of the (concatenated) body. Use for appended
+   * post-content like a dharani mantra, a Yuan/Ming dynasty colophon, or a
+   * 附录 section that the CBETA XML tacks on after the canonical closing.
+   */
+  dropFromEnd?: number;
+  /**
+   * Stop including paragraphs at the FIRST paragraph whose text contains
+   * this substring. The matching paragraph is dropped (so its index is the
+   * new end exclusive). Use when the appendix has variable length but a
+   * stable opening marker — e.g. "吾既为僧琳" marks the start of 佛衣铭
+   * (Liu Zongyuan's appendix prose) in 六祖坛经.
+   */
+  stopAtMarker?: string;
 }
 
 // 11 target sutras (miaofa is dropped — pumen covers the 普门品 sub-section).
@@ -49,7 +69,9 @@ interface SlugEntry {
 // of multi-juan sutras are single-sentence chapters that aren't useful.
 const SLUGS: SlugEntry[] = [
   { slug: 'xinjing', title: '心经', cbeta: 'T08n0251', skipIntro: 2 },
-  { slug: 'jingang', title: '金刚经', cbeta: 'T08n0235' },
+  // T08n0235 has 1 juan. The canonical end is 佛说是经已…信受奉行; the
+  // trailing 那谟婆伽跋帝…莎婆诃 is a post-text 陀罗尼 appended by CBETA.
+  { slug: 'jingang', title: '金刚经', cbeta: 'T08n0235', dropFromEnd: 1 },
   { slug: 'yaoshi', title: '药师经', cbeta: 'T14n0449', skipIntro: 4 },
   { slug: 'amituo', title: '阿弥陀经', cbeta: 'T12n0366' },
   {
@@ -59,12 +81,28 @@ const SLUGS: SlugEntry[] = [
     keepMulu: '观世音菩萨普门品',
     juanFile: 7,
   },
-  // 普贤行愿品 is the 40th juan of 華嚴經 T10n0293 — pull only that juan.
-  { slug: 'puxian', title: '普贤行愿品', cbeta: 'T10n0293', juanFile: 40 },
-  { slug: 'lengyan', title: '楞严经', cbeta: 'T19n0945', skipIntro: 3 },
-  { slug: 'weimo', title: '维摩诘经', cbeta: 'T14n0475' },
-  { slug: 'liuzu', title: '六祖坛经', cbeta: 'T48n2008', skipIntro: 11 },
-  { slug: 'dabei', title: '大悲咒', cbeta: 'T20n1060', skipIntro: 12 },
+  // 普贤行愿品 is the 40th juan of 華嚴經 T10n0293. The last 3 paragraphs
+  // 普贤行愿品 is the 40th juan of 華嚴經 T10n0293. After the canonical
+  // closing (信受奉行), CBETA appends a long attribution + Yuan/Ming-dynasty
+  // colophon (贞元十一年 translation note, 道安's 至元十六年 preface, 如志's
+  // 至元二十六年 colophon, and 4-verse dedication ending with 尧天舜日大开
+  // 一统山河 / 圣子神孙同衍千秋福寿). Stop at the dedication marker that
+  // begins the appendix.
+  { slug: 'puxian', title: '普贤行愿品', cbeta: 'T10n0293', juanFile: 40, stopAtMarker: '南天竺' },
+  // 楞严经 has 10 juan — without allJuan we only get the first 1/10.
+  { slug: 'lengyan', title: '楞严经', cbeta: 'T19n0945', allJuan: true, skipIntro: 3 },
+  // 维摩诘经 has 3 juan — without allJuan we only get the first 1/3.
+  { slug: 'weimo', title: '维摩诘经', cbeta: 'T14n0475', allJuan: true },
+  // 附录 in 六祖坛经 begins with 惠能's biographical section (starts at
+  // "大师名惠能，父卢氏..."). The canonical sutra ends at 法海's epilogue
+  // ("达磨所传信衣…留传《坛经》以显宗旨，兴隆三..."), so we cut at the
+  // first paragraph of the appendix. Earlier marker "吾既为僧琳" only
+  // caught 佛衣铭 and missed the longer Liu Zongyuan biography.
+  { slug: 'liuzu', title: '六祖坛经', cbeta: 'T48n2008', skipIntro: 11, stopAtMarker: '大师名惠能' },
+  // T20n1060 is the full sutra "千手千眼观世音菩萨广大圆满无碍大悲心
+  // 陀罗尼经" which contains the 大悲咒 mantra; rename the slug title
+  // to the canonical name so users see what they're actually reading.
+  { slug: 'dabei', title: '千手千眼大悲心陀罗尼经', cbeta: 'T20n1060', skipIntro: 12 },
   { slug: 'shishan', title: '十善业道经', cbeta: 'T15n0600' },
 ];
 
@@ -189,18 +227,55 @@ export async function buildSutras(): Promise<number> {
       const files = findCbetaFiles(entry.cbeta, entry.juanFile);
       console.log(`[build-sutras] ${entry.slug}: ${files.length} file(s) for ${entry.cbeta}`);
 
-      // Always emit a single chunk per sutra. `juanFile` (when set) limits
-      // which XML file we load; the first file's paragraphs become the chunk.
-      const file = files[0]!;
-      const sutra = parseCbetaXml(file, entry.keepMulu ? { keepOnlyMuluLabel: entry.keepMulu } : undefined);
-      if (sutra.paragraphs.length === 0) {
-        console.warn(`[build-sutras] skip ${entry.slug}: no paragraphs in ${file}`);
+      // Always emit a single chunk per sutra.
+      // - allJuan: load every juan file in order and concatenate paragraphs.
+      //   Needed for multi-juan sutras (楞严 10 卷, 维摩 3 卷) — without this
+      //   we'd only get juan 1 and miss most of the text.
+      // - juanFile (when set) limits to a single juan (e.g. puxian=juan 40).
+      // - keepMulu narrows the juan to a sub-section (e.g. 普门品).
+      let body: string[];
+      if (entry.allJuan) {
+        const allParagraphs: string[] = [];
+        for (const file of files) {
+          const sutra = parseCbetaXml(file, entry.keepMulu ? { keepOnlyMuluLabel: entry.keepMulu } : undefined);
+          allParagraphs.push(...sutra.paragraphs);
+        }
+        body = allParagraphs;
+        console.log(`[build-sutras] ${entry.slug}: allJuan concatenated ${files.length} file(s) → ${body.length} paragraphs`);
+      } else {
+        const file = files[0]!;
+        const sutra = parseCbetaXml(file, entry.keepMulu ? { keepOnlyMuluLabel: entry.keepMulu } : undefined);
+        body = sutra.paragraphs;
+        if (body.length === 0) {
+          console.warn(`[build-sutras] skip ${entry.slug}: no paragraphs in ${file}`);
+          continue;
+        }
+      }
+      if (body.length === 0) {
+        console.warn(`[build-sutras] skip ${entry.slug}: no paragraphs after multi-juan load`);
         continue;
       }
       const skip = entry.skipIntro ?? 0;
-      const trimmed = skip > 0 ? sutra.paragraphs.slice(skip) : sutra.paragraphs;
+      let trimmed = skip > 0 ? body.slice(skip) : body;
       if (skip > 0) {
-        console.log(`[build-sutras] ${entry.slug}: skipIntro=${skip} (${sutra.paragraphs.length} → ${trimmed.length} paragraphs)`);
+        console.log(`[build-sutras] ${entry.slug}: skipIntro=${skip} (${body.length} → ${trimmed.length} paragraphs)`);
+      }
+      if (entry.stopAtMarker) {
+        const idx = trimmed.findIndex((p) => p.includes(entry.stopAtMarker!));
+        if (idx >= 0) {
+          console.log(`[build-sutras] ${entry.slug}: stopAtMarker="${entry.stopAtMarker.slice(0, 20)}…" at paragraph ${idx} (${trimmed.length} → ${idx})`);
+          trimmed = trimmed.slice(0, idx);
+        } else {
+          console.warn(`[build-sutras] ${entry.slug}: stopAtMarker "${entry.stopAtMarker.slice(0, 20)}…" NOT FOUND — keeping all ${trimmed.length} paragraphs`);
+        }
+      }
+      if (entry.dropFromEnd) {
+        const n = entry.dropFromEnd;
+        if (n > trimmed.length) {
+          throw new Error(`dropFromEnd=${n} exceeds paragraph count ${trimmed.length}`);
+        }
+        console.log(`[build-sutras] ${entry.slug}: dropFromEnd=${n} (${trimmed.length} → ${trimmed.length - n} paragraphs)`);
+        trimmed = trimmed.slice(0, trimmed.length - n);
       }
       const rawChunks: RawChunk[] = [{ label: entry.title, content: trimmed }];
 

@@ -1,83 +1,83 @@
 {
   "version": 1,
-  "generatedAt": "2026-06-30T09:46:40.250Z",
+  "generatedAt": "2026-06-30T13:42:52.262Z",
   "items": [
-    {
-      "id": 1,
-      "slug": "xinjing",
-      "title": "心经",
-      "chunkCount": 1,
-      "charCount": 357
-    },
     {
       "id": 2,
       "slug": "jingang",
       "title": "金刚经",
       "chunkCount": 1,
-      "charCount": 6859
+      "charCount": 6766
     },
     {
       "id": 3,
       "slug": "yaoshi",
       "title": "药师经",
       "chunkCount": 1,
-      "charCount": 5484
+      "charCount": 5450
     },
     {
       "id": 4,
       "slug": "amituo",
       "title": "阿弥陀经",
       "chunkCount": 1,
-      "charCount": 2645
+      "charCount": 2600
     },
     {
       "id": 5,
       "slug": "pumen",
       "title": "观音菩萨普门品",
       "chunkCount": 1,
-      "charCount": 1957
+      "charCount": 1944
     },
     {
       "id": 6,
       "slug": "puxian",
       "title": "普贤行愿品",
       "chunkCount": 1,
-      "charCount": 6274
+      "charCount": 4596
     },
     {
       "id": 7,
       "slug": "lengyan",
       "title": "楞严经",
       "chunkCount": 1,
-      "charCount": 6494
+      "charCount": 79294
     },
     {
       "id": 8,
       "slug": "weimo",
       "title": "维摩诘经",
       "chunkCount": 1,
-      "charCount": 11961
+      "charCount": 33134
     },
     {
       "id": 9,
       "slug": "liuzu",
       "title": "六祖坛经",
       "chunkCount": 1,
-      "charCount": 28761
+      "charCount": 23182
     },
     {
       "id": 10,
       "slug": "dabei",
-      "title": "大悲咒",
+      "title": "千手千眼大悲心陀罗尼经",
       "chunkCount": 1,
-      "charCount": 9153
+      "charCount": 9090
     },
     {
       "id": 11,
       "slug": "shishan",
       "title": "十善业道经",
       "chunkCount": 1,
-      "charCount": 3072
+      "charCount": 3060
+    },
+    {
+      "id": 24,
+      "slug": "xinjing",
+      "title": "心经",
+      "chunkCount": 1,
+      "charCount": 348
     }
   ]
 }
