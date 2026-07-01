@@ -38,8 +38,10 @@ describe('linedHeightPx', () => {
   it('A4 = 38px (~1.0cm at 96dpi)', () => {
     expect(linedHeightPx('A4')).toBe(38);
   });
-  it('A3 = 66px, B5 = 44px', () => {
-    expect(linedHeightPx('A3')).toBe(66);
+  it('A3 = 38px (1.0cm standard, 36 lines × 38px = 1368px fits 1474px A3 inner)', () => {
+    expect(linedHeightPx('A3')).toBe(38);
+  });
+  it('B5 = 44px (14 lines × 44px = 616px fits 832px B5 inner)', () => {
     expect(linedHeightPx('B5')).toBe(44);
   });
   it('returns 0 for brush-* (lined not supported on brush paper)', () => {

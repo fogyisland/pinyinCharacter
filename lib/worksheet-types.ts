@@ -111,11 +111,11 @@ export const PRACTICE_LAYOUT: Record<PaperSize, { cellSize: number }> = {
 };
 
 // Lined-paper row height in CSS px (1px = 1/96in). Picked so the printable
-// area fits a whole number of rows: A4 inner 267mm × 38px = 1010px ≈ 24 rows;
-// A3 inner 390mm × 66px = 2592px ≈ 36 rows; B5 inner 220mm × 44px = 915px ≈
-// 14 rows. 1.0cm row height is the standard 作文本 / 信纸 convention.
+// area fits linesPerPage lines: A4 24×38=912 ≤ 1010; A3 36×38=1368 ≤ 1474;
+// B5 14×44=616 ≤ 832. All three use the 1.0cm standard 作文本 / 信纸 row
+// height (38px); B5 uses a slightly larger 44px so 14 lines doesn't crowd.
 const PRACTICE_LINED_HEIGHT: Record<PaperSize, number> = {
-  A3: 66,
+  A3: 38,
   A4: 38,
   B5: 44,
   'brush-12': 0,
