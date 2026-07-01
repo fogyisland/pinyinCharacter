@@ -3,12 +3,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { PaperSize, FontFamily } from '@/lib/worksheet-types';
-import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel, cellsPerPage } from '@/lib/worksheet-types';
 import type { Tool, Presentation } from '@/lib/worksheet-types';
 import { useAppStore } from '@/lib/store';
 import { TextInputTab } from './TextInputTab';
 import { LibrarySelectTab } from './LibrarySelectTab';
 import { RandomTab } from './RandomTab';
+import { EnglishTraceTab } from './EnglishTraceTab';
 import { ToolPicker } from './ToolPicker';
 import { PresentationPicker } from './PresentationPicker';
 import { TraceToggle } from './TraceToggle';
@@ -19,7 +20,7 @@ import { AddToWorksheetDialog } from './AddToWorksheetDialog';
 import type { ClassicDetail } from '@/lib/classics-types';
 import { stripPunct, buildBreakpoints } from '@/lib/punctuation';
 
-type Tab = 'text' | 'library' | 'random';
+type Tab = 'text' | 'library' | 'random' | 'english';
 
 export function WorksheetGenerator() {
   const sp = useSearchParams();
@@ -118,7 +119,17 @@ export function WorksheetGenerator() {
     // paperSize unchanged
   }
 
+  // When the user enters the 英文描红 tab, lock cellStyle to 'pen-english' so
+  // WorksheetPreview renders the 4-line branch. Don't force tool/presentation
+  // — tool is already 'pen' (default) and `pen-english` carries its own
+  // presentation via the cellStyle union, so the pickers stay valid in case
+  // the user switches back to a CJK tab.
+  function handleEnglishTabEnter() {
+    setTab('english');
+  }
+
   const canPreview = content.length > 0;
+  const isEnglishTab = tab === 'english';
 
   const breakpoints = useMemo(() => {
     if (!isAncient || !ancientBook) return undefined;
@@ -141,7 +152,10 @@ export function WorksheetGenerator() {
     setSaving(true);
     setErrorMsg(null);
     try {
-      const cellStyle = composeCellStyle(tool, presentation, trace);
+      // In English tab, force cellStyle to 'pen-english' regardless of the
+      // tool/presentation state — the CJK pickers are hidden, but their state
+      // is still 'brush'/'square'/false from a prior session.
+      const cellStyle = isEnglishTab ? 'pen-english' : composeCellStyle(tool, presentation, trace);
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,7 +183,7 @@ export function WorksheetGenerator() {
         <WorksheetPreview
           title={title}
           content={content}
-          cellStyle={composeCellStyle(tool, presentation, trace)}
+          cellStyle={isEnglishTab ? 'pen-english' : composeCellStyle(tool, presentation, trace)}
           paperSize={paperSize}
           fontFamily={fontFamily}
           breakpoints={breakpoints}
@@ -213,16 +227,26 @@ export function WorksheetGenerator() {
         >
           随机生成
         </button>
+        <button
+          type="button"
+          onClick={handleEnglishTabEnter}
+          className={`px-4 py-2 ${tab === 'english' ? 'border-b-2 border-seal font-medium' : 'text-ink-faint'}`}
+        >
+          英文描红
+        </button>
       </div>
 
       {tab === 'text' ? (
         <TextInputTab value={content} onChange={setContent} />
       ) : tab === 'library' ? (
         <LibrarySelectTab selected={content} onChange={setContent} />
+      ) : tab === 'english' ? (
+        <EnglishTraceTab value={content} onChange={setContent} />
       ) : (
         <RandomTab
           title={title}
           onTitleChange={setTitle}
+          paperSize={paperSize}
           hasContent={content.length > 0}
           onPicked={(chars) => {
             setContent(chars);
@@ -245,24 +269,33 @@ export function WorksheetGenerator() {
             />
           </div>
         )}
-        <div>
-          <label className="block text-sm font-medium text-ink-soft">工具</label>
-          <div className="mt-2">
-            <ToolPicker value={tool} onChange={handleToolChange} />
-          </div>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-ink-soft">格子形式</label>
-          <div className="mt-2">
-            <PresentationPicker value={presentation} onChange={handlePresentationChange} />
-          </div>
-        </div>
-        {tool === 'brush' && (
-          <div>
-            <label className="block text-sm font-medium text-ink-soft">描红</label>
-            <div className="mt-2">
-              <TraceToggle value={trace} onChange={setTrace} />
+        {!isEnglishTab && (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-ink-soft">工具</label>
+              <div className="mt-2">
+                <ToolPicker value={tool} onChange={handleToolChange} />
+              </div>
             </div>
+            <div>
+              <label className="block text-sm font-medium text-ink-soft">格子形式</label>
+              <div className="mt-2">
+                <PresentationPicker value={presentation} onChange={handlePresentationChange} />
+              </div>
+            </div>
+            {tool === 'brush' && (
+              <div>
+                <label className="block text-sm font-medium text-ink-soft">描红</label>
+                <div className="mt-2">
+                  <TraceToggle value={trace} onChange={setTrace} />
+                </div>
+              </div>
+            )}
+          </>
+        )}
+        {isEnglishTab && (
+          <div className="rounded-md border border-ink/15 bg-paper-deep px-3 py-2 text-xs text-ink-soft">
+            英文描红 (4 线格) · {paperSizeLabel(paperSize)} · 自动适配 {cellsPerPage(paperSize)} 字 / 页
           </div>
         )}
       </div>
@@ -273,7 +306,7 @@ export function WorksheetGenerator() {
             纸张尺寸 <span className="text-xs text-ink-faint">(决定每页字数)</span>
           </label>
           <div className="mt-2">
-            <PaperSizePicker value={paperSize} tool={tool} onChange={setPaperSize} />
+            <PaperSizePicker value={paperSize} tool={isEnglishTab ? 'pen' : tool} onChange={setPaperSize} />
           </div>
         </div>
         <div>
