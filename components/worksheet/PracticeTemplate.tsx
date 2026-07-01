@@ -4,7 +4,7 @@ import { useState, type ComponentType, type ReactElement, type ReactNode } from 
 import dynamic from 'next/dynamic';
 import type { DocumentProps } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
-import { PAPER_SIZES, PRACTICE_LAYOUT, cellsPerPage, cellStyleLabel, getTool, isBrushSize } from '@/lib/worksheet-types';
+import { PAPER_SIZES, PRACTICE_LAYOUT, cellsPerPage, cellStyleLabel, getTool, getPresentation, isBrushSize, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PracticePDF } from './PracticePDF';
 
@@ -28,6 +28,7 @@ const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = 
   { value: 'brush-cross', label: '毛笔 · 米字格', tool: 'brush' },
   { value: 'pen-square', label: '钢笔 · 田字格', tool: 'pen' },
   { value: 'pen-cross', label: '钢笔 · 米字格', tool: 'pen' },
+  { value: 'pen-lined', label: '钢笔·横线', tool: 'pen' },
 ];
 
 // 毛笔 ↔ brush-12/24/28; 钢笔 ↔ A3/A4/B5. Selecting a cell style whose
@@ -68,14 +69,13 @@ export function PracticeTemplate() {
     }
   }
 
-  const sizeClass = `worksheet-grid--${paperSize.toLowerCase()}`;
-  // cellSize comes from PRACTICE_LAYOUT (per-paper, sized to fit the
-  // printable area: 70px for A3 so 12 cols fit, 80px for A4/B5).
-  const cellSize = PRACTICE_LAYOUT[paperSize].cellSize;
-  // Auto-fit: cellsPerPage gives the count that fits one page at the
-  // chosen paper size. No count selector — switching paper size reflows
-  // the grid to fill exactly one sheet.
-  const count = cellsPerPage(paperSize);
+  const isLined = getPresentation(cellStyle) === 'lined';
+  const sizeClass = isLined ? `worksheet-grid--${paperSize.toLowerCase()}-lined` : `worksheet-grid--${paperSize.toLowerCase()}`;
+  // Lined mode: cellSize = row height in CSS px (e.g. A4 = 38px ≈ 1.0cm).
+  // Grid mode: cellSize = cell side in CSS px (e.g. A4 = 80px).
+  const cellSize = isLined ? linedHeightPx(paperSize) : PRACTICE_LAYOUT[paperSize].cellSize;
+  // Lined mode: count = lines per page (A4=24). Grid mode: count = cells per page.
+  const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
   const siteHost = hostOf(process.env.NEXT_PUBLIC_SITE_URL ?? '');
   const paperOptions = availablePaperSizes(getTool(cellStyle));
@@ -91,8 +91,9 @@ export function PracticeTemplate() {
         <h2 className="text-sm font-semibold text-ink mb-3">练字模板设置</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label className="block text-xs text-ink-soft mb-1">格子形式</label>
+            <label htmlFor="practice-cell-style" className="block text-xs text-ink-soft mb-1">格子形式</label>
             <select
+              id="practice-cell-style"
               value={cellStyle}
               onChange={(e) => handleCellStyleChange(e.target.value as CellStyle)}
               className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
@@ -103,8 +104,9 @@ export function PracticeTemplate() {
             </select>
           </div>
           <div>
-            <label className="block text-xs text-ink-soft mb-1">纸张尺寸</label>
+            <label htmlFor="practice-paper-size" className="block text-xs text-ink-soft mb-1">纸张尺寸</label>
             <select
+              id="practice-paper-size"
               value={paperSize}
               onChange={(e) => setPaperSize(e.target.value as PaperSize)}
               className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
@@ -117,7 +119,7 @@ export function PracticeTemplate() {
         </div>
         <div className="mt-3 flex items-center justify-between gap-2">
           <p className="text-xs text-ink-faint">
-            {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} 格 / 页
+            {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} {isLined ? '行' : '格'} / 页
           </p>
           <div className="flex gap-2 shrink-0">
             <PDFDownloadLink
@@ -141,27 +143,49 @@ export function PracticeTemplate() {
         </p>
       </div>
 
-      {/* Template grid: matches WorksheetPreview layout but with empty cells. */}
+      {/* Template body: grid for 田字格/米字格, flex stack for 横线. */}
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
-          <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
-            <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-              <span className="font-kai text-base text-ink">字·韵</span>
+        {isLined ? (
+          <div className="lined-paper mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0" style={{ minHeight: `${count * cellSize}px` }}>
+            <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+                <span className="font-kai text-base text-ink">字·韵</span>
+              </div>
+              <div className="text-sm text-ink-soft">空白字帖</div>
             </div>
-            <div className="text-sm text-ink-soft">空白字帖</div>
+            {cells.map((i) => (
+              <div key={i} className="lined-paper-row" style={{ height: `${cellSize}px` }}>
+                <WorksheetCell char="" style="pen-lined" size={cellSize} />
+              </div>
+            ))}
+            {siteHost && (
+              <div className="text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
+                {siteHost}
+              </div>
+            )}
           </div>
-          {cells.map((i) => (
-            <div key={i} className="worksheet-cell">
-              <WorksheetCell char="" style={cellStyle} size={cellSize} />
+        ) : (
+          <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+            <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+                <span className="font-kai text-base text-ink">字·韵</span>
+              </div>
+              <div className="text-sm text-ink-soft">空白字帖</div>
             </div>
-          ))}
-          {siteHost && (
-            <div className="col-span-full text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
-              {siteHost}
-            </div>
-          )}
-        </div>
+            {cells.map((i) => (
+              <div key={i} className="worksheet-cell">
+                <WorksheetCell char="" style={cellStyle} size={cellSize} />
+              </div>
+            ))}
+            {siteHost && (
+              <div className="col-span-full text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
+                {siteHost}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
