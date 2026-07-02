@@ -30,36 +30,41 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
     );
   }
 
-  // Four-line (英文描红): 4 horizontal rules — top solid + upper-mid dashed +
-  // lower-mid dashed + bottom solid. Letter is rendered in the middle (between
-  // upper-mid and lower-mid, the x-height band) in light gray with a red
-  // outline, so the user can trace over it. Cell is taller than wide (height
-  // = size × 1.25) because descenders need room below the baseline.
+  // Four-line (英文描红 / 听写本): one ruled row, lines stretch across the
+  // full SVG width and never break between letters. 4 horizontal rules —
+  // top solid + upper-mid dashed + lower-mid dashed + bottom solid — with
+  // the letter string centered in the x-height band. The SVG uses
+  // viewBox="0 0 100 38" + preserveAspectRatio="none" so the rules expand
+  // to any row width without scaling stroke thickness (`vectorEffect` on
+  // each line keeps it 1px regardless). `char` here is the whole row
+  // (e.g. "Hello World"); WorksheetPreview's generateLayout slices the
+  // content array into per-row substrings of `charsPerRow`.
   const presentation = getPresentation(style);
   if (presentation === 'four-line') {
-    const cellHeight = Math.round(size * 1.25);
-    const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", "Times New Roman", serif`;
+    // viewBox height = row height = 38px (1.0cm, matches PRACTICE_LINED_HEIGHT).
+    // y coordinates map to fractions of row height so SVG scales cleanly.
+    const fontStack = `${fontFamilyCssVar(fontFamily)}, "Times New Roman", serif`;
     return (
-      <svg width={size} height={cellHeight} viewBox={`0 0 100 125`} className="block">
-        {/* Top solid line (capital cap height) */}
-        <line x1={0} y1={10} x2={100} y2={10} stroke="#999" strokeWidth={1} />
-        {/* Upper-mid dashed (x-height for lowercase) */}
-        <line x1={0} y1={45} x2={100} y2={45} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
-        {/* Lower-mid dashed (baseline) */}
-        <line x1={0} y1={95} x2={100} y2={95} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
-        {/* Bottom solid (descender line) */}
-        <line x1={0} y1={115} x2={100} y2={115} stroke="#999" strokeWidth={1} />
-        {/* Letter — trace styling: light gray fill + red outline (consistent with brush-trace-*) */}
+      <svg width="100%" height={size} viewBox="0 0 100 38" preserveAspectRatio="none" className="block">
+        {/* Top solid line (capital cap height) — y ≈ 8/38 */}
+        <line x1={0} y1={8} x2={100} y2={8} stroke="#999" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        {/* Upper-mid dashed (x-height for lowercase) — y ≈ 14/38 */}
+        <line x1={0} y1={14} x2={100} y2={14} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" vectorEffect="non-scaling-stroke" />
+        {/* Lower-mid dashed (baseline) — y ≈ 29/38 */}
+        <line x1={0} y1={29} x2={100} y2={29} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" vectorEffect="non-scaling-stroke" />
+        {/* Bottom solid (descender line) — y ≈ 35/38 */}
+        <line x1={0} y1={35} x2={100} y2={35} stroke="#999" strokeWidth={1} vectorEffect="non-scaling-stroke" />
         {char ? (
           <text
             x={50}
-            y={70}
+            y={21}
             textAnchor="middle"
             dominantBaseline="central"
-            fontSize={56}
+            fontSize={16}
             fill="#ddd"
             stroke="#c0392b"
-            strokeWidth={1.2}
+            strokeWidth={0.8}
+            vectorEffect="non-scaling-stroke"
             style={{ fontFamily: fontStack }}
           >
             {char}

@@ -122,21 +122,20 @@ function PracticeCell({ size, paperSize, style }: { size: number; paperSize: Pap
     );
   }
   if (presentation === 'four-line') {
-    // Four-line (English trace): 4 horizontal rules — top + upper-mid dashed
-    // + lower-mid dashed + bottom. Cell is taller than wide (height = size ×
-    // 1.25) so descenders fit. Coordinates match WorksheetCell's viewBox 0..100
-    // × 0..125, but rescaled to actual size for the PDF.
-    const cellH = size * 1.25;
-    const yTop = cellH * (10 / 125);
-    const yUpper = cellH * (45 / 125);
-    const yLower = cellH * (95 / 125);
-    const yBottom = cellH * (115 / 125);
+    // Four-line (English trace / 听写本): 4 horizontal rules stretched across
+    // the full inner width. Same coordinates as WorksheetCell (viewBox
+    // 0..100 × 0..38) but rescaled to size × width for the PDF. Letter is
+    // omitted (practice template is blank).
+    const yTop = size * (8 / 38);
+    const yUpper = size * (14 / 38);
+    const yLower = size * (29 / 38);
+    const yBottom = size * (35 / 38);
     return (
-      <Svg width={size} height={cellH}>
-        <Line x1={0} y1={yTop} x2={size} y2={yTop} stroke="#999" strokeWidth={1} />
-        <Line x1={0} y1={yUpper} x2={size} y2={yUpper} stroke="#bbb" strokeWidth={0.6} />
-        <Line x1={0} y1={yLower} x2={size} y2={yLower} stroke="#bbb" strokeWidth={0.6} />
-        <Line x1={0} y1={yBottom} x2={size} y2={yBottom} stroke="#999" strokeWidth={1} />
+      <Svg width={width} height={size}>
+        <Line x1={0} y1={yTop} x2={width} y2={yTop} stroke="#999" strokeWidth={1} />
+        <Line x1={0} y1={yUpper} x2={width} y2={yUpper} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
+        <Line x1={0} y1={yLower} x2={width} y2={yLower} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
+        <Line x1={0} y1={yBottom} x2={width} y2={yBottom} stroke="#999" strokeWidth={1} />
       </Svg>
     );
   }
@@ -162,7 +161,11 @@ interface Props {
 }
 
 export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
-  const isLined = getPresentation(cellStyle) === 'lined';
+  // four-line (English trace) shares the lined mode layout: vertical stack of
+  // rules that each span the full inner width. The visual styling differs
+  // (4 rules per row vs 1) but the layout shape is the same.
+  const presentation = getPresentation(cellStyle);
+  const isLined = presentation === 'lined' || presentation === 'four-line';
   // Lined mode: cellSize = row height in pt (CSS px × 72/96). Grid mode: cell side in pt.
 // Brush papers fall back to PRACTICE_LAYOUT (they don't need the practice-grid
 // adjustment — they already fit and have their own per-paper sizing).

@@ -89,31 +89,29 @@ describe('PracticeTemplate — pen-english option (four-line English trace)', ()
     expect(labels).toContain('钢笔 · 英文描红');
   });
 
-  it('selecting 钢笔·英文描红 renders 4-line cells via .worksheet-grid (not .lined-paper)', async () => {
+  it('selecting 钢笔·英文描红 renders 4-line ruled paper (CSS background, blank template)', async () => {
     const user = userEvent.setup();
     render(<PracticeTemplate />);
     await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-english');
-    // 4-line is a grid (not lined flex); SVG cells render 4 horizontal rules
-    expect(document.querySelector('.lined-paper')).toBeNull();
-    expect(document.querySelector('.worksheet-grid')).not.toBeNull();
-    const cells = document.querySelectorAll('.worksheet-cell');
-    expect(cells.length).toBe(88); // A4 cellsPerPage
-    // Each cell should be a 4-line SVG: viewBox 0 0 100 125
-    const firstCell = cells[0]?.querySelector('svg');
-    expect(firstCell?.getAttribute('viewBox')).toBe('0 0 100 125');
-    // 4 horizontal lines + no letter (empty template)
-    const lines = firstCell?.querySelectorAll('line');
-    expect(lines?.length).toBe(4);
-    expect(firstCell?.querySelector('text')).toBeNull();
+    // 4-line uses CSS linear-gradient background (not SVG per row). The
+    // container .four-line-paper gets the ruled background; the rows are
+    // empty <div className="four-line-paper-row" /> stacked vertically.
+    const paper = document.querySelector('.four-line-paper');
+    expect(paper).not.toBeNull();
+    const rows = document.querySelectorAll('.four-line-paper-row');
+    expect(rows.length).toBe(14); // A4 学生标准版: ⌊761.89 / 52⌋ = 14 rows/page
+    // No SVG and no letter — the rules come from background-image.
+    expect(paper?.querySelector('svg')).toBeNull();
+    expect(paper?.querySelector('text')).toBeNull();
   });
 
-  it('switching pen-english → pen-square restores the 田字格 border (regression)', async () => {
+  it('switching pen-english → pen-square restores the 田字格 grid (regression)', async () => {
     const user = userEvent.setup();
     render(<PracticeTemplate />);
     await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-english');
     await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-square');
     const firstCell = document.querySelector('.worksheet-cell svg');
-    // 田字格 uses viewBox 0 0 100 100, not 0 0 100 125
+    // 田字格 uses viewBox 0 0 100 100, not 0 0 100 38
     expect(firstCell?.getAttribute('viewBox')).toBe('0 0 100 100');
   });
 });

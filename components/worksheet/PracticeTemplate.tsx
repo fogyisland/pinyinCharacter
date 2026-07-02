@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, type ComponentType, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useState, type ComponentType, type ReactElement, type ReactNode } from 'react';
+import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { DocumentProps } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
@@ -55,8 +56,20 @@ function hostOf(raw: string): string {
 
 export function PracticeTemplate() {
   // Defaults: 钢笔·田字格 · A4 · 80 cells/page (auto-fitted by paper size).
+  // `useSearchParams` is wrapped in a try/catch because happy-dom tests
+  // sometimes render outside a Next router context where the hook returns null.
+  const sp = (() => { try { return useSearchParams(); } catch { return null; } })();
+  const initialStyle = (sp?.get('style') as CellStyle | null) ?? 'pen-square';
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
-  const [cellStyle, setCellStyle] = useState<CellStyle>('pen-square');
+  const [cellStyle, setCellStyle] = useState<CellStyle>(initialStyle);
+
+  // Keep cellStyle in sync if the URL param changes (e.g. headless screenshot).
+  useEffect(() => {
+    if (initialStyle && initialStyle !== cellStyle) {
+      setCellStyle(initialStyle);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialStyle]);
 
   // Keep the paper dropdown in sync with the chosen cell style's tool.
   // Brush cells → brush-12/24/28 only; pen cells → A3/A4/B5 only.
@@ -70,7 +83,11 @@ export function PracticeTemplate() {
     }
   }
 
-  const isLined = getPresentation(cellStyle) === 'lined';
+  const presentation = getPresentation(cellStyle);
+  // Lined and four-line (English trace) share the same vertical-stack layout:
+  // N rows stacked, lines stretch across the full inner width. Visual styling
+  // differs (1 rule vs 4 rules per row) but the layout shape is identical.
+  const isLined = presentation === 'lined' || presentation === 'four-line';
   const sizeClass = isLined ? `worksheet-grid--${paperSize.toLowerCase()}-lined` : `worksheet-grid--${paperSize.toLowerCase()}`;
   // Lined mode: cellSize = row height in CSS px (e.g. A4 = 38px ≈ 1.0cm).
   // Grid mode: cellSize = cell side in CSS px (e.g. A4 = 75px — slightly smaller
@@ -80,7 +97,12 @@ export function PracticeTemplate() {
     ? linedHeightPx(paperSize)
     : (PRACTICE_GRID_CELL_SIZE[paperSize] ?? PRACTICE_LAYOUT[paperSize].cellSize);
   // Lined mode: count = lines per page (A4=24). Grid mode: count = cells per page.
-  const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
+  // Four-line uses a CSS-defined 14 rows/page (学生标准版: 52px row × 14 = 728 ≤ 761.89px usable A4 height).
+  const count = presentation === 'four-line'
+    ? 14
+    : isLined
+      ? linesPerPage(paperSize)
+      : cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
   const siteHost = hostOf(process.env.NEXT_PUBLIC_SITE_URL ?? '');
   const paperOptions = availablePaperSizes(getTool(cellStyle));
@@ -127,13 +149,18 @@ export function PracticeTemplate() {
             {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} {isLined ? '行' : '格'} / 页
           </p>
           <div className="flex gap-2 shrink-0">
-            <PDFDownloadLink
-              document={<PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />}
-              fileName={`练字模板-${paperSize}.pdf`}
-              className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
-            >
-              {({ loading }) => (loading ? '生成中…' : '下载 PDF')}
-            </PDFDownloadLink>
+            {/* Four-line (英文描红) relies on CSS linear-gradient backgrounds
+                which only render in the browser — react-pdf can't reproduce them.
+                Hide the PDF button in this mode so users don't get an empty PDF. */}
+            {presentation !== 'four-line' && (
+              <PDFDownloadLink
+                document={<PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />}
+                fileName={`练字模板-${paperSize}.pdf`}
+                className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
+              >
+                {({ loading }) => (loading ? '生成中…' : '下载 PDF')}
+              </PDFDownloadLink>
+            )}
             <button
               type="button"
               onClick={() => window.print()}
@@ -144,13 +171,45 @@ export function PracticeTemplate() {
           </div>
         </div>
         <p className="mt-2 text-xs text-ink-faint">
-          提示：点「下载 PDF」直接获得自定义排版的 PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。
+          {presentation === 'four-line'
+            ? '英文描红模板由 CSS 渐变渲染,仅支持浏览器打印（在打印对话框中取消「页眉和页脚」、勾选「背景图形」）。'
+            : '点「下载 PDF」直接获得自定义排版的 PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。'}
         </p>
       </div>
 
-      {/* Template body: grid for 田字格/米字格, flex stack for 横线. */}
+      {/* Template body: grid for 田字格/米字格, flex stack for 横线, CSS background for 英文描红. */}
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-        {isLined ? (
+        {presentation === 'four-line' ? (
+          // DOM-per-row: each row has 4 absolutely-positioned lines (top,
+          // upper-mid, baseline, bottom) and a text slot. Visual grouping
+          // is clear — a rule group belongs to one row, with a visible gap
+          // (--row-gap) to the next. CSS variables in globals.css control
+          // the spacing; tweak --grid-gap / --row-gap to scale uniformly.
+          <div className="mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0 p-10">
+            <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+                <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
+              </div>
+              <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
+            </div>
+            <div className="four-line-paper">
+              {cells.map((i) => (
+                <div key={i} className="four-line-paper-row">
+                  <div className="line line-1" />
+                  <div className="line line-2" />
+                  <div className="line line-3" />
+                  <div className="line line-4" />
+                </div>
+              ))}
+            </div>
+            {siteHost && (
+              <div className="text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
+                {siteHost}
+              </div>
+            )}
+          </div>
+        ) : isLined ? (
           <div className="lined-paper mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0" style={{ minHeight: `${count * cellSize}px` }}>
             <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
@@ -161,7 +220,7 @@ export function PracticeTemplate() {
             </div>
             {cells.map((i) => (
               <div key={i} className="lined-paper-row" style={{ height: `${cellSize}px` }}>
-                <WorksheetCell char="" style="pen-lined" size={cellSize} />
+                <WorksheetCell char="" style={cellStyle} size={cellSize} />
               </div>
             ))}
             {siteHost && (
