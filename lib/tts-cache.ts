@@ -55,3 +55,62 @@ export async function putCachedTts(voice: string, text: string, blob: Blob): Pro
     // best-effort: quota errors or private-mode caches are non-fatal
   }
 }
+
+// Hardcoded to match lib/tts.ts:BATCH_MAX_CHARS (coupled cap — DO NOT export).
+const PREFETCH_MAX_CHARS = 500;
+
+/**
+ * Fire-and-forget cache warm. Does not play audio. Skips if cached.
+ * Silently swallows network / quota errors so callers don't have to guard.
+ */
+export async function prefetchTts(voice: string, text: string): Promise<void> {
+  if (!isAvailable()) return;
+  if (!text || text.length > PREFETCH_MAX_CHARS) return;
+  const cached = await getCachedTts(voice, text);
+  if (cached) return;
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, voice }),
+    });
+    if (!res.ok) return;
+    const blob = await res.blob();
+    await putCachedTts(voice, text, blob);
+  } catch {
+    /* network / quota / opaque CORS errors — non-fatal */
+  }
+}
+
+/** Wipe the named cache. Used by admin DELETE endpoint. */
+export async function clearTtsCache(): Promise<void> {
+  if (!isAvailable()) return;
+  try {
+    await caches.delete(CACHE_NAME);
+  } catch {
+    /* best-effort */
+  }
+}
+
+/**
+ * Best-effort count + total bytes for the named cache.
+ * Walks every entry — may be slow for large caches. Returns 0/0 on any error.
+ */
+export async function getTtsCacheSize(): Promise<{ count: number; bytes: number }> {
+  if (!isAvailable()) return { count: 0, bytes: 0 };
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const keys = await cache.keys();
+    let bytes = 0;
+    for (const req of keys) {
+      const res = await cache.match(req);
+      if (res) {
+        const buf = await res.arrayBuffer();
+        bytes += buf.byteLength;
+      }
+    }
+    return { count: keys.length, bytes };
+  } catch {
+    return { count: 0, bytes: 0 };
+  }
+}
