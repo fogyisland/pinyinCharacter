@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import type { PaperSize } from '@/lib/worksheet-types';
+import { cellsPerPage, paperSizeLabel } from '@/lib/worksheet-types';
 
 interface RandomChar {
   char: string;
@@ -12,6 +14,8 @@ interface Props {
   title: string;
   onTitleChange: (v: string) => void;
   onPicked: (chars: string[]) => void;
+  /** Drives the auto-derived 字数 from cellsPerPage(paperSize) — no manual input. */
+  paperSize: PaperSize;
   /** When true, the action button relabels to 重新生成 to indicate it'll
    *  replace existing content. Defaults to false (label is 随机生成). */
   hasContent?: boolean;
@@ -23,8 +27,10 @@ const DIFFICULTY_LABELS = {
   hard: '困难 (level 1+2+3 全字库)',
 } as const;
 
-export function RandomTab({ title, onTitleChange, onPicked, hasContent = false }: Props) {
-  const [count, setCount] = useState(20);
+export function RandomTab({ title, onTitleChange, onPicked, paperSize, hasContent = false }: Props) {
+  // 字数 is fully derived from the selected paper size — no manual input,
+  // no 100-char cap (A3 = 168, A4 = 88, B5 = 48, brush-12/24/28 = 12/24/28).
+  const count = cellsPerPage(paperSize);
   const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -70,12 +76,11 @@ export function RandomTab({ title, onTitleChange, onPicked, hasContent = false }
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="text-sm font-medium text-ink-soft">字数 (1-100)</label>
-          <input
-            type="number" min={1} max={100} value={count}
-            onChange={e => setCount(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
-            className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
-          />
+          <label className="text-sm font-medium text-ink-soft">字数 (随纸张自动)</label>
+          <p className="mt-1 w-full rounded-md border border-ink/10 bg-paper-deep/40 px-3 py-2 text-sm text-ink">
+            <span className="font-medium tabular-nums">{count}</span>
+            <span className="ml-2 text-xs text-ink-faint">字 / {paperSizeLabel(paperSize)}</span>
+          </p>
         </div>
         <div>
           <label className="text-sm font-medium text-ink-soft">难度</label>

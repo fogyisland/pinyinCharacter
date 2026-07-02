@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { PaperSize, FontFamily } from '@/lib/worksheet-types';
 import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel, cellsPerPage } from '@/lib/worksheet-types';
 import type { Tool, Presentation } from '@/lib/worksheet-types';
@@ -23,15 +23,49 @@ import { stripPunct, buildBreakpoints } from '@/lib/punctuation';
 type Tab = 'text' | 'library' | 'random' | 'english';
 
 export function WorksheetGenerator() {
-  const sp = useSearchParams();
+  // AVOID `useSearchParams()` here — calling it inside a client component
+  // makes Next.js wrap us in <Suspense fallback="加载中..."> and the page
+  // shows the fallback on every render. Instead, read URL params directly
+  // from `window.location` after hydration.
   const router = useRouter();
   const pathname = usePathname();
-  const prefill = sp.get('prefill');
-
   const user = useAppStore(s => s.user);
 
-  const [tab, setTab] = useState<Tab>(prefill ? 'library' : 'text');
-  const [content, setContent] = useState<string[]>(prefill ? [prefill] : []);
+  const [tab, setTab] = useState<Tab>('text');
+  const [content, setContent] = useState<string[]>([]);
+  // Default to form view; URL params (`previewText`, `prefill`,
+  // `chapterIdx`, `source`, `book`) are read post-hydration.
+  const [view, setView] = useState<'form' | 'preview'>('form');
+  const [hydrated, setHydrated] = useState(false);
+
+  // After hydration, read URL params and apply them. This avoids the
+  // Suspense fallback that `useSearchParams()` would otherwise trigger.
+  useEffect(() => {
+    if (hydrated || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const prefill = params.get('prefill');
+    const previewText = params.get('previewText');
+    const source = params.get('source');
+    const bookSlug = params.get('book');
+    const isAncient = source === 'ancient' && !!bookSlug;
+    const chapterIdx = Number(params.get('chapterIdx')) || 0;
+    if (prefill) {
+      setTab('library');
+      setContent((cur) => (cur.includes(prefill) ? cur : [prefill, ...cur]));
+    }
+    if (previewText) {
+      setTab('english');
+      setContent(previewText.split(''));
+      setView('preview');
+    }
+    if (isAncient && bookSlug) {
+      setBookSlug(bookSlug);
+    }
+    setChapterIdx(chapterIdx);
+    setHydrated(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const [title, setTitle] = useState('');
   const [tool, setTool] = useState<Tool>(defaultToolFor());
   const [presentation, setPresentation] = useState<Presentation>(defaultPresentationFor());
@@ -40,27 +74,16 @@ export function WorksheetGenerator() {
   );
   const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor(defaultToolFor()));
   const [trace, setTrace] = useState<boolean>(false);
-  const [view, setView] = useState<'form' | 'preview'>('form');
   const [saving, setSaving] = useState(false);
   const [authHint, setAuthHint] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
   const [ancientBook, setAncientBook] = useState<ClassicDetail | null>(null);
-  const [chapterIdx, setChapterIdx] = useState<number>(
-    Number(sp.get('chapterIdx')) || 0,
-  );
+  const [chapterIdx, setChapterIdx] = useState<number>(0);
   const [appendDialogOpen, setAppendDialogOpen] = useState(false);
-
-  const source = sp.get('source');
-  const bookSlug = sp.get('book');
-  const isAncient = source === 'ancient' && !!bookSlug;
-
-  useEffect(() => {
-    if (prefill) {
-      setTab('library');
-      setContent((cur) => (cur.includes(prefill) ? cur : [prefill, ...cur]));
-    }
-  }, [prefill]);
+  // Ancient mode params — set by the post-hydration URL-params effect above.
+  const [bookSlug, setBookSlug] = useState<string | null>(null);
+  const isAncient = !!bookSlug;
 
   // 登录后清掉提示
   useEffect(() => {
@@ -120,12 +143,12 @@ export function WorksheetGenerator() {
   }
 
   // When the user enters the 英文描红 tab, lock cellStyle to 'pen-english' so
-  // WorksheetPreview renders the 4-line branch. Don't force tool/presentation
-  // — tool is already 'pen' (default) and `pen-english` carries its own
-  // presentation via the cellStyle union, so the pickers stay valid in case
-  // the user switches back to a CJK tab.
+  // WorksheetPreview renders the 4-line branch. Also force fontFamily to a
+  // hard-pen (霞鹜文楷) — brush faces like Ma Shan Zheng render Latin letters
+  // as glyph fallbacks and look like Chinese ink rather than English text.
   function handleEnglishTabEnter() {
     setTab('english');
+    setFontFamily('wenkai-gb');
   }
 
   const canPreview = content.length > 0;
