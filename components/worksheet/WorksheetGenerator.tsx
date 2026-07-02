@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { PaperSize, FontFamily } from '@/lib/worksheet-types';
 import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel, cellsPerPage } from '@/lib/worksheet-types';
 import type { Tool, Presentation } from '@/lib/worksheet-types';
@@ -23,32 +23,36 @@ import { stripPunct, buildBreakpoints } from '@/lib/punctuation';
 type Tab = 'text' | 'library' | 'random' | 'english';
 
 export function WorksheetGenerator() {
-  // AVOID `useSearchParams()` here — calling it inside a client component
-  // makes Next.js wrap us in <Suspense fallback="加载中..."> and the page
-  // shows the fallback on every render. Instead, read URL params directly
-  // from `window.location` after hydration.
+  // useSearchParams returns null in happy-dom (no Next router context); the
+  // try/catch wrapper lets unit tests mount this component without errors.
+  // The parent page (app/worksheet/page.tsx) intentionally does NOT wrap us
+  // in <Suspense>, so SSR renders the form (sp is null on server) and the
+  // client hydrates with the real URL params on first paint.
+  const sp = (() => { try { return useSearchParams(); } catch { return null; } })();
+  const prefill = sp?.get('prefill') ?? null;
+  const previewText = sp?.get('previewText') ?? null;
+  const initialBookSlug = sp?.get('book') ?? null;
+  const initialChapterIdx = Number(sp?.get('chapterIdx')) || 0;
+
   const router = useRouter();
   const pathname = usePathname();
   const user = useAppStore(s => s.user);
 
-  const [tab, setTab] = useState<Tab>('text');
-  const [content, setContent] = useState<string[]>([]);
-  // Default to form view; URL params (`previewText`, `prefill`,
-  // `chapterIdx`, `source`, `book`) are read post-hydration.
-  const [view, setView] = useState<'form' | 'preview'>('form');
-  const [hydrated, setHydrated] = useState(false);
+  // Initial state from URL params. useState initializers run once per
+  // component instance — for URL changes after mount the useEffect below
+  // syncs (mirrors PracticeTemplate's pattern).
+  const [tab, setTab] = useState<Tab>(prefill ? 'library' : previewText ? 'english' : 'text');
+  const [content, setContent] = useState<string[]>(
+    prefill ? [prefill] : previewText ? previewText.split('') : []
+  );
+  const [view, setView] = useState<'form' | 'preview'>(previewText ? 'preview' : 'form');
+  const [chapterIdx, setChapterIdx] = useState<number>(initialChapterIdx);
+  const [bookSlug, setBookSlug] = useState<string | null>(initialBookSlug);
+  const isAncient = !!bookSlug;
 
-  // After hydration, read URL params and apply them. This avoids the
-  // Suspense fallback that `useSearchParams()` would otherwise trigger.
+  // Sync URL params → state when they change after mount (browser nav,
+  // headless screenshot tool firing different URL params, etc.).
   useEffect(() => {
-    if (hydrated || typeof window === 'undefined') return;
-    const params = new URLSearchParams(window.location.search);
-    const prefill = params.get('prefill');
-    const previewText = params.get('previewText');
-    const source = params.get('source');
-    const bookSlug = params.get('book');
-    const isAncient = source === 'ancient' && !!bookSlug;
-    const chapterIdx = Number(params.get('chapterIdx')) || 0;
     if (prefill) {
       setTab('library');
       setContent((cur) => (cur.includes(prefill) ? cur : [prefill, ...cur]));
@@ -57,14 +61,15 @@ export function WorksheetGenerator() {
       setTab('english');
       setContent(previewText.split(''));
       setView('preview');
+      // English trace (4-line) only renders on pen papers (A3/A4/B5).
+      // Default paperSize is brush-12, whose rowsPerPage is 0 and would
+      // produce an empty preview. Force A4 here so /worksheet?previewText
+      // renders the full ruled paper.
+      setPaperSize((cur) => (isBrushSize(cur) ? 'A4' : cur));
     }
-    if (isAncient && bookSlug) {
-      setBookSlug(bookSlug);
-    }
-    setChapterIdx(chapterIdx);
-    setHydrated(true);
+    setChapterIdx(initialChapterIdx);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [prefill, previewText, initialChapterIdx]);
 
   const [title, setTitle] = useState('');
   const [tool, setTool] = useState<Tool>(defaultToolFor());
@@ -79,11 +84,7 @@ export function WorksheetGenerator() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
   const [ancientBook, setAncientBook] = useState<ClassicDetail | null>(null);
-  const [chapterIdx, setChapterIdx] = useState<number>(0);
   const [appendDialogOpen, setAppendDialogOpen] = useState(false);
-  // Ancient mode params — set by the post-hydration URL-params effect above.
-  const [bookSlug, setBookSlug] = useState<string | null>(null);
-  const isAncient = !!bookSlug;
 
   // 登录后清掉提示
   useEffect(() => {
@@ -146,9 +147,12 @@ export function WorksheetGenerator() {
   // WorksheetPreview renders the 4-line branch. Also force fontFamily to a
   // hard-pen (霞鹜文楷) — brush faces like Ma Shan Zheng render Latin letters
   // as glyph fallbacks and look like Chinese ink rather than English text.
+  // Switch paperSize from brush-* to A4 so the 4-line paper actually fills
+  // the page (brush papers have rowsPerPage=0 for 4-line, would render empty).
   function handleEnglishTabEnter() {
     setTab('english');
     setFontFamily('wenkai-gb');
+    setPaperSize((cur) => (isBrushSize(cur) ? 'A4' : cur));
   }
 
   const canPreview = content.length > 0;
