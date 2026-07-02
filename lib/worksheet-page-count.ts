@@ -8,7 +8,7 @@ import type { PaperSize } from './worksheet-types';
 // (the brush spec, not a heuristic).
 const CELLS_PER_PAGE: Record<PaperSize, number> = {
   A3: 168,        // 12 cols × 14 rows, 70px cells (fills the bigger paper)
-  A4: 80,         // 8 cols × 10 rows,  80px cells (verified by hand-print)
+  A4: 88,         // 8 cols × 11 rows,  70px cells (75px overflowed A4 PDF by ~5mm)
   B5: 48,         // 6 cols × 8 rows,   80px cells (54 overflowed one row)
   'brush-12': 12,
   'brush-24': 24,

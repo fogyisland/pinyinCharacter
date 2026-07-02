@@ -38,7 +38,7 @@ import { createElement } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { PracticePDF } from '@/components/worksheet/PracticePDF';
 import type { PaperSize } from '@/lib/worksheet-types';
-import { PRACTICE_LAYOUT, cellsPerPage } from '@/lib/worksheet-types';
+import { PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage } from '@/lib/worksheet-types';
 import type { CellStyle } from '@/lib/worksheet-types';
 
 const ALL_PAPER_SIZES: PaperSize[] = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'];
@@ -88,28 +88,32 @@ describe('PracticePDF — page-size units (regression for 40-page A4 bug)', () =
     });
   }
 
-  it('A4 grid fits within the printable area (480pt × 600pt ≤ ~510pt × ~689pt)', async () => {
+  it('A4 grid fits within the printable area (≤ ~510pt × ~757pt incl. gaps) for 88 cells', async () => {
     // Sanity check: A4 inner = (210 - 30mm margin) × (297 - 30mm - header - footer)
     //                ≈ 180mm × 267mm ≈ 510pt × 757pt
-    // 8 cols × 60pt = 480pt wide ✓
-    // 10 rows × 60pt = 600pt tall ✓
-    const cellSizePx = PRACTICE_LAYOUT['A4'].cellSize;
+    // Grid uses PRACTICE_GRID_CELL_SIZE['A4'] = 70px (= 52.5pt) so the
+    // 8-col × 11-row grid + 7×8pt horizontal gap = 476pt × 657.5pt, leaving
+    // headroom for the header (~37pt) and footer (~36pt) within 757pt.
+    const cellSizePx = PRACTICE_GRID_CELL_SIZE['A4'];
     const cellSizePt = cellSizePx * (72 / 96); // matches PX_TO_PT in PracticePDF
+    const gapPt = 8;
     const cols = 8;
     const rows = cellsPerPage('A4') / cols;
-    const gridWidthPt = cols * cellSizePt;
-    const gridHeightPt = rows * cellSizePt;
+    const gridWidthPt = cols * cellSizePt + (cols - 1) * gapPt;
+    const gridHeightPt = rows * cellSizePt + (rows - 1) * gapPt;
     expect(gridWidthPt).toBeLessThanOrEqual(510);
-    expect(gridHeightPt).toBeLessThanOrEqual(690);
+    // Header + grid + footer = 37 + 657.5 + 36 = 730.5 ≤ 757 ✓
+    expect(gridHeightPt + 37 + 36).toBeLessThanOrEqual(757);
   });
 
   it('A3 cellSize in pt leaves headroom for the 12×14 grid', async () => {
-    const cellSizePt = PRACTICE_LAYOUT['A3'].cellSize * (72 / 96);
-    const gridWidthPt = 12 * cellSizePt;
-    const gridHeightPt = 14 * cellSizePt;
+    const cellSizePt = PRACTICE_GRID_CELL_SIZE['A3'] * (72 / 96);
+    const gapPt = 8;
+    const gridWidthPt = 12 * cellSizePt + 11 * gapPt;
+    const gridHeightPt = 14 * cellSizePt + 13 * gapPt;
     // A3 inner ≈ (297 - 30mm) × (420 - 30mm - header - footer) ≈ 756pt × 1086pt
     expect(gridWidthPt).toBeLessThanOrEqual(756);
-    expect(gridHeightPt).toBeLessThanOrEqual(1086);
+    expect(gridHeightPt + 37 + 36).toBeLessThanOrEqual(1086);
   });
 
   it('A4 page dimensions are 595.27pt × 841.89pt (A4 in pt, not mm)', async () => {
@@ -187,5 +191,61 @@ describe('PracticePDF — pen-lined branch', () => {
     // PDF stream operators don't expose Svg width directly; we check
     // MediaBox sanity + content-fit: PDF must not auto-paginate.
     expect(text).toMatch(/\/MediaBox\s*\[\s*0\s+0\s+595(\.\d+)?\s+841(\.\d+)?\s*\]/);
+  });
+});
+
+describe('PracticePDF — header + grid gaps', () => {
+  it('A4 pen-square grid emits 88 cells (8 cols × 11 rows, 70px cells)', async () => {
+    const blob = await renderPdf('A4', 'pen-square').toBlob();
+    const buf = Buffer.from(await blob.arrayBuffer());
+    const streams = decompressStreams(buf);
+    // A4 pen-square: PRACTICE_GRID_CELL_SIZE['A4'] = 70px = 52.5pt, cellsPerPage('A4') = 88.
+    // Layout target: 8 cols × 11 rows = 88 cells. Cell positions are:
+    //   X ∈ {0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5} (step = 52.5 + 8 = 60.5pt)
+    //   Y ∈ {0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5, 484, 544.5, 605}
+    // react-pdf positions each flex child via a `1 0 0 1 X Y cm` transform.
+    // The first cell at (0, 0) is rendered at identity (no transform emitted),
+    // so we count exact-grid-point cm transforms + 1 implicit.
+    const gridX = new Set([0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5]);
+    const gridY = new Set([0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5, 484, 544.5, 605]);
+    const transforms = streams.match(/\n1 0 0 1 (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) cm\n/g) || [];
+    let cellCount = 0;
+    const xs = new Set<number>();
+    const ys = new Set<number>();
+    for (const t of transforms) {
+      const m = t.match(/1 0 0 1 (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) cm/);
+      if (!m) continue;
+      const x = Number(m[1]);
+      const y = Number(m[2]);
+      if (gridX.has(x) && gridY.has(y)) {
+        cellCount++;
+        xs.add(x);
+        ys.add(y);
+      }
+    }
+    // 87 cells have an explicit cm transform; 1 implicit at (0,0) = 88 total.
+    expect(cellCount).toBe(87);
+    expect(xs.size).toBe(8);
+    expect(ys.size).toBe(11);
+  });
+
+  it('A4 pen-lined has 24 line rows (lines stay 38px=28.5pt apart, no gap)', async () => {
+    // Lined mode is intentionally flush — consecutive lines sit at the
+    // bottom of each 28.5pt row, no inter-row gap.
+    const blob = await renderPdf('A4', 'pen-lined').toBlob();
+    const buf = Buffer.from(await blob.arrayBuffer());
+    const streams = decompressStreams(buf);
+    const moves = streams.match(/\n0 28 m\n/g) || [];
+    expect(moves.length).toBe(24);
+  });
+
+  it('PDF emits a font resource for the brand font subset', async () => {
+    const blob = await renderPdf('A4', 'pen-square').toBlob();
+    const buf = Buffer.from(await blob.arrayBuffer());
+    const text = buf.toString('binary');
+    // react-pdf names the font resource with a hash prefix
+    // (e.g. /FVZFOO+ZCOOLXiaoWei-Regular). Match the family name,
+    // which is what we registered and what matters for verification.
+    expect(text).toMatch(/ZCOOLXiaoWei/);
   });
 });

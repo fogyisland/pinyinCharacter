@@ -214,7 +214,45 @@ const SINGLE_LATIN = /^[A-Za-z]$/;
 
 const VALID_PAPER_SIZES = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'] as const;
 
-export function generateLayout(content: string[], style: CellStyle): Cell[] {
+// Four-line (English trace) layout: pack content into rows. `charsPerRow` is
+// the practical letter capacity per ruled line — A4 fits ~88 letters across
+// the inner width at ~6pt/letter. Each Cell here is one ruled row, `char` is
+// the substring for that row. Always renders `rowsPerPage` total rows so the
+// printed page fills the entire A4 sheet with practice space — empty rows
+// have `char === ''` (drawn as a blank ruled line).
+const FOUR_LINE_ROWS_PER_PAGE: Record<PaperSize, number> = {
+  A3: 18, B5: 11, A4: 14,
+  'brush-12': 0, 'brush-24': 0, 'brush-28': 0,
+};
+
+function englishCharsPerRow(paperSize: PaperSize): number {
+  switch (paperSize) {
+    case 'A3': return 168;
+    case 'A4': return 88;
+    case 'B5': return 48;
+    default:   return cellsPerPage(paperSize);
+  }
+}
+
+export function generateLayout(
+  content: string[],
+  style: CellStyle,
+  paperSize?: PaperSize,
+): Cell[] {
+  if (getPresentation(style) === 'four-line') {
+    const perRow = paperSize ? englishCharsPerRow(paperSize) : 88;
+    const rowsTotal = paperSize ? (FOUR_LINE_ROWS_PER_PAGE[paperSize] ?? 14) : 14;
+    const cells: Cell[] = [];
+    let i = 0;
+    let rowIdx = 0;
+    while (rowIdx < rowsTotal) {
+      const slice = i < content.length ? content.slice(i, i + perRow).join('') : '';
+      cells.push({ char: slice, style, index: rowIdx });
+      i += perRow;
+      rowIdx++;
+    }
+    return cells;
+  }
   return content.map((char, index) => ({ char, style, index }));
 }
 

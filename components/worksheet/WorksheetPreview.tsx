@@ -2,7 +2,7 @@
 
 import { Fragment } from 'react';
 import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
-import { generateLayout, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import { generateLayout, getPresentation, linedHeightPx, paperSizeLabel, fontFamilyLabel, fontFamilyCssVar } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PrintButton } from '@/components/common/PrintButton';
 
@@ -11,7 +11,8 @@ function cellSizeFor(p: PaperSize): number {
     case 'brush-12': return 140;  // 4×140=560px, fits screen 768 + A4 print 680
     case 'brush-24': return 100;  // 6×100=600px, fits both
     case 'brush-28': return 85;   // 7×85=595px, fits both
-    default:         return 80;   // A3/A4/B5 keep 80px (G2 default)
+    case 'A4':       return 70;   // 8×11=88 cells × 70px fits A4 PDF (was 80, would overflow)
+    default:         return 80;   // A3/B5 keep 80px (G2 default)
   }
 }
 
@@ -37,10 +38,12 @@ interface FormProps extends BaseProps {
 type Props = BaseProps | FormProps;
 
 export function WorksheetPreview(props: Props) {
-  const cells = generateLayout(props.content, props.cellStyle);
+  const presentation = getPresentation(props.cellStyle);
+  const isFourLine = presentation === 'four-line';
+  const cells = generateLayout(props.content, props.cellStyle, props.paperSize);
   const isFormView = 'onBack' in props;
-  const sizeClass = `worksheet-grid--${props.paperSize.toLowerCase()}`;
-  const cellSize = cellSizeFor(props.paperSize);
+  const sizeClass = isFourLine ? '' : `worksheet-grid--${props.paperSize.toLowerCase()}`;
+  const cellSize = isFourLine ? linedHeightPx(props.paperSize) : cellSizeFor(props.paperSize);
 
   return (
     <div>
@@ -96,30 +99,60 @@ export function WorksheetPreview(props: Props) {
       )}
 
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-        <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
-          <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
-            <div className="flex items-center gap-2">
-              <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-              <span className="font-kai text-base text-ink">字·韵</span>
-            </div>
-            <div className="text-sm text-ink-soft">
-              字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
-            </div>
-            <div className="text-xs text-ink-faint">公益网站，请多关注</div>
-          </div>
-          {cells.map((cell) => (
-            <Fragment key={cell.index}>
-              {props.breakpoints?.has(cell.index) && (
-                <div className="worksheet-cell-sep col-span-full text-center text-xs text-ink-faint py-1 print:hidden" aria-hidden>
-                  · 句 ·
-                </div>
-              )}
-              <div className="worksheet-cell">
-                <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
+        {isFourLine ? (
+          // Two siblings: header (no background) + four-line-paper container.
+          // Each row is its own DOM node with 4 absolutely-positioned lines
+          // and a text layer (see globals.css .four-line-paper-row) — this
+          // gives clean visual grouping instead of a continuous ruled grid.
+          <div className="mx-auto min-w-full sm:min-w-[640px] max-w-3xl print:min-w-0 p-10">
+            <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+                <span className="font-kai text-base text-ink">字·韵</span>
               </div>
-            </Fragment>
-          ))}
-        </div>
+              <div className="text-sm text-ink-soft">
+                字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
+              </div>
+              <div className="text-xs text-ink-faint">公益网站，请多关注</div>
+            </div>
+            <div className="four-line-paper">
+              {cells.map((cell) => (
+                <div key={cell.index} className="four-line-paper-row">
+                  <div className="line line-1" />
+                  <div className="line line-2" />
+                  <div className="line line-3" />
+                  <div className="line line-4" />
+                  <span className="text-content" style={{ fontFamily: fontFamilyCssVar(props.fontFamily) }}>
+                    {cell.char}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+            <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+              <div className="flex items-center gap-2">
+                <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+                <span className="font-kai text-base text-ink">字·韵</span>
+              </div>
+              <div className="text-sm text-ink-soft">
+                字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
+              </div>
+              <div className="text-xs text-ink-faint">公益网站，请多关注</div>
+            </div>
+            {cells.map((cell) => (
+              <Fragment key={cell.index}>
+                {props.breakpoints?.has(cell.index) && (
+                  <div className="worksheet-cell-sep col-span-full text-center text-xs text-ink-faint py-1 print:hidden" aria-hidden>
+                    · 句 ·
+                  </div>
+                )}
+                <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
+              </Fragment>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
