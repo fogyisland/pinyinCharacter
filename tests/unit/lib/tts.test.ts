@@ -2,6 +2,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { speak, stopSpeaking } from '@/lib/tts';
 
+// Minimal Cache API polyfill — happy-dom doesn't ship `caches`.
+class FakeCache {
+  private store = new Map<string, Blob>();
+  async match(req: Request | string): Promise<Response | undefined> {
+    const url = typeof req === 'string' ? req : req.url;
+    const blob = this.store.get(url);
+    return blob ? new Response(blob, { headers: { 'Content-Type': 'audio/mpeg' } }) : undefined;
+  }
+  async put(req: Request | string, res: Response): Promise<void> {
+    const url = typeof req === 'string' ? req : req.url;
+    this.store.set(url, await res.blob());
+  }
+  async delete(req: Request | string): Promise<boolean> {
+    const url = typeof req === 'string' ? req : req.url;
+    return this.store.delete(url);
+  }
+  async keys(): Promise<Request[]> {
+    return Array.from(this.store.keys()).map(url => new Request(url));
+  }
+}
+
 // Stub HTMLAudioElement so audio.play() resolves immediately and audio.onended
 // fires synchronously — happy-dom doesn't implement real audio playback.
 class FakeAudio {
@@ -34,6 +55,14 @@ describe('speak()', () => {
     }
     // Override Audio constructor to return our FakeAudio
     (global as unknown as { Audio: typeof FakeAudio }).Audio = FakeAudio as unknown as typeof FakeAudio;
+    // Install Cache API polyfill BEFORE the module under test runs.
+    // Always reinstall a fresh FakeCache so cache state doesn't bleed between tests.
+    const fake = new FakeCache();
+    Object.defineProperty(globalThis, 'caches', {
+      value: { open: async () => fake, delete: async () => true },
+      configurable: true,
+      writable: true,
+    });
   });
 
   afterEach(() => {
@@ -111,5 +140,42 @@ describe('speak()', () => {
     // After pagehide, the FakeAudio's pause() should have been called.
     // Stopping a non-active speak() must not throw.
     expect(() => stopSpeaking()).not.toThrow();
+  });
+
+  it('uses cached blob on second speak() of same text (no second fetch)', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    fetchSpy.mockResolvedValue(
+      new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })),
+    );
+    await speak('女');
+    fetchSpy.mockClear();
+    await speak('女');
+    expect(fetchSpy).not.toHaveBeenCalled();
+    fetchSpy.mockRestore();
+  });
+
+  it('stores fetched blob in cache after first speak()', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })),
+    );
+    await speak('女');
+    // After this speak(), re-importing getCachedTts should find the entry.
+    const { getCachedTts } = await import('@/lib/tts-cache');
+    const blob = await getCachedTts('female', '女');
+    expect(blob).not.toBeNull();
+    fetchSpy.mockRestore();
+  });
+
+  it('falls back to fetch when cache returns null (regression: no behavioral change)', async () => {
+    // With the polyfill installed but empty, cache always misses. speak() must still fetch.
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })),
+    );
+    await speak('学');
+    expect(fetchSpy).toHaveBeenCalledWith('/api/tts', expect.objectContaining({
+      method: 'POST',
+      body: JSON.stringify({ text: '学', voice: 'female' }),
+    }));
+    fetchSpy.mockRestore();
   });
 });

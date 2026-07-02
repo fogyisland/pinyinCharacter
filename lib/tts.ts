@@ -1,5 +1,6 @@
 'use client';
 
+import { getCachedTts, putCachedTts } from './tts-cache';
 import type { SpeakOpts } from './tts-types';
 
 export type Voice = 'male' | 'female';
@@ -75,20 +76,25 @@ export async function speak(text: string, opts: SpeakOpts & { voice?: Voice } = 
   for (let i = 0; i < batches.length; i++) {
     const isLast = i === batches.length - 1;
     const batch = batches[i]!;
-    let res: Response;
-    try {
-      res = await fetch('/api/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: batch, voice }),
-      });
-    } catch (e) {
-      throw new Error(`TTS network error: ${(e as Error).message}`);
+    let blob: Blob | null = await getCachedTts(voice, batch);
+    if (!blob) {
+      let res: Response;
+      try {
+        res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: batch, voice }),
+        });
+      } catch (e) {
+        throw new Error(`TTS network error: ${(e as Error).message}`);
+      }
+      if (!res.ok) {
+        throw new Error(`TTS failed: HTTP ${res.status}`);
+      }
+      blob = await res.blob();
+      // Best-effort cache write — quota / private-mode failures don't break playback.
+      await putCachedTts(voice, batch, blob);
     }
-    if (!res.ok) {
-      throw new Error(`TTS failed: HTTP ${res.status}`);
-    }
-    const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const audio = new Audio(url);
     const playback: ActivePlayback = { audio, url, cancelled: false };
