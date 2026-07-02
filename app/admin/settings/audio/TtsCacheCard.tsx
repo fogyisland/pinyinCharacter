@@ -8,6 +8,23 @@ function formatBytes(b: number): string {
   return `${(b / 1024 / 1024).toFixed(2)} MB`;
 }
 
+const TTS_CACHE_TIMEOUT_MS = 5000;
+
+async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ms);
+  try {
+    return await Promise.race([
+      fetch(url, { ...init, signal: controller.signal }),
+      new Promise<Response>((_, reject) =>
+        setTimeout(() => reject(new Error('请求超时（5s）')), ms)
+      ),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export function TtsCacheCard() {
   const [count, setCount] = useState<number | null>(null);
   const [bytes, setBytes] = useState<number | null>(null);
@@ -17,7 +34,7 @@ export function TtsCacheCard() {
   async function load() {
     setErr(null);
     try {
-      const res = await fetch('/api/admin/tts-cache');
+      const res = await fetchWithTimeout('/api/admin/tts-cache', {}, TTS_CACHE_TIMEOUT_MS);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const body = await res.json();
       setCount(body.data.count);
@@ -34,7 +51,7 @@ export function TtsCacheCard() {
     setBusy(true);
     setErr(null);
     try {
-      const res = await fetch('/api/admin/tts-cache', { method: 'DELETE' });
+      const res = await fetchWithTimeout('/api/admin/tts-cache', { method: 'DELETE' }, TTS_CACHE_TIMEOUT_MS);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await load();
     } catch (e) {
