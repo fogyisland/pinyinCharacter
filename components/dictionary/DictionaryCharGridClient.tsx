@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { Char } from '@/lib/chars-types';
 import { CharContextMenu } from './CharContextMenu';
 import { appendCharToWorksheetApi } from '@/lib/api-worksheet';
 import { useToastStore } from '@/lib/toast-store';
+import { prefetchTts } from '@/lib/tts-cache';
+
+const LIST_PREFETCH_CAP = 24;
 
 interface MenuState { x: number; y: number; char: string; }
 
@@ -38,6 +41,39 @@ export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
       pushToast('error', e?.message ?? '添加失败');
     }
   };
+
+  // Idle-callback prefetch: warm cache for the first LIST_PREFETCH_CAP chars
+  // so click-to-play is instant. Skips chars already cached (prefetchTts no-ops).
+  // requestIdleCallback keeps it off the main thread; falls back to setTimeout.
+  useEffect(() => {
+    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number })
+      .requestIdleCallback;
+    const cic = (window as unknown as { cancelIdleCallback?: (handle: number) => void })
+      .cancelIdleCallback;
+
+    const schedule = (cb: () => void): number | undefined =>
+      ric ? ric(cb, { timeout: 2500 }) : (setTimeout(cb, 250) as unknown as number);
+    const cancel = (handle: number | undefined): void => {
+      if (handle === undefined) return;
+      if (cic) cic(handle);
+      else clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
+    };
+
+    const targets = chars
+      .slice(0, LIST_PREFETCH_CAP)
+      .map((c) => c.char)
+      .filter((t) => t.length > 0);
+
+    const handles = targets.map((text) =>
+      schedule(() => {
+        prefetchTts('female', text).catch(() => {});
+      }),
+    );
+
+    return () => {
+      handles.forEach(cancel);
+    };
+  }, [chars]);
 
   if (chars.length === 0) {
     return <p className="text-ink-faint text-sm py-8 text-center">没有匹配的字</p>;
