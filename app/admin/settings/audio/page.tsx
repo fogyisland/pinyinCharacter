@@ -4,6 +4,7 @@ import { listTracks } from '@/lib/audio-tracks';
 import { listPlaylists } from '@/lib/playlists';
 import { AudioTracksForm } from '@/components/admin/AudioTracksForm';
 import { PlaylistsPanel } from '@/components/admin/PlaylistsPanel';
+import { TtsCacheCard } from './TtsCacheCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,7 @@ export default async function AudioSettingsPage() {
         </p>
         <PlaylistsPanel initialPlaylists={playlists} tracks={tracks} />
       </section>
+      <TtsCacheCard />
     </div>
   );
 }
