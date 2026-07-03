@@ -221,14 +221,11 @@ const VALID_PAPER_SIZES = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']
 // printed page fills the entire A4 sheet with practice space — empty rows
 // have `char === ''` (drawn as a blank ruled line).
 const FOUR_LINE_ROWS_PER_PAGE: Record<PaperSize, number> = {
-  // Tuned 2026-07-03: was 14/18/11. New values add ~2 rows so the
-  // 4-line paper fills the A4/A3/B5 sheet more tightly — old values
-  // left ~8cm of empty footer area on A4. Per-row height is 54px
-  // (38 row + 16 gap), so A4 16×54 = 864px vs available ~1007px
-  // leaves ~4.7cm of bottom margin (down from ~8cm). Row spacing
-  // stays at the standard 12px grid-gap so the rules remain
-  // readable for handwriting.
-  A3: 21, B5: 13, A4: 16,
+  // Tuned 2026-07-03: was 14/18/11. A4 +2, A3 +3 to fill the page more
+  // tightly. B5 limited to +1 (11→12) because the 12pt inter-row gap
+  // makes the math tight: 12×(33+12)-12 = 528pt + 73pt header/footer
+  // = 601pt ≤ 624pt inner. 13 would be 646pt > 624pt → 2 pages.
+  A3: 21, B5: 12, A4: 16,
   'brush-12': 0, 'brush-24': 0, 'brush-28': 0,
 };
 

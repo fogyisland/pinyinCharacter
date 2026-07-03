@@ -60,11 +60,13 @@ describe('generateLayout — four-line row packing (English trace)', () => {
     expect(cells.slice(2).every((c) => c.char === '')).toBe(true);
   });
 
-  it('A3 = 21 rows/page, B5 = 13 rows/page (tuned 2026-07-03 with A4=16)', () => {
+  it('A3 = 21 rows/page, B5 = 12 rows/page (tuned 2026-07-03 with A4=16)', () => {
     const a3 = generateLayout([], 'pen-english', 'A3');
     expect(a3).toHaveLength(21);
     const b5 = generateLayout([], 'pen-english', 'B5');
-    expect(b5).toHaveLength(13);
+    // B5 = 12: 12×(33pt+12pt) - 12 + 73pt header/footer = 601pt ≤ 624pt inner.
+    // 13 would be 646pt → 2 pages.
+    expect(b5).toHaveLength(12);
   });
 
   it('non-four-line styles fall through to per-char cells', () => {

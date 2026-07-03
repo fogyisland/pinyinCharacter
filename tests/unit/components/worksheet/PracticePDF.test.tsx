@@ -194,18 +194,99 @@ describe('PracticePDF — pen-lined branch', () => {
   });
 });
 
-describe('PracticePDF — header + grid gaps', () => {
-  it('A4 pen-square grid emits 88 cells (8 cols × 11 rows, 70px cells)', async () => {
-    const blob = await renderPdf('A4', 'pen-square').toBlob();
+describe('PracticePDF — pen-english / four-line branch (English trace PDF)', () => {
+  // Regression coverage for the 2026-07-03 feature: pen-english (钢笔·英文描红)
+  // was previously hidden from the PDF download button in PracticeTemplate
+  // (comment: "react-pdf can't reproduce CSS linear-gradient"). The DOM-per-row
+  // refactor replaced the CSS gradient with 4 <div class="line-N"> stripes,
+  // so react-pdf CAN now reproduce it via inline <Svg><Line>×4. These tests
+  // pin the new contract: PDF button must be available, 4-line produces 1
+  // page, 16 rows × 4 rules = 64 moveTo operators, and the colors match the
+  // on-screen preview (blue / red / thick red / blue).
+
+  it('pen-english + A4 produces exactly 1 page (regression: 4-line used to be hidden from PDF button)', async () => {
+    const blob = await renderPdf('A4', 'pen-english').toBlob();
+    const buf = Buffer.from(await blob.arrayBuffer());
+    expect(countPdfPages(buf)).toBe(1);
+  });
+
+  it('pen-english + A3 and B5 also produce 1 page each', async () => {
+    for (const ps of ['A3', 'B5'] as PaperSize[]) {
+      const blob = await renderPdf(ps, 'pen-english').toBlob();
+      const buf = Buffer.from(await blob.arrayBuffer());
+      expect(countPdfPages(buf)).toBe(1);
+    }
+  });
+
+  it('pen-english + A4 emits 16 four-line rows × 4 lines = 64 Line moveTo operators', async () => {
+    const blob = await renderPdf('A4', 'pen-english').toBlob();
     const buf = Buffer.from(await blob.arrayBuffer());
     const streams = decompressStreams(buf);
-    // A4 pen-square: PRACTICE_GRID_CELL_SIZE['A4'] = 70px = 52.5pt, cellsPerPage('A4') = 88.
+    // four-line emits 4 horizontal <Line> elements per row at equal
+    // 9pt spacing (12px × 0.75) within a 28.5pt row. Y values: 0, 9,
+    // 18, 27 (matches globals.css .four-line-paper-row .line-{1..4} top:
+    // 0/12/24/36 px). The PDF stream emits each as `0 Y m\n510 Y l\nS`
+    // (moveTo, lineTo, stroke). The Svg element also emits a `0 0 m`
+    // path-start for its bounding-box clip path (followed by `c` curve
+    // ops, not `l` lineTo), which we exclude by requiring `\1 l` (the
+    // same y in the lineTo).
+    const yToCount = new Map<number, number>();
+    const lineRegex = /0 ([\d.]+) m\n510 \1 l\nS/g;
+    let m: RegExpExecArray | null;
+    while ((m = lineRegex.exec(streams)) !== null) {
+      const y = Number(m[1]);
+      yToCount.set(y, (yToCount.get(y) || 0) + 1);
+    }
+    // Each of the 4 y positions should appear exactly 16 times.
+    expect(yToCount.get(0)).toBe(16);
+    expect(yToCount.get(9)).toBe(16);
+    expect(yToCount.get(18)).toBe(16);
+    expect(yToCount.get(27)).toBe(16);
+  });
+
+  it('pen-english + A4 uses the brand colors (blue/red/red/blue), not the old gray scheme', async () => {
+    const blob = await renderPdf('A4', 'pen-english').toBlob();
+    const buf = Buffer.from(await blob.arrayBuffer());
+    const streams = decompressStreams(buf);
+    // The 4-line PDF uses #4a90d9 (top/bottom), #d94c4c (upper-mid),
+    // #c0392b (lower-mid, thick 2.2pt). react-pdf emits these as
+    // DeviceRGB color spaces via the SCN (Set Color N-colorant) operator
+    // at full IEEE-754 float precision — not the shorter `rg` setrgbcolor.
+    // The exact float values come from /255 conversion:
+    //   #4a90d9 = 74/255, 144/255, 217/255
+    //   #d94c4c = 217/255, 76/255, 76/255
+    //   #c0392b = 192/255, 57/255, 43/255
+    expect(streams).toContain('0.2901960784313726 0.5647058823529412 0.8509803921568627 SCN'); // #4a90d9
+    expect(streams).toContain('0.8509803921568627 0.2980392156862745 0.2980392156862745 SCN'); // #d94c4c
+    expect(streams).toContain('0.7529411764705882 0.2235294117647059 0.16862745098039217 SCN'); // #c0392b
+  });
+
+  it('pen-english + A3 emits 21 rows (fourLineRowsPerPage A3 = 21)', async () => {
+    // Count distinct row positions by tallying first-line draws at y=0
+    // (top rule) — one per row, regardless of how many lines per row.
+    // Exclude the Svg's clip-path setup (which also uses `0 0 m` but
+    // uses `c` curve ops, not `l` lineTo) by requiring the lineTo.
+    // The lineTo x depends on paperSize: A3=757, A4=510, B5=414 — match
+    // any width with \d+ to be paper-agnostic.
+    const blob = await renderPdf('A3', 'pen-english').toBlob();
+    const buf = Buffer.from(await blob.arrayBuffer());
+    const streams = decompressStreams(buf);
+    const topRuleMoves = (streams.match(/0 0 m\n\d+(?:\.\d+)? 0 l\nS/g) || []).length;
+    expect(topRuleMoves).toBe(21);
+  });
+});
+
+describe('PracticePDF — header + grid gaps', () => {
+  it('A4 grid has 87 explicit cm transforms (8×11 layout, 1 implicit at origin)', async () => {
     // Layout target: 8 cols × 11 rows = 88 cells. Cell positions are:
     //   X ∈ {0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5} (step = 52.5 + 8 = 60.5pt)
     //   Y ∈ {0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5, 484, 544.5, 605}
     // react-pdf positions each flex child via a `1 0 0 1 X Y cm` transform.
     // The first cell at (0, 0) is rendered at identity (no transform emitted),
     // so we count exact-grid-point cm transforms + 1 implicit.
+    const blob = await renderPdf('A4', 'pen-square').toBlob();
+    const buf = Buffer.from(await blob.arrayBuffer());
+    const streams = decompressStreams(buf);
     const gridX = new Set([0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5]);
     const gridY = new Set([0, 60.5, 121, 181.5, 242, 302.5, 363, 423.5, 484, 544.5, 605]);
     const transforms = streams.match(/\n1 0 0 1 (-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?) cm\n/g) || [];

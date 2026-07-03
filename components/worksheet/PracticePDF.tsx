@@ -2,7 +2,7 @@
 
 import { Document, Page, View, Text, Image, Svg, Rect, Line, StyleSheet, Font } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize } from '@/lib/worksheet-types';
-import { PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, getPresentation, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import { PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, fourLineRowsPerPage, getPresentation, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
 
 // Register one CJK TTF for header/footer text. react-pdf subsets the font
 // to only the glyphs we use ("字·韵", "空白字帖", domain), so the PDF stays
@@ -123,19 +123,19 @@ function PracticeCell({ size, paperSize, style }: { size: number; paperSize: Pap
   }
   if (presentation === 'four-line') {
     // Four-line (English trace / 听写本): 4 horizontal rules stretched across
-    // the full inner width. Same coordinates as WorksheetCell (viewBox
-    // 0..100 × 0..38) but rescaled to size × width for the PDF. Letter is
-    // omitted (practice template is blank).
-    const yTop = size * (8 / 38);
-    const yUpper = size * (14 / 38);
-    const yLower = size * (29 / 38);
-    const yBottom = size * (35 / 38);
+    // the full inner width. Matches globals.css .four-line-paper-row
+    // .line-{1,2,3,4}: equal 12px (= 9pt) spacing within a 38px (= 28.5pt)
+    // row, with line-3 (lower-mid, the baseline where letters sit) drawn
+    // thicker. 1.5pt descender buffer at the bottom. Previous version used
+    // 8/38, 14/38, 29/38, 35/38 fractions which produced unequal gaps
+    // (4.5 / 11.25 / 4.5 pt) — the "middle is the biggest" complaint.
+    const gap = size * (12 / 38);
     return (
       <Svg width={width} height={size}>
-        <Line x1={0} y1={yTop} x2={width} y2={yTop} stroke="#999" strokeWidth={1} />
-        <Line x1={0} y1={yUpper} x2={width} y2={yUpper} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
-        <Line x1={0} y1={yLower} x2={width} y2={yLower} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" />
-        <Line x1={0} y1={yBottom} x2={width} y2={yBottom} stroke="#999" strokeWidth={1} />
+        <Line x1={0} y1={0} x2={width} y2={0} stroke="#4a90d9" strokeWidth={1.2} />
+        <Line x1={0} y1={gap} x2={width} y2={gap} stroke="#d94c4c" strokeWidth={1} />
+        <Line x1={0} y1={gap * 2} x2={width} y2={gap * 2} stroke="#c0392b" strokeWidth={2.2} />
+        <Line x1={0} y1={gap * 3} x2={width} y2={gap * 3} stroke="#4a90d9" strokeWidth={1.2} />
       </Svg>
     );
   }
@@ -161,9 +161,9 @@ interface Props {
 }
 
 export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
-  // four-line (English trace) shares the lined mode layout: vertical stack of
-  // rules that each span the full inner width. The visual styling differs
-  // (4 rules per row vs 1) but the layout shape is the same.
+  // Lined and four-line share the same row geometry (height = linedHeightPx,
+  // full inner width). The visual styling differs (1 rule vs 4 rules per row,
+  // color scheme) but the layout shape is identical.
   const presentation = getPresentation(cellStyle);
   const isLined = presentation === 'lined' || presentation === 'four-line';
   // Lined mode: cellSize = row height in pt (CSS px × 72/96). Grid mode: cell side in pt.
@@ -173,8 +173,22 @@ export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
     ? linedHeightPx(paperSize)
     : (PRACTICE_GRID_CELL_SIZE[paperSize] ?? PRACTICE_LAYOUT[paperSize].cellSize)
   ) * PX_TO_PT;
-  // Lined mode: count = lines per page. Grid mode: count = cells per page.
-  const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
+  // Row count:
+  //   - lined: `linesPerPage` (A4=24, A3=36, B5=14) — rows sit flush, no gap
+  //   - four-line: `fourLineRowsPerPage` (A4=16, A3=21, B5=13) — rows have
+  //     a 16 CSS px (12pt) marginBottom between them, matching the
+  //     .four-line-paper-row { margin-bottom: 16px } in app/globals.css
+  //   - grid: cellsPerPage
+  const isFourLine = presentation === 'four-line';
+  const count = isFourLine
+    ? fourLineRowsPerPage(paperSize)
+    : isLined
+      ? linesPerPage(paperSize)
+      : cellsPerPage(paperSize);
+  // Per-row gap below each cell, in pt. Four-line gets a 12pt marginBottom
+  // to mimic the on-screen 16px row-gap; lined and grid have no gap (lined
+  // sits flush, grid uses its 8px gap via styles.grid.gap).
+  const rowMarginBottom = isFourLine ? 12 : 0;
   const cells = Array.from({ length: count }, (_, i) => i);
   const innerWidth = PAGE_INNER_WIDTH_PT[paperSize];
 
@@ -190,7 +204,13 @@ export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
         </View>
         <View style={isLined ? styles.linedStack : styles.grid}>
           {cells.map((i) => (
-            <View key={i} style={isLined ? { width: innerWidth } : undefined}>
+            <View
+              key={i}
+              style={{
+                width: isLined ? innerWidth : undefined,
+                marginBottom: rowMarginBottom || undefined,
+              }}
+            >
               <PracticeCell size={cellSize} paperSize={paperSize} style={cellStyle} />
             </View>
           ))}

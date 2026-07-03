@@ -157,18 +157,13 @@ export function PracticeTemplate() {
             {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} {isLined ? '行' : '格'} / 页
           </p>
           <div className="flex gap-2 shrink-0">
-            {/* Four-line (英文描红) relies on CSS linear-gradient backgrounds
-                which only render in the browser — react-pdf can't reproduce them.
-                Hide the PDF button in this mode so users don't get an empty PDF. */}
-            {presentation !== 'four-line' && (
-              <PDFDownloadLink
-                document={<PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />}
-                fileName={`练字模板-${paperSize}.pdf`}
-                className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
-              >
-                {({ loading }) => (loading ? '生成中…' : '下载 PDF')}
-              </PDFDownloadLink>
-            )}
+            <PDFDownloadLink
+              document={<PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />}
+              fileName={`练字模板-${paperSize}.pdf`}
+              className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
+            >
+              {({ loading }) => (loading ? '生成中…' : '下载 PDF')}
+            </PDFDownloadLink>
             <button
               type="button"
               onClick={() => window.print()}
@@ -179,9 +174,7 @@ export function PracticeTemplate() {
           </div>
         </div>
         <p className="mt-2 text-xs text-ink-faint">
-          {presentation === 'four-line'
-            ? '英文描红模板由 CSS 渐变渲染,仅支持浏览器打印（对话框里取消「页眉和页脚」即可,4 根线会自动打印,无需勾选「背景图形」）。'
-            : '点「下载 PDF」直接获得自定义排版的 PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。'}
+          点「下载 PDF」直接获得自定义排版的 PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。
         </p>
       </div>
 
