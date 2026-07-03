@@ -105,6 +105,21 @@ describe('PracticeTemplate — pen-english option (four-line English trace)', ()
     expect(paper?.querySelector('text')).toBeNull();
   });
 
+  it('header (字·韵 + 公益网站) lives INSIDE .four-line-paper so print position:absolute carries it (regression: 2026-07-03 blank-header bug)', async () => {
+    const user = userEvent.setup();
+    render(<PracticeTemplate />);
+    await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-english');
+    const paper = document.querySelector('.four-line-paper');
+    // The header line "字·韵 · 钢笔·英文描红" must be a descendant of
+    // .four-line-paper. If a future refactor moves it to be a sibling of
+    // .four-line-paper, the @media print position:absolute reset on
+    // .four-line-paper would leave the header behind, and `body * {
+    // visibility: hidden }` would hide it — producing a printable body
+    // with rules but no header. This test pins the contract.
+    const headerText = paper?.querySelector('span.font-kai');
+    expect(headerText?.textContent).toMatch(/字·韵 · 钢笔·英文描红/);
+  });
+
   it('switching pen-english → pen-square restores the 田字格 grid (regression)', async () => {
     const user = userEvent.setup();
     render(<PracticeTemplate />);

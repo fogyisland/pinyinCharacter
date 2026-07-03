@@ -186,14 +186,20 @@ export function PracticeTemplate() {
           // (--row-gap) to the next. CSS variables in globals.css control
           // the spacing; tweak --grid-gap / --row-gap to scale uniformly.
           <div className="mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0 p-10">
-            <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
-              <div className="flex items-center gap-2">
-                <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-                <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
-              </div>
-              <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
-            </div>
             <div className="four-line-paper">
+              {/* Header lives INSIDE .four-line-paper so the @media print
+                  position:absolute reset moves header + rows + footer
+                  together. Putting it outside (as a sibling of
+                  .four-line-paper) caused the header to be left behind
+                  and hidden by `body * { visibility: hidden }` (regression
+                  2026-07-03: blank header in print). */}
+              <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+                  <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
+                </div>
+                <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
+              </div>
               {cells.map((i) => (
                 <div key={i} className="four-line-paper-row">
                   <div className="line line-1" />
@@ -202,12 +208,12 @@ export function PracticeTemplate() {
                   <div className="line line-4" />
                 </div>
               ))}
+              {siteHost && (
+                <div className="text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
+                  {siteHost}
+                </div>
+              )}
             </div>
-            {siteHost && (
-              <div className="text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
-                {siteHost}
-              </div>
-            )}
           </div>
         ) : isLined ? (
           <div className="lined-paper mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0" style={{ minHeight: `${count * cellSize}px` }}>

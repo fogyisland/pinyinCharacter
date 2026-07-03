@@ -100,22 +100,23 @@ export function WorksheetPreview(props: Props) {
 
       <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
         {isFourLine ? (
-          // Two siblings: header (no background) + four-line-paper container.
-          // Each row is its own DOM node with 4 absolutely-positioned lines
-          // and a text layer (see globals.css .four-line-paper-row) — this
-          // gives clean visual grouping instead of a continuous ruled grid.
+          // Header lives INSIDE .four-line-paper so the @media print
+          // position:absolute reset moves header + rows + footer together.
+          // Putting it outside (as a sibling of .four-line-paper) caused
+          // the header to be left behind and hidden by
+          // `body * { visibility: hidden }` (regression 2026-07-03).
           <div className="mx-auto min-w-full sm:min-w-[640px] max-w-3xl print:min-w-0 p-10">
-            <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
-              <div className="flex items-center gap-2">
-                <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-                <span className="font-kai text-base text-ink">字·韵</span>
-              </div>
-              <div className="text-sm text-ink-soft">
-                字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
-              </div>
-              <div className="text-xs text-ink-faint">公益网站，请多关注</div>
-            </div>
             <div className="four-line-paper">
+              <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
+                <div className="flex items-center gap-2">
+                  <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
+                  <span className="font-kai text-base text-ink">字·韵</span>
+                </div>
+                <div className="text-sm text-ink-soft">
+                  字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
+                </div>
+                <div className="text-xs text-ink-faint">公益网站，请多关注</div>
+              </div>
               {cells.map((cell) => (
                 <div key={cell.index} className="four-line-paper-row">
                   <div className="line line-1" />
