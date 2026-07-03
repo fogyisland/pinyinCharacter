@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { fetchGameRound, type GameRound } from '@/lib/api-game';
 import { DifficultyPicker } from '@/components/common/DifficultyPicker';
 import { TONE_RADICAL_CONFIG, type Difficulty } from '@/lib/difficulty';
+import { shuffle } from '@/lib/shuffle';
 import { ToneToken } from './ToneToken';
 import { RadicalToken } from './RadicalToken';
 import { PinyinToken } from './PinyinToken';
@@ -12,15 +13,6 @@ import { useDifficulty } from '@/lib/use-difficulty';
 import type { Tone } from '@/lib/pinyin-tone';
 
 type Phase = 'loading' | 'playing' | 'finished';
-
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j]!, a[j]!];
-  }
-  return a;
-}
 
 function formatTime(ms: number): string {
   const s = Math.floor(ms / 1000);

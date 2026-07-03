@@ -1,20 +1,12 @@
 import { listChars } from './rare-chars';
 import { getRadical } from './radical';
 import { ALL_TONES, toneFromPinyin, type Tone } from './pinyin-tone';
+import { seededShuffle } from './shuffle';
 import type { RoundChar, GameRound, RoundMode } from './game-round-types';
 
 export type { RoundChar, GameRound, RoundMode } from './game-round-types';
 
-function seededShuffle<T>(arr: T[], seed: number): T[] {
-  const a = [...arr];
-  let s = seed;
-  for (let i = a.length - 1; i > 0; i--) {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    const j = s % (i + 1);
-    [a[i], a[j]] = [a[j]!, a[j]!];
-  }
-  return a;
-}
+export { seededShuffle } from './shuffle';
 
 /** Pick a random mode for this round. The seed makes it deterministic per
  *  call, so the same client gets a stable mode for a given seed. */
