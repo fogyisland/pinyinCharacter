@@ -172,7 +172,7 @@ export function PracticeTemplate() {
         </div>
         <p className="mt-2 text-xs text-ink-faint">
           {presentation === 'four-line'
-            ? '英文描红模板由 CSS 渐变渲染,仅支持浏览器打印（在打印对话框中取消「页眉和页脚」、勾选「背景图形」）。'
+            ? '英文描红模板由 CSS 渐变渲染,仅支持浏览器打印（对话框里取消「页眉和页脚」即可,4 根线会自动打印,无需勾选「背景图形」）。'
             : '点「下载 PDF」直接获得自定义排版的 PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。'}
         </p>
       </div>

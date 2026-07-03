@@ -203,12 +203,32 @@
 .batch-print-area { position: absolute; left: -10000px; top: 0; width: 100%; }
 
 @media print {
-  /* Print: show only the printable areas; everything else hidden */
+  /* Print: show only the printable areas; everything else hidden.
+     Whitelist must list EVERY printable container class used by
+     PracticeTemplate / WorksheetPreview / BatchPrintPreview — adding a
+     new printable branch without updating this list silently produces
+     blank pages (regression: 2026-07-03, pen-english 4-line). */
   body * { visibility: hidden; }
   .worksheet-grid, .worksheet-grid *,
-  .batch-print-area, .batch-print-area * { visibility: visible; }
+  .batch-print-area, .batch-print-area *,
+  .four-line-paper, .four-line-paper *,
+  .lined-paper, .lined-paper * { visibility: visible; }
   .worksheet-grid,
-  .batch-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  .batch-print-area,
+  .four-line-paper,
+  .lined-paper { position: absolute; left: 0; top: 0; width: 100%; }
+  /* Force backgrounds to print. Chrome silently drops background-color
+     and background-image in print unless the element opts in. The 4-line
+     English template renders its 4 rules as background-color stripes, so
+     without this the page is visible-but-blank even after the visibility
+     fix above. -webkit- prefix covers Safari / older Chrome. */
+  .worksheet-grid,
+  .batch-print-area,
+  .four-line-paper,
+  .lined-paper {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   .worksheet-no-print { display: none !important; }
   .print-page-break { page-break-after: always; break-after: page; }
 }
