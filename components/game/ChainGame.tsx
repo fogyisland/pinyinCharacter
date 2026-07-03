@@ -75,6 +75,7 @@ export function ChainGame() {
     return (
       <ChainSummary
         chain={chain}
+        charsList={charsList}
         onRestart={() => {
           setChain([starter]);
           setPhase('playing');
