@@ -30,6 +30,11 @@ export function ChainGame() {
       // chain-able neighbors and hard = rare chars that break the chain.
       const source = CHAIN_GAME_CONFIG[forceDifficulty].source;
       const chars = await fetchChainChars(source);
+      // 2026-07-04: diagnostic console.log retained in case the
+      // "no valid starter" error recurs (was caused by browser caching
+      // a stale empty [] response — see /api/chain/chars/route.ts
+      // Cache-Control header).
+      console.log('[chain] startGame', { source, count: chars.length });
       const s = pickStarter(chars);
       if (!s) throw new Error('no valid starter');
       setCharsList(chars);

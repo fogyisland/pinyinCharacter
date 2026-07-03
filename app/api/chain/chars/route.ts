@@ -37,7 +37,15 @@ export async function GET(req: NextRequest) {
     }
     if (result.chars.length < 80) break; // last page
   }
+  // 2026-07-04: was `public, max-age=3600`. Switched to `no-store`
+  // because the prior version of this route returned `[]` for the new
+  // `chars-level-1` source (the old route used lib/rare-chars which has
+  // no `level` column, so the filter always skipped everything).
+  // Browsers dutifully cached that `[]` for 1 hour — users with the
+  // stale cache hit "no valid starter" even after the route was fixed.
+  // The client-side fetchChainChars() already memoizes by source for
+  // 1h in module-level state, so we don't need HTTP caching here.
   return NextResponse.json(allChars, {
-    headers: { 'Cache-Control': 'public, max-age=3600' },
+    headers: { 'Cache-Control': 'no-store' },
   });
 }
