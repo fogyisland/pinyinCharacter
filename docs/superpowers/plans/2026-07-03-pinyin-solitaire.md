@@ -892,6 +892,8 @@ describe('ChainGame', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.resetModules();
+    // Make pickStarter deterministic: always pick index 0 ('安 ān', has 2 validNext)
+    vi.spyOn(Math, 'random').mockReturnValue(0);
   });
 
   it('shows loading state initially', () => {
