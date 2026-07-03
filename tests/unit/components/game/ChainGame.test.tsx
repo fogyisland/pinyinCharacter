@@ -20,6 +20,21 @@ describe('ChainGame', () => {
     cleanup();
     vi.restoreAllMocks();
     vi.resetModules();
+    // 2026-07-03: ChainGame now uses useDifficulty which reads
+    // localStorage in a useEffect. happy-dom doesn't always expose a
+    // usable getItem, so we install a tiny in-memory shim.
+    const store = new Map<string, string>();
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => { store.set(k, v); },
+        removeItem: (k: string) => { store.delete(k); },
+        clear: () => { store.clear(); },
+        key: (i: number) => Array.from(store.keys())[i] ?? null,
+        get length() { return store.size; },
+      },
+    });
     // Make pickStarter deterministic: always pick index 0 ('安 ān', has 2 validNext)
     vi.spyOn(Math, 'random').mockReturnValue(0);
   });

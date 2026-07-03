@@ -11,11 +11,12 @@ export async function GET(req: NextRequest) {
     const parsed = gameRoundQuerySchema.safeParse({
       count: sp.get('count') ?? undefined,
       seed: sp.get('seed') ?? undefined,
+      source: sp.get('source') ?? undefined,
     });
     if (!parsed.success) {
       return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     }
-    const payload = await buildRound(parsed.data.count, parsed.data.seed);
+    const payload = await buildRound(parsed.data.count, parsed.data.seed, parsed.data.source);
     if (!payload) {
       return serviceUnavailable(
         'no_chars',

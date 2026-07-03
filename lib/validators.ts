@@ -127,6 +127,11 @@ export const classicSlugParamSchema = z.object({
 export const gameRoundQuerySchema = z.object({
   count: z.coerce.number().int().min(1).max(8).default(4),
   seed: z.coerce.number().int().optional(),
+  // 2026-07-03: per-difficulty char source for 声调·部首 game. Defaults
+  // to 'chars-all' (legacy behavior) so existing clients still get the
+  // same pool. 'chars-level-1' = level 1 only; 'chars-level-1-2' =
+  // level 1 + 2; 'chars-all' = no filter.
+  source: z.enum(['chars-level-1', 'chars-level-1-2', 'chars-all']).default('chars-all'),
 });
 
 export const charsListQuerySchema = z.object({

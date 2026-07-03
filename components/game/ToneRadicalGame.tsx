@@ -47,8 +47,12 @@ export function ToneRadicalGame() {
     setElapsedMs(0);
     setError(null);
     try {
-      const count = TONE_RADICAL_CONFIG[forceDifficulty].count;
-      const r = await fetchGameRound(count);
+      const cfg = TONE_RADICAL_CONFIG[forceDifficulty];
+      // 2026-07-03: pass `source` so easy/medium/hard pick from the
+      // appropriate level pool (was using the default full pool for
+      // all difficulties — caused "hard" to be much harder than
+      // expected because rare chars had no matching token banks).
+      const r = await fetchGameRound(cfg.count, undefined, cfg.source);
       setRound(r);
       setToneOrder(shuffle([...r.toneChoices]));
       setRadicalOrder(shuffle([...r.radicalChoices]));

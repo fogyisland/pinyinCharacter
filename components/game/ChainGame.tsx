@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { fetchChainChars } from '@/lib/api-chain';
 import { getValidNextChars, pickStarter } from '@/lib/chain-rules';
 import type { CharInfo } from '@/lib/chain-types';
+import { CHAIN_GAME_CONFIG, type Difficulty } from '@/lib/difficulty';
+import { useDifficulty } from '@/lib/use-difficulty';
+import { DifficultyPicker } from '@/components/common/DifficultyPicker';
 import { ChainScroll } from './ChainScroll';
 import { ChainPickerModal } from './ChainPickerModal';
 import { ChainSummary } from './ChainSummary';
@@ -15,13 +18,18 @@ export function ChainGame() {
   const [charsList, setCharsList] = useState<CharInfo[]>([]);
   const [chain, setChain] = useState<string[]>([]);
   const [starter, setStarter] = useState<string>('');
+  const [difficulty, setDifficulty] = useDifficulty();
 
-  useEffect(() => { void startGame(); }, []);
+  useEffect(() => { void startGame(difficulty); }, [difficulty]);
 
-  async function startGame() {
+  async function startGame(forceDifficulty: Difficulty = difficulty) {
     setPhase('loading');
     try {
-      const chars = await fetchChainChars();
+      // 2026-07-03: tier char pool by difficulty (easy=level-1 only,
+      // medium=level-1+2, hard=all) so easy = common chars with many
+      // chain-able neighbors and hard = rare chars that break the chain.
+      const source = CHAIN_GAME_CONFIG[forceDifficulty].source;
+      const chars = await fetchChainChars(source);
       const s = pickStarter(chars);
       if (!s) throw new Error('no valid starter');
       setCharsList(chars);
@@ -78,6 +86,13 @@ export function ChainGame() {
   const currentLast = charsList.find((c) => c.char === chain.at(-1));
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <DifficultyPicker
+          value={difficulty}
+          onChange={(d) => { setDifficulty(d); void startGame(d); }}
+        />
+        <div className="text-xs text-ink-faint">字库难度</div>
+      </div>
       <ChainScroll chain={chain} charsList={charsList} />
       <div className="flex items-center justify-between">
         <div className="text-sm text-ink-soft">接龙长度: {chain.length}</div>
