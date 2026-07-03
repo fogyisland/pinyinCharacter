@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { DocumentProps } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
-import { PAPER_SIZES, PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, getTool, getPresentation, isBrushSize, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import { PAPER_SIZES, PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, fourLineRowsPerPage, getTool, getPresentation, isBrushSize, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PracticePDF } from './PracticePDF';
 
@@ -97,14 +97,22 @@ export function PracticeTemplate() {
     ? linedHeightPx(paperSize)
     : (PRACTICE_GRID_CELL_SIZE[paperSize] ?? PRACTICE_LAYOUT[paperSize].cellSize);
   // Lined mode: count = lines per page (A4=24). Grid mode: count = cells per page.
-  // Four-line uses a CSS-defined 14 rows/page (学生标准版: 52px row × 14 = 728 ≤ 761.89px usable A4 height).
+  // Four-line uses fourLineRowsPerPage() (A4=16, A3=21, B5=13 — tuned 2026-07-03
+  // to fill more of the A4 sheet; 16×54=864px ≈ 4.7cm bottom margin, down from
+  // ~8cm with the old 14-row default).
   const count = presentation === 'four-line'
-    ? 14
+    ? fourLineRowsPerPage(paperSize)
     : isLined
       ? linesPerPage(paperSize)
       : cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
-  const siteHost = hostOf(process.env.NEXT_PUBLIC_SITE_URL ?? '');
+  // siteHost shows the canonical site URL (e.g. "fogyisland.github.io") so
+  // printed pages can be traced back to the source. NEXT_PUBLIC_SITE_URL is
+  // set by the admin backend in production; in dev it is empty by design
+  // (per memory next-public-site-url-from-admin). Fall back to the brand
+  // name "字·韵" so the footer line is never empty — gives users something
+  // to see while making it obvious this is local dev.
+  const siteHost = hostOf(process.env.NEXT_PUBLIC_SITE_URL ?? '') || '字·韵';
   const paperOptions = availablePaperSizes(getTool(cellStyle));
 
   return (

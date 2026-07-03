@@ -99,10 +99,27 @@ describe('PracticeTemplate — pen-english option (four-line English trace)', ()
     const paper = document.querySelector('.four-line-paper');
     expect(paper).not.toBeNull();
     const rows = document.querySelectorAll('.four-line-paper-row');
-    expect(rows.length).toBe(14); // A4 学生标准版: ⌊761.89 / 52⌋ = 14 rows/page
+    // A4 default: 16 rows/page (tuned 2026-07-03 from 14 to 18 to fill
+    // more of the A4 sheet; 16×54px = 864px ≈ 4.7cm bottom margin).
+    expect(rows.length).toBe(16);
     // No SVG and no letter — the rules come from background-image.
     expect(paper?.querySelector('svg')).toBeNull();
     expect(paper?.querySelector('text')).toBeNull();
+  });
+
+  it('4-line footer shows brand name "字·韵" in dev (NEXT_PUBLIC_SITE_URL is empty by design)', async () => {
+    // Per memory next-public-site-url-from-admin: NEXT_PUBLIC_SITE_URL is
+    // unset in local dev and only set in production by the admin backend.
+    // The footer must still render something — fall back to the brand name
+    // so the printable page is not missing its bottom line in dev.
+    const user = userEvent.setup();
+    render(<PracticeTemplate />);
+    await user.selectOptions(screen.getByLabelText('格子形式'), 'pen-english');
+    const paper = document.querySelector('.four-line-paper');
+    const footer = paper?.querySelector('.text-ink-faint');
+    // NEXT_PUBLIC_SITE_URL is empty in the test environment, so the
+    // fallback '字·韵' must be rendered.
+    expect(footer?.textContent?.trim()).toBe('字·韵');
   });
 
   it('header (字·韵 + 公益网站) lives INSIDE .four-line-paper so print position:absolute carries it (regression: 2026-07-03 blank-header bug)', async () => {

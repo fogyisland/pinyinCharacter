@@ -35,7 +35,9 @@ describe('generateLayout — four-line row packing (English trace)', () => {
   it('packs 88 letters into a single A4 row; fills the rest of the page with blanks', () => {
     const letters = Array.from({ length: 88 }, (_, i) => String.fromCharCode(65 + (i % 26)));
     const cells = generateLayout(letters, 'pen-english', 'A4');
-    expect(cells).toHaveLength(14); // A4 = 14 rows/page
+    // A4 = 16 rows/page (tuned 2026-07-03 from 14 to fill the A4 sheet
+    // more tightly; see FOUR_LINE_ROWS_PER_PAGE in worksheet-types.ts).
+    expect(cells).toHaveLength(16);
     expect(cells[0].char).toBe(letters.join(''));
     expect(cells[0].style).toBe('pen-english');
     expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
@@ -43,8 +45,8 @@ describe('generateLayout — four-line row packing (English trace)', () => {
 
   it('always renders rowsPerPage rows even with short content (blank practice lines fill the page)', () => {
     const cells = generateLayout(['A'], 'pen-english', 'A4');
-    // A4 = 14 rows/page. The 1 letter occupies row 0; rows 1-13 are blank.
-    expect(cells).toHaveLength(14);
+    // A4 = 16 rows/page. The 1 letter occupies row 0; rows 1-15 are blank.
+    expect(cells).toHaveLength(16);
     expect(cells[0].char).toBe('A');
     expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
   });
@@ -52,17 +54,17 @@ describe('generateLayout — four-line row packing (English trace)', () => {
   it('splits 89 letters across 2 A4 rows; the rest of the page is blank practice', () => {
     const letters = Array.from({ length: 89 }, (_, i) => 'A');
     const cells = generateLayout(letters, 'pen-english', 'A4');
-    expect(cells).toHaveLength(14);
+    expect(cells).toHaveLength(16);
     expect(cells[0].char).toHaveLength(88);
     expect(cells[1].char).toHaveLength(1);
     expect(cells.slice(2).every((c) => c.char === '')).toBe(true);
   });
 
-  it('A3 = 18 rows/page, B5 = 11 rows/page', () => {
+  it('A3 = 21 rows/page, B5 = 13 rows/page (tuned 2026-07-03 with A4=16)', () => {
     const a3 = generateLayout([], 'pen-english', 'A3');
-    expect(a3).toHaveLength(18);
+    expect(a3).toHaveLength(21);
     const b5 = generateLayout([], 'pen-english', 'B5');
-    expect(b5).toHaveLength(11);
+    expect(b5).toHaveLength(13);
   });
 
   it('non-four-line styles fall through to per-char cells', () => {
