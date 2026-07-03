@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { DragMatchGame } from './DragMatchGame';
 import { ToneRadicalGame } from './ToneRadicalGame';
+import { ChainGame } from './ChainGame';
 
-type Mode = 'tone-radical' | 'pinyin-char';
+type Mode = 'tone-radical' | 'pinyin-char' | 'pinyin-chain';
 
 export function GameModeTabs() {
   const [mode, setMode] = useState<Mode>('tone-radical');
@@ -33,8 +34,21 @@ export function GameModeTabs() {
         >
           拼音·字
         </button>
+        <button
+          type="button"
+          onClick={() => setMode('pinyin-chain')}
+          className={`px-4 py-2 text-sm font-medium transition-colors ${
+            mode === 'pinyin-chain'
+              ? 'border-b-2 border-seal text-seal'
+              : 'text-ink-soft hover:text-ink'
+          }`}
+        >
+          拼音接龙
+        </button>
       </div>
-      {mode === 'tone-radical' ? <ToneRadicalGame /> : <DragMatchGame />}
+      {mode === 'tone-radical' && <ToneRadicalGame />}
+      {mode === 'pinyin-char' && <DragMatchGame />}
+      {mode === 'pinyin-chain' && <ChainGame />}
     </div>
   );
 }
