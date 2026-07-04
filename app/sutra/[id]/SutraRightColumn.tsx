@@ -39,7 +39,7 @@ export function SutraRightColumn({ sutraId, sutraSlug, sutraTitle, chunk, userId
         </button>
         {!copyMode && <ReadAloudButton text={chunk.content.join('\n')} size="sm" variant="seal" />}
       </div>
-      <div className="card-paper p-5 sm:p-8">
+      <div className="card-paper p-5 sm:p-8 sutra-print-area">
         {copyMode ? (
           <SutraCopyView
             key={chunk.id}

@@ -213,12 +213,14 @@
   .batch-print-area, .batch-print-area *,
   .four-line-paper, .four-line-paper *,
   .lined-paper, .lined-paper *,
-  .poem-print-area, .poem-print-area * { visibility: visible; }
+  .poem-print-area, .poem-print-area *,
+  .sutra-print-area, .sutra-print-area * { visibility: visible; }
   .worksheet-grid,
   .batch-print-area,
   .four-line-paper,
   .lined-paper,
-  .poem-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  .poem-print-area,
+  .sutra-print-area { position: absolute; left: 0; top: 0; width: 100%; }
   /* Force backgrounds to print. Chrome silently drops background-color
      and background-image in print unless the element opts in. The 4-line
      English template renders its 4 rules as background-color stripes, so
@@ -228,7 +230,8 @@
   .batch-print-area,
   .four-line-paper,
   .lined-paper,
-  .poem-print-area {
+  .poem-print-area,
+  .sutra-print-area {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
