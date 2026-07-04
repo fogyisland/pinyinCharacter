@@ -16,6 +16,21 @@ function cellSizeFor(p: PaperSize): number {
   }
 }
 
+// Host-only display for the printed page footer: strip protocol + path so
+// the printed sheet shows e.g. "fogyisland.github.io" instead of the full
+// URL. Mirrors PracticeTemplate.tsx (same env var, same fallback to brand).
+// NEXT_PUBLIC_SITE_URL is set by the admin backend in production; in dev
+// it is empty by design (per memory next-public-site-url-from-admin).
+// Fall back to the brand name "字·韵" so the footer line is never empty.
+function hostOf(raw: string): string {
+  if (!raw) return '';
+  try {
+    return new URL(raw).host;
+  } catch {
+    return raw;
+  }
+}
+
 interface BaseProps {
   title?: string;
   content: string[];
@@ -44,6 +59,9 @@ export function WorksheetPreview(props: Props) {
   const isFormView = 'onBack' in props;
   const sizeClass = isFourLine ? '' : `worksheet-grid--${props.paperSize.toLowerCase()}`;
   const cellSize = isFourLine ? linedHeightPx(props.paperSize) : cellSizeFor(props.paperSize);
+  // Footer line: source URL host (or brand name fallback) — same logic as
+  // PracticeTemplate so the printed page is traceable back to the site.
+  const siteHost = hostOf(process.env.NEXT_PUBLIC_SITE_URL ?? '') || '字·韵';
 
   return (
     <div>
@@ -128,6 +146,11 @@ export function WorksheetPreview(props: Props) {
                   </span>
                 </div>
               ))}
+              {siteHost && (
+                <div className="text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
+                  {siteHost}
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -152,6 +175,11 @@ export function WorksheetPreview(props: Props) {
                 <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
               </Fragment>
             ))}
+            {siteHost && (
+              <div className="col-span-full text-center text-xs text-ink-faint mt-3 pt-2 border-t border-ink/10">
+                {siteHost}
+              </div>
+            )}
           </div>
         )}
       </div>
