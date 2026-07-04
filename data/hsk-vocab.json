@@ -1,0 +1,1719 @@
+{
+  "1": [
+    {
+      "char": "爱",
+      "pinyin": "ài",
+      "meaning_zh": "对人和事物有深厚真挚的感情",
+      "pos": "v"
+    },
+    {
+      "char": "八",
+      "pinyin": "bā",
+      "meaning_zh": "数目七加一的整数值",
+      "pos": "v"
+    },
+    {
+      "char": "爸",
+      "pinyin": "bàba",
+      "meaning_zh": "对有子女的男子称呼，特指自己的父亲",
+      "pos": "v"
+    },
+    {
+      "char": "吧",
+      "pinyin": "ba",
+      "meaning_zh": "语气助词，表示猜测、商量或祈使语气",
+      "pos": "v"
+    },
+    {
+      "char": "白",
+      "pinyin": "bái",
+      "meaning_zh": "像雪或乳那样的颜色，与黑相对",
+      "pos": "v"
+    },
+    {
+      "char": "天",
+      "pinyin": "báitiān",
+      "meaning_zh": "天空，地球上方广阔的空间",
+      "pos": "v"
+    },
+    {
+      "char": "百",
+      "pinyin": "bǎi",
+      "meaning_zh": "数目字，十的十倍，表示一百",
+      "pos": "v"
+    },
+    {
+      "char": "班",
+      "pinyin": "bān",
+      "meaning_zh": "集体编组或工作编制的单位，也指按时间分段的轮次",
+      "pos": "v"
+    },
+    {
+      "char": "半",
+      "pinyin": "bàn",
+      "meaning_zh": "整体的一半，二分之一",
+      "pos": "v"
+    },
+    {
+      "char": "年",
+      "pinyin": "bànnián",
+      "meaning_zh": "地球绕太阳一周的时间，一岁；也表示岁数或每年的",
+      "pos": "v"
+    },
+    {
+      "char": "帮",
+      "pinyin": "bāngmáng",
+      "meaning_zh": "帮助或协助他人，也指帮助他人的群体，如帮手、帮派",
+      "pos": "v"
+    },
+    {
+      "char": "忙",
+      "pinyin": "bāngmáng",
+      "meaning_zh": "事情多，没有空闲",
+      "pos": "v"
+    },
+    {
+      "char": "包",
+      "pinyin": "bāo",
+      "meaning_zh": "包裹、装东西用的物品，也指用纸布等物裹住",
+      "pos": "v"
+    },
+    {
+      "char": "子",
+      "pinyin": "bāozi",
+      "meaning_zh": "古代对男子的尊称，也用作对人的敬称",
+      "pos": "v"
+    },
+    {
+      "char": "杯",
+      "pinyin": "bēi",
+      "meaning_zh": "盛水或其他液体的器具，多为圆柱形或带柄",
+      "pos": "v"
+    },
+    {
+      "char": "北",
+      "pinyin": "běi",
+      "meaning_zh": "方向之一，与南相对，清晨面向太阳时左手的一侧",
+      "pos": "v"
+    },
+    {
+      "char": "边",
+      "pinyin": "běibian",
+      "meaning_zh": "物体的边缘部分或靠近的地方，也指两个地区或国家之间的交界处",
+      "pos": "v"
+    },
+    {
+      "char": "本",
+      "pinyin": "běn",
+      "meaning_zh": "草木的根茎，引申为事物根源或自己所属的",
+      "pos": "v"
+    },
+    {
+      "char": "比",
+      "pinyin": "bǐ",
+      "meaning_zh": "比较两物高低长短等差别",
+      "pos": "v"
+    },
+    {
+      "char": "别",
+      "pinyin": "bié",
+      "meaning_zh": "分开 分离 也表示不同或不要的意思",
+      "pos": "v"
+    },
+    {
+      "char": "宾",
+      "pinyin": "bīnguǎn",
+      "meaning_zh": "客人",
+      "pos": "v"
+    },
+    {
+      "char": "馆",
+      "pinyin": "bīnguǎn",
+      "meaning_zh": "供人居住、聚会、陈列或开展活动的房屋建筑",
+      "pos": "v"
+    },
+    {
+      "char": "不",
+      "pinyin": "bù",
+      "meaning_zh": "表示否定，用于拒绝、禁止或对动作性状的否定",
+      "pos": "v"
+    },
+    {
+      "char": "菜",
+      "pinyin": "cài",
+      "meaning_zh": "蔬菜的总称 也指菜肴",
+      "pos": "v"
+    },
+    {
+      "char": "茶",
+      "pinyin": "chá",
+      "meaning_zh": "常绿灌木，叶子可泡制饮料，也指用这种叶子冲泡的饮品",
+      "pos": "v"
+    },
+    {
+      "char": "差",
+      "pinyin": "chà",
+      "meaning_zh": "事物之间在程度或数量上有所不同",
+      "pos": "v"
+    },
+    {
+      "char": "常",
+      "pinyin": "cháng",
+      "meaning_zh": "经常; 不变的; 普通平常",
+      "pos": "v"
+    },
+    {
+      "char": "唱",
+      "pinyin": "chàng",
+      "meaning_zh": "依照乐律发出声音，引申为高声呼喊或念诵",
+      "pos": "v"
+    },
+    {
+      "char": "车",
+      "pinyin": "chē",
+      "meaning_zh": "陆地上有轮子的交通运输工具",
+      "pos": "v"
+    },
+    {
+      "char": "站",
+      "pinyin": "chēzhàn",
+      "meaning_zh": "人直立不动或停留、停留处",
+      "pos": "v"
+    },
+    {
+      "char": "吃",
+      "pinyin": "chī",
+      "meaning_zh": "把食物等放进嘴里咀嚼并吞咽",
+      "pos": "v"
+    },
+    {
+      "char": "饭",
+      "pinyin": "chīfàn",
+      "meaning_zh": "煮熟的谷类食物，多指米饭；也泛指每日所吃的食物",
+      "pos": "v"
+    },
+    {
+      "char": "出",
+      "pinyin": "chū",
+      "meaning_zh": "从里面到外面，与进相对",
+      "pos": "v"
+    },
+    {
+      "char": "去",
+      "pinyin": "chūqu",
+      "meaning_zh": "离开所在地方到别处",
+      "pos": "v"
+    },
+    {
+      "char": "穿",
+      "pinyin": "chuān",
+      "meaning_zh": "穿是衣物套在身上的动作，也指把洞凿通",
+      "pos": "v"
+    },
+    {
+      "char": "床",
+      "pinyin": "chuáng",
+      "meaning_zh": "供人睡觉的家具，矩形平面上有床垫或铺垫",
+      "pos": "v"
+    },
+    {
+      "char": "次",
+      "pinyin": "cì",
+      "meaning_zh": "按顺序排列的先后位置",
+      "pos": "v"
+    },
+    {
+      "char": "从",
+      "pinyin": "cóng",
+      "meaning_zh": "跟随、跟随的人或物，后引申为参与、依顺、自、由等义",
+      "pos": "v"
+    },
+    {
+      "char": "错",
+      "pinyin": "cuò",
+      "meaning_zh": "不正确或不一致的状态，也可指交叉、磨砺等动作",
+      "pos": "v"
+    },
+    {
+      "char": "打",
+      "pinyin": "dǎ",
+      "meaning_zh": "用手或器具击拍物体，也指做某种动作或活动",
+      "pos": "v"
+    },
+    {
+      "char": "电",
+      "pinyin": "dǎ diànhuà",
+      "meaning_zh": "电能，一种重要的自然能源，可通过多种方式产生和利用，常用于照明、动力等方面。",
+      "pos": "v"
+    },
+    {
+      "char": "话",
+      "pinyin": "dǎ diànhuà",
+      "meaning_zh": "说出来或写出来的语言，也指说出来的内容",
+      "pos": "v"
+    },
+    {
+      "char": "大",
+      "pinyin": "dà",
+      "meaning_zh": "规模或程度超过一般或超过比较对象，与小相对",
+      "pos": "v"
+    },
+    {
+      "char": "学",
+      "pinyin": "dàxué",
+      "meaning_zh": "学习知识技能或进行教育活动也指学问和学校",
+      "pos": "v"
+    },
+    {
+      "char": "的",
+      "pinyin": "de",
+      "meaning_zh": "表示所属或修饰关系，常用在定语和中心语之间",
+      "pos": "v"
+    },
+    {
+      "char": "得",
+      "pinyin": "de",
+      "meaning_zh": "获得得到亦表示适合可以",
+      "pos": "v"
+    },
+    {
+      "char": "等",
+      "pinyin": "děng",
+      "meaning_zh": "等待等候 或 表示列举未完 表示等级相同",
+      "pos": "v"
+    },
+    {
+      "char": "弟",
+      "pinyin": "dìdi",
+      "meaning_zh": "同父母或同辈中年龄较小的男子，称呼弟弟时也单用此字",
+      "pos": "v"
+    },
+    {
+      "char": "第",
+      "pinyin": "dìyī",
+      "meaning_zh": "表示次序，用于序数或前缀",
+      "pos": "v"
+    },
+    {
+      "char": "一",
+      "pinyin": "dìyī",
+      "meaning_zh": "最小的自然数，表示单个数量",
+      "pos": "v"
+    },
+    {
+      "char": "点",
+      "pinyin": "diǎn",
+      "meaning_zh": "小的液体或痕迹，如水点、斑点。",
+      "pos": "v"
+    },
+    {
+      "char": "钟",
+      "pinyin": "diǎnzhōng",
+      "meaning_zh": "古代盛酒的器具,也指金属制成的响器或计时器,现常用作姓氏。",
+      "pos": "v"
+    },
+    {
+      "char": "影",
+      "pinyin": "diànyǐng",
+      "meaning_zh": "物体挡住光线后在地面或墙面形成的暗像，也指电影或照片",
+      "pos": "v"
+    },
+    {
+      "char": "东",
+      "pinyin": "dōng",
+      "meaning_zh": "太阳升起的方向，与西相对",
+      "pos": "v"
+    },
+    {
+      "char": "西",
+      "pinyin": "dōngxi",
+      "meaning_zh": "太阳落下的方向，与东相对",
+      "pos": "v"
+    },
+    {
+      "char": "懂",
+      "pinyin": "dǒng",
+      "meaning_zh": "明白，了解，知道得很清楚",
+      "pos": "v"
+    },
+    {
+      "char": "都",
+      "pinyin": "dōu",
+      "meaning_zh": "表示全都，涵盖范围内的全部对象",
+      "pos": "v"
+    },
+    {
+      "char": "读",
+      "pinyin": "dú",
+      "meaning_zh": "看着文字念出声音或理解其含义",
+      "pos": "v"
+    },
+    {
+      "char": "对",
+      "pinyin": "duì",
+      "meaning_zh": "回答或动作针对的对象，也指正确的一对",
+      "pos": "v"
+    },
+    {
+      "char": "起",
+      "pinyin": "duìbuqǐ",
+      "meaning_zh": "由躺卧或较低位置向上升、站立或离开原处",
+      "pos": "v"
+    },
+    {
+      "char": "多",
+      "pinyin": "duō",
+      "meaning_zh": "数量大，与少相对",
+      "pos": "v"
+    },
+    {
+      "char": "少",
+      "pinyin": "duōshao",
+      "meaning_zh": "数量不多，与多相对",
+      "pos": "v"
+    },
+    {
+      "char": "饿",
+      "pinyin": "è",
+      "meaning_zh": "肚子空，想吃东西的感觉",
+      "pos": "v"
+    },
+    {
+      "char": "儿",
+      "pinyin": "érzi",
+      "meaning_zh": "儿子；小孩子，常用作后缀表示小或亲昵",
+      "pos": "v"
+    },
+    {
+      "char": "二",
+      "pinyin": "èr",
+      "meaning_zh": "数词，表示两个或第二的次序",
+      "pos": "v"
+    },
+    {
+      "char": "店",
+      "pinyin": "fàndiàn",
+      "meaning_zh": "出售商品或提供服务的场所，如商店、书店、旅店",
+      "pos": "v"
+    },
+    {
+      "char": "飞",
+      "pinyin": "fēijī",
+      "meaning_zh": "鸟或物体在空中快速移动，也指迅速或突然的动作",
+      "pos": "v"
+    },
+    {
+      "char": "机",
+      "pinyin": "fēijī",
+      "meaning_zh": "机器的通称，也指能自动工作的装置",
+      "pos": "v"
+    },
+    {
+      "char": "分",
+      "pinyin": "fēn",
+      "meaning_zh": "把整体变成若干部分或从整体中取出部分",
+      "pos": "v"
+    },
+    {
+      "char": "风",
+      "pinyin": "fēng",
+      "meaning_zh": "空气流动形成的气流，也指风俗、风度等抽象含义",
+      "pos": "v"
+    },
+    {
+      "char": "附",
+      "pinyin": "fùjìn",
+      "meaning_zh": "附在旁边、随带或归从，如附录、附件、附属",
+      "pos": "v"
+    },
+    {
+      "char": "近",
+      "pinyin": "fùjìn",
+      "meaning_zh": "距离不远；关系亲密；接近",
+      "pos": "v"
+    },
+    {
+      "char": "干",
+      "pinyin": "gàn",
+      "meaning_zh": "干的常用义项是做事、从事,如干活,也指事物的主体部分",
+      "pos": "v"
+    },
+    {
+      "char": "净",
+      "pinyin": "gānjìng",
+      "meaning_zh": "清洁干净，无杂质或污垢",
+      "pos": "v"
+    },
+    {
+      "char": "高",
+      "pinyin": "gāo",
+      "meaning_zh": "从下往上距离大或离地面远",
+      "pos": "v"
+    },
+    {
+      "char": "兴",
+      "pinyin": "gāoxìng",
+      "meaning_zh": "兴起举办;流行时尚;高涨旺盛",
+      "pos": "v"
+    },
+    {
+      "char": "告",
+      "pinyin": "gàosu",
+      "meaning_zh": "把事情说给别人听，使其知道",
+      "pos": "v"
+    },
+    {
+      "char": "诉",
+      "pinyin": "gàosu",
+      "meaning_zh": "向人陈述或控告冤屈、痛苦",
+      "pos": "v"
+    },
+    {
+      "char": "哥",
+      "pinyin": "gēge",
+      "meaning_zh": "同父母或同族中比自己年长的男子",
+      "pos": "v"
+    },
+    {
+      "char": "个",
+      "pinyin": "gè",
+      "meaning_zh": "量词，用于没有专用量词的事物，也指单个的人或物",
+      "pos": "v"
+    },
+    {
+      "char": "给",
+      "pinyin": "gěi",
+      "meaning_zh": "交给或使对方得到亦指为替的意思",
+      "pos": "v"
+    },
+    {
+      "char": "跟",
+      "pinyin": "gēn",
+      "meaning_zh": "脚的后部；也指紧随其后或与某人某事有关联",
+      "pos": "v"
+    },
+    {
+      "char": "工",
+      "pinyin": "gōngrén",
+      "meaning_zh": "工人，做事的人；也指工程、工作或精细。",
+      "pos": "v"
+    },
+    {
+      "char": "人",
+      "pinyin": "gōngrén",
+      "meaning_zh": "能制造并使用工具进行劳动的高等动物",
+      "pos": "v"
+    },
+    {
+      "char": "作",
+      "pinyin": "gōngzuò",
+      "meaning_zh": "从事某种活动或工作，亦指作品的创作",
+      "pos": "v"
+    },
+    {
+      "char": "狗",
+      "pinyin": "gǒu",
+      "meaning_zh": "家畜哺乳动物，嗅觉灵敏，常被人类饲养用于看家或作宠物",
+      "pos": "v"
+    },
+    {
+      "char": "够",
+      "pinyin": "gòu",
+      "meaning_zh": "数量上达到或超过需要的程度",
+      "pos": "v"
+    },
+    {
+      "char": "购",
+      "pinyin": "gòuwù",
+      "meaning_zh": "买，购买物品",
+      "pos": "v"
+    },
+    {
+      "char": "物",
+      "pinyin": "gòuwù",
+      "meaning_zh": "事物，指客观存在的一切东西",
+      "pos": "v"
+    },
+    {
+      "char": "过",
+      "pinyin": "guò",
+      "meaning_zh": "经过某个地方或从一处到另一处",
+      "pos": "v"
+    },
+    {
+      "char": "孩",
+      "pinyin": "háizi",
+      "meaning_zh": "幼小的孩子，也指子女",
+      "pos": "v"
+    },
+    {
+      "char": "汉",
+      "pinyin": "Hànyǔ",
+      "meaning_zh": "汉水,长江最大支流,源于陕西,流经湖北汇入长江",
+      "pos": "v"
+    },
+    {
+      "char": "语",
+      "pinyin": "Hànyǔ",
+      "meaning_zh": "人们说的话，也指语言文字",
+      "pos": "v"
+    },
+    {
+      "char": "好",
+      "pinyin": "hǎo",
+      "meaning_zh": "优点多的，使人满意的；友爱和睦；表示同意或结束",
+      "pos": "v"
+    },
+    {
+      "char": "看",
+      "pinyin": "hǎokàn",
+      "meaning_zh": "用眼睛注视人或事物",
+      "pos": "v"
+    },
+    {
+      "char": "号",
+      "pinyin": "hào",
+      "meaning_zh": "名称或标志，也指发出的命令或信号",
+      "pos": "v"
+    },
+    {
+      "char": "喝",
+      "pinyin": "hē",
+      "meaning_zh": "把液体或流质食物咽下去",
+      "pos": "v"
+    },
+    {
+      "char": "和",
+      "pinyin": "hé",
+      "meaning_zh": "温和融洽，亦指连带、跟、与等义",
+      "pos": "v"
+    },
+    {
+      "char": "很",
+      "pinyin": "hěn",
+      "meaning_zh": "表示程度高，常用在形容词或心理动词前加强语气",
+      "pos": "v"
+    },
+    {
+      "char": "后",
+      "pinyin": "hòu",
+      "meaning_zh": "时间或位置在后面的",
+      "pos": "v"
+    },
+    {
+      "char": "花",
+      "pinyin": "huā",
+      "meaning_zh": "种子植物的繁殖器官，通常有艳丽色彩和芳香",
+      "pos": "v"
+    },
+    {
+      "char": "回",
+      "pinyin": "huí",
+      "meaning_zh": "返回 环绕一圈或多次 也指答覆 另指回族",
+      "pos": "v"
+    },
+    {
+      "char": "到",
+      "pinyin": "huí dào",
+      "meaning_zh": "达到某一地点或某种状态",
+      "pos": "v"
+    },
+    {
+      "char": "会",
+      "pinyin": "huì",
+      "meaning_zh": "聚合集合，亦指有能力的人组成的团体",
+      "pos": "v"
+    },
+    {
+      "char": "几",
+      "pinyin": "jǐ",
+      "meaning_zh": "询问数量不多的数目，意思是几个，如几本书、几个人",
+      "pos": "v"
+    },
+    {
+      "char": "家",
+      "pinyin": "jiā",
+      "meaning_zh": "家庭住所，也指具有共同血缘或生活关系的群体",
+      "pos": "v"
+    },
+    {
+      "char": "见",
+      "pinyin": "jiàn",
+      "meaning_zh": "看到；遇到；会面",
+      "pos": "v"
+    },
+    {
+      "char": "面",
+      "pinyin": "jiànmiàn",
+      "meaning_zh": "脸部的通称，也指物体的表面或方向",
+      "pos": "v"
+    },
+    {
+      "char": "叫",
+      "pinyin": "jiào",
+      "meaning_zh": "呼喊人或动物发声，也指呼喚、命令",
+      "pos": "v"
+    },
+    {
+      "char": "教",
+      "pinyin": "jiāo",
+      "meaning_zh": "教导他人知识与技能的行为，如教学相长。",
+      "pos": "v"
+    },
+    {
+      "char": "室",
+      "pinyin": "jiàoshì",
+      "meaning_zh": "屋子，房间，由墙壁和顶棚围成的空间",
+      "pos": "v"
+    },
+    {
+      "char": "今",
+      "pinyin": "jīntiān",
+      "meaning_zh": "现在的此时，也指当前所在的时代",
+      "pos": "v"
+    },
+    {
+      "char": "进",
+      "pinyin": "jìn",
+      "meaning_zh": "向前移动 向前发展 进入里面",
+      "pos": "v"
+    },
+    {
+      "char": "来",
+      "pinyin": "jìnlái",
+      "meaning_zh": "由别处到此地或由过去到现在与去相对",
+      "pos": "v"
+    },
+    {
+      "char": "九",
+      "pinyin": "jiǔ",
+      "meaning_zh": "数目字,八加一的和,介于八与十之间",
+      "pos": "v"
+    },
+    {
+      "char": "就",
+      "pinyin": "jiù",
+      "meaning_zh": "靠近、接近，如就近、就位",
+      "pos": "v"
+    },
+    {
+      "char": "觉",
+      "pinyin": "juéde",
+      "meaning_zh": "人脑对事物的感知和认识",
+      "pos": "v"
+    },
+    {
+      "char": "咖",
+      "pinyin": "kāfēi",
+      "meaning_zh": "咖啡的咖 常指咖啡豆或咖啡饮料",
+      "pos": "v"
+    },
+    {
+      "char": "啡",
+      "pinyin": "kāfēi",
+      "meaning_zh": "咖啡的啡，多用于咖啡一词",
+      "pos": "v"
+    },
+    {
+      "char": "开",
+      "pinyin": "kāi",
+      "meaning_zh": "使关闭的东西不再关闭",
+      "pos": "v"
+    },
+    {
+      "char": "考",
+      "pinyin": "kǎo",
+      "meaning_zh": "考查学习成果或对人的品德行为进行审查",
+      "pos": "v"
+    },
+    {
+      "char": "试",
+      "pinyin": "kǎoshì",
+      "meaning_zh": "尝试检验考察，含有试验和考试的意思",
+      "pos": "v"
+    },
+    {
+      "char": "渴",
+      "pinyin": "kě",
+      "meaning_zh": "口干想喝水，引申为迫切需要",
+      "pos": "v"
+    },
+    {
+      "char": "可",
+      "pinyin": "kěyǐ",
+      "meaning_zh": "能够 允许 适合 大约 表示值得 或加强语气",
+      "pos": "v"
+    },
+    {
+      "char": "以",
+      "pinyin": "kěyǐ",
+      "meaning_zh": "用，拿：例如“以前”“以身作则”",
+      "pos": "v"
+    },
+    {
+      "char": "课",
+      "pinyin": "kè",
+      "meaning_zh": "教学的科目或单位，也指按规定内容与进度的学习活动",
+      "pos": "v"
+    },
+    {
+      "char": "口",
+      "pinyin": "kǒu",
+      "meaning_zh": "人和动物用来发声和进食的器官",
+      "pos": "v"
+    },
+    {
+      "char": "哭",
+      "pinyin": "kū",
+      "meaning_zh": "因悲伤或痛苦而流泪出声",
+      "pos": "v"
+    },
+    {
+      "char": "蓝",
+      "pinyin": "lán",
+      "meaning_zh": "一种颜色，像晴天天空那样的颜色",
+      "pos": "v"
+    },
+    {
+      "char": "老",
+      "pinyin": "lǎo",
+      "meaning_zh": "年纪大、历时久的，也指老人",
+      "pos": "v"
+    },
+    {
+      "char": "师",
+      "pinyin": "lǎoshī",
+      "meaning_zh": "教导他人或传授知识技能的人，如教师、师傅；也指军队的编制单位或某一领域的专家。",
+      "pos": "v"
+    },
+    {
+      "char": "了",
+      "pinyin": "le",
+      "meaning_zh": "完毕结束也表示了解明白",
+      "pos": "v"
+    },
+    {
+      "char": "累",
+      "pinyin": "lèi",
+      "meaning_zh": "疲劳，感到身体或精神上的负担过重",
+      "pos": "v"
+    },
+    {
+      "char": "冷",
+      "pinyin": "lěng",
+      "meaning_zh": "温度低，与热相对",
+      "pos": "v"
+    },
+    {
+      "char": "里",
+      "pinyin": "lǐ",
+      "meaning_zh": "长度单位,一里等于五百米;也指里面、内部",
+      "pos": "v"
+    },
+    {
+      "char": "两",
+      "pinyin": "liǎng",
+      "meaning_zh": "表示数量为二，或指代双方、双方的事物，有时用作量词后表示约数",
+      "pos": "v"
+    },
+    {
+      "char": "零",
+      "pinyin": "líng",
+      "meaning_zh": "数的空位 介于负数与正数之间 表示没有数量",
+      "pos": "v"
+    },
+    {
+      "char": "路",
+      "pinyin": "lù",
+      "meaning_zh": "供人马车辆通行的地面，也指途径或方向",
+      "pos": "v"
+    },
+    {
+      "char": "妈",
+      "pinyin": "māma",
+      "meaning_zh": "母亲，对妈妈的口语称呼",
+      "pos": "v"
+    },
+    {
+      "char": "马",
+      "pinyin": "mǎlù",
+      "meaning_zh": "马是一种常见的家畜，善于奔跑，可用于骑乘、拉车和运输。",
+      "pos": "v"
+    },
+    {
+      "char": "吗",
+      "pinyin": "ma",
+      "meaning_zh": "疑问语气助词，用于句末表示询问",
+      "pos": "v"
+    },
+    {
+      "char": "买",
+      "pinyin": "mǎi",
+      "meaning_zh": "用钱换取物品，与卖相对",
+      "pos": "v"
+    },
+    {
+      "char": "慢",
+      "pinyin": "màn",
+      "meaning_zh": "速度低、费时久，与快相对",
+      "pos": "v"
+    },
+    {
+      "char": "猫",
+      "pinyin": "māo",
+      "meaning_zh": "家养小型哺乳动物,性温顺,善捕鼠,广受人喜爱。",
+      "pos": "v"
+    },
+    {
+      "char": "没",
+      "pinyin": "méi",
+      "meaning_zh": "不拥有，不存在或不到，多用于否定",
+      "pos": "v"
+    },
+    {
+      "char": "关",
+      "pinyin": "méi guānxi",
+      "meaning_zh": "闭合使开不了；也指关口或牵连涉及",
+      "pos": "v"
+    },
+    {
+      "char": "系",
+      "pinyin": "méi guānxi",
+      "meaning_zh": "表示关联、联系，或指系统、体系。",
+      "pos": "v"
+    },
+    {
+      "char": "米",
+      "pinyin": "mǐfàn",
+      "meaning_zh": "稻谷去壳后的籽实可食可酿酒亦可制粉",
+      "pos": "v"
+    },
+    {
+      "char": "明",
+      "pinyin": "míngbai",
+      "meaning_zh": "光亮，与暗相对；也指明白清楚",
+      "pos": "v"
+    },
+    {
+      "char": "名",
+      "pinyin": "míngzi",
+      "meaning_zh": "人或事物的称谓，也指声誉、名义",
+      "pos": "v"
+    },
+    {
+      "char": "字",
+      "pinyin": "míngzi",
+      "meaning_zh": "文字的单个形体，也指文字本身或人的别名",
+      "pos": "v"
+    },
+    {
+      "char": "摩",
+      "pinyin": "mótuō",
+      "meaning_zh": "用手摩擦抚按接触",
+      "pos": "v"
+    },
+    {
+      "char": "托",
+      "pinyin": "mótuō",
+      "meaning_zh": "用手掌或物件承举、支撑某物",
+      "pos": "v"
+    },
+    {
+      "char": "哪",
+      "pinyin": "nǎr",
+      "meaning_zh": "表示疑问，用于询问人或事物中的特定对象",
+      "pos": "v"
+    },
+    {
+      "char": "那",
+      "pinyin": "nà",
+      "meaning_zh": "指示代词，指较远的人或事物，与这相对",
+      "pos": "v"
+    },
+    {
+      "char": "呢",
+      "pinyin": "ne",
+      "meaning_zh": "表示疑问语气，相当于“吗”",
+      "pos": "v"
+    },
+    {
+      "char": "能",
+      "pinyin": "néng",
+      "meaning_zh": "有本领、有能力，能够做到某事",
+      "pos": "v"
+    },
+    {
+      "char": "你",
+      "pinyin": "nǐ",
+      "meaning_zh": "代词，对称代词，指称听话的对方，表示第二人称",
+      "pos": "v"
+    },
+    {
+      "char": "们",
+      "pinyin": "nǐmen",
+      "meaning_zh": "表示复数，指代一类人或与前面词语构成复数称谓",
+      "pos": "v"
+    },
+    {
+      "char": "念",
+      "pinyin": "niàn",
+      "meaning_zh": "心中挂怀或口中诵读，也指想法念头",
+      "pos": "v"
+    },
+    {
+      "char": "您",
+      "pinyin": "nín",
+      "meaning_zh": "第二人称敬称，称呼对方\"你\"时表示尊敬",
+      "pos": "v"
+    },
+    {
+      "char": "牛",
+      "pinyin": "niúnǎi",
+      "meaning_zh": "牛是常见的家畜，力气大，主要用于耕田和拉车",
+      "pos": "v"
+    },
+    {
+      "char": "奶",
+      "pinyin": "niúnǎi",
+      "meaning_zh": "母乳或乳汁的通称 也指乳房或用于指代乳制品如牛奶",
+      "pos": "v"
+    },
+    {
+      "char": "女",
+      "pinyin": "nǚrén",
+      "meaning_zh": "女性,与男相对的女子通称",
+      "pos": "v"
+    },
+    {
+      "char": "朋",
+      "pinyin": "péngyou",
+      "meaning_zh": "朋 古代货币单位五贝为一朋 后泛指朋友 志同道合的同伴",
+      "pos": "v"
+    },
+    {
+      "char": "友",
+      "pinyin": "péngyou",
+      "meaning_zh": "朋友，彼此亲近没有敌意的人",
+      "pos": "v"
+    },
+    {
+      "char": "啤",
+      "pinyin": "píjiǔ",
+      "meaning_zh": "啤酒的啤字常用于啤酒一词指一种以麦芽发酵而成的含酒精饮料",
+      "pos": "v"
+    },
+    {
+      "char": "酒",
+      "pinyin": "píjiǔ",
+      "meaning_zh": "用粮食或水果等发酵制成的含乙醇饮料",
+      "pos": "v"
+    },
+    {
+      "char": "便",
+      "pinyin": "piányi",
+      "meaning_zh": "方便、顺手的程度，如便利；或指排泄粪便",
+      "pos": "v"
+    },
+    {
+      "char": "宜",
+      "pinyin": "piányi",
+      "meaning_zh": "合适，应当如此",
+      "pos": "v"
+    },
+    {
+      "char": "票",
+      "pinyin": "piào",
+      "meaning_zh": "票：用于选举、进出或付款的纸质凭证",
+      "pos": "v"
+    },
+    {
+      "char": "漂",
+      "pinyin": "piàoliang",
+      "meaning_zh": "漂 在水面上随水流或风移动",
+      "pos": "v"
+    },
+    {
+      "char": "亮",
+      "pinyin": "piàoliang",
+      "meaning_zh": "光线强 明 明白 显露 声音响 清脆",
+      "pos": "v"
+    },
+    {
+      "char": "苹",
+      "pinyin": "píngguǒ",
+      "meaning_zh": "落叶小乔木，叶有锯齿，花白色，果实也叫苹果，圆而甜",
+      "pos": "v"
+    },
+    {
+      "char": "果",
+      "pinyin": "píngguǒ",
+      "meaning_zh": "果实，植物成熟的子实，亦指事情的结果",
+      "pos": "v"
+    },
+    {
+      "char": "七",
+      "pinyin": "qī",
+      "meaning_zh": "数目字,六加一所得,表示六与一之和",
+      "pos": "v"
+    },
+    {
+      "char": "汽",
+      "pinyin": "qìchē",
+      "meaning_zh": "气体受热或减压时膨胀产生的动力",
+      "pos": "v"
+    },
+    {
+      "char": "前",
+      "pinyin": "qián",
+      "meaning_zh": "前面的位置或时间，与后相反",
+      "pos": "v"
+    },
+    {
+      "char": "钱",
+      "pinyin": "qián",
+      "meaning_zh": "硬币或纸币，泛指钱财",
+      "pos": "v"
+    },
+    {
+      "char": "请",
+      "pinyin": "qǐng",
+      "meaning_zh": "请求对方做某事或给予某物，表示礼貌",
+      "pos": "v"
+    },
+    {
+      "char": "问",
+      "pinyin": "qǐngwèn",
+      "meaning_zh": "询问 请教 对人提出需要回答的问题",
+      "pos": "v"
+    },
+    {
+      "char": "热",
+      "pinyin": "rè",
+      "meaning_zh": "温度高，与冷相对",
+      "pos": "v"
+    },
+    {
+      "char": "认",
+      "pinyin": "rènshi",
+      "meaning_zh": "识别后确认或同意对方的身份、关系或事实",
+      "pos": "v"
+    },
+    {
+      "char": "识",
+      "pinyin": "rènshi",
+      "meaning_zh": "认识辨别事物的能力或过程",
+      "pos": "v"
+    },
+    {
+      "char": "日",
+      "pinyin": "rì",
+      "meaning_zh": "太阳，白昼，也指一天或日期",
+      "pos": "v"
+    },
+    {
+      "char": "期",
+      "pinyin": "rìqī",
+      "meaning_zh": "规定的时日或一段时间",
+      "pos": "v"
+    },
+    {
+      "char": "肉",
+      "pinyin": "ròu",
+      "meaning_zh": "人和动物体内连接皮肤的柔软组织，可食用",
+      "pos": "v"
+    },
+    {
+      "char": "三",
+      "pinyin": "sān",
+      "meaning_zh": "数目字，二加一后所得，表示三这个数量",
+      "pos": "v"
+    },
+    {
+      "char": "色",
+      "pinyin": "sè",
+      "meaning_zh": "颜色；也指女子的美貌或情欲",
+      "pos": "v"
+    },
+    {
+      "char": "商",
+      "pinyin": "shāngdiàn",
+      "meaning_zh": "商业买卖活动或从事买卖的人",
+      "pos": "v"
+    },
+    {
+      "char": "上",
+      "pinyin": "shàng",
+      "meaning_zh": "表示位置在高处或向高处移动，与下相对",
+      "pos": "v"
+    },
+    {
+      "char": "谁",
+      "pinyin": "shéi",
+      "meaning_zh": "代词，用于询问某人或某些人身份",
+      "pos": "v"
+    },
+    {
+      "char": "身",
+      "pinyin": "shēntǐ",
+      "meaning_zh": "人的躯体，也指生命或自身",
+      "pos": "v"
+    },
+    {
+      "char": "体",
+      "pinyin": "shēntǐ",
+      "meaning_zh": "人或动物的全身，也指事物的整体形状",
+      "pos": "v"
+    },
+    {
+      "char": "什",
+      "pinyin": "shén",
+      "meaning_zh": "表示疑问,相当于\"什么\"",
+      "pos": "v"
+    },
+    {
+      "char": "么",
+      "pinyin": "shénme",
+      "meaning_zh": "同么常作词的后缀表示小或语气",
+      "pos": "v"
+    },
+    {
+      "char": "生",
+      "pinyin": "shēngbìng",
+      "meaning_zh": "人和动物由胚胎发育而成的活体，也泛指有生命的物体",
+      "pos": "v"
+    },
+    {
+      "char": "病",
+      "pinyin": "shēngbìng",
+      "meaning_zh": "身体或器官出现异常不适的状态，与健康相对",
+      "pos": "v"
+    },
+    {
+      "char": "十",
+      "pinyin": "shí",
+      "meaning_zh": "数目字,表示九加一的和",
+      "pos": "v"
+    },
+    {
+      "char": "时",
+      "pinyin": "shíhou",
+      "meaning_zh": "时间；某个特定的时候或季节；现在的；常常",
+      "pos": "v"
+    },
+    {
+      "char": "候",
+      "pinyin": "shíhou",
+      "meaning_zh": "等待，如等候；也指时令或时节",
+      "pos": "v"
+    },
+    {
+      "char": "是",
+      "pinyin": "shì",
+      "meaning_zh": "表示判断或肯定，表示某事物符合事实或正确",
+      "pos": "v"
+    },
+    {
+      "char": "书",
+      "pinyin": "shū",
+      "meaning_zh": "写字用的工具或文字记录本身，如一本本子或一封信",
+      "pos": "v"
+    },
+    {
+      "char": "树",
+      "pinyin": "shù",
+      "meaning_zh": "木本植物的通称，通常有主干和枝叶",
+      "pos": "v"
+    },
+    {
+      "char": "水",
+      "pinyin": "shuǐ",
+      "meaning_zh": "无色无味的透明液体，是人和生物生存所必需的饮料。",
+      "pos": "v"
+    },
+    {
+      "char": "睡",
+      "pinyin": "shuìjiào",
+      "meaning_zh": "闭眼休息大脑进入休眠状态",
+      "pos": "v"
+    },
+    {
+      "char": "说",
+      "pinyin": "shuō",
+      "meaning_zh": "用语言表达思想感情，也指一种学说或主张",
+      "pos": "v"
+    },
+    {
+      "char": "四",
+      "pinyin": "sì",
+      "meaning_zh": "数字三加一的和表示序数第三之后的整数",
+      "pos": "v"
+    },
+    {
+      "char": "岁",
+      "pinyin": "suì",
+      "meaning_zh": "年的单位，表示地球绕太阳一周的时间",
+      "pos": "v"
+    },
+    {
+      "char": "他",
+      "pinyin": "tā",
+      "meaning_zh": "代称男性或他人的代词，相当于“他”。",
+      "pos": "v"
+    },
+    {
+      "char": "她",
+      "pinyin": "tā",
+      "meaning_zh": "代称女性或雌性动物的人称代词",
+      "pos": "v"
+    },
+    {
+      "char": "太",
+      "pinyin": "tài",
+      "meaning_zh": "表示程度极高或身份最尊者 如太大 太太",
+      "pos": "v"
+    },
+    {
+      "char": "气",
+      "pinyin": "tiānqì",
+      "meaning_zh": "气体或呼吸，引申为生命活力、情绪和自然现象",
+      "pos": "v"
+    },
+    {
+      "char": "条",
+      "pinyin": "tiáo",
+      "meaning_zh": "细长的东西；用于计量条状物或项目",
+      "pos": "v"
+    },
+    {
+      "char": "听",
+      "pinyin": "tīng",
+      "meaning_zh": "用耳朵接收声音",
+      "pos": "v"
+    },
+    {
+      "char": "同",
+      "pinyin": "tóngxué",
+      "meaning_zh": "表示一样、相同，或指与某事一起做",
+      "pos": "v"
+    },
+    {
+      "char": "外",
+      "pinyin": "wài",
+      "meaning_zh": "外面，与内相对；指事物或范围的外部",
+      "pos": "v"
+    },
+    {
+      "char": "玩",
+      "pinyin": "wánr",
+      "meaning_zh": "用手摆弄物体或进行娱乐活动",
+      "pos": "v"
+    },
+    {
+      "char": "晚",
+      "pinyin": "wǎn",
+      "meaning_zh": "时间靠后，接近结束或夜深时分",
+      "pos": "v"
+    },
+    {
+      "char": "喂",
+      "pinyin": "wéi",
+      "meaning_zh": "招呼声，用于引起注意或应答电话",
+      "pos": "v"
+    },
+    {
+      "char": "我",
+      "pinyin": "wǒ",
+      "meaning_zh": "代称说话人自身的第一人称代词",
+      "pos": "v"
+    },
+    {
+      "char": "五",
+      "pinyin": "wǔ",
+      "meaning_zh": "数目字,四加一所得,介于四与六之间",
+      "pos": "v"
+    },
+    {
+      "char": "喜",
+      "pinyin": "xǐhuān",
+      "meaning_zh": "快乐高兴",
+      "pos": "v"
+    },
+    {
+      "char": "欢",
+      "pinyin": "xǐhuān",
+      "meaning_zh": "喜悦快乐",
+      "pos": "v"
+    },
+    {
+      "char": "下",
+      "pinyin": "xià",
+      "meaning_zh": "位置或等级在低处的，与上相对",
+      "pos": "v"
+    },
+    {
+      "char": "雨",
+      "pinyin": "xiàyǔ",
+      "meaning_zh": "从云层降到地面的水滴，也指像雨一样的事物",
+      "pos": "v"
+    },
+    {
+      "char": "先",
+      "pinyin": "xiānsheng",
+      "meaning_zh": "时间或次序在前的人或事物",
+      "pos": "v"
+    },
+    {
+      "char": "现",
+      "pinyin": "xiànzài",
+      "meaning_zh": "现在此刻显露露出",
+      "pos": "v"
+    },
+    {
+      "char": "在",
+      "pinyin": "xiànzài",
+      "meaning_zh": "表示人或事物的位置、存在于某处",
+      "pos": "v"
+    },
+    {
+      "char": "想",
+      "pinyin": "xiǎng",
+      "meaning_zh": "思索推测；怀念，挂念；打算，希望",
+      "pos": "v"
+    },
+    {
+      "char": "小",
+      "pinyin": "xiǎo",
+      "meaning_zh": "体积、面积、数量等比一般少的或低于比较对象的",
+      "pos": "v"
+    },
+    {
+      "char": "姐",
+      "pinyin": "xiǎojie",
+      "meaning_zh": "姐姐，同父母或同辈中年龄比自己大的女子",
+      "pos": "v"
+    },
+    {
+      "char": "笑",
+      "pinyin": "xiào",
+      "meaning_zh": "露出愉快的表情，发出欢喜的声音",
+      "pos": "v"
+    },
+    {
+      "char": "写",
+      "pinyin": "xiě",
+      "meaning_zh": "用笔在纸上留下文字",
+      "pos": "v"
+    },
+    {
+      "char": "谢",
+      "pinyin": "xièxie",
+      "meaning_zh": "对人表示感谢或表达谢意",
+      "pos": "v"
+    },
+    {
+      "char": "新",
+      "pinyin": "xīn",
+      "meaning_zh": "刚出现或刚经历的，与旧相对",
+      "pos": "v"
+    },
+    {
+      "char": "星",
+      "pinyin": "xīngqī",
+      "meaning_zh": "天体之一,由炽热气体组成,自身能发光发热,如太阳、北斗星等",
+      "pos": "v"
+    },
+    {
+      "char": "姓",
+      "pinyin": "xìng",
+      "meaning_zh": "表示家族血统的称谓，如姓氏、姓名",
+      "pos": "v"
+    },
+    {
+      "char": "休",
+      "pinyin": "xiūxi",
+      "meaning_zh": "人倚靠树木休息，也指停止工作、度假",
+      "pos": "v"
+    },
+    {
+      "char": "息",
+      "pinyin": "xiūxi",
+      "meaning_zh": "呼吸时进出的气，也指停止、消息、利息",
+      "pos": "v"
+    },
+    {
+      "char": "雪",
+      "pinyin": "xuě",
+      "meaning_zh": "从云中降落的白色冰晶，寒冷天气常见，也指颜色或动作像雪的事物",
+      "pos": "v"
+    },
+    {
+      "char": "习",
+      "pinyin": "xuéxí",
+      "meaning_zh": "反复练习以求熟练；也指长期养成的行为或习惯",
+      "pos": "v"
+    },
+    {
+      "char": "校",
+      "pinyin": "xuéxiào",
+      "meaning_zh": "学校或进行教学的机构，也指军中负责事务的官员",
+      "pos": "v"
+    },
+    {
+      "char": "颜",
+      "pinyin": "yánsè",
+      "meaning_zh": "面容脸面，也指颜色和体面",
+      "pos": "v"
+    },
+    {
+      "char": "眼",
+      "pinyin": "yǎnjing",
+      "meaning_zh": "人和动物的视觉器官，能看东西",
+      "pos": "v"
+    },
+    {
+      "char": "睛",
+      "pinyin": "yǎnjing",
+      "meaning_zh": "眼球中央能感光的黑色部分，俗称黑眼珠",
+      "pos": "v"
+    },
+    {
+      "char": "药",
+      "pinyin": "yào",
+      "meaning_zh": "用于治病或保健的物质，多为植物、动物或化学制品",
+      "pos": "v"
+    },
+    {
+      "char": "要",
+      "pinyin": "yào",
+      "meaning_zh": "重要或想要得到，也可表示将要做某事",
+      "pos": "v"
+    },
+    {
+      "char": "也",
+      "pinyin": "yě",
+      "meaning_zh": "表示同样或语气，意为也是、罢了",
+      "pos": "v"
+    },
+    {
+      "char": "衣",
+      "pinyin": "yīfu",
+      "meaning_zh": "衣服 穿在身上遮蔽身体保暖的服饰",
+      "pos": "v"
+    },
+    {
+      "char": "服",
+      "pinyin": "yīfu",
+      "meaning_zh": "衣裳也兼表穿戴之义引申为顺从承当之义",
+      "pos": "v"
+    },
+    {
+      "char": "医",
+      "pinyin": "yīshēng",
+      "meaning_zh": "治病救人的职业或活动，泛指医学、医疗",
+      "pos": "v"
+    },
+    {
+      "char": "意",
+      "pinyin": "yìsi",
+      "meaning_zh": "心思所想到的内容和想法",
+      "pos": "v"
+    },
+    {
+      "char": "思",
+      "pinyin": "yìsi",
+      "meaning_zh": "想、考虑，也指思念、怀念等思绪活动",
+      "pos": "v"
+    },
+    {
+      "char": "阴",
+      "pinyin": "yīn",
+      "meaning_zh": "天空有云不见太阳的天气状态，也指物体的背面或暗的一面",
+      "pos": "v"
+    },
+    {
+      "char": "用",
+      "pinyin": "yòng",
+      "meaning_zh": "使用或使人发挥其能力",
+      "pos": "v"
+    },
+    {
+      "char": "有",
+      "pinyin": "yǒu",
+      "meaning_zh": "表示领有、存在或具有某事物",
+      "pos": "v"
+    },
+    {
+      "char": "右",
+      "pinyin": "yòubian",
+      "meaning_zh": "面向南时靠西的一侧，与左相对",
+      "pos": "v"
+    },
+    {
+      "char": "鱼",
+      "pinyin": "yú",
+      "meaning_zh": "终生生活在水中 用鳃呼吸的脊椎动物",
+      "pos": "v"
+    },
+    {
+      "char": "元",
+      "pinyin": "yuán",
+      "meaning_zh": "最初的本义是人的头部，后引申为开始、首要、元素、货币单位等。",
+      "pos": "v"
+    },
+    {
+      "char": "远",
+      "pinyin": "yuǎn",
+      "meaning_zh": "空间或时间上距离长，跟近相反",
+      "pos": "v"
+    },
+    {
+      "char": "月",
+      "pinyin": "yuè",
+      "meaning_zh": "月亮的月，也指计时单位月份，形状像月亮的圆缺",
+      "pos": "v"
+    },
+    {
+      "char": "再",
+      "pinyin": "zài",
+      "meaning_zh": "表示又一次或重复，例如再去、再见",
+      "pos": "v"
+    },
+    {
+      "char": "怎",
+      "pinyin": "zěnme",
+      "meaning_zh": "表示疑问，相当于如何、怎么样",
+      "pos": "v"
+    },
+    {
+      "char": "这",
+      "pinyin": "zhèr",
+      "meaning_zh": "指代当前或较近的人或事物",
+      "pos": "v"
+    },
+    {
+      "char": "找",
+      "pinyin": "zhǎo",
+      "meaning_zh": "寻找；寻求",
+      "pos": "v"
+    },
+    {
+      "char": "真",
+      "pinyin": "zhēn",
+      "meaning_zh": "与客观事实相符，不虚假",
+      "pos": "v"
+    },
+    {
+      "char": "正",
+      "pinyin": "zhèngzài",
+      "meaning_zh": "不偏不斜，合乎法则或道理",
+      "pos": "v"
+    },
+    {
+      "char": "知",
+      "pinyin": "zhīdào",
+      "meaning_zh": "明白、通晓、晓得，表示对事物有认识和了解",
+      "pos": "v"
+    },
+    {
+      "char": "道",
+      "pinyin": "zhīdào",
+      "meaning_zh": "道路，方法，规律，道理，学术或宗教的体系",
+      "pos": "v"
+    },
+    {
+      "char": "中",
+      "pinyin": "Zhōngguó",
+      "meaning_zh": "表示内部、范围内或居中的位置，也指代中国",
+      "pos": "v"
+    },
+    {
+      "char": "国",
+      "pinyin": "Zhōngguó",
+      "meaning_zh": "由领土、人民、政府等构成的政治实体，如中国、美国",
+      "pos": "v"
+    },
+    {
+      "char": "间",
+      "pinyin": "zhōngjiān",
+      "meaning_zh": "中间的空间或时间段落，也指人与人之间的关系",
+      "pos": "v"
+    },
+    {
+      "char": "文",
+      "pinyin": "Zhōngwén",
+      "meaning_zh": "文字、文章、文化、文雅",
+      "pos": "v"
+    },
+    {
+      "char": "午",
+      "pinyin": "zhōngwǔ",
+      "meaning_zh": "中午十二点，也指白天十二点前后这段时间",
+      "pos": "v"
+    },
+    {
+      "char": "住",
+      "pinyin": "zhù",
+      "meaning_zh": "居住长期或临时在某地",
+      "pos": "v"
+    },
+    {
+      "char": "准",
+      "pinyin": "zhǔnbèi",
+      "meaning_zh": "依据标准或一定条件作为依据而作出决定的标准。",
+      "pos": "v"
+    },
+    {
+      "char": "备",
+      "pinyin": "zhǔnbèi",
+      "meaning_zh": "事先准备齐全，也指具有、装备等",
+      "pos": "v"
+    },
+    {
+      "char": "桌",
+      "pinyin": "zhuōzi",
+      "meaning_zh": "家具,通常有平面和腿,用来吃饭、工作或摆放物品",
+      "pos": "v"
+    },
+    {
+      "char": "走",
+      "pinyin": "zǒu",
+      "meaning_zh": "人或鸟兽的脚交互向前移动",
+      "pos": "v"
+    },
+    {
+      "char": "最",
+      "pinyin": "zuì",
+      "meaning_zh": "表示程度达到最高，超过所有同类",
+      "pos": "v"
+    },
+    {
+      "char": "昨",
+      "pinyin": "zuótiān",
+      "meaning_zh": "表示今天之前的一天，即过去的一天",
+      "pos": "v"
+    },
+    {
+      "char": "左",
+      "pinyin": "zuǒ",
+      "meaning_zh": "面向南时靠东的一侧，与右相对",
+      "pos": "v"
+    },
+    {
+      "char": "坐",
+      "pinyin": "zuò",
+      "meaning_zh": "把臀部放在椅子等物体上以支撑身体",
+      "pos": "v"
+    },
+    {
+      "char": "做",
+      "pinyin": "zuò",
+      "meaning_zh": "进行某种工作或活动，如做事、做饭",
+      "pos": "v"
+    }
+  ],
+  "2": [],
+  "3": [],
+  "4": [],
+  "5": [],
+  "6": []
+}
