@@ -5,7 +5,7 @@ import mysql from 'mysql2/promise';
 const DB_URL = process.env.DATABASE_URL ?? 'mysql://root@127.0.0.1:3306/piyin_dev';
 const JSON_PATH = resolve(__dirname, '../data/hsk-vocab.json');
 
-type VocabEntry = { char: string; pinyin: string; meaning_zh: string; pos: string };
+type VocabEntry = { char: string };
 type Vocab = Record<'1' | '2' | '3' | '4' | '5' | '6', VocabEntry[]>;
 
 export async function runImport(): Promise<void> {
