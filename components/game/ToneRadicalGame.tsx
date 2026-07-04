@@ -38,7 +38,7 @@ export function ToneRadicalGame() {
   const [toneOrder, setToneOrder] = useState<Tone[]>([]);
   const [radicalOrder, setRadicalOrder] = useState<string[]>([]);
   const [pinyinOrder, setPinyinOrder] = useState<string[]>([]);
-  const [difficulty, setDifficulty] = useDifficulty();
+  const { difficulty, setDifficulty } = useDifficulty();
 
   const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
     setPhase('loading');

@@ -43,7 +43,7 @@ export function DragMatchGame() {
   const [mismatches, setMismatches] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const startedAt = useRef<number>(0);
-  const [difficulty, setDifficulty] = useDifficulty();
+  const { difficulty, setDifficulty } = useDifficulty();
 
   useEffect(() => {
     loadGame();

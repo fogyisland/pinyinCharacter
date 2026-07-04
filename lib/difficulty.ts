@@ -38,3 +38,17 @@ export const PINYIN_INPUT_CONFIG = {
   medium: { maxCandidates: 5 },
   hard:   { maxCandidates: 9 },
 };
+
+import type { HskLevel as _HskLevel } from './reveal';
+// HskLevel re-export kept loose: importers can also import from lib/reveal directly.
+export type HskLevel = _HskLevel;
+
+export function sourceForHsk(level: HskLevel): CharSource {
+  if (level === 1) return 'chars-level-1';
+  if (level === 2 || level === 3) return 'chars-level-1-2';
+  return 'chars-all';
+}
+
+export interface GameConfig {
+  hskLevel?: HskLevel;
+}

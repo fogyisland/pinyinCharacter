@@ -18,7 +18,7 @@ export function ChainGame() {
   const [charsList, setCharsList] = useState<CharInfo[]>([]);
   const [chain, setChain] = useState<string[]>([]);
   const [starter, setStarter] = useState<string>('');
-  const [difficulty, setDifficulty] = useDifficulty();
+  const { difficulty, setDifficulty } = useDifficulty();
 
   useEffect(() => { void startGame(difficulty); }, [difficulty]);
 

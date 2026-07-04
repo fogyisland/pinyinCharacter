@@ -16,7 +16,7 @@ export function PinyinInputMethod() {
   const [buffer, setBuffer] = useState('');
   const [committed, setCommitted] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [difficulty, setDifficulty] = useDifficulty();
+  const { difficulty, setDifficulty } = useDifficulty();
   const inputRef = useRef<HTMLInputElement>(null);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<{ input: string; ts: number } | null>(null);
