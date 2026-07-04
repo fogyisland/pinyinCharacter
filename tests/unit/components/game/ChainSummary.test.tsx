@@ -4,13 +4,18 @@ import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ChainSummary } from '@/components/game/ChainSummary';
 import type { CharInfo } from '@/lib/chain-types';
 
+const mockPushToast = vi.fn();
+vi.mock('@/lib/toast-store', () => ({
+  useToastStore: (sel: any) => sel({ push: mockPushToast }),
+}));
+
 const ci = (char: string, pinyin: string): CharInfo => ({
   char, pinyin, meaning: '', radical: '阝', tone: 1,
 });
 
 beforeEach(() => {
   cleanup();
-  vi.restoreAllMocks();
+  mockPushToast.mockClear();
 });
 
 describe('ChainSummary', () => {
@@ -68,19 +73,17 @@ describe('ChainSummary', () => {
     expect(onRestart).toHaveBeenCalledOnce();
   });
 
-  it('copies chain text to clipboard on 分享', async () => {
+  it('copies chain text to clipboard on 分享 and pushes success toast', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
       value: { writeText },
     });
-    const alert = vi.fn();
-    Object.defineProperty(window, 'alert', { configurable: true, value: alert });
     render(<ChainSummary chain={['安', '那']} charsList={[]} onRestart={() => {}} />);
     fireEvent.click(screen.getByText('分享'));
     await vi.waitFor(() => {
       expect(writeText).toHaveBeenCalledWith('安 → 那');
     });
-    expect(alert).toHaveBeenCalledWith('已复制到剪贴板');
+    expect(mockPushToast).toHaveBeenCalledWith('success', '已复制到剪贴板');
   });
 });

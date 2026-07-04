@@ -2,6 +2,7 @@
 
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { speak, stopSpeaking } from '@/lib/tts';
+import { useToastStore } from '@/lib/toast-store';
 import type { CharInfo } from '@/lib/chain-types';
 
 export function ChainSummary({
@@ -14,12 +15,16 @@ export function ChainSummary({
   onRestart: () => void;
 }) {
   const text = chain.join(' → ');
+  // 2026-07-04: replace alert() with toast so the success/failure
+  // feedback doesn't break the post-game calligraphy aesthetic.
+  const pushToast = useToastStore((s) => s.push);
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(text);
-      alert('已复制到剪贴板');
+      pushToast('success', '已复制到剪贴板');
     } catch (e) {
       console.error('share failed', e);
+      pushToast('error', '复制失败,请检查浏览器权限');
     }
   };
   // 2026-07-03: read-all button. Sequential per-char calls would queue
