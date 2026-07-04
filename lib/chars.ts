@@ -11,6 +11,14 @@ export interface ListCharsOpts {
   letter?: string;
   radical?: string;
   level?: 1 | 2 | 3;
+  /**
+   * 2026-07-04: HSK 1-6 filter for /game progressive reveal. Only chars
+   * with `chars.hsk_level === hskLevel` are returned. When undefined, the
+   * existing chars.level filter (via `level` above) is the only filter.
+   * NULL `hsk_level` chars are excluded (they fall under the fallback path
+   * if the caller passes `level` alongside).
+   */
+  hskLevel?: 1 | 2 | 3 | 4 | 5 | 6;
   page?: number;
 }
 
@@ -21,6 +29,9 @@ interface DbRow {
   radical: string;
   stroke_count: number;
   unicode_codepoint: string;
+  // 2026-07-04: HSK 1-6 level from chars.hsk_level (NULL = not yet assigned).
+  // Optional so it stays backward compatible if the migration hasn't run.
+  hsk_level?: number | null;
 }
 
 const pinyinCache = new Map<string, string>();
@@ -60,6 +71,9 @@ function hydrateChar(row: DbRow): Char {
     meaningEn: content?.dict?.meaning_en ?? null,
     unicodeCodepoint: row.unicode_codepoint ?? '',
     variants: content?.dict?.variants ?? [],
+    // 2026-07-04: HSK level for /game progressive reveal. NULL = not yet
+    // assigned by the HSK import; callers should fall back to chars.level.
+    hskLevel: row.hsk_level ?? null,
   };
 }
 
@@ -104,11 +118,18 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
     where.push('level = ?');
     params.push(opts.level);
   }
+  if (opts.hskLevel) {
+    // 2026-07-04: HSK progressive reveal filter. NULL hsk_level chars are
+    // excluded — callers needing the fallback path should call listChars
+    // without `hskLevel` and filter on `level` instead.
+    where.push('hsk_level = ?');
+    params.push(opts.hskLevel);
+  }
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      ${whereSql}
      ORDER BY pinyin, \`char\`
@@ -138,7 +159,7 @@ export async function getChar(char: string): Promise<Char | null> {
   if (!char || (char.codePointAt(0) ?? 0) > 0xFFFF) return null;
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      WHERE \`char\` = ?
      LIMIT 1`,
@@ -167,7 +188,7 @@ export async function getCharDetail(char: string): Promise<CharWithRelated | nul
 
   // Related-by-radical uses DB radical, which is populated by chars import.
   const [radicalRows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      WHERE radical = ? AND \`char\` != ?
      ORDER BY stroke_count
@@ -203,7 +224,7 @@ export async function getRandomChars(opts: {
   // The previous `REGEXP '^[一-鿿]$'` filter failed because MySQL's REGEXP
   // `$` anchor doesn't align with multi-byte char boundaries.
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint
+    `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      WHERE level IN (${placeholders})
        AND LENGTH(\`char\`) = 3

@@ -9,6 +9,13 @@ export interface Char {
   meaningEn: string | null;
   unicodeCodepoint: string;
   variants: string[];
+  /**
+   * 2026-07-04: HSK 1-6 level for /game progressive reveal. NULL until the
+   * HSK import covers this char (see migration 2026-07-04-hsk-level.sql).
+   * Optional because it's populated only after the HSK migration runs and
+   * the import script has filled it in. Older fixtures/tests may omit it.
+   */
+  hskLevel?: number | null;
 }
 
 export interface CharWithRelated extends Char {

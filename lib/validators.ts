@@ -132,6 +132,17 @@ export const gameRoundQuerySchema = z.object({
   // same pool. 'chars-level-1' = level 1 only; 'chars-level-1-2' =
   // level 1 + 2; 'chars-all' = no filter.
   source: z.enum(['chars-level-1', 'chars-level-1-2', 'chars-all']).default('chars-all'),
+  // 2026-07-04: optional mode override. When omitted, buildRound picks a
+  // mode randomly per seed (legacy behavior). When set, the round is built
+  // for the requested mode AND the response embeds a matching
+  // revealConfig so the client renders hints accordingly. Tasks 8/9/10
+  // (ToneRadical / DragMatch / Chain wiring) pass `mode` here.
+  mode: z.enum(['tone', 'radical', 'pinyin']).optional(),
+  // 2026-07-04: HSK 1-6 filter for progressive reveal. When set, the
+  // server pre-filters by chars.hsk_level === N and embeds a matching
+  // revealConfig in the response. Falls back to chars.level behavior if
+  // no chars match (hskFallback=true so client can show FallbackBanner).
+  hskLevel: z.coerce.number().int().min(1).max(6).optional(),
 });
 
 export const charsListQuerySchema = z.object({
@@ -139,6 +150,10 @@ export const charsListQuerySchema = z.object({
   letter: z.string().regex(/^[A-Z]$/).optional(),
   radical: z.string().max(8).optional(),
   level: z.coerce.number().int().min(1).max(3).optional(),
+  // 2026-07-04: HSK 1-6 filter for /game progressive reveal (DragMatch
+  // pulls from /api/chars, not /api/game/round). Mutually independent of
+  // `level` — when both are set, SQL ANDs them.
+  hskLevel: z.coerce.number().int().min(1).max(6).optional(),
   page: z.coerce.number().int().min(1).default(1),
 });
 
