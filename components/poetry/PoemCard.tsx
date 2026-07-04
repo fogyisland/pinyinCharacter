@@ -3,10 +3,17 @@ import type { PoemListItem } from '@/lib/poetry-types';
 
 const DYNASTY_LABEL: Record<string, string> = { tang: '唐', song: '宋', 汉: '汉', 魏: '魏', 三国: '三国', 汉末: '汉末', 汉乐府: '汉乐府', 古诗十九首: '古诗十九首', 骈文: '骈文', yuan: '元', qing: '清', mixed: '诸' };
 
-export function PoemCard({ poem }: { poem: PoemListItem }) {
+export function PoemCard({ poem, backHref }: { poem: PoemListItem; backHref?: string }) {
+  // 2026-07-04: when the list page passes its current URL search as
+  // backHref (e.g. '/poetry?form=%E4%BA%94%E8%A8%80'), append it
+  // URL-encoded to the detail href so /poetry/[id] can read it back via
+  // getPoetryBackLink and round-trip the user to the same filtered view.
+  const href = backHref
+    ? `/poetry/${poem.id}?back=${encodeURIComponent(backHref)}`
+    : `/poetry/${poem.id}`;
   return (
     <Link
-      href={`/poetry/${poem.id}`}
+      href={href}
       className="card-paper p-4 flex flex-col gap-2 hover:border-seal transition-colors group"
     >
       <h3 className="font-kai text-lg text-ink leading-tight group-hover:text-seal transition-colors">

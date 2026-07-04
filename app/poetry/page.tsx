@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
@@ -25,6 +26,14 @@ export default function PoetryListPage() {
   const [tick, setTick] = useState(0);
   const [selectedForms, setSelectedForms] = useState<string[]>([]);
   const [availableForms, setAvailableForms] = useState<string[]>([]);
+  // 2026-07-04: capture the current URL search so PoemCard can encode it
+  // as ?back=<url> on the detail-page href. The detail page then renders
+  // a 返回诗词 link that drops the user back on the same filtered list.
+  // Only the URL-backed filter (form) survives the round-trip; dynasty /
+  // q / page are still React state and reset to defaults — by design for
+  // this iteration (user opted to scope the fix narrowly).
+  const searchParams = useSearchParams();
+  const backHref = searchParams.toString() ? `/poetry?${searchParams.toString()}` : undefined;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -98,7 +107,7 @@ export default function PoetryListPage() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6">
               {items.map((p) => (
-                <PoemCard key={p.id} poem={p} />
+                <PoemCard key={p.id} poem={p} backHref={backHref} />
               ))}
             </div>
             <PoemPagination

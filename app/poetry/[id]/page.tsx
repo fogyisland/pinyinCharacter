@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getPoem } from '@/lib/poetry';
 import { Header } from '@/components/Header';
@@ -12,11 +13,13 @@ import { PrintButton } from '@/components/common/PrintButton';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { buildCreativeWork, buildBreadcrumbList } from '@/lib/seo/jsonld';
+import { getPoetryBackLink } from './back-link';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ back?: string }>;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -34,12 +37,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   });
 }
 
-export default async function PoemDetailPage({ params }: Props) {
+export default async function PoemDetailPage({ params, searchParams }: Props) {
   const { id: idStr } = await params;
+  const { back } = await searchParams;
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) notFound();
   const poem = await getPoem(id);
   if (!poem) notFound();
+  const backLink = getPoetryBackLink(back);
 
   return (
     <>
@@ -65,6 +70,14 @@ export default async function PoemDetailPage({ params }: Props) {
         <Header />
       </Suspense>
       <PageContainer>
+        <div className="worksheet-no-print mb-3">
+          <Link
+            href={backLink.href}
+            className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal transition-colors"
+          >
+            <span aria-hidden="true">←</span> {backLink.label}
+          </Link>
+        </div>
         <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
         <div className="worksheet-no-print">
           <PoemMeta title={poem.title} author={poem.author} dynasty={poem.dynasty} form={poem.form} />
