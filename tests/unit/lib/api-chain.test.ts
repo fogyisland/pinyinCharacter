@@ -9,6 +9,10 @@ describe('fetchChainChars', () => {
   });
 
   it('fetches and caches the chars list', async () => {
+    // 2026-07-05 (Task 12 I2): fetchChainChars now returns
+    // { chars, hskFallback } envelope so ChainGame can render
+    // <FallbackBanner />. Legacy bare-array responses are still
+    // accepted (backward-compat) — hskFallback defaults to false.
     const sample: CharInfo[] = [{ char: '安', pinyin: 'ān', meaning: '', radical: '宀', tone: 1 }];
     const spy = vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -17,7 +21,8 @@ describe('fetchChainChars', () => {
 
     const { fetchChainChars: fresh } = await import('@/lib/api-chain');
     const result = await fresh();
-    expect(result).toEqual(sample);
+    expect(result.chars).toEqual(sample);
+    expect(result.hskFallback).toBe(false);
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
@@ -68,5 +73,20 @@ describe('fetchChainChars', () => {
     });
     await fetchChainChars('chars-level-1-2', 3);
     expect(global.fetch).toHaveBeenCalled();
+  });
+
+  it('surfaces hskFallback from new envelope shape (Task 12 I2)', async () => {
+    // 2026-07-05 (Task 12 I2): when /api/chain/chars returns
+    // { chars, hskFallback: true }, fetchChainChars forwards hskFallback
+    // so ChainGame can render <FallbackBanner />.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ chars: [], hskFallback: true }),
+    });
+    const { fetchChainChars } = await import('@/lib/api-chain');
+    const result = await fetchChainChars('chars-level-1-2', 5);
+    expect(result.chars).toEqual([]);
+    expect(result.hskFallback).toBe(true);
   });
 });

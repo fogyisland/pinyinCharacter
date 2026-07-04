@@ -92,7 +92,13 @@ export function ToneRadicalGame() {
     }
   };
 
-  useEffect(() => { void loadGame(); }, []);
+  // 2026-07-05 (Task 12 I1): depend on hskLevel + difficulty so picking a
+  // different HSK chip in GameModeTabs refetches the round. Previously
+  // mount-only — revealConfig would recompute but round.chars stayed stale.
+  useEffect(() => {
+    void loadGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hskLevel, difficulty]);
 
   useEffect(() => {
     if (phase === 'finished') return;

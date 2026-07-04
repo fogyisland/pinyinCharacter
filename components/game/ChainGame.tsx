@@ -11,6 +11,7 @@ import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 import { ChainScroll } from './ChainScroll';
 import { ChainPickerModal } from './ChainPickerModal';
 import { ChainSummary } from './ChainSummary';
+import { FallbackBanner } from './FallbackBanner';
 
 type Phase = 'loading' | 'playing' | 'finished' | 'error';
 
@@ -19,6 +20,10 @@ export function ChainGame() {
   const [charsList, setCharsList] = useState<CharInfo[]>([]);
   const [chain, setChain] = useState<string[]>([]);
   const [starter, setStarter] = useState<string>('');
+  // 2026-07-05 (Task 12 I2): surface hskFallback from /api/chain/chars so
+  // <FallbackBanner /> tells the user their HSK selection isn't fully
+  // supported yet (matches ToneRadicalGame + DragMatchGame pattern).
+  const [hskFallback, setHskFallback] = useState(false);
   const { difficulty, setDifficulty, hskLevel } = useDifficulty();
 
   // 2026-07-04 W3 fold-in: AbortController guards the async fetch so
@@ -33,12 +38,13 @@ export function ChainGame() {
       setPhase('loading');
       try {
         const source = CHAIN_GAME_CONFIG[difficulty].source;
-        const chars = await fetchChainChars(source, hskLevel);
+        const result = await fetchChainChars(source, hskLevel);
         if (ctrl.signal.aborted) return;
-        console.log('[chain] startGame', { source, hskLevel, count: chars.length });
-        const s = pickStarter(chars);
+        console.log('[chain] startGame', { source, hskLevel, count: result.chars.length, hskFallback: result.hskFallback });
+        const s = pickStarter(result.chars);
         if (!s) throw new Error('no valid starter');
-        setCharsList(chars);
+        setCharsList(result.chars);
+        setHskFallback(result.hskFallback);
         setStarter(s.char);
         setChain([s.char]);
         setPhase('playing');
@@ -121,6 +127,7 @@ export function ChainGame() {
         />
         <div className="text-xs text-ink-faint">字库难度</div>
       </div>
+      <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
       <ChainScroll chain={chain} charsList={charsList} revealConfig={revealConfig} onDemandReveal={handleDemand} />
       <div className="flex items-center justify-between">
         <div className="text-sm text-ink-soft">接龙长度: {chain.length}</div>
