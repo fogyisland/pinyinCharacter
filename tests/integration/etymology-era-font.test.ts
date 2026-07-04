@@ -3,7 +3,13 @@ import { getPool, closePool } from '@/lib/db';
 import { setConfig } from '@/lib/config';
 import { DEFAULT_ERA_FONTS, getActiveEraFonts } from '@/lib/era-fonts';
 
-describe('Integration: app_config era fonts reach getActiveEraFonts', () => {
+// 2026-07-04: vitest doesn't load .env, so DATABASE_URL is unset in
+// the test process. Skip cleanly when absent rather than failing the
+// suite. To run integration tests locally: set DATABASE_URL in the
+// calling shell, or `npx vitest --env-file=.env run tests/integration`.
+const integrationSkip = !process.env.DATABASE_URL;
+
+describe.skipIf(integrationSkip)('Integration: app_config era fonts reach getActiveEraFonts', () => {
   const testKey = 'era.jiaguwen.font';
   let originalValue: string | null = null;
 
