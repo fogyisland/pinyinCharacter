@@ -6,6 +6,12 @@ export interface RoundChar {
   char: string;
   pinyin: string;
   meaning: string;
+  /**
+   * Radical of the char. Surfaced so client renderers (e.g. ToneRadicalChar)
+   * can show the radical as a hint cell per HSK reveal config without a
+   * separate fetch.
+   */
+  radical: string;
 }
 
 export interface GameRound {

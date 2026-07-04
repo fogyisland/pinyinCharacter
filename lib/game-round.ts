@@ -183,7 +183,7 @@ export async function buildRound(
   return {
     round: {
       mode,
-      chars: picked.map(({ char, pinyin, meaning }) => ({ char, pinyin, meaning })),
+      chars: picked.map(({ char, pinyin, meaning, radical }) => ({ char, pinyin, meaning, radical })),
       charToAnswer,
       toneChoices,
       radicalChoices: finalRadicals,

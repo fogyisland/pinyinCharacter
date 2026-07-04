@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { fetchGameRound, type GameRound } from '@/lib/api-game';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { GameRound } from '@/lib/api-game';
 import { DifficultyPicker } from '@/components/common/DifficultyPicker';
 import { TONE_RADICAL_CONFIG, type Difficulty } from '@/lib/difficulty';
 import { shuffle } from '@/lib/shuffle';
@@ -9,7 +9,9 @@ import { ToneToken } from './ToneToken';
 import { RadicalToken } from './RadicalToken';
 import { PinyinToken } from './PinyinToken';
 import { ToneRadicalChar } from './ToneRadicalChar';
+import { FallbackBanner } from './FallbackBanner';
 import { useDifficulty } from '@/lib/use-difficulty';
+import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 import type { Tone } from '@/lib/pinyin-tone';
 
 type Phase = 'loading' | 'playing' | 'finished';
@@ -38,7 +40,21 @@ export function ToneRadicalGame() {
   const [toneOrder, setToneOrder] = useState<Tone[]>([]);
   const [radicalOrder, setRadicalOrder] = useState<string[]>([]);
   const [pinyinOrder, setPinyinOrder] = useState<string[]>([]);
-  const { difficulty, setDifficulty } = useDifficulty();
+  // 2026-07-04: HSK reveal wiring (Task 8). hskFallback is true when the
+  // server couldn't satisfy the HSK filter and widened to the broader pool —
+  // surface as <FallbackBanner /> so the user knows their HSK selection
+  // isn't fully supported yet.
+  const [hskFallback, setHskFallback] = useState(false);
+  const { difficulty, setDifficulty, hskLevel } = useDifficulty();
+
+  const revealConfig = useMemo(
+    () => getRevealConfig('tone-radical', hskLevel),
+    [hskLevel],
+  );
+
+  const handleDemand = useCallback((_el: RevealElement) => {
+    setMismatches((m) => m + revealConfig.onDemandPenalty);
+  }, [revealConfig.onDemandPenalty]);
 
   const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
     setPhase('loading');
@@ -52,8 +68,19 @@ export function ToneRadicalGame() {
       // appropriate level pool (was using the default full pool for
       // all difficulties — caused "hard" to be much harder than
       // expected because rare chars had no matching token banks).
-      const r = await fetchGameRound(cfg.count, undefined, cfg.source);
+      // 2026-07-04: also pass `hskLevel` so the server can pre-filter
+      // by HSK column and surface `hskFallback` for the FallbackBanner.
+      const params = new URLSearchParams({
+        count: String(cfg.count),
+        source: cfg.source,
+        hskLevel: String(hskLevel),
+      });
+      const res = await fetch(`/api/game/round?${params.toString()}`);
+      const json = (await res.json()) as { ok: boolean; data: GameRound; hskFallback?: boolean; error?: { code: string } };
+      if (!json.ok) throw new Error(`fetchGameRound failed: ${json.error?.code ?? 'unknown'}`);
+      const r = json.data;
       setRound(r);
+      setHskFallback(json.hskFallback ?? true);
       setToneOrder(shuffle([...r.toneChoices]));
       setRadicalOrder(shuffle([...r.radicalChoices]));
       setPinyinOrder(shuffle([...r.pinyinChoices]));
@@ -175,15 +202,21 @@ export function ToneRadicalGame() {
 
       <h3 className="text-center font-kai text-lg text-ink-soft">{modeInfo.heading}</h3>
 
+      <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
+
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {round.chars.map((c) => (
           <ToneRadicalChar
             key={c.char}
             char={c.char}
             pinyin={c.pinyin}
+            radical={c.radical}
+            meaning={c.meaning}
             slotKind={mode}
             matched={matches[c.char] ?? null}
             onDrop={(kind, payload) => handleDrop(c.char, kind, payload)}
+            revealConfig={revealConfig}
+            onDemandReveal={handleDemand}
           />
         ))}
       </div>
