@@ -261,7 +261,21 @@ export function generateLayout(
     }
     return cells;
   }
-  return content.map((char, index) => ({ char, style, index }));
+  // Pad content to the next cellsPerPage(paperSize) multiple so the final
+  // page is full of practice cells (empty char === blank cell — WorksheetCell
+  // draws the grid/lines but omits the letter). Without this, a 50-char
+  // worksheet on A4 (88 cells/page) renders only 50 cells and the page
+  // has 38 missing slots — printers / users see a short sheet instead of
+  // a full practice page. Math.max guards the empty-content case so we
+  // still return one full page of blanks (defensive — UI hides empty
+  // previews via canPreview, but the helper must not return []).
+  const perPage = cellsPerPage(paperSize ?? 'A4');
+  const total = Math.max(perPage, Math.ceil(content.length / perPage) * perPage);
+  const cells: Cell[] = [];
+  for (let i = 0; i < total; i++) {
+    cells.push({ char: i < content.length ? content[i] : '', style, index: i });
+  }
+  return cells;
 }
 
 export function validateWorksheetInput(input: {
