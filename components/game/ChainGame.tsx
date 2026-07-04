@@ -18,33 +18,46 @@ export function ChainGame() {
   const [charsList, setCharsList] = useState<CharInfo[]>([]);
   const [chain, setChain] = useState<string[]>([]);
   const [starter, setStarter] = useState<string>('');
-  const { difficulty, setDifficulty } = useDifficulty();
+  const { difficulty, setDifficulty, hskLevel } = useDifficulty();
 
-  useEffect(() => { void startGame(difficulty); }, [difficulty]);
+  // 2026-07-04 W3 fold-in: AbortController guards the async fetch so
+  // unmounting mid-fetch (or rapid difficulty switching) doesn't call
+  // setState on an unmounted component. Note: fetchChainChars is a
+  // module-level memoized promise — the AbortController doesn't cancel
+  // the network request itself, but it prevents the `.then()` chain
+  // from mutating state after cleanup.
+  useEffect(() => {
+    const ctrl = new AbortController();
+    void (async () => {
+      setPhase('loading');
+      try {
+        const source = CHAIN_GAME_CONFIG[difficulty].source;
+        const chars = await fetchChainChars(source, hskLevel);
+        if (ctrl.signal.aborted) return;
+        console.log('[chain] startGame', { source, hskLevel, count: chars.length });
+        const s = pickStarter(chars);
+        if (!s) throw new Error('no valid starter');
+        setCharsList(chars);
+        setStarter(s.char);
+        setChain([s.char]);
+        setPhase('playing');
+      } catch (e) {
+        if (ctrl.signal.aborted) return;
+        console.error('startGame failed', e);
+        setPhase('error');
+      }
+    })();
+    return () => ctrl.abort();
+  }, [difficulty, hskLevel]);
 
   async function startGame(forceDifficulty: Difficulty = difficulty) {
-    setPhase('loading');
-    try {
-      // 2026-07-03: tier char pool by difficulty (easy=level-1 only,
-      // medium=level-1+2, hard=all) so easy = common chars with many
-      // chain-able neighbors and hard = rare chars that break the chain.
-      const source = CHAIN_GAME_CONFIG[forceDifficulty].source;
-      const chars = await fetchChainChars(source);
-      // 2026-07-04: diagnostic console.log retained in case the
-      // "no valid starter" error recurs (was caused by browser caching
-      // a stale empty [] response — see /api/chain/chars/route.ts
-      // Cache-Control header).
-      console.log('[chain] startGame', { source, count: chars.length });
-      const s = pickStarter(chars);
-      if (!s) throw new Error('no valid starter');
-      setCharsList(chars);
-      setStarter(s.char);
-      setChain([s.char]);
-      setPhase('playing');
-    } catch (e) {
-      console.error('startGame failed', e);
-      setPhase('error');
-    }
+    // 2026-07-04: DifficultyPicker's onChange used to call startGame(d)
+    // which did its own fetchChainChars. Now that the useEffect above
+    // is the canonical fetch path, the onChange handler just delegates
+    // to setDifficulty — the useEffect re-runs when difficulty changes.
+    // The retry button on the error state still calls startGame() with
+    // no arg; that's a no-op re-trigger of the same path (deps unchanged).
+    setDifficulty(forceDifficulty);
   }
 
   const usedChars = useMemo(() => new Set(chain), [chain]);

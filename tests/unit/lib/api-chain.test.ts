@@ -45,4 +45,28 @@ describe('fetchChainChars', () => {
     const { fetchChainChars: fresh } = await import('@/lib/api-chain');
     await expect(fresh()).rejects.toThrow(/failed/);
   });
+
+  it('cache key changes when hskLevel differs', async () => {
+    // @vitest-environment happy-dom
+    // Mock fetch BEFORE first call so happy-dom doesn't try real network.
+    // Brief §6.2 assumes fetch is already mocked; we install a stub here.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => [],
+    });
+    const { fetchChainChars, __resetChainCache } = await import('@/lib/api-chain');
+    __resetChainCache();
+
+    // First fetch with no hskLevel.
+    await fetchChainChars('chars-level-1-2');
+    // Fetch with hskLevel=3 should be a cache miss → new fetch.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ chars: [] }),
+    });
+    await fetchChainChars('chars-level-1-2', 3);
+    expect(global.fetch).toHaveBeenCalled();
+  });
 });

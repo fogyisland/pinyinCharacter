@@ -134,4 +134,34 @@ describe('ChainGame', () => {
       expect(screen.getByText(/接龙结束/)).toBeTruthy();
     });
   });
+
+  it('W3: AbortController cleanup prevents setState after unmount', async () => {
+    // 2026-07-04: Task 6 W3 fold-in. Use a controllable fetch mock so
+    // we can resolve the fetch AFTER the component unmounts. The
+    // useEffect's cleanup should call ctrl.abort() and the subsequent
+    // fetch resolution should bail out via `if (ctrl.signal.aborted)
+    // return;` — no React warning, no transition to playing state.
+    let resolveFetch!: (value: Response) => void;
+    const pendingFetch = new Promise<Response>((resolve) => { resolveFetch = resolve; });
+    vi.spyOn(global, 'fetch').mockImplementation(() => pendingFetch);
+    const { ChainGame } = await import('@/components/game/ChainGame');
+    const { unmount } = render(<ChainGame />);
+    // Component is in loading state; fetch is pending.
+    expect(screen.getByText(/加载中/)).toBeTruthy();
+    // Unmount BEFORE fetch resolves → useEffect cleanup fires ctrl.abort().
+    unmount();
+    // Now resolve the fetch — this used to setState on unmounted component
+    // (React 18 doesn't warn, but the side-effect is wasted work). The
+    // AbortController guard should bail silently.
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    resolveFetch({
+      ok: true,
+      json: async () => sampleChars,
+    } as Response);
+    // Wait a microtask for the .then chain to settle.
+    await new Promise((r) => setTimeout(r, 10));
+    // No "startGame failed" error, no React warning about unmounted.
+    expect(consoleErrorSpy).not.toHaveBeenCalled();
+    consoleErrorSpy.mockRestore();
+  });
 });
