@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { DifficultyPicker } from '@/components/common/DifficultyPicker';
 import { DRAG_MATCH_CONFIG, type Difficulty } from '@/lib/difficulty';
 import { useDifficulty } from '@/lib/use-difficulty';
 import { fetchChars } from '@/lib/api-chars';
+import { getRevealConfig, type RevealElement } from '@/lib/reveal';
+import { FallbackBanner } from './FallbackBanner';
 import { DraggablePinyin } from './DraggablePinyin';
 import { CharDropZone } from './CharDropZone';
 
@@ -43,10 +45,24 @@ export function DragMatchGame() {
   const [mismatches, setMismatches] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const startedAt = useRef<number>(0);
-  const { difficulty, setDifficulty } = useDifficulty();
+  // 2026-07-04: T9 HSK wiring — /api/chars returns hskFallback (currently
+  // always false per app/api/chars/route.ts) so the client can decide to
+  // show <FallbackBanner />.
+  const [hskFallback, setHskFallback] = useState(false);
+  const { difficulty, setDifficulty, hskLevel } = useDifficulty();
+
+  const revealConfig = useMemo(
+    () => getRevealConfig('drag-match', hskLevel),
+    [hskLevel],
+  );
+
+  const handleDemand = useCallback((_el: RevealElement) => {
+    setMismatches((m) => m + revealConfig.onDemandPenalty);
+  }, [revealConfig.onDemandPenalty]);
 
   useEffect(() => {
-    loadGame();
+    void loadGame();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -62,14 +78,17 @@ export function DragMatchGame() {
     const cfg = DRAG_MATCH_CONFIG[forceDifficulty];
 
     let chars: Char[] = [];
+    // 2026-07-04: T9 — pass hskLevel through fetchChars so /api/chars filters
+    // by the HSK column. The legacy `level` param is left untouched for
+    // backwards compat with the chars-level-1/1-2/all sources.
     if (cfg.source === 'chars-level-1') {
-      const r = await fetchChars({ level: 1, page: 1 });
+      const r = await fetchChars({ level: 1, hskLevel, page: 1 });
       chars = r.chars.filter((c) => c.meaningZh).map(toChar);
     } else if (cfg.source === 'chars-level-1-2') {
-      const r = await fetchChars({ page: 1 });
+      const r = await fetchChars({ hskLevel, page: 1 });
       chars = r.chars.filter((c) => c.meaningZh && (c.level === 1 || c.level === 2)).map(toChar);
     } else {
-      const r = await fetchChars({ page: 1 });
+      const r = await fetchChars({ hskLevel, page: 1 });
       chars = r.chars.filter((c) => c.meaningZh).map(toChar);
     }
 
@@ -80,6 +99,19 @@ export function DragMatchGame() {
     setMismatches(0);
     setElapsedMs(0);
     startedAt.current = Date.now();
+    // Capture hskFallback from the response envelope. /api/chars currently
+    // returns hskFallback=false; the hook is here so when the server starts
+    // surfacing real fallbacks the banner will reflect them automatically.
+    try {
+      const search = new URLSearchParams();
+      search.set('hskLevel', String(hskLevel));
+      search.set('page', '1');
+      const probe = await fetch(`/api/chars?${search.toString()}`);
+      const json = (await probe.json()) as { hskFallback?: boolean };
+      setHskFallback(json.hskFallback ?? false);
+    } catch {
+      setHskFallback(false);
+    }
     setPhase('playing');
   };
 
@@ -156,6 +188,8 @@ export function DragMatchGame() {
         </button>
       </div>
 
+      <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
+
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-ink-soft">字</h3>
@@ -164,8 +198,12 @@ export function DragMatchGame() {
               key={c.char}
               charId={c.char}
               char={c.char}
+              pinyin={c.pinyin}
+              meaning={c.meaning}
               matchedPinyin={pairs[c.char] ?? null}
               onDrop={handleDrop}
+              revealConfig={revealConfig}
+              onDemandReveal={handleDemand}
             />
           ))}
         </div>
