@@ -8,7 +8,8 @@ export function getLastLetter(pinyin: string): string {
   const stripped = pinyin.replace(/[1-5]$/, '');
   const ascii = stripped.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
   if (!ascii) return '';
-  return ascii[ascii.length - 1] ?? '';
+  // ascii is non-empty here (guarded above), so index access is defined.
+  return ascii[ascii.length - 1];
 }
 
 export function expandLastLetter(letter: string): string[] {
