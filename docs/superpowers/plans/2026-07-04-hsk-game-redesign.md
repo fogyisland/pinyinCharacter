@@ -732,8 +732,13 @@ const gameModeKeyForMode: Record<'tone' | 'radical' | 'pinyin', GameMode> = {
 const hskLevel = parsed.data.hskLevel as HskLevel | undefined;
 const revealConfig = getRevealConfig(gameModeKeyForMode[parsed.data.mode], hskLevel ?? 1);
 
+// hskFallback = true when filter produced 0 rows with an HSK filter, or when
+// chars came from chars.level fallback rather than chars.hsk_level. Components
+// render <FallbackBanner /> when this flag is set.
+const hskFallback = chars.length === 0 || chars.some((c) => c.hsk_level == null);
+
 return Response.json(
-  { chars, revealConfig },
+  { chars, revealConfig, hskFallback },
   {
     headers: {
       'Cache-Control': 'no-store',
@@ -744,7 +749,7 @@ return Response.json(
 
 - [ ] **Step 5.5: Add `?hskLevel=N` filter to `/api/chars/route.ts`**
 
-`DragMatchGame` actually pulls from this endpoint (not `/api/game/round`). Read the file. Add zod hskLevel param to existing schema. In the SQL/page-list, add `AND (hsk_level = ? OR (? IS NULL AND level = ?))` filter, where the second `level` is the fallback path. Emit `Cache-Control: no-store`.
+`DragMatchGame` actually pulls from this endpoint (not `/api/game/round`). Read the file. Add zod hskLevel param to existing schema. In the SQL/page-list, add `AND (hsk_level = ? OR (? IS NULL AND level = ?))` filter, where the second `level` is the fallback path. Emit `Cache-Control: no-store` and `hskFallback: boolean` for FallbackBanner rendering.
 
 **Diff sketch** (apply after reading the existing route):
 
@@ -759,7 +764,11 @@ const QuerySchema = z.object({
 // Existing listChars call gains an hskLevel argument:
 // listChars(page, source, hskLevel) — modify lib/chars.ts helper to accept hskLevel.
 // When hskLevel is undefined, behavior unchanged. When set, filter rows by hsk_level === N.
-return Response.json(rows, {
+
+// Compute fallback flag from the result rows:
+const hskFallback = hskLevel != null && rows.some((r) => r.hsk_level == null);
+
+return Response.json({ chars: rows, hskFallback }, {
   headers: { 'Cache-Control': 'no-store' },
 });
 ```
@@ -888,7 +897,7 @@ for (const page of pages) {
 }
 
 return Response.json(
-  { chars },
+  { chars, hskFallback },
   { headers: { 'Cache-Control': 'no-store' } }
 );
 ```
@@ -1168,7 +1177,29 @@ npx vitest run tests/unit/components/game/ToneRadicalChar.test.tsx
 
 Expected: FAIL — `revealConfig` prop not yet implemented.
 
-- [ ] **Step 8.3: Update `ToneRadicalChar.tsx`**
+- [ ] **Step 8.3: Render `FallbackBanner` in `ToneRadicalGame.tsx` header**
+
+After the fetch resolves (existing fetch logic), capture `hskFallback` from the response:
+
+```tsx
+const [hskFallback, setHskFallback] = useState(false);
+
+// In the fetch:
+const data = await res.json();
+setChars(data.chars);
+setHskFallback(data.hskFallback ?? true);  // default to true on missing flag
+setRevealConfig(getRevealConfig('tone-radical', hskLevel));
+```
+
+In the JSX above the game grid:
+
+```tsx
+{isFormView && (
+  <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
+)}
+```
+
+- [ ] **Step 8.4: Update `ToneRadicalChar.tsx`**
 
 Read the file, add props and conditional rendering:
 
