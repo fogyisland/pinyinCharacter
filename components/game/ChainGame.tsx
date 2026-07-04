@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchChainChars } from '@/lib/api-chain';
 import { getValidNextChars, pickStarter } from '@/lib/chain-rules';
 import type { CharInfo } from '@/lib/chain-types';
 import { CHAIN_GAME_CONFIG, type Difficulty } from '@/lib/difficulty';
 import { useDifficulty } from '@/lib/use-difficulty';
 import { DifficultyPicker } from '@/components/common/DifficultyPicker';
+import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 import { ChainScroll } from './ChainScroll';
 import { ChainPickerModal } from './ChainPickerModal';
 import { ChainSummary } from './ChainSummary';
@@ -66,6 +67,14 @@ export function ChainGame() {
     [charsList, chain, usedChars],
   );
 
+  // 2026-07-04: HSK reveal — chain game has onDemandPenalty=0 so on-demand
+  // reveals don't bump mismatches; the handler is a no-op for chain since
+  // there's no score system (per reveal.ts: PENALTY_BY_GAME.chain = 0).
+  const revealConfig = useMemo(() => getRevealConfig('chain', hskLevel), [hskLevel]);
+  const handleDemand = useCallback((_el: RevealElement) => {
+    /* no-op: chain has no penalty system */
+  }, []);
+
   useEffect(() => {
     if (phase === 'playing' && validNext.length === 0 && chain.length > 0) {
       setPhase('finished');
@@ -112,7 +121,7 @@ export function ChainGame() {
         />
         <div className="text-xs text-ink-faint">字库难度</div>
       </div>
-      <ChainScroll chain={chain} charsList={charsList} />
+      <ChainScroll chain={chain} charsList={charsList} revealConfig={revealConfig} onDemandReveal={handleDemand} />
       <div className="flex items-center justify-between">
         <div className="text-sm text-ink-soft">接龙长度: {chain.length}</div>
         <button
