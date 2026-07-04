@@ -1,16 +1,38 @@
 'use client';
 
 import { useState } from 'react';
+import { useDifficulty } from '@/lib/use-difficulty';
+import type { HskLevel } from '@/lib/difficulty';
 import { DragMatchGame } from './DragMatchGame';
 import { ToneRadicalGame } from './ToneRadicalGame';
 import { ChainGame } from './ChainGame';
 
 type Mode = 'tone-radical' | 'pinyin-char' | 'pinyin-chain';
 
+const HSKS: HskLevel[] = [1, 2, 3, 4, 5, 6];
+
 export function GameModeTabs() {
   const [mode, setMode] = useState<Mode>('tone-radical');
+  const { hskLevel, setHskLevel } = useDifficulty();
   return (
     <div>
+      <div role="group" aria-label="HSK level" className="flex gap-2 mb-3">
+        {HSKS.map((lvl) => (
+          <button
+            key={lvl}
+            type="button"
+            onClick={() => setHskLevel(lvl)}
+            aria-pressed={lvl === hskLevel}
+            className={`rounded border px-2 py-1 text-sm ${
+              lvl === hskLevel
+                ? 'bg-seal text-white border-seal'
+                : 'bg-paper-deep border-ink/30 hover:bg-paper'
+            }`}
+          >
+            HSK {lvl}
+          </button>
+        ))}
+      </div>
       <div className="mb-5 flex gap-2 border-b border-ink/10">
         <button
           type="button"
