@@ -23,20 +23,34 @@ describe('matchesChainRule', () => {
     expect(matchesChainRule('hǎo', 'dēng')).toBe(false); // o → d
   });
 
-  it('handles i wildcard (爱 ài → 一 yī)', () => {
-    expect(matchesChainRule('ài', 'yī')).toBe(true);  // i → y
-    expect(matchesChainRule('ài', 'èr')).toBe(false); // i → e
+  // Strict last-letter: 你 (nǐ, last 'i') only chains to chars with first letter 'i'.
+  // Brief 2026-07-04 example "你 → 期 (qī)" was a typo: qī first letter is 'q', not 'i'.
+  // There is no common pinyin syllable starting with 'i' (yi/yi series start with 'y'),
+  // so under strict rule, 你 has effectively 0 validNext chars — that IS the point
+  // of the rollback. We assert the negative plus a working positive case.
+  it('爱 (ài, last i) does NOT chain to 一 (yī, first y) — i→y wildcard dropped', () => {
+    expect(matchesChainRule('ài', 'yī')).toBe(false);
   });
 
-  it('handles u wildcard (母 mǔ → 雨 yǔ)', () => {
-    expect(matchesChainRule('mǔ', 'yǔ')).toBe(true);  // u → y
-    expect(matchesChainRule('mǔ', 'jù')).toBe(true);  // u → j (ü pair)
+  it('你 (nǐ, last i) does NOT chain to 衣 (yī, first y) — different spelling, same sound', () => {
+    expect(matchesChainRule('nǐ', 'yī')).toBe(false);
   });
 
-  it('handles v/ü wildcard (绿 lǜ → 距 jù)', () => {
-    expect(matchesChainRule('lǜ', 'jù')).toBe(true);  // ü → j
-    expect(matchesChainRule('lǜ', 'xū')).toBe(true);  // ü → x
-    expect(matchesChainRule('lǜ', 'yǔ')).toBe(true);  // ü → y
+  it('姑 (gū, last u) does NOT chain to 女 (nǚ, first n) — even though ü is u-glide', () => {
+    expect(matchesChainRule('gū', 'nǚ')).toBe(false);
+  });
+
+  it('母 (mǔ, last u) does NOT chain to 雨 (yǔ, first y) — u→y wildcard dropped', () => {
+    expect(matchesChainRule('mǔ', 'yǔ')).toBe(false);
+  });
+
+  it('绿 (lǜ, last u after NFD) does NOT chain to 距 (jù, first j) — ü wildcard dropped', () => {
+    expect(matchesChainRule('lǜ', 'jù')).toBe(false);
+  });
+
+  // Positive control: strict rule still works for non-wildcard transitions.
+  it('爱 (ài, last i) chains to 安 (ān, first a) is rejected — i ≠ a', () => {
+    expect(matchesChainRule('ài', 'ān')).toBe(false);
   });
 
   it('returns false for empty pinyin', () => {
@@ -51,6 +65,7 @@ describe('getValidNextChars', () => {
     ci('呢', 'ne'),
     ci('包', 'bāo'),
     ci('爱', 'ài'),
+    ci('期', 'qī'),
     ci('一', 'yī'),
     ci('二', 'èr'),
     ci('母', 'mǔ'),
@@ -77,10 +92,14 @@ describe('getValidNextChars', () => {
     expect(valid).toEqual([]);
   });
 
-  it('handles i/u/ü wildcards for next char matching', () => {
-    // 爱 ends in i → next can start with i or y → 一 yī
+  // Strict rule: 爱 (ài, last i) → only chars starting with 'i' qualify.
+  // After rollback, no common pinyin starts with 'i' (yi/yi series start with 'y'),
+  // so 爱 has 0 validNext. Brief 2026-07-04 originally asserted ['期'] but qī
+  // first letter is 'q' — that assertion was logically broken under strict rule.
+  it('爱 (ài, last i) has 0 validNext — no i→y wildcard, no char starts with i', () => {
     const valid = getValidNextChars(chars, '爱', new Set());
-    expect(valid.map((c) => c.char)).toContain('一');
+    expect(valid).toEqual([]);
+    expect(valid.map((c) => c.char)).not.toContain('一');
   });
 });
 
