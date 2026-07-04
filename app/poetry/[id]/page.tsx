@@ -72,7 +72,7 @@ export default async function PoemDetailPage({ params }: Props) {
         <div className="flex items-center justify-end mb-2 worksheet-no-print">
           <ReadAloudButton text={`${poem.title}。${poem.author}。${poem.content}`} size="sm" variant="seal" />
         </div>
-        <div className="card-paper p-5 sm:p-8">
+        <div className="card-paper p-5 sm:p-8 poem-print-area">
           <PoemViewer content={poem.content} />
         </div>
         {poem.appreciation && (

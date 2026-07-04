@@ -45,6 +45,13 @@ describe('app/globals.css — @media print whitelist for worksheet templates', (
     expect(block).toMatch(/\.batch-print-area[^{]*\{[^}]*visibility:\s*visible/);
   });
 
+  it('whitelists .poem-print-area so /poetry/[id] prints (regression: 2026-07-04 blank-print bug)', () => {
+    const block = readPrintBlock();
+    expect(block).toMatch(/\.poem-print-area[^{]*\{[^}]*visibility:\s*visible/);
+    expect(block).toMatch(/\.poem-print-area[^{]*\{[^}]*position:\s*absolute/);
+    expect(block).toMatch(/\.poem-print-area[^{]*\{[^}]*print-color-adjust:\s*exact/);
+  });
+
   it('sets print-color-adjust: exact on printable containers so background-color rules print without user toggling "Background graphics"', () => {
     const block = readPrintBlock();
     // The 4-line CSS uses background-color for its 4 rules; Chrome silently
