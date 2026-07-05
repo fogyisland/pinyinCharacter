@@ -251,9 +251,20 @@ export async function bumpRateLimit(ip: string, email: string | null): Promise<v
 - SELECT row `(scope='ip', key_value=ip, window_kind='minute')` where `window_start = minute_start`; if `post_count >= 1` → block
 - If `email` provided: SELECT row `(scope='email', key_value=email, window_kind='hour')` where `window_start = hour_start`; if `post_count >= 5` → block
 
-**`bumpRateLimit`** (called after successful insert, same transaction):
-- INSERT ... ON DUPLICATE KEY UPDATE `post_count = post_count + 1`, `window_start = IF(window_start = current_window, window_start, current_window)` (keeps old `window_start` if same window; replaces when the next window starts)
-- Simpler: do it as 2 separate INSERTs wrapped in a transaction with the note insert. If a row from a previous window exists, UPDATE its `window_start` to current + reset `post_count = 1`.
+**`bumpRateLimit`** (called after successful insert, same transaction as `createNote`):
+
+```sql
+INSERT INTO notes_rate_limits (scope, key_value, window_kind, window_start, post_count)
+VALUES (?, ?, ?, ?, 1)
+ON DUPLICATE KEY UPDATE
+  -- If the existing row is from the same window, increment count.
+  -- If it's from an older window (key collided because IP/email was used before),
+  -- reset count to 1 and update window_start.
+  window_start = VALUES(window_start),
+  post_count   = IF(window_start = VALUES(window_start), post_count + 1, 1)
+```
+
+Run twice: once for `(scope='ip', window_kind='minute')`, optionally once for `(scope='email', window_kind='hour')` when email provided.
 
 **`retry_after_seconds`**:
 - IP case: `60 - now.getSeconds()`
