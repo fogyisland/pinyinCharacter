@@ -37,7 +37,9 @@ export type AuditEvent =
   | 'admin.font_config.update'
   | 'admin.audio.upload' | 'admin.audio.update' | 'admin.audio.delete'
   | 'admin.playlist.create' | 'admin.playlist.update' | 'admin.playlist.delete'
-  | 'admin.playlist.add_track' | 'admin.playlist.remove_track' | 'admin.playlist.reorder';
+  | 'admin.playlist.add_track' | 'admin.playlist.remove_track' | 'admin.playlist.reorder'
+  | 'notes_posted' | 'notes_deleted'
+  | 'notes_email_sent' | 'notes_email_failed';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -76,6 +78,8 @@ export const AUDIT_EVENTS = [
   'admin.audio.upload', 'admin.audio.update', 'admin.audio.delete',
   'admin.playlist.create', 'admin.playlist.update', 'admin.playlist.delete',
   'admin.playlist.add_track', 'admin.playlist.remove_track', 'admin.playlist.reorder',
+  'notes_posted', 'notes_deleted',
+  'notes_email_sent', 'notes_email_failed',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -149,6 +153,10 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   'admin.playlist.add_track': '向播放列表添加曲目',
   'admin.playlist.remove_track': '从播放列表移除曲目',
   'admin.playlist.reorder': '重排播放列表',
+  notes_posted: '发布留言',
+  notes_deleted: '删除留言',
+  notes_email_sent: '通知邮件发送',
+  notes_email_failed: '通知邮件失败',
 };
 
 /**
@@ -161,6 +169,7 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
     typeof v === 'number' ? `${v}${suffix}` : typeof v === 'string' ? `${v}${suffix}` : '';
   const str = (v: unknown): string => (typeof v === 'string' && v ? v : '');
   const join = (arr: unknown[]): string => arr.filter((x) => typeof x === 'string' && x).join('、');
+  const truncate = (v: unknown, n: number): string => str(v).slice(0, n);
 
   switch (event) {
     case 'register':              return '注册新账号';
@@ -263,6 +272,11 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
     case 'admin.playlist.add_track': return `向播放列表「${str(m.playlistTitle) || '?'}」添加曲目「${str(m.trackTitle) || '?'}」`;
     case 'admin.playlist.remove_track': return `从播放列表「${str(m.playlistTitle) || '?'}」移除曲目「${str(m.trackTitle) || '?'}」`;
     case 'admin.playlist.reorder':   return `重排播放列表「${str(m.playlistTitle) || '?'}」(${num(m.trackCount) || '?'} 首)`;
+
+    case 'notes_posted':       return `收到新留言 #${num(m.id) || '?'}「${str(m.authorName) || '匿名'}」${str(m.content) ? `: ${truncate(str(m.content), 40)}` : ''}`;
+    case 'notes_deleted':      return `删除留言 #${num(m.id) || '?'}${str(m.authorName) ? `「${str(m.authorName)}」` : ''}`;
+    case 'notes_email_sent':   return `留言通知邮件发送 (to=${str(m.to) || '?'}, id=${num(m.noteId) || '?'})`;
+    case 'notes_email_failed': return `留言通知邮件失败 (id=${num(m.noteId) || '?'}, error=${str(m.error) || '?'})`;
 
     default: {
       const keys = Object.keys(m);
