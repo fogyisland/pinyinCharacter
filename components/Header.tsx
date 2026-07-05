@@ -6,39 +6,44 @@ import Image from 'next/image';
 import { Menu, X } from 'lucide-react';
 import { SafeModeToggle } from './SafeModeToggle';
 import { UserMenu } from './UserMenu';
+import { HeaderNavDropdown } from './HeaderNavDropdown';
 import { useAppStore } from '@/lib/store';
-import { BRAND, NAV_LINKS } from '@/lib/design';
+import { BRAND, filterNavGroups, type NavGroup } from '@/lib/design';
 
 export function Header() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const user = useAppStore(s => s.user);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const user = useAppStore((s) => s.user);
   const [mobileOpen, setMobileOpen] = useState(false);
-  // 儿童模式默认隐藏佛经/古籍导航(古典/宗教内容偏成人);关闭儿童模式后恢复
-  const visibleNavLinks = safeMode
-    ? NAV_LINKS.filter((l) => l.href !== '/sutra' && l.href !== '/ancient')
-    : NAV_LINKS;
+  const visibleGroups: readonly NavGroup[] = filterNavGroups(safeMode);
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
-      <div className="max-w-5xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 md:gap-8 min-w-0">
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0" aria-label={BRAND.name}>
-            <Image src="/logo.png" alt={BRAND.name} width={40} height={40} className="rounded-full shrink-0" />
-            <span className="font-kai text-xl text-ink tracking-wide truncate">{BRAND.name}</span>
+      <div className="max-w-6xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 md:gap-6 min-w-0">
+          <Link
+            href="/"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0"
+            aria-label={BRAND.name}
+          >
+            <Image
+              src="/logo.png"
+              alt={BRAND.name}
+              width={40}
+              height={40}
+              className="rounded-full shrink-0"
+            />
+            <span className="font-kai text-xl text-ink tracking-wide truncate">
+              {BRAND.name}
+            </span>
           </Link>
-          <nav className="hidden md:flex items-center gap-6 text-sm">
-            {visibleNavLinks.map(link => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="text-ink-soft hover:text-seal transition-colors border-b-2 border-transparent hover:border-seal pb-0.5"
-              >
-                {link.label}
-              </Link>
+          {/* Desktop nav: grouped with hover dropdowns */}
+          <nav className="hidden md:flex items-center gap-5 text-sm">
+            {visibleGroups.map((group) => (
+              <HeaderNavDropdown key={group.numeral} group={group} />
             ))}
           </nav>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 shrink-0">
           {safeMode && (
             <span className="hidden sm:inline text-xs px-2 py-0.5 rounded bg-success/15 text-success">
               已开启儿童模式
@@ -49,8 +54,12 @@ export function Header() {
             <UserMenu />
           ) : (
             <>
-              <Link href="/login" className="btn-seal text-sm">登录</Link>
-              <Link href="/register" className="text-sm text-ink-soft hover:text-seal">注册</Link>
+              <Link href="/login" className="btn-seal text-sm">
+                登录
+              </Link>
+              <Link href="/register" className="hidden sm:inline text-sm text-ink-soft hover:text-seal">
+                注册
+              </Link>
             </>
           )}
           <button
@@ -64,36 +73,72 @@ export function Header() {
         </div>
       </div>
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-20 bg-ink/40" onClick={() => setMobileOpen(false)}>
+        <div
+          className="md:hidden fixed inset-0 z-20 bg-ink/40"
+          onClick={() => setMobileOpen(false)}
+        >
           <div
-            className="absolute right-0 top-0 h-full w-64 bg-paper-soft p-4 shadow-paper-lg"
-            onClick={e => e.stopPropagation()}
+            className="absolute right-0 top-0 h-full w-72 max-w-[calc(100vw-2rem)] bg-paper-soft p-4 shadow-paper-lg overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
               <span className="font-kai text-xl flex items-center gap-2">
-                <Image src="/logo.png" alt={BRAND.name} width={28} height={28} className="rounded-full" />
+                <Image
+                  src="/logo.png"
+                  alt={BRAND.name}
+                  width={28}
+                  height={28}
+                  className="rounded-full"
+                />
                 {BRAND.name}
               </span>
               <button onClick={() => setMobileOpen(false)} aria-label="关闭菜单">
                 <X size={22} />
               </button>
             </div>
-            <nav className="flex flex-col gap-3">
-              {visibleNavLinks.map(link => (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMobileOpen(false)}
-                  className="text-base text-ink py-2 border-b border-ink/10"
-                >
-                  {link.label}
-                </Link>
+            {/* Mobile nav: groups expanded inline (no dropdowns) */}
+            <nav className="flex flex-col gap-5">
+              {visibleGroups.map((group) => (
+                <div key={group.numeral} className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-2 px-1">
+                    <span className="font-kai text-xs text-ink-soft/70">
+                      {group.numeral}
+                    </span>
+                    <span className="text-sm font-medium text-ink">
+                      {group.label}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className="text-base text-ink-soft hover:text-ink py-2 pl-4 border-b border-ink/10 last:border-b-0"
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
               ))}
               {!user && (
-                <>
-                  <Link href="/login" onClick={() => setMobileOpen(false)} className="text-base text-seal py-2 border-b border-ink/10">登录</Link>
-                  <Link href="/register" onClick={() => setMobileOpen(false)} className="text-base text-ink-soft py-2">注册</Link>
-                </>
+                <div className="flex flex-col gap-1 pt-4 border-t border-ink/10">
+                  <Link
+                    href="/login"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-base text-seal py-2"
+                  >
+                    登录
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setMobileOpen(false)}
+                    className="text-base text-ink-soft py-2"
+                  >
+                    注册
+                  </Link>
+                </div>
               )}
             </nav>
           </div>
