@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
+import { parseNotesAdminEmails, isValidEmail } from '@/lib/notes-email-config';
 
 export interface NotesEmailFormInitial {
   adminEmails: string;
@@ -14,6 +15,13 @@ export function NotesEmailForm({ initial }: { initial: NotesEmailFormInitial }) 
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+
+  // Compute parsed email count using the same logic as the server.
+  const trimmed = value.trim();
+  const allParts = parseNotesAdminEmails(value);
+  const validCount = allParts.filter(isValidEmail).length;
+  const hasInvalid = trimmed !== '' && validCount === 0;
+  const submitDisabled = busy || hasInvalid;
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
@@ -57,11 +65,21 @@ export function NotesEmailForm({ initial }: { initial: NotesEmailFormInitial }) 
         <p className="text-xs text-ink-soft mt-1">
           新留言的邮件通知会发到这里。多个邮箱用英文逗号分隔。留空则回退到「发件人地址」。
         </p>
+        {hasInvalid && (
+          <p className="text-xs text-yellow-700 mt-1" role="alert">
+            请检查邮箱格式,当前 0 个有效地址
+          </p>
+        )}
+        {!hasInvalid && trimmed !== '' && validCount > 0 && (
+          <p className="text-xs text-ink-soft mt-1">
+            将通知 {validCount} 个邮箱
+          </p>
+        )}
       </div>
 
       <button
         type="submit"
-        disabled={busy}
+        disabled={submitDisabled}
         className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
       >
         {busy ? '保存中…' : '保存'}

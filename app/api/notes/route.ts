@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
-import { insertNote, listActiveNotes, checkRateLimit, bumpRateLimit } from '@/lib/notes';
+import { insertNote, listActiveNotes, checkRateLimit, bumpRateLimit, type NoteRow } from '@/lib/notes';
 import { sendEmail, notesNotificationEmail, EmailNotConfiguredError, EmailSendError } from '@/lib/email';
 import { getConfig } from '@/lib/config';
 
@@ -36,9 +36,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let id: number;
+    let note: NoteRow;
     try {
-      id = await insertNote({
+      note = await insertNote({
         authorUserId: user?.id ?? null,
         authorName: parsed.data.name,
         authorEmail: parsed.data.email ?? null,
@@ -55,14 +55,14 @@ export async function POST(req: NextRequest) {
     await writeAudit({
       userId: user?.id ?? null,
       event: 'notes_posted',
-      metadata: { id, authorName: parsed.data.name },
+      metadata: { id: note.id, authorName: parsed.data.name },
       ip, userAgent: ua,
     }).catch(() => {});
 
     // Admin email (fire-and-forget; failures go to audit only)
-    sendAdminNotification(id).catch(() => {});
+    sendAdminNotification(note).catch(() => {});
 
-    return NextResponse.json({ ok: true, data: { id } });
+    return NextResponse.json({ ok: true, data: { id: note.id } });
   });
 }
 
@@ -78,12 +78,7 @@ export async function GET(req: NextRequest) {
   });
 }
 
-async function sendAdminNotification(noteId: number): Promise<void> {
-  // Lazy import to avoid pulling notes.ts into email-only call paths
-  const { listAllNotesForAdmin } = await import('@/lib/notes');
-  const all = await listAllNotesForAdmin({ limit: 200, includeDeleted: true });
-  const note = all.find((n) => n.id === noteId);
-  if (!note) return;
+async function sendAdminNotification(note: NoteRow): Promise<void> {
   const recipients = await resolveAdminRecipients();
   if (recipients.length === 0) return;
   const tpl = notesNotificationEmail({

@@ -23,7 +23,11 @@ export function NotesForm({ onPosted, defaultName }: NotesFormProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email: email || undefined, content }),
       });
-      const body = await res.json();
+      if (res.status >= 500) {
+        setError('服务器错误,请稍后再试');
+        return;
+      }
+      const body = await res.json().catch(() => ({} as { ok?: boolean; error?: { message?: string } }));
       if (!body.ok) {
         setError(body.error?.message ?? '提交失败,请稍后再试');
         return;

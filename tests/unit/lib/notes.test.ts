@@ -16,7 +16,7 @@ describe.skipIf(integrationSkip)('lib/notes — rate limit + insert', () => {
       const [u] = await conn.query<any[]>('SELECT id FROM users ORDER BY id LIMIT 1');
       const realUserId = (u as any[])[0]?.id ?? null;
 
-      const id = await insertNote({
+      const inserted = await insertNote({
         authorUserId: null,
         authorName: 'Unit测试',
         authorEmail: null,
@@ -24,7 +24,11 @@ describe.skipIf(integrationSkip)('lib/notes — rate limit + insert', () => {
         ip: '127.0.0.1',
         userAgent: 'vitest',
       });
+      const id = inserted.id;
       expect(id).toBeGreaterThan(0);
+      expect(inserted.authorName).toBe('Unit测试');
+      expect(inserted.content).toBe('unit test content');
+      expect(inserted.deletedAt).toBeNull();
       const before = await listActiveNotes({ limit: 100 });
       expect(before.find((n) => n.id === id)).toBeTruthy();
 

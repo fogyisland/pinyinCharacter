@@ -1,5 +1,3 @@
-import type { NoteRow } from './notes';
-
 export interface PasswordResetArgs {
   username: string;
   resetUrl: string;

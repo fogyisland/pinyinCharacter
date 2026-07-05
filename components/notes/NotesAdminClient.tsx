@@ -23,7 +23,15 @@ export function NotesAdminClient({ initial }: NotesAdminClientProps) {
     setError(null);
     try {
       const res = await fetch(`/api/admin/notes/${id}`, { method: 'DELETE' });
-      const body = await res.json();
+      if (res.status === 401) {
+        setError('请重新登录');
+        return;
+      }
+      if (res.status >= 500) {
+        setError('服务器错误,请稍后重试');
+        return;
+      }
+      const body = await res.json().catch(() => ({} as { ok?: boolean; error?: { message?: string } }));
       if (!body.ok) {
         setError(body.error?.message ?? '删除失败');
         return;

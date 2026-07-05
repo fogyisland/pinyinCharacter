@@ -280,7 +280,7 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
     case 'notes_deleted':      return `删除留言 #${num(m.id) || '?'}${str(m.authorName) ? `「${str(m.authorName)}」` : ''}`;
     case 'notes_email_sent':   return `留言通知邮件发送 (to=${str(m.to) || '?'}, id=${num(m.noteId) || '?'})`;
     case 'notes_email_failed': return `留言通知邮件失败 (id=${num(m.noteId) || '?'}, error=${str(m.error) || '?'})`;
-    case 'notes_admin_emails_updated': return `更新通知邮箱 (${num(m.count) ?? '?'} 个收件人)`;
+    case 'notes_admin_emails_updated': return `更新通知邮箱 (${num(m.count) || '?'} 个收件人)`;
 
     default: {
       const keys = Object.keys(m);

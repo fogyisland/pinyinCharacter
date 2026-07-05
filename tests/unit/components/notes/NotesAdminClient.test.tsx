@@ -45,12 +45,30 @@ describe('NotesAdminClient', () => {
     });
   });
 
-  it('shows error when DELETE fails', async () => {
+  it('shows error when DELETE fails with 404', async () => {
     global.fetch = vi.fn(async () => ({
       ok: false, status: 404, json: async () => ({ ok: false, error: { code: 'not_found', message: 'not found' } }),
     })) as any;
     render(<NotesAdminClient initial={SAMPLE as any} />);
     fireEvent.click(screen.getAllByRole('button', { name: /删除/ })[0]);
     await waitFor(() => expect(screen.getByText(/not found/)).toBeTruthy());
+  });
+
+  it('shows "请重新登录" when DELETE returns 401', async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: false, status: 401, json: async () => ({ ok: false, error: { code: 'unauthenticated', message: 'login required' } }),
+    })) as any;
+    render(<NotesAdminClient initial={SAMPLE as any} />);
+    fireEvent.click(screen.getAllByRole('button', { name: /删除/ })[0]);
+    await waitFor(() => expect(screen.getByText(/请重新登录/)).toBeTruthy());
+  });
+
+  it('shows "服务器错误" when DELETE returns 5xx', async () => {
+    global.fetch = vi.fn(async () => ({
+      ok: false, status: 503, json: async () => ({}),
+    })) as any;
+    render(<NotesAdminClient initial={SAMPLE as any} />);
+    fireEvent.click(screen.getAllByRole('button', { name: /删除/ })[0]);
+    await waitFor(() => expect(screen.getByText(/服务器错误,请稍后重试/)).toBeTruthy());
   });
 });

@@ -52,7 +52,7 @@ export interface InsertNoteArgs {
   userAgent: string | null;
 }
 
-export async function insertNote(args: InsertNoteArgs): Promise<number> {
+export async function insertNote(args: InsertNoteArgs): Promise<NoteRow> {
   const name = args.authorName.trim().slice(0, MAX_NAME_LEN);
   const content = args.content.trim().slice(0, MAX_CONTENT_LEN);
   const email = args.authorEmail ? args.authorEmail.trim().slice(0, 254) : null;
@@ -63,7 +63,22 @@ export async function insertNote(args: InsertNoteArgs): Promise<number> {
      VALUES (?, ?, ?, ?, ?, ?)`,
     [args.authorUserId, name, email, content, ip, ua]
   );
-  return Number(res.insertId);
+  const id = Number(res.insertId);
+  const [rows] = await getPool().query<any[]>(
+    `SELECT id, author_user_id, author_name, author_email, content, created_at, deleted_at
+     FROM notes WHERE id = ?`,
+    [id]
+  );
+  const r = (rows as any[])[0];
+  return {
+    id: Number(r.id),
+    authorUserId: r.author_user_id,
+    authorName: r.author_name,
+    authorEmail: r.author_email,
+    content: r.content,
+    createdAt: r.created_at,
+    deletedAt: r.deleted_at,
+  };
 }
 
 export async function softDeleteNote(id: number, byUserId: number): Promise<boolean> {

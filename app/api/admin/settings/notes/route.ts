@@ -4,21 +4,11 @@ import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { setConfig } from '@/lib/config';
 import { writeAudit } from '@/lib/audit';
+import { parseNotesAdminEmails, isValidEmail } from '@/lib/notes-email-config';
 
 const NotesEmailsSchema = z.object({
   adminEmails: z.string().max(1024),
 });
-
-function parseEmails(raw: string): string[] {
-  return raw
-    .split(',')
-    .map((s) => s.trim().toLowerCase())
-    .filter((s) => s.length > 0);
-}
-
-function isValidEmail(s: string): boolean {
-  return /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s) && s.length <= 254;
-}
 
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -26,7 +16,7 @@ export async function POST(req: NextRequest) {
     if (!auth.ok) return auth.response;
     const parsed = NotesEmailsSchema.safeParse(await req.json());
     if (!parsed.success) return badRequest('validation', parsed.error.message);
-    const emails = parseEmails(parsed.data.adminEmails);
+    const emails = parseNotesAdminEmails(parsed.data.adminEmails);
     for (const e of emails) {
       if (!isValidEmail(e)) {
         return badRequest('validation', `非法邮箱: ${e}`);
