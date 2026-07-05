@@ -30,25 +30,25 @@ const TOP_STEPS: { id: Step; label: string; icon: React.ReactNode }[] = [
 ];
 
 // Sub-steps shown live during /init step 3. The wizard runs ONE big API call
-// (/api/init/init-db) that internally runs migrations + initDb(); each card
+// (/api/init/init-db) that internally runs initDb() THEN runMigrations(); each card
 // flips from idle → running → done/failed as the API call progresses through
 // internal phases (which we don't stream yet — see road-test note in
 // handleSeed). Detail text is filled in from the API's returned stats.
 interface SubStep {
-  id: 'migrations' | 'tables' | 'app_config' | 'poems' | 'sutras' | 'chars' | 'activate' | 'mark_complete';
+  id: 'tables' | 'app_config' | 'poems' | 'sutras' | 'chars' | 'activate' | 'migrations' | 'mark_complete';
   label: string;
   status: StepStatus;
   detail?: string;
 }
 
 const INITIAL_SUB_STEPS: SubStep[] = [
-  { id: 'migrations', label: '应用迁移文件', status: 'idle' },
   { id: 'tables', label: '创建表结构', status: 'idle' },
   { id: 'app_config', label: '写入 app_config 默认值', status: 'idle' },
   { id: 'poems', label: '导入古诗 (data/poems/)', status: 'idle' },
   { id: 'sutras', label: '导入佛经 (data/sutras/)', status: 'idle' },
   { id: 'chars', label: '导入字典 (data/chars)', status: 'idle' },
   { id: 'activate', label: '写入平台激活信息', status: 'idle' },
+  { id: 'migrations', label: '应用迁移文件', status: 'idle' },
   { id: 'mark_complete', label: '标记 setup.completed', status: 'idle' },
 ];
 
@@ -161,12 +161,12 @@ export default function InitPage() {
     setSubSteps(INITIAL_SUB_STEPS.map((s) => ({ ...s, status: 'idle', detail: undefined })));
     setSeedStats(null);
 
-    // /api/init/init-db internally runs runMigrations() THEN initDb().
+    // /api/init/init-db internally runs initDb() THEN runMigrations().
     // We optimistically mark every card "running" up-front so the user sees
     // the pipeline start; on success we fill in per-card detail from the
     // returned stats; on failure we mark every card as failed (we can't tell
     // which phase broke).
-    const initPhaseIds: SubStep['id'][] = ['migrations', 'tables', 'app_config', 'poems', 'sutras', 'chars', 'activate'];
+    const initPhaseIds: SubStep['id'][] = ['tables', 'app_config', 'poems', 'sutras', 'chars', 'activate', 'migrations'];
     for (const id of initPhaseIds) updateSubStep(id, { status: 'running' });
     try {
       const r = await fetch('/api/init/init-db', { method: 'POST' });
@@ -180,10 +180,6 @@ export default function InitPage() {
       }
       const { migrations, stats } = d.data as { migrations: { files: number; statements: number }; stats: InitDbStats };
       setSeedStats({ migrations, stats });
-      updateSubStep('migrations', {
-        status: 'done',
-        detail: `${migrations.files} 个 SQL 文件 / ${migrations.statements} 条语句`,
-      });
       updateSubStep('tables', {
         status: 'done',
         detail: `${stats.statementsRun} 条 DDL 写入完成,当前 ${stats.tablesNow} 张表`,
@@ -198,6 +194,10 @@ export default function InitPage() {
       updateSubStep('activate', {
         status: 'done',
         detail: stats.activateSeeded ? '已写入 (id=1)' : '已存在,跳过',
+      });
+      updateSubStep('migrations', {
+        status: 'done',
+        detail: `${migrations.files} 个 SQL 文件 / ${migrations.statements} 条语句`,
       });
     } catch (e) {
       const detail = (e as Error).message;

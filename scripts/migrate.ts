@@ -11,41 +11,38 @@
  */
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { getPool, closePool } from '../lib/db';
+import mysql from 'mysql2/promise';
+import { closePool } from '../lib/db';
 
 const MIGRATIONS_DIR = join(process.cwd(), 'scripts', 'migrations');
 
-function splitStatements(sql: string): string[] {
-  // Naive splitter: split on `;` at end of line, drop empty / comment-only
-  // chunks. Migrations are written without stored procedures / DELIMITER
-  // tricks, so a single split is enough. If we ever need DELIMITER, replace
-  // with a real SQL parser.
-  //
-  // IMPORTANT: strip leading `--` comment lines from each chunk — many
-  // migrations start with a header comment (e.g. "G5+: add trace variants")
-  // followed by the actual ALTER/CREATE. Without stripping, the comment
-  // makes the whole chunk look like a pure comment and gets dropped.
-  return sql
-    .split(/;\s*(?:\r?\n|$)/)
-    .map((s) => s.replace(/^\s*(?:--[^\n]*\n)+/, '').trim())
-    .filter((s) => s.length > 0 && !/^\s*--/.test(s));
-}
-
 export async function runMigrations(): Promise<{ files: number; statements: number }> {
-  const pool = getPool();
+  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
   const files = readdirSync(MIGRATIONS_DIR)
     .filter((f) => f.endsWith('.sql'))
     .sort();  // lexical = chronological given YYYY-MM-DD- prefix
+
+  // Separate connection with multipleStatements — the shared pool only accepts
+  // single-statement queries (default). PREPARE/EXECUTE/DEALLOCATE blocks in
+  // 2026-06-27-email-{campaigns,verification}.sql put all 3 statements on one
+  // line; the naive splitter concatenated them and mysql rejected the result.
+  // Multi-statement is safe here because migration files are operator-controlled.
+  const conn = await mysql.createConnection({
+    uri: process.env.DATABASE_URL,
+    multipleStatements: true,
+  });
+
   let statements = 0;
-  for (const file of files) {
-    const fullPath = join(MIGRATIONS_DIR, file);
-    const sql = readFileSync(fullPath, 'utf8');
-    const stmts = splitStatements(sql);
-    for (const stmt of stmts) {
-      await pool.query(stmt);
-      statements++;
+  try {
+    for (const file of files) {
+      const sql = readFileSync(join(MIGRATIONS_DIR, file), 'utf8');
+      const [results] = await conn.query(sql);
+      const count = Array.isArray(results) ? results.length : 1;
+      statements += count;
+      console.log(`[migrate] applied ${file} (${count} statements)`);
     }
-    console.log(`[migrate] applied ${file} (${stmts.length} statements)`);
+  } finally {
+    await conn.end();
   }
   return { files: files.length, statements };
 }
