@@ -18,7 +18,7 @@ describe('import-hsk', () => {
 
   afterAll(async () => { await conn.end(); });
 
-  it('round-trips HSK 1.0 entries idempotently', { timeout: 60000 }, async () => {
+  it('round-trips HSK 1-6 entries idempotently', { timeout: 120000 }, async () => {
     const { runImport } = await import('../../../scripts/import-hsk');
     await runImport();
 
