@@ -1,3 +1,5 @@
+import type { NoteRow } from './notes';
+
 export interface PasswordResetArgs {
   username: string;
   resetUrl: string;
@@ -237,6 +239,47 @@ export function campaignEmail(args: CampaignEmailArgs): EmailContent {
 
   // Subject is decided by the campaign, not the template.
   return { subject: '', html, text };
+}
+
+/**
+ * Renders the admin notification email for a new public note.
+ * Pure function — no DB / nodemailer import — so the template can also be
+ * unit-tested without the network.
+ */
+export function notesNotificationEmail(note: {
+  id: number;
+  authorName: string;
+  authorEmail: string | null;
+  content: string;
+  createdAt: Date;
+  ip: string | null;
+}): { subject: string; html: string; text: string } {
+  const when = note.createdAt.toISOString();
+  const safeContent = note.content
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\n/g, '<br/>');
+  const subject = `[留言笔记] 新留言 #${note.id} — ${note.authorName}`;
+  const text = [
+    `作者: ${note.authorName}${note.authorEmail ? ` <${note.authorEmail}>` : ''}`,
+    `时间: ${when}`,
+    note.ip ? `IP:   ${note.ip}` : '',
+    '',
+    '内容:',
+    note.content,
+    '',
+    `管理: /admin/notes`,
+  ].filter((l) => l !== null && l !== undefined).join('\n');
+  const html = `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif">
+<h2>新留言 #${note.id}</h2>
+<p><b>作者:</b> ${escapeHtml(note.authorName)}${note.authorEmail ? ` &lt;${escapeHtml(note.authorEmail)}&gt;` : ''}</p>
+<p><b>时间:</b> ${when}</p>
+${note.ip ? `<p><b>IP:</b> ${escapeHtml(note.ip)}</p>` : ''}
+<hr/>
+<div style="white-space:pre-wrap">${safeContent}</div>
+<hr/>
+<p><a href="/admin/notes">前往管理 →</a></p>
+</body></html>`;
+  return { subject, html, text };
 }
 
 function escapeHtml(s: string): string {

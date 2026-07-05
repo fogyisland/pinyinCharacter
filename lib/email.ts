@@ -1,6 +1,8 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 import { getMailTransport, getSmtpConfig } from './smtp-config';
 
+export { notesNotificationEmail } from './email-templates';
+
 export interface EmailMessage {
   to: string;
   subject: string;
