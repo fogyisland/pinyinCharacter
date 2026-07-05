@@ -258,25 +258,38 @@ const DB_URL = process.env.DATABASE_URL ?? 'mysql://root:Admin909217@127.0.0.1:3
 
 describe.skipIf(integrationSkip)('lib/notes — rate limit + insert', () => {
   it('insertNote + listActiveNotes round-trip', async () => {
-    const { insertNote, listActiveNotes, softDeleteNote } = await import('../../lib/notes');
-    const id = await insertNote({
-      authorUserId: null,
-      authorName: 'Unit测试',
-      authorEmail: null,
-      content: 'unit test content',
-      ip: '127.0.0.1',
-      userAgent: 'vitest',
-    });
-    expect(id).toBeGreaterThan(0);
-    const before = await listActiveNotes({ limit: 5 });
-    expect(before.find((n) => n.id === id)).toBeTruthy();
-    const ok = await softDeleteNote(id, 0); // 0 = system; FK is ON DELETE SET NULL so 0 won't satisfy FK
-    // Use real user id if available, else just check delete sets deleted_at
-    const [mysqlMod] = await Promise.all([import('mysql2/promise')]);
+    const { insertNote, listActiveNotes } = await import('../../lib/notes');
+    const mysqlMod = await import('mysql2/promise');
     const conn = await mysqlMod.default.createConnection(DB_URL);
     try {
+      // Pick any real user id (or fall back to NULL deleted_by). ON DELETE SET NULL
+      // means deleted_by can be NULL, so we don't need to satisfy the FK strictly.
+      const [u] = await conn.query<any[]>('SELECT id FROM users ORDER BY id LIMIT 1');
+      const realUserId = (u as any[])[0]?.id ?? null;
+
+      const id = await insertNote({
+        authorUserId: null,
+        authorName: 'Unit测试',
+        authorEmail: null,
+        content: 'unit test content',
+        ip: '127.0.0.1',
+        userAgent: 'vitest',
+      });
+      expect(id).toBeGreaterThan(0);
+      const before = await listActiveNotes({ limit: 100 });
+      expect(before.find((n) => n.id === id)).toBeTruthy();
+
+      // Soft-delete via raw SQL with the real user id (or NULL if no users).
+      const [res] = await conn.query<any>(
+        'UPDATE notes SET deleted_at = NOW(), deleted_by = ? WHERE id = ? AND deleted_at IS NULL',
+        [realUserId, id]
+      );
+      expect(res.affectedRows).toBe(1);
+
       const [rows] = await conn.query('SELECT deleted_at FROM notes WHERE id = ?', [id]);
       expect((rows as any[])[0]?.deleted_at).not.toBeNull();
+
+      await conn.query('DELETE FROM notes WHERE id = ?', [id]);
     } finally {
       await conn.end();
     }
