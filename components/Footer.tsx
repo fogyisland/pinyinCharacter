@@ -5,7 +5,7 @@ import { BRAND, FOOTER_LINKS } from '@/lib/design';
 export function Footer() {
   return (
     <footer className="border-t border-ink/10 mt-16 bg-paper-soft/60">
-      <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Image src="/logo.png" alt={BRAND.name} width={40} height={40} className="rounded-full" />

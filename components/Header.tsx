@@ -18,7 +18,7 @@ export function Header() {
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
-      <div className="max-w-6xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto px-6 h-[72px] flex items-center justify-between gap-6">
         <div className="flex items-center gap-4 md:gap-6 min-w-0">
           <Link
             href="/"
