@@ -3,26 +3,102 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { SafeModeToggle } from './SafeModeToggle';
 import { UserMenu } from './UserMenu';
-import { HeaderNavDropdown } from './HeaderNavDropdown';
 import { useAppStore } from '@/lib/store';
-import { BRAND, filterNavGroups, type NavGroup } from '@/lib/design';
+import { BRAND, filterNavLinks, NAV_GROUPS, type NavGroupId, type NavLink } from '@/lib/design';
+
+const GROUP_ORDER: readonly NavGroupId[] = ['dictionary', 'worksheet', 'classics', 'game', 'feedback'];
+
+function DesktopNav({ links, currentPath }: { links: readonly NavLink[]; currentPath: string }) {
+  // Walk links in original group order; insert a wider gap when the group changes.
+  let prevGroup: NavGroupId | null = null;
+  return (
+    <nav className="hidden md:flex items-center text-sm">
+      {links.map((item) => {
+        const isFirstInGroup = item.group !== prevGroup;
+        const separator = !isFirstInGroup && (
+          <span aria-hidden="true" className="px-2 text-ink-faint/50 select-none">·</span>
+        );
+        prevGroup = item.group;
+        const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
+        const groupGap = isFirstInGroup && prevGroup !== null ? 'ml-5 pl-0' : '';
+        return (
+          <span key={item.href} className={'inline-flex items-center ' + groupGap}>
+            {separator}
+            <Link
+              href={item.href}
+              aria-current={isActive ? 'page' : undefined}
+              className={
+                'px-1 py-0.5 transition-colors hover:text-seal ' +
+                (isActive ? 'text-seal font-medium border-b-2 border-seal' : 'text-ink-soft')
+              }
+            >
+              {item.label}
+            </Link>
+          </span>
+        );
+      })}
+    </nav>
+  );
+}
+
+function MobileNav({ links, currentPath, onNavigate }: { links: readonly NavLink[]; currentPath: string; onNavigate: () => void }) {
+  const byGroup = new Map<NavGroupId, NavLink[]>();
+  for (const id of GROUP_ORDER) byGroup.set(id, []);
+  for (const l of links) byGroup.get(l.group)?.push(l);
+  return (
+    <nav className="flex flex-col gap-4">
+      {GROUP_ORDER.map((gid) => {
+        const items = byGroup.get(gid) ?? [];
+        if (items.length === 0) return null;
+        return (
+          <div key={gid} className="flex flex-col gap-1">
+            <div className="px-1 text-xs font-medium text-ink-soft/50 select-none">
+              {NAV_GROUPS[gid].label}
+            </div>
+            <div className="flex flex-col">
+              {items.map((item) => {
+                const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={onNavigate}
+                    aria-current={isActive ? 'page' : undefined}
+                    className={
+                      'text-base py-2 pl-3 border-b border-ink/10 last:border-b-0 ' +
+                      (isActive ? 'text-seal font-medium' : 'text-ink-soft hover:text-ink')
+                    }
+                  >
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
 
 export function Header() {
   const safeMode = useAppStore((s) => s.safeMode);
   const user = useAppStore((s) => s.user);
+  const currentPath = usePathname() ?? '';
+  const links = filterNavLinks(safeMode);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const visibleGroups: readonly NavGroup[] = filterNavGroups(safeMode);
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
       <div className="max-w-6xl mx-auto px-6 h-[72px] flex items-center justify-between gap-6">
-        <div className="flex items-center gap-4 md:gap-6 min-w-0">
+        <div className="flex items-center gap-6 min-w-0">
           <Link
             href="/"
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0"
+            className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0 shrink-0"
             aria-label={BRAND.name}
           >
             <Image
@@ -32,16 +108,11 @@ export function Header() {
               height={40}
               className="rounded-full shrink-0"
             />
-            <span className="font-kai text-xl text-ink tracking-wide truncate">
+            <span className="font-kai text-xl text-ink tracking-wide truncate hidden sm:inline">
               {BRAND.name}
             </span>
           </Link>
-          {/* Desktop nav: grouped with hover dropdowns */}
-          <nav className="hidden md:flex items-center gap-5 text-sm">
-            {visibleGroups.map((group) => (
-              <HeaderNavDropdown key={group.numeral} group={group} />
-            ))}
-          </nav>
+          <DesktopNav links={links} currentPath={currentPath} />
         </div>
         <div className="flex items-center gap-3 shrink-0">
           {safeMode && (
@@ -78,7 +149,7 @@ export function Header() {
           onClick={() => setMobileOpen(false)}
         >
           <div
-            className="absolute right-0 top-0 h-full w-72 max-w-[calc(100vw-2rem)] bg-paper-soft p-4 shadow-paper-lg overflow-y-auto"
+            className="absolute right-0 top-0 h-full w-80 max-w-[calc(100vw-2rem)] bg-paper-soft p-5 shadow-paper-lg overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
@@ -96,51 +167,25 @@ export function Header() {
                 <X size={22} />
               </button>
             </div>
-            {/* Mobile nav: groups expanded inline (no dropdowns) */}
-            <nav className="flex flex-col gap-5">
-              {visibleGroups.map((group) => (
-                <div key={group.numeral} className="flex flex-col gap-1">
-                  <div className="flex items-baseline gap-2 px-1">
-                    <span className="font-kai text-xs text-ink-soft/70">
-                      {group.numeral}
-                    </span>
-                    <span className="text-sm font-medium text-ink">
-                      {group.label}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    {group.items.map((item) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={() => setMobileOpen(false)}
-                        className="text-base text-ink-soft hover:text-ink py-2 pl-4 border-b border-ink/10 last:border-b-0"
-                      >
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ))}
-              {!user && (
-                <div className="flex flex-col gap-1 pt-4 border-t border-ink/10">
-                  <Link
-                    href="/login"
-                    onClick={() => setMobileOpen(false)}
-                    className="text-base text-seal py-2"
-                  >
-                    登录
-                  </Link>
-                  <Link
-                    href="/register"
-                    onClick={() => setMobileOpen(false)}
-                    className="text-base text-ink-soft py-2"
-                  >
-                    注册
-                  </Link>
-                </div>
-              )}
-            </nav>
+            <MobileNav links={links} currentPath={currentPath} onNavigate={() => setMobileOpen(false)} />
+            {!user && (
+              <div className="mt-6 pt-4 border-t border-ink/10 flex flex-col gap-2">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-base text-seal py-2"
+                >
+                  登录
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-base text-ink-soft py-2"
+                >
+                  注册
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       )}

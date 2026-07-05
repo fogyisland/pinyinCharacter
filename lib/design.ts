@@ -8,67 +8,42 @@ export const BRAND = {
 
 export type NavItem = { href: string; label: string };
 
-export type NavGroup = {
-  /** Chinese numeral prefix — distinctive on-brand section marker (壹/贰/叁/肆/伍). */
-  numeral: string;
-  /** Top-level label shown in the nav (e.g. 字典). */
-  label: string;
-  /** 1 item → render as plain link; ≥2 → render with dropdown. */
-  items: readonly NavItem[];
-};
+/**
+ * Visual grouping for the header nav. Items in the same group are separated
+ * by "·" with tight spacing; groups are separated by a wider gap so the eye
+ * reads each cluster as one section.
+ */
+export type NavGroupId = 'dictionary' | 'worksheet' | 'classics' | 'game' | 'feedback';
 
-export const NAV_GROUPS: readonly NavGroup[] = [
-  {
-    numeral: '壹',
-    label: '字典',
-    items: [
-      { href: '/dictionary', label: '字典' },
-      { href: '/rare-chars', label: '罕见字库' },
-      { href: '/pinyin', label: '字转拼音' },
-    ],
-  },
-  {
-    numeral: '贰',
-    label: '字帖',
-    items: [
-      { href: '/worksheet', label: '字帖' },
-      { href: '/worksheet/practice', label: '练字模板' },
-    ],
-  },
-  {
-    numeral: '叁',
-    label: '诗词',
-    items: [
-      { href: '/poetry', label: '诗词' },
-      { href: '/ancient', label: '古籍' },
-      { href: '/sutra', label: '佛经' },
-    ],
-  },
-  {
-    numeral: '肆',
-    label: '游戏',
-    items: [{ href: '/game', label: '游戏' }],
-  },
-  {
-    numeral: '伍',
-    label: '留言笔记',
-    items: [{ href: '/notes', label: '留言笔记' }],
-  },
+export const NAV_GROUPS: Readonly<Record<NavGroupId, { label: string }>> = {
+  dictionary: { label: '字典' },
+  worksheet: { label: '字帖' },
+  classics: { label: '诗词' },
+  game: { label: '游戏' },
+  feedback: { label: '留言笔记' },
+} as const;
+
+export type NavLink = NavItem & { group: NavGroupId };
+
+export const NAV_LINKS: readonly NavLink[] = [
+  { group: 'dictionary', href: '/dictionary', label: '字典' },
+  { group: 'dictionary', href: '/rare-chars', label: '罕见字库' },
+  { group: 'dictionary', href: '/pinyin', label: '字转拼音' },
+  { group: 'worksheet', href: '/worksheet', label: '字帖' },
+  { group: 'worksheet', href: '/worksheet/practice', label: '练字模板' },
+  { group: 'classics', href: '/poetry', label: '诗词' },
+  { group: 'classics', href: '/ancient', label: '古籍' },
+  { group: 'classics', href: '/sutra', label: '佛经' },
+  { group: 'game', href: '/game', label: '游戏' },
+  { group: 'feedback', href: '/notes', label: '留言笔记' },
 ] as const;
 
 /**
- * Children-mode hides 古籍/佛经 (adult-classical content). When filter
- * drops all items in a group, the group itself is omitted (so the user
- * doesn't see an empty section header).
+ * Children-mode hides 古籍/佛经 (adult-classical content).
  */
-export function filterNavGroups(safeMode: boolean): readonly NavGroup[] {
-  if (!safeMode) return NAV_GROUPS;
-  return NAV_GROUPS
-    .map((g) => ({
-      ...g,
-      items: g.items.filter((i) => i.href !== '/sutra' && i.href !== '/ancient'),
-    }))
-    .filter((g) => g.items.length > 0);
+export function filterNavLinks(safeMode: boolean): readonly NavLink[] {
+  if (!safeMode) return NAV_LINKS;
+  return NAV_LINKS.filter((i) => i.href !== '/sutra' && i.href !== '/ancient');
 }
 
 export const GITHUB_REPO_URL = 'https://github.com/fogyisland/pinyinCharacter';
