@@ -4,13 +4,10 @@ import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { isSetupRouteEnabled } from '@/lib/setup';
 
 /**
- * Step 2 of /init wizard. **Validation only** — page 2 collects admin credentials
- * and stores them in client state. The actual INSERT happens in step 3's
- * create-admin phase (`/api/init/create-admin`) after the users table exists.
- *
- * Public: only callable when setup is incomplete OR setup.route_enabled=true.
+ * /init phase 6: create the first admin user. Requires users table (PHASE 1).
+ * Idempotent — refuses if username already taken.
  */
-const adminSchema = z.object({
+const createAdminSchema = z.object({
   username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
   password: z.string().min(8).max(72),
   email: z.string().email().max(255).optional(),
@@ -21,13 +18,16 @@ export async function POST(req: NextRequest) {
     if (!(await isSetupRouteEnabled())) {
       return badRequest('setup_disabled', '/init is disabled.');
     }
+    if (!process.env.DATABASE_URL) {
+      return badRequest('db_not_configured', 'Configure DATABASE_URL first (Step 1).');
+    }
     const body = await req.json();
-    const parsed = adminSchema.safeParse(body);
+    const parsed = createAdminSchema.safeParse(body);
     if (!parsed.success) {
       return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
     }
-    // No DB write here — see route docstring. The wizard page stores these
-    // values in state and re-sends them to /api/init/create-admin in step 3.
-    return NextResponse.json({ ok: true, data: { validated: true } });
+    const { createAdminUser } = await import('@/scripts/init-db');
+    const stats = await createAdminUser(parsed.data);
+    return NextResponse.json({ ok: true, data: stats });
   });
 }

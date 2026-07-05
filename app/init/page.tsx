@@ -29,13 +29,11 @@ const TOP_STEPS: { id: Step; label: string; icon: React.ReactNode }[] = [
   { id: 'seed', label: '初始化数据', icon: <Rocket className="h-4 w-4" /> },
 ];
 
-// Sub-steps shown live during /init step 3. The wizard runs ONE big API call
-// (/api/init/init-db) that internally runs initDb() THEN runMigrations(); each card
-// flips from idle → running → done/failed as the API call progresses through
-// internal phases (which we don't stream yet — see road-test note in
-// handleSeed). Detail text is filled in from the API's returned stats.
+// Sub-steps shown live during /init step 3. The wizard calls ONE endpoint per
+// sub-step, in order, so the user sees real per-phase progress (not one big
+// "running…" flash). Detail text is filled in from each endpoint's response.
 interface SubStep {
-  id: 'tables' | 'app_config' | 'poems' | 'sutras' | 'chars' | 'activate' | 'migrations' | 'mark_complete';
+  id: 'tables' | 'app_config' | 'poems' | 'sutras' | 'chars' | 'create_admin' | 'activate' | 'migrations' | 'mark_complete';
   label: string;
   status: StepStatus;
   detail?: string;
@@ -47,20 +45,11 @@ const INITIAL_SUB_STEPS: SubStep[] = [
   { id: 'poems', label: '导入古诗 (data/poems/)', status: 'idle' },
   { id: 'sutras', label: '导入佛经 (data/sutras/)', status: 'idle' },
   { id: 'chars', label: '导入字典 (data/chars)', status: 'idle' },
+  { id: 'create_admin', label: '创建管理员账号', status: 'idle' },
   { id: 'activate', label: '写入平台激活信息', status: 'idle' },
   { id: 'migrations', label: '应用迁移文件', status: 'idle' },
   { id: 'mark_complete', label: '标记 setup.completed', status: 'idle' },
 ];
-
-interface InitDbStats {
-  statementsRun: number;
-  tablesNow: number;
-  appConfigRows: number;
-  poems: { inserted: number; skipped: boolean; failed?: string };
-  sutras: { inserted: number; skipped: boolean; failed?: string };
-  chars: { inserted: number; skipped: boolean; failed?: string };
-  activateSeeded: boolean;
-}
 
 export default function InitPage() {
   const router = useRouter();
@@ -94,8 +83,17 @@ export default function InitPage() {
 
   // Sub-step state for /init step 3 live progress.
   const [subSteps, setSubSteps] = useState<SubStep[]>(INITIAL_SUB_STEPS);
-  // Final stats from /api/init/init-db — used to render the summary card.
-  const [seedStats, setSeedStats] = useState<{ migrations: { files: number; statements: number }; stats: InitDbStats } | null>(null);
+  // Per-phase stats collected during handleSeed — used to render the summary card.
+  const [phaseStats, setPhaseStats] = useState<{
+    tables?: { statementsRun: number; tablesNow: number };
+    appConfig?: { inserted: number; totalRows: number };
+    poems?: { inserted: number; skipped: boolean; failed?: string };
+    sutras?: { inserted: number; skipped: boolean; failed?: string };
+    chars?: { inserted: number; skipped: boolean; failed?: string };
+    createAdmin?: { userId: number; username: string };
+    activate?: { seeded: boolean; shortName: string };
+    migrations?: { files: number; statements: number };
+  }>({});
 
   function updateSubStep(id: SubStep['id'], patch: Partial<SubStep>) {
     setSubSteps((steps) => steps.map((s) => (s.id === id ? { ...s, ...patch } : s)));
@@ -159,52 +157,62 @@ export default function InitPage() {
     setErr(null);
     // Reset all sub-steps to idle so the user sees a clean progress run.
     setSubSteps(INITIAL_SUB_STEPS.map((s) => ({ ...s, status: 'idle', detail: undefined })));
-    setSeedStats(null);
+    setPhaseStats({});
 
-    // /api/init/init-db internally runs initDb() THEN runMigrations().
-    // We optimistically mark every card "running" up-front so the user sees
-    // the pipeline start; on success we fill in per-card detail from the
-    // returned stats; on failure we mark every card as failed (we can't tell
-    // which phase broke).
-    const initPhaseIds: SubStep['id'][] = ['tables', 'app_config', 'poems', 'sutras', 'chars', 'activate', 'migrations'];
-    for (const id of initPhaseIds) updateSubStep(id, { status: 'running' });
-    try {
-      const r = await fetch('/api/init/init-db', { method: 'POST' });
-      const d = await r.json();
-      if (!d.ok) {
-        const detail = d.error?.message ?? '失败';
-        for (const id of initPhaseIds) updateSubStep(id, { status: 'failed', detail });
-        setErr(detail);
+    // Each phase is its own API call so the user sees real per-step progress.
+    // Failure of any phase stops the sequence; remaining sub-steps are marked
+    // failed with the same error so the user can see exactly where it broke.
+    const phases: Array<{
+      id: SubStep['id'];
+      endpoint: string;
+      body?: Record<string, unknown>;
+      format: (data: any) => string;
+    }> = [
+      { id: 'tables', endpoint: '/api/init/init-tables',
+        format: (d: any) => `${d.statementsRun} 条 DDL 写入完成,当前 ${d.tablesNow} 张表` },
+      { id: 'app_config', endpoint: '/api/init/init-app-config',
+        format: (d: any) => `${d.totalRows} 条配置 (era 默认 + ai/tts)` },
+      { id: 'poems', endpoint: '/api/init/init-poems',
+        format: (d: any) => summarizeAutoPopulate(d) },
+      { id: 'sutras', endpoint: '/api/init/init-sutras',
+        format: (d: any) => summarizeAutoPopulate(d) },
+      { id: 'chars', endpoint: '/api/init/init-chars',
+        format: (d: any) => summarizeAutoPopulate(d) },
+      { id: 'create_admin', endpoint: '/api/init/create-admin',
+        body: { username, password, email: email || undefined },
+        format: (d: any) => `已创建 (id=${d.userId})` },
+      { id: 'activate', endpoint: '/api/init/init-activate',
+        format: (d: any) => d.seeded ? `已写入 (short_name=${d.shortName})` : '已存在,跳过' },
+      { id: 'migrations', endpoint: '/api/init/migrate',
+        format: (d: any) => `${d.files} 个 SQL 文件 / ${d.statements} 条语句` },
+    ];
+
+    for (const phase of phases) {
+      updateSubStep(phase.id, { status: 'running' });
+      try {
+        const res = await fetch(phase.endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: phase.body ? JSON.stringify(phase.body) : undefined,
+        });
+        const data = await res.json();
+        if (!data.ok) {
+          const detail = data.error?.message ?? '失败';
+          updateSubStep(phase.id, { status: 'failed', detail });
+          setErr(`${phase.id} 失败: ${detail}`);
+          setBusy(false);
+          return;
+        }
+        updateSubStep(phase.id, { status: 'done', detail: phase.format(data.data) });
+        // Record stats for the summary card
+        setPhaseStats((prev) => ({ ...prev, [phase.id]: data.data }));
+      } catch (e) {
+        const detail = (e as Error).message;
+        updateSubStep(phase.id, { status: 'failed', detail });
+        setErr(`${phase.id} 失败: ${detail}`);
         setBusy(false);
         return;
       }
-      const { migrations, stats } = d.data as { migrations: { files: number; statements: number }; stats: InitDbStats };
-      setSeedStats({ migrations, stats });
-      updateSubStep('tables', {
-        status: 'done',
-        detail: `${stats.statementsRun} 条 DDL 写入完成,当前 ${stats.tablesNow} 张表`,
-      });
-      updateSubStep('app_config', {
-        status: 'done',
-        detail: `${stats.appConfigRows} 条配置 (era 默认 + ai/tts)`,
-      });
-      updateSubStep('poems', { status: 'done', detail: summarizeAutoPopulate(stats.poems) });
-      updateSubStep('sutras', { status: 'done', detail: summarizeAutoPopulate(stats.sutras) });
-      updateSubStep('chars', { status: 'done', detail: summarizeAutoPopulate(stats.chars) });
-      updateSubStep('activate', {
-        status: 'done',
-        detail: stats.activateSeeded ? '已写入 (id=1)' : '已存在,跳过',
-      });
-      updateSubStep('migrations', {
-        status: 'done',
-        detail: `${migrations.files} 个 SQL 文件 / ${migrations.statements} 条语句`,
-      });
-    } catch (e) {
-      const detail = (e as Error).message;
-      for (const id of initPhaseIds) updateSubStep(id, { status: 'failed', detail });
-      setErr(detail);
-      setBusy(false);
-      return;
     }
 
     // Mark setup complete.
@@ -503,16 +511,16 @@ export default function InitPage() {
               数据库已就绪,管理员账号已创建,种子数据已写入。
             </p>
           </div>
-          {seedStats && (
+          {phaseStats.tables && (
             <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2 text-left text-sm sm:grid-cols-4">
-              <SummaryCell label="迁移文件" value={`${seedStats.migrations.files}`} />
-              <SummaryCell label="表结构" value={`${seedStats.stats.tablesNow} 张`} />
-              <SummaryCell label="配置 (app_config)" value={`${seedStats.stats.appConfigRows} 条`} />
-              <SummaryCell label="古诗" value={seedStats.stats.poems.skipped ? '已存在' : `+${seedStats.stats.poems.inserted.toLocaleString('zh-CN')}`} />
-              <SummaryCell label="佛经" value={seedStats.stats.sutras.skipped ? '已存在' : `+${seedStats.stats.sutras.inserted.toLocaleString('zh-CN')}`} />
-              <SummaryCell label="字典" value={seedStats.stats.chars.skipped ? '已存在' : `+${seedStats.stats.chars.inserted.toLocaleString('zh-CN')}`} />
-              <SummaryCell label="激活行" value={seedStats.stats.activateSeeded ? '已写入' : '已存在'} />
-              <SummaryCell label="DDL 语句" value={`${seedStats.stats.statementsRun}`} />
+              <SummaryCell label="迁移文件" value={`${phaseStats.migrations?.files ?? 0}`} />
+              <SummaryCell label="表结构" value={`${phaseStats.tables.tablesNow} 张`} />
+              <SummaryCell label="配置 (app_config)" value={`${phaseStats.appConfig?.totalRows ?? 0} 条`} />
+              <SummaryCell label="古诗" value={phaseStats.poems?.skipped ? '已存在' : `+${(phaseStats.poems?.inserted ?? 0).toLocaleString('zh-CN')}`} />
+              <SummaryCell label="佛经" value={phaseStats.sutras?.skipped ? '已存在' : `+${(phaseStats.sutras?.inserted ?? 0).toLocaleString('zh-CN')}`} />
+              <SummaryCell label="字典" value={phaseStats.chars?.skipped ? '已存在' : `+${(phaseStats.chars?.inserted ?? 0).toLocaleString('zh-CN')}`} />
+              <SummaryCell label="激活行" value={phaseStats.activate?.seeded ? '已写入' : '已存在'} />
+              <SummaryCell label="DDL 语句" value={`${phaseStats.tables.statementsRun}`} />
             </dl>
           )}
           <div className="mt-6 text-center">

@@ -385,7 +385,12 @@ const DDL = [
      updated_at         TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
      PRIMARY KEY (id)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+];
 
+// Era font defaults — always upserted by initAppConfig (idempotent).
+// Kept separate from DDL so phase 1 (tables) and phase 2 (app_config) have
+// clean boundaries; no double-execution.
+const APPCONFIG_DEFAULTS = [
   `INSERT INTO app_config (\`key\`, value, updated_by) VALUES
      ('era.jiaguwen.font', 'Oracular',          NULL),
      ('era.jinwen.font',    'WangHanzongWeibei', NULL),
@@ -394,19 +399,6 @@ const DDL = [
      ('era.kaishu.font',    'ZCOOLXiaoWei',      NULL)
    ON DUPLICATE KEY UPDATE value = VALUES(value)`,
 ];
-
-export interface InitDbStats {
-  /** Total CREATE TABLE / INSERT executed. Equal to DDL length. */
-  statementsRun: number;
-  /** Total tables in current schema (information_schema count). */
-  tablesNow: number;
-  /** Number of rows in app_config after init. */
-  appConfigRows: number;
-  poems: AutoPopulateResult;
-  sutras: AutoPopulateResult;
-  chars: AutoPopulateResult;
-  activateSeeded: boolean;
-}
 
 export interface AutoPopulateResult {
   /** 0 = skipped because table already had rows; >0 = inserted count. */
@@ -417,21 +409,31 @@ export interface AutoPopulateResult {
   failed?: string;
 }
 
-export async function initDb(): Promise<InitDbStats> {
+/**
+ * PHASE 1: create the 25-table base schema (DDL is idempotent — re-runs are no-ops).
+ * Also handles 2 idempotent ALTERs on `users` (disabled_at, email) that were added
+ * post-launch. Returns total statements executed + current table count for the
+ * wizard summary.
+ */
+export interface InitTablesStats {
+  statementsRun: number;
+  tablesNow: number;
+}
+
+export async function initTables(): Promise<InitTablesStats> {
   const pool = getPool();
+  let altersRun = 0;
   for (const sql of DDL) {
     await pool.query(sql);
   }
-  const statementsRun = DDL.length;
-  // Idempotent ALTER: only add disabled_at if it doesn't already exist
   const [cols] = await pool.query<any[]>(
     `SELECT COLUMN_NAME FROM information_schema.columns
      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'disabled_at'`,
   );
   if (cols.length === 0) {
     await pool.query(`ALTER TABLE users ADD COLUMN disabled_at DATETIME NULL AFTER is_admin`);
+    altersRun++;
   }
-  // Idempotent ALTER: only add email if it doesn't already exist
   const [emailCols] = await pool.query<any[]>(
     `SELECT COLUMN_NAME FROM information_schema.columns
      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'email'`,
@@ -439,12 +441,31 @@ export async function initDb(): Promise<InitDbStats> {
   if (emailCols.length === 0) {
     await pool.query(`ALTER TABLE users ADD COLUMN email VARCHAR(255) NULL AFTER username`);
     await pool.query(`ALTER TABLE users ADD UNIQUE KEY uk_email (email)`);
+    altersRun += 2;
   }
-  // Seed app_config defaults
-  const [[{ count: cfgCount }]] = await pool.query<any[]>(
+  const [[{ count }]] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_schema = DATABASE()`,
+  );
+  return { statementsRun: DDL.length + altersRun, tablesNow: Number(count) };
+}
+
+/**
+ * PHASE 2: seed app_config defaults (ai.* + tts.* + era fonts).
+ * Idempotent — re-runs are no-ops (era fonts use ON DUPLICATE KEY UPDATE,
+ * ai/tts keys check existing rows first).
+ */
+export interface InitAppConfigStats {
+  inserted: number;
+  totalRows: number;
+}
+
+export async function initAppConfig(): Promise<InitAppConfigStats> {
+  const pool = getPool();
+  const [[{ count: beforeCount }]] = await pool.query<any[]>(
     `SELECT COUNT(*) AS count FROM app_config`,
   );
-  if (Number(cfgCount) === 0) {
+  let inserted = 0;
+  if (Number(beforeCount) === 0) {
     const defaults: Array<[string, string]> = [
       ['ai.model', 'gpt-4o-mini'],
       ['ai.rate_limit_per_user_per_day', '5'],
@@ -460,122 +481,200 @@ export async function initDb(): Promise<InitDbStats> {
          ('tts.voice_female', 'zh-CN-XiaoxiaoNeural', NULL),
          ('tts.audio_format', 'audio-24khz-48kbitrate-mono-mp3', NULL)`
     );
-    console.log(`[initDb] seeded ${defaults.length} app_config defaults`);
+    inserted = defaults.length + 3;
+    console.log(`[initAppConfig] seeded ${inserted} app_config defaults`);
   } else {
-    console.log(`[initDb] app_config has ${cfgCount} rows, skip seed`);
+    console.log(`[initAppConfig] app_config has ${beforeCount} rows, skip seed`);
   }
-  // Auto-populate poems table if empty (fail-soft)
-  let poems: AutoPopulateResult = { inserted: 0, skipped: false };
+  // Era font defaults — always upsert (ON DUPLICATE KEY keeps them in sync with code).
+  for (const sql of APPCONFIG_DEFAULTS) {
+    await pool.query(sql);
+  }
+  const [[{ count: afterCount }]] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS count FROM app_config`,
+  );
+  return { inserted, totalRows: Number(afterCount) };
+}
+
+/**
+ * PHASE 3: auto-populate poems table from data/poems/*.json. Idempotent (skip if
+ * poems table already has rows). Fail-soft — errors don't propagate.
+ */
+export async function initPoems(): Promise<AutoPopulateResult> {
+  const pool = getPool();
   try {
     const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM poems`);
-    if (Number(count) === 0) {
-      const { buildPoems } = await import('./build-poems');
-      const n = await buildPoems();
-      poems = { inserted: n, skipped: false };
-      console.log(`[initDb] inserted ${n} poems (auto-populate)`);
-    } else {
-      console.log(`[initDb] poems table has ${count} rows, skip auto-populate`);
-      poems = { inserted: 0, skipped: true };
+    if (Number(count) > 0) {
+      console.log(`[initPoems] poems table has ${count} rows, skip auto-populate`);
+      return { inserted: 0, skipped: true };
     }
+    const { buildPoems } = await import('./build-poems');
+    const n = await buildPoems();
+    console.log(`[initPoems] inserted ${n} poems (auto-populate)`);
+    return { inserted: n, skipped: false };
   } catch (err) {
-    console.warn('[initDb] poems auto-populate failed (continuing):', (err as Error).message);
-    poems = { inserted: 0, skipped: false, failed: (err as Error).message };
+    console.warn('[initPoems] auto-populate failed (continuing):', (err as Error).message);
+    return { inserted: 0, skipped: false, failed: (err as Error).message };
   }
-  // Auto-populate sutras table if empty (fail-soft)
-  let sutras: AutoPopulateResult = { inserted: 0, skipped: false };
+}
+
+/**
+ * PHASE 4: auto-populate sutras table from data/sutras/*.json.
+ */
+export async function initSutras(): Promise<AutoPopulateResult> {
+  const pool = getPool();
   try {
-    const [[{ count: sCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
-    if (Number(sCount) === 0) {
-      const { buildSutras } = await import('./build-sutras');
-      const n = await buildSutras();
-      sutras = { inserted: n, skipped: false };
-      console.log(`[initDb] inserted ${n} sutras (auto-populate)`);
-    } else {
-      console.log(`[initDb] sutras table has ${sCount} rows, skip auto-populate`);
-      sutras = { inserted: 0, skipped: true };
+    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
+    if (Number(count) > 0) {
+      console.log(`[initSutras] sutras table has ${count} rows, skip auto-populate`);
+      return { inserted: 0, skipped: true };
     }
+    const { buildSutras } = await import('./build-sutras');
+    const n = await buildSutras();
+    console.log(`[initSutras] inserted ${n} sutras (auto-populate)`);
+    return { inserted: n, skipped: false };
   } catch (err) {
-    console.warn('[initDb] sutras auto-populate failed (continuing):', (err as Error).message);
-    sutras = { inserted: 0, skipped: false, failed: (err as Error).message };
+    console.warn('[initSutras] auto-populate failed (continuing):', (err as Error).message);
+    return { inserted: 0, skipped: false, failed: (err as Error).message };
   }
-  // Auto-populate chars table if empty (fail-soft)
-  // Seed 8105 chars with level + unicode_codepoint + radical from JSON files.
-  // Pinyin/meaning/stroke_count are filled by admin tools or content-refresh scheduler.
-  // Filter to BMP-only — mysql2 binary protocol mojibakes supp-plane chars (length > 1).
-  // Bulk insert in batches of 500 to avoid per-row roundtrips (~3min → <10s).
-  let chars: AutoPopulateResult = { inserted: 0, skipped: false };
+}
+
+/**
+ * PHASE 5: auto-populate chars table from data/general-standard-chinese-characters.json.
+ * 8105 chars with level + unicode_codepoint + radical. Pinyin/meaning/stroke_count
+ * are filled later by admin tools or content-refresh scheduler.
+ * Filter to BMP-only — mysql2 binary protocol mojibakes supp-plane chars.
+ */
+export async function initChars(): Promise<AutoPopulateResult> {
+  const pool = getPool();
   try {
-    const [[{ count: cCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM chars`);
-    if (Number(cCount) === 0) {
-      const charsArr = (charsData as string[]).filter((c) => c.length === 1);
-      const radicalsMap = radicalsData as Record<string, string>;
-      const rows: Array<[string, number, string, string]> = [];
-      let idx = 0;
-      for (const ch of charsArr) {
-        const level = idx < 3500 ? 1 : idx < 6500 ? 2 : 3;
-        const cp = `U+${ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
-        const radical = radicalsMap[ch] ?? '';
-        rows.push([ch, level, radical, cp]);
-        idx++;
-      }
-      const BATCH = 500;
-      let imported = 0;
-      for (let off = 0; off < rows.length; off += BATCH) {
-        const batch = rows.slice(off, off + BATCH);
-        const placeholders = batch.map(() => '(?, ?, ?, ?)').join(', ');
-        const params = batch.flat();
-        await pool.execute(
-          `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES ${placeholders}`,
-          params
-        );
-        imported += batch.length;
-      }
-      chars = { inserted: imported, skipped: false };
-      console.log(`[initDb] inserted ${imported} chars (bulk auto-populate)`);
-    } else {
-      console.log(`[initDb] chars table has ${cCount} rows, skip auto-populate`);
-      chars = { inserted: 0, skipped: true };
+    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM chars`);
+    if (Number(count) > 0) {
+      console.log(`[initChars] chars table has ${count} rows, skip auto-populate`);
+      return { inserted: 0, skipped: true };
     }
+    const charsArr = (charsData as string[]).filter((c) => c.length === 1);
+    const radicalsMap = radicalsData as Record<string, string>;
+    const rows: Array<[string, number, string, string]> = [];
+    let idx = 0;
+    for (const ch of charsArr) {
+      const level = idx < 3500 ? 1 : idx < 6500 ? 2 : 3;
+      const cp = `U+${ch.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
+      const radical = radicalsMap[ch] ?? '';
+      rows.push([ch, level, radical, cp]);
+      idx++;
+    }
+    const BATCH = 500;
+    let imported = 0;
+    for (let off = 0; off < rows.length; off += BATCH) {
+      const batch = rows.slice(off, off + BATCH);
+      const placeholders = batch.map(() => '(?, ?, ?, ?)').join(', ');
+      const params = batch.flat();
+      await pool.execute(
+        `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES ${placeholders}`,
+        params
+      );
+      imported += batch.length;
+    }
+    console.log(`[initChars] inserted ${imported} chars (bulk auto-populate)`);
+    return { inserted: imported, skipped: false };
   } catch (err) {
-    console.warn('[initDb] chars auto-populate failed (continuing):', (err as Error).message);
-    chars = { inserted: 0, skipped: false, failed: (err as Error).message };
+    console.warn('[initChars] auto-populate failed (continuing):', (err as Error).message);
+    return { inserted: 0, skipped: false, failed: (err as Error).message };
   }
-  // Seed activate singleton (id=1) — platform instance monitoring row.
-  // short_name defaults to OS hostname; cloud_endpoint is the future
-  // reporting target. installationData is left NULL until the cloud
-  // daemon populates it on first heartbeat.
-  let activateSeeded = false;
-  try {
-    const os = await import('node:os');
-    const hostname = os.hostname().slice(0, 64);
-    const installationData = JSON.stringify({
-      hostname,
-      platform: os.platform(),
-      arch: os.arch(),
-      cpus: os.cpus().length,
-      totalMem: os.totalmem(),
-      nodeVersion: process.version,
-    });
-    const [r] = await pool.execute(
-      `INSERT IGNORE INTO activate (id, short_name, installation_data) VALUES (1, ?, ?)`,
-      [hostname, installationData]
-    );
-    activateSeeded = (r as any).affectedRows > 0;
-    console.log(`[initDb] activate singleton ready (short_name=${hostname})`);
-  } catch (err) {
-    console.warn('[initDb] activate singleton seed failed (continuing):', (err as Error).message);
-  }
-  // Snapshot after init for the /init wizard summary card.
-  const [[{ tableCount }]] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS tableCount FROM information_schema.tables WHERE table_schema = DATABASE()`
+}
+
+/**
+ * PHASE 6: create the first admin user. Requires users table (PHASE 1).
+ * Idempotent — refuses if username already taken. Returns the new user's id.
+ */
+export interface CreateAdminInput {
+  username: string;
+  password: string;
+  email?: string;
+}
+export interface CreateAdminStats {
+  userId: number;
+  username: string;
+}
+
+export async function createAdminUser(input: CreateAdminInput): Promise<CreateAdminStats> {
+  const pool = getPool();
+  // Refuse if username already exists (idempotent re-runs).
+  const [existing] = await pool.query<any[]>(
+    `SELECT id FROM users WHERE username = ? LIMIT 1`,
+    [input.username],
   );
-  const [[{ cfgCount: appConfigRows }]] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS cfgCount FROM app_config`
+  if (existing.length > 0) {
+    throw new Error(`username_taken: A user with username '${input.username}' already exists.`);
+  }
+  const bcrypt = await import('bcryptjs');
+  const hash = await bcrypt.hash(input.password, 10);
+  const [r] = await pool.execute<any>(
+    `INSERT INTO users (username, email, password_hash, is_admin) VALUES (?, ?, ?, 1)`,
+    [input.username, input.email ?? null, hash],
   );
+  return { userId: Number((r as any).insertId), username: input.username };
+}
+
+/**
+ * PHASE 7: seed activate singleton (id=1) — platform instance monitoring row.
+ * short_name defaults to OS hostname; cloud_endpoint is the future reporting
+ * target. installationData is left NULL until the cloud daemon populates it.
+ */
+export interface InitActivateStats {
+  seeded: boolean;
+  shortName: string;
+}
+
+export async function initActivate(): Promise<InitActivateStats> {
+  const pool = getPool();
+  const os = await import('node:os');
+  const hostname = os.hostname().slice(0, 64);
+  const installationData = JSON.stringify({
+    hostname,
+    platform: os.platform(),
+    arch: os.arch(),
+    cpus: os.cpus().length,
+    totalMem: os.totalmem(),
+    nodeVersion: process.version,
+  });
+  const [r] = await pool.execute(
+    `INSERT IGNORE INTO activate (id, short_name, installation_data) VALUES (1, ?, ?)`,
+    [hostname, installationData],
+  );
+  const seeded = (r as any).affectedRows > 0;
+  console.log(`[initActivate] singleton ready (short_name=${hostname}, seeded=${seeded})`);
+  return { seeded, shortName: hostname };
+}
+
+/**
+ * Orchestrator: runs all 7 init phases in order. Kept for CLI use
+ * (`npx tsx scripts/init-db.ts`) and for one-shot callers that don't need
+ * per-phase progress. The /init wizard calls each phase individually for
+ * real-time progress UI.
+ */
+export interface InitDbStats {
+  statementsRun: number;
+  tablesNow: number;
+  appConfigRows: number;
+  poems: AutoPopulateResult;
+  sutras: AutoPopulateResult;
+  chars: AutoPopulateResult;
+  activateSeeded: boolean;
+}
+
+export async function initDb(): Promise<InitDbStats> {
+  const tables = await initTables();
+  const appConfig = await initAppConfig();
+  const poems = await initPoems();
+  const sutras = await initSutras();
+  const chars = await initChars();
+  const { seeded: activateSeeded } = await initActivate();
   return {
-    statementsRun: DDL.length,
-    tablesNow: Number(tableCount),
-    appConfigRows: Number(appConfigRows),
+    statementsRun: tables.statementsRun,
+    tablesNow: tables.tablesNow,
+    appConfigRows: appConfig.totalRows,
     poems,
     sutras,
     chars,
