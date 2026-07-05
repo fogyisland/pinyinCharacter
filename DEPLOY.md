@@ -249,6 +249,16 @@ npx tsx scripts/migrate.ts
 | 2026-06-20 | `...-classics.sql` | `classics` 加 category/era/source 列 | 古籍列表缺失分类 |
 | 2026-06-20 | `...-worksheet-tool-presentation-split.sql` | cell_style ENUM 加 brush-/pen-square/cross | 选新格子样式保存失败 |
 | 2026-06-22 | `...-cell-style-trace.sql` | cell_style ENUM 加 brush-trace-square/cross | 描红模式保存失败 |
+| 2026-06-23 | `...-downloads-user-agent.sql` | `downloads` 加 `user_agent` 列 | 审计溯源不齐 |
+| 2026-06-23 | `...-email-send-history.sql` | 新增 `email_send_history` 表 | 邮件发送历史缺失 |
+| 2026-06-23 | `...-scheduler-run-history.sql` | 新增 `scheduler_run_history` 表 | 定时任务执行历史缺失 |
+| 2026-06-25 | `...-platform-activation.sql` | 新增 `activate` 表(平台激活 + 云端心跳) | 多副本激活锁缺失 |
+| 2026-06-27 | `...-email-campaigns.sql` | 新增 `email_campaigns` + `email_campaign_recipients` + `users.marketing_opt_out` 列 | 营销广播功能缺失 |
+| 2026-06-27 | `...-email-verification.sql` | 新增 `email_verifications` 表 | 邮箱验证功能缺失 |
+| 2026-06-28 | `...-era-font-defaults.sql` | 写入 5 条 era.*.font 默认 app_config | 字源朝代字体配置空 |
+| 2026-06-29 | `...-audio-tracks.sql` | 新增 `audio_tracks` 表 | 佛经音频播放器缺失 |
+| 2026-06-29 | `...-playlists.sql` | 新增 `playlists` + `playlist_tracks` 表 | 佛经音频播放列表缺失 |
+| 2026-07-04 | `...-hsk-level.sql` | `chars` 加 `hsk_level` TINYINT 列 + 索引 | `/game` HSK 1-6 难度筛选全空 |
 
 **不在 SQL 迁移里的变更** (运行时行为变化,不需要 SQL):
 - `data/content/<char>.json` 成为内容单一来源 (取代 chars 表的内容列)
@@ -256,5 +266,51 @@ npx tsx scripts/migrate.ts
 - `poems` 表同样迁到 `data/poems/<id>.json`(不影响字段,只是数据物理位置变化)
 - 新增 SEO 路由:`/sitemap.xml`、`/sitemap-poetry.xml`、`/sitemap-ancient.xml`、`/sitemap-chars.xml`、`/robots.txt`(反代无需变更,Next.js 自动 serve)
 - 新增 `deploy/nginx.ziyun.pudafo.com.conf`(具体域名配置模板)
-- 新增 `scripts/copy-to-up.py`(取代旧的 `Up.zip` 打包流程)
+- 新增 `scripts/copy-to-up.py`(取代旧的 `Up.zip` 打包流程,`data/classics/` + `data/content/` 自动 gzip)
 - 新增 `scripts/audit/seed-check.js`、`scripts/audit/db.js`(运维检查工具)
+- 新增 `/game` HSK 1-6 难度轴 + 6 档 progressive reveal(声调 / 部首 / 拼音接龙 三款小游戏)
+- 新增 `/sutra/[id]` 抄经模式(同页 toggle + 点击入墨 + 印章)
+- 新增 `/admin/settings/audio` 音频曲目管理 + 默认播放列表
+- 新增 `/admin/settings/era-fonts` 字源朝代字体管理 + 写回 `app_config`
+- 新增 TTS 朗读 + 缓存 (`lib/tts.ts` + `lib/tts-cache.ts`,浏览器 Cache API,5s AbortController)
+- 新增 `data/era-coverage.json`(由 `scripts/build-era-coverage.ts` 生成,字源页面 slim-DB fallback 必需)
+- 字帖生成器新增「英文描红」Tab(`WorksheetGenerator` 4 个 tab + `EnglishTraceTab` 组件 + A-Z/a-z 输入过滤 + 大小写切换)
+- 字帖空模板新增 `钢笔·英文描红` 选项 + 4 线 SVG 分支(`WorksheetCell` + `PracticePDF` 共用)
+- 字帖中心 `/worksheets` 支持多字帖 + 重命名 + 追加到现有 (`AddToWorksheetDialog`)
+
+## 9. 种子数据补全 (首次部署必跑)
+
+`/init` 三步向导**只**会写入 schema + poems/sutras/chars 三个表 + app_config + activate singleton。以下数据**不在 `/init` 范围内**,首次部署完成 `/init` 后必须手工跑这些脚本(每个都幂等):
+
+```bash
+# 1. HSK 等级标定 (2632 个 HSK 1-6 字写入 chars.hsk_level)
+#    /game 难度筛选依赖此列;不跑的话 HSK 1-6 chip 都返回 0 字
+npx tsx scripts/import-hsk.ts
+#    数据来源:data/hsk-vocab.json (HSK 2.0 official, 2632 chars)
+
+# 2. 古籍导入 (196 本写入 classics 表)
+#    /ancient 页面依赖此表;不跑的话 /ancient 显示空
+npx tsx scripts/build-classics.ts && \
+npx tsx scripts/build-classics-guwendao.ts && \
+npx tsx scripts/build-pianwen.ts
+#    数据来源:data/classics/<slug>.json (190+ books)
+
+# 3. 字源 etymology_story + era_*_has 标记 (~7905 字)
+#    /etymology 页面依赖此表 + data/era-coverage.json
+npx tsx scripts/import-content.ts
+npx tsx scripts/build-era-coverage.ts   # 生成 data/era-coverage.json (slim-DB fallback)
+#    数据来源:data/content/<char>.json (7905 个文件)
+
+# 4. 罕用字 (1412 个,写入 rare_chars 表)
+#    ⚠️ 仓库里暂无 seeder 脚本 —— /rare-chars 页面首次部署会显示空列表
+#    需要从历史备份恢复,或补一个 scripts/import-rare-chars.ts
+```
+
+### 9.1 升级已运行的生产环境
+
+如果之前已经手工跑过这些脚本,升级时无需重跑(脚本都是 INSERT ... ON DUPLICATE KEY 幂等)。建议每季度跑一次 `scripts/show-stats.ts` + `scripts/check-progress.ts` 检查:
+
+- `chars.hsk_level` 是否还有 NULL(应为 5278 NULL = 7910 - 2632,非 HSK 字,正常)
+- `rare_chars` 行数是否还是 1412(没有缺失)
+- `classics` 行数是否与 `ls data/classics/ | wc -l` 一致(都是 196)
+- `data/era-coverage.json` 是否存在(不跑 `build-era-coverage` 的话 slim-DB 字源页面会慢很多)
