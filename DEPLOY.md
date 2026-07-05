@@ -259,6 +259,7 @@ npx tsx scripts/migrate.ts
 | 2026-06-29 | `...-audio-tracks.sql` | 新增 `audio_tracks` 表 | 佛经音频播放器缺失 |
 | 2026-06-29 | `...-playlists.sql` | 新增 `playlists` + `playlist_tracks` 表 | 佛经音频播放列表缺失 |
 | 2026-07-04 | `...-hsk-level.sql` | `chars` 加 `hsk_level` TINYINT 列 + 索引 | `/game` HSK 1-6 难度筛选全空 |
+| 2026-07-05 | `...-notes.sql` | CREATE notes + notes_rate_limits | 留言笔记功能 |
 
 **不在 SQL 迁移里的变更** (运行时行为变化,不需要 SQL):
 - `data/content/<char>.json` 成为内容单一来源 (取代 chars 表的内容列)
@@ -277,6 +278,7 @@ npx tsx scripts/migrate.ts
 - 字帖生成器新增「英文描红」Tab(`WorksheetGenerator` 4 个 tab + `EnglishTraceTab` 组件 + A-Z/a-z 输入过滤 + 大小写切换)
 - 字帖空模板新增 `钢笔·英文描红` 选项 + 4 线 SVG 分支(`WorksheetCell` + `PracticePDF` 共用)
 - 字帖中心 `/worksheets` 支持多字帖 + 重命名 + 追加到现有 (`AddToWorksheetDialog`)
+- 留言笔记 (`/notes` 公共墙 + `/admin/notes` 管理) — 表 `notes`, `notes_rate_limits`. 管理员邮箱通过 `app_config.notes.admin_emails` 配置(逗号分隔,空时回退到 `smtp.from`).
 
 ## 9. 种子数据补全 (首次部署必跑)
 
