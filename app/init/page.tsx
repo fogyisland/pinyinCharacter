@@ -29,23 +29,38 @@ const TOP_STEPS: { id: Step; label: string; icon: React.ReactNode }[] = [
   { id: 'seed', label: '初始化数据', icon: <Rocket className="h-4 w-4" /> },
 ];
 
-// Sub-steps shown live during /init step 3. Each maps to one API call so the
-// UI can flip its color the moment the server confirms success.
+// Sub-steps shown live during /init step 3. The wizard runs ONE big API call
+// (/api/init/init-db) that internally runs migrations + initDb(); each card
+// flips from idle → running → done/failed as the API call progresses through
+// internal phases (which we don't stream yet — see road-test note in
+// handleSeed). Detail text is filled in from the API's returned stats.
 interface SubStep {
-  id: string;
+  id: 'migrations' | 'tables' | 'app_config' | 'poems' | 'sutras' | 'chars' | 'activate' | 'mark_complete';
   label: string;
   status: StepStatus;
   detail?: string;
 }
 
 const INITIAL_SUB_STEPS: SubStep[] = [
-  { id: 'tables', label: '创建表结构 (18 张)', status: 'idle' },
+  { id: 'migrations', label: '应用迁移文件', status: 'idle' },
+  { id: 'tables', label: '创建表结构', status: 'idle' },
   { id: 'app_config', label: '写入 app_config 默认值', status: 'idle' },
-  { id: 'poems', label: '导入古诗 (从 data/poems/)', status: 'idle' },
-  { id: 'sutras', label: '导入佛经 (从 data/sutras/)', status: 'idle' },
-  { id: 'chars', label: '导入字典 (7909 字)', status: 'idle' },
+  { id: 'poems', label: '导入古诗 (data/poems/)', status: 'idle' },
+  { id: 'sutras', label: '导入佛经 (data/sutras/)', status: 'idle' },
+  { id: 'chars', label: '导入字典 (data/chars)', status: 'idle' },
+  { id: 'activate', label: '写入平台激活信息', status: 'idle' },
   { id: 'mark_complete', label: '标记 setup.completed', status: 'idle' },
 ];
+
+interface InitDbStats {
+  statementsRun: number;
+  tablesNow: number;
+  appConfigRows: number;
+  poems: { inserted: number; skipped: boolean; failed?: string };
+  sutras: { inserted: number; skipped: boolean; failed?: string };
+  chars: { inserted: number; skipped: boolean; failed?: string };
+  activateSeeded: boolean;
+}
 
 export default function InitPage() {
   const router = useRouter();
@@ -79,9 +94,17 @@ export default function InitPage() {
 
   // Sub-step state for /init step 3 live progress.
   const [subSteps, setSubSteps] = useState<SubStep[]>(INITIAL_SUB_STEPS);
+  // Final stats from /api/init/init-db — used to render the summary card.
+  const [seedStats, setSeedStats] = useState<{ migrations: { files: number; statements: number }; stats: InitDbStats } | null>(null);
 
-  function updateSubStep(id: string, patch: Partial<SubStep>) {
+  function updateSubStep(id: SubStep['id'], patch: Partial<SubStep>) {
     setSubSteps((steps) => steps.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+  }
+
+  function summarizeAutoPopulate(r: { inserted: number; skipped: boolean; failed?: string }): string {
+    if (r.failed) return `失败: ${r.failed}`;
+    if (r.skipped) return '已跳过 (表内已有数据)';
+    return `新增 ${r.inserted.toLocaleString('zh-CN')} 行`;
   }
 
   async function handleDbSubmit(e: React.FormEvent) {
@@ -136,32 +159,49 @@ export default function InitPage() {
     setErr(null);
     // Reset all sub-steps to idle so the user sees a clean progress run.
     setSubSteps(INITIAL_SUB_STEPS.map((s) => ({ ...s, status: 'idle', detail: undefined })));
+    setSeedStats(null);
 
-    // initDb creates the full schema (latest ENUM values, all tables) in
-    // one shot. Migrations are for upgrading older DBs and are NOT run
-    // during /init — they reference tables that may not exist yet.
-    const initDbSteps = ['tables', 'app_config', 'poems', 'sutras', 'chars'];
-    for (const id of initDbSteps) updateSubStep(id, { status: 'running' });
+    // /api/init/init-db internally runs runMigrations() THEN initDb().
+    // We optimistically mark every card "running" up-front so the user sees
+    // the pipeline start; on success we fill in per-card detail from the
+    // returned stats; on failure we mark every card as failed (we can't tell
+    // which phase broke).
+    const initPhaseIds: SubStep['id'][] = ['migrations', 'tables', 'app_config', 'poems', 'sutras', 'chars', 'activate'];
+    for (const id of initPhaseIds) updateSubStep(id, { status: 'running' });
     try {
       const r = await fetch('/api/init/init-db', { method: 'POST' });
       const d = await r.json();
       if (!d.ok) {
         const detail = d.error?.message ?? '失败';
-        // Mark all initDb sub-steps as failed since we don't know how far it got.
-        for (const id of initDbSteps) updateSubStep(id, { status: 'failed', detail });
+        for (const id of initPhaseIds) updateSubStep(id, { status: 'failed', detail });
         setErr(detail);
         setBusy(false);
         return;
       }
-      // All initDb sub-steps succeeded.
-      updateSubStep('tables', { status: 'done' });
-      updateSubStep('app_config', { status: 'done' });
-      updateSubStep('poems', { status: 'done' });
-      updateSubStep('sutras', { status: 'done' });
-      updateSubStep('chars', { status: 'done' });
+      const { migrations, stats } = d.data as { migrations: { files: number; statements: number }; stats: InitDbStats };
+      setSeedStats({ migrations, stats });
+      updateSubStep('migrations', {
+        status: 'done',
+        detail: `${migrations.files} 个 SQL 文件 / ${migrations.statements} 条语句`,
+      });
+      updateSubStep('tables', {
+        status: 'done',
+        detail: `${stats.statementsRun} 条 DDL 写入完成,当前 ${stats.tablesNow} 张表`,
+      });
+      updateSubStep('app_config', {
+        status: 'done',
+        detail: `${stats.appConfigRows} 条配置 (era 默认 + ai/tts)`,
+      });
+      updateSubStep('poems', { status: 'done', detail: summarizeAutoPopulate(stats.poems) });
+      updateSubStep('sutras', { status: 'done', detail: summarizeAutoPopulate(stats.sutras) });
+      updateSubStep('chars', { status: 'done', detail: summarizeAutoPopulate(stats.chars) });
+      updateSubStep('activate', {
+        status: 'done',
+        detail: stats.activateSeeded ? '已写入 (id=1)' : '已存在,跳过',
+      });
     } catch (e) {
       const detail = (e as Error).message;
-      for (const id of initDbSteps) updateSubStep(id, { status: 'failed', detail });
+      for (const id of initPhaseIds) updateSubStep(id, { status: 'failed', detail });
       setErr(detail);
       setBusy(false);
       return;
@@ -453,16 +493,47 @@ export default function InitPage() {
         </div>
       )}
 
-      {/* Done */}
+      {/* Done — summary of what was created so the operator can verify */}
       {step === 'done' && (
-        <div className="rounded-md border border-green-300 bg-green-50 p-6 text-center">
-          <Check className="mx-auto h-12 w-12 text-green-700" />
-          <h2 className="mt-3 text-lg font-medium text-ink">初始化完成</h2>
-          <p className="mt-1 text-sm text-ink-soft">
-            数据库已就绪,管理员账号已创建,种子数据已写入。
-          </p>
+        <div className="rounded-md border border-green-300 bg-green-50 p-6">
+          <div className="text-center">
+            <Check className="mx-auto h-12 w-12 text-green-700" />
+            <h2 className="mt-3 text-lg font-medium text-ink">初始化完成</h2>
+            <p className="mt-1 text-sm text-ink-soft">
+              数据库已就绪,管理员账号已创建,种子数据已写入。
+            </p>
+          </div>
+          {seedStats && (
+            <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-2 text-left text-sm sm:grid-cols-4">
+              <SummaryCell label="迁移文件" value={`${seedStats.migrations.files}`} />
+              <SummaryCell label="表结构" value={`${seedStats.stats.tablesNow} 张`} />
+              <SummaryCell label="配置 (app_config)" value={`${seedStats.stats.appConfigRows} 条`} />
+              <SummaryCell label="古诗" value={seedStats.stats.poems.skipped ? '已存在' : `+${seedStats.stats.poems.inserted.toLocaleString('zh-CN')}`} />
+              <SummaryCell label="佛经" value={seedStats.stats.sutras.skipped ? '已存在' : `+${seedStats.stats.sutras.inserted.toLocaleString('zh-CN')}`} />
+              <SummaryCell label="字典" value={seedStats.stats.chars.skipped ? '已存在' : `+${seedStats.stats.chars.inserted.toLocaleString('zh-CN')}`} />
+              <SummaryCell label="激活行" value={seedStats.stats.activateSeeded ? '已写入' : '已存在'} />
+              <SummaryCell label="DDL 语句" value={`${seedStats.stats.statementsRun}`} />
+            </dl>
+          )}
+          <div className="mt-6 text-center">
+            <button
+              type="button" onClick={() => router.push('/login')}
+              className="rounded-md bg-green-700 px-6 py-2 text-white hover:bg-green-800"
+            >
+              完成 — 前往登录 →
+            </button>
+          </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function SummaryCell({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-white/60 px-3 py-2">
+      <dt className="text-xs text-ink-soft">{label}</dt>
+      <dd className="mt-0.5 text-sm font-medium text-ink tabular-nums">{value}</dd>
     </div>
   );
 }

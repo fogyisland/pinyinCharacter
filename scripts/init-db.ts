@@ -395,11 +395,34 @@ const DDL = [
    ON DUPLICATE KEY UPDATE value = VALUES(value)`,
 ];
 
-export async function initDb(): Promise<void> {
+export interface InitDbStats {
+  /** Total CREATE TABLE / INSERT executed. Equal to DDL length. */
+  statementsRun: number;
+  /** Total tables in current schema (information_schema count). */
+  tablesNow: number;
+  /** Number of rows in app_config after init. */
+  appConfigRows: number;
+  poems: AutoPopulateResult;
+  sutras: AutoPopulateResult;
+  chars: AutoPopulateResult;
+  activateSeeded: boolean;
+}
+
+export interface AutoPopulateResult {
+  /** 0 = skipped because table already had rows; >0 = inserted count. */
+  inserted: number;
+  /** True when the table had rows already and we skipped auto-populate. */
+  skipped: boolean;
+  /** Error message when auto-populate failed (table remains empty). */
+  failed?: string;
+}
+
+export async function initDb(): Promise<InitDbStats> {
   const pool = getPool();
   for (const sql of DDL) {
     await pool.query(sql);
   }
+  const statementsRun = DDL.length;
   // Idempotent ALTER: only add disabled_at if it doesn't already exist
   const [cols] = await pool.query<any[]>(
     `SELECT COLUMN_NAME FROM information_schema.columns
@@ -442,36 +465,45 @@ export async function initDb(): Promise<void> {
     console.log(`[initDb] app_config has ${cfgCount} rows, skip seed`);
   }
   // Auto-populate poems table if empty (fail-soft)
+  let poems: AutoPopulateResult = { inserted: 0, skipped: false };
   try {
     const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM poems`);
     if (Number(count) === 0) {
       const { buildPoems } = await import('./build-poems');
       const n = await buildPoems();
+      poems = { inserted: n, skipped: false };
       console.log(`[initDb] inserted ${n} poems (auto-populate)`);
     } else {
       console.log(`[initDb] poems table has ${count} rows, skip auto-populate`);
+      poems = { inserted: 0, skipped: true };
     }
   } catch (err) {
     console.warn('[initDb] poems auto-populate failed (continuing):', (err as Error).message);
+    poems = { inserted: 0, skipped: false, failed: (err as Error).message };
   }
   // Auto-populate sutras table if empty (fail-soft)
+  let sutras: AutoPopulateResult = { inserted: 0, skipped: false };
   try {
     const [[{ count: sCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
     if (Number(sCount) === 0) {
       const { buildSutras } = await import('./build-sutras');
       const n = await buildSutras();
+      sutras = { inserted: n, skipped: false };
       console.log(`[initDb] inserted ${n} sutras (auto-populate)`);
     } else {
       console.log(`[initDb] sutras table has ${sCount} rows, skip auto-populate`);
+      sutras = { inserted: 0, skipped: true };
     }
   } catch (err) {
     console.warn('[initDb] sutras auto-populate failed (continuing):', (err as Error).message);
+    sutras = { inserted: 0, skipped: false, failed: (err as Error).message };
   }
   // Auto-populate chars table if empty (fail-soft)
   // Seed 8105 chars with level + unicode_codepoint + radical from JSON files.
   // Pinyin/meaning/stroke_count are filled by admin tools or content-refresh scheduler.
   // Filter to BMP-only — mysql2 binary protocol mojibakes supp-plane chars (length > 1).
   // Bulk insert in batches of 500 to avoid per-row roundtrips (~3min → <10s).
+  let chars: AutoPopulateResult = { inserted: 0, skipped: false };
   try {
     const [[{ count: cCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM chars`);
     if (Number(cCount) === 0) {
@@ -498,17 +530,21 @@ export async function initDb(): Promise<void> {
         );
         imported += batch.length;
       }
+      chars = { inserted: imported, skipped: false };
       console.log(`[initDb] inserted ${imported} chars (bulk auto-populate)`);
     } else {
       console.log(`[initDb] chars table has ${cCount} rows, skip auto-populate`);
+      chars = { inserted: 0, skipped: true };
     }
   } catch (err) {
     console.warn('[initDb] chars auto-populate failed (continuing):', (err as Error).message);
+    chars = { inserted: 0, skipped: false, failed: (err as Error).message };
   }
   // Seed activate singleton (id=1) — platform instance monitoring row.
   // short_name defaults to OS hostname; cloud_endpoint is the future
   // reporting target. installationData is left NULL until the cloud
   // daemon populates it on first heartbeat.
+  let activateSeeded = false;
   try {
     const os = await import('node:os');
     const hostname = os.hostname().slice(0, 64);
@@ -520,18 +556,38 @@ export async function initDb(): Promise<void> {
       totalMem: os.totalmem(),
       nodeVersion: process.version,
     });
-    await pool.execute(
+    const [r] = await pool.execute(
       `INSERT IGNORE INTO activate (id, short_name, installation_data) VALUES (1, ?, ?)`,
       [hostname, installationData]
     );
+    activateSeeded = (r as any).affectedRows > 0;
     console.log(`[initDb] activate singleton ready (short_name=${hostname})`);
   } catch (err) {
     console.warn('[initDb] activate singleton seed failed (continuing):', (err as Error).message);
   }
+  // Snapshot after init for the /init wizard summary card.
+  const [[{ tableCount }]] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS tableCount FROM information_schema.tables WHERE table_schema = DATABASE()`
+  );
+  const [[{ cfgCount: appConfigRows }]] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS cfgCount FROM app_config`
+  );
+  return {
+    statementsRun: DDL.length,
+    tablesNow: Number(tableCount),
+    appConfigRows: Number(appConfigRows),
+    poems,
+    sutras,
+    chars,
+    activateSeeded,
+  };
 }
 
 if (require.main === module) {
   initDb()
-    .then(() => { console.log('DB initialized'); return closePool(); })
+    .then((stats) => {
+      console.log('DB initialized:', JSON.stringify(stats, null, 2));
+      return closePool();
+    })
     .catch((err) => { console.error(err); process.exit(1); });
 }
