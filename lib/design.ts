@@ -16,6 +16,7 @@ export const NAV_LINKS = [
   { href: '/sutra', label: '佛经' },
   { href: '/ancient', label: '古籍' },
   { href: '/game', label: '游戏' },
+  { href: '/notes', label: '留言笔记' },
 ] as const;
 
 export const GITHUB_REPO_URL = 'https://github.com/fogyisland/pinyinCharacter';

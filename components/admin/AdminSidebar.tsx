@@ -23,9 +23,11 @@ const ITEMS: NavItem[] = [
   { href: '/admin/tts', label: '语音设置' },
   { href: '/admin/email', label: '邮件' },
   { href: '/admin/email/campaigns', label: '营销邮件' },
+  { href: '/admin/notes', label: '留言笔记' },
   { href: '/admin/settings/site-url', label: '站点设置' },
   { href: '/admin/settings/fonts', label: '字源字体' },
   { href: '/admin/settings/audio', label: '佛经音频' },
+  { href: '/admin/settings/notes', label: '留言通知邮箱' },
   { href: '/admin/settings/setup', label: '初始化路由' },
 ];
 

@@ -35,6 +35,7 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'smtp.pass': (v) => v.length <= 256,
   'smtp.from': (v) => v.length === 0 || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v),
   'smtp.from_name': (v) => v.length <= 128,
+  'notes.admin_emails': (v) => v.length <= 1024,
   'site.url': (v) => /^https?:\/\//.test(v) && v.length <= 256,
   'era.jiaguwen.font': (v) => ['Oracular', 'OracularInverted', 'YinQiJiaGuWen'].includes(v),
   'era.jinwen.font':    (v) => ['WangHanzongWeibei', 'HanDianJinWen'].includes(v),
