@@ -202,12 +202,20 @@ export const dynamic = 'force-dynamic';
 
 export default async function InitOrchestrator() {
   if (await isSetupComplete()) {
-    return <AlreadyDoneCard />;  // 现成的绿色完成卡 (markSetupComplete 同时置 setup.completed=true)
+    // Set the cookie on first visit so this browser can navigate freely
+    // (e.g., click "前往登录") without being redirected back to /init by
+    // the cookie-only middleware. 10-year maxAge mirrors mark-complete.
+    cookies().set('setup_completed', '1', {
+      path: '/', maxAge: 60 * 60 * 24 * 365 * 10, sameSite: 'lax', httpOnly: false,
+    });
+    return <AlreadyDoneCard />;
   }
   // setup 没跑完 → orchestrator 落到第 1 屏; 各屏自己再 redirect 到正确位置
   redirect('/init/db');
 }
 ```
+
+> 关键:orchestrator 必须设 cookie,否则已完成 setup 的新浏览器第一次访问 /login 会被中间件 → /init → /init 又是 locked → AlreadyDoneCard → 死循环。设了 cookie 后后续 navigation 走 middleware 第 2 步 allow。
 
 但要拿到 setup.wizard.admin_done 这个新标志需要新 helper。我倾向于在 `lib/setup.ts` 加:
 
