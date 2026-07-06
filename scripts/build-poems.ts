@@ -69,50 +69,87 @@ async function fetchFile(path: string): Promise<RawPoem[]> {
   return data as RawPoem[];
 }
 
+interface PreparedPoem {
+  dynasty: 'tang' | 'song';
+  title: string;
+  author: string;
+  form: string | null;
+  content: string;
+  pinyin: string;
+  appreciation: string | null;
+}
+
+function prepare(p: RawPoem, dynasty: 'tang' | 'song'): PreparedPoem | null {
+  const rawContent = Array.isArray(p.paragraphs) ? p.paragraphs.filter((s) => typeof s === 'string') : [];
+  if (rawContent.length === 0) return null;
+  // 唐诗为繁体, 统一转简体; 宋词已为简体, 转换是幂等的
+  const content = rawContent.map((s) => t2s(s));
+  // 宋词无 title 字段, 用 rhythmic (词牌名) 作为 title; 同时转简体
+  const title = t2s(String(p.title ?? p.rhythmic ?? '').trim());
+  const author = t2s(String(p.author ?? '').trim());
+  if (!title || !author) return null;
+  let form = extractForm(p);
+  if (form) form = t2s(form);
+  // 当 title 已是 rhythmic 时, 避免 form 字段重复显示
+  if (form && form === title) form = null;
+  return {
+    dynasty,
+    title,
+    author,
+    form,
+    content: JSON.stringify(content),
+    pinyin: JSON.stringify(content.map(linePinyin)),
+    appreciation: (p.translation ?? p.appreciation ?? null) || null,
+  };
+}
+
 export async function buildPoems(): Promise<number> {
   const pool = getPool();
-  let inserted = 0;
 
+  // Pass 1: fetch + dedup by uniq_poem(dynasty, title, author) key.
+  // The chinese-poetry sources contain within-file duplicates (e.g. 春宫怨/杜荀鹤
+  // appears twice in tang300.json with identical content). If we let them through
+  // to MySQL, every duplicate pair hits ON DUPLICATE KEY UPDATE and MySQL returns
+  // ambiguous signals (insertId is the updated row's id, affectedRows with
+  // CLIENT_FOUND_ROWS reports matched rows not changed rows). Deduping here
+  // makes `inserted++` trivially equal to the number of INSERT statements we
+  // actually send — and equals the number of new rows on a fresh DB.
+  const deduped = new Map<string, PreparedPoem>();
   for (const file of FILES) {
     const poems = await fetchFile(file.path);
     for (const p of poems) {
-      const rawContent = Array.isArray(p.paragraphs) ? p.paragraphs.filter((s) => typeof s === 'string') : [];
-      if (rawContent.length === 0) continue;
-      // 唐诗为繁体, 统一转简体; 宋词已为简体, 转换是幂等的
-      const content = rawContent.map((s) => t2s(s));
-      const pinyinArr = content.map(linePinyin);
-      const appreciation = (p.translation ?? p.appreciation ?? null) || null;
-      // 宋词无 title 字段, 用 rhythmic (词牌名) 作为 title; 同时转简体
-      const title = t2s(String(p.title ?? p.rhythmic ?? '').trim());
-      const author = t2s(String(p.author ?? '').trim());
-      if (!title || !author) continue;
-      let form = extractForm(p);
-      if (form) form = t2s(form);
-      // 当 title 已是 rhythmic 时, 避免 form 字段重复显示
-      if (form && form === title) form = null;
-
-      await pool.execute(
-        `INSERT INTO poems (dynasty, title, author, form, content, pinyin, appreciation, source)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-           form = VALUES(form),
-           content = VALUES(content),
-           pinyin = VALUES(pinyin),
-           appreciation = VALUES(appreciation),
-           source = VALUES(source)`,
-        [
-          file.dynasty,
-          title,
-          author,
-          form,
-          JSON.stringify(content),
-          JSON.stringify(pinyinArr),
-          appreciation,
-          SOURCE_TAG,
-        ]
-      );
-      inserted++;
+      const prepared = prepare(p, file.dynasty);
+      if (!prepared) continue;
+      const key = `${prepared.dynasty}|${prepared.title}|${prepared.author}`;
+      // Last-write-wins: if two source rows share a key, the later one wins.
+      // Content is identical for the known duplicates, so this is safe.
+      deduped.set(key, prepared);
     }
+  }
+
+  let inserted = 0;
+  for (const prepared of deduped.values()) {
+    await pool.execute(
+      `INSERT INTO poems (dynasty, title, author, form, content, pinyin, appreciation, source)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         form = VALUES(form),
+         content = VALUES(content),
+         pinyin = VALUES(pinyin),
+         appreciation = VALUES(appreciation),
+         source = VALUES(source)`,
+      [
+        prepared.dynasty,
+        prepared.title,
+        prepared.author,
+        prepared.form,
+        prepared.content,
+        prepared.pinyin,
+        prepared.appreciation,
+        SOURCE_TAG,
+      ]
+    );
+    inserted++;
   }
   return inserted;
 }
