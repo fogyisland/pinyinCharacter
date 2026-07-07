@@ -202,20 +202,60 @@ export const dynamic = 'force-dynamic';
 
 export default async function InitOrchestrator() {
   if (await isSetupComplete()) {
-    // Set the cookie on first visit so this browser can navigate freely
-    // (e.g., click "前往登录") without being redirected back to /init by
-    // the cookie-only middleware. 10-year maxAge mirrors mark-complete.
-    cookies().set('setup_completed', '1', {
-      path: '/', maxAge: 60 * 60 * 24 * 365 * 10, sameSite: 'lax', httpOnly: false,
-    });
-    return <AlreadyDoneCard />;
+    // Next.js 15.5+ forbids `cookies().set()` from RSC ("Cookies can only
+    // be modified in a Server Action or Route Handler"). We therefore fire
+    // the Server Action `markSetupCompletedCookie` from a tiny client-side
+    // sibling (`<EnsureSetupCompletedCookie />`) that mounts on the same
+    // tree as the locked card. See app/init/actions.ts and
+    // app/init/EnsureSetupCompletedCookie.tsx for the actual implementation.
+    return (
+      <>
+        <EnsureSetupCompletedCookie />
+        <AlreadyDoneCard />
+      </>
+    );
   }
   // setup 没跑完 → orchestrator 落到第 1 屏; 各屏自己再 redirect 到正确位置
   redirect('/init/db');
 }
 ```
 
+Server Action (`app/init/actions.ts`) — sets `setup_completed=1` for 10 years:
+
+```ts
+'use server';
+import { cookies } from 'next/headers';
+
+export async function markSetupCompletedCookie(): Promise<void> {
+  (await cookies()).set('setup_completed', '1', {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365 * 10, // 10 years — mirrors mark-complete
+    sameSite: 'lax',
+    httpOnly: false,
+  });
+}
+```
+
+Client sibling (`app/init/EnsureSetupCompletedCookie.tsx`) — fires the action on mount:
+
+```tsx
+'use client';
+import { useEffect } from 'react';
+import { markSetupCompletedCookie } from './actions';
+
+export function EnsureSetupCompletedCookie() {
+  useEffect(() => {
+    markSetupCompletedCookie().catch(() => {
+      // Non-fatal: locked card still renders. Next navigation retries.
+    });
+  }, []);
+  return null;
+}
+```
+
 > 关键:orchestrator 必须设 cookie,否则已完成 setup 的新浏览器第一次访问 /login 会被中间件 → /init → /init 又是 locked → AlreadyDoneCard → 死循环。设了 cookie 后后续 navigation 走 middleware 第 2 步 allow。
+>
+> **Next.js 15.5+ 偏离**:原 spec 第 208-210 行的 `cookies().set(...)` 写法在 RSC 内会 500("Cookies can only be modified in a Server Action or Route Handler")。Workaround:Server Action + 隐形 client 组件。端到端行为一致 — `app/init/page.tsx` 注释 + Task 9 review 报告(b969b374)有详细说明。
 
 但要拿到 setup.wizard.admin_done 这个新标志需要新 helper。我倾向于在 `lib/setup.ts` 加:
 
