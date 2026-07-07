@@ -1,21 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Fresh-deploy gate only.
+ * Cookie-only setup gate.
  *
- * When the system is fresh (DATABASE_URL not set), redirect all traffic
- * to /init. The activation lock check (lib/activation) lives in a server
- * component guard, not here, because middleware runs in the edge runtime
- * and can't import mysql2.
+ * With the 3-URL wizard in place, the *only* signal middleware has about
+ * whether setup is done is the `setup_completed=1` cookie set by:
+ *   1. `/api/init/mark-complete` when step 3 succeeds, OR
+ *   2. The /init orchestrator when a fresh browser lands on /init after
+ *      setup is already complete (breaks the redirect loop).
  *
- * Allow-list: /init itself, Next.js internals (_next/, api/init/*), and
- * static assets. Everything else redirects to /init on a fresh deploy.
+ * Edge runtime can't import mysql2 to query app_config directly, so the
+ * cookie is the sole gate. The /init page itself does a server-side check
+ * via `/api/init/status` for the locked UI.
+ *
+ * Whitelist: /init, /init/*, /api/init/*, Next.js internals, static assets.
+ * Everything else: redirect to /init if cookie not set.
  */
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Always allow /init (the wizard) and its API routes
-  if (pathname === '/init' || pathname.startsWith('/api/init/')) {
+  // Always allow /init (the wizard + its 3 screens) and its API routes
+  if (pathname === '/init' || pathname.startsWith('/init/')) {
+    return NextResponse.next();
+  }
+  if (pathname.startsWith('/api/init/')) {
     return NextResponse.next();
   }
 
@@ -29,22 +37,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // If this browser completed setup, trust the cookie. Edge runtime
-  // doesn't see runtime .env writes, so the cookie is the only way for
-  // middleware to learn setup is done before the next server restart.
+  // Cookie gate: trust `setup_completed=1` to mean setup is done.
   if (req.cookies.get('setup_completed')?.value === '1') {
     return NextResponse.next();
   }
 
-  // Fresh deploy: no DATABASE_URL yet at startup → /init. The actual
-  // setup-completed check (app_config flag) lives in /init's API routes.
-  if (!process.env.DATABASE_URL) {
-    const url = req.nextUrl.clone();
-    url.pathname = '/init';
-    return NextResponse.redirect(url);
-  }
-
-  return NextResponse.next();
+  // Otherwise, force the wizard.
+  const url = req.nextUrl.clone();
+  url.pathname = '/init';
+  return NextResponse.redirect(url);
 }
 
 export const config = {
