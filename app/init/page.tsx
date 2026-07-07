@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { isSetupComplete } from '@/lib/setup';
-import { markSetupCompletedCookie } from './actions';
 import { EnsureSetupCompletedCookie } from './EnsureSetupCompletedCookie';
 
 export const dynamic = 'force-dynamic';
