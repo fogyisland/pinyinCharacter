@@ -16,23 +16,23 @@ function DesktopNav({ links, currentPath }: { links: readonly NavLink[]; current
   // Walk links in original group order; insert a wider gap when the group changes.
   let prevGroup: NavGroupId | null = null;
   return (
-    <nav className="hidden md:flex items-center text-sm">
+    <nav className="hidden md:flex flex-1 min-w-0 items-center justify-center flex-wrap text-sm">
       {links.map((item) => {
         const isFirstInGroup = item.group !== prevGroup;
         const separator = !isFirstInGroup && (
-          <span aria-hidden="true" className="px-2 text-ink-faint/50 select-none">·</span>
+          <span aria-hidden="true" className="px-1 text-ink-faint/50 select-none">·</span>
         );
         prevGroup = item.group;
         const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
-        const groupGap = isFirstInGroup && prevGroup !== null ? 'ml-5 pl-0' : '';
+        const groupGap = isFirstInGroup && prevGroup !== null ? 'ml-3 pl-0' : '';
         return (
-          <span key={item.href} className={'inline-flex items-center ' + groupGap}>
+          <span key={item.href} className={'inline-flex items-center shrink-0 ' + groupGap}>
             {separator}
             <Link
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={
-                'px-1 py-0.5 transition-colors hover:text-seal ' +
+                'px-1.5 py-0.5 whitespace-nowrap transition-colors hover:text-seal ' +
                 (isActive ? 'text-seal font-medium border-b-2 border-seal' : 'text-ink-soft')
               }
             >
@@ -94,26 +94,24 @@ export function Header() {
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
-      <div className="max-w-6xl mx-auto px-6 h-[72px] flex items-center justify-between gap-6">
-        <div className="flex items-center gap-6 min-w-0">
-          <Link
-            href="/"
-            className="flex items-center gap-2 hover:opacity-80 transition-opacity min-w-0 shrink-0"
-            aria-label={BRAND.name}
-          >
-            <Image
-              src="/logo.png"
-              alt={BRAND.name}
-              width={40}
-              height={40}
-              className="rounded-full shrink-0"
-            />
-            <span className="font-kai text-xl text-ink tracking-wide truncate hidden sm:inline">
-              {BRAND.name}
-            </span>
-          </Link>
-          <DesktopNav links={links} currentPath={currentPath} />
-        </div>
+      <div className="max-w-6xl mx-auto px-6 h-[72px] flex items-center gap-4">
+        <Link
+          href="/"
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0"
+          aria-label={BRAND.name}
+        >
+          <Image
+            src="/logo.png"
+            alt={BRAND.name}
+            width={40}
+            height={40}
+            className="rounded-full shrink-0"
+          />
+          <span className="font-kai text-xl text-ink tracking-wide truncate hidden sm:inline">
+            {BRAND.name}
+          </span>
+        </Link>
+        <DesktopNav links={links} currentPath={currentPath} />
         <div className="flex items-center gap-3 shrink-0">
           {safeMode && (
             <span className="hidden sm:inline text-xs px-2 py-0.5 rounded bg-success/15 text-success">

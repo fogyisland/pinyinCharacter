@@ -21,6 +21,9 @@ EXCLUDE_DIRS = {
     'playwright-report',
     'test-results',
     'coverage',
+    'tests',             # Unit/integration tests — never ship
+    '__tests__',         # Co-located test dirs — never ship
+    '__mocks__',         # Jest-style mocks — never ship
     '.turbo',
     '.vscode',
     '.idea',
@@ -41,6 +44,8 @@ EXCLUDE_FILES = {
     '*.tsbuildinfo',
     'Thumbs.db',
     '.DS_Store',
+    'vitest.config.ts',  # Test runner config — never ship to prod
+    'Up.rar',            # Self-archive — never recurse back into Up/
 }
 
 # Explicit files to always include at root (overrides EXCLUDE_FILES if matched)
