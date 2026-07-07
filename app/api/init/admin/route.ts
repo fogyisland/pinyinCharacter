@@ -2,13 +2,21 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { isSetupRouteEnabled } from '@/lib/setup';
+import { getPool } from '@/lib/db';
 
 /**
- * Step 2 of /init wizard. **Validation only** — page 2 collects admin credentials
- * and stores them in client state. The actual INSERT happens in step 3's
- * create-admin phase (`/api/init/create-admin`) after the users table exists.
+ * Step 2 of /init wizard. After validating the admin schema, writes the
+ * wizard step marker `setup.wizard.admin_done='true'` to app_config. This
+ * marker tells the orchestrator (/init, /init/admin, /init/execute pages)
+ * that step 2 has been reached, so subsequent visits skip the form and
+ * jump straight to step 3.
  *
- * Public: only callable when setup is incomplete OR setup.route_enabled=true.
+ * The actual user INSERT happens in step 3's `/api/init/create-admin`
+ * (which consumes the token from /api/init/stash-admin).
+ *
+ * All responses carry `Cache-Control: no-store` so a browser cannot replay
+ * a previously-seen step-2-completed state from its HTTP cache and skip
+ * form re-validation.
  */
 const adminSchema = z.object({
   username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
@@ -17,7 +25,7 @@ const adminSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  return withErrorHandling(async () => {
+  const result = await withErrorHandling(async () => {
     if (!(await isSetupRouteEnabled())) {
       return badRequest('setup_disabled', '/init is disabled.');
     }
@@ -26,8 +34,15 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
     }
-    // No DB write here — see route docstring. The wizard page stores these
-    // values in state and re-sends them to /api/init/create-admin in step 3.
+    // Write the wizard marker so the orchestrator can skip step 2 on re-entry.
+    await getPool().query(
+      `INSERT INTO app_config (\`key\`, value) VALUES ('setup.wizard.admin_done', 'true')
+       ON DUPLICATE KEY UPDATE value = VALUES(value)`,
+    );
     return NextResponse.json({ ok: true, data: { validated: true } });
   });
+  if (result instanceof NextResponse) {
+    result.headers.set('Cache-Control', 'no-store');
+  }
+  return result;
 }
