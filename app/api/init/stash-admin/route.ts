@@ -13,9 +13,12 @@ const stashAdminSchema = z.object({
 /** Step 2 of /init wizard. Validates the admin schema and stashes the
  *  credentials server-side (in-memory, 30s TTL), returning a single-use
  *  token. Step 3 will POST this token to /api/init/create-admin which
- *  consumes it. The password NEVER leaves server memory. */
+ *  consumes it. The password NEVER leaves server memory.
+ *
+ *  All responses carry `Cache-Control: no-store` so a browser cannot replay
+ *  a previously-issued token from its HTTP cache. */
 export async function POST(req: NextRequest) {
-  return withErrorHandling(async () => {
+  const result = await withErrorHandling(async () => {
     if (!(await isSetupRouteEnabled())) {
       return badRequest('setup_disabled', '/init is disabled.');
     }
@@ -27,4 +30,8 @@ export async function POST(req: NextRequest) {
     const token = stashAdminCredentials(parsed.data);
     return NextResponse.json({ ok: true, data: { token, expiresInSec: 30 } });
   });
+  if (result instanceof NextResponse) {
+    result.headers.set('Cache-Control', 'no-store');
+  }
+  return result;
 }

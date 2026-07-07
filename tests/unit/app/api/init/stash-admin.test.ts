@@ -71,4 +71,11 @@ describe('POST /api/init/stash-admin', () => {
     expect((await res.json()).error.code).toBe('setup_disabled');
     expect(mockedStash).not.toHaveBeenCalled();
   });
+
+  it('sets Cache-Control: no-store on the happy-path response', async () => {
+    mockedStash.mockReturnValueOnce('abc123def456abc123def456abc12345');
+    const res = await POST(postReq({ username: 'admin', password: 'supersecret' }));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('cache-control')).toBe('no-store');
+  });
 });
