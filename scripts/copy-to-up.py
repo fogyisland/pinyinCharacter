@@ -6,6 +6,12 @@ import gzip
 SRC = '.'
 DST = './Up'
 
+# rmtree(Up/) at start — re-runs are hermetic. (If Up/ doesn't exist yet,
+# shutil.rmtree(..., ignore_errors=True) is a no-op.)
+if os.path.exists(DST):
+    shutil.rmtree(DST, ignore_errors=True)
+os.makedirs(DST, exist_ok=True)
+
 # Excludes — never copy these to the deploy bundle
 EXCLUDE_DIRS = {
     'node_modules',
@@ -27,6 +33,7 @@ EXCLUDE_DIRS = {
     '.turbo',
     '.vscode',
     '.idea',
+    '.tmp',              # Throwaway scratch (font screenshots, dev logs)
 }
 
 # Path-relative excludes (matched against relative path from SRC).
@@ -161,4 +168,152 @@ print(f'Copied {count} files ({bytes_total/1024/1024:.1f} MB)')
 if gzipped_count:
     saved = (gzipped_bytes_in - gzipped_bytes_out) / 1024 / 1024
     print(f'Gzipped {gzipped_count} files: {gzipped_bytes_in/1024/1024:.1f} MB → {gzipped_bytes_out/1024/1024:.1f} MB (saved {saved:.1f} MB)')
+
+
+# ---------------------------------------------------------------------------
+# Generate Up/.env — minimal safe defaults + wizard guidance.
+#
+# PinYinCharacter's flow is cleaner than the reference MINIMAXVoiceProject:
+#   - No IS_INITIALIZED flag. middleware.ts reads the `setup_completed` cookie
+#     and redirects to /init when missing. The /init orchestrator detects
+#     fresh DB (no DATABASE_URL) and routes to /init/db → /init/admin →
+#     /init/execute. After /init/execute mark-complete, the cookie is set
+#     and the app is locked.
+#   - DATABASE_URL gets written by /init Step 1 (lib/setup.ts writeEnvVars).
+#   - JWT_SECRET must be set on prod; local dev auto-generates.
+#   - Everything else (AI keys, SMTP, etc.) goes through /admin/settings UI.
+# ---------------------------------------------------------------------------
+def write_up_env():
+    env_path = os.path.join(DST, '.env')
+    content = '''# Up/ bundle .env — customer self-deploy
+#
+# 运行时配置全部走 /init 向导 / /admin/settings 系统配置:
+#   - DATABASE_URL → /init 第一屏填(自动写回 .env)
+#   - JWT_SECRET   → 产线必填,本地自动生成
+#   - 其他配置    → /admin/settings 系统配置(admin 登录后可见)
+#
+# 安全默认值:下面 1 行不要改。/init 走完后会自动设置 setup.completed 标志,
+# 由 middleware.ts 用 setup_completed cookie 锁定 /init 路径,无需 env flag。
+
+NODE_ENV="production"
+'''
+    with open(env_path, 'w', encoding='utf-8', newline='\n') as f:
+        f.write(content)
+
+
+# ---------------------------------------------------------------------------
+# Generate Up/README.md — 4-step customer quick-start.
+# ---------------------------------------------------------------------------
+def write_up_readme():
+    readme_path = os.path.join(DST, 'README.md')
+    content = '''# 字韵 — 部署包
+
+> 客户自部署版本(Up/)。首次启动走 `/init` 向导,无需手动编辑 `.env`。
+
+## 快速开始(4 步)
+
+```bash
+# 0. 修复权限(zip 跨平台传输可能丢 Unix mode,显式修一次)
+chmod -R u+rwX,g+rX,o+rX .
+
+# 1. 安装依赖
+npm ci --legacy-peer-deps
+
+# 2. 构建
+npm run build
+
+# 3. 启动(默认端口 4444)
+npm start -- -p 4444
+```
+
+启动后访问 `http://your-domain:4444/`,根路由检测到 `setup_completed` cookie 缺失会**自动 307 跳到 `/init` 向导**。
+
+**`/init` 三屏走完即可上线**:
+1. `/init/db` — 填 MySQL 连接(host / port / user / password / db),自动写入 `DATABASE_URL`
+2. `/init/admin` — 创建第一个管理员账号(username + password + email)
+3. `/init/execute` — 一键执行 9 阶段初始化(建表 + 导入数据 + 创建账号 + 激活 + 迁移 + mark-complete)
+
+完成后:
+- `setup_completed=1` cookie 写入浏览器
+- 根路由改跳 `/login`(已就绪)
+- `/init` 路径被 middleware 锁定,显示「已完成」卡片
+
+> 整个部署流程**不需要手动编辑 `.env`** — 全部运行时配置在 `/init` 向导 / `/admin/settings` 系统配置里完成。`Up/.env` 只有 1 行安全默认值,不要手改。
+
+## 关键文件
+
+| 文件 | 作用 |
+|------|------|
+| `.env` | **不要手填** — 只含 `NODE_ENV="production"`,运行时配置走 `/init` 向导写回 |
+| `.env.example` | 模板 + 全部变量说明(仅供运维参考,**不是**部署必填) |
+| `DEPLOY.md` | 完整部署指南(Nginx 反代 + systemd + MySQL 初始化 + 字体生成 + 数据导入) |
+| `README.md` | 项目使用说明(部署完成后给最终用户看) |
+| `scripts/copy-to-up.py` | 重新打包工具(从主仓库根目录跑) |
+| `app/init/` | `/init` 三屏向导源码 |
+
+## 部署架构要求
+
+- **Node.js 20+**(项目用 Next.js 15 + React 19)
+- **MySQL 8.0+**(utf8mb4_unicode_ci 字符集,见 `DEPLOY.md`)
+- **可选**:Nginx 反代(详见 `DEPLOY.md`)+ systemd 守护进程
+- **首次启动**:`/init` 自动:
+  - 创建 25 张表 + 写入 `app_config` 默认值
+  - 导入古诗 / 佛经 / 字典
+  - 创建第一个 admin 账号(填表时设置)
+  - 写入 `DATABASE_URL` 到 `.env`
+  - 写入 `setup.completed=true` 到 `app_config`
+  - 设置 `setup_completed=1` cookie(浏览器锁定 `/init`)
+
+## 出问题?
+
+1. 看 `DEPLOY.md` 故障排查章节
+2. 看启动日志(Nginx / systemd journal)
+3. 确认 MySQL 连接信息正确(账号、host、库名)
+
+## 升级
+
+`DEPLOY.md` 升级流程速查。**必须**在 `npm run build` 之前 `rm -rf .next`。
+
+## 重新打包
+
+如果从 main 拉了新代码想重新出包:
+```bash
+cd <main-repo>
+python3 scripts/copy-to-up.py    # 或 py / python,看环境
+```
+会清空 `Up/` 并重新生成(含新的 `.env` 极简模板和 README)。
+'''
+    with open(readme_path, 'w', encoding='utf-8', newline='\n') as f:
+        f.write(content)
+
+
+# ---------------------------------------------------------------------------
+# normalize_permissions(Up/) — chmod 644/755 递归。
+#
+# shutil.copy2 + os.makedirs 的默认 mode 受 umask 影响:
+#   - macOS(umask 022)出来 644/755 ✓
+#   - 某些 Linux 配置出来 750/640,supervisor 切非 root 用户启不起来
+#   - Windows zip 后传到 Linux 解压,mode 可能完全不对
+# 显式 chmod 一次,产线解压后不需要再批量修权限。
+# ---------------------------------------------------------------------------
+def normalize_permissions(directory):
+    for entry in os.scandir(directory):
+        full = entry.path
+        if entry.is_dir():
+            try:
+                os.chmod(full, 0o755)
+            except OSError:
+                pass  # Windows + non-Unix mode
+            normalize_permissions(full)
+        elif entry.is_file():
+            try:
+                os.chmod(full, 0o644)
+            except OSError:
+                pass
+
+
+write_up_env()
+write_up_readme()
+normalize_permissions(DST)
+print(f'Generated Up/.env + Up/README.md + normalized permissions')
 
