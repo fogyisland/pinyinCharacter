@@ -14,6 +14,27 @@ interface SubStep {
   detail?: string;
 }
 
+// Response types — mirror scripts/init-db.ts + scripts/migrate.ts return shapes.
+interface InitTablesResponse { statementsRun: number; tablesNow: number; }
+interface InitAppConfigResponse { inserted: number; totalRows: number; }
+interface AutoPopulateResponse { inserted: number; skipped: boolean; failed?: string; }
+interface CreateAdminResponse { userId: number; username: string; }
+interface InitActivateResponse { seeded: boolean; shortName: string; }
+interface MigrateResponse { files: number; statements: number; }
+interface MarkCompleteResponse { completed: true; }
+
+/** Discriminated union: each phase pins its request body + response shape so a
+ *  future API field rename surfaces as a tsc error, not a silent mis-format. */
+type Phase =
+  | { id: 'tables';       endpoint: '/api/init/init-tables';    body?: never; format: (d: InitTablesResponse)    => string }
+  | { id: 'app_config';   endpoint: '/api/init/init-app-config'; body?: never; format: (d: InitAppConfigResponse) => string }
+  | { id: 'poems';        endpoint: '/api/init/init-poems';     body?: never; format: (d: AutoPopulateResponse)  => string }
+  | { id: 'sutras';       endpoint: '/api/init/init-sutras';    body?: never; format: (d: AutoPopulateResponse)  => string }
+  | { id: 'chars';        endpoint: '/api/init/init-chars';     body?: never; format: (d: AutoPopulateResponse)  => string }
+  | { id: 'create_admin'; endpoint: '/api/init/create-admin';   body: { token: string }; format: (d: CreateAdminResponse) => string }
+  | { id: 'activate';     endpoint: '/api/init/init-activate';  body?: never; format: (d: InitActivateResponse)  => string }
+  | { id: 'migrations';   endpoint: '/api/init/migrate';        body?: never; format: (d: MigrateResponse)       => string };
+
 const INITIAL: SubStep[] = [
   { id: 'tables', label: '创建表结构', status: 'idle' },
   { id: 'app_config', label: '写入 app_config 默认值', status: 'idle' },
@@ -63,7 +84,7 @@ export function InitExecuteForm() {
     setErr(null);
     setSubSteps(INITIAL.map((s) => ({ ...s, status: 'idle', detail: undefined })));
 
-    const phases: Array<{ id: SubStep['id']; endpoint: string; body?: any; format: (d: any) => string }> = [
+    const phases: Phase[] = [
       { id: 'tables', endpoint: '/api/init/init-tables',
         format: (d) => `${d.statementsRun} 条 DDL 写入完成,当前 ${d.tablesNow} 张表` },
       { id: 'app_config', endpoint: '/api/init/init-app-config',
