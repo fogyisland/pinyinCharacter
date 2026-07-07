@@ -24,20 +24,20 @@ export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T | Ne
   }
 }
 
-export function badRequest(code: string, message: string) {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 400 });
+export function badRequest(code: string, message: string, init?: ResponseInit) {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 400, ...(init ?? {}) });
 }
 
-export function notFound(code = 'not_found', message = 'not_found') {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 404 });
+export function notFound(code = 'not_found', message = 'not_found', init?: ResponseInit) {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 404, ...(init ?? {}) });
 }
 
-export function forbidden(code = 'forbidden', message = 'forbidden') {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 403 });
+export function forbidden(code = 'forbidden', message = 'forbidden', init?: ResponseInit) {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 403, ...(init ?? {}) });
 }
 
-export function unauthorized(code = 'unauthorized', message = 'unauthorized') {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 401 });
+export function unauthorized(code = 'unauthorized', message = 'unauthorized', init?: ResponseInit) {
+  return NextResponse.json({ ok: false, error: { code, message } }, { status: 401, ...(init ?? {}) });
 }
 
 export function serviceUnavailable(code: string, message: string) {
