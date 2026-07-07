@@ -201,6 +201,26 @@ export async function isSetupRouteEnabled(): Promise<boolean> {
 }
 
 /**
+ * Whether the admin step of the /init wizard has been completed.
+ * Set by /api/init/admin after validation passes. Used by /init/admin
+ * page to decide whether to render the form or redirect to /init/execute.
+ *
+ * Defensive: returns false on any DB error or missing DATABASE_URL.
+ */
+export async function isInitWizardAdminDone(): Promise<boolean> {
+  if (!process.env.DATABASE_URL) return false;
+  try {
+    const { getPool } = await import('./db');
+    const [rows] = await getPool().query<any[]>(
+      `SELECT value FROM app_config WHERE \`key\` = 'setup.wizard.admin_done' LIMIT 1`,
+    );
+    return rows.length > 0 && rows[0].value === 'true';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Mark setup as complete in app_config. Called by /api/init/run-seed after
  * initDb() succeeds. Sets both the completed flag and route_enabled=false
  * so the wizard locks itself out by default.

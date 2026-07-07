@@ -1,16 +1,19 @@
 import { NextResponse } from 'next/server';
-import { isSetupComplete, isSetupRouteEnabled } from '@/lib/setup';
+import { isSetupComplete, isSetupRouteEnabled, isInitWizardAdminDone } from '@/lib/setup';
 
 /**
- * Read-only status endpoint used by /init page on mount to decide
- * whether to show the wizard form or the "already done, go to login"
- * card. Returns { setupComplete, routeEnabled }.
+ * Read-only status endpoint used by /init page on mount and by the
+ * orchestrator to decide which wizard screen (or locked card) to show.
+ * Returns { setupComplete, routeEnabled, adminDone }.
  */
 export async function GET() {
-  const setupComplete = await isSetupComplete();
-  const routeEnabled = await isSetupRouteEnabled();
+  const [setupComplete, routeEnabled, adminDone] = await Promise.all([
+    isSetupComplete(),
+    isSetupRouteEnabled(),
+    isInitWizardAdminDone(),
+  ]);
   return NextResponse.json({
     ok: true,
-    data: { setupComplete, routeEnabled },
+    data: { setupComplete, routeEnabled, adminDone },
   });
 }
