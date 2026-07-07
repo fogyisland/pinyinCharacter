@@ -58,12 +58,16 @@ describe('POST /api/init/create-admin (token-based)', () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error.code).toBe('invalid_input');
     expect(mockedConsume).not.toHaveBeenCalled();
+    // Secret-bearing endpoint — must never be HTTP-cached
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
   it('returns 400 invalid_input when token wrong length', async () => {
     const res = await POST(postReq({ token: 'short' }));
     expect(res.status).toBe(400);
     expect((await res.json()).error.code).toBe('invalid_input');
+    // Secret-bearing endpoint — must never be HTTP-cached
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
   it('returns 401 token_expired when consume returns null', async () => {
@@ -72,6 +76,8 @@ describe('POST /api/init/create-admin (token-based)', () => {
     expect(res.status).toBe(401);
     expect((await res.json()).error.code).toBe('token_expired');
     expect(createAdminUserMock).not.toHaveBeenCalled();
+    // Secret-bearing endpoint — must never be HTTP-cached
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
   it('returns 400 setup_disabled when route locked', async () => {
@@ -80,5 +86,7 @@ describe('POST /api/init/create-admin (token-based)', () => {
     expect(res.status).toBe(400);
     expect((await res.json()).error.code).toBe('setup_disabled');
     expect(mockedConsume).not.toHaveBeenCalled();
+    // Secret-bearing endpoint — must never be HTTP-cached
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 });
