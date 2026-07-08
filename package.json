@@ -13,6 +13,7 @@
     "radicals:build": "tsx scripts/build-radicals.ts",
     "radicals:import": "tsx --env-file=.env scripts/import-radicals.ts",
     "sutras:build": "tsx scripts/build-sutras.ts",
+    "sutras:enrich-pinyin": "tsx scripts/enrich-sutra-pinyin.ts",
     "strokes:build": "tsx scripts/build-strokes.ts",
     "fonts:download": "tsx scripts/download-ancient-fonts.ts",
     "fonts:download-hard-pen": "tsx scripts/fonts/download-hard-pen-fonts.ts",
