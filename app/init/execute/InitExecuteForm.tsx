@@ -114,7 +114,9 @@ export function InitExecuteForm() {
         });
         const data = await res.json();
         if (!data.ok) {
-          const detail = data.error?.message ?? '失败';
+          const detail = data.error?.code
+            ? `${data.error.code}: ${data.error.message ?? '失败'}`
+            : (data.error?.message ?? '失败');
           update(phase.id, { status: 'failed', detail });
           setErr(`${phase.id} 失败: ${detail}`);
           setBusy(false);
