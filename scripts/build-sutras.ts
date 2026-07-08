@@ -17,7 +17,7 @@
  * Run with:  npx tsx scripts/build-sutras.ts
  *            (or `npm run sutras:build`)
  */
-import { mkdirSync, readFileSync, readdirSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPool, closePool } from '../lib/db';
 import { writeSutrasFs, readSutraManifest } from '../lib/sutras-fs';
@@ -26,29 +26,6 @@ import type { SutraChunk } from '../lib/sutra-types';
 
 const SUTRAS_DIR = join(process.cwd(), 'data', 'sutras');
 const SOURCE_TAG = 'prebuilt-json:data/sutras';
-
-function ensureDataDir(): void {
-  // mkdirSync(recursive) is a no-op if the dir exists. Safety check only —
-  // production deployments ship data/sutras/* via the bundle.
-  if (!existsSyncCompat(SUTRAS_DIR)) {
-    mkdirSync(SUTRAS_DIR, { recursive: true });
-  }
-}
-
-function existsSyncCompat(p: string): boolean {
-  try {
-    readdirSync(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function listSlugFiles(): string[] {
-  return readdirSync(SUTRAS_DIR)
-    .filter((f) => f.endsWith('.json') && f !== 'manifest.json')
-    .sort();
-}
 
 function readSutraFile(slug: string): SutraChunk[] {
   const path = join(SUTRAS_DIR, `${slug}.json`);
@@ -67,8 +44,6 @@ function readSutraFile(slug: string): SutraChunk[] {
 }
 
 export async function buildSutras(): Promise<number> {
-  ensureDataDir();
-
   const manifest = readSutraManifest();
   if (!manifest) {
     throw new Error(
@@ -79,7 +54,6 @@ export async function buildSutras(): Promise<number> {
   const pool = getPool();
   const chunksBySlug: Record<string, SutraChunk[]> = {};
   let upserted = 0;
-  let manifestNeedsRewrite = false;
 
   for (const item of manifest.items) {
     try {
@@ -131,7 +105,6 @@ export async function buildSutras(): Promise<number> {
       (existing) => manifestItemMap.get(existing.slug) ?? existing,
     );
     writeSutrasFs({ items: mergedItems, chunksBySlug });
-    manifestNeedsRewrite = true;
     console.log(
       `[build-sutras] wrote ${Object.keys(chunksBySlug).length} files + manifest (${mergedItems.length} items) to data/sutras/`,
     );
