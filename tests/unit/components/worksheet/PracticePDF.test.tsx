@@ -248,15 +248,15 @@ describe('PracticePDF — pen-english / four-line branch (English trace PDF)', (
     const blob = await renderPdf('A4', 'pen-english').toBlob();
     const buf = Buffer.from(await blob.arrayBuffer());
     const streams = decompressStreams(buf);
-    // The 4-line PDF uses #4a90d9 (top/bottom), #d94c4c (upper-mid),
-    // #c0392b (lower-mid, thick 2.2pt). react-pdf emits these as
-    // DeviceRGB color spaces via the SCN (Set Color N-colorant) operator
-    // at full IEEE-754 float precision — not the shorter `rg` setrgbcolor.
-    // The exact float values come from /255 conversion:
-    //   #4a90d9 = 74/255, 144/255, 217/255
+    // The 4-line PDF uses #1d4ed8 (top/bottom, dark blue), #d94c4c
+    // (upper-mid red), #c0392b (lower-mid, thick 2.2pt deep red). react-pdf
+    // emits these as DeviceRGB color spaces via the SCN (Set Color N-colorant)
+    // operator at full IEEE-754 float precision — not the shorter `rg`
+    // setrgbcolor. The exact float values come from /255 conversion:
+    //   #1d4ed8 = 29/255, 78/255, 216/255
     //   #d94c4c = 217/255, 76/255, 76/255
     //   #c0392b = 192/255, 57/255, 43/255
-    expect(streams).toContain('0.2901960784313726 0.5647058823529412 0.8509803921568627 SCN'); // #4a90d9
+    expect(streams).toContain('0.11372549019607843 0.3058823529411765 0.8470588235294118 SCN'); // #1d4ed8
     expect(streams).toContain('0.8509803921568627 0.2980392156862745 0.2980392156862745 SCN'); // #d94c4c
     expect(streams).toContain('0.7529411764705882 0.2235294117647059 0.16862745098039217 SCN'); // #c0392b
   });

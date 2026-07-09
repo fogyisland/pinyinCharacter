@@ -132,10 +132,10 @@ function PracticeCell({ size, paperSize, style }: { size: number; paperSize: Pap
     const gap = size * (12 / 38);
     return (
       <Svg width={width} height={size}>
-        <Line x1={0} y1={0} x2={width} y2={0} stroke="#4a90d9" strokeWidth={1.2} />
+        <Line x1={0} y1={0} x2={width} y2={0} stroke="#1d4ed8" strokeWidth={1.2} />
         <Line x1={0} y1={gap} x2={width} y2={gap} stroke="#d94c4c" strokeWidth={1} />
         <Line x1={0} y1={gap * 2} x2={width} y2={gap * 2} stroke="#c0392b" strokeWidth={2.2} />
-        <Line x1={0} y1={gap * 3} x2={width} y2={gap * 3} stroke="#4a90d9" strokeWidth={1.2} />
+        <Line x1={0} y1={gap * 3} x2={width} y2={gap * 3} stroke="#1d4ed8" strokeWidth={1.2} />
       </Svg>
     );
   }
