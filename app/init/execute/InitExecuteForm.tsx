@@ -245,7 +245,7 @@ export function InitExecuteForm() {
   return (
     <>
       <h1 className="mb-2 text-2xl font-semibold text-ink">首次部署 — 第 3 步 / 共 3 步</h1>
-      <p className="mb-6 text-sm text-ink-soft">
+      <p className="mb-2 text-sm text-ink-soft">
         点击下方按钮开始初始化。系统会依次执行以下步骤,每步状态实时显示。<br />
         创建管理员:<code className="rounded bg-ink/5 px-1">{creds.username}</code>
         {creds.email ? (
@@ -255,6 +255,12 @@ export function InitExecuteForm() {
           </>
         ) : null}
       </p>
+      <div className="mb-6 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
+        <Check className="h-3.5 w-3.5 text-green-700" />
+        <span>
+          步骤 0 已完成 — 管理员凭证已在 <code className="rounded bg-green-100 px-1">/init/admin</code> 提交时缓存到服务端,token 有效期 120 秒(create-admin 阶段会消耗它)。
+        </span>
+      </div>
       <InitHeader currentStep={2} />
       {err && (
         <div className="my-4 rounded-md border border-seal/30 bg-seal/5 p-3 text-sm text-seal">
