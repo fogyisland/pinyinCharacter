@@ -60,8 +60,9 @@ describe('build-sutras JSON-reader pipeline', () => {
     expect(chunks.length).toBe(1);
     expect(chunks[0].content.length).toBe(7);
     expect(chunks[0].pinyin.length).toBe(7);
-    // First line: 观自在菩萨 (4 chars + 1 space = 5 tokens?)
-    // Actually cbeta-parser strips spaces. Just assert first pinyin value is a string.
+    // Pre-enriched JSONs already segment content/pinyin by line; just confirm
+    // the first pinyin value is a non-empty array of strings rather than
+    // asserting a specific segmentation scheme.
     expect(typeof chunks[0].pinyin[0][0]).toBe('string');
   });
 });

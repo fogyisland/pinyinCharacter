@@ -138,8 +138,11 @@ export function InitExecuteForm() {
       const r = await fetch('/api/init/mark-complete', { method: 'POST' });
       const d = await r.json();
       if (!d.ok) {
-        update('mark_complete', { status: 'failed', detail: d.error?.message ?? '失败' });
-        setErr(d.error?.message ?? 'mark-complete 失败');
+        const detail = d.error?.code
+          ? `${d.error.code}: ${d.error.message ?? '失败'}`
+          : (d.error?.message ?? '失败');
+        update('mark_complete', { status: 'failed', detail });
+        setErr(`mark-complete ${detail}`);
         setBusy(false);
         return;
       }
