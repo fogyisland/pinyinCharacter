@@ -23,7 +23,8 @@ EXCLUDE_DIRS = {
     'backups',
     'data/runtime',
     'Up',                # Don't recurse into the output dir
-    'public/strokes',    # Regenerable via pnpm strokes:build
+    # public/strokes/ is TRACKED in git (as of 2026-07-09) — included in Up/
+    # bundle so prod deploys skip the 10-min `npm run strokes:build` step.
     'playwright-report',
     'test-results',
     'coverage',
@@ -79,7 +80,8 @@ def should_exclude_path(rel):
 
 # Specific files to always exclude by full relative path
 EXCLUDE_FILE_PATHS = {
-    'data/strokes-manifest.json',                 # Regenerable via pnpm strokes:build
+    # data/strokes-manifest.json is TRACKED in git (as of 2026-07-09) —
+    # included in Up/ bundle so prod deploys skip `npm run strokes:build`.
     'data/poems/yuefu.json',                      # Collection files (regenerable)
     'data/poems/shijiu.json',
     'data/poems/cifu.json',

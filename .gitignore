@@ -23,9 +23,11 @@ data/runtime/
 # mysqldump / db backups (huge binary, regenerable)
 backups/
 
-# build artifacts (regenerate with pnpm strokes:build)
-public/strokes/
-data/strokes-manifest.json
+# build artifacts (regenerate with pnpm strokes:build) — TRACKED in git as
+# of 2026-07-09 so deploys don't have to wait for the 10-min CDN fetch.
+# Local files stay in public/strokes/ unchanged; .gitignore line removed.
+# public/strokes/
+# data/strokes-manifest.json
 
 # poems build artifacts (regenerate with pnpm tsx scripts/build-poems-extra.ts)
 # These are collection files (slug-named), not individual poem files (id-named).
