@@ -94,37 +94,37 @@ async function readLevel(char: string): Promise<CharLevel> {
 
 export async function getEtymology(char: string): Promise<Etymology | null> {
   const pool = getPool();
-  // story/generation provenance is moving to data/content/<char>.json, but the
-  // column still exists in the DB for in-flight migrations. Read JSON first,
-  // fall back to the legacy column.
+  // post-2026-06-17 slim-DB: story data lives in data/content/<char>.json;
+  // char_etymology table only carries era_*_font + era_*_has glyph metadata.
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`,
             era_jiaguwen_font, era_jiaguwen_has,
             era_jinwen_font, era_jinwen_has,
             era_xiaozhuan_font, era_xiaozhuan_has,
             era_lishu_font, era_lishu_has,
-            era_kaishu_font, era_kaishu_has,
-            story, generated_by, generated_at
+            era_kaishu_font, era_kaishu_has
      FROM char_etymology
      WHERE \`char\` = ?
      LIMIT 1`,
     [char]
   );
+  // Story + generation provenance ALWAYS come from data/content/<char>.json.
+  // The DB row only exists to carry era glyph metadata; if both the row and
+  // the JSON content are missing for a given char, return null so the
+  // /etymology/[char] page renders the soft "字库中无字源" empty state.
+  const content = await getContent(char);
+  const story = content?.etymology?.story ?? null;
+  const generatedBy = content?.etymology?.generated_by ?? null;
+  const generatedAt = content?.etymology?.generated_at ?? null;
+  const cov = getEraCoverage(char);
   if (rows.length === 0) {
-    // Slim-DB path: no char_etymology row, but story may live in data/content/<char>.json.
-    // Era glyph availability is filled from data/era-coverage.json (built by
-    // scripts/build-era-coverage.ts) so the morph component can render ancient
-    // forms even when the DB row is missing.
-    const contentOnly = await getContent(char);
-    const storyOnly = contentOnly?.etymology?.story ?? null;
-    if (!storyOnly) return null;
-    const cov = getEraCoverage(char);
+    if (!story) return null;
     return {
       char,
       eraGlyphs: buildEraGlyphs(char, cov, null),
-      story: storyOnly,
-      generatedBy: contentOnly?.etymology?.generated_by ?? null,
-      generatedAt: contentOnly?.etymology?.generated_at ?? null,
+      story,
+      generatedBy,
+      generatedAt,
       level: await readLevel(char),
     };
   }
@@ -134,13 +134,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
   // were never backfilled after the refactor that moved era coverage to JSON,
   // and trust them here and the morph component renders only kaishu for every
   // char. Fall back to the DB column only if the JSON has no entry.
-  const cov = getEraCoverage(char);
   const eraGlyphs: EraGlyph[] = buildEraGlyphs(char, cov, r);
-  const content = await getContent(char);
-  const story = content?.etymology?.story ?? r.story ?? null;
-  const generatedBy = content?.etymology?.generated_by ?? r.generated_by ?? null;
-  const generatedAt = content?.etymology?.generated_at
-    ?? (r.generated_at ? r.generated_at.toISOString() : null);
   return {
     char: r.char,
     eraGlyphs,
