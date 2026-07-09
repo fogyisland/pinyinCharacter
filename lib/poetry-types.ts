@@ -5,6 +5,7 @@ export interface PoemListItem {
   title: string;
   author: string;
   dynasty: Dynasty;
+  category: string | null;
   form: string | null;
 }
 
@@ -12,6 +13,7 @@ export interface PoemDetail extends PoemListItem {
   content: string[];
   pinyin: string[][];
   appreciation: string | null;
+  source: string;
 }
 
 export interface PoemListResult {

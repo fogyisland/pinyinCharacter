@@ -58,7 +58,7 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
   const start = (page - 1) * pageSize;
   const slice = filtered.slice(start, start + pageSize);
   const items: PoemListItem[] = slice.map(i => ({
-    id: i.id, title: i.title, author: i.author, dynasty: i.dynasty as Dynasty, form: i.form,
+    id: i.id, title: i.title, author: i.author, dynasty: i.dynasty as Dynasty, category: i.category, form: i.form,
   }));
   return { items, total: filtered.length, page, pageSize };
 }
