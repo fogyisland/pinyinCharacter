@@ -54,19 +54,16 @@ export async function importContent(): Promise<ImportResult> {
         if ((r as any).affectedRows > 0) result.imported.meaning_zh.push(char);
       }
 
-      // etymology_story: 整行 upsert, era_*_has 默认 0 (legacy top-level + full-shape etymology.story)
+      // post-2026-06-17 slim-DB: story data lives in data/content/<char>.json,
+      // not in char_etymology. Just ensure a row exists so /etymology/[char] has
+      // a target; era_*_has defaults from DDL handle the rest (kaishu=1, others=0).
       const etymologyStory = parsed.etymology_story ?? parsed.etymology?.story;
       if (etymologyStory !== undefined) {
         await pool.query(
-          `INSERT INTO char_etymology
-             (\`char\`, story, era_jiaguwen_has, era_jinwen_has,
-              era_xiaozhuan_has, era_lishu_has, era_kaishu_has, generated_by, generated_at)
-           VALUES (?, ?, 0, 0, 0, 0, 1, 'claude-handwritten', NOW())
-           ON DUPLICATE KEY UPDATE
-             story = VALUES(story),
-             generated_by = VALUES(generated_by),
-             generated_at = VALUES(generated_at)`,
-          [char, etymologyStory]
+          `INSERT INTO char_etymology (\`char\`, era_kaishu_has)
+           VALUES (?, 1)
+           ON DUPLICATE KEY UPDATE era_kaishu_has = 1`,
+          [char]
         );
         result.imported.etymology_story.push(char);
       }

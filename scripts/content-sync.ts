@@ -367,11 +367,13 @@ async function writeBackToDb(
   if (content.dict?.variants) {
     await pool.execute(`UPDATE chars SET variants = ? WHERE \`char\` = ?`, [JSON.stringify(content.dict.variants), char]);
   }
+  // post-2026-06-17 slim-DB: story data lives in data/content/<char>.json,
+  // not in char_etymology. Just ensure a row exists for this char.
   if (content.etymology?.story) {
     await pool.execute(
-      `INSERT INTO char_etymology (\`char\`, story, generated_by, generated_at) VALUES (?, ?, ?, NOW())
-       ON DUPLICATE KEY UPDATE story=VALUES(story), generated_by=VALUES(generated_by), generated_at=NOW()`,
-      [char, content.etymology.story, content.generated_by ?? 'content-sync'],
+      `INSERT INTO char_etymology (\`char\`, era_kaishu_has) VALUES (?, 1)
+       ON DUPLICATE KEY UPDATE era_kaishu_has = 1`,
+      [char],
     );
   }
   if (content.rare?.meaning || content.rare?.story) {
