@@ -22,6 +22,18 @@ const config: NextConfig = {
   // PDFDownloadLink in PracticeTemplate, this avoids the "PDFDownloadLink
   // is a web specific API" throw on SSR.
   transpilePackages: ['@react-pdf/renderer'],
+  // Image Optimization fallback (2026-07-09): when sharp is missing or the
+  // wrong platform binary (e.g. prod Linux without `sharp-linux-x64` after
+  // `npm ci` from a Windows-built lockfile), `/_next/image` returns 400
+  // "The requested resource isn't a valid image". `unoptimized: true` makes
+  // <Image> render the raw src instead — no resize, no WebP/AVIF, just the
+  // original file. Trade-off: more bytes on the wire, but no native deps
+  // and the page actually loads. Long-term: install sharp properly via
+  // `rm -rf node_modules && npm ci --legacy-peer-deps` on the target
+  // platform, then flip this back to false.
+  images: {
+    unoptimized: true,
+  },
 };
 
 export default config;
