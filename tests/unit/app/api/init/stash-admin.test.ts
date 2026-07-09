@@ -36,7 +36,7 @@ describe('POST /api/init/stash-admin', () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data.token).toBe('abc123def456abc123def456abc12345');
-    expect(body.data.expiresInSec).toBe(30);
+    expect(body.data.expiresInSec).toBe(120);
     expect(mockedStash).toHaveBeenCalledWith({ username: 'admin', password: 'supersecret', email: undefined });
   });
 

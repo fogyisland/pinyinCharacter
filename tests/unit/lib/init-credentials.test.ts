@@ -26,10 +26,10 @@ describe('consumeAdminCredentials', () => {
     expect(consumeAdminCredentials('a'.repeat(32))).toBeNull();
   });
 
-  it('returns null after expiry (>30s)', () => {
+  it('returns null after expiry (>120s)', () => {
     vi.useFakeTimers();
     const t = stashAdminCredentials({ username: 'admin', password: 'supersecret' });
-    vi.advanceTimersByTime(31_000);
+    vi.advanceTimersByTime(121_000);
     expect(consumeAdminCredentials(t)).toBeNull();
     vi.useRealTimers();
   });
@@ -39,9 +39,9 @@ describe('gcExpired', () => {
   it('removes only expired entries', () => {
     vi.useFakeTimers();
     const t1 = stashAdminCredentials({ username: 'one', password: 'x' });
-    vi.advanceTimersByTime(20_000);
+    vi.advanceTimersByTime(70_000);
     const t2 = stashAdminCredentials({ username: 'two', password: 'y' });
-    vi.advanceTimersByTime(15_000); // t1 now at 35s (expired), t2 at 15s
+    vi.advanceTimersByTime(60_000); // t1 now at 130s (expired), t2 at 60s
     gcExpired();
     expect(consumeAdminCredentials(t1)).toBeNull(); // already gone via gc
     expect(consumeAdminCredentials(t2)).not.toBeNull();

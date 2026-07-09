@@ -11,7 +11,7 @@ const stashAdminSchema = z.object({
 });
 
 /** Step 2 of /init wizard. Validates the admin schema and stashes the
- *  credentials server-side (in-memory, 30s TTL), returning a single-use
+ *  credentials server-side (in-memory, 120s TTL), returning a single-use
  *  token. Step 3 will POST this token to /api/init/create-admin which
  *  consumes it. The password NEVER leaves server memory.
  *
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
     }
     const token = stashAdminCredentials(parsed.data);
-    return NextResponse.json({ ok: true, data: { token, expiresInSec: 30 } });
+    return NextResponse.json({ ok: true, data: { token, expiresInSec: 120 } });
   });
   if (result instanceof NextResponse) {
     result.headers.set('Cache-Control', 'no-store');

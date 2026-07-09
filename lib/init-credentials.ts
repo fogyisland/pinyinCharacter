@@ -8,10 +8,12 @@ interface Credentials {
 }
 
 const STORE = new Map<string, Credentials>();
-const TTL_MS = 30_000;
+const TTL_MS = 120_000;
 
 /** Stash admin credentials and return a 32-char hex token. Token is single-use
- *  and expires after 30 seconds. The password NEVER leaves server memory. */
+ *  and expires after 2 minutes. Sized so the full /init wizard (9 phases,
+ *  ~40s when poems remote-fetches) finishes before expiry. The password
+ *  NEVER leaves server memory. */
 export function stashAdminCredentials(input: { username: string; password: string; email?: string }): string {
   ensureGcStarted();
   const token = randomBytes(16).toString('hex');
