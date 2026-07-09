@@ -27,37 +27,50 @@ export async function buildPoems(): Promise<number> {
     throw new Error(`build-poems: missing ${MANIFEST_PATH} — cannot mirror without a manifest`);
   }
   const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as PoemsManifest;
+  // Wrap 1160 UPSERTs in a single transaction — without it, each INSERT forces
+  // a commit-and-fsync and 1160 individual commits take ~80s on local MySQL.
+  // One commit at the end brings the same work to ~2s.
+  const conn = await pool.getConnection();
   let inserted = 0;
-  for (const item of manifest.items) {
-    const filePath = join(POEMS_DIR, `${item.id}.json`);
-    if (!existsSync(filePath)) {
-      console.warn(`[build-poems] missing ${filePath}; skipping id=${item.id}`);
-      continue;
+  try {
+    await conn.beginTransaction();
+    for (const item of manifest.items) {
+      const filePath = join(POEMS_DIR, `${item.id}.json`);
+      if (!existsSync(filePath)) {
+        console.warn(`[build-poems] missing ${filePath}; skipping id=${item.id}`);
+        continue;
+      }
+      const poem = JSON.parse(readFileSync(filePath, 'utf8')) as PoemDetail;
+      await conn.execute(
+        `INSERT INTO poems (dynasty, title, author, form, category, content, pinyin, appreciation, source)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           form = VALUES(form),
+           content = VALUES(content),
+           pinyin = VALUES(pinyin),
+           appreciation = VALUES(appreciation),
+           category = VALUES(category),
+           source = VALUES(source)`,
+        [
+          poem.dynasty,
+          poem.title,
+          poem.author,
+          poem.form,
+          poem.category,
+          JSON.stringify(poem.content),
+          JSON.stringify(poem.pinyin),
+          poem.appreciation,
+          poem.source ?? DEFAULT_SOURCE_TAG,
+        ]
+      );
+      inserted++;
     }
-    const poem = JSON.parse(readFileSync(filePath, 'utf8')) as PoemDetail;
-    await pool.execute(
-      `INSERT INTO poems (dynasty, title, author, form, category, content, pinyin, appreciation, source)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE
-         form = VALUES(form),
-         content = VALUES(content),
-         pinyin = VALUES(pinyin),
-         appreciation = VALUES(appreciation),
-         category = VALUES(category),
-         source = VALUES(source)`,
-      [
-        poem.dynasty,
-        poem.title,
-        poem.author,
-        poem.form,
-        poem.category,
-        JSON.stringify(poem.content),
-        JSON.stringify(poem.pinyin),
-        poem.appreciation,
-        poem.source ?? DEFAULT_SOURCE_TAG,
-      ]
-    );
-    inserted++;
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
   }
   return inserted;
 }
