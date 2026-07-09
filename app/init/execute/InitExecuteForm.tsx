@@ -122,6 +122,13 @@ export function InitExecuteForm() {
           setBusy(false);
           return;
         }
+        if (data.data?.failed) {
+          const detail = `失败: ${data.data.failed}`;
+          update(phase.id, { status: 'failed', detail });
+          setErr(`${phase.id} 失败: ${detail}`);
+          setBusy(false);
+          return;
+        }
         update(phase.id, { status: 'done', detail: phase.format(data.data) });
       } catch (e) {
         const detail = (e as Error).message;
@@ -146,7 +153,7 @@ export function InitExecuteForm() {
         setBusy(false);
         return;
       }
-      update('mark_complete', { status: 'done' });
+      update('mark_complete', { status: 'done', detail: 'setup.completed=true,cookie 已同步' });
       // Clean up sessionStorage — token is consumed server-side.
       sessionStorage.removeItem(STORAGE_KEY);
       // Bounce to /init orchestrator — it sets cookie + shows locked card.
