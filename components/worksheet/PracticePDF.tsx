@@ -117,7 +117,7 @@ function PracticeCell({ size, paperSize, style }: { size: number; paperSize: Pap
     // Lined: single 1px line stretched across the full inner width.
     return (
       <Svg width={width} height={size}>
-        <Line x1={0} y1={size - 0.5} x2={width} y2={size - 0.5} stroke="#bbb" strokeWidth={1} />
+        <Line x1={0} y1={size - 0.5} x2={width} y2={size - 0.5} stroke="#555" strokeWidth={1} />
       </Svg>
     );
   }
@@ -141,7 +141,7 @@ function PracticeCell({ size, paperSize, style }: { size: number; paperSize: Pap
   }
   return (
     <Svg width={size} height={size}>
-      <Rect x={0} y={0} width={size} height={size} fill="none" stroke="#bbb" strokeWidth={1} />
+      <Rect x={0} y={0} width={size} height={size} fill="none" stroke="#555" strokeWidth={1} />
       <Line x1={size / 2} y1={0} x2={size / 2} y2={size} stroke="#bbb" strokeWidth={0.5} />
       <Line x1={0} y1={size / 2} x2={size} y2={size / 2} stroke="#bbb" strokeWidth={0.5} />
       {presentation === 'cross' ? (

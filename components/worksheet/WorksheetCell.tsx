@@ -22,7 +22,7 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
           y1={size - 0.5}
           x2={100}
           y2={size - 0.5}
-          stroke="#bbb"
+          stroke="#555"
           strokeWidth={1}
           vectorEffect="non-scaling-stroke"
         />
@@ -77,9 +77,11 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
   const isTrace = getIsTrace(style);
   // Trace mode (传统描红): the character is filled light gray with a red
   // outline (字体的外边缘是红色). The user traces over the red outline
-  // with ink. Cell border and guide lines stay light gray.
+  // with ink. Cell border darkens to #555 for print visibility (regression
+  // 2026-07-09: user feedback "颜色框太浅了"); inner guide lines stay
+  // lighter as the subtle 1.0cm / 米字 cross hints.
   const guideStroke = '#bbb';
-  const borderStroke = '#bbb';
+  const borderStroke = '#555';
   const charFill = isTrace ? '#ddd' : '#bbb';
   const charStroke = isTrace ? '#c0392b' : 'none';
   const charStrokeWidth = isTrace ? 1.5 : 0;

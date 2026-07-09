@@ -32,7 +32,7 @@ describe('WorksheetCell — lined branch (pen-lined)', () => {
     expect(line?.getAttribute('x1')).toBe('0');
     expect(line?.getAttribute('x2')).toBe('100');
     expect(line?.getAttribute('vector-effect')).toBe('non-scaling-stroke');
-    expect(line?.getAttribute('stroke')).toBe('#bbb');
+    expect(line?.getAttribute('stroke')).toBe('#555');
   });
 
   it('does not render any text (lined is a blank rule, not a character)', () => {
