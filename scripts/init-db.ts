@@ -11,6 +11,8 @@
 import { getPool, closePool } from '../lib/db';
 import charsData from '../data/general-standard-chinese-characters.json';
 import radicalsData from '../data/radicals.json';
+import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
 
 const DDL = [
   `CREATE TABLE IF NOT EXISTS chars (
@@ -585,6 +587,69 @@ export async function initChars(): Promise<AutoPopulateResult> {
 }
 
 /**
+ * PHASE 5b: auto-populate rare_chars table from data/content/<char>.json.
+ * /rare-chars page reads FROM this table; without seed, the page shows
+ * "字库为空" even though chars table has 1412 level-3 rows (added 2026-07-09
+ * to fix "罕见字库为空" user feedback).
+ *
+ * Source: scan data/content/<char>.json, keep those with `level === 3` AND
+ * non-empty `rare.meaning`. The "needs_review" flag stays at the default (1)
+ * — admin tools flag individual chars after human review.
+ *
+ * Idempotent: skips if table already has rows (matches initChars pattern).
+ */
+export interface InitRareCharsStats {
+  scanned: number;
+  inserted: number;
+  skipped: boolean;
+  failed?: string;
+}
+export async function initRareChars(): Promise<InitRareCharsStats> {
+  const pool = getPool();
+  try {
+    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM rare_chars`);
+    if (Number(count) > 0) {
+      console.log(`[initRareChars] rare_chars table has ${count} rows, skip auto-populate`);
+      return { scanned: 0, inserted: 0, skipped: true };
+    }
+    const contentDir = join(process.cwd(), 'data', 'content');
+    if (!existsSync(contentDir)) {
+      console.warn(`[initRareChars] ${contentDir} not found, nothing to seed`);
+      return { scanned: 0, inserted: 0, skipped: false };
+    }
+    const files = readdirSync(contentDir).filter((f) => f.endsWith('.json'));
+    const rows: Array<[string]> = [];
+    for (const f of files) {
+      try {
+        const raw = JSON.parse(readFileSync(join(contentDir, f), 'utf8'));
+        if (raw?.level === 3 && raw?.rare?.meaning) {
+          rows.push([raw.char]);
+        }
+      } catch {
+        // Skip malformed JSON — log but don't abort the whole seed.
+        continue;
+      }
+    }
+    const BATCH = 500;
+    let imported = 0;
+    for (let off = 0; off < rows.length; off += BATCH) {
+      const batch = rows.slice(off, off + BATCH);
+      const placeholders = batch.map(() => '(?)').join(', ');
+      await pool.execute(
+        `INSERT IGNORE INTO rare_chars (\`char\`) VALUES ${placeholders}`,
+        batch.flat(),
+      );
+      imported += batch.length;
+    }
+    console.log(`[initRareChars] scanned ${files.length}, inserted ${imported} rare chars`);
+    return { scanned: files.length, inserted: imported, skipped: false };
+  } catch (err) {
+    console.warn('[initRareChars] auto-populate failed (continuing):', (err as Error).message);
+    return { scanned: 0, inserted: 0, skipped: false, failed: (err as Error).message };
+  }
+}
+
+/**
  * PHASE 6: create the first admin user. Requires users table (PHASE 1).
  * Idempotent — refuses if username already taken. Returns the new user's id.
  */
@@ -661,6 +726,7 @@ export interface InitDbStats {
   poems: AutoPopulateResult;
   sutras: AutoPopulateResult;
   chars: AutoPopulateResult;
+  rareChars: InitRareCharsStats;
   activateSeeded: boolean;
 }
 
@@ -670,6 +736,7 @@ export async function initDb(): Promise<InitDbStats> {
   const poems = await initPoems();
   const sutras = await initSutras();
   const chars = await initChars();
+  const rareChars = await initRareChars();
   const { seeded: activateSeeded } = await initActivate();
   return {
     statementsRun: tables.statementsRun,
@@ -678,6 +745,7 @@ export async function initDb(): Promise<InitDbStats> {
     poems,
     sutras,
     chars,
+    rareChars,
     activateSeeded,
   };
 }
