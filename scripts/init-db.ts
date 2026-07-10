@@ -725,20 +725,35 @@ export async function initCharEtymology(): Promise<AutoPopulateResult> {
       console.log('[initCharEtymology] no chars missing etymology row, skip');
       return { inserted: 0, skipped: true };
     }
+    // Single transaction — 7909 INSERT IGNOREs commit as one. Without the
+    // wrapper, mysql2 autocommit fires 7909 separate fsyncs (~3 min on local
+    // dev). With it, ~2s (per memory plan-poems-json-reader-status.md same
+    // pattern on 1160 poems, 83s → 2s = 36× speedup). Mirrors
+    // scripts/build-classics.ts::buildClassicsFromFiles.
+    const conn = await pool.getConnection();
     let inserted = 0;
-    for (const ch of missing) {
-      await pool.execute(
-        `INSERT IGNORE INTO char_etymology (\`char\`, era_jiaguwen_font, era_jiaguwen_has, era_jinwen_font, era_jinwen_has, era_xiaozhuan_font, era_xiaozhuan_has, era_lishu_font, era_lishu_has, era_kaishu_font, era_kaishu_has) VALUES (?, ?, 0, ?, 0, ?, 0, ?, 0, ?, 1)`,
-        [
-          ch,
-          CHAR_ETYMOLOGY_ERA_FONT.jiaguwen,
-          CHAR_ETYMOLOGY_ERA_FONT.jinwen,
-          CHAR_ETYMOLOGY_ERA_FONT.xiaozhuan,
-          CHAR_ETYMOLOGY_ERA_FONT.lishu,
-          CHAR_ETYMOLOGY_ERA_FONT.kaishu,
-        ],
-      );
-      inserted++;
+    try {
+      await conn.beginTransaction();
+      for (const ch of missing) {
+        await conn.execute(
+          `INSERT IGNORE INTO char_etymology (\`char\`, era_jiaguwen_font, era_jiaguwen_has, era_jinwen_font, era_jinwen_has, era_xiaozhuan_font, era_xiaozhuan_has, era_lishu_font, era_lishu_has, era_kaishu_font, era_kaishu_has) VALUES (?, ?, 0, ?, 0, ?, 0, ?, 0, ?, 1)`,
+          [
+            ch,
+            CHAR_ETYMOLOGY_ERA_FONT.jiaguwen,
+            CHAR_ETYMOLOGY_ERA_FONT.jinwen,
+            CHAR_ETYMOLOGY_ERA_FONT.xiaozhuan,
+            CHAR_ETYMOLOGY_ERA_FONT.lishu,
+            CHAR_ETYMOLOGY_ERA_FONT.kaishu,
+          ],
+        );
+        inserted++;
+      }
+      await conn.commit();
+    } catch (e) {
+      await conn.rollback();
+      throw e;
+    } finally {
+      conn.release();
     }
     console.log(`[initCharEtymology] backfilled ${inserted} char_etymology rows`);
     return { inserted, skipped: false };
