@@ -87,6 +87,19 @@ const DDL = [
      KEY idx_audit_event (event, created_at DESC)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+  `CREATE TABLE IF NOT EXISTS page_views (
+     id BIGINT NOT NULL AUTO_INCREMENT,
+     user_id BIGINT NULL,
+     path VARCHAR(255) NOT NULL,
+     ip VARCHAR(45) NULL,
+     user_agent VARCHAR(255) NULL,
+     created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+     PRIMARY KEY (id),
+     KEY idx_pv_created (created_at DESC),
+     KEY idx_pv_user_created (user_id, created_at DESC),
+     KEY idx_pv_path_created (path, created_at DESC)
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
   `CREATE TABLE IF NOT EXISTS password_resets (
      id BIGINT NOT NULL AUTO_INCREMENT,
      user_id BIGINT NOT NULL,
