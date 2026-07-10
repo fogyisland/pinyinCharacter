@@ -650,6 +650,64 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
 }
 
 /**
+ * PHASE 5c: backfill char_etymology rows for chars without one.
+ *
+ * 2026-06-17 slim-DB refactor only writes a char_etymology row when the
+ * content JSON has a non-empty `etymology_story` field. ~10 chars have no
+ * content JSON, so /etymology/<char> would fall through to the empty state
+ * path forever. Insert a placeholder row (kaishu only) so the page renders.
+ *
+ * ERA_FONT defaults mirror lib/etymology.ts:19-25 — kept local so this
+ * module doesn't pull client-side code. Idempotent (INSERT IGNORE).
+ */
+function isBmpChar(c: string): boolean {
+  const cp = c.codePointAt(0);
+  return cp != null && cp <= 0xFFFF;
+}
+
+const CHAR_ETYMOLOGY_ERA_FONT = {
+  jiaguwen: 'YinQiJiaGuWen',
+  jinwen: 'HanDianJinWen',
+  xiaozhuan: 'QuanZiKuShuoWen',
+  lishu: 'QuanZiKuLiDing',
+  kaishu: 'KaiTi',
+};
+
+export async function initCharEtymology(): Promise<AutoPopulateResult> {
+  const pool = getPool();
+  try {
+    const [rows] = await pool.query<any[]>(
+      `SELECT c.char FROM chars c LEFT JOIN char_etymology e ON c.char = e.char WHERE e.char IS NULL`,
+    );
+    const missing: string[] = (rows as any[]).map((r) => r.char);
+    if (missing.length === 0) {
+      console.log('[initCharEtymology] no chars missing etymology row, skip');
+      return { inserted: 0, skipped: true };
+    }
+    let inserted = 0;
+    for (const ch of missing) {
+      await pool.execute(
+        `INSERT IGNORE INTO char_etymology (\`char\`, era_jiaguwen_font, era_jiaguwen_has, era_jinwen_font, era_jinwen_has, era_xiaozhuan_font, era_xiaozhuan_has, era_lishu_font, era_lishu_has, era_kaishu_font, era_kaishu_has) VALUES (?, ?, 0, ?, 0, ?, 0, ?, 0, ?, 1)`,
+        [
+          ch,
+          CHAR_ETYMOLOGY_ERA_FONT.jiaguwen,
+          CHAR_ETYMOLOGY_ERA_FONT.jinwen,
+          CHAR_ETYMOLOGY_ERA_FONT.xiaozhuan,
+          CHAR_ETYMOLOGY_ERA_FONT.lishu,
+          CHAR_ETYMOLOGY_ERA_FONT.kaishu,
+        ],
+      );
+      inserted++;
+    }
+    console.log(`[initCharEtymology] backfilled ${inserted} char_etymology rows`);
+    return { inserted, skipped: false };
+  } catch (err) {
+    console.warn('[initCharEtymology] backfill failed (continuing):', (err as Error).message);
+    return { inserted: 0, skipped: false, failed: (err as Error).message };
+  }
+}
+
+/**
  * PHASE 6: create the first admin user. Requires users table (PHASE 1).
  * Idempotent — refuses if username already taken. Returns the new user's id.
  */
