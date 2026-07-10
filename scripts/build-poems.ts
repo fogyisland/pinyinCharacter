@@ -75,10 +75,21 @@ export async function buildPoems(): Promise<number> {
   return inserted;
 }
 
+export async function printPoemStats(pool: ReturnType<typeof getPool>): Promise<void> {
+  const [rows] = await pool.execute<any[]>(
+    `SELECT dynasty, COUNT(*) AS n FROM poems GROUP BY dynasty ORDER BY dynasty`
+  );
+  console.log('[build-poems] dynasty distribution:');
+  console.table(rows);
+  const [countRows] = await pool.execute<any[]>(`SELECT COUNT(*) AS total FROM poems`);
+  console.log(`[build-poems] total poems: ${(countRows as any[])[0].total}`);
+}
+
 if (require.main === module) {
   buildPoems()
-    .then((n) => {
+    .then(async (n) => {
       console.log(`[build-poems] mirrored ${n} poems`);
+      await printPoemStats(getPool());
       return closePool();
     })
     .catch((err) => {
