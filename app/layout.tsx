@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AuthSync } from './_auth-sync';
 import { ToastViewport } from '@/components/common/Toast';
 import { ActivationGuard } from '@/components/ActivationGuard';
+import { PageViewTracker } from '@/components/PageViewTracker';
 
 export const metadata = {
   title: '字·韵 — 汉字与拼音互转',
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="font-sans antialiased min-h-screen">
         <AuthSync />
         <ActivationGuard>{children}</ActivationGuard>
+        <PageViewTracker />
         <ToastViewport />
       </body>
     </html>
