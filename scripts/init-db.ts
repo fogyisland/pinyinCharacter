@@ -11,8 +11,9 @@
 import { getPool, closePool } from '../lib/db';
 import charsData from '../data/general-standard-chinese-characters.json';
 import radicalsData from '../data/radicals.json';
-import { readdirSync, readFileSync, existsSync } from 'node:fs';
+import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { readJsonAuto } from '../lib/json-fs';
 
 const DDL = [
   `CREATE TABLE IF NOT EXISTS chars (
@@ -621,12 +622,22 @@ export async function initChars(): Promise<AutoPopulateResult> {
  * — admin tools flag individual chars after human review.
  *
  * Idempotent: skips if table already has rows (matches initChars pattern).
+ *
+ * Up/ deploy bundle ships these as .json.gz (saves ~190MB); `readJsonAuto()`
+ * reads .json first, falls back to .json.gz via gunzipSync — so both shapes
+ * work without branching. Without this, prod wizard shows "新增 0 行" because
+ * `.filter(f => f.endsWith('.json'))` skips every gzipped file.
  */
 export interface InitRareCharsStats {
   scanned: number;
   inserted: number;
   skipped: boolean;
   failed?: string;
+}
+interface ContentShape {
+  char?: string;
+  level?: number;
+  rare?: { meaning?: string };
 }
 export async function initRareChars(): Promise<InitRareCharsStats> {
   const pool = getPool();
@@ -641,12 +652,18 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
       console.warn(`[initRareChars] ${contentDir} not found, nothing to seed`);
       return { scanned: 0, inserted: 0, skipped: false };
     }
-    const files = readdirSync(contentDir).filter((f) => f.endsWith('.json'));
+    const files = readdirSync(contentDir).filter(
+      (f) => f.endsWith('.json') || f.endsWith('.json.gz'),
+    );
     const rows: Array<[string]> = [];
     for (const f of files) {
       try {
-        const raw = JSON.parse(readFileSync(join(contentDir, f), 'utf8'));
-        if (raw?.level === 3 && raw?.rare?.meaning) {
+        // readJsonAuto() expects a path WITHOUT the .gz suffix (it appends
+        // .gz internally when .json is missing). Strip it so the helper
+        // picks the right file from either plain or gzipped Up/ bundle.
+        const baseName = f.endsWith('.json.gz') ? f.slice(0, -'.gz'.length) : f;
+        const raw = readJsonAuto(join(contentDir, baseName)) as ContentShape | null;
+        if (raw?.level === 3 && raw.rare?.meaning && raw.char) {
           rows.push([raw.char]);
         }
       } catch {
