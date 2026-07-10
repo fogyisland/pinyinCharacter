@@ -8,7 +8,7 @@ import { StepGroup } from '@/components/init/StepGroup';
 const STORAGE_KEY = 'piyin.init.admin.creds';
 
 interface SubStep {
-  id: 'tables' | 'app_config' | 'poems' | 'sutras' | 'chars' | 'create_admin' | 'activate' | 'migrations' | 'mark_complete';
+  id: 'tables' | 'app_config' | 'poems' | 'classics' | 'sutras' | 'chars' | 'rare_chars' | 'char_etymology' | 'create_admin' | 'activate' | 'migrations' | 'mark_complete';
   label: string;
   status: 'idle' | 'running' | 'done' | 'failed';
   detail?: string;
@@ -29,8 +29,11 @@ type Phase =
   | { id: 'tables';       endpoint: '/api/init/init-tables';    body?: never; format: (d: InitTablesResponse)    => string }
   | { id: 'app_config';   endpoint: '/api/init/init-app-config'; body?: never; format: (d: InitAppConfigResponse) => string }
   | { id: 'poems';        endpoint: '/api/init/init-poems';     body?: never; format: (d: AutoPopulateResponse)  => string }
+  | { id: 'classics';     endpoint: '/api/init/init-classics';   body?: never; format: (d: AutoPopulateResponse)  => string }
   | { id: 'sutras';       endpoint: '/api/init/init-sutras';    body?: never; format: (d: AutoPopulateResponse)  => string }
   | { id: 'chars';        endpoint: '/api/init/init-chars';     body?: never; format: (d: AutoPopulateResponse)  => string }
+  | { id: 'rare_chars';   endpoint: '/api/init/init-rare-chars'; body?: never; format: (d: AutoPopulateResponse) => string }
+  | { id: 'char_etymology'; endpoint: '/api/init/init-char-etymology'; body?: never; format: (d: AutoPopulateResponse) => string }
   | { id: 'create_admin'; endpoint: '/api/init/create-admin';   body: { token: string }; format: (d: CreateAdminResponse) => string }
   | { id: 'activate';     endpoint: '/api/init/init-activate';  body?: never; format: (d: InitActivateResponse)  => string }
   | { id: 'migrations';   endpoint: '/api/init/migrate';        body?: never; format: (d: MigrateResponse)       => string };
@@ -39,8 +42,11 @@ const INITIAL: SubStep[] = [
   { id: 'tables', label: '创建表结构', status: 'idle' },
   { id: 'app_config', label: '写入 app_config 默认值', status: 'idle' },
   { id: 'poems', label: '导入古诗 (data/poems/)', status: 'idle' },
+  { id: 'classics', label: '导入古籍 (data/classics/)', status: 'idle' },
   { id: 'sutras', label: '导入佛经 (data/sutras/)', status: 'idle' },
   { id: 'chars', label: '导入字典 (data/chars)', status: 'idle' },
+  { id: 'rare_chars', label: '种子罕见字库 (data/content/)', status: 'idle' },
+  { id: 'char_etymology', label: '回填字源行 (data/content/)', status: 'idle' },
   { id: 'create_admin', label: '创建管理员账号', status: 'idle' },
   { id: 'activate', label: '写入平台激活信息', status: 'idle' },
   { id: 'migrations', label: '应用迁移文件', status: 'idle' },
@@ -91,9 +97,15 @@ export function InitExecuteForm() {
         format: (d) => `${d.totalRows} 条配置 (era 默认 + ai/tts)` },
       { id: 'poems', endpoint: '/api/init/init-poems',
         format: summarizeAutoPopulate },
+      { id: 'classics', endpoint: '/api/init/init-classics',
+        format: summarizeAutoPopulate },
       { id: 'sutras', endpoint: '/api/init/init-sutras',
         format: summarizeAutoPopulate },
       { id: 'chars', endpoint: '/api/init/init-chars',
+        format: summarizeAutoPopulate },
+      { id: 'rare_chars', endpoint: '/api/init/init-rare-chars',
+        format: summarizeAutoPopulate },
+      { id: 'char_etymology', endpoint: '/api/init/init-char-etymology',
         format: summarizeAutoPopulate },
       { id: 'create_admin', endpoint: '/api/init/create-admin',
         body: { token: creds.token },
@@ -172,7 +184,7 @@ export function InitExecuteForm() {
 
   const groups: { title: string; ids: SubStep['id'][] }[] = [
     { title: '数据库结构', ids: ['tables', 'app_config', 'migrations'] },
-    { title: '数据导入', ids: ['poems', 'sutras', 'chars'] },
+    { title: '数据导入', ids: ['poems', 'classics', 'sutras', 'chars', 'rare_chars', 'char_etymology'] },
     { title: '账号与激活', ids: ['create_admin', 'activate', 'mark_complete'] },
   ];
 
