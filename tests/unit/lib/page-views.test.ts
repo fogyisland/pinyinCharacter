@@ -11,6 +11,7 @@ type QueryResult = any[];
 
 let queryResults: Record<string, QueryResult> = {};
 let queryLog: Array<{ sql: string; params: any[] }> = [];
+let executeLog: Array<{ sql: string; params: any[] }> = [];
 
 vi.mock('@/lib/db', () => ({
   getPool: () => ({
@@ -22,7 +23,7 @@ vi.mock('@/lib/db', () => ({
       return [[], []];
     }),
     execute: vi.fn(async (sql: string, params: any[] = []) => {
-      queryLog.push({ sql, params });
+      executeLog.push({ sql, params });
       for (const key of Object.keys(queryResults)) {
         if (sql.includes(key)) return queryResults[key]!;
       }
@@ -37,6 +38,7 @@ import { getPageViewStats } from '@/lib/admin-pageviews';
 beforeEach(() => {
   queryResults = {};
   queryLog = [];
+  executeLog = [];
 });
 
 describe('recordPageView', () => {
@@ -48,7 +50,7 @@ describe('recordPageView', () => {
       ip: '203.0.113.5',
       userAgent: 'Mozilla/5.0',
     });
-    const ins = queryLog.find((q) => q.sql.includes('INSERT INTO page_views'));
+    const ins = executeLog.find((q) => q.sql.includes('INSERT INTO page_views'));
     expect(ins).toBeDefined();
     expect(ins!.sql).toContain('(user_id, path, ip, user_agent)');
     expect(ins!.params).toEqual([7, '/char/汉', '203.0.113.5', 'Mozilla/5.0']);
@@ -62,7 +64,7 @@ describe('recordPageView', () => {
       ip: '1.2.3.4',
       userAgent: null,
     });
-    const ins = queryLog.find((q) => q.sql.includes('INSERT INTO page_views'));
+    const ins = executeLog.find((q) => q.sql.includes('INSERT INTO page_views'));
     expect(ins).toBeDefined();
     expect(ins!.params).toEqual([null, '/poems', '1.2.3.4', null]);
     // No defensive coercion: NULL is preserved as JS null
@@ -78,10 +80,14 @@ describe('recordPageView', () => {
       ip: null,
       userAgent: null,
     });
-    // We can verify by checking that our mock recorded exactly one call to
-    // execute() with the INSERT — and zero to query() with it.
-    const insertsOnExecute = queryLog.filter((q) => q.sql.includes('INSERT INTO page_views'));
+    // Regression guard for the mysql2 supp-plane bug:
+    // pool.execute() uses the binary protocol and preserves 4-byte UTF-8;
+    // pool.query() uses string interpolation and corrupts supp-plane chars.
+    // The INSERT must go to executeLog and NOT to queryLog.
+    const insertsOnExecute = executeLog.filter((q) => q.sql.includes('INSERT INTO page_views'));
+    const insertsOnQuery = queryLog.filter((q) => q.sql.includes('INSERT INTO page_views'));
     expect(insertsOnExecute).toHaveLength(1);
+    expect(insertsOnQuery).toHaveLength(0);
   });
 
   it('does NOT truncate path — the API route is responsible for that', async () => {
@@ -90,7 +96,7 @@ describe('recordPageView', () => {
     const longPath = '/' + 'a'.repeat(500);
     queryResults['INSERT INTO page_views'] = [{ insertId: 103, affectedRows: 1 }, []];
     await recordPageView({ userId: null, path: longPath, ip: null, userAgent: null });
-    const ins = queryLog.find((q) => q.sql.includes('INSERT INTO page_views'));
+    const ins = executeLog.find((q) => q.sql.includes('INSERT INTO page_views'));
     expect(ins!.params[1]).toBe(longPath);
     expect((ins!.params[1] as string).length).toBe(501);
   });
