@@ -262,6 +262,16 @@ async function fetchFile(path: string): Promise<unknown> {
 }
 
 export async function buildClassics(): Promise<number> {
+  return buildClassicsRefresh();
+}
+
+/**
+ * Fetch from raw.githubusercontent.com + write data/classics/<slug>.json +
+ * UPSERT classics table. Network-bound; soft-fails per-file. Use --refresh
+ * from the CLI when upstream changes. Wizard path uses buildClassicsFromFiles
+ * instead (file-only, no network).
+ */
+export async function buildClassicsRefresh(): Promise<number> {
   const pool = getPool();
   let inserted = 0;
   for (const file of CLASSIC_FILES) {
@@ -322,10 +332,57 @@ export async function buildClassics(): Promise<number> {
   return inserted;
 }
 
+/**
+ * Read data/classics-manifest.json + UPSERT classics table from the manifest
+ * entries. File-only — does not fetch or regenerate pinyin/chunks. The 196
+ * data/classics/<slug>.json files are git committed as of commit 04cf3fea
+ * + 57526b4c, so this is the wizard-path build: deterministic, no network.
+ *
+ * Wrapped in a transaction so 196 UPSERTs commit as one (~2s vs ~30s).
+ * Returns the number of UPSERTed rows (= manifest.books.length on success).
+ */
+export async function buildClassicsFromFiles(): Promise<number> {
+  const pool = getPool();
+  if (!existsSync(MANIFEST_PATH)) {
+    console.warn(`[build-classics] missing ${MANIFEST_PATH}; run buildClassicsRefresh first to seed`);
+    return 0;
+  }
+  const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as Manifest;
+  const conn = await pool.getConnection();
+  let upserted = 0;
+  try {
+    await conn.beginTransaction();
+    for (const book of manifest.books) {
+      await conn.execute(
+        `INSERT INTO classics (slug, title, category, author, era, source)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE
+           title = VALUES(title),
+           category = VALUES(category),
+           author = VALUES(author),
+           era = VALUES(era),
+           source = VALUES(source)`,
+        [book.slug, book.title, book.category, book.author, book.era, book.source],
+      );
+      upserted++;
+    }
+    await conn.commit();
+  } catch (e) {
+    await conn.rollback();
+    throw e;
+  } finally {
+    conn.release();
+  }
+  return upserted;
+}
+
 if (require.main === module) {
-  buildClassics()
+  const args = process.argv.slice(2);
+  const refresh = args.includes('--refresh');
+  const run = refresh ? buildClassicsRefresh() : buildClassicsFromFiles();
+  run
     .then((n) => {
-      console.log(`[build-classics] inserted/updated ${n} classics`);
+      console.log(`[build-classics] ${refresh ? 'refreshed' : 'mirrored'} ${n} classics`);
       const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as Manifest;
       console.log(`[build-classics] manifest has ${manifest.books.length} books total`);
       return closePool();

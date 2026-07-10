@@ -521,6 +521,30 @@ export async function initPoems(): Promise<AutoPopulateResult> {
 }
 
 /**
+ * PHASE 4b: auto-populate classics from data/classics-manifest.json +
+ * data/classics/<slug>.json (file-only since 2026-07-10; build-classics was
+ * previously GitHub-fetch which 503'd on prod). Idempotent (skip if classics
+ * already has rows). Mirrors initPoems.
+ */
+export async function initClassics(): Promise<AutoPopulateResult> {
+  const pool = getPool();
+  try {
+    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM classics`);
+    if (Number(count) > 0) {
+      console.log(`[initClassics] classics table has ${count} rows, skip auto-populate`);
+      return { inserted: 0, skipped: true };
+    }
+    const { buildClassicsFromFiles } = await import('./build-classics');
+    const n = await buildClassicsFromFiles();
+    console.log(`[initClassics] inserted ${n} classics (auto-populate)`);
+    return { inserted: n, skipped: false };
+  } catch (err) {
+    console.warn('[initClassics] auto-populate failed (continuing):', (err as Error).message);
+    return { inserted: 0, skipped: false, failed: (err as Error).message };
+  }
+}
+
+/**
  * PHASE 4: auto-populate sutras table from data/sutras/*.json.
  */
 export async function initSutras(): Promise<AutoPopulateResult> {
