@@ -54,6 +54,12 @@ EXCLUDE_FILES = {
     '.DS_Store',
     'vitest.config.ts',  # Test runner config — never ship to prod
     'Up.rar',            # Self-archive — never recurse back into Up/
+    # Tests — both co-located (next to source) and standalone files. Never ship to prod.
+    '*.test.ts',
+    '*.test.tsx',
+    '*.spec.ts',
+    '*.spec.tsx',
+    '__snapshots__',     # Vitest/Jest snapshot dirs (when matched as basename — rare)
 }
 
 # Explicit files to always include at root (overrides EXCLUDE_FILES if matched)
@@ -104,6 +110,11 @@ def should_exclude_file(name, rel_path=None):
     if name.endswith('.log'):
         return True
     if name in ('Thumbs.db', '.DS_Store'):
+        return True
+    # Co-located test files (matched by suffix anywhere)
+    if name.endswith('.test.ts') or name.endswith('.test.tsx'):
+        return True
+    if name.endswith('.spec.ts') or name.endswith('.spec.tsx'):
         return True
     return False
 
