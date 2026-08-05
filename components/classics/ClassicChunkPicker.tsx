@@ -38,11 +38,15 @@ export function ClassicChunkPicker({ slug, chunks, activeId }: Props) {
         <label className="block text-xs text-ink-faint mb-1">章</label>
         <select
           value={activeId}
-          onChange={(e) => { window.location.href = `/ancient/${slug}?chunk=${Number(e.target.value) - 1}`; }}
+          onChange={(e) => {
+            window.location.href = `/ancient/${slug}?chunk=${Number(e.target.value) - 1}`;
+          }}
           className="w-full rounded-md border border-ink/20 bg-paper-soft px-3 py-2"
         >
           {chunks.map((c) => (
-            <option key={c.id} value={c.id}>{c.label}</option>
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
           ))}
         </select>
       </div>

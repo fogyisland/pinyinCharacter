@@ -2,22 +2,39 @@ import type { ApiResult } from './api-auth';
 import type { User } from './store';
 
 export interface AdminUserRow {
-  id: number; username: string; isAdmin: boolean;
-  createdAt: string | Date; historyCount: number; favoriteCount: number;
+  id: number;
+  username: string;
+  isAdmin: boolean;
+  createdAt: string | Date;
+  historyCount: number;
+  favoriteCount: number;
 }
-export interface ListUsersData { users: AdminUserRow[]; total: number; }
+export interface ListUsersData {
+  users: AdminUserRow[];
+  total: number;
+}
 
 export interface AuditLogRow {
-  id: number; user_id: number | null; event: string;
-  metadata: any; ip: string | null; user_agent: string | null; created_at: string | Date;
+  id: number;
+  user_id: number | null;
+  event: string;
+  metadata: any;
+  ip: string | null;
+  user_agent: string | null;
+  created_at: string | Date;
 }
 
 export interface UserDetailData {
   user: AdminUserRow;
   recentHistory: Array<{
-    id: number; user_id: number; kind: 'text2pinyin' | 'pinyin2text';
-    input: string; output: string | null; is_favorite: 0 | 1;
-    char_count: number; created_at: string | Date;
+    id: number;
+    user_id: number;
+    kind: 'text2pinyin' | 'pinyin2text';
+    input: string;
+    output: string | null;
+    is_favorite: 0 | 1;
+    char_count: number;
+    created_at: string | Date;
   }>;
 }
 
@@ -28,7 +45,9 @@ async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   return j as ApiResult<T>;
 }
 
-export async function adminListUsers(opts: { limit?: number; offset?: number } = {}): Promise<ApiResult<ListUsersData>> {
+export async function adminListUsers(
+  opts: { limit?: number; offset?: number } = {},
+): Promise<ApiResult<ListUsersData>> {
   const sp = new URLSearchParams();
   if (opts.limit !== undefined) sp.set('limit', String(opts.limit));
   if (opts.offset !== undefined) sp.set('offset', String(opts.offset));
@@ -40,32 +59,46 @@ export async function adminGetUser(id: number): Promise<ApiResult<UserDetailData
   return call(`/api/admin/users/${id}`, { method: 'GET' });
 }
 
-export async function adminDeleteUser(id: number, confirmUsername: string): Promise<ApiResult<null>> {
+export async function adminDeleteUser(
+  id: number,
+  confirmUsername: string,
+): Promise<ApiResult<null>> {
   return call(`/api/admin/users/${id}`, {
-    method: 'DELETE', headers: { 'content-type': 'application/json' },
+    method: 'DELETE',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ confirmUsername }),
   });
 }
 
-export async function adminResetUserPassword(id: number): Promise<ApiResult<{ tempPassword: string }>> {
+export async function adminResetUserPassword(
+  id: number,
+): Promise<ApiResult<{ tempPassword: string }>> {
   return call(`/api/admin/users/${id}/reset-password`, { method: 'POST' });
 }
 
-export async function adminPromoteUser(id: number): Promise<ApiResult<{ id: number; isAdmin: true }>> {
+export async function adminPromoteUser(
+  id: number,
+): Promise<ApiResult<{ id: number; isAdmin: true }>> {
   return call(`/api/admin/users/${id}/promote`, { method: 'POST' });
 }
 
-export async function adminDemoteUser(id: number): Promise<ApiResult<{ id: number; isAdmin: false }>> {
+export async function adminDemoteUser(
+  id: number,
+): Promise<ApiResult<{ id: number; isAdmin: false }>> {
   return call(`/api/admin/users/${id}/demote`, { method: 'POST' });
 }
 
 // --- H7: user disable/enable -------------------------------------------
 
-export async function disableUserRequest(id: number): Promise<ApiResult<{ id: number; disabled: true }>> {
+export async function disableUserRequest(
+  id: number,
+): Promise<ApiResult<{ id: number; disabled: true }>> {
   return call(`/api/admin/users/${id}/disable`, { method: 'POST' });
 }
 
-export async function enableUserRequest(id: number): Promise<ApiResult<{ id: number; disabled: false }>> {
+export async function enableUserRequest(
+  id: number,
+): Promise<ApiResult<{ id: number; disabled: false }>> {
   return call(`/api/admin/users/${id}/enable`, { method: 'POST' });
 }
 
@@ -81,9 +114,14 @@ export interface UserActivityItem {
   createdAt: string;
   metadata: Record<string, unknown>;
 }
-export interface UserActivityData { items: UserActivityItem[]; }
+export interface UserActivityData {
+  items: UserActivityItem[];
+}
 
-export async function getUserActivityRequest(id: number, after?: string): Promise<ApiResult<UserActivityData>> {
+export async function getUserActivityRequest(
+  id: number,
+  after?: string,
+): Promise<ApiResult<UserActivityData>> {
   const qs = after ? `?after=${encodeURIComponent(after)}` : '';
   return call(`/api/admin/users/${id}/activity${qs}`, { method: 'GET' });
 }
@@ -100,12 +138,25 @@ export interface AdminLogRow {
   createdAt: string;
   metadata: Record<string, unknown>;
 }
-export interface AdminLogListData { items: AdminLogRow[]; total: number; page: number; pageSize: number; }
+export interface AdminLogListData {
+  items: AdminLogRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
-export async function listAdminLogsRequest(params: {
-  source?: string; type?: string; userId?: number; ip?: string;
-  from?: string; to?: string; page?: number; pageSize?: number;
-} = {}): Promise<ApiResult<AdminLogListData>> {
+export async function listAdminLogsRequest(
+  params: {
+    source?: string;
+    type?: string;
+    userId?: number;
+    ip?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<ApiResult<AdminLogListData>> {
   const sp = new URLSearchParams();
   if (params.source) sp.set('source', params.source);
   if (params.type) sp.set('type', params.type);
@@ -134,12 +185,23 @@ export interface AdminDownloadRow {
   userAgent: string | null;
   createdAt: string;
 }
-export interface AdminDownloadListData { items: AdminDownloadRow[]; total: number; page: number; pageSize: number; }
+export interface AdminDownloadListData {
+  items: AdminDownloadRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
-export async function listAdminDownloadsRequest(params: {
-  userId?: number; sourceType?: string;
-  from?: string; to?: string; page?: number; pageSize?: number;
-} = {}): Promise<ApiResult<AdminDownloadListData>> {
+export async function listAdminDownloadsRequest(
+  params: {
+    userId?: number;
+    sourceType?: string;
+    from?: string;
+    to?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<ApiResult<AdminDownloadListData>> {
   const sp = new URLSearchParams();
   if (params.userId !== undefined) sp.set('userId', String(params.userId));
   if (params.sourceType) sp.set('sourceType', params.sourceType);
@@ -168,12 +230,24 @@ export interface AdminAiCallRow {
   error: string | null;
   createdAt: string;
 }
-export interface AdminAiCallListData { rows: AdminAiCallRow[]; total: number; page: number; pageSize: number; }
+export interface AdminAiCallListData {
+  rows: AdminAiCallRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
-export async function listAiCallsRequest(params: {
-  feature?: string; status?: string; userId?: number;
-  from?: string; to?: string; page?: number; pageSize?: number;
-} = {}): Promise<ApiResult<AdminAiCallListData>> {
+export async function listAiCallsRequest(
+  params: {
+    feature?: string;
+    status?: string;
+    userId?: number;
+    from?: string;
+    to?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<ApiResult<AdminAiCallListData>> {
   const sp = new URLSearchParams();
   if (params.feature) sp.set('feature', params.feature);
   if (params.status) sp.set('status', params.status);
@@ -197,7 +271,9 @@ export async function getAiConfigRequest(): Promise<ApiResult<AiConfigResponse>>
   return call('/api/admin/ai/config', { method: 'GET' });
 }
 
-export async function updateAiConfigRequest(body: Record<string, string | number>): Promise<ApiResult<AiConfigResponse>> {
+export async function updateAiConfigRequest(
+  body: Record<string, string | number>,
+): Promise<ApiResult<AiConfigResponse>> {
   return call('/api/admin/ai/config', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
@@ -209,9 +285,13 @@ export async function getTtsConfigRequest(): Promise<ApiResult<Record<string, st
   return call('/api/admin/config', { method: 'GET' });
 }
 
-export async function updateTtsConfigRequest(body: Record<string, string>): Promise<ApiResult<Record<string, string>>> {
+export async function updateTtsConfigRequest(
+  body: Record<string, string>,
+): Promise<ApiResult<Record<string, string>>> {
   return call('/api/admin/config', {
-    method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
   });
 }
 
@@ -231,11 +311,21 @@ export interface AdminMembershipRow {
   note: string | null;
   grantedBy: number | null;
 }
-export interface AdminMembershipListData { items: AdminMembershipRow[]; total: number; page: number; pageSize: number; }
+export interface AdminMembershipListData {
+  items: AdminMembershipRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
-export async function listAdminMembershipsRequest(params: {
-  userId?: number; planKey?: string; page?: number; pageSize?: number;
-} = {}): Promise<ApiResult<AdminMembershipListData>> {
+export async function listAdminMembershipsRequest(
+  params: {
+    userId?: number;
+    planKey?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<ApiResult<AdminMembershipListData>> {
   const sp = new URLSearchParams();
   if (params.userId !== undefined) sp.set('userId', String(params.userId));
   if (params.planKey) sp.set('planKey', params.planKey);
@@ -246,17 +336,24 @@ export async function listAdminMembershipsRequest(params: {
 }
 
 export async function grantAdminMembershipRequest(body: {
-  userId: number; planKey: string; note?: string;
+  userId: number;
+  planKey: string;
+  note?: string;
 }): Promise<ApiResult<{ id: number; expiresAt: string }>> {
   return call('/api/admin/memberships', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-export async function revokeAdminMembershipRequest(id: number, reason?: string): Promise<ApiResult<AdminMembershipRow>> {
+export async function revokeAdminMembershipRequest(
+  id: number,
+  reason?: string,
+): Promise<ApiResult<AdminMembershipRow>> {
   return call(`/api/admin/memberships/${id}/revoke`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ reason }),
   });
 }
@@ -264,25 +361,41 @@ export async function revokeAdminMembershipRequest(id: number, reason?: string):
 // --- H12: Admin plans (list only here; PATCH + seed in later tasks) ----
 
 export interface AdminPlanRow {
-  id: number; planKey: string; displayName: string;
-  durationDays: number; amount: string; currency: string;
-  enabled: boolean; displayOrder: number; features: string[];
+  id: number;
+  planKey: string;
+  displayName: string;
+  durationDays: number;
+  amount: string;
+  currency: string;
+  enabled: boolean;
+  displayOrder: number;
+  features: string[];
 }
-export interface AdminPlanListData { items: AdminPlanRow[]; total: number; }
+export interface AdminPlanListData {
+  items: AdminPlanRow[];
+  total: number;
+}
 
 export async function listAdminPlansRequest(): Promise<ApiResult<AdminPlanListData>> {
   return call('/api/admin/memberships/plans', { method: 'GET' });
 }
 
 export interface UpdatePlanBody {
-  displayName?: string; durationDays?: number; amount?: string;
-  enabled?: boolean; displayOrder?: number;
+  displayName?: string;
+  durationDays?: number;
+  amount?: string;
+  enabled?: boolean;
+  displayOrder?: number;
   features?: ('unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts')[];
 }
 
-export async function updateAdminPlanRequest(id: number, body: UpdatePlanBody): Promise<ApiResult<{ plan: AdminPlanRow }>> {
+export async function updateAdminPlanRequest(
+  id: number,
+  body: UpdatePlanBody,
+): Promise<ApiResult<{ plan: AdminPlanRow }>> {
   return call(`/api/admin/memberships/plans/${id}`, {
-    method: 'PATCH', headers: { 'content-type': 'application/json' },
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
@@ -307,14 +420,19 @@ export async function getAdminPayPalConfigRequest(): Promise<ApiResult<AdminPayP
 
 export async function updateAdminPayPalConfigRequest(body: {
   mode?: 'sandbox' | 'live';
-  clientId?: string; clientSecret?: string; webhookId?: string;
+  clientId?: string;
+  clientSecret?: string;
+  webhookId?: string;
 }): Promise<ApiResult<{ mode: 'sandbox' | 'live'; changed: string[] }>> {
   return call('/api/admin/paypal/config', {
-    method: 'PUT', headers: { 'content-type': 'application/json' },
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-export async function testPayPalConnectionRequest(): Promise<ApiResult<{ ok: true; message: string }>> {
+export async function testPayPalConnectionRequest(): Promise<
+  ApiResult<{ ok: true; message: string }>
+> {
   return call('/api/admin/paypal/test-connection', { method: 'POST' });
 }

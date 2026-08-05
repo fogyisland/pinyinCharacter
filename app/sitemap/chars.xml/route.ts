@@ -27,16 +27,21 @@ export async function GET() {
   // new Date() (which would re-trigger crawls on every request).
   let lastmod: string;
   try {
-    const m = JSON.parse(readFileSync(join(process.cwd(), 'data', 'content-manifest.json'), 'utf8')) as { generatedAt: string };
+    const m = JSON.parse(
+      readFileSync(join(process.cwd(), 'data', 'content-manifest.json'), 'utf8'),
+    ) as { generatedAt: string };
     lastmod = new Date(m.generatedAt).toISOString();
   } catch {
     lastmod = new Date().toISOString();
   }
   const urls = chars
-    .map((ch) => `<url><loc>${base}/dictionary/${encodeURIComponent(ch)}</loc><lastmod>${lastmod}</lastmod><priority>0.6</priority></url>`)
+    .map(
+      (ch) =>
+        `<url><loc>${base}/dictionary/${encodeURIComponent(ch)}</loc><lastmod>${lastmod}</lastmod><priority>0.6</priority></url>`,
+    )
     .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }

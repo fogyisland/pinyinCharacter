@@ -114,10 +114,7 @@ export interface UpdatePlaylistInput {
   isDefault?: boolean;
 }
 
-export async function updatePlaylist(
-  id: number,
-  input: UpdatePlaylistInput,
-): Promise<void> {
+export async function updatePlaylist(id: number, input: UpdatePlaylistInput): Promise<void> {
   const pool = getPool();
   const conn = await pool.getConnection();
   try {
@@ -137,10 +134,7 @@ export async function updatePlaylist(
     }
     if (sets.length > 0) {
       params.push(id);
-      await conn.query(
-        `UPDATE playlists SET ${sets.join(', ')} WHERE id = ?`,
-        params,
-      );
+      await conn.query(`UPDATE playlists SET ${sets.join(', ')} WHERE id = ?`, params);
     }
     await conn.commit();
   } catch (e) {
@@ -159,10 +153,7 @@ export async function deletePlaylist(id: number): Promise<void> {
 /** Appends a track to a playlist at the next available position.
  *  Re-sequences to keep positions dense 1..N. Throws if the track is
  *  already in the playlist. */
-export async function addTrackToPlaylist(
-  playlistId: number,
-  trackId: number,
-): Promise<void> {
+export async function addTrackToPlaylist(playlistId: number, trackId: number): Promise<void> {
   const pool = getPool();
   const conn = await pool.getConnection();
   try {
@@ -193,10 +184,7 @@ export async function addTrackToPlaylist(
 }
 
 /** Removes a track and re-sequences remaining positions to keep 1..N dense. */
-export async function removeTrackFromPlaylist(
-  playlistId: number,
-  trackId: number,
-): Promise<void> {
+export async function removeTrackFromPlaylist(playlistId: number, trackId: number): Promise<void> {
   const pool = getPool();
   const conn = await pool.getConnection();
   try {
@@ -211,10 +199,10 @@ export async function removeTrackFromPlaylist(
       return;
     }
     const removedPos = Number(rows[0].position);
-    await conn.execute(
-      `DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?`,
-      [playlistId, trackId],
-    );
+    await conn.execute(`DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?`, [
+      playlistId,
+      trackId,
+    ]);
     // Re-sequence: shift positions down for rows above the gap.
     await conn.execute(
       `UPDATE playlist_tracks SET position = position - 1
@@ -232,10 +220,7 @@ export async function removeTrackFromPlaylist(
 
 /** Replaces the entire track order with `trackIds` (in the new order).
  *  Validates all IDs belong to the playlist. Re-sequences to 1..N. */
-export async function reorderPlaylistTracks(
-  playlistId: number,
-  trackIds: number[],
-): Promise<void> {
+export async function reorderPlaylistTracks(playlistId: number, trackIds: number[]): Promise<void> {
   const pool = getPool();
   const conn = await pool.getConnection();
   try {
@@ -255,10 +240,7 @@ export async function reorderPlaylistTracks(
       }
     }
     // Clear and re-insert with positions 1..N.
-    await conn.execute(
-      `DELETE FROM playlist_tracks WHERE playlist_id = ?`,
-      [playlistId],
-    );
+    await conn.execute(`DELETE FROM playlist_tracks WHERE playlist_id = ?`, [playlistId]);
     for (let i = 0; i < trackIds.length; i++) {
       await conn.execute(
         `INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)`,

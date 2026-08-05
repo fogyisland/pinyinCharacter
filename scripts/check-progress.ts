@@ -6,9 +6,12 @@ async function main() {
        COUNT(*) as total,
        SUM(CASE WHEN meaning IS NOT NULL AND meaning != '' THEN 1 ELSE 0 END) as done,
        SUM(CASE WHEN meaning IS NULL OR meaning = '' THEN 1 ELSE 0 END) as pending
-     FROM rare_chars`
+     FROM rare_chars`,
   );
   console.log(JSON.stringify(rows[0]));
   await conn.end();
 }
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

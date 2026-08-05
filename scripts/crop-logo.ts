@@ -30,4 +30,7 @@ async function main() {
   console.log('[output]', dst, out.width, 'x', out.height, out.format);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

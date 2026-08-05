@@ -40,7 +40,12 @@ export function ChainGame() {
         const source = CHAIN_GAME_CONFIG[difficulty].source;
         const result = await fetchChainChars(source, hskLevel);
         if (ctrl.signal.aborted) return;
-        console.log('[chain] startGame', { source, hskLevel, count: result.chars.length, hskFallback: result.hskFallback });
+        console.log('[chain] startGame', {
+          source,
+          hskLevel,
+          count: result.chars.length,
+          hskFallback: result.hskFallback,
+        });
         const s = pickStarter(result.chars);
         if (!s) throw new Error('no valid starter');
         setCharsList(result.chars);
@@ -123,12 +128,20 @@ export function ChainGame() {
       <div className="flex items-center justify-between">
         <DifficultyPicker
           value={difficulty}
-          onChange={(d) => { setDifficulty(d); void startGame(d); }}
+          onChange={(d) => {
+            setDifficulty(d);
+            void startGame(d);
+          }}
         />
         <div className="text-xs text-ink-faint">字库难度</div>
       </div>
       <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
-      <ChainScroll chain={chain} charsList={charsList} revealConfig={revealConfig} onDemandReveal={handleDemand} />
+      <ChainScroll
+        chain={chain}
+        charsList={charsList}
+        revealConfig={revealConfig}
+        onDemandReveal={handleDemand}
+      />
       <div className="flex items-center justify-between">
         <div className="text-sm text-ink-soft">接龙长度: {chain.length}</div>
         <button
@@ -145,10 +158,7 @@ export function ChainGame() {
           上一个字: {currentLast.char} {currentLast.pinyin}
         </div>
       )}
-      <ChainPickerModal
-        validChars={validNext}
-        onSelect={(c) => setChain((prev) => [...prev, c])}
-      />
+      <ChainPickerModal validChars={validNext} onSelect={(c) => setChain((prev) => [...prev, c])} />
     </div>
   );
 }

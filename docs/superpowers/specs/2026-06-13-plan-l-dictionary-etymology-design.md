@@ -11,6 +11,7 @@
 ## 1. 背景与目标
 
 ### 现状 (现状已存在)
+
 - `data/general-standard-chinese-characters.json` — 8105 字符号数组 (level 1=3500 + level 2=3000 + level 3=1605)
 - `data/radicals.json` — 6920 字符号 → 部首 (部首 214, 但 chars 字典有 1185 字不在里面)
 - `data/pinyin-hanzi.json` — 398 pinyin 键 → 候选汉字 (来自 pypinyin, 覆盖不全)
@@ -22,6 +23,7 @@
 - 字体: 殷契甲骨文 woff/ttf, 漢典金文 ttf, 全字库说文解字/隶定 ttf (开源, 可商用)
 
 ### 目标
+
 1. **完整字典页 `/dictionary`** — 覆盖全部 8105 字符,支持 [按拼音 A-Z 锚点] / [按部首 214 侧栏] 两种浏览模式 toggle,显示 pinyin/部首/笔画,搜索 by pinyin/汉字/英文。
 2. **字典详情页 `/dictionary/[char]`** — tab 切换 (字典/字源/故事/+字帖),展示 7 字段 (拼音/部首/笔画/释义/英文/Unicode/异体字) + 相关字 (同部首/同拼音)。
 3. **字源沉浸页 `/etymology/[char]`** — 大字 + 时间轴 (甲骨/金文/小篆/隶书/楷书) + LLM 生成的故事 + 上一字/下一字。**5 个时代的字形图 = 用专门字体渲染该字**,无图时显示「暂无」。
@@ -30,6 +32,7 @@
 6. **Admin 扩展** — `/admin/chars` 看覆盖率, `/admin/chars/generate` 手动批量生成。
 
 ### 不做
+
 - 异体字自动补全 (仅做字段,数据靠 import 阶段填)
 - 释义/英文的 AI 自动生成 (v1 释义/英文数据靠外部数据集,缺口保留空)
 - 字典导出 (PDF/CSV 导出)
@@ -64,6 +67,7 @@
 ### 2.3 数据流
 
 **字典列表页**
+
 ```
 RSC /dictionary
   → listChars({ level?, letter?, radical?, q?, page })
@@ -74,6 +78,7 @@ RSC /dictionary
 ```
 
 **字典详情页**
+
 ```
 RSC /dictionary/[char]
   → getCharDetail(char) 返回 { 7 字段 + 同部首 N 字 + 同拼音 N 字 }
@@ -85,6 +90,7 @@ RSC /dictionary/[char]
 ```
 
 **字源页**
+
 ```
 RSC /etymology/[char]
   → getEtymology(char) 返回 { story, eraGlyphs: { era, font_class, has_glyph, fallback? } }
@@ -95,6 +101,7 @@ RSC /etymology/[char]
 ```
 
 **管理员手动生成**
+
 ```
 Admin POST /api/admin/chars/generate { char[]: string[] }
   → for each char:
@@ -140,6 +147,7 @@ CREATE TABLE chars (
 ```
 
 字段填写来源 (v1):
+
 - `char`/`level`: 从 `data/general-standard-chinese-characters.json` 导入(1-3500=level 1, 3501-6500=level 2, 6501-8105=level 3)
 - `pinyin`/`pinyin_alt`: 从 pypinyin 字典补,辅以 CC-CEDICT 兜底
 - `radical`: 从 `data/radicals.json` 导入(覆盖 6920 字,缺 1185 字留空,后续手动补)
@@ -177,12 +185,14 @@ CREATE TABLE char_etymology (
 ```
 
 字段语义:
+
 - `{era}_font`: 字体 CSS class 名 (与 `app/globals.css` 中的 `@font-face` 名称对应)
 - `{era}_has`: 该 char 在该字体中是否有 glyph (启动时一次性检测, charcode 是否在 font 范围内)。`FALSE` 的字在 UI 显示「暂无」
 - `story`: LLM 生成的字源演变故事 (与 Plan G `rare_chars.story` 不同)
 - `generated_by`/`generated_at`: withAiLogging 自动填
 
 **字体覆盖检测** (启动时一次性):
+
 ```ts
 // scripts/detect-font-coverage.ts
 async function detectCoverage(char: string, fontBuffer: ArrayBuffer): Promise<boolean> {
@@ -190,9 +200,11 @@ async function detectCoverage(char: string, fontBuffer: ArrayBuffer): Promise<bo
   return document.fonts.check(`16px "${fontFamily}"`, char);
 }
 ```
+
 无浏览器时 (build script) 用 `fontkit` 包读取 cmap 表检查。
 
 ### 3.3 `rare_chars` 表 (现有, Plan G)
+
 - 不动。Plan G 故事继续走这表。
 - 字典详情页"故事" tab 链接到 `/stories/[char]`,`/stories/[char]` 走 Plan G 的逻辑(读 `rare_chars.story`)。
 
@@ -229,6 +241,7 @@ public/fonts/
 ```
 
 Tailwind config (在 `tailwind.config.ts` 中扩展) 把这些字体名加到 `fontFamily`:
+
 ```ts
 fontFamily: {
   jiaguwen: ['YinQiJiaGuWen', 'serif'],
@@ -268,50 +281,54 @@ LLM 返回纯文本,直接存 `char_etymology.story`。
 
 ## 6. API 路由
 
-| 路由 | 方法 | 用途 | 鉴权 |
-|---|---|---|---|
-| `/api/chars` | GET | 字典列表 (支持 level/letter/radical/q/page 参数) | 公开 |
-| `/api/chars/[char]` | GET | 字典详情 (7 字段 + 相关字) | 公开 |
-| `/api/etymology/[char]` | GET | 字源 (5 era 字形 + story + prev/next) | 公开 |
-| `/api/admin/chars/coverage` | GET | 覆盖率统计 (level/grouped) | admin |
-| `/api/admin/chars/generate` | POST | 批量触发 story 生成 | admin |
-| `/api/admin/chars/cron-config` | GET/PUT | cron 频率/启停 | admin |
+| 路由                           | 方法    | 用途                                             | 鉴权  |
+| ------------------------------ | ------- | ------------------------------------------------ | ----- |
+| `/api/chars`                   | GET     | 字典列表 (支持 level/letter/radical/q/page 参数) | 公开  |
+| `/api/chars/[char]`            | GET     | 字典详情 (7 字段 + 相关字)                       | 公开  |
+| `/api/etymology/[char]`        | GET     | 字源 (5 era 字形 + story + prev/next)            | 公开  |
+| `/api/admin/chars/coverage`    | GET     | 覆盖率统计 (level/grouped)                       | admin |
+| `/api/admin/chars/generate`    | POST    | 批量触发 story 生成                              | admin |
+| `/api/admin/chars/cron-config` | GET/PUT | cron 频率/启停                                   | admin |
 
 ---
 
 ## 7. 错误处理
 
-| 场景 | 行为 |
-|---|---|
-| `/dictionary` 0 结果 (不可能,8105 字都有) | 仍显示 EmptyState |
-| `/dictionary/[char]` 不存在 | 404 |
-| `/etymology/[char]` 不存在 | 404 |
-| `/etymology/[char]` 无字源 (row 不存在) | 显示「字源即将生成」+ 上一字/下一字 |
-| `/etymology/[char]` 某 era 无 glyph | 该 era 显示「暂无」灰色块,不阻塞其他 era |
-| Admin generate LLM 失败 | 记录到 `ai_calls` 表,返回错误列表 |
-| 字体加载失败 | fallback 到 system serif, console.warn |
+| 场景                                      | 行为                                     |
+| ----------------------------------------- | ---------------------------------------- |
+| `/dictionary` 0 结果 (不可能,8105 字都有) | 仍显示 EmptyState                        |
+| `/dictionary/[char]` 不存在               | 404                                      |
+| `/etymology/[char]` 不存在                | 404                                      |
+| `/etymology/[char]` 无字源 (row 不存在)   | 显示「字源即将生成」+ 上一字/下一字      |
+| `/etymology/[char]` 某 era 无 glyph       | 该 era 显示「暂无」灰色块,不阻塞其他 era |
+| Admin generate LLM 失败                   | 记录到 `ai_calls` 表,返回错误列表        |
+| 字体加载失败                              | fallback 到 system serif, console.warn   |
 
 ---
 
 ## 8. 测试
 
 ### 单元测试 (Vitest)
+
 - `lib/chars.ts` — 6 fns: listChars / getChar / getCharDetail / searchChars (each TDD)
 - `lib/etymology.ts` — 3 fns: getEtymology / getAdjacentChars / detectFontCoverage (TDD)
 - `lib/char-ai.ts` — 1 fn: generateEtymologyStory (mocked LLM)
 - `lib/validators.ts` — `charsListQuery`, `charParam`, `etymologyCharParam` (zod)
 
 ### 集成测试 (Vitest + MySQL)
+
 - 7 个 API 路由 (3 public + 4 admin), 用 `integrationDescribe` 自动 skip 无 DB
 - DDL smoke test (`initDb` 启动后表存在)
 
 ### 组件测试 (Vitest + happy-dom)
+
 - `<DictionaryClient>` — toggle 切换, 搜索输入, 字母锚点滚动
 - `<DictionaryDetailTabs>` — 4 tab 渲染, link href 正确
 - `<EtymologyTimeline>` — 5 era dot, 切换 active, 键盘 ←/→
 - `<EtymologyPrevNext>` — 按钮 disabled 边界, 跳转 href
 
 ### 浏览器手动冒烟 (Human, Plan L Task 24)
+
 - 12 步: 字典 toggle, 搜索, 详情 tab, 字源时间轴, 字体显示, 上一字/下一字, Admin 生成
 - pnpm dev + 打开浏览器, 12 步全过
 
@@ -368,6 +385,7 @@ LLM 返回纯文本,直接存 `char_etymology.story`。
 ## 10. 实施任务列表 (大纲)
 
 Plan L 预计 24 个任务,7 个阶段:
+
 - **Phase A 数据层 (Tasks 1-6)**: DDL chars + char_etymology → chars.ts (6 fns) → etymology.ts (3 fns) → font-coverage.ts → import-chars-data 脚本 → detect-font-coverage 脚本
 - **Phase B API 层 (Tasks 7-10)**: validators → /api/chars (list+search) → /api/chars/[char] → /api/etymology/[char]
 - **Phase C 字典前端 (Tasks 11-15)**: PinyinAnchor + RadicalSidebar + DictionaryCharGrid → DictionaryClient → /dictionary 页面 → /dictionary/[char] 详情 → DictionaryDetailTabs
@@ -397,16 +415,16 @@ Plan L 预计 24 个任务,7 个阶段:
 
 ## 12. 风险与缓解
 
-| 风险 | 缓解 |
-|---|---|
-| 8105 字符号数据从公开数据集导入失败 | 备选: hanzicraft/Unicode Unihan CSV, 任一能 import 即可 |
-| 字体 woff2 文件获取受阻 (GitHub raw 限流/CORS) | 下载脚本带 retry, 同时 fallback 到 npm 包 (hanzi-writer) |
-| 字体覆盖检测在 happy-dom 不可用 | build script 用 fontkit 直接读 cmap, 不依赖浏览器 |
-| LLM 生成 story 失败率高 | retry 3 次 + 失败计入 ai_calls 表供 admin 重试 |
-| 8MB 字体拖慢首屏 | 楷书 woff2 放 inline <link rel="preload">, 其余 4 个懒加载 |
-| 5 个 era 字体不覆盖所有 8105 字 | "暂无" 灰色块, 不阻塞其他 era 显示;覆盖率显示在 admin |
-| 字典页 8105 字 grid 滚动卡 | 服务端 LIMIT/OFFSET, 每页 80 字, 复用现有分页组件 |
-| `/admin/chars` 慢查询 | 加 `idx_radical` / `idx_pinyin` 索引 |
+| 风险                                           | 缓解                                                       |
+| ---------------------------------------------- | ---------------------------------------------------------- |
+| 8105 字符号数据从公开数据集导入失败            | 备选: hanzicraft/Unicode Unihan CSV, 任一能 import 即可    |
+| 字体 woff2 文件获取受阻 (GitHub raw 限流/CORS) | 下载脚本带 retry, 同时 fallback 到 npm 包 (hanzi-writer)   |
+| 字体覆盖检测在 happy-dom 不可用                | build script 用 fontkit 直接读 cmap, 不依赖浏览器          |
+| LLM 生成 story 失败率高                        | retry 3 次 + 失败计入 ai_calls 表供 admin 重试             |
+| 8MB 字体拖慢首屏                               | 楷书 woff2 放 inline <link rel="preload">, 其余 4 个懒加载 |
+| 5 个 era 字体不覆盖所有 8105 字                | "暂无" 灰色块, 不阻塞其他 era 显示;覆盖率显示在 admin      |
+| 字典页 8105 字 grid 滚动卡                     | 服务端 LIMIT/OFFSET, 每页 80 字, 复用现有分页组件          |
+| `/admin/chars` 慢查询                          | 加 `idx_radical` / `idx_pinyin` 索引                       |
 
 ---
 

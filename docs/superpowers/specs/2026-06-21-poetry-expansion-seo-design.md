@@ -20,6 +20,7 @@ Two related changes driven by user requests:
 - `classics` table is in utf8mb4 with VARCHAR `category` (not enum); new categories like 'pianwen' are free-form.
 
 User decisions confirmed in brainstorm (2026-06-21):
+
 1. Scope = BOTH new dynasty poetry (汉乐府/南北朝/骈文) AND form filter on existing /poetry.
 2. New data sources = chinese-poetry (汉乐府/南北朝) + guwendao.net (骈文) — mixed approach.
 3. Form annotation = structural inference (五言/七言/绝句/律诗) + source `type` field merge (乐府/古风). 词曲 use 词牌名/套数 as form.
@@ -37,6 +38,7 @@ User decisions confirmed in brainstorm (2026-06-21):
 ### Part 1: Schema changes (poems)
 
 **Existing schema** (verified 2026-06-21 on prod `piyin`):
+
 ```sql
 CREATE TABLE poems (
   id INT(11) NOT NULL AUTO_INCREMENT,
@@ -57,6 +59,7 @@ CREATE TABLE poems (
 ```
 
 **Required changes**:
+
 ```sql
 -- 1. dynasty ENUM -> VARCHAR(16) to support 乐府(汉/魏晋/南北朝), 纳兰性德(清), 曹操诗集(魏), 辞赋(mixed)
 ALTER TABLE poems MODIFY COLUMN dynasty VARCHAR(16) NOT NULL;
@@ -86,17 +89,22 @@ Pure function in `lib/poetry/infer-form.ts`:
 
 ```ts
 type FormResult = {
-  primary: string;       // '五绝' | '七绝' | '五律' | '七律' | '五言古风' | '七言古风' | '杂言古风' | '乐府' | '古风' | null
+  primary: string; // '五绝' | '七绝' | '五律' | '七律' | '五言古风' | '七言古风' | '杂言古风' | '乐府' | '古风' | null
   source: 'inferred' | 'source-tag' | 'passthrough';
-  confidence: number;    // 0..1
+  confidence: number; // 0..1
 };
 
-function inferFormFromParagraphs(paragraphs: string[]): FormResult
-function resolveFormFromSource(type: string | null, rhythmic: string | null, category: string): FormResult
-function mergeForm(structInferred: FormResult, sourceTag: FormResult): FormResult
+function inferFormFromParagraphs(paragraphs: string[]): FormResult;
+function resolveFormFromSource(
+  type: string | null,
+  rhythmic: string | null,
+  category: string,
+): FormResult;
+function mergeForm(structInferred: FormResult, sourceTag: FormResult): FormResult;
 ```
 
 **Structural inference rules** (paragraphs = lines of poem):
+
 1. Filter out empty/whitespace-only lines.
 2. Compute `lineLengths` = each line's character count (Chinese chars only, no punctuation).
 3. Compute `lengthMode` = single value if all `lineLengths` equal, else `mixed`.
@@ -111,17 +119,20 @@ function mergeForm(structInferred: FormResult, sourceTag: FormResult): FormResul
 6. Confidence = 1.0 for canonical (4/8 lines, uniform 5/7); 0.7 for 6 lines (古风 candidate); 0.5 for irregular.
 
 **Source tag rules**:
+
 - `category='song'` + non-null `rhythmic` → passthrough `form=rhythmic` (e.g., `水调歌头`), source='passthrough'
 - `category='yuan'` + `type='套数'` → form='套数'; `type='小令'` → form='小令'
 - Non-null `type` from chinese-poetry (e.g., `五言古诗`, `七言绝句`, `乐府`, `古风`, `歌行`) → use as primary form, source='source-tag', confidence=1.0
 - Otherwise fall through to structural inference
 
 **Merge rule**:
+
 - If source-tag present and structural agrees → use source-tag, confidence=1.0
 - If source-tag present and structural disagrees → use source-tag, confidence=0.8
 - If source-tag absent → use structural, confidence=structural.confidence
 
 **Existing-form normalization** (run once before backfill):
+
 - 五言律诗 → 五律
 - 七言律诗 → 七律
 - 五言古诗 → 五言古风
@@ -148,21 +159,23 @@ async function backfillForm({ batchSize = 1000, dryRun = false, whereFormNull = 
 ### Part 4: New dynasty poem ingest
 
 **Data sources (verified 2026-06-21)**:
+
 - chinese-poetry 仓 **没有** 汉乐府/南北朝/古体诗独立目录 (top-level dirs are 五代诗词/元曲/全唐诗/四书五经/宋词/楚辞/水墨唐诗/纳兰性德/蒙学/论语/诗经 etc.)
 - guwendao.net **诗** subcategories have: 乐府 (203), 古诗十九首 (19), 辞赋 (47), 楚辞 (17 — already in /classics)
 - chinese-poetry 仓 has: 曹操诗集 (caocao.json, ~20 poems), 纳兰性德 (词集, ~350 首, 字段 `para` 不是 `paragraphs`)
 
 **Final list (5 ingests, 诗 → poems 表, 骈文 → classics 表)**:
 
-| Source | Type | Path/URL | Count | category | dynasty | notes |
-|---|---|---|---|---|---|---|
-| guwendao 乐府 | 诗 | https://www.guwendao.net/gushi/yuefu.aspx | 203 | '汉乐府' | '汉/魏晋/南北朝' | scrape poem list, then each `shiwenv_xxx.aspx` |
-| guwendao 古诗十九首 | 诗 | https://www.guwendao.net/gushi/shijiu.aspx | 19 | '古诗十九首' | '汉末' | same scrape pattern |
-| chinese-poetry 曹操诗集 | 诗 | /曹操诗集/caocao.json | ~20 | '魏' | '三国' | has `paragraphs` field |
-| chinese-poetry 纳兰性德 | **词** | /纳兰性德/纳兰性德诗集.json | ~350 | 'qing' | '清' | has `para` field; treat as 词 form=词牌名 |
-| guwendao 辞赋 | 骈文/赋 | https://www.guwendao.net/gushi/cifu.aspx | 47 | '骈文' | 'mixed' | scrape pattern, 长篇赋 like 赤壁赋/阿房宫赋 |
+| Source                  | Type    | Path/URL                                   | Count | category     | dynasty          | notes                                          |
+| ----------------------- | ------- | ------------------------------------------ | ----- | ------------ | ---------------- | ---------------------------------------------- |
+| guwendao 乐府           | 诗      | https://www.guwendao.net/gushi/yuefu.aspx  | 203   | '汉乐府'     | '汉/魏晋/南北朝' | scrape poem list, then each `shiwenv_xxx.aspx` |
+| guwendao 古诗十九首     | 诗      | https://www.guwendao.net/gushi/shijiu.aspx | 19    | '古诗十九首' | '汉末'           | same scrape pattern                            |
+| chinese-poetry 曹操诗集 | 诗      | /曹操诗集/caocao.json                      | ~20   | '魏'         | '三国'           | has `paragraphs` field                         |
+| chinese-poetry 纳兰性德 | **词**  | /纳兰性德/纳兰性德诗集.json                | ~350  | 'qing'       | '清'             | has `para` field; treat as 词 form=词牌名      |
+| guwendao 辞赋           | 骈文/赋 | https://www.guwendao.net/gushi/cifu.aspx   | 47    | '骈文'       | 'mixed'          | scrape pattern, 长篇赋 like 赤壁赋/阿房宫赋    |
 
 **训蒙骈句** (骈文 book) — 1 book, 30 chapters:
+
 - URL: https://www.guwendao.net/guwen/book_427c5eea5943.aspx (book index)
 - Chapters: `bookv_xxx.aspx` (e.g. `一东`, `二冬`, `三江`...)
 - Goes to `classics` table with `category='pianwen'`, `author='司祢（清）/萧良有（明）'` (per guwendao metadata), `era='明/清'`
@@ -170,26 +183,40 @@ async function backfillForm({ batchSize = 1000, dryRun = false, whereFormNull = 
 **Implementation**: NEW script `scripts/build-poems-extra.ts` (诗 + 词 from chinese-poetry + guwendao poem scrape) + new `scripts/build-pianwen.ts` (训蒙骈句 book scrape using existing guwendao scraping primitives).
 
 **4a. poems table 改动**:
+
 - 现有 `poems` 表无 `slug` 列。每行是单首诗，用 `id` 主键。
 - 新朝代诗用 auto-increment `id` 续接（与现有 唐诗 同表）。
 - 唯一识别靠 `(title, author, content_hash)` 组合去重。Import 时计算 `content_hash = md5(JSON.stringify(paragraphs))`，先 `SELECT` 查重再 INSERT。
 - 详见 Part 4b `build-poems-extra.ts` 的去重逻辑。
 
 **4b. `scripts/build-poems-extra.ts` 流程**:
+
 ```ts
 async function buildExtraPoems() {
   // 路径 1: chinese-poetry JSON (曹操诗集 + 纳兰性德)
-  for (const file of CP_EXTRA_FILES) {  // 曹操诗集/caocao.json + 纳兰性德/纳兰性德诗集.json
+  for (const file of CP_EXTRA_FILES) {
+    // 曹操诗集/caocao.json + 纳兰性德/纳兰性德诗集.json
     const raw = await fetchCP(file.path);
-    const seeds = normalizePoemJson(raw);  // 兼容 `paragraphs` 和 `para` 两种 schema
-    await insertPoems(seeds, { category: file.category, dynasty: file.dynasty, source: SOURCE_TAG_CP });
+    const seeds = normalizePoemJson(raw); // 兼容 `paragraphs` 和 `para` 两种 schema
+    await insertPoems(seeds, {
+      category: file.category,
+      dynasty: file.dynasty,
+      source: SOURCE_TAG_CP,
+    });
   }
   // 路径 2: guwendao poem scrape (乐府 + 古诗十九首 + 辞赋)
-  for (const cat of GWD_POEM_CATEGORIES) {  // [{name:'yuefu', category:'汉乐府', dynasty:'汉/魏晋/南北朝'}, ...]
+  for (const cat of GWD_POEM_CATEGORIES) {
+    // [{name:'yuefu', category:'汉乐府', dynasty:'汉/魏晋/南北朝'}, ...]
     const poemList = await scrapePoemList(`https://www.guwendao.net/gushi/${cat.name}.aspx`);
     for (const pid of poemList) {
-      const { title, author, dynasty, content } = await scrapePoemPage(`https://www.guwendao.net/shiwenv_${pid}.aspx`);
-      await insertPoems([{ title, author, paragraphs: content, type: cat.type }], { category: cat.category, dynasty, source: SOURCE_TAG_GWD });
+      const { title, author, dynasty, content } = await scrapePoemPage(
+        `https://www.guwendao.net/shiwenv_${pid}.aspx`,
+      );
+      await insertPoems([{ title, author, paragraphs: content, type: cat.type }], {
+        category: cat.category,
+        dynasty,
+        source: SOURCE_TAG_GWD,
+      });
     }
   }
   // 写 data/poems/<slug>.json (source of truth)
@@ -198,18 +225,35 @@ async function buildExtraPoems() {
 async function insertPoems(seeds, { category, dynasty, source }) {
   for (const seed of seeds) {
     const content_hash = md5(JSON.stringify(seed.paragraphs));
-    const [existing] = await pool.execute('SELECT id FROM poems WHERE title = ? AND content_hash = ?', [seed.title, content_hash]);
-    if (existing.length > 0) continue;  // 幂等：跳过
-    const form = mergeForm(inferFormFromParagraphs(seed.paragraphs), resolveFormFromSource(seed.type, null, category));
+    const [existing] = await pool.execute(
+      'SELECT id FROM poems WHERE title = ? AND content_hash = ?',
+      [seed.title, content_hash],
+    );
+    if (existing.length > 0) continue; // 幂等：跳过
+    const form = mergeForm(
+      inferFormFromParagraphs(seed.paragraphs),
+      resolveFormFromSource(seed.type, null, category),
+    );
     await pool.execute(
       'INSERT INTO poems (title, author, dynasty, category, content, paragraphs, pinyin, type, form) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [seed.title, seed.author, dynasty, category, JSON.stringify(seed.paragraphs), JSON.stringify(seed.paragraphs), JSON.stringify(seed.paragraphs.map(linePinyin)), seed.type, form.primary]
+      [
+        seed.title,
+        seed.author,
+        dynasty,
+        category,
+        JSON.stringify(seed.paragraphs),
+        JSON.stringify(seed.paragraphs),
+        JSON.stringify(seed.paragraphs.map(linePinyin)),
+        seed.type,
+        form.primary,
+      ],
     );
   }
 }
 ```
 
 **scrapePoemPage 解析** (new helper in `lib/guwendao-scraper.ts`):
+
 - GET `https://www.guwendao.net/shiwenv_<id>.aspx`
 - Parse `<div class="contson">...</div>` for content
 - Extract title from `<h1>` or page title tag
@@ -217,6 +261,7 @@ async function insertPoems(seeds, { category, dynasty, source }) {
 - Return `{ title, author, dynasty, paragraphs: string[] }`
 
 **4c. `scripts/build-pianwen.ts`** (训蒙骈句):
+
 - Reuses `fetchChapterList`, `scrapeChapterContent` from `lib/guwendao-scraper.ts` (extracted in `scripts/build-classics-guwendao.ts`).
 - Single book `bookId: '427c5eea5943'`, 30 chapters, all-in-one (no volume split needed, ~10KB per chapter).
 - `category='pianwen'`, `author='司祢（清）/萧良有（明）'` (per guwendao metadata, may be split if multiple authors).
@@ -242,15 +287,16 @@ export function FormFilterBar({ category, selectedForms, onChange }: FormFilterB
 ```
 
 **Server-side form list** in `lib/api-poetry.ts`:
+
 ```ts
 async function getAvailableForms(category: string): Promise<string[]> {
   // 诗类（唐诗/汉乐府/南北朝）用固定 8 个 form chips
   if (['tang', '汉乐府', '南北朝'].includes(category)) {
-    return SHI_FORMS;  // ['五言', '七言', '五绝', '七绝', '五律', '七律', '古风', '乐府']
+    return SHI_FORMS; // ['五言', '七言', '五绝', '七绝', '五律', '七律', '古风', '乐府']
   }
   // 词用 top 30 词牌名（从 DB 动态取，不硬编码）
   if (category === 'song') {
-    return getTopCipaiNames(30);  // SELECT rhythmic, COUNT(*) AS n FROM poems WHERE category='song' AND rhythmic IS NOT NULL GROUP BY rhythmic ORDER BY n DESC LIMIT 30
+    return getTopCipaiNames(30); // SELECT rhythmic, COUNT(*) AS n FROM poems WHERE category='song' AND rhythmic IS NOT NULL GROUP BY rhythmic ORDER BY n DESC LIMIT 30
   }
   // 元曲用固定 2 个
   if (category === 'yuan') {
@@ -261,12 +307,14 @@ async function getAvailableForms(category: string): Promise<string[]> {
 ```
 
 **集成点** `app/poetry/page.tsx` (RSC):
+
 - 读 `searchParams.form` (逗号分隔字符串, e.g. `?form=七绝,七律` → 数组 `['七绝', '七律']`).
 - 传给 `getPoems({ category, forms })`.
 - 列表 query: `WHERE category = ? AND form IN (?)` (or `AND (form IN (?) OR ?)` for "all" category).
 - 同步 chips 选中状态到 URL via `router.replace('/poetry?form=...')`.
 
 **视觉** (per Plan E/G 字·韵 style):
+
 - Chips: 圆角 999px, 14px 字号, h-8 padding-y, hover 显示该 form 诗数
 - 选中态: 主色 #5A4530 背景 + 白字；未选: #F5EFE6 背景 + #5A4530 字
 - 多选: 累加（OR），不是互斥
@@ -274,6 +322,7 @@ async function getAvailableForms(category: string): Promise<string[]> {
 ### Part 6: SEO architecture
 
 **新文件**:
+
 ```
 lib/seo/
   metadata.ts          # generatePoemMetadata, generateClassicMetadata, generateCharMetadata
@@ -291,6 +340,7 @@ app/
 ```
 
 **`lib/seo/config.ts`** (NEW, 集中 SEO 配置):
+
 ```ts
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 export const SITE_NAME = '字·韵';
@@ -300,6 +350,7 @@ export const SITE_LOCALE = 'zh_CN';
 Used in: `app/sitemap.ts`, `app/robots.ts`, `lib/seo/metadata.ts`, `lib/seo/jsonld.ts`, `lib/seo/canonical.ts`. Avoid hardcoding across files.
 
 **`app/sitemap.ts`** — 动态分片:
+
 ```ts
 import type { MetadataRoute } from 'next';
 import { SITE_URL } from '@/lib/seo/config';
@@ -320,13 +371,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 ```
 
 **`app/sitemap/poetry.xml/route.ts`** — 单独 sitemap 分片:
+
 ```ts
 export const revalidate = 3600;
 
 export async function GET() {
   const poems = await pool.query('SELECT id, updated_at FROM poems ORDER BY id');
-  const urls = poems.map(p => `<url><loc>${SITE}/poetry/${p.id}</loc><lastmod>${p.updated_at}</lastmod><priority>0.7</priority></url>`).join('');
-  return new Response(`<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`, { headers: { 'Content-Type': 'application/xml' } });
+  const urls = poems
+    .map(
+      (p) =>
+        `<url><loc>${SITE}/poetry/${p.id}</loc><lastmod>${p.updated_at}</lastmod><priority>0.7</priority></url>`,
+    )
+    .join('');
+  return new Response(
+    `<?xml version="1.0"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
+    { headers: { 'Content-Type': 'application/xml' } },
+  );
 }
 ```
 
@@ -335,6 +395,7 @@ export async function GET() {
 - `revalidate=3600` = Next.js 缓存 1 小时，爬虫高频访问不击穿 DB
 
 **`app/robots.ts`**:
+
 ```ts
 import { SITE_URL } from '@/lib/seo/config';
 
@@ -347,6 +408,7 @@ export default function robots(): MetadataRoute.Robots {
 ```
 
 **`lib/seo/metadata.ts`** — 详情页 metadata 生成:
+
 ```ts
 import { SITE_URL, SITE_NAME } from './config';
 
@@ -369,6 +431,7 @@ export async function generatePoemMetadata(id: number): Promise<Metadata> {
 - 用 Next.js 15 的 `generateMetadata` async 函数，与 `params` 一起传入
 
 **`lib/seo/jsonld.ts`** — 结构化数据生成器:
+
 ```ts
 export function buildCreativeWork(poem: Poem) {
   return {
@@ -421,6 +484,7 @@ export function buildWebSite(site: SiteConfig) {
 ```
 
 **JSON-LD 注入**:
+
 - 详情页: 在 page.tsx 末尾 `<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(buildCreativeWork(poem)) }} />`
 - 首页: 同上，buildOrganization + buildWebSite
 - BreadcrumbList: 详情页末尾追加
@@ -428,34 +492,40 @@ export function buildWebSite(site: SiteConfig) {
 ### Part 7: Rollout (dev first, then prod)
 
 **Step 1: Schema migration on piyin_dev**
+
 ```bash
 DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" \
   pnpm tsx scripts/migrate-add-form-column.ts
 ```
 
 **Step 2: Form backfill on piyin_dev**
+
 ```bash
 DATABASE_URL="...piyin_dev" pnpm tsx scripts/build-form-tags.ts --dry-run   # 看分布
 DATABASE_URL="...piyin_dev" pnpm tsx scripts/build-form-tags.ts             # 实际写
 ```
 
 **Step 3: New content on piyin_dev**
+
 ```bash
 DATABASE_URL="...piyin_dev" pnpm tsx scripts/build-poems-extra.ts
 DATABASE_URL="...piyin_dev" pnpm tsx scripts/build-pianwen.ts
 ```
 
 **Step 4: UI dev (本地烟测)**
+
 - `pnpm dev`，浏览器访问 /poetry
 - 验证 form chips 工作
 - 验证新朝代诗可读
 
 **Step 5: SEO dev**
+
 - 写完所有 lib/seo + app/sitemap.ts + app/robots.ts + 详情页 generateMetadata
 - `pnpm dev`，浏览器 View Source 看 head + JSON-LD
 - 抓 /sitemap.xml, /sitemap/poetry.xml, /robots.txt
 
 **Step 6: 同步到 prod**
+
 ```bash
 DATABASE_URL="mysql://piyin:Admin909217@139.5.108.245:3306/piyin" pnpm tsx scripts/migrate-add-form-column.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/build-form-tags.ts
@@ -465,6 +535,7 @@ git push origin main   # 触发 prod 部署
 ```
 
 **回滚预案**:
+
 - Step 1: `ALTER TABLE poems DROP COLUMN form, DROP INDEX idx_form` (DDL instant in MySQL 5.7)
 - Step 2: `UPDATE poems SET form = NULL` (full clear); 重跑 build-form-tags 推断结果应一致
 - Step 3: `DELETE FROM poems WHERE category IN ('汉乐府', '南北朝') AND id > <last_existing_id>`
@@ -525,11 +596,13 @@ NOT TOUCHED:
 ### Testing Strategy
 
 **Unit (vitest, 新增)**:
+
 - `tests/unit/lib/poetry/infer-form.test.ts`: ≥20 fixture cases covering 五绝/七绝/五律/七律/古风/杂言/乐府/词牌名/套数/小令, 各种 edge case (空行/标点/混合行数)
 - `tests/unit/lib/seo/metadata.test.ts`: snapshot tests for generatePoemMetadata, generateClassicMetadata, generateCharMetadata
 - `tests/unit/lib/seo/jsonld.test.ts`: snapshot tests for each schema type
 
 **Integration (vitest, 新增)**:
+
 - `tests/integration/scripts/build-form-tags.test.ts`: mock pool, verify SQL + batch logic
 - `tests/integration/api/poetry-form-filter.test.ts`: form filter query returns correct rows
 - `tests/integration/app/sitemap.test.ts`: fetch /sitemap.xml, verify contains 100+ poem URLs + 3 分片 references
@@ -537,12 +610,14 @@ NOT TOUCHED:
 - `tests/integration/app/robots.test.ts`: fetch /robots.txt, verify allow/disallow/sitemap
 
 **Regression**:
+
 - `pnpm tsc --noEmit` clean
 - `pnpm build` exit 0 (per memory rule `feedback-per-task-build-check`)
 - `pnpm test` ≥ 575/578 (G6 baseline) — 不掉到 575 以下
 - 现有 /poetry 路由在无 form filter 时仍能跑 (form=NULL or default=all)
 
 **Smoke (人验, 8-step 沿用 G6 模板)**:
+
 1. /poetry → category=唐诗 → form chips 显示，hover 数字 = DB 实际数
 2. form chip 选 七绝 → 列表只剩 七绝 诗，分页正确
 3. form chip 多选（七绝 + 七律）→ 列表是两类的并集
@@ -552,25 +627,20 @@ NOT TOUCHED:
 7. /poetry/<id>（某首 汉乐府）→ 详情正常显示，pinyin 完整
 8. /ancient 列表 → 骈文集出现，点击进入阅读器正常
 
-**SEO smoke (额外 5-step)**:
-9. 浏览器 DevTools View Source → head 有 unique title/description/canonical
-10. 抓 /sitemap.xml → 200 OK，引用 3 个分片
-11. 抓 /sitemap/poetry.xml → 200 OK，包含所有诗 URL
-12. 抓 /robots.txt → 含 Sitemap 指向
-13. 浏览器 DevTools → 详情页有 JSON-LD `<script type="application/ld+json">` 含 CreativeWork/Book/DefinedTerm
+**SEO smoke (额外 5-step)**: 9. 浏览器 DevTools View Source → head 有 unique title/description/canonical 10. 抓 /sitemap.xml → 200 OK，引用 3 个分片 11. 抓 /sitemap/poetry.xml → 200 OK，包含所有诗 URL 12. 抓 /robots.txt → 含 Sitemap 指向 13. 浏览器 DevTools → 详情页有 JSON-LD `<script type="application/ld+json">` 含 CreativeWork/Book/DefinedTerm
 
 ### Risks & Mitigations
 
-| Risk | Mitigation |
-|---|---|
+| Risk                                                    | Mitigation                                                         |
+| ------------------------------------------------------- | ------------------------------------------------------------------ |
 | raw.githubusercontent.com 网络阻塞（已发生 2026-06-20） | build-poems-extra.ts 先 HEAD 验路径；fail 立即 abort + clear error |
-| Form 推断误判（如 七言古风 被判七绝） | minimum 置信度 0.7；6 行以上才标古风；fallback 到源 type |
-| 词牌名 form 枚举爆炸（数百个） | 只显示 top 30 + 搜索框；不强制全显示 |
-| 19万行 sitemap 单文件 10MB | 协议允许 50MB；如超限可加 lastmod-based 分片 |
-| JSON-LD 字段错误 | 严格单测 snapshot；CI 跑 Google Rich Results 校验（可选） |
-| 骈文 长篇抓取超时 | 沿用 G6 split 卷模式 |
-| ALTER TABLE 在大表锁表 | MySQL 5.7 ADD COLUMN = in-place + instant；先在 dev 验证 |
-| SEO 改动破坏 RSC 缓存 | 详情页 generateMetadata 改 cache 策略；用 revalidate 控制 |
+| Form 推断误判（如 七言古风 被判七绝）                   | minimum 置信度 0.7；6 行以上才标古风；fallback 到源 type           |
+| 词牌名 form 枚举爆炸（数百个）                          | 只显示 top 30 + 搜索框；不强制全显示                               |
+| 19万行 sitemap 单文件 10MB                              | 协议允许 50MB；如超限可加 lastmod-based 分片                       |
+| JSON-LD 字段错误                                        | 严格单测 snapshot；CI 跑 Google Rich Results 校验（可选）          |
+| 骈文 长篇抓取超时                                       | 沿用 G6 split 卷模式                                               |
+| ALTER TABLE 在大表锁表                                  | MySQL 5.7 ADD COLUMN = in-place + instant；先在 dev 验证           |
+| SEO 改动破坏 RSC 缓存                                   | 详情页 generateMetadata 改 cache 策略；用 revalidate 控制          |
 
 ### Out of Scope (YAGNI)
 
@@ -587,7 +657,7 @@ NOT TOUCHED:
 
 ## Open Questions — ALL RESOLVED 2026-06-21
 
-1. ✅ **chinese-poetry 仓路径**（Q1）: 
+1. ✅ **chinese-poetry 仓路径**（Q1）:
    - **没有** 汉乐府/南北朝/古体诗 独立目录（top-level 是 五代诗词/元曲/全唐诗/四书五经/宋词/楚辞/水墨唐诗/纳兰性德/蒙学/论语/诗经 等）
    - 验证通过 (200 OK): `/曹操诗集/caocao.json` (~20 首, `paragraphs` 字段), `/纳兰性德/纳兰性德诗集.json` (~350 首, `para` 字段)
    - 决策：核心 4 集 (乐府+古诗十九首+曹操诗集+纳兰性德) 中 2 集 from guwendao scrape, 2 集 from chinese-poetry JSON

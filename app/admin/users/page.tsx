@@ -23,7 +23,11 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   // this search", not the global user table size.
   const listOpts = { q, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE };
   const [{ users, total }, { total: totalAdmins }, { total: totalDisabled }] = await Promise.all([
-    listUsers({ ...listOpts, isAdmin: adminOnly ? true : undefined, disabled: disabled ? true : undefined }),
+    listUsers({
+      ...listOpts,
+      isAdmin: adminOnly ? true : undefined,
+      disabled: disabled ? true : undefined,
+    }),
     listUsers({ q, limit: 1, isAdmin: true }),
     listUsers({ q, limit: 1, disabled: true }),
   ]);
@@ -39,9 +43,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
 
   const chipClass = (active: boolean) =>
     `text-xs px-3 py-1.5 rounded border transition-colors ${
-      active
-        ? 'bg-ink text-paper border-ink'
-        : 'border-paper-warm text-ink hover:bg-paper-warm'
+      active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
     }`;
 
   const showAll = !adminOnly && !disabled;
@@ -49,19 +51,42 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     <div>
       <h1 className="text-xl font-semibold mb-4">用户管理 (共 {total})</h1>
 
-      <form className="card-paper rounded p-3 mb-3 flex flex-wrap gap-2 items-end text-sm" method="get">
+      <form
+        className="card-paper rounded p-3 mb-3 flex flex-wrap gap-2 items-end text-sm"
+        method="get"
+      >
         {adminOnly && <input type="hidden" name="adminOnly" value="1" />}
         {disabled && <input type="hidden" name="disabled" value="1" />}
-        <input type="text" name="q" placeholder="搜索用户名或邮箱" defaultValue={q ?? ''}
-          className="border border-ink/20 rounded px-2 py-1 w-64 bg-paper-soft" />
-        <button type="submit" className="btn-seal text-sm">搜索</button>
-        {q && <Link href={chipHref({})} className="px-3 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep">清空</Link>}
+        <input
+          type="text"
+          name="q"
+          placeholder="搜索用户名或邮箱"
+          defaultValue={q ?? ''}
+          className="border border-ink/20 rounded px-2 py-1 w-64 bg-paper-soft"
+        />
+        <button type="submit" className="btn-seal text-sm">
+          搜索
+        </button>
+        {q && (
+          <Link
+            href={chipHref({})}
+            className="px-3 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep"
+          >
+            清空
+          </Link>
+        )}
       </form>
 
       <div className="flex gap-2 mb-4 flex-wrap">
-        <Link href={chipHref({})} className={chipClass(showAll)}>全部 ({total})</Link>
-        <Link href={chipHref({ adminOnly: '1' })} className={chipClass(adminOnly)}>管理员 ({totalAdmins})</Link>
-        <Link href={chipHref({ disabled: '1' })} className={chipClass(disabled)}>禁用 ({totalDisabled})</Link>
+        <Link href={chipHref({})} className={chipClass(showAll)}>
+          全部 ({total})
+        </Link>
+        <Link href={chipHref({ adminOnly: '1' })} className={chipClass(adminOnly)}>
+          管理员 ({totalAdmins})
+        </Link>
+        <Link href={chipHref({ disabled: '1' })} className={chipClass(disabled)}>
+          禁用 ({totalDisabled})
+        </Link>
       </div>
 
       <ResponsiveTable
@@ -80,16 +105,24 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       >
         {(u) => (
           <>
-            <Link href={`/admin/users/${u.id}`} className="text-seal hover:underline">{u.username}</Link>
-            <span className="text-ink-soft text-xs">{new Date(u.createdAt).toLocaleString('zh-CN')}</span>
+            <Link href={`/admin/users/${u.id}`} className="text-seal hover:underline">
+              {u.username}
+            </Link>
+            <span className="text-ink-soft text-xs">
+              {new Date(u.createdAt).toLocaleString('zh-CN')}
+            </span>
             <span>{u.historyCount}</span>
             <span>{u.favoriteCount}</span>
-            {u.isAdmin
-              ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">管理员</span>
-              : <span className="text-xs text-ink-faint">用户</span>}
-            {u.disabledAt != null
-              ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">禁用</span>
-              : <span className="text-xs text-ink-faint">正常</span>}
+            {u.isAdmin ? (
+              <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">管理员</span>
+            ) : (
+              <span className="text-xs text-ink-faint">用户</span>
+            )}
+            {u.disabledAt != null ? (
+              <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">禁用</span>
+            ) : (
+              <span className="text-xs text-ink-faint">正常</span>
+            )}
             <UserActions
               userId={u.id}
               username={u.username}

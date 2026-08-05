@@ -20,7 +20,9 @@ export function SutraPagination({ page, pageSize, total, onPageChange }: Props) 
       >
         上一页
       </button>
-      <span className="text-ink-soft">第 {page} / {totalPages} 页</span>
+      <span className="text-ink-soft">
+        第 {page} / {totalPages} 页
+      </span>
       <button
         type="button"
         onClick={() => onPageChange(Math.min(totalPages, page + 1))}

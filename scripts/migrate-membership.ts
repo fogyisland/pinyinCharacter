@@ -75,15 +75,51 @@ const DDL = [
 ];
 
 const SEED_PLANS = [
-  { plan_key: 'monthly_usd', display_name: '月度会员', duration_days: 30, amount: '3.00', currency: 'USD', enabled: 1, display_order: 1 },
-  { plan_key: 'yearly_usd', display_name: '年度会员', duration_days: 365, amount: '15.00', currency: 'USD', enabled: 1, display_order: 2 },
-  { plan_key: 'monthly_cny', display_name: '月度会员', duration_days: 30, amount: '15.00', currency: 'CNY', enabled: 0, display_order: 3 },
-  { plan_key: 'yearly_cny', display_name: '年度会员', duration_days: 365, amount: '100.00', currency: 'CNY', enabled: 0, display_order: 4 },
+  {
+    plan_key: 'monthly_usd',
+    display_name: '月度会员',
+    duration_days: 30,
+    amount: '3.00',
+    currency: 'USD',
+    enabled: 1,
+    display_order: 1,
+  },
+  {
+    plan_key: 'yearly_usd',
+    display_name: '年度会员',
+    duration_days: 365,
+    amount: '15.00',
+    currency: 'USD',
+    enabled: 1,
+    display_order: 2,
+  },
+  {
+    plan_key: 'monthly_cny',
+    display_name: '月度会员',
+    duration_days: 30,
+    amount: '15.00',
+    currency: 'CNY',
+    enabled: 0,
+    display_order: 3,
+  },
+  {
+    plan_key: 'yearly_cny',
+    display_name: '年度会员',
+    duration_days: 365,
+    amount: '100.00',
+    currency: 'CNY',
+    enabled: 0,
+    display_order: 4,
+  },
 ];
 
 const ALL_FEATURES = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'];
 
-export async function migrateMembership(): Promise<{ created: number; seeded: number; featureRows: number }> {
+export async function migrateMembership(): Promise<{
+  created: number;
+  seeded: number;
+  featureRows: number;
+}> {
   const pool = getPool();
   for (const sql of DDL) await pool.query(sql);
 
@@ -93,7 +129,15 @@ export async function migrateMembership(): Promise<{ created: number; seeded: nu
       `INSERT IGNORE INTO membership_plans
          (plan_key, display_name, duration_days, amount, currency, enabled, display_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [p.plan_key, p.display_name, p.duration_days, p.amount, p.currency, p.enabled, p.display_order],
+      [
+        p.plan_key,
+        p.display_name,
+        p.duration_days,
+        p.amount,
+        p.currency,
+        p.enabled,
+        p.display_order,
+      ],
     );
     seeded += (res as any).affectedRows > 0 ? 1 : 0;
   }
@@ -116,10 +160,15 @@ export async function migrateMembership(): Promise<{ created: number; seeded: nu
 
 async function main() {
   const r = await migrateMembership();
-  console.log(`[migrate-membership] tables=4, plans seeded=${r.seeded}, feature_rows=${r.featureRows}`);
+  console.log(
+    `[migrate-membership] tables=4, plans seeded=${r.seeded}, feature_rows=${r.featureRows}`,
+  );
   await closePool();
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

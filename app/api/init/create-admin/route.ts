@@ -16,7 +16,10 @@ import { consumeAdminCredentials } from '@/lib/init-credentials';
  * consumed or expired.
  */
 const tokenSchema = z.object({
-  token: z.string().length(32).regex(/^[0-9a-f]+$/i, 'token must be 32 hex chars'),
+  token: z
+    .string()
+    .length(32)
+    .regex(/^[0-9a-f]+$/i, 'token must be 32 hex chars'),
 });
 
 // Secret-bearing endpoint — must never be HTTP-cached (lesson from Task 5 review)
@@ -37,7 +40,11 @@ export async function POST(req: NextRequest) {
     }
     const creds = consumeAdminCredentials(parsed.data.token);
     if (!creds) {
-      return unauthorized('token_expired', 'admin credentials token expired or invalid; please re-enter on /init/admin', NO_STORE);
+      return unauthorized(
+        'token_expired',
+        'admin credentials token expired or invalid; please re-enter on /init/admin',
+        NO_STORE,
+      );
     }
     const { createAdminUser } = await import('@/scripts/init-db');
     const stats = await createAdminUser({

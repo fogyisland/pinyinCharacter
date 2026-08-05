@@ -7,6 +7,7 @@
 **Goal:** Close the 4 remaining gaps from the poetry expansion + site-wide SEO effort: (A) ingest 训蒙骈句 as a new classics book, (B) build SEO infrastructure (config, metadata, JSON-LD, robots, sub-sitemaps), (C) wire generateMetadata + JSON-LD on the 3 detail-page surfaces (poetry, ancient, chars), (D) add the form/category filter to the `/poetry` browse page with API + UI.
 
 **Architecture:**
+
 - **File-first**: All new ingestion writes the source-of-truth JSON file + manifest entry first, then inserts the metadata row in `classics` / `chars` table. The content lives on disk (matching the post-`9f7763c4` poems file-only architecture). The classics table now has no `chunks` column (post `8b204b61`), so the pianwen ingest must NOT write to a `chunks` column.
 - **SEO lib is a leaf module** with no DB dependencies — `lib/seo/{config,metadata,jsonld}.ts` reads from already-loaded data passed in by the caller (e.g., detail pages fetch the poem/classic/char first, then pass it to a JSON-LD builder). This keeps the lib testable without a DB and avoids double-fetching.
 - **Sitemaps** are file-readers backed by `lib/poetry/loader.ts` and `lib/classics/loader.ts`, plus a query against the `chars` table (which is still DB-backed for 8105 chars). One sub-sitemap per content domain, an index at `app/sitemap.ts`.
@@ -50,6 +51,7 @@ The following 10 of V1's 14 tasks are already on `main` between commits `9f7763c
 ### Task 1: 训蒙骈句 ingest (file-only — no `chunks` column)
 
 **Files:**
+
 - Create: `scripts/build-pianwen.ts`
 - Test: `tests/integration/scripts/build-pianwen.test.ts`
 - Modify: `data/classics-manifest.json` (auto-rebuilt by script)
@@ -57,11 +59,13 @@ The following 10 of V1's 14 tasks are already on `main` between commits `9f7763c
 - Modify: `classics` row in piyin_dev (INSERT metadata only)
 
 **Interfaces:**
+
 - Consumes: `lib/guwendao-scraper.ts` (`fetchChapterList`, `scrapeChapterContent`), `lib/classics-types.ts` (`VolumeJson`).
 - Produces: `buildPianwen()` — writes `data/classics/xunmeng-pianju.json` (1 entry in `classics-manifest.json`), inserts 1 row into `classics` table (metadata only, no `chunks` column).
 - Category: `'pianwen'` — requires the `classics.category` ENUM to be widened to include this value. Check first; ALTER if needed.
 
 **Discovery (Step 0 — before writing code):**
+
 - Read `lib/classics-types.ts` for the `VolumeJson` shape.
 - Read `lib/guwendao-scraper.ts` for the `fetchChapterList(bookId)` and `scrapeChapterContent(bookId, chapterId)` signatures. (Both already exist.)
 - Read the latest commit message for `scripts/build-classics-guwendao.ts` to see the post-`8b204b61` pattern (it writes JSON + manifest + 6-col INSERT, not 7-col).
@@ -98,18 +102,22 @@ vi.mock('node:fs', () => ({
 }));
 
 describe('buildPianwen', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
 
   it('calls fetchChapterList + scrapeChapterContent + writes JSON + INSERT', async () => {
     mockScraper.fetchChapterList.mockResolvedValueOnce(['c1', 'c2']);
     mockScraper.scrapeChapterContent
-      .mockResolvedValueOnce({ title: '一东', paragraphs: ['天上双星会','人间此夜同'] })
-      .mockResolvedValueOnce({ title: '二冬', paragraphs: ['春光正好','花影重重'] });
+      .mockResolvedValueOnce({ title: '一东', paragraphs: ['天上双星会', '人间此夜同'] })
+      .mockResolvedValueOnce({ title: '二冬', paragraphs: ['春光正好', '花影重重'] });
     mockQuery.mockResolvedValue([[]]); // no existing row + no manifest entry yet
-    mockReadDir.mockReturnValue([]);  // manifest starts empty for the test
+    mockReadDir.mockReturnValue([]); // manifest starts empty for the test
     mockReadFile.mockImplementation((p: string) => {
-      if (p.endsWith('classics-manifest.json')) return JSON.stringify({ version: 1, updatedAt: '2026-06-22', books: [] });
-      if (p.endsWith('xunmeng-pianju.json')) return JSON.stringify({ slug: 'xunmeng-pianju', chunks: [] });
+      if (p.endsWith('classics-manifest.json'))
+        return JSON.stringify({ version: 1, updatedAt: '2026-06-22', books: [] });
+      if (p.endsWith('xunmeng-pianju.json'))
+        return JSON.stringify({ slug: 'xunmeng-pianju', chunks: [] });
       return '{}';
     });
     mockExecute.mockResolvedValue([{ affectedRows: 1 }]);
@@ -118,7 +126,9 @@ describe('buildPianwen', () => {
     const r = await buildPianwen();
     expect(r.chapters).toBe(2);
     expect(mockScraper.fetchChapterList).toHaveBeenCalledWith('427c5eea5943');
-    expect(mockExecute.mock.calls.some((c: any) => c[0].startsWith('INSERT INTO classics'))).toBe(true);
+    expect(mockExecute.mock.calls.some((c: any) => c[0].startsWith('INSERT INTO classics'))).toBe(
+      true,
+    );
   });
 });
 ```
@@ -141,7 +151,7 @@ const PIANWEN_CATEGORY = 'pianwen';
 async function ensurePianwenCategory(pool: any): Promise<'widened' | 'already'> {
   const [rows] = await pool.query<any[]>(
     `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classics' AND COLUMN_NAME = 'category'`
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classics' AND COLUMN_NAME = 'category'`,
   );
   const colType: string = rows?.[0]?.COLUMN_TYPE ?? '';
   if (colType.includes("'pianwen'")) return 'already';
@@ -149,7 +159,7 @@ async function ensurePianwenCategory(pool: any): Promise<'widened' | 'already'> 
   await pool.query(
     `ALTER TABLE classics MODIFY COLUMN category
      ENUM('four-books','five-classics','mengxue','philosophy','history','other','pianwen')
-     NOT NULL DEFAULT 'other'`
+     NOT NULL DEFAULT 'other'`,
   );
   console.log('[build-pianwen] widened classics.category ENUM to include pianwen');
   return 'widened';
@@ -179,14 +189,14 @@ const PIANWEN_CATEGORY = 'pianwen';
 async function ensurePianwenCategory(pool: any): Promise<'widened' | 'already'> {
   const [rows] = await pool.query<any[]>(
     `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classics' AND COLUMN_NAME = 'category'`
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classics' AND COLUMN_NAME = 'category'`,
   );
   const colType: string = (rows as any[])?.[0]?.COLUMN_TYPE ?? '';
   if (colType.includes("'pianwen'")) return 'already';
   await pool.query(
     `ALTER TABLE classics MODIFY COLUMN category
      ENUM('four-books','five-classics','mengxue','philosophy','history','other','pianwen')
-     NOT NULL DEFAULT 'other'`
+     NOT NULL DEFAULT 'other'`,
   );
   console.log('[build-pianwen] widened classics.category ENUM to include pianwen');
   return 'widened';
@@ -255,17 +265,25 @@ export async function buildPianwen(): Promise<PianwenResult> {
        author = VALUES(author),
        era = VALUES(era),
        source = VALUES(source)`,
-    [SLUG, '训蒙骈句', PIANWEN_CATEGORY, '萧良有/司祢', '明/清', SOURCE]
+    [SLUG, '训蒙骈句', PIANWEN_CATEGORY, '萧良有/司祢', '明/清', SOURCE],
   );
 
   // Rebuild manifest by appending this book (other entries preserved)
   const manifestRaw = readFileSync(MANIFEST_PATH, 'utf8');
   const manifest = JSON.parse(manifestRaw);
   const newEntry = {
-    slug: SLUG, title: '训蒙骈句', source: SOURCE, category: PIANWEN_CATEGORY,
-    author: '萧良有/司祢', era: '明/清', chapterCount: chunks.length,
-    charCount: countChars(chunks), jsonFile: `data/classics/${SLUG}.json`,
-    jsonBytes: statSync(filePath).size, bookId: BOOK_ID, bookTitle: '训蒙骈句',
+    slug: SLUG,
+    title: '训蒙骈句',
+    source: SOURCE,
+    category: PIANWEN_CATEGORY,
+    author: '萧良有/司祢',
+    era: '明/清',
+    chapterCount: chunks.length,
+    charCount: countChars(chunks),
+    jsonFile: `data/classics/${SLUG}.json`,
+    jsonBytes: statSync(filePath).size,
+    bookId: BOOK_ID,
+    bookTitle: '训蒙骈句',
   };
   // Replace if already present (idempotent), else append
   const idx = manifest.books.findIndex((b: any) => b.slug === SLUG);
@@ -276,14 +294,23 @@ export async function buildPianwen(): Promise<PianwenResult> {
   writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), 'utf8');
 
   const result: PianwenResult = { chapters: chunks.length, bytes: json.length, categoryStatus };
-  console.log(`[build-pianwen] ${SLUG}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB → ${filePath}`);
+  console.log(
+    `[build-pianwen] ${SLUG}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB → ${filePath}`,
+  );
   return result;
 }
 
 if (require.main === module) {
   buildPianwen()
-    .then((r) => console.log(`[done] chapters=${r.chapters} bytes=${r.bytes} categoryStatus=${r.categoryStatus}`))
-    .catch((err) => { console.error(err); process.exit(1); })
+    .then((r) =>
+      console.log(
+        `[done] chapters=${r.chapters} bytes=${r.bytes} categoryStatus=${r.categoryStatus}`,
+      ),
+    )
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    })
     .finally(() => closePool());
 }
 ```
@@ -323,6 +350,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(class
 ### Task 2: SEO lib foundation (config + metadata + jsonld)
 
 **Files:**
+
 - Create: `lib/seo/config.ts`
 - Create: `lib/seo/metadata.ts`
 - Create: `lib/seo/jsonld.ts`
@@ -331,6 +359,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(class
 - Test: `tests/unit/lib/seo/jsonld.test.ts`
 
 **Interfaces:**
+
 - `getSiteUrl(): string` — reads `NEXT_PUBLIC_SITE_URL`, falls back to `http://localhost:3000`. Strips trailing `/`.
 - `buildCanonicalUrl(path: string): string` — returns absolute URL.
 - `SITE_NAME`, `SITE_LOCALE` constants.
@@ -343,6 +372,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(class
 - `buildWebSite(): object` — schema.org WebSite with SearchAction.
 
 **Design decisions:**
+
 - `lib/seo/*` is **leaf and side-effect-free** (no DB calls, no React, no Next.js data fetchers). Detail pages fetch their data first, then call a builder with the data. This is the opposite of V1's design (which had `generatePoemMetadata` etc. that fetched from DB); we keep builders pure and let the caller (RSC) own the fetch.
 - All builders return plain objects; the detail page is responsible for `JSON.stringify` + `dangerouslySetInnerHTML`.
 - `lib/seo/config.ts` reads `process.env.NEXT_PUBLIC_SITE_URL` lazily inside `getSiteUrl()` (NOT at module top level) so the value can differ between `next build` (Vercel env) and `next dev` (`.env.local`).
@@ -355,18 +385,20 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 
 describe('getSiteUrl', () => {
   const original = process.env.NEXT_PUBLIC_SITE_URL;
-  afterEach(() => { process.env.NEXT_PUBLIC_SITE_URL = original; });
+  afterEach(() => {
+    process.env.NEXT_PUBLIC_SITE_URL = original;
+  });
 
   it('returns env value when set, stripping trailing slash', () => {
     process.env.NEXT_PUBLIC_SITE_URL = 'https://pinyin.example.com/';
-    return import('@/lib/seo/config').then(m => {
+    return import('@/lib/seo/config').then((m) => {
       expect(m.getSiteUrl()).toBe('https://pinyin.example.com');
     });
   });
 
   it('returns fallback when env missing', () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    return import('@/lib/seo/config').then(m => {
+    return import('@/lib/seo/config').then((m) => {
       expect(m.getSiteUrl()).toBe('http://localhost:3000');
     });
   });
@@ -375,7 +407,7 @@ describe('getSiteUrl', () => {
 describe('buildCanonicalUrl', () => {
   it('prepends site url and adds leading slash', () => {
     process.env.NEXT_PUBLIC_SITE_URL = 'https://x.com';
-    return import('@/lib/seo/config').then(m => {
+    return import('@/lib/seo/config').then((m) => {
       expect(m.buildCanonicalUrl('/poetry/1')).toBe('https://x.com/poetry/1');
       expect(m.buildCanonicalUrl('poetry/1')).toBe('https://x.com/poetry/1');
     });
@@ -383,7 +415,7 @@ describe('buildCanonicalUrl', () => {
 
   it('passes through absolute URLs unchanged', () => {
     process.env.NEXT_PUBLIC_SITE_URL = 'https://x.com';
-    return import('@/lib/seo/config').then(m => {
+    return import('@/lib/seo/config').then((m) => {
       expect(m.buildCanonicalUrl('https://other.com/y')).toBe('https://other.com/y');
     });
   });
@@ -396,12 +428,20 @@ describe('buildCanonicalUrl', () => {
 // tests/unit/lib/seo/jsonld.test.ts
 import { describe, it, expect, vi, afterEach } from 'vitest';
 
-afterEach(() => { vi.resetModules(); process.env.NEXT_PUBLIC_SITE_URL = 'https://x.com'; });
+afterEach(() => {
+  vi.resetModules();
+  process.env.NEXT_PUBLIC_SITE_URL = 'https://x.com';
+});
 
 describe('buildCreativeWork', () => {
   it('has required schema.org fields', async () => {
     const { buildCreativeWork } = await import('@/lib/seo/jsonld');
-    const j = buildCreativeWork({ title: '静夜思', author: '李白', dynasty: 'tang', content: ['床前明月光'] });
+    const j = buildCreativeWork({
+      title: '静夜思',
+      author: '李白',
+      dynasty: 'tang',
+      content: ['床前明月光'],
+    });
     expect(j['@context']).toBe('https://schema.org');
     expect(j['@type']).toBe('CreativeWork');
     expect(j.name).toBe('静夜思');
@@ -438,7 +478,10 @@ describe('buildDefinedTerm', () => {
 describe('buildBreadcrumbList', () => {
   it('maps items to ListItem with absolute URL', async () => {
     const { buildBreadcrumbList } = await import('@/lib/seo/jsonld');
-    const j = buildBreadcrumbList([{ name: '首页', url: '/' }, { name: '字典', url: '/chars' }]);
+    const j = buildBreadcrumbList([
+      { name: '首页', url: '/' },
+      { name: '字典', url: '/chars' },
+    ]);
     expect(j.itemListElement.length).toBe(2);
     expect(j.itemListElement[0].item).toBe('https://x.com/');
     expect(j.itemListElement[1].position).toBe(2);
@@ -590,7 +633,9 @@ Expected: PASS (12+ tests).
 ```ts
 // tests/unit/lib/seo/metadata.test.ts
 import { describe, it, expect, afterEach } from 'vitest';
-afterEach(() => { process.env.NEXT_PUBLIC_SITE_URL = undefined; });
+afterEach(() => {
+  process.env.NEXT_PUBLIC_SITE_URL = undefined;
+});
 
 describe('buildMetadata', () => {
   it('includes title, description, canonical, openGraph, twitter', async () => {
@@ -668,6 +713,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 ### Task 3: robots.txt + sitemap sub-routes + root sitemap refactor
 
 **Files:**
+
 - Create: `app/robots.ts`
 - Create: `app/sitemap/poetry.xml/route.ts`
 - Create: `app/sitemap/ancient.xml/route.ts`
@@ -676,6 +722,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 - Test: `tests/integration/app/sitemap.test.ts`
 
 **Interfaces:**
+
 - `GET /robots.txt` → Next.js robots config.
 - `GET /sitemap/poetry.xml` → XML with all poem URLs from `data/poems-manifest.json`.
 - `GET /sitemap/ancient.xml` → XML with all classic URLs from `data/classics-manifest.json`.
@@ -683,6 +730,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 - `GET /sitemap.xml` → Next.js `MetadataRoute.Sitemap` index that includes the 3 sub-sitemap URLs.
 
 **Design decisions:**
+
 - Sub-sitemaps are **file-backed** (read from manifest) for poems and classics. The `chars` table is still DB-backed (8105 chars), so the chars sub-sitemap queries the DB.
 - `app/sitemap/poetry.xml/route.ts` reads `data/poems-manifest.json` and emits one `<url>` per item. The `lastmod` is taken from `manifest.updatedAt` (single value for the whole manifest — manifest is rewritten as a whole each ingest).
 - `revalidate = 3600` (1 hour) on all sitemap routes so Next.js caches.
@@ -712,10 +760,17 @@ describe('sub-sitemap routes', () => {
 
   it('poetry.xml emits <urlset> with each manifest item', async () => {
     process.env.NEXT_PUBLIC_SITE_URL = 'https://x.com';
-    mockReadFile.mockReturnValueOnce(JSON.stringify({
-      version: 1, updatedAt: '2026-06-22T00:00:00Z', count: 2,
-      items: [{ id: 1, title: 'a', author: 'b', dynasty: 'tang' }, { id: 2, title: 'c', author: 'd', dynasty: 'tang' }],
-    }));
+    mockReadFile.mockReturnValueOnce(
+      JSON.stringify({
+        version: 1,
+        updatedAt: '2026-06-22T00:00:00Z',
+        count: 2,
+        items: [
+          { id: 1, title: 'a', author: 'b', dynasty: 'tang' },
+          { id: 2, title: 'c', author: 'd', dynasty: 'tang' },
+        ],
+      }),
+    );
     const { GET } = await import('@/app/sitemap/poetry.xml/route');
     const res = await GET();
     const text = await res.text();
@@ -727,9 +782,13 @@ describe('sub-sitemap routes', () => {
 
   it('ancient.xml emits <urlset> with each manifest book', async () => {
     process.env.NEXT_PUBLIC_SITE_URL = 'https://x.com';
-    mockReadFile.mockReturnValueOnce(JSON.stringify({
-      version: 1, updatedAt: '2026-06-22T00:00:00Z', books: [{ slug: 'lunyu' }, { slug: 'daxue' }],
-    }));
+    mockReadFile.mockReturnValueOnce(
+      JSON.stringify({
+        version: 1,
+        updatedAt: '2026-06-22T00:00:00Z',
+        books: [{ slug: 'lunyu' }, { slug: 'daxue' }],
+      }),
+    );
     const { GET } = await import('@/app/sitemap/ancient.xml/route');
     const res = await GET();
     const text = await res.text();
@@ -770,11 +829,14 @@ export async function GET() {
   const base = getSiteUrl();
   const lastmod = new Date(manifest.updatedAt).toISOString();
   const urls = manifest.items
-    .map((i) => `<url><loc>${base}/poetry/${i.id}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`)
+    .map(
+      (i) =>
+        `<url><loc>${base}/poetry/${i.id}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`,
+    )
     .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }
 ```
@@ -795,11 +857,14 @@ export async function GET() {
   const base = getSiteUrl();
   const lastmod = new Date(manifest.updatedAt).toISOString();
   const urls = manifest.books
-    .map((b) => `<url><loc>${base}/ancient/${b.slug}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`)
+    .map(
+      (b) =>
+        `<url><loc>${base}/ancient/${b.slug}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`,
+    )
     .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }
 ```
@@ -819,11 +884,14 @@ export async function GET() {
   const base = getSiteUrl();
   const lastmod = new Date().toISOString();
   const urls = (rows as any[])
-    .map((r) => `<url><loc>${base}/dictionary/${encodeURIComponent(r.char)}</loc><lastmod>${lastmod}</lastmod><priority>0.6</priority></url>`)
+    .map(
+      (r) =>
+        `<url><loc>${base}/dictionary/${encodeURIComponent(r.char)}</loc><lastmod>${lastmod}</lastmod><priority>0.6</priority></url>`,
+    )
     .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }
 ```
@@ -906,15 +974,18 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 ### Task 4: Poetry detail page — replace inline JSON-LD with lib/seo + add canonical
 
 **Files:**
+
 - Modify: `app/poetry/[id]/page.tsx`
 - Modify: `app/poetry/[id]/jsonld.ts` (delete — content moves to `lib/seo/jsonld.ts`)
 
 **Interfaces:**
+
 - `app/poetry/[id]/page.tsx` calls `buildMetadata()` (from `lib/seo/metadata.ts`) inside `generateMetadata`.
 - Detail page injects 2 JSON-LD scripts: `buildCreativeWork(poem)` + `buildBreadcrumbList([...])`.
 - Old `app/poetry/[id]/jsonld.ts` deleted.
 
 **Design decisions:**
+
 - The detail page already has `generateMetadata` returning minimal `{title, description}`. Replace the body with a call to `buildMetadata` for full OpenGraph + canonical + Twitter.
 - The current JSON-LD is built by an inline `app/poetry/[id]/jsonld.ts` helper. Replace the import with `buildCreativeWork` + `buildBreadcrumbList` from `lib/seo/jsonld.ts`, and delete the local `jsonld.ts` file.
 
@@ -930,10 +1001,13 @@ Identify: (a) the existing `generateMetadata` return shape, (b) the existing `bu
 - [ ] **Step 2: Replace imports in `app/poetry/[id]/page.tsx`**
 
 Find:
+
 ```ts
 import { buildPoemJsonLd } from './jsonld';
 ```
+
 Replace with:
+
 ```ts
 import { buildMetadata } from '@/lib/seo/metadata';
 import { buildCreativeWork, buildBreadcrumbList } from '@/lib/seo/jsonld';
@@ -1006,9 +1080,11 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "refactor(s
 ### Task 5: Ancient detail page — extend generateMetadata + add JSON-LD
 
 **Files:**
+
 - Modify: `app/ancient/[slug]/page.tsx`
 
 **Interfaces:**
+
 - `generateMetadata` now returns full `buildMetadata` result with canonical + OpenGraph.
 - Detail page injects `buildBook(classic)` + `buildBreadcrumbList([...])` JSON-LD scripts.
 
@@ -1088,13 +1164,16 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 ### Task 6: Chars detail page — add generateMetadata + JSON-LD
 
 **Files:**
+
 - Modify: `app/dictionary/[char]/page.tsx`
 
 **Interfaces:**
+
 - Add `generateMetadata` (uses file-based `getChar` if available, else falls back to `getPool().query('SELECT ... FROM chars')`).
 - Inject `buildDefinedTerm(charInfo)` + `buildBreadcrumbList([...])` JSON-LD.
 
 **Discovery (Step 0):**
+
 - Read `app/dictionary/[char]/page.tsx` (currently 31 lines per earlier check) to know how it currently loads the char.
 - The `chars` table is still DB-backed (8105 chars). The page likely already does `getPool().query('SELECT ... FROM chars WHERE char = ?')` or uses a helper in `lib/chars.ts`. Use whichever is the existing pattern.
 
@@ -1175,6 +1254,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 ### Task 7: Form filter — query layer (`getAvailableForms` + `category` filter)
 
 **Files:**
+
 - Modify: `lib/poetry/queries.ts` (add `category` filter to `listPoems`, add `getAvailableForms`)
 - Modify: `lib/api-poetry.ts` (add `category` + `forms` params to `listPoemsRequest`, add `getAvailableFormsRequest`)
 - Modify: `app/api/poetry/route.ts` (accept `category` + `forms` query params)
@@ -1183,6 +1263,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 - Test: `tests/unit/lib/poetry/queries.test.ts` (extend)
 
 **Interfaces:**
+
 - `listPoems(args)` now accepts `category?: string` in addition to existing `dynasty` and `form`.
 - `getAvailableForms(category: string): Promise<string[]>` returns:
   - For 诗类 categories (`tang`, `汉乐府`, `古诗十九首`, `魏`, `骈文`): `SHI_FORMS` constant array `['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '杂言古风', '乐府']`.
@@ -1221,20 +1302,24 @@ describe('getAvailableForms', () => {
 
   it('returns SHI_FORMS for 诗类 categories', async () => {
     const { getAvailableForms } = await import('@/lib/poetry/queries');
-    expect(await getAvailableForms('tang')).toEqual(expect.arrayContaining(['五绝', '七绝', '五律', '七律']));
+    expect(await getAvailableForms('tang')).toEqual(
+      expect.arrayContaining(['五绝', '七绝', '五律', '七律']),
+    );
     expect(await getAvailableForms('汉乐府')).toEqual(expect.arrayContaining(['五绝', '乐府']));
   });
 
   it('returns top N forms from manifest for song/qing', async () => {
-    mockReadFile.mockReturnValueOnce(JSON.stringify({
-      count: 4,
-      items: [
-        { id: 1, title: 'a', author: 'x', dynasty: 'song', form: '水调歌头' },
-        { id: 2, title: 'b', author: 'x', dynasty: 'song', form: '水调歌头' },
-        { id: 3, title: 'c', author: 'x', dynasty: 'song', form: '浣溪沙' },
-        { id: 4, title: 'd', author: 'x', dynasty: 'song', form: null },
-      ],
-    }));
+    mockReadFile.mockReturnValueOnce(
+      JSON.stringify({
+        count: 4,
+        items: [
+          { id: 1, title: 'a', author: 'x', dynasty: 'song', form: '水调歌头' },
+          { id: 2, title: 'b', author: 'x', dynasty: 'song', form: '水调歌头' },
+          { id: 3, title: 'c', author: 'x', dynasty: 'song', form: '浣溪沙' },
+          { id: 4, title: 'd', author: 'x', dynasty: 'song', form: null },
+        ],
+      }),
+    );
     const { getAvailableForms } = await import('@/lib/poetry/queries');
     const forms = await getAvailableForms('song');
     expect(forms).toContain('水调歌头');
@@ -1256,15 +1341,17 @@ describe('getAvailableForms', () => {
 describe('listPoems with category filter', () => {
   it('filters by category when provided', async () => {
     mockReadFile.mockReset();
-    mockReadFile.mockReturnValueOnce(JSON.stringify({
-      count: 4,
-      items: [
-        { id: 1, dynasty: 'tang', form: '五绝', title: 'a', author: 'x' },
-        { id: 2, dynasty: 'song', form: '水调歌头', title: 'b', author: 'x' },
-        { id: 3, dynasty: '汉',   form: '五言古风', title: 'c', author: 'x' },
-        { id: 4, dynasty: 'song', form: '浣溪沙', title: 'd', author: 'x' },
-      ],
-    }));
+    mockReadFile.mockReturnValueOnce(
+      JSON.stringify({
+        count: 4,
+        items: [
+          { id: 1, dynasty: 'tang', form: '五绝', title: 'a', author: 'x' },
+          { id: 2, dynasty: 'song', form: '水调歌头', title: 'b', author: 'x' },
+          { id: 3, dynasty: '汉', form: '五言古风', title: 'c', author: 'x' },
+          { id: 4, dynasty: 'song', form: '浣溪沙', title: 'd', author: 'x' },
+        ],
+      }),
+    );
     const { listPoems } = await import('@/lib/poetry/queries');
     const r = await listPoems({ dynasty: 'tang', category: 'tang' } as any);
     expect(r.items.length).toBe(1);
@@ -1285,7 +1372,16 @@ Append to the file (and add the new function to the imports/exports):
 ```ts
 // lib/poetry/queries.ts — append
 
-export const SHI_FORMS = ['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '杂言古风', '乐府'] as const;
+export const SHI_FORMS = [
+  '五绝',
+  '七绝',
+  '五律',
+  '七律',
+  '五言古风',
+  '七言古风',
+  '杂言古风',
+  '乐府',
+] as const;
 const YUAN_FORMS = ['小令', '套数'] as const;
 const SHI_CATEGORIES = new Set(['tang', '汉乐府', '古诗十九首', '魏', '骈文']);
 
@@ -1325,11 +1421,12 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
   const manifest = await loadManifest();
   const page = Math.max(1, args.page ?? 1);
   const pageSize = Math.max(1, Math.min(MAX_PAGE_SIZE, args.pageSize ?? DEFAULT_PAGE_SIZE));
-  const filtered = manifest.items.filter(i =>
-    i.dynasty === args.dynasty &&
-    (args.category == null || i.dynasty === args.category) &&  // <-- new
-    (args.form == null || i.form === args.form) &&
-    matchesQ({ title: i.title, author: i.author }, args.q ?? '')
+  const filtered = manifest.items.filter(
+    (i) =>
+      i.dynasty === args.dynasty &&
+      (args.category == null || i.dynasty === args.category) && // <-- new
+      (args.form == null || i.form === args.form) &&
+      matchesQ({ title: i.title, author: i.author }, args.q ?? ''),
   );
   // ... rest unchanged
 }
@@ -1348,7 +1445,14 @@ Expected: PASS (5 tests).
 
 ```ts
 // lib/api-poetry.ts — modify listPoemsRequest signature
-export async function listPoemsRequest(args: { dynasty: string; category?: string; q?: string; forms?: string[]; page?: number; pageSize?: number }): Promise<PoemListResult> {
+export async function listPoemsRequest(args: {
+  dynasty: string;
+  category?: string;
+  q?: string;
+  forms?: string[];
+  page?: number;
+  pageSize?: number;
+}): Promise<PoemListResult> {
   const sp = new URLSearchParams();
   sp.set('dynasty', args.dynasty);
   if (args.category) sp.set('category', args.category);
@@ -1394,11 +1498,18 @@ export async function GET(req: Request) {
 
   try {
     const result = await listPoems({
-      dynasty, category, forms, q, page,
+      dynasty,
+      category,
+      forms,
+      q,
+      page,
     } as any);
     return NextResponse.json({ ok: true, data: result });
   } catch (err) {
-    return NextResponse.json({ ok: false, error: { message: (err as Error).message } }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: { message: (err as Error).message } },
+      { status: 500 },
+    );
   }
 }
 ```
@@ -1421,7 +1532,10 @@ export async function GET(req: Request) {
     const forms = await getAvailableForms(category);
     return NextResponse.json({ ok: true, forms });
   } catch (err) {
-    return NextResponse.json({ ok: false, error: { message: (err as Error).message }, forms: [] }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: { message: (err as Error).message }, forms: [] },
+      { status: 500 },
+    );
   }
 }
 ```
@@ -1440,11 +1554,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 8: FormFilterBar component + /poetry page integration
 
 **Files:**
+
 - Create: `components/poetry/FormFilterBar.tsx`
 - Test: `tests/unit/components/poetry/FormFilterBar.test.tsx`
 - Modify: `app/poetry/page.tsx` (add `useState` for selected forms, URL sync, render `FormFilterBar`)
 
 **Interfaces:**
+
 - `FormFilterBar({ category, availableForms, selectedForms, onChange }: Props): JSX.Element | null` — returns null if `availableForms` is empty.
 - `/poetry` page reads `?form=` from URL, syncs to local state, fetches `availableForms` for the active category, and re-fetches list when forms change.
 
@@ -1472,7 +1588,7 @@ describe('FormFilterBar', () => {
         availableForms={['五绝', '七绝', '五律']}
         selectedForms={[]}
         onChange={() => {}}
-      />
+      />,
     );
     expect(screen.getByText('五绝')).toBeDefined();
     expect(screen.getByText('七绝')).toBeDefined();
@@ -1481,7 +1597,7 @@ describe('FormFilterBar', () => {
 
   it('returns null when no forms', () => {
     const { container } = render(
-      <FormFilterBar category="tang" availableForms={[]} selectedForms={[]} onChange={() => {}} />
+      <FormFilterBar category="tang" availableForms={[]} selectedForms={[]} onChange={() => {}} />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -1494,7 +1610,7 @@ describe('FormFilterBar', () => {
         availableForms={['五绝', '七绝']}
         selectedForms={['五绝']}
         onChange={onChange}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('七绝'));
     expect(onChange).toHaveBeenCalledWith(['五绝', '七绝']);
@@ -1508,7 +1624,7 @@ describe('FormFilterBar', () => {
         availableForms={['五绝', '七绝']}
         selectedForms={['五绝', '七绝']}
         onChange={onChange}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('五绝'));
     expect(onChange).toHaveBeenCalledWith(['七绝']);
@@ -1578,40 +1694,55 @@ Expected: PASS (4 tests).
 Add these changes (do not rewrite the whole file unless needed):
 
 1. **Imports** — add:
+
 ```ts
 import { FormFilterBar } from '@/components/poetry/FormFilterBar';
 import { getAvailableFormsRequest, listPoemsRequest } from '@/lib/api-poetry';
 ```
 
 2. **State** — inside the page component, add:
+
 ```ts
 const [selectedForms, setSelectedForms] = useState<string[]>([]);
 const [availableForms, setAvailableForms] = useState<string[]>([]);
 ```
 
 3. **Effect to fetch available forms when `dynasty` changes** — add:
+
 ```ts
 useEffect(() => {
   let cancelled = false;
   getAvailableFormsRequest(dynasty).then((forms) => {
     if (!cancelled) setAvailableForms(forms);
   });
-  return () => { cancelled = true; };
+  return () => {
+    cancelled = true;
+  };
 }, [dynasty]);
 ```
 
 4. **Update the list-fetch effect** to pass `forms: selectedForms` to `listPoemsRequest`:
+
 ```ts
-const r = await listPoemsRequest({ dynasty, q: q || undefined, forms: selectedForms.length > 0 ? selectedForms : undefined, page });
+const r = await listPoemsRequest({
+  dynasty,
+  q: q || undefined,
+  forms: selectedForms.length > 0 ? selectedForms : undefined,
+  page,
+});
 ```
 
 5. **JSX** — add `<FormFilterBar ... />` after the search box and before the list:
+
 ```tsx
 <FormFilterBar
   category={dynasty}
   availableForms={availableForms}
   selectedForms={selectedForms}
-  onChange={(forms) => { setSelectedForms(forms); setPage(1); }}
+  onChange={(forms) => {
+    setSelectedForms(forms);
+    setPage(1);
+  }}
 />
 ```
 
@@ -1655,6 +1786,7 @@ curl -s "http://localhost:4444/api/poetry?dynasty=tang&forms=%E4%BA%94%E7%BB%9D"
 ```
 
 In browser:
+
 1. /poetry → dynasty=唐诗 → FormFilterBar shows 8 chips (五绝/七绝/五律/七律/五言古风/七言古风/杂言古风/乐府)
 2. Click 五绝 → URL has `?form=五绝`, list filters
 3. Click 七绝 → URL has `?form=五绝,七绝`, list shows both

@@ -34,7 +34,7 @@ export async function importContent(): Promise<ImportResult> {
     return result;
   }
 
-  const files = readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json'));
+  const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json'));
 
   for (const f of files) {
     result.scanned++;
@@ -49,7 +49,7 @@ export async function importContent(): Promise<ImportResult> {
         const [r] = await pool.query<any>(
           `UPDATE chars SET meaning_zh = ?
            WHERE \`char\` = ? AND (meaning_zh IS NULL OR meaning_zh = '')`,
-          [meaningZh, char]
+          [meaningZh, char],
         );
         if ((r as any).affectedRows > 0) result.imported.meaning_zh.push(char);
       }
@@ -63,7 +63,7 @@ export async function importContent(): Promise<ImportResult> {
           `INSERT INTO char_etymology (\`char\`, era_kaishu_has)
            VALUES (?, 1)
            ON DUPLICATE KEY UPDATE era_kaishu_has = 1`,
-          [char]
+          [char],
         );
         result.imported.etymology_story.push(char);
       }
@@ -77,7 +77,7 @@ export async function importContent(): Promise<ImportResult> {
              story = VALUES(story),
              generated_by = VALUES(generated_by),
              generated_at = VALUES(generated_at)`,
-          [char, parsed.hanzi_story]
+          [char, parsed.hanzi_story],
         );
         result.imported.hanzi_story.push(char);
       }
@@ -89,11 +89,13 @@ export async function importContent(): Promise<ImportResult> {
     }
   }
 
-  console.error(`[import] scanned=${result.scanned} ` +
-    `meaning_zh=${result.imported.meaning_zh.length} ` +
-    `etymology_story=${result.imported.etymology_story.length} ` +
-    `hanzi_story=${result.imported.hanzi_story.length} ` +
-    `errors=${result.errors.length}`);
+  console.error(
+    `[import] scanned=${result.scanned} ` +
+      `meaning_zh=${result.imported.meaning_zh.length} ` +
+      `etymology_story=${result.imported.etymology_story.length} ` +
+      `hanzi_story=${result.imported.hanzi_story.length} ` +
+      `errors=${result.errors.length}`,
+  );
 
   return result;
 }
@@ -104,5 +106,8 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

@@ -24,7 +24,11 @@ export async function fetchChars(opts: FetchCharsOpts = {}): Promise<CharsListRe
   if (opts.hskLevel) params.set('hskLevel', String(opts.hskLevel));
   if (opts.page) params.set('page', String(opts.page));
   const res = await fetch(`/api/chars?${params.toString()}`);
-  const json = (await res.json()) as { ok: boolean; data: CharsListResult; error?: { message: string } };
+  const json = (await res.json()) as {
+    ok: boolean;
+    data: CharsListResult;
+    error?: { message: string };
+  };
   if (!json.ok) throw new Error(json.error?.message ?? 'fetchChars failed');
   return json.data;
 }

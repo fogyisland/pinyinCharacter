@@ -1,9 +1,12 @@
 import { getPool } from './db';
-import type { SutraListItem, SutraListResult, SutraChunk, SutraChunkNoPinyin, SutraDetail } from './sutra-types';
-import {
-  listSutrasFromFs,
-  getSutraByIdFromFs,
-} from './sutras-fs';
+import type {
+  SutraListItem,
+  SutraListResult,
+  SutraChunk,
+  SutraChunkNoPinyin,
+  SutraDetail,
+} from './sutra-types';
+import { listSutrasFromFs, getSutraByIdFromFs } from './sutras-fs';
 
 const PIN_MARKER_RE = /第[一二三四五六七八九十百千零〇]+品|分第[一二三四五六七八九十百千零〇]+/;
 
@@ -63,7 +66,7 @@ function mapListRow(r: RawSutraRow): SutraListItem {
   const chunks = typeof r.chunks === 'string' ? (JSON.parse(r.chunks) as SutraChunk[]) : r.chunks;
   const charCount = chunks.reduce(
     (sum, c) => sum + c.content.reduce((s, line) => s + Array.from(line).length, 0),
-    0
+    0,
   );
   return {
     id: Number(r.id),
@@ -90,7 +93,7 @@ export async function listSutras(args: ListSutrasArgs = {}): Promise<SutraListRe
   const [rows] = await pool.query<any[]>(sql, [...params, pageSize, offset]);
   const [[{ total }]] = await pool.query<any[]>(
     `SELECT COUNT(*) AS total FROM sutras ${where}`,
-    params
+    params,
   );
 
   return {
@@ -112,26 +115,27 @@ export async function getSutra(id: number): Promise<SutraDetail | null> {
       // that mismatched the rest of the sutra stack and caused 400s on the
       // first chunk of any single-chunk sutra.
       id: i,
-      content: c.content.map(s => sanitizeMojibake(s)),
+      content: c.content.map((s) => sanitizeMojibake(s)),
     }));
     return { id: fs.id, title: fs.title, slug: fs.slug, chunks };
   }
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT id, title, slug, chunks FROM sutras WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   const row = rows[0] as RawSutraRow | undefined;
   if (!row) return null;
 
-  const rawChunks = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
+  const rawChunks =
+    typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
   // See FS branch above for why we force 0-based ids. Also strip mojibake left
   // by mysql2 when binding 4-byte UTF-8 chars (see memory: mysql2-supp-plane-bug):
   // orphan UTF-16 surrogate halves and U+FFFD replacement chars.
   const chunks: SutraChunk[] = rawChunks.map((c, i) => ({
     ...c,
     id: i,
-    content: c.content.map(s => sanitizeMojibake(s)),
+    content: c.content.map((s) => sanitizeMojibake(s)),
   }));
   return {
     id: Number(row.id),
@@ -145,10 +149,10 @@ function sanitizeMojibake(s: string): string {
   // Drop lone UTF-16 surrogate halves (mysql2 corrupts 4-byte UTF-8 to these)
   // and U+FFFD replacement chars that result. Length-1 BMP chars pass through.
   return Array.from(s)
-    .filter(ch => {
+    .filter((ch) => {
       const code = ch.codePointAt(0)!;
-      if (code >= 0xD800 && code <= 0xDFFF) return false; // surrogate half
-      if (code === 0xFFFD) return false;                  // replacement char
+      if (code >= 0xd800 && code <= 0xdfff) return false; // surrogate half
+      if (code === 0xfffd) return false; // replacement char
       return true;
     })
     .join('');

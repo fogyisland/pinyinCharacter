@@ -4,7 +4,9 @@ import { requireAdmin } from '@/lib/auth';
 import { enableUser, isUserDisabled } from '@/lib/admin';
 import { writeAudit } from '@/lib/audit';
 
-interface Ctx { params: Promise<{ id: string }>; }
+interface Ctx {
+  params: Promise<{ id: string }>;
+}
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   return withErrorHandling(async () => {
@@ -22,9 +24,11 @@ export async function POST(req: NextRequest, ctx: Ctx) {
       const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
       const ua = req.headers.get('user-agent') ?? null;
       await writeAudit({
-        userId: auth.user.id, event: 'user_reenabled',
+        userId: auth.user.id,
+        event: 'user_reenabled',
         metadata: { targetUserId: id },
-        ip, userAgent: ua,
+        ip,
+        userAgent: ua,
       });
     }
     return NextResponse.json({ ok: true, data: { id, disabled: false } });

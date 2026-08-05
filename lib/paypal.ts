@@ -13,10 +13,16 @@ import { getPool } from './db';
 
 export type PayPalMode = 'sandbox' | 'live';
 export interface PayPalConfig {
-  mode: PayPalMode; clientId: string; clientSecret: string; webhookId: string;
+  mode: PayPalMode;
+  clientId: string;
+  clientSecret: string;
+  webhookId: string;
 }
 
-interface TokenEntry { token: string; expiresAt: number; }
+interface TokenEntry {
+  token: string;
+  expiresAt: number;
+}
 const tokenCache: Map<string, TokenEntry> = new Map();
 const TOKEN_TTL_MS = 50 * 60 * 1000;
 
@@ -47,11 +53,14 @@ export async function getPayPalAccessToken(cfg: PayPalConfig): Promise<string> {
   const auth = Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64');
   const res = await fetch(`${BASE(cfg.mode)}/v1/oauth2/token`, {
     method: 'POST',
-    headers: { authorization: `Basic ${auth}`, 'content-type': 'application/x-www-form-urlencoded' },
+    headers: {
+      authorization: `Basic ${auth}`,
+      'content-type': 'application/x-www-form-urlencoded',
+    },
     body: 'grant_type=client_credentials',
   });
   if (!res.ok) throw new Error(`paypal_oauth_failed: ${res.status}`);
-  const j = await res.json() as { access_token: string; expires_in: number };
+  const j = (await res.json()) as { access_token: string; expires_in: number };
   tokenCache.set(key, { token: j.access_token, expiresAt: Date.now() + TOKEN_TTL_MS });
   return j.access_token;
 }
@@ -61,12 +70,16 @@ export function _resetTokenCacheForTest(): void {
 }
 
 export interface PayPalOrder {
-  id: string; status: string;
+  id: string;
+  status: string;
   links: { href: string; rel: string }[];
 }
 export async function createPayPalOrder(args: {
-  amount: string; currency: 'CNY' | 'USD'; description: string;
-  returnUrl: string; cancelUrl: string;
+  amount: string;
+  currency: 'CNY' | 'USD';
+  description: string;
+  returnUrl: string;
+  cancelUrl: string;
 }): Promise<PayPalOrder> {
   const cfg = await getPayPalConfig();
   if (!cfg) throw new Error('paypal_not_configured');
@@ -76,10 +89,12 @@ export async function createPayPalOrder(args: {
     headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       intent: 'CAPTURE',
-      purchase_units: [{
-        amount: { currency_code: args.currency, value: args.amount },
-        description: args.description,
-      }],
+      purchase_units: [
+        {
+          amount: { currency_code: args.currency, value: args.amount },
+          description: args.description,
+        },
+      ],
       application_context: { return_url: args.returnUrl, cancel_url: args.cancelUrl },
     }),
   });
@@ -98,7 +113,9 @@ export async function capturePayPalOrder(orderId: string): Promise<unknown> {
   return res.json();
 }
 export async function verifyWebhookSignature(args: {
-  cfg: PayPalConfig; rawBody: string; headers: Record<string, string>;
+  cfg: PayPalConfig;
+  rawBody: string;
+  headers: Record<string, string>;
 }): Promise<boolean> {
   const token = await getPayPalAccessToken(args.cfg);
   const res = await fetch(`${BASE(args.cfg.mode)}/v1/notifications/verify-webhook-signature`, {
@@ -115,6 +132,6 @@ export async function verifyWebhookSignature(args: {
     }),
   });
   if (!res.ok) return false;
-  const j = await res.json() as { verification_status: string };
+  const j = (await res.json()) as { verification_status: string };
   return j.verification_status === 'SUCCESS';
 }

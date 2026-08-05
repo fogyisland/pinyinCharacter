@@ -33,8 +33,8 @@ export default async function CampaignsPage() {
         </Link>
       </div>
       <p className="text-sm text-ink-soft max-w-2xl">
-        群发营销通知给订阅用户。默认所有用户都收(底部退订链接一键取消)。
-        发送走 scheduler 异步任务,单次 tick 处理 50 封,可放心发万级邮件。
+        群发营销通知给订阅用户。默认所有用户都收(底部退订链接一键取消)。 发送走 scheduler
+        异步任务,单次 tick 处理 50 封,可放心发万级邮件。
       </p>
       <ResponsiveTable
         rows={rows}
@@ -53,14 +53,18 @@ export default async function CampaignsPage() {
         {(c) => (
           <>
             <span className="text-ink-soft">#{c.id}</span>
-            <Link href={`/admin/email/campaigns/${c.id}`} className="text-ink hover:underline">{c.subject}</Link>
+            <Link href={`/admin/email/campaigns/${c.id}`} className="text-ink hover:underline">
+              {c.subject}
+            </Link>
             <span className="text-ink-soft">{c.audience}</span>
             <span className={'px-2 py-0.5 rounded text-xs ' + (STATUS_COLOR[c.status] ?? '')}>
               {STATUS_LABEL[c.status] ?? c.status}
             </span>
             <span className="text-right tabular-nums block">{c.total_recipients}</span>
             <span className="text-right tabular-nums block">{`${c.sent_count}/${c.failed_count}`}</span>
-            <span className="text-ink-soft text-xs">{new Date(c.created_at).toLocaleString('zh-CN')}</span>
+            <span className="text-ink-soft text-xs">
+              {new Date(c.created_at).toLocaleString('zh-CN')}
+            </span>
           </>
         )}
       </ResponsiveTable>

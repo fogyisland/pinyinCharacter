@@ -30,7 +30,7 @@ export async function listAllNotesForAdmin(opts: ListNotesOpts = {}): Promise<No
   const [rows] = await getPool().query<any[]>(
     `SELECT id, author_user_id, author_name, author_email, content, created_at, deleted_at
      FROM notes ${where} ORDER BY created_at DESC LIMIT ?`,
-    [limit]
+    [limit],
   );
   return (rows as any[]).map((r) => ({
     id: Number(r.id),
@@ -61,13 +61,13 @@ export async function insertNote(args: InsertNoteArgs): Promise<NoteRow> {
   const [res] = await getPool().query<any>(
     `INSERT INTO notes (author_user_id, author_name, author_email, content, ip, user_agent)
      VALUES (?, ?, ?, ?, ?, ?)`,
-    [args.authorUserId, name, email, content, ip, ua]
+    [args.authorUserId, name, email, content, ip, ua],
   );
   const id = Number(res.insertId);
   const [rows] = await getPool().query<any[]>(
     `SELECT id, author_user_id, author_name, author_email, content, created_at, deleted_at
      FROM notes WHERE id = ?`,
-    [id]
+    [id],
   );
   const r = (rows as any[])[0];
   return {
@@ -85,14 +85,13 @@ export async function softDeleteNote(id: number, byUserId: number): Promise<bool
   const [res] = await getPool().query<any>(
     `UPDATE notes SET deleted_at = NOW(), deleted_by = ?
      WHERE id = ? AND deleted_at IS NULL`,
-    [byUserId, id]
+    [byUserId, id],
   );
   return res.affectedRows > 0;
 }
 
 export type RateLimitVerdict =
-  | { allow: true }
-  | { allow: false; retryAfterSec: number; reason: string };
+  { allow: true } | { allow: false; retryAfterSec: number; reason: string };
 
 function truncateDate(d: Date): Date {
   // strip seconds/ms so windowStart buckets cleanly per minute/hour
@@ -101,7 +100,10 @@ function truncateDate(d: Date): Date {
   return t;
 }
 
-export interface RateLimitArgs { ip: string | null; email: string | null; }
+export interface RateLimitArgs {
+  ip: string | null;
+  email: string | null;
+}
 
 export async function checkRateLimit(args: RateLimitArgs): Promise<RateLimitVerdict> {
   const now = new Date();
@@ -120,16 +122,22 @@ export async function checkRateLimit(args: RateLimitArgs): Promise<RateLimitVerd
 
   if (args.ip) {
     checks.push({
-      scope: 'ip', value: args.ip,
-      windowKind: 'minute', windowStart: minuteStart,
-      limit: IP_MINUTE_LIMIT, label: '同一 IP 一分钟内',
+      scope: 'ip',
+      value: args.ip,
+      windowKind: 'minute',
+      windowStart: minuteStart,
+      limit: IP_MINUTE_LIMIT,
+      label: '同一 IP 一分钟内',
     });
   }
   if (args.email) {
     checks.push({
-      scope: 'email', value: args.email,
-      windowKind: 'hour', windowStart: hourStart,
-      limit: EMAIL_HOUR_LIMIT, label: '同一邮箱一小时内',
+      scope: 'email',
+      value: args.email,
+      windowKind: 'hour',
+      windowStart: hourStart,
+      limit: EMAIL_HOUR_LIMIT,
+      label: '同一邮箱一小时内',
     });
   }
   if (checks.length === 0) return { allow: true }; // no identifiers — skip
@@ -139,13 +147,14 @@ export async function checkRateLimit(args: RateLimitArgs): Promise<RateLimitVerd
     const [rows] = await pool.query<any[]>(
       `SELECT post_count FROM notes_rate_limits
        WHERE scope = ? AND key_value = ? AND window_kind = ? AND window_start = ? LIMIT 1`,
-      [c.scope, c.value, c.windowKind, c.windowStart]
+      [c.scope, c.value, c.windowKind, c.windowStart],
     );
     const count = Number((rows as any[])[0]?.post_count ?? 0);
     if (count >= c.limit) {
-      const nextWindow = c.windowKind === 'minute'
-        ? new Date(minuteStart.getTime() + 60_000)
-        : new Date(hourStart.getTime() + 3600_000);
+      const nextWindow =
+        c.windowKind === 'minute'
+          ? new Date(minuteStart.getTime() + 60_000)
+          : new Date(hourStart.getTime() + 3600_000);
       const retryAfterSec = Math.max(1, Math.ceil((nextWindow.getTime() - now.getTime()) / 1000));
       return {
         allow: false,
@@ -164,9 +173,16 @@ export async function bumpRateLimit(args: RateLimitArgs): Promise<void> {
   hourStart.setMinutes(0);
   const pool = getPool();
 
-  const bumps: Array<{ scope: 'ip' | 'email'; value: string; windowKind: 'minute' | 'hour'; windowStart: Date; }> = [];
-  if (args.ip) bumps.push({ scope: 'ip', value: args.ip, windowKind: 'minute', windowStart: minuteStart });
-  if (args.email) bumps.push({ scope: 'email', value: args.email, windowKind: 'hour', windowStart: hourStart });
+  const bumps: Array<{
+    scope: 'ip' | 'email';
+    value: string;
+    windowKind: 'minute' | 'hour';
+    windowStart: Date;
+  }> = [];
+  if (args.ip)
+    bumps.push({ scope: 'ip', value: args.ip, windowKind: 'minute', windowStart: minuteStart });
+  if (args.email)
+    bumps.push({ scope: 'email', value: args.email, windowKind: 'hour', windowStart: hourStart });
 
   for (const b of bumps) {
     await pool.query(
@@ -175,7 +191,7 @@ export async function bumpRateLimit(args: RateLimitArgs): Promise<void> {
        ON DUPLICATE KEY UPDATE
          window_start = VALUES(window_start),
          post_count   = IF(window_start = VALUES(window_start), post_count + 1, 1)`,
-      [b.scope, b.value, b.windowKind, b.windowStart]
+      [b.scope, b.value, b.windowKind, b.windowStart],
     );
   }
 }

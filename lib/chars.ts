@@ -156,7 +156,7 @@ export async function getChar(char: string): Promise<Char | null> {
   // means the corrupted value never reaches the driver. Callers that need
   // to distinguish "supp-plane unsupported" from "genuinely missing" should
   // check `isSuppPlaneChar(char)` first.
-  if (!char || (char.codePointAt(0) ?? 0) > 0xFFFF) return null;
+  if (!char || (char.codePointAt(0) ?? 0) > 0xffff) return null;
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
@@ -178,7 +178,7 @@ export async function getChar(char: string): Promise<Char | null> {
 export function isSuppPlaneChar(char: string): boolean {
   if (!char) return false;
   const cp = char.codePointAt(0);
-  return cp !== undefined && cp > 0xFFFF;
+  return cp !== undefined && cp > 0xffff;
 }
 
 export async function getCharDetail(char: string): Promise<CharWithRelated | null> {

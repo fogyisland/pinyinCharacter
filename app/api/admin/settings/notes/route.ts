@@ -32,6 +32,9 @@ export async function POST(req: NextRequest) {
       userId: auth.user.id,
       metadata: { count: emails.length },
     });
-    return NextResponse.json({ ok: true, data: { adminEmails: parsed.data.adminEmails, count: emails.length } });
+    return NextResponse.json({
+      ok: true,
+      data: { adminEmails: parsed.data.adminEmails, count: emails.length },
+    });
   });
 }

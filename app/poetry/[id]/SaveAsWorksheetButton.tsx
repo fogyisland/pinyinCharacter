@@ -14,7 +14,7 @@ interface Props {
 export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const user = useAppStore(s => s.user);
+  const user = useAppStore((s) => s.user);
   const [saving, setSaving] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
 
@@ -67,9 +67,7 @@ export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
       >
         {saving ? '保存中…' : '保存到字帖'}
       </button>
-      {hint && !user && (
-        <span className="text-xs text-ink-soft">{hint}</span>
-      )}
+      {hint && !user && <span className="text-xs text-ink-soft">{hint}</span>}
     </div>
   );
 }

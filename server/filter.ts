@@ -8,9 +8,10 @@ let loaded = false;
 
 function loadBadWords(): void {
   if (loaded) return;
-  const data = JSON.parse(
-    readFileSync(join(process.cwd(), 'data', 'bad-words.json'), 'utf8'),
-  ) as { chars: string[]; words: string[] };
+  const data = JSON.parse(readFileSync(join(process.cwd(), 'data', 'bad-words.json'), 'utf8')) as {
+    chars: string[];
+    words: string[];
+  };
   badChars = new Set(data.chars);
   badWords = new Set(data.words);
   loaded = true;
@@ -39,7 +40,7 @@ export function filterCandidates(
 ): DictEntry[] {
   if (!safeMode) return candidates;
   const set = badCharsOverride ?? getBadChars();
-  return candidates.filter(c => !set.has(c.char));
+  return candidates.filter((c) => !set.has(c.char));
 }
 
 /**

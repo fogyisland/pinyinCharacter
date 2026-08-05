@@ -3,7 +3,9 @@ import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 
-interface Ctx { params: Promise<{ id: string }>; }
+interface Ctx {
+  params: Promise<{ id: string }>;
+}
 
 interface UnifiedLogEntry {
   id: string;
@@ -19,7 +21,11 @@ interface UnifiedLogEntry {
 function safeParse(s: unknown): Record<string, unknown> {
   if (s == null) return {};
   if (typeof s !== 'string') return s as Record<string, unknown>;
-  try { return JSON.parse(s); } catch { return {}; }
+  try {
+    return JSON.parse(s);
+  } catch {
+    return {};
+  }
 }
 
 export async function GET(req: NextRequest, ctx: Ctx) {
@@ -39,7 +45,10 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const pool = getPool();
     const auditArgs: any[] = [userId];
     let auditWhere = '';
-    if (after) { auditWhere = 'AND created_at > ?'; auditArgs.push(after); }
+    if (after) {
+      auditWhere = 'AND created_at > ?';
+      auditArgs.push(after);
+    }
     const [audit] = await pool.query<any[]>(
       `SELECT id, event, metadata, ip, created_at FROM audit_log
        WHERE user_id = ? ${auditWhere} ORDER BY created_at DESC LIMIT 100`,
@@ -48,7 +57,10 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     const dlArgs: any[] = [userId];
     let dlWhere = '';
-    if (after) { dlWhere = 'AND created_at > ?'; dlArgs.push(after); }
+    if (after) {
+      dlWhere = 'AND created_at > ?';
+      dlArgs.push(after);
+    }
     const [downloads] = await pool.query<any[]>(
       `SELECT id, source_type, source_id, status, format, duration_ms, created_at
        FROM downloads WHERE user_id = ? ${dlWhere} ORDER BY created_at DESC LIMIT 100`,
@@ -57,7 +69,10 @@ export async function GET(req: NextRequest, ctx: Ctx) {
 
     const aiArgs: any[] = [userId];
     let aiWhere = '';
-    if (after) { aiWhere = 'AND created_at > ?'; aiArgs.push(after); }
+    if (after) {
+      aiWhere = 'AND created_at > ?';
+      aiArgs.push(after);
+    }
     const [aiCalls] = await pool.query<any[]>(
       `SELECT id, feature, model, status, duration_ms, error, metadata, created_at
        FROM ai_calls WHERE user_id = ? ${aiWhere} ORDER BY created_at DESC LIMIT 100`,
@@ -65,7 +80,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     );
 
     const items: UnifiedLogEntry[] = [
-      ...audit.map(r => ({
+      ...audit.map((r) => ({
         id: `audit:${r.id}`,
         source: 'audit' as const,
         event: r.event,
@@ -75,7 +90,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         createdAt: String(r.created_at),
         metadata: safeParse(r.metadata),
       })),
-      ...downloads.map(r => ({
+      ...downloads.map((r) => ({
         id: `download:${r.id}`,
         source: 'download' as const,
         event: 'download_logged',
@@ -91,7 +106,7 @@ export async function GET(req: NextRequest, ctx: Ctx) {
           durationMs: r.duration_ms,
         },
       })),
-      ...aiCalls.map(r => ({
+      ...aiCalls.map((r) => ({
         id: `ai_call:${r.id}`,
         source: 'ai_call' as const,
         event: r.feature,

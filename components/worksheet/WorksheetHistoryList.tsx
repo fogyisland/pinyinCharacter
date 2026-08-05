@@ -34,9 +34,7 @@ export function WorksheetHistoryList({ worksheets, hasMulti }: Props) {
   };
 
   if (worksheets.length === 0) {
-    return (
-      <div className="py-8 text-center text-ink-faint">还没有保存的字帖</div>
-    );
+    return <div className="py-8 text-center text-ink-faint">还没有保存的字帖</div>;
   }
 
   const allChecked = selected.size === worksheets.length;
@@ -56,10 +54,7 @@ export function WorksheetHistoryList({ worksheets, hasMulti }: Props) {
           </span>
         </label>
         <div className="flex items-center gap-2">
-          <BatchPrintButton
-            selectedIds={Array.from(selected)}
-            hasFeature={hasMulti}
-          />
+          <BatchPrintButton selectedIds={Array.from(selected)} hasFeature={hasMulti} />
           <span className="text-xs text-ink-faint">最多 50 张/批</span>
         </div>
       </div>
@@ -79,8 +74,8 @@ export function WorksheetHistoryList({ worksheets, hasMulti }: Props) {
                   {w.title}
                 </Link>
                 <div className="text-sm text-ink-faint">
-                  {paperSizeLabel(w.paperSize)} · {fontFamilyLabel(w.fontFamily)} · {w.content.length} 字 ·{' '}
-                  {cellStyleLabel(w.cellStyle)} ·{' '}
+                  {paperSizeLabel(w.paperSize)} · {fontFamilyLabel(w.fontFamily)} ·{' '}
+                  {w.content.length} 字 · {cellStyleLabel(w.cellStyle)} ·{' '}
                   {new Date(w.createdAt).toLocaleString()}
                 </div>
               </div>

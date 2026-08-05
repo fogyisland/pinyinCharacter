@@ -36,7 +36,8 @@ function parseArgs(): ExportOpts {
 async function main() {
   const opts = parseArgs();
   if (opts.dryRun) console.log('[export-sutras] DRY RUN — no files will be written');
-  if (sutrasFsAvailable()) console.log('[export-sutras] data/sutras/ already exists, will overwrite');
+  if (sutrasFsAvailable())
+    console.log('[export-sutras] data/sutras/ already exists, will overwrite');
 
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
@@ -46,8 +47,14 @@ async function main() {
 
   const manifestItems: SutraManifestEntry[] = [];
   const chunksBySlug: Record<string, SutraChunk[]> = {};
-  for (const row of rows as Array<{ id: number; title: string; slug: string; chunks: string | SutraChunk[] }>) {
-    const raw = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
+  for (const row of rows as Array<{
+    id: number;
+    title: string;
+    slug: string;
+    chunks: string | SutraChunk[];
+  }>) {
+    const raw =
+      typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
     const chunkCount = raw.length;
     const charCount = raw.reduce(
       (sum, c) => sum + c.content.reduce((s, line) => s + Array.from(line).length, 0),
@@ -83,13 +90,17 @@ async function main() {
     const m = readSutraManifest();
     if (!m) throw new Error('verify: manifest missing after write');
     if (m.items.length !== manifestItems.length) {
-      throw new Error(`verify: manifest item count mismatch (${m.items.length} vs ${manifestItems.length})`);
+      throw new Error(
+        `verify: manifest item count mismatch (${m.items.length} vs ${manifestItems.length})`,
+      );
     }
     for (const item of manifestItems) {
       const chunks = readSutraChunksBySlug(item.slug);
       if (!chunks) throw new Error(`verify: ${item.slug}.json missing`);
       if (chunks.length !== item.chunkCount) {
-        throw new Error(`verify: ${item.slug} chunk count mismatch (${chunks.length} vs ${item.chunkCount})`);
+        throw new Error(
+          `verify: ${item.slug} chunk count mismatch (${chunks.length} vs ${item.chunkCount})`,
+        );
       }
     }
     console.log(`[export-sutras] verified ${manifestItems.length} files`);

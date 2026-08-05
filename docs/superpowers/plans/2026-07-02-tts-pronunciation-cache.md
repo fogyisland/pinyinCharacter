@@ -28,10 +28,12 @@
 ## Task 1: Add 3 helpers to `lib/tts-cache.ts`
 
 **Files:**
+
 - Modify: `lib/tts-cache.ts` (add 3 functions after `putCachedTts`)
 - Create: `tests/unit/lib/tts-cache.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `prefetchTts(voice: string, text: string): Promise<void>` — fire-and-forget warm; no-op if cached
   - `clearTtsCache(): Promise<void>` — deletes the named cache
@@ -69,7 +71,7 @@ class FakeCache {
     return this.store.delete(url);
   }
   async keys(): Promise<Request[]> {
-    return Array.from(this.store.keys()).map(url => new Request(url));
+    return Array.from(this.store.keys()).map((url) => new Request(url));
   }
 }
 
@@ -99,14 +101,17 @@ describe('tts-cache', () => {
   });
 
   it('prefetchTts: calls fetch on cache miss and stores the result', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([9, 9])], { type: 'audio/mpeg' })),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Blob([new Uint8Array([9, 9])], { type: 'audio/mpeg' })));
     await prefetchTts('female', '学');
-    expect(fetchSpy).toHaveBeenCalledWith('/api/tts', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ text: '学', voice: 'female' }),
-    }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/tts',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ text: '学', voice: 'female' }),
+      }),
+    );
     const got = await getCachedTts('female', '学');
     expect(got).not.toBeNull();
     fetchSpy.mockRestore();
@@ -114,9 +119,9 @@ describe('tts-cache', () => {
 
   it('prefetchTts: does NOT call fetch when entry is already cached', async () => {
     await putCachedTts('female', '学', new Blob([new Uint8Array([1])], { type: 'audio/mpeg' }));
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([9])], { type: 'audio/mpeg' })),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Blob([new Uint8Array([9])], { type: 'audio/mpeg' })));
     await prefetchTts('female', '学');
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
@@ -251,16 +256,19 @@ cd "E:/ToolDevelop/PinYinCharacter" && git add lib/tts-cache.ts tests/unit/lib/t
 ## Task 2: Wire `speak()` in `lib/tts.ts` to the cache
 
 **Files:**
+
 - Modify: `lib/tts.ts:78-92` (replace the bare fetch with the cache-then-fetch pattern)
 - Modify: `tests/unit/lib/tts.test.ts` (add cache-mock + new cache-hit/miss tests)
 
 **Interfaces:**
+
 - Consumes: `getCachedTts(voice, text)`, `putCachedTts(voice, text, blob)` from `@/lib/tts-cache` (Task 1)
 - No change to `speak()` signature or return type
 
 - [ ] **Step 1: Read current `tests/unit/lib/tts.test.ts` to understand mock setup**
 
 Read `tests/unit/lib/tts.test.ts`. Identify:
+
 - The `FakeAudio` class (likely 20-30 lines)
 - How `fetch` is mocked (probably `vi.spyOn(globalThis, 'fetch')`)
 - The setup function (`beforeEach` block)
@@ -285,7 +293,7 @@ class FakeCache {
     return this.store.delete(url);
   }
   async keys(): Promise<Request[]> {
-    return Array.from(this.store.keys()).map(url => new Request(url));
+    return Array.from(this.store.keys()).map((url) => new Request(url));
   }
 }
 ```
@@ -293,15 +301,15 @@ class FakeCache {
 Inside the existing `beforeEach` (or wrap the test setup), after the existing fake setup, add:
 
 ```ts
-  // Install Cache API polyfill BEFORE the module under test runs.
-  if (!('caches' in globalThis)) {
-    const fake = new FakeCache();
-    Object.defineProperty(globalThis, 'caches', {
-      value: { open: async () => fake, delete: async () => true },
-      configurable: true,
-      writable: true,
-    });
-  }
+// Install Cache API polyfill BEFORE the module under test runs.
+if (!('caches' in globalThis)) {
+  const fake = new FakeCache();
+  Object.defineProperty(globalThis, 'caches', {
+    value: { open: async () => fake, delete: async () => true },
+    configurable: true,
+    writable: true,
+  });
+}
 ```
 
 (If the existing file uses a different setup pattern, match it — copy the same shape as the new tests for `tests/unit/lib/tts-cache.test.ts`.)
@@ -309,42 +317,45 @@ Inside the existing `beforeEach` (or wrap the test setup), after the existing fa
 Add 3 new test cases inside the existing describe block:
 
 ```ts
-  it('uses cached blob on second speak() of same text (no second fetch)', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch');
-    fetchSpy.mockResolvedValue(
-      new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })),
-    );
-    await speak('女');
-    fetchSpy.mockClear();
-    await speak('女');
-    expect(fetchSpy).not.toHaveBeenCalled();
-    fetchSpy.mockRestore();
-  });
+it('uses cached blob on second speak() of same text (no second fetch)', async () => {
+  const fetchSpy = vi.spyOn(globalThis, 'fetch');
+  fetchSpy.mockResolvedValue(
+    new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })),
+  );
+  await speak('女');
+  fetchSpy.mockClear();
+  await speak('女');
+  expect(fetchSpy).not.toHaveBeenCalled();
+  fetchSpy.mockRestore();
+});
 
-  it('stores fetched blob in cache after first speak()', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })),
-    );
-    await speak('女');
-    // After this speak(), re-importing getCachedTts should find the entry.
-    const { getCachedTts } = await import('@/lib/tts-cache');
-    const blob = await getCachedTts('female', '女');
-    expect(blob).not.toBeNull();
-    fetchSpy.mockRestore();
-  });
+it('stores fetched blob in cache after first speak()', async () => {
+  const fetchSpy = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValue(new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })));
+  await speak('女');
+  // After this speak(), re-importing getCachedTts should find the entry.
+  const { getCachedTts } = await import('@/lib/tts-cache');
+  const blob = await getCachedTts('female', '女');
+  expect(blob).not.toBeNull();
+  fetchSpy.mockRestore();
+});
 
-  it('falls back to fetch when cache returns null (regression: no behavioral change)', async () => {
-    // With the polyfill installed but empty, cache always misses. speak() must still fetch.
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })),
-    );
-    await speak('学');
-    expect(fetchSpy).toHaveBeenCalledWith('/api/tts', expect.objectContaining({
+it('falls back to fetch when cache returns null (regression: no behavioral change)', async () => {
+  // With the polyfill installed but empty, cache always misses. speak() must still fetch.
+  const fetchSpy = vi
+    .spyOn(globalThis, 'fetch')
+    .mockResolvedValue(new Response(new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })));
+  await speak('学');
+  expect(fetchSpy).toHaveBeenCalledWith(
+    '/api/tts',
+    expect.objectContaining({
       method: 'POST',
       body: JSON.stringify({ text: '学', voice: 'female' }),
-    }));
-    fetchSpy.mockRestore();
-  });
+    }),
+  );
+  fetchSpy.mockRestore();
+});
 ```
 
 - [ ] **Step 2: Run the modified test file, verify the 3 new tests fail**
@@ -363,26 +374,26 @@ import { getCachedTts, putCachedTts } from './tts-cache';
 Replace lines 78-91 (the bare `let res: Response; ... if (!res.ok) { throw ... } const blob = await res.blob();` block) with:
 
 ```ts
-    let blob: Blob | null = await getCachedTts(voice, batch);
-    if (!blob) {
-      let res: Response;
-      try {
-        res = await fetch('/api/tts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ text: batch, voice }),
-        });
-      } catch (e) {
-        throw new Error(`TTS network error: ${(e as Error).message}`);
-      }
-      if (!res.ok) {
-        throw new Error(`TTS failed: HTTP ${res.status}`);
-      }
-      blob = await res.blob();
-      // Best-effort cache write — quota / private-mode failures don't break playback.
-      await putCachedTts(voice, batch, blob);
-    }
-    const url = URL.createObjectURL(blob);
+let blob: Blob | null = await getCachedTts(voice, batch);
+if (!blob) {
+  let res: Response;
+  try {
+    res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: batch, voice }),
+    });
+  } catch (e) {
+    throw new Error(`TTS network error: ${(e as Error).message}`);
+  }
+  if (!res.ok) {
+    throw new Error(`TTS failed: HTTP ${res.status}`);
+  }
+  blob = await res.blob();
+  // Best-effort cache write — quota / private-mode failures don't break playback.
+  await putCachedTts(voice, batch, blob);
+}
+const url = URL.createObjectURL(blob);
 ```
 
 The line `const url = URL.createObjectURL(blob);` was previously at line 92 — DELETE it from there since it's now produced from the (possibly cached) blob.
@@ -408,10 +419,12 @@ cd "E:/ToolDevelop/PinYinCharacter" && git add lib/tts.ts tests/unit/lib/tts.tes
 ## Task 3: List-page prefetch in `DictionaryCharGridClient`
 
 **Files:**
+
 - Modify: `components/dictionary/DictionaryCharGridClient.tsx` (add useEffect)
 - No test (pure UI hook; manual smoke only)
 
 **Interfaces:**
+
 - Consumes: `prefetchTts(voice, text)` from `@/lib/tts-cache` (Task 1)
 - Const: `LIST_PREFETCH_CAP = 24` (per spec §C)
 
@@ -446,38 +459,41 @@ const LIST_PREFETCH_CAP = 24;
 Insert this block **after** the `const handleAdd = ...` definition and **before** the `if (chars.length === 0)` early-return:
 
 ```tsx
-  // Idle-callback prefetch: warm cache for the first LIST_PREFETCH_CAP chars
-  // so click-to-play is instant. Skips chars already cached (prefetchTts no-ops).
-  // requestIdleCallback keeps it off the main thread; falls back to setTimeout.
-  useEffect(() => {
-    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number })
-      .requestIdleCallback;
-    const cic = (window as unknown as { cancelIdleCallback?: (handle: number) => void })
-      .cancelIdleCallback;
+// Idle-callback prefetch: warm cache for the first LIST_PREFETCH_CAP chars
+// so click-to-play is instant. Skips chars already cached (prefetchTts no-ops).
+// requestIdleCallback keeps it off the main thread; falls back to setTimeout.
+useEffect(() => {
+  const ric = (
+    window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }
+  ).requestIdleCallback;
+  const cic = (window as unknown as { cancelIdleCallback?: (handle: number) => void })
+    .cancelIdleCallback;
 
-    const schedule = (cb: () => void): number | undefined =>
-      ric ? ric(cb, { timeout: 2500 }) : (setTimeout(cb, 250) as unknown as number);
-    const cancel = (handle: number | undefined): void => {
-      if (handle === undefined) return;
-      if (cic) cic(handle);
-      else clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
-    };
+  const schedule = (cb: () => void): number | undefined =>
+    ric ? ric(cb, { timeout: 2500 }) : (setTimeout(cb, 250) as unknown as number);
+  const cancel = (handle: number | undefined): void => {
+    if (handle === undefined) return;
+    if (cic) cic(handle);
+    else clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
+  };
 
-    const targets = chars
-      .slice(0, LIST_PREFETCH_CAP)
-      .map((c) => c.char)
-      .filter((t) => t.length > 0);
+  const targets = chars
+    .slice(0, LIST_PREFETCH_CAP)
+    .map((c) => c.char)
+    .filter((t) => t.length > 0);
 
-    const handles = targets.map((text) =>
-      schedule(() => {
-        prefetchTts('female', text).catch(() => {});
-      }),
-    );
+  const handles = targets.map((text) =>
+    schedule(() => {
+      prefetchTts('female', text).catch(() => {});
+    }),
+  );
 
-    return () => {
-      handles.forEach(cancel);
-    };
-  }, [chars]);
+  return () => {
+    handles.forEach(cancel);
+  };
+}, [chars]);
 ```
 
 The `prefetchTts('female', text)` call uses voice='female' per Global Constraint (only female char audios are prefetched; male is rare). If user wants male too later, can be parameterized via a prop.
@@ -503,11 +519,13 @@ cd "E:/ToolDevelop/PinYinCharacter" && git add components/dictionary/DictionaryC
 ## Task 4: Detail-page prefetch (auto) + manual button (new component)
 
 **Files:**
+
 - Create: `components/dictionary/DetailPrefetchButton.tsx`
 - Modify: `components/dictionary/DictionaryDetailTabs.tsx` (import + render button + auto-prefetch effect)
 - Create: `tests/unit/components/dictionary/DetailPrefetchButton.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `prefetchTts(voice, text)` (Task 1), `useToastStore` (existing pattern)
 - Props: `{ relatedChars: string[]; cap?: number }` (button shows count; prefetches up to `cap`, default 20)
 
@@ -647,32 +665,37 @@ import { prefetchTts } from '@/lib/tts-cache';
 **Change 2 — add auto-prefetch effect**. Insert this block inside the component, right after the `return (` line's component body — actually BEFORE the return. Add right after `export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {`:
 
 ```tsx
-  // Auto-prefetch audios for the first 6 chars sharing the radical. Skips
-  // cached entries (prefetchTts no-ops). Cancelled on unmount.
-  useEffect(() => {
-    const targets = char.relatedByRadical.slice(0, 6).map((c) => c.char);
-    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number })
-      .requestIdleCallback;
-    const cic = (window as unknown as { cancelIdleCallback?: (h: number) => void })
-      .cancelIdleCallback;
-    const schedule = (cb: () => void): number | undefined =>
-      ric ? ric(cb, { timeout: 2500 }) : (setTimeout(cb, 250) as unknown as number);
-    const cancel = (handle: number | undefined): void => {
-      if (handle === undefined) return;
-      if (cic) cic(handle);
-      else clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
-    };
-    const handles = targets.map((text) =>
-      schedule(() => { prefetchTts('female', text).catch(() => {}); }),
-    );
-    return () => handles.forEach(cancel);
-  }, [char.relatedByRadical]);
+// Auto-prefetch audios for the first 6 chars sharing the radical. Skips
+// cached entries (prefetchTts no-ops). Cancelled on unmount.
+useEffect(() => {
+  const targets = char.relatedByRadical.slice(0, 6).map((c) => c.char);
+  const ric = (
+    window as unknown as {
+      requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+    }
+  ).requestIdleCallback;
+  const cic = (window as unknown as { cancelIdleCallback?: (h: number) => void })
+    .cancelIdleCallback;
+  const schedule = (cb: () => void): number | undefined =>
+    ric ? ric(cb, { timeout: 2500 }) : (setTimeout(cb, 250) as unknown as number);
+  const cancel = (handle: number | undefined): void => {
+    if (handle === undefined) return;
+    if (cic) cic(handle);
+    else clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
+  };
+  const handles = targets.map((text) =>
+    schedule(() => {
+      prefetchTts('female', text).catch(() => {});
+    }),
+  );
+  return () => handles.forEach(cancel);
+}, [char.relatedByRadical]);
 ```
 
 **Change 3 — render the manual button** inside the existing `<span className="ml-auto flex items-center gap-2 pb-1">` block, BEFORE the two `<ReadAloudButton>` elements:
 
 ```tsx
-          <DetailPrefetchButton relatedChars={char.relatedByRadical.map((c) => c.char)} cap={20} />
+<DetailPrefetchButton relatedChars={char.relatedByRadical.map((c) => c.char)} cap={20} />
 ```
 
 If `char.relatedByRadical` is empty, the button is disabled (handled inside the component).
@@ -696,11 +719,13 @@ cd "E:/ToolDevelop/PinYinCharacter" && git add components/dictionary/DetailPrefe
 ## Task 5: Admin endpoint + admin page card
 
 **Files:**
+
 - Create: `app/api/admin/tts-cache/route.ts` (GET + DELETE)
 - Create: `tests/unit/api/admin/tts-cache.test.ts`
 - Modify: `app/admin/settings/audio/page.tsx` (add a TTS cache card)
 
 **Interfaces:**
+
 - Consumes: `getTtsCacheSize`, `clearTtsCache` (Task 1)
 - `GET /api/admin/tts-cache` → `{ ok: true, data: { count: number; bytes: number } }`
 - `DELETE /api/admin/tts-cache` → `{ ok: true }`
@@ -711,6 +736,7 @@ cd "E:/ToolDevelop/PinYinCharacter" && git add components/dictionary/DetailPrefe
 Read `app/admin/settings/audio/page.tsx`. Identify the existing card layout (likely `card-paper`).
 
 Read one existing admin route (e.g., `app/api/admin/audio/route.ts`) to confirm:
+
 - Cookie name: `pinyin_session`
 - `verifySession` import
 - `session.isAdmin` check
@@ -724,11 +750,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const cookieStore = new Map<string, string>();
 vi.mock('next/headers', () => ({
-  cookies: () => Promise.resolve({
-    get: (name: string) => cookieStore.has(name)
-      ? { name, value: cookieStore.get(name)! }
-      : undefined,
-  }),
+  cookies: () =>
+    Promise.resolve({
+      get: (name: string) =>
+        cookieStore.has(name) ? { name, value: cookieStore.get(name)! } : undefined,
+    }),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -879,7 +905,9 @@ export function TtsCacheCard() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function handleClear() {
     if (!confirm('确认清除全部 TTS 音频缓存？下次播放将重新合成。')) return;
@@ -908,7 +936,8 @@ export function TtsCacheCard() {
       ) : (
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm text-ink">
-            <span className="font-medium">{count}</span> 条 · <span className="font-medium">{formatBytes(bytes ?? 0)}</span>
+            <span className="font-medium">{count}</span> 条 ·{' '}
+            <span className="font-medium">{formatBytes(bytes ?? 0)}</span>
           </div>
           <button
             type="button"
@@ -971,24 +1000,24 @@ Per memory `dev-build-cache-stomp`: dev server is alive on port 4444. Do NOT run
 
 ## Spec Coverage Check
 
-| Spec requirement | Task |
-|---|---|
-| `speak()` uses Cache API | Task 2 |
-| `speak()` returns blob from cache on hit | Task 2 |
-| `speak()` writes to cache on miss | Task 2 |
-| `prefetchTts(voice, text)` helper | Task 1 |
-| `clearTtsCache()` helper | Task 1 |
-| `getTtsCacheSize()` helper | Task 1 |
-| Dictionary list page prefetch (cap 24) | Task 3 |
+| Spec requirement                                           | Task   |
+| ---------------------------------------------------------- | ------ |
+| `speak()` uses Cache API                                   | Task 2 |
+| `speak()` returns blob from cache on hit                   | Task 2 |
+| `speak()` writes to cache on miss                          | Task 2 |
+| `prefetchTts(voice, text)` helper                          | Task 1 |
+| `clearTtsCache()` helper                                   | Task 1 |
+| `getTtsCacheSize()` helper                                 | Task 1 |
+| Dictionary list page prefetch (cap 24)                     | Task 3 |
 | Dictionary detail auto-prefetch (first 6 relatedByRadical) | Task 4 |
-| Dictionary detail manual button (cap 20) | Task 4 |
-| `GET /api/admin/tts-cache` | Task 5 |
-| `DELETE /api/admin/tts-cache` | Task 5 |
-| `/admin/settings/audio` cache card | Task 5 |
-| Tests for cache roundtrip | Task 1 |
-| Tests for `speak()` cache integration | Task 2 |
-| Tests for DetailPrefetchButton | Task 4 |
-| Tests for admin route | Task 5 |
-| Manual smoke verification | Final |
+| Dictionary detail manual button (cap 20)                   | Task 4 |
+| `GET /api/admin/tts-cache`                                 | Task 5 |
+| `DELETE /api/admin/tts-cache`                              | Task 5 |
+| `/admin/settings/audio` cache card                         | Task 5 |
+| Tests for cache roundtrip                                  | Task 1 |
+| Tests for `speak()` cache integration                      | Task 2 |
+| Tests for DetailPrefetchButton                             | Task 4 |
+| Tests for admin route                                      | Task 5 |
+| Manual smoke verification                                  | Final  |
 
 All 16 requirements covered. No gaps.

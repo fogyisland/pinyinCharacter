@@ -14,6 +14,7 @@ Replace the existing single-era-at-a-time `<EtymologyTimeline>` on `/etymology/[
 - Dictionary detail page (`app/dictionary/[char]/page.tsx`) already has a tab/link to `/etymology/<char>`. No additional entry point needed.
 
 User decisions confirmed in brainstorm:
+
 1. Animation = auto-play crossfade, 1.2s per era, scrubbable.
 2. Missing eras = skip (no "暂无" mid-animation).
 3. Era context = date range label per era (static data).
@@ -27,29 +28,34 @@ User decisions confirmed in brainstorm:
 **New file:** `components/etymology/EtymologyMorph.tsx` (`'use client'`)
 
 **Props:**
+
 ```ts
 interface EtymologyMorphProps {
   char: string;
-  eras: EraGlyph[];     // already filtered to hasGlyph: true
-  story: string;        // etymology_story
-  level: 1 | 2 | 3;     // from content JSON
+  eras: EraGlyph[]; // already filtered to hasGlyph: true
+  story: string; // etymology_story
+  level: 1 | 2 | 3; // from content JSON
 }
 ```
 
 **State:**
+
 ```ts
 const [currentIndex, setCurrentIndex] = useState(0);
 const [isPlaying, setIsPlaying] = useState(true);
 ```
 
 **Render structure:**
+
 ```tsx
 <section aria-label="字形演变">
   {/* Header row: char + level badge + coverage hint */}
   <div className="flex items-baseline gap-3">
     <h2 className="text-3xl font-kai">{char}</h2>
-    <span className="text-xs px-2 py-0.5 rounded bg-paper-warm
-                     border border-ink-faint/30">
+    <span
+      className="text-xs px-2 py-0.5 rounded bg-paper-warm
+                     border border-ink-faint/30"
+    >
       {LEVEL_LABEL[level]}
     </span>
     <span className="text-xs text-ink-faint">{coverageHint(eras.length, level)}</span>
@@ -77,16 +83,26 @@ const [isPlaying, setIsPlaying] = useState(true);
     <button onClick={togglePlay} aria-label={isPlaying ? '暂停' : '播放'}>
       {isPlaying ? '⏸' : '▶'}
     </button>
-    <span>{eras[currentIndex].label} · {ERA_DATES[eras[currentIndex].id].range}</span>
+    <span>
+      {eras[currentIndex].label} · {ERA_DATES[eras[currentIndex].id].range}
+    </span>
   </div>
 
   {/* Scrubber */}
-  <div role="slider" aria-valuemin={0} aria-valuemax={eras.length-1}
-       aria-valuenow={currentIndex} aria-label="字形演变时间轴">
+  <div
+    role="slider"
+    aria-valuemin={0}
+    aria-valuemax={eras.length - 1}
+    aria-valuenow={currentIndex}
+    aria-label="字形演变时间轴"
+  >
     {eras.map((era, i) => (
-      <button key={era.id} onClick={() => goTo(i)}
-              aria-current={i === currentIndex ? 'true' : 'false'}
-              className={chipClass(i === currentIndex)}>
+      <button
+        key={era.id}
+        onClick={() => goTo(i)}
+        aria-current={i === currentIndex ? 'true' : 'false'}
+        className={chipClass(i === currentIndex)}
+      >
         {era.label}
         <small className="text-xs text-ink-faint">{ERA_DATES[era.id].range}</small>
       </button>
@@ -99,22 +115,23 @@ const [isPlaying, setIsPlaying] = useState(true);
 ```
 
 **Static data (separate file `components/etymology/era-dates.ts`):**
+
 ```ts
 export const ERA_DATES: Record<EraId, { range: string }> = {
-  jiaguwen:  { range: '商代晚期 (~1200-1046 BC)' },
-  jinwen:    { range: '西周 (~1046-771 BC)' },
+  jiaguwen: { range: '商代晚期 (~1200-1046 BC)' },
+  jinwen: { range: '西周 (~1046-771 BC)' },
   xiaozhuan: { range: '秦 (~221-206 BC)' },
-  lishu:     { range: '汉 (~206 BC-220 AD)' },
-  kaishu:    { range: '魏晋至今 (~220 AD+)' },
+  lishu: { range: '汉 (~206 BC-220 AD)' },
+  kaishu: { range: '魏晋至今 (~220 AD+)' },
 };
 
-export const LEVEL_LABEL: Record<1|2|3, string> = {
+export const LEVEL_LABEL: Record<1 | 2 | 3, string> = {
   1: '一级',
   2: '二级',
   3: '三级',
 };
 
-export function coverageHint(eraCount: number, level: 1|2|3): string {
+export function coverageHint(eraCount: number, level: 1 | 2 | 3): string {
   if (eraCount === 5) return `${eraCount}/5 字形 · 完整`;
   if (eraCount >= 3) return `${eraCount}/5 字形 · 部分 (L${level} 字形覆盖较全)`;
   if (eraCount >= 1) return `${eraCount}/5 字形 · 部分 (L${level} 字形覆盖有限)`;
@@ -123,17 +140,20 @@ export function coverageHint(eraCount: number, level: 1|2|3): string {
 ```
 
 **Effects:**
+
 - Autoplay: `useEffect` registers a `setInterval` that advances `currentIndex` every 1200ms when `isPlaying && eras.length > 1`. Cleanup on pause / unmount / `eras.length` change.
 - Wrap-around: `(currentIndex + 1) % eras.length`.
 - `prefers-reduced-motion`: initial `isPlaying` state is `false` if matchMedia returns true.
 
 **Keyboard:**
+
 - Container `<div tabIndex={0} onKeyDown={...}>`:
   - `←` / `→` — prev / next era (wraps).
   - `Space` — toggle play / pause.
   - `Home` / `End` — jump to first / last era.
 
 **User interactions pause autoplay:**
+
 - Clicking any era chip in the scrubber → `setIsPlaying(false)`, `setCurrentIndex(i)`.
 - Pressing ← / → / Home / End → keeps current `isPlaying` state (don't surprise the user by auto-pausing on every keypress).
 - Pressing Space → toggles explicitly.
@@ -141,21 +161,24 @@ export function coverageHint(eraCount: number, level: 1|2|3): string {
 ### Data flow
 
 `lib/etymology.ts` — extend `EtymologyResult`:
+
 ```ts
 export interface EtymologyResult {
   char: string;
   eras: EraGlyph[];
   story: string;
-  level: 1 | 2 | 3;   // NEW
+  level: 1 | 2 | 3; // NEW
 }
 ```
 
 `getEtymology(char)` populates `level`:
+
 - **File-first** (post 2026-06-17 slim-DB): read from `data/content/<char>.json` → `content.level` (cast to `1|2|3`).
 - **DB fallback** (legacy): `SELECT level FROM chars WHERE char = ?`.
 - **Default**: `1` if neither source has the char (extremely defensive — should never happen in practice since `/etymology/<char>` is only reachable for chars in the dictionary).
 
 `app/etymology/[char]/page.tsx` — pass `level`:
+
 ```tsx
 <EtymologyMorph
   char={etymology.char}
@@ -194,7 +217,7 @@ export interface EtymologyResult {
 
 - Server-side PDF / image generation of the evolution strip.
 - Adding new era fields to the JSON content schema (era data stays in MySQL `char_etymology`).
-- Animating the *story* text in sync with the era (would be cute but adds complexity for marginal value).
+- Animating the _story_ text in sync with the era (would be cute but adds complexity for marginal value).
 - Letting users reorder the eras (the historical order is fixed).
 - Per-char shape-change annotations ("竖笔逐渐变直" etc.) — would require content generation per char.
 - Visual redesign of the surrounding `/etymology/[char]` page header / footer.

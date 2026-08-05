@@ -7,7 +7,7 @@ export type AudioFormat =
   | 'audio-16khz-128kbitrate-mono-mp3';
 
 export interface SynthesizeOpts {
-  voiceName: string;            // e.g. 'zh-CN-YunjianNeural'
+  voiceName: string; // e.g. 'zh-CN-YunjianNeural'
   text: string;
   format?: AudioFormat;
   timeoutMs?: number;
@@ -50,7 +50,9 @@ export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
     return await Promise.race([streamPromise, timeoutPromise]);
   } catch (e) {
     const err = e as Error;
-    process.stderr.write(`[tts-edge] error: name=${err.name} message=${err.message} voice=${opts.voiceName} text="${opts.text.slice(0, 20)}"\n`);
+    process.stderr.write(
+      `[tts-edge] error: name=${err.name} message=${err.message} voice=${opts.voiceName} text="${opts.text.slice(0, 20)}"\n`,
+    );
     (e as any).ttsErrorName = err.name;
     throw e;
   }

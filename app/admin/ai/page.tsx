@@ -6,8 +6,10 @@ import { StatCard } from '@/components/admin/StatCard';
 import { JsonPanel } from '@/components/admin/JsonPanel';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import {
-  listAiCallsRequest, getAiStatsRequest,
-  getAiConfigRequest, updateAiConfigRequest,
+  listAiCallsRequest,
+  getAiStatsRequest,
+  getAiConfigRequest,
+  updateAiConfigRequest,
   type AdminAiCallRow,
 } from '@/lib/api-admin';
 
@@ -17,7 +19,13 @@ const STATUS_COLORS: Record<string, string> = {
   'rate-limited': 'bg-yellow-100 text-yellow-800',
 };
 function StatusBadge({ status }: { status: string }) {
-  return <span className={`inline-block px-2 py-0.5 rounded text-xs ${STATUS_COLORS[status] ?? 'bg-paper-deep text-ink-soft'}`}>{status}</span>;
+  return (
+    <span
+      className={`inline-block px-2 py-0.5 rounded text-xs ${STATUS_COLORS[status] ?? 'bg-paper-deep text-ink-soft'}`}
+    >
+      {status}
+    </span>
+  );
 }
 
 const STATUS_OPTIONS = [
@@ -55,10 +63,15 @@ export default function AdminAiPage() {
   const [err, setErr] = useState<string | null>(null);
   const [expandedErr, setExpandedErr] = useState<string | null>(null);
 
-  const [stats, setStats] = useState<{ total: number; errorRate: number; p95Duration: number | null } | null>(null);
+  const [stats, setStats] = useState<{
+    total: number;
+    errorRate: number;
+    p95Duration: number | null;
+  } | null>(null);
 
   const fetchCalls = useCallback(async () => {
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     try {
       const r = await listAiCallsRequest({
         feature: feature || undefined,
@@ -66,12 +79,18 @@ export default function AdminAiPage() {
         userId: /^\d+$/.test(userQ) ? Number(userQ) : undefined,
         from: from ? new Date(from).toISOString() : undefined,
         to: to ? new Date(to + 'T23:59:59').toISOString() : undefined,
-        page, pageSize,
+        page,
+        pageSize,
       });
-      if (!r.ok) { setErr(r.error.message); return; }
+      if (!r.ok) {
+        setErr(r.error.message);
+        return;
+      }
       setRows(r.data.rows);
       setTotal(r.data.total);
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+    }
   }, [feature, status, userQ, from, to, page, pageSize]);
 
   const fetchStats = useCallback(async () => {
@@ -85,7 +104,12 @@ export default function AdminAiPage() {
     });
   }, []);
 
-  useEffect(() => { if (tab === 'calls') { fetchCalls(); fetchStats(); } }, [tab, fetchCalls, fetchStats]);
+  useEffect(() => {
+    if (tab === 'calls') {
+      fetchCalls();
+      fetchStats();
+    }
+  }, [tab, fetchCalls, fetchStats]);
 
   function applyCallFilters(e: React.FormEvent) {
     e.preventDefault();
@@ -104,16 +128,22 @@ export default function AdminAiPage() {
 
   useEffect(() => {
     if (tab !== 'config') return;
-    setConfigMsg(null); setConfigErr(null);
-    getAiConfigRequest().then(r => {
+    setConfigMsg(null);
+    setConfigErr(null);
+    getAiConfigRequest().then((r) => {
       if (!r.ok) setConfigErr(r.error.message);
-      else { setConfig(r.data.config); setHasApiKey(r.data.hasApiKey); }
+      else {
+        setConfig(r.data.config);
+        setHasApiKey(r.data.hasApiKey);
+      }
     });
   }, [tab]);
 
   async function saveConfig(e: React.FormEvent) {
     e.preventDefault();
-    setConfigBusy(true); setConfigMsg(null); setConfigErr(null);
+    setConfigBusy(true);
+    setConfigMsg(null);
+    setConfigErr(null);
     // Skip empty fields so admin doesn't accidentally clear a configured secret
     // (ai.api_key is masked to '' in GET, would otherwise overwrite on save).
     const body: Record<string, string> = {};
@@ -128,7 +158,11 @@ export default function AdminAiPage() {
     const r = await updateAiConfigRequest(body);
     setConfigBusy(false);
     if (!r.ok) setConfigErr(r.error.message);
-    else { setConfig(r.data.config); setHasApiKey(r.data.hasApiKey); setConfigMsg('配置已保存'); }
+    else {
+      setConfig(r.data.config);
+      setHasApiKey(r.data.hasApiKey);
+      setConfigMsg('配置已保存');
+    }
   }
 
   // --- Mock tab state ---
@@ -145,13 +179,16 @@ export default function AdminAiPage() {
 
   useEffect(() => {
     if (tab === 'mock') {
-      setMockMsg(null); setMockErr(null);
+      setMockMsg(null);
+      setMockErr(null);
       fetchMock();
     }
   }, [tab, fetchMock]);
 
   async function toggleMock() {
-    setMockBusy(true); setMockMsg(null); setMockErr(null);
+    setMockBusy(true);
+    setMockMsg(null);
+    setMockErr(null);
     const next = !mockEnabled;
     try {
       const r = await fetch('/api/admin/ai/mock', {
@@ -172,7 +209,9 @@ export default function AdminAiPage() {
 
   const tabClass = (active: boolean) =>
     `px-4 py-2 text-sm border-b-2 -mb-px ${
-      active ? 'border-ink text-ink font-semibold' : 'border-transparent text-ink-soft hover:text-ink'
+      active
+        ? 'border-ink text-ink font-semibold'
+        : 'border-transparent text-ink-soft hover:text-ink'
     }`;
 
   return (
@@ -180,50 +219,99 @@ export default function AdminAiPage() {
       <h1 className="text-xl font-semibold">AI</h1>
 
       <div className="flex border-b border-paper-warm">
-        <button type="button" onClick={() => setTab('calls')} className={tabClass(tab === 'calls')}>调用记录</button>
-        <button type="button" onClick={() => setTab('config')} className={tabClass(tab === 'config')}>配置</button>
-        <button type="button" onClick={() => setTab('mock')} className={tabClass(tab === 'mock')}>Mock 模式</button>
+        <button type="button" onClick={() => setTab('calls')} className={tabClass(tab === 'calls')}>
+          调用记录
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('config')}
+          className={tabClass(tab === 'config')}
+        >
+          配置
+        </button>
+        <button type="button" onClick={() => setTab('mock')} className={tabClass(tab === 'mock')}>
+          Mock 模式
+        </button>
       </div>
 
       {tab === 'calls' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <StatCard label="调用总数 (7d)" value={stats?.total ?? '—'} icon={Bot} />
-            <StatCard label="错误率 (7d)" value={stats ? `${(stats.errorRate * 100).toFixed(1)}%` : '—'} icon={AlertTriangle} />
-            <StatCard label="P95 延迟 (7d)" value={stats?.p95Duration != null ? `${stats.p95Duration} ms` : '—'} icon={Bot} />
+            <StatCard
+              label="错误率 (7d)"
+              value={stats ? `${(stats.errorRate * 100).toFixed(1)}%` : '—'}
+              icon={AlertTriangle}
+            />
+            <StatCard
+              label="P95 延迟 (7d)"
+              value={stats?.p95Duration != null ? `${stats.p95Duration} ms` : '—'}
+              icon={Bot}
+            />
           </div>
 
-          <form onSubmit={applyCallFilters} className="card-paper rounded-lg p-3 grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
+          <form
+            onSubmit={applyCallFilters}
+            className="card-paper rounded-lg p-3 grid grid-cols-1 md:grid-cols-6 gap-2 items-end"
+          >
             <div>
               <label className="text-xs text-ink-soft">功能</label>
-              <input value={feature} onChange={e => setFeature(e.target.value)}
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper" placeholder="如 rare-char-story" />
+              <input
+                value={feature}
+                onChange={(e) => setFeature(e.target.value)}
+                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+                placeholder="如 rare-char-story"
+              />
             </div>
             <div>
               <label className="text-xs text-ink-soft">状态</label>
-              <select value={status} onChange={e => setStatus(e.target.value)}
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper">
-                {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+              >
+                {STATUS_OPTIONS.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label}
+                  </option>
+                ))}
               </select>
             </div>
             <div>
               <label className="text-xs text-ink-soft">用户 ID</label>
-              <input value={userQ} onChange={e => setUserQ(e.target.value)} type="text" placeholder="数字 ID"
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+              <input
+                value={userQ}
+                onChange={(e) => setUserQ(e.target.value)}
+                type="text"
+                placeholder="数字 ID"
+                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+              />
             </div>
             <div>
               <label className="text-xs text-ink-soft">从</label>
-              <input value={from} onChange={e => setFrom(e.target.value)} type="date"
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+              <input
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+                type="date"
+                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+              />
             </div>
             <div>
               <label className="text-xs text-ink-soft">至</label>
-              <input value={to} onChange={e => setTo(e.target.value)} type="date"
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+              <input
+                value={to}
+                onChange={(e) => setTo(e.target.value)}
+                type="date"
+                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+              />
             </div>
-            <button type="submit" disabled={busy}
-              className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50 inline-flex items-center justify-center gap-1">
-              <Filter className="h-3.5 w-3.5" />筛选
+            <button
+              type="submit"
+              disabled={busy}
+              className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50 inline-flex items-center justify-center gap-1"
+            >
+              <Filter className="h-3.5 w-3.5" />
+              筛选
             </button>
           </form>
 
@@ -247,40 +335,67 @@ export default function AdminAiPage() {
               <>
                 <span className="text-sm">{r.feature}</span>
                 <StatusBadge status={r.status} />
-                {r.username
-                  ? <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</a>
-                  : <span className="text-ink-faint">#{r.userId}</span>}
+                {r.username ? (
+                  <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
+                    {r.username}
+                  </a>
+                ) : (
+                  <span className="text-ink-faint">#{r.userId}</span>
+                )}
                 <span className="text-xs text-ink-soft">{r.model ?? '—'}</span>
                 <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
-                <span className="text-xs text-ink-soft">{new Date(r.createdAt).toLocaleString('zh-CN')}</span>
-                {r.error
-                  ? <>
-                      <span className="text-seal">{truncate(r.error, 100)}</span>
-                      {r.error.length > 100 && (
-                        <button type="button" onClick={() => setExpandedErr(expandedErr === String(r.id) ? null : String(r.id))}
-                          className="ml-2 text-seal hover:underline">
-                          {expandedErr === String(r.id) ? '收起' : '展开'}
-                        </button>
-                      )}
-                      {expandedErr === String(r.id) && (
-                        <div className="mt-1"><JsonPanel data={r.error} /></div>
-                      )}
-                    </>
-                  : '—'}
+                <span className="text-xs text-ink-soft">
+                  {new Date(r.createdAt).toLocaleString('zh-CN')}
+                </span>
+                {r.error ? (
+                  <>
+                    <span className="text-seal">{truncate(r.error, 100)}</span>
+                    {r.error.length > 100 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setExpandedErr(expandedErr === String(r.id) ? null : String(r.id))
+                        }
+                        className="ml-2 text-seal hover:underline"
+                      >
+                        {expandedErr === String(r.id) ? '收起' : '展开'}
+                      </button>
+                    )}
+                    {expandedErr === String(r.id) && (
+                      <div className="mt-1">
+                        <JsonPanel data={r.error} />
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  '—'
+                )}
               </>
             )}
           </ResponsiveTable>
 
           <div className="flex items-center justify-between">
-            <span className="text-xs text-ink-faint">共 {total} 条 · 第 {page} / {totalPages} 页</span>
+            <span className="text-xs text-ink-faint">
+              共 {total} 条 · 第 {page} / {totalPages} 页
+            </span>
             <div className="flex gap-2">
-              <button type="button" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={busy || page <= 1}
-                className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1">
-                <ChevronLeft className="h-3.5 w-3.5" />上一页
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={busy || page <= 1}
+                className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" />
+                上一页
               </button>
-              <button type="button" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={busy || page >= totalPages}
-                className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1">
-                下一页<ChevronRight className="h-3.5 w-3.5" />
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={busy || page >= totalPages}
+                className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1"
+              >
+                下一页
+                <ChevronRight className="h-3.5 w-3.5" />
               </button>
             </div>
           </div>
@@ -290,45 +405,87 @@ export default function AdminAiPage() {
       {tab === 'config' && (
         <form onSubmit={saveConfig} className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
           {configErr && <p className="text-sm text-seal">{configErr}</p>}
-          {configMsg && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{configMsg}</p>}
+          {configMsg && (
+            <p className="text-sm text-green-700 inline-flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" />
+              {configMsg}
+            </p>
+          )}
 
           <div className="space-y-1">
             <h2 className="text-sm font-semibold text-ink">AI 连接配置</h2>
-            <p className="text-xs text-ink-soft">写入 <code>app_config</code> 表,优先级高于环境变量 <code>LLM_API_KEY</code> / <code>LLM_BASE_URL</code> / <code>LLM_MODEL</code>。</p>
+            <p className="text-xs text-ink-soft">
+              写入 <code>app_config</code> 表,优先级高于环境变量 <code>LLM_API_KEY</code> /{' '}
+              <code>LLM_BASE_URL</code> / <code>LLM_MODEL</code>。
+            </p>
           </div>
-          <ConfigField label="端点 URL (Base URL)" hint="OpenAI 兼容 API 根地址" placeholder="https://api.openai.com/v1"
+          <ConfigField
+            label="端点 URL (Base URL)"
+            hint="OpenAI 兼容 API 根地址"
+            placeholder="https://api.openai.com/v1"
             value={config['ai.base_url'] ?? ''}
-            onChange={v => setConfig(c => ({ ...c, 'ai.base_url': v }))} />
-          <ConfigField label="连接 KEY (API Key)" hint={hasApiKey ? '已配置,留空不改' : '尚未配置'}
-            type="password" value={config['ai.api_key'] ?? ''}
-            onChange={v => setConfig(c => ({ ...c, 'ai.api_key': v }))} />
-          <ConfigField label="模型" hint="MiniMax-M3 / MiniMax-M2.7 / MiniMax-M2.7-highspeed / MiniMax-M2.5 / MiniMax-M2.5-highspeed / MiniMax-M2.1 / MiniMax-M2.1-highspeed / MiniMax-M2" placeholder="MiniMax-M3"
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.base_url': v }))}
+          />
+          <ConfigField
+            label="连接 KEY (API Key)"
+            hint={hasApiKey ? '已配置,留空不改' : '尚未配置'}
+            type="password"
+            value={config['ai.api_key'] ?? ''}
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.api_key': v }))}
+          />
+          <ConfigField
+            label="模型"
+            hint="MiniMax-M3 / MiniMax-M2.7 / MiniMax-M2.7-highspeed / MiniMax-M2.5 / MiniMax-M2.5-highspeed / MiniMax-M2.1 / MiniMax-M2.1-highspeed / MiniMax-M2"
+            placeholder="MiniMax-M3"
             value={config['ai.model'] ?? ''}
-            onChange={v => setConfig(c => ({ ...c, 'ai.model': v }))} />
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.model': v }))}
+          />
 
           <div className="pt-2 space-y-1">
             <h2 className="text-sm font-semibold text-ink">AI 运行参数</h2>
             <p className="text-xs text-ink-soft">LLM 调用层面的限速/超时/采样。</p>
           </div>
-          <ConfigField label="限速 (次/用户/日)" placeholder="20"
+          <ConfigField
+            label="限速 (次/用户/日)"
+            placeholder="20"
             value={config['ai.rate_limit_per_user_per_day'] ?? ''}
-            onChange={v => setConfig(c => ({ ...c, 'ai.rate_limit_per_user_per_day': v }))} />
-          <ConfigField label="超时 (毫秒)" placeholder="30000"
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.rate_limit_per_user_per_day': v }))}
+          />
+          <ConfigField
+            label="超时 (毫秒)"
+            placeholder="30000"
             value={config['ai.timeout_ms'] ?? ''}
-            onChange={v => setConfig(c => ({ ...c, 'ai.timeout_ms': v }))} />
-          <ConfigField label="温度" placeholder="0.3"
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.timeout_ms': v }))}
+          />
+          <ConfigField
+            label="温度"
+            placeholder="0.3"
             value={config['ai.temperature'] ?? ''}
-            onChange={v => setConfig(c => ({ ...c, 'ai.temperature': v }))} />
-          <ConfigSelectField label="思考模式 (thinking)" hint="MiniMax-M3 等推理模型:disabled 直接作答;adaptive 先推理再作答(可能更准但会占用 token 预算)"
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.temperature': v }))}
+          />
+          <ConfigSelectField
+            label="思考模式 (thinking)"
+            hint="MiniMax-M3 等推理模型:disabled 直接作答;adaptive 先推理再作答(可能更准但会占用 token 预算)"
             value={config['ai.thinking'] ?? 'disabled'}
-            options={[{ value: 'disabled', label: 'disabled' }, { value: 'adaptive', label: 'adaptive' }]}
-            onChange={v => setConfig(c => ({ ...c, 'ai.thinking': v }))} />
-          <ConfigField label="最大输出 token (max_completion_tokens)" hint="M3 推荐 131072,M2.x 推荐 65536;上限 524288" placeholder="4096"
+            options={[
+              { value: 'disabled', label: 'disabled' },
+              { value: 'adaptive', label: 'adaptive' },
+            ]}
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.thinking': v }))}
+          />
+          <ConfigField
+            label="最大输出 token (max_completion_tokens)"
+            hint="M3 推荐 131072,M2.x 推荐 65536;上限 524288"
+            placeholder="4096"
             value={config['ai.max_completion_tokens'] ?? ''}
-            onChange={v => setConfig(c => ({ ...c, 'ai.max_completion_tokens': v }))} />
+            onChange={(v) => setConfig((c) => ({ ...c, 'ai.max_completion_tokens': v }))}
+          />
 
-          <button type="submit" disabled={configBusy}
-            className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={configBusy}
+            className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+          >
             {configBusy ? '保存中…' : '保存'}
           </button>
         </form>
@@ -337,7 +494,12 @@ export default function AdminAiPage() {
       {tab === 'mock' && (
         <div className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
           {mockErr && <p className="text-sm text-seal">{mockErr}</p>}
-          {mockMsg && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{mockMsg}</p>}
+          {mockMsg && (
+            <p className="text-sm text-green-700 inline-flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" />
+              {mockMsg}
+            </p>
+          )}
 
           <div className="space-y-1">
             <h2 className="text-sm font-semibold text-ink">AI Mock 模式</h2>
@@ -351,12 +513,16 @@ export default function AdminAiPage() {
             <span className={`text-sm font-medium ${mockEnabled ? 'text-seal' : 'text-ink-soft'}`}>
               {mockEnabled ? '已开启' : '已关闭'}
             </span>
-            <button type="button" onClick={toggleMock} disabled={mockBusy}
+            <button
+              type="button"
+              onClick={toggleMock}
+              disabled={mockBusy}
               className={`text-sm px-4 py-1.5 rounded disabled:opacity-50 ${
                 mockEnabled
                   ? 'bg-paper-deep text-ink hover:bg-paper-warm'
                   : 'bg-ink text-paper hover:bg-ink/80'
-              }`}>
+              }`}
+            >
               {mockBusy ? '切换中…' : mockEnabled ? '关闭 Mock' : '开启 Mock'}
             </button>
           </div>
@@ -367,7 +533,12 @@ export default function AdminAiPage() {
 }
 
 function ConfigField({
-  label, hint, value, onChange, type = 'text', placeholder,
+  label,
+  hint,
+  value,
+  onChange,
+  type = 'text',
+  placeholder,
 }: {
   label: string;
   hint?: string;
@@ -385,7 +556,7 @@ function ConfigField({
       <input
         type={type}
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
       />
@@ -394,7 +565,11 @@ function ConfigField({
 }
 
 function ConfigSelectField({
-  label, hint, value, options, onChange,
+  label,
+  hint,
+  value,
+  options,
+  onChange,
 }: {
   label: string;
   hint?: string;
@@ -410,10 +585,14 @@ function ConfigSelectField({
       </label>
       <select
         value={value}
-        onChange={e => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value)}
         className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
       >
-        {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
       </select>
     </div>
   );

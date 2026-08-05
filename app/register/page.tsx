@@ -8,7 +8,7 @@ import { useAppStore } from '@/lib/store';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const setUser = useAppStore(s => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,27 +27,38 @@ export default function RegisterPage() {
       setError('邮箱格式不正确');
       return;
     }
-    if (password.length < 8) { setError('密码至少 8 位'); return; }
-    if (password !== passwordConfirm) { setError('两次密码不一致'); return; }
+    if (password.length < 8) {
+      setError('密码至少 8 位');
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setError('两次密码不一致');
+      return;
+    }
 
     setBusy(true);
     const r = await registerRequest(username, email, password);
     setBusy(false);
-    if (!r.ok) { setError(r.error.message); return; }
+    if (!r.ok) {
+      setError(r.error.message);
+      return;
+    }
     setUser(r.data.user);
     router.push('/');
   }
 
   return (
     <div className="mx-auto max-w-sm card-paper p-6 mt-8">
-      <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">字 · 韵</div>
+      <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">
+        字 · 韵
+      </div>
       <h1 className="font-serif text-2xl text-ink text-center mb-6">注册</h1>
       <form onSubmit={submit} className="space-y-3">
         <input
           className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
           placeholder="用户名 (3-32 字符)"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           disabled={busy}
         />
@@ -56,7 +67,7 @@ export default function RegisterPage() {
           type="email"
           placeholder="邮箱"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
           disabled={busy}
         />
@@ -65,7 +76,7 @@ export default function RegisterPage() {
           type="password"
           placeholder="密码 (≥ 8 字符)"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           autoComplete="new-password"
           disabled={busy}
         />
@@ -74,7 +85,7 @@ export default function RegisterPage() {
           type="password"
           placeholder="再次输入密码"
           value={passwordConfirm}
-          onChange={e => setPasswordConfirm(e.target.value)}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
           autoComplete="new-password"
           disabled={busy}
         />
@@ -84,7 +95,10 @@ export default function RegisterPage() {
         </button>
       </form>
       <p className="text-xs text-ink-faint mt-4 text-center">
-        已有账号？<Link href="/login" className="text-seal hover:underline">去登录</Link>
+        已有账号？
+        <Link href="/login" className="text-seal hover:underline">
+          去登录
+        </Link>
       </p>
     </div>
   );

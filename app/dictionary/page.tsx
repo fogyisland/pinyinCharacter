@@ -10,7 +10,14 @@ import { EmptyState } from '@/components/common/EmptyState';
 export const dynamic = 'force-dynamic';
 
 interface Props {
-  searchParams: Promise<{ q?: string; letter?: string; radical?: string; level?: string; page?: string; view?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    letter?: string;
+    radical?: string;
+    level?: string;
+    page?: string;
+    view?: string;
+  }>;
 }
 
 export default async function DictionaryPage({ searchParams }: Props) {
@@ -26,9 +33,13 @@ export default async function DictionaryPage({ searchParams }: Props) {
 
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
-        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵 · 通用规范字典</div>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵 · 通用规范字典
+        </div>
         <SectionTitle subtitle="通用规范汉字表 · 8105 字">字典</SectionTitle>
 
         <Suspense>

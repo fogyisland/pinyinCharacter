@@ -35,11 +35,13 @@
 ### Task 1: Build EtymologyMorph component + era-dates + tests (TDD)
 
 **Files:**
+
 - Create: `components/etymology/era-dates.ts` (static data + helper)
 - Create: `components/etymology/EtymologyMorph.tsx` (client component)
 - Create: `tests/unit/components/etymology/etymology-morph.test.tsx` (vitest + happy-dom)
 
 **Interfaces:**
+
 - Consumes: `EraGlyph[]` from `@/lib/etymology-types` (each `{ era: Era, font: string, hasGlyph: boolean }`).
 - Produces: `<EtymologyMorph char eraGlyphs story level />` — pure client component, no exported helpers.
 - Produces: `ERA_DATES: Record<Era, { range: string }>`, `LEVEL_LABEL: Record<1|2|3, string>`, `coverageHint(eraCount, level): string` from `era-dates.ts`.
@@ -74,9 +76,7 @@ describe('EtymologyMorph', () => {
   it('renders the first era (jiaguwen) visibly by default', () => {
     render(<EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />);
     // The first era is the visible one (opacity-100); others opacity-0
-    const jiaguwen = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-jiaguwen')
-    );
+    const jiaguwen = screen.getAllByText('一').find((el) => el.className.includes('font-jiaguwen'));
     expect(jiaguwen).toBeDefined();
     expect(jiaguwen!.className).toContain('opacity-100');
   });
@@ -93,9 +93,7 @@ describe('EtymologyMorph', () => {
   it('clicking an era chip jumps to that era and pauses autoplay', () => {
     render(<EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />);
     fireEvent.click(screen.getByRole('button', { name: '隶书' }));
-    const lishu = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-lishu')
-    );
+    const lishu = screen.getAllByText('一').find((el) => el.className.includes('font-lishu'));
     expect(lishu!.className).toContain('opacity-100');
     // After click, the play/pause button should now read "▶" (paused state)
     expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument();
@@ -104,17 +102,17 @@ describe('EtymologyMorph', () => {
   it('autoplay advances currentIndex every 1200ms and wraps around', () => {
     render(<EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />);
     // After 1200ms → jiaguwen (0) → jinwen (1)
-    act(() => { vi.advanceTimersByTime(1200); });
-    const jinwen = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-jinwen')
-    );
+    act(() => {
+      vi.advanceTimersByTime(1200);
+    });
+    const jinwen = screen.getAllByText('一').find((el) => el.className.includes('font-jinwen'));
     expect(jinwen!.className).toContain('opacity-100');
     // Advance enough to wrap around (5 eras × 1200ms = 6000ms)
-    act(() => { vi.advanceTimersByTime(5 * 1200); });
+    act(() => {
+      vi.advanceTimersByTime(5 * 1200);
+    });
     // Back to jiaguwen
-    const jiaguwen = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-jiaguwen')
-    );
+    const jiaguwen = screen.getAllByText('一').find((el) => el.className.includes('font-jiaguwen'));
     expect(jiaguwen!.className).toContain('opacity-100');
   });
 
@@ -125,13 +123,15 @@ describe('EtymologyMorph', () => {
     fireEvent.click(screen.getByRole('button', { name: '暂停' }));
     expect(screen.getByRole('button', { name: '播放' })).toBeInTheDocument();
     // After pause, advancing timers should NOT change currentIndex
-    const before = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-jiaguwen')
-    )!.className;
-    act(() => { vi.advanceTimersByTime(5000); });
-    const after = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-jiaguwen')
-    )!.className;
+    const before = screen
+      .getAllByText('一')
+      .find((el) => el.className.includes('font-jiaguwen'))!.className;
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    const after = screen
+      .getAllByText('一')
+      .find((el) => el.className.includes('font-jiaguwen'))!.className;
     expect(before).toContain('opacity-100');
     expect(after).toContain('opacity-100');
   });
@@ -139,11 +139,11 @@ describe('EtymologyMorph', () => {
   it('does not autoplay when eras.length === 1', () => {
     const oneGlyph = [fullGlyphs[0]];
     render(<EtymologyMorph char="一" eraGlyphs={oneGlyph} story="演变故事" level={1} />);
-    act(() => { vi.advanceTimersByTime(10000); });
+    act(() => {
+      vi.advanceTimersByTime(10000);
+    });
     // Still on the only era
-    const only = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-jiaguwen')
-    );
+    const only = screen.getAllByText('一').find((el) => el.className.includes('font-jiaguwen'));
     expect(only!.className).toContain('opacity-100');
   });
 
@@ -169,9 +169,7 @@ describe('EtymologyMorph', () => {
     fireEvent.keyDown(section, { key: 'ArrowRight' });
     fireEvent.keyDown(section, { key: 'ArrowRight' });
     fireEvent.keyDown(section, { key: 'ArrowRight' });
-    const lishu = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-lishu')
-    );
+    const lishu = screen.getAllByText('一').find((el) => el.className.includes('font-lishu'));
     expect(lishu!.className).toContain('opacity-100');
   });
 
@@ -179,19 +177,17 @@ describe('EtymologyMorph', () => {
     render(<EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />);
     const section = screen.getByRole('region', { name: '字形演变' });
     fireEvent.keyDown(section, { key: 'End' });
-    const kaishu = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-kai')
-    );
+    const kaishu = screen.getAllByText('一').find((el) => el.className.includes('font-kai'));
     expect(kaishu!.className).toContain('opacity-100');
     fireEvent.keyDown(section, { key: 'Home' });
-    const jiaguwen = screen.getAllByText('一').find(
-      (el) => el.className.includes('font-jiaguwen')
-    );
+    const jiaguwen = screen.getAllByText('一').find((el) => el.className.includes('font-jiaguwen'));
     expect(jiaguwen!.className).toContain('opacity-100');
   });
 
   it('shows the level badge with the correct Chinese label', () => {
-    const { rerender } = render(<EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />);
+    const { rerender } = render(
+      <EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />,
+    );
     expect(screen.getByText('一级')).toBeInTheDocument();
     rerender(<EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={2} />);
     expect(screen.getByText('二级')).toBeInTheDocument();
@@ -200,7 +196,9 @@ describe('EtymologyMorph', () => {
   });
 
   it('shows the coverage hint based on era count + level', () => {
-    const { rerender } = render(<EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />);
+    const { rerender } = render(
+      <EtymologyMorph char="一" eraGlyphs={fullGlyphs} story="演变故事" level={1} />,
+    );
     expect(screen.getByText(/5\/5 字形 · 完整/)).toBeInTheDocument();
 
     const partialGlyphs = fullGlyphs.slice(0, 2);
@@ -223,11 +221,11 @@ Create the file with this exact content:
 import type { Era } from '@/lib/etymology-types';
 
 export const ERA_DATES: Record<Era, { range: string }> = {
-  jiaguwen:  { range: '商代晚期 (~1200-1046 BC)' },
-  jinwen:    { range: '西周 (~1046-771 BC)' },
+  jiaguwen: { range: '商代晚期 (~1200-1046 BC)' },
+  jinwen: { range: '西周 (~1046-771 BC)' },
   xiaozhuan: { range: '秦 (~221-206 BC)' },
-  lishu:     { range: '汉 (~206 BC-220 AD)' },
-  kaishu:    { range: '魏晋至今 (~220 AD+)' },
+  lishu: { range: '汉 (~206 BC-220 AD)' },
+  kaishu: { range: '魏晋至今 (~220 AD+)' },
 };
 
 export type CharLevel = 1 | 2 | 3;
@@ -294,9 +292,12 @@ export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
   // Filter to eras that have glyph data (skip missing per spec).
   const eras = eraGlyphs.filter((g) => g.hasGlyph);
 
-  const goTo = useCallback((i: number) => {
-    setCurrentIndex(((i % eras.length) + eras.length) % eras.length);
-  }, [eras.length]);
+  const goTo = useCallback(
+    (i: number) => {
+      setCurrentIndex(((i % eras.length) + eras.length) % eras.length);
+    },
+    [eras.length],
+  );
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => (i + 1) % Math.max(1, eras.length));
@@ -314,32 +315,31 @@ export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
   }, [isPlaying, eras.length, goNext]);
 
   // Keyboard
-  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      goNext();
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      goPrev();
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      setIsPlaying((p) => !p);
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      goTo(0);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      goTo(eras.length - 1);
-    }
-  }, [goNext, goPrev, goTo, eras.length]);
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goNext();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        setIsPlaying((p) => !p);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goTo(eras.length - 1);
+      }
+    },
+    [goNext, goPrev, goTo, eras.length],
+  );
 
   // Empty state
   if (eras.length === 0) {
-    return (
-      <div className="text-center py-12 text-ink-faint">
-        暂无字源数据
-      </div>
-    );
+    return <div className="text-center py-12 text-ink-faint">暂无字源数据</div>;
   }
 
   const currentEra = eras[currentIndex];
@@ -355,13 +355,13 @@ export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
       {/* Header row: char + level badge + coverage hint */}
       <div className="flex items-baseline gap-3 mb-4 flex-wrap">
         <h2 className="text-3xl font-kai text-ink">{char}</h2>
-        <span className="text-xs px-2 py-0.5 rounded bg-paper-warm
-                         border border-ink-faint/30 text-ink-soft">
+        <span
+          className="text-xs px-2 py-0.5 rounded bg-paper-warm
+                         border border-ink-faint/30 text-ink-soft"
+        >
           {LEVEL_LABEL[level]}
         </span>
-        <span className="text-xs text-ink-faint">
-          {coverageHint(eras.length, level)}
-        </span>
+        <span className="text-xs text-ink-faint">{coverageHint(eras.length, level)}</span>
       </div>
 
       {/* Big glyph stage — all eras stacked absolutely */}
@@ -439,9 +439,7 @@ export function EtymologyMorph({ char, eraGlyphs, story, level }: Props) {
           <span className="text-ink-faint text-sm">演变 ·</span> {story}
         </div>
       ) : (
-        <div className="text-sm text-ink-faint text-center py-6">
-          字源故事即将生成
-        </div>
+        <div className="text-sm text-ink-faint text-center py-6">字源故事即将生成</div>
       )}
 
       <div className="text-xs text-ink-faint text-center mt-4">
@@ -474,6 +472,7 @@ git commit -m "feat(etymology): add EtymologyMorph component + era-dates constan
 ### Task 2: Extend getEtymology() with level + migrate page + delete EtymologyTimeline
 
 **Files:**
+
 - Modify: `lib/etymology-types.ts:10-16` (add `level` to `Etymology`)
 - Modify: `lib/etymology-types.ts:23-31` (add `level` to `EtymologyClient`)
 - Modify: `lib/etymology.ts:10-63` (populate `level` in `getEtymology()`)
@@ -482,6 +481,7 @@ git commit -m "feat(etymology): add EtymologyMorph component + era-dates constan
 - Delete: `tests/unit/components/etymology/etymology-timeline.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `CharLevel = 1|2|3` from `@/components/etymology/era-dates` (per Task 1).
 - Produces: `Etymology.level: CharLevel` and `EtymologyClient.level: CharLevel` (additive to existing fields).
 - Produces: `getEtymology(char)` returns the same `Etymology` shape plus `level`. Two paths: file-first reads `content.level` from `getContent(char)`; DB fallback reads `chars.level`.
@@ -543,7 +543,7 @@ async function readLevel(char: string): Promise<CharLevel> {
   // DB fallback (legacy)
   const [rows] = await getPool().query<any[]>(
     `SELECT level FROM chars WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
   return toCharLevel(rows[0]?.level);
 }
@@ -590,6 +590,7 @@ return {
 In `app/etymology/[char]/page.tsx`, make two changes:
 
 (a) Replace the import at line 8:
+
 ```ts
 // Before
 import { EtymologyTimeline } from '@/components/etymology/EtymologyTimeline';
@@ -598,6 +599,7 @@ import { EtymologyMorph } from '@/components/etymology/EtymologyMorph';
 ```
 
 (b) Replace the JSX at lines 47-51:
+
 ```tsx
 // Before
 <EtymologyTimeline
@@ -632,6 +634,7 @@ pnpm test tests/unit/lib/etymology.test.ts 2>/dev/null || true  # skip if file d
 ```
 
 Expected:
+
 - tsc: exit 0
 - `etymology/` tests: etymology-morph.test.tsx (12 cases) PASS; era-glyph.test.tsx (existing) still PASS
 - etymology.test.ts: PASS or skip cleanly (file may not exist — the 2>/dev/null || true handles that)
@@ -672,9 +675,11 @@ curl -s -o /dev/null -w "etymology-api=%{http_code}\n" --max-time 10 "http://loc
 Expected: 200 (page renders) and 200 (API returns EtymologyClient with `level` field). If the API response doesn't include `level`, the migration of `EtymologyClient` is incomplete — flag in the report.
 
 Quick API body check:
+
 ```bash
 curl -s --max-time 10 "http://localhost:4444/api/etymology/一" | python -c "import sys,json; d=json.load(sys.stdin); assert d.get('ok') and d['data'].get('level') in (1,2,3), d; print('level OK:', d['data']['level'])"
 ```
+
 Expected: prints `level OK: <1|2|3>` (一 is L1).
 
 - [ ] **Step 4: Render the page and check for "EtymologyMorph" markers**
@@ -688,6 +693,7 @@ Expected: prints `字形演变` (the section aria-label) and `一级` (level bad
 - [ ] **Step 5: Manual browser smoke (deferred to human)**
 
 Document for the human:
+
 1. Open `/etymology/一` in browser → animation should auto-start, cycling through 5 eras.
 2. Click `⏸` → animation pauses, current glyph stays visible.
 3. Click any era chip in the scrubber → jumps to that era, animation stops.
@@ -709,37 +715,38 @@ If tsc + tests surfaced no error, no commit needed. If a small fix was required 
 
 **Spec coverage** — checked each section of the spec:
 
-| Spec requirement | Task |
-|---|---|
-| New `EtymologyMorph.tsx` client component | T1 |
-| `era-dates.ts` with `ERA_DATES`, `LEVEL_LABEL`, `coverageHint` | T1 |
-| Props `{char, eraGlyphs, story, level}` | T1 |
-| `useState({currentIndex, isPlaying})` | T1 |
-| `useEffect` autoplay interval (1200ms) | T1 |
-| Crossfade `transition-opacity duration-500` + `motion-reduce:transition-none` | T1 |
-| Wrap-around `(i+1) % eras.length` | T1 |
-| `prefers-reduced-motion` check on mount → initial `isPlaying = false` | T1 |
-| Keyboard: ←/→/Space/Home/End | T1 |
-| `aria-hidden` on non-current glyphs | T1 |
-| `role="slider"` on scrubber with `aria-valuemin/max/now` | T1 |
-| `aria-current` on era chips | T1 |
-| Level badge + coverage hint in header | T1 |
-| Empty-eras fallback (`暂无字源数据`) | T1 |
-| 1-era static render | T1 |
-| 2+ eras full feature | T1 |
-| Mobile `h-48 sm:h-64` | T1 |
-| `Etymology.level: CharLevel` type field | T2 |
-| `EtymologyClient.level: CharLevel` type field | T2 |
-| `getEtymology` populates `level` (file-first, DB fallback) | T2 |
-| Page uses `<EtymologyMorph>` + passes `level` | T2 |
-| Delete `<EtymologyTimeline>` + its test | T2 |
-| tsc + test verification | T3 |
-| HTTP smoke of `/etymology/一` + `/api/etymology/一` | T3 |
-| Browser smoke documented for human | T3 |
+| Spec requirement                                                              | Task |
+| ----------------------------------------------------------------------------- | ---- |
+| New `EtymologyMorph.tsx` client component                                     | T1   |
+| `era-dates.ts` with `ERA_DATES`, `LEVEL_LABEL`, `coverageHint`                | T1   |
+| Props `{char, eraGlyphs, story, level}`                                       | T1   |
+| `useState({currentIndex, isPlaying})`                                         | T1   |
+| `useEffect` autoplay interval (1200ms)                                        | T1   |
+| Crossfade `transition-opacity duration-500` + `motion-reduce:transition-none` | T1   |
+| Wrap-around `(i+1) % eras.length`                                             | T1   |
+| `prefers-reduced-motion` check on mount → initial `isPlaying = false`         | T1   |
+| Keyboard: ←/→/Space/Home/End                                                  | T1   |
+| `aria-hidden` on non-current glyphs                                           | T1   |
+| `role="slider"` on scrubber with `aria-valuemin/max/now`                      | T1   |
+| `aria-current` on era chips                                                   | T1   |
+| Level badge + coverage hint in header                                         | T1   |
+| Empty-eras fallback (`暂无字源数据`)                                          | T1   |
+| 1-era static render                                                           | T1   |
+| 2+ eras full feature                                                          | T1   |
+| Mobile `h-48 sm:h-64`                                                         | T1   |
+| `Etymology.level: CharLevel` type field                                       | T2   |
+| `EtymologyClient.level: CharLevel` type field                                 | T2   |
+| `getEtymology` populates `level` (file-first, DB fallback)                    | T2   |
+| Page uses `<EtymologyMorph>` + passes `level`                                 | T2   |
+| Delete `<EtymologyTimeline>` + its test                                       | T2   |
+| tsc + test verification                                                       | T3   |
+| HTTP smoke of `/etymology/一` + `/api/etymology/一`                           | T3   |
+| Browser smoke documented for human                                            | T3   |
 
 **Placeholder scan** — no "TBD"/"TODO"/"implement later"/"fill in details". Every code step shows actual code.
 
 **Type consistency**:
+
 - `CharLevel = 1|2|3` defined once in `components/etymology/era-dates.ts` and imported by `EtymologyMorph.tsx`, `Etymology`, `EtymologyClient`, `lib/etymology.ts` (via `toCharLevel` helper).
 - `eraGlyphs: EraGlyph[]` used consistently (the actual field name on `Etymology`, not `eras` as the spec abbreviated it). The new component prop is `eraGlyphs` to match.
 - `ERA_FONT_FAMILY` is local to `EtymologyMorph.tsx` (was `ERA_FONT_CLASS` in the deleted `EraGlyph.tsx` — only `EtymologyTimeline` was using it via `<EraGlyph>`, and we're replacing `EtymologyTimeline`).
@@ -750,6 +757,7 @@ If tsc + tests surfaced no error, no commit needed. If a small fix was required 
 **Commit granularity** — 2 implementation commits + 1 smoke task. Each commit is independently revertable.
 
 **Risk callouts for the implementer**:
+
 - Step 3 in Task 2 (`getEtymology` level) has 2 places to modify; both need `await readLevel(char)`. Don't forget either.
 - Step 5 in Task 2 uses `git rm` — this assumes the files exist in git's index. They do (per `git log --all -- components/etymology/EtymologyTimeline.tsx`).
 - The new `<EtymologyMorph>` does NOT use the existing `<EraGlyph>` component (which has the "暂无" placeholder + dot nav). Spec C deliberately replaces that. The new component inlines its own font-family span rendering.

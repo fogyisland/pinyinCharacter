@@ -25,8 +25,7 @@ interface Props {
 }
 
 export function EraGlyph({ char, era, hasGlyph, size = 'md' }: Props) {
-  const sizeClass =
-    size === 'lg' ? 'text-7xl' : size === 'sm' ? 'text-2xl' : 'text-4xl';
+  const sizeClass = size === 'lg' ? 'text-7xl' : size === 'sm' ? 'text-2xl' : 'text-4xl';
   if (!hasGlyph) {
     return (
       <div className="flex flex-col items-center gap-1">

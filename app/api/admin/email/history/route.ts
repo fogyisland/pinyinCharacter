@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       data: {
-        items: rows.map(r => ({
+        items: rows.map((r) => ({
           id: Number(r.id),
           to: r.to_addr,
           subject: r.subject,

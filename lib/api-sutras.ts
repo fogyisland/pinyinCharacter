@@ -1,6 +1,8 @@
 import type { SutraListResult, SutraDetail } from './sutra-types';
 
-export async function listSutrasRequest(args: { q?: string; page?: number } = {}): Promise<SutraListResult> {
+export async function listSutrasRequest(
+  args: { q?: string; page?: number } = {},
+): Promise<SutraListResult> {
   const sp = new URLSearchParams();
   if (args.q) sp.set('q', args.q);
   if (args.page) sp.set('page', String(args.page));
@@ -17,7 +19,10 @@ export async function getSutraRequest(id: number): Promise<SutraDetail> {
   return j.data;
 }
 
-export async function printSutraRequest(slug: string, chunkId: string): Promise<{ sourceId: string }> {
+export async function printSutraRequest(
+  slug: string,
+  chunkId: string,
+): Promise<{ sourceId: string }> {
   const res = await fetch(`/api/sutra/${slug}/print`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

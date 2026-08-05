@@ -19,7 +19,11 @@ import { createHash } from 'node:crypto';
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPool, closePool } from '../lib/db';
-import { inferFormFromParagraphs, resolveFormFromSource, mergeForm } from '../lib/poetry/infer-form';
+import {
+  inferFormFromParagraphs,
+  resolveFormFromSource,
+  mergeForm,
+} from '../lib/poetry/infer-form';
 import { scrapePoemList, scrapePoemPage, type PoemPage } from '../lib/guwendao-scraper';
 
 const DATA_DIR = join(process.cwd(), 'data', 'poems');
@@ -39,14 +43,16 @@ async function fetchChinesePoetry(
   path: string,
   normalize: 'paragraphs' | 'para' = 'paragraphs',
 ): Promise<PoemPage[]> {
-  const res = await fetch(CP_BASE + path, { headers: { 'User-Agent': 'pinyin-character-build/1.0' } });
+  const res = await fetch(CP_BASE + path, {
+    headers: { 'User-Agent': 'pinyin-character-build/1.0' },
+  });
   if (!res.ok) throw new Error(`fetch ${path} -> ${res.status}`);
   const raw: any[] = JSON.parse(await res.text());
   return raw.map((p) => ({
     title: p.title,
     author: p.author || '佚名',
     dynasty: '',
-    paragraphs: normalize === 'para' ? (p.para || []) : (p.paragraphs || []),
+    paragraphs: normalize === 'para' ? p.para || [] : p.paragraphs || [],
   }));
 }
 
@@ -96,7 +102,8 @@ const COLLECTIONS: CollectionConfig[] = [
     category: '魏',
     dynasty: '三国',
     source: 'chinese-poetry:/曹操诗集/caocao.json',
-    fetch: () => fetchChinesePoetry('/%E6%9B%B9%E6%93%8D%E8%AF%97%E9%9B%86/caocao.json', 'paragraphs'),
+    fetch: () =>
+      fetchChinesePoetry('/%E6%9B%B9%E6%93%8D%E8%AF%97%E9%9B%86/caocao.json', 'paragraphs'),
   },
   {
     slug: 'nalan',
@@ -104,7 +111,11 @@ const COLLECTIONS: CollectionConfig[] = [
     category: 'qing',
     dynasty: '清',
     source: 'chinese-poetry:/纳兰性德/纳兰性德诗集.json',
-    fetch: () => fetchChinesePoetry('/%E7%BA%B3%E5%85%B0%E6%80%A7%E5%BE%B7/%E7%BA%B3%E5%85%B0%E6%80%A7%E5%BE%B7%E8%AF%97%E9%9B%86.json', 'para'),
+    fetch: () =>
+      fetchChinesePoetry(
+        '/%E7%BA%B3%E5%85%B0%E6%80%A7%E5%BE%B7/%E7%BA%B3%E5%85%B0%E6%80%A7%E5%BE%B7%E8%AF%97%E9%9B%86.json',
+        'para',
+      ),
   },
 ];
 
@@ -118,7 +129,9 @@ export interface BuildResult {
   byCollection: Record<string, number>;
 }
 
-export async function buildPoemsExtra({ onlyCategory }: { onlyCategory?: string } = {}): Promise<BuildResult> {
+export async function buildPoemsExtra({
+  onlyCategory,
+}: { onlyCategory?: string } = {}): Promise<BuildResult> {
   const pool = getPool();
   const result: BuildResult = { inserted: 0, skipped: 0, byCollection: {} };
 

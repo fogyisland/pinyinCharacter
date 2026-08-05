@@ -8,9 +8,7 @@
 // `/poetry`. This blocks open-redirect via `?back=//evil.com` or
 // `?back=http://evil.com` from a hand-crafted link.
 
-export function getPoetryBackLink(
-  back: string | undefined,
-): { href: string; label: string } {
+export function getPoetryBackLink(back: string | undefined): { href: string; label: string } {
   // Strict boundary check: accept only the bare /poetry, or /poetry
   // followed by a path/query/fragment separator (/, ?, #). This blocks
   // /poetry-evil, //evil.com, and http://evil.com in one go.

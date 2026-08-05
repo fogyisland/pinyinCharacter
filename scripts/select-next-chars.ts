@@ -28,7 +28,7 @@ interface ExistingFile {
 function scanContentDir(): Map<string, ExistingFile> {
   const result = new Map<string, ExistingFile>();
   if (!existsSync(CONTENT_DIR)) return result;
-  const files = readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json'));
+  const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json'));
   for (const f of files) {
     const char = f.replace(/\.json$/, '');
     try {
@@ -51,7 +51,7 @@ async function listCharsMissing(
   field: 'meaning_zh' | 'etymology_story' | 'hanzi_story',
   limit: number,
   existing: Map<string, ExistingFile>,
-  levels: Array<1 | 2 | 3>
+  levels: Array<1 | 2 | 3>,
 ): Promise<string[]> {
   const chars: string[] = [];
   for (const level of levels) {
@@ -86,9 +86,9 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
   const seen = new Set<string>();
 
   const [[{ n: meaningInDb }]] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM chars WHERE meaning_zh IS NOT NULL AND meaning_zh != ''`
+    `SELECT COUNT(*) AS n FROM chars WHERE meaning_zh IS NOT NULL AND meaning_zh != ''`,
   );
-  const meaningInFiles = [...existing.values()].filter(v => v.meaning_zh).length;
+  const meaningInFiles = [...existing.values()].filter((v) => v.meaning_zh).length;
   const meaningGap = 8105 - Number(meaningInDb) - meaningInFiles;
 
   if (meaningGap > 0) {
@@ -102,7 +102,7 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
   }
 
   const hanziTarget = 1607;
-  const hanziInFiles = [...existing.values()].filter(v => v.hanzi_story).length;
+  const hanziInFiles = [...existing.values()].filter((v) => v.hanzi_story).length;
   const hanziGap = hanziTarget - hanziInFiles;
 
   if (hanziGap > 0) {
@@ -117,7 +117,7 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
   }
 
   const etymTarget = 6498;
-  const etymInFiles = [...existing.values()].filter(v => v.etymology_story).length;
+  const etymInFiles = [...existing.values()].filter((v) => v.etymology_story).length;
   const etymGap = etymTarget - etymInFiles;
 
   if (etymGap > 0) {
@@ -144,5 +144,8 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

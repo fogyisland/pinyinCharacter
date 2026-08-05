@@ -87,39 +87,39 @@ describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
     const chars = Array.from({ length: 50 }, (_, i) => String.fromCharCode(0x4e00 + i));
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
-    expect(cells.slice(0, 50).map(c => c.char)).toEqual(chars);
-    expect(cells.slice(50).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(0, 50).map((c) => c.char)).toEqual(chars);
+    expect(cells.slice(50).every((c) => c.char === '')).toBe(true);
   });
 
   it('1 char + A4 → 88 cells (one-char-per-page practice mode)', () => {
     const cells = generateLayout(['你'], 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
     expect(cells[0].char).toBe('你');
-    expect(cells.slice(1).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
   });
 
   it('88 chars + A4 → 88 cells (exact fit, zero blanks)', () => {
     const chars = Array.from({ length: 88 }, () => '字');
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
-    expect(cells.every(c => c.char === '字')).toBe(true);
+    expect(cells.every((c) => c.char === '字')).toBe(true);
   });
 
   it('89 chars + A4 → 176 cells (cross-page: page 1 full, page 2 = 1 char + 87 blanks)', () => {
     const chars = Array.from({ length: 89 }, (_, i) => `字${i}`);
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(176);
-    expect(cells.slice(0, 88).every(c => c.char !== '')).toBe(true);
+    expect(cells.slice(0, 88).every((c) => c.char !== '')).toBe(true);
     expect(cells[88].char).toBe(`字88`);
-    expect(cells.slice(89).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(89).every((c) => c.char === '')).toBe(true);
   });
 
   it('100 chars + A3 (per=168) → 168 cells (100 chars + 68 blanks; A3 sized)', () => {
     const chars = Array.from({ length: 100 }, (_, i) => `字${i}`);
     const cells = generateLayout(chars, 'brush-square', 'A3');
     expect(cells).toHaveLength(168);
-    expect(cells.slice(0, 100).map(c => c.char)).toEqual(chars);
-    expect(cells.slice(100).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(0, 100).map((c) => c.char)).toEqual(chars);
+    expect(cells.slice(100).every((c) => c.char === '')).toBe(true);
   });
 
   it('pads lined style too (pen-lined cells are blank ruled lines, no letter)', () => {
@@ -127,7 +127,7 @@ describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
     expect(cells).toHaveLength(88);
     expect(cells[0].char).toBe('爱');
     expect(cells[1].char).toBe('国');
-    expect(cells.slice(2).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(2).every((c) => c.char === '')).toBe(true);
   });
 });
 

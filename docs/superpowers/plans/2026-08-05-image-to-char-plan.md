@@ -30,6 +30,7 @@
 ### Schema notes (verified against init-db.ts)
 
 `ai_calls` table (per `scripts/init-db.ts:281-297`):
+
 ```sql
 id BIGINT, user_id BIGINT NULL, feature VARCHAR(32), model VARCHAR(64),
 status ENUM('ok','error','rate-limited'), prompt_tokens INT, completion_tokens INT,
@@ -40,6 +41,7 @@ KEY idx_status (status, created_at DESC)
 ```
 
 This plan adds:
+
 ```sql
 ALTER TABLE ai_calls ADD COLUMN ip VARCHAR(45) NULL AFTER user_id;
 ALTER TABLE ai_calls ADD KEY idx_ai_calls_ip_created (ip, created_at DESC);
@@ -52,11 +54,13 @@ The new index `idx_ai_calls_ip_created (ip, created_at DESC)` covers the anonymo
 ### Task 1: LLM multimodal content type extension (TDD) + AI_FEATURE_ZH entry
 
 **Files:**
+
 - Modify: `lib/llm.ts` (extend `LLMMessage.content` to union; add `ContentPart` type)
 - Modify: `lib/admin-activity.ts` (add `recognize: '拍照识别'` to `AI_FEATURE_ZH`)
 - Create: `tests/unit/lib/llm.test.ts` (5 multimodal cases)
 
 **Interfaces:**
+
 - Produces: `ContentPart` type (`{type:'text', text} | {type:'image_url', image_url:{url, detail?}}`) + extended `LLMMessage.content: string | ContentPart[]` — consumed by Task 2's `app/api/ai/char-recognize/route.ts`
 - Produces: `AI_FEATURE_ZH['recognize'] = '拍照识别'` — consumed by `lib/admin-activity.ts` `formatAiFeature()` so admin audit log shows Chinese name
 
@@ -85,7 +89,8 @@ const fetchMock = vi.fn(async (url: string, init: any) => {
     json: async () => ({
       choices: [{ message: { content: mockReply ?? 'mock-reply' } }],
     }),
-    text: async () => JSON.stringify({ choices: [{ message: { content: mockReply ?? 'mock-reply' } }] }),
+    text: async () =>
+      JSON.stringify({ choices: [{ message: { content: mockReply ?? 'mock-reply' } }] }),
   };
 });
 vi.stubGlobal('fetch', fetchMock);
@@ -138,7 +143,10 @@ describe('LLM multimodal content', () => {
       messages: [{ role: 'user', content }],
     });
     expect(lastFetchBody.messages[0].content[0]).toEqual({ type: 'text', text: '识别此图' });
-    expect(lastFetchBody.messages[0].content[1]).toEqual({ type: 'image_url', image_url: { url: 'data:image/png;base64,ABC' } });
+    expect(lastFetchBody.messages[0].content[1]).toEqual({
+      type: 'image_url',
+      image_url: { url: 'data:image/png;base64,ABC' },
+    });
   });
 
   it('detail field passes through to image_url', async () => {
@@ -160,7 +168,12 @@ describe('LLM multimodal content', () => {
       baseUrl: 'https://api.example.com/v1',
       apiKey: 'k',
       model: 'm',
-      messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,X' } }] }],
+      messages: [
+        {
+          role: 'user',
+          content: [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,X' } }],
+        },
+      ],
     });
     expect(result.content).toBe('中');
     expect(fetchMock).not.toHaveBeenCalled();
@@ -231,7 +244,9 @@ function mockReply(input: string | ContentPart[]): string {
     return JSON.stringify([{ char: '?', pinyin: '', meaning: '', story: 'MOCK-rare-st 占位' }]);
   }
   if (input.includes('meaning') && input.includes('story')) {
-    return JSON.stringify([{ char: '?', pinyin: '', meaning: 'MOCK-rare-mn', story: 'MOCK-rare-st' }]);
+    return JSON.stringify([
+      { char: '?', pinyin: '', meaning: 'MOCK-rare-mn', story: 'MOCK-rare-st' },
+    ]);
   }
   // ai-rare-chars batch path.
   if (input.includes('汉字列表')) {
@@ -281,6 +296,7 @@ git commit -m "feat(ai-vision): multimodal content type in lib/llm.ts [2026-08-0
 ### Task 2: API layer — migration + `checkAnonRateLimit` + `/api/ai/char-recognize` + `char-explain` rate limit fix (TDD)
 
 **Files:**
+
 - Create: `scripts/migrations/2026-08-05-ai-calls-ip.sql` (DDL: ADD COLUMN ip + idx for existing prod DBs)
 - Modify: `scripts/init-db.ts` (CREATE TABLE for fresh DBs adds `ip` column + `idx_ai_calls_ip_created`)
 - Modify: `lib/ai-calls.ts` (extend `logAiCall` with `ip` field; add `checkAnonRateLimit(ip)`)
@@ -289,6 +305,7 @@ git commit -m "feat(ai-vision): multimodal content type in lib/llm.ts [2026-08-0
 - Create: `tests/unit/app/api/ai/char-recognize.test.ts` (5 route cases)
 
 **Interfaces:**
+
 - Consumes: `ContentPart` type from `lib/llm.ts` (Task 1)
 - Consumes: `logAiCall`, `withAiLogging`, `checkAiRateLimit`, `RateLimitError` from `lib/ai-calls.ts`
 - Consumes: `llmChat` from `lib/llm.ts` (Task 1)
@@ -313,11 +330,11 @@ let llmMockReply: string = '中';
 let llmShouldThrow: Error | null = null;
 
 vi.mock('next/headers', () => ({
-  cookies: () => Promise.resolve({
-    get: (name: string) => cookieStore.has(name)
-      ? { name, value: cookieStore.get(name)! }
-      : undefined,
-  }),
+  cookies: () =>
+    Promise.resolve({
+      get: (name: string) =>
+        cookieStore.has(name) ? { name, value: cookieStore.get(name)! } : undefined,
+    }),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -326,20 +343,33 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/membership', () => ({
   hasFeature: vi.fn(async (_userId: number, feature: string) =>
-    feature === 'ai_calls' ? hasAiCallsFeature : false
+    feature === 'ai_calls' ? hasAiCallsFeature : false,
   ),
 }));
 
 vi.mock('@/lib/ai-calls', () => ({
   checkAiRateLimit: vi.fn(async (_userId: number) => userCount < 5),
-  checkAnonRateLimit: vi.fn(async (_ip: string) => ({ exceeded: anonCount >= 5, count: anonCount })),
-  logAiCall: vi.fn(async () => { /* no-op */ }),
+  checkAnonRateLimit: vi.fn(async (_ip: string) => ({
+    exceeded: anonCount >= 5,
+    count: anonCount,
+  })),
+  logAiCall: vi.fn(async () => {
+    /* no-op */
+  }),
   withAiLogging: vi.fn(async (args: any, fn: () => Promise<any>) => {
     const start = Date.now();
-    try { return await fn(); }
-    finally { /* logAiCall would be called here */ }
+    try {
+      return await fn();
+    } finally {
+      /* logAiCall would be called here */
+    }
   }),
-  RateLimitError: class extends Error { constructor() { super('rate limit'); this.name = 'RateLimitError'; } },
+  RateLimitError: class extends Error {
+    constructor() {
+      super('rate limit');
+      this.name = 'RateLimitError';
+    }
+  },
 }));
 
 vi.mock('@/lib/llm', () => ({
@@ -463,23 +493,23 @@ export interface LogAiCallArgs {
 **4b. Update `logAiCall` INSERT (lines 21-34)** to include `ip` column. Replace the existing INSERT block with:
 
 ```ts
-    await getPool().query(
-      `INSERT INTO ai_calls
+await getPool().query(
+  `INSERT INTO ai_calls
          (user_id, ip, feature, model, status, prompt_tokens, completion_tokens, duration_ms, error, metadata)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        args.userId,
-        args.ip ?? null,
-        args.feature,
-        args.model,
-        args.status,
-        args.promptTokens ?? null,
-        args.completionTokens ?? null,
-        args.durationMs ?? null,
-        args.error ?? null,
-        args.metadata ? JSON.stringify(args.metadata) : null,
-      ],
-    );
+  [
+    args.userId,
+    args.ip ?? null,
+    args.feature,
+    args.model,
+    args.status,
+    args.promptTokens ?? null,
+    args.completionTokens ?? null,
+    args.durationMs ?? null,
+    args.error ?? null,
+    args.metadata ? JSON.stringify(args.metadata) : null,
+  ],
+);
 ```
 
 **4c. Append `checkAnonRateLimit`** at the end of the file (after `withAiLogging`):
@@ -491,7 +521,9 @@ export interface LogAiCallArgs {
  * Threshold mirrors `checkAiRateLimit`: 5/day by default, configurable via
  * `ai.rate_limit_per_user_per_day` (same config key; both paths share the limit).
  */
-export async function checkAnonRateLimit(ip: string): Promise<{ exceeded: boolean; count: number }> {
+export async function checkAnonRateLimit(
+  ip: string,
+): Promise<{ exceeded: boolean; count: number }> {
   const limitStr = await getConfig('ai.rate_limit_per_user_per_day');
   const limit = limitStr ? parseInt(limitStr, 10) : 5;
   if (limit <= 0) return { exceeded: false, count: 0 };
@@ -553,9 +585,9 @@ function isCjkBmpChar(ch: string): boolean {
   if (ch.length !== 1) return false;
   const cp = ch.codePointAt(0)!;
   return (
-    (cp >= 0x4e00 && cp <= 0x9fff) ||  // CJK Unified Ideographs
-    (cp >= 0x3400 && cp <= 0x4dbf) ||  // CJK Extension A
-    (cp >= 0xf900 && cp <= 0xfaff)     // CJK Compatibility Ideographs
+    (cp >= 0x4e00 && cp <= 0x9fff) || // CJK Unified Ideographs
+    (cp >= 0x3400 && cp <= 0x4dbf) || // CJK Extension A
+    (cp >= 0xf900 && cp <= 0xfaff) // CJK Compatibility Ideographs
   );
 }
 
@@ -563,36 +595,60 @@ export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim().slice(0, 45) ?? null;
 
   let body: any;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: 'invalid_image', message: '请求体格式错误' }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: 'invalid_image', message: '请求体格式错误' },
+      { status: 400 },
+    );
+  }
 
   const image = typeof body?.image === 'string' ? body.image : '';
   if (!image || !VALID_PREFIXES.some((p) => image.startsWith(p))) {
-    return NextResponse.json({ ok: false, error: 'invalid_image', message: '图片格式或大小不支持' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'invalid_image', message: '图片格式或大小不支持' },
+      { status: 400 },
+    );
   }
   // Approximate decoded size: base64 length × 3/4, subtract padding.
-  const decodedApprox = Math.floor(image.length * 3 / 4);
+  const decodedApprox = Math.floor((image.length * 3) / 4);
   if (decodedApprox > MAX_IMAGE_BYTES) {
-    return NextResponse.json({ ok: false, error: 'invalid_image', message: '图片过大' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'invalid_image', message: '图片过大' },
+      { status: 400 },
+    );
   }
 
   const user = await getCurrentUser();
 
   // Gating: anonymous vs logged-in
   if (user) {
-    if (!await hasFeature(user.id, 'ai_calls')) {
-      return NextResponse.json({ ok: false, error: 'membership_required', message: '拍照识别需要 AI 会员权限' }, { status: 403 });
+    if (!(await hasFeature(user.id, 'ai_calls'))) {
+      return NextResponse.json(
+        { ok: false, error: 'membership_required', message: '拍照识别需要 AI 会员权限' },
+        { status: 403 },
+      );
     }
-    if (!await checkAiRateLimit(user.id)) {
-      return NextResponse.json({ ok: false, error: 'rate_limited', message: '今日次数已用完,明天再来' }, { status: 429 });
+    if (!(await checkAiRateLimit(user.id))) {
+      return NextResponse.json(
+        { ok: false, error: 'rate_limited', message: '今日次数已用完,明天再来' },
+        { status: 429 },
+      );
     }
   } else {
     if (!ip) {
-      return NextResponse.json({ ok: false, error: 'rate_limited', message: '无法识别客户端' }, { status: 429 });
+      return NextResponse.json(
+        { ok: false, error: 'rate_limited', message: '无法识别客户端' },
+        { status: 429 },
+      );
     }
     const { exceeded } = await checkAnonRateLimit(ip);
     if (exceeded) {
-      return NextResponse.json({ ok: false, error: 'rate_limited', message: '今日试用次数已用完,请登录后继续使用' }, { status: 429 });
+      return NextResponse.json(
+        { ok: false, error: 'rate_limited', message: '今日试用次数已用完,请登录后继续使用' },
+        { status: 429 },
+      );
     }
   }
 
@@ -605,46 +661,66 @@ export async function POST(req: NextRequest) {
       baseUrl: (await getConfig('ai.base_url')) ?? 'https://api.openai.com/v1',
       apiKey: (await getConfig('ai.api_key')) ?? '',
       model,
-      messages: [{
-        role: 'user',
-        content: [
-          { type: 'text', text: '请识别此图中的单个汉字,只返回该字符,无其他文字' },
-          { type: 'image_url', image_url: { url: image, detail: 'low' } },
-        ],
-      }],
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: '请识别此图中的单个汉字,只返回该字符,无其他文字' },
+            { type: 'image_url', image_url: { url: image, detail: 'low' } },
+          ],
+        },
+      ],
       maxTokens: 16,
       temperature: 0,
     });
     raw = result.content.trim();
   } catch (err) {
     await logAiCall({
-      userId: user?.id ?? null, feature: 'char-recognize', model,
-      status: 'error', durationMs: Date.now() - start,
+      userId: user?.id ?? null,
+      feature: 'char-recognize',
+      model,
+      status: 'error',
+      durationMs: Date.now() - start,
       error: (err as Error).message,
-      ip, metadata: { ip },
+      ip,
+      metadata: { ip },
     });
     const isTimeout = (err as Error).message.includes('timeout');
-    return NextResponse.json({
-      ok: false,
-      error: isTimeout ? 'timeout' : 'provider_error',
-      message: isTimeout ? '识别超时,请重试' : '识别服务暂时不可用',
-    }, { status: isTimeout ? 504 : 502 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: isTimeout ? 'timeout' : 'provider_error',
+        message: isTimeout ? '识别超时,请重试' : '识别服务暂时不可用',
+      },
+      { status: isTimeout ? 504 : 502 },
+    );
   }
 
   if (!isCjkBmpChar(raw)) {
     await logAiCall({
-      userId: user?.id ?? null, feature: 'char-recognize', model,
-      status: 'error', durationMs: Date.now() - start,
+      userId: user?.id ?? null,
+      feature: 'char-recognize',
+      model,
+      status: 'error',
+      durationMs: Date.now() - start,
       error: `not_cjk: ${raw.slice(0, 20)}`,
-      ip, metadata: { ip, raw: raw.slice(0, 20) },
+      ip,
+      metadata: { ip, raw: raw.slice(0, 20) },
     });
-    return NextResponse.json({ ok: false, error: 'not_recognized', message: '未识别到汉字,请重试' }, { status: 502 });
+    return NextResponse.json(
+      { ok: false, error: 'not_recognized', message: '未识别到汉字,请重试' },
+      { status: 502 },
+    );
   }
 
   await logAiCall({
-    userId: user?.id ?? null, feature: 'char-recognize', model,
-    status: 'ok', durationMs: Date.now() - start,
-    ip, metadata: { ip, char: raw },
+    userId: user?.id ?? null,
+    feature: 'char-recognize',
+    model,
+    status: 'ok',
+    durationMs: Date.now() - start,
+    ip,
+    metadata: { ip, char: raw },
   });
   return NextResponse.json({ ok: true, char: raw });
 }
@@ -655,18 +731,24 @@ export async function POST(req: NextRequest) {
 Modify `app/api/ai/char-explain/route.ts`. **Replace lines 18-20** (the existing membership check) with this complete block:
 
 ```ts
-    if (!await hasFeature(user.id, 'ai_calls')) {
-      return forbidden('membership_required', '需要 AI 调用会员');
-    }
-    if (!await checkAiRateLimit(user.id)) {
-      return tooManyRequests('rate_limited', '今日 AI 调用次数已用完');
-    }
+if (!(await hasFeature(user.id, 'ai_calls'))) {
+  return forbidden('membership_required', '需要 AI 调用会员');
+}
+if (!(await checkAiRateLimit(user.id))) {
+  return tooManyRequests('rate_limited', '今日 AI 调用次数已用完');
+}
 ```
 
 Then add `tooManyRequests` to the import from `@/lib/api-handler` (line 3). Update the import to:
 
 ```ts
-import { withErrorHandling, badRequest, unauthorized, forbidden, tooManyRequests } from '@/lib/api-handler';
+import {
+  withErrorHandling,
+  badRequest,
+  unauthorized,
+  forbidden,
+  tooManyRequests,
+} from '@/lib/api-handler';
 ```
 
 And add `checkAiRateLimit` to the import from `@/lib/ai-calls` (line 8). Update to:
@@ -719,15 +801,18 @@ git commit -m "feat(ai-recognize): POST /api/ai/char-recognize + anon rate limit
 ### Task 3: UI 📷 button on `/pinyin` (TextToPinyin component)
 
 **Files:**
+
 - Modify: `components/TextToPinyin.tsx` (+60 LoC: hidden file input + camera icon + handler + toast)
 
 **Interfaces:**
+
 - Consumes: `POST /api/ai/char-recognize` from Task 2
 - Consumes: existing `text` state and `setText()` setter from `TextToPinyin.tsx`
 
 - [ ] **Step 1: Read `components/TextToPinyin.tsx` to find textarea + state**
 
 Read `components/TextToPinyin.tsx` (94 lines). Note:
+
 - State: `text: string`, `withSpaces: boolean`, `tokens: PinyinToken[]`
 - text setter: `setText`
 - textarea: `<textarea>` rendering `text`
@@ -772,7 +857,10 @@ const compressImage = async (file: File): Promise<string> => {
         canvas.width = Math.round(img.width * scale);
         canvas.height = Math.round(img.height * scale);
         const ctx = canvas.getContext('2d');
-        if (!ctx) { reject(new Error('canvas 2d unavailable')); return; }
+        if (!ctx) {
+          reject(new Error('canvas 2d unavailable'));
+          return;
+        }
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         resolve(canvas.toDataURL('image/jpeg', 0.8));
       };
@@ -863,6 +951,7 @@ Expected: `✓ Compiled successfully`. The route list should be unchanged (no ne
 - [ ] **Step 5: Manual smoke (dev server)**
 
 Run:
+
 ```bash
 npx next dev -p 4448 &
 DEV_PID=$!
@@ -875,6 +964,7 @@ done
 ```
 
 Manually verify in browser:
+
 1. Open `/pinyin` — textarea visible, 📷 camera icon visible in top-right of textarea
 2. Click 📷 on desktop → file picker opens (or on mobile, camera launches)
 3. Pick a small image of a single Chinese char → textarea appends the char, pinyin line shows pinyin
@@ -882,6 +972,7 @@ Manually verify in browser:
 5. Pick a non-image file → Toast "请选择图片"
 
 After smoke:
+
 ```bash
 kill $DEV_PID
 ```
@@ -914,18 +1005,18 @@ git commit -m "feat(pinyin-camera): append-to-textarea 📷 button on /pinyin [2
 
 ## Files Summary
 
-| File | Action | LoC |
-|---|---|---|
-| `lib/llm.ts` | Modify (ContentPart union + mockReply) | +15 |
-| `lib/admin-activity.ts` | Modify (+recognize entry) | +1 |
-| `tests/unit/lib/llm.test.ts` | Create | +60 |
-| `scripts/migrations/2026-08-05-ai-calls-ip.sql` | Create (DDL: ip column + index) | +5 |
-| `scripts/init-db.ts` | Modify (CREATE TABLE adds `ip` + index) | +3 |
-| `lib/ai-calls.ts` | Modify (logAiCall.ip field + checkAnonRateLimit) | +18 |
-| `app/api/ai/char-recognize/route.ts` | Create | ~80 |
-| `app/api/ai/char-explain/route.ts` | Modify (add rate limit) | +5 |
-| `tests/unit/app/api/ai/char-recognize.test.ts` | Create | +100 |
-| `components/TextToPinyin.tsx` | Modify (+📷 button) | +60 |
+| File                                            | Action                                           | LoC  |
+| ----------------------------------------------- | ------------------------------------------------ | ---- |
+| `lib/llm.ts`                                    | Modify (ContentPart union + mockReply)           | +15  |
+| `lib/admin-activity.ts`                         | Modify (+recognize entry)                        | +1   |
+| `tests/unit/lib/llm.test.ts`                    | Create                                           | +60  |
+| `scripts/migrations/2026-08-05-ai-calls-ip.sql` | Create (DDL: ip column + index)                  | +5   |
+| `scripts/init-db.ts`                            | Modify (CREATE TABLE adds `ip` + index)          | +3   |
+| `lib/ai-calls.ts`                               | Modify (logAiCall.ip field + checkAnonRateLimit) | +18  |
+| `app/api/ai/char-recognize/route.ts`            | Create                                           | ~80  |
+| `app/api/ai/char-explain/route.ts`              | Modify (add rate limit)                          | +5   |
+| `tests/unit/app/api/ai/char-recognize.test.ts`  | Create                                           | +100 |
+| `components/TextToPinyin.tsx`                   | Modify (+📷 button)                              | +60  |
 
 **Total: ~344 LoC across 10 files.**
 

@@ -7,7 +7,9 @@ const DATA_DIR = path.join(process.cwd(), 'data', 'classics');
 
 let cache: ClassicsManifest | null = null;
 
-export function invalidateManifestCache(): void { cache = null; }
+export function invalidateManifestCache(): void {
+  cache = null;
+}
 
 export function invalidateClassicFileCache(slug?: string): void {
   if (slug) invalidateJsonCache(path.join(DATA_DIR, `${slug}.json`));

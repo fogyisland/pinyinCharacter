@@ -24,9 +24,7 @@ export function TextInputTab({ value, onChange }: Props) {
         rows={8}
         className="w-full rounded-md border border-ink/20 p-3 font-serif text-lg focus:border-seal focus:outline-none"
       />
-      <p className="mt-2 text-xs text-ink-faint">
-        {value.length} / 500 字
-      </p>
+      <p className="mt-2 text-xs text-ink-faint">{value.length} / 500 字</p>
     </div>
   );
 }

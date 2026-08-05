@@ -16,7 +16,10 @@ export function RareCharDetail({ data }: Props) {
         <div className="worksheet-no-print mt-4 flex flex-wrap items-center justify-center gap-3">
           <ReadAloudButton text={data.char} label="读字" variant="seal" />
           <ReadAloudButton text={data.meaning} label="读释义" variant="paper" />
-          <PrintButton endpoint={`/api/rare-chars/${encodeURIComponent(data.char)}/print`} label="打印本页" />
+          <PrintButton
+            endpoint={`/api/rare-chars/${encodeURIComponent(data.char)}/print`}
+            label="打印本页"
+          />
         </div>
       </header>
 

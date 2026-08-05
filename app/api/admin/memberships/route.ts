@@ -36,7 +36,9 @@ export async function POST(req: NextRequest) {
     const plan = await getPlanByKey(parsed.data.planKey as PlanKey);
     if (!plan) return notFound('plan_not_found', `plan ${parsed.data.planKey} not found`);
     // Ensure target user exists
-    const [u] = await getPool().query<any[]>(`SELECT id FROM users WHERE id = ? LIMIT 1`, [parsed.data.userId]);
+    const [u] = await getPool().query<any[]>(`SELECT id FROM users WHERE id = ? LIMIT 1`, [
+      parsed.data.userId,
+    ]);
     if (u.length === 0) return notFound('user_not_found', `user ${parsed.data.userId} not found`);
 
     const result = await grantMembership({

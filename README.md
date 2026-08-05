@@ -39,6 +39,7 @@ HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 首次部署访问 `http://your-server/` 会被中间件重定向到 `/init`,按向导完成 DB 连接、管理员账号、seed 数据三步即可。
 
 > **生产环境请配合反向代理 (Nginx / Caddy / Cloudflare) 使用。** 完整配置见 [`DEPLOY.md`](DEPLOY.md),关键点:
+>
 > - 后端 Node **只** listen 在 `127.0.0.1:4444`
 > - 反代做 TLS 终止 + `client_max_body_size 500m` (必须,见 DEPLOY.md §3.3 原因)
 > - WebSocket `Upgrade` 头必须透传 (字帖打印页用)
@@ -82,6 +83,7 @@ HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 ### 邮件配置
 
 `.env` 中：
+
 - `MAIL_TRANSPORT=console`（默认）：邮件打印到 server console，无需 SMTP
 - `MAIL_TRANSPORT=smtp`：启用真实 SMTP，需填 `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`
 
@@ -94,6 +96,7 @@ HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 - **`/admin/ai`** — AI 调用记录 + 可编辑配置 (model, rate_limit_per_user_per_day, timeout_ms, temperature)
 
 新增管理员 API (需 `is_admin=1`):
+
 - `POST /api/admin/users/[id]/disable` — 软禁用用户
 - `POST /api/admin/users/[id]/enable` — 恢复
 - `GET  /api/admin/users/[id]/activity` — 最近 100 条用户事件
@@ -106,6 +109,7 @@ HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 - `PUT  /api/admin/ai/config` — 更新 AI 配置 (按字段校验)
 
 用户面 print 端点 (登录用户调用，记入 downloads 表):
+
 - `POST /api/worksheets/[id]/print`
 - `POST /api/poetry/[id]/print`
 - `POST /api/sutra/[slug]/print` — body: `{ sourceId: "{slug}#{chunkId}" }`
@@ -169,6 +173,7 @@ pnpm radicals:build                                      # 重新生成 data/rad
 字典详情页 (`/dictionary/[char]`) 卡片下方展示 280×280 田字格 + 浓墨笔顺动画。
 
 **特性**
+
 - 加载后自动循环播放笔画动画 (可手动关闭)
 - ⟲ 重播按钮
 - 笔数显示 (`N / M 画`) 实时更新
@@ -217,6 +222,7 @@ pnpm strokes:build
 ## 读故事 (/stories)（v1 / Plan G）
 
 单字翻页阅读器, 从 `rare_chars` 表里随机抽一个有 AI 生成故事的字阅读. 支持:
+
 - 键盘快捷键 (→ 下一个 / ← 上一个 / L 朗读 / Esc 停止)
 - TTS 朗读 (Web Speech API)
 - localStorage 进度 ("已读 X 字" 持久化)
@@ -228,17 +234,17 @@ pnpm strokes:build
 
 复制 `.env.example` 为 `.env` 并填入：
 
-| 变量 | 必填 | 说明 |
-|---|---|---|
-| `DATABASE_URL` | ✓ | MySQL 连接串，例 `mysql://root:pw@localhost:3306/pinyin` |
-| `JWT_SECRET` | ✓ | 32+ 字节随机串，例 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
-| `DATABASE_URL_TEST` |   | 集成测试用，缺省时 skip |
-| `COOKIE_SECURE` |   | 生产环境设为 `true` 让 cookie 带 Secure 标志 |
-| `MAIL_TRANSPORT` |   | `console`（默认，邮件打印到 console） 或 `smtp`（需配 SMTP_* / MAIL_FROM） |
-| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` |   | `MAIL_TRANSPORT=smtp` 时填入 |
-| `MAIL_FROM` |   | `MAIL_TRANSPORT=smtp` 时填入（`noreply@example.com`） |
-| `MAIL_FROM_NAME` |   | 发件人显示名，缺省为空 |
-| `PUBLIC_BASE_URL` |   | 密码重置邮件里的链接域名，缺省取请求 host |
+| 变量                                                                  | 必填 | 说明                                                                                             |
+| --------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`                                                        | ✓    | MySQL 连接串，例 `mysql://root:pw@localhost:3306/pinyin`                                         |
+| `JWT_SECRET`                                                          | ✓    | 32+ 字节随机串，例 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `DATABASE_URL_TEST`                                                   |      | 集成测试用，缺省时 skip                                                                          |
+| `COOKIE_SECURE`                                                       |      | 生产环境设为 `true` 让 cookie 带 Secure 标志                                                     |
+| `MAIL_TRANSPORT`                                                      |      | `console`（默认，邮件打印到 console） 或 `smtp`（需配 SMTP_* / MAIL_FROM）                       |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` |      | `MAIL_TRANSPORT=smtp` 时填入                                                                     |
+| `MAIL_FROM`                                                           |      | `MAIL_TRANSPORT=smtp` 时填入（`noreply@example.com`）                                            |
+| `MAIL_FROM_NAME`                                                      |      | 发件人显示名，缺省为空                                                                           |
+| `PUBLIC_BASE_URL`                                                     |      | 密码重置邮件里的链接域名，缺省取请求 host                                                        |
 
 ## 路线图
 

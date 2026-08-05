@@ -12,14 +12,22 @@ export async function MembershipStatusCard({ userId }: { userId: number }) {
       </div>
       {m.active ? (
         <div className="space-y-1 text-sm">
-          <p>当前套餐: <span className="font-medium">{m.planKey}</span></p>
-          <p>到期时间: <span className="font-medium">{new Date(m.expiresAt).toLocaleDateString('zh-CN')}</span> (还剩 {m.expiresInDays} 天)</p>
+          <p>
+            当前套餐: <span className="font-medium">{m.planKey}</span>
+          </p>
+          <p>
+            到期时间:{' '}
+            <span className="font-medium">{new Date(m.expiresAt).toLocaleDateString('zh-CN')}</span>{' '}
+            (还剩 {m.expiresInDays} 天)
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
           <p className="text-sm text-ink-soft">您还不是会员</p>
-          <Link href="/membership"
-            className="inline-flex items-center gap-1 text-sm px-3 py-1.5 bg-seal text-paper rounded hover:bg-seal/80">
+          <Link
+            href="/membership"
+            className="inline-flex items-center gap-1 text-sm px-3 py-1.5 bg-seal text-paper rounded hover:bg-seal/80"
+          >
             开通会员 <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>

@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Camera } from 'lucide-react';
 import { PinyinOutput } from './PinyinOutput';
 import { ReadAloudButton } from './ReadAloudButton';
-import { textToPinyin, renderWithSpaces, renderWithoutSpaces, type PinyinToken } from '@/lib/pinyin-client';
+import {
+  textToPinyin,
+  renderWithSpaces,
+  renderWithoutSpaces,
+  type PinyinToken,
+} from '@/lib/pinyin-client';
 import { useAppStore } from '@/lib/store';
 import { createHistoryRequest } from '@/lib/api-history';
 
@@ -14,14 +19,17 @@ export function TextToPinyin() {
   const [tokens, setTokens] = useState<PinyinToken[]>([]);
   const [recognizing, setRecognizing] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: 'error' | 'info' } | null>(null);
-  const user = useAppStore(s => s.user);
+  const user = useAppStore((s) => s.user);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<{ input: string; ts: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 字 → 拼音：实时
   useEffect(() => {
-    if (!text.trim()) { setTokens([]); return; }
+    if (!text.trim()) {
+      setTokens([]);
+      return;
+    }
     setTokens(textToPinyin(text));
   }, [text]);
 
@@ -30,17 +38,24 @@ export function TextToPinyin() {
     if (!user) return;
     if (!text.trim()) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { void saveHistory(text); }, 1500);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    debounceRef.current = setTimeout(() => {
+      void saveHistory(text);
+    }, 1500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, user]);
 
   // unmount 时 flush
-  useEffect(() => () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (user && text.trim()) void saveHistory(text);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (user && text.trim()) void saveHistory(text);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [],
+  );
 
   async function saveHistory(input: string) {
     if (!user) return;
@@ -48,10 +63,16 @@ export function TextToPinyin() {
     if (last && last.input === input && Date.now() - last.ts < 60_000) return;
     try {
       await createHistoryRequest({
-        kind: 'text2pinyin', input, output: null, char_count: input.length, dedup: true,
+        kind: 'text2pinyin',
+        input,
+        output: null,
+        char_count: input.length,
+        dedup: true,
       });
       lastSavedRef.current = { input, ts: Date.now() };
-    } catch (e) { console.error('history save failed', e); }
+    } catch (e) {
+      console.error('history save failed', e);
+    }
   }
 
   const showToast = (msg: string, type: 'error' | 'info' = 'info') => {
@@ -73,7 +94,10 @@ export function TextToPinyin() {
           canvas.width = Math.round(img.width * scale);
           canvas.height = Math.round(img.height * scale);
           const ctx = canvas.getContext('2d');
-          if (!ctx) { reject(new Error('canvas 2d unavailable')); return; }
+          if (!ctx) {
+            reject(new Error('canvas 2d unavailable'));
+            return;
+          }
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           resolve(canvas.toDataURL('image/jpeg', 0.8));
         };
@@ -111,7 +135,9 @@ export function TextToPinyin() {
   };
 
   const rendered = text.trim()
-    ? (withSpaces ? renderWithSpaces(tokens) : renderWithoutSpaces(tokens))
+    ? withSpaces
+      ? renderWithSpaces(tokens)
+      : renderWithoutSpaces(tokens)
     : '';
 
   return (
@@ -120,7 +146,11 @@ export function TextToPinyin() {
         <h2 className="text-base font-semibold">字 → 拼音</h2>
         <div className="flex items-center gap-3 text-sm">
           <label className="flex items-center gap-1">
-            <input type="checkbox" checked={withSpaces} onChange={e => setWithSpaces(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={withSpaces}
+              onChange={(e) => setWithSpaces(e.target.checked)}
+            />
             带空格
           </label>
         </div>
@@ -130,7 +160,7 @@ export function TextToPinyin() {
           className="w-full border rounded p-2 min-h-24"
           placeholder="输入汉字，如「你好世界」"
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
         />
         <input
           ref={fileInputRef}
@@ -161,7 +191,9 @@ export function TextToPinyin() {
           <div
             role="alert"
             className={`absolute left-1/2 -translate-x-1/2 -top-10 px-3 py-1.5 rounded text-sm whitespace-nowrap ${
-              toast.type === 'error' ? 'bg-red-100 text-red-800' : 'bg-paper text-ink border border-line'
+              toast.type === 'error'
+                ? 'bg-red-100 text-red-800'
+                : 'bg-paper text-ink border border-line'
             }`}
           >
             {toast.msg}
@@ -176,13 +208,19 @@ export function TextToPinyin() {
             <button
               type="button"
               className="text-sm px-3 py-1 border rounded hover:bg-paper-deep"
-              onClick={async () => { await navigator.clipboard.writeText(rendered); }}
-            >复制</button>
+              onClick={async () => {
+                await navigator.clipboard.writeText(rendered);
+              }}
+            >
+              复制
+            </button>
             <button
               type="button"
               className="text-sm px-3 py-1 border rounded hover:bg-paper-deep ml-auto"
               onClick={() => setText('')}
-            >清空</button>
+            >
+              清空
+            </button>
           </div>
         </div>
       )}

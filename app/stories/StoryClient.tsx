@@ -98,12 +98,17 @@ export function StoryClient({ initialChar }: Props) {
   return (
     <div className="mx-auto max-w-2xl">
       <header className="mb-6 flex items-center justify-between text-sm text-ink-soft">
-        <Link href="/rare-chars" className="hover:text-seal">← 返回字库</Link>
+        <Link href="/rare-chars" className="hover:text-seal">
+          ← 返回字库
+        </Link>
         <span aria-label="已读进度">已读 {readCount} 字</span>
       </header>
 
       {error && (
-        <div role="alert" className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800"
+        >
           {error}
         </div>
       )}
@@ -111,15 +116,16 @@ export function StoryClient({ initialChar }: Props) {
       <article className="card-paper text-center">
         <h1 className="font-kai text-9xl font-bold text-ink leading-none">{current.char}</h1>
         <p className="mt-4 text-3xl text-ink-soft">{current.pinyin}</p>
-        {current.meaning && (
-          <p className="mt-2 text-sm text-ink-faint">{current.meaning}</p>
-        )}
+        {current.meaning && <p className="mt-2 text-sm text-ink-faint">{current.meaning}</p>}
         <p className="mt-8 whitespace-pre-line px-4 text-left font-serif text-base leading-relaxed text-ink">
           {current.story}
         </p>
       </article>
 
-      <nav aria-label="故事操作" className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center">
+      <nav
+        aria-label="故事操作"
+        className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center"
+      >
         <button
           type="button"
           onClick={handlePrev}

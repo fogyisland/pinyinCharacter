@@ -86,11 +86,7 @@ async function listExistingStrokes(
 ): Promise<Set<string>> {
   if (!existsSync(outputDir)) return new Set();
   const files = await readdirImpl(outputDir);
-  return new Set(
-    files
-      .filter(f => f.endsWith('.json'))
-      .map(f => f.replace(/\.json$/, '')),
-  );
+  return new Set(files.filter((f) => f.endsWith('.json')).map((f) => f.replace(/\.json$/, '')));
 }
 
 async function loadCharList(options: BuildStrokesOptions): Promise<string[]> {
@@ -103,15 +99,13 @@ async function loadCharList(options: BuildStrokesOptions): Promise<string[]> {
       `SELECT \`char\` FROM chars ${levelFilter} ORDER BY \`char\``,
       params,
     );
-    return rows.map(r => r.char);
+    return rows.map((r) => r.char);
   }
   const charsJson = await readFile(CHARS_FILE, 'utf-8');
   return JSON.parse(charsJson) as string[];
 }
 
-export async function buildStrokes(
-  options: BuildStrokesOptions = {},
-): Promise<BuildStrokesResult> {
+export async function buildStrokes(options: BuildStrokesOptions = {}): Promise<BuildStrokesResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
   const readFileImpl = options.readFile ?? readFile;
   const writeFileImpl = options.writeFile ?? writeFile;
@@ -131,7 +125,7 @@ export async function buildStrokes(
   let skipped = 0;
   if (options.missing) {
     const existing = await listExistingStrokes(readdirImpl, OUTPUT_DIR);
-    toProcess = chars.filter(c => !existing.has(c));
+    toProcess = chars.filter((c) => !existing.has(c));
     skipped = chars.length - toProcess.length;
   }
 
@@ -203,7 +197,7 @@ if (isMain) {
       const verb = opts.dryRun ? 'would write' : 'wrote';
       console.log(
         `[strokes] considered=${considered} ` +
-        `${verb}=${supported.length} missing=${missing.length} skipped=${skipped}`,
+          `${verb}=${supported.length} missing=${missing.length} skipped=${skipped}`,
       );
       if (supported.length > 0 && supported.length <= 20) {
         console.log(`  supported: ${supported.join(' ')}`);

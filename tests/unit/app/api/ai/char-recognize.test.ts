@@ -10,11 +10,11 @@ let llmMockReply: string = '中';
 let llmShouldThrow: Error | null = null;
 
 vi.mock('next/headers', () => ({
-  cookies: () => Promise.resolve({
-    get: (name: string) => cookieStore.has(name)
-      ? { name, value: cookieStore.get(name)! }
-      : undefined,
-  }),
+  cookies: () =>
+    Promise.resolve({
+      get: (name: string) =>
+        cookieStore.has(name) ? { name, value: cookieStore.get(name)! } : undefined,
+    }),
 }));
 
 vi.mock('@/lib/auth', () => ({
@@ -23,20 +23,33 @@ vi.mock('@/lib/auth', () => ({
 
 vi.mock('@/lib/membership', () => ({
   hasFeature: vi.fn(async (_userId: number, feature: string) =>
-    feature === 'ai_calls' ? hasAiCallsFeature : false
+    feature === 'ai_calls' ? hasAiCallsFeature : false,
   ),
 }));
 
 vi.mock('@/lib/ai-calls', () => ({
   checkAiRateLimit: vi.fn(async (_userId: number) => userCount < 5),
-  checkAnonRateLimit: vi.fn(async (_ip: string) => ({ exceeded: anonCount >= 5, count: anonCount })),
-  logAiCall: vi.fn(async () => { /* no-op */ }),
+  checkAnonRateLimit: vi.fn(async (_ip: string) => ({
+    exceeded: anonCount >= 5,
+    count: anonCount,
+  })),
+  logAiCall: vi.fn(async () => {
+    /* no-op */
+  }),
   withAiLogging: vi.fn(async (args: any, fn: () => Promise<any>) => {
     const start = Date.now();
-    try { return await fn(); }
-    finally { /* logAiCall would be called here */ }
+    try {
+      return await fn();
+    } finally {
+      /* logAiCall would be called here */
+    }
   }),
-  RateLimitError: class extends Error { constructor() { super('rate limit'); this.name = 'RateLimitError'; } },
+  RateLimitError: class extends Error {
+    constructor() {
+      super('rate limit');
+      this.name = 'RateLimitError';
+    }
+  },
 }));
 
 vi.mock('@/lib/llm', () => ({

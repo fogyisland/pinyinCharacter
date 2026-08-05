@@ -11,10 +11,13 @@ export async function GET() {
   const base = await getRuntimeSiteUrl();
   const lastmod = new Date(manifest.updatedAt).toISOString();
   const urls = manifest.items
-    .map((i) => `<url><loc>${base}/poetry/${i.id}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`)
+    .map(
+      (i) =>
+        `<url><loc>${base}/poetry/${i.id}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`,
+    )
     .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }

@@ -15,6 +15,7 @@
 ## File Structure
 
 **New files (server):**
+
 - `lib/sutra-types.ts` — shared types (SutraListItem, SutraChunk, SutraDetail, SutraListResult)
 - `lib/sutras.ts` — listSutras, getSutra, splitIntoChunks
 - `app/api/sutras/route.ts` — GET list
@@ -22,6 +23,7 @@
 - `scripts/build-sutras.ts` — fetch chinese-poetry 佛经/ + UPSERT
 
 **New files (client):**
+
 - `lib/api-sutras.ts` — client wrapper (listSutrasRequest, getSutraRequest)
 - `components/sutra/SutraSearch.tsx`
 - `components/sutra/SutraCard.tsx`
@@ -34,6 +36,7 @@
 - `app/sutra/[id]/SaveAsWorksheetButton.tsx`
 
 **Tests:**
+
 - `tests/unit/lib/sutras.test.ts` — splitIntoChunks (纯函数 TDD)
 - `tests/unit/lib/sutra-validators.test.ts` — zod schemas
 - `tests/unit/components/sutra/SutraCard.test.tsx`
@@ -41,6 +44,7 @@
 - `tests/integration/api/sutras.test.ts` — list, detail
 
 **Modified files:**
+
 - `scripts/init-db.ts` — add sutras DDL + auto-populate via build-sutras
 - `lib/validators.ts` — add sutraListQuerySchema, sutraIdParamSchema
 - `lib/design.ts` — add 佛经 to NAV_LINKS
@@ -53,6 +57,7 @@
 ## Task 1: DDL — add `sutras` table to init-db
 
 **Files:**
+
 - Modify: `scripts/init-db.ts` (append DDL string)
 - Modify: `package.json` (add script)
 
@@ -90,6 +95,7 @@ git commit -m "feat(sutras): add sutras table DDL to init-db"
 ## Task 2: lib/sutra-types.ts (shared types)
 
 **Files:**
+
 - Create: `lib/sutra-types.ts`
 
 - [ ] **Step 1: Write the types file**
@@ -144,6 +150,7 @@ git commit -m "feat(sutras): add shared sutra types"
 ## Task 3: lib/sutras.ts — splitIntoChunks (pure function, TDD)
 
 **Files:**
+
 - Create: `tests/unit/lib/sutras.test.ts`
 - Create: `lib/sutras.ts`
 
@@ -157,7 +164,10 @@ import { splitIntoChunks } from '@/lib/sutras';
 
 describe('splitIntoChunks', () => {
   it('returns single chunk for sutra with no 品 markers', () => {
-    const paragraphs = ['观自在菩萨,行深般若波罗蜜多时,照见五蕴皆空,度一切苦厄。', '舍利子,色不异空,空不异色,色即是空,空即是色。'];
+    const paragraphs = [
+      '观自在菩萨,行深般若波罗蜜多时,照见五蕴皆空,度一切苦厄。',
+      '舍利子,色不异空,空不异色,色即是空,空即是色。',
+    ];
     const chunks = splitIntoChunks('心经', paragraphs);
     expect(chunks).toHaveLength(1);
     expect(chunks[0]!.label).toBe('心经');
@@ -217,31 +227,31 @@ Expected: PASS — 1 test passed.
 Append to `tests/unit/lib/sutras.test.ts`:
 
 ```ts
-  it('splits sutra with 品 markers into multiple chunks', () => {
-    const paragraphs = [
-      '如是我闻:一时,佛在舍卫国祇树给孤独园。',
-      '法会因由分第一:尔时,世尊食时,著衣持钵,入舍卫大城乞食。',
-      '善现启请分第二:时,长老须菩提在大众中即从座起,偏袒右肩,右膝着地。',
-      '大乘正宗分第三:佛告须菩提:诸菩萨摩诃萨应如是降伏其心。',
-    ];
-    const chunks = splitIntoChunks('金刚经', paragraphs);
-    expect(chunks.length).toBeGreaterThanOrEqual(2);
-    expect(chunks[0]!.label).toMatch(/如是我闻/);
-    expect(chunks[1]!.label).toMatch(/法会因由分第一/);
-    expect(chunks[2]!.label).toMatch(/善现启请分第二/);
-    expect(chunks[0]!.id).toBe(0);
-    expect(chunks[1]!.id).toBe(1);
-  });
+it('splits sutra with 品 markers into multiple chunks', () => {
+  const paragraphs = [
+    '如是我闻:一时,佛在舍卫国祇树给孤独园。',
+    '法会因由分第一:尔时,世尊食时,著衣持钵,入舍卫大城乞食。',
+    '善现启请分第二:时,长老须菩提在大众中即从座起,偏袒右肩,右膝着地。',
+    '大乘正宗分第三:佛告须菩提:诸菩萨摩诃萨应如是降伏其心。',
+  ];
+  const chunks = splitIntoChunks('金刚经', paragraphs);
+  expect(chunks.length).toBeGreaterThanOrEqual(2);
+  expect(chunks[0]!.label).toMatch(/如是我闻/);
+  expect(chunks[1]!.label).toMatch(/法会因由分第一/);
+  expect(chunks[2]!.label).toMatch(/善现启请分第二/);
+  expect(chunks[0]!.id).toBe(0);
+  expect(chunks[1]!.id).toBe(1);
+});
 
-  it('returns empty array for empty input', () => {
-    expect(splitIntoChunks('心经', [])).toEqual([]);
-  });
+it('returns empty array for empty input', () => {
+  expect(splitIntoChunks('心经', [])).toEqual([]);
+});
 
-  it('truncates chunk label to 32 chars', () => {
-    const longLabel = '第' + '一'.repeat(20) + '品:这是一段非常非常长的品名' + '啊'.repeat(30);
-    const chunks = splitIntoChunks('测试经', [longLabel]);
-    expect(chunks[0]!.label.length).toBeLessThanOrEqual(32);
-  });
+it('truncates chunk label to 32 chars', () => {
+  const longLabel = '第' + '一'.repeat(20) + '品:这是一段非常非常长的品名' + '啊'.repeat(30);
+  const chunks = splitIntoChunks('测试经', [longLabel]);
+  expect(chunks[0]!.label.length).toBeLessThanOrEqual(32);
+});
 ```
 
 - [ ] **Step 6: Run all splitIntoChunks tests**
@@ -261,6 +271,7 @@ git commit -m "feat(sutras): splitIntoChunks with 品 marker detection + tests"
 ## Task 4: lib/sutras.ts — listSutras + getSutra (DB functions)
 
 **Files:**
+
 - Modify: `lib/sutras.ts`
 - Create: `tests/integration/api/sutras-list.test.ts` (or defer to API test in Task 6)
 
@@ -303,7 +314,7 @@ function mapListRow(r: RawSutraRow): SutraListItem {
   const chunks = typeof r.chunks === 'string' ? (JSON.parse(r.chunks) as SutraChunk[]) : r.chunks;
   const charCount = chunks.reduce(
     (sum, c) => sum + c.content.reduce((s, line) => s + Array.from(line).length, 0),
-    0
+    0,
   );
   return {
     id: Number(r.id),
@@ -328,7 +339,7 @@ export async function listSutras(args: ListSutrasArgs = {}): Promise<SutraListRe
   const [rows] = await pool.query<any[]>(sql, [...params, pageSize, offset]);
   const [[{ total }]] = await pool.query<any[]>(
     `SELECT COUNT(*) AS total FROM sutras ${where}`,
-    params
+    params,
   );
 
   return {
@@ -343,12 +354,13 @@ export async function getSutra(id: number): Promise<SutraDetail | null> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT id, title, slug, chunks FROM sutras WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   const row = rows[0] as RawSutraRow | undefined;
   if (!row) return null;
 
-  const chunks = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
+  const chunks =
+    typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
   return {
     id: Number(row.id),
     title: row.title,
@@ -375,6 +387,7 @@ git commit -m "feat(sutras): listSutras + getSutra DB functions"
 ## Task 5: validators (zod) for sutra list + id
 
 **Files:**
+
 - Modify: `lib/validators.ts` (append two schemas)
 - Create: `tests/unit/lib/sutra-validators.test.ts`
 
@@ -445,6 +458,7 @@ git commit -m "feat(sutras): zod validators for list + id params"
 ## Task 6: API routes — GET /api/sutras + /api/sutras/[id]
 
 **Files:**
+
 - Create: `app/api/sutras/route.ts`
 - Create: `app/api/sutras/[id]/route.ts`
 - Create: `tests/integration/api/sutras.test.ts`
@@ -467,7 +481,8 @@ export async function GET(req: NextRequest) {
       page: sp.get('page') ?? undefined,
       pageSize: sp.get('pageSize') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const result = await listSutras(parsed.data);
     return NextResponse.json({ ok: true, data: result });
   });
@@ -488,7 +503,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   return withErrorHandling(async () => {
     const { id: idStr } = await ctx.params;
     const parsed = sutraIdParamSchema.safeParse({ id: idStr });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const sutra = await getSutra(parsed.data.id);
     if (!sutra) return notFound();
     return NextResponse.json({ ok: true, data: sutra });
@@ -518,9 +534,14 @@ beforeAll(async () => {
       '心经',
       TEST_SLUG,
       JSON.stringify([
-        { id: 0, label: '心经', content: ['观自在菩萨', '行深般若波罗蜜多时'], pinyin: [['guān'], ['xíng']] },
+        {
+          id: 0,
+          label: '心经',
+          content: ['观自在菩萨', '行深般若波罗蜜多时'],
+          pinyin: [['guān'], ['xíng']],
+        },
       ]),
-    ]
+    ],
   );
   insertedId = result.insertId;
 });
@@ -595,6 +616,7 @@ git commit -m "feat(sutras): GET /api/sutras + /api/sutras/[id] with integration
 ## Task 7: lib/api-sutras.ts (client wrapper)
 
 **Files:**
+
 - Create: `lib/api-sutras.ts`
 
 - [ ] **Step 1: Create client wrapper**
@@ -604,7 +626,9 @@ Create `lib/api-sutras.ts`:
 ```ts
 import type { SutraListResult, SutraDetail } from './sutra-types';
 
-export async function listSutrasRequest(args: { q?: string; page?: number } = {}): Promise<SutraListResult> {
+export async function listSutrasRequest(
+  args: { q?: string; page?: number } = {},
+): Promise<SutraListResult> {
   const sp = new URLSearchParams();
   if (args.q) sp.set('q', args.q);
   if (args.page) sp.set('page', String(args.page));
@@ -639,6 +663,7 @@ git commit -m "feat(sutras): client api wrappers"
 ## Task 8: scripts/build-sutras.ts (fetch chinese-poetry 佛经/)
 
 **Files:**
+
 - Create: `scripts/build-sutras.ts`
 - Modify: `package.json` (add `sutras:build` script)
 
@@ -704,21 +729,24 @@ function extractParagraphs(raw: RawSutra): string[] {
     // Split on common sentence-ending punctuation, keep groups non-empty
     return raw.content
       .split(/[。！？]/u)
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean)
-      .map(s => s + '。');
+      .map((s) => s + '。');
   }
   return [];
 }
 
-function calcChunkPinyin(label: string, paragraphs: string[]): { label: string; content: string[]; pinyin: string[][] } {
-  const t2sParagraphs = paragraphs.map(p => t2s(p));
+function calcChunkPinyin(
+  label: string,
+  paragraphs: string[],
+): { label: string; content: string[]; pinyin: string[][] } {
+  const t2sParagraphs = paragraphs.map((p) => t2s(p));
   const t2sLabel = t2s(label);
-  const pinyinRows = t2sParagraphs.map(line =>
-    Array.from(line).map(char => {
+  const pinyinRows = t2sParagraphs.map((line) =>
+    Array.from(line).map((char) => {
       const py = pinyin(char, { toneType: 'symbol' });
       return Array.isArray(py) && py.length > 0 ? py[0]! : '';
-    })
+    }),
   );
   return { label: t2sLabel, content: t2sParagraphs, pinyin: pinyinRows };
 }
@@ -740,14 +768,14 @@ export async function buildSutras(): Promise<number> {
         console.warn(`[build-sutras] skip ${slug}: no paragraphs`);
         continue;
       }
-      const chunks = splitIntoChunks(raw.title ?? title, paragraphs).map(c =>
-        calcChunkPinyin(c.label, c.content)
+      const chunks = splitIntoChunks(raw.title ?? title, paragraphs).map((c) =>
+        calcChunkPinyin(c.label, c.content),
       );
 
       await pool.query(
         `INSERT INTO sutras (title, slug, chunks, source) VALUES (?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE title = VALUES(title), chunks = VALUES(chunks), source = VALUES(source)`,
-        [t2s(raw.title ?? title), slug, JSON.stringify(chunks), SOURCE_TAG]
+        [t2s(raw.title ?? title), slug, JSON.stringify(chunks), SOURCE_TAG],
       );
       console.log(`[build-sutras] upserted ${slug} (${chunks.length} chunks)`);
       inserted += 1;
@@ -760,8 +788,14 @@ export async function buildSutras(): Promise<number> {
 
 if (require.main === module) {
   buildSutras()
-    .then((n) => { console.log(`done: ${n} sutras upserted`); return closePool(); })
-    .catch((err) => { console.error(err); process.exit(1); });
+    .then((n) => {
+      console.log(`done: ${n} sutras upserted`);
+      return closePool();
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -782,6 +816,7 @@ git commit -m "feat(sutras): build-sutras script fetching chinese-poetry 佛经/
 ## Task 9: Wire build-sutras into initDb auto-populate
 
 **Files:**
+
 - Modify: `scripts/init-db.ts`
 
 - [ ] **Step 1: Add auto-populate for sutras (mirror poems block)**
@@ -789,19 +824,19 @@ git commit -m "feat(sutras): build-sutras script fetching chinese-poetry 佛经/
 In `scripts/init-db.ts`, after the `try { ... } catch` block that handles poems auto-populate, add a second block:
 
 ```ts
-  // Auto-populate sutras table if empty (fail-soft)
-  try {
-    const [[{ count: sCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
-    if (Number(sCount) === 0) {
-      const { buildSutras } = await import('./build-sutras');
-      const n = await buildSutras();
-      console.log(`[initDb] inserted ${n} sutras (auto-populate)`);
-    } else {
-      console.log(`[initDb] sutras table has ${sCount} rows, skip auto-populate`);
-    }
-  } catch (err) {
-    console.warn('[initDb] sutras auto-populate failed (continuing):', (err as Error).message);
+// Auto-populate sutras table if empty (fail-soft)
+try {
+  const [[{ count: sCount }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
+  if (Number(sCount) === 0) {
+    const { buildSutras } = await import('./build-sutras');
+    const n = await buildSutras();
+    console.log(`[initDb] inserted ${n} sutras (auto-populate)`);
+  } else {
+    console.log(`[initDb] sutras table has ${sCount} rows, skip auto-populate`);
   }
+} catch (err) {
+  console.warn('[initDb] sutras auto-populate failed (continuing):', (err as Error).message);
+}
 ```
 
 Add this **inside** the existing `initDb()` function, **after** the existing poems try/catch block and **before** the closing `}` of `initDb()`.
@@ -823,6 +858,7 @@ git commit -m "feat(sutras): auto-populate sutras via initDb"
 ## Task 10: Components — SutraSearch, SutraCard, SutraPagination, SutraMeta, SutraChunkPicker, SutraWorksheet
 
 **Files:**
+
 - Create: `components/sutra/SutraSearch.tsx`
 - Create: `components/sutra/SutraCard.tsx`
 - Create: `components/sutra/SutraPagination.tsx`
@@ -912,7 +948,9 @@ export function SutraPagination({ page, pageSize, total, onPageChange }: Props) 
       >
         上一页
       </button>
-      <span className="text-ink-soft">第 {page} / {totalPages} 页</span>
+      <span className="text-ink-soft">
+        第 {page} / {totalPages} 页
+      </span>
       <button
         type="button"
         onClick={() => onPageChange(Math.min(totalPages, page + 1))}
@@ -941,9 +979,7 @@ export function SutraMeta({ title, chunkLabel }: Props) {
     <div className="text-center my-6">
       <div className="paper-rule mb-3" />
       <h1 className="font-kai text-3xl text-ink">《{title}》</h1>
-      {chunkLabel && (
-        <p className="text-sm text-ink-soft mt-2">{chunkLabel}</p>
-      )}
+      {chunkLabel && <p className="text-sm text-ink-soft mt-2">{chunkLabel}</p>}
       <div className="paper-rule mt-3" />
     </div>
   );
@@ -1002,7 +1038,9 @@ export function SutraChunkPicker({ chunks, activeId, onChange }: Props) {
           className="w-full rounded-md border border-ink/20 bg-paper-soft px-3 py-2"
         >
           {chunks.map((c) => (
-            <option key={c.id} value={c.id}>{c.label}</option>
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
           ))}
         </select>
       </div>
@@ -1057,7 +1095,9 @@ import { SutraCard } from '@/components/sutra/SutraCard';
 describe('SutraCard', () => {
   it('renders title and chunk count label', () => {
     const { container } = render(
-      <SutraCard sutra={{ id: 1, title: '心经', slug: 'xinjing', chunkCount: 1, charCount: 260 }} />
+      <SutraCard
+        sutra={{ id: 1, title: '心经', slug: 'xinjing', chunkCount: 1, charCount: 260 }}
+      />,
     );
     expect(container.textContent).toContain('心经');
     expect(container.textContent).toContain('全文');
@@ -1066,7 +1106,9 @@ describe('SutraCard', () => {
 
   it('shows "N 品" when chunkCount > 1', () => {
     const { container } = render(
-      <SutraCard sutra={{ id: 1, title: '金刚经', slug: 'jingang', chunkCount: 32, charCount: 5000 }} />
+      <SutraCard
+        sutra={{ id: 1, title: '金刚经', slug: 'jingang', chunkCount: 32, charCount: 5000 }}
+      />,
     );
     expect(container.textContent).toContain('32 品');
   });
@@ -1115,6 +1157,7 @@ git commit -m "feat(sutras): 6 client components + unit tests"
 ## Task 11: app/sutra/page.tsx (list page)
 
 **Files:**
+
 - Create: `app/sutra/page.tsx`
 
 - [ ] **Step 1: Create the list page**
@@ -1163,7 +1206,10 @@ export default function SutraListPage() {
         if (!cancelled) setLoading(false);
       }
     }, 300);
-    return () => { cancelled = true; clearTimeout(handle); };
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [q, page, tick]);
 
   return (
@@ -1174,7 +1220,10 @@ export default function SutraListPage() {
         <SectionTitle subtitle="12 部经 · 分品块抄写">佛经选读</SectionTitle>
         <SutraSearch
           q={q}
-          onQChange={(v) => { setQ(v); setPage(1); }}
+          onQChange={(v) => {
+            setQ(v);
+            setPage(1);
+          }}
         />
         {error ? (
           <ErrorState message={error} onRetry={() => setTick((t) => t + 1)} />
@@ -1189,12 +1238,7 @@ export default function SutraListPage() {
                 <SutraCard key={s.id} sutra={s} />
               ))}
             </div>
-            <SutraPagination
-              page={page}
-              pageSize={12}
-              total={total}
-              onPageChange={setPage}
-            />
+            <SutraPagination page={page} pageSize={12} total={total} onPageChange={setPage} />
           </>
         )}
       </PageContainer>
@@ -1221,6 +1265,7 @@ git commit -m "feat(sutras): /sutra list page"
 ## Task 12: app/sutra/[id]/page.tsx + SaveAsWorksheetButton (detail page)
 
 **Files:**
+
 - Create: `app/sutra/[id]/page.tsx`
 - Create: `app/sutra/[id]/SaveAsWorksheetButton.tsx`
 
@@ -1244,8 +1289,8 @@ interface Props {
 
 export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
   const router = useRouter();
-  const user = useAppStore(s => s.user);
-  const setAuthOpen = useAppStore(s => s.setAuthOpen);
+  const user = useAppStore((s) => s.user);
+  const setAuthOpen = useAppStore((s) => s.setAuthOpen);
   const [saving, setSaving] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
 
@@ -1296,9 +1341,7 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
       >
         {saving ? '保存中…' : '保存到字帖'}
       </button>
-      {hint && !user && (
-        <span className="text-xs text-ink-soft">{hint}</span>
-      )}
+      {hint && !user && <span className="text-xs text-ink-soft">{hint}</span>}
     </div>
   );
 }
@@ -1350,13 +1393,22 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
         <Header />
       </Suspense>
       <PageContainer>
-        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵
+        </div>
         <div className="worksheet-no-print">
-          <SutraMeta title={sutra.title} chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null} />
+          <SutraMeta
+            title={sutra.title}
+            chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null}
+          />
         </div>
         <div className="flex gap-6">
           <Suspense fallback={null}>
-            <SutraChunkPickerClient sutraId={sutra.id} chunks={sutra.chunks as SutraChunk[]} activeId={activeChunkId} />
+            <SutraChunkPickerClient
+              sutraId={sutra.id}
+              chunks={sutra.chunks as SutraChunk[]}
+              activeId={activeChunkId}
+            />
           </Suspense>
           <div className="flex-1 card-paper p-5 sm:p-8">
             <SutraWorksheet chunk={activeChunk} />
@@ -1424,6 +1476,7 @@ git commit -m "feat(sutras): /sutra/[id] detail page with chunk picker + save-as
 ## Task 13: Wire nav + BentoGrid + final smoke
 
 **Files:**
+
 - Modify: `lib/design.ts` (add 佛经 to NAV_LINKS)
 - Modify: `components/BentoGrid.tsx` (add 经 tile)
 
@@ -1469,6 +1522,7 @@ Expected: Server starts on port 4444 (per `dev-port.md` memory).
 - [ ] **Step 2: Verify initDb auto-populated sutras**
 
 Watch server logs. On first start, should see:
+
 - `[initDb] inserted N sutras (auto-populate)` (N between 8–12, depending on GitHub availability)
 - or `[initDb] sutras table has N rows, skip auto-populate` on subsequent runs
 

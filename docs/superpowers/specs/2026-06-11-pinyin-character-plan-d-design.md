@@ -101,10 +101,10 @@ export function pickDailyChar(chars: string[], dateStr: string): string {
 
 Added to `lib/audit.ts`'s `AuditEvent` union:
 
-| `event` value | When | Metadata |
-|---|---|---|
-| `worksheet_saved` | Logged-in user saves a worksheet | `{ worksheetId, charCount, cellStyle }` |
-| `worksheet_deleted` | Owner deletes a worksheet | `{ worksheetId }` |
+| `event` value       | When                             | Metadata                                |
+| ------------------- | -------------------------------- | --------------------------------------- |
+| `worksheet_saved`   | Logged-in user saves a worksheet | `{ worksheetId, charCount, cellStyle }` |
+| `worksheet_deleted` | Owner deletes a worksheet        | `{ worksheetId }`                       |
 
 No new events for game play, library browse, or daily char (read-only / uninteresting from an audit perspective).
 
@@ -456,18 +456,18 @@ tests/integration/
 
 ## 12. Risks and mitigations
 
-| Risk | Mitigation |
-|---|---|
-| `通用规范汉字表` source URL goes dead | The URL is hard-coded in `fetch-rare-chars.ts`; if it 404s, the script fails fast with a clear error. Operator updates the URL. v1 does not auto-discover mirrors. |
-| LLM generates inaccurate pinyin or offensive content for some chars | Every row is `needs_review=1`. The script writes a row per char; a separate SQL pass can correct errors. (v1 does not expose this in UI.) |
-| LLM API rate limits kick in | Script processes 1 batch per 2s; total runtime ~90s for 1600 chars. If a provider is slower, the operator can lower the batch size or add sleep. |
-| 拖拽小游戏 on touch devices doesn't work (HTML5 DnD is desktop-centric) | v1: documented as desktop-only. Mobile users see the page but can only read the chars; no touch-based game in v1. |
-| Worksheet with 500 chars × ~3KB cell SVG = ~1.5MB DOM | Tested with 50 cells (≈150KB); 500 cells is the absolute upper limit. If real users hit performance issues, we'll add a "split into multiple pages" option. |
-| Game's "8 random chars" picks 8 that look identical (e.g. 𠂉 vs 𠂊) | Acceptable for v1; could add a "distinct" filter in a later iteration. |
-| Daily char picks an unfilled (`meaning=''`) char | We pick from `meaning <> ''` rows only. If a day has no fillable char (DB empty), return 503 — but this should never happen in practice. |
-| LLM API key leaks via git | `.env` is in `.gitignore` (verified at Plan B+). Documented in README. |
-| Anonymous users spam POST /api/worksheets to bloat DB | 401 prevents it (no auth, no save). Generate-only path has no DB writes. |
-| `/api/rare-chars?q=` SQL injection | zod validates the input; parameterized queries via the existing `pool.execute`. |
+| Risk                                                                    | Mitigation                                                                                                                                                         |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `通用规范汉字表` source URL goes dead                                   | The URL is hard-coded in `fetch-rare-chars.ts`; if it 404s, the script fails fast with a clear error. Operator updates the URL. v1 does not auto-discover mirrors. |
+| LLM generates inaccurate pinyin or offensive content for some chars     | Every row is `needs_review=1`. The script writes a row per char; a separate SQL pass can correct errors. (v1 does not expose this in UI.)                          |
+| LLM API rate limits kick in                                             | Script processes 1 batch per 2s; total runtime ~90s for 1600 chars. If a provider is slower, the operator can lower the batch size or add sleep.                   |
+| 拖拽小游戏 on touch devices doesn't work (HTML5 DnD is desktop-centric) | v1: documented as desktop-only. Mobile users see the page but can only read the chars; no touch-based game in v1.                                                  |
+| Worksheet with 500 chars × ~3KB cell SVG = ~1.5MB DOM                   | Tested with 50 cells (≈150KB); 500 cells is the absolute upper limit. If real users hit performance issues, we'll add a "split into multiple pages" option.        |
+| Game's "8 random chars" picks 8 that look identical (e.g. 𠂉 vs 𠂊)     | Acceptable for v1; could add a "distinct" filter in a later iteration.                                                                                             |
+| Daily char picks an unfilled (`meaning=''`) char                        | We pick from `meaning <> ''` rows only. If a day has no fillable char (DB empty), return 503 — but this should never happen in practice.                           |
+| LLM API key leaks via git                                               | `.env` is in `.gitignore` (verified at Plan B+). Documented in README.                                                                                             |
+| Anonymous users spam POST /api/worksheets to bloat DB                   | 401 prevents it (no auth, no save). Generate-only path has no DB writes.                                                                                           |
+| `/api/rare-chars?q=` SQL injection                                      | zod validates the input; parameterized queries via the existing `pool.execute`.                                                                                    |
 
 ## 13. Plan for the implementation phase
 

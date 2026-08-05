@@ -122,13 +122,16 @@ describe('getPageViewStats', () => {
   it('returns topPaths mapped to {path, count} in COUNT(*) DESC order, LIMIT 5', async () => {
     queryResults['COUNT(*) AS today_pv'] = [[{ today_pv: 0 }], []];
     queryResults['COUNT(DISTINCT COALESCE'] = [[{ today_uv: 0 }], []];
-    queryResults['GROUP BY path'] = [[
-      { path: '/poems', count: 50 },
-      { path: '/char/学', count: 30 },
-      { path: '/sutras', count: 20 },
-      { path: '/etymology/字', count: 10 },
-      { path: '/worksheets/new', count: 5 },
-    ], []];
+    queryResults['GROUP BY path'] = [
+      [
+        { path: '/poems', count: 50 },
+        { path: '/char/学', count: 30 },
+        { path: '/sutras', count: 20 },
+        { path: '/etymology/字', count: 10 },
+        { path: '/worksheets/new', count: 5 },
+      ],
+      [],
+    ];
     const stats = await getPageViewStats();
     expect(stats.topPaths).toEqual([
       { path: '/poems', count: 50 },
@@ -144,9 +147,7 @@ describe('getPageViewStats', () => {
     // The lib guards with Number() — verify that path actually fires.
     queryResults['COUNT(*) AS today_pv'] = [[{ today_pv: '142' }], []];
     queryResults['COUNT(DISTINCT COALESCE'] = [[{ today_uv: '88' }], []];
-    queryResults['GROUP BY path'] = [[
-      { path: '/x', count: '12' },
-    ], []];
+    queryResults['GROUP BY path'] = [[{ path: '/x', count: '12' }], []];
     const stats = await getPageViewStats();
     expect(typeof stats.todayPv).toBe('number');
     expect(stats.todayPv).toBe(142);

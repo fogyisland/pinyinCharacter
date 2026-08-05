@@ -14,9 +14,13 @@ export async function GET(req: NextRequest) {
       page: sp.get('page') ?? undefined,
       pageSize: sp.get('pageSize') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const forms = parsed.data.forms
-      ? parsed.data.forms.split(',').map(s => s.trim()).filter(Boolean)
+      ? parsed.data.forms
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
       : undefined;
     const result = await listPoems({
       dynasty: parsed.data.dynasty,

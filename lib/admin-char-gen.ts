@@ -50,21 +50,21 @@ export function emptyPerField(): Record<FieldName, FieldResult> {
   };
 }
 
-interface DictCtx { pinyin: string; meaningZh: string | null; }
+interface DictCtx {
+  pinyin: string;
+  meaningZh: string | null;
+}
 
 async function loadDictCtx(pool: Pool, char: string): Promise<DictCtx | null> {
-  const [rows] = await pool.query<any[]>(
-    `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`,
-    [char],
-  );
+  const [rows] = await pool.query<any[]>(`SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [
+    char,
+  ]);
   if (rows.length === 0) return null;
   // meaningZh may live in either the chars row (legacy DB) or the JSON file.
   // Prefer JSON since it's the source of truth post-migration.
   const content = readContentFromFs(char);
   const meaningZh =
-    content?.dict?.meaning_zh ??
-    content?.meaning_zh ??
-    (await loadDbMeaningZh(pool, char));
+    content?.dict?.meaning_zh ?? content?.meaning_zh ?? (await loadDbMeaningZh(pool, char));
   return { pinyin: rows[0].pinyin ?? '', meaningZh };
 }
 
@@ -81,7 +81,10 @@ async function loadDbMeaningZh(pool: Pool, char: string): Promise<string | null>
   }
 }
 
-function hasDictField(content: CharContent | null, field: 'meaning_zh' | 'meaning_en' | 'pinyin_alt' | 'variants'): boolean {
+function hasDictField(
+  content: CharContent | null,
+  field: 'meaning_zh' | 'meaning_en' | 'pinyin_alt' | 'variants',
+): boolean {
   if (!content) return false;
   if (field === 'meaning_zh') {
     return !!(content.dict?.meaning_zh ?? content.meaning_zh);
@@ -118,13 +121,24 @@ export async function processOneField(
       });
     case 'pinyin_alt':
       return generateDictJsonField(
-        pool, userId, model, char, 'pinyin_alt', 'char-pinyin-alt',
+        pool,
+        userId,
+        model,
+        char,
+        'pinyin_alt',
+        'char-pinyin-alt',
         async (char, ctx) => generatePinyinAlt({ char, pinyin: ctx.pinyin }),
       );
     case 'variants':
       return generateDictJsonField(
-        pool, userId, model, char, 'variants', 'char-variants',
-        async (char, ctx) => generateVariants({ char, pinyin: ctx.pinyin, meaningZh: ctx.meaningZh }),
+        pool,
+        userId,
+        model,
+        char,
+        'variants',
+        'char-variants',
+        async (char, ctx) =>
+          generateVariants({ char, pinyin: ctx.pinyin, meaningZh: ctx.meaningZh }),
       );
     case 'etymology_story':
       return generateEtymologyField(pool, userId, model, char);
@@ -153,15 +167,19 @@ async function generateDictField(
   const dict = { ...(existing?.dict ?? {}) };
   if (field === 'meaning_zh') dict.meaning_zh = value;
   if (field === 'meaning_en') dict.meaning_en = value;
-  writeContent(char, {
+  writeContent(
     char,
-    pinyin: existing?.pinyin ?? ctx.pinyin,
-    level: existing?.level,
-    dict,
-    etymology: existing?.etymology,
-    rare: existing?.rare,
-    hanzi_story: existing?.hanzi_story,
-  }, { merge: true });
+    {
+      char,
+      pinyin: existing?.pinyin ?? ctx.pinyin,
+      level: existing?.level,
+      dict,
+      etymology: existing?.etymology,
+      rare: existing?.rare,
+      hanzi_story: existing?.hanzi_story,
+    },
+    { merge: true },
+  );
   return 'generated';
 }
 
@@ -180,22 +198,25 @@ async function generateDictJsonField(
   // Treat absence as "not set"; [] is a valid LLM answer (no variants), so once
   // the field is written we don't overwrite it on re-run.
   if (hasDictField(existing, field)) return 'skipped';
-  const arr = await withAiLogging(
-    { userId, feature, model, metadata: { char } },
-    () => run(char, ctx),
+  const arr = await withAiLogging({ userId, feature, model, metadata: { char } }, () =>
+    run(char, ctx),
   );
   const dict = { ...(existing?.dict ?? {}) };
   if (field === 'pinyin_alt') dict.pinyin_alt = arr;
   if (field === 'variants') dict.variants = arr;
-  writeContent(char, {
+  writeContent(
     char,
-    pinyin: existing?.pinyin ?? ctx.pinyin,
-    level: existing?.level,
-    dict,
-    etymology: existing?.etymology,
-    rare: existing?.rare,
-    hanzi_story: existing?.hanzi_story,
-  }, { merge: true });
+    {
+      char,
+      pinyin: existing?.pinyin ?? ctx.pinyin,
+      level: existing?.level,
+      dict,
+      etymology: existing?.etymology,
+      rare: existing?.rare,
+      hanzi_story: existing?.hanzi_story,
+    },
+    { merge: true },
+  );
   return 'generated';
 }
 
@@ -214,20 +235,24 @@ async function generateEtymologyField(
     { userId, feature: 'etymology-story', model, metadata: { char } },
     () => generateEtymologyStory({ char, pinyin: ctx.pinyin, meaningZh: ctx.meaningZh }),
   );
-  writeContent(char, {
+  writeContent(
     char,
-    pinyin: existing?.pinyin ?? ctx.pinyin,
-    level: existing?.level,
-    dict: existing?.dict,
-    etymology: {
-      story,
-      generated_by: model,
-      generated_at: new Date().toISOString(),
-      ...(existing?.etymology ?? {}),
+    {
+      char,
+      pinyin: existing?.pinyin ?? ctx.pinyin,
+      level: existing?.level,
+      dict: existing?.dict,
+      etymology: {
+        story,
+        generated_by: model,
+        generated_at: new Date().toISOString(),
+        ...(existing?.etymology ?? {}),
+      },
+      rare: existing?.rare,
+      hanzi_story: existing?.hanzi_story,
     },
-    rare: existing?.rare,
-    hanzi_story: existing?.hanzi_story,
-  }, { merge: true });
+    { merge: true },
+  );
   return 'generated';
 }
 
@@ -248,21 +273,26 @@ async function generateRareField(
   if (column === 'meaning' && existing?.rare?.meaning) return 'skipped';
   if (column === 'story' && existing?.rare?.story) return 'skipped';
 
-  const content = await generateRareCharContent(
-    { char, pinyin },
-    { fields: [column] },
-  );
-  const rare = { ...(existing?.rare ?? {}), generated_by: model, generated_at: new Date().toISOString() };
+  const content = await generateRareCharContent({ char, pinyin }, { fields: [column] });
+  const rare = {
+    ...(existing?.rare ?? {}),
+    generated_by: model,
+    generated_at: new Date().toISOString(),
+  };
   if (column === 'meaning') rare.meaning = content.meaning;
   if (column === 'story') rare.story = content.story;
-  writeContent(char, {
+  writeContent(
     char,
-    pinyin: existing?.pinyin ?? pinyin,
-    level: existing?.level,
-    dict: existing?.dict,
-    etymology: existing?.etymology,
-    rare,
-    hanzi_story: existing?.hanzi_story,
-  }, { merge: true });
+    {
+      char,
+      pinyin: existing?.pinyin ?? pinyin,
+      level: existing?.level,
+      dict: existing?.dict,
+      etymology: existing?.etymology,
+      rare,
+      hanzi_story: existing?.hanzi_story,
+    },
+    { merge: true },
+  );
   return 'generated';
 }

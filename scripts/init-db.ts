@@ -497,7 +497,7 @@ export async function initAppConfig(): Promise<InitAppConfigStats> {
       `INSERT IGNORE INTO app_config (\`key\`, value, updated_by) VALUES
          ('tts.voice_male', 'zh-CN-YunjianNeural', NULL),
          ('tts.voice_female', 'zh-CN-XiaoxiaoNeural', NULL),
-         ('tts.audio_format', 'audio-24khz-48kbitrate-mono-mp3', NULL)`
+         ('tts.audio_format', 'audio-24khz-48kbitrate-mono-mp3', NULL)`,
     );
     inserted = defaults.length + 3;
     console.log(`[initAppConfig] seeded ${inserted} app_config defaults`);
@@ -614,7 +614,7 @@ export async function initChars(): Promise<AutoPopulateResult> {
       const params = batch.flat();
       await pool.execute(
         `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES ${placeholders}`,
-        params
+        params,
       );
       imported += batch.length;
     }
@@ -718,7 +718,7 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
  */
 function isBmpChar(c: string): boolean {
   const cp = c.codePointAt(0);
-  return cp != null && cp <= 0xFFFF;
+  return cp != null && cp <= 0xffff;
 }
 
 const CHAR_ETYMOLOGY_ERA_FONT = {
@@ -795,10 +795,9 @@ export interface CreateAdminStats {
 export async function createAdminUser(input: CreateAdminInput): Promise<CreateAdminStats> {
   const pool = getPool();
   // Refuse if username already exists (idempotent re-runs).
-  const [existing] = await pool.query<any[]>(
-    `SELECT id FROM users WHERE username = ? LIMIT 1`,
-    [input.username],
-  );
+  const [existing] = await pool.query<any[]>(`SELECT id FROM users WHERE username = ? LIMIT 1`, [
+    input.username,
+  ]);
   if (existing.length > 0) {
     throw new Error(`username_taken: A user with username '${input.username}' already exists.`);
   }
@@ -885,5 +884,8 @@ if (require.main === module) {
       console.log('DB initialized:', JSON.stringify(stats, null, 2));
       return closePool();
     })
-    .catch((err) => { console.error(err); process.exit(1); });
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }

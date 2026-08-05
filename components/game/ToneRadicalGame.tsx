@@ -47,14 +47,14 @@ export function ToneRadicalGame() {
   const [hskFallback, setHskFallback] = useState(false);
   const { difficulty, setDifficulty, hskLevel } = useDifficulty();
 
-  const revealConfig = useMemo(
-    () => getRevealConfig('tone-radical', hskLevel),
-    [hskLevel],
-  );
+  const revealConfig = useMemo(() => getRevealConfig('tone-radical', hskLevel), [hskLevel]);
 
-  const handleDemand = useCallback((_el: RevealElement) => {
-    setMismatches((m) => m + revealConfig.onDemandPenalty);
-  }, [revealConfig.onDemandPenalty]);
+  const handleDemand = useCallback(
+    (_el: RevealElement) => {
+      setMismatches((m) => m + revealConfig.onDemandPenalty);
+    },
+    [revealConfig.onDemandPenalty],
+  );
 
   const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
     setPhase('loading');
@@ -76,7 +76,12 @@ export function ToneRadicalGame() {
         hskLevel: String(hskLevel),
       });
       const res = await fetch(`/api/game/round?${params.toString()}`);
-      const json = (await res.json()) as { ok: boolean; data: GameRound; hskFallback?: boolean; error?: { code: string } };
+      const json = (await res.json()) as {
+        ok: boolean;
+        data: GameRound;
+        hskFallback?: boolean;
+        error?: { code: string };
+      };
       if (!json.ok) throw new Error(`fetchGameRound failed: ${json.error?.code ?? 'unknown'}`);
       const r = json.data;
       setRound(r);
@@ -122,9 +127,11 @@ export function ToneRadicalGame() {
     const answer = round.charToAnswer[char];
     if (!answer) return;
     const expected =
-      round.mode === 'tone' ? String(answer.tone) :
-      round.mode === 'radical' ? answer.radical :
-      answer.pinyin;
+      round.mode === 'tone'
+        ? String(answer.tone)
+        : round.mode === 'radical'
+          ? answer.radical
+          : answer.pinyin;
     if (payload !== expected) {
       setMismatches((m) => m + 1);
       return;
@@ -145,7 +152,9 @@ export function ToneRadicalGame() {
         <p className="mt-2 text-ink-soft">{error}</p>
         <p className="mt-1 text-sm text-ink-faint">
           如果提示「not enough rare chars」,请运行
-          <code className="mx-1 rounded bg-paper-deep px-1">pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts</code>
+          <code className="mx-1 rounded bg-paper-deep px-1">
+            pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts
+          </code>
           导入数据
         </p>
         <button
@@ -195,13 +204,23 @@ export function ToneRadicalGame() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
-        <DifficultyPicker value={difficulty} onChange={(d) => { setDifficulty(d); void loadGame(d); }} />
+        <DifficultyPicker
+          value={difficulty}
+          onChange={(d) => {
+            setDifficulty(d);
+            void loadGame(d);
+          }}
+        />
         <div className="text-xs text-ink-faint">本轮:{modeInfo.subject}</div>
       </div>
       <div className="flex items-center justify-between text-sm text-ink-soft">
         <div>用时: {formatTime(elapsedMs)}</div>
         <div>错配: {mismatches}</div>
-        <button type="button" onClick={() => setPhase('finished')} className="text-ink-faint hover:underline">
+        <button
+          type="button"
+          onClick={() => setPhase('finished')}
+          className="text-ink-faint hover:underline"
+        >
           放弃
         </button>
       </div>
@@ -228,30 +247,28 @@ export function ToneRadicalGame() {
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-3">
-        {mode === 'tone' && toneOrder.map((t) => (
-          <ToneToken
-            key={t}
-            tone={t}
-            matched={matchedValues.has(String(t))}
-            onDragStart={() => {}}
-          />
-        ))}
-        {mode === 'radical' && radicalOrder.map((r) => (
-          <RadicalToken
-            key={r}
-            radical={r}
-            matched={matchedValues.has(r)}
-            onDragStart={() => {}}
-          />
-        ))}
-        {mode === 'pinyin' && pinyinOrder.map((p) => (
-          <PinyinToken
-            key={p}
-            pinyin={p}
-            matched={matchedValues.has(p)}
-            onDragStart={() => {}}
-          />
-        ))}
+        {mode === 'tone' &&
+          toneOrder.map((t) => (
+            <ToneToken
+              key={t}
+              tone={t}
+              matched={matchedValues.has(String(t))}
+              onDragStart={() => {}}
+            />
+          ))}
+        {mode === 'radical' &&
+          radicalOrder.map((r) => (
+            <RadicalToken
+              key={r}
+              radical={r}
+              matched={matchedValues.has(r)}
+              onDragStart={() => {}}
+            />
+          ))}
+        {mode === 'pinyin' &&
+          pinyinOrder.map((p) => (
+            <PinyinToken key={p} pinyin={p} matched={matchedValues.has(p)} onDragStart={() => {}} />
+          ))}
       </div>
     </div>
   );

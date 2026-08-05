@@ -34,7 +34,14 @@ export function InitDbForm() {
         return;
       }
       // Clear password from state so a back-nav doesn't render the value.
-      setCfg({ ...DEFAULT_DB, host: cfg.host, port: cfg.port, user: cfg.user, database: cfg.database, password: '' });
+      setCfg({
+        ...DEFAULT_DB,
+        host: cfg.host,
+        port: cfg.port,
+        user: cfg.user,
+        database: cfg.database,
+        password: '',
+      });
       router.push('/init/admin');
     } catch (e) {
       setErr((e as Error).message);
@@ -54,12 +61,18 @@ export function InitDbForm() {
           {err}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6"
+      >
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-ink-soft">主机</label>
             <input
-              type="text" required autoComplete="off" value={cfg.host}
+              type="text"
+              required
+              autoComplete="off"
+              value={cfg.host}
               onChange={(e) => setCfg({ ...cfg, host: e.target.value })}
               placeholder="例如 127.0.0.1 或 db.example.com"
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
@@ -68,7 +81,12 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">端口</label>
             <input
-              type="number" required min={1} max={65535} autoComplete="off" value={cfg.port}
+              type="number"
+              required
+              min={1}
+              max={65535}
+              autoComplete="off"
+              value={cfg.port}
               onChange={(e) => setCfg({ ...cfg, port: Number(e.target.value) })}
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
             />
@@ -76,7 +94,10 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">Schema</label>
             <input
-              type="text" required autoComplete="off" value={cfg.database}
+              type="text"
+              required
+              autoComplete="off"
+              value={cfg.database}
               onChange={(e) => setCfg({ ...cfg, database: e.target.value })}
               placeholder="pinyin"
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
@@ -85,7 +106,10 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">用户名</label>
             <input
-              type="text" required autoComplete="off" value={cfg.user}
+              type="text"
+              required
+              autoComplete="off"
+              value={cfg.user}
               onChange={(e) => setCfg({ ...cfg, user: e.target.value })}
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
             />
@@ -93,7 +117,9 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">密码</label>
             <input
-              type="password" autoComplete="current-password" value={cfg.password}
+              type="password"
+              autoComplete="current-password"
+              value={cfg.password}
               onChange={(e) => setCfg({ ...cfg, password: e.target.value })}
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
             />
@@ -103,7 +129,8 @@ export function InitDbForm() {
           连接测试会自动创建 schema (如果不存在)。生产环境请使用专用账号,不要 root。
         </p>
         <button
-          type="submit" disabled={busy}
+          type="submit"
+          disabled={busy}
           className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
         >
           {busy ? '测试连接…' : '测试连接并保存'}

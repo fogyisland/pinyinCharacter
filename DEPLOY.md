@@ -5,12 +5,12 @@
 
 ## 1. 服务器最小要求
 
-| 资源 | 最低 | 推荐 | 说明 |
-|---|---|---|---|
-| CPU | 1 vCPU | 2+ vCPU | PDF 生成 / 批量 AI 调用时峰值 |
-| RAM | 2 GB | 4+ GB | Next.js 进程 + mysql2 连接池 (limit 10) |
-| 磁盘 | 5 GB | 20+ GB | Up/ 438M + node_modules/ ~400M + MySQL 数据 |
-| MySQL | 5.7+ | 8.0+ | 字符集 `utf8mb4` / 排序 `utf8mb4_unicode_ci` |
+| 资源  | 最低   | 推荐    | 说明                                         |
+| ----- | ------ | ------- | -------------------------------------------- |
+| CPU   | 1 vCPU | 2+ vCPU | PDF 生成 / 批量 AI 调用时峰值                |
+| RAM   | 2 GB   | 4+ GB   | Next.js 进程 + mysql2 连接池 (limit 10)      |
+| 磁盘  | 5 GB   | 20+ GB  | Up/ 438M + node_modules/ ~400M + MySQL 数据  |
+| MySQL | 5.7+   | 8.0+    | 字符集 `utf8mb4` / 排序 `utf8mb4_unicode_ci` |
 
 ## 2. 部署步骤
 
@@ -37,6 +37,7 @@ HOST=127.0.0.1 npm start    # 只 listen 在 127.0.0.1,反代访问
 ```
 
 **首次启动**访问 `http://your-server/` 会被中间件重定向到 `/init`,按向导三步走:
+
 1. 数据库连接
 2. 管理员账号
 3. 初始化数据 (poems / sutras / chars / activate singleton)
@@ -76,9 +77,10 @@ client_max_body_size 500m;
 ### 3.4 超时时间
 
 下列端点耗时较长:
-- `/api/tts`  `maxDuration = 30s` (TTS 合成)
-- 字帖 PDF 生成  3-10s
-- `/api/worksheets/.../can-print`  Edge TTS WebSocket 流式
+
+- `/api/tts` `maxDuration = 30s` (TTS 合成)
+- 字帖 PDF 生成 3-10s
+- `/api/worksheets/.../can-print` Edge TTS WebSocket 流式
 
 ```nginx
 proxy_read_timeout 120s;
@@ -186,15 +188,15 @@ server {
 
 ## 5. 部署后自检清单
 
-| # | 检查 | 怎么验 |
-|---|---|---|
-| 1 | `setup_completed` cookie 是 `Secure` | 浏览器 DevTools → Application → Cookies,看 `Secure` 列打勾 |
-| 2 | 静态资源被反代 cache | `curl -I https://your.domain/strokes/一.png` 看到 `Cache-Control: public, immutable` |
-| 3 | WebSocket 通 | 打开 `/worksheet/...` 打印页,看 console **无** `WebSocket connection failed` |
-| 4 | audit_log 记的是真 IP | 登录后到 `/admin/downloads`,看 IP 列是你的真实 IP (不是 `127.0.0.1` 也不是反代 IP) |
-| 5 | `/api/init/*` 被限流 | 用脚本狂发,429 出现 |
-| 6 | sitemap 域名对 | `https://your.domain/sitemap.xml` 里的 URL 都是 `https://your.domain/...` 不是 `localhost:3000` (要先去 admin 后台配 `NEXT_PUBLIC_SITE_URL`) |
-| 7 | `/init` 三步全跑通 | 浏览器走完 DB → admin → seed 三步,看到绿色"完成"卡 |
+| #   | 检查                                 | 怎么验                                                                                                                                       |
+| --- | ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `setup_completed` cookie 是 `Secure` | 浏览器 DevTools → Application → Cookies,看 `Secure` 列打勾                                                                                   |
+| 2   | 静态资源被反代 cache                 | `curl -I https://your.domain/strokes/一.png` 看到 `Cache-Control: public, immutable`                                                         |
+| 3   | WebSocket 通                         | 打开 `/worksheet/...` 打印页,看 console **无** `WebSocket connection failed`                                                                 |
+| 4   | audit_log 记的是真 IP                | 登录后到 `/admin/downloads`,看 IP 列是你的真实 IP (不是 `127.0.0.1` 也不是反代 IP)                                                           |
+| 5   | `/api/init/*` 被限流                 | 用脚本狂发,429 出现                                                                                                                          |
+| 6   | sitemap 域名对                       | `https://your.domain/sitemap.xml` 里的 URL 都是 `https://your.domain/...` 不是 `localhost:3000` (要先去 admin 后台配 `NEXT_PUBLIC_SITE_URL`) |
+| 7   | `/init` 三步全跑通                   | 浏览器走完 DB → admin → seed 三步,看到绿色"完成"卡                                                                                           |
 
 ## 6. 常见踩坑
 
@@ -240,28 +242,29 @@ npx tsx scripts/migrate.ts
 
 升级后如果遇到字段缺失 / ENUM 报错,对照下表确认是否缺迁移。所有迁移在 `scripts/migrations/` 下,文件名前缀是日期 (YYYY-MM-DD-...):
 
-| 日期 | 文件 | 内容 | 影响 |
-|---|---|---|---|
-| 2026-06-18 | `...-cell-style-cross.sql` | `worksheets.cell_style` 加 `cross` | 老库保存 worksheet 时 ENUM 报错 |
-| 2026-06-18 | `...-multi-worksheet-print-feature.sql` | 字帖批量打印相关 | 不跑功能缺失 |
-| 2026-06-19 | `...-brush-paper-size.sql` | `worksheets.paper_size` 加 brush-12/24/28 | 选毛笔纸型保存失败 |
-| 2026-06-19 | `...-sutra-copy-progress.sql` | 新增 `sutra_copy_progress` 表 | 抄经模式进度保存失败 |
-| 2026-06-20 | `...-classics.sql` | `classics` 加 category/era/source 列 | 古籍列表缺失分类 |
-| 2026-06-20 | `...-worksheet-tool-presentation-split.sql` | cell_style ENUM 加 brush-/pen-square/cross | 选新格子样式保存失败 |
-| 2026-06-22 | `...-cell-style-trace.sql` | cell_style ENUM 加 brush-trace-square/cross | 描红模式保存失败 |
-| 2026-06-23 | `...-downloads-user-agent.sql` | `downloads` 加 `user_agent` 列 | 审计溯源不齐 |
-| 2026-06-23 | `...-email-send-history.sql` | 新增 `email_send_history` 表 | 邮件发送历史缺失 |
-| 2026-06-23 | `...-scheduler-run-history.sql` | 新增 `scheduler_run_history` 表 | 定时任务执行历史缺失 |
-| 2026-06-25 | `...-platform-activation.sql` | 新增 `activate` 表(平台激活 + 云端心跳) | 多副本激活锁缺失 |
-| 2026-06-27 | `...-email-campaigns.sql` | 新增 `email_campaigns` + `email_campaign_recipients` + `users.marketing_opt_out` 列 | 营销广播功能缺失 |
-| 2026-06-27 | `...-email-verification.sql` | 新增 `email_verifications` 表 | 邮箱验证功能缺失 |
-| 2026-06-28 | `...-era-font-defaults.sql` | 写入 5 条 era.*.font 默认 app_config | 字源朝代字体配置空 |
-| 2026-06-29 | `...-audio-tracks.sql` | 新增 `audio_tracks` 表 | 佛经音频播放器缺失 |
-| 2026-06-29 | `...-playlists.sql` | 新增 `playlists` + `playlist_tracks` 表 | 佛经音频播放列表缺失 |
-| 2026-07-04 | `...-hsk-level.sql` | `chars` 加 `hsk_level` TINYINT 列 + 索引 | `/game` HSK 1-6 难度筛选全空 |
-| 2026-07-05 | `...-notes.sql` | CREATE notes + notes_rate_limits | 留言笔记功能 |
+| 日期       | 文件                                        | 内容                                                                                | 影响                            |
+| ---------- | ------------------------------------------- | ----------------------------------------------------------------------------------- | ------------------------------- |
+| 2026-06-18 | `...-cell-style-cross.sql`                  | `worksheets.cell_style` 加 `cross`                                                  | 老库保存 worksheet 时 ENUM 报错 |
+| 2026-06-18 | `...-multi-worksheet-print-feature.sql`     | 字帖批量打印相关                                                                    | 不跑功能缺失                    |
+| 2026-06-19 | `...-brush-paper-size.sql`                  | `worksheets.paper_size` 加 brush-12/24/28                                           | 选毛笔纸型保存失败              |
+| 2026-06-19 | `...-sutra-copy-progress.sql`               | 新增 `sutra_copy_progress` 表                                                       | 抄经模式进度保存失败            |
+| 2026-06-20 | `...-classics.sql`                          | `classics` 加 category/era/source 列                                                | 古籍列表缺失分类                |
+| 2026-06-20 | `...-worksheet-tool-presentation-split.sql` | cell_style ENUM 加 brush-/pen-square/cross                                          | 选新格子样式保存失败            |
+| 2026-06-22 | `...-cell-style-trace.sql`                  | cell_style ENUM 加 brush-trace-square/cross                                         | 描红模式保存失败                |
+| 2026-06-23 | `...-downloads-user-agent.sql`              | `downloads` 加 `user_agent` 列                                                      | 审计溯源不齐                    |
+| 2026-06-23 | `...-email-send-history.sql`                | 新增 `email_send_history` 表                                                        | 邮件发送历史缺失                |
+| 2026-06-23 | `...-scheduler-run-history.sql`             | 新增 `scheduler_run_history` 表                                                     | 定时任务执行历史缺失            |
+| 2026-06-25 | `...-platform-activation.sql`               | 新增 `activate` 表(平台激活 + 云端心跳)                                             | 多副本激活锁缺失                |
+| 2026-06-27 | `...-email-campaigns.sql`                   | 新增 `email_campaigns` + `email_campaign_recipients` + `users.marketing_opt_out` 列 | 营销广播功能缺失                |
+| 2026-06-27 | `...-email-verification.sql`                | 新增 `email_verifications` 表                                                       | 邮箱验证功能缺失                |
+| 2026-06-28 | `...-era-font-defaults.sql`                 | 写入 5 条 era.*.font 默认 app_config                                                | 字源朝代字体配置空              |
+| 2026-06-29 | `...-audio-tracks.sql`                      | 新增 `audio_tracks` 表                                                              | 佛经音频播放器缺失              |
+| 2026-06-29 | `...-playlists.sql`                         | 新增 `playlists` + `playlist_tracks` 表                                             | 佛经音频播放列表缺失            |
+| 2026-07-04 | `...-hsk-level.sql`                         | `chars` 加 `hsk_level` TINYINT 列 + 索引                                            | `/game` HSK 1-6 难度筛选全空    |
+| 2026-07-05 | `...-notes.sql`                             | CREATE notes + notes_rate_limits                                                    | 留言笔记功能                    |
 
 **不在 SQL 迁移里的变更** (运行时行为变化,不需要 SQL):
+
 - `data/content/<char>.json` 成为内容单一来源 (取代 chars 表的内容列)
 - `classics` 表的 `chunks` / `chunk_count` 列已 drop,内容迁到 `data/classics/<slug>.json`
 - `poems` 表同样迁到 `data/poems/<id>.json`(不影响字段,只是数据物理位置变化)

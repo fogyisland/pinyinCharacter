@@ -86,16 +86,22 @@ async function main(): Promise<void> {
         console.log(`[enrich-sutra-pinyin] skip ${slug}: already has pinyin`);
         skippedCount += 1;
       } else {
-        console.log(`[enrich-sutra-pinyin] ${slug}: ${result.lines} lines, ${result.chars} chars enriched`);
+        console.log(
+          `[enrich-sutra-pinyin] ${slug}: ${result.lines} lines, ${result.chars} chars enriched`,
+        );
         enrichedCount += 1;
       }
     } catch (err) {
       console.warn(`[enrich-sutra-pinyin] ${slug} failed: ${(err as Error).message}`);
     }
   }
-  console.log(`[enrich-sutra-pinyin] done: ${enrichedCount} enriched, ${skippedCount} skipped, ${slugs.length - enrichedCount - skippedCount} failed`);
+  console.log(
+    `[enrich-sutra-pinyin] done: ${enrichedCount} enriched, ${skippedCount} skipped, ${slugs.length - enrichedCount - skippedCount} failed`,
+  );
   if (enrichedCount === 0 && skippedCount > 0) {
-    console.log('[enrich-sutra-pinyin] all slugs already enriched — no work to do (idempotent re-run).');
+    console.log(
+      '[enrich-sutra-pinyin] all slugs already enriched — no work to do (idempotent re-run).',
+    );
   }
 }
 

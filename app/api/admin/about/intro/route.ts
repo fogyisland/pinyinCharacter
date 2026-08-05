@@ -26,7 +26,11 @@ export async function POST(req: NextRequest) {
     await writeAudit({
       event: 'admin_about_intro_regenerated',
       userId: auth.user.id,
-      metadata: { charCount: result.text.length, durationMs: result.durationMs, model: result.model },
+      metadata: {
+        charCount: result.text.length,
+        durationMs: result.durationMs,
+        model: result.model,
+      },
     });
     return NextResponse.json({
       ok: true,

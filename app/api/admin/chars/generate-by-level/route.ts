@@ -4,11 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 import { getConfig } from '@/lib/config';
 import { adminGenerateByLevelSchema } from '@/lib/validators';
-import {
-  processOneField,
-  emptyPerField,
-  type FieldName,
-} from '@/lib/admin-char-gen';
+import { processOneField, emptyPerField, type FieldName } from '@/lib/admin-char-gen';
 import { logUserAction } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +20,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const parsed = adminGenerateByLevelSchema.safeParse(body);
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
 
     const { level, fields, offset, limit, concurrency } = parsed.data;
     const requested: FieldName[] = (Object.keys(fields) as FieldName[]).filter(
@@ -34,10 +31,9 @@ export async function POST(req: NextRequest) {
     const pool = getPool();
     const model = (await getConfig('ai.model')) ?? 'gpt-4o-mini';
 
-    const [countRows] = await pool.query<any[]>(
-      `SELECT COUNT(*) AS n FROM chars WHERE level = ?`,
-      [level],
-    );
+    const [countRows] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM chars WHERE level = ?`, [
+      level,
+    ]);
     const totalChars = Number(countRows[0].n);
 
     const startMs = Date.now();
@@ -89,7 +85,9 @@ export async function POST(req: NextRequest) {
     }
 
     const nextOffset = offset + chars.length;
-    let generatedTotal = 0, skippedTotal = 0, errorsTotal = 0;
+    let generatedTotal = 0,
+      skippedTotal = 0,
+      errorsTotal = 0;
     for (const r of Object.values(perField)) {
       generatedTotal += r.generated;
       skippedTotal += r.skipped;

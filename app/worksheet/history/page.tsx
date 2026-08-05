@@ -25,10 +25,7 @@ export default async function WorksheetHistoryPage() {
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
         <div className="mb-4 flex items-end justify-between gap-3">
           <SectionTitle subtitle="保存的字帖，可继续编辑或打印">我的字帖</SectionTitle>
-          <Link
-            href="/worksheet"
-            className="btn-seal text-sm shrink-0"
-          >
+          <Link href="/worksheet" className="btn-seal text-sm shrink-0">
             新建字帖
           </Link>
         </div>

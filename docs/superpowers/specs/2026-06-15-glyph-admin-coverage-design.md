@@ -48,9 +48,9 @@
 
 **不新增表**。读两个源:
 
-| 源 | 字段 | 量级 |
-|---|---|---|
-| `chars` | `id, char, level, stroke_count, ...` | 8105 行 |
+| 源                           | 字段                                         | 量级        |
+| ---------------------------- | -------------------------------------------- | ----------- |
+| `chars`                      | `id, char, level, stroke_count, ...`         | 8105 行     |
 | `public/strokes/{char}.json` | `{strokes: string[], medians: number[][][]}` | 6866 个文件 |
 
 **新模块** `lib/glyph-coverage.ts` (服务端专用):
@@ -59,20 +59,20 @@
 export type GlyphFilter = 'missing' | 'orphan' | 'all';
 
 export interface GlyphDiffRow {
-  char: string;       // 文件名也用 char 字段存
+  char: string; // 文件名也用 char 字段存
   level: number | null; // 孤儿文件没有 level
 }
 
 export interface GlyphCoverage {
-  dbTotal: number;       // SELECT COUNT(*) FROM chars
-  fileTotal: number;     // fs.readdir 计数
-  matched: number;       // |DB ∩ files|
+  dbTotal: number; // SELECT COUNT(*) FROM chars
+  fileTotal: number; // fs.readdir 计数
+  matched: number; // |DB ∩ files|
   missingInFiles: number; // DB - files
-  orphans: number;        // files - DB
+  orphans: number; // files - DB
   // 分页 + 当前 filter 切片:
   missingRows: GlyphDiffRow[];
   orphanRows: GlyphDiffRow[];
-  totalMissing: number;   // unfiltered
+  totalMissing: number; // unfiltered
   totalOrphans: number;
   page: number;
   pageSize: number;
@@ -161,7 +161,7 @@ const ITEMS = [
   { href: '/admin', label: '仪表盘', exact: true },
   { href: '/admin/users', label: '用户' },
   { href: '/admin/chars', label: '字典 / 字源' },
-  { href: '/admin/glyphs', label: '字形数据' },     // ← 新增
+  { href: '/admin/glyphs', label: '字形数据' }, // ← 新增
   { href: '/admin/logs', label: '日志' },
   { href: '/admin/downloads', label: '下载' },
   { href: '/admin/ai', label: 'AI' },
@@ -175,27 +175,29 @@ const ITEMS = [
 
 ## 4. 错误处理
 
-| 情况 | 处理 |
-|---|---|
-| `fs.readdir` 失败 (路径不存在/权限) | 抛错 → Next error boundary;典型情况下路径总存在,失败说明部署坏了 |
-| `chars` 表 SELECT 失败 | 抛错 → error boundary (统一行为) |
-| `pageSize` 不是合法值 | 用 zod parse,失败回退默认 50 |
-| `filter` 不是合法值 | zod 校验,回退 `missing` |
-| `page < 1` | clamp 到 1 |
-| `page > totalPages` | clamp 到 `totalPages` (若无数据则停在 1) |
-| 字符不在 BMP (U+10000+) | `encodeURIComponent` 在 `StrokeOrderCard` 里已处理;admin 页面用 `encodeURIComponent` 后再 `decodeURIComponent` 显示 |
+| 情况                                | 处理                                                                                                                |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `fs.readdir` 失败 (路径不存在/权限) | 抛错 → Next error boundary;典型情况下路径总存在,失败说明部署坏了                                                    |
+| `chars` 表 SELECT 失败              | 抛错 → error boundary (统一行为)                                                                                    |
+| `pageSize` 不是合法值               | 用 zod parse,失败回退默认 50                                                                                        |
+| `filter` 不是合法值                 | zod 校验,回退 `missing`                                                                                             |
+| `page < 1`                          | clamp 到 1                                                                                                          |
+| `page > totalPages`                 | clamp 到 `totalPages` (若无数据则停在 1)                                                                            |
+| 字符不在 BMP (U+10000+)             | `encodeURIComponent` 在 `StrokeOrderCard` 里已处理;admin 页面用 `encodeURIComponent` 后再 `decodeURIComponent` 显示 |
 
 ---
 
 ## 5. 测试
 
 **单元** (`tests/unit/glyph-coverage.test.ts`):
+
 - 4 个 mock 场景:全匹配 / 全 missing / 全 orphan / 部分匹配
 - 边界:空 DB、空目录、单字 BMP / 扩展 A
 - 排序:`missing` 按 level ASC 排序正确;`orphans` 按 codepoint 排序正确
 - 分页:切片准确,`pageSize=50, page=2` 返回 50-99
 
 **集成** (可选,`tests/integration/admin-glyphs.test.ts`):
+
 - 登录 admin → GET `/admin/glyphs` 200,返回的 `matched + missingInFiles === dbTotal`
 - GET `/admin/glyphs?filter=orphan&pageSize=10` 200,`orphanRows.length <= 10`
 - 未登录 → 302 redirect to login
@@ -214,12 +216,12 @@ const ITEMS = [
 
 ## 7. 风险
 
-| 风险 | 缓解 |
-|---|---|
-| `fs.readdir('public/strokes')` 慢 (目录很大) | 6866 个文件对 ext4 几乎是瞬时;加 `unstable_cache` 兜底 |
-| 字符集 (BMP / 扩展 A) URL 编码 | 复用 `encodeURIComponent` 规则;admin 表格直接显示字符,不嵌 URL |
-| Sidebar 顺序调整破坏现有快照测试 | 暂无快照测试;若有,需要同步更新 |
-| `getGlyphCoverage` 在 RSC 中调用 = 每个用户访问都跑 | admin-only,流量极低;缓存后实际开销 <5ms |
+| 风险                                                | 缓解                                                           |
+| --------------------------------------------------- | -------------------------------------------------------------- |
+| `fs.readdir('public/strokes')` 慢 (目录很大)        | 6866 个文件对 ext4 几乎是瞬时;加 `unstable_cache` 兜底         |
+| 字符集 (BMP / 扩展 A) URL 编码                      | 复用 `encodeURIComponent` 规则;admin 表格直接显示字符,不嵌 URL |
+| Sidebar 顺序调整破坏现有快照测试                    | 暂无快照测试;若有,需要同步更新                                 |
+| `getGlyphCoverage` 在 RSC 中调用 = 每个用户访问都跑 | admin-only,流量极低;缓存后实际开销 <5ms                        |
 
 ---
 

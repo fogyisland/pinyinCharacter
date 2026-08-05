@@ -34,6 +34,7 @@
 ## File Structure
 
 **New files (6 source + 3 test):**
+
 - `scripts/migrations/2026-06-19-sutra-copy-progress.sql` — DDL
 - `scripts/migrate-sutra-copy-progress.ts` — one-shot migration runner
 - `lib/sutra-copy-progress.ts` — server-only DB I/O
@@ -45,6 +46,7 @@
 - `tests/integration/api/sutra-copy-progress.test.ts`
 
 **Modified files (2):**
+
 - `components/sutra/SutraReadingClient.tsx` — add copyMode state + toggle + swap view; pass `key={chunk.id}` to force remount on chunk switch
 - `app/sutra/[id]/page.tsx` — pass `userId` and `sutraId` to `SutraReadingClient`; suppress Print + SaveAsWorksheet + ReadAloud buttons when `copyMode === true` (lift state or use a context, see Task 6)
 
@@ -53,10 +55,12 @@
 ### Task 1: Migration — `sutra_copy_progress` table
 
 **Files:**
+
 - Create: `scripts/migrations/2026-06-19-sutra-copy-progress.sql`
 - Create: `scripts/migrate-sutra-copy-progress.ts`
 
 **Interfaces:**
+
 - Produces: MySQL table `sutra_copy_progress` (PK `(user_id, sutra_id, chunk_idx)`, JSON `written_chars`, timestamps).
 
 - [ ] **Step 1: Write the SQL**
@@ -98,11 +102,14 @@ import { getPool, closePool } from '../lib/db';
 async function main() {
   const sql = readFileSync(
     join(__dirname, 'migrations', '2026-06-19-sutra-copy-progress.sql'),
-    'utf8'
+    'utf8',
   );
   // Split on `;` boundary for clean execution (single DDL block, but be safe).
   const pool = getPool();
-  for (const stmt of sql.split(/;\s*$/m).map(s => s.trim()).filter(Boolean)) {
+  for (const stmt of sql
+    .split(/;\s*$/m)
+    .map((s) => s.trim())
+    .filter(Boolean)) {
     await pool.query(stmt);
   }
   // Confirm by selecting the table.
@@ -112,7 +119,10 @@ async function main() {
   await closePool();
 }
 
-main().catch(err => { console.error(err); process.exit(1); });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
 ```
 
 - [ ] **Step 3: Run against local MySQL**
@@ -151,10 +161,12 @@ git commit -m "feat(sutra): add sutra_copy_progress table"
 ### Task 2: `lib/sutra-copy-progress.ts` (TDD)
 
 **Files:**
+
 - Create: `lib/sutra-copy-progress.ts`
 - Test: `tests/unit/lib/sutra-copy-progress.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `interface CopyProgress { writtenChars: boolean[]; startedAt: Date; updatedAt: Date; completedAt: Date | null; }`
   - `getProgress(userId, sutraId, chunkIdx): Promise<CopyProgress | null>`
@@ -172,7 +184,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const queryMock = vi.fn();
 const executeMock = vi.fn();
 vi.mock('@/lib/db', () => ({
-  getPool: () => ({ query: (...a: unknown[]) => queryMock(...a), execute: (...a: unknown[]) => executeMock(...a) }),
+  getPool: () => ({
+    query: (...a: unknown[]) => queryMock(...a),
+    execute: (...a: unknown[]) => executeMock(...a),
+  }),
 }));
 
 import {
@@ -195,12 +210,16 @@ describe('getProgress', () => {
   });
 
   it('parses written_chars JSON into boolean[]', async () => {
-    queryMock.mockResolvedValueOnce([[{
-      written_chars: JSON.stringify([true, false, true]),
-      started_at: new Date('2026-06-19T08:00:00Z'),
-      updated_at: new Date('2026-06-19T08:30:00Z'),
-      completed_at: null,
-    }]]);
+    queryMock.mockResolvedValueOnce([
+      [
+        {
+          written_chars: JSON.stringify([true, false, true]),
+          started_at: new Date('2026-06-19T08:00:00Z'),
+          updated_at: new Date('2026-06-19T08:30:00Z'),
+          completed_at: null,
+        },
+      ],
+    ]);
     const r = await getProgress(1, 2, 0);
     expect(r).toEqual({
       writtenChars: [true, false, true],
@@ -232,9 +251,13 @@ describe('upsertProgress', () => {
 
 describe('markComplete', () => {
   it('updates completed_at when stored row is all-true', async () => {
-    queryMock.mockResolvedValueOnce([[{
-      written_chars: JSON.stringify([true, true, true]),
-    }]]);
+    queryMock.mockResolvedValueOnce([
+      [
+        {
+          written_chars: JSON.stringify([true, true, true]),
+        },
+      ],
+    ]);
     executeMock.mockResolvedValueOnce([{ affectedRows: 1 }]);
     await markComplete(1, 2, 0);
     expect(executeMock).toHaveBeenCalledTimes(1);
@@ -250,9 +273,13 @@ describe('markComplete', () => {
   });
 
   it('no-ops when any char is un-written', async () => {
-    queryMock.mockResolvedValueOnce([[{
-      written_chars: JSON.stringify([true, false, true]),
-    }]]);
+    queryMock.mockResolvedValueOnce([
+      [
+        {
+          written_chars: JSON.stringify([true, false, true]),
+        },
+      ],
+    ]);
     await markComplete(1, 2, 0);
     expect(executeMock).not.toHaveBeenCalled();
   });
@@ -310,14 +337,14 @@ function parseWrittenChars(raw: string | boolean[]): boolean[] {
 export async function getProgress(
   userId: number,
   sutraId: number,
-  chunkIdx: number
+  chunkIdx: number,
 ): Promise<CopyProgress | null> {
   const [rows] = await getPool().query<any[]>(
     `SELECT written_chars, started_at, updated_at, completed_at
        FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?
        LIMIT 1`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
   if (rows.length === 0) return null;
   const r = rows[0] as DbRow;
@@ -334,7 +361,7 @@ export async function upsertProgress(
   sutraId: number,
   chunkIdx: number,
   writtenChars: boolean[],
-  opts: { completedAt?: Date | null } = {}
+  opts: { completedAt?: Date | null } = {},
 ): Promise<void> {
   const completedAt = opts.completedAt === undefined ? null : opts.completedAt;
   await getPool().execute(
@@ -344,19 +371,19 @@ export async function upsertProgress(
      ON DUPLICATE KEY UPDATE
        written_chars = VALUES(written_chars),
        completed_at  = VALUES(completed_at)`,
-    [userId, sutraId, chunkIdx, JSON.stringify(writtenChars), completedAt]
+    [userId, sutraId, chunkIdx, JSON.stringify(writtenChars), completedAt],
   );
 }
 
 export async function markComplete(
   userId: number,
   sutraId: number,
-  chunkIdx: number
+  chunkIdx: number,
 ): Promise<void> {
   const [rows] = await getPool().query<any[]>(
     `SELECT written_chars FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ? LIMIT 1`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
   if (rows.length === 0) return;
   const written = parseWrittenChars(rows[0].written_chars);
@@ -365,19 +392,19 @@ export async function markComplete(
     `UPDATE sutra_copy_progress
        SET completed_at = NOW()
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
 }
 
 export async function deleteProgress(
   userId: number,
   sutraId: number,
-  chunkIdx: number
+  chunkIdx: number,
 ): Promise<void> {
   await getPool().execute(
     `DELETE FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
 }
 ```
@@ -410,10 +437,12 @@ git commit -m "feat(sutra): add copy-progress lib with TDD"
 ### Task 3: API route `GET` / `POST /api/sutra/[id]/copy-progress`
 
 **Files:**
+
 - Create: `app/api/sutra/[id]/copy-progress/route.ts`
 - Test: `tests/integration/api/sutra-copy-progress.test.ts`
 
 **Interfaces:**
+
 - `GET ?chunk=N` → `{ ok: true, data: { progress: CopyProgress | null } }`
 - `POST { chunkIdx, writtenChars, completed?: bool, reset?: bool }` → `{ ok: true, data: { saved: true } }`
 - Both require `requireUser()` (401 anonymous).
@@ -435,8 +464,12 @@ const testCookieStore: Record<string, Bag> = {};
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: (name: string) => testCookieStore[name],
-    set: (opts: any) => { testCookieStore[opts.name] = { value: opts.value }; },
-    delete: (name: string) => { delete testCookieStore[name]; },
+    set: (opts: any) => {
+      testCookieStore[opts.name] = { value: opts.value };
+    },
+    delete: (name: string) => {
+      delete testCookieStore[name];
+    },
   }),
 }));
 
@@ -452,9 +485,17 @@ let userId: number;
 let userToken: string;
 let sutraId: number;
 
-function req(method: string, path: string, body: object | null, cookie: string | null = userToken): NextRequest {
+function req(
+  method: string,
+  path: string,
+  body: object | null,
+  cookie: string | null = userToken,
+): NextRequest {
   const headers: Record<string, string> = { cookie: `auth_token=${cookie}` };
-  const init: { method: string; headers: Record<string, string>; body?: string } = { method, headers };
+  const init: { method: string; headers: Record<string, string>; body?: string } = {
+    method,
+    headers,
+  };
   if (body) {
     headers['content-type'] = 'application/json';
     init.body = JSON.stringify(body);
@@ -464,7 +505,10 @@ function req(method: string, path: string, body: object | null, cookie: string |
 
 function anonReq(method: string, path: string, body: object | null = null): NextRequest {
   const headers: Record<string, string> = {};
-  const init: { method: string; headers: Record<string, string>; body?: string } = { method, headers };
+  const init: { method: string; headers: Record<string, string>; body?: string } = {
+    method,
+    headers,
+  };
   if (body) {
     headers['content-type'] = 'application/json';
     init.body = JSON.stringify(body);
@@ -474,7 +518,8 @@ function anonReq(method: string, path: string, body: object | null = null): Next
 
 d('sutra copy-progress API', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -486,12 +531,13 @@ d('sutra copy-progress API', () => {
     userToken = await signSession({ id: userId, username: 'usr_copy' });
 
     await pool.query(`DELETE FROM sutras WHERE slug = 'copytest'`);
-    const [s] = await pool.query<any>(
-      `INSERT INTO sutras (title, slug, chunks) VALUES (?, ?, ?)`,
-      ['抄经测试', 'copytest', JSON.stringify([
+    const [s] = await pool.query<any>(`INSERT INTO sutras (title, slug, chunks) VALUES (?, ?, ?)`, [
+      '抄经测试',
+      'copytest',
+      JSON.stringify([
         { id: 0, label: '全段', content: ['观自在菩萨', '行深般若波罗蜜多时'], pinyin: [] },
-      ])]
-    );
+      ]),
+    ]);
     sutraId = Number(s.insertId);
   });
 
@@ -503,17 +549,27 @@ d('sutra copy-progress API', () => {
   });
 
   it('GET 401 anonymous', async () => {
-    const r = await GET(anonReq('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await GET(anonReq('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, {
+      params: Promise.resolve({ id: String(sutraId) }),
+    });
     expect(r.status).toBe(401);
   });
 
   it('POST 401 anonymous', async () => {
-    const r = await POST(anonReq('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: [true] }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(
+      anonReq('POST', `/api/sutra/${sutraId}/copy-progress`, {
+        chunkIdx: 0,
+        writtenChars: [true],
+      }) as any,
+      { params: Promise.resolve({ id: String(sutraId) }) },
+    );
     expect(r.status).toBe(401);
   });
 
   it('GET 200 with progress=null for fresh user', async () => {
-    const r = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, {
+      params: Promise.resolve({ id: String(sutraId) }),
+    });
     expect(r.status).toBe(200);
     const body = await r.json();
     expect(body.ok).toBe(true);
@@ -521,35 +577,69 @@ d('sutra copy-progress API', () => {
   });
 
   it('POST 200 upserts; subsequent GET returns same array', async () => {
-    const r1 = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: [true, false, true, true] }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r1 = await POST(
+      req('POST', `/api/sutra/${sutraId}/copy-progress`, {
+        chunkIdx: 0,
+        writtenChars: [true, false, true, true],
+      }) as any,
+      { params: Promise.resolve({ id: String(sutraId) }) },
+    );
     expect(r1.status).toBe(200);
-    const r2 = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r2 = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, {
+      params: Promise.resolve({ id: String(sutraId) }),
+    });
     const body = await r2.json();
     expect(body.data.progress.writtenChars).toEqual([true, false, true, true]);
     expect(body.data.progress.completedAt).toBeNull();
   });
 
   it('POST 400 on out-of-range chunkIdx', async () => {
-    const r = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 99, writtenChars: [true] }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(
+      req('POST', `/api/sutra/${sutraId}/copy-progress`, {
+        chunkIdx: 99,
+        writtenChars: [true],
+      }) as any,
+      { params: Promise.resolve({ id: String(sutraId) }) },
+    );
     expect(r.status).toBe(400);
   });
 
   it('POST 400 on non-array writtenChars', async () => {
-    const r = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: 'nope' }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(
+      req('POST', `/api/sutra/${sutraId}/copy-progress`, {
+        chunkIdx: 0,
+        writtenChars: 'nope',
+      }) as any,
+      { params: Promise.resolve({ id: String(sutraId) }) },
+    );
     expect(r.status).toBe(400);
   });
 
   it('POST with completed=true sets completed_at when all true', async () => {
-    await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, writtenChars: [true, true, true, true], completed: true }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
-    const r = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    await POST(
+      req('POST', `/api/sutra/${sutraId}/copy-progress`, {
+        chunkIdx: 0,
+        writtenChars: [true, true, true, true],
+        completed: true,
+      }) as any,
+      { params: Promise.resolve({ id: String(sutraId) }) },
+    );
+    const r = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, {
+      params: Promise.resolve({ id: String(sutraId) }),
+    });
     const body = await r.json();
     expect(body.data.progress.completedAt).not.toBeNull();
   });
 
   it('POST reset=true deletes the row', async () => {
-    const r = await POST(req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, reset: true }) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r = await POST(
+      req('POST', `/api/sutra/${sutraId}/copy-progress`, { chunkIdx: 0, reset: true }) as any,
+      { params: Promise.resolve({ id: String(sutraId) }) },
+    );
     expect(r.status).toBe(200);
-    const r2 = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, { params: Promise.resolve({ id: String(sutraId) }) });
+    const r2 = await GET(req('GET', `/api/sutra/${sutraId}/copy-progress?chunk=0`) as any, {
+      params: Promise.resolve({ id: String(sutraId) }),
+    });
     const body = await r2.json();
     expect(body.data.progress).toBeNull();
   });
@@ -580,7 +670,9 @@ import {
   deleteProgress,
 } from '@/lib/sutra-copy-progress';
 
-interface RouteContext { params: Promise<{ id: string }>; }
+interface RouteContext {
+  params: Promise<{ id: string }>;
+}
 
 function parseChunkIdx(url: string): number | null {
   const u = new URL(url);
@@ -618,9 +710,10 @@ export async function POST(req: NextRequest, ctx: RouteContext) {
     const sutraId = Number(idStr);
     if (!Number.isInteger(sutraId) || sutraId <= 0) return badRequest('bad_id', 'invalid sutra id');
 
-    const body = await req.json().catch(() => ({} as any));
+    const body = await req.json().catch(() => ({}) as any);
     const chunkIdx = Number(body?.chunkIdx);
-    if (!Number.isInteger(chunkIdx) || chunkIdx < 0) return badRequest('bad_chunk', 'chunkIdx invalid');
+    if (!Number.isInteger(chunkIdx) || chunkIdx < 0)
+      return badRequest('bad_chunk', 'chunkIdx invalid');
 
     const sutra = await getSutra(sutraId);
     if (!sutra) return notFound('sutra_not_found', 'sutra not found');
@@ -677,9 +770,11 @@ git commit -m "feat(sutra): add copy-progress GET/POST API + integration test"
 ### Task 4: `<CopySeal />` component (pure SVG)
 
 **Files:**
+
 - Create: `components/sutra/CopySeal.tsx`
 
 **Interfaces:**
+
 - Props: `{ className?: string }` — purely presentational, no state.
 - Renders an inline SVG: 80×80 viewBox, `<circle r=36 cx=40 cy=40 stroke=#B22B2B strokeWidth=1.5 fill=none/>` + `<text x=40 y=44 textAnchor=middle fontSize=10 fill=#B22B2B fontFamily="Noto Serif SC, serif">功德圆满</text>`.
 
@@ -753,10 +848,12 @@ git commit -m "feat(sutra): add CopySeal vermillion SVG component"
 ### Task 5: `<SutraCopyView />` — interactive copy view (TDD component test)
 
 **Files:**
+
 - Create: `components/sutra/SutraCopyView.tsx`
 - Test: `tests/unit/components/sutra/sutra-copy-view.test.tsx`
 
 **Interfaces:**
+
 - Props:
   ```ts
   interface SutraCopyViewProps {
@@ -802,7 +899,7 @@ const CHUNK: SutraChunk = {
 
 function getWrittenChars(row: HTMLElement): boolean[] {
   const spans = Array.from(row.querySelectorAll<HTMLElement>('span[data-idx]'));
-  return spans.map(s => s.classList.contains('copy-char--written'));
+  return spans.map((s) => s.classList.contains('copy-char--written'));
 }
 
 beforeEach(() => {
@@ -817,69 +914,216 @@ beforeEach(() => {
 
 describe('SutraCopyView', () => {
   it('renders all chars unwritten by default (logged-in user)', async () => {
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
+    render(
+      <SutraCopyView
+        chunk={CHUNK}
+        sutraId={1}
+        userId={42}
+        reading="horizontal"
+        onExit={() => {}}
+      />,
+    );
     // Wait for the GET to resolve
-    await act(async () => { await new Promise(r => setTimeout(r, 0)); });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
     const written = getWrittenChars(screen.getByTestId('copy-body'));
-    expect(written).toEqual([false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]);
+    expect(written).toEqual([
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
   });
 
   it('hydrates from GET response', async () => {
     fetchMock.mockResolvedValueOnce({
-      ok: true, status: 200,
-      json: async () => ({ ok: true, data: { progress: { writtenChars: [true, true, false, false, false, false, false, false, false, false, false, false, false, false, false], startedAt: new Date(), updatedAt: new Date(), completedAt: null } } }),
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ok: true,
+        data: {
+          progress: {
+            writtenChars: [
+              true,
+              true,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+              false,
+            ],
+            startedAt: new Date(),
+            updatedAt: new Date(),
+            completedAt: null,
+          },
+        },
+      }),
     });
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
-    await act(async () => { await new Promise(r => setTimeout(r, 0)); });
+    render(
+      <SutraCopyView
+        chunk={CHUNK}
+        sutraId={1}
+        userId={42}
+        reading="horizontal"
+        onExit={() => {}}
+      />,
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
     const written = getWrittenChars(screen.getByTestId('copy-body'));
-    expect(written).toEqual([true, true, false, false, false, false, false, false, false, false, false, false, false, false, false]);
+    expect(written).toEqual([
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+    ]);
   });
 
   it('clicking a char marks it written and triggers POST (after 500ms debounce)', async () => {
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
-    await act(async () => { await new Promise(r => setTimeout(r, 0)); });
+    render(
+      <SutraCopyView
+        chunk={CHUNK}
+        sutraId={1}
+        userId={42}
+        reading="horizontal"
+        onExit={() => {}}
+      />,
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
 
     // Click the first char
     const spans = screen.getByTestId('copy-body').querySelectorAll<HTMLElement>('span[data-idx]');
-    await act(async () => { fireEvent.click(spans[0]!); });
+    await act(async () => {
+      fireEvent.click(spans[0]!);
+    });
     expect(spans[0]!.classList.contains('copy-char--written')).toBe(true);
 
     // Wait debounce 500ms
-    await act(async () => { await new Promise(r => setTimeout(r, 550)); });
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 550));
+    });
 
     // The POST call should be the 2nd fetch (1st was the GET)
     expect(fetchMock).toHaveBeenCalledTimes(2);
     const [url, init] = fetchMock.mock.calls[1]!;
     expect(String(url)).toBe('/api/sutra/1/copy-progress');
     const body = JSON.parse((init as RequestInit).body as string);
-    expect(body).toEqual({ chunkIdx: 0, writtenChars: [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false] });
+    expect(body).toEqual({
+      chunkIdx: 0,
+      writtenChars: [
+        true,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+        false,
+      ],
+    });
   });
 
   it('anonymous user sees disabled view + banner', async () => {
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={null} reading="horizontal" onExit={() => {}} />);
-    await act(async () => { await new Promise(r => setTimeout(r, 0)); });
+    render(
+      <SutraCopyView
+        chunk={CHUNK}
+        sutraId={1}
+        userId={null}
+        reading="horizontal"
+        onExit={() => {}}
+      />,
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
     expect(screen.getByText(/请登录后开始抄经/)).toBeInTheDocument();
     const spans = screen.getByTestId('copy-body').querySelectorAll<HTMLElement>('span[data-idx]');
     expect(spans[0]!.classList.contains('copy-char--disabled')).toBe(true);
     // Click is a no-op
-    await act(async () => { fireEvent.click(spans[0]!); });
+    await act(async () => {
+      fireEvent.click(spans[0]!);
+    });
     expect(spans[0]!.classList.contains('copy-char--written')).toBe(false);
   });
 
   it('last char click triggers collapse + seal phase', async () => {
     vi.useFakeTimers();
     fetchMock.mockResolvedValue({
-      ok: true, status: 200,
-      json: async () => ({ ok: true, data: { progress: { writtenChars: new Array(15).fill(true), startedAt: new Date(), updatedAt: new Date(), completedAt: null } } }),
+      ok: true,
+      status: 200,
+      json: async () => ({
+        ok: true,
+        data: {
+          progress: {
+            writtenChars: new Array(15).fill(true),
+            startedAt: new Date(),
+            updatedAt: new Date(),
+            completedAt: null,
+          },
+        },
+      }),
     });
-    render(<SutraCopyView chunk={CHUNK} sutraId={1} userId={42} reading="horizontal" onExit={() => {}} />);
+    render(
+      <SutraCopyView
+        chunk={CHUNK}
+        sutraId={1}
+        userId={42}
+        reading="horizontal"
+        onExit={() => {}}
+      />,
+    );
     // flush initial GET microtask
-    await act(async () => { await vi.runAllTimersAsync(); });
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
     // Find the body — should already be in collapsing phase
     const body = screen.getByTestId('copy-view');
     expect(body.classList.contains('copy-view--collapsing')).toBe(true);
     // Advance 1200ms to sealed phase
-    await act(async () => { vi.advanceTimersByTime(1200); });
+    await act(async () => {
+      vi.advanceTimersByTime(1200);
+    });
     // Seal text appears
     expect(screen.getByText('功德圆满')).toBeInTheDocument();
     vi.useRealTimers();
@@ -919,7 +1163,7 @@ interface Props {
 type Phase = 'copying' | 'collapsing' | 'sealed';
 
 const WRITING_MODE: Record<SutraReading, string> = {
-  'horizontal': 'horizontal-tb',
+  horizontal: 'horizontal-tb',
   'vertical-rtl': 'vertical-rl',
   'vertical-ltr': 'vertical-lr',
 };
@@ -966,7 +1210,9 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
       if (p?.completedAt) setPhase('sealed');
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chunk.id, sutraId]);
 
@@ -1005,23 +1251,28 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ chunkIdx: chunk.id, writtenChars }),
-      }).then(r => {
+      }).then((r) => {
         if (!r.ok) setError('进度保存失败');
       });
     }, DEBOUNCE_MS);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [writtenChars, sutraId, chunk.id, userId, phase]);
 
-  const handleCharClick = useCallback((idx: number) => {
-    if (!userId) return;
-    setPhase('copying'); // reset from sealed if user re-clicks after a reset
-    setWrittenChars(prev => {
-      if (prev[idx]) return prev;
-      const next = prev.slice();
-      next[idx] = true;
-      return next;
-    });
-  }, [userId]);
+  const handleCharClick = useCallback(
+    (idx: number) => {
+      if (!userId) return;
+      setPhase('copying'); // reset from sealed if user re-clicks after a reset
+      setWrittenChars((prev) => {
+        if (prev[idx]) return prev;
+        const next = prev.slice();
+        next[idx] = true;
+        return next;
+      });
+    },
+    [userId],
+  );
 
   const handleReset = useCallback(() => {
     if (!window.confirm('将清除本段抄经进度，确定？')) return;
@@ -1047,10 +1298,18 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
       >
         <CopySeal className="copy-seal--enter" />
         <div className="mt-8 flex gap-3">
-          <button type="button" onClick={handleReset} className="rounded-md border border-ink/20 px-4 py-2 hover:bg-ink/5">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="rounded-md border border-ink/20 px-4 py-2 hover:bg-ink/5"
+          >
             重新抄写
           </button>
-          <button type="button" onClick={onExit} className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80">
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80"
+          >
             退出抄经
           </button>
         </div>
@@ -1062,8 +1321,7 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
     <div
       data-testid="copy-view"
       className={
-        'copy-view' +
-        (phase === 'collapsing' ? ' copy-view--collapse copy-view--collapsing' : '')
+        'copy-view' + (phase === 'collapsing' ? ' copy-view--collapse copy-view--collapsing' : '')
       }
     >
       <div className="copy-progress mb-3">
@@ -1073,7 +1331,9 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-ink-faint">已抄 {writtenCount} / {total} 字</p>
+        <p className="mt-1 text-xs text-ink-faint">
+          已抄 {writtenCount} / {total} 字
+        </p>
       </div>
 
       {disabled && (
@@ -1082,7 +1342,10 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
           className="mb-3 rounded border-l-4 border-seal bg-paper-warm p-3 text-sm text-ink-soft"
         >
           请登录后开始抄经，进度将自动保存。
-          <a className="ml-2 text-seal underline" href={`/login?next=${encodeURIComponent(`/sutra/${sutraId}?chunk=${chunk.id}`)}`}>
+          <a
+            className="ml-2 text-seal underline"
+            href={`/login?next=${encodeURIComponent(`/sutra/${sutraId}?chunk=${chunk.id}`)}`}
+          >
             登录
           </a>
         </div>
@@ -1096,7 +1359,10 @@ export function SutraCopyView({ chunk, sutraId, userId, reading, onExit }: Props
         style={{ writingMode: WRITING_MODE[reading] as any }}
       >
         {chunk.content.map((line, li) => (
-          <p key={li} className={reading === 'horizontal' ? 'my-1.5' : 'mx-3 inline-block align-top'}>
+          <p
+            key={li}
+            className={reading === 'horizontal' ? 'my-1.5' : 'mx-3 inline-block align-top'}
+          >
             {[...line].map((ch, ci) => {
               const safeIdx = lineStartsAt(chunk, li) + ci;
               return (
@@ -1144,16 +1410,45 @@ Then append to `app/globals.css` (below the existing `/* ============ Print (wor
 
 ```css
 /* ============ Sutra Copy Mode ============ */
-.copy-view { transform-origin: center; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
-.copy-view--collapse { opacity: 0; }
-.copy-view--collapse[data-reading="horizontal"] { transform: scaleX(0); }
-.copy-view--collapse[data-reading="vertical-rtl"] { transform: scaleY(0); }
-.copy-view--collapse[data-reading="vertical-ltr"] { transform: scaleY(0); }
-.copy-view--collapsing { pointer-events: none; }
-.copy-seal { transition: transform 0.6s ease-out, opacity 0.6s ease-out; transform-origin: center; opacity: 0; transform: scale(0.5); }
-.copy-seal--enter { opacity: 1; transform: scale(1); }
-.copy-char { transition: color 0.4s ease-in-out; }
-.copy-char--disabled { pointer-events: none; }
+.copy-view {
+  transform-origin: center;
+  transition:
+    transform 1.2s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.copy-view--collapse {
+  opacity: 0;
+}
+.copy-view--collapse[data-reading='horizontal'] {
+  transform: scaleX(0);
+}
+.copy-view--collapse[data-reading='vertical-rtl'] {
+  transform: scaleY(0);
+}
+.copy-view--collapse[data-reading='vertical-ltr'] {
+  transform: scaleY(0);
+}
+.copy-view--collapsing {
+  pointer-events: none;
+}
+.copy-seal {
+  transition:
+    transform 0.6s ease-out,
+    opacity 0.6s ease-out;
+  transform-origin: center;
+  opacity: 0;
+  transform: scale(0.5);
+}
+.copy-seal--enter {
+  opacity: 1;
+  transform: scale(1);
+}
+.copy-char {
+  transition: color 0.4s ease-in-out;
+}
+.copy-char--disabled {
+  pointer-events: none;
+}
 ```
 
 - [ ] **Step 5: Run component tests, verify they pass**
@@ -1184,10 +1479,12 @@ git commit -m "feat(sutra): add SutraCopyView with click-to-ink + collapse + sea
 ### Task 6: Wire `<SutraCopyView />` into `SutraReadingClient` + page (smoke + lint)
 
 **Files:**
+
 - Modify: `components/sutra/SutraReadingClient.tsx`
 - Modify: `app/sutra/[id]/page.tsx`
 
 **Interfaces:**
+
 - `SutraReadingClient` new prop: `sutraId: number` and `userId: number | null`.
 - Adds `copyMode: boolean` state, toggle button next to ReadingModePicker, and renders `<SutraCopyView key={chunk.id} ... />` instead of `<SutraTextView />` when on.
 - `app/sutra/[id]/page.tsx` passes `sutraId={sutra.id}` and `userId={user?.id ?? null}`. The Print / SaveAsWorksheet / ReadAloud buttons are hidden when `copyMode` is on — easiest path: lift `copyMode` to a small client wrapper that wraps the page right column. (Or: extract the right column into a client component. Choose the wrapper approach — smaller diff.)
@@ -1225,7 +1522,7 @@ export function SutraRightColumn({ sutraId, sutraSlug, sutraTitle, chunk, userId
       <div className="flex items-center justify-between mb-2 worksheet-no-print">
         <button
           type="button"
-          onClick={() => setCopyMode(v => !v)}
+          onClick={() => setCopyMode((v) => !v)}
           className={
             'rounded-md border px-3 py-1.5 text-sm transition-colors ' +
             (copyMode
@@ -1254,7 +1551,10 @@ export function SutraRightColumn({ sutraId, sutraSlug, sutraTitle, chunk, userId
       </div>
       {!copyMode && (
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">
-          <PrintButton endpoint={`/api/sutra/${sutraSlug}/print`} sourceId={`${sutraSlug}#${chunk.id}`} />
+          <PrintButton
+            endpoint={`/api/sutra/${sutraSlug}/print`}
+            sourceId={`${sutraSlug}#${chunk.id}`}
+          />
           <SaveAsWorksheetButton id={sutraId} title={sutraTitle} chunk={chunk} />
         </div>
       )}
@@ -1305,15 +1605,26 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
-        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵
+        </div>
         <div className="worksheet-no-print">
-          <SutraMeta title={sutra.title} chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null} />
+          <SutraMeta
+            title={sutra.title}
+            chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null}
+          />
         </div>
         <div className="flex gap-6">
           <Suspense fallback={null}>
-            <SutraChunkPickerClient sutraId={sutra.id} chunks={sutra.chunks as SutraChunk[]} activeId={activeChunkId} />
+            <SutraChunkPickerClient
+              sutraId={sutra.id}
+              chunks={sutra.chunks as SutraChunk[]}
+              activeId={activeChunkId}
+            />
           </Suspense>
           <div className="flex-1">
             <SutraRightColumn

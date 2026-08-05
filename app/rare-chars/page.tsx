@@ -39,7 +39,9 @@ export default async function RareCharsPage({ searchParams }: Props) {
         <Header />
       </Suspense>
       <PageContainer>
-        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵 · 千字罕见库</div>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵 · 千字罕见库
+        </div>
         <SectionTitle subtitle="通用规范汉字表三级 · 1450 字">罕见字库</SectionTitle>
 
         {daily && (

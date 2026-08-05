@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
       count: sp.get('count') ?? undefined,
       difficulty: sp.get('difficulty') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const chars = await getRandomChars(parsed.data);
     return NextResponse.json({ ok: true, data: { chars } });
   });

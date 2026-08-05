@@ -589,7 +589,8 @@ const CLASSIC_FILES: ClassicFile[] = [
     era: '秦汉',
     volumes: [
       { slug: 'sanlve-1', title: '三略·上册', fromIdx: 1, toIdx: 2 },
-      { slug: 'sanlve-2', title: '三略·下册', fromIdx: 3, toIdx: 3 }],
+      { slug: 'sanlve-2', title: '三略·下册', fromIdx: 3, toIdx: 3 },
+    ],
   },
   {
     bookId: 'a8af31e22938',
@@ -1184,9 +1185,7 @@ async function fetchChapterParagraphs(chapterPath: string): Promise<string[]> {
   if (paragraphs.length === 0) {
     throw new Error(`no .contson div in ${chapterPath}`);
   }
-  return paragraphs
-    .map((p) => t2s(p))
-    .filter((p) => p.length > 0);
+  return paragraphs.map((p) => t2s(p)).filter((p) => p.length > 0);
 }
 
 function writeVolumeJson(vol: VolumeJson): { path: string; bytes: number } {
@@ -1228,7 +1227,9 @@ function buildManifestFromDisk(): Manifest {
     });
   }
   // Stable sort: by category then by slug.
-  entries.sort((a, b) => (a.category < b.category ? -1 : a.category > b.category ? 1 : a.slug.localeCompare(b.slug)));
+  entries.sort((a, b) =>
+    a.category < b.category ? -1 : a.category > b.category ? 1 : a.slug.localeCompare(b.slug),
+  );
   return { version: 1, updatedAt: new Date().toISOString(), books: entries };
 }
 
@@ -1266,8 +1267,15 @@ export async function buildClassicsGuwendao(): Promise<{ volumes: number; manife
       try {
         const paragraphs = await fetchChapterParagraphs(c.path);
         const pinyinArr = paragraphs.map(linePinyin);
-        allChunks.push({ id: i + 1, label: c.label.slice(0, 64), content: paragraphs, pinyin: pinyinArr });
-        process.stdout.write(`  [${i + 1}/${chapters.length}] ${c.label} (${paragraphs.length} 段)\n`);
+        allChunks.push({
+          id: i + 1,
+          label: c.label.slice(0, 64),
+          content: paragraphs,
+          pinyin: pinyinArr,
+        });
+        process.stdout.write(
+          `  [${i + 1}/${chapters.length}] ${c.label} (${paragraphs.length} 段)\n`,
+        );
       } catch (err) {
         console.warn(`  [guwendao] skip chapter ${c.path}: ${(err as Error).message}`);
       }

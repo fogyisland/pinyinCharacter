@@ -11,11 +11,41 @@ type BentoItem = {
 };
 
 const ITEMS: BentoItem[] = [
-  { char: '字', title: '字 ↔ 拼音互转', description: '文本转拼音 · 整句智能转换', href: '/dictionary', variant: 'primary' },
-  { char: '库', title: '罕见字库', description: '1412 个生僻字查询', href: '/rare-chars', variant: 'accent' },
-  { char: '帖', title: '字帖打印', description: '毛笔格 / 田字格 PDF', href: '/worksheet', variant: 'outline' },
-  { char: '戏', title: '趣味识字游戏', description: '拼音与字配对', href: '/game', variant: 'outline' },
-  { char: '经', title: '佛经选读', description: '12 部经分品抄写', href: '/sutra', variant: 'outline' },
+  {
+    char: '字',
+    title: '字 ↔ 拼音互转',
+    description: '文本转拼音 · 整句智能转换',
+    href: '/dictionary',
+    variant: 'primary',
+  },
+  {
+    char: '库',
+    title: '罕见字库',
+    description: '1412 个生僻字查询',
+    href: '/rare-chars',
+    variant: 'accent',
+  },
+  {
+    char: '帖',
+    title: '字帖打印',
+    description: '毛笔格 / 田字格 PDF',
+    href: '/worksheet',
+    variant: 'outline',
+  },
+  {
+    char: '戏',
+    title: '趣味识字游戏',
+    description: '拼音与字配对',
+    href: '/game',
+    variant: 'outline',
+  },
+  {
+    char: '经',
+    title: '佛经选读',
+    description: '12 部经分品抄写',
+    href: '/sutra',
+    variant: 'outline',
+  },
 ];
 
 const variantClass = {
@@ -46,7 +76,10 @@ export function BentoGrid() {
           className={`card-paper col-span-2 sm:row-span-2 ${variantClass[ITEMS[0]!.variant]} p-6 sm:p-8 flex flex-col justify-between min-h-[200px] sm:min-h-[260px] group relative overflow-hidden`}
         >
           {/* Decorative oversized char watermark */}
-          <div className="absolute -right-4 -bottom-6 font-kai text-[180px] leading-none opacity-[0.07] pointer-events-none select-none" aria-hidden="true">
+          <div
+            className="absolute -right-4 -bottom-6 font-kai text-[180px] leading-none opacity-[0.07] pointer-events-none select-none"
+            aria-hidden="true"
+          >
             {ITEMS[0]!.char}
           </div>
           <div className="font-kai text-5xl sm:text-6xl leading-none relative z-10">
@@ -56,13 +89,14 @@ export function BentoGrid() {
             <div className="font-serif text-xl sm:text-2xl mb-1">{ITEMS[0]!.title}</div>
             <div className="text-sm opacity-75 mb-3">{ITEMS[0]!.description}</div>
             <div className="flex items-center gap-1 text-sm font-kai">
-              进入功能 <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
+              进入功能{' '}
+              <ArrowRight size={14} className="group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         </Link>
 
         {/* Standard cards */}
-        {ITEMS.slice(1, 4).map(item => (
+        {ITEMS.slice(1, 4).map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -83,7 +117,9 @@ export function BentoGrid() {
         >
           <div className="font-kai text-3xl sm:text-4xl leading-none">{ITEMS[4]!.char}</div>
           <div>
-            <div className="font-semibold text-sm sm:text-base leading-tight">{ITEMS[4]!.title}</div>
+            <div className="font-semibold text-sm sm:text-base leading-tight">
+              {ITEMS[4]!.title}
+            </div>
             <div className="text-xs opacity-70 mt-0.5">{ITEMS[4]!.description}</div>
           </div>
         </Link>

@@ -37,7 +37,10 @@ export function FontFamilyPicker({ tool, value, onChange }: Props) {
       className="rounded border border-ink/20 bg-paper px-3 py-1.5 text-sm"
     >
       {valueIsHidden && (
-        <option value={value} style={{ fontFamily: FONT_FAMILIES.find((f) => f.value === value)?.cssVar }}>
+        <option
+          value={value}
+          style={{ fontFamily: FONT_FAMILIES.find((f) => f.value === value)?.cssVar }}
+        >
           {fontFamilyLabel(value)}
         </option>
       )}

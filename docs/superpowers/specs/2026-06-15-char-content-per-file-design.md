@@ -13,17 +13,20 @@
 ### 现状 (2026-06-15)
 
 **文件层**:
+
 - `data/char-meaning-batch-0001..0217.json` — 217 个批次,30 字/批,共 6510 条,内容 `{char, pinyin, meaning_zh}`。**已 100% 入库 (6498/6498)**,批次元数据是历史产物。
 - `data/story-batch-0000..0047.json` — 48 个批次,30 字/批 (0000 含 3 字),共 1413 唯一字,内容 `{char, pinyin, meaning, story}`。**未入库**,在 DB 里没有对应表。1413 字全部在 CJK Ext A (U+3400–U+4DBF),即 level 3 罕用字。
 - `data/etymology-batch-0001..0003.json` — memory 记录 90 字,**磁盘不存在** (data/etymology/ 是空目录)。内容 `{char, pinyin, story}`。
 - `data/content/` — 刚建好的空目录,本次设计的目标落点。
 
 **DB 层**:
+
 - `chars.meaning_zh` — 6498/6498 level 1+2 字,1.0 满。
 - `char_etymology.story` — 0/6498 (90 字源内容丢失)。
 - `char_story` — **表不存在**。
 
 **生成节奏** (来自 bulk-content-generation-pattern memory):
+
 - 30 字/轮 → 写 JSON → 用户 `/compact` → 继续。
 - 入库放在所有批次写完后。
 
@@ -117,22 +120,23 @@ git commit -m "chore(data): remove legacy batch files (migrated to per-char cont
 ```typescript
 // scripts/schemas/content.ts (新,仅供 zod 校验)
 const CharContentSchema = z.object({
-  char:           z.string().length(1),
-  pinyin:         z.string().min(1),
-  meaning_zh:     z.string().min(1).optional(),
-  etymology_story:z.string().min(140).max(220).optional(),   // 仅基本字,140-180 汉字
-  hanzi_story:    z.string().min(15).max(80).optional(),     // 异体字,30-50 汉字
+  char: z.string().length(1),
+  pinyin: z.string().min(1),
+  meaning_zh: z.string().min(1).optional(),
+  etymology_story: z.string().min(140).max(220).optional(), // 仅基本字,140-180 汉字
+  hanzi_story: z.string().min(15).max(80).optional(), // 异体字,30-50 汉字
 });
 ```
 
 **字段填法约定**:
-| 字段 | 适用字符 | 长度 | 来源 |
-|---|---|---|---|
-| `char` | 全部 | 1 字符 | 必有 |
-| `pinyin` | 全部 | 拼音字符串 | 必有 |
-| `meaning_zh` | 全部 8105 | ~30-50 字 | 跟 char-meaning 旧批次一致 (《说文》+ 引申) |
-| `etymology_story` | 仅基本字 6498 | 140-180 字 | 跟 etymology 旧批次一致 (甲骨文→楷书演变) |
-| `hanzi_story` | 仅异体字 1607 (level 3 全集) | 30-50 字 | 跟 story 旧批次一致 (出处 + 用途) |
+
+| 字段              | 适用字符                     | 长度       | 来源                                        |
+| ----------------- | ---------------------------- | ---------- | ------------------------------------------- |
+| `char`            | 全部                         | 1 字符     | 必有                                        |
+| `pinyin`          | 全部                         | 拼音字符串 | 必有                                        |
+| `meaning_zh`      | 全部 8105                    | ~30-50 字  | 跟 char-meaning 旧批次一致 (《说文》+ 引申) |
+| `etymology_story` | 仅基本字 6498                | 140-180 字 | 跟 etymology 旧批次一致 (甲骨文→楷书演变)   |
+| `hanzi_story`     | 仅异体字 1607 (level 3 全集) | 30-50 字   | 跟 story 旧批次一致 (出处 + 用途)           |
 
 字段不写 = 没生成。**禁止存 `null` 噪声字段**。
 
@@ -142,18 +146,19 @@ const CharContentSchema = z.object({
 
 ```typescript
 const ContentManifestSchema = z.object({
-  version:     z.literal(1),
-  totalChars:  z.literal(8105),
+  version: z.literal(1),
+  totalChars: z.literal(8105),
   byField: z.object({
-    meaning_zh:      z.number().int().min(0).max(8105),
+    meaning_zh: z.number().int().min(0).max(8105),
     etymology_story: z.number().int().min(0).max(6498),
-    hanzi_story:     z.number().int().min(0).max(1607),
+    hanzi_story: z.number().int().min(0).max(1607),
   }),
   generatedAt: z.string().datetime(),
 });
 ```
 
 `update-content-manifest.ts` 流程:
+
 1. 扫 `data/content/*.json` (一次 `fs.readdir`)
 2. 对每个文件解析,按字段存在性计数
 3. 写回 manifest,`generatedAt = new Date().toISOString()`
@@ -169,11 +174,13 @@ const ContentManifestSchema = z.object({
 ```
 
 **同字段内**:
+
 - 优先 level 1 (3500) > level 2 (3000) > level 3 (1605)
 - 优先没在任何已写批次的字
 - 跳过 8105 字符号源外的字
 
 **每轮"30 字"语义**:
+
 - 30 是去重后的 char 数,不是字段数
 - 一个 char 可在同轮填多个字段 (例: 「一」本轮同时补 meaning_zh + etymology_story)
 - 上限: 30 字 × 3 字段 = 90 字段-字 / 轮
@@ -184,14 +191,17 @@ const ContentManifestSchema = z.object({
 ### 3.4 DB 表
 
 #### `chars` (已有,不动)
+
 - `meaning_zh` 列已 100% 满,本设计不再写入新值
 - 运行时读路径回退到该列
 
 #### `char_etymology` (已有,不动)
+
 - 沿用现有 DDL (5 个 era_*_has + story + generated_by/at)
 - import 时新行 `era_*_has` 全部默认 0,story 来自 data/content/
 
 #### `char_story` (新)
+
 ```sql
 CREATE TABLE char_story (
   char         CHAR(1)     NOT NULL,
@@ -278,18 +288,21 @@ async function getContentFromDb(char: string): Promise<CharContent | null> {
 ### 4.5 测试
 
 #### Unit (`tests/unit/lib/content.test.ts`)
+
 - `getContent('一')` 在有文件时返回文件内容
 - `getContent('一')` 在无文件 + DB 有 chars 行时回退
 - `getContent('一')` 在无文件 + DB 无 chars 行时返回 null
 - `getContentList({level: 1})` 优先返回文件列表,缺失回退 DB
 
 #### Integration (`tests/integration/scripts/import-content.test.ts`)
+
 - 写 5 个测试 JSON 到 `data/content/`
 - 跑 import 脚本 (spawn)
 - 验证 DB 三表对应行落库
 - 验证 manifest 计数 = 5
 
 #### Smoke (人工)
+
 - 浏览器访问 `/dictionary/一` 显示 meaning_zh (DB 回退)
 - 访问 `/dictionary/严` (刚生成) 显示新 meaning_zh (data/content/)
 - 访问 `/etymology/严` (刚生成) 显示 etymology_story
@@ -300,27 +313,27 @@ async function getContentFromDb(char: string): Promise<CharContent | null> {
 
 ## 5. 风险与缓解
 
-| 风险 | 缓解 |
-|---|---|
-| 8000+ 文件 git status 慢 | 先按原样跑,接受慢;真不可接受再上 git-lfs |
-| Windows 中文文件名 git 乱码 | 第一轮 commit 1-2 个测试文件,验证 `git log` / `git status` 正常 |
-| mysql2 supp-plane 乱码 (memory 已知) | 8105 都在 BMP,不涉及;但 scripts/import-content.ts 仍按 BMP-only 写,只导入 BMP 字 |
-| 数据回退不一致 (data/content/ 有 hanzi_story, DB char_etymology 有 etymology_story) | getContent 三表都查,合并返回;UI 端按字段显示 |
-| 旧批次删后找不回 | git log 即可,本设计 §2.4 直接 git rm 不备份 |
-| 90 字源丢失无法恢复 | 已知,按 §3.3 选题顺序在后续轮次自然补回 |
+| 风险                                                                                | 缓解                                                                             |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| 8000+ 文件 git status 慢                                                            | 先按原样跑,接受慢;真不可接受再上 git-lfs                                         |
+| Windows 中文文件名 git 乱码                                                         | 第一轮 commit 1-2 个测试文件,验证 `git log` / `git status` 正常                  |
+| mysql2 supp-plane 乱码 (memory 已知)                                                | 8105 都在 BMP,不涉及;但 scripts/import-content.ts 仍按 BMP-only 写,只导入 BMP 字 |
+| 数据回退不一致 (data/content/ 有 hanzi_story, DB char_etymology 有 etymology_story) | getContent 三表都查,合并返回;UI 端按字段显示                                     |
+| 旧批次删后找不回                                                                    | git log 即可,本设计 §2.4 直接 git rm 不备份                                      |
+| 90 字源丢失无法恢复                                                                 | 已知,按 §3.3 选题顺序在后续轮次自然补回                                          |
 
 ---
 
 ## 6. 执行顺序 (Phase)
 
-| Phase | 内容 | 验证 |
-|---|---|---|
-| **P1: 删旧文件** | git rm 217 + 48 批次 | `ls data/*.json` 仅剩通用/部首/pinyin-hanzi/manifest 等基础文件 |
-| **P2: 写 DDL** | `scripts/migrate-ddl-char-story.ts` 跑一次 | `SHOW TABLES LIKE 'char_story'` 存在 |
-| **P3: 写 lib + scripts** | lib/content.ts + 4 个 scripts + zod schemas | `pnpm tsc` 通过;unit tests pass |
-| **P4: 跑迁移脚本** | 首次跑 `update-content-manifest.ts` 写空 manifest | `data/content-manifest.json` 存在,byField 全 0 |
-| **P5: Round 1** | 选 30 字手写 30 个 .json + manifest + import | 浏览器看站点可见 |
-| **P6+: 持续** | 每轮 30 字,直到 8105 × 3 字段全满 | manifest byField 全达 max |
+| Phase                    | 内容                                              | 验证                                                            |
+| ------------------------ | ------------------------------------------------- | --------------------------------------------------------------- |
+| **P1: 删旧文件**         | git rm 217 + 48 批次                              | `ls data/*.json` 仅剩通用/部首/pinyin-hanzi/manifest 等基础文件 |
+| **P2: 写 DDL**           | `scripts/migrate-ddl-char-story.ts` 跑一次        | `SHOW TABLES LIKE 'char_story'` 存在                            |
+| **P3: 写 lib + scripts** | lib/content.ts + 4 个 scripts + zod schemas       | `pnpm tsc` 通过;unit tests pass                                 |
+| **P4: 跑迁移脚本**       | 首次跑 `update-content-manifest.ts` 写空 manifest | `data/content-manifest.json` 存在,byField 全 0                  |
+| **P5: Round 1**          | 选 30 字手写 30 个 .json + manifest + import      | 浏览器看站点可见                                                |
+| **P6+: 持续**            | 每轮 30 字,直到 8105 × 3 字段全满                 | manifest byField 全达 max                                       |
 
 ---
 

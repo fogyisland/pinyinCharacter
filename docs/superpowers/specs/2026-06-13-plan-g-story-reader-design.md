@@ -15,6 +15,7 @@
 `rare_chars` 表已存 ~1400 条 `(char, pinyin, meaning, story)`, 由 `lib/ai-rare-chars.ts` 批量生成. 现有展示只在 `/rare-chars/[char]` 详情页, 用户需先在 80 个/页的卡片墙里翻找才能看到. 没有任何 "随机阅读" 或 "进度追踪" 体验.
 
 已有基础设施 (全部复用, 不动):
+
 - `lib/rare-chars.ts:listChars / getChar / getDailyChar` — DB queries
 - `lib/tts.ts:speak / stopSpeaking / pickChineseVoice` — Web Speech API
 - `components/rare/DailyCharBanner.tsx` — 今日一字入口
@@ -27,6 +28,7 @@
 **入口** (单一): 用户在 `/rare-chars` 看到 "今日一字" banner, 点击进入 `/stories/[char]`.
 
 **单屏内容**:
+
 1. 顶部条: 左 "返回字库" 链接 + 右 "已读 X 字" 进度徽章
 2. 巨字号汉字 (text-9xl, font-kai)
 3. Pinyin (text-3xl, 灰)
@@ -48,25 +50,25 @@
 
 ### 新增
 
-| 文件 | 责任 |
-|---|---|
-| `app/stories/page.tsx` | RSC, server 调 `getRandomStoryChar()` 拿 initial, 渲染 `<StoryClient>` |
-| `app/stories/[char]/page.tsx` | RSC, 调 `getChar(char)`, 渲染 `<StoryClient>`. char 不存在 → notFound() |
-| `app/stories/StoryClient.tsx` | 'use client' 顶层组件, 自管 state, 包含 UI + handlers |
-| `app/api/stories/random/route.ts` | GET → 随机一个有 story 的 char (200 / 503) |
-| `lib/rare-chars.ts` | +`getRandomStoryChar()` server fn |
-| `lib/api-stories.ts` | 客户端 `fetchRandomStory()` wrapper |
-| `lib/story-history.ts` | localStorage helpers: getReadChars, addReadChar, clearReadHistory |
-| `tests/unit/lib/story-history.test.ts` | localStorage 增删改测试 |
-| `tests/integration/api/stories-random.test.ts` | GET /api/stories/random 200/503 |
+| 文件                                           | 责任                                                                    |
+| ---------------------------------------------- | ----------------------------------------------------------------------- |
+| `app/stories/page.tsx`                         | RSC, server 调 `getRandomStoryChar()` 拿 initial, 渲染 `<StoryClient>`  |
+| `app/stories/[char]/page.tsx`                  | RSC, 调 `getChar(char)`, 渲染 `<StoryClient>`. char 不存在 → notFound() |
+| `app/stories/StoryClient.tsx`                  | 'use client' 顶层组件, 自管 state, 包含 UI + handlers                   |
+| `app/api/stories/random/route.ts`              | GET → 随机一个有 story 的 char (200 / 503)                              |
+| `lib/rare-chars.ts`                            | +`getRandomStoryChar()` server fn                                       |
+| `lib/api-stories.ts`                           | 客户端 `fetchRandomStory()` wrapper                                     |
+| `lib/story-history.ts`                         | localStorage helpers: getReadChars, addReadChar, clearReadHistory       |
+| `tests/unit/lib/story-history.test.ts`         | localStorage 增删改测试                                                 |
+| `tests/integration/api/stories-random.test.ts` | GET /api/stories/random 200/503                                         |
 
 ### 修改
 
-| 文件 | 改动 |
-|---|---|
+| 文件                                  | 改动                                              |
+| ------------------------------------- | ------------------------------------------------- |
 | `components/rare/DailyCharBanner.tsx` | href 从 `/rare-chars/[char]` 改 `/stories/[char]` |
-| `README.md` | +一段说明 `/stories` 是隐藏入口 |
-| `.env.example` | 不变 (无新 env) |
+| `README.md`                           | +一段说明 `/stories` 是隐藏入口                   |
+| `.env.example`                        | 不变 (无新 env)                                   |
 
 ### 不动
 
@@ -107,6 +109,7 @@
 ### `GET /api/stories/random`
 
 **200 OK**:
+
 ```json
 {
   "ok": true,
@@ -124,6 +127,7 @@
 ```
 
 **503 Service Unavailable** (库为空):
+
 ```json
 { "ok": false, "error": { "code": "NO_STORIES" } }
 ```
@@ -139,17 +143,19 @@
 **Props**: `{ initialChar: RareCharClient }`
 
 **State**:
+
 ```ts
 interface ReaderState {
   current: RareCharClient;
-  history: RareCharClient[];   // stack of previous, no current
+  history: RareCharClient[]; // stack of previous, no current
   loading: boolean;
   error: string | null;
-  speaking: boolean;           // TTS 状态
+  speaking: boolean; // TTS 状态
 }
 ```
 
 **行为**:
+
 - mount 时: `addReadChar(initialChar.char)`
 - 点 "下一个": `setLoading(true)` → `fetchRandomStory()` → 成功 `setState` + `addReadChar`, 失败 `setError(msg)` 保留 current
 - 点 "上一个": 弹出 history 末项, 替换 current; 空时按钮 disabled
@@ -165,9 +171,9 @@ interface ReaderState {
 const STORAGE_KEY = 'pinyin-character:read-stories';
 const MAX_HISTORY = 500;
 
-export function getReadChars(): string[]           // 返回去重 array
-export function addReadChar(char: string): void    // 写入 localStorage
-export function clearReadHistory(): void            // 清空 (测试用)
+export function getReadChars(): string[]; // 返回去重 array
+export function addReadChar(char: string): void; // 写入 localStorage
+export function clearReadHistory(): void; // 清空 (测试用)
 
 // 内部: read JSON.parse / JSON.stringify, 防 SSR (typeof window === 'undefined' 时返回 [])
 ```
@@ -181,6 +187,7 @@ export function clearReadHistory(): void            // 清空 (测试用)
 ### 单元测试 (vitest + happy-dom)
 
 **`tests/unit/lib/story-history.test.ts`**:
+
 - `getReadChars` 空 localStorage → `[]`
 - `addReadChar` 写入后再读 → 包含
 - 重复 add → 不重复 (Set 语义)
@@ -188,6 +195,7 @@ export function clearReadHistory(): void            // 清空 (测试用)
 - localStorage 抛错 → 返回 `[]` 不抛
 
 **`tests/unit/components/StoryClient.test.tsx`** (新):
+
 - happy-dom, mock `fetchRandomStory`, mock `speak`
 - 渲染 initialChar (char text 出现在文档)
 - 点 "下一个" → `fetchRandomStory` 被调一次, current 替换
@@ -203,6 +211,7 @@ export function clearReadHistory(): void            // 清空 (测试用)
 ### 集成测试
 
 **`tests/integration/api/stories-random.test.ts`**:
+
 - 跳过若 DB 不可达 (跟 `/api/rare-chars/daily` 一样)
 - 200 + 含 story 字段
 - 503 模拟: mock `getRandomStoryChar` 返回 null
@@ -211,14 +220,14 @@ export function clearReadHistory(): void            // 清空 (测试用)
 
 ## 错误处理
 
-| 场景 | 行为 |
-|---|---|
-| API 503 NO_STORIES | `<EmptyState>` + "返回字库" 链接, 隐藏操作栏 |
-| fetch 抛错 | 顶部红条 + "重试" 按钮, current 保留 |
-| localStorage 不可用 | 静默降级, 进度徽章隐藏数字显示 "?" |
-| Web Speech 不可用 | TTS 按钮 disabled, tooltip "当前浏览器不支持" |
-| 同 char 重复 | 允许, 进度不去重 |
-| 不存在的 char 进 `/stories/[c]` | 404 (next/navigation `notFound()`) |
+| 场景                            | 行为                                          |
+| ------------------------------- | --------------------------------------------- |
+| API 503 NO_STORIES              | `<EmptyState>` + "返回字库" 链接, 隐藏操作栏  |
+| fetch 抛错                      | 顶部红条 + "重试" 按钮, current 保留          |
+| localStorage 不可用             | 静默降级, 进度徽章隐藏数字显示 "?"            |
+| Web Speech 不可用               | TTS 按钮 disabled, tooltip "当前浏览器不支持" |
+| 同 char 重复                    | 允许, 进度不去重                              |
+| 不存在的 char 进 `/stories/[c]` | 404 (next/navigation `notFound()`)            |
 
 ---
 

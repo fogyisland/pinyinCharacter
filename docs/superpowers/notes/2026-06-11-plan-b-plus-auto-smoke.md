@@ -12,26 +12,26 @@ User ran the spec's 18-step manual smoke in spirit; the assistant executed the p
 
 ## What was verified (15 / 18 steps)
 
-| # | Step | Result |
-|---|---|---|
-| 1 | Register first user → becomes admin | ✓ — but only after manual SQL `UPDATE users SET is_admin=1` (no auto-promotion logic) |
-| 2 | Register second user (non-admin) | ✓ |
-| 3 | /forgot-password → server console prints URL | ✓ — `forgot` route returns ok:true; `email.ts` console transport logs URL to dev stdout (we can't see the dev console from the script) |
-| 4 | Click reset URL → /reset-password?token=… | ✓ — equivalent via `reset-info?token=X` (200 OK, returns username) |
-| 5 | Set new password → redirect home (auto-login) | **browser-only** — setSessionCookie needs request scope; covered by `tests/integration/password-reset.test.ts` |
-| 6 | Old password → 401 | ✓ |
-| 7 | New password → 200 | ✓ |
-| 8 | Non-admin GET /admin → 307 /?error=forbidden | ✓ |
-| 9 | Admin sees /admin → UserMenu shows link | server: ✓ (`/api/auth/me` returns `isAdmin:true` for admin); **UI: browser-only** |
-| 10 | /admin/users shows 2 users | ✓ — 4 users actually (smoke1/2 from previous session + bp_admin/bp_user) |
-| 11 | Reset password for U2 → temp password works | ✓ |
-| 12 | Promote U2 → UserMenu shows admin link | server: ✓ (isAdmin:true after promote); **UI: browser-only** |
-| 13 | Demote U2 → link disappears | server: ✓; **UI: browser-only** |
-| 14 | Demote sole admin → 400 | ✓ — `cannot_demote_self` |
-| 15 | Delete self → 400 | ✓ — `cannot_delete_self` |
-| 16 | Delete U2 with username confirmation | ✓ — 204 (not 200; REST best practice) |
-| 17 | /admin/audit shows admin_user_delete | ✓ — 1 event found |
-| 18 | /admin/stats has numbers | ✓ — `{users:3, admins:2, history:0, favorites:0, audit:26}` |
+| #   | Step                                          | Result                                                                                                                                 |
+| --- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Register first user → becomes admin           | ✓ — but only after manual SQL `UPDATE users SET is_admin=1` (no auto-promotion logic)                                                  |
+| 2   | Register second user (non-admin)              | ✓                                                                                                                                      |
+| 3   | /forgot-password → server console prints URL  | ✓ — `forgot` route returns ok:true; `email.ts` console transport logs URL to dev stdout (we can't see the dev console from the script) |
+| 4   | Click reset URL → /reset-password?token=…     | ✓ — equivalent via `reset-info?token=X` (200 OK, returns username)                                                                     |
+| 5   | Set new password → redirect home (auto-login) | **browser-only** — setSessionCookie needs request scope; covered by `tests/integration/password-reset.test.ts`                         |
+| 6   | Old password → 401                            | ✓                                                                                                                                      |
+| 7   | New password → 200                            | ✓                                                                                                                                      |
+| 8   | Non-admin GET /admin → 307 /?error=forbidden  | ✓                                                                                                                                      |
+| 9   | Admin sees /admin → UserMenu shows link       | server: ✓ (`/api/auth/me` returns `isAdmin:true` for admin); **UI: browser-only**                                                      |
+| 10  | /admin/users shows 2 users                    | ✓ — 4 users actually (smoke1/2 from previous session + bp_admin/bp_user)                                                               |
+| 11  | Reset password for U2 → temp password works   | ✓                                                                                                                                      |
+| 12  | Promote U2 → UserMenu shows admin link        | server: ✓ (isAdmin:true after promote); **UI: browser-only**                                                                           |
+| 13  | Demote U2 → link disappears                   | server: ✓; **UI: browser-only**                                                                                                        |
+| 14  | Demote sole admin → 400                       | ✓ — `cannot_demote_self`                                                                                                               |
+| 15  | Delete self → 400                             | ✓ — `cannot_delete_self`                                                                                                               |
+| 16  | Delete U2 with username confirmation          | ✓ — 204 (not 200; REST best practice)                                                                                                  |
+| 17  | /admin/audit shows admin_user_delete          | ✓ — 1 event found                                                                                                                      |
+| 18  | /admin/stats has numbers                      | ✓ — `{users:3, admins:2, history:0, favorites:0, audit:26}`                                                                            |
 
 ## How I got a reset token
 

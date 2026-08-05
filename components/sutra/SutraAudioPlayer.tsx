@@ -121,7 +121,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
     if (chunks.length === 0) return;
     setBatchIndex(0);
     loadAndPlay(trackIndex, 0);
-    // eslint-disable-next-line react-hooks/disable-exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trackIndex]);
 
   // When batchIndex changes, load next batch (only after trackIndex init)
@@ -129,7 +129,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
     if (chunks.length === 0) return;
     if (batchIndex === 0) return; // handled by trackIndex effect
     loadAndPlay(trackIndex, batchIndex);
-    // eslint-disable-next-line react-hooks/disable-dehaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [batchIndex]);
 
   // Audio event listeners — ended → next batch (or next chunk)
@@ -232,7 +232,9 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
   if (chunks.length === 0) return null;
 
   const singleChunk = chunks.length === 1;
-  const headerTitle = singleChunk ? (currentChunk?.title ?? playlistTitle ?? '') : (playlistTitle ?? '');
+  const headerTitle = singleChunk
+    ? (currentChunk?.title ?? playlistTitle ?? '')
+    : (playlistTitle ?? '');
   const showPlaylist = chunks.length > 1;
 
   // Compute current batch progress for the single-chunk UI
@@ -332,9 +334,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
               />
             </div>
           </div>
-          {errored && (
-            <div className="mt-2 text-[10px] text-ink-soft">合成失败</div>
-          )}
+          {errored && <div className="mt-2 text-[10px] text-ink-soft">合成失败</div>}
         </div>
       ) : (
         <button
@@ -423,12 +423,21 @@ function LoopIcon({ mode }: { mode: SutraAudioLoopMode }) {
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <text x="7" y="11.5" fontSize="4.5" textAnchor="middle" fill="currentColor">1</text>
+        <text x="7" y="11.5" fontSize="4.5" textAnchor="middle" fill="currentColor">
+          1
+        </text>
       </svg>
     );
   }
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" opacity={dim ? 0.45 : 1}>
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      aria-hidden="true"
+      opacity={dim ? 0.45 : 1}
+    >
       <path
         d="M2.5 6h7l-2-2M11.5 8h-7l2 2"
         stroke="currentColor"
@@ -442,12 +451,31 @@ function LoopIcon({ mode }: { mode: SutraAudioLoopMode }) {
 
 function VolumeIcon({ muted }: { muted: boolean }) {
   return (
-    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="text-ink-soft flex-shrink-0">
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      fill="none"
+      aria-hidden="true"
+      className="text-ink-soft flex-shrink-0"
+    >
       <path d="M3 5h2l3-2v8L5 9H3z" fill="currentColor" />
       {!muted && (
         <>
-          <path d="M10 5.5c0.8 0.8 0.8 2.2 0 3" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none" />
-          <path d="M11.5 4c1.5 1.5 1.5 4.5 0 6" stroke="currentColor" strokeWidth="1" strokeLinecap="round" fill="none" />
+          <path
+            d="M10 5.5c0.8 0.8 0.8 2.2 0 3"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            fill="none"
+          />
+          <path
+            d="M11.5 4c1.5 1.5 1.5 4.5 0 6"
+            stroke="currentColor"
+            strokeWidth="1"
+            strokeLinecap="round"
+            fill="none"
+          />
         </>
       )}
     </svg>

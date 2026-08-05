@@ -15,6 +15,7 @@ Replace the `/ancient-texts` placeholder with a real 古籍 (classical texts) mo
 - `WorksheetPreview` line-breaks cells automatically based on `cellsPerPage(paperSize, cellStyle)`. There is no per-chapter layout awareness today.
 
 User decisions confirmed in brainstorm:
+
 1. Data source = public/open-source (`chinese-poetry/chinese-poetry` repo).
 2. Mount as top-level menu `/ancient` (replaces placeholder `/ancient-texts`).
 3. Separator handling = 行间标点 (inter-sentence punctuation) shown OUTSIDE the 田字格, not inside cells.
@@ -29,6 +30,7 @@ User decisions confirmed in brainstorm:
 ### Data model
 
 **New table: `classics`**
+
 ```sql
 CREATE TABLE classics (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -62,6 +64,7 @@ CREATE TABLE classics (
 **Generated columns caveat:** `JSON_LENGTH(chunks)` works on MySQL 5.7+ for arrays. `JSON_TABLE` is MySQL 8.0+. Since the project targets MySQL 5.7 (per `lib/db.ts` and existing migrations), drop the `char_count` generated column and compute it on read in `lib/classics.ts` instead. `chunk_count` via `JSON_LENGTH` is MySQL 5.7-compatible.
 
 Final DDL (no JSON_TABLE):
+
 ```sql
 CREATE TABLE classics (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -82,12 +85,13 @@ CREATE TABLE classics (
 ```
 
 **Chunk shape (stored in `chunks` JSON column):**
+
 ```ts
 interface ClassicChunk {
-  id: number;          // 1-based, contiguous within book
-  label: string;       // e.g. "学而第一", "第一篇", "乾"
-  content: string[];   // lines of text including punctuation (句号, 逗号, etc.)
-  pinyin: string[][];  // line-aligned pinyin; punctuation → "" entry
+  id: number; // 1-based, contiguous within book
+  label: string; // e.g. "学而第一", "第一篇", "乾"
+  content: string[]; // lines of text including punctuation (句号, 逗号, etc.)
+  pinyin: string[][]; // line-aligned pinyin; punctuation → "" entry
 }
 ```
 
@@ -110,6 +114,7 @@ Pinyin is computed at ingest time with `pinyin-pro` (already a project dep, used
 ### File structure
 
 **New:**
+
 - `migrations/2026-06-20-classics.sql` — CREATE TABLE
 - `scripts/init-db.ts` — add CREATE TABLE for `classics` (so fresh local DBs get it)
 - `scripts/build-classics.ts` — fetch from chinese-poetry/古文, parse, generate pinyin, UPSERT
@@ -129,6 +134,7 @@ Pinyin is computed at ingest time with `pinyin-pro` (already a project dep, used
 - `tests/integration/api/classics.test.ts` — list/detail endpoint tests
 
 **Modified:**
+
 - `components/Header.tsx` — `NAV_LINKS` `/ancient-texts` → `/ancient`
 - `app/ancient-texts/page.tsx` — replaced with redirect to `/ancient`
 - `components/worksheet/WorksheetGenerator.tsx` — accept new query param `source=ancient&book=<slug>&chapter=<idx>`; preload only the chars (punctuation stripped); add "上一章/下一章" buttons visible when `source=ancient`
@@ -139,27 +145,32 @@ Pinyin is computed at ingest time with `pinyin-pro` (already a project dep, used
 ### Components
 
 **`ClassicCategoryNav.tsx`** (client)
+
 - Props: `{ current: Category | 'all' }`
 - Categories: 全部 / 四书 / 五经 / 蒙学 / 诸子 / 史书 (with counts from server-passed prop)
 - Renders horizontal scrollable tab strip, click → navigates to `/ancient?category=<cat>` (RSC handles filter via sp)
 
 **`ClassicCard.tsx`** (server)
+
 - Props: `{ item: ClassicListItem }`
 - Renders: title (大字), author · era (小字), chunkCount · charCount (footer)
 - Wraps in `<Link href={`/ancient/${item.slug}`}>`
 
 **`ClassicChunkPicker.tsx`** (client, mirrors `SutraChunkPicker.tsx`)
+
 - Props: `{ chunks: {id,label}[]; current: number; slug: string }`
 - Sidebar list of chapter labels
 - Click → navigates to `/ancient/[slug]?chunk=<id>`
 
 **`ClassicReader.tsx`** (client, mirrors `SutraReadingClient.tsx`)
+
 - Props: `{ chunk: ClassicChunk; book: { slug, title, author, era, chunks: ClassicChunk[] } }`
 - Renders the chunk text + pinyin annotations (one `<p>` per line; each char as `<span class="char"><span class="char-text">字</span><span class="char-pinyin">pīn</span></span>`)
 - Reading-direction toggle: 横向 / 竖排从右到左 / 竖排从左到右 — reuse `useSutraReading` (it's a generic localStorage hook keyed by `'pinyin:sutra-reading'`; rename key to `'pinyin:classic-reading'` and make the hook accept the key as arg, OR keep the same key and accept shared preference — choose: shared preference because users will want one consistent reading direction across all classical content)
 - CTA row: "生成字帖" (primary, → `/worksheet?source=ancient&book=<slug>&chapter=<id>`) + "上一章" / "下一章" (secondary, navigate within detail page when current ± 1 exists)
 
 **`ClassicToWorksheetButton.tsx`** (server, internal helper if useful)
+
 - Builds the URL: `content` = `chunk.content.flatMap(line => Array.from(line).filter(ch => !isPunct(ch))).join('')`; prefill = that string.
 - Punctuation filter list: `。，！？；：、""''「」（）()…—`
 - The button is a normal `<Link>` inside `ClassicReader` — no separate component file needed unless we want isolated logic. **Decision: keep inline in `ClassicReader`; no separate file.**
@@ -167,6 +178,7 @@ Pinyin is computed at ingest time with `pinyin-pro` (already a project dep, used
 ### WorksheetGenerator integration
 
 Add to `WorksheetGenerator.tsx`:
+
 - Read new search params: `source`, `book`, `chapterIdx`.
 - When `source === 'ancient'`, on mount fetch `/api/classics/<slug>` to resolve slug → book, then on chapter change re-fetch the chars from the in-memory `chunks[chapterIdx].content`.
 - Initialize `content` state with current chapter chars (punctuation stripped).
@@ -175,12 +187,14 @@ Add to `WorksheetGenerator.tsx`:
 - "标题(可选)" input stays visible (ancient books already have a title; this is for custom worksheet names).
 
 When `source === 'ancient'` and `view === 'preview'`, pass a new prop `showSentenceSeparators: true` to `WorksheetPreview`. The preview then renders an inter-sentence separator OUTSIDE cells at punctuation boundaries. **Implementation:** the `cells` array returned by `generateLayout(content, cellStyle)` only contains Chinese chars (punctuation is filtered upstream). We need to also know WHERE in the sequence the original sentences break. Two options:
+
 - **Option A:** Pass a parallel `breakpoints: number[]` array (cell indices where a separator should appear between cells N and N+1). WorksheetPreview renders `<div class="worksheet-sep">·</div>` between those cells.
 - **Option B:** Render separators visually via CSS `gap` — group cells into flex rows with extra gap between sentence groups. Simpler but loses per-cell separator flexibility.
 
 Choose **Option A** for v1: it's explicit, easy to test, and aligns with the user's "OUTSIDE 田字格" requirement.
 
 **WorksheetPreview separator rendering:**
+
 ```tsx
 {cells.map((cell, i) => (
   <Fragment key={cell.index}>
@@ -193,19 +207,20 @@ Choose **Option A** for v1: it's explicit, easy to test, and aligns with the use
   </Fragment>
 ))}
 ```
+
 The separator div uses `col-span-full` so it takes the full row of the worksheet grid; sits OUTSIDE any cell; styled as small grey text "· 句 ·". `print:hidden` so it doesn't pollute the printed worksheet.
 
 ### Visual specs
 
-| Element | CSS |
-|---------|-----|
-| Classic char container | inline-block, padding 4px 6px, font-size per reading mode |
-| Classic char text | `<span class="char-text">字</span>` — main color `#2c251e` |
-| Classic char pinyin | `<span class="char-pinyin">pīn</span>` — color `rgba(0,0,0,0.45)`, font-size 0.7em, display block |
-| Punctuation char | NOT rendered as a `<span class="char">`; instead, a single space (inline-block separator) so line breaks stay natural |
-| Worksheet sentence separator | `text-xs text-ink-faint text-center py-1`, content `· 句 ·`; `print:hidden` |
-| Category nav tab | Same visual as SutraChunkPicker tabs |
-| ClassicCard hover | border → seal/30; lift via `hover:-translate-y-0.5` |
+| Element                      | CSS                                                                                                                   |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Classic char container       | inline-block, padding 4px 6px, font-size per reading mode                                                             |
+| Classic char text            | `<span class="char-text">字</span>` — main color `#2c251e`                                                            |
+| Classic char pinyin          | `<span class="char-pinyin">pīn</span>` — color `rgba(0,0,0,0.45)`, font-size 0.7em, display block                     |
+| Punctuation char             | NOT rendered as a `<span class="char">`; instead, a single space (inline-block separator) so line breaks stay natural |
+| Worksheet sentence separator | `text-xs text-ink-faint text-center py-1`, content `· 句 ·`; `print:hidden`                                           |
+| Category nav tab             | Same visual as SutraChunkPicker tabs                                                                                  |
+| ClassicCard hover            | border → seal/30; lift via `hover:-translate-y-0.5`                                                                   |
 
 ### Separator handling detail
 
@@ -213,10 +228,12 @@ The user said: "如果古籍和内容有分隔符，记得在田字格外面标�
 ("If classics has separators between chunks/segments, mark them OUTSIDE the 田字格, not inside.")
 
 Two cases:
+
 1. **Inter-chunk separator** (between two chunks of the same book): on `/ancient/[slug]`, the chapter reader only shows ONE chunk at a time, so this isn't an issue at the reader level. At the worksheet level, if the user picks the whole book, chunks would be concatenated — but the user always picks ONE chapter, so the worksheet is one chapter = one page. **No inter-chunk separator needed at v1.**
 2. **Inter-sentence separator within a chapter**: Punctuation marks like `。` separate sentences. When rendered as worksheet cells, punctuation is filtered out. To preserve the sentence structure visually (without putting punctuation in cells), we render a row-level separator between cells that were originally in different sentences.
 
 The "breakpoints" array is computed from the original `chunk.content` lines:
+
 ```ts
 function buildBreakpoints(chunk: ClassicChunk): Set<number> {
   const set = new Set<number>();
@@ -240,7 +257,7 @@ Actually simpler: scan once, track `lastWasSentenceEnd`, emit breakpoint at each
 const SENT_END = new Set(['。', '！', '？']);
 function buildBreakpoints(chunk: ClassicChunk): Set<number> {
   const set = new Set<number>();
-  const chars = chunk.content.flatMap(line => Array.from(line));
+  const chars = chunk.content.flatMap((line) => Array.from(line));
   let cellIdx = 0;
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i]!;
@@ -258,6 +275,7 @@ The breakpoints `Set` keys are the cell index at which to insert a separator BEF
 ### Data ingestion
 
 **`scripts/build-classics.ts`** (new) — parallel to `scripts/build-poems.ts`:
+
 - Fetch from `chinese-poetry/chinese-poetry@master/古文/论语.json`, `孟子.json`, etc.
 - Map upstream filenames to our slug + category + author + era. The mapping is hard-coded (small set, not worth a config file):
   ```ts
@@ -276,6 +294,7 @@ The breakpoints `Set` keys are the cell index at which to insert a separator BEF
 ### Test plan
 
 **Unit (`tests/unit/lib/classics.test.ts`):**
+
 - `listClassics({ category: 'four-books' })` returns only rows in that category.
 - `listClassics({ q: '论语' })` matches by title.
 - `getClassicBySlug('lunyu')` returns the canonical detail.
@@ -283,6 +302,7 @@ The breakpoints `Set` keys are the cell index at which to insert a separator BEF
 - `isPunct('。')` returns true; `isPunct('字')` returns false.
 
 **Component (`tests/unit/components/classics/ClassicReader.test.tsx`):**
+
 - Renders all non-punct chars from chunk content.
 - Pinyin annotations rendered for each char.
 - Punctuation not rendered as char span.
@@ -290,12 +310,14 @@ The breakpoints `Set` keys are the cell index at which to insert a separator BEF
 - "生成字帖" link has correct `/worksheet?source=ancient&...` href.
 
 **Integration (`tests/integration/api/classics.test.ts`):**
+
 - `GET /api/classics?category=four-books` returns the expected filtered list.
 - `GET /api/classics/lunyu` returns full detail with chunks.
 - `GET /api/classics/nonexistent` returns 404.
 - Pagination: `?page=2&pageSize=2` returns next page with correct total.
 
 **Manual smoke:**
+
 - Visit `/ancient` (post-rename) → see category tabs + book cards.
 - Click 论语 → see book detail with chapter picker.
 - Click a chapter → see text + pinyin.
@@ -324,6 +346,7 @@ Also update `scripts/init-db.ts` to include the CREATE TABLE so fresh local DBs 
 ## Files touched (summary)
 
 **New (12):**
+
 - `migrations/2026-06-20-classics.sql`
 - `scripts/build-classics.ts`
 - `lib/classics-types.ts`
@@ -339,6 +362,7 @@ Also update `scripts/init-db.ts` to include the CREATE TABLE so fresh local DBs 
 - Tests × 3 (above)
 
 **Modified (6):**
+
 - `components/Header.tsx` — nav link path
 - `app/ancient-texts/page.tsx` → redirect
 - `scripts/init-db.ts` — add classics CREATE TABLE

@@ -40,7 +40,10 @@ if (typeof window !== 'undefined') {
 }
 
 function splitBatches(text: string): string[] {
-  const paragraphs = text.split(/\n+/).map((p) => p.trim()).filter((p) => p.length > 0);
+  const paragraphs = text
+    .split(/\n+/)
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
   const batches: string[] = [];
   let buf = '';
   for (const p of paragraphs) {

@@ -11,7 +11,11 @@ interface Props {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  draft: '草稿', sending: '发送中', sent: '已发送', failed: '失败', cancelled: '已取消',
+  draft: '草稿',
+  sending: '发送中',
+  sent: '已发送',
+  failed: '失败',
+  cancelled: '已取消',
 };
 
 export default async function CampaignDetailPage({ params }: Props) {
@@ -25,7 +29,7 @@ export default async function CampaignDetailPage({ params }: Props) {
   const pool = getPool();
   const [recipients] = await pool.query<any[]>(
     `SELECT status, COUNT(*) AS n FROM email_campaign_recipients WHERE campaign_id = ? GROUP BY status`,
-    [id]
+    [id],
   );
   const counts: Record<string, number> = {};
   for (const r of recipients) counts[r.status] = Number(r.n);
@@ -34,12 +38,18 @@ export default async function CampaignDetailPage({ params }: Props) {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <Link href="/admin/email/campaigns" className="text-sm text-ink-soft hover:text-ink">← 返回列表</Link>
+          <Link href="/admin/email/campaigns" className="text-sm text-ink-soft hover:text-ink">
+            ← 返回列表
+          </Link>
           <h1 className="text-xl font-semibold mt-1">{c.subject}</h1>
         </div>
         <div className="text-sm text-ink-soft">
-          <span className="mr-2">受众: <span className="text-ink">{c.audience}</span></span>
-          <span className="px-2 py-0.5 rounded bg-paper-warm">{STATUS_LABEL[c.status] ?? c.status}</span>
+          <span className="mr-2">
+            受众: <span className="text-ink">{c.audience}</span>
+          </span>
+          <span className="px-2 py-0.5 rounded bg-paper-warm">
+            {STATUS_LABEL[c.status] ?? c.status}
+          </span>
         </div>
       </div>
 
@@ -61,7 +71,9 @@ export default async function CampaignDetailPage({ params }: Props) {
 
       <div className="border border-paper-warm rounded-md p-4 space-y-3">
         <h2 className="text-sm font-medium text-ink-soft">正文 (纯文本版本)</h2>
-        <pre className="whitespace-pre-wrap text-xs bg-paper-warm/30 p-3 rounded">{c.text_body}</pre>
+        <pre className="whitespace-pre-wrap text-xs bg-paper-warm/30 p-3 rounded">
+          {c.text_body}
+        </pre>
       </div>
 
       <CampaignActions id={c.id} status={c.status} />

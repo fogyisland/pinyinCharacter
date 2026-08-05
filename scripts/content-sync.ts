@@ -144,8 +144,8 @@ function parseArgs(): SyncOptions {
     else if (a === '--char') opts.char = args[++i];
     else if (a === '--level') opts.level = parseInt(args[++i], 10);
     else if (a === '--fields') {
-      const list = args[++i].split(',').map(s => s.trim()) as FieldName[];
-      const valid = list.filter(f => ALL_FIELDS.includes(f));
+      const list = args[++i].split(',').map((s) => s.trim()) as FieldName[];
+      const valid = list.filter((f) => ALL_FIELDS.includes(f));
       if (valid.length === 0) throw new Error(`--fields: no valid fields in "${args[i]}"`);
       opts.fields = valid;
     } else if (a === '--concurrency') opts.concurrency = parseInt(args[++i], 10);
@@ -157,8 +157,8 @@ function listExistingJsonFiles(): Set<string> {
   if (!existsSync(CONTENT_DIR)) return new Set();
   return new Set(
     readdirSync(CONTENT_DIR)
-      .filter(f => f.endsWith('.json'))
-      .map(f => f.replace(/\.json$/, '')),
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => f.replace(/\.json$/, '')),
   );
 }
 
@@ -175,13 +175,20 @@ function loadExistingJson(char: string): Partial<CharContent> | null {
 function hasField(existing: Partial<CharContent> | null, field: FieldName): boolean {
   if (!existing) return false;
   switch (field) {
-    case 'meaning_zh': return !!(existing.meaning_zh || existing.dict?.meaning_zh);
-    case 'meaning_en': return !!existing.dict?.meaning_en;
-    case 'pinyin_alt': return !!existing.dict?.pinyin_alt;
-    case 'variants': return !!existing.dict?.variants;
-    case 'etymology_story': return !!(existing.etymology_story || existing.etymology?.story);
-    case 'rare_meaning': return !!existing.rare?.meaning;
-    case 'rare_story': return !!existing.rare?.story;
+    case 'meaning_zh':
+      return !!(existing.meaning_zh || existing.dict?.meaning_zh);
+    case 'meaning_en':
+      return !!existing.dict?.meaning_en;
+    case 'pinyin_alt':
+      return !!existing.dict?.pinyin_alt;
+    case 'variants':
+      return !!existing.dict?.variants;
+    case 'etymology_story':
+      return !!(existing.etymology_story || existing.etymology?.story);
+    case 'rare_meaning':
+      return !!existing.rare?.meaning;
+    case 'rare_story':
+      return !!existing.rare?.story;
   }
 }
 
@@ -256,18 +263,28 @@ async function generateForChar(
           });
           break;
         case 'rare_meaning':
-          if (!rareRow) { result.skipped.push(field); return; }
-          value = (await generateRareCharContent(
-            { char: charRow.char, pinyin: rareRow.pinyin },
-            { fields: ['meaning'] },
-          )).meaning;
+          if (!rareRow) {
+            result.skipped.push(field);
+            return;
+          }
+          value = (
+            await generateRareCharContent(
+              { char: charRow.char, pinyin: rareRow.pinyin },
+              { fields: ['meaning'] },
+            )
+          ).meaning;
           break;
         case 'rare_story':
-          if (!rareRow) { result.skipped.push(field); return; }
-          value = (await generateRareCharContent(
-            { char: charRow.char, pinyin: rareRow.pinyin },
-            { fields: ['story'] },
-          )).story;
+          if (!rareRow) {
+            result.skipped.push(field);
+            return;
+          }
+          value = (
+            await generateRareCharContent(
+              { char: charRow.char, pinyin: rareRow.pinyin },
+              { fields: ['story'] },
+            )
+          ).story;
           break;
       }
       if (value !== null && value !== undefined && value !== '') {
@@ -356,16 +373,28 @@ async function writeBackToDb(
   content: CharContent,
 ): Promise<void> {
   if (content.dict?.meaning_zh) {
-    await pool.execute(`UPDATE chars SET meaning_zh = ? WHERE \`char\` = ?`, [content.dict.meaning_zh, char]);
+    await pool.execute(`UPDATE chars SET meaning_zh = ? WHERE \`char\` = ?`, [
+      content.dict.meaning_zh,
+      char,
+    ]);
   }
   if (content.dict?.meaning_en) {
-    await pool.execute(`UPDATE chars SET meaning_en = ? WHERE \`char\` = ?`, [content.dict.meaning_en, char]);
+    await pool.execute(`UPDATE chars SET meaning_en = ? WHERE \`char\` = ?`, [
+      content.dict.meaning_en,
+      char,
+    ]);
   }
   if (content.dict?.pinyin_alt) {
-    await pool.execute(`UPDATE chars SET pinyin_alt = ? WHERE \`char\` = ?`, [JSON.stringify(content.dict.pinyin_alt), char]);
+    await pool.execute(`UPDATE chars SET pinyin_alt = ? WHERE \`char\` = ?`, [
+      JSON.stringify(content.dict.pinyin_alt),
+      char,
+    ]);
   }
   if (content.dict?.variants) {
-    await pool.execute(`UPDATE chars SET variants = ? WHERE \`char\` = ?`, [JSON.stringify(content.dict.variants), char]);
+    await pool.execute(`UPDATE chars SET variants = ? WHERE \`char\` = ?`, [
+      JSON.stringify(content.dict.variants),
+      char,
+    ]);
   }
   // post-2026-06-17 slim-DB: story data lives in data/content/<char>.json,
   // not in char_etymology. Just ensure a row exists for this char.
@@ -379,7 +408,12 @@ async function writeBackToDb(
   if (content.rare?.meaning || content.rare?.story) {
     await pool.execute(
       `UPDATE rare_chars SET meaning = COALESCE(NULLIF(?, ''), meaning), story = COALESCE(NULLIF(?, ''), story), generated_by = ?, generated_at = NOW() WHERE \`char\` = ?`,
-      [content.rare.meaning ?? '', content.rare.story ?? '', content.generated_by ?? 'content-sync', char],
+      [
+        content.rare.meaning ?? '',
+        content.rare.story ?? '',
+        content.generated_by ?? 'content-sync',
+        char,
+      ],
     );
   }
 }
@@ -402,7 +436,9 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
   if (opts.writeDb === undefined) {
     const rich = await dbHasRichContentColumns(pool);
     opts.writeDb = rich;
-    console.log(`[sync] --write-db auto-detected: ${rich ? 'ON (rich schema)' : 'OFF (slim schema)'}`);
+    console.log(
+      `[sync] --write-db auto-detected: ${rich ? 'ON (rich schema)' : 'OFF (slim schema)'}`,
+    );
   }
 
   // Force mock mode if --mock, or if ai.mock_mode is already on.
@@ -450,7 +486,7 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
     return stats;
   }
 
-  const charList = charRows.map(r => r.char);
+  const charList = charRows.map((r) => r.char);
   const placeholders = charList.map(() => '?').join(',');
   const [rareRows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin FROM rare_chars WHERE \`char\` IN (${placeholders})`,
@@ -460,8 +496,8 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
     `SELECT \`char\` FROM char_etymology WHERE \`char\` IN (${placeholders})`,
     charList,
   );
-  const rareByChar = new Map<string, RareRow>(rareRows.map(r => [r.char, r]));
-  const etymByChar = new Map<string, EtymRow>(etymRows.map(r => [r.char, r]));
+  const rareByChar = new Map<string, RareRow>(rareRows.map((r) => [r.char, r]));
+  const etymByChar = new Map<string, EtymRow>(etymRows.map((r) => [r.char, r]));
   const existingFiles = opts.missing || opts.outdated ? listExistingJsonFiles() : new Set<string>();
 
   // Process with limited concurrency.
@@ -488,14 +524,14 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
         // Note: this intentionally does NOT gate on existingFiles.has() —
         // a char with a partial JSON (e.g. only meaning_zh) should still
         // be processed for missing fields like meaning_en / pinyin_alt.
-        const allPresent = fields.every(f => hasField(existing, f));
+        const allPresent = fields.every((f) => hasField(existing, f));
         if (allPresent) {
           stats.skipped++;
           continue;
         }
       }
       if (opts.outdated) {
-        const allPresent = fields.every(f => hasField(existing, f));
+        const allPresent = fields.every((f) => hasField(existing, f));
         if (allPresent) {
           stats.skipped++;
           continue;
@@ -602,12 +638,15 @@ async function main() {
   const dt = ((Date.now() - t0) / 1000).toFixed(1);
   console.log(
     `[sync] scanned=${stats.scanned} generated=${stats.generated} skipped=${stats.skipped} ` +
-    `errors=${stats.errors} time=${dt}s`,
+      `errors=${stats.errors} time=${dt}s`,
   );
   console.log(`[sync] byField: ${JSON.stringify(stats.byField)}`);
   await closePool();
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

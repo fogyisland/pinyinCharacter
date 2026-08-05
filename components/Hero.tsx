@@ -31,9 +31,7 @@ export function Hero() {
         <div className="font-kai text-xs sm:text-sm text-ink-faint tracking-[0.4em]">
           {BRAND.name}
         </div>
-        <div className="stamp text-[10px] sm:text-xs">
-          公益 · 免费
-        </div>
+        <div className="stamp text-[10px] sm:text-xs">公益 · 免费</div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
@@ -54,7 +52,7 @@ export function Hero() {
         {/* Headline — right, asymmetric */}
         <div className="lg:col-span-7 order-1 lg:order-2">
           <div className="font-kai text-sm sm:text-base text-ink-faint tracking-[0.3em] mb-3">
-            漢  字  ·  拼  音
+            漢 字 · 拼 音
           </div>
           <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl text-ink leading-[1.1] mb-6 tracking-tight">
             <span className="block">汉字与拼音，</span>
@@ -62,8 +60,8 @@ export function Hero() {
             <span className="block">皆有意。</span>
           </h1>
           <p className="text-sm sm:text-base text-ink-soft max-w-lg leading-relaxed mb-8">
-            {BRAND.shortDesc}。<br className="sm:hidden" />
-            字 ↔ 拼音互转 · 千字罕见库 · 字帖打印 · 趣味识字游戏 · 佛经选读。
+            {BRAND.shortDesc}。<br className="sm:hidden" />字 ↔ 拼音互转 · 千字罕见库 · 字帖打印 ·
+            趣味识字游戏 · 佛经选读。
           </p>
           <div className="flex items-center gap-4 flex-wrap">
             <Link

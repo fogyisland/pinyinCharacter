@@ -56,14 +56,22 @@ export function InitAdminForm() {
           {err}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6"
+      >
         <div>
           <label className="block text-sm font-medium text-ink-soft">
             用户名 (3-32 字符,a-z A-Z 0-9 _)
           </label>
           <input
-            type="text" required minLength={3} maxLength={32} autoComplete="username"
-            value={username} onChange={(e) => setUsername(e.target.value)}
+            type="text"
+            required
+            minLength={3}
+            maxLength={32}
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             pattern="[a-zA-Z0-9_]+"
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
@@ -71,21 +79,28 @@ export function InitAdminForm() {
         <div>
           <label className="block text-sm font-medium text-ink-soft">密码 (≥8 字符)</label>
           <input
-            type="password" required minLength={8} autoComplete="new-password"
-            value={password} onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-ink-soft">邮箱 (可选)</label>
           <input
-            type="email" autoComplete="email"
-            value={email} onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
         </div>
         <button
-          type="submit" disabled={busy}
+          type="submit"
+          disabled={busy}
           className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
         >
           {busy ? '提交中…' : '下一步'}

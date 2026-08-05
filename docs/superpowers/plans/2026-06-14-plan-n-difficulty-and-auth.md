@@ -5,6 +5,7 @@
 **Goal:** Add three-level difficulty (简单 / 复杂 / 超难) to the two mini-games and the pinyin input method, and split login/register out of `AuthModal` into independent pages with a required email field.
 
 **Architecture:**
+
 - One shared `DifficultyPicker` segmented control persisted to `localStorage` (key: `pinyin:difficulty`, default: `'medium'`). Same setting applies across all three call sites.
 - Each feature reads the setting and applies its own mapping. No API changes — all filtering is client-side (we already have the data we need).
 - Auth becomes 4 independent routes (`/login`, `/register`, `/forgot-password`, `/reset-password`) each in their own page. `registerRequest` adds a required `email` field. `AuthModal` is deleted; `Header` "登录 / 注册" buttons become `<Link>` to `/login` (with "没有账号？去注册" link) and `/register` (with "已有账号？去登录" link).
@@ -15,29 +16,29 @@
 
 ## File Structure
 
-| File | Responsibility |
-|---|---|
-| `lib/difficulty.ts` (NEW) | Pure functions: type, defaults, mapping per feature |
-| `lib/use-difficulty.ts` (NEW) | `useDifficulty()` hook reading/writing localStorage (SSR-safe) |
-| `components/common/DifficultyPicker.tsx` (NEW) | Reusable segmented control |
-| `components/common/DifficultyPicker.test.tsx` (NEW) | Click + persistence tests |
-| `components/game/DragMatchGame.tsx` (MODIFY) | Read difficulty → char count + source filter |
-| `components/game/ToneRadicalGame.tsx` (MODIFY) | Read difficulty → pass count to `fetchGameRound` |
-| `components/PinyinInputMethod.tsx` (MODIFY) | Read difficulty → slice candidates |
-| `components/PinyinInputMethod.test.tsx` (NEW) | Difficulty filter logic unit test |
-| `lib/difficulty.test.ts` (NEW) | Pure-function tests for mappings |
-| `app/login/page.tsx` (NEW) | Standalone login form |
-| `app/register/page.tsx` (NEW) | Standalone register form with email |
-| `app/forgot-password/page.tsx` (MODIFY) | Already exists; ensure link from `/login` |
-| `app/reset-password/page.tsx` (MODIFY) | Already exists; ensure flow is end-to-end |
-| `lib/api-auth.ts` (MODIFY) | Add `email` param to `registerRequest` |
-| `lib/validators.ts` (MODIFY) | `registerSchema` requires email + password + username |
-| `server/auth.ts` (MODIFY) | Persist `email` on register (column already exists per Plan B+) |
-| `app/api/auth/register/route.ts` (MODIFY) | Validate + persist email |
-| `components/Header.tsx` (MODIFY) | Replace AuthModal trigger with `<Link>` to `/login` or `/register` |
-| `components/AuthModal.tsx` (DELETE) | No longer needed |
-| `lib/api-auth.test.ts` (MODIFY or NEW) | Test `registerRequest` includes email |
-| `tests/integration/api/auth.test.ts` (MODIFY) | Verify email persisted on register |
+| File                                                | Responsibility                                                     |
+| --------------------------------------------------- | ------------------------------------------------------------------ |
+| `lib/difficulty.ts` (NEW)                           | Pure functions: type, defaults, mapping per feature                |
+| `lib/use-difficulty.ts` (NEW)                       | `useDifficulty()` hook reading/writing localStorage (SSR-safe)     |
+| `components/common/DifficultyPicker.tsx` (NEW)      | Reusable segmented control                                         |
+| `components/common/DifficultyPicker.test.tsx` (NEW) | Click + persistence tests                                          |
+| `components/game/DragMatchGame.tsx` (MODIFY)        | Read difficulty → char count + source filter                       |
+| `components/game/ToneRadicalGame.tsx` (MODIFY)      | Read difficulty → pass count to `fetchGameRound`                   |
+| `components/PinyinInputMethod.tsx` (MODIFY)         | Read difficulty → slice candidates                                 |
+| `components/PinyinInputMethod.test.tsx` (NEW)       | Difficulty filter logic unit test                                  |
+| `lib/difficulty.test.ts` (NEW)                      | Pure-function tests for mappings                                   |
+| `app/login/page.tsx` (NEW)                          | Standalone login form                                              |
+| `app/register/page.tsx` (NEW)                       | Standalone register form with email                                |
+| `app/forgot-password/page.tsx` (MODIFY)             | Already exists; ensure link from `/login`                          |
+| `app/reset-password/page.tsx` (MODIFY)              | Already exists; ensure flow is end-to-end                          |
+| `lib/api-auth.ts` (MODIFY)                          | Add `email` param to `registerRequest`                             |
+| `lib/validators.ts` (MODIFY)                        | `registerSchema` requires email + password + username              |
+| `server/auth.ts` (MODIFY)                           | Persist `email` on register (column already exists per Plan B+)    |
+| `app/api/auth/register/route.ts` (MODIFY)           | Validate + persist email                                           |
+| `components/Header.tsx` (MODIFY)                    | Replace AuthModal trigger with `<Link>` to `/login` or `/register` |
+| `components/AuthModal.tsx` (DELETE)                 | No longer needed                                                   |
+| `lib/api-auth.test.ts` (MODIFY or NEW)              | Test `registerRequest` includes email                              |
+| `tests/integration/api/auth.test.ts` (MODIFY)       | Verify email persisted on register                                 |
 
 ---
 
@@ -49,27 +50,28 @@ export const DEFAULT_DIFFICULTY: Difficulty = 'medium';
 
 // DragMatchGame: { count, source }
 export const DRAG_MATCH_CONFIG = {
-  easy:   { count: 6, source: 'chars-level-1' },
+  easy: { count: 6, source: 'chars-level-1' },
   medium: { count: 8, source: 'chars-level-1-2' },
-  hard:   { count: 12, source: 'chars-all' },
+  hard: { count: 12, source: 'chars-all' },
 } as const;
 
 // ToneRadicalGame: { count } — passed to /api/game/round
 export const TONE_RADICAL_CONFIG = {
-  easy:   { count: 3 },
+  easy: { count: 3 },
   medium: { count: 4 },
-  hard:   { count: 6 },
+  hard: { count: 6 },
 } as const;
 
 // PinyinInputMethod: { maxCandidates } — slice after fetch
 export const PINYIN_INPUT_CONFIG = {
-  easy:   { maxCandidates: 3 },
+  easy: { maxCandidates: 3 },
   medium: { maxCandidates: 5 },
-  hard:   { maxCandidates: 9 },
+  hard: { maxCandidates: 9 },
 } as const;
 ```
 
 **For DragMatchGame source filter:**
+
 - `chars-level-1`: `GET /api/chars?level=1&page=1` → filter to chars with meaning
 - `chars-level-1-2`: `GET /api/chars?page=1` (returns 80 chars mixing 1+2 — good enough)
 - `chars-all`: `GET /api/chars?page=1` (current behaviour — already includes all levels)
@@ -85,12 +87,14 @@ Then shuffle + slice to `count`.
 ## Task 1: `lib/difficulty.ts` — pure config module
 
 **Files:**
+
 - Create: `lib/difficulty.ts`
 - Test: `lib/difficulty.test.ts`
 
 - [ ] **Step 1: Write failing test**
 
 `lib/difficulty.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import {
@@ -139,26 +143,27 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Write minimal implementation**
 
 `lib/difficulty.ts`:
+
 ```ts
 export type Difficulty = 'easy' | 'medium' | 'hard';
 export const DEFAULT_DIFFICULTY: Difficulty = 'medium';
 
 export const DRAG_MATCH_CONFIG = {
-  easy:   { count: 6, source: 'chars-level-1' as const },
+  easy: { count: 6, source: 'chars-level-1' as const },
   medium: { count: 8, source: 'chars-level-1-2' as const },
-  hard:   { count: 12, source: 'chars-all' as const },
+  hard: { count: 12, source: 'chars-all' as const },
 };
 
 export const TONE_RADICAL_CONFIG = {
-  easy:   { count: 3 },
+  easy: { count: 3 },
   medium: { count: 4 },
-  hard:   { count: 6 },
+  hard: { count: 6 },
 };
 
 export const PINYIN_INPUT_CONFIG = {
-  easy:   { maxCandidates: 3 },
+  easy: { maxCandidates: 3 },
   medium: { maxCandidates: 5 },
-  hard:   { maxCandidates: 9 },
+  hard: { maxCandidates: 9 },
 };
 ```
 
@@ -179,6 +184,7 @@ git commit -m "feat(difficulty): shared config module + pure-function tests"
 ## Task 2: `lib/use-difficulty.ts` — localStorage-backed hook
 
 **Files:**
+
 - Create: `lib/use-difficulty.ts`
 
 (No test — pure side-effect wrapper, exercised via `DifficultyPicker` tests.)
@@ -186,6 +192,7 @@ git commit -m "feat(difficulty): shared config module + pure-function tests"
 - [ ] **Step 1: Write the hook**
 
 `lib/use-difficulty.ts`:
+
 ```ts
 'use client';
 
@@ -247,12 +254,14 @@ git commit -m "feat(difficulty): useDifficulty hook (localStorage + cross-tab sy
 ## Task 3: `components/common/DifficultyPicker.tsx` — reusable segmented control
 
 **Files:**
+
 - Create: `components/common/DifficultyPicker.tsx`
 - Test: `components/common/DifficultyPicker.test.tsx`
 
 - [ ] **Step 1: Write failing test**
 
 `components/common/DifficultyPicker.test.tsx`:
+
 ```tsx
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
@@ -293,6 +302,7 @@ Expected: FAIL — component not found.
 - [ ] **Step 3: Write minimal implementation**
 
 `components/common/DifficultyPicker.tsx`:
+
 ```tsx
 'use client';
 
@@ -360,11 +370,13 @@ git commit -m "feat(common): DifficultyPicker segmented control + tests"
 ## Task 4: Wire `DragMatchGame` to difficulty
 
 **Files:**
+
 - Modify: `components/game/DragMatchGame.tsx`
 
 - [ ] **Step 1: Modify component**
 
 At top of file add:
+
 ```tsx
 import { DRAG_MATCH_CONFIG, type Difficulty } from '@/lib/difficulty';
 import { useDifficulty } from '@/lib/use-difficulty';
@@ -373,6 +385,7 @@ import { fetchChars } from '@/lib/api-chars';
 ```
 
 Replace the `loadGame` body to switch by difficulty:
+
 ```tsx
 const [difficulty, setDifficulty] = useDifficulty();
 
@@ -404,6 +417,7 @@ const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
 ```
 
 Add a small mapper near top (next to `Char` interface):
+
 ```tsx
 function toChar(c: { char: string; pinyin: string; meaningZh: string | null }): Char {
   return { char: c.char, pinyin: c.pinyin, meaning: c.meaningZh ?? '' };
@@ -411,9 +425,16 @@ function toChar(c: { char: string; pinyin: string; meaningZh: string | null }): 
 ```
 
 In the JSX, before the timer/status bar, add the picker (only when `phase === 'loading'` or `'finished'`? No — always visible so the user can change mid-round):
+
 ```tsx
 <div className="flex items-center justify-between mb-2">
-  <DifficultyPicker value={difficulty} onChange={(d) => { setDifficulty(d); void loadGame(d); }} />
+  <DifficultyPicker
+    value={difficulty}
+    onChange={(d) => {
+      setDifficulty(d);
+      void loadGame(d);
+    }}
+  />
 </div>
 ```
 
@@ -434,6 +455,7 @@ git commit -m "feat(game): DragMatchGame respects difficulty (count + char sourc
 ## Task 5: Add `lib/api-chars.ts` client wrapper (used by DragMatchGame)
 
 **Files:**
+
 - Create: `lib/api-chars.ts`
 
 - [ ] **Step 1: Write the wrapper**
@@ -448,17 +470,23 @@ export interface CharsListResult {
   pageSize: number;
 }
 
-export async function fetchChars(opts: {
-  q?: string;
-  level?: 1 | 2 | 3;
-  page?: number;
-} = {}): Promise<CharsListResult> {
+export async function fetchChars(
+  opts: {
+    q?: string;
+    level?: 1 | 2 | 3;
+    page?: number;
+  } = {},
+): Promise<CharsListResult> {
   const params = new URLSearchParams();
   if (opts.q) params.set('q', opts.q);
   if (opts.level) params.set('level', String(opts.level));
   if (opts.page) params.set('page', String(opts.page));
   const res = await fetch(`/api/chars?${params.toString()}`);
-  const json = (await res.json()) as { ok: boolean; data: CharsListResult; error?: { message: string } };
+  const json = (await res.json()) as {
+    ok: boolean;
+    data: CharsListResult;
+    error?: { message: string };
+  };
   if (!json.ok) throw new Error(json.error?.message ?? 'fetchChars failed');
   return json.data;
 }
@@ -481,11 +509,13 @@ git commit -m "feat(api): fetchChars client wrapper for /api/chars with level fi
 ## Task 6: Wire `ToneRadicalGame` to difficulty
 
 **Files:**
+
 - Modify: `components/game/ToneRadicalGame.tsx`
 
 - [ ] **Step 1: Modify component**
 
 Add at top:
+
 ```tsx
 import { TONE_RADICAL_CONFIG, type Difficulty } from '@/lib/difficulty';
 import { useDifficulty } from '@/lib/use-difficulty';
@@ -493,6 +523,7 @@ import { DifficultyPicker } from '@/components/common/DifficultyPicker';
 ```
 
 Replace `loadGame`:
+
 ```tsx
 const [difficulty, setDifficulty] = useDifficulty();
 
@@ -519,14 +550,24 @@ const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
 ```
 
 Update `useEffect`:
+
 ```tsx
-useEffect(() => { void loadGame(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+useEffect(() => {
+  void loadGame();
+}, []); // eslint-disable-line react-hooks/exhaustive-deps
 ```
 
 In the main JSX (before the timer row), add the picker:
+
 ```tsx
 <div className="flex items-center justify-between">
-  <DifficultyPicker value={difficulty} onChange={(d) => { setDifficulty(d); void loadGame(d); }} />
+  <DifficultyPicker
+    value={difficulty}
+    onChange={(d) => {
+      setDifficulty(d);
+      void loadGame(d);
+    }}
+  />
 </div>
 ```
 
@@ -547,26 +588,39 @@ git commit -m "feat(game): ToneRadicalGame respects difficulty (round count)"
 ## Task 7: Wire `PinyinInputMethod` to difficulty
 
 **Files:**
+
 - Modify: `components/PinyinInputMethod.tsx`
 - Test: `components/PinyinInputMethod.test.tsx`
 
 - [ ] **Step 1: Write failing test**
 
 `components/PinyinInputMethod.test.tsx`:
+
 ```tsx
 import { describe, it, expect } from 'vitest';
 import { applyDifficulty, PINYIN_INPUT_CONFIG } from '@/lib/pinyin-input-difficulty';
 
 describe('applyDifficulty', () => {
   it('easy: limits to 3 candidates', () => {
-    const out = applyDifficulty([{char:'a'},{char:'b'},{char:'c'},{char:'d'},{char:'e'}], 'easy');
+    const out = applyDifficulty(
+      [{ char: 'a' }, { char: 'b' }, { char: 'c' }, { char: 'd' }, { char: 'e' }],
+      'easy',
+    );
     expect(out).toHaveLength(3);
-    expect(out.map(c => c.char)).toEqual(['a','b','c']);
+    expect(out.map((c) => c.char)).toEqual(['a', 'b', 'c']);
   });
 
   it('medium: limits to 5 candidates', () => {
     const out = applyDifficulty(
-      [{char:'a'},{char:'b'},{char:'c'},{char:'d'},{char:'e'},{char:'f'},{char:'g'}],
+      [
+        { char: 'a' },
+        { char: 'b' },
+        { char: 'c' },
+        { char: 'd' },
+        { char: 'e' },
+        { char: 'f' },
+        { char: 'g' },
+      ],
       'medium',
     );
     expect(out).toHaveLength(5);
@@ -574,7 +628,18 @@ describe('applyDifficulty', () => {
 
   it('hard: returns all up to 9', () => {
     const out = applyPassword(
-      [{char:'a'},{char:'b'},{char:'c'},{char:'d'},{char:'e'},{char:'f'},{char:'g'},{char:'h'},{char:'i'},{char:'j'}],
+      [
+        { char: 'a' },
+        { char: 'b' },
+        { char: 'c' },
+        { char: 'd' },
+        { char: 'e' },
+        { char: 'f' },
+        { char: 'g' },
+        { char: 'h' },
+        { char: 'i' },
+        { char: 'j' },
+      ],
       'hard',
     ).length as any;
   });
@@ -590,16 +655,24 @@ import { applyDifficulty, PINYIN_INPUT_CONFIG } from '@/lib/pinyin-input-difficu
 describe('applyDifficulty', () => {
   it('easy: limits to 3 candidates', () => {
     const out = applyDifficulty(
-      [{char:'a'},{char:'b'},{char:'c'},{char:'d'},{char:'e'}],
+      [{ char: 'a' }, { char: 'b' }, { char: 'c' }, { char: 'd' }, { char: 'e' }],
       'easy',
     );
     expect(out).toHaveLength(3);
-    expect(out.map(c => c.char)).toEqual(['a','b','c']);
+    expect(out.map((c) => c.char)).toEqual(['a', 'b', 'c']);
   });
 
   it('medium: limits to 5 candidates', () => {
     const out = applyDifficulty(
-      [{char:'a'},{char:'b'},{char:'c'},{char:'d'},{char:'e'},{char:'f'},{char:'g'}],
+      [
+        { char: 'a' },
+        { char: 'b' },
+        { char: 'c' },
+        { char: 'd' },
+        { char: 'e' },
+        { char: 'f' },
+        { char: 'g' },
+      ],
       'medium',
     );
     expect(out).toHaveLength(5);
@@ -607,7 +680,7 @@ describe('applyDifficulty', () => {
 
   it('hard: returns all up to 9 (does not slice below 9)', () => {
     const out = applyDifficulty(
-      Array.from({length: 12}, (_, i) => ({char: String(i)})),
+      Array.from({ length: 12 }, (_, i) => ({ char: String(i) })),
       'hard',
     );
     expect(out).toHaveLength(9); // hard ceiling is 9
@@ -627,6 +700,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Write minimal implementation**
 
 `lib/pinyin-input-difficulty.ts`:
+
 ```ts
 import { PINYIN_INPUT_CONFIG, type Difficulty } from './difficulty';
 
@@ -643,6 +717,7 @@ Expected: PASS (4/4).
 - [ ] **Step 5: Modify PinyinInputMethod to use it**
 
 Add to imports:
+
 ```tsx
 import { useDifficulty } from '@/lib/use-difficulty';
 import { DifficultyPicker } from '@/components/common/DifficultyPicker';
@@ -650,16 +725,19 @@ import { applyDifficulty } from '@/lib/pinyin-input-difficulty';
 ```
 
 Inside the component:
+
 ```tsx
 const [difficulty, setDifficulty] = useDifficulty();
 ```
 
 In the candidate fetch effect, replace `setCandidates(res.data.candidates)` with:
+
 ```tsx
 setCandidates(applyDifficulty(res.data.candidates, difficulty));
 ```
 
 In the JSX, just above the input:
+
 ```tsx
 <div className="flex items-center justify-between mb-2">
   <DifficultyPicker value={difficulty} onChange={setDifficulty} />
@@ -706,6 +784,7 @@ Expected: success (Next.js production build green).
 - [ ] **Step 5: Commit (no changes if all green)**
 
 If any small fixes were needed:
+
 ```bash
 git add -A
 git commit -m "fix(difficulty): post-smoke fixes"
@@ -716,14 +795,20 @@ git commit -m "fix(difficulty): post-smoke fixes"
 ## Task 9: `lib/validators.ts` — extend `registerSchema` with email (currently ad-hoc in route)
 
 **Files:**
+
 - Modify: `lib/validators.ts`
 
 - [ ] **Step 1: Add the schema**
 
 Find an appropriate spot in `lib/validators.ts` and add:
+
 ```ts
 export const registerSchema = z.object({
-  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_\-]+$/, '用户名仅支持字母数字下划线短横'),
+  username: z
+    .string()
+    .min(3)
+    .max(32)
+    .regex(/^[a-zA-Z0-9_\-]+$/, '用户名仅支持字母数字下划线短横'),
   email: z.string().email('邮箱格式不正确'),
   password: z.string().min(8).max(128),
 });
@@ -751,11 +836,13 @@ git commit -m "feat(validators): registerSchema (username+email+password), login
 ## Task 10: Update `registerRequest` to send email
 
 **Files:**
+
 - Modify: `lib/api-auth.ts`
 
 - [ ] **Step 1: Update signature**
 
 Replace the existing `registerRequest`:
+
 ```ts
 export async function registerRequest(
   username: string,
@@ -763,7 +850,8 @@ export async function registerRequest(
   password: string,
 ): Promise<ApiResult<{ user: User }>> {
   return call('/api/auth/register', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ username, email, password }),
   });
 }
@@ -786,6 +874,7 @@ git commit -m "feat(auth): registerRequest takes email"
 ## Task 11: Server-side `registerRequest` validates + persists email
 
 **Files:**
+
 - Modify: `app/api/auth/register/route.ts`
 - Modify: `server/auth.ts` (if a register fn exists)
 
@@ -794,6 +883,7 @@ git commit -m "feat(auth): registerRequest takes email"
 Run: `cat app/api/auth/register/route.ts`
 
 Look at current behaviour. If it manually parses JSON without using `registerSchema`, switch to:
+
 ```ts
 import { registerSchema } from '@/lib/validators';
 
@@ -801,7 +891,13 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: { code: 'bad_input', message: parsed.error.issues[0]?.message ?? 'invalid input' } }, { status: 400 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: { code: 'bad_input', message: parsed.error.issues[0]?.message ?? 'invalid input' },
+      },
+      { status: 400 },
+    );
   }
   // call server-side register fn with parsed.data { username, email, password }
   // ensure email is included in INSERT (users table already has email column per Plan B+)
@@ -815,10 +911,12 @@ If `server/auth.ts` has a `registerUser` fn, pass email to it. Update that fn to
 Read the DDL or run: `grep -r "email" scripts/init-db.sql` (or wherever DDL lives). If missing, ALTER TABLE.
 
 If missing, add a migration:
+
 ```sql
 ALTER TABLE users ADD COLUMN email VARCHAR(255) DEFAULT NULL;
 ALTER TABLE users ADD UNIQUE KEY uk_email (email);
 ```
+
 And apply it to the live DB.
 
 - [ ] **Step 3: Run typecheck**
@@ -829,6 +927,7 @@ Expected: no errors.
 - [ ] **Step 4: Add integration test**
 
 In `tests/integration/api/auth.test.ts` (or equivalent — find the existing one), add a test:
+
 ```ts
 it('register persists email', async () => {
   const r = await POST('/api/auth/register', {
@@ -838,7 +937,9 @@ it('register persists email', async () => {
   });
   expect(r.ok).toBe(true);
   // Query users table to verify email persisted
-  const [rows] = await pool.query('SELECT email FROM users WHERE username = ?', ['with_email_user']);
+  const [rows] = await pool.query('SELECT email FROM users WHERE username = ?', [
+    'with_email_user',
+  ]);
   expect(rows[0].email).toBe('with@email.com');
 });
 ```
@@ -860,6 +961,7 @@ git commit -m "feat(auth): register endpoint validates email and persists it"
 ## Task 12: `app/login/page.tsx` — standalone login page
 
 **Files:**
+
 - Create: `app/login/page.tsx`
 
 - [ ] **Step 1: Create the page**
@@ -877,7 +979,7 @@ import { validateUsername, validatePassword } from '@/lib/auth-client';
 export default function LoginPage() {
   const router = useRouter();
   const search = useSearchParams();
-  const setUser = useAppStore(s => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -888,11 +990,17 @@ export default function LoginPage() {
     setError(null);
     const uErr = validateUsername(username);
     const pErr = validatePassword(password);
-    if (uErr || pErr) { setError(uErr || pErr); return; }
+    if (uErr || pErr) {
+      setError(uErr || pErr);
+      return;
+    }
     setBusy(true);
     const r = await loginRequest(username, password);
     setBusy(false);
-    if (!r.ok) { setError(r.error.message); return; }
+    if (!r.ok) {
+      setError(r.error.message);
+      return;
+    }
     setUser(r.data.user);
     const next = search.get('next') || '/';
     router.push(next);
@@ -900,14 +1008,16 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto max-w-sm card-paper p-6 mt-8">
-      <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">字 · 韵</div>
+      <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">
+        字 · 韵
+      </div>
       <h1 className="font-serif text-2xl text-ink text-center mb-6">登录</h1>
       <form onSubmit={submit} className="space-y-3">
         <input
           className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
           placeholder="用户名"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           disabled={busy}
         />
@@ -916,7 +1026,7 @@ export default function LoginPage() {
           type="password"
           placeholder="密码"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           autoComplete="current-password"
           disabled={busy}
         />
@@ -926,8 +1036,12 @@ export default function LoginPage() {
         </button>
       </form>
       <div className="flex justify-between text-xs text-ink-faint mt-4">
-        <Link href="/forgot-password" className="text-seal hover:underline">忘记密码</Link>
-        <Link href="/register" className="hover:underline">没有账号？去注册</Link>
+        <Link href="/forgot-password" className="text-seal hover:underline">
+          忘记密码
+        </Link>
+        <Link href="/register" className="hover:underline">
+          没有账号？去注册
+        </Link>
       </div>
     </div>
   );
@@ -951,6 +1065,7 @@ git commit -m "feat(auth): /login standalone page"
 ## Task 13: `app/register/page.tsx` — standalone register page with email
 
 **Files:**
+
 - Create: `app/register/page.tsx`
 
 - [ ] **Step 1: Create the page**
@@ -966,7 +1081,7 @@ import { useAppStore } from '@/lib/store';
 
 export default function RegisterPage() {
   const router = useRouter();
-  const setUser = useAppStore(s => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -985,27 +1100,38 @@ export default function RegisterPage() {
       setError('邮箱格式不正确');
       return;
     }
-    if (password.length < 8) { setError('密码至少 8 位'); return; }
-    if (password !== passwordConfirm) { setError('两次密码不一致'); return; }
+    if (password.length < 8) {
+      setError('密码至少 8 位');
+      return;
+    }
+    if (password !== passwordConfirm) {
+      setError('两次密码不一致');
+      return;
+    }
 
     setBusy(true);
     const r = await registerRequest(username, email, password);
     setBusy(false);
-    if (!r.ok) { setError(r.error.message); return; }
+    if (!r.ok) {
+      setError(r.error.message);
+      return;
+    }
     setUser(r.data.user);
     router.push('/');
   }
 
   return (
     <div className="mx-auto max-w-sm card-paper p-6 mt-8">
-      <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">字 · 韵</div>
+      <div className="font-kai text-ink-faint tracking-[0.3em] text-xs text-center mb-4">
+        字 · 韵
+      </div>
       <h1 className="font-serif text-2xl text-ink text-center mb-6">注册</h1>
       <form onSubmit={submit} className="space-y-3">
         <input
           className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
           placeholder="用户名 (3-32 字符)"
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={(e) => setUsername(e.target.value)}
           autoComplete="username"
           disabled={busy}
         />
@@ -1014,7 +1140,7 @@ export default function RegisterPage() {
           type="email"
           placeholder="邮箱"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
           autoComplete="email"
           disabled={busy}
         />
@@ -1023,7 +1149,7 @@ export default function RegisterPage() {
           type="password"
           placeholder="密码 (≥ 8 字符)"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
           autoComplete="new-password"
           disabled={busy}
         />
@@ -1032,7 +1158,7 @@ export default function RegisterPage() {
           type="password"
           placeholder="再次输入密码"
           value={passwordConfirm}
-          onChange={e => setPasswordConfirm(e.target.value)}
+          onChange={(e) => setPasswordConfirm(e.target.value)}
           autoComplete="new-password"
           disabled={busy}
         />
@@ -1042,7 +1168,10 @@ export default function RegisterPage() {
         </button>
       </form>
       <p className="text-xs text-ink-faint mt-4 text-center">
-        已有账号？<Link href="/login" className="text-seal hover:underline">去登录</Link>
+        已有账号？
+        <Link href="/login" className="text-seal hover:underline">
+          去登录
+        </Link>
       </p>
     </div>
   );
@@ -1066,6 +1195,7 @@ git commit -m "feat(auth): /register standalone page with email field"
 ## Task 14: Update `/forgot-password` and `/reset-password` flow + cross-links
 
 **Files:**
+
 - Modify: `app/forgot-password/page.tsx`
 - Modify: `app/reset-password/page.tsx`
 
@@ -1075,9 +1205,13 @@ git commit -m "feat(auth): /register standalone page with email field"
   - Shows success message ("邮件已发送，请查收")
 
 If anything missing, add it. Also add Link to `/register`:
+
 ```tsx
 <p className="text-xs text-ink-faint mt-4 text-center">
-  没有账号？<Link href="/register" className="text-seal hover:underline">去注册</Link>
+  没有账号？
+  <Link href="/register" className="text-seal hover:underline">
+    去注册
+  </Link>
 </p>
 ```
 
@@ -1106,6 +1240,7 @@ git commit -m "fix(auth): cross-links between /forgot-password, /reset-password,
 ## Task 15: Update `Header.tsx` — replace AuthModal trigger with Link
 
 **Files:**
+
 - Modify: `components/Header.tsx`
 
 - [ ] **Step 1: Find current AuthModal usage**
@@ -1119,10 +1254,13 @@ The Header probably has a "登录" button that toggles `authModalOpen` state and
 Remove the `useState` for `authModalOpen`, remove the import of `AuthModal`, remove the `<AuthModal />` element from JSX.
 
 Replace the button:
+
 ```tsx
 <button onClick={() => setAuthModalOpen(true)}>登录</button>
 ```
+
 with:
+
 ```tsx
 <Link href="/login" className="...">登录</Link>
 <Link href="/register" className="...">注册</Link>
@@ -1147,6 +1285,7 @@ git commit -m "feat(header): login/register buttons link to /login and /register
 ## Task 16: Delete `AuthModal.tsx`
 
 **Files:**
+
 - Delete: `components/AuthModal.tsx`
 
 - [ ] **Step 1: Verify no remaining references**
@@ -1176,11 +1315,13 @@ git commit -m "refactor(auth): remove AuthModal (replaced by /login and /registe
 ## Task 17: Update README + .env.example
 
 **Files:**
+
 - Modify: `README.md`
 
 - [ ] **Step 1: Update README**
 
 Find the section listing routes. Add:
+
 - `/login` — 登录 (独立页)
 - `/register` — 注册 (独立页，需邮箱)
 - `/forgot-password` — 忘记密码
@@ -1246,6 +1387,7 @@ git push origin main
 Classical Chinese sutras were read vertically, top-to-bottom, columns running right-to-left. Modern Chinese is read horizontally, left-to-right. Users who copy sutras for practice benefit from all three options.
 
 **Architecture:**
+
 - `ReadingMode = 'horizontal' | 'vertical-rtl' | 'vertical-ltr'`
 - Persisted to `localStorage` (`pinyin:sutra-reading`), default: `'horizontal'`
 - `ReadingModePicker` 3-segment control sits above `SutraTextView` in the sutra detail page
@@ -1254,6 +1396,7 @@ Classical Chinese sutras were read vertically, top-to-bottom, columns running ri
 ### Task 19: `lib/sutra-reading.ts` — type + default
 
 **Files:**
+
 - Create: `lib/sutra-reading.ts`
 
 - [ ] **Step 1: Create the module**
@@ -1264,7 +1407,7 @@ export type ReadingMode = 'horizontal' | 'vertical-rtl' | 'vertical-ltr';
 export const DEFAULT_READING_MODE: ReadingMode = 'horizontal';
 
 export const READING_MODE_LABELS: Record<ReadingMode, string> = {
-  'horizontal': '横向',
+  horizontal: '横向',
   'vertical-rtl': '竖排 · 从右到左',
   'vertical-ltr': '竖排 · 从左到右',
 };
@@ -1286,6 +1429,7 @@ git commit -m "feat(sutra): ReadingMode type + labels"
 ### Task 20: `lib/use-sutra-reading.ts` — localStorage hook
 
 **Files:**
+
 - Create: `lib/use-sutra-reading.ts`
 
 - [ ] **Step 1: Create the hook**
@@ -1307,7 +1451,9 @@ function readInitial(): ReadingMode {
 export function useSutraReading(): [ReadingMode, (next: ReadingMode) => void] {
   const [mode, setMode] = useState<ReadingMode>(DEFAULT_READING_MODE);
 
-  useEffect(() => { setMode(readInitial()); }, []);
+  useEffect(() => {
+    setMode(readInitial());
+  }, []);
 
   useEffect(() => {
     const onStorage = (e: StorageEvent) => {
@@ -1343,6 +1489,7 @@ git commit -m "feat(sutra): useSutraReading hook (localStorage + cross-tab sync)
 ### Task 21: `components/common/ReadingModePicker.tsx`
 
 **Files:**
+
 - Create: `components/common/ReadingModePicker.tsx`
 - Test: `components/common/ReadingModePicker.test.tsx`
 
@@ -1446,6 +1593,7 @@ git commit -m "feat(common): ReadingModePicker (3-segment control)"
 ### Task 22: `SutraTextView` supports all three modes
 
 **Files:**
+
 - Modify: `components/sutra/SutraTextView.tsx`
 - Test: `components/sutra/SutraTextView.test.tsx`
 
@@ -1500,7 +1648,7 @@ interface Props {
 }
 
 const MODE_CLASS: Record<ReadingMode, string> = {
-  'horizontal': '',
+  horizontal: '',
   'vertical-rtl': '[writing-mode:vertical-rl] flex-row-reverse',
   'vertical-ltr': '[writing-mode:vertical-lr]',
 };
@@ -1510,7 +1658,9 @@ export function SutraTextView({ chunk, mode = 'horizontal' }: Props) {
     return (
       <div className="font-serif text-lg sm:text-xl text-ink leading-loose">
         {chunk.content.map((line, i) => (
-          <p key={i} className="my-1.5">{line}</p>
+          <p key={i} className="my-1.5">
+            {line}
+          </p>
         ))}
       </div>
     );
@@ -1521,7 +1671,9 @@ export function SutraTextView({ chunk, mode = 'horizontal' }: Props) {
       style={{ writingMode: mode === 'vertical-rtl' ? 'vertical-rl' : 'vertical-lr' }}
     >
       {chunk.content.map((line, i) => (
-        <p key={i} className="my-1.5 whitespace-nowrap">{line}</p>
+        <p key={i} className="my-1.5 whitespace-nowrap">
+          {line}
+        </p>
       ))}
     </div>
   );
@@ -1545,12 +1697,14 @@ git commit -m "feat(sutra): SutraTextView supports horizontal + vertical-rtl + v
 ### Task 23: Wire `ReadingModePicker` into sutra detail page
 
 **Files:**
+
 - Create: `app/sutra/[id]/ReadingModeControl.tsx` (NEW client wrapper)
 - Modify: `app/sutra/[id]/page.tsx`
 
 - [ ] **Step 1: Create client wrapper**
 
 `app/sutra/[id]/ReadingModeControl.tsx`:
+
 ```tsx
 'use client';
 
@@ -1566,18 +1720,22 @@ export function ReadingModeControl() {
 - [ ] **Step 2: Modify sutra detail page**
 
 Replace the imports at top of `app/sutra/[id]/page.tsx`:
+
 ```tsx
 import { SutraTextView } from '@/components/sutra/SutraTextView';
 ```
+
 becomes nothing — keep the import.
 
 Add to imports:
+
 ```tsx
 import { ReadingModeControl } from './ReadingModeControl';
 import { SutraTextViewWithMode } from './SutraTextViewWithMode';
 ```
 
 Create `app/sutra/[id]/SutraTextViewWithMode.tsx`:
+
 ```tsx
 'use client';
 
@@ -1592,15 +1750,19 @@ export function SutraTextViewWithMode({ chunk }: { chunk: SutraChunk }) {
 ```
 
 In the page JSX, replace:
+
 ```tsx
 <SutraTextView chunk={activeChunk} />
 ```
+
 with:
+
 ```tsx
 <SutraTextViewWithMode chunk={activeChunk} />
 ```
 
 Add the picker control above the ReadAloud row:
+
 ```tsx
 <div className="flex items-center justify-between mb-2 worksheet-no-print">
   <ReadingModeControl />

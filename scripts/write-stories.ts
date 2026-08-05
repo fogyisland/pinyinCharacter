@@ -23,7 +23,7 @@ async function main() {
       `UPDATE rare_chars
        SET meaning = ?, story = ?, generated_by = 'claude', generated_at = NOW(), needs_review = 0
        WHERE \`char\` = ?`,
-      [u.meaning, u.story || '', u.char]
+      [u.meaning, u.story || '', u.char],
     );
     ok++;
   }
@@ -31,4 +31,7 @@ async function main() {
   console.log(`[write-stories] updated ${ok} rows`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

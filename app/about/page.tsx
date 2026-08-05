@@ -46,16 +46,24 @@ export default async function AboutPage() {
             <ul className="text-sm text-ink-soft space-y-1">
               <li>
                 ·{' '}
-                <a href={GITHUB_REPO_URL} target="_blank" rel="noopener noreferrer"
-                   className="text-seal hover:underline">
+                <a
+                  href={GITHUB_REPO_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-seal hover:underline"
+                >
                   {GITHUB_REPO_URL}
                 </a>{' '}
                 — 源代码、README、license
               </li>
               <li>
                 ·{' '}
-                <a href={GITHUB_ISSUES_URL} target="_blank" rel="noopener noreferrer"
-                   className="text-seal hover:underline">
+                <a
+                  href={GITHUB_ISSUES_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-seal hover:underline"
+                >
                   {GITHUB_ISSUES_URL}
                 </a>{' '}
                 — bug 反馈 / 功能建议

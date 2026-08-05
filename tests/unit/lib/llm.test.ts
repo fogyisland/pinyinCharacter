@@ -18,7 +18,8 @@ const fetchMock = vi.fn(async (url: string, init: any) => {
     json: async () => ({
       choices: [{ message: { content: mockReply ?? 'mock-reply' } }],
     }),
-    text: async () => JSON.stringify({ choices: [{ message: { content: mockReply ?? 'mock-reply' } }] }),
+    text: async () =>
+      JSON.stringify({ choices: [{ message: { content: mockReply ?? 'mock-reply' } }] }),
   };
 });
 vi.stubGlobal('fetch', fetchMock);
@@ -71,7 +72,10 @@ describe('LLM multimodal content', () => {
       messages: [{ role: 'user', content }],
     });
     expect(lastFetchBody.messages[0].content[0]).toEqual({ type: 'text', text: '识别此图' });
-    expect(lastFetchBody.messages[0].content[1]).toEqual({ type: 'image_url', image_url: { url: 'data:image/png;base64,ABC' } });
+    expect(lastFetchBody.messages[0].content[1]).toEqual({
+      type: 'image_url',
+      image_url: { url: 'data:image/png;base64,ABC' },
+    });
   });
 
   it('detail field passes through to image_url', async () => {
@@ -93,7 +97,12 @@ describe('LLM multimodal content', () => {
       baseUrl: 'https://api.example.com/v1',
       apiKey: 'k',
       model: 'm',
-      messages: [{ role: 'user', content: [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,X' } }] }],
+      messages: [
+        {
+          role: 'user',
+          content: [{ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,X' } }],
+        },
+      ],
     });
     expect(result.content).toBe('中');
     expect(fetchMock).not.toHaveBeenCalled();

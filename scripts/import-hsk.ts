@@ -30,8 +30,8 @@ export async function runImport(): Promise<void> {
       for (const e of entries) {
         // INSERT…ON DUPLICATE KEY UPDATE keyed on PK (char).
         await conn.execute(
-          "INSERT INTO chars (`char`, hsk_level) VALUES (?, ?) ON DUPLICATE KEY UPDATE hsk_level = VALUES(hsk_level)",
-          [e.char, lvl]
+          'INSERT INTO chars (`char`, hsk_level) VALUES (?, ?) ON DUPLICATE KEY UPDATE hsk_level = VALUES(hsk_level)',
+          [e.char, lvl],
         );
       }
     }
@@ -42,6 +42,12 @@ export async function runImport(): Promise<void> {
 
 if (require.main === module) {
   runImport()
-    .then(() => { console.log('import-hsk: done'); process.exit(0); })
-    .catch((err) => { console.error(err); process.exit(1); });
+    .then(() => {
+      console.log('import-hsk: done');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }

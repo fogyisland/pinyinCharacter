@@ -16,7 +16,13 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
   // No character is rendered — lined is blank ruled paper.
   if (style === 'pen-lined') {
     return (
-      <svg width="100%" height={size} viewBox={`0 0 100 ${size}`} preserveAspectRatio="none" className="block">
+      <svg
+        width="100%"
+        height={size}
+        viewBox={`0 0 100 ${size}`}
+        preserveAspectRatio="none"
+        className="block"
+      >
         <line
           x1={0}
           y1={size - 0.5}
@@ -45,15 +51,55 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
     // y coordinates map to fractions of row height so SVG scales cleanly.
     const fontStack = `${fontFamilyCssVar(fontFamily)}, "Times New Roman", serif`;
     return (
-      <svg width="100%" height={size} viewBox="0 0 100 38" preserveAspectRatio="none" className="block">
+      <svg
+        width="100%"
+        height={size}
+        viewBox="0 0 100 38"
+        preserveAspectRatio="none"
+        className="block"
+      >
         {/* Top solid line (capital cap height) — y ≈ 8/38 */}
-        <line x1={0} y1={8} x2={100} y2={8} stroke="#999" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <line
+          x1={0}
+          y1={8}
+          x2={100}
+          y2={8}
+          stroke="#999"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
         {/* Upper-mid dashed (x-height for lowercase) — y ≈ 14/38 */}
-        <line x1={0} y1={14} x2={100} y2={14} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" vectorEffect="non-scaling-stroke" />
+        <line
+          x1={0}
+          y1={14}
+          x2={100}
+          y2={14}
+          stroke="#bbb"
+          strokeWidth={0.6}
+          strokeDasharray="4,3"
+          vectorEffect="non-scaling-stroke"
+        />
         {/* Lower-mid dashed (baseline) — y ≈ 29/38 */}
-        <line x1={0} y1={29} x2={100} y2={29} stroke="#bbb" strokeWidth={0.6} strokeDasharray="4,3" vectorEffect="non-scaling-stroke" />
+        <line
+          x1={0}
+          y1={29}
+          x2={100}
+          y2={29}
+          stroke="#bbb"
+          strokeWidth={0.6}
+          strokeDasharray="4,3"
+          vectorEffect="non-scaling-stroke"
+        />
         {/* Bottom solid (descender line) — y ≈ 35/38 */}
-        <line x1={0} y1={35} x2={100} y2={35} stroke="#999" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+        <line
+          x1={0}
+          y1={35}
+          x2={100}
+          y2={35}
+          stroke="#999"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+        />
         {char ? (
           <text
             x={50}

@@ -25,12 +25,14 @@
 ## Concept
 
 当前 `/worksheet/practice` 有 4 个 `CellStyle`：
+
 - `brush-square` / `brush-cross` — 毛笔，田字格/米字格
 - `pen-square` / `pen-cross` — 钢笔，田字格/米字格
 
 每个 cell 是一个方框 + 内部导引线。`PRACTICE_LAYOUT[paperSize].cellSize` 是 cell 的边长（px CSS），`cellsPerPage(paperSize)` 是每页 cell 数。
 
 新增第 5 个：`pen-lined`（钢笔·横线）。把 cell 抽象重解读为"一条横线"：
+
 - 1 列 × N 行（CSS grid 1 列铺满）
 - 每个 cell = 一个 SVG，宽 100%，高 = lineHeight，底部一条 1px 灰线
 - `cellSize` 在 lined 语义下 = 行高（A4 = 38px ≈ 1.0cm，~24 行）
@@ -41,20 +43,26 @@
 ### `lib/worksheet-types.ts`
 
 **`CellStyle` union（line 5-8）**：
+
 ```ts
 export type CellStyle =
-  | 'brush-square' | 'brush-cross'
-  | 'pen-square'   | 'pen-cross'
-  | 'brush-trace-square' | 'brush-trace-cross'
+  | 'brush-square'
+  | 'brush-cross'
+  | 'pen-square'
+  | 'pen-cross'
+  | 'brush-trace-square'
+  | 'brush-trace-cross'
   | 'pen-lined';
 ```
 
 **`Presentation` type（line 4，新加值 'lined'）**：
+
 ```ts
 export type Presentation = 'square' | 'cross' | 'lined';
 ```
 
 **`getPresentation`（line 35-38）**：
+
 ```ts
 export function getPresentation(s: CellStyle): Presentation {
   if (s.includes('cross')) return 'cross';
@@ -66,6 +74,7 @@ export function getPresentation(s: CellStyle): Presentation {
 **`getIsTrace`（line 40-42）**：lined 永远不是 trace，保持原样。
 
 **`cellStyleLabel`（line 146-150）**：
+
 ```ts
 export function cellStyleLabel(s: CellStyle): string {
   const tool = getTool(s) === 'brush' ? '毛笔' : '钢笔';
@@ -78,12 +87,15 @@ export function cellStyleLabel(s: CellStyle): string {
 **`PRACTICE_LAYOUT`（line 101-108）**：`cellSize` 含义不变（grid 模式 cell 边长）。
 
 **新增 `PRACTICE_LINED_HEIGHT` map**：lined 模式的行高（CSS px, 1px = 1/96in）：
+
 ```ts
 const PRACTICE_LINED_HEIGHT: Record<PaperSize, number> = {
-  A3: 66,        // 36 行 × 66px = 2376px, fits A3 inner 1480px (390mm @ 96dpi)
-  A4: 38,        // 24 行 × 38px = 912px, fits A4 inner 1010px (267mm @ 96dpi)
-  B5: 44,        // 14 行 × 44px = 616px, fits B5 inner 832px (220mm @ 96dpi)
-  'brush-12': 0, 'brush-24': 0, 'brush-28': 0,  // lined 不支持 brush papers
+  A3: 66, // 36 行 × 66px = 2376px, fits A3 inner 1480px (390mm @ 96dpi)
+  A4: 38, // 24 行 × 38px = 912px, fits A4 inner 1010px (267mm @ 96dpi)
+  B5: 44, // 14 行 × 44px = 616px, fits B5 inner 832px (220mm @ 96dpi)
+  'brush-12': 0,
+  'brush-24': 0,
+  'brush-28': 0, // lined 不支持 brush papers
 };
 export function linedHeightPx(paperSize: PaperSize): number {
   return PRACTICE_LINED_HEIGHT[paperSize];
@@ -91,9 +103,15 @@ export function linedHeightPx(paperSize: PaperSize): number {
 ```
 
 **新增 `linesPerPage` 函数**（不复用 `cellsPerPage`）：
+
 ```ts
 const LINES_PER_PAGE: Record<PaperSize, number> = {
-  A3: 36, A4: 24, B5: 14, 'brush-12': 0, 'brush-24': 0, 'brush-28': 0,
+  A3: 36,
+  A4: 24,
+  B5: 14,
+  'brush-12': 0,
+  'brush-24': 0,
+  'brush-28': 0,
 };
 export function linesPerPage(paperSize: PaperSize): number {
   return LINES_PER_PAGE[paperSize];
@@ -112,8 +130,22 @@ export function linesPerPage(paperSize: PaperSize): number {
 const presentation = getPresentation(style);
 if (presentation === 'lined') {
   return (
-    <svg width="100%" height={size} viewBox={`0 0 100 ${size}`} preserveAspectRatio="none" className="block">
-      <line x1={0} y1={size - 0.5} x2={100} y2={size - 0.5} stroke="#bbb" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+    <svg
+      width="100%"
+      height={size}
+      viewBox={`0 0 100 ${size}`}
+      preserveAspectRatio="none"
+      className="block"
+    >
+      <line
+        x1={0}
+        y1={size - 0.5}
+        x2={100}
+        y2={size - 0.5}
+        stroke="#bbb"
+        strokeWidth={1}
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
@@ -126,25 +158,38 @@ if (presentation === 'lined') {
 `PracticeCell` 加 lined 分支：用 paper-aware 宽度常量（PDF SVG `width="100%"` 行为不可靠），底部一条横线：
 
 新增 paper-aware inner width 常量（pt）：
+
 ```ts
 // Print area width (page width - 2 × 1.5cm padding) in pt
 const PAGE_INNER_WIDTH_PT: Record<PaperSize, number> = {
-  A3: 757,        // 841.9 - 2*42.5
-  A4: 510,        // 595.3 - 2*42.5
-  B5: 414,        // 498.9 - 2*42.5
-  'brush-12': 510, 'brush-24': 510, 'brush-28': 510,
+  A3: 757, // 841.9 - 2*42.5
+  A4: 510, // 595.3 - 2*42.5
+  B5: 414, // 498.9 - 2*42.5
+  'brush-12': 510,
+  'brush-24': 510,
+  'brush-28': 510,
 };
 ```
 
 注：这些值是 `paperWidth_pt - 2×42.5pt_padding`，确保 lined 纸跟 grid 模式的"可写宽度"一致（A4 = 510pt = 180mm ≈ 网格模式的 8 cols × 60pt inner width）。
 
 Lined cell SVG：
+
 ```tsx
-{presentation === 'lined' ? (
-  <Svg width={PAGE_INNER_WIDTH_PT[paperSize]} height={size}>
-    <Line x1={0} y1={size - 0.5} x2={PAGE_INNER_WIDTH_PT[paperSize]} y2={size - 0.5} stroke="#bbb" strokeWidth={1} />
-  </Svg>
-) : null}
+{
+  presentation === 'lined' ? (
+    <Svg width={PAGE_INNER_WIDTH_PT[paperSize]} height={size}>
+      <Line
+        x1={0}
+        y1={size - 0.5}
+        x2={PAGE_INNER_WIDTH_PT[paperSize]}
+        y2={size - 0.5}
+        stroke="#bbb"
+        strokeWidth={1}
+      />
+    </Svg>
+  ) : null;
+}
 ```
 
 PDF lined cell 容器宽度也要适配：`cells.map((i) => <View key={i} style={{ width: PAGE_INNER_WIDTH_PT[paperSize] }}>...</View>)`。
@@ -152,6 +197,7 @@ PDF lined cell 容器宽度也要适配：`cells.map((i) => <View key={i} style=
 ### `components/worksheet/PracticeTemplate.tsx`
 
 **`PRACTICE_CELL_STYLES`（line 26-31）** 加 `pen-lined`：
+
 ```ts
 const PRACTICE_CELL_STYLES = [
   { value: 'brush-square', label: '毛笔 · 田字格', tool: 'brush' },
@@ -165,22 +211,28 @@ const PRACTICE_CELL_STYLES = [
 **`handleCellStyleChange`（line 61-69）**：lined 属 'pen', 现有联动（`nextTool === 'pen' && isBrushSize(paperSize) → A4`）自动适用。
 
 **`sizeClass`（line 71）**：当前 `worksheet-grid--${paperSize.toLowerCase()}`，对 lined 模式加后缀：
+
 ```ts
 const isLined = getPresentation(cellStyle) === 'lined';
-const sizeClass = isLined ? `worksheet-grid--${paperSize.toLowerCase()}-lined` : `worksheet-grid--${paperSize.toLowerCase()}`;
+const sizeClass = isLined
+  ? `worksheet-grid--${paperSize.toLowerCase()}-lined`
+  : `worksheet-grid--${paperSize.toLowerCase()}`;
 ```
 
 **`cellSize` 选 lined 还是 grid**（line 74）：
+
 ```ts
 const cellSize = isLined ? linedHeightPx(paperSize) : PRACTICE_LAYOUT[paperSize].cellSize;
 ```
 
 **`count` 选 lines 还是 cells**（line 78）：
+
 ```ts
 const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
 ```
 
 **渲染分支**（line 145-165 替换为）：
+
 ```tsx
 {isLined ? (
   <div className="lined-paper mx-auto max-w-3xl" style={{ minHeight: `${count * cellSize}px` }}>
@@ -201,19 +253,30 @@ const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
 ### `app/globals.css`
 
 新增 3 个 lined grid 模板 + 1 个 lined paper 容器样式：
+
 ```css
 .worksheet-grid--a3-lined,
 .worksheet-grid--a4-lined,
-.worksheet-grid--b5-lined { grid-template-columns: 1fr; }
+.worksheet-grid--b5-lined {
+  grid-template-columns: 1fr;
+}
 
 /* lined paper 容器：1 列铺满，每行高 = cellSize */
-.lined-paper { display: flex; flex-direction: column; width: 100%; }
-.lined-paper-row { display: block; width: 100%; }
+.lined-paper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.lined-paper-row {
+  display: block;
+  width: 100%;
+}
 ```
 
 ### `tests/unit/components/worksheet/PracticePDF.test.tsx`
 
 新增 2-3 个 lined 专项 case：
+
 - `pen-lined + A4` 仍产 1 页
 - `pen-lined + A3` 仍产 1 页
 - A4 lined 模式 PDF 包含 ≥ 24 个 Line 元素（grep SVG path 数）

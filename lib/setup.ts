@@ -63,7 +63,9 @@ export async function testDbConnection(cfg: DbConnectionConfig): Promise<DbConne
       password: cfg.password,
       connectTimeout: 10000,
     });
-    await conn.query(`CREATE DATABASE IF NOT EXISTS \`${cfg.database.replace(/`/g, '')}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    await conn.query(
+      `CREATE DATABASE IF NOT EXISTS \`${cfg.database.replace(/`/g, '')}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    );
     return { ok: true };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
@@ -92,7 +94,7 @@ export function buildDatabaseUrl(cfg: DbConnectionConfig): string {
  */
 export function writeEnvVar(key: string, value: string): void {
   const escaped = value.replace(/\n/g, '');
-  let content = existsSync(ENV_PATH) ? readFileSync(ENV_PATH, 'utf8') : '';
+  const content = existsSync(ENV_PATH) ? readFileSync(ENV_PATH, 'utf8') : '';
   const lines = content.split(/\r?\n/);
   const re = new RegExp(`^\\s*${key}\\s*=`);
   let replaced = false;

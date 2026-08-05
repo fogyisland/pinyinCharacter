@@ -51,14 +51,14 @@ export function DragMatchGame() {
   const [hskFallback, setHskFallback] = useState(false);
   const { difficulty, setDifficulty, hskLevel } = useDifficulty();
 
-  const revealConfig = useMemo(
-    () => getRevealConfig('drag-match', hskLevel),
-    [hskLevel],
-  );
+  const revealConfig = useMemo(() => getRevealConfig('drag-match', hskLevel), [hskLevel]);
 
-  const handleDemand = useCallback((_el: RevealElement) => {
-    setMismatches((m) => m + revealConfig.onDemandPenalty);
-  }, [revealConfig.onDemandPenalty]);
+  const handleDemand = useCallback(
+    (_el: RevealElement) => {
+      setMismatches((m) => m + revealConfig.onDemandPenalty);
+    },
+    [revealConfig.onDemandPenalty],
+  );
 
   // 2026-07-05 (Task 12 I1): depend on hskLevel + difficulty so picking a
   // different HSK chip in GameModeTabs refetches the char pool. Previously
@@ -158,15 +158,14 @@ export function DragMatchGame() {
         <div className="mt-6 flex justify-center gap-2">
           <button
             type="button"
-            onClick={() => { void loadGame(); }}
+            onClick={() => {
+              void loadGame();
+            }}
             className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80"
           >
             再来一局
           </button>
-          <a
-            href="/"
-            className="rounded-md border border-ink/20 px-4 py-2 hover:bg-paper-deep"
-          >
+          <a href="/" className="rounded-md border border-ink/20 px-4 py-2 hover:bg-paper-deep">
             返回首页
           </a>
         </div>
@@ -177,7 +176,13 @@ export function DragMatchGame() {
   return (
     <div className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center justify-between mb-2">
-        <DifficultyPicker value={difficulty} onChange={(d) => { setDifficulty(d); void loadGame(d); }} />
+        <DifficultyPicker
+          value={difficulty}
+          onChange={(d) => {
+            setDifficulty(d);
+            void loadGame(d);
+          }}
+        />
       </div>
       <div className="flex items-center justify-between">
         <div className="text-sm text-ink-soft">用时: {formatTime(elapsedMs)}</div>

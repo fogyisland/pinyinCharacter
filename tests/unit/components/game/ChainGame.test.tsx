@@ -4,7 +4,11 @@ import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/re
 import type { CharInfo } from '@/lib/chain-types';
 
 const ci = (char: string, pinyin: string): CharInfo => ({
-  char, pinyin, meaning: '', radical: '宀', tone: 1,
+  char,
+  pinyin,
+  meaning: '',
+  radical: '宀',
+  tone: 1,
 });
 
 const sampleChars: CharInfo[] = [
@@ -28,11 +32,19 @@ describe('ChainGame', () => {
       configurable: true,
       value: {
         getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => { store.set(k, v); },
-        removeItem: (k: string) => { store.delete(k); },
-        clear: () => { store.clear(); },
+        setItem: (k: string, v: string) => {
+          store.set(k, v);
+        },
+        removeItem: (k: string) => {
+          store.delete(k);
+        },
+        clear: () => {
+          store.clear();
+        },
         key: (i: number) => Array.from(store.keys())[i] ?? null,
-        get length() { return store.size; },
+        get length() {
+          return store.size;
+        },
       },
     });
     // Make pickStarter deterministic: always pick index 0 ('安 ān', has 2 validNext)
@@ -119,7 +131,7 @@ describe('ChainGame', () => {
   it('triggers finished state when validNext is empty (dead letter)', async () => {
     // Build chars where starter has 0 valid next chars
     const deadChars: CharInfo[] = [
-      ci('包', 'bāo'),  // ends in o, no char starts with o
+      ci('包', 'bāo'), // ends in o, no char starts with o
     ];
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -142,7 +154,9 @@ describe('ChainGame', () => {
     // fetch resolution should bail out via `if (ctrl.signal.aborted)
     // return;` — no React warning, no transition to playing state.
     let resolveFetch!: (value: Response) => void;
-    const pendingFetch = new Promise<Response>((resolve) => { resolveFetch = resolve; });
+    const pendingFetch = new Promise<Response>((resolve) => {
+      resolveFetch = resolve;
+    });
     vi.spyOn(global, 'fetch').mockImplementation(() => pendingFetch);
     const { ChainGame } = await import('@/components/game/ChainGame');
     const { unmount } = render(<ChainGame />);

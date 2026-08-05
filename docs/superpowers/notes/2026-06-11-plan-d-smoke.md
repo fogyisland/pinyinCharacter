@@ -18,20 +18,20 @@ The fetch-rare-chars URL `https://raw.githubusercontent.com/elkmovie/通用规�
 
 ## What was verified (12 / 15 steps)
 
-| # | Step | Result |
-|---|---|---|
-| 1 | `/rare-chars` shows daily banner + cards | ✓ 40 cards rendered, 今日一字 banner present |
-| 2 | Search "ni" filters | partial — search "lan" returns 1 char; "long"/"龙" returns 0 (no 龙-related chars in seed) |
-| 3 | Click card → detail page | ✓ `/rare-chars/凤` shows meaning + story + 加入字帖 CTA |
-| 4 | "加入字帖" → /worksheet?prefill=... | ✓ URL pattern works (page renders with `加载中` during client hydration) |
-| 5 | Type "你好世界" → 4 cells (毛笔格) | ✓ POST /api/worksheets succeeds, 4 chars validated |
-| 6 | Switch style to 田字格 | manual — UI works, both styles registered |
-| 7 | Print preview | ✓ `@media print` + `worksheet-grid` + `worksheet-no-print` in static CSS |
-| 8 | Login, save worksheet → /worksheet/history | ✓ Save returns id=1, history page shows 我的字帖 + entry |
-| 9 | View saved → delete | ✓ DELETE returns 204, list empty after, page returns 404 after delete |
-| 10 | /game — 8 chars + 8 pinyins | ✓ API returns 8 chars with `minMeaning=true`; client renders 加载中 then shuffles |
-| 11-14 | Game drag/click/modal/再来一局 | browser-only — code reviewed and matches spec |
-| 15 | Home Header has 3 new links | ✓ `/rare-chars`, `/worksheet`, `/game` links present |
+| #     | Step                                       | Result                                                                                     |
+| ----- | ------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 1     | `/rare-chars` shows daily banner + cards   | ✓ 40 cards rendered, 今日一字 banner present                                               |
+| 2     | Search "ni" filters                        | partial — search "lan" returns 1 char; "long"/"龙" returns 0 (no 龙-related chars in seed) |
+| 3     | Click card → detail page                   | ✓ `/rare-chars/凤` shows meaning + story + 加入字帖 CTA                                    |
+| 4     | "加入字帖" → /worksheet?prefill=...        | ✓ URL pattern works (page renders with `加载中` during client hydration)                   |
+| 5     | Type "你好世界" → 4 cells (毛笔格)         | ✓ POST /api/worksheets succeeds, 4 chars validated                                         |
+| 6     | Switch style to 田字格                     | manual — UI works, both styles registered                                                  |
+| 7     | Print preview                              | ✓ `@media print` + `worksheet-grid` + `worksheet-no-print` in static CSS                   |
+| 8     | Login, save worksheet → /worksheet/history | ✓ Save returns id=1, history page shows 我的字帖 + entry                                   |
+| 9     | View saved → delete                        | ✓ DELETE returns 204, list empty after, page returns 404 after delete                      |
+| 10    | /game — 8 chars + 8 pinyins                | ✓ API returns 8 chars with `minMeaning=true`; client renders 加载中 then shuffles          |
+| 11-14 | Game drag/click/modal/再来一局             | browser-only — code reviewed and matches spec                                              |
+| 15    | Home Header has 3 new links                | ✓ `/rare-chars`, `/worksheet`, `/game` links present                                       |
 
 ## Cross-user auth check (extra)
 

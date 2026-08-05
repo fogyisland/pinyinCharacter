@@ -18,10 +18,7 @@ export const metadata = {
 function readReadme(): string {
   // process.cwd() at runtime = repo root for `next dev`/`next start`.
   // Try both locations in case the build runs from a different cwd.
-  const candidates = [
-    join(process.cwd(), 'README.md'),
-    join(process.cwd(), '..', 'README.md'),
-  ];
+  const candidates = [join(process.cwd(), 'README.md'), join(process.cwd(), '..', 'README.md')];
   for (const p of candidates) {
     if (existsSync(p)) return readFileSync(p, 'utf8');
   }
@@ -50,12 +47,10 @@ export default function GuidePage() {
             </a>
           </div>
           <p className="text-sm text-ink-soft">
-            本页基于项目根目录的 <code className="rounded bg-paper-deep px-1">README.md</code> 自动渲染。文档修改后刷新此页即可看到最新内容。
+            本页基于项目根目录的 <code className="rounded bg-paper-deep px-1">README.md</code>{' '}
+            自动渲染。文档修改后刷新此页即可看到最新内容。
           </p>
-          <div
-            className="guide-content"
-            dangerouslySetInnerHTML={{ __html: html }}
-          />
+          <div className="guide-content" dangerouslySetInnerHTML={{ __html: html }} />
         </div>
       </PageContainer>
       <Footer />

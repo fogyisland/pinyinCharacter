@@ -54,7 +54,9 @@ export async function sendEmail(msg: EmailMessage): Promise<void> {
   const cfg = await getSmtpConfig();
   if (!cfg) {
     await recordSend({ msg, status: 'failed', at, error: 'SMTP not configured' });
-    throw new EmailNotConfiguredError('SMTP is not fully configured (set smtp.transport, smtp.host, smtp.from in app_config or SMTP_* in env)');
+    throw new EmailNotConfiguredError(
+      'SMTP is not fully configured (set smtp.transport, smtp.host, smtp.from in app_config or SMTP_* in env)',
+    );
   }
   if (!cfg.from) {
     await recordSend({ msg, status: 'failed', at, error: 'MAIL_FROM not set' });

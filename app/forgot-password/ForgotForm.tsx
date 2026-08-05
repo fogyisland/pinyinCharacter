@@ -39,14 +39,17 @@ export function ForgotForm() {
       <div>
         <label className="block text-sm mb-1 text-ink">用户名</label>
         <input
-          type="text" value={username} onChange={e => setUsername(e.target.value)}
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
-          required minLength={3} maxLength={32}
+          required
+          minLength={3}
+          maxLength={32}
         />
       </div>
       {error && <p className="text-sm text-seal">{error}</p>}
-      <button type="submit" disabled={submitting}
-        className="w-full btn-seal disabled:opacity-50">
+      <button type="submit" disabled={submitting} className="w-full btn-seal disabled:opacity-50">
         {submitting ? '提交中…' : '发送重置链接'}
       </button>
     </form>

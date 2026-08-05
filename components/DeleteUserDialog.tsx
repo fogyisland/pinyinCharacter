@@ -5,8 +5,16 @@ import { useRouter } from 'next/navigation';
 import { adminDeleteUser } from '@/lib/api-admin';
 import { ConfirmDialog } from './ConfirmDialog';
 
-export function DeleteUserDialog({ userId, username, open, onClose }: {
-  userId: number; username: string; open: boolean; onClose: () => void;
+export function DeleteUserDialog({
+  userId,
+  username,
+  open,
+  onClose,
+}: {
+  userId: number;
+  username: string;
+  open: boolean;
+  onClose: () => void;
 }) {
   const router = useRouter();
   const [confirm, setConfirm] = useState('');
@@ -20,17 +28,26 @@ export function DeleteUserDialog({ userId, username, open, onClose }: {
       description="此操作不可撤销。该用户的所有历史和审计记录会一并删除。请输入用户名以确认。"
       confirmLabel="删除"
       destructive
-      onClose={() => { setConfirm(''); setError(null); onClose(); }}
+      onClose={() => {
+        setConfirm('');
+        setError(null);
+        onClose();
+      }}
       onConfirm={async () => {
         setError(null);
         const r = await adminDeleteUser(userId, confirm);
-        if (!r.ok) { setError(r.error.message); throw new Error(r.error.message); }
+        if (!r.ok) {
+          setError(r.error.message);
+          throw new Error(r.error.message);
+        }
         router.push('/admin/users');
         router.refresh();
       }}
     >
       <input
-        type="text" value={confirm} onChange={e => setConfirm(e.target.value)}
+        type="text"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
         placeholder={`输入 ${username} 以确认`}
         className="w-full border rounded px-3 py-2 text-sm mb-1"
       />

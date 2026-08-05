@@ -56,7 +56,10 @@ export async function readSchedulerConfig(): Promise<SchedulerConfig> {
   for (const r of rows) out[r.key] = r.value;
   return {
     enabled: out[SCHEDULER_KEYS.enabled] === '1',
-    intervalMin: Math.max(1, Math.min(24 * 60, parseInt(out[SCHEDULER_KEYS.intervalMin], 10) || 60)),
+    intervalMin: Math.max(
+      1,
+      Math.min(24 * 60, parseInt(out[SCHEDULER_KEYS.intervalMin], 10) || 60),
+    ),
     lastRunAt: out[SCHEDULER_KEYS.lastRunAt] || null,
     lastResult: out[SCHEDULER_KEYS.lastResult] || null,
     taskContentRefresh: out[SCHEDULER_KEYS.taskContentRefresh] !== '0',
@@ -67,7 +70,17 @@ export async function readSchedulerConfig(): Promise<SchedulerConfig> {
 }
 
 export async function writeSchedulerConfig(
-  updates: Partial<Pick<SchedulerConfig, 'enabled' | 'intervalMin' | 'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh' | 'taskEmailCampaign'>>,
+  updates: Partial<
+    Pick<
+      SchedulerConfig,
+      | 'enabled'
+      | 'intervalMin'
+      | 'taskContentRefresh'
+      | 'taskDailyChar'
+      | 'taskStatsRefresh'
+      | 'taskEmailCampaign'
+    >
+  >,
   byUserId: number | null,
 ): Promise<void> {
   const pool = getPool();
@@ -82,10 +95,14 @@ export async function writeSchedulerConfig(
     const n = Math.max(1, Math.min(24 * 60, Math.floor(updates.intervalMin)));
     await set(SCHEDULER_KEYS.intervalMin, String(n));
   }
-  if (updates.taskContentRefresh !== undefined) await set(SCHEDULER_KEYS.taskContentRefresh, updates.taskContentRefresh ? '1' : '0');
-  if (updates.taskDailyChar !== undefined) await set(SCHEDULER_KEYS.taskDailyChar, updates.taskDailyChar ? '1' : '0');
-  if (updates.taskStatsRefresh !== undefined) await set(SCHEDULER_KEYS.taskStatsRefresh, updates.taskStatsRefresh ? '1' : '0');
-  if (updates.taskEmailCampaign !== undefined) await set(SCHEDULER_KEYS.taskEmailCampaign, updates.taskEmailCampaign ? '1' : '0');
+  if (updates.taskContentRefresh !== undefined)
+    await set(SCHEDULER_KEYS.taskContentRefresh, updates.taskContentRefresh ? '1' : '0');
+  if (updates.taskDailyChar !== undefined)
+    await set(SCHEDULER_KEYS.taskDailyChar, updates.taskDailyChar ? '1' : '0');
+  if (updates.taskStatsRefresh !== undefined)
+    await set(SCHEDULER_KEYS.taskStatsRefresh, updates.taskStatsRefresh ? '1' : '0');
+  if (updates.taskEmailCampaign !== undefined)
+    await set(SCHEDULER_KEYS.taskEmailCampaign, updates.taskEmailCampaign ? '1' : '0');
 }
 
 export async function recordSchedulerRun(summary: string, at: Date = new Date()): Promise<void> {
@@ -104,7 +121,8 @@ export async function recordSchedulerRun(summary: string, at: Date = new Date())
 
 // Per-task history. Each task in a run gets its own row; run_id groups them.
 
-export type SchedulerHistoryTaskName = 'content-refresh' | 'daily-char' | 'stats-refresh' | 'email-campaign-send';
+export type SchedulerHistoryTaskName =
+  'content-refresh' | 'daily-char' | 'stats-refresh' | 'email-campaign-send';
 
 export interface SchedulerHistoryRow {
   id: number;
@@ -185,7 +203,12 @@ export async function getSchedulerRunHistory(limit: number = 20): Promise<Schedu
       runId: r.run_id,
       taskName: r.task_name,
       startedAt: r.started_at instanceof Date ? r.started_at.toISOString() : String(r.started_at),
-      finishedAt: r.finished_at == null ? null : (r.finished_at instanceof Date ? r.finished_at.toISOString() : String(r.finished_at)),
+      finishedAt:
+        r.finished_at == null
+          ? null
+          : r.finished_at instanceof Date
+            ? r.finished_at.toISOString()
+            : String(r.finished_at),
       ok: r.ok === 1 || r.ok === true,
       summary: r.summary,
       error: r.error,
@@ -203,7 +226,10 @@ export async function getSchedulerRunHistory(limit: number = 20): Promise<Schedu
 
 /** A run id unique enough for grouping — short iso timestamp + random. */
 export function newRunId(): string {
-  const ts = new Date().toISOString().replace(/[-:.TZ]/g, '').slice(0, 14);
+  const ts = new Date()
+    .toISOString()
+    .replace(/[-:.TZ]/g, '')
+    .slice(0, 14);
   const rand = Math.random().toString(36).slice(2, 8);
   return `${ts}-${rand}`;
 }

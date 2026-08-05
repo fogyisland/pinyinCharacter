@@ -5,7 +5,13 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -21,7 +27,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           {error.digest && (
             <code className="text-xs text-ink-faint font-mono mb-4 block">[{error.digest}]</code>
           )}
-          <button onClick={reset} className="btn-seal mt-2">刷新重试</button>
+          <button onClick={reset} className="btn-seal mt-2">
+            刷新重试
+          </button>
         </div>
       </PageContainer>
       <Footer />

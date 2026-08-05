@@ -22,9 +22,7 @@ export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
         chars={[char]}
         onClose={() => setOpen(false)}
         onAdded={(r) => {
-          const msg = r.added
-            ? `已添加到「${r.title}」`
-            : `「${char}」已在「${r.title}」中`;
+          const msg = r.added ? `已添加到「${r.title}」` : `「${char}」已在「${r.title}」中`;
           pushToast('success', msg);
         }}
       />

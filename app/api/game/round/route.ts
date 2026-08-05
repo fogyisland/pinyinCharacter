@@ -33,10 +33,7 @@ export async function GET(req: NextRequest) {
     const { count, seed, source, mode: modeOverride, hskLevel } = parsed.data;
     const result = await buildRound(count, seed, source, (hskLevel ?? null) as HskLevel | null);
     if (!result) {
-      return serviceUnavailable(
-        'no_chars',
-        'not enough rare chars with radicals to build a round',
-      );
+      return serviceUnavailable('no_chars', 'not enough rare chars with radicals to build a round');
     }
     const { round, hskFallback, hskLevel: appliedHskLevel } = result;
     // 2026-07-04: embed revealConfig so progressive-reveal clients can

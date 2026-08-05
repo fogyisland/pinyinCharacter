@@ -16,7 +16,8 @@ export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
     const body = await req.json();
     const parsed = schema.safeParse(body);
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
 
     const cfg = await getTtsConfig();
     const voiceName = parsed.data.voice === 'male' ? cfg.voiceMale : cfg.voiceFemale;

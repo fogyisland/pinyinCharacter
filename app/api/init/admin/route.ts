@@ -19,7 +19,11 @@ import { getPool } from '@/lib/db';
  * form re-validation.
  */
 const adminSchema = z.object({
-  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
+  username: z
+    .string()
+    .min(3)
+    .max(32)
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
   password: z.string().min(8).max(72),
   email: z.string().email().max(255).optional(),
 });
@@ -32,7 +36,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = adminSchema.safeParse(body);
     if (!parsed.success) {
-      return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
+      return badRequest('invalid_input', parsed.error.issues.map((i) => i.message).join('; '));
     }
     // Write the wizard marker so the orchestrator can skip step 2 on re-entry.
     await getPool().query(

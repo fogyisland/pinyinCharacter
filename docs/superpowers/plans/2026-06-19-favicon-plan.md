@@ -25,12 +25,14 @@
 ### Task 1: Build script + npm script
 
 **Files:**
+
 - Create: `scripts/build-favicon.ts`
 - Modify: `package.json` (add `favicon:build` script)
 - Modify: `package.json` + `pnpm-lock.yaml` (add `to-ico` devDep)
 - Test: `tests/unit/scripts/build-favicon.test.ts` (an integration test that runs the script and asserts the 4 output files exist with non-zero size)
 
 **Interfaces:**
+
 - Consumes: `public/logo.png` (370×370, RGBA, 266 KB). Must exist already.
 - Produces: 4 image files written to disk:
   - `app/icon.png` — 32×32 PNG
@@ -55,12 +57,7 @@ import { existsSync, statSync, rmSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const ROOT = resolve(__dirname, '..', '..', '..');
-const OUTPUTS = [
-  'app/icon.png',
-  'app/apple-icon.png',
-  'app/favicon.ico',
-  'public/favicon.ico',
-];
+const OUTPUTS = ['app/icon.png', 'app/apple-icon.png', 'app/favicon.ico', 'public/favicon.ico'];
 
 describe('scripts/build-favicon.ts', () => {
   beforeAll(() => {
@@ -200,10 +197,12 @@ git commit -m "feat(favicon): 字·韵 favicon build script (sharp from logo.png
 ### Task 2: PWA manifest `public/manifest.json`
 
 **Files:**
+
 - Create: `public/manifest.json`
 - Test: `tests/unit/public/manifest.test.ts` (validates the JSON file has the required fields and types)
 
 **Interfaces:**
+
 - Consumes: hand-written JSON
 - Produces: `public/manifest.json` referenced by the `<link rel="manifest">` in `app/layout.tsx` (added in Task 3)
 
@@ -300,10 +299,12 @@ git commit -m "feat(favicon): PWA manifest (name=字·韵, theme=#5A4530)"
 ### Task 3: `app/layout.tsx` — add theme-color + manifest link
 
 **Files:**
+
 - Modify: `app/layout.tsx` (add 2 lines inside the `<head>` block)
 - Test: `tests/unit/app/layout.test.tsx` (renders RootLayout and asserts the 2 new tags exist in the rendered `<head>`)
 
 **Interfaces:**
+
 - Consumes: existing `app/layout.tsx` (already imports `globals.css`, `AuthSync`, `ToastViewport`, and exports `metadata`)
 - Produces: 2 new tags inside `<head>`:
   - `<meta name="theme-color" content="#5A4530" />`
@@ -384,6 +385,7 @@ git commit -m "feat(favicon): theme-color #5A4530 + manifest link in root layout
 ### Task 4: Final verification (tsc + build)
 
 **Files:**
+
 - Create: `scripts/to-ico.d.ts` (ambient module shim — `to-ico@1.x` ships no types and `@types/to-ico` is not on npm)
 
 - [ ] **Step 0: Add `to-ico` ambient type shim**

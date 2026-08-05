@@ -254,7 +254,9 @@ export function notesNotificationEmail(note: {
 }): { subject: string; html: string; text: string } {
   const when = note.createdAt.toISOString();
   const safeContent = note.content
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
     .replace(/\n/g, '<br/>');
   const subject = `[留言笔记] 新留言 #${note.id} — ${note.authorName}`;
   const text = [
@@ -266,7 +268,9 @@ export function notesNotificationEmail(note: {
     note.content,
     '',
     `管理: /admin/notes`,
-  ].filter((l) => l !== null && l !== undefined).join('\n');
+  ]
+    .filter((l) => l !== null && l !== undefined)
+    .join('\n');
   const html = `<!DOCTYPE html><html><body style="font-family:system-ui,sans-serif">
 <h2>新留言 #${note.id}</h2>
 <p><b>作者:</b> ${escapeHtml(note.authorName)}${note.authorEmail ? ` &lt;${escapeHtml(note.authorEmail)}&gt;` : ''}</p>

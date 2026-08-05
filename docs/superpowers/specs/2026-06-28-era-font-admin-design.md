@@ -11,19 +11,20 @@
 `/etymology/[char]` renders 5 evolution stages. Currently the era→font mapping is **hardcoded** in `components/etymology/EtymologyMorph.tsx:14-20`, which makes switching fonts require a code deploy.
 
 User feedback 2026-06-28:
+
 > "E:\ToolDevelop\PinYinCharacter\public\fonts 将甲骨文的效果替换为oracular 的内容。另外我们将在后台设置字源对应字体，例如甲骨文有两个可以选择"
 > "为字源设置不同格式的字体"
 > "例如甲骨文、小篆 楷体 等等全部都会有多个不同的字体类型，到时候可以在后台设置"
 
 We surveyed open-source fonts in each era (2026-06-28):
 
-| Era | Best open-source option | Fallback |
-|---|---|---|
-| 甲骨文 | **Oracular** (32MB, full oracle-bone style at standard CPs) | Oracular-Inverted (white-on-black, like real bones), founder-jiaguwen |
-| 金文 | **No real 金文 font exists.** 王汉宗魏碑 (10MB) is the closest angular visual proxy. | BabelStone Han Basic (basic 金文 subset, broader) |
-| 小篆 | **全字庫說文解字** (10MB, dedicated 小篆) | BabelStone Han Basic |
-| 隶书 | **王漢宗中隸書繁** (8.1MB, dedicated 隶书) | Iansui (modern 隶书 feel) |
-| 楷书 | **ZCOOLXiaoWei** (6.1MB TTF, also works in react-pdf) | KaiTi (system), Iansui, MaShanZheng |
+| Era    | Best open-source option                                                              | Fallback                                                              |
+| ------ | ------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| 甲骨文 | **Oracular** (32MB, full oracle-bone style at standard CPs)                          | Oracular-Inverted (white-on-black, like real bones), founder-jiaguwen |
+| 金文   | **No real 金文 font exists.** 王汉宗魏碑 (10MB) is the closest angular visual proxy. | BabelStone Han Basic (basic 金文 subset, broader)                     |
+| 小篆   | **全字庫說文解字** (10MB, dedicated 小篆)                                            | BabelStone Han Basic                                                  |
+| 隶书   | **王漢宗中隸書繁** (8.1MB, dedicated 隶书)                                           | Iansui (modern 隶书 feel)                                             |
+| 楷书   | **ZCOOLXiaoWei** (6.1MB TTF, also works in react-pdf)                                | KaiTi (system), Iansui, MaShanZheng                                   |
 
 ---
 
@@ -65,27 +66,77 @@ Central registry mapping era → curated font list + CSS `@font-face` family ID 
 ```ts
 export const ERA_FONTS: Record<Era, EraFontOption[]> = {
   jiaguwen: [
-    { id: 'Oracular',         label: 'Oracular (默认)',         file: 'Oracular-Regular.ttf',       desc: '32MB, 甲骨文, 1531 BMP chars' },
-    { id: 'OracularInverted', label: 'Oracular 阴文',           file: 'Oracular-Inverted.ttf',      desc: '白底黑字, 类似真实甲骨' },
-    { id: 'YinQiJiaGuWen',    label: 'Founder 甲骨文',          file: 'founder-jiaguwen.ttf',       desc: '方正甲骨文, 旧默认, 2.7MB' },
+    {
+      id: 'Oracular',
+      label: 'Oracular (默认)',
+      file: 'Oracular-Regular.ttf',
+      desc: '32MB, 甲骨文, 1531 BMP chars',
+    },
+    {
+      id: 'OracularInverted',
+      label: 'Oracular 阴文',
+      file: 'Oracular-Inverted.ttf',
+      desc: '白底黑字, 类似真实甲骨',
+    },
+    {
+      id: 'YinQiJiaGuWen',
+      label: 'Founder 甲骨文',
+      file: 'founder-jiaguwen.ttf',
+      desc: '方正甲骨文, 旧默认, 2.7MB',
+    },
   ],
   jinwen: [
-    { id: 'WangHanzongWeibei', label: '王汉宗魏碑 (默认)',     file: 'wang-hanzong-weibei.ttf',    desc: '10MB, 魏碑 ≈ 金文风格' },
-    { id: 'HanDianJinWen',     label: 'BabelStone Han',         file: 'BabelStoneHanBasic.ttf',     desc: '25MB, 通用甲骨/金文/简帛 fallback' },
+    {
+      id: 'WangHanzongWeibei',
+      label: '王汉宗魏碑 (默认)',
+      file: 'wang-hanzong-weibei.ttf',
+      desc: '10MB, 魏碑 ≈ 金文风格',
+    },
+    {
+      id: 'HanDianJinWen',
+      label: 'BabelStone Han',
+      file: 'BabelStoneHanBasic.ttf',
+      desc: '25MB, 通用甲骨/金文/简帛 fallback',
+    },
   ],
   xiaozhuan: [
-    { id: 'QuanZiKuShuoWen',   label: '全字庫說文解字 (默认)', file: 'quanziku-shuowen.ttf',       desc: '10MB, 专用小篆' },
-    { id: 'HanDianJinWen',     label: 'BabelStone Han',         file: 'BabelStoneHanBasic.ttf',     desc: '25MB, 通用 fallback' },
+    {
+      id: 'QuanZiKuShuoWen',
+      label: '全字庫說文解字 (默认)',
+      file: 'quanziku-shuowen.ttf',
+      desc: '10MB, 专用小篆',
+    },
+    {
+      id: 'HanDianJinWen',
+      label: 'BabelStone Han',
+      file: 'BabelStoneHanBasic.ttf',
+      desc: '25MB, 通用 fallback',
+    },
   ],
   lishu: [
-    { id: 'WangHanzongLishu',  label: '王漢宗中隸書繁 (默认)', file: 'wang-hanzong-lishu.ttf',     desc: '8.1MB, 专用隶书' },
-    { id: 'ZCOOLXiaoWei',      label: '站酷小薇',              file: 'zcool-xiaowei.ttf',          desc: '6.1MB, 现代隶书感' },
+    {
+      id: 'WangHanzongLishu',
+      label: '王漢宗中隸書繁 (默认)',
+      file: 'wang-hanzong-lishu.ttf',
+      desc: '8.1MB, 专用隶书',
+    },
+    { id: 'ZCOOLXiaoWei', label: '站酷小薇', file: 'zcool-xiaowei.ttf', desc: '6.1MB, 现代隶书感' },
   ],
   kaishu: [
-    { id: 'ZCOOLXiaoWei',      label: '站酷小薇 (默认)',       file: 'zcool-xiaowei.ttf',          desc: '6.1MB, react-pdf 兼容' },
-    { id: 'KaiTi',             label: '系统楷体',              file: null,                         desc: 'local(KaiTi) / STKaiti / BiauKai' },
-    { id: 'Iansui',            label: '汉仪润圆',              file: 'Iansui-Regular.woff2',       desc: '1.2MB, 圆润楷书' },
-    { id: 'MaShanZheng',       label: '马善政',                file: 'ma-shan-zheng.woff2',        desc: '3.2MB, 楷书带毛笔感' },
+    {
+      id: 'ZCOOLXiaoWei',
+      label: '站酷小薇 (默认)',
+      file: 'zcool-xiaowei.ttf',
+      desc: '6.1MB, react-pdf 兼容',
+    },
+    { id: 'KaiTi', label: '系统楷体', file: null, desc: 'local(KaiTi) / STKaiti / BiauKai' },
+    { id: 'Iansui', label: '汉仪润圆', file: 'Iansui-Regular.woff2', desc: '1.2MB, 圆润楷书' },
+    {
+      id: 'MaShanZheng',
+      label: '马善政',
+      file: 'ma-shan-zheng.woff2',
+      desc: '3.2MB, 楷书带毛笔感',
+    },
   ],
 };
 
@@ -118,26 +169,30 @@ Append after the existing ancient-script block (line 204):
 /* ============ Era font alternatives (added 2026-06-28) ============ */
 @font-face {
   font-family: 'Oracular';
-  src: url('/fonts/Oracular-Regular.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/Oracular-Regular.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'OracularInverted';
-  src: url('/fonts/Oracular-Inverted.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/Oracular-Inverted.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongWeibei';
-  src: url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongXingshu';
-  src: url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 ```
@@ -169,7 +224,7 @@ interface Props {
 export function EtymologyMorph({ char, eraGlyphs, eraFonts }: Props) {
   // ...
   // line 133: replace hardcoded lookup
-  <text style={{ fontFamily: eraFonts[era.era] }}>{char}</text>
+  <text style={{ fontFamily: eraFonts[era.era] }}>{char}</text>;
 }
 ```
 
@@ -238,6 +293,7 @@ Add 4 new `FontEntry` rows for Oracular + Oracular-Inverted + 王漢宗魏碑 + 
 ## File Structure
 
 ### New — source (5)
+
 - `lib/era-fonts.ts` — curated registry + `getActiveEraFonts()` helper
 - `app/api/admin/font-config/route.ts` — GET + PUT
 - `app/admin/settings/fonts/page.tsx` — RSC
@@ -245,12 +301,14 @@ Add 4 new `FontEntry` rows for Oracular + Oracular-Inverted + 王漢宗魏碑 + 
 - `scripts/migrations/2026-06-28-era-font-defaults.sql` — seed 5 default rows for existing DBs
 
 ### New — tests (4)
+
 - `tests/unit/lib/era-fonts.test.ts`
 - `tests/unit/app/api/admin/font-config.test.ts`
 - `tests/unit/components/admin/FontConfigForm.test.tsx`
 - `tests/integration/etymology-era-font.test.ts` — config change → /etymology/[char] HTML reflects font
 
 ### Modified (8)
+
 - `app/globals.css` — add 4 `@font-face` blocks
 - `lib/config.ts` — add 5 KEY_VALIDATORS
 - `lib/etymology.ts` (or new `lib/era-fonts.ts`) — `getActiveEraFonts()`
@@ -264,27 +322,30 @@ Add 4 new `FontEntry` rows for Oracular + Oracular-Inverted + 王漢宗魏碑 + 
 
 ## Error Handling
 
-| Scenario | Behavior |
-|---|---|
-| Admin submits invalid font ID | KEY_VALIDATOR throws; API returns 400 with validator message; form shows inline error |
-| Non-admin calls PUT | `requireAdmin()` returns 403 |
-| `app_config` table read fails | `getActiveEraFonts()` catches and returns `DEFAULT_ERA_FONTS`; etymology renders with built-in defaults |
-| Font file missing from `public/fonts/` | `@font-face` silently falls through to BabelStone Han Basic; visible glyphs degrade gracefully |
-| First deploy with no `app_config` rows | Migration seeds defaults; admin page shows current = default |
+| Scenario                               | Behavior                                                                                                |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| Admin submits invalid font ID          | KEY_VALIDATOR throws; API returns 400 with validator message; form shows inline error                   |
+| Non-admin calls PUT                    | `requireAdmin()` returns 403                                                                            |
+| `app_config` table read fails          | `getActiveEraFonts()` catches and returns `DEFAULT_ERA_FONTS`; etymology renders with built-in defaults |
+| Font file missing from `public/fonts/` | `@font-face` silently falls through to BabelStone Han Basic; visible glyphs degrade gracefully          |
+| First deploy with no `app_config` rows | Migration seeds defaults; admin page shows current = default                                            |
 
 ---
 
 ## Testing Strategy
 
 ### Unit (3 files)
+
 - `tests/unit/lib/era-fonts.test.ts` — `ERA_FONTS` shape (5 entries each, has `id`/`label`/`file`); `DEFAULT_ERA_FONTS` references valid IDs; `getActiveEraFonts()` merges config + defaults; rejects unknown font IDs.
 - `tests/unit/app/api/admin/font-config.test.ts` — GET returns `Record<Era, string>`; PUT validates per-key; 403 non-admin; audit log entry written.
 - `tests/unit/components/admin/FontConfigForm.test.tsx` — renders 5 selects with current value selected; onChange updates local state; save calls PUT with full shape.
 
 ### Integration (1 file)
+
 - `tests/integration/etymology-era-font.test.ts` — set `era.jiaguwen.font = 'OracularInverted'` in app_config → fetch `/etymology/永` HTML → assert `font-family: OracularInverted` appears in the rendered SVG.
 
 ### Smoke (human, post-deploy)
+
 - Visit `/etymology/永` — 甲骨文 renders with Oracular (new default).
 - Visit `/admin/settings/fonts` — 5 dropdowns show current defaults.
 - Change 甲骨文 → Oracular Inverted, save → reload `/etymology/永` — 甲骨文 now renders inverted.

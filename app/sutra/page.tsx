@@ -39,7 +39,10 @@ export default function SutraListPage() {
         if (!cancelled) setLoading(false);
       }
     }, 300);
-    return () => { cancelled = true; clearTimeout(handle); };
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [q, page, tick]);
 
   return (
@@ -50,7 +53,10 @@ export default function SutraListPage() {
         <SectionTitle subtitle="12 部经 · 分品块抄写">佛经选读</SectionTitle>
         <SutraSearch
           q={q}
-          onQChange={(v) => { setQ(v); setPage(1); }}
+          onQChange={(v) => {
+            setQ(v);
+            setPage(1);
+          }}
         />
         {error ? (
           <ErrorState message={error} onRetry={() => setTick((t) => t + 1)} />
@@ -65,12 +71,7 @@ export default function SutraListPage() {
                 <SutraCard key={s.id} sutra={s} />
               ))}
             </div>
-            <SutraPagination
-              page={page}
-              pageSize={12}
-              total={total}
-              onPageChange={setPage}
-            />
+            <SutraPagination page={page} pageSize={12} total={total} onPageChange={setPage} />
           </>
         )}
       </PageContainer>

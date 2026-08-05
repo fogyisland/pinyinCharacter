@@ -45,7 +45,9 @@ export function SutraChunkPicker({ chunks, activeId, onChange }: Props) {
           className="w-full rounded-md border border-ink/20 bg-paper-soft px-3 py-2"
         >
           {chunks.map((c) => (
-            <option key={c.id} value={c.id}>{c.label}</option>
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
           ))}
         </select>
       </div>

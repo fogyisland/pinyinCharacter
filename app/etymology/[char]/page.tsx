@@ -45,13 +45,19 @@ export default async function EtymologyPage({ params }: Props) {
           >
             ← 返回字典
           </Link>
-          <span className="text-xs text-ink-faint tracking-widest">
-            字 · 韵 · 字源
-          </span>
+          <span className="text-xs text-ink-faint tracking-widest">字 · 韵 · 字源</span>
         </div>
         <SectionTitle subtitle={etymology?.story ? '字形演变故事' : '字源即将生成'}>
-          <span className="text-5xl sm:text-6xl font-serif text-ink mr-3 align-middle">{decoded}</span>
-          <ReadAloudButton text={decoded} size="sm" variant="seal" label="读字" className="align-middle" />
+          <span className="text-5xl sm:text-6xl font-serif text-ink mr-3 align-middle">
+            {decoded}
+          </span>
+          <ReadAloudButton
+            text={decoded}
+            size="sm"
+            variant="seal"
+            label="读字"
+            className="align-middle"
+          />
         </SectionTitle>
         {etymology ? (
           <EtymologyMorph

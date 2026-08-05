@@ -1,9 +1,4 @@
-const BLOCKED_H2_SECTIONS = [
-  '## 启动',
-  '## 测试',
-  '## 管理员后台扩展',
-  '## 环境变量',
-] as const;
+const BLOCKED_H2_SECTIONS = ['## 启动', '## 测试', '## 管理员后台扩展', '## 环境变量'] as const;
 
 /**
  * Drop H2 sections that are admin/deployment-only from the README so that

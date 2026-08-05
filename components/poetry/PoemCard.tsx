@@ -1,7 +1,20 @@
 import Link from 'next/link';
 import type { PoemListItem } from '@/lib/poetry-types';
 
-const DYNASTY_LABEL: Record<string, string> = { tang: '唐', song: '宋', 汉: '汉', 魏: '魏', 三国: '三国', 汉末: '汉末', 汉乐府: '汉乐府', 古诗十九首: '古诗十九首', 骈文: '骈文', yuan: '元', qing: '清', mixed: '诸' };
+const DYNASTY_LABEL: Record<string, string> = {
+  tang: '唐',
+  song: '宋',
+  汉: '汉',
+  魏: '魏',
+  三国: '三国',
+  汉末: '汉末',
+  汉乐府: '汉乐府',
+  古诗十九首: '古诗十九首',
+  骈文: '骈文',
+  yuan: '元',
+  qing: '清',
+  mixed: '诸',
+};
 
 export function PoemCard({ poem, backHref }: { poem: PoemListItem; backHref?: string }) {
   // 2026-07-04: when the list page passes its current URL search as

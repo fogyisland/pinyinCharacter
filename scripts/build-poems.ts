@@ -61,7 +61,7 @@ export async function buildPoems(): Promise<number> {
           JSON.stringify(poem.pinyin),
           poem.appreciation,
           poem.source ?? DEFAULT_SOURCE_TAG,
-        ]
+        ],
       );
       inserted++;
     }
@@ -77,7 +77,7 @@ export async function buildPoems(): Promise<number> {
 
 export async function printPoemStats(pool: ReturnType<typeof getPool>): Promise<void> {
   const [rows] = await pool.execute<any[]>(
-    `SELECT dynasty, COUNT(*) AS n FROM poems GROUP BY dynasty ORDER BY dynasty`
+    `SELECT dynasty, COUNT(*) AS n FROM poems GROUP BY dynasty ORDER BY dynasty`,
   );
   console.log('[build-poems] dynasty distribution:');
   console.table(rows);

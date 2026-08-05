@@ -25,8 +25,7 @@ export function ChainScroll({
   const lookup = useMemo(() => new Map(charsList.map((c) => [c.char, c])), [charsList]);
   const [revealed, setRevealed] = useState<Set<RevealElement>>(new Set());
 
-  const isVisible = (el: RevealElement) =>
-    revealConfig.cellHints.includes(el) || revealed.has(el);
+  const isVisible = (el: RevealElement) => revealConfig.cellHints.includes(el) || revealed.has(el);
 
   const handleClick = (el: RevealElement) => {
     if (!revealConfig.allowOnDemandHints) return;
@@ -69,7 +68,11 @@ export function ChainScroll({
                       <span key={el}>
                         {renderToken(
                           'pinyin',
-                          <PinyinToken pinyin={info?.pinyin ?? ''} matched={false} onDragStart={() => {}} />,
+                          <PinyinToken
+                            pinyin={info?.pinyin ?? ''}
+                            matched={false}
+                            onDragStart={() => {}}
+                          />,
                         )}
                       </span>
                     );

@@ -14,7 +14,7 @@ const CONFIG_KEYS = [
   'ai.thinking',
   'ai.max_completion_tokens',
 ] as const;
-type AiConfigKey = typeof CONFIG_KEYS[number];
+type AiConfigKey = (typeof CONFIG_KEYS)[number];
 const SECRET_KEYS: ReadonlySet<AiConfigKey> = new Set(['ai.api_key']);
 
 export async function GET(_req: NextRequest) {
@@ -49,7 +49,9 @@ export async function PUT(req: NextRequest) {
     await writeAudit({
       userId: auth.user.id,
       event: 'ai_config_updated',
-      metadata: Object.fromEntries(Object.entries(updates).map(([k, v]) => [k, SECRET_KEYS.has(k as AiConfigKey) ? '***' : v])),
+      metadata: Object.fromEntries(
+        Object.entries(updates).map(([k, v]) => [k, SECRET_KEYS.has(k as AiConfigKey) ? '***' : v]),
+      ),
     });
     const all = await getAllConfig();
     const config: Record<string, string> = {};

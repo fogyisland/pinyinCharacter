@@ -27,7 +27,9 @@ export function NotesForm({ onPosted, defaultName }: NotesFormProps) {
         setError('服务器错误,请稍后再试');
         return;
       }
-      const body = await res.json().catch(() => ({} as { ok?: boolean; error?: { message?: string } }));
+      const body = await res
+        .json()
+        .catch(() => ({}) as { ok?: boolean; error?: { message?: string } });
       if (!body.ok) {
         setError(body.error?.message ?? '提交失败,请稍后再试');
         return;
@@ -44,29 +46,59 @@ export function NotesForm({ onPosted, defaultName }: NotesFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-3 p-4 border rounded-lg bg-paper-warm">
       <div>
-        <label htmlFor="notes-name" className="block text-sm font-medium">姓名 <span className="text-red-600">*</span></label>
-        <input id="notes-name" type="text" maxLength={64} required value={name}
-               onChange={(e) => setName(e.target.value)}
-               disabled={submitting}
-               className="mt-1 block w-full border rounded px-2 py-1" />
+        <label htmlFor="notes-name" className="block text-sm font-medium">
+          姓名 <span className="text-red-600">*</span>
+        </label>
+        <input
+          id="notes-name"
+          type="text"
+          maxLength={64}
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          disabled={submitting}
+          className="mt-1 block w-full border rounded px-2 py-1"
+        />
       </div>
       <div>
-        <label htmlFor="notes-email" className="block text-sm font-medium">邮箱 <span className="text-gray-500">(选填,不会公开)</span></label>
-        <input id="notes-email" type="email" maxLength={254} value={email}
-               onChange={(e) => setEmail(e.target.value)}
-               disabled={submitting}
-               className="mt-1 block w-full border rounded px-2 py-1" />
+        <label htmlFor="notes-email" className="block text-sm font-medium">
+          邮箱 <span className="text-gray-500">(选填,不会公开)</span>
+        </label>
+        <input
+          id="notes-email"
+          type="email"
+          maxLength={254}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          disabled={submitting}
+          className="mt-1 block w-full border rounded px-2 py-1"
+        />
       </div>
       <div>
-        <label htmlFor="notes-content" className="block text-sm font-medium">留言内容 <span className="text-red-600">*</span></label>
-        <textarea id="notes-content" required rows={4} maxLength={1000} value={content}
-                  onChange={(e) => setContent(e.target.value)}
-                  disabled={submitting}
-                  className="mt-1 block w-full border rounded px-2 py-1" />
+        <label htmlFor="notes-content" className="block text-sm font-medium">
+          留言内容 <span className="text-red-600">*</span>
+        </label>
+        <textarea
+          id="notes-content"
+          required
+          rows={4}
+          maxLength={1000}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          disabled={submitting}
+          className="mt-1 block w-full border rounded px-2 py-1"
+        />
       </div>
-      {error && <p className="text-sm text-red-600" role="alert">{error}</p>}
-      <button type="submit" disabled={submitting || !!error || name.trim() === '' || content.trim() === ''}
-              className="px-4 py-2 bg-ink text-paper rounded disabled:opacity-50">
+      {error && (
+        <p className="text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      )}
+      <button
+        type="submit"
+        disabled={submitting || !!error || name.trim() === '' || content.trim() === ''}
+        className="px-4 py-2 bg-ink text-paper rounded disabled:opacity-50"
+      >
         {submitting ? '发布中…' : '发布'}
       </button>
     </form>

@@ -7,11 +7,19 @@ const shim = vi.hoisted(() => {
   const memStore: Record<string, string> = {};
   const obj = {
     getItem: (k: string) => memStore[k] ?? null,
-    setItem: (k: string, v: string) => { memStore[k] = v; },
-    removeItem: (k: string) => { delete memStore[k]; },
-    clear: () => { for (const k of Object.keys(memStore)) delete memStore[k]; },
+    setItem: (k: string, v: string) => {
+      memStore[k] = v;
+    },
+    removeItem: (k: string) => {
+      delete memStore[k];
+    },
+    clear: () => {
+      for (const k of Object.keys(memStore)) delete memStore[k];
+    },
     key: (i: number) => Object.keys(memStore)[i] ?? null,
-    get length() { return Object.keys(memStore).length; },
+    get length() {
+      return Object.keys(memStore).length;
+    },
   };
   (globalThis as any).localStorage = obj;
   if (typeof window !== 'undefined') (window as any).localStorage = obj;

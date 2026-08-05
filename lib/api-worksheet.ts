@@ -4,7 +4,8 @@ export async function listWorksheets(): Promise<Worksheet[]> {
   const res = await fetch('/api/worksheets');
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
     throw new Error(msg);
   }
   return data.data.worksheets;
@@ -21,7 +22,8 @@ export async function listWorksheetsLightweight(): Promise<WorksheetSummary[]> {
   const res = await fetch('/api/worksheets/lightweight');
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
     throw new Error(msg);
   }
   return data.data.items;
@@ -31,7 +33,8 @@ export async function fetchWorksheet(id: number): Promise<Worksheet> {
   const res = await fetch(`/api/worksheets/${id}`);
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
     throw new Error(msg);
   }
   return data.data;
@@ -49,7 +52,8 @@ export async function saveWorksheetApi(input: {
   });
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'save failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'save failed');
     throw new Error(msg);
   }
   return data.data;
@@ -81,7 +85,8 @@ export async function printWorksheetRequest(id: number): Promise<{ id: number }>
   const res = await fetch(`/api/worksheets/${id}/print`, { method: 'POST' });
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'print failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'print failed');
     throw new Error(msg);
   }
   return data.data;
@@ -105,7 +110,7 @@ export interface AppendCharToWorksheetResult {
 }
 
 export async function appendCharToWorksheetApi(
-  input: AppendCharToWorksheetInput
+  input: AppendCharToWorksheetInput,
 ): Promise<AppendCharToWorksheetResult> {
   const res = await fetch('/api/worksheets/append', {
     method: 'POST',
@@ -117,14 +122,16 @@ export async function appendCharToWorksheetApi(
   }
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'add failed';
+    const msg = typeof data.error === 'string' ? data.error : (data.error?.message ?? 'add failed');
     throw new Error(msg);
   }
   return data.data;
 }
 
 /** @deprecated use appendCharToWorksheetApi — kept for callers that only need legacy "我的字帖" mode. */
-export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksheetId: number; added: boolean }> {
+export async function appendCharToMyWorksheetApi(
+  char: string,
+): Promise<{ worksheetId: number; added: boolean }> {
   const r = await appendCharToWorksheetApi({ char });
   return { worksheetId: r.worksheetId, added: r.added };
 }

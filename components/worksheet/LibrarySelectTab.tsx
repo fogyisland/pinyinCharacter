@@ -103,9 +103,7 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
               type="button"
               onClick={() => toggle(c.char)}
               className={`flex flex-col items-center rounded border p-2 text-center transition ${
-                isSelected
-                  ? 'border-seal bg-seal/10'
-                  : 'border-ink/10 hover:border-ink/30'
+                isSelected ? 'border-seal bg-seal/10' : 'border-ink/10 hover:border-ink/30'
               }`}
               title={c.meaning}
             >
@@ -119,9 +117,7 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
         )}
       </div>
       <div className="mt-2 flex items-center justify-between text-xs text-ink-faint">
-        <span>
-          {source !== 'rare' ? `共 ${total} 字 · 已加载 ${chars.length}` : ''}
-        </span>
+        <span>{source !== 'rare' ? `共 ${total} 字 · 已加载 ${chars.length}` : ''}</span>
         <span>已选 {selected.length} / 500</span>
       </div>
       {hasMore && (

@@ -21,7 +21,14 @@
  *
  * Run: pnpm tsx scripts/export-content.ts [--missing|--outdated|--char X|--level N|--dry-run]
  */
-import { readFileSync, writeFileSync, renameSync, existsSync, readdirSync, statSync } from 'node:fs';
+import {
+  readFileSync,
+  writeFileSync,
+  renameSync,
+  existsSync,
+  readdirSync,
+  statSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 import { getPool, closePool } from '../lib/db';
@@ -94,8 +101,8 @@ function listExistingJsonFiles(): Set<string> {
   if (!existsSync(CONTENT_DIR)) return new Set();
   return new Set(
     readdirSync(CONTENT_DIR)
-      .filter(f => f.endsWith('.json'))
-      .map(f => f.replace(/\.json$/, '')),
+      .filter((f) => f.endsWith('.json'))
+      .map((f) => f.replace(/\.json$/, '')),
   );
 }
 
@@ -120,7 +127,8 @@ function isOutdated(existing: CharContentFull | null, fresh: CharContentFull): b
   if (fresh.dict?.meaning_en && !existing.dict?.meaning_en) return true;
   if (fresh.dict?.pinyin_alt && !existing.dict?.pinyin_alt) return true;
   if (fresh.dict?.variants && !existing.dict?.variants) return true;
-  if (fresh.etymology?.story && !existing.etymology?.story && !existing.etymology_story) return true;
+  if (fresh.etymology?.story && !existing.etymology?.story && !existing.etymology_story)
+    return true;
   if (fresh.rare?.meaning && !existing.rare?.meaning) return true;
   if (fresh.rare?.story && !existing.rare?.story) return true;
   return false;
@@ -211,9 +219,9 @@ export async function exportContent(opts: ExportOptions = {}): Promise<ExportSta
     opts.char ? [opts.char] : [],
   );
 
-  const etymByChar = new Map(etymRows.map(r => [r.char, r]));
-  const storyByChar = new Map(storyRows.map(r => [r.char, r]));
-  const rareByChar = new Map(rareRows.map(r => [r.char, r]));
+  const etymByChar = new Map(etymRows.map((r) => [r.char, r]));
+  const storyByChar = new Map(storyRows.map((r) => [r.char, r]));
+  const rareByChar = new Map(rareRows.map((r) => [r.char, r]));
   const existingFiles = opts.missing || opts.outdated ? listExistingJsonFiles() : new Set<string>();
 
   // For aggregation manifest counts we need to scan all JSON files too, so
@@ -247,9 +255,8 @@ export async function exportContent(opts: ExportOptions = {}): Promise<ExportSta
 
     // pinyin-pro fallback for chars where DB pinyin is empty (most L1/L2/L3).
     const dbPinyin = rare?.pinyin ?? row.pinyin;
-    const resolvedPinyin = dbPinyin && dbPinyin.trim()
-      ? dbPinyin.trim()
-      : pinyin(char, { toneType: 'symbol' }).trim();
+    const resolvedPinyin =
+      dbPinyin && dbPinyin.trim() ? dbPinyin.trim() : pinyin(char, { toneType: 'symbol' }).trim();
 
     const content: CharContentFull = {
       char,
@@ -261,12 +268,18 @@ export async function exportContent(opts: ExportOptions = {}): Promise<ExportSta
     if (row.meaning_zh) dict.meaning_zh = stripThinking(row.meaning_zh);
     if (row.meaning_en) dict.meaning_en = stripThinking(row.meaning_en);
     if (row.pinyin_alt) {
-      try { dict.pinyin_alt = JSON.parse(row.pinyin_alt); }
-      catch { /* skip malformed */ }
+      try {
+        dict.pinyin_alt = JSON.parse(row.pinyin_alt);
+      } catch {
+        /* skip malformed */
+      }
     }
     if (row.variants) {
-      try { dict.variants = JSON.parse(row.variants); }
-      catch { /* skip malformed */ }
+      try {
+        dict.variants = JSON.parse(row.variants);
+      } catch {
+        /* skip malformed */
+      }
     }
     if (Object.keys(dict).length > 0) content.dict = dict;
 
@@ -287,8 +300,9 @@ export async function exportContent(opts: ExportOptions = {}): Promise<ExportSta
       };
     }
     // Provenance at top level = the freshest timestamp across blocks.
-    const stamps = [content.etymology?.generated_at, content.rare?.generated_at]
-      .filter(Boolean) as string[];
+    const stamps = [content.etymology?.generated_at, content.rare?.generated_at].filter(
+      Boolean,
+    ) as string[];
     if (stamps.length > 0) {
       stamps.sort().reverse();
       content.generated_at = stamps[0];
@@ -373,7 +387,7 @@ async function main() {
   const stats = await exportContent(opts);
   console.log(
     `[export] scanned=${stats.scanned} written=${stats.written} skipped=${stats.skipped} ` +
-    `errors=${stats.errors.length}`,
+      `errors=${stats.errors.length}`,
   );
   if (stats.errors.length > 0) {
     for (const e of stats.errors.slice(0, 10)) {
@@ -384,5 +398,8 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

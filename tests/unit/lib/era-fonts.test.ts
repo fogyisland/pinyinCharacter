@@ -29,7 +29,7 @@ describe('ERA_FONTS registry', () => {
     }
   });
 
-  it('default id for each era appears in that era\'s curated list', () => {
+  it("default id for each era appears in that era's curated list", () => {
     for (const era of ERAS) {
       const ids = ERA_FONTS[era].map((o) => o.id);
       expect(ids).toContain(DEFAULT_ERA_FONTS[era]);

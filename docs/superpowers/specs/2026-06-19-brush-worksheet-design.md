@@ -57,9 +57,15 @@ Extend the `FontFamily` union and `FONT_FAMILIES` table:
 
 ```ts
 export type FontFamily =
-  | 'song' | 'kai' | 'hei'
-  | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin'
-  | 'ma-shan-zheng' | 'long-cang';
+  | 'song'
+  | 'kai'
+  | 'hei'
+  | 'wenkai-gb'
+  | 'yozai'
+  | 'iansui'
+  | 'zen-kaku-thin'
+  | 'ma-shan-zheng'
+  | 'long-cang';
 
 export const FONT_FAMILIES: {
   value: FontFamily;
@@ -68,16 +74,31 @@ export const FONT_FAMILIES: {
   group: 'system' | 'hard-pen' | 'brush';
 }[] = [
   // existing 7 entries unchanged
-  { value: 'song',            label: '宋体',         cssVar: 'var(--font-han-serif)',         group: 'system' },
-  { value: 'kai',             label: '楷体',         cssVar: 'var(--font-wenkai)',            group: 'system' },
-  { value: 'hei',             label: '黑体',         cssVar: 'var(--font-han-sans)',          group: 'system' },
-  { value: 'wenkai-gb',       label: '霞鹜文楷 GB',  cssVar: 'var(--font-lxgw-wenkai-gb)',    group: 'hard-pen' },
-  { value: 'yozai',           label: '悠哉',         cssVar: 'var(--font-yozai)',             group: 'hard-pen' },
-  { value: 'iansui',          label: '芫荽',         cssVar: 'var(--font-iansui)',            group: 'hard-pen' },
-  { value: 'zen-kaku-thin',   label: '思源极细黑',   cssVar: 'var(--font-zen-kaku-thin)',     group: 'hard-pen' },
+  { value: 'song', label: '宋体', cssVar: 'var(--font-han-serif)', group: 'system' },
+  { value: 'kai', label: '楷体', cssVar: 'var(--font-wenkai)', group: 'system' },
+  { value: 'hei', label: '黑体', cssVar: 'var(--font-han-sans)', group: 'system' },
+  {
+    value: 'wenkai-gb',
+    label: '霞鹜文楷 GB',
+    cssVar: 'var(--font-lxgw-wenkai-gb)',
+    group: 'hard-pen',
+  },
+  { value: 'yozai', label: '悠哉', cssVar: 'var(--font-yozai)', group: 'hard-pen' },
+  { value: 'iansui', label: '芫荽', cssVar: 'var(--font-iansui)', group: 'hard-pen' },
+  {
+    value: 'zen-kaku-thin',
+    label: '思源极细黑',
+    cssVar: 'var(--font-zen-kaku-thin)',
+    group: 'hard-pen',
+  },
   // NEW brush group
-  { value: 'ma-shan-zheng',   label: '马善政体 (毛笔正书)', cssVar: 'var(--font-ma-shan-zheng)', group: 'brush' },
-  { value: 'long-cang',        label: '龙藏体 (草书)',       cssVar: 'var(--font-long-cang)',      group: 'brush' },
+  {
+    value: 'ma-shan-zheng',
+    label: '马善政体 (毛笔正书)',
+    cssVar: 'var(--font-ma-shan-zheng)',
+    group: 'brush',
+  },
+  { value: 'long-cang', label: '龙藏体 (草书)', cssVar: 'var(--font-long-cang)', group: 'brush' },
 ];
 ```
 
@@ -88,13 +109,18 @@ Extend the `PaperSize` union and `PAPER_SIZES` table:
 ```ts
 export type PaperSize = 'A3' | 'A4' | 'B5' | 'brush-12' | 'brush-24' | 'brush-28';
 
-export const PAPER_SIZES: { value: PaperSize; label: string; cols: number; cellsPerPage: number }[] = [
-  { value: 'A3',       label: 'A3 · 大',       cols: 12, cellsPerPage: cellsPerPage('A3') },
-  { value: 'A4',       label: 'A4 · 标准',     cols: 8,  cellsPerPage: cellsPerPage('A4') },
-  { value: 'B5',       label: 'B5 · 小',       cols: 6,  cellsPerPage: cellsPerPage('B5') },
-  { value: 'brush-12', label: '12 字 · 毛笔',  cols: 4,  cellsPerPage: 12 },
-  { value: 'brush-24', label: '24 字 · 毛笔',  cols: 6,  cellsPerPage: 24 },
-  { value: 'brush-28', label: '28 字 · 毛笔',  cols: 7,  cellsPerPage: 28 },
+export const PAPER_SIZES: {
+  value: PaperSize;
+  label: string;
+  cols: number;
+  cellsPerPage: number;
+}[] = [
+  { value: 'A3', label: 'A3 · 大', cols: 12, cellsPerPage: cellsPerPage('A3') },
+  { value: 'A4', label: 'A4 · 标准', cols: 8, cellsPerPage: cellsPerPage('A4') },
+  { value: 'B5', label: 'B5 · 小', cols: 6, cellsPerPage: cellsPerPage('B5') },
+  { value: 'brush-12', label: '12 字 · 毛笔', cols: 4, cellsPerPage: 12 },
+  { value: 'brush-24', label: '24 字 · 毛笔', cols: 6, cellsPerPage: 24 },
+  { value: 'brush-28', label: '28 字 · 毛笔', cols: 7, cellsPerPage: 28 },
 ];
 ```
 
@@ -107,12 +133,18 @@ Extend the `cellsPerPage()` function:
 ```ts
 export function cellsPerPage(size: PaperSize): number {
   switch (size) {
-    case 'A3':        return 96;
-    case 'A4':        return 88;
-    case 'B5':        return 60;
-    case 'brush-12':  return 12;
-    case 'brush-24':  return 24;
-    case 'brush-28':  return 28;
+    case 'A3':
+      return 96;
+    case 'A4':
+      return 88;
+    case 'B5':
+      return 60;
+    case 'brush-12':
+      return 12;
+    case 'brush-24':
+      return 24;
+    case 'brush-28':
+      return 28;
   }
 }
 ```
@@ -127,7 +159,10 @@ If we want belt-and-suspenders validation, we can add a switch in `validateWorks
 
 ```ts
 const VALID_PAPER_SIZES = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'] as const;
-if (typeof input.paperSize !== 'string' || !(VALID_PAPER_SIZES as readonly string[]).includes(input.paperSize)) {
+if (
+  typeof input.paperSize !== 'string' ||
+  !(VALID_PAPER_SIZES as readonly string[]).includes(input.paperSize)
+) {
   return { ok: false, error: 'paperSize must be A3, A4, B5, brush-12, brush-24, or brush-28' };
 }
 ```
@@ -139,10 +174,14 @@ Decision: include this guard. The POST `/api/worksheets` route already passes `p
 ```ts
 export function defaultFontFor(cellStyle: CellStyle): FontFamily {
   switch (cellStyle) {
-    case 'brush':   return 'ma-shan-zheng';
-    case 'pen':     return 'wenkai-gb';
-    case 'square':  return 'song';
-    case 'cross':   return 'song';
+    case 'brush':
+      return 'ma-shan-zheng';
+    case 'pen':
+      return 'wenkai-gb';
+    case 'square':
+      return 'song';
+    case 'cross':
+      return 'song';
   }
 }
 ```
@@ -153,7 +192,7 @@ First brush = `ma-shan-zheng` (毛笔正书); first hard-pen = `wenkai-gb` (霞�
 
 ```ts
 export const BRUSH_PAPER_SIZES = ['brush-12', 'brush-24', 'brush-28'] as const;
-export type BrushPaperSize = typeof BRUSH_PAPER_SIZES[number];
+export type BrushPaperSize = (typeof BRUSH_PAPER_SIZES)[number];
 
 export function isBrushSize(p: PaperSize): p is BrushPaperSize {
   return (BRUSH_PAPER_SIZES as readonly string[]).includes(p);
@@ -188,6 +227,7 @@ Apply to both prod (`piyin`) and dev (`piyin_dev`). Non-destructive — all exis
 #### Subset pipeline (extends G2)
 
 G2 ships:
+
 - `scripts/build-gb2312-charset.ts` — emits `data/gb2312-7000.txt` (7064 chars, 21 KB). **Unchanged.**
 - `scripts/download-hard-pen-fonts.ts` — fetches TTF → `scripts/fonts/staging/`. **Renamed to `download-worksheet-fonts.ts` in this spec** (it now covers hard-pen + brush).
 - `scripts/subset-fonts.ts` — subsets staged TTF → WOFF2 in `public/fonts/`. **Unchanged** — just add 2 entries to the `FONT_CONFIG` array.
@@ -201,6 +241,7 @@ G2 ships:
 ```
 
 Both fonts are single-weight from Google Fonts / github.com/google/fonts. Final WOFF2 files:
+
 - `public/fonts/ma-shan-zheng.woff2` (~600 KB subset)
 - `public/fonts/long-cang.woff2` (~300 KB subset)
 
@@ -208,10 +249,10 @@ Both fonts are single-weight from Google Fonts / github.com/google/fonts. Final 
 
 Add to the existing download manifest (whichever file holds the font URLs):
 
-| Font | Source | OFL |
-|------|--------|-----|
+| Font          | Source                                                                   | OFL     |
+| ------------- | ------------------------------------------------------------------------ | ------- |
 | Ma Shan Zheng | github.com/google/fonts/raw/main/ofl/mashanzheng/MaShanZheng-Regular.ttf | OFL 1.1 |
-| Long Cang | github.com/google/fonts/raw/main/ofl/longcang/LongCang-Regular.ttf | OFL 1.1 |
+| Long Cang     | github.com/google/fonts/raw/main/ofl/longcang/LongCang-Regular.ttf       | OFL 1.1 |
 
 Both fonts have the OFL.txt in the same github folder. Copy to `public/fonts/OFL-ma-shan-zheng.txt` and `public/fonts/OFL-long-cang.txt`.
 
@@ -235,12 +276,12 @@ Both fonts have the OFL.txt in the same github folder. Copy to `public/fonts/OFL
 ```css
 :root {
   --font-ma-shan-zheng: 'MaShanZheng', 'Noto Serif SC', serif;
-  --font-long-cang:      'LongCang',      'Noto Serif SC', serif;
+  --font-long-cang: 'LongCang', 'Noto Serif SC', serif;
 }
 
 @theme inline {
   --font-ma-shan-zheng: var(--font-ma-shan-zheng);
-  --font-long-cang:      var(--font-long-cang);
+  --font-long-cang: var(--font-long-cang);
 }
 ```
 
@@ -250,11 +291,13 @@ Add 2 entries:
 
 ```markdown
 ### Ma Shan Zheng
+
 - Source: https://github.com/google/fonts/tree/main/ofl/mashanzheng
 - License: SIL Open Font License 1.1
 - Used as: 毛笔正书 brush worksheet font
 
 ### Long Cang
+
 - Source: https://github.com/google/fonts/tree/main/ofl/longcang
 - License: SIL Open Font License 1.1
 - Used as: 草书 brush worksheet font
@@ -266,9 +309,9 @@ The existing `<FontFamilyPicker>` already groups fonts via the `GROUPS` array. *
 
 ```ts
 const GROUPS = [
-  { key: 'system',   label: '系统字体' },
+  { key: 'system', label: '系统字体' },
   { key: 'hard-pen', label: '硬笔字体' },
-  { key: 'brush',    label: '毛笔字体' },
+  { key: 'brush', label: '毛笔字体' },
 ] as const;
 ```
 
@@ -296,7 +339,7 @@ interface Props {
 export function BrushModePicker({ value, onChange }: Props) {
   return (
     <div className="flex gap-2">
-      {MODES.map(m => (
+      {MODES.map((m) => (
         <button
           key={m.value}
           type="button"
@@ -364,9 +407,9 @@ import { defaultFontFor, isBrushSize } from '@/lib/worksheet-types';
 function handleCellStyleChange(next: CellStyle) {
   setCellStyle(next);
   if (next === 'brush' && !isBrushSize(paperSize)) {
-    setPaperSize('brush-12');     // default to smallest density (most breathing room)
+    setPaperSize('brush-12'); // default to smallest density (most breathing room)
   } else if (next !== 'brush' && isBrushSize(paperSize)) {
-    setPaperSize('A4');           // existing default
+    setPaperSize('A4'); // existing default
   }
   setFontFamily(defaultFontFor(next));
 }
@@ -375,6 +418,7 @@ function handleCellStyleChange(next: CellStyle) {
 The `setFontFamily` call is the auto-pick from Section 4. Both behaviors fire together.
 
 Default state for a fresh worksheet:
+
 - `cellStyle = 'brush'` (current default) → `paperSize = 'brush-12'`, `fontFamily = 'ma-shan-zheng'`.
 - This is a behavior change: existing users who land on `/worksheet/new` will see a brush worksheet by default. The G2 spec already locks `cellStyle = 'brush'` as default; this just extends the default paper size and font.
 
@@ -383,7 +427,7 @@ Default state for a fresh worksheet:
 The current SVG renders the practice char at fixed `fontSize={60}`. For 200px brush cells, that's too small. Compute the guide size from the cell size:
 
 ```tsx
-const guideFontSize = Math.round(size * 0.6);   // 200→120, 80→48, 60→36
+const guideFontSize = Math.round(size * 0.6); // 200→120, 80→48, 60→36
 ```
 
 (Replace the hard-coded `fontSize={60}` in the `<text>` element.)
@@ -397,10 +441,14 @@ Add a helper inside the component (or in `lib/worksheet-types.ts`):
 ```ts
 function cellSizeFor(p: PaperSize): number {
   switch (p) {
-    case 'brush-12': return 200;
-    case 'brush-24': return 150;
-    case 'brush-28': return 120;
-    default:         return 80;   // A3/A4/B5 keep 80px (G2 default)
+    case 'brush-12':
+      return 200;
+    case 'brush-24':
+      return 150;
+    case 'brush-28':
+      return 120;
+    default:
+      return 80; // A3/A4/B5 keep 80px (G2 default)
   }
 }
 ```
@@ -410,16 +458,18 @@ Then in the render:
 ```tsx
 const cellSize = cellSizeFor(props.paperSize);
 // ...
-{cells.map(cell => (
-  <div key={cell.index} className="worksheet-cell">
-    <WorksheetCell
-      char={cell.char}
-      style={cell.style}
-      size={cellSize}
-      fontFamily={props.fontFamily}
-    />
-  </div>
-))}
+{
+  cells.map((cell) => (
+    <div key={cell.index} className="worksheet-cell">
+      <WorksheetCell
+        char={cell.char}
+        style={cell.style}
+        size={cellSize}
+        fontFamily={props.fontFamily}
+      />
+    </div>
+  ));
+}
 ```
 
 #### CSS grid for brush modes
@@ -427,9 +477,15 @@ const cellSize = cellSizeFor(props.paperSize);
 `app/globals.css` — add 3 new grid classes:
 
 ```css
-.worksheet-grid--brush-12 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.worksheet-grid--brush-24 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.worksheet-grid--brush-28 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.worksheet-grid--brush-12 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.worksheet-grid--brush-24 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.worksheet-grid--brush-28 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
 ```
 
 Layout: 12=4×3, 24=6×4, 28=7×4. The `minmax(0, 1fr)` matches the existing grid pattern.
@@ -442,7 +498,7 @@ The `handleCellStyleChange` function above already calls `setFontFamily(defaultF
 
 ```ts
 const [cellStyle, setCellStyle] = useState<CellStyle>('brush');
-const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor('brush'));  // 'ma-shan-zheng'
+const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor('brush')); // 'ma-shan-zheng'
 ```
 
 The font picker still shows all 9 fonts in 3 groups. The user can override the auto-picked font at any time. The next time they change cell style, the auto-pick fires again.
@@ -453,8 +509,8 @@ The font picker still shows all 9 fonts in 3 groups. The user can override the a
 
 ```tsx
 interface Props {
-  title: string;                    // NEW
-  onTitleChange: (v: string) => void;  // NEW
+  title: string; // NEW
+  onTitleChange: (v: string) => void; // NEW
   onPicked: (chars: string[]) => void;
 }
 
@@ -478,7 +534,7 @@ export function RandomTab({ title, onTitleChange, onPicked }: Props) {
         <input
           type="text"
           value={title}
-          onChange={e => onTitleChange(e.target.value.slice(0, 80))}
+          onChange={(e) => onTitleChange(e.target.value.slice(0, 80))}
           maxLength={80}
           placeholder="给字帖起个名字..."
           className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"

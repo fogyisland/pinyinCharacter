@@ -19,7 +19,7 @@ class FakeCache {
     return this.store.delete(url);
   }
   async keys(): Promise<Request[]> {
-    return Array.from(this.store.keys()).map(url => new Request(url));
+    return Array.from(this.store.keys()).map((url) => new Request(url));
   }
 }
 
@@ -30,7 +30,9 @@ class FakeAudio {
   onended: (() => void) | null = null;
   onerror: (() => void) | null = null;
   paused = true;
-  pause() { this.paused = true; }
+  pause() {
+    this.paused = true;
+  }
   play(): Promise<void> {
     this.paused = false;
     queueMicrotask(() => this.onended?.());
@@ -50,11 +52,14 @@ function makeFetchOk(): ReturnType<typeof vi.fn> {
 describe('speak()', () => {
   beforeEach(() => {
     if (!('createObjectURL' in URL)) {
-      (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = () => 'blob:mock';
-      (URL as unknown as { revokeObjectURL: (u: string) => void }).revokeObjectURL = () => undefined;
+      (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = () =>
+        'blob:mock';
+      (URL as unknown as { revokeObjectURL: (u: string) => void }).revokeObjectURL = () =>
+        undefined;
     }
     // Override Audio constructor to return our FakeAudio
-    (global as unknown as { Audio: typeof FakeAudio }).Audio = FakeAudio as unknown as typeof FakeAudio;
+    (global as unknown as { Audio: typeof FakeAudio }).Audio =
+      FakeAudio as unknown as typeof FakeAudio;
     // Install Cache API polyfill BEFORE the module under test runs.
     // Always reinstall a fresh FakeCache so cache state doesn't bleed between tests.
     const fake = new FakeCache();
@@ -85,7 +90,8 @@ describe('speak()', () => {
 
   it('splits long text on \\n into multiple batches each under BATCH_MAX_CHARS', async () => {
     const fetchMock = makeFetchOk();
-    const para = '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法无眼界乃至无意识界无无明亦无无明尽乃至无老死亦无老死尽无苦集灭道无智亦无得。';
+    const para =
+      '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法无眼界乃至无意识界无无明亦无无明尽乃至无老死亦无老死尽无苦集灭道无智亦无得。';
     expect(Array.from(para).length).toBeLessThanOrEqual(500); // sanity
     await speak(Array(10).fill(para).join('\n'));
     const ttsCalls = fetchMock.mock.calls.filter((c) => {
@@ -101,10 +107,14 @@ describe('speak()', () => {
   });
 
   it('throws (does not fall back to browser speech) when /api/tts returns 500', async () => {
-    global.fetch = vi.fn(async () => new Response('boom', { status: 500 })) as unknown as typeof fetch;
+    global.fetch = vi.fn(
+      async () => new Response('boom', { status: 500 }),
+    ) as unknown as typeof fetch;
     await expect(speak('南无阿弥陀佛')).rejects.toThrow(/TTS failed/);
     // Specifically: speechSynthesis must NOT be invoked
-    expect((window as unknown as { speechSynthesis?: { speak: unknown } }).speechSynthesis?.speak).toBeUndefined();
+    expect(
+      (window as unknown as { speechSynthesis?: { speak: unknown } }).speechSynthesis?.speak,
+    ).toBeUndefined();
   });
 
   it('throws when /api/tts network errors', async () => {
@@ -155,9 +165,11 @@ describe('speak()', () => {
   });
 
   it('stores fetched blob in cache after first speak()', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(
+        new Response(new Blob([new Uint8Array([1, 2, 3])], { type: 'audio/mpeg' })),
+      );
     await speak('女');
     // After this speak(), re-importing getCachedTts should find the entry.
     const { getCachedTts } = await import('@/lib/tts-cache');
@@ -168,14 +180,17 @@ describe('speak()', () => {
 
   it('falls back to fetch when cache returns null (regression: no behavioral change)', async () => {
     // With the polyfill installed but empty, cache always misses. speak() must still fetch.
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Blob([new Uint8Array([1])], { type: 'audio/mpeg' })));
     await speak('学');
-    expect(fetchSpy).toHaveBeenCalledWith('/api/tts', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ text: '学', voice: 'female' }),
-    }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/tts',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ text: '学', voice: 'female' }),
+      }),
+    );
     fetchSpy.mockRestore();
   });
 });

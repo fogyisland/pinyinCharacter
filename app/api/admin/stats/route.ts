@@ -14,9 +14,7 @@ export async function GET() {
     getSystemStats(),
     getDownloadStats(7),
     getAiStats(7),
-    getPool().query<any[]>(
-      `SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`,
-    ),
+    getPool().query<any[]>(`SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`),
   ]);
   const disabledUsersCount = Number((disabledRows[0] as any[])[0]?.n ?? 0);
 

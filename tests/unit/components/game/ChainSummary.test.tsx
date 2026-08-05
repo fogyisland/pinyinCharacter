@@ -10,7 +10,11 @@ vi.mock('@/lib/toast-store', () => ({
 }));
 
 const ci = (char: string, pinyin: string): CharInfo => ({
-  char, pinyin, meaning: '', radical: '阝', tone: 1,
+  char,
+  pinyin,
+  meaning: '',
+  radical: '阝',
+  tone: 1,
 });
 
 beforeEach(() => {
@@ -54,13 +58,7 @@ describe('ChainSummary', () => {
   });
 
   it('omits pinyin label when char not in charsList', () => {
-    render(
-      <ChainSummary
-        chain={['安', '那']}
-        charsList={[ci('安', 'ān')]}
-        onRestart={() => {}}
-      />,
-    );
+    render(<ChainSummary chain={['安', '那']} charsList={[ci('安', 'ān')]} onRestart={() => {}} />);
     // 安 has pinyin; 那 has no entry → no second pinyin text
     expect(screen.getByText('ān')).toBeTruthy();
     expect(screen.queryByText('nà')).toBeNull();

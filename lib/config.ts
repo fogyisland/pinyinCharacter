@@ -18,12 +18,13 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   },
   'tts.voice_male': (v) => /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v),
   'tts.voice_female': (v) => /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v),
-  'tts.audio_format': (v) => [
-    'audio-24khz-48kbitrate-mono-mp3',
-    'audio-24khz-96kbitrate-mono-mp3',
-    'audio-16khz-32kbitrate-mono-mp3',
-    'audio-16khz-128kbitrate-mono-mp3',
-  ].includes(v),
+  'tts.audio_format': (v) =>
+    [
+      'audio-24khz-48kbitrate-mono-mp3',
+      'audio-24khz-96kbitrate-mono-mp3',
+      'audio-16khz-32kbitrate-mono-mp3',
+      'audio-16khz-128kbitrate-mono-mp3',
+    ].includes(v),
   'smtp.transport': (v) => v === 'console' || v === 'smtp',
   'smtp.host': (v) => v.length === 0 || v.length <= 256,
   'smtp.port': (v) => {
@@ -38,10 +39,10 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'notes.admin_emails': (v) => v.length <= 1024,
   'site.url': (v) => /^https?:\/\//.test(v) && v.length <= 256,
   'era.jiaguwen.font': (v) => ['Oracular', 'OracularInverted', 'YinQiJiaGuWen'].includes(v),
-  'era.jinwen.font':    (v) => ['WangHanzongWeibei', 'HanDianJinWen'].includes(v),
+  'era.jinwen.font': (v) => ['WangHanzongWeibei', 'HanDianJinWen'].includes(v),
   'era.xiaozhuan.font': (v) => ['QuanZiKuShuoWen', 'HanDianJinWen'].includes(v),
-  'era.lishu.font':     (v) => ['WangHanzongLishu', 'ZCOOLXiaoWei'].includes(v),
-  'era.kaishu.font':    (v) => ['ZCOOLXiaoWei', 'KaiTi', 'Iansui', 'MaShanZheng'].includes(v),
+  'era.lishu.font': (v) => ['WangHanzongLishu', 'ZCOOLXiaoWei'].includes(v),
+  'era.kaishu.font': (v) => ['ZCOOLXiaoWei', 'KaiTi', 'Iansui', 'MaShanZheng'].includes(v),
 };
 
 export async function getConfig(key: string): Promise<string | null> {
@@ -52,7 +53,11 @@ export async function getConfig(key: string): Promise<string | null> {
   return rows.length ? rows[0].value : null;
 }
 
-export async function setConfig(key: string, value: string, byUserId: number | null): Promise<void> {
+export async function setConfig(
+  key: string,
+  value: string,
+  byUserId: number | null,
+): Promise<void> {
   const validator = KEY_VALIDATORS[key];
   if (validator && !validator(value)) {
     throw new Error(`Invalid value for ${key}: ${value}`);
@@ -73,7 +78,10 @@ export async function getAllConfig(): Promise<Record<string, string>> {
   return out;
 }
 
-export async function setConfigBatch(updates: Record<string, string>, byUserId: number): Promise<void> {
+export async function setConfigBatch(
+  updates: Record<string, string>,
+  byUserId: number,
+): Promise<void> {
   for (const [k, v] of Object.entries(updates)) {
     await setConfig(k, v, byUserId);
   }

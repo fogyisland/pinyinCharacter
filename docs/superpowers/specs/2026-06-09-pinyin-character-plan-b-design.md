@@ -11,6 +11,7 @@
 **Out of scope (Plan C):** 简繁真实实现、响应式深度优化、E2E 测试。**Out of scope for Plan B itself:** 密码找回、邮箱验证、OAuth、用户主动删除账号、管理员后台（→ Plan B+）、字帖/生僻字库（→ Plan D）。
 
 **Forward-compat hooks (为 B+/D 预留):**
+
 - `users.is_admin` BOOLEAN DEFAULT FALSE — B+ 用
 - 注册路由的"第一个用户即管理员"逻辑 — B+ 用
 - API 路由的 401 框架 — B+ 加 is_admin 校验就够
@@ -21,13 +22,13 @@
 
 ### 1.1 users
 
-| 字段 | 类型 | 约束 |
-|---|---|---|
-| `id` | BIGINT | PK, AUTO_INCREMENT |
-| `username` | VARCHAR(32) | UNIQUE, NOT NULL |
+| 字段            | 类型        | 约束                                           |
+| --------------- | ----------- | ---------------------------------------------- |
+| `id`            | BIGINT      | PK, AUTO_INCREMENT                             |
+| `username`      | VARCHAR(32) | UNIQUE, NOT NULL                               |
 | `password_hash` | VARCHAR(72) | NOT NULL（bcrypt 输出固定 60 字符，72 给兼容） |
-| `is_admin` | BOOLEAN | DEFAULT FALSE（为 Plan B+ 预留） |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
+| `is_admin`      | BOOLEAN     | DEFAULT FALSE（为 Plan B+ 预留）               |
+| `created_at`    | TIMESTAMP   | DEFAULT CURRENT_TIMESTAMP                      |
 
 索引：`UNIQUE(username)`（隐式）。
 
@@ -35,32 +36,33 @@
 
 ### 1.2 history
 
-| 字段 | 类型 | 约束 |
-|---|---|---|
-| `id` | BIGINT | PK, AUTO_INCREMENT |
-| `user_id` | BIGINT | FK → users.id, ON DELETE CASCADE |
-| `kind` | ENUM('text2pinyin','pinyin2text') | NOT NULL |
-| `input` | TEXT | NOT NULL（字或拼音原文） |
-| `output` | TEXT | NULL（text2pinyin 可重算，存 NULL；pinyin2text 存结果汉字） |
-| `is_favorite` | BOOLEAN | DEFAULT FALSE |
-| `char_count` | INT UNSIGNED | NOT NULL（用于统计，预先算好） |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
+| 字段          | 类型                              | 约束                                                        |
+| ------------- | --------------------------------- | ----------------------------------------------------------- |
+| `id`          | BIGINT                            | PK, AUTO_INCREMENT                                          |
+| `user_id`     | BIGINT                            | FK → users.id, ON DELETE CASCADE                            |
+| `kind`        | ENUM('text2pinyin','pinyin2text') | NOT NULL                                                    |
+| `input`       | TEXT                              | NOT NULL（字或拼音原文）                                    |
+| `output`      | TEXT                              | NULL（text2pinyin 可重算，存 NULL；pinyin2text 存结果汉字） |
+| `is_favorite` | BOOLEAN                           | DEFAULT FALSE                                               |
+| `char_count`  | INT UNSIGNED                      | NOT NULL（用于统计，预先算好）                              |
+| `created_at`  | TIMESTAMP                         | DEFAULT CURRENT_TIMESTAMP                                   |
 
 索引：
+
 - `(user_id, created_at DESC)` — 列表默认按时间倒序
 - `(user_id, is_favorite, created_at DESC)` — 收藏页过滤
 
 ### 1.3 audit_log
 
-| 字段 | 类型 | 约束 |
-|---|---|---|
-| `id` | BIGINT | PK, AUTO_INCREMENT |
-| `user_id` | BIGINT | NULLABLE（注册事件时该值是新用户 id，注册前为 NULL 也行；统一写新 id） |
-| `event` | VARCHAR(32) | NOT NULL，见枚举 |
-| `metadata` | JSON | NULL（事件附加信息，如 `{ kind, char_count }`） |
-| `ip` | VARCHAR(45) | NULL（IPv6 最长 45 字符） |
-| `user_agent` | VARCHAR(255) | NULL |
-| `created_at` | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP |
+| 字段         | 类型         | 约束                                                                   |
+| ------------ | ------------ | ---------------------------------------------------------------------- |
+| `id`         | BIGINT       | PK, AUTO_INCREMENT                                                     |
+| `user_id`    | BIGINT       | NULLABLE（注册事件时该值是新用户 id，注册前为 NULL 也行；统一写新 id） |
+| `event`      | VARCHAR(32)  | NOT NULL，见枚举                                                       |
+| `metadata`   | JSON         | NULL（事件附加信息，如 `{ kind, char_count }`）                        |
+| `ip`         | VARCHAR(45)  | NULL（IPv6 最长 45 字符）                                              |
+| `user_agent` | VARCHAR(255) | NULL                                                                   |
+| `created_at` | TIMESTAMP    | DEFAULT CURRENT_TIMESTAMP                                              |
 
 索引：`(user_id, created_at DESC)`, `(event, created_at DESC)`。
 
@@ -69,6 +71,7 @@
 ### 1.4 字符计数规则
 
 `char_count` = `input` 字符串长度（JavaScript `.length`，即 UTF-16 code units）。
+
 - 简化统计：不去 emoji 算、不去标点算。CJK 占 1 unit，所以"你好"=2。
 - 如果需要更精确（CJK 占 1 实际字符），后续可改用 `[...input].length`（code points）。
 
@@ -94,12 +97,12 @@
 
 ### 2.3 接口
 
-| Method | Path | Body | 行为 |
-|---|---|---|---|
-| POST | `/api/auth/register` | `{username, password}` | 创建用户，签 JWT，set cookie，返回 user |
-| POST | `/api/auth/login` | `{username, password}` | 校验，签 JWT，set cookie，返回 user |
-| POST | `/api/auth/logout` | — | 清 cookie，返回 204 |
-| GET | `/api/auth/me` | — | 读 cookie，返回 user 或 401 |
+| Method | Path                 | Body                   | 行为                                    |
+| ------ | -------------------- | ---------------------- | --------------------------------------- |
+| POST   | `/api/auth/register` | `{username, password}` | 创建用户，签 JWT，set cookie，返回 user |
+| POST   | `/api/auth/login`    | `{username, password}` | 校验，签 JWT，set cookie，返回 user     |
+| POST   | `/api/auth/logout`   | —                      | 清 cookie，返回 204                     |
+| GET    | `/api/auth/me`       | —                      | 读 cookie，返回 user 或 401             |
 
 成功响应统一 `{ ok: true, data: { user } }`，错误 `{ ok: false, error: { code, message } }`（与 Plan A 一致）。
 
@@ -107,13 +110,13 @@
 
 ## 3. History / Stats API
 
-| Method | Path | Query / Body | 行为 |
-|---|---|---|---|
-| GET | `/api/history` | `?favorite=true&limit=50&offset=0` | 列出当前用户的记录，按时间倒序，filter by favorite |
-| POST | `/api/history` | `{kind, input, output, char_count}` | 新建一条；写 audit_log |
-| PATCH | `/api/history/:id` | `{is_favorite: boolean}` | 切换收藏位（**不**写 audit_log） |
-| DELETE | `/api/history/:id` | — | 删除一条（写 audit_log） |
-| GET | `/api/stats` | — | `{ total: int, favorites: int }` |
+| Method | Path               | Query / Body                        | 行为                                               |
+| ------ | ------------------ | ----------------------------------- | -------------------------------------------------- |
+| GET    | `/api/history`     | `?favorite=true&limit=50&offset=0`  | 列出当前用户的记录，按时间倒序，filter by favorite |
+| POST   | `/api/history`     | `{kind, input, output, char_count}` | 新建一条；写 audit_log                             |
+| PATCH  | `/api/history/:id` | `{is_favorite: boolean}`            | 切换收藏位（**不**写 audit_log）                   |
+| DELETE | `/api/history/:id` | —                                   | 删除一条（写 audit_log）                           |
+| GET    | `/api/stats`       | —                                   | `{ total: int, favorites: int }`                   |
 
 **限流**（v1 简化）：仅校验 401，不做速率限制。后续可加 per-IP 限流。
 
@@ -130,10 +133,17 @@
 新增 `user: User | null` + `setUser(user)`，依然走 zustand persist 存到 localStorage（key 同 `pinyin-app-state`）。**注意**：cookie 才是权威，store 里只是缓存。组件挂载时（`app/layout.tsx` 顶层 effect）调 `/api/auth/me` 同步一次。
 
 ```ts
-interface User { id: number; username: string; }
+interface User {
+  id: number;
+  username: string;
+}
 interface AppState {
-  safeMode: boolean; script: Script; user: User | null;
-  setSafeMode, setScript, setUser: (u: User | null) => void;
+  safeMode: boolean;
+  script: Script;
+  user: User | null;
+  setSafeMode;
+  setScript;
+  setUser: (u: User | null) => void;
 }
 ```
 
@@ -151,6 +161,7 @@ interface AppState {
 ### 4.3 AuthModal 组件
 
 `components/AuthModal.tsx`：
+
 - 顶部两个 tab：[登录] [注册]
 - 表单字段：username, password
 - 客户端预校验（≥ 3 字符、≥ 8 字符）
@@ -162,6 +173,7 @@ interface AppState {
 `app/history/page.tsx`（server component）：从 cookie 取 user，调 `/api/history?favorite=...`，渲染列表。
 
 `components/HistoryList.tsx`（client component，每行）：
+
 - 显示 `kind` 图标、`input` 截断、`output` 截断、`char_count` 字符数、`created_at` 相对时间
 - ⭐ 按钮（实心/空心），点击 PATCH
 - 🗑 按钮，点击 DELETE（**无确认**）
@@ -175,11 +187,11 @@ interface AppState {
 
 ### 4.6 自动入库触发
 
-| 组件 | 触发时机 |
-|---|---|
-| `TextToPinyin` | 输入非空 → 1.5s debounce → POST；同时记录 `output = null, char_count = input.length`。组件 unmount 时 flush pending。 |
-| `PinyinInputMethod` | 6s 无候选点击 / 输入框清空时 POST（保存已选汉字串）。如果只选了 0-1 个字并清空，跳过。 |
-| `PinyinFullSentence` | 点 转换 按钮瞬间 POST（与 fetch sentence 并行）。 |
+| 组件                 | 触发时机                                                                                                              |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `TextToPinyin`       | 输入非空 → 1.5s debounce → POST；同时记录 `output = null, char_count = input.length`。组件 unmount 时 flush pending。 |
+| `PinyinInputMethod`  | 6s 无候选点击 / 输入框清空时 POST（保存已选汉字串）。如果只选了 0-1 个字并清空，跳过。                                |
+| `PinyinFullSentence` | 点 转换 按钮瞬间 POST（与 fetch sentence 并行）。                                                                     |
 
 **去重**：每次 POST 前查最近 60 秒内 `kind + input` 相同则跳过（用 `useRef` 缓存最近一次时间戳 + input hash，避免多余请求）。
 
@@ -239,6 +251,7 @@ README.md                        ~ (新增账号部分)
 ## 6. 数据库初始化
 
 `scripts/init-db.ts`：
+
 - 读 `DATABASE_URL`，连 MySQL。
 - 执行 3 条 `CREATE TABLE IF NOT EXISTS`。
 - 用 `IF NOT EXISTS` 保证幂等。
@@ -251,6 +264,7 @@ README.md                        ~ (新增账号部分)
 ## 7. 测试策略
 
 ### 7.1 单元测试
+
 - `lib/auth.ts`: JWT 签/验 roundtrip、过期检测、错误 secret 检测
 - `lib/db.ts`: pool 创建（不连真实库，注入 mock）
 - `lib/history.ts`: CRUD with in-memory MySQL（或 vitest 用 sqlite 替身，谨慎标注差异）
@@ -261,6 +275,7 @@ README.md                        ~ (新增账号部分)
 **测试 DB**：集成测试需要本地 MySQL。CI / 本地开发用 `DATABASE_URL_TEST` env（schema 单独，例如 `pinyin_test`）。`init-db.ts` 接受可选 schema 名参数；测试 setup 钩子里传 `pinyin_test` 并先 `CREATE DATABASE IF NOT EXISTS pinyin_test`。**如果 `DATABASE_URL_TEST` 未设置，集成测试 skip**（不 fail），单元测试照常跑。这样 `pnpm test` 在没有 MySQL 的机器上也能过大部分。
 
 ### 7.2 集成测试
+
 - register → me → 拿到 user
 - register → login → me
 - 未登录访问 /api/history → 401
@@ -269,6 +284,7 @@ README.md                        ~ (新增账号部分)
 - 注册 / 登录 / 删除 history 时 audit_log 各 +1 行
 
 ### 7.3 手动冒烟
+
 1. 注册新用户 → cookie 设置
 2. 用 字→拼音 输入"你好世界" → 1.5s 后 history 多一行
 3. 在 history 页 ⭐ → 收藏

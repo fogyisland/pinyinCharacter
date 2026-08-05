@@ -27,11 +27,13 @@
 ### Task 1: Page-count helper + re-export + unit tests
 
 **Files:**
+
 - Create: `lib/worksheet-page-count.ts`
 - Modify: `lib/worksheet-types.ts:35-39` (re-export `cellsPerPage`)
 - Create: `tests/unit/lib/worksheet-page-count.test.ts`
 
 **Interfaces:**
+
 - Produces: `cellsPerPage(paperSize: PaperSize): number`, `pageCountFor(contentLength: number, paperSize: PaperSize): number`, `exceedsFreeLimit(contentLength: number, paperSize: PaperSize): boolean` — consumed by Tasks 6, 7, 8.
 
 - [ ] **Step 1: Write the failing tests**
@@ -150,6 +152,7 @@ git commit -m "feat(worksheet): add cellsPerPage/pageCountFor helper + unit test
 ### Task 2: Add `multi_worksheet_print` feature key + DB migration
 
 **Files:**
+
 - Modify: `lib/membership.ts:9` (`MembershipFeature` union)
 - Modify: `lib/membership.ts:88` (`ALL_FEATURES` array)
 - Create: `scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql`
@@ -161,16 +164,14 @@ git commit -m "feat(worksheet): add cellsPerPage/pageCountFor helper + unit test
 Open `lib/membership.ts:9`. Find:
 
 ```ts
-export type MembershipFeature =
-  | 'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts';
+export type MembershipFeature = 'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts';
 ```
 
 Replace with:
 
 ```ts
 export type MembershipFeature =
-  | 'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts'
-  | 'multi_worksheet_print';
+  'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts' | 'multi_worksheet_print';
 ```
 
 - [ ] **Step 2: Add to `ALL_FEATURES`**
@@ -178,13 +179,24 @@ export type MembershipFeature =
 Open `lib/membership.ts:88`. Find:
 
 ```ts
-const ALL_FEATURES: MembershipFeature[] = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'];
+const ALL_FEATURES: MembershipFeature[] = [
+  'unlimited_history',
+  'download_pdf',
+  'ai_calls',
+  'priority_tts',
+];
 ```
 
 Replace with:
 
 ```ts
-const ALL_FEATURES: MembershipFeature[] = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts', 'multi_worksheet_print'];
+const ALL_FEATURES: MembershipFeature[] = [
+  'unlimited_history',
+  'download_pdf',
+  'ai_calls',
+  'priority_tts',
+  'multi_worksheet_print',
+];
 ```
 
 - [ ] **Step 3: Create the migration SQL file**
@@ -223,23 +235,29 @@ multi_worksheet_print: '批量 / 多页打印',
 - [ ] **Step 6: Apply ALTER/INSERT to dev `piyin_dev`**
 
 Run:
+
 ```bash
 DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev < scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql
 ```
+
 Expected: no output on success.
 
 Verify with:
+
 ```bash
 DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev -e "SELECT plan_id, feature_key FROM membership_plan_features WHERE feature_key='multi_worksheet_print';"
 ```
+
 Expected: at least 1 row per plan (4 rows total if there are 4 plans).
 
 - [ ] **Step 7: Apply to prod `piyin`**
 
 Same command, pointing at prod:
+
 ```bash
 mysql -h 139.5.108.245 -u piyin -pAdmin909217 piyin < scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql
 ```
+
 (If unreachable, document in the report — a human with prod access will run it manually.)
 
 - [ ] **Step 8: Verify tsc**
@@ -259,6 +277,7 @@ git commit -m "feat(membership): add multi_worksheet_print feature key + labels 
 ### Task 3: Add `worksheet_batch_printed` audit event + unit tests
 
 **Files:**
+
 - Modify: `lib/audit-format.ts:19` (`AuditEvent` union)
 - Modify: `lib/audit-format.ts:33` (add formatLogMessage case)
 - Modify: `tests/unit/lib/audit.test.ts` (bump count + 2 new cases)
@@ -278,13 +297,13 @@ it('counts worksheet_batch_printed in the AuditEvent union', () => {
 });
 
 it('formats worksheet_batch_printed with count and ids', () => {
-  expect(formatLogMessage('worksheet_batch_printed', { count: 3, ids: [1, 2, 3] }))
-    .toBe('批量打印 3 张字帖 (1, 2, 3)');
+  expect(formatLogMessage('worksheet_batch_printed', { count: 3, ids: [1, 2, 3] })).toBe(
+    '批量打印 3 张字帖 (1, 2, 3)',
+  );
 });
 
 it('handles missing ids in worksheet_batch_printed metadata', () => {
-  expect(formatLogMessage('worksheet_batch_printed', { count: 2 }))
-    .toBe('批量打印 2 张字帖 (?)');
+  expect(formatLogMessage('worksheet_batch_printed', { count: 2 })).toBe('批量打印 2 张字帖 (?)');
 });
 ```
 
@@ -344,6 +363,7 @@ git commit -m "feat(audit): worksheet_batch_printed event + formatLogMessage cas
 ### Task 4: Add `printBatchSchema` validator
 
 **Files:**
+
 - Modify: `lib/validators.ts` (add export)
 
 - [ ] **Step 1: Find a good insertion point**
@@ -377,9 +397,11 @@ git commit -m "feat(worksheet-print): add printBatchSchema validator (max 50 ids
 ### Task 5: New `POST /api/worksheets/print-batch` endpoint
 
 **Files:**
+
 - Create: `app/api/worksheets/print-batch/route.ts`
 
 **Interfaces:**
+
 - Consumes: `printBatchSchema` (T4), `hasFeature(userId, 'multi_worksheet_print')` (T2), `cellsPerPage`/`pageCountFor`/`exceedsFreeLimit` (T1), `logUserAction`/`logDownload` (existing).
 - Produces: `POST /api/worksheets/print-batch` returning either `{ok:true, data:{worksheets:[{id, title, content, paperSize, cellStyle, fontFamily}]}}` or 403 `{code:'membership_required', reason, upgradeUrl:'/membership'}`.
 
@@ -411,7 +433,7 @@ export async function POST(req: NextRequest) {
     const [rows] = await getPool().query<any[]>(
       `SELECT id, title, content, paper_size, cell_style, font_family
        FROM worksheets WHERE user_id = ? AND id IN (${placeholders})`,
-      [auth.user.id, ...worksheetIds]
+      [auth.user.id, ...worksheetIds],
     );
     if (rows.length !== worksheetIds.length) return notFound('not_found', 'worksheet not found');
 
@@ -429,7 +451,11 @@ export async function POST(req: NextRequest) {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
     for (const ws of rows) {
       await logDownload({
-        userId: auth.user.id, format: 'print', sourceType: 'worksheet', sourceId: String(ws.id), ip,
+        userId: auth.user.id,
+        format: 'print',
+        sourceType: 'worksheet',
+        sourceId: String(ws.id),
+        ip,
       });
     }
     await logUserAction(req, auth.user.id, 'worksheet_batch_printed', {
@@ -471,6 +497,7 @@ git commit -m "feat(worksheet-print): POST /api/worksheets/print-batch (membersh
 ### Task 6: Gate existing single `/api/worksheets/[id]/print` for multi-page
 
 **Files:**
+
 - Modify: `app/api/worksheets/[id]/print/route.ts` (insert gate after ownership check)
 
 - [ ] **Step 1: Add the multi-page gate**
@@ -478,12 +505,21 @@ git commit -m "feat(worksheet-print): POST /api/worksheets/print-batch (membersh
 Open `app/api/worksheets/[id]/print/route.ts`. After the existing `SELECT id, title FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1` query (currently selects only `id, title`), widen it to also fetch `content, paper_size`, then add the gate.
 
 Replace the `SELECT` line:
+
 ```ts
-const [rows] = await getPool().query<any[]>(`SELECT id, title FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`, [wid, auth.user.id]);
+const [rows] = await getPool().query<any[]>(
+  `SELECT id, title FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`,
+  [wid, auth.user.id],
+);
 ```
+
 with:
+
 ```ts
-const [rows] = await getPool().query<any[]>(`SELECT id, title, content, paper_size FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`, [wid, auth.user.id]);
+const [rows] = await getPool().query<any[]>(
+  `SELECT id, title, content, paper_size FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`,
+  [wid, auth.user.id],
+);
 ```
 
 Then immediately after the `if (rows.length === 0) return notFound(...)` line, add:
@@ -497,6 +533,7 @@ if (!isMember && exceedsFreeLimit(ws.content.length, ws.paper_size)) {
 ```
 
 Add the imports at the top:
+
 ```ts
 import { hasFeature } from '@/lib/membership';
 import { exceedsFreeLimit } from '@/lib/worksheet-page-count';
@@ -521,9 +558,11 @@ git commit -m "feat(worksheet-print): gate /api/worksheets/[id]/print for multi-
 ### Task 7: New `GET /api/worksheets/[id]/can-print` pre-check endpoint
 
 **Files:**
+
 - Create: `app/api/worksheets/[id]/can-print/route.ts`
 
 **Interfaces:**
+
 - Consumes: `cellsPerPage`/`exceedsFreeLimit` (T1), `hasFeature` (T2).
 - Produces: `GET /api/worksheets/[id]/can-print` returning `{ok:true, data:{canPrint:boolean, reason?:'multi_page', upgradeUrl:'/membership'}}`. Used by the detail-page `PrintButton` to decide whether to render the button or the upgrade hint (T8).
 
@@ -550,7 +589,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
     const [rows] = await getPool().query<any[]>(
       `SELECT content, paper_size FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`,
-      [wid, auth.user.id]
+      [wid, auth.user.id],
     );
     if (rows.length === 0) return notFound('not_found', 'worksheet not found');
     const ws = rows[0];
@@ -586,6 +625,7 @@ git commit -m "feat(worksheet-print): GET /api/worksheets/[id]/can-print pre-che
 ### Task 8: UI — multi-select history list + batch print + PrintButton gate
 
 **Files:**
+
 - Modify: `components/common/PrintButton.tsx` (add `gate` prop + can-print pre-check)
 - Create: `components/worksheet/BatchPrintButton.tsx`
 - Create: `components/worksheet/BatchPrintPreview.tsx`
@@ -609,13 +649,20 @@ interface Props {
 Inside the component, add a state `canPrint: boolean | null` (null = unknown). On mount (or when `gate==='multi_page'`), fetch `/api/worksheets/[id]/can-print` (extract the id from `endpoint` via regex: `/api/worksheets/(\d+)/print`). If `canPrint===false && reason==='multi_page'`, render an upgrade card:
 
 ```tsx
-{gate === 'multi_page' && canPrint === false ? (
-  <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-    本字帖超过 1 页，升级会员可打印全部页面 · <Link href="/membership" className="text-seal underline">升级 →</Link>
-  </div>
-) : (
-  <button onClick={handleClick} disabled={busy}>打印</button>
-)}
+{
+  gate === 'multi_page' && canPrint === false ? (
+    <div className="rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      本字帖超过 1 页，升级会员可打印全部页面 ·{' '}
+      <Link href="/membership" className="text-seal underline">
+        升级 →
+      </Link>
+    </div>
+  ) : (
+    <button onClick={handleClick} disabled={busy}>
+      打印
+    </button>
+  );
+}
 ```
 
 If `canPrint===true` or `gate===null`, render the existing button.
@@ -662,16 +709,28 @@ export function BatchPrintPreview({ items }: { items: BatchPrintItem[] }) {
 Add the matching CSS to `app/globals.css` (existing stylesheet — find the end of the `@media print` block or the bottom of the file):
 
 ```css
-.batch-print-area { position: absolute; left: -10000px; top: 0; width: 100%; }
+.batch-print-area {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 100%;
+}
 @media print {
-  .batch-print-area { position: static; left: 0; }
-  .print-page-break { page-break-after: always; break-after: page; }
+  .batch-print-area {
+    position: static;
+    left: 0;
+  }
+  .print-page-break {
+    page-break-after: always;
+    break-after: page;
+  }
 }
 ```
 
 - [ ] **Step 4: Create `BatchPrintButton.tsx`**
 
 Create `components/worksheet/BatchPrintButton.tsx` (NEW). When clicked:
+
 1. POST `{worksheetIds: Array.from(selected)}` to `/api/worksheets/print-batch`.
 2. On 200: set local state `items` from response, then `setTimeout(() => window.print(), 50)` (let React render the off-screen container first).
 3. On 403 `membership_required`: toast error + redirect to `/membership`.
@@ -696,13 +755,14 @@ export function BatchPrintButton({ selectedIds, hasFeature }: Props) {
   const [busy, setBusy] = useState(false);
 
   const count = selectedIds.length;
-  const label = hasFeature
-    ? `批量打印 (${count})`
-    : `批量打印 (${count}) — 需会员`;
+  const label = hasFeature ? `批量打印 (${count})` : `批量打印 (${count}) — 需会员`;
 
   if (!hasFeature) {
     return (
-      <a href="/membership" className="rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm text-amber-900">
+      <a
+        href="/membership"
+        className="rounded border border-amber-300 bg-amber-50 px-3 py-1.5 text-sm text-amber-900"
+      >
         {label} →
       </a>
     );
@@ -754,6 +814,7 @@ export function BatchPrintButton({ selectedIds, hasFeature }: Props) {
 - [ ] **Step 5: Update `WorksheetHistoryList.tsx`**
 
 Open `components/worksheet/WorksheetHistoryList.tsx`. Add:
+
 - A `useState<Set<number>>` for `selected`.
 - A leading checkbox column on each row.
 - A sticky top bar (above the list) that shows the count + a `<BatchPrintButton selectedIds={Array.from(selected)} hasFeature={...} />`.
@@ -806,10 +867,12 @@ Expected: exit 0.
 - [ ] **Step 2: All unit tests**
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/worksheet-page-count.test.ts
 pnpm test tests/unit/lib/audit.test.ts
 ```
+
 Expected: both files pass.
 
 - [ ] **Step 3: HTTP smoke (dev server on 4444)**
@@ -824,11 +887,13 @@ curl -s -o /dev/null -w "can-print=%{http_code}\n" --max-time 10 "http://localho
 # New batch endpoint (no body → 400)
 curl -s -o /dev/null -w "print-batch-nobody=%{http_code}\n" --max-time 10 -X POST -H "Content-Type: application/json" -d "{}" "http://localhost:4444/api/worksheets/print-batch"
 ```
+
 Expected: 401 (not logged in) or 200 (logged in). If 401, that confirms the auth gate works. The 400 case requires auth + bad body — skip if you can't easily get a cookie.
 
 - [ ] **Step 4: Manual browser smoke (deferred to human)**
 
 Document for the human:
+
 1. Logged in free user with a 200-char A4 worksheet → open `/worksheet/<id>` → print button hidden, upgrade card visible with `/membership` link.
 2. Logged in member with 5 saved worksheets → open `/worksheet` → checkboxes visible, multi-select 3 → click 批量打印 (3) → browser print preview shows 3 worksheets in sequence with page breaks.
 3. Logged in free user → open `/worksheet` → checkboxes visible, batch button shows "批量打印 (N) — 需会员" and links to `/membership`.
@@ -845,33 +910,34 @@ If tsc + tests are clean, no commit needed. If a small fix was required, commit 
 
 **Spec coverage** — every section of the spec is mapped to a task:
 
-| Spec requirement | Task |
-|---|---|
-| `lib/worksheet-page-count.ts` helper | T1 |
-| Re-export from `lib/worksheet-types.ts` | T1 |
-| Unit tests for cellsPerPage/pageCountFor/exceedsFreeLimit | T1 |
-| `MembershipFeature` union extension | T2 |
-| `ALL_FEATURES` extension | T2 |
-| PlanCard/PlanRow labels | T2 |
-| DB backfill migration (dev + prod) | T2 |
-| `worksheet_batch_printed` audit event | T3 |
-| `formatLogMessage` case | T3 |
-| Audit unit tests | T3 |
-| `printBatchSchema` validator | T4 |
-| `POST /api/worksheets/print-batch` | T5 |
-| Multi-page gate on existing `/api/worksheets/[id]/print` | T6 |
-| `GET /api/worksheets/[id]/can-print` | T7 |
-| `PrintButton` `gate` prop + can-print pre-check | T8 |
-| `BatchPrintButton` + `BatchPrintPreview` | T8 |
-| WorksheetHistoryList multi-select + sticky bar | T8 |
-| Detail page passes `gate="multi_page"` | T8 |
-| `app/worksheet/page.tsx` passes `hasFeature` | T8 |
-| `BatchPrintPreview` CSS | T8 |
-| tsc + unit test + curl smoke | T9 |
+| Spec requirement                                          | Task |
+| --------------------------------------------------------- | ---- |
+| `lib/worksheet-page-count.ts` helper                      | T1   |
+| Re-export from `lib/worksheet-types.ts`                   | T1   |
+| Unit tests for cellsPerPage/pageCountFor/exceedsFreeLimit | T1   |
+| `MembershipFeature` union extension                       | T2   |
+| `ALL_FEATURES` extension                                  | T2   |
+| PlanCard/PlanRow labels                                   | T2   |
+| DB backfill migration (dev + prod)                        | T2   |
+| `worksheet_batch_printed` audit event                     | T3   |
+| `formatLogMessage` case                                   | T3   |
+| Audit unit tests                                          | T3   |
+| `printBatchSchema` validator                              | T4   |
+| `POST /api/worksheets/print-batch`                        | T5   |
+| Multi-page gate on existing `/api/worksheets/[id]/print`  | T6   |
+| `GET /api/worksheets/[id]/can-print`                      | T7   |
+| `PrintButton` `gate` prop + can-print pre-check           | T8   |
+| `BatchPrintButton` + `BatchPrintPreview`                  | T8   |
+| WorksheetHistoryList multi-select + sticky bar            | T8   |
+| Detail page passes `gate="multi_page"`                    | T8   |
+| `app/worksheet/page.tsx` passes `hasFeature`              | T8   |
+| `BatchPrintPreview` CSS                                   | T8   |
+| tsc + unit test + curl smoke                              | T9   |
 
 **Placeholder scan** — no "TBD" / "TODO" / "implement later" / "add appropriate handling". Every code step shows the actual code.
 
 **Type consistency** — checked:
+
 - `MembershipFeature` union extension (T2) and Zod validator (T4) reference the same `'multi_worksheet_print'` string.
 - `cellsPerPage` / `exceedsFreeLimit` (T1) consumed by both server routes (T5, T6, T7) and the audit event (T3 has no need for it; only print paths use it).
 - `hasFeature(userId, 'multi_worksheet_print')` called in 3 server contexts (T5 batch route, T6 single route, T7 can-print route) — same signature everywhere.

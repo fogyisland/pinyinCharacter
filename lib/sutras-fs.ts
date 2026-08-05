@@ -71,15 +71,13 @@ export function listSutrasFromFs(opts: ListSutrasFsOpts = {}): SutraListResult |
   const offset = (page - 1) * pageSize;
   const sliced = items.slice(offset, offset + pageSize);
   return {
-    items: sliced.map(
-      (i): SutraListItem => ({
-        id: i.id,
-        title: i.title,
-        slug: i.slug,
-        chunkCount: i.chunkCount,
-        charCount: i.charCount,
-      }),
-    ),
+    items: sliced.map((i): SutraListItem => ({
+      id: i.id,
+      title: i.title,
+      slug: i.slug,
+      chunkCount: i.chunkCount,
+      charCount: i.charCount,
+    })),
     total: items.length,
     page,
     pageSize,

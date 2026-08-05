@@ -14,7 +14,7 @@ export async function GET() {
     if (!s) {
       return NextResponse.json({
         ok: true,
-        data: { ready: false },  // pre-init or DB unreachable
+        data: { ready: false }, // pre-init or DB unreachable
       });
     }
     return NextResponse.json({

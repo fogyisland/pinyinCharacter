@@ -42,8 +42,7 @@ export function CharDropZone({
     if (pinyinId) onDrop(charId, pinyinId);
   };
 
-  const isVisible = (el: RevealElement) =>
-    revealConfig.cellHints.includes(el) || revealed.has(el);
+  const isVisible = (el: RevealElement) => revealConfig.cellHints.includes(el) || revealed.has(el);
 
   const handleClick = (el: RevealElement) => {
     if (!revealConfig.allowOnDemandHints) return;

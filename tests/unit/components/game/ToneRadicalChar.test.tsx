@@ -6,7 +6,11 @@ beforeEach(() => cleanup());
 
 it('renders all hints at HSK 1', async () => {
   const { ToneRadicalChar } = await import('@/components/game/ToneRadicalChar');
-  const cfg = { cellHints: ['pinyin', 'meaning', 'radical'], allowOnDemandHints: false, onDemandPenalty: 1 };
+  const cfg = {
+    cellHints: ['pinyin', 'meaning', 'radical'],
+    allowOnDemandHints: false,
+    onDemandPenalty: 1,
+  };
   const { container } = render(
     <ToneRadicalChar
       char="你"
@@ -15,7 +19,7 @@ it('renders all hints at HSK 1', async () => {
       onDrop={vi.fn()}
       revealConfig={cfg as any}
       onDemandReveal={vi.fn()}
-    />
+    />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeTruthy();
   expect(container.querySelector('[data-hint="meaning"]')).toBeTruthy();
@@ -34,7 +38,7 @@ it('hides all hints at HSK 6; allows click-to-reveal', async () => {
       onDrop={vi.fn()}
       revealConfig={cfg as any}
       onDemandReveal={onDemand}
-    />
+    />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeFalsy();
   fireEvent.click(getByLabelText('显示拼音'));
@@ -52,7 +56,7 @@ it('at HSK 1 (allowOnDemandHints=false) no click-to-reveal button is shown', asy
       onDrop={vi.fn()}
       revealConfig={cfg as any}
       onDemandReveal={vi.fn()}
-    />
+    />,
   );
   expect(queryByLabelText('显示拼音')).toBeNull();
 });
@@ -61,7 +65,11 @@ it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', a
   const { ToneRadicalChar } = await import('@/components/game/ToneRadicalChar');
   // HSK 1: all hints visible, but DropSlot must STILL be present
   // (the slot is a quiz answer the user drags onto, not a hint about the cell).
-  const cfg = { cellHints: ['pinyin', 'meaning', 'radical'], allowOnDemandHints: false, onDemandPenalty: 1 };
+  const cfg = {
+    cellHints: ['pinyin', 'meaning', 'radical'],
+    allowOnDemandHints: false,
+    onDemandPenalty: 1,
+  };
   const onDrop = vi.fn();
   const { container } = render(
     <ToneRadicalChar
@@ -74,7 +82,7 @@ it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', a
       onDrop={onDrop}
       revealConfig={cfg as any}
       onDemandReveal={vi.fn()}
-    />
+    />,
   );
   const slot = container.querySelector('[data-slot="tone"]');
   expect(slot).toBeTruthy();
@@ -91,7 +99,7 @@ it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', a
       onDrop={onDrop}
       revealConfig={cfg6 as any}
       onDemandReveal={vi.fn()}
-    />
+    />,
   );
   expect(c6.querySelector('[data-slot="radical"]')).toBeTruthy();
   expect(c6.querySelector('[data-slot="radical"]')!.textContent).toContain('女');

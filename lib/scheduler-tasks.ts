@@ -99,12 +99,14 @@ export async function runEmailCampaignSend(): Promise<TaskResult> {
   const pool = getPool();
   // Active campaigns (one row each, status='sending').
   const [campaigns] = await pool.query<any[]>(
-    `SELECT id, subject FROM email_campaigns WHERE status = 'sending' ORDER BY id LIMIT 5`
+    `SELECT id, subject FROM email_campaigns WHERE status = 'sending' ORDER BY id LIMIT 5`,
   );
   if (campaigns.length === 0) {
     return { name: 'email-campaign-send', ok: true, summary: 'no active campaigns (0ms)' };
   }
-  let totalSent = 0, totalFailed = 0, totalSkipped = 0;
+  let totalSent = 0,
+    totalFailed = 0,
+    totalSkipped = 0;
   for (const c of campaigns as Array<{ id: number; subject: string }>) {
     const [pending] = await pool.query<any[]>(
       `SELECT r.id, r.user_id, r.email, u.username, c.html_body, c.text_body
@@ -113,52 +115,65 @@ export async function runEmailCampaignSend(): Promise<TaskResult> {
        JOIN email_campaigns c ON c.id = r.campaign_id
        WHERE r.campaign_id = ? AND r.status = 'pending'
        ORDER BY r.id LIMIT ?`,
-      [c.id, BATCH]
+      [c.id, BATCH],
     );
-    let sent = 0, failed = 0, skipped = 0;
+    let sent = 0,
+      failed = 0,
+      skipped = 0;
     // Simple bounded concurrency: process in chunks of CONCURRENCY.
     for (let off = 0; off < pending.length; off += CONCURRENCY) {
       const slice = pending.slice(off, off + CONCURRENCY);
-      await Promise.all(slice.map(async (row) => {
-        try {
-          // Honor opt-out at send time — race with /unsubscribe.
-          const [u] = await pool.query<any[]>(
-            `SELECT marketing_opted_out FROM users WHERE id = ? LIMIT 1`,
-            [row.user_id]
-          );
-          if (u[0]?.marketing_opted_out) {
-            await markRecipient(row.id, 'skipped', 'opted-out');
-            skipped++;
-            return;
+      await Promise.all(
+        slice.map(async (row) => {
+          try {
+            // Honor opt-out at send time — race with /unsubscribe.
+            const [u] = await pool.query<any[]>(
+              `SELECT marketing_opted_out FROM users WHERE id = ? LIMIT 1`,
+              [row.user_id],
+            );
+            if (u[0]?.marketing_opted_out) {
+              await markRecipient(row.id, 'skipped', 'opted-out');
+              skipped++;
+              return;
+            }
+            const unsub = issueUnsubscribeToken(row.user_id);
+            // Use site url from env at send time (admin may have updated it).
+            const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4444').replace(
+              /\/+$/,
+              '',
+            );
+            const unsubUrl = `${siteUrl}/api/email/unsubscribe?token=${encodeURIComponent(unsub)}`;
+            const tpl = campaignEmail({
+              username: row.username,
+              bodyHtml: row.html_body,
+              bodyText: row.text_body,
+              unsubscribeUrl: unsubUrl,
+            });
+            await sendEmail({
+              to: row.email,
+              subject: c.subject,
+              html: tpl.html,
+              text: tpl.text,
+              template: 'campaign',
+            });
+            await markRecipient(row.id, 'sent');
+            sent++;
+          } catch (e) {
+            const err = e instanceof Error ? e.message : String(e);
+            try {
+              await markRecipient(row.id, 'failed', err);
+            } catch {
+              /* swallow */
+            }
+            failed++;
           }
-          const unsub = issueUnsubscribeToken(row.user_id);
-          // Use site url from env at send time (admin may have updated it).
-          const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:4444').replace(/\/+$/, '');
-          const unsubUrl = `${siteUrl}/api/email/unsubscribe?token=${encodeURIComponent(unsub)}`;
-          const tpl = campaignEmail({
-            username: row.username,
-            bodyHtml: row.html_body,
-            bodyText: row.text_body,
-            unsubscribeUrl: unsubUrl,
-          });
-          await sendEmail({
-            to: row.email,
-            subject: c.subject,
-            html: tpl.html,
-            text: tpl.text,
-            template: 'campaign',
-          });
-          await markRecipient(row.id, 'sent');
-          sent++;
-        } catch (e) {
-          const err = e instanceof Error ? e.message : String(e);
-          try { await markRecipient(row.id, 'failed', err); } catch { /* swallow */ }
-          failed++;
-        }
-      }));
+        }),
+      );
     }
     const status = await finalizeCampaignIfDone(c.id);
-    totalSent += sent; totalFailed += failed; totalSkipped += skipped;
+    totalSent += sent;
+    totalFailed += failed;
+    totalSkipped += skipped;
     if (status !== 'sending') {
       // Campaign terminal — nothing more for it.
     }
@@ -173,11 +188,20 @@ export async function runEmailCampaignSend(): Promise<TaskResult> {
 
 export async function runTask(name: TaskName): Promise<TaskResult> {
   switch (name) {
-    case 'content-refresh':      return runContentRefresh();
-    case 'daily-char':           return runDailyCharRefresh();
-    case 'stats-refresh':        return runStatsRefresh();
-    case 'email-campaign-send':  return runEmailCampaignSend();
+    case 'content-refresh':
+      return runContentRefresh();
+    case 'daily-char':
+      return runDailyCharRefresh();
+    case 'stats-refresh':
+      return runStatsRefresh();
+    case 'email-campaign-send':
+      return runEmailCampaignSend();
   }
 }
 
-export const ALL_TASKS: TaskName[] = ['content-refresh', 'daily-char', 'stats-refresh', 'email-campaign-send'];
+export const ALL_TASKS: TaskName[] = [
+  'content-refresh',
+  'daily-char',
+  'stats-refresh',
+  'email-campaign-send',
+];

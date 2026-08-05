@@ -25,6 +25,7 @@
 ### Task 1: Extend CellStyle type + validateWorksheetInput to accept `cross`
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts:1` (CellStyle union)
 - Modify: `lib/worksheet-types.ts:68-89` (`validateWorksheetInput` validator)
 - Modify: `tests/unit/lib/worksheet.test.ts` (add 2 test cases to the existing `describe('validateWorksheetInput', ...)` block)
@@ -67,10 +68,13 @@ Expected: 2 new tests FAIL. Existing tests still pass. Output should show `× ac
 - [ ] **Step 3: Extend `CellStyle` union in `lib/worksheet-types.ts`**
 
 Change line 1 from:
+
 ```ts
 export type CellStyle = 'brush' | 'square' | 'pen';
 ```
+
 to:
+
 ```ts
 export type CellStyle = 'brush' | 'square' | 'pen' | 'cross';
 ```
@@ -80,14 +84,14 @@ export type CellStyle = 'brush' | 'square' | 'pen' | 'cross';
 Replace the existing validator body so `cross` is accepted and the error message lists all four. Find the `validateWorksheetInput` function (around line 68) and update the cellStyle check:
 
 ```ts
-  if (
-    input.cellStyle !== 'brush' &&
-    input.cellStyle !== 'square' &&
-    input.cellStyle !== 'pen' &&
-    input.cellStyle !== 'cross'
-  ) {
-    return { ok: false, error: 'cellStyle must be brush, square, pen, or cross' };
-  }
+if (
+  input.cellStyle !== 'brush' &&
+  input.cellStyle !== 'square' &&
+  input.cellStyle !== 'pen' &&
+  input.cellStyle !== 'cross'
+) {
+  return { ok: false, error: 'cellStyle must be brush, square, pen, or cross' };
+}
 ```
 
 - [ ] **Step 5: Re-run the tests to verify they pass**
@@ -107,6 +111,7 @@ git commit -m "feat(worksheet): extend CellStyle union + validator with 'cross' 
 ### Task 2: Add `cellStyleLabel()` helper + replace fallthrough chains at 2 display sites
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts` (add `cellStyleLabel()` next to `paperSizeLabel()` around line 47)
 - Modify: `app/worksheet/[id]/page.tsx:44` (replace ternary chain)
 - Modify: `components/worksheet/WorksheetHistoryList.tsx:26` (replace ternary chain)
@@ -118,10 +123,14 @@ Insert this immediately after `fontFamilyCssVar` (around line 55, before the `Va
 ```ts
 export function cellStyleLabel(s: CellStyle): string {
   switch (s) {
-    case 'brush': return '毛笔格';
-    case 'square': return '田字格';
-    case 'pen': return '钢笔格';
-    case 'cross': return '米字格';
+    case 'brush':
+      return '毛笔格';
+    case 'square':
+      return '田字格';
+    case 'pen':
+      return '钢笔格';
+    case 'cross':
+      return '米字格';
   }
 }
 ```
@@ -136,19 +145,25 @@ Expected: exit 0, no errors.
 Edit the file: in the import line near the top, add `cellStyleLabel` to the existing import from `@/lib/worksheet-types`:
 
 Find:
+
 ```ts
 import { paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
 ```
+
 Replace with:
+
 ```ts
 import { paperSizeLabel, fontFamilyLabel, cellStyleLabel } from '@/lib/worksheet-types';
 ```
 
 Then in the body of the component (around line 44), find:
+
 ```tsx
 {ws.cellStyle === 'brush' ? '毛笔格' : ws.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
 ```
+
 Replace with:
+
 ```tsx
 {cellStyleLabel(ws.cellStyle)} ·{' '}
 ```
@@ -158,10 +173,13 @@ Replace with:
 Edit the file: at the top, add `cellStyleLabel` to the import from `@/lib/worksheet-types`. (Check the existing import shape first; if it imports multiple names, extend the list. If it imports nothing from that path yet, add `import { cellStyleLabel } from '@/lib/worksheet-types';`.)
 
 Then around line 26, find:
+
 ```tsx
 {w.cellStyle === 'brush' ? '毛笔格' : w.cellStyle === 'square' ? '田字格' : '钢笔格'} ·{' '}
 ```
+
 Replace with:
+
 ```tsx
 {cellStyleLabel(w.cellStyle)} ·{' '}
 ```
@@ -183,6 +201,7 @@ git commit -m "refactor(worksheet): extract cellStyleLabel helper, replace terna
 ### Task 3: Add SVG branch for `cross` style in `WorksheetCell.tsx`
 
 **Files:**
+
 - Modify: `components/worksheet/WorksheetCell.tsx:21-28` (add 4th branch)
 
 - [ ] **Step 1: Add the cross branch**
@@ -190,30 +209,40 @@ git commit -m "refactor(worksheet): extract cellStyleLabel helper, replace terna
 Open `components/worksheet/WorksheetCell.tsx`. The current SVG body around lines 21–28 looks like:
 
 ```tsx
-{/* brush: two diagonals; square: horizontal center; pen: no inner lines (clean box) */}
-{style === 'brush' ? (
-  <>
-    <line x1={2} y1={2} x2={98} y2={98} stroke={stroke} strokeWidth={0.5} />
-    <line x1={98} y1={2} x2={2} y2={98} stroke={stroke} strokeWidth={0.5} />
-  </>
-) : style === 'square' ? (
-  <line x1={2} y1={50} x2={98} y2={50} stroke={stroke} strokeWidth={0.5} />
-) : null}
+{
+  /* brush: two diagonals; square: horizontal center; pen: no inner lines (clean box) */
+}
+{
+  style === 'brush' ? (
+    <>
+      <line x1={2} y1={2} x2={98} y2={98} stroke={stroke} strokeWidth={0.5} />
+      <line x1={98} y1={2} x2={2} y2={98} stroke={stroke} strokeWidth={0.5} />
+    </>
+  ) : style === 'square' ? (
+    <line x1={2} y1={50} x2={98} y2={50} stroke={stroke} strokeWidth={0.5} />
+  ) : null;
+}
 ```
 
 Replace with (the cross branch renders horizontal + both diagonals — vertical stays in the common block above):
 
 ```tsx
-{/* brush: diagonals only; square: horizontal; pen: nothing extra; cross: horizontal + diagonals (米) */}
-{style === 'brush' || style === 'cross' ? (
-  <>
-    <line x1={2} y1={2} x2={98} y2={98} stroke={stroke} strokeWidth={0.5} />
-    <line x1={98} y1={2} x2={2} y2={98} stroke={stroke} strokeWidth={0.5} />
-  </>
-) : null}
-{style === 'square' || style === 'cross' ? (
-  <line x1={2} y1={50} x2={98} y2={50} stroke={stroke} strokeWidth={0.5} />
-) : null}
+{
+  /* brush: diagonals only; square: horizontal; pen: nothing extra; cross: horizontal + diagonals (米) */
+}
+{
+  style === 'brush' || style === 'cross' ? (
+    <>
+      <line x1={2} y1={2} x2={98} y2={98} stroke={stroke} strokeWidth={0.5} />
+      <line x1={98} y1={2} x2={2} y2={98} stroke={stroke} strokeWidth={0.5} />
+    </>
+  ) : null;
+}
+{
+  style === 'square' || style === 'cross' ? (
+    <line x1={2} y1={50} x2={98} y2={50} stroke={stroke} strokeWidth={0.5} />
+  ) : null;
+}
 ```
 
 (`pen` renders nothing extra — falls through both branches and produces just the outer border + vertical center line from the common block.)
@@ -235,6 +264,7 @@ git commit -m "feat(worksheet): add 米字格 (cross) SVG branch — box + horiz
 ### Task 4: Add `cross` radio button to `StylePicker.tsx`
 
 **Files:**
+
 - Modify: `components/worksheet/StylePicker.tsx` (add 4th `<label>` after the `pen` label, around line 42)
 
 - [ ] **Step 1: Add the 4th radio**
@@ -286,6 +316,7 @@ git commit -m "feat(worksheet): add 米字格 radio to StylePicker"
 ### Task 5: Update `saveWorksheetSchema` Zod enum to accept `cross`
 
 **Files:**
+
 - Modify: `lib/validators.ts:36-42` (`saveWorksheetSchema`)
 
 - [ ] **Step 1: Find and extend the Zod enum**
@@ -293,10 +324,13 @@ git commit -m "feat(worksheet): add 米字格 radio to StylePicker"
 Open `lib/validators.ts`. Find the `saveWorksheetSchema` definition (around line 36). It currently has `cellStyle: z.enum(['brush', 'square', 'pen'])`.
 
 Replace:
+
 ```ts
 cellStyle: z.enum(['brush', 'square', 'pen']),
 ```
+
 with:
+
 ```ts
 cellStyle: z.enum(['brush', 'square', 'pen', 'cross']),
 ```
@@ -318,6 +352,7 @@ git commit -m "feat(worksheet): accept 'cross' cellStyle in saveWorksheetSchema"
 ### Task 6: DB migration — fix init-db.ts + add ALTER file for live DBs
 
 **Files:**
+
 - Modify: `scripts/init-db.ts:130` (extend ENUM definition)
 - Create: `scripts/migrations/2026-06-18-cell-style-cross.sql`
 
@@ -345,23 +380,29 @@ Find line 130 (`cell_style ENUM('brush','square') NOT NULL,`) and replace with:
 - [ ] **Step 3: Apply the ALTER to live dev DB `piyin_dev`**
 
 Run:
+
 ```bash
 DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev < scripts/migrations/2026-06-18-cell-style-cross.sql
 ```
+
 Expected: no output. (MySQL prints nothing on success. If you see "ERROR", stop and investigate.)
 
 Verify with:
+
 ```bash
 DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev -e "SHOW COLUMNS FROM worksheets LIKE 'cell_style';"
 ```
+
 Expected output shows `Type = enum('brush','square','pen','cross')`.
 
 - [ ] **Step 4: Apply the ALTER to prod `piyin` (if accessible)**
 
 If the dev host can reach prod MySQL (`139.5.108.245:3306`), apply the same ALTER:
+
 ```bash
 mysql -h 139.5.108.245 -u piyin -pAdmin909217 piyin < scripts/migrations/2026-06-18-cell-style-cross.sql
 ```
+
 (If prod is unreachable from this host, document this in the commit message and the spec's "What to verify next" — a human with prod access will run the ALTER manually.)
 
 - [ ] **Step 5: Commit**
@@ -392,16 +433,20 @@ Expected: all tests pass (existing + 2 new).
 Make sure `pnpm dev` is running on port 4444 (per project memory). If not, start it: `pnpm dev &`.
 
 Then:
+
 ```bash
 # Open worksheet creator with prefilled char
 curl -s -o /dev/null -w "%{http_code}\n" "http://localhost:4444/worksheet/new?prefill=%E4%B8%8D"
 ```
+
 Expected: 200 or 307 (redirect to login is fine — the page exists).
 
 Verify the 米字格 radio appears in the rendered HTML:
+
 ```bash
 curl -s "http://localhost:4444/worksheet/new?prefill=%E4%B8%8D" | grep -o 'value="cross"\|米字格' | head -3
 ```
+
 Expected: prints `value="cross"` and `米字格` at least once each.
 
 - [ ] **Step 4: Manual browser smoke (per project memory, deferred to human)**
@@ -418,22 +463,22 @@ If tsc or tests surfaced nothing, no commit is needed. If you discovered a missi
 
 **Spec coverage** — checked each requirement in `docs/superpowers/specs/2026-06-18-worksheet-cross-cell-style-design.md`:
 
-| Spec requirement | Task |
-|---|---|
-| Extend `CellStyle` union | T1 |
-| Extend `validateWorksheetInput` | T1 |
-| Unit test for `cross` accepted | T1 |
-| Unit test for invalid rejected with new error msg | T1 |
-| `cellStyleLabel` helper | T2 |
-| Replace `app/worksheet/[id]/page.tsx:44` chain | T2 |
-| Replace `WorksheetHistoryList.tsx:26` chain | T2 |
-| SVG branch in `WorksheetCell.tsx` | T3 |
-| 4th radio in `StylePicker.tsx` | T4 |
-| `saveWorksheetSchema` Zod enum | T5 |
-| Fix `init-db.ts:130` stale enum | T6 |
-| ALTER migration file | T6 |
-| Apply ALTER to dev + prod | T6 |
-| tsc + test verification | T7 |
+| Spec requirement                                  | Task |
+| ------------------------------------------------- | ---- |
+| Extend `CellStyle` union                          | T1   |
+| Extend `validateWorksheetInput`                   | T1   |
+| Unit test for `cross` accepted                    | T1   |
+| Unit test for invalid rejected with new error msg | T1   |
+| `cellStyleLabel` helper                           | T2   |
+| Replace `app/worksheet/[id]/page.tsx:44` chain    | T2   |
+| Replace `WorksheetHistoryList.tsx:26` chain       | T2   |
+| SVG branch in `WorksheetCell.tsx`                 | T3   |
+| 4th radio in `StylePicker.tsx`                    | T4   |
+| `saveWorksheetSchema` Zod enum                    | T5   |
+| Fix `init-db.ts:130` stale enum                   | T6   |
+| ALTER migration file                              | T6   |
+| Apply ALTER to dev + prod                         | T6   |
+| tsc + test verification                           | T7   |
 
 **Placeholder scan** — no "TBD"/"TODO"/"implement later" found. Every code step shows actual code.
 

@@ -23,7 +23,10 @@ export function SiteUrlForm({ initial }: { initial: SiteUrlFormInitial }) {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setErr(null); setOk(null); setTestResult(null);
+    setBusy(true);
+    setErr(null);
+    setOk(null);
+    setTestResult(null);
     const trimmed = url.trim();
     if (!isValidUrl(trimmed)) {
       setErr('URL 必须以 http:// 或 https:// 开头, 且不超过 256 字符');
@@ -63,7 +66,8 @@ export function SiteUrlForm({ initial }: { initial: SiteUrlFormInitial }) {
         {err && <p className="text-sm text-seal">{err}</p>}
         {ok && (
           <p className="text-sm text-green-700 inline-flex items-center gap-1">
-            <Check className="h-3.5 w-3.5" />{ok}
+            <Check className="h-3.5 w-3.5" />
+            {ok}
           </p>
         )}
 

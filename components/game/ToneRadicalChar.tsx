@@ -77,8 +77,7 @@ export function ToneRadicalChar({
 }: Props) {
   const [revealed, setRevealed] = useState<Set<RevealElement>>(new Set());
 
-  const isVisible = (el: RevealElement) =>
-    revealConfig.cellHints.includes(el) || revealed.has(el);
+  const isVisible = (el: RevealElement) => revealConfig.cellHints.includes(el) || revealed.has(el);
 
   const handleClick = (el: RevealElement) => {
     if (!revealConfig.allowOnDemandHints) return;
@@ -104,15 +103,19 @@ export function ToneRadicalChar({
     <div className="tone-radical-char flex flex-col items-center gap-2">
       <span className="text-3xl">{char}</span>
       <div className="text-xs mt-1 flex flex-wrap justify-center gap-2">
-        {renderToken('pinyin', <PinyinToken pinyin={pinyin ?? ''} matched={false} onDragStart={() => {}} />)}
+        {renderToken(
+          'pinyin',
+          <PinyinToken pinyin={pinyin ?? ''} matched={false} onDragStart={() => {}} />,
+        )}
         {renderToken('meaning', <span data-meaning>{meaning ?? ''}</span>)}
-        {renderToken('radical', <RadicalToken radical={radical ?? ''} matched={false} onDragStart={() => {}} />)}
+        {renderToken(
+          'radical',
+          <RadicalToken radical={radical ?? ''} matched={false} onDragStart={() => {}} />,
+        )}
       </div>
       <DropSlot
         kind={slotKind}
-        label={
-          slotKind === 'tone' ? '声调槽' : slotKind === 'radical' ? '部首槽' : '拼音槽'
-        }
+        label={slotKind === 'tone' ? '声调槽' : slotKind === 'radical' ? '部首槽' : '拼音槽'}
         matched={matched}
         onDrop={onDrop}
       />

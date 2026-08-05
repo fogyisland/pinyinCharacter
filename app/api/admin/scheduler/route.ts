@@ -30,11 +30,17 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     }
-    const updates: Partial<Pick<SchedulerConfig,
-      'enabled' | 'intervalMin' | 'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh'>> = parsed.data;
+    const updates: Partial<
+      Pick<
+        SchedulerConfig,
+        'enabled' | 'intervalMin' | 'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh'
+      >
+    > = parsed.data;
     await writeSchedulerConfig(updates, auth.user.id);
     // (Re)start the in-process scheduler so live config changes take effect.
-    try { await bootstrapScheduler(); } catch (e) {
+    try {
+      await bootstrapScheduler();
+    } catch (e) {
       console.error('[scheduler] restart after update failed', e);
     }
     await writeAudit({

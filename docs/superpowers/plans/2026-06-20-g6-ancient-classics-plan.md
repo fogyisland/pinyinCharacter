@@ -27,6 +27,7 @@
 ## Task 1: Data model + punctuation/breakpoint helpers (TDD)
 
 **Files:**
+
 - Create: `migrations/2026-06-20-classics.sql`
 - Modify: `scripts/init-db.ts:13` (append CREATE TABLE to DDL array)
 - Create: `lib/classics-types.ts`
@@ -34,12 +35,14 @@
 - Create: `tests/unit/lib/punctuation.test.ts`
 
 **Interfaces:**
+
 - Produces: `ClassicListItem`, `ClassicDetail`, `ClassicChunk`, `ClassicListResult` (types in `lib/classics-types.ts`)
 - Produces: `isPunct(ch: string): boolean`, `SENT_END: ReadonlySet<string>`, `buildBreakpoints(chunk: ClassicChunk): Set<number>`, `stripPunct(s: string): string` (helpers in `lib/punctuation.ts`)
 
 - [ ] **Step 1: Write the failing test for `lib/punctuation.ts`**
 
 Create `tests/unit/lib/punctuation.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { isPunct, buildBreakpoints, stripPunct } from '@/lib/punctuation';
@@ -113,20 +116,16 @@ Expected: FAIL — `Cannot find module '@/lib/punctuation'` or `classics-types`.
 - [ ] **Step 3: Write types and helpers**
 
 Create `lib/classics-types.ts`:
+
 ```ts
 export type ClassicCategory =
-  | 'four-books'
-  | 'five-classics'
-  | 'mengxue'
-  | 'philosophy'
-  | 'history'
-  | 'other';
+  'four-books' | 'five-classics' | 'mengxue' | 'philosophy' | 'history' | 'other';
 
 export interface ClassicChunk {
-  id: number;          // 1-based, contiguous within book
-  label: string;       // e.g. "学而第一", "第一篇", "乾"
-  content: string[];   // lines of text including punctuation
-  pinyin: string[][];  // line-aligned pinyin; punctuation chars → "" entry
+  id: number; // 1-based, contiguous within book
+  label: string; // e.g. "学而第一", "第一篇", "乾"
+  content: string[]; // lines of text including punctuation
+  pinyin: string[][]; // line-aligned pinyin; punctuation chars → "" entry
 }
 
 export interface ClassicListItem {
@@ -159,6 +158,7 @@ export interface ClassicListResult {
 ```
 
 Create `lib/punctuation.ts`:
+
 ```ts
 export const SENT_END: ReadonlySet<string> = new Set(['。', '！', '？']);
 
@@ -210,6 +210,7 @@ Expected: PASS — all 12+ tests green.
 - [ ] **Step 5: Add migration file and init-db entry**
 
 Create `migrations/2026-06-20-classics.sql`:
+
 ```sql
 -- Plan G6 — Ancient Classics table.
 -- Stores classical Chinese texts (论语, 孟子, 弟子规, etc.) as JSON chunks,
@@ -233,6 +234,7 @@ CREATE TABLE IF NOT EXISTS classics (
 ```
 
 Edit `scripts/init-db.ts` — append this DDL to the `DDL` array (after the last existing entry, before the closing `]`):
+
 ```ts
   `CREATE TABLE IF NOT EXISTS classics (
      id INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -256,9 +258,11 @@ Edit `scripts/init-db.ts` — append this DDL to the `DDL` array (after the last
 
 Run: `pnpm tsx scripts/migrate.ts migrations/2026-06-20-classics.sql`
 Expected: log line "Applied migrations/2026-06-20-classics.sql" or equivalent (matches existing migrate.ts output style). Verify with:
+
 ```bash
 mysql -uroot -pAdmin909217 piyin_dev -e "DESCRIBE classics;"
 ```
+
 Expected: 10 rows including `id`, `slug`, `title`, `category` (ENUM with 6 values), `chunks` (JSON), `chunk_count` (GENERATED).
 
 - [ ] **Step 7: Commit**
@@ -273,16 +277,19 @@ git commit -m "feat(classics): classics table migration + punctuation/breakpoint
 ## Task 2: `lib/classics.ts` — server data access (TDD)
 
 **Files:**
+
 - Create: `lib/classics.ts`
 - Create: `tests/unit/lib/classics.test.ts`
 - Consumes: `getPool()` from `lib/db`, types from `lib/classics-types.ts`
 
 **Interfaces:**
+
 - Produces: `listClassics(args: ListClassicsArgs): Promise<ClassicListResult>`, `getClassicBySlug(slug: string): Promise<ClassicDetail | null>`, `countByCategory(): Promise<Record<ClassicCategory, number>>`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/lib/classics.test.ts`:
+
 ```ts
 import { describe, it, expect, beforeEach, afterAll } from 'vitest';
 import { getPool, closePool } from '@/lib/db';
@@ -293,41 +300,57 @@ async function reset() {
   await pool.execute('DELETE FROM classics');
 }
 
-async function insertFixture(slug: string, title: string, category: string, chunks: unknown[], author: string | null = null, era: string | null = null) {
+async function insertFixture(
+  slug: string,
+  title: string,
+  category: string,
+  chunks: unknown[],
+  author: string | null = null,
+  era: string | null = null,
+) {
   const pool = getPool();
   await pool.execute(
     'INSERT INTO classics (slug, title, category, author, era, chunks) VALUES (?, ?, ?, ?, ?, ?)',
-    [slug, title, category, author, era, JSON.stringify(chunks)]
+    [slug, title, category, author, era, JSON.stringify(chunks)],
   );
 }
 
 describe('listClassics', () => {
   beforeEach(async () => {
     await reset();
-    await insertFixture('lunyu', '论语', 'four-books', [
-      { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [[]] },
-      { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [[]] },
-    ], '孔子', '春秋');
+    await insertFixture(
+      'lunyu',
+      '论语',
+      'four-books',
+      [
+        { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [[]] },
+        { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [[]] },
+      ],
+      '孔子',
+      '春秋',
+    );
     await insertFixture('dizigui', '弟子规', 'mengxue', [
       { id: 1, label: '总叙', content: ['弟子规圣人训。'], pinyin: [[]] },
     ]);
   });
-  afterAll(async () => { await closePool(); });
+  afterAll(async () => {
+    await closePool();
+  });
 
   it('returns all classics when no filter', async () => {
     const r = await listClassics({});
     expect(r.total).toBe(2);
-    expect(r.items.map(i => i.slug)).toEqual(['lunyu', 'dizigui']);
+    expect(r.items.map((i) => i.slug)).toEqual(['lunyu', 'dizigui']);
   });
 
   it('filters by category', async () => {
     const r = await listClassics({ category: 'four-books' });
-    expect(r.items.map(i => i.slug)).toEqual(['lunyu']);
+    expect(r.items.map((i) => i.slug)).toEqual(['lunyu']);
   });
 
   it('filters by q (title match)', async () => {
     const r = await listClassics({ q: '弟子' });
-    expect(r.items.map(i => i.slug)).toEqual(['dizigui']);
+    expect(r.items.map((i) => i.slug)).toEqual(['dizigui']);
   });
 
   it('paginates', async () => {
@@ -340,13 +363,13 @@ describe('listClassics', () => {
 
   it('computes chunkCount from JSON_LENGTH', async () => {
     const r = await listClassics({});
-    const lunyu = r.items.find(i => i.slug === 'lunyu')!;
+    const lunyu = r.items.find((i) => i.slug === 'lunyu')!;
     expect(lunyu.chunkCount).toBe(2);
   });
 
   it('computes charCount from chunk content (excludes punctuation)', async () => {
     const r = await listClassics({});
-    const lunyu = r.items.find(i => i.slug === 'lunyu')!;
+    const lunyu = r.items.find((i) => i.slug === 'lunyu')!;
     // 学而时习之 + 为政以德 = 10 non-punct chars
     expect(lunyu.charCount).toBe(10);
   });
@@ -355,11 +378,25 @@ describe('listClassics', () => {
 describe('getClassicBySlug', () => {
   beforeEach(async () => {
     await reset();
-    await insertFixture('lunyu', '论语', 'four-books', [
-      { id: 1, label: '学而第一', content: ['子曰学而时习之。', '有朋自远方来。'], pinyin: [[], []] },
-    ], '孔子', '春秋');
+    await insertFixture(
+      'lunyu',
+      '论语',
+      'four-books',
+      [
+        {
+          id: 1,
+          label: '学而第一',
+          content: ['子曰学而时习之。', '有朋自远方来。'],
+          pinyin: [[], []],
+        },
+      ],
+      '孔子',
+      '春秋',
+    );
   });
-  afterAll(async () => { await closePool(); });
+  afterAll(async () => {
+    await closePool();
+  });
 
   it('returns full detail with chunks parsed', async () => {
     const c = await getClassicBySlug('lunyu');
@@ -384,17 +421,23 @@ describe('getClassicBySlug', () => {
       { label: '蒹葭', content: ['蒹葭苍苍。'], pinyin: [[]] },
     ]);
     const c = await getClassicBySlug('shijing');
-    expect(c!.chunks.map(x => x.id)).toEqual([1, 2]);
+    expect(c!.chunks.map((x) => x.id)).toEqual([1, 2]);
   });
 });
 
 describe('countByCategory', () => {
   beforeEach(async () => {
     await reset();
-    await insertFixture('lunyu', '论语', 'four-books', [{ id: 1, label: 'x', content: [], pinyin: [] }]);
-    await insertFixture('dizigui', '弟子规', 'mengxue', [{ id: 1, label: 'x', content: [], pinyin: [] }]);
+    await insertFixture('lunyu', '论语', 'four-books', [
+      { id: 1, label: 'x', content: [], pinyin: [] },
+    ]);
+    await insertFixture('dizigui', '弟子规', 'mengxue', [
+      { id: 1, label: 'x', content: [], pinyin: [] },
+    ]);
   });
-  afterAll(async () => { await closePool(); });
+  afterAll(async () => {
+    await closePool();
+  });
 
   it('returns counts keyed by category', async () => {
     const counts = await countByCategory();
@@ -413,6 +456,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement `lib/classics.ts`**
 
 Create `lib/classics.ts`:
+
 ```ts
 import 'server-only';
 import { getPool } from './db';
@@ -451,7 +495,12 @@ function buildWhereClause(args: ListClassicsArgs): { where: string; params: unkn
 
 function parseChunks(raw: unknown): ClassicChunk[] {
   const arr = typeof raw === 'string' ? JSON.parse(raw) : (raw as ClassicChunk[]);
-  return arr.map((c, i) => ({ id: c.id ?? i + 1, label: String(c.label ?? ''), content: c.content ?? [], pinyin: c.pinyin ?? [] }));
+  return arr.map((c, i) => ({
+    id: c.id ?? i + 1,
+    label: String(c.label ?? ''),
+    content: c.content ?? [],
+    pinyin: c.pinyin ?? [],
+  }));
 }
 
 function computeCharCount(chunks: ClassicChunk[]): number {
@@ -461,7 +510,15 @@ function computeCharCount(chunks: ClassicChunk[]): number {
   );
 }
 
-function mapListRow(r: { id: number; slug: string; title: string; category: ClassicCategory; author: string | null; era: string | null; chunks: unknown }): ClassicListItem {
+function mapListRow(r: {
+  id: number;
+  slug: string;
+  title: string;
+  category: ClassicCategory;
+  author: string | null;
+  era: string | null;
+  chunks: unknown;
+}): ClassicListItem {
   const chunks = parseChunks(r.chunks);
   return {
     id: Number(r.id),
@@ -557,12 +614,14 @@ git commit -m "feat(classics): lib/classics.ts (listClassics, getClassicBySlug, 
 ## Task 3: API endpoints + validators (TDD)
 
 **Files:**
+
 - Create: `app/api/classics/route.ts`
 - Create: `app/api/classics/[slug]/route.ts`
 - Modify: `lib/validators.ts` (append `classicsListQuerySchema`, `classicSlugParamSchema`)
 - Create: `tests/integration/api/classics.test.ts`
 
 **Interfaces:**
+
 - Consumes: `listClassics`, `getClassicBySlug` from Task 2
 - Produces:
   - `GET /api/classics?category=&q=&page=&pageSize=` → `{ ok: true, data: ClassicListResult }`
@@ -571,6 +630,7 @@ git commit -m "feat(classics): lib/classics.ts (listClassics, getClassicBySlug, 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/integration/api/classics.test.ts`:
+
 ```ts
 import { describe, it, expect, beforeEach, afterAll, beforeAll } from 'vitest';
 import { getPool, closePool } from '@/lib/db';
@@ -590,7 +650,9 @@ beforeAll(async () => {
     ],
   );
 });
-afterAll(async () => { await closePool(); });
+afterAll(async () => {
+  await closePool();
+});
 beforeEach(async () => {});
 
 describe('GET /api/classics', () => {
@@ -639,22 +701,34 @@ Expected: FAIL — 404 or route not found.
 - [ ] **Step 3: Add validators**
 
 Append to `lib/validators.ts`:
+
 ```ts
 export const classicsListQuerySchema = z.object({
-  category: z.enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other']).optional(),
-  q: z.string().max(64).transform((s) => s.trim()).optional(),
+  category: z
+    .enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other'])
+    .optional(),
+  q: z
+    .string()
+    .max(64)
+    .transform((s) => s.trim())
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(12),
 });
 
 export const classicSlugParamSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9-]+$/).min(1).max(64),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9-]+$/)
+    .min(1)
+    .max(64),
 });
 ```
 
 - [ ] **Step 4: Implement endpoints**
 
 Create `app/api/classics/route.ts`:
+
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { listClassics } from '@/lib/classics';
@@ -670,7 +744,8 @@ export async function GET(req: NextRequest) {
       page: sp.get('page') ?? undefined,
       pageSize: sp.get('pageSize') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const result = await listClassics(parsed.data);
     return NextResponse.json({ ok: true, data: result });
   });
@@ -678,6 +753,7 @@ export async function GET(req: NextRequest) {
 ```
 
 Create `app/api/classics/[slug]/route.ts`:
+
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getClassicBySlug } from '@/lib/classics';
@@ -688,7 +764,8 @@ export async function GET(_req: NextRequest, ctx: { params: Promise<{ slug: stri
   return withErrorHandling(async () => {
     const { slug } = await ctx.params;
     const parsed = classicSlugParamSchema.safeParse({ slug });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const c = await getClassicBySlug(parsed.data.slug);
     if (!c) return notFound();
     return NextResponse.json({ ok: true, data: c });
@@ -713,10 +790,12 @@ git commit -m "feat(classics): GET /api/classics + /api/classics/[slug] endpoint
 ## Task 4: Data ingestion — `build-classics.ts` + re-run `build-poems.ts` for 宋词
 
 **Files:**
+
 - Create: `scripts/build-classics.ts`
 - Modify: `package.json:scripts` (add `fonts:ancient` line — optional, see step 4)
 
 **Interfaces:**
+
 - Produces: `buildClassics(): Promise<number>` — fetches chinese-poetry/古文 JSONs, OpenCC t2s, generates pinyin, UPSERTs by slug
 - Network-bound; sandbox fails — must soft-fail with clear log
 
@@ -750,23 +829,142 @@ const CLASSIC_FILES: Array<{
   author: string | null;
   era: string | null;
 }> = [
-  { path: '/古文/论语.json', slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋' },
-  { path: '/古文/孟子.json', slug: 'mengzi', title: '孟子', category: 'four-books', author: '孟子', era: '战国' },
-  { path: '/古文/大学.json', slug: 'daxue', title: '大学', category: 'four-books', author: '曾子', era: '春秋' },
-  { path: '/古文中庸.json', slug: 'zhongyong', title: '中庸', category: 'four-books', author: '子思', era: '战国' },
-  { path: '/古文/诗经.json', slug: 'shijing', title: '诗经', category: 'five-classics', author: null, era: '西周' },
-  { path: '/古文/尚书.json', slug: 'shangshu', title: '尚书', category: 'five-classics', author: null, era: '上古' },
-  { path: '/古文/礼记.json', slug: 'liji', title: '礼记', category: 'five-classics', author: null, era: '西汉' },
-  { path: '/古文/易经.json', slug: 'yijing', title: '易经', category: 'five-classics', author: null, era: '上古' },
-  { path: '/古文/春秋.json', slug: 'chunqiu', title: '春秋', category: 'five-classics', author: '孔子', era: '春秋' },
-  { path: '/古文/弟子规.json', slug: 'dizigui', title: '弟子规', category: 'mengxue', author: '李毓秀', era: '清' },
-  { path: '/古文/千字文.json', slug: 'qianziwen', title: '千字文', category: 'mengxue', author: '周兴嗣', era: '南朝' },
-  { path: '/古文/三字经.json', slug: 'sanzijing', title: '三字经', category: 'mengxue', author: '王应麟', era: '宋' },
-  { path: '/古文/百家姓.json', slug: 'baijiaxing', title: '百家姓', category: 'mengxue', author: null, era: '北宋' },
-  { path: '/古文/道德经.json', slug: 'daodejing', title: '道德经', category: 'philosophy', author: '老子', era: '春秋' },
-  { path: '/古文/庄子.json', slug: 'zhuangzi', title: '庄子', category: 'philosophy', author: '庄子', era: '战国' },
-  { path: '/古文/列子.json', slug: 'liezi', title: '列子', category: 'philosophy', author: '列御寇', era: '战国' },
-  { path: '/古文/史记.json', slug: 'shiji', title: '史记', category: 'history', author: '司马迁', era: '西汉' },
+  {
+    path: '/古文/论语.json',
+    slug: 'lunyu',
+    title: '论语',
+    category: 'four-books',
+    author: '孔子',
+    era: '春秋',
+  },
+  {
+    path: '/古文/孟子.json',
+    slug: 'mengzi',
+    title: '孟子',
+    category: 'four-books',
+    author: '孟子',
+    era: '战国',
+  },
+  {
+    path: '/古文/大学.json',
+    slug: 'daxue',
+    title: '大学',
+    category: 'four-books',
+    author: '曾子',
+    era: '春秋',
+  },
+  {
+    path: '/古文中庸.json',
+    slug: 'zhongyong',
+    title: '中庸',
+    category: 'four-books',
+    author: '子思',
+    era: '战国',
+  },
+  {
+    path: '/古文/诗经.json',
+    slug: 'shijing',
+    title: '诗经',
+    category: 'five-classics',
+    author: null,
+    era: '西周',
+  },
+  {
+    path: '/古文/尚书.json',
+    slug: 'shangshu',
+    title: '尚书',
+    category: 'five-classics',
+    author: null,
+    era: '上古',
+  },
+  {
+    path: '/古文/礼记.json',
+    slug: 'liji',
+    title: '礼记',
+    category: 'five-classics',
+    author: null,
+    era: '西汉',
+  },
+  {
+    path: '/古文/易经.json',
+    slug: 'yijing',
+    title: '易经',
+    category: 'five-classics',
+    author: null,
+    era: '上古',
+  },
+  {
+    path: '/古文/春秋.json',
+    slug: 'chunqiu',
+    title: '春秋',
+    category: 'five-classics',
+    author: '孔子',
+    era: '春秋',
+  },
+  {
+    path: '/古文/弟子规.json',
+    slug: 'dizigui',
+    title: '弟子规',
+    category: 'mengxue',
+    author: '李毓秀',
+    era: '清',
+  },
+  {
+    path: '/古文/千字文.json',
+    slug: 'qianziwen',
+    title: '千字文',
+    category: 'mengxue',
+    author: '周兴嗣',
+    era: '南朝',
+  },
+  {
+    path: '/古文/三字经.json',
+    slug: 'sanzijing',
+    title: '三字经',
+    category: 'mengxue',
+    author: '王应麟',
+    era: '宋',
+  },
+  {
+    path: '/古文/百家姓.json',
+    slug: 'baijiaxing',
+    title: '百家姓',
+    category: 'mengxue',
+    author: null,
+    era: '北宋',
+  },
+  {
+    path: '/古文/道德经.json',
+    slug: 'daodejing',
+    title: '道德经',
+    category: 'philosophy',
+    author: '老子',
+    era: '春秋',
+  },
+  {
+    path: '/古文/庄子.json',
+    slug: 'zhuangzi',
+    title: '庄子',
+    category: 'philosophy',
+    author: '庄子',
+    era: '战国',
+  },
+  {
+    path: '/古文/列子.json',
+    slug: 'liezi',
+    title: '列子',
+    category: 'philosophy',
+    author: '列御寇',
+    era: '战国',
+  },
+  {
+    path: '/古文/史记.json',
+    slug: 'shiji',
+    title: '史记',
+    category: 'history',
+    author: '司马迁',
+    era: '西汉',
+  },
 ];
 
 interface RawClassic {
@@ -836,7 +1034,15 @@ export async function buildClassics(): Promise<number> {
          era = VALUES(era),
          chunks = VALUES(chunks),
          source = VALUES(source)`,
-      [file.slug, file.title, file.category, file.author, file.era, JSON.stringify(chunks), SOURCE_TAG],
+      [
+        file.slug,
+        file.title,
+        file.category,
+        file.author,
+        file.era,
+        JSON.stringify(chunks),
+        SOURCE_TAG,
+      ],
     );
     inserted++;
     console.log(`[build-classics] ${file.slug}: ${chunks.length} chapters`);
@@ -860,6 +1066,7 @@ if (require.main === module) {
 - [ ] **Step 2: Add npm script**
 
 Modify `package.json` — add to the `scripts` section:
+
 ```json
     "build:classics": "tsx scripts/build-classics.ts",
 ```
@@ -870,9 +1077,11 @@ Run: `pnpm run build:classics 2>&1 | tail -30`
 Expected: Fetch fails with DNS / network error in sandbox. Script logs `[build-classics] skip lunyu: fetch ... → ENOTFOUND` etc., then exits 0 (because soft-fail per-file continues). End log shows `[build-classics] inserted/updated 0 classics`.
 
 Verify nothing was inserted:
+
 ```bash
 mysql -uroot -pAdmin909217 piyin_dev -e "SELECT COUNT(*) FROM classics;"
 ```
+
 Expected: `0`.
 
 Document in the report file: "Sandbox has no network. Human must run `pnpm run build:classics` on a network host before browser smoke."
@@ -893,6 +1102,7 @@ git commit -m "feat(classics): build-classics.ts (chinese-poetry/古文 ingestio
 ## Task 5: `/ancient` list page + components + `/ancient-texts` redirect (TDD)
 
 **Files:**
+
 - Create: `app/ancient/page.tsx` (RSC)
 - Create: `app/ancient-texts/page.tsx` (replace with redirect to `/ancient`)
 - Create: `components/classics/ClassicCategoryNav.tsx`
@@ -902,12 +1112,14 @@ git commit -m "feat(classics): build-classics.ts (chinese-poetry/古文 ingestio
 - Modify: `components/Header.tsx` — no code change needed if NAV_LINKS handles it (verify; if Header has hardcoded reference, update)
 
 **Interfaces:**
+
 - Consumes: `listClassics`, `countByCategory` from Task 2
 - Produces: `/ancient` server-rendered list page with category nav + book cards + pagination + search
 
 - [ ] **Step 1: Write the failing test for ClassicCard**
 
 Create `tests/unit/components/classics/ClassicCard.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest';
@@ -917,18 +1129,57 @@ import { ClassicCard } from '@/components/classics/ClassicCard';
 
 describe('ClassicCard', () => {
   it('renders title wrapped in 《》', () => {
-    const { container } = render(<ClassicCard item={{ id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋', chunkCount: 20, charCount: 5000 }} />);
+    const { container } = render(
+      <ClassicCard
+        item={{
+          id: 1,
+          slug: 'lunyu',
+          title: '论语',
+          category: 'four-books',
+          author: '孔子',
+          era: '春秋',
+          chunkCount: 20,
+          charCount: 5000,
+        }}
+      />,
+    );
     expect(container.querySelector('h3')).toHaveTextContent('《论语》');
   });
 
   it('shows chunk and char counts', () => {
-    const { container } = render(<ClassicCard item={{ id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: null, era: null, chunkCount: 20, charCount: 5000 }} />);
+    const { container } = render(
+      <ClassicCard
+        item={{
+          id: 1,
+          slug: 'lunyu',
+          title: '论语',
+          category: 'four-books',
+          author: null,
+          era: null,
+          chunkCount: 20,
+          charCount: 5000,
+        }}
+      />,
+    );
     expect(container.textContent).toMatch(/20 章/);
     expect(container.textContent).toMatch(/5000 字/);
   });
 
   it('links to /ancient/[slug]', () => {
-    const { container } = render(<ClassicCard item={{ id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: null, era: null, chunkCount: 1, charCount: 100 }} />);
+    const { container } = render(
+      <ClassicCard
+        item={{
+          id: 1,
+          slug: 'lunyu',
+          title: '论语',
+          category: 'four-books',
+          author: null,
+          era: null,
+          chunkCount: 1,
+          charCount: 100,
+        }}
+      />,
+    );
     const a = container.querySelector('a');
     expect(a?.getAttribute('href')).toBe('/ancient/lunyu');
   });
@@ -943,6 +1194,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement ClassicCard**
 
 Create `components/classics/ClassicCard.tsx`:
+
 ```tsx
 import Link from 'next/link';
 import type { ClassicListItem } from '@/lib/classics-types';
@@ -950,10 +1202,10 @@ import type { ClassicListItem } from '@/lib/classics-types';
 const CATEGORY_LABELS: Record<string, string> = {
   'four-books': '四书',
   'five-classics': '五经',
-  'mengxue': '蒙学',
-  'philosophy': '诸子',
-  'history': '史书',
-  'other': '其他',
+  mengxue: '蒙学',
+  philosophy: '诸子',
+  history: '史书',
+  other: '其他',
 };
 
 export function ClassicCard({ item }: { item: ClassicListItem }) {
@@ -989,6 +1241,7 @@ Expected: PASS — 3 tests green.
 - [ ] **Step 5: Implement ClassicCategoryNav**
 
 Create `components/classics/ClassicCategoryNav.tsx`:
+
 ```tsx
 import Link from 'next/link';
 
@@ -1008,13 +1261,17 @@ const CATEGORIES: Array<{ value: string; label: string }> = [
 
 export function ClassicCategoryNav({ current, counts }: Props) {
   return (
-    <nav className="flex gap-2 overflow-x-auto pb-2 mb-6 border-b border-ink/10" aria-label="古籍分类">
+    <nav
+      className="flex gap-2 overflow-x-auto pb-2 mb-6 border-b border-ink/10"
+      aria-label="古籍分类"
+    >
       {CATEGORIES.map((c) => {
         const active = current === c.value;
         const href = c.value === 'all' ? '/ancient' : `/ancient?category=${c.value}`;
-        const n = c.value === 'all'
-          ? Object.values(counts).reduce((s, v) => s + v, 0)
-          : (counts[c.value] ?? 0);
+        const n =
+          c.value === 'all'
+            ? Object.values(counts).reduce((s, v) => s + v, 0)
+            : (counts[c.value] ?? 0);
         return (
           <Link
             key={c.value}
@@ -1035,6 +1292,7 @@ export function ClassicCategoryNav({ current, counts }: Props) {
 - [ ] **Step 6: Implement `/ancient` list page**
 
 Create `app/ancient/page.tsx`:
+
 ```tsx
 import { Suspense } from 'react';
 import { Header } from '@/components/Header';
@@ -1056,12 +1314,20 @@ interface Props {
   searchParams: Promise<{ category?: string; q?: string; page?: string }>;
 }
 
-const VALID_CATS = new Set<ClassicCategory>(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other']);
+const VALID_CATS = new Set<ClassicCategory>([
+  'four-books',
+  'five-classics',
+  'mengxue',
+  'philosophy',
+  'history',
+  'other',
+]);
 
 export default async function AncientListPage({ searchParams }: Props) {
   const sp = await searchParams;
   const rawCat = sp.category;
-  const category: ClassicCategory | undefined = rawCat && VALID_CATS.has(rawCat as ClassicCategory) ? (rawCat as ClassicCategory) : undefined;
+  const category: ClassicCategory | undefined =
+    rawCat && VALID_CATS.has(rawCat as ClassicCategory) ? (rawCat as ClassicCategory) : undefined;
   const page = Math.max(1, Number(sp.page ?? '1') || 1);
 
   const [result, counts] = await Promise.all([
@@ -1071,7 +1337,9 @@ export default async function AncientListPage({ searchParams }: Props) {
 
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
         <div className="max-w-5xl mx-auto py-8 space-y-6">
           <header className="space-y-2">
@@ -1092,14 +1360,18 @@ export default async function AncientListPage({ searchParams }: Props) {
               placeholder="搜索书名 (如 论语, 弟子规)..."
               className="flex-1 rounded-md border border-ink/20 px-3 py-2 text-sm"
             />
-            <button type="submit" className="rounded-md bg-seal px-4 py-2 text-white text-sm hover:bg-seal/80">
+            <button
+              type="submit"
+              className="rounded-md bg-seal px-4 py-2 text-white text-sm hover:bg-seal/80"
+            >
               搜索
             </button>
           </form>
 
           {result.items.length === 0 ? (
             <p className="py-12 text-center text-ink-faint">
-              暂无数据。先在网络主机跑 <code className="bg-paper-deep px-1 rounded">pnpm run build:classics</code> 导入。
+              暂无数据。先在网络主机跑{' '}
+              <code className="bg-paper-deep px-1 rounded">pnpm run build:classics</code> 导入。
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1112,7 +1384,10 @@ export default async function AncientListPage({ searchParams }: Props) {
           {result.total > result.pageSize && (
             <div className="flex items-center justify-center gap-2 pt-4">
               {page > 1 && (
-                <a href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page - 1) }).toString()}`} className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep">
+                <a
+                  href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page - 1) }).toString()}`}
+                  className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep"
+                >
                   ← 上一页
                 </a>
               )}
@@ -1120,7 +1395,10 @@ export default async function AncientListPage({ searchParams }: Props) {
                 第 {page} / {Math.ceil(result.total / result.pageSize)} 页
               </span>
               {page * result.pageSize < result.total && (
-                <a href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page + 1) }).toString()}`} className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep">
+                <a
+                  href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page + 1) }).toString()}`}
+                  className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep"
+                >
                   下一页 →
                 </a>
               )}
@@ -1137,6 +1415,7 @@ export default async function AncientListPage({ searchParams }: Props) {
 - [ ] **Step 7: Replace `/ancient-texts` placeholder with redirect**
 
 Replace `app/ancient-texts/page.tsx` content:
+
 ```tsx
 import { redirect } from 'next/navigation';
 
@@ -1148,6 +1427,7 @@ export default function AncientTextsRedirect() {
 - [ ] **Step 8: Update `NAV_LINKS`**
 
 Modify `lib/design.ts` — change the ancient-texts entry:
+
 ```ts
   { href: '/ancient', label: '古籍' },
 ```
@@ -1174,6 +1454,7 @@ git commit -m "feat(ancient): /ancient list page + ClassicCard/ClassicCategoryNa
 ## Task 6: `/ancient/[slug]` detail page + reader (TDD)
 
 **Files:**
+
 - Create: `app/ancient/[slug]/page.tsx`
 - Create: `components/classics/ClassicChunkPicker.tsx`
 - Create: `components/classics/ClassicReader.tsx`
@@ -1181,12 +1462,14 @@ git commit -m "feat(ancient): /ancient list page + ClassicCard/ClassicCategoryNa
 - Modify: `lib/use-sutra-reading.ts` — accept `storageKey` arg
 
 **Interfaces:**
+
 - Consumes: `getClassicBySlug`, `stripPunct`, `buildBreakpoints` from prior tasks
 - Produces: `/ancient/[slug]` server-rendered detail with chunk picker + pinyin reader + "生成字帖" CTA + 上一章/下一章
 
 - [ ] **Step 1: Update `useSutraReading` to accept storageKey**
 
 Modify `lib/use-sutra-reading.ts`:
+
 ```ts
 'use client';
 
@@ -1197,7 +1480,9 @@ function isValid(v: string | null): v is SutraReading {
   return v === 'horizontal' || v === 'vertical-rtl' || v === 'vertical-ltr';
 }
 
-export function useSutraReading(storageKey = 'pinyin:sutra-reading'): [SutraReading, (next: SutraReading) => void] {
+export function useSutraReading(
+  storageKey = 'pinyin:sutra-reading',
+): [SutraReading, (next: SutraReading) => void] {
   const [reading, setReading] = useState<SutraReading>(DEFAULT_SUTRA_READING);
 
   useEffect(() => {
@@ -1231,6 +1516,7 @@ export function useSutraReading(storageKey = 'pinyin:sutra-reading'): [SutraRead
 - [ ] **Step 2: Write the failing test for ClassicReader**
 
 Create `tests/unit/components/classics/ClassicReader.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import { describe, it, expect, vi } from 'vitest';
@@ -1250,7 +1536,10 @@ const SAMPLE_CHUNK: ClassicChunk = {
 describe('ClassicReader', () => {
   it('renders non-punct chars as char spans', () => {
     const { container } = render(
-      <ClassicReader chunk={SAMPLE_CHUNK} book={{ slug: 'lunyu', title: '论语', chunks: [SAMPLE_CHUNK] }} />,
+      <ClassicReader
+        chunk={SAMPLE_CHUNK}
+        book={{ slug: 'lunyu', title: '论语', chunks: [SAMPLE_CHUNK] }}
+      />,
     );
     const charSpans = container.querySelectorAll('.classic-char');
     expect(charSpans.length).toBe(9); // 子曰学而时习之不亦说乎
@@ -1258,14 +1547,20 @@ describe('ClassicReader', () => {
 
   it('does not render punctuation as char spans', () => {
     const { container } = render(
-      <ClassicReader chunk={SAMPLE_CHUNK} book={{ slug: 'lunyu', title: '论语', chunks: [SAMPLE_CHUNK] }} />,
+      <ClassicReader
+        chunk={SAMPLE_CHUNK}
+        book={{ slug: 'lunyu', title: '论语', chunks: [SAMPLE_CHUNK] }}
+      />,
     );
     expect(container.textContent).not.toContain('。');
   });
 
   it('renders worksheet CTA link with prefill', () => {
     const { container } = render(
-      <ClassicReader chunk={SAMPLE_CHUNK} book={{ slug: 'lunyu', title: '论语', chunks: [SAMPLE_CHUNK] }} />,
+      <ClassicReader
+        chunk={SAMPLE_CHUNK}
+        book={{ slug: 'lunyu', title: '论语', chunks: [SAMPLE_CHUNK] }}
+      />,
     );
     const cta = container.querySelector('a[href*="/worksheet"]');
     expect(cta).not.toBeNull();
@@ -1283,17 +1578,33 @@ describe('ClassicReader', () => {
 
   it('disables 上一章 button on first chunk', () => {
     const { container } = render(
-      <ClassicReader chunk={SAMPLE_CHUNK} book={{ slug: 'lunyu', title: '论语', chunks: [SAMPLE_CHUNK, { ...SAMPLE_CHUNK, id: 2, label: '为政' }] }} />,
+      <ClassicReader
+        chunk={SAMPLE_CHUNK}
+        book={{
+          slug: 'lunyu',
+          title: '论语',
+          chunks: [SAMPLE_CHUNK, { ...SAMPLE_CHUNK, id: 2, label: '为政' }],
+        }}
+      />,
     );
-    const prevBtn = Array.from(container.querySelectorAll('button')).find(b => b.textContent?.includes('上一章'));
+    const prevBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('上一章'),
+    );
     expect(prevBtn).toBeDisabled();
   });
 
   it('disables 下一章 button on last chunk', () => {
-    const chunks = [{ ...SAMPLE_CHUNK, id: 1, label: '学而' }, { ...SAMPLE_CHUNK, id: 2, label: '为政' }];
+    const chunks = [
+      { ...SAMPLE_CHUNK, id: 1, label: '学而' },
+      { ...SAMPLE_CHUNK, id: 2, label: '为政' },
+    ];
     const last = chunks[chunks.length - 1]!;
-    const { container } = render(<ClassicReader chunk={last} book={{ slug: 'lunyu', title: '论语', chunks }} />);
-    const nextBtn = Array.from(container.querySelectorAll('button')).find(b => b.textContent?.includes('下一章'));
+    const { container } = render(
+      <ClassicReader chunk={last} book={{ slug: 'lunyu', title: '论语', chunks }} />,
+    );
+    const nextBtn = Array.from(container.querySelectorAll('button')).find((b) =>
+      b.textContent?.includes('下一章'),
+    );
     expect(nextBtn).toBeDisabled();
   });
 });
@@ -1307,6 +1618,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 4: Implement ClassicReader**
 
 Create `components/classics/ClassicReader.tsx`:
+
 ```tsx
 'use client';
 
@@ -1319,7 +1631,7 @@ import { SUTRA_READING_LABELS, type SutraReading } from '@/lib/sutra-reading';
 import { isPunct, stripPunct } from '@/lib/punctuation';
 
 const WRITING_MODE: Record<SutraReading, string> = {
-  'horizontal': 'horizontal-tb',
+  horizontal: 'horizontal-tb',
   'vertical-rtl': 'vertical-rl',
   'vertical-ltr': 'vertical-lr',
 };
@@ -1343,7 +1655,7 @@ export function ClassicReader({ chunk, book }: Props) {
     });
   }
 
-  const prefill = encodeURIComponent(charsAndPinyin.map(c => c.ch).join(''));
+  const prefill = encodeURIComponent(charsAndPinyin.map((c) => c.ch).join(''));
   const worksheetHref = `/worksheet?source=ancient&book=${book.slug}&chapterIdx=${chunk.id - 1}&prefill=${prefill}`;
 
   const currentIdx = chunk.id - 1;
@@ -1359,7 +1671,11 @@ export function ClassicReader({ chunk, book }: Props) {
 
       <article
         className="font-serif text-lg sm:text-xl text-ink leading-loose"
-        style={isVertical ? { writingMode: WRITING_MODE[reading] as 'vertical-rl' | 'vertical-lr' } : undefined}
+        style={
+          isVertical
+            ? { writingMode: WRITING_MODE[reading] as 'vertical-rl' | 'vertical-lr' }
+            : undefined
+        }
       >
         {chunk.content.map((line, lineIdx) => (
           <p key={lineIdx} className={isVertical ? 'mx-3 inline-block' : 'my-1.5'}>
@@ -1381,7 +1697,9 @@ export function ClassicReader({ chunk, book }: Props) {
         <button
           type="button"
           disabled={!prevChunk}
-          onClick={() => prevChunk && (window.location.href = `/ancient/${book.slug}?chunk=${prevChunk.id - 1}`)}
+          onClick={() =>
+            prevChunk && (window.location.href = `/ancient/${book.slug}?chunk=${prevChunk.id - 1}`)
+          }
           className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40 disabled:cursor-not-allowed"
         >
           ← 上一章
@@ -1395,7 +1713,9 @@ export function ClassicReader({ chunk, book }: Props) {
         <button
           type="button"
           disabled={!nextChunk}
-          onClick={() => nextChunk && (window.location.href = `/ancient/${book.slug}?chunk=${nextChunk.id - 1}`)}
+          onClick={() =>
+            nextChunk && (window.location.href = `/ancient/${book.slug}?chunk=${nextChunk.id - 1}`)
+          }
           className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40 disabled:cursor-not-allowed"
         >
           下一章 →
@@ -1409,6 +1729,7 @@ export function ClassicReader({ chunk, book }: Props) {
 - [ ] **Step 5: Implement ClassicChunkPicker**
 
 Create `components/classics/ClassicChunkPicker.tsx`:
+
 ```tsx
 'use client';
 
@@ -1450,11 +1771,15 @@ export function ClassicChunkPicker({ slug, chunks, activeId }: Props) {
         <label className="block text-xs text-ink-faint mb-1">章</label>
         <select
           value={activeId}
-          onChange={(e) => { window.location.href = `/ancient/${slug}?chunk=${Number(e.target.value) - 1}`; }}
+          onChange={(e) => {
+            window.location.href = `/ancient/${slug}?chunk=${Number(e.target.value) - 1}`;
+          }}
           className="w-full rounded-md border border-ink/20 bg-paper-soft px-3 py-2"
         >
           {chunks.map((c) => (
-            <option key={c.id} value={c.id}>{c.label}</option>
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
           ))}
         </select>
       </div>
@@ -1466,6 +1791,7 @@ export function ClassicChunkPicker({ slug, chunks, activeId }: Props) {
 - [ ] **Step 6: Implement `/ancient/[slug]` page**
 
 Create `app/ancient/[slug]/page.tsx`:
+
 ```tsx
 import { Suspense } from 'react';
 import Link from 'next/link';
@@ -1498,16 +1824,22 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
   if (!book) notFound();
 
   const requested = Number(sp.chunk ?? '0');
-  const activeIdx = Number.isInteger(requested) && requested >= 0 && requested < book.chunks.length ? requested : 0;
+  const activeIdx =
+    Number.isInteger(requested) && requested >= 0 && requested < book.chunks.length ? requested : 0;
   const activeChunk = book.chunks[activeIdx]!;
 
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
         <div className="max-w-5xl mx-auto py-6 space-y-4">
           <div className="worksheet-no-print">
-            <Link href="/ancient" className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal">
+            <Link
+              href="/ancient"
+              className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal"
+            >
               ← 返回古籍列表
             </Link>
           </div>
@@ -1523,7 +1855,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
             <Suspense fallback={null}>
               <ClassicChunkPicker
                 slug={book.slug}
-                chunks={book.chunks.map(c => ({ id: c.id, label: c.label }))}
+                chunks={book.chunks.map((c) => ({ id: c.id, label: c.label }))}
                 activeId={activeChunk.id}
               />
             </Suspense>
@@ -1563,18 +1895,21 @@ git commit -m "feat(ancient): /ancient/[slug] detail page + ClassicChunkPicker/C
 ## Task 7: Worksheet integration — separator rendering + source=ancient wiring (TDD)
 
 **Files:**
+
 - Modify: `components/worksheet/WorksheetPreview.tsx` (add `breakpoints` prop + separator render)
 - Modify: `components/worksheet/WorksheetGenerator.tsx` (read `source/book/chapterIdx` query, fetch chunk, render 上一章/下一章 buttons, pass breakpoints to preview)
 - Create: `tests/unit/components/worksheet/WorksheetPreview-breakpoints.test.tsx`
 - Create: `tests/unit/components/worksheet/WorksheetGenerator-ancient.test.tsx`
 
 **Interfaces:**
+
 - Produces: `WorksheetPreview` accepts optional `breakpoints?: Set<number>` prop; renders separator divs BETWEEN cells (not inside) at those indices, with class `worksheet-cell-sep col-span-full print:hidden`
 - Produces: `WorksheetGenerator` reads `source=ancient&book=<slug>&chapterIdx=<n>` from `useSearchParams`; when source=ancient, fetches `/api/classics/<slug>` on mount + chapter change; shows 上一章/下一章 buttons (only when source=ancient and prev/next chunk exist); passes breakpoints to WorksheetPreview
 
 - [ ] **Step 1: Write failing test for WorksheetPreview separator**
 
 Create `tests/unit/components/worksheet/WorksheetPreview-breakpoints.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import { describe, it, expect } from 'vitest';
@@ -1593,9 +1928,7 @@ const baseProps = {
 describe('WorksheetPreview with breakpoints', () => {
   it('renders separator div at breakpoint index', () => {
     // Breakpoint BEFORE cell at index 5 (between "之" and "不") — mimics 。 after "之"
-    const { container } = render(
-      <WorksheetPreview {...baseProps} breakpoints={new Set([5])} />,
-    );
+    const { container } = render(<WorksheetPreview {...baseProps} breakpoints={new Set([5])} />);
     const seps = container.querySelectorAll('.worksheet-cell-sep');
     expect(seps).toHaveLength(1);
     expect(seps[0]).toHaveClass('print:hidden');
@@ -1603,9 +1936,7 @@ describe('WorksheetPreview with breakpoints', () => {
   });
 
   it('renders no separator when breakpoints is empty', () => {
-    const { container } = render(
-      <WorksheetPreview {...baseProps} breakpoints={new Set()} />,
-    );
+    const { container } = render(<WorksheetPreview {...baseProps} breakpoints={new Set()} />);
     expect(container.querySelectorAll('.worksheet-cell-sep')).toHaveLength(0);
   });
 
@@ -1615,9 +1946,7 @@ describe('WorksheetPreview with breakpoints', () => {
   });
 
   it('separator is OUTSIDE any worksheet-cell div', () => {
-    const { container } = render(
-      <WorksheetPreview {...baseProps} breakpoints={new Set([5])} />,
-    );
+    const { container } = render(<WorksheetPreview {...baseProps} breakpoints={new Set([5])} />);
     const sep = container.querySelector('.worksheet-cell-sep');
     expect(sep?.querySelector('.worksheet-cell')).toBeNull();
   });
@@ -1634,6 +1963,7 @@ Expected: FAIL — breakpoints prop not accepted.
 Modify `components/worksheet/WorksheetPreview.tsx` — change `BaseProps` and the cells map:
 
 Replace the `BaseProps` block (around lines 17-24):
+
 ```tsx
 interface BaseProps {
   title?: string;
@@ -1647,22 +1977,34 @@ interface BaseProps {
 ```
 
 Replace the cells map (around lines 96-100):
+
 ```tsx
-          {cells.map((cell) => (
-            <Fragment key={cell.index}>
-              {props.breakpoints?.has(cell.index) && (
-                <div className="worksheet-cell-sep col-span-full text-center text-xs text-ink-faint py-1 print:hidden" aria-hidden>
-                  · 句 ·
-                </div>
-              )}
-              <div className="worksheet-cell">
-                <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
-              </div>
-            </Fragment>
-          ))}
+{
+  cells.map((cell) => (
+    <Fragment key={cell.index}>
+      {props.breakpoints?.has(cell.index) && (
+        <div
+          className="worksheet-cell-sep col-span-full text-center text-xs text-ink-faint py-1 print:hidden"
+          aria-hidden
+        >
+          · 句 ·
+        </div>
+      )}
+      <div className="worksheet-cell">
+        <WorksheetCell
+          char={cell.char}
+          style={cell.style}
+          size={cellSize}
+          fontFamily={props.fontFamily}
+        />
+      </div>
+    </Fragment>
+  ));
+}
 ```
 
 Add at the top of the file:
+
 ```tsx
 import { Fragment } from 'react';
 ```
@@ -1675,6 +2017,7 @@ Expected: PASS — 4 tests green.
 - [ ] **Step 5: Write failing test for WorksheetGenerator ancient wiring**
 
 Create `tests/unit/components/worksheet/WorksheetGenerator-ancient.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -1716,16 +2059,19 @@ describe('WorksheetGenerator with source=ancient', () => {
       json: async () => ({
         ok: true,
         data: {
-          id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋',
-          chunks: [
-            { id: 1, label: '学而第一', content: ['子曰:学而时习之。'], pinyin: [] },
-          ],
+          id: 1,
+          slug: 'lunyu',
+          title: '论语',
+          category: 'four-books',
+          author: '孔子',
+          era: '春秋',
+          chunks: [{ id: 1, label: '学而第一', content: ['子曰:学而时习之。'], pinyin: [] }],
         },
       }),
     });
     render(<WorksheetGenerator />);
     // Wait for fetch + render
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
     expect(mockFetch).toHaveBeenCalledWith('/api/classics/lunyu');
   });
 
@@ -1738,7 +2084,12 @@ describe('WorksheetGenerator with source=ancient', () => {
       json: async () => ({
         ok: true,
         data: {
-          id: 1, slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋',
+          id: 1,
+          slug: 'lunyu',
+          title: '论语',
+          category: 'four-books',
+          author: '孔子',
+          era: '春秋',
           chunks: [
             { id: 1, label: '学而第一', content: ['子曰学而时习之。'], pinyin: [] },
             { id: 2, label: '为政第二', content: ['子曰为政以德。'], pinyin: [] },
@@ -1747,7 +2098,7 @@ describe('WorksheetGenerator with source=ancient', () => {
       }),
     });
     render(<WorksheetGenerator />);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
     expect(screen.getByRole('button', { name: /下一章/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /上一章/ })).toBeInTheDocument();
   });
@@ -1755,7 +2106,7 @@ describe('WorksheetGenerator with source=ancient', () => {
   it('does NOT show 上一章/下一章 when source is not ancient', async () => {
     mockSearchParams.set('prefill', '你好');
     render(<WorksheetGenerator />);
-    await new Promise(r => setTimeout(r, 50));
+    await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByRole('button', { name: /下一章/ })).toBeNull();
   });
 });
@@ -1771,96 +2122,103 @@ Expected: FAIL — wiring not in place.
 Modify `components/worksheet/WorksheetGenerator.tsx`. Add imports and state:
 
 Add to imports (top of file):
+
 ```tsx
 import type { ClassicDetail } from '@/lib/classics-types';
 import { stripPunct } from '@/lib/punctuation';
 ```
 
 Inside the component, after existing useState declarations (around line 36):
-```tsx
-  const [ancientBook, setAncientBook] = useState<ClassicDetail | null>(null);
-  const [chapterIdx, setChapterIdx] = useState<number>(
-    Number(sp.get('chapterIdx') ?? '0') || 0,
-  );
 
-  const source = sp.get('source');
-  const bookSlug = sp.get('book');
-  const isAncient = source === 'ancient' && !!bookSlug;
+```tsx
+const [ancientBook, setAncientBook] = useState<ClassicDetail | null>(null);
+const [chapterIdx, setChapterIdx] = useState<number>(Number(sp.get('chapterIdx') ?? '0') || 0);
+
+const source = sp.get('source');
+const bookSlug = sp.get('book');
+const isAncient = source === 'ancient' && !!bookSlug;
 ```
 
 Add a useEffect to fetch the classic when source=ancient (after the existing useEffects around line 56):
+
 ```tsx
-  // Ancient mode: fetch book once, then update content on chapter change
-  useEffect(() => {
-    if (!isAncient || !bookSlug) return;
-    let cancelled = false;
-    (async () => {
-      const res = await fetch(`/api/classics/${bookSlug}`);
-      const data = await res.json();
-      if (cancelled || !data.ok) return;
-      const book: ClassicDetail = data.data;
-      setAncientBook(book);
-      const idx = Math.max(0, Math.min(chapterIdx, book.chunks.length - 1));
-      const chunk = book.chunks[idx]!;
-      const chars = chunk.content
-        .flatMap(line => Array.from(stripPunct(line)));
-      setContent(chars);
-      setTab('text');
-    })();
-    return () => { cancelled = true; };
-  }, [isAncient, bookSlug, chapterIdx]);
+// Ancient mode: fetch book once, then update content on chapter change
+useEffect(() => {
+  if (!isAncient || !bookSlug) return;
+  let cancelled = false;
+  (async () => {
+    const res = await fetch(`/api/classics/${bookSlug}`);
+    const data = await res.json();
+    if (cancelled || !data.ok) return;
+    const book: ClassicDetail = data.data;
+    setAncientBook(book);
+    const idx = Math.max(0, Math.min(chapterIdx, book.chunks.length - 1));
+    const chunk = book.chunks[idx]!;
+    const chars = chunk.content.flatMap((line) => Array.from(stripPunct(line)));
+    setContent(chars);
+    setTab('text');
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, [isAncient, bookSlug, chapterIdx]);
 ```
 
 Add a `breakpoints` computation (after `canPreview` line):
+
 ```tsx
-  const breakpoints = useMemo(() => {
-    if (!isAncient || !ancientBook) return undefined;
-    const chunk = ancientBook.chunks[chapterIdx];
-    if (!chunk) return undefined;
-    return buildBreakpoints(chunk);
-  }, [isAncient, ancientBook, chapterIdx]);
+const breakpoints = useMemo(() => {
+  if (!isAncient || !ancientBook) return undefined;
+  const chunk = ancientBook.chunks[chapterIdx];
+  if (!chunk) return undefined;
+  return buildBreakpoints(chunk);
+}, [isAncient, ancientBook, chapterIdx]);
 ```
 
 Add `import { useMemo } from 'react'` to the imports.
 
 Replace the `<WorksheetPreview ... />` props in the view='preview' branch to include `breakpoints`:
+
 ```tsx
-      <WorksheetPreview
-        title={title}
-        content={content}
-        cellStyle={composeCellStyle(tool, presentation)}
-        paperSize={paperSize}
-        fontFamily={fontFamily}
-        breakpoints={breakpoints}
-        onBack={() => setView('form')}
-        onSave={handleSave}
-        saving={saving}
-        savedId={savedId}
-      />
+<WorksheetPreview
+  title={title}
+  content={content}
+  cellStyle={composeCellStyle(tool, presentation)}
+  paperSize={paperSize}
+  fontFamily={fontFamily}
+  breakpoints={breakpoints}
+  onBack={() => setView('form')}
+  onSave={handleSave}
+  saving={saving}
+  savedId={savedId}
+/>
 ```
 
 Add 上一章/下一章 buttons to the form view, visible only when `isAncient && ancientBook`. Add this inside the `.flex.flex-col.items-end.gap-2` div (around line 226), BEFORE the existing "生成字帖" button:
+
 ```tsx
-        {isAncient && ancientBook && (
-          <div className="flex gap-2 self-end">
-            <button
-              type="button"
-              disabled={chapterIdx <= 0}
-              onClick={() => setChapterIdx(i => i - 1)}
-              className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
-            >
-              ← 上一章
-            </button>
-            <button
-              type="button"
-              disabled={chapterIdx >= ancientBook.chunks.length - 1}
-              onClick={() => setChapterIdx(i => i + 1)}
-              className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
-            >
-              下一章 →
-            </button>
-          </div>
-        )}
+{
+  isAncient && ancientBook && (
+    <div className="flex gap-2 self-end">
+      <button
+        type="button"
+        disabled={chapterIdx <= 0}
+        onClick={() => setChapterIdx((i) => i - 1)}
+        className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
+      >
+        ← 上一章
+      </button>
+      <button
+        type="button"
+        disabled={chapterIdx >= ancientBook.chunks.length - 1}
+        onClick={() => setChapterIdx((i) => i + 1)}
+        className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
+      >
+        下一章 →
+      </button>
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 8: Run tests to verify they pass**
@@ -1898,6 +2256,7 @@ pnpm build
 ```
 
 Expected:
+
 - tsc: clean
 - vitest: 95%+ pass (pre-existing 1-2 fails unrelated — `etymology.test.ts`, `admin-extensions.test.ts`, `downloads.test.ts` per MEMORY)
 - build: exit 0, ~131 routes (G5's 129 + `/ancient` + `/api/classics/[slug]`)
@@ -1905,11 +2264,13 @@ Expected:
 - [ ] **Step 2: Browser smoke checklist (human runs; document results in report)**
 
 Start dev server (if not running):
+
 ```bash
 pnpm dev
 ```
 
 Human smoke (one-by-one):
+
 1. Visit `/ancient` → see category tabs + book cards (empty if no data ingested; rebuild data on network host first via `pnpm run build:classics`).
 2. After ingestion: see 论语/孟子/弟子规 etc. Click 论语 → chapter picker + reader with pinyin.
 3. Click "生成字帖" → arrive at `/worksheet?source=ancient&book=lunyu&chapterIdx=0&prefill=...`. Switch tool to 毛笔 (allowed). Change font/paper.
@@ -1936,6 +2297,7 @@ Expected: pushed 7 commits (plan + Task 1-7).
 Add MEMORY entry: `Plan G6 — SHIPPED 2026-06-XX, awaiting human smoke`.
 
 Update `.git/sdd/progress.md`:
+
 - Mark all 8 tasks complete
 - Record commit hashes from `git log --oneline main ^38d63ddc | head -10`
 - Note pending smoke items + network-bound ingestion caveat

@@ -33,19 +33,19 @@ Project 字·韵 已有 2 款 mini-game (声调·部首, 拼音·字) 在 `/game
 
 ## Locked Design Decisions (from brainstorming)
 
-| # | 决策 | 详情 |
-|---|------|------|
-| 1 | 规则 | 末字母 = 首字母 (前字拼音末字母 = 后字拼音首字母) |
-| 2 | 模式 | 生存接龙 (无时限, 死字即停) |
-| 3 | 选字 | 字库 modal (列所有可接字, 带拼音+部首+声调+释义) |
-| 4 | 展示 | 纸卷横展 (左→右, 旧字微淡) |
-| 5 | 起始 | 系统给随机常用字 (从 usage_rank top 100 抽) |
-| 6 | 结束 | 死字即停, 展示长度 + [再来一局] / [分享] |
-| 7 | 集成 | /game 第 3 tab (复用 layout + GameModeTabs) |
-| 8 | 死字边界 | 整体认读音节通配 (yi/wu/yu 算 i/u/v 开头) + 「换一条」按钮 (回退 1 步重选) |
-| 9 | 词库 | 全 chars 表 (有带声调拼音) + starter 池 = top 100 |
-| 10 | 死字 starter 预过滤 | 抽 starter 时 validNext ≥ 3, 否则重抽, 最多 5 次后从全词库降级 |
-| 11 | 架构 | 纯客户端 (启动时一次拉全 chars, 缓存 1h) |
+| #   | 决策                | 详情                                                                       |
+| --- | ------------------- | -------------------------------------------------------------------------- |
+| 1   | 规则                | 末字母 = 首字母 (前字拼音末字母 = 后字拼音首字母)                          |
+| 2   | 模式                | 生存接龙 (无时限, 死字即停)                                                |
+| 3   | 选字                | 字库 modal (列所有可接字, 带拼音+部首+声调+释义)                           |
+| 4   | 展示                | 纸卷横展 (左→右, 旧字微淡)                                                 |
+| 5   | 起始                | 系统给随机常用字 (从 usage_rank top 100 抽)                                |
+| 6   | 结束                | 死字即停, 展示长度 + [再来一局] / [分享]                                   |
+| 7   | 集成                | /game 第 3 tab (复用 layout + GameModeTabs)                                |
+| 8   | 死字边界            | 整体认读音节通配 (yi/wu/yu 算 i/u/v 开头) + 「换一条」按钮 (回退 1 步重选) |
+| 9   | 词库                | 全 chars 表 (有带声调拼音) + starter 池 = top 100                          |
+| 10  | 死字 starter 预过滤 | 抽 starter 时 validNext ≥ 3, 否则重抽, 最多 5 次后从全词库降级             |
+| 11  | 架构                | 纯客户端 (启动时一次拉全 chars, 缓存 1h)                                   |
 
 ## Architecture
 
@@ -113,10 +113,7 @@ import type { CharInfo } from './chain-types';
 import { getLastLetter, expandLastLetter } from './pinyin-syllable';
 
 /** 检查 prev → next 是否符合末字母 = 首字母 规则 (含整体认读音节通配) */
-export function matchesChainRule(
-  prevPinyin: string,
-  nextPinyin: string,
-): boolean {
+export function matchesChainRule(prevPinyin: string, nextPinyin: string): boolean {
   const last = getLastLetter(prevPinyin);
   if (!last) return false;
   const expanded = expandLastLetter(last);
@@ -167,11 +164,11 @@ export function pickStarter(
 /** 接龙游戏使用的字符信息 */
 export interface CharInfo {
   char: string;
-  pinyin: string;        // 带声调字母: 'dēng'
-  meaning: string;       // 中文释义
-  radical: string;       // 部首
-  tone: 1 | 2 | 3 | 4;   // 声调
-  usage_rank: number;    // 常用度排名
+  pinyin: string; // 带声调字母: 'dēng'
+  meaning: string; // 中文释义
+  radical: string; // 部首
+  tone: 1 | 2 | 3 | 4; // 声调
+  usage_rank: number; // 常用度排名
 }
 ```
 
@@ -180,7 +177,10 @@ export interface CharInfo {
 ```ts
 import type { CharInfo } from './chain-types';
 
-interface CacheEntry { data: CharInfo[]; ts: number }
+interface CacheEntry {
+  data: CharInfo[];
+  ts: number;
+}
 let cache: CacheEntry | null = null;
 const TTL_MS = 60 * 60 * 1000; // 1h
 
@@ -245,7 +245,9 @@ export function ChainGame() {
   const [chain, setChain] = useState<string[]>([]);
   const [starter, setStarter] = useState<string>('');
 
-  useEffect(() => { void startGame(); }, []);
+  useEffect(() => {
+    void startGame();
+  }, []);
 
   async function startGame() {
     setPhase('loading');
@@ -277,15 +279,28 @@ export function ChainGame() {
   }, [phase, validNext.length]);
 
   if (phase === 'loading') return <div className="py-12 text-center text-ink-faint">加载中...</div>;
-  if (phase === 'error') return (
-    <div className="py-12 text-center">
-      <p className="text-seal">字库加载失败</p>
-      <button onClick={() => void startGame()} className="mt-4 rounded-md bg-seal px-4 py-2 text-white">
-        重试
-      </button>
-    </div>
-  );
-  if (phase === 'finished') return <ChainSummary chain={chain} onRestart={() => { setChain([starter]); setPhase('playing'); }} />;
+  if (phase === 'error')
+    return (
+      <div className="py-12 text-center">
+        <p className="text-seal">字库加载失败</p>
+        <button
+          onClick={() => void startGame()}
+          className="mt-4 rounded-md bg-seal px-4 py-2 text-white"
+        >
+          重试
+        </button>
+      </div>
+    );
+  if (phase === 'finished')
+    return (
+      <ChainSummary
+        chain={chain}
+        onRestart={() => {
+          setChain([starter]);
+          setPhase('playing');
+        }}
+      />
+    );
 
   const currentLast = charsList.find((c) => c.char === chain.at(-1))!;
   return (
@@ -305,10 +320,7 @@ export function ChainGame() {
       <div className="text-center text-xs text-ink-faint">
         上一个字: {currentLast.char} {currentLast.pinyin}
       </div>
-      <ChainPickerModal
-        validChars={validNext}
-        onSelect={(c) => setChain((prev) => [...prev, c])}
-      />
+      <ChainPickerModal validChars={validNext} onSelect={(c) => setChain((prev) => [...prev, c])} />
     </div>
   );
 }
@@ -397,15 +409,25 @@ export function ChainSummary({ chain, onRestart }: { chain: string[]; onRestart:
   return (
     <div className="mx-auto max-w-md rounded-lg border bg-paper p-8 text-center">
       <h2 className="text-2xl font-bold">接龙结束</h2>
-      <p className="mt-2 text-ink-soft">接龙长度: <span className="text-3xl text-seal">{chain.length}</span> 字</p>
+      <p className="mt-2 text-ink-soft">
+        接龙长度: <span className="text-3xl text-seal">{chain.length}</span> 字
+      </p>
       <div className="mt-4 max-h-32 overflow-y-auto rounded bg-paper-deep p-2 text-sm font-kai">
         {text}
       </div>
       <div className="mt-6 flex justify-center gap-2">
-        <button type="button" onClick={onRestart} className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80">
+        <button
+          type="button"
+          onClick={onRestart}
+          className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80"
+        >
           再来一局
         </button>
-        <button type="button" onClick={handleShare} className="rounded-md border border-ink/20 px-4 py-2 hover:bg-paper-deep">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="rounded-md border border-ink/20 px-4 py-2 hover:bg-paper-deep"
+        >
           分享
         </button>
       </div>
@@ -433,12 +455,14 @@ const TABS: { key: TabKey; label: string }[] = [
 ## Data Flow
 
 ### 启动 (mount)
+
 1. `ChainGame` `useEffect` → `fetchChainChars()` (1h 缓存命中跳过)
 2. `loading` 阶段显示居中 spinner
 3. 拉完按 `usage_rank` 排序取 top 100 → `pickStarter(chars, top)` 抽 starter (要求 validNext ≥ 3, 5 次重抽, 降级到全词库)
 4. `setChain([starter])` → `phase = 'playing'`
 
 ### 走法 (每步)
+
 1. `useMemo` 派生 `validNextChars`:
    - `chain.at(-1)` → `pinyin` → `getLastLetter()` → 末字母 L
    - `expandLastLetter(L)`: L ∈ {i,u,v} 时展开为 {i/u/v, y/w}
@@ -447,13 +471,16 @@ const TABS: { key: TabKey; label: string }[] = [
 3. modal 默认开 (validNext.length > 0)
 
 ### 选字
+
 - modal click → `setChain(prev => [...prev, picked])` → 关 modal → useMemo 重算 → validNext.length === 0 触发 finished
 
 ### 换一条
+
 - 右上角按钮, `chain.length >= 2` 时启用
 - `setChain(prev => prev.slice(0, -1))` → 重开 modal
 
 ### 结束屏
+
 - 显示长度 + 全链横展 (去掉渐隐)
 - [再来一局] → `setChain([starter])` + `phase = 'playing'`, 复用 charsList
 - [分享] → `navigator.clipboard.writeText(chain.join(' → '))`
@@ -480,15 +507,15 @@ const TABS: { key: TabKey; label: string }[] = [
 
 ## Error Handling
 
-| 场景 | 行为 |
-|------|------|
-| `fetchChainChars` 失败 | `phase = 'error'`, 居中 [重试] 按钮 |
-| charsList 返回 0 条 | 友好提示"字库为空,请联系管理员" |
-| starter 5 次预过滤失败 | 降级: 从全词库抽任意 char |
-| 拼音为空 / 无声调 | server endpoint 阶段 WHERE 过滤掉 |
-| 声调格式混用 (dēng vs deng1) | `getLastLetter` 两种都支持 |
-| 客户端缓存 > 1h | 自动 refetch (timestamp 校验) |
-| navigator.clipboard 不可用 (无 https) | share 按钮 catch + console.warn |
+| 场景                                  | 行为                                |
+| ------------------------------------- | ----------------------------------- |
+| `fetchChainChars` 失败                | `phase = 'error'`, 居中 [重试] 按钮 |
+| charsList 返回 0 条                   | 友好提示"字库为空,请联系管理员"     |
+| starter 5 次预过滤失败                | 降级: 从全词库抽任意 char           |
+| 拼音为空 / 无声调                     | server endpoint 阶段 WHERE 过滤掉   |
+| 声调格式混用 (dēng vs deng1)          | `getLastLetter` 两种都支持          |
+| 客户端缓存 > 1h                       | 自动 refetch (timestamp 校验)       |
+| navigator.clipboard 不可用 (无 https) | share 按钮 catch + console.warn     |
 
 ## Testing Strategy
 
@@ -534,6 +561,7 @@ const TABS: { key: TabKey; label: string }[] = [
 ## Files Touched Summary
 
 新增 (12):
+
 - `lib/pinyin-syllable.ts`
 - `lib/chain-rules.ts`
 - `lib/chain-types.ts`
@@ -549,6 +577,7 @@ const TABS: { key: TabKey; label: string }[] = [
 - `tests/unit/components/game/ChainGame.test.tsx`
 
 修改 (1):
+
 - `components/game/GameModeTabs.tsx` (加 'pinyin-chain' tab)
 
 合计: 13 新文件 + 1 改文件 = 14 文件

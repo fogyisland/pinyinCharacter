@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const parsed = adminGenerateCharsSchema.safeParse(body);
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
 
     const requested: FieldName[] = (Object.keys(parsed.data.fields) as FieldName[]).filter(
       (k) => parsed.data.fields[k as keyof typeof parsed.data.fields],

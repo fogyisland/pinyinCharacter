@@ -23,7 +23,7 @@ async function main() {
       `UPDATE chars
        SET meaning_zh = ?, updated_at = NOW()
        WHERE \`char\` = ?`,
-      [u.meaning_zh, u.char]
+      [u.meaning_zh, u.char],
     );
     ok++;
   }
@@ -31,4 +31,7 @@ async function main() {
   console.log(`[write-char-meanings] updated ${ok} rows`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

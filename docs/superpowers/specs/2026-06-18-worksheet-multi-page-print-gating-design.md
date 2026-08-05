@@ -14,6 +14,7 @@ Gate the existing single-worksheet print + add batch (multi-worksheet) print, so
 - `components/worksheet/WorksheetHistoryList.tsx` lists saved worksheets as individual rows with per-row `PrintButton` + `DeleteWorksheetButton`. No multi-select, no batch action.
 
 User decisions confirmed in brainstorm:
+
 1. Monthly and annual members have **the same** unlimited capability (price/duration differ; feature does not).
 2. Free users (logged in, no active membership) are **hard-rejected with upgrade prompt** when they exceed limits; UI pre-validates where possible.
 3. The free limit applies to **print only**, not save (free users can save any-size worksheet; print truncates / blocks).
@@ -30,6 +31,7 @@ Add one new value to `MembershipFeature`:
 ```
 
 This single key unlocks BOTH capabilities for members:
+
 - Print N worksheets in one batch (free limit: 1 worksheet per print action).
 - Print all pages of a single worksheet (free limit: page 1 only).
 
@@ -71,6 +73,7 @@ export function exceedsFreeLimit(contentLength: number, paperSize: PaperSize): b
 Request: `{ worksheetIds: number[] }` (Zod-validated, `min(1)`, `max(50)`).
 
 Server logic:
+
 1. `requireUser` — 401 if not logged in.
 2. Load all rows: `SELECT id, title, content, paper_size FROM worksheets WHERE user_id = ? AND id IN (?)`.
 3. If any requested ID is missing from result → 404 (don't leak which IDs exist).
@@ -88,6 +91,7 @@ Server logic:
 **`POST /api/worksheets/[id]/print` (MODIFIED)**
 
 Same logic for the **single** path:
+
 1. Existing checks (auth, ownership).
 2. **New gate:** if user lacks `multi_worksheet_print` AND `pageCountFor(content.length, paperSize) > 1` → 403 `{ code: 'membership_required', reason: 'multi_page', upgradeUrl: '/membership' }`.
 3. Otherwise existing behavior unchanged (log download + audit, return ok).
@@ -130,6 +134,7 @@ Cheap query: `SELECT content, paper_size FROM worksheets WHERE id = ? AND user_i
 **Upgrade hint UX (everywhere)**
 
 Standard helper `<UpgradeHint reason="batch" | "multi_page" />` rendering a small inline `<Link href="/membership">升级会员 → </Link>` block. Reused by:
+
 - `PrintButton` upgrade-card path
 - `BatchPrintButton` disabled state
 - 403 toast in `lib/api-worksheet.ts` client helper
@@ -137,6 +142,7 @@ Standard helper `<UpgradeHint reason="batch" | "multi_page" />` rendering a smal
 ### Audit event
 
 `lib/audit-format.ts`:
+
 - Add `'worksheet_batch_printed'` to `AuditEvent` union.
 - Add formatLogMessage case:
   ```ts
@@ -147,19 +153,23 @@ Standard helper `<UpgradeHint reason="batch" | "multi_page" />` rendering a smal
 ### Plan feature display
 
 `components/membership/PlanCard.tsx` and `components/admin/memberships/PlanRow.tsx`:
+
 - Add to `FEATURE_LABELS`: `multi_worksheet_print: '批量 / 多页打印'`.
 
 `scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql` (NEW):
+
 ```sql
 -- 2026-06-18: grant 'multi_worksheet_print' to all existing plans (idempotent)
 INSERT IGNORE INTO membership_plan_features (plan_id, feature_key)
 SELECT id, 'multi_worksheet_print' FROM membership_plans;
 ```
+
 Apply to both dev and prod.
 
 ### Validity / validator
 
 `lib/validators.ts`:
+
 - New `printBatchSchema`: `z.object({ worksheetIds: z.array(z.number().int().positive()).min(1).max(50) })`.
 - New (if not present) `forbidden` helper or use existing `forbidden('membership_required', message)` in `lib/api-handler.ts`.
 

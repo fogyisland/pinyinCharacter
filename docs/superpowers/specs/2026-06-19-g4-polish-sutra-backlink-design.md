@@ -60,6 +60,7 @@ export function getSutraBackLink(from: string | undefined): { href: string; labe
 **New:** `tests/unit/app/sutra/back-link.test.ts` — 5 tests (3 valid sources, 1 unknown string, 1 undefined), pure function, no React env needed.
 
 **Behavior:**
+
 - `from = 'dictionary'` → `{ href: '/dictionary', label: '返回字典' }`
 - `from = 'rare-chars'` → `{ href: '/rare-chars', label: '返回罕见字库' }`
 - `from = 'sutras'` → `{ href: '/sutras', label: '返回经文目录' }`
@@ -82,7 +83,10 @@ href={`/sutra/${sutra.id}?from=sutras`}
 
 ```tsx
 <div className="worksheet-no-print mb-2">
-  <Link href={backLink.href} className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal transition-colors">
+  <Link
+    href={backLink.href}
+    className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal transition-colors"
+  >
     <span aria-hidden="true">←</span> {backLink.label}
   </Link>
 </div>
@@ -156,16 +160,16 @@ This fills the brush-mode gap in the existing `pageCountFor` coverage (only A3/A
 
 ## Test Plan
 
-| Commit | Test command | Expected |
-|--------|--------------|----------|
-| 1 (newlines) | `pnpm tsc --noEmit` | clean |
-| 2 (helper) | `pnpm test tests/unit/app/sutra/back-link.test.ts` | 5/5 pass |
-| 3 (wiring) | `pnpm test tests/unit/components/sutra/SutraCard.test.tsx` | 3/3 pass (2 existing + 1 new) |
-| 3 (wiring) | `pnpm tsc --noEmit` | clean (page.tsx + SutraCard types) |
-| 4 (I4 fix) | `pnpm test tests/unit/components/worksheet/RandomTab.test.tsx` | 6/6 pass (no test added; regression check) |
-| 4 (I4 fix) | `pnpm tsc --noEmit` | clean |
-| 5 (pageCountFor) | `pnpm test tests/unit/lib/worksheet-page-count.test.ts` | 12/12 pass (9 existing + 3 new) |
-| 6 (script) | manual: `pnpm tsx scripts/pull-prod-to-dev.ts` against a real prod + dev DB | logs rows pulled / inserted |
+| Commit           | Test command                                                                | Expected                                   |
+| ---------------- | --------------------------------------------------------------------------- | ------------------------------------------ |
+| 1 (newlines)     | `pnpm tsc --noEmit`                                                         | clean                                      |
+| 2 (helper)       | `pnpm test tests/unit/app/sutra/back-link.test.ts`                          | 5/5 pass                                   |
+| 3 (wiring)       | `pnpm test tests/unit/components/sutra/SutraCard.test.tsx`                  | 3/3 pass (2 existing + 1 new)              |
+| 3 (wiring)       | `pnpm tsc --noEmit`                                                         | clean (page.tsx + SutraCard types)         |
+| 4 (I4 fix)       | `pnpm test tests/unit/components/worksheet/RandomTab.test.tsx`              | 6/6 pass (no test added; regression check) |
+| 4 (I4 fix)       | `pnpm tsc --noEmit`                                                         | clean                                      |
+| 5 (pageCountFor) | `pnpm test tests/unit/lib/worksheet-page-count.test.ts`                     | 12/12 pass (9 existing + 3 new)            |
+| 6 (script)       | manual: `pnpm tsx scripts/pull-prod-to-dev.ts` against a real prod + dev DB | logs rows pulled / inserted                |
 
 Final verification (after all 6 commits):
 
@@ -177,16 +181,17 @@ pnpm build                  # must succeed; 128 routes preserved
 
 ## Commit breakdown (final order, dependencies upstream)
 
-| # | Hash (TBD) | Type | Scope | Message |
-|---|------------|------|-------|---------|
-| 1 | — | `chore` | (none) | `trailing newlines in 3 test/asset files` |
-| 2 | — | `feat` | `sutra` | `back-link helper getSutraBackLink` |
-| 3 | — | `feat` | `sutra` | `wire ?from=sutras through SutraCard + detail page` |
-| 4 | — | `fix` | `worksheet` | `clear RandomTab title error on title change` |
-| 5 | — | `test` | `worksheet` | `pageCountFor brush mode coverage` |
-| 6 | — | `chore` | `scripts` | `add pull-prod-to-dev helper` |
+| #   | Hash (TBD) | Type    | Scope       | Message                                             |
+| --- | ---------- | ------- | ----------- | --------------------------------------------------- |
+| 1   | —          | `chore` | (none)      | `trailing newlines in 3 test/asset files`           |
+| 2   | —          | `feat`  | `sutra`     | `back-link helper getSutraBackLink`                 |
+| 3   | —          | `feat`  | `sutra`     | `wire ?from=sutras through SutraCard + detail page` |
+| 4   | —          | `fix`   | `worksheet` | `clear RandomTab title error on title change`       |
+| 5   | —          | `test`  | `worksheet` | `pageCountFor brush mode coverage`                  |
+| 6   | —          | `chore` | `scripts`   | `add pull-prod-to-dev helper`                       |
 
 Order rationale:
+
 - **1 first** (no logic, no risk; sets a clean diff baseline for everything that follows).
 - **2 before 3** (helper is a new file with its own tests; commit 3's wiring depends on it).
 - **4, 5** are independent worksheet polish; either order works; do 4 (I4 fix) before 5 (test) to keep the worksheet area's diff grouped.

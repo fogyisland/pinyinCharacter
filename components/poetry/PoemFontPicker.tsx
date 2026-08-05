@@ -28,9 +28,7 @@ export function PoemFontPicker({ value, onChange }: Props) {
             aria-pressed={active}
             className={
               'px-3 py-1 transition-colors border-r border-ink/10 last:border-r-0 ' +
-              (active
-                ? 'bg-seal text-paper'
-                : 'text-ink-soft hover:bg-paper-deep')
+              (active ? 'bg-seal text-paper' : 'text-ink-soft hover:bg-paper-deep')
             }
             style={{ fontFamily: opt.cssVar }}
           >

@@ -45,14 +45,17 @@ export interface AppendArgs {
 }
 
 export class WorksheetAccessError extends Error {
-  constructor(public code: 'not_found' | 'not_owner', msg?: string) {
+  constructor(
+    public code: 'not_found' | 'not_owner',
+    msg?: string,
+  ) {
     super(msg ?? code);
   }
 }
 
 export async function appendCharToWorksheet(
   userId: number,
-  args: AppendArgs
+  args: AppendArgs,
 ): Promise<AppendResult> {
   const chars = normalizeChars(args);
   if (args.worksheetId) {
@@ -70,11 +73,15 @@ function normalizeChars(args: AppendArgs): string[] {
   throw new Error('appendCharToWorksheet: char or chars required');
 }
 
-async function appendById(userId: number, worksheetId: number, chars: string[]): Promise<AppendResult> {
+async function appendById(
+  userId: number,
+  worksheetId: number,
+  chars: string[],
+): Promise<AppendResult> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, title, content FROM worksheets WHERE id = ? LIMIT 1`,
-    [worksheetId]
+    [worksheetId],
   );
   if (rows.length === 0) throw new WorksheetAccessError('not_found');
   const ws = rows[0];
@@ -82,11 +89,15 @@ async function appendById(userId: number, worksheetId: number, chars: string[]):
   return applyAppend(ws.id, ws.title, ws.content, chars, false);
 }
 
-async function appendByTitle(userId: number, title: string, chars: string[]): Promise<AppendResult> {
+async function appendByTitle(
+  userId: number,
+  title: string,
+  chars: string[],
+): Promise<AppendResult> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, title, content FROM worksheets WHERE user_id = ? AND title = ? LIMIT 1`,
-    [userId, title]
+    [userId, title],
   );
   if (rows.length > 0) {
     return applyAppend(rows[0].id, rows[0].title, rows[0].content, chars, false);
@@ -95,7 +106,14 @@ async function appendByTitle(userId: number, title: string, chars: string[]): Pr
   const [ins] = await pool.execute<any>(
     `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family)
      VALUES (?, ?, CAST(? AS JSON), ?, ?, ?)`,
-    [userId, title, JSON.stringify(chars), DEFAULT_CELL_STYLE, DEFAULT_PAPER_SIZE, DEFAULT_FONT_FAMILY]
+    [
+      userId,
+      title,
+      JSON.stringify(chars),
+      DEFAULT_CELL_STYLE,
+      DEFAULT_PAPER_SIZE,
+      DEFAULT_FONT_FAMILY,
+    ],
   );
   return {
     worksheetId: ins.insertId as number,
@@ -113,36 +131,44 @@ async function applyAppend(
   title: string,
   contentRaw: unknown,
   chars: string[],
-  created: boolean
+  created: boolean,
 ): Promise<AppendResult> {
   const pool = getPool();
-  const content: string[] = typeof contentRaw === 'string'
-    ? JSON.parse(contentRaw)
-    : (contentRaw as string[]);
+  const content: string[] =
+    typeof contentRaw === 'string' ? JSON.parse(contentRaw) : (contentRaw as string[]);
   const existing = new Set(content);
   const toAdd = chars.filter((c) => !existing.has(c));
   if (toAdd.length === 0) {
     return {
-      worksheetId, title, added: false, addedCount: 0, skipped: chars.length,
-      charCount: content.length, created,
+      worksheetId,
+      title,
+      added: false,
+      addedCount: 0,
+      skipped: chars.length,
+      charCount: content.length,
+      created,
     };
   }
   if (toAdd.length === 1) {
     await pool.execute<any>(
       `UPDATE worksheets SET content = JSON_ARRAY_APPEND(content, '$', ?) WHERE id = ?`,
-      [toAdd[0], worksheetId]
+      [toAdd[0], worksheetId],
     );
   } else {
     // Bulk path: rebuild content as existing + toAdd, write as JSON.
     const merged = [...content, ...toAdd];
-    await pool.execute<any>(
-      `UPDATE worksheets SET content = CAST(? AS JSON) WHERE id = ?`,
-      [JSON.stringify(merged), worksheetId]
-    );
+    await pool.execute<any>(`UPDATE worksheets SET content = CAST(? AS JSON) WHERE id = ?`, [
+      JSON.stringify(merged),
+      worksheetId,
+    ]);
   }
   return {
-    worksheetId, title, added: true, addedCount: toAdd.length,
+    worksheetId,
+    title,
+    added: true,
+    addedCount: toAdd.length,
     skipped: chars.length - toAdd.length,
-    charCount: content.length + toAdd.length, created,
+    charCount: content.length + toAdd.length,
+    created,
   };
 }

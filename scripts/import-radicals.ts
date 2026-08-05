@@ -17,9 +17,7 @@ const RADICALS_FILE = join(process.cwd(), 'data', 'radicals.json');
 async function main() {
   const radicals: Record<string, string> = JSON.parse(readFileSync(RADICALS_FILE, 'utf8'));
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
-    'SELECT `char`, radical FROM chars',
-  );
+  const [rows] = await pool.query<any[]>('SELECT `char`, radical FROM chars');
   let updated = 0;
   let unchanged = 0;
   let skipped = 0;
@@ -34,10 +32,7 @@ async function main() {
       unchanged++;
       continue;
     }
-    await pool.execute('UPDATE chars SET radical = ? WHERE `char` = ?', [
-      newRad,
-      row.char,
-    ]);
+    await pool.execute('UPDATE chars SET radical = ? WHERE `char` = ?', [newRad, row.char]);
     if (row.radical) {
       corrections.push({ char: row.char, from: row.radical, to: newRad });
     }
@@ -45,9 +40,7 @@ async function main() {
   }
   console.log(`[import-radicals] updated=${updated} unchanged=${unchanged} skipped=${skipped}`);
   console.log(`[import-radicals] corrections (old → new):`);
-  corrections.slice(0, 20).forEach((c) =>
-    console.log(`  ${c.char}: ${c.from} → ${c.to}`),
-  );
+  corrections.slice(0, 20).forEach((c) => console.log(`  ${c.char}: ${c.from} → ${c.to}`));
   if (corrections.length > 20) {
     console.log(`  ... and ${corrections.length - 20} more`);
   }

@@ -1,7 +1,7 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { validateEnv } = await import('./lib/env');
-    validateEnv();  // soft warnings only — never throws
+    validateEnv(); // soft warnings only — never throws
     const { loadDictionaries } = await import('./server/dictionary');
     loadDictionaries();
     if (process.env.DATABASE_URL) {
@@ -16,7 +16,9 @@ export async function register() {
         const { bootstrapScheduler } = await import('./lib/scheduler');
         await bootstrapScheduler();
       } else {
-        console.warn('[instrumentation] Setup incomplete — visit /init to configure. Scheduler disabled.');
+        console.warn(
+          '[instrumentation] Setup incomplete — visit /init to configure. Scheduler disabled.',
+        );
       }
     } else {
       console.warn('[instrumentation] DATABASE_URL not set — visit /init to configure.');

@@ -17,7 +17,7 @@ it('shows pinyin + meaning at HSK 1 (no radical in drag-match)', async () => {
       onDrop={vi.fn()}
       revealConfig={cfg as any}
       onDemandReveal={vi.fn()}
-    />
+    />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeTruthy();
   expect(container.querySelector('[data-hint="meaning"]')).toBeTruthy();
@@ -38,7 +38,7 @@ it('hides everything at HSK 6; click-to-reveal only when allowOnDemandHints', as
       onDrop={vi.fn()}
       revealConfig={cfg as any}
       onDemandReveal={onDemand}
-    />
+    />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeFalsy();
   fireEvent.click(getByLabelText('显示拼音'));
@@ -68,7 +68,7 @@ it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', a
       onDrop={onDrop}
       revealConfig={cfg as any}
       onDemandReveal={vi.fn()}
-    />
+    />,
   );
   expect(container.textContent).toContain('拖动拼音到这里');
   // HSK 6: no hints, DropSlot still present (placeholder text remains).
@@ -83,7 +83,7 @@ it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', a
       onDrop={onDrop}
       revealConfig={cfg6 as any}
       onDemandReveal={vi.fn()}
-    />
+    />,
   );
   expect(c6.textContent).toContain('拖动拼音到这里');
 });

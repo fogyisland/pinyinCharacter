@@ -120,7 +120,9 @@ async function exportDbOnlyBooks(): Promise<{ written: string[]; skipped: string
     const json = JSON.stringify(vol, null, 2);
     writeFileSync(filePath, json, 'utf8');
     written.push(slug);
-    console.log(`[export] ${slug}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB → ${filePath}`);
+    console.log(
+      `[export] ${slug}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB → ${filePath}`,
+    );
   }
   return { written, skipped };
 }
@@ -136,10 +138,9 @@ async function insertManifestOnlyBooks(): Promise<{ inserted: string[]; skipped:
       console.warn(`[insert] ${slug}: not in manifest, skipping`);
       continue;
     }
-    const [exists] = await pool.query<any[]>(
-      `SELECT 1 FROM classics WHERE slug = ? LIMIT 1`,
-      [slug],
-    );
+    const [exists] = await pool.query<any[]>(`SELECT 1 FROM classics WHERE slug = ? LIMIT 1`, [
+      slug,
+    ]);
     if ((exists as any[]).length > 0) {
       skipped.push(slug);
       continue;
@@ -147,7 +148,14 @@ async function insertManifestOnlyBooks(): Promise<{ inserted: string[]; skipped:
     await pool.execute(
       `INSERT INTO classics (slug, title, category, author, era, source)
        VALUES (?, ?, ?, ?, ?, ?)`,
-      [entry.slug, entry.title, entry.category, entry.author ?? null, entry.era ?? null, entry.source],
+      [
+        entry.slug,
+        entry.title,
+        entry.category,
+        entry.author ?? null,
+        entry.era ?? null,
+        entry.source,
+      ],
     );
     inserted.push(slug);
     console.log(`[insert] ${slug}: ${entry.chapterCount} chapters, source=${entry.source}`);
@@ -188,7 +196,11 @@ async function rebuildManifest(): Promise<Manifest> {
   return manifest;
 }
 
-async function verify(): Promise<{ dbSlugs: Set<string>; manifestSlugs: Set<string>; aligned: boolean }> {
+async function verify(): Promise<{
+  dbSlugs: Set<string>;
+  manifestSlugs: Set<string>;
+  aligned: boolean;
+}> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(`SELECT slug FROM classics`);
   const dbSlugs = new Set((rows as any[]).map((r) => r.slug as string));
@@ -198,8 +210,12 @@ async function verify(): Promise<{ dbSlugs: Set<string>; manifestSlugs: Set<stri
   const inManifestNotDb = [...manifestSlugs].filter((s) => !dbSlugs.has(s)).sort();
   const aligned = inDbNotManifest.length === 0 && inManifestNotDb.length === 0;
   console.log(`[verify] db=${dbSlugs.size} manifest=${manifestSlugs.size} aligned=${aligned}`);
-  if (inDbNotManifest.length > 0) console.warn(`[verify] DB-only (${inDbNotManifest.length}): ${inDbNotManifest.join(', ')}`);
-  if (inManifestNotDb.length > 0) console.warn(`[verify] Manifest-only (${inManifestNotDb.length}): ${inManifestNotDb.join(', ')}`);
+  if (inDbNotManifest.length > 0)
+    console.warn(`[verify] DB-only (${inDbNotManifest.length}): ${inDbNotManifest.join(', ')}`);
+  if (inManifestNotDb.length > 0)
+    console.warn(
+      `[verify] Manifest-only (${inManifestNotDb.length}): ${inManifestNotDb.join(', ')}`,
+    );
   return { dbSlugs, manifestSlugs, aligned };
 }
 

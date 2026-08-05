@@ -36,7 +36,10 @@ export async function generateEtymologyStory(input: EtymologyStoryInput): Promis
   return text.trim();
 }
 
-export interface CharExplainInput { char: string; pinyin: string; }
+export interface CharExplainInput {
+  char: string;
+  pinyin: string;
+}
 export async function explainChar(input: CharExplainInput): Promise<string> {
   const text = await callLlm({
     system: '你是一位汉语言文字学家,擅长简洁解释汉字。',
@@ -47,7 +50,10 @@ export async function explainChar(input: CharExplainInput): Promise<string> {
   return text.trim();
 }
 
-export interface MeaningZhInput { char: string; pinyin: string; }
+export interface MeaningZhInput {
+  char: string;
+  pinyin: string;
+}
 export async function generateMeaningZh(input: MeaningZhInput): Promise<string> {
   const text = await callLlm({
     system: '你是一位汉语言文字学家,擅长简洁释义。',
@@ -58,10 +64,15 @@ export async function generateMeaningZh(input: MeaningZhInput): Promise<string> 
   return text.trim();
 }
 
-export interface MeaningEnInput { char: string; pinyin: string; meaningZh?: string | null; }
+export interface MeaningEnInput {
+  char: string;
+  pinyin: string;
+  meaningZh?: string | null;
+}
 export async function generateMeaningEn(input: MeaningEnInput): Promise<string> {
   const text = await callLlm({
-    system: 'You are a lexicographer specializing in concise English glosses for Chinese characters.',
+    system:
+      'You are a lexicographer specializing in concise English glosses for Chinese characters.',
     prompt: `Provide a concise English gloss (5-15 words) for the Chinese character "${input.char}" (pinyin: ${input.pinyin}${input.meaningZh ? `, Chinese meaning: ${input.meaningZh}` : ''}).\n\nOutput ONLY the gloss, no explanation, no quotes.`,
     temperature: 0.3,
     maxTokens: 60,
@@ -69,7 +80,10 @@ export async function generateMeaningEn(input: MeaningEnInput): Promise<string> 
   return text.trim();
 }
 
-export interface PinyinAltInput { char: string; pinyin: string; }
+export interface PinyinAltInput {
+  char: string;
+  pinyin: string;
+}
 export async function generatePinyinAlt(input: PinyinAltInput): Promise<string[]> {
   const text = await callLlm({
     system: '你是一位汉语言文字学家。',
@@ -80,7 +94,11 @@ export async function generatePinyinAlt(input: PinyinAltInput): Promise<string[]
   return parseJsonStringArray(text);
 }
 
-export interface VariantsInput { char: string; pinyin: string; meaningZh?: string | null; }
+export interface VariantsInput {
+  char: string;
+  pinyin: string;
+  meaningZh?: string | null;
+}
 export async function generateVariants(input: VariantsInput): Promise<string[]> {
   const text = await callLlm({
     system: '你是一位汉语言文字学家。',
@@ -89,7 +107,7 @@ export async function generateVariants(input: VariantsInput): Promise<string[]> 
     maxTokens: 80,
   });
   const arr = parseJsonStringArray(text);
-  return Array.from(new Set(arr.filter(v => v !== input.char)));
+  return Array.from(new Set(arr.filter((v) => v !== input.char)));
 }
 
 function parseJsonStringArray(content: string): string[] {
@@ -100,14 +118,14 @@ function parseJsonStringArray(content: string): string[] {
   try {
     const data = JSON.parse(stripped);
     if (!Array.isArray(data)) throw new Error('expected JSON array');
-    return data.map(v => String(v));
+    return data.map((v) => String(v));
   } catch (firstErr) {
     // Try to extract the first [...] block (LLM sometimes adds prose around it).
     const m = stripped.match(/\[[\s\S]*\]/);
     if (m) {
       const data = JSON.parse(m[0]);
       if (!Array.isArray(data)) throw new Error('expected JSON array');
-      return data.map(v => String(v));
+      return data.map((v) => String(v));
     }
     throw firstErr;
   }

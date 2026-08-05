@@ -93,7 +93,12 @@ export function TrendChart({
           tickFormatter={formatValue}
           label={
             yLabel
-              ? { value: yLabel, angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#7a6f5f' } }
+              ? {
+                  value: yLabel,
+                  angle: -90,
+                  position: 'insideLeft',
+                  style: { fontSize: 11, fill: '#7a6f5f' },
+                }
               : undefined
           }
         />

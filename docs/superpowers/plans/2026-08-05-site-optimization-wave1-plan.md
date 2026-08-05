@@ -13,27 +13,30 @@
 ## File Structure
 
 ### New files (6)
-| File | LoC | Sub-feature |
-|---|---|---|
-| `eslint.config.mjs` | ~50 | C.1 |
-| `.prettierrc` | ~5 | C.1 |
-| `app/sitemap/etymology.xml/route.ts` | ~30 | A.3 |
-| `tests/unit/lib/mysql-protocol-migration.test.ts` | ~80 | B (TDD) |
-| `tests/integration/seo.test.ts` | ~40 | A verification |
-| `tests/integration/lint.test.ts` | ~10 | C verification |
+
+| File                                              | LoC | Sub-feature    |
+| ------------------------------------------------- | --- | -------------- |
+| `eslint.config.mjs`                               | ~50 | C.1            |
+| `.prettierrc`                                     | ~5  | C.1            |
+| `app/sitemap/etymology.xml/route.ts`              | ~30 | A.3            |
+| `tests/unit/lib/mysql-protocol-migration.test.ts` | ~80 | B (TDD)        |
+| `tests/integration/seo.test.ts`                   | ~40 | A verification |
+| `tests/integration/lint.test.ts`                  | ~10 | C verification |
 
 ### Modified files (~50)
-| Category | Files | Sub-feature |
-|---|---|---|
-| Markup (server components) | `app/robots.ts`, `app/sutra/[id]/page.tsx`, `app/pinyin/page.tsx`, `app/dictionary/page.tsx`, `app/rare-chars/page.tsx`, `app/game/page.tsx`, `app/layout.tsx` | A |
-| `.execute()` → `.query()` mechanical | `lib/admin.ts`, `lib/membership.ts`, `lib/playlists.ts`, `lib/email-campaigns.ts`, `lib/email-verification.ts`, `lib/audit.ts`, `lib/password-reset.ts`, `lib/page-views.ts`, `lib/payment-orders.ts`, `lib/audio-tracks.ts`, `lib/activation.ts`, `lib/ai-rare-chars.ts`, `lib/sutra-copy-progress.ts`, `lib/auth.ts`, `lib/history.ts` (~30 sites) | B |
-| Dead code removal (parts of files) | 6 `lib/api-*.ts` + ~15 other `lib/*.ts` files | C.2 |
-| Console.log cleanups | `lib/email.ts:49`, `lib/scheduler.ts:143`, `components/game/ChainGame.tsx:43` | C.3 |
-| Build config | `package.json` scripts | C.1 |
+
+| Category                             | Files                                                                                                                                                                                                                                                                                                                                                | Sub-feature |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Markup (server components)           | `app/robots.ts`, `app/sutra/[id]/page.tsx`, `app/pinyin/page.tsx`, `app/dictionary/page.tsx`, `app/rare-chars/page.tsx`, `app/game/page.tsx`, `app/layout.tsx`                                                                                                                                                                                       | A           |
+| `.execute()` → `.query()` mechanical | `lib/admin.ts`, `lib/membership.ts`, `lib/playlists.ts`, `lib/email-campaigns.ts`, `lib/email-verification.ts`, `lib/audit.ts`, `lib/password-reset.ts`, `lib/page-views.ts`, `lib/payment-orders.ts`, `lib/audio-tracks.ts`, `lib/activation.ts`, `lib/ai-rare-chars.ts`, `lib/sutra-copy-progress.ts`, `lib/auth.ts`, `lib/history.ts` (~30 sites) | B           |
+| Dead code removal (parts of files)   | 6 `lib/api-*.ts` + ~15 other `lib/*.ts` files                                                                                                                                                                                                                                                                                                        | C.2         |
+| Console.log cleanups                 | `lib/email.ts:49`, `lib/scheduler.ts:143`, `components/game/ChainGame.tsx:43`                                                                                                                                                                                                                                                                        | C.3         |
+| Build config                         | `package.json` scripts                                                                                                                                                                                                                                                                                                                               | C.1         |
 
 ### Deleted files (1)
-| File | Sub-feature |
-|---|---|
+
+| File            | Sub-feature                          |
+| --------------- | ------------------------------------ |
 | `lib/opencc.ts` | C.2 (opencc-js whole package unused) |
 
 ---
@@ -61,12 +64,14 @@ These constraints apply to **every task**. Tasks' implicit requirements include 
 ## Task 1: ESLint + Prettier Baseline Config
 
 **Files:**
+
 - Create: `eslint.config.mjs` (new, ~50 LoC)
 - Create: `.prettierrc` (new, ~5 LoC)
 - Modify: `package.json` (add `lint`, `lint:fix`, `format`, `format:check` scripts; add devDependencies)
 - Modify: `tests/integration/lint.test.ts` (new, ~10 LoC — exists after this task for verification)
 
 **Interfaces:**
+
 - Consumes: nothing (foundational task)
 - Produces: working `npm run lint` exit 0; `npm run format:check` exit 0; ESLint rules ready to enforce `no-explicit-any` (warn), `eqeqeq`, `react-hooks/*`, `no-console` (allow warn/error/info/debug), and the future mysql2 rule (added in Task 2)
 
@@ -260,11 +265,13 @@ Note: Replace `[YYYY-MM-DD HH.MM]` with actual timestamp from `date` command.
 ## Task 2: mysql2 `.execute()` → `.query()` Migration (with TDD + ESLint rule)
 
 **Files:**
+
 - Create: `tests/unit/lib/mysql-protocol-migration.test.ts` (new, ~80 LoC)
 - Modify: 15+ files in `lib/` for mechanical `.execute(` → `.query(` replacement
 - Modify: `eslint.config.mjs` (add `no-restricted-syntax` rule for `.execute()`)
 
 **Interfaces:**
+
 - Consumes: `getPool()` from `@/lib/db` (already exists). `getSystemStats()` from `lib/admin.ts` (representative query used for TDD).
 - Produces: All `pool.execute(...)` and `getPool().execute(...)` calls become `pool.query(...)` / `getPool().query(...)`. ESLint rule prevents new occurrences.
 
@@ -340,6 +347,7 @@ grep -n "\.execute(" lib/admin.ts
 For each line, use Edit to change `pool.execute(` → `pool.query(`. There are ~12 sites per audit. Don't change anything else.
 
 After edits:
+
 ```bash
 grep -n "\.execute(" lib/admin.ts  # should be empty
 ```
@@ -375,6 +383,7 @@ Expected: 30 lines (per spec audit). For each file in the list:
 4. Run any related unit test (if exists)
 
 Files to migrate (15+, per audit):
+
 - `lib/membership.ts` (5 sites)
 - `lib/playlists.ts` (6 sites)
 - `lib/email-campaigns.ts` (5 sites)
@@ -391,6 +400,7 @@ Files to migrate (15+, per audit):
 - `lib/history.ts` (1 site)
 
 After all migrations:
+
 ```bash
 grep -rn "\.execute(" --include="*.ts" --include="*.tsx" lib/ scripts/ 2>/dev/null \
   | grep -v "Up/" | grep -v "node_modules"
@@ -456,10 +466,12 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ## Task 3: Dead Code Removal (60+ symbols)
 
 **Files:**
+
 - Modify: ~15 `lib/*.ts` files (remove unused exports)
 - Delete: `lib/opencc.ts` (opencc-js whole package unused)
 
 **Interfaces:**
+
 - Consumes: ESLint `@typescript-eslint/no-unused-vars` (warn) from Task 1
 - Produces: 60+ dead symbols removed; `lib/` smaller; lint shows no new warnings for those symbols
 
@@ -487,6 +499,7 @@ npm uninstall opencc-js --legacy-peer-deps
 ```
 
 Verify:
+
 ```bash
 grep "opencc" package.json  # should be empty
 ```
@@ -516,6 +529,7 @@ For each function/symbol with 0 callers outside its file, prepare an Edit to rem
 Read the file, then use Edit to remove dead exports per Step 3's verification. Keep used exports (per grep).
 
 For example, if `listWorksheets` is dead:
+
 - Delete the line `export async function listWorksheets(...) { ... }`
 - If the function was the only thing in the file, consider deleting the whole file
 
@@ -523,11 +537,12 @@ For example, if `listWorksheets` is dead:
 
 Same pattern: Read → verify callers → Edit to remove dead exports.
 
-Note: `lib/api-rare-chars.ts` exports `RareCharClient` *type* which IS used. Only remove async functions that have 0 callers.
+Note: `lib/api-rare-chars.ts` exports `RareCharClient` _type_ which IS used. Only remove async functions that have 0 callers.
 
 - [ ] **Step 6: Remove individual unused symbols from other `lib/*.ts` files**
 
 For each candidate from the spec's audit:
+
 - `lib/activation.ts:setLock`
 - `lib/radical.ts:initRadicalMap`, `_resetRadicalMapForTest`, `getRadical`
 - `lib/audit-format.ts:AUDIT_EVENTS`, `EVENT_LABEL`
@@ -550,6 +565,7 @@ For each candidate from the spec's audit:
 - `lib/worksheet-types.ts:BRUSH_PAPER_SIZES`
 
 For each:
+
 ```bash
 cd E:\ToolDevelop\PinYinCharacter
 grep -rn "symbolName\b" --include="*.ts" --include="*.tsx" \
@@ -595,11 +611,13 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ## Task 4: 3 Console.log Cleanups
 
 **Files:**
+
 - Modify: `lib/email.ts:49`
 - Modify: `lib/scheduler.ts:143`
 - Modify: `components/game/ChainGame.tsx:43`
 
 **Interfaces:**
+
 - Consumes: ESLint `no-console` rule (allow: warn/error/info/debug) from Task 1
 - Produces: 0 raw `console.log` in shipped code
 
@@ -611,6 +629,7 @@ grep -n "console\.log" lib/email.ts lib/scheduler.ts components/game/ChainGame.t
 ```
 
 Expected output:
+
 - `lib/email.ts:49: console.log('[email] sending to', to)`
 - `lib/scheduler.ts:143: console.log('[scheduler] started')`
 - `components/game/ChainGame.tsx:43: console.log('chain state:', state)`
@@ -618,11 +637,13 @@ Expected output:
 - [ ] **Step 2: Fix `lib/email.ts:49`** (preserve as debug log)
 
 Read `lib/email.ts` around line 49, then Edit:
+
 - Change `console.log('[email] sending to', to)` to `console.debug('[email] sending to', to)`
 
 - [ ] **Step 3: Fix `lib/scheduler.ts:143`** (legitimate startup info)
 
 Read `lib/scheduler.ts` around line 143, then Edit:
+
 - Change `console.log('[scheduler] started')` to `console.info('[scheduler] started')`
 
 - [ ] **Step 4: Fix `components/game/ChainGame.tsx:43`** (debug residue, delete)
@@ -665,6 +686,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ## Task 5: SEO Markup — robots + /sutra/[id] JSON-LD + 4 List Pages Metadata + Organization/WebSite
 
 **Files:**
+
 - Modify: `app/robots.ts` (add `/init`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/activate` to disallow)
 - Modify: `app/sutra/[id]/page.tsx` (add Book + BreadcrumbList JSON-LD)
 - Modify: `app/pinyin/page.tsx` (add title/description/OG)
@@ -675,6 +697,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 - Create: `tests/integration/seo.test.ts` (~40 LoC)
 
 **Interfaces:**
+
 - Consumes: `buildMetadata()` from `lib/seo/metadata.ts`; `buildBook()`, `buildBreadcrumbList()`, `buildOrganization()`, `buildWebSite()` from `lib/seo/jsonld.ts`; `getRuntimeSiteUrl()` from `lib/site-url`
 - Produces: working metadata on 4 list pages; valid JSON-LD on `/sutra/[id]` + site-wide; `/init` + auth paths excluded from crawlers
 
@@ -683,15 +706,24 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 Read `app/robots.ts`. Add `/init`, `/login`, `/register`, `/forgot-password`, `/reset-password`, `/activate` to the disallow array.
 
 Expected final state:
+
 ```ts
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/admin', '/api', '/account', '/init',
-                 '/login', '/register', '/forgot-password',
-                 '/reset-password', '/activate'],
+      disallow: [
+        '/admin',
+        '/api',
+        '/account',
+        '/init',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/reset-password',
+        '/activate',
+      ],
     },
     sitemap: `${getRuntimeSiteUrl()}/sitemap.xml`,
   };
@@ -723,8 +755,7 @@ const jsonLd = [
 ];
 
 // ... in the returned JSX, add:
-<script type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
 ```
 
 Verify the exact data fields by reading the file's data shape.
@@ -807,8 +838,10 @@ const siteJsonLd = [
 ];
 
 // In JSX, before {children}:
-<script type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+/>;
 ```
 
 - [ ] **Step 8: Create `tests/integration/seo.test.ts`**
@@ -886,9 +919,11 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ## Task 6: `/etymology/[char]` Sub-Sitemap
 
 **Files:**
+
 - Create: `app/sitemap/etymology.xml/route.ts` (new, ~30 LoC)
 
 **Interfaces:**
+
 - Consumes: `getPool()` from `@/lib/db`; `generateSitemapXml()` helper from existing sitemap routes
 - Produces: `/sitemap/etymology.xml` route returning ~8000 URLs of `/etymology/[char]` with monthly changefreq
 
@@ -902,13 +937,18 @@ Use this as a template. Note the response headers (Content-Type + Cache-Control)
 import { getPool } from '@/lib/db';
 import { getRuntimeSiteUrl } from '@/lib/site-url';
 
-function generateSitemapXml(urls: Array<{ loc: string; changefreq?: string; priority?: number }>): string {
-  const entries = urls.map(u =>
-    `  <url>\n    <loc>${u.loc}</loc>\n` +
-    (u.changefreq ? `    <changefreq>${u.changefreq}</changefreq>\n` : '') +
-    (u.priority !== undefined ? `    <priority>${u.priority}</priority>\n` : '') +
-    `  </url>`
-  ).join('\n');
+function generateSitemapXml(
+  urls: Array<{ loc: string; changefreq?: string; priority?: number }>,
+): string {
+  const entries = urls
+    .map(
+      (u) =>
+        `  <url>\n    <loc>${u.loc}</loc>\n` +
+        (u.changefreq ? `    <changefreq>${u.changefreq}</changefreq>\n` : '') +
+        (u.priority !== undefined ? `    <priority>${u.priority}</priority>\n` : '') +
+        `  </url>`,
+    )
+    .join('\n');
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
 }
 
@@ -919,9 +959,9 @@ export async function GET() {
     `SELECT c.\`char\` FROM chars c
        INNER JOIN char_etymology e ON c.\`char\` = e.\`char\`
        WHERE c.\`char\` REGEXP '^[一-鿿]$'
-       LIMIT 50000`
+       LIMIT 50000`,
   );
-  const urls = rows.map(r => ({
+  const urls = rows.map((r) => ({
     loc: `${baseUrl}/etymology/${encodeURIComponent(r.char)}`,
     changefreq: 'monthly' as const,
     priority: 0.5,
@@ -993,17 +1033,17 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 
 Cross-referencing each spec requirement to a task:
 
-| Spec section | Task | ✓ |
-|---|---|---|
-| A.1 robots.ts add /init | Task 5 Step 1 | ✓ |
-| A.2 /sutra/[id] JSON-LD | Task 5 Step 2 | ✓ |
-| A.3 etymology sub-sitemap | Task 6 | ✓ |
-| A.4 4 list metadata | Task 5 Steps 3-6 | ✓ |
-| A.5 Org/WebSite JSON-LD | Task 5 Step 7 | ✓ |
-| B .execute() → .query() | Task 2 | ✓ |
-| C.1 ESLint + Prettier | Task 1 | ✓ |
-| C.2 dead code removal | Task 3 | ✓ |
-| C.3 console.log cleanup | Task 4 | ✓ |
+| Spec section              | Task             | ✓   |
+| ------------------------- | ---------------- | --- |
+| A.1 robots.ts add /init   | Task 5 Step 1    | ✓   |
+| A.2 /sutra/[id] JSON-LD   | Task 5 Step 2    | ✓   |
+| A.3 etymology sub-sitemap | Task 6           | ✓   |
+| A.4 4 list metadata       | Task 5 Steps 3-6 | ✓   |
+| A.5 Org/WebSite JSON-LD   | Task 5 Step 7    | ✓   |
+| B .execute() → .query()   | Task 2           | ✓   |
+| C.1 ESLint + Prettier     | Task 1           | ✓   |
+| C.2 dead code removal     | Task 3           | ✓   |
+| C.3 console.log cleanup   | Task 4           | ✓   |
 
 All 9 spec sub-features are covered by 6 tasks (Tasks 5 combines 4 SEO sub-features for reviewer efficiency).
 
@@ -1029,19 +1069,20 @@ Tasks MUST execute in order: 1 → 2 → 3 → 4 → 5 → 6. Or 1 → 4 → 5 �
 
 ### 5. Verification matrix
 
-| Check | When | How |
-|---|---|---|
-| `npx tsc --noEmit` | After each task | `exit 0` |
-| `npx vitest run` | After each task | Same baseline, +new tests per task |
-| `npm run lint` | After Tasks 1-4 (no benefit for 5-6) | `exit 0` |
-| `npm run build` | After Tasks 5, 6 | `✓ Compiled successfully`, route count check |
-| `curl /sitemap/etymology.xml` | After Task 6 | URL count ~8000 |
-| `curl /robots.txt` | After Task 5 | contains `Disallow: /init` |
-| `curl /pinyin` | After Task 5 | contains new `<title>` |
+| Check                         | When                                 | How                                          |
+| ----------------------------- | ------------------------------------ | -------------------------------------------- |
+| `npx tsc --noEmit`            | After each task                      | `exit 0`                                     |
+| `npx vitest run`              | After each task                      | Same baseline, +new tests per task           |
+| `npm run lint`                | After Tasks 1-4 (no benefit for 5-6) | `exit 0`                                     |
+| `npm run build`               | After Tasks 5, 6                     | `✓ Compiled successfully`, route count check |
+| `curl /sitemap/etymology.xml` | After Task 6                         | URL count ~8000                              |
+| `curl /robots.txt`            | After Task 5                         | contains `Disallow: /init`                   |
+| `curl /pinyin`                | After Task 5                         | contains new `<title>`                       |
 
 ### 6. Out-of-scope verification
 
 The plan does NOT include:
+
 - Schema changes (✓ per spec)
 - `unstable_cache` (deferred to Wave 2)
 - Font preload (deferred to Wave 2/3)

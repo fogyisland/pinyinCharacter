@@ -17,8 +17,9 @@ export default async function AdminInitPage() {
       <div>
         <h1 className="text-xl font-semibold">初始化检查</h1>
         <p className="text-sm text-ink-soft max-w-2xl mt-1">
-          自动检测当前部署的关键配置:数据库连接、必需表、管理员、站点 URL、邮件、AI、清单文件、JWT 密钥。
-          只读 — 不会修改任何数据。绿色 ✓ = 通过, 黄色 ⚠ = 建议修复, 红色 ✗ = 必须修复才能上线。
+          自动检测当前部署的关键配置:数据库连接、必需表、管理员、站点 URL、邮件、AI、清单文件、JWT
+          密钥。 只读 — 不会修改任何数据。绿色 ✓ = 通过, 黄色 ⚠ = 建议修复, 红色 ✗ =
+          必须修复才能上线。
         </p>
       </div>
       <InitChecklist report={report} />

@@ -9,10 +9,13 @@ async function main() {
       COUNT(*) AS total,
       SUM(CASE WHEN meaning_zh IS NOT NULL AND meaning_zh != '' THEN 1 ELSE 0 END) AS done,
       SUM(CASE WHEN meaning_zh IS NULL OR meaning_zh = '' THEN 1 ELSE 0 END) AS pending
-     FROM chars WHERE level IN (1, 2)`
+     FROM chars WHERE level IN (1, 2)`,
   );
   await conn.end();
   process.stdout.write(JSON.stringify(rows[0]));
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

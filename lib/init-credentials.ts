@@ -14,7 +14,11 @@ const TTL_MS = 120_000;
  *  and expires after 2 minutes. Sized so the full /init wizard (9 phases,
  *  ~40s when poems remote-fetches) finishes before expiry. The password
  *  NEVER leaves server memory. */
-export function stashAdminCredentials(input: { username: string; password: string; email?: string }): string {
+export function stashAdminCredentials(input: {
+  username: string;
+  password: string;
+  email?: string;
+}): string {
   ensureGcStarted();
   const token = randomBytes(16).toString('hex');
   STORE.set(token, { ...input, expiresAt: Date.now() + TTL_MS });
@@ -22,7 +26,9 @@ export function stashAdminCredentials(input: { username: string; password: strin
 }
 
 /** Consume a token (one-shot). Returns credentials or null on miss/expiry. */
-export function consumeAdminCredentials(token: string): { username: string; password: string; email?: string } | null {
+export function consumeAdminCredentials(
+  token: string,
+): { username: string; password: string; email?: string } | null {
   const v = STORE.get(token);
   if (!v) return null;
   if (v.expiresAt < Date.now()) {

@@ -33,8 +33,14 @@ export function AudioTracksForm({ initialTracks }: Props) {
   async function onUpload(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!file) { setError('请选择 MP3 文件'); return; }
-    if (!title.trim()) { setError('请填写标题'); return; }
+    if (!file) {
+      setError('请选择 MP3 文件');
+      return;
+    }
+    if (!title.trim()) {
+      setError('请填写标题');
+      return;
+    }
     setUploading(true);
     try {
       const fd = new FormData();
@@ -124,7 +130,10 @@ export function AudioTracksForm({ initialTracks }: Props) {
 
   return (
     <div className="space-y-8">
-      <form onSubmit={onUpload} className="border border-ink/20 rounded-md p-4 space-y-3 bg-paper-warm/40">
+      <form
+        onSubmit={onUpload}
+        className="border border-ink/20 rounded-md p-4 space-y-3 bg-paper-warm/40"
+      >
         <h2 className="text-sm font-semibold text-ink">上传新音频</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
@@ -183,13 +192,21 @@ export function AudioTracksForm({ initialTracks }: Props) {
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-ink truncate">{t.title}</span>
                     {t.isDefault && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-seal text-paper rounded">默认</span>
+                      <span className="text-[10px] px-1.5 py-0.5 bg-seal text-paper rounded">
+                        默认
+                      </span>
                     )}
                   </div>
                   <div className="text-xs text-ink-faint mt-0.5">
-                    {t.filename} · {fmtBytes(t.sizeBytes)} · 上传于 {new Date(t.createdAt).toLocaleString('zh-CN')}
+                    {t.filename} · {fmtBytes(t.sizeBytes)} · 上传于{' '}
+                    {new Date(t.createdAt).toLocaleString('zh-CN')}
                   </div>
-                  <audio src={`/audio/${t.filename}`} controls preload="none" className="mt-1 h-8 w-full max-w-md" />
+                  <audio
+                    src={`/audio/${t.filename}`}
+                    controls
+                    preload="none"
+                    className="mt-1 h-8 w-full max-w-md"
+                  />
                 </div>
                 <div className="flex flex-col sm:flex-row gap-1 shrink-0">
                   {!t.isDefault && (

@@ -50,9 +50,7 @@ const radMap: Record<number, string> = {};
     radMap[num] = String.fromCodePoint(parseInt(ideo, 16));
   }
   if (Object.keys(radMap).length !== 214) {
-    console.warn(
-      `警告: CJKRadicals.txt 只解析出 ${Object.keys(radMap).length} 个部首 (期望 214)`,
-    );
+    console.warn(`警告: CJKRadicals.txt 只解析出 ${Object.keys(radMap).length} 个部首 (期望 214)`);
   }
 }
 
@@ -73,13 +71,11 @@ let skipped = 0;
     if (!m) continue;
     const code = parseInt(m[1]!, 16);
     // 只要 CJK Unified + Ext A + Ext B (BMP 之外用 surrogate pair)
-    if (
-      !(
-        (code >= 0x3400 && code <= 0x4dbf) ||
-        (code >= 0x4e00 && code <= 0x9fff) ||
-        (code >= 0x20000 && code <= 0x2a6df)
-      )
-    )
+    if (!(
+      (code >= 0x3400 && code <= 0x4dbf) ||
+      (code >= 0x4e00 && code <= 0x9fff) ||
+      (code >= 0x20000 && code <= 0x2a6df)
+    ))
       continue;
     // kRSUnicode 格式: "78.2" 或 "85.1'" 或 "18'2" (部首.附加笔数[变体])
     const rs = parts[2]!;

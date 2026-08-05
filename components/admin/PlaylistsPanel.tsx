@@ -13,7 +13,9 @@ interface Props {
 export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
   const [playlists, setPlaylists] = useState<Playlist[]>(initialPlaylists);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [playlistTracks, setPlaylistTracks] = useState<Record<number, PlaylistWithTracks['tracks']>>({});
+  const [playlistTracks, setPlaylistTracks] = useState<
+    Record<number, PlaylistWithTracks['tracks']>
+  >({});
   const [newTitle, setNewTitle] = useState('');
   const [newIsDefault, setNewIsDefault] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -208,7 +210,10 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
 
   return (
     <div className="space-y-6">
-      <form onSubmit={onCreate} className="border border-ink/20 rounded-md p-4 space-y-3 bg-paper-warm/40">
+      <form
+        onSubmit={onCreate}
+        className="border border-ink/20 rounded-md p-4 space-y-3 bg-paper-warm/40"
+      >
         <h3 className="text-sm font-semibold text-ink">新建播放列表</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label className="block">
@@ -266,7 +271,9 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-ink truncate">{p.title}</span>
                       {p.isDefault && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-seal text-paper rounded">默认</span>
+                        <span className="text-[10px] px-1.5 py-0.5 bg-seal text-paper rounded">
+                          默认
+                        </span>
                       )}
                     </div>
                     <div className="text-xs text-ink-faint">

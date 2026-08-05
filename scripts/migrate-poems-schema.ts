@@ -23,7 +23,7 @@ const TARGET_DDL = {
 async function columnExists(pool: Pool, column: string): Promise<boolean> {
   const [rows] = await pool.query<any[]>(
     `SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = ?`,
-    [column]
+    [column],
   );
   return Array.isArray(rows) && rows.length > 0;
 }
@@ -31,7 +31,7 @@ async function columnExists(pool: Pool, column: string): Promise<boolean> {
 async function indexExists(pool: Pool, index: string): Promise<boolean> {
   const [rows] = await pool.query<any[]>(
     `SELECT INDEX_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND INDEX_NAME = ?`,
-    [index]
+    [index],
   );
   return Array.isArray(rows) && rows.length > 0;
 }
@@ -43,9 +43,13 @@ export async function migratePoemsSchema(): Promise<{ ran: string[]; skipped: st
 
   // 1. dynasty ENUM -> VARCHAR(16) — check by column type containing 'enum'
   const [dynastyRows] = await pool.query<any[]>(
-    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'dynasty'`
+    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'dynasty'`,
   );
-  if (Array.isArray(dynastyRows) && dynastyRows[0] && dynastyRows[0].COLUMN_TYPE?.includes('enum')) {
+  if (
+    Array.isArray(dynastyRows) &&
+    dynastyRows[0] &&
+    dynastyRows[0].COLUMN_TYPE?.includes('enum')
+  ) {
     await pool.query(TARGET_DDL.dynasty);
     ran.push('dynasty');
   } else {
@@ -70,7 +74,7 @@ export async function migratePoemsSchema(): Promise<{ ran: string[]; skipped: st
 
   // 4. form column widening
   const [formRows] = await pool.query<any[]>(
-    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'form'`
+    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'form'`,
   );
   if (Array.isArray(formRows) && formRows[0] && formRows[0].COLUMN_TYPE?.includes('varchar(32)')) {
     skipped.push('form');

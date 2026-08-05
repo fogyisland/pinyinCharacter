@@ -12,7 +12,8 @@ export async function GET(req: NextRequest) {
       page: sp.get('page') ?? undefined,
       pageSize: sp.get('pageSize') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const result = await listClassics(parsed.data);
     return NextResponse.json({ ok: true, data: result });
   });

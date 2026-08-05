@@ -15,14 +15,18 @@ export async function POST(req: NextRequest) {
     if (!user) return unauthorized('unauthenticated', 'login required');
     const parsed = Schema.safeParse(await req.json());
     if (!parsed.success) return badRequest('validation', parsed.error.message);
-    if (!await hasFeature(user.id, 'ai_calls')) {
+    if (!(await hasFeature(user.id, 'ai_calls'))) {
       return forbidden('membership_required', '需要 AI 调用会员');
     }
-    if (!await checkAiRateLimit(user.id)) {
-      return NextResponse.json({ ok: false, error: 'rate_limited', message: '今日 AI 调用次数已用完' }, { status: 429 });
+    if (!(await checkAiRateLimit(user.id))) {
+      return NextResponse.json(
+        { ok: false, error: 'rate_limited', message: '今日 AI 调用次数已用完' },
+        { status: 429 },
+      );
     }
     const [rows] = await getPool().query<any[]>(
-      `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [parsed.data.char],
+      `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`,
+      [parsed.data.char],
     );
     if (rows.length === 0) return badRequest('char_not_found', 'char not in dictionary');
     const pinyin = String(rows[0].pinyin);
@@ -31,14 +35,22 @@ export async function POST(req: NextRequest) {
     try {
       const explanation = await explainChar({ char: parsed.data.char, pinyin });
       await logAiCall({
-        userId: user.id, feature: 'char-explain', model: 'unknown', status: 'ok',
-        durationMs: Date.now() - start, metadata: { char: parsed.data.char },
+        userId: user.id,
+        feature: 'char-explain',
+        model: 'unknown',
+        status: 'ok',
+        durationMs: Date.now() - start,
+        metadata: { char: parsed.data.char },
       });
       return NextResponse.json({ ok: true, data: { explanation } });
     } catch (err) {
       await logAiCall({
-        userId: user.id, feature: 'char-explain', model: 'unknown', status: 'error',
-        durationMs: Date.now() - start, error: (err as Error).message,
+        userId: user.id,
+        feature: 'char-explain',
+        model: 'unknown',
+        status: 'error',
+        durationMs: Date.now() - start,
+        error: (err as Error).message,
         metadata: { char: parsed.data.char },
       });
       throw err;

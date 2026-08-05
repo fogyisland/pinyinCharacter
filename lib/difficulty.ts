@@ -4,9 +4,9 @@ export const DEFAULT_DIFFICULTY: Difficulty = 'medium';
 export type CharSource = 'chars-level-1' | 'chars-level-1-2' | 'chars-all';
 
 export const DRAG_MATCH_CONFIG = {
-  easy:   { count: 6, source: 'chars-level-1' as const },
+  easy: { count: 6, source: 'chars-level-1' as const },
   medium: { count: 8, source: 'chars-level-1-2' as const },
-  hard:   { count: 12, source: 'chars-all' as const },
+  hard: { count: 12, source: 'chars-all' as const },
 };
 
 // 2026-07-03: added `source` so easy pulls only level-1 chars (simple,
@@ -16,9 +16,9 @@ export const DRAG_MATCH_CONFIG = {
 // higher count (6) it overflowed the pinyin-bank and produced invalid
 // rounds. Mirrors the DRAG_MATCH_CONFIG pattern (3-tier source).
 export const TONE_RADICAL_CONFIG = {
-  easy:   { count: 3, source: 'chars-level-1' as const },
+  easy: { count: 3, source: 'chars-level-1' as const },
   medium: { count: 4, source: 'chars-level-1-2' as const },
-  hard:   { count: 6, source: 'chars-all' as const },
+  hard: { count: 6, source: 'chars-all' as const },
 };
 
 // 2026-07-03: 拼音接龙 (pinyin solitaire) had no difficulty at all —
@@ -28,15 +28,15 @@ export const TONE_RADICAL_CONFIG = {
 // chain-able neighbors. `chainMinLen` is the early-stop threshold for
 // short-game mode (optional, can be ignored by the server for now).
 export const CHAIN_GAME_CONFIG = {
-  easy:   { source: 'chars-level-1' as const },
+  easy: { source: 'chars-level-1' as const },
   medium: { source: 'chars-level-1-2' as const },
-  hard:   { source: 'chars-all' as const },
+  hard: { source: 'chars-all' as const },
 };
 
 export const PINYIN_INPUT_CONFIG = {
-  easy:   { maxCandidates: 3 },
+  easy: { maxCandidates: 3 },
   medium: { maxCandidates: 5 },
-  hard:   { maxCandidates: 9 },
+  hard: { maxCandidates: 9 },
 };
 
 import type { HskLevel as _HskLevel } from './reveal';

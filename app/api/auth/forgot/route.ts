@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateUsername } from '@/lib/auth';
-import { findUserByUsername, generateResetToken, createResetRow, RESET_TTL_MINUTES } from '@/lib/password-reset';
+import {
+  findUserByUsername,
+  generateResetToken,
+  createResetRow,
+  RESET_TTL_MINUTES,
+} from '@/lib/password-reset';
 import { checkRateLimit } from '@/lib/ratelimit';
 import { sendEmail } from '@/lib/email';
 import { passwordResetEmail } from '@/lib/email-templates';
 import { writeAudit } from '@/lib/audit';
 
-interface Body { username?: string; }
+interface Body {
+  username?: string;
+}
 
 function clientIp(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
@@ -17,29 +24,46 @@ export async function POST(req: NextRequest) {
   if (!checkRateLimit(ip, 60_000)) {
     return NextResponse.json(
       { ok: false, error: { code: 'rate_limited', message: '请求过于频繁,请稍后再试' } },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
   let body: Body;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
 
   const username = (body.username ?? '').trim();
   const uErr = validateUsername(username);
-  if (uErr) return NextResponse.json({ ok: false, error: { code: 'invalid_username', message: uErr } }, { status: 400 });
+  if (uErr)
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_username', message: uErr } },
+      { status: 400 },
+    );
 
   const ua = req.headers.get('user-agent') ?? null;
   const user = await findUserByUsername(username);
   if (!user) {
-    await writeAudit({ userId: null, event: 'password_reset_request', metadata: { userExists: false, username }, ip, userAgent: ua });
+    await writeAudit({
+      userId: null,
+      event: 'password_reset_request',
+      metadata: { userExists: false, username },
+      ip,
+      userAgent: ua,
+    });
     return NextResponse.json({ ok: true, data: null });
   }
 
   const token = generateResetToken();
   await createResetRow(user.id, token);
 
-  const baseUrl = process.env.PUBLIC_BASE_URL ?? `http://${req.headers.get('host') ?? 'localhost:5555'}`;
+  const baseUrl =
+    process.env.PUBLIC_BASE_URL ?? `http://${req.headers.get('host') ?? 'localhost:5555'}`;
   const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
 
   let emailError: string | null = null;

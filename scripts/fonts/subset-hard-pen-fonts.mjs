@@ -28,19 +28,21 @@ const OUT = resolve(ROOT, 'public', 'fonts');
 const GLYPHS_FILE = resolve(__dirname, 'gb2312-7000.txt');
 
 const TARGETS = [
-  { in: 'LXGWWenKaiGB-Regular.ttf',   out: 'LXGWWenKaiGB-Regular.woff2' },
-  { in: 'Yozai-Regular.ttf',          out: 'Yozai-Regular.woff2' },
-  { in: 'Iansui-Regular.ttf',         out: 'Iansui-Regular.woff2' },
-  { in: 'ZenKakuGothicNew-Thin.otf',  out: 'ZenKakuGothicNew-Thin.woff2' },
-  { in: 'MaShanZheng-Regular.ttf',    out: 'ma-shan-zheng.woff2' },
-  { in: 'LongCang-Regular.ttf',       out: 'long-cang.woff2' },
+  { in: 'LXGWWenKaiGB-Regular.ttf', out: 'LXGWWenKaiGB-Regular.woff2' },
+  { in: 'Yozai-Regular.ttf', out: 'Yozai-Regular.woff2' },
+  { in: 'Iansui-Regular.ttf', out: 'Iansui-Regular.woff2' },
+  { in: 'ZenKakuGothicNew-Thin.otf', out: 'ZenKakuGothicNew-Thin.woff2' },
+  { in: 'MaShanZheng-Regular.ttf', out: 'ma-shan-zheng.woff2' },
+  { in: 'LongCang-Regular.ttf', out: 'long-cang.woff2' },
 ];
 
 const SIZE_WARN_KB = 800;
 
 async function main() {
   if (!existsSync(GLYPHS_FILE)) {
-    console.error(`[subset] missing ${GLYPHS_FILE} — run pnpm tsx scripts/fonts/build-gb2312-7000.ts first`);
+    console.error(
+      `[subset] missing ${GLYPHS_FILE} — run pnpm tsx scripts/fonts/build-gb2312-7000.ts first`,
+    );
     process.exit(0);
   }
   const glyphs = await readFile(GLYPHS_FILE, 'utf8');
@@ -49,7 +51,9 @@ async function main() {
   for (const t of TARGETS) {
     const src = resolve(STAGING, t.in);
     if (!existsSync(src)) {
-      console.warn(`[subset] SKIP ${t.out}  (source ${t.in} not in staging/ — run pnpm fonts:download-hard-pen)`);
+      console.warn(
+        `[subset] SKIP ${t.out}  (source ${t.in} not in staging/ — run pnpm fonts:download-hard-pen)`,
+      );
       results.push({ out: t.out, status: 'skip' });
       continue;
     }

@@ -15,12 +15,14 @@ Naming chosen by user: enum value `cross` (display label 米字格). This deviat
 ### Type & validator
 
 `lib/worksheet-types.ts`
+
 - Extend `CellStyle` union to include `'cross'`.
 - Extend `validateWorksheetInput`'s `cellStyle` check to accept `'cross'`.
 
 ### SVG guides
 
 `components/worksheet/WorksheetCell.tsx`
+
 - Add a 4th branch `style === 'cross'` after `pen`:
   - outer border (existing)
   - vertical center line (existing — common to all)
@@ -30,16 +32,17 @@ Naming chosen by user: enum value `cross` (display label 米字格). This deviat
 
 Final SVG layout:
 
-| style   | border | vertical | horizontal | diagonal-1 | diagonal-2 |
-|---------|--------|----------|------------|------------|------------|
-| brush   | ✓      | ✓        |            | ✓          | ✓          |
-| square  | ✓      | ✓        | ✓          |            |            |
-| pen     | ✓      | ✓        |            |            |            |
-| cross   | ✓      | ✓        | ✓          | ✓          | ✓          |
+| style  | border | vertical | horizontal | diagonal-1 | diagonal-2 |
+| ------ | ------ | -------- | ---------- | ---------- | ---------- |
+| brush  | ✓      | ✓        |            | ✓          | ✓          |
+| square | ✓      | ✓        | ✓          |            |            |
+| pen    | ✓      | ✓        |            |            |            |
+| cross  | ✓      | ✓        | ✓          | ✓          | ✓          |
 
 ### Style picker UI
 
 `components/worksheet/StylePicker.tsx`
+
 - Add a 4th radio with `value="cross"` and label `米字格`. Match the existing layout (flex gap-4, same label/input pattern).
 
 ### Display labels (avoid fallthrough chains)
@@ -47,6 +50,7 @@ Final SVG layout:
 Currently `app/worksheet/[id]/page.tsx:44` and `components/worksheet/WorksheetHistoryList.tsx:26` use a ternary chain ending in `?: '钢笔格'` for `pen`. With a 4th style the chain becomes fragile. Extract a helper:
 
 `lib/worksheet-types.ts`
+
 - New export `cellStyleLabel(s: CellStyle): string` returning:
   - `brush` → `毛笔格`
   - `square` → `田字格`
@@ -96,5 +100,6 @@ Replace both call sites' ternary chains with `cellStyleLabel(ws.cellStyle)` and 
 ## Commit plan
 
 Single commit:
+
 - `feat(worksheet): add 米字格 (cross) cell style`
 - Files: `lib/worksheet-types.ts`, `components/worksheet/StylePicker.tsx`, `components/worksheet/WorksheetCell.tsx`, `app/worksheet/[id]/page.tsx`, `components/worksheet/WorksheetHistoryList.tsx`, `scripts/init-db.ts`, `scripts/migrations/2026-06-18-cell-style-cross.sql`, `tests/unit/lib/worksheet-types.test.ts` (or create if absent).

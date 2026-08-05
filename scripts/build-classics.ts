@@ -108,7 +108,9 @@ function buildManifestFromDisk(): Manifest {
       bookTitle: vol.bookTitle,
     });
   }
-  entries.sort((a, b) => (a.category < b.category ? -1 : a.category > b.category ? 1 : a.slug.localeCompare(b.slug)));
+  entries.sort((a, b) =>
+    a.category < b.category ? -1 : a.category > b.category ? 1 : a.slug.localeCompare(b.slug),
+  );
   return { version: 1, updatedAt: new Date().toISOString(), books: entries };
 }
 
@@ -131,23 +133,121 @@ interface ClassicFile {
 
 const CLASSIC_FILES: ClassicFile[] = [
   // 四书 (Four Books)
-  { path: '/论语/lunyu.json', slug: 'lunyu', title: '论语', category: 'four-books', author: '孔子', era: '春秋' },
-  { path: '/四书五经/mengzi.json', slug: 'mengzi', title: '孟子', category: 'four-books', author: '孟子', era: '战国' },
-  { path: '/四书五经/daxue.json', slug: 'daxue', title: '大学', category: 'four-books', author: '曾子', era: '春秋' },
-  { path: '/四书五经/zhongyong.json', slug: 'zhongyong', title: '中庸', category: 'four-books', author: '子思', era: '战国' },
+  {
+    path: '/论语/lunyu.json',
+    slug: 'lunyu',
+    title: '论语',
+    category: 'four-books',
+    author: '孔子',
+    era: '春秋',
+  },
+  {
+    path: '/四书五经/mengzi.json',
+    slug: 'mengzi',
+    title: '孟子',
+    category: 'four-books',
+    author: '孟子',
+    era: '战国',
+  },
+  {
+    path: '/四书五经/daxue.json',
+    slug: 'daxue',
+    title: '大学',
+    category: 'four-books',
+    author: '曾子',
+    era: '春秋',
+  },
+  {
+    path: '/四书五经/zhongyong.json',
+    slug: 'zhongyong',
+    title: '中庸',
+    category: 'four-books',
+    author: '子思',
+    era: '战国',
+  },
   // 五经 (only 诗经 available; 尚书/礼记/易经/春秋 not in upstream repo)
-  { path: '/诗经/shijing.json', slug: 'shijing', title: '诗经', category: 'five-classics', author: null, era: '西周' },
+  {
+    path: '/诗经/shijing.json',
+    slug: 'shijing',
+    title: '诗经',
+    category: 'five-classics',
+    author: null,
+    era: '西周',
+  },
   // 蒙学 (Children's classics)
-  { path: '/蒙学/dizigui.json', slug: 'dizigui', title: '弟子规', category: 'mengxue', author: '李毓秀', era: '清' },
-  { path: '/蒙学/qianziwen.json', slug: 'qianziwen', title: '千字文', category: 'mengxue', author: '周兴嗣', era: '南朝' },
-  { path: '/蒙学/sanzijing-new.json', slug: 'sanzijing', title: '三字经', category: 'mengxue', author: '王应麟', era: '宋' },
-  { path: '/蒙学/baijiaxing.json', slug: 'baijiaxing', title: '百家姓', category: 'mengxue', author: null, era: '北宋' },
-  { path: '/蒙学/zengguangxianwen.json', slug: 'zengguangxianwen', title: '增广贤文', category: 'mengxue', author: null, era: '明清' },
-  { path: '/蒙学/youxueqionglin.json', slug: 'youxueqionglin', title: '幼学琼林', category: 'mengxue', author: '程登吉', era: '明' },
-  { path: '/蒙学/wenzimengqiu.json', slug: 'wenzimengqiu', title: '文字蒙求', category: 'mengxue', author: '王筠', era: '清' },
-  { path: '/蒙学/guwenguanzhi.json', slug: 'guwenguanzhi', title: '古文观止', category: 'other', author: '吴楚材/吴调侯', era: '清' },
+  {
+    path: '/蒙学/dizigui.json',
+    slug: 'dizigui',
+    title: '弟子规',
+    category: 'mengxue',
+    author: '李毓秀',
+    era: '清',
+  },
+  {
+    path: '/蒙学/qianziwen.json',
+    slug: 'qianziwen',
+    title: '千字文',
+    category: 'mengxue',
+    author: '周兴嗣',
+    era: '南朝',
+  },
+  {
+    path: '/蒙学/sanzijing-new.json',
+    slug: 'sanzijing',
+    title: '三字经',
+    category: 'mengxue',
+    author: '王应麟',
+    era: '宋',
+  },
+  {
+    path: '/蒙学/baijiaxing.json',
+    slug: 'baijiaxing',
+    title: '百家姓',
+    category: 'mengxue',
+    author: null,
+    era: '北宋',
+  },
+  {
+    path: '/蒙学/zengguangxianwen.json',
+    slug: 'zengguangxianwen',
+    title: '增广贤文',
+    category: 'mengxue',
+    author: null,
+    era: '明清',
+  },
+  {
+    path: '/蒙学/youxueqionglin.json',
+    slug: 'youxueqionglin',
+    title: '幼学琼林',
+    category: 'mengxue',
+    author: '程登吉',
+    era: '明',
+  },
+  {
+    path: '/蒙学/wenzimengqiu.json',
+    slug: 'wenzimengqiu',
+    title: '文字蒙求',
+    category: 'mengxue',
+    author: '王筠',
+    era: '清',
+  },
+  {
+    path: '/蒙学/guwenguanzhi.json',
+    slug: 'guwenguanzhi',
+    title: '古文观止',
+    category: 'other',
+    author: '吴楚材/吴调侯',
+    era: '清',
+  },
   // 楚辞 (Songs of Chu — poetry rather than prose, but tagged as a classic)
-  { path: '/楚辞/chuci.json', slug: 'chuci', title: '楚辞', category: 'other', author: '屈原等', era: '战国' },
+  {
+    path: '/楚辞/chuci.json',
+    slug: 'chuci',
+    title: '楚辞',
+    category: 'other',
+    author: '屈原等',
+    era: '战国',
+  },
 ];
 
 function isStringArray(x: unknown): x is string[] {
@@ -225,7 +325,9 @@ function normalize(raw: unknown): ChunkSeed[] {
             const ccObj = cc as Record<string, unknown>;
             if (Array.isArray(ccObj.paragraphs) && isStringArray(ccObj.paragraphs)) {
               out.push({
-                chapter: String(ccObj.chapter ?? ccObj.title ?? cObj.title ?? obj.title ?? '').slice(0, 32),
+                chapter: String(
+                  ccObj.chapter ?? ccObj.title ?? cObj.title ?? obj.title ?? '',
+                ).slice(0, 32),
                 paragraphs: ccObj.paragraphs,
               });
             }
@@ -314,7 +416,9 @@ export async function buildClassicsRefresh(): Promise<number> {
       chunks,
     };
     const { path: jsonPath, bytes } = writeVolumeJson(volJson);
-    console.log(`[build-classics] ${file.slug}: ${chunks.length} chapters, ${Math.round(bytes / 1024)}KB JSON → ${jsonPath}`);
+    console.log(
+      `[build-classics] ${file.slug}: ${chunks.length} chapters, ${Math.round(bytes / 1024)}KB JSON → ${jsonPath}`,
+    );
     await pool.execute(
       `INSERT INTO classics (slug, title, category, author, era, source)
        VALUES (?, ?, ?, ?, ?, ?)
@@ -344,7 +448,9 @@ export async function buildClassicsRefresh(): Promise<number> {
 export async function buildClassicsFromFiles(): Promise<number> {
   const pool = getPool();
   if (!existsSync(MANIFEST_PATH)) {
-    console.warn(`[build-classics] missing ${MANIFEST_PATH}; run buildClassicsRefresh first to seed`);
+    console.warn(
+      `[build-classics] missing ${MANIFEST_PATH}; run buildClassicsRefresh first to seed`,
+    );
     return 0;
   }
   const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as Manifest;

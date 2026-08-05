@@ -71,7 +71,7 @@ const CJK_PUNCT_STRING =
   // Roman numerals + currency + common symbols (trim to keep total ~200)
   'ⅠⅡⅢⅣⅤⅥⅦⅧⅨⅩ￥＄￠￡％※'; // 16 = 211
 
-const CJK_PUNCT: number[] = [...CJK_PUNCT_STRING].map(c => c.codePointAt(0)!);
+const CJK_PUNCT: number[] = [...CJK_PUNCT_STRING].map((c) => c.codePointAt(0)!);
 
 // Latin letters/digits/symbols — already covered by ASCII block, but the
 // spec also lists them separately so we dedupe them through the Set below.
@@ -79,7 +79,7 @@ const LATIN_SYMBOLS = ASCII;
 
 // Build the union
 const all: number[] = [
-  ...[...GB2312_HANZI].map(c => c.codePointAt(0)!),
+  ...[...GB2312_HANZI].map((c) => c.codePointAt(0)!),
   ...ASCII,
   ...CJK_PUNCT,
   ...LATIN_SYMBOLS,
@@ -87,7 +87,7 @@ const all: number[] = [
 
 const uniq = Array.from(new Set(all)).sort((a, b) => a - b);
 
-const text = uniq.map(cp => String.fromCodePoint(cp)).join('');
+const text = uniq.map((cp) => String.fromCodePoint(cp)).join('');
 const out = resolve(__dirname, 'gb2312-7000.txt');
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, text, 'utf8');

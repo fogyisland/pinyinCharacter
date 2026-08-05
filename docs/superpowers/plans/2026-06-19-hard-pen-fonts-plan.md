@@ -38,6 +38,7 @@ From `docs/superpowers/specs/2026-06-19-hard-pen-fonts-design.md` (commit `6e344
 ## File Structure
 
 ### New files
+
 - `scripts/fonts/build-gb2312-7000.ts` — one-shot char-set emitter (kept for re-generation)
 - `scripts/fonts/gb2312-7000.txt` — static char-set text (~7163 unique codepoints)
 - `scripts/fonts/download-hard-pen-fonts.ts` — TTF download to `scripts/fonts/staging/`
@@ -53,6 +54,7 @@ From `docs/superpowers/specs/2026-06-19-hard-pen-fonts-design.md` (commit `6e344
 - `tests/unit/components/worksheet/WorksheetPreview.test.tsx` — print header
 
 ### Modified files
+
 - `app/globals.css` — 4 `@font-face` + 4 `:root` tokens + 4 `@theme` tokens
 - `lib/worksheet-types.ts` — extend `FontFamily`; add `group` to `FONT_FAMILIES`
 - `lib/worksheet-page-count.ts` — A4: 96→88, B5: 66→60
@@ -63,6 +65,7 @@ From `docs/superpowers/specs/2026-06-19-hard-pen-fonts-design.md` (commit `6e344
 - `tests/unit/lib/worksheet-page-count.test.ts` — update A4/B5 expected values
 
 ### Decomposition note
+
 - `scripts/fonts/copy-ofl.ts` is a 10-line tsx — kept separate from `download-hard-pen-fonts.ts` so the download script stays focused on "fetch from CDN"; the copy is a deterministic local file move that can be re-run safely.
 - `THIRD_PARTY_LICENSES.md` and `.gitignore` are pure doc/config changes; they could be folded into Task 12/13 but stay separate so a reviewer can reject one without blocking the other.
 
@@ -73,12 +76,14 @@ From `docs/superpowers/specs/2026-06-19-hard-pen-fonts-design.md` (commit `6e344
 ### Task 1: Char set builder script + emit `gb2312-7000.txt`
 
 **Files:**
+
 - Create: `scripts/fonts/build-gb2312-7000.ts`
 - Create: `scripts/fonts/gb2312-7000.txt`
 
 **Step 1: Write the script `scripts/fonts/build-gb2312-7000.ts`**
 
 The script emits a single text file containing the union of:
+
 - 6763 GB2312 chars (a hand-curated 2-D array literal committed in code — see code below)
 - 100 ASCII printable (`U+0020`–`U+007E`)
 - 200 common CJK punctuation (commit the string in code)
@@ -104,7 +109,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 // GB2312 level 1 + level 2 ranges (6763 hanzi).
 // Compact form: ranges of start-end (inclusive) on the BMP CJK Unified block.
 const GB2312_RANGES: Array<[number, number]> = [
-  [0x4E00, 0x4E00], // 一
+  [0x4e00, 0x4e00], // 一
   // ... full 6763-entry list (see Step 1a below for source)
 ];
 
@@ -127,8 +132,14 @@ The implementer must produce a string that contains exactly the 6763 GB2312 char
 ```ts
 // Add the supplementary char sets
 const ASCII = Array.from({ length: 95 }, (_, i) => 0x20 + i); // 0x20..0x7E
-const CJK_PUNCT = '，。！？、；：「」『』（）…—《》【】〈〉「」·※〒々〇〉〈〔〕〖〗〜〃‘’“”〝〞㐀㐁㐂㐃㐄㐅㐆㐇㐈㐉㐊㐋㐌㐍㐎㐏㐐㐑㐒㐓㐔㐕㐖㐗㐘㐙㐚㐛㐜㐝㐞㐟㐠㐡㐢㐣㐤㐥㐦㐧㐨㐩㐪㐫㐬㐭㐮㐯㐰㐱㐲㐳㐴㐵㐶㐷㐸㐹㐺㐻㐼㐽㐾㐿㑀㑁㑂㑃㑄㑅㑆㑇㑈㑉㑊㑋㑌㑍㑎㑏㑐㑑㑒㑓㑔㑕㑖㑗㑘㑙㑚㑛㑜㑝㑞㑟㑠㑡㑢㑣㑤㑥㑦㑧㑨㑩㑪㑫㑬㑭㑮㑯㑰㑱㑲㑳㑴㑵㑶㑷㑸㑹㑺㑻㑼㑽㑾㑿'.split('').map(c => c.codePointAt(0)!);
-const LATIN_SYMBOLS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=[]{}|;:,.<>?/\\~`\'"'.split('').map(c => c.codePointAt(0)!);
+const CJK_PUNCT =
+  '，。！？、；：「」『』（）…—《》【】〈〉「」·※〒々〇〉〈〔〕〖〗〜〃‘’“”〝〞㐀㐁㐂㐃㐄㐅㐆㐇㐈㐉㐊㐋㐌㐍㐎㐏㐐㐑㐒㐓㐔㐕㐖㐗㐘㐙㐚㐛㐜㐝㐞㐟㐠㐡㐢㐣㐤㐥㐦㐧㐨㐩㐪㐫㐬㐭㐮㐯㐰㐱㐲㐳㐴㐵㐶㐷㐸㐹㐺㐻㐼㐽㐾㐿㑀㑁㑂㑃㑄㑅㑆㑇㑈㑉㑊㑋㑌㑍㑎㑏㑐㑑㑒㑓㑔㑕㑖㑗㑘㑙㑚㑛㑜㑝㑞㑟㑠㑡㑢㑣㑤㑥㑦㑧㑨㑩㑪㑫㑬㑭㑮㑯㑰㑱㑲㑳㑴㑵㑶㑷㑸㑹㑺㑻㑼㑽㑾㑿'
+    .split('')
+    .map((c) => c.codePointAt(0)!);
+const LATIN_SYMBOLS =
+  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()_+-=[]{}|;:,.<>?/\\~`\'"'
+    .split('')
+    .map((c) => c.codePointAt(0)!);
 
 const all = [
   // ...GB2312 codepoints (from the literal)...
@@ -139,7 +150,7 @@ const all = [
 
 const uniq = Array.from(new Set(all)).sort((a, b) => a - b);
 
-const text = uniq.map(cp => String.fromCodePoint(cp)).join('');
+const text = uniq.map((cp) => String.fromCodePoint(cp)).join('');
 const out = resolve(__dirname, 'gb2312-7000.txt');
 mkdirSync(dirname(out), { recursive: true });
 writeFileSync(out, text, 'utf8');
@@ -166,6 +177,7 @@ git commit -m "feat(fonts): add gb2312-7000 char-set builder + emit file"
 ### Task 2: `subset-font` dep + 3 npm scripts
 
 **Files:**
+
 - Modify: `package.json` (add devDep + 3 scripts)
 
 **Step 1: Add `subset-font` to devDependencies**
@@ -208,6 +220,7 @@ git commit -m "chore(deps): add subset-font + 3 font-pipeline npm scripts"
 ### Task 3: Download script for hard-pen fonts
 
 **Files:**
+
 - Create: `scripts/fonts/download-hard-pen-fonts.ts`
 
 **Step 1: Write the script**
@@ -251,16 +264,12 @@ const FONTS: FontEntry[] = [
   },
   {
     filename: 'Yozai-Regular.ttf',
-    urls: [
-      'https://github.com/lxgw/LxgwYozai/releases/latest/download/Yozai-Regular.ttf',
-    ],
+    urls: ['https://github.com/lxgw/LxgwYozai/releases/latest/download/Yozai-Regular.ttf'],
     label: 'Yozai (悠哉)',
   },
   {
     filename: 'Iansui-Regular.ttf',
-    urls: [
-      'https://github.com/lxgw/LxgwIansui/releases/latest/download/Iansui-Regular.ttf',
-    ],
+    urls: ['https://github.com/lxgw/LxgwIansui/releases/latest/download/Iansui-Regular.ttf'],
     label: 'Iansui (芫荽)',
   },
   {
@@ -294,7 +303,9 @@ async function downloadOnce(url: string, dest: string, timeoutMs = 60000): Promi
   }
 }
 
-async function downloadFont(entry: FontEntry): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number }> {
+async function downloadFont(
+  entry: FontEntry,
+): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number }> {
   const dest = resolve(STAGING, entry.filename);
   if (existsSync(dest) && statSync(dest).size > 0) {
     return { status: 'skip' };
@@ -371,6 +382,7 @@ git commit -m "feat(fonts): add hard-pen font download script (ttf -> staging/)"
 ### Task 4: Subset script (WOFF2 emitter)
 
 **Files:**
+
 - Create: `scripts/fonts/subset-hard-pen-fonts.mjs`
 
 **Step 1: Verify `subset-font` API surface**
@@ -405,17 +417,23 @@ const OUT = resolve(ROOT, 'public', 'fonts');
 const GLYPHS_FILE = resolve(__dirname, 'gb2312-7000.txt');
 
 const TARGETS = [
-  { in: 'LXGWWenKaiGB-Regular.ttf',   out: 'LXGWWenKaiGB-Regular.woff2',   family: 'LXGW WenKai GB' },
-  { in: 'Yozai-Regular.ttf',          out: 'Yozai-Regular.woff2',          family: 'Yozai' },
-  { in: 'Iansui-Regular.ttf',         out: 'Iansui-Regular.woff2',         family: 'Iansui' },
-  { in: 'ZenKakuGothicNew-Thin.otf',  out: 'ZenKakuGothicNew-Thin.woff2',  family: 'Zen Kaku Gothic New' },
+  { in: 'LXGWWenKaiGB-Regular.ttf', out: 'LXGWWenKaiGB-Regular.woff2', family: 'LXGW WenKai GB' },
+  { in: 'Yozai-Regular.ttf', out: 'Yozai-Regular.woff2', family: 'Yozai' },
+  { in: 'Iansui-Regular.ttf', out: 'Iansui-Regular.woff2', family: 'Iansui' },
+  {
+    in: 'ZenKakuGothicNew-Thin.otf',
+    out: 'ZenKakuGothicNew-Thin.woff2',
+    family: 'Zen Kaku Gothic New',
+  },
 ];
 
 const SIZE_WARN_KB = 800;
 
 async function main() {
   if (!existsSync(GLYPHS_FILE)) {
-    console.error(`[subset] missing ${GLYPHS_FILE} — run pnpm tsx scripts/fonts/build-gb2312-7000.ts first`);
+    console.error(
+      `[subset] missing ${GLYPHS_FILE} — run pnpm tsx scripts/fonts/build-gb2312-7000.ts first`,
+    );
     process.exit(0);
   }
   const glyphs = await readFile(GLYPHS_FILE, 'utf8');
@@ -424,7 +442,9 @@ async function main() {
   for (const t of TARGETS) {
     const src = resolve(STAGING, t.in);
     if (!existsSync(src)) {
-      console.warn(`[subset] SKIP ${t.out}  (source ${t.in} not in staging/ — run pnpm fonts:download-hard-pen)`);
+      console.warn(
+        `[subset] SKIP ${t.out}  (source ${t.in} not in staging/ — run pnpm fonts:download-hard-pen)`,
+      );
       results.push({ out: t.out, status: 'skip' });
       continue;
     }
@@ -478,6 +498,7 @@ git commit -m "feat(fonts): add subset script (TTF staging -> WOFF2 public/)"
 ### Task 5: Copy `OFL.txt` files to `public/fonts/`
 
 **Files:**
+
 - Create: `scripts/fonts/copy-ofl.ts`
 - Create (eventually): 4 `OFL.txt` files in `public/fonts/` (one per font)
 
@@ -523,7 +544,9 @@ async function main() {
       console.log(`[ofl] OK   ${oflName}`);
       copied++;
     } else {
-      console.warn(`[ofl] SKIP ${oflName}  (no OFL.txt in staging/ — manually copy from upstream release)`);
+      console.warn(
+        `[ofl] SKIP ${oflName}  (no OFL.txt in staging/ — manually copy from upstream release)`,
+      );
       skipped++;
     }
   }
@@ -580,6 +603,7 @@ Expected: 4 downloads → 4 subsets → exit 0.
 **Step 2: Verify all 4 WOFF2 are present and within size budget**
 
 Run:
+
 ```bash
 ls -la public/fonts/*.woff2
 ```
@@ -603,6 +627,7 @@ Expected: only `download-hard-pen-fonts.ts`, `subset-hard-pen-fonts.mjs`, `build
 ### Task 7: `globals.css` — `@font-face` + tokens
 
 **Files:**
+
 - Modify: `app/globals.css:18-35` (add tokens to `@theme {}`)
 - Modify: `app/globals.css:124-128` (add tokens to `:root {}`)
 - Modify: `app/globals.css:130-156` (add 4 `@font-face` blocks)
@@ -612,10 +637,10 @@ Expected: only `download-hard-pen-fonts.ts`, `subset-hard-pen-fonts.mjs`, `build
 In `app/globals.css`, find the `--font-*` lines inside `@theme { ... }` (around lines 19-26). Add 4 more tokens after `--font-kai`:
 
 ```css
-  --font-lxgw-wenkai-gb: 'LXGW WenKai GB', serif;
-  --font-yozai: 'Yozai', serif;
-  --font-iansui: 'Iansui', serif;
-  --font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
+--font-lxgw-wenkai-gb: 'LXGW WenKai GB', serif;
+--font-yozai: 'Yozai', serif;
+--font-iansui: 'Iansui', serif;
+--font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
 ```
 
 **Step 2: Add 4 tokens to `:root {}` block**
@@ -623,10 +648,10 @@ In `app/globals.css`, find the `--font-*` lines inside `@theme { ... }` (around 
 In `app/globals.css`, find the `:root { ... }` block (lines 124-128). Add 4 lines after `--font-wenkai`:
 
 ```css
-  --font-lxgw-wenkai-gb: 'LXGW WenKai GB', serif;
-  --font-yozai: 'Yozai', serif;
-  --font-iansui: 'Iansui', serif;
-  --font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
+--font-lxgw-wenkai-gb: 'LXGW WenKai GB', serif;
+--font-yozai: 'Yozai', serif;
+--font-iansui: 'Iansui', serif;
+--font-zen-kaku-thin: 'Zen Kaku Gothic New', sans-serif;
 ```
 
 **Step 3: Add 4 `@font-face` blocks**
@@ -675,6 +700,7 @@ git commit -m "feat(fonts): wire 4 hard-pen @font-face + tailwind/root tokens"
 ### Task 8: Extend `FontFamily` union + add `group` to `FONT_FAMILIES` (TDD)
 
 **Files:**
+
 - Create: `tests/unit/lib/worksheet-types.test.ts`
 - Modify: `lib/worksheet-types.ts:5,44-48`
 
@@ -703,7 +729,15 @@ describe('FONT_FAMILIES (G2)', () => {
 
   it('covers the FontFamily union', () => {
     const values = new Set(FONT_FAMILIES.map((f) => f.value));
-    const expected: FontFamily[] = ['song', 'kai', 'hei', 'wenkai-gb', 'yozai', 'iansui', 'zen-kaku-thin'];
+    const expected: FontFamily[] = [
+      'song',
+      'kai',
+      'hei',
+      'wenkai-gb',
+      'yozai',
+      'iansui',
+      'zen-kaku-thin',
+    ];
     for (const e of expected) expect(values.has(e)).toBe(true);
   });
 
@@ -727,8 +761,7 @@ Open `lib/worksheet-types.ts`. Change line 5:
 
 ```ts
 export type FontFamily =
-  | 'song' | 'kai' | 'hei'
-  | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin';
+  'song' | 'kai' | 'hei' | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin';
 ```
 
 Change `FONT_FAMILIES` (lines 44-48) to:
@@ -740,13 +773,23 @@ export const FONT_FAMILIES: {
   cssVar: string;
   group: 'system' | 'hard-pen';
 }[] = [
-  { value: 'song', label: '宋体',     cssVar: 'var(--font-han-serif)',     group: 'system' },
-  { value: 'kai',  label: '楷体',     cssVar: 'var(--font-wenkai)',        group: 'system' },
-  { value: 'hei',  label: '黑体',     cssVar: 'var(--font-han-sans)',      group: 'system' },
-  { value: 'wenkai-gb',     label: '霞鹜文楷 GB', cssVar: 'var(--font-lxgw-wenkai-gb)', group: 'hard-pen' },
-  { value: 'yozai',         label: '悠哉',         cssVar: 'var(--font-yozai)',         group: 'hard-pen' },
-  { value: 'iansui',        label: '芫荽',         cssVar: 'var(--font-iansui)',        group: 'hard-pen' },
-  { value: 'zen-kaku-thin', label: '思源极细黑',   cssVar: 'var(--font-zen-kaku-thin)', group: 'hard-pen' },
+  { value: 'song', label: '宋体', cssVar: 'var(--font-han-serif)', group: 'system' },
+  { value: 'kai', label: '楷体', cssVar: 'var(--font-wenkai)', group: 'system' },
+  { value: 'hei', label: '黑体', cssVar: 'var(--font-han-sans)', group: 'system' },
+  {
+    value: 'wenkai-gb',
+    label: '霞鹜文楷 GB',
+    cssVar: 'var(--font-lxgw-wenkai-gb)',
+    group: 'hard-pen',
+  },
+  { value: 'yozai', label: '悠哉', cssVar: 'var(--font-yozai)', group: 'hard-pen' },
+  { value: 'iansui', label: '芫荽', cssVar: 'var(--font-iansui)', group: 'hard-pen' },
+  {
+    value: 'zen-kaku-thin',
+    label: '思源极细黑',
+    cssVar: 'var(--font-zen-kaku-thin)',
+    group: 'hard-pen',
+  },
 ];
 ```
 
@@ -772,6 +815,7 @@ git commit -m "feat(worksheet): extend FontFamily to 7 (3 system + 4 hard-pen)"
 ### Task 9: Update `CELLS_PER_PAGE` (A4: 96→88, B5: 66→60) (TDD)
 
 **Files:**
+
 - Modify: `lib/worksheet-page-count.ts:3-7`
 - Modify: `tests/unit/lib/worksheet-page-count.test.ts:7-8,17,19,22,24,27-28,35,38-39`
 
@@ -829,6 +873,7 @@ git commit -m "feat(worksheet): A4 96->88, B5 66->60 cells/page"
 ### Task 10: Rewrite `FontFamilyPicker` to `<select>` with `<optgroup>` (TDD)
 
 **Files:**
+
 - Create: `tests/unit/components/worksheet/FontFamilyPicker.test.tsx`
 - Modify: `components/worksheet/FontFamilyPicker.tsx`
 
@@ -956,6 +1001,7 @@ git commit -m "feat(worksheet): FontFamilyPicker radio -> optgroup select"
 ### Task 11: Print header in `WorksheetPreview` (TDD)
 
 **Files:**
+
 - Create: `tests/unit/components/worksheet/WorksheetPreview.test.tsx`
 - Modify: `components/worksheet/WorksheetPreview.tsx:69-82`
 
@@ -1037,7 +1083,9 @@ Open `components/worksheet/WorksheetPreview.tsx`. The `fontFamilyLabel` import a
 Then, locate the `.worksheet-grid` `<div>` at line 74. Add a header row inside it (before the `.map(cells)`):
 
 ```tsx
-<div className={`worksheet-grid mx-auto grid min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+<div
+  className={`worksheet-grid mx-auto grid min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}
+>
   <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
     <div className="flex items-center gap-2">
       <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
@@ -1078,6 +1126,7 @@ git commit -m "feat(worksheet): print header (Logo + 字体名 + 公益网站,�
 ### Task 12: `THIRD_PARTY_LICENSES.md`
 
 **Files:**
+
 - Create: `THIRD_PARTY_LICENSES.md`
 
 **Step 1: Write the file**
@@ -1090,26 +1139,31 @@ Create `THIRD_PARTY_LICENSES.md` at the repo root with the following content:
 This project bundles the following fonts, all under the [SIL Open Font License 1.1](https://scripts.sil.org/OFL). The full OFL.txt for each font is committed next to its WOFF2 in `public/fonts/`.
 
 ## LXGW WenKai GB (霞鹜文楷 GB)
+
 - Upstream: https://github.com/lxgw/LxgwWenkaiGB
 - Copyright: © 2020-2026 LXGW.
 - License: SIL OFL 1.1
 
 ## Yozai (悠哉)
+
 - Upstream: https://github.com/lxgw/LxgwYozai
 - Copyright: © 2022-2026 LXGW.
 - License: SIL OFL 1.1
 
 ## Iansui (芫荽)
+
 - Upstream: https://github.com/lxgw/LxgwIansui
 - Copyright: © 2021-2026 LXGW.
 - License: SIL OFL 1.1
 
 ## Zen Kaku Gothic New (思源ゴシック)
+
 - Upstream: https://github.com/googlefonts/zen-kakugothic
 - Copyright: © 2022 Adobe Inc., Google Inc.
 - License: SIL OFL 1.1
 
 ## BabelStone Han Basic + Extra (Plan L)
+
 - Upstream: https://www.babelstone.co.uk/Fonts/BabelStoneHan.html
 - Copyright: © 2019 BabelStone.
 - License: SIL OFL 1.1
@@ -1129,6 +1183,7 @@ git commit -m "docs: THIRD_PARTY_LICENSES.md for hard-pen + BabelStone fonts"
 ### Task 13: `.gitignore` — exclude `scripts/fonts/staging/`
 
 **Files:**
+
 - Modify: `.gitignore`
 
 **Step 1: Add the staging pattern**
@@ -1180,6 +1235,7 @@ Expected: `dev server stopped` (the project pins dev to port 4444; never run `pn
 
 Run: `pnpm build`
 Expected: build succeeds. Verify the new font assets are referenced:
+
 - `public/fonts/LXGWWenKaiGB-Regular.woff2` is present (no transformation needed; static file)
 - `public/fonts/Yozai-Regular.woff2` present
 - `public/fonts/Iansui-Regular.woff2` present

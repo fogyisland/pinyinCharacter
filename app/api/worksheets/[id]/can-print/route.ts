@@ -16,7 +16,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     }
     const [rows] = await getPool().query<any[]>(
       `SELECT content, paper_size FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`,
-      [wid, auth.user.id]
+      [wid, auth.user.id],
     );
     if (rows.length === 0) return notFound('not_found', 'worksheet not found');
     const ws = rows[0];

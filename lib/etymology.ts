@@ -1,10 +1,5 @@
 import { getPool } from './db';
-import {
-  ERAS,
-  type Etymology,
-  type EtymologyAdjacent,
-  type EraGlyph,
-} from './etymology-types';
+import { ERAS, type Etymology, type EtymologyAdjacent, type EraGlyph } from './etymology-types';
 import { getContent } from './content';
 import type { CharLevel } from '../components/etymology/era-dates';
 import { readFileSync, existsSync } from 'node:fs';
@@ -62,7 +57,7 @@ interface DbEtymologyRow {
 function buildEraGlyphs(
   char: string,
   cov: EraCoverage | null,
-  row: DbEtymologyRow | null
+  row: DbEtymologyRow | null,
 ): EraGlyph[] {
   return ERAS.map((era) => {
     const font = (row?.[`era_${era}_font`] ?? null) || ERA_FONT[era] || '';
@@ -87,7 +82,7 @@ async function readLevel(char: string): Promise<CharLevel> {
   // DB fallback (legacy)
   const [rows] = await getPool().query<any[]>(
     `SELECT level FROM chars WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
   return toCharLevel(rows[0]?.level);
 }
@@ -106,7 +101,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
      FROM char_etymology
      WHERE \`char\` = ?
      LIMIT 1`,
-    [char]
+    [char],
   );
   // Story + generation provenance ALWAYS come from data/content/<char>.json.
   // The DB row only exists to carry era glyph metadata; if both the row and
@@ -154,7 +149,7 @@ export async function getAdjacentChars(char: string): Promise<EtymologyAdjacent>
      WHERE c.unicode_codepoint < (SELECT unicode_codepoint FROM chars WHERE \`char\` = ?)
      ORDER BY c.unicode_codepoint DESC
      LIMIT 1`,
-    [char]
+    [char],
   );
   const [nextRows] = await pool.query<any[]>(
     `SELECT c.\`char\`
@@ -162,7 +157,7 @@ export async function getAdjacentChars(char: string): Promise<EtymologyAdjacent>
      WHERE c.unicode_codepoint > (SELECT unicode_codepoint FROM chars WHERE \`char\` = ?)
      ORDER BY c.unicode_codepoint ASC
      LIMIT 1`,
-    [char]
+    [char],
   );
   return {
     prev: prevRows[0]?.char ?? null,

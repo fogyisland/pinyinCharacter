@@ -50,19 +50,19 @@ export default async function PoemDetailPage({ params, searchParams }: Props) {
     <>
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
+
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildCreativeWork(poem)) }}
       />
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
+
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
             await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '诗词', url: '/poetry' },
               { name: poem.title, url: `/poetry/${poem.id}` },
-            ])
+            ]),
           ),
         }}
       />
@@ -78,12 +78,23 @@ export default async function PoemDetailPage({ params, searchParams }: Props) {
             <span aria-hidden="true">←</span> {backLink.label}
           </Link>
         </div>
-        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵
+        </div>
         <div className="worksheet-no-print">
-          <PoemMeta title={poem.title} author={poem.author} dynasty={poem.dynasty} form={poem.form} />
+          <PoemMeta
+            title={poem.title}
+            author={poem.author}
+            dynasty={poem.dynasty}
+            form={poem.form}
+          />
         </div>
         <div className="flex items-center justify-end mb-2 worksheet-no-print">
-          <ReadAloudButton text={`${poem.title}。${poem.author}。${poem.content}`} size="sm" variant="seal" />
+          <ReadAloudButton
+            text={`${poem.title}。${poem.author}。${poem.content}`}
+            size="sm"
+            variant="seal"
+          />
         </div>
         <div className="card-paper p-5 sm:p-8 poem-print-area">
           <PoemViewer content={poem.content} />
@@ -94,8 +105,16 @@ export default async function PoemDetailPage({ params, searchParams }: Props) {
           </div>
         )}
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">
-          <PrintButton endpoint={`/api/poetry/${poem.id}/print`} loginRedirect={`/poetry/${poem.id}`} />
-          <SaveAsWorksheetButton id={poem.id} title={poem.title} author={poem.author} content={poem.content} />
+          <PrintButton
+            endpoint={`/api/poetry/${poem.id}/print`}
+            loginRedirect={`/poetry/${poem.id}`}
+          />
+          <SaveAsWorksheetButton
+            id={poem.id}
+            title={poem.title}
+            author={poem.author}
+            content={poem.content}
+          />
         </div>
       </PageContainer>
       <Footer />

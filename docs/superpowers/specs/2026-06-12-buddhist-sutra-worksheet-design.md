@@ -7,6 +7,7 @@
 在「字·韵」网站加一个**佛经选读**板块,把 ~12 部常见佛教典籍按**字帖 (米字格)**方式呈现,既能浏览抄写 (有拼音),也能直接打印练字,还能"保存到我的字帖"复用现有 /worksheet 体系。
 
 承接现有 `/poetry` (唐诗宋词) 的整套设计,实现模式基本一致。差异在于:
+
 - 佛经是匿名集体作品,**无作者 / 无朝代**,元数据只有经名
 - 佛经篇幅长 (金刚经 ~5000 字),所以需要**品/段落分块**才能在字帖页合理呈现
 - 风格采用**中性文化视角** (不强调宗教 / 功德 / 福报),与现有站点定位一致
@@ -25,6 +26,7 @@
 ## 3. 范围
 
 **In scope:**
+
 - /sutra 列表页 (搜索 + 分页)
 - /sutra/[id] 详情页 (元数据 + 品块选择器 + 米字格 + 拼音)
 - DB 存储 ~12 部经
@@ -36,6 +38,7 @@
 - 按品/段落分块 (chunk model)
 
 **Out of scope:**
+
 - 佛教背景介绍 / 白话翻译 (决策: 完全不要背景文字)
 - 功德 / 福报 / 宗教性 framing (决策: 中性文化语言)
 - 拼音开关 (始终显示,跟 /poetry 一致)
@@ -48,32 +51,32 @@
 
 ### 4.1 新增页面
 
-| 路径 | 类型 | 渲染 | 鉴权 |
-|---|---|---|---|
-| `/sutra` | 列表 | CSR (useEffect fetch) | 公开 |
-| `/sutra/[id]` | 详情 | SSR (getSutra 直查 DB) | 公开 |
-| `/` (首页) | 现有 + 加 tile | SSR | 公开 |
+| 路径          | 类型           | 渲染                   | 鉴权 |
+| ------------- | -------------- | ---------------------- | ---- |
+| `/sutra`      | 列表           | CSR (useEffect fetch)  | 公开 |
+| `/sutra/[id]` | 详情           | SSR (getSutra 直查 DB) | 公开 |
+| `/` (首页)    | 现有 + 加 tile | SSR                    | 公开 |
 
 ### 4.2 新增 API
 
-| Method | Path | 行为 | 鉴权 |
-|---|---|---|---|
-| GET | `/api/sutras` | 列表 + 搜索 + 分页 | 公开 |
-| GET | `/api/sutras/[id]` | 详情 (含 chunks) | 公开 |
+| Method | Path               | 行为               | 鉴权 |
+| ------ | ------------------ | ------------------ | ---- |
+| GET    | `/api/sutras`      | 列表 + 搜索 + 分页 | 公开 |
+| GET    | `/api/sutras/[id]` | 详情 (含 chunks)   | 公开 |
 
 **列表 query params:**
+
 - `q` — 可选,模糊搜索 title
 - `page` — 可选,默认 1
 - `pageSize` — 可选,默认 12 (经数量少,不需要大页)
 
 **列表响应:**
+
 ```json
 {
   "ok": true,
   "data": {
-    "items": [
-      { "id": 1, "title": "心经", "slug": "xinjing", "chunkCount": 1, "charCount": 260 }
-    ],
+    "items": [{ "id": 1, "title": "心经", "slug": "xinjing", "chunkCount": 1, "charCount": 260 }],
     "total": 12,
     "page": 1,
     "pageSize": 12
@@ -82,6 +85,7 @@
 ```
 
 **详情响应:**
+
 ```json
 {
   "ok": true,
@@ -137,6 +141,7 @@ CREATE TABLE IF NOT EXISTS sutras (
 **具体拉取路径:** `佛经/<slug>.json`
 
 **12 部经 (slug → 经名):**
+
 1. `xinjing` — 心经
 2. `jingang` — 金刚经 (32 品)
 3. `yaoshi` — 药师经
@@ -153,6 +158,7 @@ CREATE TABLE IF NOT EXISTS sutras (
 > **注意**: 如果 chinese-poetry 仓库 佛经/ 子目录没有某经,build 脚本跳过该经 (warn),不让 initDb 整体失败。具体经名以仓库实际为准 — `scripts/build-sutras.ts` 跑一次打印实际可用列表。
 
 **JSON 格式 (chinese-poetry 标准,典型):**
+
 ```json
 {
   "title": "心经",
@@ -161,6 +167,7 @@ CREATE TABLE IF NOT EXISTS sutras (
 ```
 
 或者带 `paragraphs` 数组 (跟唐诗一致):
+
 ```json
 {
   "title": "金刚经",
@@ -184,7 +191,7 @@ function splitIntoChunks(title: string, paragraphs: string[]): SutraChunk[] {
       if (current) chunks.push({ id: chunks.length, ...current });
       current = { label: para.slice(0, 32), content: [para] };
     } else {
-      if (!current) current = { label: "全文", content: [para] };
+      if (!current) current = { label: '全文', content: [para] };
       else current.content.push(para);
     }
   }
@@ -200,6 +207,7 @@ function splitIntoChunks(title: string, paragraphs: string[]): SutraChunk[] {
 ```
 
 **算法边界:**
+
 - 心经 / 阿弥陀经: 无品标记 → 1 chunk, label = 经名
 - 金刚经: 32 个品标记 → 32 chunks
 - 法华经 (节选): 视具体段落而定
@@ -209,6 +217,7 @@ function splitIntoChunks(title: string, paragraphs: string[]): SutraChunk[] {
 ### 6.1 服务端 lib
 
 **`lib/sutra-types.ts`** (共享,client + server 都 import)
+
 ```ts
 export interface SutraListItem {
   id: number;
@@ -238,22 +247,32 @@ export interface SutraListResult {
 ```
 
 **`lib/sutras.ts`** (server-only)
+
 ```ts
-export async function listSutras(args: { q?: string; page?: number; pageSize?: number }): Promise<SutraListResult>;
+export async function listSutras(args: {
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}): Promise<SutraListResult>;
 export async function getSutra(id: number): Promise<SutraDetail | null>;
 ```
 
 ### 6.2 客户端 lib
 
 **`lib/api-sutras.ts`**
+
 ```ts
-export async function listSutrasRequest(args: { q?: string; page?: number }): Promise<SutraListResult>;
+export async function listSutrasRequest(args: {
+  q?: string;
+  page?: number;
+}): Promise<SutraListResult>;
 export async function getSutraRequest(id: number): Promise<SutraDetail>;
 ```
 
 ### 6.3 页面
 
 **`app/sutra/page.tsx`**
+
 - 客户端组件, useEffect 拉列表
 - state: `q`, `page`, `items`, `total`, `loading`
 - 顶部: `SutraSearch` (搜索框)
@@ -264,12 +283,14 @@ export async function getSutraRequest(id: number): Promise<SutraDetail>;
 - 错误 → ErrorState + 重试
 
 **`app/sutra/[id]/page.tsx`**
+
 - server component: `const sutra = await getSutra(id); if (!sutra) notFound();`
 - 默认 `?chunk=0`,若 query 参数越界则用 0
 - 渲染: `SutraMeta` (经名) + `SutraChunkPicker` (品块选择) + `SutraWorksheet` (米字格 + 拼音) + `SaveAsWorksheetButton` (用当前 chunk 的 content)
 - 打印时: 隐藏 nav/button, 只显示字帖
 
 **`app/sutra/[id]/SaveAsWorksheetButton.tsx`**
+
 - 'use client'
 - 接收: `id, title, chunk: SutraChunk`
 - onClick: 同 /poetry/[id] 的 SaveAsWorksheetButton
@@ -281,20 +302,24 @@ export async function getSutraRequest(id: number): Promise<SutraDetail>;
 ### 6.4 组件
 
 **`components/sutra/SutraSearch.tsx`**
+
 - props: `{ q, onQChange }`
 - 输入框 (placeholder: "搜索经名...")
 
 **`components/sutra/SutraCard.tsx`**
+
 - props: `{ sutra: SutraListItem }`
 - 卡片: 经名 (kai, 中号) + 「X 品」或「全文」标记 + 总字数
 - hover: 边框变 seal
 - 整卡可点击 → /sutra/[id]
 
 **`components/sutra/SutraPagination.tsx`**
+
 - props: `{ page, pageSize, total, onPageChange }`
 - 上一页 / 下一页 / "第 X/Y 页"
 
 **`components/sutra/SutraChunkPicker.tsx`**
+
 - props: `{ chunks: SutraChunk[]; activeId: number; onChange: (id: number) => void }`
 - **桌面**: 右侧 sticky 垂直列表,点击切换
 - **移动**: 顶部 dropdown (`<select>`) 切换
@@ -302,6 +327,7 @@ export async function getSutraRequest(id: number): Promise<SutraDetail>;
 - 经只有 1 chunk 时:不渲染
 
 **`components/sutra/SutraWorksheet.tsx`**
+
 - props: `{ chunk: SutraChunk }`
 - 渲染: 每行一段, char 一个 `WorksheetCell`, char 下方小字拼音
 - 行间距: mb-4
@@ -309,6 +335,7 @@ export async function getSutraRequest(id: number): Promise<SutraDetail>;
 - 行宽: max-w-3xl 居中
 
 **`components/sutra/SutraMeta.tsx`**
+
 - props: `{ title, chunkLabel? }`
 - 标题 (kai, 36px) 居中
 - 副标题: 当前 chunk label (如有,小字,ink-soft)
@@ -378,34 +405,38 @@ const ITEMS: BentoItem[] = [
 
 ## 8. 错误处理
 
-| 场景 | 处理 |
-|---|---|
-| /sutra/[id] id 不存在 | `notFound()` → 404 页面 |
-| /sutra 列表空 (搜索无结果) | EmptyState "无匹配经文" |
-| /sutra 列表 API 失败 | ErrorState + "重试" 按钮 |
-| 详情页 data 加载失败 | notFound() (DB 不可达也走这) |
-| ?chunk=N 越界 | 用 0 |
-| 保存到字帖 401 | 打开 AuthModal (跟 /poetry 一致的最新模式) |
-| 保存到字帖 5xx | inline 错误提示 + button 恢复 |
-| Build 脚本某经缺失 | warn + 跳过该经,继续下一个 |
+| 场景                           | 处理                                                     |
+| ------------------------------ | -------------------------------------------------------- |
+| /sutra/[id] id 不存在          | `notFound()` → 404 页面                                  |
+| /sutra 列表空 (搜索无结果)     | EmptyState "无匹配经文"                                  |
+| /sutra 列表 API 失败           | ErrorState + "重试" 按钮                                 |
+| 详情页 data 加载失败           | notFound() (DB 不可达也走这)                             |
+| ?chunk=N 越界                  | 用 0                                                     |
+| 保存到字帖 401                 | 打开 AuthModal (跟 /poetry 一致的最新模式)               |
+| 保存到字帖 5xx                 | inline 错误提示 + button 恢复                            |
+| Build 脚本某经缺失             | warn + 跳过该经,继续下一个                               |
 | pinyin-pro 算不出拼音 (生僻字) | 降级: `pinyin(char, { toneType: 'none' })` 再降级到 `''` |
 
 ## 9. 测试策略
 
 ### 9.1 单元测试
+
 - `lib/sutras.ts` 的 `splitIntoChunks` (心经单 chunk / 金刚经 32 chunk / 边界情况)
 - `lib/sutras.ts` 的 `listSutras`, `getSutra` (mock DB)
 - `components/sutra/SutraCard` 渲染 (Vitest + happy-dom)
 - `components/sutra/SutraWorksheet` 渲染 (props → DOM)
 
 ### 9.2 集成测试
+
 - `GET /api/sutras` (正常/分页/搜索/空 q)
 - `GET /api/sutras/[id]` (正常/不存在)
 
 ### 9.3 Build 脚本冒烟
+
 - 跑 `pnpm sutras:build` 用 mock JSON 验证: 解析 + chunk split + pinyin 计算 + UPSERT 都不报错
 
 ### 9.4 手工冒烟 (人 review)
+
 1. 首页 BentoGrid 看到"佛经" tile
 2. 点击 Header 佛经链接 → /sutra
 3. 列表页: 12 部经显示,搜索"金刚"过滤

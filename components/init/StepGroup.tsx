@@ -20,11 +20,7 @@ export function StepGroup({
   const [open, setOpen] = useState(defaultOpen);
   const allDone = completedCount === total;
   return (
-    <div
-      className={`rounded-md border-2 ${
-        allDone ? 'border-green-300' : 'border-ink/15'
-      }`}
-    >
+    <div className={`rounded-md border-2 ${allDone ? 'border-green-300' : 'border-ink/15'}`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}

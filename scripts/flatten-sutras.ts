@@ -49,7 +49,10 @@ function flatten(slug: string, title: string, chunks: SutraChunk[]): SutraChunk[
 }
 
 function countChars(chunks: SutraChunk[]): number {
-  return chunks.reduce((sum, c) => sum + c.content.reduce((s, line) => s + Array.from(line).length, 0), 0);
+  return chunks.reduce(
+    (sum, c) => sum + c.content.reduce((s, line) => s + Array.from(line).length, 0),
+    0,
+  );
 }
 
 function main() {

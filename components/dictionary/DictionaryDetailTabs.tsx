@@ -14,8 +14,11 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
   // cached entries (prefetchTts no-ops). Cancelled on unmount.
   useEffect(() => {
     const targets = char.relatedByRadical.slice(0, 6).map((c) => c.char);
-    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number })
-      .requestIdleCallback;
+    const ric = (
+      window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
     const cic = (window as unknown as { cancelIdleCallback?: (h: number) => void })
       .cancelIdleCallback;
     const schedule = (cb: () => void): number | undefined =>
@@ -26,7 +29,9 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
       else clearTimeout(handle as unknown as ReturnType<typeof setTimeout>);
     };
     const handles = targets.map((text) =>
-      schedule(() => { prefetchTts('female', text).catch(() => {}); }),
+      schedule(() => {
+        prefetchTts('female', text).catch(() => {});
+      }),
     );
     return () => handles.forEach(cancel);
   }, [char.relatedByRadical]);
@@ -35,13 +40,29 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
     <div>
       <div className="flex flex-wrap items-center gap-x-1 gap-y-2 border-b border-ink/30 mb-4">
         <span className="bg-ink text-paper px-3 py-2 rounded-t text-sm">字典</span>
-        <Link href={`/etymology/${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">字源 →</Link>
-        <Link href={`/stories/${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">故事 →</Link>
+        <Link
+          href={`/etymology/${encodeURIComponent(char.char)}`}
+          className="px-3 py-2 text-sm text-ink-soft hover:text-ink"
+        >
+          字源 →
+        </Link>
+        <Link
+          href={`/stories/${encodeURIComponent(char.char)}`}
+          className="px-3 py-2 text-sm text-ink-soft hover:text-ink"
+        >
+          故事 →
+        </Link>
         <DictionaryDetailAddToWorksheet char={char.char} />
         <span className="ml-auto flex items-center gap-2 pb-1">
           <DetailPrefetchButton relatedChars={char.relatedByRadical.map((c) => c.char)} cap={20} />
           <ReadAloudButton text={char.char} label="读字" size="sm" variant="seal" voice="male" />
-          <ReadAloudButton text={char.pinyin} label="读音" size="sm" variant="paper" voice="female" />
+          <ReadAloudButton
+            text={char.pinyin}
+            label="读音"
+            size="sm"
+            variant="paper"
+            voice="female"
+          />
         </span>
       </div>
 
@@ -62,7 +83,13 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
             <div className="mb-2">
               <span className="text-ink-faint">同部首 ·</span>{' '}
               {char.relatedByRadical.map((c) => (
-                <Link key={c.char} href={`/dictionary/${encodeURIComponent(c.char)}`} className="mr-2 hover:text-seal">{c.char}</Link>
+                <Link
+                  key={c.char}
+                  href={`/dictionary/${encodeURIComponent(c.char)}`}
+                  className="mr-2 hover:text-seal"
+                >
+                  {c.char}
+                </Link>
               ))}
             </div>
           )}
@@ -70,7 +97,13 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
             <div>
               <span className="text-ink-faint">同拼音 ·</span>{' '}
               {char.relatedByPinyin.map((c) => (
-                <Link key={c.char} href={`/dictionary/${encodeURIComponent(c.char)}`} className="mr-2 hover:text-seal">{c.char}</Link>
+                <Link
+                  key={c.char}
+                  href={`/dictionary/${encodeURIComponent(c.char)}`}
+                  className="mr-2 hover:text-seal"
+                >
+                  {c.char}
+                </Link>
               ))}
             </div>
           )}

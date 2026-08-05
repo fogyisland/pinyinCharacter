@@ -14,12 +14,12 @@ const ci = (char: string, pinyin: string, opts: Partial<CharInfo> = {}): CharInf
 
 describe('matchesChainRule', () => {
   it('matches when prev last letter = next first letter', () => {
-    expect(matchesChainRule('ān', 'nà')).toBe(true);  // n → n
-    expect(matchesChainRule('wán', 'ne')).toBe(true);  // n → n
+    expect(matchesChainRule('ān', 'nà')).toBe(true); // n → n
+    expect(matchesChainRule('wán', 'ne')).toBe(true); // n → n
   });
 
   it('rejects mismatched letters', () => {
-    expect(matchesChainRule('ān', 'bāo')).toBe(false);  // n → b
+    expect(matchesChainRule('ān', 'bāo')).toBe(false); // n → b
     expect(matchesChainRule('hǎo', 'dēng')).toBe(false); // o → d
   });
 

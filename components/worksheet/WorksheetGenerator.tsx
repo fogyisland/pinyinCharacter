@@ -1,9 +1,19 @@
 'use client';
+/* eslint-disable react-hooks/rules-of-hooks -- useSearchParams wrapped in IIFE try/catch for happy-dom tests (lint false positive) */
 
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import type { PaperSize, FontFamily } from '@/lib/worksheet-types';
-import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel, cellsPerPage } from '@/lib/worksheet-types';
+import {
+  defaultToolFor,
+  defaultPresentationFor,
+  defaultFontFor,
+  composeCellStyle,
+  isBrushSize,
+  paperSizeLabel,
+  fontFamilyLabel,
+  cellsPerPage,
+} from '@/lib/worksheet-types';
 import type { Tool, Presentation } from '@/lib/worksheet-types';
 import { useAppStore } from '@/lib/store';
 import { TextInputTab } from './TextInputTab';
@@ -28,7 +38,13 @@ export function WorksheetGenerator() {
   // The parent page (app/worksheet/page.tsx) intentionally does NOT wrap us
   // in <Suspense>, so SSR renders the form (sp is null on server) and the
   // client hydrates with the real URL params on first paint.
-  const sp = (() => { try { return useSearchParams(); } catch { return null; } })();
+  const sp = (() => {
+    try {
+      return useSearchParams();
+    } catch {
+      return null;
+    }
+  })();
   const prefill = sp?.get('prefill') ?? null;
   const previewText = sp?.get('previewText') ?? null;
   const initialBookSlug = sp?.get('book') ?? null;
@@ -36,14 +52,14 @@ export function WorksheetGenerator() {
 
   const router = useRouter();
   const pathname = usePathname();
-  const user = useAppStore(s => s.user);
+  const user = useAppStore((s) => s.user);
 
   // Initial state from URL params. useState initializers run once per
   // component instance — for URL changes after mount the useEffect below
   // syncs (mirrors PracticeTemplate's pattern).
   const [tab, setTab] = useState<Tab>(prefill ? 'library' : previewText ? 'english' : 'text');
   const [content, setContent] = useState<string[]>(
-    prefill ? [prefill] : previewText ? previewText.split('') : []
+    prefill ? [prefill] : previewText ? previewText.split('') : [],
   );
   const [view, setView] = useState<'form' | 'preview'>(previewText ? 'preview' : 'form');
   const [chapterIdx, setChapterIdx] = useState<number>(initialChapterIdx);
@@ -68,7 +84,6 @@ export function WorksheetGenerator() {
       setPaperSize((cur) => (isBrushSize(cur) ? 'A4' : cur));
     }
     setChapterIdx(initialChapterIdx);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [prefill, previewText, initialChapterIdx]);
 
   const [title, setTitle] = useState('');
@@ -107,7 +122,9 @@ export function WorksheetGenerator() {
       setAncientBook(data.data as ClassicDetail);
       setTab('text');
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isAncient, bookSlug]);
 
   // Ancient mode: re-derive content + breakpoints when book or chapter changes.
@@ -119,10 +136,12 @@ export function WorksheetGenerator() {
     const idx = Math.max(0, Math.min(chapterIdx, ancientBook.chunks.length - 1));
     const chunk = ancientBook.chunks[idx];
     if (!chunk) return;
-    const chars = chunk.content.flatMap(line => Array.from(stripPunct(line)));
+    const chars = chunk.content.flatMap((line) => Array.from(stripPunct(line)));
     if (cancelled) return;
     setContent(chars);
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [ancientBook, chapterIdx]);
 
   // 改字体/工具/格子形式/纸张尺寸/描红 后, 不再自动跳到预览页.
@@ -133,7 +152,7 @@ export function WorksheetGenerator() {
       setPaperSize('brush-12');
     } else if (next === 'pen' && isBrushSize(paperSize)) {
       setPaperSize('A4');
-      setTrace(false);  // pen has no trace mode
+      setTrace(false); // pen has no trace mode
     }
     // fontFamily is preserved (user explicit decision 2026-06-20)
   }
@@ -186,7 +205,13 @@ export function WorksheetGenerator() {
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title || `字帖 ${new Date().toLocaleDateString()}`, content, cellStyle, paperSize, fontFamily }),
+        body: JSON.stringify({
+          title: title || `字帖 ${new Date().toLocaleDateString()}`,
+          content,
+          cellStyle,
+          paperSize,
+          fontFamily,
+        }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -322,7 +347,8 @@ export function WorksheetGenerator() {
         )}
         {isEnglishTab && (
           <div className="rounded-md border border-ink/15 bg-paper-deep px-3 py-2 text-xs text-ink-soft">
-            英文描红 (4 线格) · {paperSizeLabel(paperSize)} · 自动适配 {cellsPerPage(paperSize)} 字 / 页
+            英文描红 (4 线格) · {paperSizeLabel(paperSize)} · 自动适配 {cellsPerPage(paperSize)} 字
+            / 页
           </div>
         )}
       </div>
@@ -333,7 +359,11 @@ export function WorksheetGenerator() {
             纸张尺寸 <span className="text-xs text-ink-faint">(决定每页字数)</span>
           </label>
           <div className="mt-2">
-            <PaperSizePicker value={paperSize} tool={isEnglishTab ? 'pen' : tool} onChange={setPaperSize} />
+            <PaperSizePicker
+              value={paperSize}
+              tool={isEnglishTab ? 'pen' : tool}
+              onChange={setPaperSize}
+            />
           </div>
         </div>
         <div>
@@ -350,7 +380,7 @@ export function WorksheetGenerator() {
             <button
               type="button"
               disabled={chapterIdx <= 0}
-              onClick={() => setChapterIdx(i => i - 1)}
+              onClick={() => setChapterIdx((i) => i - 1)}
               className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
             >
               ← 上一章
@@ -358,7 +388,7 @@ export function WorksheetGenerator() {
             <button
               type="button"
               disabled={chapterIdx >= ancientBook.chunks.length - 1}
-              onClick={() => setChapterIdx(i => i + 1)}
+              onClick={() => setChapterIdx((i) => i + 1)}
               className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
             >
               下一章 →
@@ -377,9 +407,7 @@ export function WorksheetGenerator() {
             </button>
           </p>
         )}
-        {errorMsg && (
-          <p className="text-sm text-red-600">{errorMsg}</p>
-        )}
+        {errorMsg && <p className="text-sm text-red-600">{errorMsg}</p>}
         <p className="text-xs text-ink-faint self-end">
           预览: {paperSizeLabel(paperSize)} · {fontFamilyLabel(fontFamily)}
         </p>

@@ -3,11 +3,11 @@ import { NextRequest } from 'next/server';
 
 const cookieStore = new Map<string, string>();
 vi.mock('next/headers', () => ({
-  cookies: () => Promise.resolve({
-    get: (name: string) => cookieStore.has(name)
-      ? { name, value: cookieStore.get(name)! }
-      : undefined,
-  }),
+  cookies: () =>
+    Promise.resolve({
+      get: (name: string) =>
+        cookieStore.has(name) ? { name, value: cookieStore.get(name)! } : undefined,
+    }),
 }));
 
 vi.mock('@/lib/auth', () => ({

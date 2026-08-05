@@ -2,17 +2,29 @@
 
 import { Fragment } from 'react';
 import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
-import { generateLayout, getPresentation, linedHeightPx, paperSizeLabel, fontFamilyLabel, fontFamilyCssVar } from '@/lib/worksheet-types';
+import {
+  generateLayout,
+  getPresentation,
+  linedHeightPx,
+  paperSizeLabel,
+  fontFamilyLabel,
+  fontFamilyCssVar,
+} from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PrintButton } from '@/components/common/PrintButton';
 
 function cellSizeFor(p: PaperSize): number {
   switch (p) {
-    case 'brush-12': return 140;  // 4×140=560px, fits screen 768 + A4 print 680
-    case 'brush-24': return 100;  // 6×100=600px, fits both
-    case 'brush-28': return 85;   // 7×85=595px, fits both
-    case 'A4':       return 70;   // 8×11=88 cells × 70px fits A4 PDF (was 80, would overflow)
-    default:         return 80;   // A3/B5 keep 80px (G2 default)
+    case 'brush-12':
+      return 140; // 4×140=560px, fits screen 768 + A4 print 680
+    case 'brush-24':
+      return 100; // 6×100=600px, fits both
+    case 'brush-28':
+      return 85; // 7×85=595px, fits both
+    case 'A4':
+      return 70; // 8×11=88 cells × 70px fits A4 PDF (was 80, would overflow)
+    default:
+      return 80; // A3/B5 keep 80px (G2 default)
   }
 }
 
@@ -80,7 +92,11 @@ export function WorksheetPreview(props: Props) {
           </button>
           <div className="flex gap-2">
             {props.savedId ? (
-              <PrintButton endpoint={`/api/worksheets/${props.savedId}/print`} label="打印" gate="multi_page" />
+              <PrintButton
+                endpoint={`/api/worksheets/${props.savedId}/print`}
+                label="打印"
+                gate="multi_page"
+              />
             ) : (
               <button
                 type="button"
@@ -131,7 +147,8 @@ export function WorksheetPreview(props: Props) {
                   <span className="font-kai text-base text-ink">字·韵</span>
                 </div>
                 <div className="text-sm text-ink-soft">
-                  字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
+                  字体:{' '}
+                  <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
                 </div>
                 <div className="text-xs text-ink-faint">公益网站，请多关注</div>
               </div>
@@ -141,7 +158,10 @@ export function WorksheetPreview(props: Props) {
                   <div className="line line-2" />
                   <div className="line line-3" />
                   <div className="line line-4" />
-                  <span className="text-content" style={{ fontFamily: fontFamilyCssVar(props.fontFamily) }}>
+                  <span
+                    className="text-content"
+                    style={{ fontFamily: fontFamilyCssVar(props.fontFamily) }}
+                  >
                     {cell.char}
                   </span>
                 </div>
@@ -154,25 +174,36 @@ export function WorksheetPreview(props: Props) {
             </div>
           </div>
         ) : (
-          <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+          <div
+            className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}
+          >
             <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
                 <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
                 <span className="font-kai text-base text-ink">字·韵</span>
               </div>
               <div className="text-sm text-ink-soft">
-                字体: <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
+                字体:{' '}
+                <span className="font-medium text-ink">{fontFamilyLabel(props.fontFamily)}</span>
               </div>
               <div className="text-xs text-ink-faint">公益网站，请多关注</div>
             </div>
             {cells.map((cell) => (
               <Fragment key={cell.index}>
                 {props.breakpoints?.has(cell.index) && (
-                  <div className="worksheet-cell-sep col-span-full text-center text-xs text-ink-faint py-1 print:hidden" aria-hidden>
+                  <div
+                    className="worksheet-cell-sep col-span-full text-center text-xs text-ink-faint py-1 print:hidden"
+                    aria-hidden
+                  >
                     · 句 ·
                   </div>
                 )}
-                <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
+                <WorksheetCell
+                  char={cell.char}
+                  style={cell.style}
+                  size={cellSize}
+                  fontFamily={props.fontFamily}
+                />
               </Fragment>
             ))}
             {siteHost && (

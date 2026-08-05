@@ -13,6 +13,7 @@
 ## File Structure
 
 **Create**:
+
 - `lib/tts-edge.ts` — Edge TTS WebSocket synthesize + SSML builder
 - `lib/tts-config.ts` — getTtsConfig() 读 app_config 默认值
 - `app/api/tts/route.ts` — POST /api/tts 代理
@@ -28,6 +29,7 @@
 - `tests/unit/components/worksheet/RandomTab.test.tsx` — 抽字后跳转
 
 **Modify**:
+
 - `app/globals.css` — `.card-paper` 改 `background: transparent` (修白字)
 - `lib/config.ts` — `KEY_VALIDATORS` 加 `tts.voice_male/female/audio_format` 3 个
 - `lib/tts.ts` — `speak()` 改 fetch /api/tts + new Audio() (保留旧 export)
@@ -48,14 +50,16 @@
 ### Task 1: globals.css `.card-paper` 改 transparent
 
 **Files:**
+
 - Modify: `app/globals.css:90-99`
 
 - [ ] **Step 1: 定位 `.card-paper` 定义**
 
 `app/globals.css` 中搜索 `card-paper` (在 `@layer utilities` 块内),当前定义形如:
+
 ```css
 .card-paper {
-  background-color: #FFFAEE;
+  background-color: #fffaee;
   border: 1px solid rgba(58, 42, 20, 0.08);
   border-radius: 0.5rem;
   box-shadow: 0 1px 2px rgba(58, 42, 20, 0.04);
@@ -112,6 +116,7 @@ git commit -m "fix(bento): card-paper transparent bg — white text on cream was
 ### Task 2: 实现 lib/tts-edge + unit test
 
 **Files:**
+
 - Create: `lib/tts-edge.ts`
 - Create: `tests/unit/lib/tts-edge.test.ts`
 - Modify: `package.json` (加 `ws` 依赖)
@@ -140,7 +145,7 @@ export type AudioFormat =
   | 'audio-16khz-128kbitrate-mono-mp3';
 
 export interface SynthesizeOpts {
-  voiceName: string;            // e.g. 'zh-CN-YunjianNeural'
+  voiceName: string; // e.g. 'zh-CN-YunjianNeural'
   text: string;
   format?: AudioFormat;
   timeoutMs?: number;
@@ -158,7 +163,9 @@ export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
 
     const cleanup = () => {
       if (timer) clearTimeout(timer);
-      try { ws.close(); } catch {}
+      try {
+        ws.close();
+      } catch {}
     };
 
     timer = setTimeout(() => {
@@ -174,7 +181,9 @@ export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
     ws.on('open', () => {
       // 1) SSML config
       const ssml = buildSsml(opts.voiceName, format, opts.text);
-      ws.send(`Content-Type:application/ssml+xml\r\nX-Timestamp:${ts()}\r\nPath:ssml\r\n\r\n${ssml}`);
+      ws.send(
+        `Content-Type:application/ssml+xml\r\nX-Timestamp:${ts()}\r\nPath:ssml\r\n\r\n${ssml}`,
+      );
     });
 
     ws.on('message', (data) => {
@@ -195,7 +204,10 @@ export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
     });
 
     ws.on('close', () => {
-      if (timer) { clearTimeout(timer); timer = null; }
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
       // edge case: close without last frame — reject if no audio
       if (chunks.length === 0) reject(new Error('Edge TTS closed with no audio'));
     });
@@ -204,10 +216,7 @@ export async function synthesize(opts: SynthesizeOpts): Promise<Buffer> {
 
 export function buildSsml(voiceName: string, format: string, text: string): string {
   // escape XML
-  const safe = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='zh-CN'>
   <voice name='${voiceName}'>
     <prosody pitch='+0Hz' rate='+0%'>${safe}</prosody>
@@ -275,6 +284,7 @@ git commit -m "feat(tts): lib/tts-edge WebSocket synthesize + SSML builder"
 ### Task 3: KEY_VALIDATORS 加 3 个 tts key + 默认 seed
 
 **Files:**
+
 - Modify: `lib/config.ts` (KEY_VALIDATORS)
 - Modify: `scripts/init-db.ts` (app_config seed)
 - Create: `lib/tts-config.ts`
@@ -304,7 +314,7 @@ await pool.query(
   `INSERT IGNORE INTO app_config (\`key\`, value, updated_by) VALUES
      ('tts.voice_male', 'zh-CN-YunjianNeural', NULL),
      ('tts.voice_female', 'zh-CN-XiaoxiaoNeural', NULL),
-     ('tts.audio_format', 'audio-24khz-48kbitrate-mono-mp3', NULL)`
+     ('tts.audio_format', 'audio-24khz-48kbitrate-mono-mp3', NULL)`,
 );
 ```
 
@@ -407,6 +417,7 @@ git commit -m "feat(tts-config): validators + defaults + getTtsConfig"
 ### Task 4: POST /api/tts 路由
 
 **Files:**
+
 - Create: `app/api/tts/route.ts`
 - Create: `tests/integration/api/tts.test.ts`
 
@@ -433,7 +444,8 @@ export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
     const body = await req.json();
     const parsed = schema.safeParse(body);
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
 
     const cfg = await getTtsConfig();
     const voiceName = parsed.data.voice === 'male' ? cfg.voiceMale : cfg.voiceFemale;
@@ -476,7 +488,8 @@ integrationDescribe('POST /api/tts', () => {
 
   it('400 on empty text', async () => {
     const req = new NextRequest('http://localhost/api/tts', {
-      method: 'POST', body: JSON.stringify({ text: '' }),
+      method: 'POST',
+      body: JSON.stringify({ text: '' }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -484,7 +497,8 @@ integrationDescribe('POST /api/tts', () => {
 
   it('400 on invalid voice', async () => {
     const req = new NextRequest('http://localhost/api/tts', {
-      method: 'POST', body: JSON.stringify({ text: '你好', voice: 'invalid' }),
+      method: 'POST',
+      body: JSON.stringify({ text: '你好', voice: 'invalid' }),
     });
     const res = await POST(req);
     expect(res.status).toBe(400);
@@ -492,7 +506,8 @@ integrationDescribe('POST /api/tts', () => {
 
   it.skip('200 audio/mpeg on valid request (skipped — no network in CI)', async () => {
     const req = new NextRequest('http://localhost/api/tts', {
-      method: 'POST', body: JSON.stringify({ text: '你好', voice: 'female' }),
+      method: 'POST',
+      body: JSON.stringify({ text: '你好', voice: 'female' }),
     });
     const res = await POST(req);
     expect(res.status).toBe(200);
@@ -523,6 +538,7 @@ git commit -m "feat(api/tts): POST handler with Edge TTS proxy"
 ### Task 5: speak() 改 fetch + new Audio()
 
 **Files:**
+
 - Modify: `lib/tts.ts`
 
 - [ ] **Step 1: 改造 speak()**
@@ -540,7 +556,9 @@ export function pickChineseVoice(): SpeechSynthesisVoice | null {
   // 保留旧 export 用于可能回退,实际不再用
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices();
-  return voices.find(v => v.lang === 'zh-CN') ?? voices.find(v => v.lang.startsWith('zh')) ?? null;
+  return (
+    voices.find((v) => v.lang === 'zh-CN') ?? voices.find((v) => v.lang.startsWith('zh')) ?? null
+  );
 }
 
 export async function speak(text: string, opts: SpeakOpts & { voice?: Voice } = {}): Promise<void> {
@@ -643,6 +661,7 @@ git commit -m "refactor(tts): lib/tts uses Edge TTS proxy with browser fallback"
 ### Task 6: 改 ReadAloudButton + DictionaryDetailTabs
 
 **Files:**
+
 - Modify: `components/ReadAloudButton.tsx`
 - Modify: `components/dictionary/DictionaryDetailTabs.tsx`
 
@@ -750,6 +769,7 @@ git commit -m "feat(ReadAloudButton): voice prop (male/female); 字典页 读字
 ### Task 7: admin/tts 页面 + 通用 admin/config API
 
 **Files:**
+
 - Create: `app/admin/tts/page.tsx`
 - Create: `app/api/admin/config/route.ts` (通用 GET/PUT,可服务 ai + tts)
 - Modify: `lib/api-admin.ts` (getAdminConfig / updateAdminConfig)
@@ -794,7 +814,10 @@ export async function PUT(req: NextRequest) {
     if (r instanceof NextResponse) return r;
     const body = await req.json();
     if (typeof body !== 'object' || body === null) {
-      return NextResponse.json({ ok: false, error: { code: 'bad_input', message: 'body must be object' } }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: { code: 'bad_input', message: 'body must be object' } },
+        { status: 400 },
+      );
     }
     const updates: Record<string, string> = {};
     for (const [k, v] of Object.entries(body)) {
@@ -816,9 +839,13 @@ export async function getTtsConfigRequest(): Promise<ApiResult<Record<string, st
   return call('/api/admin/config', { method: 'GET' });
 }
 
-export async function updateTtsConfigRequest(body: Record<string, string>): Promise<ApiResult<Record<string, string>>> {
+export async function updateTtsConfigRequest(
+  body: Record<string, string>,
+): Promise<ApiResult<Record<string, string>>> {
   return call('/api/admin/config', {
-    method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
   });
 }
 ```
@@ -859,7 +886,7 @@ export default function AdminTtsPage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    getTtsConfigRequest().then(r => {
+    getTtsConfigRequest().then((r) => {
       if (r.ok) setCfg(r.data);
       else setErr(r.error.message);
     });
@@ -867,7 +894,9 @@ export default function AdminTtsPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setMsg(null); setErr(null);
+    setBusy(true);
+    setMsg(null);
+    setErr(null);
     const r = await updateTtsConfigRequest({
       'tts.voice_male': cfg['tts.voice_male'] ?? '',
       'tts.voice_female': cfg['tts.voice_female'] ?? '',
@@ -875,50 +904,79 @@ export default function AdminTtsPage() {
     });
     setBusy(false);
     if (!r.ok) setErr(r.error.message);
-    else { setMsg('配置已保存'); }
+    else {
+      setMsg('配置已保存');
+    }
   }
 
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">语音设置</h1>
-      <p className="text-sm text-ink-soft">站点全局默认音色,字典页「读字」用男声、「读音」用女声。</p>
+      <p className="text-sm text-ink-soft">
+        站点全局默认音色,字典页「读字」用男声、「读音」用女声。
+      </p>
 
-      {err && <p className="text-sm text-seal inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />{err}</p>}
-      {msg && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{msg}</p>}
+      {err && (
+        <p className="text-sm text-seal inline-flex items-center gap-1">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          {err}
+        </p>
+      )}
+      {msg && (
+        <p className="text-sm text-green-700 inline-flex items-center gap-1">
+          <Check className="h-3.5 w-3.5" />
+          {msg}
+        </p>
+      )}
 
       <form onSubmit={save} className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
         <div>
           <label className="text-sm font-medium">男声默认 (读字)</label>
           <select
             value={cfg['tts.voice_male'] ?? ''}
-            onChange={e => setCfg(c => ({ ...c, 'tts.voice_male': e.target.value }))}
+            onChange={(e) => setCfg((c) => ({ ...c, 'tts.voice_male': e.target.value }))}
             className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           >
-            {VOICES.male.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
+            {VOICES.male.map((v) => (
+              <option key={v.value} value={v.value}>
+                {v.label}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="text-sm font-medium">女声默认 (读音)</label>
           <select
             value={cfg['tts.voice_female'] ?? ''}
-            onChange={e => setCfg(c => ({ ...c, 'tts.voice_female': e.target.value }))}
+            onChange={(e) => setCfg((c) => ({ ...c, 'tts.voice_female': e.target.value }))}
             className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           >
-            {VOICES.female.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
+            {VOICES.female.map((v) => (
+              <option key={v.value} value={v.value}>
+                {v.label}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="text-sm font-medium">音频格式</label>
           <select
             value={cfg['tts.audio_format'] ?? ''}
-            onChange={e => setCfg(c => ({ ...c, 'tts.audio_format': e.target.value }))}
+            onChange={(e) => setCfg((c) => ({ ...c, 'tts.audio_format': e.target.value }))}
             className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           >
-            {FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+            {FORMATS.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
           </select>
         </div>
-        <button type="submit" disabled={busy}
-          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={busy}
+          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+        >
           {busy ? '保存中…' : '保存'}
         </button>
       </form>
@@ -947,6 +1005,7 @@ git commit -m "feat(admin/tts): config page + generic admin/config API"
 ### Task 8: AdminSidebar 加「语音设置」
 
 **Files:**
+
 - Modify: `components/admin/AdminSidebar.tsx`
 
 - [ ] **Step 1: ITEMS 数组插 1 行**
@@ -1002,6 +1061,7 @@ git commit -m "feat(admin/sidebar): add 语音设置 entry to /admin/tts"
 ### Task 10: lib/chars.getRandomChars + API + RandomTab
 
 **Files:**
+
 - Modify: `lib/chars.ts` (加 getRandomChars)
 - Modify: `lib/validators.ts` (加 charsRandomQuerySchema)
 - Create: `app/api/chars/random/route.ts`
@@ -1023,9 +1083,9 @@ export const charsRandomQuerySchema = z.object({
 
 ```typescript
 const DIFFICULTY_LEVELS: Record<'easy' | 'medium' | 'hard', number[]> = {
-  easy:   [1],
+  easy: [1],
   medium: [1, 2],
-  hard:   [1, 2, 3],
+  hard: [1, 2, 3],
 };
 
 export async function getRandomChars(opts: {
@@ -1044,7 +1104,7 @@ export async function getRandomChars(opts: {
      LIMIT ?`,
     [...levels, opts.count],
   );
-  return rows.map(r => ({
+  return rows.map((r) => ({
     char: r.char,
     pinyin: r.pinyin ?? '',
     meaningZh: r.meaning_zh,
@@ -1071,7 +1131,8 @@ export async function GET(req: NextRequest) {
       count: sp.get('count') ?? undefined,
       difficulty: sp.get('difficulty') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const chars = await getRandomChars(parsed.data);
     return NextResponse.json({ ok: true, data: { chars } });
   });
@@ -1119,7 +1180,7 @@ integrationDescribe('GET /api/chars/random', () => {
     // 简单验证:返回的 char 都是 BMP (mysql2 过滤已生效)
     for (const c of j.data.chars) {
       const cp = c.char.codePointAt(0)!;
-      expect(cp).toBeLessThanOrEqual(0x9FFF);
+      expect(cp).toBeLessThanOrEqual(0x9fff);
     }
   });
 });
@@ -1157,12 +1218,16 @@ export function RandomTab({ onPicked }: Props) {
   const [err, setErr] = useState<string | null>(null);
 
   async function handleGenerate() {
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     try {
       const res = await fetch(`/api/chars/random?count=${count}&difficulty=${difficulty}`);
       const j = await res.json();
-      if (!j.ok) { setErr(j.error?.message ?? '生成失败'); return; }
-      const chars = (j.data.chars as RandomChar[]).map(c => c.char);
+      if (!j.ok) {
+        setErr(j.error?.message ?? '生成失败');
+        return;
+      }
+      const chars = (j.data.chars as RandomChar[]).map((c) => c.char);
       onPicked(chars);
     } catch (e) {
       setErr((e as Error).message);
@@ -1178,26 +1243,34 @@ export function RandomTab({ onPicked }: Props) {
         <div>
           <label className="text-sm font-medium text-ink-soft">字数 (1-100)</label>
           <input
-            type="number" min={1} max={100} value={count}
-            onChange={e => setCount(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
+            type="number"
+            min={1}
+            max={100}
+            value={count}
+            onChange={(e) => setCount(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
         </div>
         <div>
           <label className="text-sm font-medium text-ink-soft">难度</label>
           <select
-            value={difficulty} onChange={e => setDifficulty(e.target.value as any)}
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as any)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           >
-            {(['easy', 'medium', 'hard'] as const).map(d => (
-              <option key={d} value={d}>{DIFFICULTY_LABELS[d]}</option>
+            {(['easy', 'medium', 'hard'] as const).map((d) => (
+              <option key={d} value={d}>
+                {DIFFICULTY_LABELS[d]}
+              </option>
             ))}
           </select>
         </div>
       </div>
       {err && <p className="text-sm text-red-600">{err}</p>}
       <button
-        type="button" onClick={handleGenerate} disabled={busy}
+        type="button"
+        onClick={handleGenerate}
+        disabled={busy}
         className="rounded-md bg-ink px-4 py-2 text-paper-soft hover:bg-ink/80 disabled:opacity-50"
       >
         {busy ? '抽字中…' : '随机生成'}
@@ -1295,6 +1368,7 @@ git commit -m "feat(worksheet): random tab — pick N chars by difficulty"
 ### Task 11: TextToPinyin 独立路由
 
 **Files:**
+
 - Create: `app/pinyin/page.tsx`
 - Modify: `app/page.tsx`
 - Modify: `lib/design.ts`
@@ -1349,7 +1423,7 @@ export const NAV_LINKS = [
   { href: '/rare-chars', label: '罕见字库' },
   { href: '/dictionary', label: '字典' },
   { href: '/worksheet', label: '字帖' },
-  { href: '/pinyin', label: '字转拼音' },     // 新增
+  { href: '/pinyin', label: '字转拼音' }, // 新增
   { href: '/poetry', label: '诗词' },
   { href: '/sutra', label: '佛经' },
   { href: '/game', label: '游戏' },
@@ -1464,14 +1538,14 @@ git push origin main
 
 ## 风险
 
-| 风险 | 缓解 |
-|---|---|
-| Edge TTS 协议变化 | 用成熟 edge-tts 开源协议参考;fallback 到浏览器 speech |
-| WebSocket Next.js runtime 差异 | `runtime = 'nodejs'`, 不用 edge |
-| 高频朗读服务器压力 | maxDuration=30s + text 1000 字上限 |
-| 502/504 体验断裂 | lib/tts catch 块 fallback 到浏览器 speech |
-| 4-byte UTF-8 mysql2 mojibake | 随机字帖 SQL 过滤 BMP |
-| 8000+ char 性能 | chars 表有索引 (pinyin), `ORDER BY RAND() LIMIT 100` 毫秒级 |
-| `card-paper` 改 transparent 后其他页面 hover 变化 | 检查所有使用处;outline 卡片补 hover bg |
-| 用户连点抽字 | 不去重,符合"随机"语义 |
-| `ws` 包没装 | Step 1 显式 `pnpm add ws` |
+| 风险                                              | 缓解                                                        |
+| ------------------------------------------------- | ----------------------------------------------------------- |
+| Edge TTS 协议变化                                 | 用成熟 edge-tts 开源协议参考;fallback 到浏览器 speech       |
+| WebSocket Next.js runtime 差异                    | `runtime = 'nodejs'`, 不用 edge                             |
+| 高频朗读服务器压力                                | maxDuration=30s + text 1000 字上限                          |
+| 502/504 体验断裂                                  | lib/tts catch 块 fallback 到浏览器 speech                   |
+| 4-byte UTF-8 mysql2 mojibake                      | 随机字帖 SQL 过滤 BMP                                       |
+| 8000+ char 性能                                   | chars 表有索引 (pinyin), `ORDER BY RAND() LIMIT 100` 毫秒级 |
+| `card-paper` 改 transparent 后其他页面 hover 变化 | 检查所有使用处;outline 卡片补 hover bg                      |
+| 用户连点抽字                                      | 不去重,符合"随机"语义                                       |
+| `ws` 包没装                                       | Step 1 显式 `pnpm add ws`                                   |

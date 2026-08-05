@@ -24,10 +24,8 @@ const SIZE_CLASS: Record<Size, string> = {
 const VARIANT_CLASS = {
   paper:
     'border border-ink/30 text-ink-soft bg-paper-soft hover:bg-paper hover:border-ink/60 hover:text-ink',
-  ink:
-    'border border-ink/60 text-ink bg-paper hover:bg-ink hover:text-paper-soft',
-  seal:
-    'border border-seal/60 text-seal bg-paper-soft hover:bg-seal hover:text-paper-soft',
+  ink: 'border border-ink/60 text-ink bg-paper hover:bg-ink hover:text-paper-soft',
+  seal: 'border border-seal/60 text-seal bg-paper-soft hover:bg-seal hover:text-paper-soft',
 } as const;
 
 export function ReadAloudButton({
@@ -68,7 +66,7 @@ export function ReadAloudButton({
       className={`inline-flex items-center rounded-sm font-kai tracking-widest transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${SIZE_CLASS[size]} ${VARIANT_CLASS[variant]} ${className}`}
     >
       <SpeakerIcon active={isSpeaking} />
-      <span>{isSpeaking ? '停止' : label ?? '朗读'}</span>
+      <span>{isSpeaking ? '停止' : (label ?? '朗读')}</span>
     </button>
   );
 }

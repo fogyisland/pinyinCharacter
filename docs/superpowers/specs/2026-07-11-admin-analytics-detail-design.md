@@ -18,11 +18,11 @@ User wants scoping questions to remain tight: **click row → copy to clipboard*
 
 ## Decomposition (3-wave recap)
 
-| Wave | Scope | Status |
-|---|---|---|
-| 1 — Foundation | `?range=` helper + recharts wrappers + `getRecentActivity` | SHIPPED (`6712e955..03e16d98`) |
-| 2 — `/admin/analytics` page (THIS SPEC) | Top-20 paths + range tabs + drill-by-copy + sidebar entry | spec stage |
-| 3 — `/admin` redesign + anomaly | KPI grid + TrendChart + RecentActivity widget + AnomalyBanner + polling | future spec |
+| Wave                                    | Scope                                                                   | Status                         |
+| --------------------------------------- | ----------------------------------------------------------------------- | ------------------------------ |
+| 1 — Foundation                          | `?range=` helper + recharts wrappers + `getRecentActivity`              | SHIPPED (`6712e955..03e16d98`) |
+| 2 — `/admin/analytics` page (THIS SPEC) | Top-20 paths + range tabs + drill-by-copy + sidebar entry               | spec stage                     |
+| 3 — `/admin` redesign + anomaly         | KPI grid + TrendChart + RecentActivity widget + AnomalyBanner + polling | future spec                    |
 
 ## Global Constraints (binding for Wave 2)
 
@@ -57,13 +57,13 @@ User wants scoping questions to remain tight: **click row → copy to clipboard*
 
 ### Files (4 operations, ~180 LoC)
 
-| File | Action | LoC | Purpose |
-|---|---|---|---|
-| `lib/admin-pageviews.ts` | Modify (+~50) | 50 | Add `TopPage` interface + `getTopPaths(days, limit)` SELECT |
-| `tests/unit/lib/admin-pageviews.test.ts` | Create | 80 | TDD: 5 cases for `getTopPaths` (mock-pool pattern) |
-| `app/admin/analytics/page.tsx` | Create | 110 | Server component: header + RangeTabs + BarChartTop + table |
-| `components/admin/AdminSidebar.tsx` | Modify (+1) | 1 | Add `{ href: '/admin/analytics', label: '访问分析' }` to 运维 group last position |
-| `REDEPLOY-2026-07-09.md` | Modify (bump v8 → v9) | +30 | Add Wave 2 commit(s) |
+| File                                     | Action                | LoC | Purpose                                                                           |
+| ---------------------------------------- | --------------------- | --- | --------------------------------------------------------------------------------- |
+| `lib/admin-pageviews.ts`                 | Modify (+~50)         | 50  | Add `TopPage` interface + `getTopPaths(days, limit)` SELECT                       |
+| `tests/unit/lib/admin-pageviews.test.ts` | Create                | 80  | TDD: 5 cases for `getTopPaths` (mock-pool pattern)                                |
+| `app/admin/analytics/page.tsx`           | Create                | 110 | Server component: header + RangeTabs + BarChartTop + table                        |
+| `components/admin/AdminSidebar.tsx`      | Modify (+1)           | 1   | Add `{ href: '/admin/analytics', label: '访问分析' }` to 运维 group last position |
+| `REDEPLOY-2026-07-09.md`                 | Modify (bump v8 → v9) | +30 | Add Wave 2 commit(s)                                                              |
 
 ### Key Interfaces
 
@@ -71,8 +71,8 @@ User wants scoping questions to remain tight: **click row → copy to clipboard*
 // lib/admin-pageviews.ts (extend)
 export interface TopPage {
   path: string;
-  views: number;        // COUNT(*) over range
-  unique: number;       // COUNT(DISTINCT COALESCE(user_id, ip)) over range
+  views: number; // COUNT(*) over range
+  unique: number; // COUNT(DISTINCT COALESCE(user_id, ip)) over range
 }
 
 export async function getTopPaths(days: number, limit: number): Promise<TopPage[]>;
@@ -138,9 +138,16 @@ A `<CopyPathCell>` client component wraps a `<button>` containing the path text:
 export function CopyPathCell({ path }: { path: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button onClick={async () => {
-      try { await navigator.clipboard.writeText(path); setCopied(true); setTimeout(() => setCopied(false), 1500); } catch {}
-    }} className="hover:bg-muted/50 ...">
+    <button
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(path);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        } catch {}
+      }}
+      className="hover:bg-muted/50 ..."
+    >
       {copied ? '✓ 已复制' : path}
     </button>
   );
@@ -151,25 +158,25 @@ Tiny client island: ~15 LoC. Falls back silently on browsers without `navigator.
 
 ### Data Flow
 
-| Step | What | Where |
-|---|---|---|
-| 1 | User navigates `/admin/analytics?range=30d` | Browser |
-| 2 | Server reads `searchParams.range`, falls back to `'7d'` if invalid | `parseRange()` Wave 1 |
-| 3 | Server calls `getTopPaths(rangeToDays(current), 20)` | New helper, single SELECT |
-| 4 | Server returns page (HTML SSR'd) | `app/admin/analytics/page.tsx` |
-| 5 | Click on path cell → client side → clipboard copy | `<CopyPathCell/>` client island |
-| 6 | Click on range tab → page reload with `?range=X` | `<Link>` (server-driven) |
+| Step | What                                                               | Where                           |
+| ---- | ------------------------------------------------------------------ | ------------------------------- |
+| 1    | User navigates `/admin/analytics?range=30d`                        | Browser                         |
+| 2    | Server reads `searchParams.range`, falls back to `'7d'` if invalid | `parseRange()` Wave 1           |
+| 3    | Server calls `getTopPaths(rangeToDays(current), 20)`               | New helper, single SELECT       |
+| 4    | Server returns page (HTML SSR'd)                                   | `app/admin/analytics/page.tsx`  |
+| 5    | Click on path cell → client side → clipboard copy                  | `<CopyPathCell/>` client island |
+| 6    | Click on range tab → page reload with `?range=X`                   | `<Link>` (server-driven)        |
 
 ### Error Handling
 
-| Failure | Handling |
-|---|---|
-| `parseRange` unknown value | Returns `'7d'` (Wave 1 default), never throws |
-| `getTopPaths` DB error | Server component lets it bubble → Next.js error boundary → default 500 (admin-only route, low blast radius) |
-| `rangeToDays` invalid | TypeScript-level (Range type prevents) |
-| `page_views` table empty | Empty array from `getTopPaths` → BarChartTop renders its existing "暂无数据" placeholder, table renders just headers |
-| `clipboard API` unavailable | Silent fallback (no toast, no error) |
-| User clicks cell with super-long path | Path text overflows with `truncate` Tailwind class |
+| Failure                               | Handling                                                                                                             |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `parseRange` unknown value            | Returns `'7d'` (Wave 1 default), never throws                                                                        |
+| `getTopPaths` DB error                | Server component lets it bubble → Next.js error boundary → default 500 (admin-only route, low blast radius)          |
+| `rangeToDays` invalid                 | TypeScript-level (Range type prevents)                                                                               |
+| `page_views` table empty              | Empty array from `getTopPaths` → BarChartTop renders its existing "暂无数据" placeholder, table renders just headers |
+| `clipboard API` unavailable           | Silent fallback (no toast, no error)                                                                                 |
+| User clicks cell with super-long path | Path text overflows with `truncate` Tailwind class                                                                   |
 
 ### Testing (`tests/unit/lib/admin-pageviews.test.ts`)
 
@@ -179,17 +186,19 @@ Tiny client island: ~15 LoC. Falls back silently on browsers without `navigator.
 describe('getTopPaths', () => {
   it('queries FROM page_views with LIMIT and INTERVAL clause', async () => {
     await getTopPaths(7, 20);
-    const q = queryLog.find(x => x.sql.includes('FROM page_views'));
+    const q = queryLog.find((x) => x.sql.includes('FROM page_views'));
     expect(q).toBeDefined();
     expect(q!.sql).toMatch(/GROUP BY path/);
     expect(q!.params).toEqual([7, 20]);
   });
 
   it('groups by path, orders by views DESC, applies LIMIT', async () => {
-    queryResults['FROM page_views'] = [[
-      { path: '/a', views: 100, unique_visitors: 50 },
-      { path: '/b', views: 50, unique_visitors: 30 },
-    ]];
+    queryResults['FROM page_views'] = [
+      [
+        { path: '/a', views: 100, unique_visitors: 50 },
+        { path: '/b', views: 50, unique_visitors: 30 },
+      ],
+    ];
     const result = await getTopPaths(7, 10);
     expect(result[0].path).toBe('/a');
     expect(result[0].views).toBe(100);
@@ -271,14 +280,14 @@ docs(redeploy): v9 — add Wave 2 SHA + admin/analytics section [2026-07-11 HH.M
 
 ### Files Summary
 
-| File | Action | LoC |
-|---|---|---|
-| `lib/admin-pageviews.ts` | Modify (+~50) | +50 |
-| `tests/unit/lib/admin-pageviews.test.ts` | Create | +80 |
-| `app/admin/analytics/page.tsx` | Create | +110 |
-| `components/admin/AdminSidebar.tsx` | Modify (+1) | +1 |
-| `components/admin/analytics/CopyPathCell.tsx` | Create | +15 |
-| `REDEPLOY-2026-07-09.md` | Modify (v8 → v9) | +30 |
+| File                                          | Action           | LoC  |
+| --------------------------------------------- | ---------------- | ---- |
+| `lib/admin-pageviews.ts`                      | Modify (+~50)    | +50  |
+| `tests/unit/lib/admin-pageviews.test.ts`      | Create           | +80  |
+| `app/admin/analytics/page.tsx`                | Create           | +110 |
+| `components/admin/AdminSidebar.tsx`           | Modify (+1)      | +1   |
+| `components/admin/analytics/CopyPathCell.tsx` | Create           | +15  |
+| `REDEPLOY-2026-07-09.md`                      | Modify (v8 → v9) | +30  |
 
 **Total: ~286 LoC across 6 files (5 source + 1 doc).**
 

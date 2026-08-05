@@ -41,7 +41,11 @@ async function getColumnInfo(): Promise<{ chunks: boolean; chunkCount: boolean }
   return { chunks: cols.has('chunks'), chunkCount: cols.has('chunk_count') };
 }
 
-async function verifyAlignment(): Promise<{ dbSlugs: Set<string>; manifestSlugs: Set<string>; aligned: boolean }> {
+async function verifyAlignment(): Promise<{
+  dbSlugs: Set<string>;
+  manifestSlugs: Set<string>;
+  aligned: boolean;
+}> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(`SELECT slug FROM classics`);
   const dbSlugs = new Set((rows as any[]).map((r) => r.slug as string));
@@ -53,7 +57,8 @@ async function verifyAlignment(): Promise<{ dbSlugs: Set<string>; manifestSlugs:
   if (!aligned) {
     console.warn(`[verify] db=${dbSlugs.size} manifest=${manifestSlugs.size} aligned=false`);
     if (inDbNotManifest.length > 0) console.warn(`[verify] DB-only: ${inDbNotManifest.join(', ')}`);
-    if (inManifestNotDb.length > 0) console.warn(`[verify] Manifest-only: ${inManifestNotDb.join(', ')}`);
+    if (inManifestNotDb.length > 0)
+      console.warn(`[verify] Manifest-only: ${inManifestNotDb.join(', ')}`);
   } else {
     console.log(`[verify] db=${dbSlugs.size} manifest=${manifestSlugs.size} aligned=true`);
   }
@@ -70,7 +75,12 @@ export async function dropClassicsChunks(opts: { dryRun: boolean }): Promise<{
   if (!cols.chunks && !cols.chunkCount) {
     console.log(`[drop] already dropped (chunks and chunk_count both absent)`);
     const v = await verifyAlignment();
-    return { alreadyDropped: true, droppedChunks: false, droppedChunkCount: false, aligned: v.aligned };
+    return {
+      alreadyDropped: true,
+      droppedChunks: false,
+      droppedChunkCount: false,
+      aligned: v.aligned,
+    };
   }
 
   const v = await verifyAlignment();
@@ -81,7 +91,12 @@ export async function dropClassicsChunks(opts: { dryRun: boolean }): Promise<{
   if (opts.dryRun) {
     console.log(`[dry-run] would ALTER TABLE classics DROP COLUMN chunks`);
     console.log(`[dry-run] would ALTER TABLE classics DROP COLUMN chunk_count`);
-    return { alreadyDropped: false, droppedChunks: false, droppedChunkCount: false, aligned: v.aligned };
+    return {
+      alreadyDropped: false,
+      droppedChunks: false,
+      droppedChunkCount: false,
+      aligned: v.aligned,
+    };
   }
 
   const pool = getPool();
@@ -94,7 +109,12 @@ export async function dropClassicsChunks(opts: { dryRun: boolean }): Promise<{
     console.log(`[drop] ALTER TABLE classics DROP COLUMN chunks`);
     await pool.query(`ALTER TABLE classics DROP COLUMN chunks`);
   }
-  return { alreadyDropped: false, droppedChunks: cols.chunks, droppedChunkCount: cols.chunkCount, aligned: v.aligned };
+  return {
+    alreadyDropped: false,
+    droppedChunks: cols.chunks,
+    droppedChunkCount: cols.chunkCount,
+    aligned: v.aligned,
+  };
 }
 
 if (require.main === module) {

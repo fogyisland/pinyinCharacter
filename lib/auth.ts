@@ -4,7 +4,10 @@ import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 import { getPool } from './db';
 
-export interface User { id: number; username: string; }
+export interface User {
+  id: number;
+  username: string;
+}
 export interface SessionPayload extends JwtPayload {
   userId: number;
   username: string;
@@ -30,11 +33,10 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 }
 
 export async function signSession(user: User): Promise<string> {
-  return jwt.sign(
-    { userId: user.id, username: user.username },
-    getSecret(),
-    { algorithm: 'HS256', expiresIn: `${SESSION_DAYS}d` }
-  );
+  return jwt.sign({ userId: user.id, username: user.username }, getSecret(), {
+    algorithm: 'HS256',
+    expiresIn: `${SESSION_DAYS}d`,
+  });
 }
 
 export async function verifySession(token: string): Promise<SessionPayload | null> {
@@ -55,7 +57,7 @@ export async function getCurrentUser(): Promise<User | null> {
   // Check disabled_at
   const [rows] = await getPool().query<any[]>(
     `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
-    [session.userId]
+    [session.userId],
   );
   if (rows.length === 0 || rows[0].disabled_at !== null) return null;
   return { id: session.userId, username: session.username };
@@ -65,7 +67,10 @@ export interface SetSessionCookieOptions {
   secure: boolean;
 }
 
-export async function setSessionCookie(token: string, opts: SetSessionCookieOptions): Promise<void> {
+export async function setSessionCookie(
+  token: string,
+  opts: SetSessionCookieOptions,
+): Promise<void> {
   (await cookies()).set({
     name: COOKIE_NAME,
     value: token,
@@ -96,7 +101,9 @@ export function validatePassword(s: string): string | null {
   return null;
 }
 
-export interface UserWithAdmin extends User { isAdmin: boolean; }
+export interface UserWithAdmin extends User {
+  isAdmin: boolean;
+}
 
 /**
  * Same as getCurrentUser, but also queries is_admin from DB.
@@ -110,7 +117,7 @@ export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
-    [user.id]
+    [user.id],
   );
   if (rows.length === 0) return null;
   // If disabled since the last check (e.g. session was just created), return null
@@ -145,7 +152,7 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
       reason: 'unauthenticated',
       response: NextResponse.json(
         { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
-        { status: 401 }
+        { status: 401 },
       ),
     };
   }
@@ -155,7 +162,7 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
       reason: 'forbidden',
       response: NextResponse.json(
         { ok: false, error: { code: 'forbidden', message: '需要管理员权限' } },
-        { status: 403 }
+        { status: 403 },
       ),
     };
   }
@@ -182,7 +189,7 @@ export async function requireUser(): Promise<RequireUserResult> {
       reason: 'unauthenticated',
       response: NextResponse.json(
         { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
-        { status: 401 }
+        { status: 401 },
       ),
     };
   }
@@ -193,14 +200,14 @@ export async function requireUser(): Promise<RequireUserResult> {
       reason: 'unauthenticated',
       response: NextResponse.json(
         { ok: false, error: { code: 'unauthenticated', message: '会话无效' } },
-        { status: 401 }
+        { status: 401 },
       ),
     };
   }
   // Check disabled_at explicitly so the reason is 'account_disabled' (403), not 401
   const [rows] = await getPool().query<any[]>(
     `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
-    [session.userId]
+    [session.userId],
   );
   if (rows.length === 0 || rows[0].disabled_at !== null) {
     return {
@@ -208,7 +215,7 @@ export async function requireUser(): Promise<RequireUserResult> {
       reason: 'account_disabled',
       response: NextResponse.json(
         { ok: false, error: { code: 'account_disabled', message: '账户已停用' } },
-        { status: 403 }
+        { status: 403 },
       ),
     };
   }

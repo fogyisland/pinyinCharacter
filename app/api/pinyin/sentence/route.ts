@@ -7,7 +7,10 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const pinyin = url.searchParams.get('pinyin');
   if (!pinyin) {
-    return NextResponse.json({ ok: false, error: 'pinyin required', code: 'missing_pinyin' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'pinyin required', code: 'missing_pinyin' },
+      { status: 400 },
+    );
   }
   const safeMode = url.searchParams.get('safeMode') === 'true';
   const script = (url.searchParams.get('script') ?? 'simplified') as 'simplified' | 'traditional';

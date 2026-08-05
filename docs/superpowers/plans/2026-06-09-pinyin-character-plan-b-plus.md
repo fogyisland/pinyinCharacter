@@ -11,6 +11,7 @@
 **Out of scope:** OAuth、密码强制轮换、RBAC、国际化（v1 全部中文）、多实例共享的 rate limit（in-memory 即可）。
 
 **Pre-requisites:**
+
 - Node 20+, pnpm 9+
 - 项目根目录：`E:\ToolDevelop\PinYinCharacter`
 - Plan B 已完成（22 commits 在 main，`main` 分支）
@@ -105,6 +106,7 @@ Plan B 已有的 `tests/integration/setup.ts` 用 `DATABASE_URL_TEST` env 标识
 ## Task 1: 安装 nodemailer + 扩展 .env.example
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\package.json`
 - Modify: `E:\ToolDevelop\PinYinCharacter\.env.example`
 
@@ -161,6 +163,7 @@ git commit -m "feat(deps): add nodemailer + mail env vars"
 ## Task 2: 扩展 init-db 加 password_resets 表
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\scripts\init-db.ts`
 - Modify: `E:\ToolDevelop\PinYinCharacter\tests\integration\setup.ts`
 
@@ -221,6 +224,7 @@ git commit -m "feat(db): add password_resets table + truncate"
 ## Task 3: lib/ratelimit.ts（in-memory 1/60s/IP）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\ratelimit.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\ratelimit.test.ts`
 
@@ -305,6 +309,7 @@ git commit -m "feat(lib): in-memory rate limit (1/60s/key)"
 ## Task 4: lib/email.ts（sendEmail + 错误类）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\email.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\email.test.ts`
 
@@ -346,14 +351,14 @@ describe('sendEmail', () => {
     process.env.MAIL_TRANSPORT = 'smtp';
     delete process.env.SMTP_HOST;
     await expect(
-      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' })
+      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' }),
     ).rejects.toBeInstanceOf(EmailNotConfiguredError);
   });
 
   it('MAIL_TRANSPORT=foo throws EmailNotConfiguredError', async () => {
     process.env.MAIL_TRANSPORT = 'foo';
     await expect(
-      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' })
+      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' }),
     ).rejects.toBeInstanceOf(EmailNotConfiguredError);
   });
 });
@@ -395,7 +400,9 @@ function buildTransport(): Transporter {
   const pass = process.env.SMTP_PASS;
   if (!host) throw new EmailNotConfiguredError('SMTP_HOST is not set');
   cachedTransport = nodemailer.createTransport({
-    host, port, secure,
+    host,
+    port,
+    secure,
     auth: user && pass ? { user, pass } : undefined,
   });
   return cachedTransport;
@@ -454,6 +461,7 @@ git commit -m "feat(email): sendEmail with console/smtp transport + errors"
 ## Task 5: lib/email-templates.ts（passwordResetEmail）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\email-templates.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\email-templates.test.ts`
 
@@ -464,7 +472,11 @@ import { describe, it, expect } from 'vitest';
 import { passwordResetEmail } from '@/lib/email-templates';
 
 describe('passwordResetEmail', () => {
-  const args = { username: 'alice', resetUrl: 'https://x.com/reset?token=abc', expiresInMinutes: 15 };
+  const args = {
+    username: 'alice',
+    resetUrl: 'https://x.com/reset?token=abc',
+    expiresInMinutes: 15,
+  };
 
   it('subject mentions 密码', () => {
     expect(passwordResetEmail(args).subject).toMatch(/密码/);
@@ -596,6 +608,7 @@ git commit -m "feat(email): password reset HTML + text template"
 ## Task 6: lib/password-reset.ts（token 生成/校验/CRUD）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\password-reset.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\password-reset.test.ts`
 
@@ -604,8 +617,10 @@ git commit -m "feat(email): password reset HTML + text template"
 ```ts
 import { describe, it, expect } from 'vitest';
 import {
-  generateResetToken, hashResetToken,
-  RESET_TTL_MINUTES, TOKEN_MIN_LENGTH,
+  generateResetToken,
+  hashResetToken,
+  RESET_TTL_MINUTES,
+  TOKEN_MIN_LENGTH,
 } from '@/lib/password-reset';
 
 describe('password-reset primitives', () => {
@@ -673,7 +688,7 @@ export async function createResetRow(userId: number, rawToken: string): Promise<
   const [res] = await pool.execute<any>(
     `INSERT INTO password_resets (user_id, token_hash, expires_at)
      VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))`,
-    [userId, hash, RESET_TTL_MINUTES]
+    [userId, hash, RESET_TTL_MINUTES],
   );
   return Number(res.insertId);
 }
@@ -686,26 +701,22 @@ export async function findValidResetRow(rawToken: string): Promise<ResetRow | nu
      FROM password_resets
      WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()
      ORDER BY id DESC LIMIT 1`,
-    [hash]
+    [hash],
   );
   return rows.length > 0 ? (rows[0] as ResetRow) : null;
 }
 
 export async function markResetUsed(id: number): Promise<void> {
   const pool = getPool();
-  await pool.execute(
-    `UPDATE password_resets SET used_at = NOW() WHERE id = ?`,
-    [id]
-  );
+  await pool.execute(`UPDATE password_resets SET used_at = NOW() WHERE id = ?`, [id]);
 }
 
 export async function findUserByUsername(username: string): Promise<{ id: number } | null> {
   // v1: 表里没有 email 字段；SMTP mode 下需要把用户的真实 email 路径在 v2 加进 schema
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
-    `SELECT id FROM users WHERE username = ? LIMIT 1`,
-    [username]
-  );
+  const [rows] = await pool.execute<any[]>(`SELECT id FROM users WHERE username = ? LIMIT 1`, [
+    username,
+  ]);
   if (rows.length === 0) return null;
   return { id: Number(rows[0].id) };
 }
@@ -731,6 +742,7 @@ git commit -m "feat(auth): password reset token + CRUD helpers"
 ## Task 7: lib/auth.ts 加 `getCurrentUserWithAdmin` + `requireAdmin`
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\lib\auth.ts`
 
 - [ ] **Step 1: 在文件末尾追加**
@@ -740,7 +752,9 @@ git commit -m "feat(auth): password reset token + CRUD helpers"
 import { NextResponse } from 'next/server';
 import { getPool } from './db';
 
-export interface UserWithAdmin extends User { isAdmin: boolean; }
+export interface UserWithAdmin extends User {
+  isAdmin: boolean;
+}
 
 /**
  * Same as getCurrentUser, but also queries is_admin from DB.
@@ -752,10 +766,9 @@ export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null> {
   const user = await getCurrentUser();
   if (!user) return null;
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
-    `SELECT is_admin FROM users WHERE id = ? LIMIT 1`,
-    [user.id]
-  );
+  const [rows] = await pool.execute<any[]>(`SELECT is_admin FROM users WHERE id = ? LIMIT 1`, [
+    user.id,
+  ]);
   if (rows.length === 0) return null;
   return { ...user, isAdmin: Number(rows[0].is_admin) === 1 };
 }
@@ -787,7 +800,7 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
       reason: 'unauthenticated',
       response: NextResponse.json(
         { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
-        { status: 401 }
+        { status: 401 },
       ),
     };
   }
@@ -797,7 +810,7 @@ export async function requireAdmin(): Promise<RequireAdminResult> {
       reason: 'forbidden',
       response: NextResponse.json(
         { ok: false, error: { code: 'forbidden', message: '需要管理员权限' } },
-        { status: 403 }
+        { status: 403 },
       ),
     };
   }
@@ -825,6 +838,7 @@ git commit -m "feat(auth): getCurrentUserWithAdmin + requireAdmin guard"
 ## Task 8: lib/store.ts 加 `isAdmin`
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\lib\store.ts`
 
 - [ ] **Step 1: 加可选字段**
@@ -832,7 +846,11 @@ git commit -m "feat(auth): getCurrentUserWithAdmin + requireAdmin guard"
 把 `User` interface 改成：
 
 ```ts
-export interface User { id: number; username: string; isAdmin?: boolean; }
+export interface User {
+  id: number;
+  username: string;
+  isAdmin?: boolean;
+}
 ```
 
 （`isAdmin` 设为可选以保持 zustand persist 旧 state 兼容。）
@@ -857,6 +875,7 @@ git commit -m "feat(store): User.isAdmin optional field"
 ## Task 9: /api/auth/me 返回 isAdmin
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\app\api\auth\me\route.ts`
 
 - [ ] **Step 1: 替换整个文件**
@@ -868,7 +887,10 @@ import { getCurrentUserWithAdmin } from '@/lib/auth';
 export async function GET() {
   const user = await getCurrentUserWithAdmin();
   if (!user) {
-    return NextResponse.json({ ok: false, error: { code: 'unauthenticated', message: '未登录' } }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+      { status: 401 },
+    );
   }
   return NextResponse.json({ ok: true, data: { user } });
 }
@@ -892,6 +914,7 @@ git commit -m "feat(api): /me returns isAdmin"
 ## Task 10: lib/audit.ts 扩展 AuditEvent 联合
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\lib\audit.ts`
 
 - [ ] **Step 1: 扩展 union**
@@ -900,11 +923,17 @@ git commit -m "feat(api): /me returns isAdmin"
 
 ```ts
 export type AuditEvent =
-  | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete'
-  | 'password_reset_request' | 'password_reset_complete'
-  | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote';
+  | 'register'
+  | 'login'
+  | 'logout'
+  | 'history_create'
+  | 'history_delete'
+  | 'password_reset_request'
+  | 'password_reset_complete'
+  | 'admin_user_delete'
+  | 'admin_user_password_reset'
+  | 'admin_user_promote'
+  | 'admin_user_demote';
 ```
 
 - [ ] **Step 2: 跑测试**
@@ -925,6 +954,7 @@ git commit -m "feat(audit): 6 new admin/password events"
 ## Task 11: POST /api/auth/forgot
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\auth\forgot\route.ts`
 
 - [ ] **Step 1: 创建文件**
@@ -932,13 +962,20 @@ git commit -m "feat(audit): 6 new admin/password events"
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { validateUsername } from '@/lib/auth';
-import { findUserByUsername, generateResetToken, createResetRow, RESET_TTL_MINUTES } from '@/lib/password-reset';
+import {
+  findUserByUsername,
+  generateResetToken,
+  createResetRow,
+  RESET_TTL_MINUTES,
+} from '@/lib/password-reset';
 import { checkRateLimit } from '@/lib/ratelimit';
 import { sendEmail, EmailNotConfiguredError } from '@/lib/email';
 import { passwordResetEmail } from '@/lib/email-templates';
 import { writeAudit } from '@/lib/audit';
 
-interface Body { username?: string; }
+interface Body {
+  username?: string;
+}
 
 function clientIp(req: NextRequest): string {
   return req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
@@ -949,29 +986,46 @@ export async function POST(req: NextRequest) {
   if (!checkRateLimit(ip, 60_000)) {
     return NextResponse.json(
       { ok: false, error: { code: 'rate_limited', message: '请求过于频繁,请稍后再试' } },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
   let body: Body;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
 
   const username = (body.username ?? '').trim();
   const uErr = validateUsername(username);
-  if (uErr) return NextResponse.json({ ok: false, error: { code: 'invalid_username', message: uErr } }, { status: 400 });
+  if (uErr)
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_username', message: uErr } },
+      { status: 400 },
+    );
 
   const ua = req.headers.get('user-agent') ?? null;
   const user = await findUserByUsername(username);
   if (!user) {
-    await writeAudit({ userId: null, event: 'password_reset_request', metadata: { userExists: false, username }, ip, userAgent: ua });
+    await writeAudit({
+      userId: null,
+      event: 'password_reset_request',
+      metadata: { userExists: false, username },
+      ip,
+      userAgent: ua,
+    });
     return NextResponse.json({ ok: true, data: null });
   }
 
   const token = generateResetToken();
   await createResetRow(user.id, token);
 
-  const baseUrl = process.env.PUBLIC_BASE_URL ?? `http://${req.headers.get('host') ?? 'localhost:5555'}`;
+  const baseUrl =
+    process.env.PUBLIC_BASE_URL ?? `http://${req.headers.get('host') ?? 'localhost:5555'}`;
   const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
 
   let emailError: string | null = null;
@@ -983,7 +1037,7 @@ export async function POST(req: NextRequest) {
     if (e instanceof EmailNotConfiguredError) {
       return NextResponse.json(
         { ok: false, error: { code: 'email_not_configured', message: '邮件服务未配置' } },
-        { status: 503 }
+        { status: 503 },
       );
     }
     emailError = e instanceof Error ? e.message : String(e);
@@ -1020,6 +1074,7 @@ git commit -m "feat(api): POST /api/auth/forgot with rate limit + audit"
 ## Task 12: GET /api/auth/reset-info
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\auth\reset-info\route.ts`
 
 - [ ] **Step 1: 创建文件**
@@ -1036,7 +1091,7 @@ export async function GET(req: NextRequest) {
   if (raw.length < TOKEN_MIN) {
     return NextResponse.json(
       { ok: false, error: { code: 'invalid_token', message: '链接已失效,请重新申请' } },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -1044,19 +1099,18 @@ export async function GET(req: NextRequest) {
   if (!row) {
     return NextResponse.json(
       { ok: false, error: { code: 'invalid_token', message: '链接已失效,请重新申请' } },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
-    `SELECT username FROM users WHERE id = ? LIMIT 1`,
-    [row.user_id]
-  );
+  const [rows] = await pool.execute<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
+    row.user_id,
+  ]);
   if (rows.length === 0) {
     return NextResponse.json(
       { ok: false, error: { code: 'invalid_token', message: '链接已失效,请重新申请' } },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -1082,6 +1136,7 @@ git commit -m "feat(api): GET /api/auth/reset-info validates token"
 ## Task 13: POST /api/auth/reset
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\auth\reset\route.ts`
 
 - [ ] **Step 1: 创建文件**
@@ -1092,56 +1147,71 @@ import { hashPassword, signSession, setSessionCookie, validatePassword } from '@
 import { findValidResetRow, markResetUsed } from '@/lib/password-reset';
 import { writeAudit } from '@/lib/audit';
 
-interface Body { token?: string; newPassword?: string; }
+interface Body {
+  token?: string;
+  newPassword?: string;
+}
 
 export async function POST(req: NextRequest) {
   let body: Body;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
 
   const token = body.token ?? '';
   const newPassword = body.newPassword ?? '';
   if (token.length < 32) {
     return NextResponse.json(
       { ok: false, error: { code: 'invalid_token', message: '链接已失效,请重新申请' } },
-      { status: 400 }
+      { status: 400 },
     );
   }
   const pErr = validatePassword(newPassword);
-  if (pErr) return NextResponse.json({ ok: false, error: { code: 'invalid_password', message: pErr } }, { status: 400 });
+  if (pErr)
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_password', message: pErr } },
+      { status: 400 },
+    );
 
   const row = await findValidResetRow(token);
   if (!row) {
     return NextResponse.json(
       { ok: false, error: { code: 'invalid_token', message: '链接已失效,请重新申请' } },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const { getPool } = await import('@/lib/db');
   const pool = getPool();
-  const [urows] = await pool.execute<any[]>(
-    `SELECT id, username FROM users WHERE id = ? LIMIT 1`,
-    [row.user_id]
-  );
+  const [urows] = await pool.execute<any[]>(`SELECT id, username FROM users WHERE id = ? LIMIT 1`, [
+    row.user_id,
+  ]);
   if (urows.length === 0) {
     return NextResponse.json(
       { ok: false, error: { code: 'invalid_token', message: '链接已失效,请重新申请' } },
-      { status: 400 }
+      { status: 400 },
     );
   }
   const user = { id: Number(urows[0].id), username: urows[0].username as string };
 
   const newHash = await hashPassword(newPassword);
-  await pool.execute(
-    `UPDATE users SET password_hash = ? WHERE id = ?`,
-    [newHash, user.id]
-  );
+  await pool.execute(`UPDATE users SET password_hash = ? WHERE id = ?`, [newHash, user.id]);
   await markResetUsed(row.id);
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
-  await writeAudit({ userId: user.id, event: 'password_reset_complete', metadata: { resetId: row.id }, ip, userAgent: ua });
+  await writeAudit({
+    userId: user.id,
+    event: 'password_reset_complete',
+    metadata: { resetId: row.id },
+    ip,
+    userAgent: ua,
+  });
 
   const sessionToken = await signSession(user);
   await setSessionCookie(sessionToken, { secure: process.env.COOKIE_SECURE === 'true' });
@@ -1168,6 +1238,7 @@ git commit -m "feat(api): POST /api/auth/reset completes password change"
 ## Task 14: lib/admin.ts（listUsers / getUserDetail / getAuditLog / getSystemStats / writeAdminOps）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\admin.ts`
 
 - [ ] **Step 1: 创建文件**
@@ -1213,14 +1284,12 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
      ) h ON h.user_id = u.id
      ORDER BY u.created_at DESC
      LIMIT ? OFFSET ?`,
-    [limit, offset]
+    [limit, offset],
   );
-  const [countRows] = await pool.execute<any[]>(
-    `SELECT COUNT(*) AS n FROM users`
-  );
+  const [countRows] = await pool.execute<any[]>(`SELECT COUNT(*) AS n FROM users`);
 
   return {
-    users: rows.map(r => ({
+    users: rows.map((r) => ({
       id: Number(r.id),
       username: r.username,
       isAdmin: Number(r.is_admin) === 1,
@@ -1251,7 +1320,7 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
        FROM history GROUP BY user_id
      ) h ON h.user_id = u.id
      WHERE u.id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   if (rows.length === 0) return null;
   const r = rows[0];
@@ -1265,16 +1334,23 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
   };
   const [hist] = await pool.execute<any[]>(
     `SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`,
-    [id]
+    [id],
   );
   return { user, recentHistory: hist as HistoryRow[] };
 }
 
 export type AuditEventName =
-  | 'register' | 'login' | 'logout' | 'history_create' | 'history_delete'
-  | 'password_reset_request' | 'password_reset_complete'
-  | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote';
+  | 'register'
+  | 'login'
+  | 'logout'
+  | 'history_create'
+  | 'history_delete'
+  | 'password_reset_request'
+  | 'password_reset_complete'
+  | 'admin_user_delete'
+  | 'admin_user_password_reset'
+  | 'admin_user_promote'
+  | 'admin_user_demote';
 
 export interface AuditLogRow {
   id: number;
@@ -1289,32 +1365,47 @@ export interface AuditLogRow {
 export interface AuditLogOptions {
   userId?: number;
   event?: AuditEventName;
-  from?: string;     // ISO date
-  to?: string;       // ISO date
+  from?: string; // ISO date
+  to?: string; // ISO date
   limit?: number;
   offset?: number;
 }
-export interface AuditLogResult { rows: AuditLogRow[]; total: number; }
+export interface AuditLogResult {
+  rows: AuditLogRow[];
+  total: number;
+}
 
 export async function getAuditLog(opts: AuditLogOptions = {}): Promise<AuditLogResult> {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const offset = Math.max(opts.offset ?? 0, 0);
   const wheres: string[] = [];
   const params: any[] = [];
-  if (opts.userId !== undefined) { wheres.push('user_id = ?'); params.push(opts.userId); }
-  if (opts.event) { wheres.push('event = ?'); params.push(opts.event); }
-  if (opts.from) { wheres.push('created_at >= ?'); params.push(opts.from); }
-  if (opts.to) { wheres.push('created_at <= ?'); params.push(opts.to); }
+  if (opts.userId !== undefined) {
+    wheres.push('user_id = ?');
+    params.push(opts.userId);
+  }
+  if (opts.event) {
+    wheres.push('event = ?');
+    params.push(opts.event);
+  }
+  if (opts.from) {
+    wheres.push('created_at >= ?');
+    params.push(opts.from);
+  }
+  if (opts.to) {
+    wheres.push('created_at <= ?');
+    params.push(opts.to);
+  }
   const where = wheres.length ? `WHERE ${wheres.join(' AND ')}` : '';
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, event, metadata, ip, user_agent, created_at
      FROM audit_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-    [...params, limit, offset]
+    [...params, limit, offset],
   );
   const [countRows] = await pool.execute<any[]>(
     `SELECT COUNT(*) AS n FROM audit_log ${where}`,
-    params
+    params,
   );
   return { rows: rows as AuditLogRow[], total: Number(countRows[0]?.n ?? 0) };
 }
@@ -1335,7 +1426,7 @@ export async function getSystemStats(): Promise<SystemStats> {
        (SELECT COUNT(*) FROM users WHERE is_admin = 1) AS admins,
        (SELECT COUNT(*) FROM history) AS history,
        (SELECT COUNT(*) FROM history WHERE is_favorite = 1) AS favorites,
-       (SELECT COUNT(*) FROM audit_log) AS audit`
+       (SELECT COUNT(*) FROM audit_log) AS audit`,
   );
   const r = rows[0] ?? {};
   return {
@@ -1351,35 +1442,32 @@ export async function countOtherAdmins(excludeUserId: number): Promise<number> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT COUNT(*) AS n FROM users WHERE is_admin = 1 AND id != ?`,
-    [excludeUserId]
+    [excludeUserId],
   );
   return Number(rows[0]?.n ?? 0);
 }
 
 export async function deleteUserCascade(id: number): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
-    `DELETE FROM users WHERE id = ?`,
-    [id]
-  );
+  const [res] = await pool.execute<any>(`DELETE FROM users WHERE id = ?`, [id]);
   return res.affectedRows > 0;
 }
 
 export async function setUserAdmin(id: number, isAdmin: boolean): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
-    `UPDATE users SET is_admin = ? WHERE id = ?`,
-    [isAdmin ? 1 : 0, id]
-  );
+  const [res] = await pool.execute<any>(`UPDATE users SET is_admin = ? WHERE id = ?`, [
+    isAdmin ? 1 : 0,
+    id,
+  ]);
   return res.affectedRows > 0;
 }
 
 export async function setUserPasswordHash(id: number, hash: string): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
-    `UPDATE users SET password_hash = ? WHERE id = ?`,
-    [hash, id]
-  );
+  const [res] = await pool.execute<any>(`UPDATE users SET password_hash = ? WHERE id = ?`, [
+    hash,
+    id,
+  ]);
   return res.affectedRows > 0;
 }
 
@@ -1407,6 +1495,7 @@ git commit -m "feat(admin): listUsers / getUserDetail / getAuditLog / getSystemS
 ## Task 15: GET /api/admin/users
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\admin\users\route.ts`
 
 - [ ] **Step 1: 创建文件**
@@ -1440,6 +1529,7 @@ git commit -m "feat(api): GET /api/admin/users"
 ## Task 16: GET /api/admin/users/[id] + DELETE 同路径
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\admin\users\[id]\route.ts`
 
 - [ ] **Step 1: 创建文件**
@@ -1450,7 +1540,9 @@ import { requireAdmin, validateUsername } from '@/lib/auth';
 import { getUserDetail, deleteUserCascade, countOtherAdmins } from '@/lib/admin';
 import { writeAudit } from '@/lib/audit';
 
-interface Ctx { params: Promise<{ id: string }>; }
+interface Ctx {
+  params: Promise<{ id: string }>;
+}
 
 function asIdInt(s: string): number | null {
   const n = Number(s);
@@ -1463,10 +1555,18 @@ export async function GET(_req: NextRequest, ctx: Ctx) {
 
   const { id: idStr } = await ctx.params;
   const id = asIdInt(idStr);
-  if (!id) return NextResponse.json({ ok: false, error: { code: 'bad_id', message: 'id 不合法' } }, { status: 400 });
+  if (!id)
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_id', message: 'id 不合法' } },
+      { status: 400 },
+    );
 
   const detail = await getUserDetail(id);
-  if (!detail) return NextResponse.json({ ok: false, error: { code: 'not_found', message: '用户不存在' } }, { status: 404 });
+  if (!detail)
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_found', message: '用户不存在' } },
+      { status: 404 },
+    );
   return NextResponse.json({ ok: true, data: detail });
 }
 
@@ -1476,28 +1576,49 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
 
   const { id: idStr } = await ctx.params;
   const id = asIdInt(idStr);
-  if (!id) return NextResponse.json({ ok: false, error: { code: 'bad_id', message: 'id 不合法' } }, { status: 400 });
+  if (!id)
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_id', message: 'id 不合法' } },
+      { status: 400 },
+    );
 
   if (id === auth.user.id) {
-    return NextResponse.json({ ok: false, error: { code: 'cannot_delete_self', message: '不能删除自己' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'cannot_delete_self', message: '不能删除自己' } },
+      { status: 400 },
+    );
   }
 
   let body: { confirmUsername?: string };
-  try { body = await req.json(); } catch { body = {}; }
+  try {
+    body = await req.json();
+  } catch {
+    body = {};
+  }
   const confirm = (body.confirmUsername ?? '').trim();
   const uErr = validateUsername(confirm);
   // 用户名格式错误时也算 mismatch（不区分原因以减少信息泄露）
   void uErr;
 
   const detail = await getUserDetail(id);
-  if (!detail) return NextResponse.json({ ok: false, error: { code: 'not_found', message: '用户不存在' } }, { status: 404 });
+  if (!detail)
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_found', message: '用户不存在' } },
+      { status: 404 },
+    );
   if (confirm !== detail.user.username) {
-    return NextResponse.json({ ok: false, error: { code: 'username_mismatch', message: '用户名不匹配' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'username_mismatch', message: '用户名不匹配' } },
+      { status: 400 },
+    );
   }
   if (detail.user.isAdmin) {
     const others = await countOtherAdmins(id);
     if (others === 0) {
-      return NextResponse.json({ ok: false, error: { code: 'last_admin', message: '至少保留一个管理员' } }, { status: 400 });
+      return NextResponse.json(
+        { ok: false, error: { code: 'last_admin', message: '至少保留一个管理员' } },
+        { status: 400 },
+      );
     }
   }
 
@@ -1505,9 +1626,11 @@ export async function DELETE(req: NextRequest, ctx: Ctx) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
   await writeAudit({
-    userId: auth.user.id, event: 'admin_user_delete',
+    userId: auth.user.id,
+    event: 'admin_user_delete',
     metadata: { targetUserId: id, targetUsername: detail.user.username },
-    ip, userAgent: ua,
+    ip,
+    userAgent: ua,
   });
   return new NextResponse(null, { status: 204 });
 }
@@ -1525,6 +1648,7 @@ git commit -m "feat(api): GET/DELETE /api/admin/users/[id]"
 ## Task 17: POST /api/admin/users/[id]/reset-password
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\admin\users\[id]\reset-password\route.ts`
 
 - [ ] **Step 1: 创建文件**
@@ -1535,7 +1659,9 @@ import { requireAdmin, hashPassword } from '@/lib/auth';
 import { getUserDetail, generateTempPassword, setUserPasswordHash } from '@/lib/admin';
 import { writeAudit } from '@/lib/audit';
 
-interface Ctx { params: Promise<{ id: string }>; }
+interface Ctx {
+  params: Promise<{ id: string }>;
+}
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   const auth = await requireAdmin();
@@ -1544,14 +1670,27 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const { id: idStr } = await ctx.params;
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ ok: false, error: { code: 'bad_id', message: 'id 不合法' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_id', message: 'id 不合法' } },
+      { status: 400 },
+    );
   }
   if (id === auth.user.id) {
-    return NextResponse.json({ ok: false, error: { code: 'cannot_reset_self', message: '请使用「忘记密码」重置自己的密码' } }, { status: 400 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: { code: 'cannot_reset_self', message: '请使用「忘记密码」重置自己的密码' },
+      },
+      { status: 400 },
+    );
   }
 
   const detail = await getUserDetail(id);
-  if (!detail) return NextResponse.json({ ok: false, error: { code: 'not_found', message: '用户不存在' } }, { status: 404 });
+  if (!detail)
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_found', message: '用户不存在' } },
+      { status: 404 },
+    );
 
   const tempPassword = generateTempPassword();
   const hash = await hashPassword(tempPassword);
@@ -1560,9 +1699,11 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
   await writeAudit({
-    userId: auth.user.id, event: 'admin_user_password_reset',
+    userId: auth.user.id,
+    event: 'admin_user_password_reset',
     metadata: { targetUserId: id, targetUsername: detail.user.username },
-    ip, userAgent: ua,
+    ip,
+    userAgent: ua,
   });
 
   return NextResponse.json({ ok: true, data: { tempPassword } });
@@ -1581,6 +1722,7 @@ git commit -m "feat(api): admin reset password (returns temp password)"
 ## Task 18: POST /api/admin/users/[id]/promote + /demote
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\admin\users\[id]\promote\route.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\admin\users\[id]\demote\route.ts`
 
@@ -1592,7 +1734,9 @@ import { requireAdmin } from '@/lib/auth';
 import { getUserDetail, setUserAdmin } from '@/lib/admin';
 import { writeAudit } from '@/lib/audit';
 
-interface Ctx { params: Promise<{ id: string }>; }
+interface Ctx {
+  params: Promise<{ id: string }>;
+}
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   const auth = await requireAdmin();
@@ -1601,21 +1745,33 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const { id: idStr } = await ctx.params;
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ ok: false, error: { code: 'bad_id', message: 'id 不合法' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_id', message: 'id 不合法' } },
+      { status: 400 },
+    );
   }
   const detail = await getUserDetail(id);
-  if (!detail) return NextResponse.json({ ok: false, error: { code: 'not_found', message: '用户不存在' } }, { status: 404 });
+  if (!detail)
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_found', message: '用户不存在' } },
+      { status: 404 },
+    );
   if (detail.user.isAdmin) {
-    return NextResponse.json({ ok: false, error: { code: 'already_admin', message: '已经是管理员' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'already_admin', message: '已经是管理员' } },
+      { status: 400 },
+    );
   }
   await setUserAdmin(id, true);
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
   await writeAudit({
-    userId: auth.user.id, event: 'admin_user_promote',
+    userId: auth.user.id,
+    event: 'admin_user_promote',
     metadata: { targetUserId: id, targetUsername: detail.user.username },
-    ip, userAgent: ua,
+    ip,
+    userAgent: ua,
   });
   return NextResponse.json({ ok: true, data: { id, isAdmin: true } });
 }
@@ -1629,7 +1785,9 @@ import { requireAdmin } from '@/lib/auth';
 import { getUserDetail, setUserAdmin, countOtherAdmins } from '@/lib/admin';
 import { writeAudit } from '@/lib/audit';
 
-interface Ctx { params: Promise<{ id: string }>; }
+interface Ctx {
+  params: Promise<{ id: string }>;
+}
 
 export async function POST(req: NextRequest, ctx: Ctx) {
   const auth = await requireAdmin();
@@ -1638,25 +1796,40 @@ export async function POST(req: NextRequest, ctx: Ctx) {
   const { id: idStr } = await ctx.params;
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ ok: false, error: { code: 'bad_id', message: 'id 不合法' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_id', message: 'id 不合法' } },
+      { status: 400 },
+    );
   }
   const detail = await getUserDetail(id);
-  if (!detail) return NextResponse.json({ ok: false, error: { code: 'not_found', message: '用户不存在' } }, { status: 404 });
+  if (!detail)
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_found', message: '用户不存在' } },
+      { status: 404 },
+    );
   if (!detail.user.isAdmin) {
-    return NextResponse.json({ ok: false, error: { code: 'not_admin', message: '该用户不是管理员' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_admin', message: '该用户不是管理员' } },
+      { status: 400 },
+    );
   }
   const others = await countOtherAdmins(id);
   if (others === 0) {
-    return NextResponse.json({ ok: false, error: { code: 'last_admin', message: '至少保留一个管理员' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'last_admin', message: '至少保留一个管理员' } },
+      { status: 400 },
+    );
   }
   await setUserAdmin(id, false);
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
   await writeAudit({
-    userId: auth.user.id, event: 'admin_user_demote',
+    userId: auth.user.id,
+    event: 'admin_user_demote',
     metadata: { targetUserId: id, targetUsername: detail.user.username },
-    ip, userAgent: ua,
+    ip,
+    userAgent: ua,
   });
   return NextResponse.json({ ok: true, data: { id, isAdmin: false } });
 }
@@ -1674,6 +1847,7 @@ git commit -m "feat(api): admin promote/demote user"
 ## Task 19: GET /api/admin/audit + /api/admin/stats
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\admin\audit\route.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\admin\stats\route.ts`
 
@@ -1685,10 +1859,17 @@ import { requireAdmin } from '@/lib/auth';
 import { getAuditLog, type AuditEventName } from '@/lib/admin';
 
 const ALLOWED_EVENTS: AuditEventName[] = [
-  'register', 'login', 'logout', 'history_create', 'history_delete',
-  'password_reset_request', 'password_reset_complete',
-  'admin_user_delete', 'admin_user_password_reset',
-  'admin_user_promote', 'admin_user_demote',
+  'register',
+  'login',
+  'logout',
+  'history_create',
+  'history_delete',
+  'password_reset_request',
+  'password_reset_complete',
+  'admin_user_delete',
+  'admin_user_password_reset',
+  'admin_user_promote',
+  'admin_user_demote',
 ];
 
 export async function GET(req: NextRequest) {
@@ -1705,7 +1886,8 @@ export async function GET(req: NextRequest) {
 
   const opts: Parameters<typeof getAuditLog>[0] = { limit, offset };
   if (userIdStr && /^\d+$/.test(userIdStr)) opts.userId = Number(userIdStr);
-  if (eventStr && (ALLOWED_EVENTS as string[]).includes(eventStr)) opts.event = eventStr as AuditEventName;
+  if (eventStr && (ALLOWED_EVENTS as string[]).includes(eventStr))
+    opts.event = eventStr as AuditEventName;
   if (from) opts.from = from;
   if (to) opts.to = to;
 
@@ -1742,6 +1924,7 @@ git commit -m "feat(api): admin audit log + system stats"
 ## Task 20: lib/api-auth.ts 加 forgot/reset 包装 + 新建 lib/api-admin.ts
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\lib\api-auth.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\api-admin.ts`
 
@@ -1750,7 +1933,8 @@ git commit -m "feat(api): admin audit log + system stats"
 ```ts
 export async function forgotPasswordRequest(username: string): Promise<ApiResult<null>> {
   return call<null>('/api/auth/forgot', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ username }),
   });
 }
@@ -1759,9 +1943,13 @@ export async function getResetInfoRequest(token: string): Promise<ApiResult<{ us
   return call(`/api/auth/reset-info?token=${encodeURIComponent(token)}`, { method: 'GET' });
 }
 
-export async function resetPasswordRequest(token: string, newPassword: string): Promise<ApiResult<{ user: User }>> {
+export async function resetPasswordRequest(
+  token: string,
+  newPassword: string,
+): Promise<ApiResult<{ user: User }>> {
   return call('/api/auth/reset', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ token, newPassword }),
   });
 }
@@ -1774,27 +1962,51 @@ import type { ApiResult } from './api-auth';
 import type { User } from './store';
 
 export interface AdminUserRow {
-  id: number; username: string; isAdmin: boolean;
-  createdAt: string | Date; historyCount: number; favoriteCount: number;
+  id: number;
+  username: string;
+  isAdmin: boolean;
+  createdAt: string | Date;
+  historyCount: number;
+  favoriteCount: number;
 }
-export interface ListUsersData { users: AdminUserRow[]; total: number; }
+export interface ListUsersData {
+  users: AdminUserRow[];
+  total: number;
+}
 
 export interface AuditLogRow {
-  id: number; user_id: number | null; event: string;
-  metadata: any; ip: string | null; user_agent: string | null; created_at: string | Date;
+  id: number;
+  user_id: number | null;
+  event: string;
+  metadata: any;
+  ip: string | null;
+  user_agent: string | null;
+  created_at: string | Date;
 }
-export interface AuditLogData { rows: AuditLogRow[]; total: number; }
+export interface AuditLogData {
+  rows: AuditLogRow[];
+  total: number;
+}
 
 export interface SystemStats {
-  users: number; admins: number; history: number; favorites: number; audit: number;
+  users: number;
+  admins: number;
+  history: number;
+  favorites: number;
+  audit: number;
 }
 
 export interface UserDetailData {
   user: AdminUserRow;
   recentHistory: Array<{
-    id: number; user_id: number; kind: 'text2pinyin' | 'pinyin2text';
-    input: string; output: string | null; is_favorite: 0 | 1;
-    char_count: number; created_at: string | Date;
+    id: number;
+    user_id: number;
+    kind: 'text2pinyin' | 'pinyin2text';
+    input: string;
+    output: string | null;
+    is_favorite: 0 | 1;
+    char_count: number;
+    created_at: string | Date;
   }>;
 }
 
@@ -1805,7 +2017,9 @@ async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   return j as ApiResult<T>;
 }
 
-export async function adminListUsers(opts: { limit?: number; offset?: number } = {}): Promise<ApiResult<ListUsersData>> {
+export async function adminListUsers(
+  opts: { limit?: number; offset?: number } = {},
+): Promise<ApiResult<ListUsersData>> {
   const sp = new URLSearchParams();
   if (opts.limit !== undefined) sp.set('limit', String(opts.limit));
   if (opts.offset !== undefined) sp.set('offset', String(opts.offset));
@@ -1817,29 +2031,45 @@ export async function adminGetUser(id: number): Promise<ApiResult<UserDetailData
   return call(`/api/admin/users/${id}`, { method: 'GET' });
 }
 
-export async function adminDeleteUser(id: number, confirmUsername: string): Promise<ApiResult<null>> {
+export async function adminDeleteUser(
+  id: number,
+  confirmUsername: string,
+): Promise<ApiResult<null>> {
   return call(`/api/admin/users/${id}`, {
-    method: 'DELETE', headers: { 'content-type': 'application/json' },
+    method: 'DELETE',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ confirmUsername }),
   });
 }
 
-export async function adminResetUserPassword(id: number): Promise<ApiResult<{ tempPassword: string }>> {
+export async function adminResetUserPassword(
+  id: number,
+): Promise<ApiResult<{ tempPassword: string }>> {
   return call(`/api/admin/users/${id}/reset-password`, { method: 'POST' });
 }
 
-export async function adminPromoteUser(id: number): Promise<ApiResult<{ id: number; isAdmin: true }>> {
+export async function adminPromoteUser(
+  id: number,
+): Promise<ApiResult<{ id: number; isAdmin: true }>> {
   return call(`/api/admin/users/${id}/promote`, { method: 'POST' });
 }
 
-export async function adminDemoteUser(id: number): Promise<ApiResult<{ id: number; isAdmin: false }>> {
+export async function adminDemoteUser(
+  id: number,
+): Promise<ApiResult<{ id: number; isAdmin: false }>> {
   return call(`/api/admin/users/${id}/demote`, { method: 'POST' });
 }
 
-export async function adminGetAudit(opts: {
-  userId?: number; event?: string; from?: string; to?: string;
-  limit?: number; offset?: number;
-} = {}): Promise<ApiResult<AuditLogData>> {
+export async function adminGetAudit(
+  opts: {
+    userId?: number;
+    event?: string;
+    from?: string;
+    to?: string;
+    limit?: number;
+    offset?: number;
+  } = {},
+): Promise<ApiResult<AuditLogData>> {
   const sp = new URLSearchParams();
   if (opts.userId !== undefined) sp.set('user_id', String(opts.userId));
   if (opts.event) sp.set('event', opts.event);
@@ -1874,6 +2104,7 @@ git commit -m "feat(client): api wrappers for forgot/reset + admin endpoints"
 ## Task 21: /forgot-password 页面
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\forgot-password\page.tsx`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\forgot-password\ForgotForm.tsx`
 
@@ -1921,14 +2152,21 @@ export function ForgotForm() {
       <div>
         <label className="block text-sm mb-1">用户名</label>
         <input
-          type="text" value={username} onChange={e => setUsername(e.target.value)}
+          type="text"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
           className="w-full border rounded px-3 py-2"
-          required minLength={3} maxLength={32}
+          required
+          minLength={3}
+          maxLength={32}
         />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button type="submit" disabled={submitting}
-        className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-50">
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-50"
+      >
         {submitting ? '提交中…' : '发送重置链接'}
       </button>
     </form>
@@ -1955,10 +2193,15 @@ export default function ForgotPasswordPage() {
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-sm bg-white border rounded-lg p-6 shadow-sm">
           <h2 className="text-lg font-semibold mb-1">忘记密码</h2>
-          <p className="text-sm text-gray-600 mb-4">输入你的用户名,我们会发送一封重置链接到你的注册邮箱。</p>
+          <p className="text-sm text-gray-600 mb-4">
+            输入你的用户名,我们会发送一封重置链接到你的注册邮箱。
+          </p>
           <ForgotForm />
           <p className="text-xs text-gray-500 mt-4">
-            想起密码了? <a href="/?auth=login" className="text-blue-600 hover:underline">返回登录</a>
+            想起密码了?{' '}
+            <a href="/?auth=login" className="text-blue-600 hover:underline">
+              返回登录
+            </a>
           </p>
         </div>
       </main>
@@ -1979,6 +2222,7 @@ git commit -m "feat(ui): /forgot-password page with form"
 ## Task 22: /reset-password 页面
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\reset-password\page.tsx`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\reset-password\ResetForm.tsx`
 
@@ -1993,7 +2237,7 @@ import { resetPasswordRequest } from '@/lib/api-auth';
 import { validatePasswordConfirmation } from '@/lib/auth-client';
 
 export function ResetForm({ token, username }: { token: string; username: string }) {
-  const setUser = useAppStore(s => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -2003,13 +2247,21 @@ export function ResetForm({ token, username }: { token: string; username: string
     e.preventDefault();
     setError(null);
     const cErr = validatePasswordConfirmation(pw, pw2);
-    if (cErr) { setError(cErr); return; }
-    if (pw.length < 8) { setError('密码至少 8 位'); return; }
+    if (cErr) {
+      setError(cErr);
+      return;
+    }
+    if (pw.length < 8) {
+      setError('密码至少 8 位');
+      return;
+    }
     setSubmitting(true);
     const r = await resetPasswordRequest(token, pw);
     if (r.ok) {
       setUser(r.data.user);
-      setTimeout(() => { window.location.href = '/'; }, 1000);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     } else {
       setSubmitting(false);
       setError(r.error.message);
@@ -2021,17 +2273,34 @@ export function ResetForm({ token, username }: { token: string; username: string
       <p className="text-sm text-gray-700">你好,{username}。请输入新密码 (至少 8 位)。</p>
       <div>
         <label className="block text-sm mb-1">新密码</label>
-        <input type="password" value={pw} onChange={e => setPw(e.target.value)}
-          className="w-full border rounded px-3 py-2" required minLength={8} maxLength={72} />
+        <input
+          type="password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+          required
+          minLength={8}
+          maxLength={72}
+        />
       </div>
       <div>
         <label className="block text-sm mb-1">再次输入</label>
-        <input type="password" value={pw2} onChange={e => setPw2(e.target.value)}
-          className="w-full border rounded px-3 py-2" required minLength={8} maxLength={72} />
+        <input
+          type="password"
+          value={pw2}
+          onChange={(e) => setPw2(e.target.value)}
+          className="w-full border rounded px-3 py-2"
+          required
+          minLength={8}
+          maxLength={72}
+        />
       </div>
       {error && <p className="text-sm text-red-600">{error}</p>}
-      <button type="submit" disabled={submitting}
-        className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-50">
+      <button
+        type="submit"
+        disabled={submitting}
+        className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-50"
+      >
         {submitting ? '提交中…' : '重置密码'}
       </button>
     </form>
@@ -2049,14 +2318,20 @@ import { ResetForm } from './ResetForm';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ResetPasswordPage({ searchParams }: {
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
   searchParams: Promise<{ token?: string }>;
 }) {
   const sp = await searchParams;
   const token = sp.token ?? '';
   const expired = (
     <p className="text-sm text-gray-700">
-      链接已失效,请返回 <a href="/forgot-password" className="text-blue-600 hover:underline">忘记密码</a> 重新申请。
+      链接已失效,请返回{' '}
+      <a href="/forgot-password" className="text-blue-600 hover:underline">
+        忘记密码
+      </a>{' '}
+      重新申请。
     </p>
   );
 
@@ -2070,14 +2345,17 @@ export default async function ResetPasswordPage({ searchParams }: {
   }
 
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
-    `SELECT username FROM users WHERE id = ? LIMIT 1`,
-    [row.user_id]
-  );
+  const [rows] = await pool.execute<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
+    row.user_id,
+  ]);
   if (rows.length === 0) return <Shell>{expired}</Shell>;
   const username = rows[0].username as string;
 
-  return <Shell><ResetForm token={token} username={username} /></Shell>;
+  return (
+    <Shell>
+      <ResetForm token={token} username={username} />
+    </Shell>
+  );
 }
 
 function Shell({ children }: { children: React.ReactNode }) {
@@ -2117,6 +2395,7 @@ git commit -m "feat(ui): /reset-password page (server validates token, client re
 ## Task 23: AdminNav 组件
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\components\AdminNav.tsx`
 
 - [ ] **Step 1: 创建文件**
@@ -2137,12 +2416,14 @@ export function AdminNav() {
   return (
     <nav className="w-48 border-r bg-white">
       <ul className="py-4">
-        {ITEMS.map(item => {
+        {ITEMS.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
             <li key={item.href}>
-              <a href={item.href}
-                className={`block px-4 py-2 text-sm ${active ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}>
+              <a
+                href={item.href}
+                className={`block px-4 py-2 text-sm ${active ? 'bg-blue-50 text-blue-700 border-r-2 border-blue-600' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
                 {item.label}
               </a>
             </li>
@@ -2166,6 +2447,7 @@ git commit -m "feat(ui): AdminNav sidebar"
 ## Task 24: Admin layout
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\admin\layout.tsx`
 
 - [ ] **Step 1: 创建文件**
@@ -2208,6 +2490,7 @@ git commit -m "feat(admin): layout with requireAdmin + sidebar"
 ## Task 25: /admin redirect + /admin/users 页
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\admin\page.tsx`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\admin\users\page.tsx`
 
@@ -2216,7 +2499,9 @@ git commit -m "feat(admin): layout with requireAdmin + sidebar"
 ```tsx
 import { redirect } from 'next/navigation';
 export const dynamic = 'force-dynamic';
-export default function AdminIndex() { redirect('/admin/users'); }
+export default function AdminIndex() {
+  redirect('/admin/users');
+}
 ```
 
 - [ ] **Step 2: app/admin/users/page.tsx**
@@ -2244,24 +2529,36 @@ export default async function AdminUsersPage() {
             </tr>
           </thead>
           <tbody>
-            {users.map(u => (
+            {users.map((u) => (
               <tr key={u.id} className="border-t">
                 <td className="px-3 py-2">{u.username}</td>
-                <td className="px-3 py-2 text-gray-600">{new Date(u.createdAt).toLocaleString('zh-CN')}</td>
+                <td className="px-3 py-2 text-gray-600">
+                  {new Date(u.createdAt).toLocaleString('zh-CN')}
+                </td>
                 <td className="px-3 py-2">{u.historyCount}</td>
                 <td className="px-3 py-2">{u.favoriteCount}</td>
                 <td className="px-3 py-2">
-                  {u.isAdmin
-                    ? <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">管理员</span>
-                    : <span className="text-xs text-gray-500">用户</span>}
+                  {u.isAdmin ? (
+                    <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">
+                      管理员
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-500">用户</span>
+                  )}
                 </td>
                 <td className="px-3 py-2">
-                  <a href={`/admin/users/${u.id}`} className="text-blue-600 hover:underline">详情 →</a>
+                  <a href={`/admin/users/${u.id}`} className="text-blue-600 hover:underline">
+                    详情 →
+                  </a>
                 </td>
               </tr>
             ))}
             {users.length === 0 && (
-              <tr><td colSpan={6} className="px-3 py-6 text-center text-gray-500">暂无用户</td></tr>
+              <tr>
+                <td colSpan={6} className="px-3 py-6 text-center text-gray-500">
+                  暂无用户
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -2283,6 +2580,7 @@ git commit -m "feat(admin): /admin index redirect + /admin/users list"
 ## Task 26: 3 个 admin 对话框组件 (DeleteUserDialog, ResetPasswordDialog, ConfirmDialog)
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\components\DeleteUserDialog.tsx`
 - Create: `E:\ToolDevelop\PinYinCharacter\components\ResetPasswordDialog.tsx`
 - Create: `E:\ToolDevelop\PinYinCharacter\components\ConfirmDialog.tsx`
@@ -2307,14 +2605,26 @@ interface Props {
 }
 
 export function ConfirmDialog({
-  open, title, description, confirmLabel = '确认', cancelLabel = '取消',
-  destructive = false, onConfirm, onClose, children,
+  open,
+  title,
+  description,
+  confirmLabel = '确认',
+  cancelLabel = '取消',
+  destructive = false,
+  onConfirm,
+  onClose,
+  children,
 }: Props) {
   const [busy, setBusy] = useState(false);
   if (!open) return null;
   async function go() {
     setBusy(true);
-    try { await onConfirm(); } finally { setBusy(false); onClose(); }
+    try {
+      await onConfirm();
+    } finally {
+      setBusy(false);
+      onClose();
+    }
   }
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
@@ -2323,10 +2633,20 @@ export function ConfirmDialog({
         <p className="text-sm text-gray-600 mb-4">{description}</p>
         {children}
         <div className="flex justify-end gap-2 mt-4">
-          <button type="button" onClick={onClose} disabled={busy}
-            className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50">{cancelLabel}</button>
-          <button type="button" onClick={go} disabled={busy}
-            className={`px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 ${destructive ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-3 py-1.5 text-sm border rounded hover:bg-gray-50"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            onClick={go}
+            disabled={busy}
+            className={`px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 ${destructive ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700'}`}
+          >
             {busy ? '处理中…' : confirmLabel}
           </button>
         </div>
@@ -2346,8 +2666,16 @@ import { useRouter } from 'next/navigation';
 import { adminDeleteUser } from '@/lib/api-admin';
 import { ConfirmDialog } from './ConfirmDialog';
 
-export function DeleteUserDialog({ userId, username, open, onClose }: {
-  userId: number; username: string; open: boolean; onClose: () => void;
+export function DeleteUserDialog({
+  userId,
+  username,
+  open,
+  onClose,
+}: {
+  userId: number;
+  username: string;
+  open: boolean;
+  onClose: () => void;
 }) {
   const router = useRouter();
   const [confirm, setConfirm] = useState('');
@@ -2361,17 +2689,26 @@ export function DeleteUserDialog({ userId, username, open, onClose }: {
       description="此操作不可撤销。该用户的所有历史和审计记录会一并删除。请输入用户名以确认。"
       confirmLabel="删除"
       destructive
-      onClose={() => { setConfirm(''); setError(null); onClose(); }}
+      onClose={() => {
+        setConfirm('');
+        setError(null);
+        onClose();
+      }}
       onConfirm={async () => {
         setError(null);
         const r = await adminDeleteUser(userId, confirm);
-        if (!r.ok) { setError(r.error.message); throw new Error(r.error.message); }
+        if (!r.ok) {
+          setError(r.error.message);
+          throw new Error(r.error.message);
+        }
         router.push('/admin/users');
         router.refresh();
       }}
     >
       <input
-        type="text" value={confirm} onChange={e => setConfirm(e.target.value)}
+        type="text"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
         placeholder={`输入 ${username} 以确认`}
         className="w-full border rounded px-3 py-2 text-sm mb-1"
       />
@@ -2391,8 +2728,16 @@ import { useState } from 'react';
 import { adminResetUserPassword } from '@/lib/api-admin';
 import { ConfirmDialog } from './ConfirmDialog';
 
-export function ResetPasswordDialog({ userId, username, open, onClose }: {
-  userId: number; username: string; open: boolean; onClose: () => void;
+export function ResetPasswordDialog({
+  userId,
+  username,
+  open,
+  onClose,
+}: {
+  userId: number;
+  username: string;
+  open: boolean;
+  onClose: () => void;
 }) {
   const [temp, setTemp] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -2401,14 +2746,17 @@ export function ResetPasswordDialog({ userId, username, open, onClose }: {
 
   // 在 open 从 false → true 时拉一次
   if (open && temp === null && !error) {
-    adminResetUserPassword(userId).then(r => {
+    adminResetUserPassword(userId).then((r) => {
       if (r.ok) setTemp(r.data.tempPassword);
       else setError(r.error.message);
     });
   }
 
   function close() {
-    setTemp(null); setCopied(false); setHandedOff(false); setError(null);
+    setTemp(null);
+    setCopied(false);
+    setHandedOff(false);
+    setError(null);
     onClose();
   }
 
@@ -2432,8 +2780,14 @@ export function ResetPasswordDialog({ userId, username, open, onClose }: {
       {temp && (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono break-all">{temp}</code>
-            <button type="button" onClick={copy} className="text-sm px-2 py-1 border rounded hover:bg-gray-50">
+            <code className="flex-1 bg-gray-100 px-3 py-2 rounded text-sm font-mono break-all">
+              {temp}
+            </code>
+            <button
+              type="button"
+              onClick={copy}
+              className="text-sm px-2 py-1 border rounded hover:bg-gray-50"
+            >
               {copied ? '已复制' : '复制'}
             </button>
           </div>
@@ -2457,6 +2811,7 @@ git commit -m "feat(ui): admin ConfirmDialog + DeleteUserDialog + ResetPasswordD
 ## Task 27: /admin/users/[id] 详情页
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\admin\users\[id]\page.tsx`
 
 - [ ] **Step 1: 创建文件**
@@ -2473,8 +2828,14 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import type { AdminUserRow } from '@/lib/api-admin';
 import type { HistoryRow } from '@/lib/api-history';
 
-export function UserDetailClient({ user, recentHistory, isSelf }: {
-  user: AdminUserRow; recentHistory: HistoryRow[]; isSelf: boolean;
+export function UserDetailClient({
+  user,
+  recentHistory,
+  isSelf,
+}: {
+  user: AdminUserRow;
+  recentHistory: HistoryRow[];
+  isSelf: boolean;
 }) {
   const router = useRouter();
   const [showDelete, setShowDelete] = useState(false);
@@ -2486,59 +2847,102 @@ export function UserDetailClient({ user, recentHistory, isSelf }: {
   async function doPromote() {
     setErr(null);
     const r = await adminPromoteUser(user.id);
-    if (!r.ok) setErr(r.error.message); else router.refresh();
+    if (!r.ok) setErr(r.error.message);
+    else router.refresh();
   }
   async function doDemote() {
     setErr(null);
     const r = await adminDemoteUser(user.id);
-    if (!r.ok) setErr(r.error.message); else router.refresh();
+    if (!r.ok) setErr(r.error.message);
+    else router.refresh();
   }
 
   return (
     <div className="space-y-6">
       <div className="bg-white border rounded-lg p-4">
         <h1 className="text-xl font-semibold">{user.username}</h1>
-        <p className="text-sm text-gray-600">注册时间: {new Date(user.createdAt).toLocaleString('zh-CN')}</p>
-        <p className="text-sm text-gray-600">历史: {user.historyCount} / 收藏: {user.favoriteCount}</p>
+        <p className="text-sm text-gray-600">
+          注册时间: {new Date(user.createdAt).toLocaleString('zh-CN')}
+        </p>
+        <p className="text-sm text-gray-600">
+          历史: {user.historyCount} / 收藏: {user.favoriteCount}
+        </p>
         <p className="text-sm mt-1">
-          角色: {user.isAdmin
-            ? <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">管理员</span>
-            : <span className="text-xs text-gray-500">用户</span>}
+          角色:{' '}
+          {user.isAdmin ? (
+            <span className="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-700">管理员</span>
+          ) : (
+            <span className="text-xs text-gray-500">用户</span>
+          )}
         </p>
         {err && <p className="text-sm text-red-600 mt-2">{err}</p>}
         <div className="flex gap-2 mt-4 flex-wrap">
           {!isSelf && (
             <>
-              <button type="button" onClick={() => setShowReset(true)}
-                className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50">重置密码</button>
-              {!user.isAdmin
-                ? <button type="button" onClick={() => setShowPromote(true)}
-                    className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50">提升为管理员</button>
-                : <button type="button" onClick={() => setShowDemote(true)}
-                    className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50">撤销管理员</button>}
-              <button type="button" onClick={() => setShowDelete(true)}
-                className="text-sm px-3 py-1.5 border rounded text-red-600 hover:bg-red-50">删除用户</button>
+              <button
+                type="button"
+                onClick={() => setShowReset(true)}
+                className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
+              >
+                重置密码
+              </button>
+              {!user.isAdmin ? (
+                <button
+                  type="button"
+                  onClick={() => setShowPromote(true)}
+                  className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
+                >
+                  提升为管理员
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowDemote(true)}
+                  className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
+                >
+                  撤销管理员
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowDelete(true)}
+                className="text-sm px-3 py-1.5 border rounded text-red-600 hover:bg-red-50"
+              >
+                删除用户
+              </button>
             </>
           )}
-          {isSelf && <p className="text-xs text-gray-500">不能对自己执行写操作,请用其他管理员账号操作。</p>}
+          {isSelf && (
+            <p className="text-xs text-gray-500">不能对自己执行写操作,请用其他管理员账号操作。</p>
+          )}
         </div>
       </div>
 
       <div className="bg-white border rounded-lg overflow-hidden">
         <h2 className="px-4 py-2 text-sm font-semibold bg-gray-50">最近 10 条历史</h2>
         <table className="w-full text-sm">
-          <thead><tr className="text-left text-gray-600">
-            <th className="px-3 py-2">时间</th><th className="px-3 py-2">类型</th>
-            <th className="px-3 py-2">输入</th><th className="px-3 py-2">输出</th>
-            <th className="px-3 py-2">字数</th>
-          </tr></thead>
+          <thead>
+            <tr className="text-left text-gray-600">
+              <th className="px-3 py-2">时间</th>
+              <th className="px-3 py-2">类型</th>
+              <th className="px-3 py-2">输入</th>
+              <th className="px-3 py-2">输出</th>
+              <th className="px-3 py-2">字数</th>
+            </tr>
+          </thead>
           <tbody>
             {recentHistory.length === 0 && (
-              <tr><td colSpan={5} className="px-3 py-4 text-center text-gray-500">暂无</td></tr>
+              <tr>
+                <td colSpan={5} className="px-3 py-4 text-center text-gray-500">
+                  暂无
+                </td>
+              </tr>
             )}
-            {recentHistory.map(r => (
+            {recentHistory.map((r) => (
               <tr key={r.id} className="border-t">
-                <td className="px-3 py-2 text-gray-600">{new Date(r.created_at).toLocaleString('zh-CN')}</td>
+                <td className="px-3 py-2 text-gray-600">
+                  {new Date(r.created_at).toLocaleString('zh-CN')}
+                </td>
                 <td className="px-3 py-2">{r.kind}</td>
                 <td className="px-3 py-2 truncate max-w-xs">{r.input}</td>
                 <td className="px-3 py-2 truncate max-w-xs">{r.output ?? '—'}</td>
@@ -2549,16 +2953,32 @@ export function UserDetailClient({ user, recentHistory, isSelf }: {
         </table>
       </div>
 
-      <DeleteUserDialog userId={user.id} username={user.username}
-        open={showDelete} onClose={() => setShowDelete(false)} />
-      <ResetPasswordDialog userId={user.id} username={user.username}
-        open={showReset} onClose={() => setShowReset(false)} />
-      <ConfirmDialog open={showPromote} title={`将 ${user.username} 提升为管理员`}
+      <DeleteUserDialog
+        userId={user.id}
+        username={user.username}
+        open={showDelete}
+        onClose={() => setShowDelete(false)}
+      />
+      <ResetPasswordDialog
+        userId={user.id}
+        username={user.username}
+        open={showReset}
+        onClose={() => setShowReset(false)}
+      />
+      <ConfirmDialog
+        open={showPromote}
+        title={`将 ${user.username} 提升为管理员`}
         description="该用户将获得管理后台的完全访问权限。"
-        onConfirm={doPromote} onClose={() => setShowPromote(false)} />
-      <ConfirmDialog open={showDemote} title={`撤销 ${user.username} 的管理员权限`}
+        onConfirm={doPromote}
+        onClose={() => setShowPromote(false)}
+      />
+      <ConfirmDialog
+        open={showDemote}
+        title={`撤销 ${user.username} 的管理员权限`}
         description="撤销后,该用户将无法访问管理后台。"
-        onConfirm={doDemote} onClose={() => setShowDemote(false)} />
+        onConfirm={doDemote}
+        onClose={() => setShowDemote(false)}
+      />
     </div>
   );
 }
@@ -2603,6 +3023,7 @@ git commit -m "feat(admin): /admin/users/[id] detail with action buttons"
 ## Task 28: /admin/audit + /admin/stats 页
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\admin\audit\page.tsx`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\admin\stats\page.tsx`
 
@@ -2615,16 +3036,29 @@ import { getAuditLog, type AuditEventName } from '@/lib/admin';
 export const dynamic = 'force-dynamic';
 
 const EVENT_LABEL: Record<string, string> = {
-  register: '注册', login: '登录', logout: '登出',
-  history_create: '历史创建', history_delete: '历史删除',
-  password_reset_request: '密码重置申请', password_reset_complete: '密码重置完成',
+  register: '注册',
+  login: '登录',
+  logout: '登出',
+  history_create: '历史创建',
+  history_delete: '历史删除',
+  password_reset_request: '密码重置申请',
+  password_reset_complete: '密码重置完成',
   admin_user_delete: '管理员删除用户',
   admin_user_password_reset: '管理员重置密码',
-  admin_user_promote: '管理员提升', admin_user_demote: '管理员撤销',
+  admin_user_promote: '管理员提升',
+  admin_user_demote: '管理员撤销',
 };
 
-export default async function AdminAuditPage({ searchParams }: {
-  searchParams: Promise<{ user_id?: string; event?: string; from?: string; to?: string; page?: string }>;
+export default async function AdminAuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    user_id?: string;
+    event?: string;
+    from?: string;
+    to?: string;
+    page?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const page = Math.max(Number(sp.page ?? 0), 0);
@@ -2641,16 +3075,39 @@ export default async function AdminAuditPage({ searchParams }: {
     <div>
       <h1 className="text-xl font-semibold mb-4">审计日志 (共 {total})</h1>
       <form className="bg-white border rounded p-3 mb-4 flex flex-wrap gap-2 text-sm">
-        <input type="text" name="user_id" placeholder="用户 ID" defaultValue={sp.user_id ?? ''}
-          className="border rounded px-2 py-1 w-24" />
+        <input
+          type="text"
+          name="user_id"
+          placeholder="用户 ID"
+          defaultValue={sp.user_id ?? ''}
+          className="border rounded px-2 py-1 w-24"
+        />
         <select name="event" defaultValue={sp.event ?? ''} className="border rounded px-2 py-1">
           <option value="">全部事件</option>
-          {Object.entries(EVENT_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+          {Object.entries(EVENT_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>
+              {v}
+            </option>
+          ))}
         </select>
-        <input type="date" name="from" defaultValue={sp.from ?? ''} className="border rounded px-2 py-1" />
-        <input type="date" name="to" defaultValue={sp.to ?? ''} className="border rounded px-2 py-1" />
-        <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">筛选</button>
-        <Link href="/admin/audit" className="px-3 py-1 border rounded text-gray-600">清空</Link>
+        <input
+          type="date"
+          name="from"
+          defaultValue={sp.from ?? ''}
+          className="border rounded px-2 py-1"
+        />
+        <input
+          type="date"
+          name="to"
+          defaultValue={sp.to ?? ''}
+          className="border rounded px-2 py-1"
+        />
+        <button type="submit" className="px-3 py-1 bg-blue-600 text-white rounded">
+          筛选
+        </button>
+        <Link href="/admin/audit" className="px-3 py-1 border rounded text-gray-600">
+          清空
+        </Link>
       </form>
 
       <div className="bg-white border rounded-lg overflow-x-auto">
@@ -2666,15 +3123,23 @@ export default async function AdminAuditPage({ searchParams }: {
           </thead>
           <tbody>
             {rows.length === 0 && (
-              <tr><td colSpan={5} className="px-3 py-6 text-center text-gray-500">无记录</td></tr>
+              <tr>
+                <td colSpan={5} className="px-3 py-6 text-center text-gray-500">
+                  无记录
+                </td>
+              </tr>
             )}
-            {rows.map(r => (
+            {rows.map((r) => (
               <tr key={r.id} className="border-t">
-                <td className="px-3 py-2 text-gray-600 whitespace-nowrap">{new Date(r.created_at).toLocaleString('zh-CN')}</td>
+                <td className="px-3 py-2 text-gray-600 whitespace-nowrap">
+                  {new Date(r.created_at).toLocaleString('zh-CN')}
+                </td>
                 <td className="px-3 py-2">{r.user_id ?? '—'}</td>
                 <td className="px-3 py-2">{EVENT_LABEL[r.event] ?? r.event}</td>
                 <td className="px-3 py-2 text-gray-500">{r.ip ?? '—'}</td>
-                <td className="px-3 py-2 text-xs text-gray-500 font-mono max-w-md truncate">{r.metadata ? JSON.stringify(r.metadata) : '—'}</td>
+                <td className="px-3 py-2 text-xs text-gray-500 font-mono max-w-md truncate">
+                  {r.metadata ? JSON.stringify(r.metadata) : '—'}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -2682,9 +3147,25 @@ export default async function AdminAuditPage({ searchParams }: {
       </div>
 
       <div className="flex gap-2 mt-4 text-sm">
-        {page > 0 && <Link href={{ query: { ...sp, page: String(page - 1) } }} className="px-3 py-1 border rounded">← 上一页</Link>}
-        <span className="px-3 py-1 text-gray-600">第 {page + 1} / {totalPages} 页</span>
-        {page + 1 < totalPages && <Link href={{ query: { ...sp, page: String(page + 1) } }} className="px-3 py-1 border rounded">下一页 →</Link>}
+        {page > 0 && (
+          <Link
+            href={{ query: { ...sp, page: String(page - 1) } }}
+            className="px-3 py-1 border rounded"
+          >
+            ← 上一页
+          </Link>
+        )}
+        <span className="px-3 py-1 text-gray-600">
+          第 {page + 1} / {totalPages} 页
+        </span>
+        {page + 1 < totalPages && (
+          <Link
+            href={{ query: { ...sp, page: String(page + 1) } }}
+            className="px-3 py-1 border rounded"
+          >
+            下一页 →
+          </Link>
+        )}
       </div>
     </div>
   );
@@ -2711,7 +3192,7 @@ export default async function AdminStatsPage() {
     <div>
       <h1 className="text-xl font-semibold mb-4">系统统计</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {cards.map(c => (
+        {cards.map((c) => (
           <div key={c.label} className="bg-white border rounded-lg p-4">
             <div className="text-sm text-gray-500">{c.label}</div>
             <div className="text-2xl font-semibold mt-1">{c.value.toLocaleString()}</div>
@@ -2735,6 +3216,7 @@ git commit -m "feat(admin): /admin/audit + /admin/stats pages"
 ## Task 29: UserMenu 加管理后台链接
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\components\UserMenu.tsx`
 
 - [ ] **Step 1: 在「我的主页」之前插入链接**
@@ -2742,9 +3224,13 @@ git commit -m "feat(admin): /admin/audit + /admin/stats pages"
 把现有 `<a href="/profile">` 之前加：
 
 ```tsx
-        {user.isAdmin && (
-          <a href="/admin/users" className="block px-3 py-1.5 hover:bg-gray-50 text-blue-600">管理后台</a>
-        )}
+{
+  user.isAdmin && (
+    <a href="/admin/users" className="block px-3 py-1.5 hover:bg-gray-50 text-blue-600">
+      管理后台
+    </a>
+  );
+}
 ```
 
 完整文件内容：
@@ -2757,8 +3243,8 @@ import { useAppStore } from '@/lib/store';
 import { logoutRequest } from '@/lib/api-auth';
 
 export function UserMenu() {
-  const user = useAppStore(s => s.user);
-  const setUser = useAppStore(s => s.setUser);
+  const user = useAppStore((s) => s.user);
+  const setUser = useAppStore((s) => s.setUser);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -2784,17 +3270,33 @@ export function UserMenu() {
       <button
         type="button"
         className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
-        onClick={() => setOpen(o => !o)}
-      >{user.username} ⌄</button>
+        onClick={() => setOpen((o) => !o)}
+      >
+        {user.username} ⌄
+      </button>
       {open && (
         <div className="absolute right-0 mt-1 w-44 bg-white border rounded shadow-lg py-1 z-20">
           {user.isAdmin && (
-            <a href="/admin/users" className="block px-3 py-1.5 hover:bg-gray-50 text-blue-600">管理后台</a>
+            <a href="/admin/users" className="block px-3 py-1.5 hover:bg-gray-50 text-blue-600">
+              管理后台
+            </a>
           )}
-          <a href="/profile" className="block px-3 py-1.5 hover:bg-gray-50">我的主页</a>
-          <a href="/history" className="block px-3 py-1.5 hover:bg-gray-50">历史记录</a>
-          <a href="/history?favorite=true" className="block px-3 py-1.5 hover:bg-gray-50">收藏夹</a>
-          <button type="button" onClick={logout} className="block w-full text-left px-3 py-1.5 hover:bg-gray-50 text-red-600">退出登录</button>
+          <a href="/profile" className="block px-3 py-1.5 hover:bg-gray-50">
+            我的主页
+          </a>
+          <a href="/history" className="block px-3 py-1.5 hover:bg-gray-50">
+            历史记录
+          </a>
+          <a href="/history?favorite=true" className="block px-3 py-1.5 hover:bg-gray-50">
+            收藏夹
+          </a>
+          <button
+            type="button"
+            onClick={logout}
+            className="block w-full text-left px-3 py-1.5 hover:bg-gray-50 text-red-600"
+          >
+            退出登录
+          </button>
         </div>
       )}
     </div>
@@ -2820,6 +3322,7 @@ git commit -m "feat(ui): UserMenu shows admin link when isAdmin"
 ## Task 30: AuthModal 加「忘记密码」链接 + lib/auth-client.ts 加 validatePasswordConfirmation
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\components\AuthModal.tsx`
 - Modify: `E:\ToolDevelop\PinYinCharacter\lib\auth-client.ts`
 
@@ -2840,9 +3343,11 @@ export function validatePasswordConfirmation(pw: string, confirm: string): strin
 定位到 `</form>` 之后追加（**先 Read 文件确认结构**）：
 
 ```tsx
-      <p className="text-xs text-gray-500 mt-3 text-center">
-        <a href="/forgot-password" className="text-blue-600 hover:underline">忘记密码</a>
-      </p>
+<p className="text-xs text-gray-500 mt-3 text-center">
+  <a href="/forgot-password" className="text-blue-600 hover:underline">
+    忘记密码
+  </a>
+</p>
 ```
 
 - [ ] **Step 3: 跑测试**
@@ -2863,6 +3368,7 @@ git commit -m "feat(ui+client): AuthModal forgot-password link + password confir
 ## Task 31: 集成测试 — password-reset
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\integration\password-reset.test.ts`
 
 - [ ] **Step 1: 写测试**
@@ -2897,14 +3403,16 @@ function makeReq(url: string, body?: any) {
 integrationDescribe('password reset full flow', () => {
   it('forgot → reset-info → reset with valid token logs in user', async () => {
     const username = uniqueUsername('pr');
-    const r1 = await register(makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any);
+    const r1 = await register(
+      makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any,
+    );
     expect(r1.status).toBe(200);
 
     // 第一次 forgot：拿 token from console
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const r2 = await forgot(makeReq('http://x/api/auth/forgot', { username }) as any);
     expect(r2.status).toBe(200);
-    const logText = consoleSpy.mock.calls.map(c => c.join(' ')).join('\n');
+    const logText = consoleSpy.mock.calls.map((c) => c.join(' ')).join('\n');
     const m = logText.match(/token=([A-Za-z0-9_-]+)/);
     expect(m).not.toBeNull();
     const token = m![1];
@@ -2917,66 +3425,91 @@ integrationDescribe('password reset full flow', () => {
     expect(j3.data.username).toBe(username);
 
     // reset
-    const r4 = await reset(makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword1' }) as any);
+    const r4 = await reset(
+      makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword1' }) as any,
+    );
     expect(r4.status).toBe(200);
     expect(r4.headers.get('set-cookie')).toMatch(/auth_token=/);
 
     // 新密码可以登录
-    const r5 = await login(makeReq('http://x/api/auth/login', { username, password: 'newpassword1' }) as any);
+    const r5 = await login(
+      makeReq('http://x/api/auth/login', { username, password: 'newpassword1' }) as any,
+    );
     expect(r5.status).toBe(200);
 
     // 旧密码失败
-    const r6 = await login(makeReq('http://x/api/auth/login', { username, password: 'oldpassword1' }) as any);
+    const r6 = await login(
+      makeReq('http://x/api/auth/login', { username, password: 'oldpassword1' }) as any,
+    );
     expect(r6.status).toBe(401);
   });
 
   it('token reuse: second reset with same token returns 400', async () => {
     const username = uniqueUsername('pr2');
-    await register(makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any);
+    await register(
+      makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any,
+    );
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await forgot(makeReq('http://x/api/auth/forgot', { username }) as any);
-    const logText = consoleSpy.mock.calls.map(c => c.join(' ')).join('\n');
+    const logText = consoleSpy.mock.calls.map((c) => c.join(' ')).join('\n');
     const m = logText.match(/token=([A-Za-z0-9_-]+)/);
     const token = m![1];
     consoleSpy.mockRestore();
 
-    const a = await reset(makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword1' }) as any);
+    const a = await reset(
+      makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword1' }) as any,
+    );
     expect(a.status).toBe(200);
-    const b = await reset(makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword2' }) as any);
+    const b = await reset(
+      makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword2' }) as any,
+    );
     expect(b.status).toBe(400);
   });
 
   it('expired token: manually expire, then use returns 400', async () => {
     const username = uniqueUsername('pr3');
-    const r1 = await register(makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any);
+    const r1 = await register(
+      makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any,
+    );
     const userId = (await r1.json()).data.user.id;
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     await forgot(makeReq('http://x/api/auth/forgot', { username }) as any);
-    const logText = consoleSpy.mock.calls.map(c => c.join(' ')).join('\n');
+    const logText = consoleSpy.mock.calls.map((c) => c.join(' ')).join('\n');
     const m = logText.match(/token=([A-Za-z0-9_-]+)/);
     const token = m![1];
     consoleSpy.mockRestore();
 
     const pool = getPool();
-    await pool.execute(`UPDATE password_resets SET expires_at = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE user_id = ?`, [userId]);
-    const r2 = await reset(makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword1' }) as any);
+    await pool.execute(
+      `UPDATE password_resets SET expires_at = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE user_id = ?`,
+      [userId],
+    );
+    const r2 = await reset(
+      makeReq('http://x/api/auth/reset', { token, newPassword: 'newpassword1' }) as any,
+    );
     expect(r2.status).toBe(400);
   });
 
   it('unknown username: forgot returns 200, no row created', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const r = await forgot(makeReq('http://x/api/auth/forgot', { username: 'nobody_here_xxx' }) as any);
+    const r = await forgot(
+      makeReq('http://x/api/auth/forgot', { username: 'nobody_here_xxx' }) as any,
+    );
     consoleSpy.mockRestore();
     expect(r.status).toBe(200);
     const pool = getPool();
-    const [rows] = await pool.execute<any[]>(`SELECT COUNT(*) AS n FROM password_resets WHERE user_id IN (SELECT id FROM users WHERE username = ?)`,
-      ['nobody_here_xxx']);
+    const [rows] = await pool.execute<any[]>(
+      `SELECT COUNT(*) AS n FROM password_resets WHERE user_id IN (SELECT id FROM users WHERE username = ?)`,
+      ['nobody_here_xxx'],
+    );
     expect(Number(rows[0]?.n ?? 0)).toBe(0);
   });
 
   it('rate limit: two forgot in 1 second: second 429', async () => {
     const username = uniqueUsername('pr4');
-    await register(makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any);
+    await register(
+      makeReq('http://x/api/auth/register', { username, password: 'oldpassword1' }) as any,
+    );
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     const a = await forgot(makeReq('http://x/api/auth/forgot', { username }) as any);
     const b = await forgot(makeReq('http://x/api/auth/forgot', { username }) as any);
@@ -3007,6 +3540,7 @@ git commit -m "test: password reset integration suite (5 cases)"
 ## Task 32: 集成测试 — admin CRUD
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\integration\admin-crud.test.ts`
 
 - [ ] **Step 1: 写测试**
@@ -3033,18 +3567,24 @@ const { POST: promote } = await import('@/app/api/admin/users/[id]/promote/route
 const { POST: demote } = await import('@/app/api/admin/users/[id]/demote/route');
 
 async function regUser(username: string) {
-  const r = await register(new Request('http://x/api/auth/register', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username, password: 'longenoughpwd' }),
-  }) as any);
+  const r = await register(
+    new Request('http://x/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'longenoughpwd' }),
+    }) as any,
+  );
   return r;
 }
 
 async function loginAndCookie(username: string) {
-  const r = await login(new Request('http://x/api/auth/login', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username, password: 'longenoughpwd' }),
-  }) as any);
+  const r = await login(
+    new Request('http://x/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'longenoughpwd' }),
+    }) as any,
+  );
   const cookie = r.headers.get('set-cookie')!.split(';')[0]; // 'auth_token=...'
   const j = await r.json();
   return { cookie, user: j.data.user };
@@ -3086,17 +3626,26 @@ integrationDescribe('admin: write endpoints', () => {
     const { user: targetUser } = await loginAndCookie(target);
 
     const ctx = { params: Promise.resolve({ id: String(targetUser.id) }) } as any;
-    const r = await resetPw(withCookie(cookie, new Request(`http://x/api/admin/users/${targetUser.id}/reset-password`, { method: 'POST' })) as any, ctx);
+    const r = await resetPw(
+      withCookie(
+        cookie,
+        new Request(`http://x/api/admin/users/${targetUser.id}/reset-password`, { method: 'POST' }),
+      ) as any,
+      ctx,
+    );
     expect(r.status).toBe(200);
     const j = await r.json();
     const tempPw = j.data.tempPassword;
     expect(tempPw).toBeTruthy();
 
     // target 用临时密码登录
-    const lr = await login(new Request('http://x/api/auth/login', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ username: target, password: tempPw }),
-    }) as any);
+    const lr = await login(
+      new Request('http://x/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ username: target, password: tempPw }),
+      }) as any,
+    );
     expect(lr.status).toBe(200);
   });
 
@@ -3109,10 +3658,22 @@ integrationDescribe('admin: write endpoints', () => {
     const { user: targetUser } = await loginAndCookie(target);
 
     const ctx = { params: Promise.resolve({ id: String(targetUser.id) }) } as any;
-    const p1 = await promote(withCookie(cookie, new Request(`http://x/api/admin/users/${targetUser.id}/promote`, { method: 'POST' })) as any, ctx);
+    const p1 = await promote(
+      withCookie(
+        cookie,
+        new Request(`http://x/api/admin/users/${targetUser.id}/promote`, { method: 'POST' }),
+      ) as any,
+      ctx,
+    );
     expect(p1.status).toBe(200);
 
-    const p2 = await demote(withCookie(cookie, new Request(`http://x/api/admin/users/${targetUser.id}/demote`, { method: 'POST' })) as any, ctx);
+    const p2 = await demote(
+      withCookie(
+        cookie,
+        new Request(`http://x/api/admin/users/${targetUser.id}/demote`, { method: 'POST' }),
+      ) as any,
+      ctx,
+    );
     expect(p2.status).toBe(200);
   });
 
@@ -3123,7 +3684,13 @@ integrationDescribe('admin: write endpoints', () => {
     const { cookie } = await loginAndCookie(admin);
 
     const ctx = { params: Promise.resolve({ id: String(adminId) }) } as any;
-    const r = await demote(withCookie(cookie, new Request(`http://x/api/admin/users/${adminId}/demote`, { method: 'POST' })) as any, ctx);
+    const r = await demote(
+      withCookie(
+        cookie,
+        new Request(`http://x/api/admin/users/${adminId}/demote`, { method: 'POST' }),
+      ) as any,
+      ctx,
+    );
     expect(r.status).toBe(400);
   });
 
@@ -3134,10 +3701,17 @@ integrationDescribe('admin: write endpoints', () => {
     const { cookie } = await loginAndCookie(admin);
 
     const ctx = { params: Promise.resolve({ id: String(adminId) }) } as any;
-    const r = await delUser(withCookie(cookie, new Request(`http://x/api/admin/users/${adminId}`, {
-      method: 'DELETE', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ confirmUsername: admin }),
-    })) as any, ctx);
+    const r = await delUser(
+      withCookie(
+        cookie,
+        new Request(`http://x/api/admin/users/${adminId}`, {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ confirmUsername: admin }),
+        }),
+      ) as any,
+      ctx,
+    );
     expect(r.status).toBe(400);
   });
 
@@ -3152,18 +3726,31 @@ integrationDescribe('admin: write endpoints', () => {
     // 写一条 history
     const { POST: createHistory } = await import('@/app/api/history/route');
     const { cookie: targetCookie } = await loginAndCookie(target);
-    const ch = await createHistory(withCookie(targetCookie, new Request('http://x/api/history', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ kind: 'text2pinyin', input: '你好', char_count: 2, dedup: false }),
-    })) as any);
+    const ch = await createHistory(
+      withCookie(
+        targetCookie,
+        new Request('http://x/api/history', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ kind: 'text2pinyin', input: '你好', char_count: 2, dedup: false }),
+        }),
+      ) as any,
+    );
     expect(ch.status).toBe(200);
 
     // admin 删除 target
     const ctx = { params: Promise.resolve({ id: String(targetId) }) } as any;
-    const r = await delUser(withCookie(cookie, new Request(`http://x/api/admin/users/${targetId}`, {
-      method: 'DELETE', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ confirmUsername: target }),
-    })) as any, ctx);
+    const r = await delUser(
+      withCookie(
+        cookie,
+        new Request(`http://x/api/admin/users/${targetId}`, {
+          method: 'DELETE',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ confirmUsername: target }),
+        }),
+      ) as any,
+      ctx,
+    );
     expect(r.status).toBe(204);
 
     // 验证 cascade
@@ -3197,6 +3784,7 @@ git commit -m "test: admin CRUD integration suite (6 cases)"
 ## Task 33: README + .env.example 更新
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\README.md`
 - Modify: `E:\ToolDevelop\PinYinCharacter\.env.example`
 
@@ -3217,6 +3805,7 @@ git commit -m "test: admin CRUD integration suite (6 cases)"
 ### 邮件配置
 
 `.env` 中：
+
 - `MAIL_TRANSPORT=console`（默认）：邮件打印到 server console，无需 SMTP
 - `MAIL_TRANSPORT=smtp`：启用真实 SMTP，需填 `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`
 ```
@@ -3270,6 +3859,7 @@ git commit -m "docs: add 密码找回 + 管理员后台 section to README"
 ## Task 35: 集成测试套件端到端跑通
 
 **Files:**
+
 - （无新文件，跑测试）
 
 - [ ] **Step 1: 跑全套**
@@ -3305,6 +3895,7 @@ pnpm build
 ## Task 36: admin 单元测试 (纯函数 + 辅助)
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\admin.test.ts`
 
 注意：admin.ts 里大部分函数（listUsers / getUserDetail / getAuditLog / getSystemStats / countOtherAdmins / deleteUserCascade / setUserAdmin / setUserPasswordHash）都直连 DB，纯单元测试需要 mock `getPool`。这些函数的覆盖由 Task 32 集成测试完成。本任务只测**纯函数**部分。
@@ -3348,6 +3939,7 @@ git commit -m "test: admin pure helpers (generateTempPassword)"
 ## Final: 整体 code review
 
 派一个独立子代理做 final code review（spec compliance + code quality）：
+
 - 对照 spec 检查 12 个章节是否都实现
 - 重点看：SMTP 行为、admin guard、rate limit、HTML 模板、cascading delete
 - 跑一遍 `pnpm test` + `pnpm exec tsc --noEmit` + `pnpm build`

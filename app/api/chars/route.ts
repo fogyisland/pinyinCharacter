@@ -16,7 +16,8 @@ export async function GET(req: NextRequest) {
       hskLevel: sp.get('hskLevel') ?? undefined,
       page: sp.get('page') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const { level, hskLevel, ...rest } = parsed.data;
     const result = await listChars({
       ...rest,

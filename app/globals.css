@@ -1,24 +1,24 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ============ Design Tokens (字·韵) ============ */
 @theme {
   /* Colors */
-  --color-paper: #F4ECD8;
-  --color-paper-soft: #FFFAEE;
-  --color-paper-deep: #E8DCC0;
-  --color-ink: #3A2A14;
-  --color-ink-soft: #5A4530;
-  --color-ink-faint: #8B6F3A;
-  --color-seal: #B22B2B;
-  --color-success: #4A7C59;
-  --color-warning: #C99A3E;
-  --color-danger: #B22B2B;
-  --color-info: #4F6B8C;
+  --color-paper: #f4ecd8;
+  --color-paper-soft: #fffaee;
+  --color-paper-deep: #e8dcc0;
+  --color-ink: #3a2a14;
+  --color-ink-soft: #5a4530;
+  --color-ink-faint: #8b6f3a;
+  --color-seal: #b22b2b;
+  --color-success: #4a7c59;
+  --color-warning: #c99a3e;
+  --color-danger: #b22b2b;
+  --color-info: #4f6b8c;
 
   /* Fonts */
   --font-sans: var(--font-han-sans), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-han-serif), Georgia, serif;
-  --font-kai: var(--font-wenkai), "LXGW WenKai", "Kaiti SC", serif;
+  --font-kai: var(--font-wenkai), 'LXGW WenKai', 'Kaiti SC', serif;
   /* Hard-pen fonts (Plan G2) */
   --font-lxgw-wenkai-gb: 'LXGW WenKai GB', serif;
   --font-yozai: 'Yozai', serif;
@@ -38,7 +38,7 @@
 
   /* Shadows */
   --shadow-paper: 0 1px 2px rgba(58, 42, 20, 0.06);
-  --shadow-paper-md: 0 4px 12px rgba(58, 42, 20, 0.10);
+  --shadow-paper-md: 0 4px 12px rgba(58, 42, 20, 0.1);
   --shadow-paper-lg: 0 12px 32px rgba(58, 42, 20, 0.14);
 
   /* Border radius (small) */
@@ -48,11 +48,11 @@
 /* ============ Base Layer ============ */
 @layer base {
   body {
-    background-color: #F4ECD8;
+    background-color: #f4ecd8;
     background-image:
       radial-gradient(circle at 20% 30%, rgba(178, 43, 43, 0.018) 0%, transparent 40%),
       radial-gradient(circle at 80% 70%, rgba(58, 42, 20, 0.025) 0%, transparent 50%);
-    color: #3A2A14;
+    color: #3a2a14;
     font-family: var(--font-sans);
   }
   /* Touch target baseline (a11y): inputs/selects/textareas ≥ 44px tall.
@@ -83,8 +83,8 @@
   }
   .stamp {
     display: inline-block;
-    border: 2px solid #B22B2B;
-    color: #B22B2B;
+    border: 2px solid #b22b2b;
+    color: #b22b2b;
     padding: 4px 10px;
     font-family: var(--font-kai);
     transform: rotate(-4deg);
@@ -92,8 +92,8 @@
     background: transparent;
   }
   .btn-seal {
-    background-color: #B22B2B;
-    color: #FFFAEE;
+    background-color: #b22b2b;
+    color: #fffaee;
     padding: 8px 18px;
     font-family: var(--font-kai);
     letter-spacing: 0.1em;
@@ -106,24 +106,28 @@
   }
   .btn-ghost {
     background: transparent;
-    color: #3A2A14;
-    border: 1px solid rgba(58, 42, 20, 0.20);
+    color: #3a2a14;
+    border: 1px solid rgba(58, 42, 20, 0.2);
     padding: 8px 18px;
     cursor: pointer;
-    transition: background-color 200ms, border-color 200ms;
+    transition:
+      background-color 200ms,
+      border-color 200ms;
   }
   .btn-ghost:hover {
-    background-color: #FFFAEE;
-    border-color: rgba(58, 42, 20, 0.40);
+    background-color: #fffaee;
+    border-color: rgba(58, 42, 20, 0.4);
   }
   .card-paper {
     background: transparent;
-    border: 1px solid rgba(58, 42, 20, 0.10);
+    border: 1px solid rgba(58, 42, 20, 0.1);
     box-shadow: var(--shadow-paper);
-    transition: box-shadow 200ms, border-color 200ms;
+    transition:
+      box-shadow 200ms,
+      border-color 200ms;
   }
   .card-paper:hover {
-    border-color: #B22B2B;
+    border-color: #b22b2b;
     box-shadow: var(--shadow-paper-md);
   }
 }
@@ -131,21 +135,42 @@
 /* ============ Print (worksheet) ============ */
 /* The @page size is set inline per worksheet (see WorksheetPreview), since CSS
    has no per-element way to drive @page without Paged Media Level 3 support. */
-.worksheet-grid--a3 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-.worksheet-grid--a4 { grid-template-columns: repeat(8,  minmax(0, 1fr)); }
-.worksheet-grid--b5 { grid-template-columns: repeat(6,  minmax(0, 1fr)); }
-.worksheet-grid--brush-12 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.worksheet-grid--brush-24 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.worksheet-grid--brush-28 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.worksheet-grid--a3 {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+.worksheet-grid--a4 {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+}
+.worksheet-grid--b5 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.worksheet-grid--brush-12 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.worksheet-grid--brush-24 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.worksheet-grid--brush-28 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
 
 /* Lined-paper (钢笔·横线) variants: 1 column, rows = linesPerPage. The
    container uses .lined-paper (flexbox) instead of grid because each row's
    height comes from linedHeightPx, not from grid auto-sizing. */
 .worksheet-grid--a3-lined,
 .worksheet-grid--a4-lined,
-.worksheet-grid--b5-lined { grid-template-columns: 1fr; }
-.lined-paper { display: flex; flex-direction: column; width: 100%; }
-.lined-paper-row { display: block; width: 100%; }
+.worksheet-grid--b5-lined {
+  grid-template-columns: 1fr;
+}
+.lined-paper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.lined-paper-row {
+  display: block;
+  width: 100%;
+}
 
 /* Four-line paper (钢笔·英文描红 / 听写本). Each ruled row is its own DOM
    node with 4 absolutely-positioned line elements + a text layer, so the
@@ -158,8 +183,8 @@
      A4 height = 841.89px; @page top/bottom margins ~40px each → usable
      ~761.89px. With grid-gap 12px × 3 rules = 36px + row-gap 16px = 52px
      per row → ⌊761.89 / 52⌋ = 14 rows per A4 page. */
-  --grid-gap: 12px;       /* gap between the 4 rules within a row */
-  --row-gap: 16px;        /* gap between rows (visually separates groups) */
+  --grid-gap: 12px; /* gap between the 4 rules within a row */
+  --row-gap: 16px; /* gap between rows (visually separates groups) */
   --row-height: calc(var(--grid-gap) * 3); /* rule 1 → rule 3 spacing */
   --rows-per-page: 14;
   background-color: #fff;
@@ -177,10 +202,23 @@
   width: 100%;
   height: 2px;
 }
-.four-line-paper-row .line-1 { top: 0;                        background-color: #1d4ed8; }
-.four-line-paper-row .line-2 { top: var(--grid-gap);           background-color: #d94c4c; }
-.four-line-paper-row .line-3 { top: calc(var(--grid-gap) * 2); background-color: #c0392b; height: 3px; }
-.four-line-paper-row .line-4 { top: calc(var(--grid-gap) * 3); background-color: #1d4ed8; }
+.four-line-paper-row .line-1 {
+  top: 0;
+  background-color: #1d4ed8;
+}
+.four-line-paper-row .line-2 {
+  top: var(--grid-gap);
+  background-color: #d94c4c;
+}
+.four-line-paper-row .line-3 {
+  top: calc(var(--grid-gap) * 2);
+  background-color: #c0392b;
+  height: 3px;
+}
+.four-line-paper-row .line-4 {
+  top: calc(var(--grid-gap) * 3);
+  background-color: #1d4ed8;
+}
 .four-line-paper-row .text-content {
   position: absolute;
   left: 8px;
@@ -200,7 +238,12 @@
 }
 
 /* Screen: hide batch area off-screen (Spec B / Task 8) */
-.batch-print-area { position: absolute; left: -10000px; top: 0; width: 100%; }
+.batch-print-area {
+  position: absolute;
+  left: -10000px;
+  top: 0;
+  width: 100%;
+}
 
 @media print {
   /* Print: show only the printable areas; everything else hidden.
@@ -208,19 +251,34 @@
      PracticeTemplate / WorksheetPreview / BatchPrintPreview — adding a
      new printable branch without updating this list silently produces
      blank pages (regression: 2026-07-03, pen-english 4-line). */
-  body * { visibility: hidden; }
-  .worksheet-grid, .worksheet-grid *,
-  .batch-print-area, .batch-print-area *,
-  .four-line-paper, .four-line-paper *,
-  .lined-paper, .lined-paper *,
-  .poem-print-area, .poem-print-area *,
-  .sutra-print-area, .sutra-print-area * { visibility: visible; }
+  body * {
+    visibility: hidden;
+  }
+  .worksheet-grid,
+  .worksheet-grid *,
+  .batch-print-area,
+  .batch-print-area *,
+  .four-line-paper,
+  .four-line-paper *,
+  .lined-paper,
+  .lined-paper *,
+  .poem-print-area,
+  .poem-print-area *,
+  .sutra-print-area,
+  .sutra-print-area * {
+    visibility: visible;
+  }
   .worksheet-grid,
   .batch-print-area,
   .four-line-paper,
   .lined-paper,
   .poem-print-area,
-  .sutra-print-area { position: absolute; left: 0; top: 0; width: 100%; }
+  .sutra-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
   /* Force backgrounds to print. Chrome silently drops background-color
      and background-image in print unless the element opts in. The 4-line
      English template renders its 4 rules as background-color stripes, so
@@ -235,13 +293,19 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  .worksheet-no-print { display: none !important; }
-  .print-page-break { page-break-after: always; break-after: page; }
+  .worksheet-no-print {
+    display: none !important;
+  }
+  .print-page-break {
+    page-break-after: always;
+    break-after: page;
+  }
 }
 
 /* Self-hosted Chinese fonts (replaces next/font/google) */
 :root {
-  --font-han-sans: 'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-han-sans:
+    'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
   --font-han-serif: 'Noto Serif SC', Georgia, 'Songti SC', 'SimSun', serif;
   --font-wenkai: 'LXGW WenKai TC', 'Kaiti SC', 'KaiTi', 'STKaiti', serif;
   /* Hard-pen fonts (Plan G2) */
@@ -262,26 +326,30 @@
    fallback for any glyph the dedicated font lacks. */
 @font-face {
   font-family: 'YinQiJiaGuWen';
-  src: url('/fonts/founder-jiaguwen.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/founder-jiaguwen.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'HanDianJinWen';
-  src: url('/fonts/BabelStoneHanBasic.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanExtra.ttf') format('truetype');
+  src:
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanExtra.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'QuanZiKuShuoWen';
-  src: url('/fonts/quanziku-shuowen.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/quanziku-shuowen.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'QuanZiKuLiDing';
-  src: url('/fonts/wang-hanzong-lishu.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/wang-hanzong-lishu.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
@@ -293,26 +361,30 @@
 /* ============ Era font alternatives (added 2026-06-28) ============ */
 @font-face {
   font-family: 'Oracular';
-  src: url('/fonts/Oracular-Regular.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/Oracular-Regular.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'OracularInverted';
-  src: url('/fonts/Oracular-Inverted.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/Oracular-Inverted.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongWeibei';
-  src: url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongXingshu';
-  src: url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 
@@ -372,13 +444,42 @@
 }
 
 /* ============ Sutra Copy Mode ============ */
-.copy-view { transform-origin: center; transition: transform 1.2s cubic-bezier(0.25, 1, 0.5, 1), opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1); }
-.copy-view--collapse { opacity: 0; }
-.copy-view--collapse[data-reading="horizontal"] { transform: scaleX(0); }
-.copy-view--collapse[data-reading="vertical-rtl"] { transform: scaleY(0); }
-.copy-view--collapse[data-reading="vertical-ltr"] { transform: scaleY(0); }
-.copy-view--collapsing { pointer-events: none; }
-.copy-seal { transition: transform 0.6s ease-out, opacity 0.6s ease-out; transform-origin: center; opacity: 0; transform: scale(0.5); }
-.copy-seal--enter { opacity: 1; transform: scale(1); }
-.copy-char { transition: color 0.4s ease-in-out; }
-.copy-char--disabled { pointer-events: none; }
+.copy-view {
+  transform-origin: center;
+  transition:
+    transform 1.2s cubic-bezier(0.25, 1, 0.5, 1),
+    opacity 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.copy-view--collapse {
+  opacity: 0;
+}
+.copy-view--collapse[data-reading='horizontal'] {
+  transform: scaleX(0);
+}
+.copy-view--collapse[data-reading='vertical-rtl'] {
+  transform: scaleY(0);
+}
+.copy-view--collapse[data-reading='vertical-ltr'] {
+  transform: scaleY(0);
+}
+.copy-view--collapsing {
+  pointer-events: none;
+}
+.copy-seal {
+  transition:
+    transform 0.6s ease-out,
+    opacity 0.6s ease-out;
+  transform-origin: center;
+  opacity: 0;
+  transform: scale(0.5);
+}
+.copy-seal--enter {
+  opacity: 1;
+  transform: scale(1);
+}
+.copy-char {
+  transition: color 0.4s ease-in-out;
+}
+.copy-char--disabled {
+  pointer-events: none;
+}

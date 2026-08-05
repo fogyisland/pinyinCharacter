@@ -17,6 +17,7 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 ## Goal
 
 在 `/game` 页加第二个 tab「声调·部首」，提供组合小游戏，让玩家：
+
 - Round 1 把声调 (1/2/3/4/5) 拖到对应的汉字
 - Round 2 把部首拖到对应的汉字
 
@@ -28,10 +29,10 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 
 **部首** — 缺失。需要外部数据。两个选项：
 
-| 选项 | 实现 | 优点 | 缺点 |
-|---|---|---|---|
+| 选项                | 实现                                                     | 优点           | 缺点                                                   |
+| ------------------- | -------------------------------------------------------- | -------------- | ------------------------------------------------------ |
 | **A. Bundled JSON** | `data/radicals.json` (~10k CJK chars × 1-2 byte radical) | 零依赖，纯静态 | 增加 ~30-50KB 到 client bundle (在 `lazy load` 范围内) |
-| **B. DB column** | 加 `radical` 列到 `rare_chars` + 一次迁移脚本 | 简单查询 | 只覆盖 rare_chars；其他 char 没数据 |
+| **B. DB column**    | 加 `radical` 列到 `rare_chars` + 一次迁移脚本            | 简单查询       | 只覆盖 rare_chars；其他 char 没数据                    |
 
 **采用 A**。理由：游戏可选加载 (`dynamic import`)，30KB 不影响首屏；保持 DB schema 稳定；未来其他特性 (PinyinInputMethod 提示部首) 可复用同一份 JSON。
 
@@ -46,6 +47,7 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 返回 4 个稀有汉字 + 4 个声调 (1-5 范围去重) + 4 个部首。
 
 **Round 生成算法** (server-side, deterministic via seed)：
+
 1. 从 `rare_chars` WHERE `meaning <> ''` AND `pinyin <> ''` 随机抽 8 个
 2. 对每个 char 调 `getRadical` — 丢回无 radical 的
 3. 4 chars 进入 round；剩下 4 个作为「错配干扰项」候选
@@ -58,10 +60,12 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 ## UI/UX
 
 `/game` 页加顶部 tab 切换 (使用现有 lucide-react icon)：
+
 - 「声调·部首」— 新 ToneRadicalGame (default)
 - 「拼音·字」— 现有 DragMatchGame
 
 **ToneRadicalGame 单局流程**：
+
 1. **加载** — 调 API 拿 4 chars
 2. **Round 1: 声调** (countdown 3-2-1)
    - 顶部：4 chars 排成一行 (大字，每字下方有 pinyin 无声调数字)
@@ -78,6 +82,7 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 ## File Structure
 
 新建：
+
 - `data/radicals.json` — char → radical 静态映射 (build script 生成，commit 进 git)
 - `scripts/build-radicals.ts` — 从 npm `cjk-radicals` 生成 JSON
 - `lib/radical.ts` — `getRadical(char): string | null`，懒加载 JSON
@@ -93,6 +98,7 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 - `tests/unit/server/api-game-round.test.ts` — round 路由测试
 
 修改：
+
 - `app/game/page.tsx` — 改成 tab 容器
 - `lib/validators.ts` — 加 `gameRoundQuerySchema` (count: 1-8, seed: optional int)
 - `package.json` — 加 `radicals:build` script
@@ -121,6 +127,7 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 ## Verification
 
 完成时：
+
 - `pnpm test` — 新增 3 个测试文件全过；现有 116+ 测试无回归
 - `pnpm tsc --noEmit` — 无错
 - `pnpm build` — 通过
@@ -136,19 +143,19 @@ Plan I 加第二款小游戏：组合挑战「声调」+「部首」。预期一
 
 ## Estimated Tasks
 
-| # | Task | 估时 |
-|---|---|---|
-| 1 | `scripts/build-radicals.ts` + 生成 `data/radicals.json` commit | 0.5h |
-| 2 | `lib/pinyin-tone.ts` + tests | 0.3h |
-| 3 | `lib/radical.ts` + tests (mock JSON) | 0.3h |
-| 4 | `/api/radicals` route (cache headers) | 0.3h |
-| 5 | validators — `gameRoundQuerySchema` | 0.2h |
-| 6 | `/api/game/round` route + tests | 0.5h |
-| 7 | `ToneToken` + `RadicalToken` + `ToneRadicalChar` 组件 | 0.5h |
-| 8 | `ToneRadicalGame` 主组件 (state machine) | 0.8h |
-| 9 | `GameModeTabs` + `app/game/page.tsx` 改造 | 0.3h |
-| 10 | `radicals:build` script + README 更新 | 0.2h |
-| 11 | 手动浏览器冒烟 | human |
+| #   | Task                                                           | 估时  |
+| --- | -------------------------------------------------------------- | ----- |
+| 1   | `scripts/build-radicals.ts` + 生成 `data/radicals.json` commit | 0.5h  |
+| 2   | `lib/pinyin-tone.ts` + tests                                   | 0.3h  |
+| 3   | `lib/radical.ts` + tests (mock JSON)                           | 0.3h  |
+| 4   | `/api/radicals` route (cache headers)                          | 0.3h  |
+| 5   | validators — `gameRoundQuerySchema`                            | 0.2h  |
+| 6   | `/api/game/round` route + tests                                | 0.5h  |
+| 7   | `ToneToken` + `RadicalToken` + `ToneRadicalChar` 组件          | 0.5h  |
+| 8   | `ToneRadicalGame` 主组件 (state machine)                       | 0.8h  |
+| 9   | `GameModeTabs` + `app/game/page.tsx` 改造                      | 0.3h  |
+| 10  | `radicals:build` script + README 更新                          | 0.2h  |
+| 11  | 手动浏览器冒烟                                                 | human |
 
 **Total:** ~4h impl + smoke
 

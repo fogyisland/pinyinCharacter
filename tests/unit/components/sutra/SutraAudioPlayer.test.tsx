@@ -13,11 +13,13 @@ function getAudio(): HTMLAudioElement {
 function makeFetchMock(): ReturnType<typeof vi.fn> {
   // happy-dom does not implement URL.createObjectURL out of the box; stub it
   if (!('createObjectURL' in URL)) {
-    (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = () => 'blob:mock';
+    (URL as unknown as { createObjectURL: (b: Blob) => string }).createObjectURL = () =>
+      'blob:mock';
     (URL as unknown as { revokeObjectURL: (u: string) => void }).revokeObjectURL = () => undefined;
   }
   const fn = vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
-    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    const url =
+      typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
     if (url.endsWith('/api/tts') && init?.method === 'POST') {
       return new Response(new Blob(['x'], { type: 'audio/mpeg' }), { status: 200 });
     }
@@ -27,12 +29,10 @@ function makeFetchMock(): ReturnType<typeof vi.fn> {
   return fn;
 }
 
-const singleChunk: SutraAudioChunk[] = [
-  { id: 1, title: '大悲咒', text: '南无喝啰怛那哆啰夜耶' },
-];
+const singleChunk: SutraAudioChunk[] = [{ id: 1, title: '大悲咒', text: '南无喝啰怛那哆啰夜耶' }];
 const playlist: SutraAudioChunk[] = [
   { id: 1, title: '大悲咒', text: '南无喝啰怛那哆啰夜耶。' },
-  { id: 2, title: '心经',   text: '观自在菩萨。' },
+  { id: 2, title: '心经', text: '观自在菩萨。' },
   { id: 3, title: '药师咒', text: '南无薄伽伐帝。' },
 ];
 
@@ -89,7 +89,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
 
     const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls;
     const ttsCall = calls.find((c) => {
-      const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+      const url =
+        typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
       return url.endsWith('/api/tts');
     });
     expect(ttsCall).toBeTruthy();
@@ -150,7 +151,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     // Wait for first fetch
     await waitFor(() => {
       const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => {
-        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        const url =
+          typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
         return url.endsWith('/api/tts');
       });
       expect(calls.length).toBeGreaterThanOrEqual(1);
@@ -171,7 +173,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
 
     const allCalls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls;
     const ttsCalls = allCalls.filter((c) => {
-      const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+      const url =
+        typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
       return url.endsWith('/api/tts');
     });
     // Second fetch should be for the second chunk text
@@ -245,7 +248,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
 
   it('splits a long single-chunk text into multiple TTS batches under 800 chars', async () => {
     // 12 paragraphs of ~200 chars each → at least 3 batches
-    const para = '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法。';
+    const para =
+      '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法。';
     const longChunk: SutraAudioChunk[] = [
       { id: 1, title: '长经', text: Array(12).fill(para).join('\n') },
     ];
@@ -255,7 +259,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
 
     await waitFor(() => {
       const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => {
-        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        const url =
+          typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
         return url.endsWith('/api/tts');
       });
       expect(calls.length).toBeGreaterThanOrEqual(1);
@@ -264,11 +269,14 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     // Fire ended a few times to trigger more batches
     const audio = getAudio();
     for (let i = 0; i < 4; i++) {
-      act(() => { audio.dispatchEvent(new Event('ended')); });
+      act(() => {
+        audio.dispatchEvent(new Event('ended'));
+      });
     }
     await waitFor(() => {
       const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => {
-        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        const url =
+          typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
         return url.endsWith('/api/tts');
       });
       expect(calls.length).toBeGreaterThanOrEqual(2);
@@ -276,7 +284,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
 
     const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls;
     const ttsCalls = calls.filter((c) => {
-      const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+      const url =
+        typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
       return url.endsWith('/api/tts');
     });
     const bodies = ttsCalls.map((c) => JSON.parse((c[1] as RequestInit).body as string));
@@ -290,7 +299,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
   });
 
   it('shows batch progress 1/N for a single long chunk and advances N→2 on next-batch ended', async () => {
-    const para = '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法。';
+    const para =
+      '观自在菩萨行深般若波罗蜜多时照见五蕴皆空度一切苦厄舍利子色不异空空不异色色即是空空即是色受想行识亦复如是舍利子是诸法空相不生不灭不垢不净不增不减是故空中无色无受想行识无眼耳鼻舌身意无色声香味触法。';
     const longChunk: SutraAudioChunk[] = [
       { id: 1, title: '长经', text: Array(12).fill(para).join('\n') },
     ];
@@ -301,7 +311,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     // Wait for first batch fetch to flush
     await waitFor(() => {
       const calls = (global.fetch as unknown as ReturnType<typeof vi.fn>).mock.calls.filter((c) => {
-        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        const url =
+          typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
         return url.endsWith('/api/tts');
       });
       expect(calls.length).toBeGreaterThanOrEqual(1);
@@ -346,9 +357,14 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     };
 
     // Sanity-check crypto.subtle works in happy-dom
-    await crypto.subtle.digest('SHA-256', new TextEncoder().encode('female|观自在菩萨行深般若波罗蜜多时'));
+    await crypto.subtle.digest(
+      'SHA-256',
+      new TextEncoder().encode('female|观自在菩萨行深般若波罗蜜多时'),
+    );
 
-    const chunk: SutraAudioChunk[] = [{ id: 1, title: '心经', text: '观自在菩萨行深般若波罗蜜多时' }];
+    const chunk: SutraAudioChunk[] = [
+      { id: 1, title: '心经', text: '观自在菩萨行深般若波罗蜜多时' },
+    ];
     const fetchMock = makeFetchMock();
 
     const { unmount } = render(<SutraAudioPlayer chunks={chunk} />);
@@ -358,7 +374,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     // Wait for first fetch
     await waitFor(() => {
       const calls = fetchMock.mock.calls.filter((c) => {
-        const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+        const url =
+          typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
         return url.endsWith('/api/tts');
       });
       expect(calls.length).toBeGreaterThanOrEqual(1);
@@ -376,7 +393,8 @@ describe('SutraAudioPlayer (TTS per chunk)', () => {
     // Give the component a generous window to fetch — if cache works, no fetch
     await new Promise((r) => setTimeout(r, 200));
     const ttsCalls2 = fetchMock2.mock.calls.filter((c) => {
-      const url = typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
+      const url =
+        typeof c[0] === 'string' ? c[0] : c[0] instanceof URL ? c[0].toString() : c[0].url;
       return url.endsWith('/api/tts');
     });
     expect(ttsCalls2.length).toBe(0);

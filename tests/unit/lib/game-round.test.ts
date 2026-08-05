@@ -67,9 +67,7 @@ describe('buildRound hskLevel filter (Step 5.1 RED → GREEN)', () => {
   });
 
   it('returns empty array when no chars match hskLevel (caller must fallback)', () => {
-    const chars: CharInfo[] = [
-      { char: '你', level: 1, hsk_level: 1 } as CharInfo,
-    ];
+    const chars: CharInfo[] = [{ char: '你', level: 1, hsk_level: 1 } as CharInfo];
     const filtered = filterByHskLevel(chars, 6);
     expect(filtered).toEqual([]);
   });

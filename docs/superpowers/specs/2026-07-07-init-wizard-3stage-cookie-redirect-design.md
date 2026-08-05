@@ -33,23 +33,24 @@
 
 `app/init/page.tsx:170-188` 列了 9 个 phases,每个一个 endpoint:
 
-| 序号 | endpoint | 用途 |
-|---|---|---|
-| 1 | `init-tables` | 建 25 张表 |
-| 2 | `init-app-config` | 写 app_config 默认行 |
-| 3 | `init-poems` | 导入 624 首 |
-| 4 | `init-sutras` | 导入 11 经 |
-| 5 | `init-chars` | 导入 7909 字 |
-| 6 | `create-admin` | 创管理员 (要 step 2 抓的 username/password) |
-| 7 | `init-activate` | 写激活行 |
-| 8 | `migrate` | 应用 18 个 migration |
-| 9 | `mark-complete` | 置 setup.completed = true |
+| 序号 | endpoint          | 用途                                        |
+| ---- | ----------------- | ------------------------------------------- |
+| 1    | `init-tables`     | 建 25 张表                                  |
+| 2    | `init-app-config` | 写 app_config 默认行                        |
+| 3    | `init-poems`      | 导入 624 首                                 |
+| 4    | `init-sutras`     | 导入 11 经                                  |
+| 5    | `init-chars`      | 导入 7909 字                                |
+| 6    | `create-admin`    | 创管理员 (要 step 2 抓的 username/password) |
+| 7    | `init-activate`   | 写激活行                                    |
+| 8    | `migrate`         | 应用 18 个 migration                        |
+| 9    | `mark-complete`   | 置 setup.completed = true                   |
 
 UI 把这 9 张卡一字排开 (`app/init/page.tsx:421-475`),用户嫌"混在一起"。
 
 #### Middleware
 
 `middleware.ts:14-48` 顺序检查:
+
 1. 白名单 (init 自身 / api/init/* / _next / favicon)
 2. `setup_completed=1` cookie → allow
 3. `!process.env.DATABASE_URL` → redirect `/init`
@@ -60,6 +61,7 @@ UI 把这 9 张卡一字排开 (`app/init/page.tsx:421-475`),用户嫌"混在一
 #### 旧 bug
 
 浏览器控制台:
+
 - `POST https://ziyun.pudafo.com/api/init/init-db 500` — 端点已被 `a00c6106` 删除,但旧 client bundle 缓存仍在调
 - `<input type="password" value="Admin909217">` — step 1 的 dbConfig.password 提交后还留在 state,NAV 回到 step 1 时回显
 - `[DOM] Input elements should have autocomplete attributes` — Browser 报警,所有 `<input>` 都没 `autoComplete`
@@ -72,7 +74,7 @@ UI 把这 9 张卡一字排开 (`app/init/page.tsx:421-475`),用户嫌"混在一
 fresh deploy (没 .env + 没 cookie)
   → 任何 URL 都跳 /init
   → /init → /init/db (因 wizard.db_done === false)
-  
+
 /init/db submit
   → 写 .env (DATABASE_URL + JWT_SECRET + COOKIE_SECURE)
   → reloadProcessEnvFromFile() + closePool()
@@ -126,7 +128,13 @@ export function middleware(req: NextRequest) {
 
   // 1. 白名单 — 不变
   if (pathname === '/init' || pathname.startsWith('/api/init/')) return NextResponse.next();
-  if (pathname.startsWith('/_next') || pathname.startsWith('/favicon') || pathname.startsWith('/icon') || pathname.startsWith('/apple-icon')) return NextResponse.next();
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/icon') ||
+    pathname.startsWith('/apple-icon')
+  )
+    return NextResponse.next();
 
   // 2. setup 完成 → allow
   if (req.cookies.get('setup_completed')?.value === '1') return NextResponse.next();
@@ -139,6 +147,7 @@ export function middleware(req: NextRequest) {
 ```
 
 影响:
+
 - 没 .env 部署:① 通过,因为 wizard 在白名单
 - 有 .env 但 setup 没跑: ① 落到 /init → /init/db 已 DB 配置完了,直跳 /init/admin
 - setup 跑完:② 通过
@@ -146,20 +155,27 @@ export function middleware(req: NextRequest) {
 #### 旧端点 `init-db` 加 410 shim
 
 `app/api/init/init-db/route.ts` 加回来,只返回:
+
 ```ts
 return NextResponse.json(
-  { ok: false, error: { code: 'stale_build', message: '请硬刷新浏览器 (Ctrl+Shift+R) 后重试。这是旧版 wizard 的端点,新版已分拆。' } },
-  { status: 410 }
+  {
+    ok: false,
+    error: {
+      code: 'stale_build',
+      message: '请硬刷新浏览器 (Ctrl+Shift+R) 后重试。这是旧版 wizard 的端点,新版已分拆。',
+    },
+  },
+  { status: 410 },
 );
 ```
 
 #### Form bug 修复
 
-| Bug | 修法 |
-|---|---|
-| `<input value="Admin909217">` | step 1 提交成功后立刻 `setDbConfig({...DEFAULT_DB, ...cfg, password: ''})`; screen 1 重渲染不携带 password |
+| Bug                                             | 修法                                                                                                                                                                                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `<input value="Admin909217">`                   | step 1 提交成功后立刻 `setDbConfig({...DEFAULT_DB, ...cfg, password: ''})`; screen 1 重渲染不携带 password                                                                                                                |
 | `[DOM] Input elements should have autocomplete` | DB host/user: `autoComplete="off"`<br>DB password: `autoComplete="current-password"`<br>Admin username: `autoComplete="username"`<br>Admin password: `autoComplete="new-password"`<br>Admin email: `autoComplete="email"` |
-| Admin password 在 step 2 → 3 后泄漏 | step 3 调完 `/api/init/mark-complete` 后,`sessionStorage.removeItem('piyin.init.admin.creds')` + `setPassword('')` |
+| Admin password 在 step 2 → 3 后泄漏             | step 3 调完 `/api/init/mark-complete` 后,`sessionStorage.removeItem('piyin.init.admin.creds')` + `setPassword('')`                                                                                                        |
 
 ## Architecture
 
@@ -264,7 +280,7 @@ export async function isInitWizardAdminDone(): Promise<boolean> {
   if (!process.env.DATABASE_URL) return false;
   const { getPool } = await import('./db');
   const [rows] = await getPool().query<any[]>(
-    `SELECT value FROM app_config WHERE \`key\` = 'setup.wizard.admin_done' LIMIT 1`
+    `SELECT value FROM app_config WHERE \`key\` = 'setup.wizard.admin_done' LIMIT 1`,
   );
   return rows.length > 0 && rows[0].value === 'true';
 }
@@ -299,31 +315,40 @@ export async function isInitWizardAdminDone(): Promise<boolean> {
 **这里有个 trade-off**:`/init/admin` 和 `/init/execute` 是两个独立的 RSC page tree,client state 不共享。pass password 跨 page 的选项:
 
 **选项 A:** sessionStorage 也存密码 (但加密/标记 expire,30s 内 step 3 拿完即删)
+
 - 优点:实现简单
 - 缺点:密码短暂落盘 (即使 sessionStorage),稍微弱化安全
 
 **选项 B:** step 2 提交时把 password POST 给新端点 `/api/init/stash-admin`,服务端存在内存 (Map<token, {username,password,email,expiresAt}>) 返回 token;step 3 从 sessionStorage 拿 token,execute 时把它跟 username/email 一起 POST 给 create-admin 端点
+
 - 优点:密码不落 sessionStorage,服务端内存短 TTL
 - 缺点:新端点 + 状态管理
 
 **选项 C:** step 2 提交 `/api/init/create-admin/preset` 端,直接把 username/password/email 写到一个 `app_config` 行 (e.g., `setup.wizard.admin_creds` JSON,值 base64 编码),step 3 后续 `init-db` 流程读这个值,完成后清掉
+
 - 优点:server-side state,无 sessionStorage 风险
 - 缺点:密码短暂存 DB,理论不安全
 
 **选项 D:** 把 wizard 改成 single-page 3 views 但 URL 走 query (e.g., `/init?step=2`),保留 useState
+
 - 优点:client state 自动保留
 - 缺点:跟用户要求的"3 个独立 URL"违背
 
 权衡后我推荐 **选项 B (token 模式)**。理由:
+
 - sessionStorage 存密码即使是 30s TTL 也违反"无敏感数据落客户端"的工程原则
 - 选项 C 把密码写 DB 太重,虽然加密但仍然不对
 - 选项 D 违背用户的 "3 屏独立 URL" 要求
 - 选项 B 实现 50 行代码,内存 Map 几行就够,30s 内 step 3 必须用掉否则重新登录
 
 实现:
+
 ```ts
 // lib/init-credentials.ts
-const STORE = new Map<string, { username: string; password: string; email?: string; expiresAt: number }>();
+const STORE = new Map<
+  string,
+  { username: string; password: string; email?: string; expiresAt: number }
+>();
 
 export function stashAdminCredentials(input: { username; password; email? }) {
   const token = randomBytes(16).toString('hex');
@@ -334,8 +359,11 @@ export function stashAdminCredentials(input: { username; password; email? }) {
 export function consumeAdminCredentials(token: string) {
   const v = STORE.get(token);
   if (!v) return null;
-  if (v.expiresAt < Date.now()) { STORE.delete(token); return null; }
-  STORE.delete(token);  // 一次性消费
+  if (v.expiresAt < Date.now()) {
+    STORE.delete(token);
+    return null;
+  }
+  STORE.delete(token); // 一次性消费
   return { username: v.username, password: v.password, email: v.email };
 }
 
@@ -346,12 +374,14 @@ setInterval(gcExpired, 60_000).unref();
 ```
 
 新端点 `app/api/init/stash-admin/route.ts`:
+
 ```ts
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
     if (!(await isSetupRouteEnabled())) return badRequest('setup_disabled', '/init is disabled.');
     const parsed = adminSchema.safeParse(await req.json());
-    if (!parsed.success) return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
+    if (!parsed.success)
+      return badRequest('invalid_input', parsed.error.issues.map((i) => i.message).join('; '));
     const token = stashAdminCredentials(parsed.data);
     return NextResponse.json({ ok: true, data: { token, expiresInSec: 30 } });
   });
@@ -388,22 +418,24 @@ export async function POST(req: NextRequest) {
 
 ### 路由失败表
 
-| Page | `!DATABASE_URL` | DB 已配, `!admin_done` | DB + admin_done, 没 setup.completed | setup.completed=true |
-|---|---|---|---|---|
-| `/init` | → `/init/db` | → `/init/admin` | → `/init/execute` | AlreadyDoneCard |
-| `/init/db` | render form | → `/init/admin` | → `/init/admin` | AlreadyDoneCard |
-| `/init/admin` | → `/init/db` | render form | → `/init/execute` | AlreadyDoneCard |
-| `/init/execute` | → `/init/db` | → `/init/admin` | render | AlreadyDoneCard |
+| Page            | `!DATABASE_URL` | DB 已配, `!admin_done` | DB + admin_done, 没 setup.completed | setup.completed=true |
+| --------------- | --------------- | ---------------------- | ----------------------------------- | -------------------- |
+| `/init`         | → `/init/db`    | → `/init/admin`        | → `/init/execute`                   | AlreadyDoneCard      |
+| `/init/db`      | render form     | → `/init/admin`        | → `/init/admin`                     | AlreadyDoneCard      |
+| `/init/admin`   | → `/init/db`    | render form            | → `/init/execute`                   | AlreadyDoneCard      |
+| `/init/execute` | → `/init/db`    | → `/init/admin`        | render                              | AlreadyDoneCard      |
 
 locked state:任意一页检测到 `setup.completed=true` → render AlreadyDoneCard 而不是 form (防呆)。
 
 ### InitiateHeader + StepGroup
 
 `<InitHeader currentStep={0|1|2}>`
+
 - 复用现有 `TOP_STEPS` + icons (Database / User / Rocket)
 - 三段水平指示器,已完成绿色,当前 seal 高亮,未到灰色
 
 `<StepGroup title status total>`
+
 - 标题行:`▼/▶ {title} ({completedCount}/{total} 完成)`
 - 折叠:点击切 visible,默认展开
 - 子内容:`children` (子卡片 list)

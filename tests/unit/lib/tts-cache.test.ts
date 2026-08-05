@@ -37,7 +37,7 @@ class FakeCache {
     return this.store.delete(url);
   }
   async keys(): Promise<Request[]> {
-    return Array.from(this.store.keys()).map(url => new Request(url));
+    return Array.from(this.store.keys()).map((url) => new Request(url));
   }
   clear(): void {
     this.store.clear();
@@ -49,7 +49,10 @@ beforeEach(() => {
   Object.defineProperty(globalThis, 'caches', {
     value: {
       open: async () => fake,
-      delete: async () => { fake.clear(); return true; },
+      delete: async () => {
+        fake.clear();
+        return true;
+      },
     },
     configurable: true,
     writable: true,
@@ -73,14 +76,17 @@ describe('tts-cache', () => {
   });
 
   it('prefetchTts: calls fetch on cache miss and stores the result', async () => {
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([9, 9])], { type: 'audio/mpeg' })),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Blob([new Uint8Array([9, 9])], { type: 'audio/mpeg' })));
     await prefetchTts('female', '学');
-    expect(fetchSpy).toHaveBeenCalledWith('/api/tts', expect.objectContaining({
-      method: 'POST',
-      body: JSON.stringify({ text: '学', voice: 'female' }),
-    }));
+    expect(fetchSpy).toHaveBeenCalledWith(
+      '/api/tts',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({ text: '学', voice: 'female' }),
+      }),
+    );
     const got = await getCachedTts('female', '学');
     expect(got).not.toBeNull();
     fetchSpy.mockRestore();
@@ -88,9 +94,9 @@ describe('tts-cache', () => {
 
   it('prefetchTts: does NOT call fetch when entry is already cached', async () => {
     await putCachedTts('female', '学', new Blob([new Uint8Array([1])], { type: 'audio/mpeg' }));
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(new Blob([new Uint8Array([9])], { type: 'audio/mpeg' })),
-    );
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockResolvedValue(new Response(new Blob([new Uint8Array([9])], { type: 'audio/mpeg' })));
     await prefetchTts('female', '学');
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();

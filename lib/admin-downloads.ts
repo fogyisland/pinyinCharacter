@@ -36,10 +36,22 @@ export async function listDownloads(opts: ListDownloadsOptions = {}): Promise<Li
   const offset = (page - 1) * pageSize;
   const where: string[] = [];
   const params: any[] = [];
-  if (opts.userId) { where.push('d.user_id = ?'); params.push(opts.userId); }
-  if (opts.sourceType) { where.push('d.source_type = ?'); params.push(opts.sourceType); }
-  if (opts.from) { where.push('d.created_at >= ?'); params.push(opts.from); }
-  if (opts.to) { where.push('d.created_at <= ?'); params.push(opts.to); }
+  if (opts.userId) {
+    where.push('d.user_id = ?');
+    params.push(opts.userId);
+  }
+  if (opts.sourceType) {
+    where.push('d.source_type = ?');
+    params.push(opts.sourceType);
+  }
+  if (opts.from) {
+    where.push('d.created_at >= ?');
+    params.push(opts.from);
+  }
+  if (opts.to) {
+    where.push('d.created_at <= ?');
+    params.push(opts.to);
+  }
   const sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
@@ -53,13 +65,22 @@ export async function listDownloads(opts: ListDownloadsOptions = {}): Promise<Li
     params,
   );
   return {
-    items: rows.map(r => ({
-      id: Number(r.id), userId: Number(r.user_id), username: r.username,
-      format: r.format, sourceType: r.source_type, sourceId: r.source_id,
-      status: r.status, durationMs: r.duration_ms, ip: r.ip, userAgent: r.user_agent,
+    items: rows.map((r) => ({
+      id: Number(r.id),
+      userId: Number(r.user_id),
+      username: r.username,
+      format: r.format,
+      sourceType: r.source_type,
+      sourceId: r.source_id,
+      status: r.status,
+      durationMs: r.duration_ms,
+      ip: r.ip,
+      userAgent: r.user_agent,
       createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
     })),
-    total: Number(countRows[0].n), page, pageSize,
+    total: Number(countRows[0].n),
+    page,
+    pageSize,
   };
 }
 
@@ -94,6 +115,10 @@ export async function getDownloadStats(days = 7): Promise<DownloadStats> {
   return {
     total: Number(totalRows[0].n),
     bySourceType,
-    topUsers: topUsers.map((r: any) => ({ userId: Number(r.user_id), username: r.username, count: Number(r.n) })),
+    topUsers: topUsers.map((r: any) => ({
+      userId: Number(r.user_id),
+      username: r.username,
+      count: Number(r.n),
+    })),
   };
 }

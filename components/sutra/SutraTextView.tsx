@@ -7,7 +7,7 @@ interface Props {
 }
 
 const WRITING_MODE: Record<SutraReading, string> = {
-  'horizontal': 'horizontal-tb',
+  horizontal: 'horizontal-tb',
   'vertical-rtl': 'vertical-rl',
   'vertical-ltr': 'vertical-lr',
 };
@@ -19,7 +19,11 @@ export function SutraTextView({ chunk, reading = 'horizontal' }: Props) {
       className={`font-serif text-lg sm:text-xl text-ink leading-loose ${
         isVertical ? 'h-[28rem] overflow-x-auto' : ''
       }`}
-      style={isVertical ? { writingMode: WRITING_MODE[reading] as 'vertical-rl' | 'vertical-lr' } : undefined}
+      style={
+        isVertical
+          ? { writingMode: WRITING_MODE[reading] as 'vertical-rl' | 'vertical-lr' }
+          : undefined
+      }
     >
       {chunk.content.map((line, i) => (
         <p key={i} className={isVertical ? 'mx-3 inline-block' : 'my-1.5'}>

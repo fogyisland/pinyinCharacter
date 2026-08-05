@@ -20,7 +20,7 @@ export async function runMigrations(): Promise<{ files: number; statements: numb
   if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not set');
   const files = readdirSync(MIGRATIONS_DIR)
     .filter((f) => f.endsWith('.sql'))
-    .sort();  // lexical = chronological given YYYY-MM-DD- prefix
+    .sort(); // lexical = chronological given YYYY-MM-DD- prefix
 
   // Separate connection with multipleStatements — the shared pool only accepts
   // single-statement queries (default). PREPARE/EXECUTE/DEALLOCATE blocks in

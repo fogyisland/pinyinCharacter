@@ -35,10 +35,12 @@
 ## Task 1: Types extension — `CellStyle` + `Presentation` + helpers + maps
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts:1-150`
 - Create: `tests/unit/lib/worksheet-types.test.ts`
 
 **Interfaces:**
+
 - Produces: `Presentation = 'square' | 'cross' | 'lined'` (new value `'lined'`)
 - Produces: `CellStyle` union adds `'pen-lined'`
 - Produces: `linedHeightPx(paperSize: PaperSize): number` — returns CSS px row height (0 for brush-*)
@@ -150,31 +152,42 @@ Expected: 5 of 5 describe blocks FAIL (helpers don't exist yet).
 In `lib/worksheet-types.ts`:
 
 1. Line 4 — extend `Presentation`:
+
 ```ts
 export type Presentation = 'square' | 'cross' | 'lined';
 ```
 
 2. Line 5-8 — extend `CellStyle`:
+
 ```ts
 export type CellStyle =
-  | 'brush-square' | 'brush-cross'
-  | 'pen-square'   | 'pen-cross'
-  | 'brush-trace-square' | 'brush-trace-cross'
+  | 'brush-square'
+  | 'brush-cross'
+  | 'pen-square'
+  | 'pen-cross'
+  | 'brush-trace-square'
+  | 'brush-trace-cross'
   | 'pen-lined';
 ```
 
 3. Line 16-21 — update `ALL_PRESENTATIONS` and `ALL_CELL_STYLES`:
+
 ```ts
 const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
 const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross', 'lined'];
 const ALL_CELL_STYLES: readonly CellStyle[] = [
-  'brush-square', 'brush-cross', 'pen-square', 'pen-cross',
-  'brush-trace-square', 'brush-trace-cross',
+  'brush-square',
+  'brush-cross',
+  'pen-square',
+  'pen-cross',
+  'brush-trace-square',
+  'brush-trace-cross',
   'pen-lined',
 ] as const;
 ```
 
 4. Line 35-38 — update `getPresentation` to handle `'lined'`:
+
 ```ts
 export function getPresentation(s: CellStyle): Presentation {
   if (s.includes('cross')) return 'cross';
@@ -184,6 +197,7 @@ export function getPresentation(s: CellStyle): Presentation {
 ```
 
 5. Line 146-150 — update `cellStyleLabel` to label lined:
+
 ```ts
 export function cellStyleLabel(s: CellStyle): string {
   const tool = getTool(s) === 'brush' ? '毛笔' : '钢笔';
@@ -195,6 +209,7 @@ export function cellStyleLabel(s: CellStyle): string {
 ```
 
 6. After `PRACTICE_LAYOUT` (after line 108) — add `PRACTICE_LINED_HEIGHT`, `linedHeightPx`, `linesPerPage`:
+
 ```ts
 // Lined-paper row height in CSS px (1px = 1/96in). Picked so the printable
 // area fits a whole number of rows: A4 inner 267mm × 38px = 1010px ≈ 24 rows;
@@ -230,8 +245,13 @@ export function linesPerPage(paperSize: PaperSize): number {
 - [ ] **Step 4: Update `validateWorksheetInput` error message to mention pen-lined**
 
 In `lib/worksheet-types.ts:181` — update the error string to include the new value:
+
 ```ts
-return { ok: false, error: 'cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross, pen-lined' };
+return {
+  ok: false,
+  error:
+    'cellStyle must be one of: brush-square, brush-cross, pen-square, pen-cross, brush-trace-square, brush-trace-cross, pen-lined',
+};
 ```
 
 - [ ] **Step 5: Re-run the tests to verify they pass**
@@ -260,11 +280,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(works
 ## Task 2: `WorksheetCell` lined SVG branch + CSS grid templates
 
 **Files:**
+
 - Modify: `components/worksheet/WorksheetCell.tsx:1-58`
 - Modify: `app/globals.css:131-153` (add new grid template + lined container classes)
 - Create: `tests/unit/components/worksheet/WorksheetCell.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `Presentation = 'square' | 'cross' | 'lined'` (from Task 1)
 - Consumes: `getPresentation` already exported from `lib/worksheet-types`
 - Produces: `WorksheetCell` with `style === 'pen-lined'` rendering an SVG that fills its container width with a 1px gray bottom line
@@ -348,7 +370,13 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
   // No character is rendered — lined is blank ruled paper.
   if (style === 'pen-lined') {
     return (
-      <svg width="100%" height={size} viewBox={`0 0 100 ${size}`} preserveAspectRatio="none" className="block">
+      <svg
+        width="100%"
+        height={size}
+        viewBox={`0 0 100 ${size}`}
+        preserveAspectRatio="none"
+        className="block"
+      >
         <line
           x1={0}
           y1={size - 0.5}
@@ -422,9 +450,18 @@ In `app/globals.css`, immediately after the existing `.worksheet-grid--brush-28`
    height comes from linedHeightPx, not from grid auto-sizing. */
 .worksheet-grid--a3-lined,
 .worksheet-grid--a4-lined,
-.worksheet-grid--b5-lined { grid-template-columns: 1fr; }
-.lined-paper { display: flex; flex-direction: column; width: 100%; }
-.lined-paper-row { display: block; width: 100%; }
+.worksheet-grid--b5-lined {
+  grid-template-columns: 1fr;
+}
+.lined-paper {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.lined-paper-row {
+  display: block;
+  width: 100%;
+}
 ```
 
 Note: `.worksheet-grid--*-lined` is a defensive fallback in case the page leaves the `worksheet-grid` class in place. The actual lined rendering in `PracticeTemplate` uses a separate `.lined-paper` flex container (Task 3), so this grid rule is a no-op for the current UI but prevents regressions if anyone reuses the grid class with lined.
@@ -446,10 +483,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(works
 ## Task 3: `PracticeTemplate` UI integration — select option + lined render branch
 
 **Files:**
+
 - Modify: `components/worksheet/PracticeTemplate.tsx:7, 26-31, 71-79, 144-165`
 - Create: `tests/unit/components/worksheet/PracticeTemplate.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `pen-lined` (CellStyle), `getPresentation`, `linedHeightPx`, `linesPerPage` (all from Tasks 1-2)
 - Produces: `<option value="pen-lined">` in the 格子形式 select
 - Produces: when `cellStyle === 'pen-lined'`, renders `.lined-paper` flex container with N rows of `linedHeightPx`-tall `WorksheetCell` instead of the grid layout
@@ -467,7 +506,9 @@ import userEvent from '@testing-library/user-event';
 // import to a plain anchor so the test only exercises the UI tree.
 vi.mock('@react-pdf/renderer', () => ({
   PDFDownloadLink: ({ children, fileName }: { children: unknown; fileName?: string }) => (
-    <a data-testid="pdf-link" data-filename={fileName}>{typeof children === 'function' ? children({ loading: false }) : children}</a>
+    <a data-testid="pdf-link" data-filename={fileName}>
+      {typeof children === 'function' ? children({ loading: false }) : children}
+    </a>
   ),
 }));
 
@@ -535,13 +576,25 @@ Expected: all 6 tests FAIL (no `pen-lined` option yet; the render branch doesn't
 - [ ] **Step 3: Update the imports in `PracticeTemplate.tsx`**
 
 In `components/worksheet/PracticeTemplate.tsx:7`, extend the import:
+
 ```ts
-import { PAPER_SIZES, PRACTICE_LAYOUT, cellsPerPage, cellStyleLabel, getTool, getPresentation, isBrushSize, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import {
+  PAPER_SIZES,
+  PRACTICE_LAYOUT,
+  cellsPerPage,
+  cellStyleLabel,
+  getTool,
+  getPresentation,
+  isBrushSize,
+  linedHeightPx,
+  linesPerPage,
+} from '@/lib/worksheet-types';
 ```
 
 - [ ] **Step 4: Add `pen-lined` to `PRACTICE_CELL_STYLES`**
 
 In `components/worksheet/PracticeTemplate.tsx:26-31`, add the 5th option:
+
 ```ts
 const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = [
   { value: 'brush-square', label: '毛笔 · 田字格', tool: 'brush' },
@@ -555,9 +608,12 @@ const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = 
 - [ ] **Step 5: Add the `isLined` derivation + `sizeClass` / `cellSize` / `count` switch**
 
 In `components/worksheet/PracticeTemplate.tsx:71-79`, replace the derivation block:
+
 ```ts
 const isLined = getPresentation(cellStyle) === 'lined';
-const sizeClass = isLined ? `worksheet-grid--${paperSize.toLowerCase()}-lined` : `worksheet-grid--${paperSize.toLowerCase()}`;
+const sizeClass = isLined
+  ? `worksheet-grid--${paperSize.toLowerCase()}-lined`
+  : `worksheet-grid--${paperSize.toLowerCase()}`;
 // Lined mode: cellSize = row height in CSS px (e.g. A4 = 38px ≈ 1.0cm).
 // Grid mode: cellSize = cell side in CSS px (e.g. A4 = 80px).
 const cellSize = isLined ? linedHeightPx(paperSize) : PRACTICE_LAYOUT[paperSize].cellSize;
@@ -569,9 +625,11 @@ const paperOptions = availablePaperSizes(getTool(cellStyle));
 ```
 
 Also update the hint text (line 120) so the wording matches the mode:
+
 ```tsx
 <p className="text-xs text-ink-faint">
-  {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} {isLined ? '行' : '格'} / 页
+  {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find((p) => p.value === paperSize)?.label} · 自动适配{' '}
+  {count} {isLined ? '行' : '格'} / 页
 </p>
 ```
 
@@ -580,10 +638,15 @@ Also update the hint text (line 120) so the wording matches the mode:
 In `components/worksheet/PracticeTemplate.tsx:144-165`, replace the single grid render block with a conditional that branches on `isLined`:
 
 ```tsx
-{/* Template body: grid for 田字格/米字格, flex stack for 横线. */}
+{
+  /* Template body: grid for 田字格/米字格, flex stack for 横线. */
+}
 <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
   {isLined ? (
-    <div className="lined-paper mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0" style={{ minHeight: `${count * cellSize}px` }}>
+    <div
+      className="lined-paper mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0"
+      style={{ minHeight: `${count * cellSize}px` }}
+    >
       <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
@@ -603,7 +666,9 @@ In `components/worksheet/PracticeTemplate.tsx:144-165`, replace the single grid 
       )}
     </div>
   ) : (
-    <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+    <div
+      className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}
+    >
       <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
         <div className="flex items-center gap-2">
           <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
@@ -623,7 +688,7 @@ In `components/worksheet/PracticeTemplate.tsx:144-165`, replace the single grid 
       )}
     </div>
   )}
-</div>
+</div>;
 ```
 
 - [ ] **Step 7: Re-run the new tests to verify they pass**
@@ -648,10 +713,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(works
 ## Task 4: `PracticePDF` lined branch + PDF tests + browser smoke
 
 **Files:**
+
 - Modify: `components/worksheet/PracticePDF.tsx:3-129` (add `PAGE_INNER_WIDTH_PT`, add lined branch in `PracticeCell`, add lined branch in `PracticePDF`)
 - Modify: `tests/unit/components/worksheet/PracticePDF.test.tsx` (extend with 2-3 lined cases)
 
 **Interfaces:**
+
 - Consumes: `pen-lined` (CellStyle), `getPresentation` (from Task 1)
 - Produces: `PAGE_INNER_WIDTH_PT` map: A3=757, A4=510, B5=414, brush-*=510 (all in pt)
 - Produces: `PracticeCell` with lined mode: an `<Svg>` of full inner width × row height, single `<Line>` at y = size - 0.5
@@ -667,9 +734,9 @@ In `components/worksheet/PracticePDF.tsx`, add the constant after `PX_TO_PT` (af
 // usable width as the grid cells. The 1.5cm padding matches the
 // `<Page style={padding: '1.5cm'}>` set in `styles.page` below.
 const PAGE_INNER_WIDTH_PT: Record<PaperSize, number> = {
-  A3: 757,        // 841.9 - 2*42.5
-  A4: 510,        // 595.3 - 2*42.5
-  B5: 414,        // 498.9 - 2*42.5
+  A3: 757, // 841.9 - 2*42.5
+  A4: 510, // 595.3 - 2*42.5
+  B5: 414, // 498.9 - 2*42.5
   'brush-12': 510,
   'brush-24': 510,
   'brush-28': 510,
@@ -679,7 +746,15 @@ const PAGE_INNER_WIDTH_PT: Record<PaperSize, number> = {
 Then replace the `PracticeCell` function (line 83-98) with a version that branches on presentation:
 
 ```tsx
-function PracticeCell({ size, paperSize, style }: { size: number; paperSize: PaperSize; style: CellStyle }) {
+function PracticeCell({
+  size,
+  paperSize,
+  style,
+}: {
+  size: number;
+  paperSize: PaperSize;
+  style: CellStyle;
+}) {
   const presentation = getPresentation(style);
   const width = PAGE_INNER_WIDTH_PT[paperSize];
   if (presentation === 'lined') {
@@ -709,6 +784,7 @@ function PracticeCell({ size, paperSize, style }: { size: number; paperSize: Pap
 - [ ] **Step 2: Update `PracticePDF` to use lined cellSize + count + cell width**
 
 In `components/worksheet/PracticePDF.tsx`, replace the `PracticePDF` function body (line 106-129). The key changes:
+
 - `cellSize` and `count` switch to lined values when `getPresentation(cellStyle) === 'lined'`
 - Each cell wrapper `<View>` gets a width so the lined SVG sits at the full inner width
 
@@ -716,7 +792,8 @@ In `components/worksheet/PracticePDF.tsx`, replace the `PracticePDF` function bo
 export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
   const isLined = getPresentation(cellStyle) === 'lined';
   // Lined mode: cellSize = row height in pt (CSS px × 72/96). Grid mode: cell side in pt.
-  const cellSize = (isLined ? linedHeightPx(paperSize) : PRACTICE_LAYOUT[paperSize].cellSize) * PX_TO_PT;
+  const cellSize =
+    (isLined ? linedHeightPx(paperSize) : PRACTICE_LAYOUT[paperSize].cellSize) * PX_TO_PT;
   // Lined mode: count = lines per page. Grid mode: count = cells per page.
   const count = isLined ? linesPerPage(paperSize) : cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
@@ -759,7 +836,13 @@ linedStack: {
 And add `linedHeightPx, linesPerPage` to the import from `@/lib/worksheet-types` (line 5):
 
 ```ts
-import { PRACTICE_LAYOUT, cellsPerPage, getPresentation, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import {
+  PRACTICE_LAYOUT,
+  cellsPerPage,
+  getPresentation,
+  linedHeightPx,
+  linesPerPage,
+} from '@/lib/worksheet-types';
 ```
 
 - [ ] **Step 3: Write failing PDF tests for the lined branch**
@@ -836,11 +919,13 @@ npx next build
 ```
 
 Expected:
+
 - tsc: exit 0
 - vitest: all worksheet + lined tests green (≥25 worksheet tests total: 13 types + 6 cell + 6 template + 12 PDF)
 - build: exit 0
 
 If dev server is alive on port 4444, kill it first per memory `dev-build-cache-stomp`:
+
 ```bash
 # Find and kill the dev server PID
 lsof -i :4444 -t 2>/dev/null | xargs -r kill -9
@@ -876,6 +961,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(works
 Per `superpowers:subagent-driven-development`, dispatch the final code-reviewer with the merged diff (all 4 commits). Pass the printout of `git log --oneline` for the 4 lined commits + the full diff as the review package.
 
 Reviewer checks:
+
 - Spec coverage: all 5 Global Constraints met? Lined produces 24 lines on A4? PDF 1 page? Browser regression-free?
 - Code quality: no `any`, no dead code, no premature abstractions, no comments restating code
 - Type safety: CellStyle union is exhaustive; no untyped casts

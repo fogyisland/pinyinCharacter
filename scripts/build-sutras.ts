@@ -82,8 +82,14 @@ export async function buildSutras(): Promise<number> {
       manifest.items.map((s) => s.slug),
     );
     const items: SutraManifestEntry[] = [];
-    for (const row of idRows as Array<{ id: number; slug: string; title: string; chunks: string | SutraChunk[] }>) {
-      const raw = typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
+    for (const row of idRows as Array<{
+      id: number;
+      slug: string;
+      title: string;
+      chunks: string | SutraChunk[];
+    }>) {
+      const raw =
+        typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
       const chunkCount = raw.length;
       const charCount = raw.reduce(
         (sum, c) => sum + c.content.reduce((s, line) => s + Array.from(line).length, 0),

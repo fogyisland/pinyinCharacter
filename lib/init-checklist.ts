@@ -122,28 +122,30 @@ export async function runInitChecks(): Promise<InitReport> {
   const adminRows = (await safeQuery(
     `SELECT id, username, created_at FROM users WHERE is_admin = 1 ORDER BY id LIMIT 1`,
   )) as any[] | null;
-  const firstAdmin = adminRows && adminRows[0]
-    ? {
-        id: Number(adminRows[0].id),
-        username: String(adminRows[0].username),
-        createdAt: adminRows[0].created_at instanceof Date
-          ? adminRows[0].created_at.toISOString()
-          : String(adminRows[0].created_at),
-      }
-    : null;
-  const adminCountRows = (await safeQuery(
-    `SELECT COUNT(*) AS n FROM users WHERE is_admin = 1`,
-  )) as any[] | null;
+  const firstAdmin =
+    adminRows && adminRows[0]
+      ? {
+          id: Number(adminRows[0].id),
+          username: String(adminRows[0].username),
+          createdAt:
+            adminRows[0].created_at instanceof Date
+              ? adminRows[0].created_at.toISOString()
+              : String(adminRows[0].created_at),
+        }
+      : null;
+  const adminCountRows = (await safeQuery(`SELECT COUNT(*) AS n FROM users WHERE is_admin = 1`)) as
+    any[] | null;
   const adminCount = adminCountRows && adminCountRows[0] ? Number(adminCountRows[0].n) : 0;
 
   // app_config snapshot
-  const configKeys = [
-    'site.url', 'smtp.transport', 'smtp.from', 'ai.api_key', 'ai.model',
-  ];
+  const configKeys = ['site.url', 'smtp.transport', 'smtp.from', 'ai.api_key', 'ai.model'];
   const config: Record<string, string | null> = {};
   for (const k of configKeys) {
-    try { config[k] = await getConfig(k); }
-    catch { config[k] = null; }
+    try {
+      config[k] = await getConfig(k);
+    } catch {
+      config[k] = null;
+    }
   }
 
   // Manifests
@@ -155,8 +157,11 @@ export async function runInitChecks(): Promise<InitReport> {
 
   // site URL — only meaningful in prod (in dev localhost is fine)
   let siteUrl: string;
-  try { siteUrl = await getRuntimeSiteUrl(); }
-  catch { siteUrl = ''; }
+  try {
+    siteUrl = await getRuntimeSiteUrl();
+  } catch {
+    siteUrl = '';
+  }
   const siteUrlIsLocalhost = !siteUrl || /localhost|127\.0\.0\.1/.test(siteUrl);
 
   // --- Build the 12 steps ---
@@ -182,7 +187,7 @@ export async function runInitChecks(): Promise<InitReport> {
     required: true,
     status: tableCount >= EXPECTED_TABLES ? 'ok' : 'fail',
     details: `实际 ${tableCount} / 期望 ≥ ${EXPECTED_TABLES}`,
-    fixHref: undefined,  // no UI to fix; tell user to run `pnpm tsx scripts/init-db.ts`
+    fixHref: undefined, // no UI to fix; tell user to run `pnpm tsx scripts/init-db.ts`
     fixLabel: '查看 init-db.ts',
   });
 
@@ -193,9 +198,10 @@ export async function runInitChecks(): Promise<InitReport> {
     description: '至少 1 个 is_admin=1 的用户存在',
     required: true,
     status: adminCount > 0 ? 'ok' : 'fail',
-    details: adminCount > 0
-      ? `${adminCount} 个 (${firstAdmin?.username})`
-      : '无管理员 — 需注册后手动改 is_admin=1',
+    details:
+      adminCount > 0
+        ? `${adminCount} 个 (${firstAdmin?.username})`
+        : '无管理员 — 需注册后手动改 is_admin=1',
     fixHref: '/admin/users',
   });
 
@@ -205,7 +211,7 @@ export async function runInitChecks(): Promise<InitReport> {
     name: '站点 URL',
     description: 'prod 下 sitemap/canonical 必须用真实域名,不能是 localhost',
     required: prod,
-    status: prod ? (siteUrlIsLocalhost ? 'fail' : 'ok') : (siteUrlIsLocalhost ? 'warn' : 'ok'),
+    status: prod ? (siteUrlIsLocalhost ? 'fail' : 'ok') : siteUrlIsLocalhost ? 'warn' : 'ok',
     details: siteUrlIsLocalhost ? `${siteUrl || '未设'} (dev 用可)` : siteUrl,
     fixHref: '/admin/settings/site-url',
   });
@@ -217,7 +223,10 @@ export async function runInitChecks(): Promise<InitReport> {
     description: 'smtp.transport 设为 smtp 才真发邮件,否则只打 console',
     required: false,
     status: config['smtp.transport'] === 'smtp' ? 'ok' : 'warn',
-    details: config['smtp.transport'] === 'smtp' ? 'smtp' : (config['smtp.transport'] ?? '未设 (默认 console)'),
+    details:
+      config['smtp.transport'] === 'smtp'
+        ? 'smtp'
+        : (config['smtp.transport'] ?? '未设 (默认 console)'),
     fixHref: '/admin/email',
   });
 
@@ -271,27 +280,33 @@ export async function runInitChecks(): Promise<InitReport> {
     details: exists ? '已生成' : '未生成 (导入后才有)',
     fixHref,
   });
-  steps.push(manifestStep(
-    'content-manifest',
-    '内容清单 (content-manifest)',
-    'data/content-manifest.json — 索引所有字符的内容文件',
-    manifestExists.content,
-    '/admin/chars',
-  ));
-  steps.push(manifestStep(
-    'poems-manifest',
-    '诗清单 (poems-manifest)',
-    'data/poems-manifest.json — 索引 /poetry 页面',
-    manifestExists.poems,
-    '/poetry',
-  ));
-  steps.push(manifestStep(
-    'classics-manifest',
-    '经典清单 (classics-manifest)',
-    'data/classics-manifest.json — 索引 /ancient 页面',
-    manifestExists.classics,
-    '/ancient',
-  ));
+  steps.push(
+    manifestStep(
+      'content-manifest',
+      '内容清单 (content-manifest)',
+      'data/content-manifest.json — 索引所有字符的内容文件',
+      manifestExists.content,
+      '/admin/chars',
+    ),
+  );
+  steps.push(
+    manifestStep(
+      'poems-manifest',
+      '诗清单 (poems-manifest)',
+      'data/poems-manifest.json — 索引 /poetry 页面',
+      manifestExists.poems,
+      '/poetry',
+    ),
+  );
+  steps.push(
+    manifestStep(
+      'classics-manifest',
+      '经典清单 (classics-manifest)',
+      'data/classics-manifest.json — 索引 /ancient 页面',
+      manifestExists.classics,
+      '/ancient',
+    ),
+  );
 
   // 12. JWT_SECRET (required in prod)
   const jwtStrong = jwtSecret.length >= 32 && jwtSecret !== DEV_DEFAULT_JWT;
@@ -300,10 +315,14 @@ export async function runInitChecks(): Promise<InitReport> {
     name: 'JWT 签名密钥',
     description: 'prod 下必须是 ≥32 字节且非 dev 默认值的随机串',
     required: prod,
-    status: prod ? (jwtStrong ? 'ok' : 'fail') : (jwtStrong ? 'ok' : 'warn'),
+    status: prod ? (jwtStrong ? 'ok' : 'fail') : jwtStrong ? 'ok' : 'warn',
     details: prod
-      ? (jwtStrong ? `${jwtSecret.length} 字节` : `${jwtSecret.length} 字节 (太短 / dev 默认)`)
-      : (jwtSecret === DEV_DEFAULT_JWT ? 'dev 默认值 (dev 用可)' : `${jwtSecret.length} 字节`),
+      ? jwtStrong
+        ? `${jwtSecret.length} 字节`
+        : `${jwtSecret.length} 字节 (太短 / dev 默认)`
+      : jwtSecret === DEV_DEFAULT_JWT
+        ? 'dev 默认值 (dev 用可)'
+        : `${jwtSecret.length} 字节`,
   });
 
   const context: InitContext = {

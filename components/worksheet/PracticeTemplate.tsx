@@ -1,11 +1,24 @@
 'use client';
+/* eslint-disable react-hooks/rules-of-hooks -- useSearchParams wrapped in IIFE try/catch for happy-dom tests (lint false positive) */
 
 import { useEffect, useState, type ComponentType, type ReactElement, type ReactNode } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import type { DocumentProps } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
-import { PAPER_SIZES, PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, fourLineRowsPerPage, getTool, getPresentation, isBrushSize, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import {
+  PAPER_SIZES,
+  PRACTICE_LAYOUT,
+  PRACTICE_GRID_CELL_SIZE,
+  cellsPerPage,
+  cellStyleLabel,
+  fourLineRowsPerPage,
+  getTool,
+  getPresentation,
+  isBrushSize,
+  linedHeightPx,
+  linesPerPage,
+} from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PracticePDF } from './PracticePDF';
 
@@ -16,7 +29,12 @@ import { PracticePDF } from './PracticePDF';
 // react-pdf's overloaded children (ReactNode | render-prop).
 const PDFDownloadLink = dynamic(
   () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
-  { ssr: false, loading: () => <span className="rounded border border-seal px-4 py-1.5 text-seal/60 text-sm">…</span> }
+  {
+    ssr: false,
+    loading: () => (
+      <span className="rounded border border-seal px-4 py-1.5 text-seal/60 text-sm">…</span>
+    ),
+  },
 ) as unknown as ComponentType<{
   document: ReactElement<DocumentProps>;
   fileName?: string;
@@ -58,7 +76,13 @@ export function PracticeTemplate() {
   // Defaults: 钢笔·田字格 · A4 · 80 cells/page (auto-fitted by paper size).
   // `useSearchParams` is wrapped in a try/catch because happy-dom tests
   // sometimes render outside a Next router context where the hook returns null.
-  const sp = (() => { try { return useSearchParams(); } catch { return null; } })();
+  const sp = (() => {
+    try {
+      return useSearchParams();
+    } catch {
+      return null;
+    }
+  })();
   const initialStyle = (sp?.get('style') as CellStyle | null) ?? 'pen-square';
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
   const [cellStyle, setCellStyle] = useState<CellStyle>(initialStyle);
@@ -88,7 +112,9 @@ export function PracticeTemplate() {
   // N rows stacked, lines stretch across the full inner width. Visual styling
   // differs (1 rule vs 4 rules per row) but the layout shape is identical.
   const isLined = presentation === 'lined' || presentation === 'four-line';
-  const sizeClass = isLined ? `worksheet-grid--${paperSize.toLowerCase()}-lined` : `worksheet-grid--${paperSize.toLowerCase()}`;
+  const sizeClass = isLined
+    ? `worksheet-grid--${paperSize.toLowerCase()}-lined`
+    : `worksheet-grid--${paperSize.toLowerCase()}`;
   // Lined mode: cellSize = row height in CSS px (e.g. A4 = 38px ≈ 1.0cm).
   // Grid mode: cellSize = cell side in CSS px (e.g. A4 = 75px — slightly smaller
   // than PRACTICE_LAYOUT so the 8px grid gap fits A4's printable width).
@@ -100,11 +126,12 @@ export function PracticeTemplate() {
   // Four-line uses fourLineRowsPerPage() (A4=16, A3=21, B5=13 — tuned 2026-07-03
   // to fill more of the A4 sheet; 16×54=864px ≈ 4.7cm bottom margin, down from
   // ~8cm with the old 14-row default).
-  const count = presentation === 'four-line'
-    ? fourLineRowsPerPage(paperSize)
-    : isLined
-      ? linesPerPage(paperSize)
-      : cellsPerPage(paperSize);
+  const count =
+    presentation === 'four-line'
+      ? fourLineRowsPerPage(paperSize)
+      : isLined
+        ? linesPerPage(paperSize)
+        : cellsPerPage(paperSize);
   const cells = Array.from({ length: count }, (_, i) => i);
   // siteHost shows the canonical site URL (e.g. "fogyisland.github.io") so
   // printed pages can be traced back to the source. NEXT_PUBLIC_SITE_URL is
@@ -126,7 +153,9 @@ export function PracticeTemplate() {
         <h2 className="text-sm font-semibold text-ink mb-3">练字模板设置</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label htmlFor="practice-cell-style" className="block text-xs text-ink-soft mb-1">格子形式</label>
+            <label htmlFor="practice-cell-style" className="block text-xs text-ink-soft mb-1">
+              格子形式
+            </label>
             <select
               id="practice-cell-style"
               value={cellStyle}
@@ -134,12 +163,16 @@ export function PracticeTemplate() {
               className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
             >
               {PRACTICE_CELL_STYLES.map((s) => (
-                <option key={s.value} value={s.value}>{s.label}</option>
+                <option key={s.value} value={s.value}>
+                  {s.label}
+                </option>
               ))}
             </select>
           </div>
           <div>
-            <label htmlFor="practice-paper-size" className="block text-xs text-ink-soft mb-1">纸张尺寸</label>
+            <label htmlFor="practice-paper-size" className="block text-xs text-ink-soft mb-1">
+              纸张尺寸
+            </label>
             <select
               id="practice-paper-size"
               value={paperSize}
@@ -147,18 +180,23 @@ export function PracticeTemplate() {
               className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
             >
               {paperOptions.map((p) => (
-                <option key={p} value={p}>{PAPER_SIZES.find(x => x.value === p)?.label ?? p}</option>
+                <option key={p} value={p}>
+                  {PAPER_SIZES.find((x) => x.value === p)?.label ?? p}
+                </option>
               ))}
             </select>
           </div>
         </div>
         <div className="mt-3 flex items-center justify-between gap-2">
           <p className="text-xs text-ink-faint">
-            {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find(p => p.value === paperSize)?.label} · 自动适配 {count} {isLined ? '行' : '格'} / 页
+            {cellStyleLabel(cellStyle)} · {PAPER_SIZES.find((p) => p.value === paperSize)?.label} ·
+            自动适配 {count} {isLined ? '行' : '格'} / 页
           </p>
           <div className="flex gap-2 shrink-0">
             <PDFDownloadLink
-              document={<PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />}
+              document={
+                <PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />
+              }
               fileName={`练字模板-${paperSize}.pdf`}
               className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
             >
@@ -174,7 +212,8 @@ export function PracticeTemplate() {
           </div>
         </div>
         <p className="mt-2 text-xs text-ink-faint">
-          点「下载 PDF」直接获得自定义排版的 PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。
+          点「下载 PDF」直接获得自定义排版的
+          PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。
         </p>
       </div>
 
@@ -197,7 +236,9 @@ export function PracticeTemplate() {
               <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
                 <div className="flex items-center gap-2">
                   <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-                  <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
+                  <span className="font-kai text-base text-ink">
+                    字·韵 · {cellStyleLabel(cellStyle)}
+                  </span>
                 </div>
                 <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
               </div>
@@ -217,11 +258,16 @@ export function PracticeTemplate() {
             </div>
           </div>
         ) : isLined ? (
-          <div className="lined-paper mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0" style={{ minHeight: `${count * cellSize}px` }}>
+          <div
+            className="lined-paper mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0"
+            style={{ minHeight: `${count * cellSize}px` }}
+          >
             <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
                 <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-                <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
+                <span className="font-kai text-base text-ink">
+                  字·韵 · {cellStyleLabel(cellStyle)}
+                </span>
               </div>
               <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
             </div>
@@ -237,11 +283,15 @@ export function PracticeTemplate() {
             )}
           </div>
         ) : (
-          <div className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+          <div
+            className={`worksheet-grid mx-auto grid min-w-full sm:min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}
+          >
             <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
               <div className="flex items-center gap-2">
                 <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
-                <span className="font-kai text-base text-ink">字·韵 · {cellStyleLabel(cellStyle)}</span>
+                <span className="font-kai text-base text-ink">
+                  字·韵 · {cellStyleLabel(cellStyle)}
+                </span>
               </div>
               <div className="text-sm text-ink-soft">空白字帖 · 公益网站，多多支持</div>
             </div>

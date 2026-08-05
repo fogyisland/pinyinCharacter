@@ -25,7 +25,9 @@ export function NotesEmailForm({ initial }: { initial: NotesEmailFormInitial }) 
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setErr(null); setOk(null);
+    setBusy(true);
+    setErr(null);
+    setOk(null);
     try {
       const res = await fetch('/api/admin/settings/notes', {
         method: 'POST',
@@ -49,7 +51,8 @@ export function NotesEmailForm({ initial }: { initial: NotesEmailFormInitial }) 
       {err && <p className="text-sm text-seal">{err}</p>}
       {ok && (
         <p className="text-sm text-green-700 inline-flex items-center gap-1">
-          <Check className="h-3.5 w-3.5" />{ok}
+          <Check className="h-3.5 w-3.5" />
+          {ok}
         </p>
       )}
 
@@ -71,9 +74,7 @@ export function NotesEmailForm({ initial }: { initial: NotesEmailFormInitial }) 
           </p>
         )}
         {!hasInvalid && trimmed !== '' && validCount > 0 && (
-          <p className="text-xs text-ink-soft mt-1">
-            将通知 {validCount} 个邮箱
-          </p>
+          <p className="text-xs text-ink-soft mt-1">将通知 {validCount} 个邮箱</p>
         )}
       </div>
 

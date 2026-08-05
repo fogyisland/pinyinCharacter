@@ -1,6 +1,13 @@
 import type { Dynasty, PoemListResult, PoemDetail } from './poetry-types';
 
-export async function listPoemsRequest(args: { dynasty: Dynasty; category?: string; q?: string; forms?: string[]; page?: number; pageSize?: number }): Promise<PoemListResult> {
+export async function listPoemsRequest(args: {
+  dynasty: Dynasty;
+  category?: string;
+  q?: string;
+  forms?: string[];
+  page?: number;
+  pageSize?: number;
+}): Promise<PoemListResult> {
   const sp = new URLSearchParams();
   sp.set('dynasty', args.dynasty);
   if (args.category) sp.set('category', args.category);

@@ -22,7 +22,7 @@ export async function updateContentManifest(): Promise<ContentManifest> {
     rare_meaning: 0,
     rare_story: 0,
   };
-  const files = readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json'));
+  const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json'));
 
   for (const f of files) {
     try {
@@ -52,7 +52,7 @@ export async function updateContentManifest(): Promise<ContentManifest> {
     generatedAt: new Date().toISOString(),
   };
 
-  ContentManifestSchema.parse(manifest);  // sanity check
+  ContentManifestSchema.parse(manifest); // sanity check
   writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
   console.error(`[manifest] byField: ${JSON.stringify(byField)} → ${MANIFEST_PATH}`);
 
@@ -64,5 +64,8 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }

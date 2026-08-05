@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest) {
     const pool = getPool();
     const [totals] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM chars`);
     const [withStory] = await pool.query<any[]>(
-      `SELECT COUNT(*) AS n FROM char_etymology WHERE story IS NOT NULL AND story <> ''`
+      `SELECT COUNT(*) AS n FROM char_etymology WHERE story IS NOT NULL AND story <> ''`,
     );
     const [byLevel] = await pool.query<any[]>(
       `SELECT level, COUNT(*) AS total,
@@ -21,7 +21,7 @@ export async function GET(_req: NextRequest) {
        FROM chars c
        LEFT JOIN char_etymology ce ON c.\`char\` = ce.\`char\`
        GROUP BY level
-       ORDER BY level`
+       ORDER BY level`,
     );
     const [byEra] = await pool.query<any[]>(
       `SELECT
@@ -30,7 +30,7 @@ export async function GET(_req: NextRequest) {
          SUM(era_xiaozhuan_has) AS xiaozhuan,
          SUM(era_lishu_has) AS lishu,
          SUM(era_kaishu_has) AS kaishu
-       FROM char_etymology`
+       FROM char_etymology`,
     );
 
     const total = Number(totals[0].n);

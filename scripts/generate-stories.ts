@@ -30,7 +30,7 @@ async function main() {
   const pool = getPool();
 
   const [rows] = await pool.query<any[]>(
-    `SELECT \`char\`, pinyin FROM rare_chars WHERE meaning = '' ORDER BY \`char\` ASC`
+    `SELECT \`char\`, pinyin FROM rare_chars WHERE meaning = '' ORDER BY \`char\` ASC`,
   );
   console.log(`[generate-stories] ${rows.length} chars need stories`);
 

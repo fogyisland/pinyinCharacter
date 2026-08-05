@@ -9,7 +9,7 @@ export type ChainCharsResult = {
   hskFallback: boolean;
 };
 
-type CacheKey = string;  // `${source}::hsk${level ?? 0}`
+type CacheKey = string; // `${source}::hsk${level ?? 0}`
 const cache = new Map<CacheKey, Promise<ChainCharsResult>>();
 
 export async function fetchChainChars(

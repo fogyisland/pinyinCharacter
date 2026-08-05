@@ -40,7 +40,7 @@ async function verifyExport() {
   const stats = await exportContent({ dryRun: true });
   console.log(
     `[migrate] export dry-run: scanned=${stats.scanned} written=${stats.written} ` +
-    `skipped=${stats.skipped} errors=${stats.errors.length}`,
+      `skipped=${stats.skipped} errors=${stats.errors.length}`,
   );
   if (stats.errors.length > 0) {
     for (const e of stats.errors.slice(0, 5)) {
@@ -53,7 +53,7 @@ async function verifyExport() {
   if (stats.written === 0) {
     throw new Error(
       'export-content would write 0 files — DB may already be empty or JSON already has everything. ' +
-      'Refusing to drop columns without a positive write count.',
+        'Refusing to drop columns without a positive write count.',
     );
   }
   console.log(`[migrate] ✓ export dry-run wrote ${stats.written} files (would update manifest)`);
@@ -102,7 +102,9 @@ async function main() {
   const opts = parseArgs();
   if (!opts.confirmed) {
     console.error('REFUSING TO RUN without --yes-i-know-what-im-doing');
-    console.error('This migration drops LLM content columns. All content must be in data/content/ first.');
+    console.error(
+      'This migration drops LLM content columns. All content must be in data/content/ first.',
+    );
     console.error('Run scripts/export-content.ts first to verify, then re-run with the flag.');
     process.exit(1);
   }
@@ -110,7 +112,9 @@ async function main() {
   if (!opts.skipExportCheck) {
     await verifyExport();
   } else {
-    console.warn('[migrate] WARNING: --skip-export-check set, not verifying export. THIS IS RISKY.');
+    console.warn(
+      '[migrate] WARNING: --skip-export-check set, not verifying export. THIS IS RISKY.',
+    );
   }
 
   const pool = getPool();

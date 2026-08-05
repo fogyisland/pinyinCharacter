@@ -19,12 +19,7 @@ const OUTLINE_COLOR = 'rgba(58, 42, 20, 0.18)';
 const ANIMATION_SPEED = 1.4;
 const DELAY_BETWEEN_STROKES = 220;
 
-export function LiveStrokeDemo({
-  char,
-  size = 220,
-  className = '',
-  loopIntervalMs = 4000,
-}: Props) {
+export function LiveStrokeDemo({ char, size = 220, className = '', loopIntervalMs = 4000 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const writerRef = useRef<HanziWriterLike | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -105,10 +100,7 @@ export function LiveStrokeDemo({
   }
 
   return (
-    <div
-      className={`relative ${className}`}
-      style={{ width: size, height: size }}
-    >
+    <div className={`relative ${className}`} style={{ width: size, height: size }}>
       <svg
         className="absolute inset-0 pointer-events-none"
         viewBox="0 0 100 100"

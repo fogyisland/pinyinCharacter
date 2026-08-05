@@ -49,10 +49,18 @@ export function GenerateCharsForm() {
   return (
     <div>
       <div className="flex border-b border-paper-warm mb-4">
-        <TabBtn active={tab === 'dict'} onClick={() => setTab('dict')}>字典字段</TabBtn>
-        <TabBtn active={tab === 'etymology'} onClick={() => setTab('etymology')}>字源</TabBtn>
-        <TabBtn active={tab === 'batch'} onClick={() => setTab('batch')}>按级别批量</TabBtn>
-        <TabBtn active={tab === 'rare'} onClick={() => setTab('rare')}>罕见字</TabBtn>
+        <TabBtn active={tab === 'dict'} onClick={() => setTab('dict')}>
+          字典字段
+        </TabBtn>
+        <TabBtn active={tab === 'etymology'} onClick={() => setTab('etymology')}>
+          字源
+        </TabBtn>
+        <TabBtn active={tab === 'batch'} onClick={() => setTab('batch')}>
+          按级别批量
+        </TabBtn>
+        <TabBtn active={tab === 'rare'} onClick={() => setTab('rare')}>
+          罕见字
+        </TabBtn>
       </div>
 
       {tab === 'dict' && <DictTab />}
@@ -63,12 +71,25 @@ export function GenerateCharsForm() {
   );
 }
 
-function TabBtn({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function TabBtn({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <button type="button" onClick={onClick}
+    <button
+      type="button"
+      onClick={onClick}
       className={`px-4 py-2 text-sm border-b-2 -mb-px ${
-        active ? 'border-ink text-ink font-semibold' : 'border-transparent text-ink-soft hover:text-ink'
-      }`}>
+        active
+          ? 'border-ink text-ink font-semibold'
+          : 'border-transparent text-ink-soft hover:text-ink'
+      }`}
+    >
       {children}
     </button>
   );
@@ -97,10 +118,17 @@ function useSubmit() {
   const [error, setError] = useState<string | null>(null);
 
   async function submit(chars: string, fields: Record<string, boolean>) {
-    setError(null); setResult(null);
+    setError(null);
+    setResult(null);
     const validChars = Array.from(chars).filter((c) => /[一-鿿]/.test(c));
-    if (validChars.length === 0) { setError('请输入至少 1 个汉字'); return; }
-    if (!Object.values(fields).some(Boolean)) { setError('请至少勾选 1 个字段'); return; }
+    if (validChars.length === 0) {
+      setError('请输入至少 1 个汉字');
+      return;
+    }
+    if (!Object.values(fields).some(Boolean)) {
+      setError('请至少勾选 1 个字段');
+      return;
+    }
     setLoading(true);
     try {
       const res = await fetch('/api/admin/chars/generate', {
@@ -109,7 +137,10 @@ function useSubmit() {
         body: JSON.stringify({ chars: validChars, fields }),
       });
       const j = await res.json();
-      if (!j.ok) { setError(j.error?.message ?? '生成失败'); return; }
+      if (!j.ok) {
+        setError(j.error?.message ?? '生成失败');
+        return;
+      }
       setResult(j.data);
     } catch (err) {
       setError((err as Error).message);
@@ -121,24 +152,33 @@ function useSubmit() {
   return { loading, result, error, submit };
 }
 
-function ResultPanel({ result, error, fieldLabels }: {
+function ResultPanel({
+  result,
+  error,
+  fieldLabels,
+}: {
   result: GenerateResponse | null;
   error: string | null;
   fieldLabels: Record<string, string>;
 }) {
-  if (error) return <div className="mt-4 p-3 bg-paper-warm rounded text-sm text-seal">✗ {error}</div>;
+  if (error)
+    return <div className="mt-4 p-3 bg-paper-warm rounded text-sm text-seal">✗ {error}</div>;
   if (!result) return null;
   const { totals } = result;
   return (
     <div className="mt-4 p-3 bg-paper-warm rounded text-sm space-y-2">
-      <div>✓ 已生成 <span className="font-semibold">{totals.generated}</span> 个</div>
+      <div>
+        ✓ 已生成 <span className="font-semibold">{totals.generated}</span> 个
+      </div>
       {totals.skipped > 0 && <div>↷ 跳过 {totals.skipped} 个(字段已有值)</div>}
       {totals.errors.length > 0 && (
         <div className="text-seal">
           <div>✗ 失败 {totals.errors.length} 个:</div>
           <ul className="mt-1 ml-4 text-xs space-y-0.5">
             {totals.errors.map((e, i) => (
-              <li key={i}>{e.char} ({fieldLabels[labelForError(e.char, totals)] ?? '未知'}): {e.message}</li>
+              <li key={i}>
+                {e.char} ({fieldLabels[labelForError(e.char, totals)] ?? '未知'}): {e.message}
+              </li>
             ))}
           </ul>
         </div>
@@ -151,7 +191,11 @@ function labelForError(char: string, totals: FieldResult): string {
   return char;
 }
 
-function FieldCheckboxes<T extends string>({ options, value, onChange }: {
+function FieldCheckboxes<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
   options: ReadonlyArray<{ key: T; label: string }>;
   value: Record<T, boolean>;
   onChange: (v: Record<T, boolean>) => void;
@@ -182,20 +226,29 @@ function DictTab() {
   });
   const { loading, result, error, submit } = useSubmit();
 
-  const fieldLabels: Record<string, string> = Object.fromEntries(DICT_FIELDS.map((f) => [f.key, f.label]));
+  const fieldLabels: Record<string, string> = Object.fromEntries(
+    DICT_FIELDS.map((f) => [f.key, f.label]),
+  );
 
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); submit(chars, fields); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit(chars, fields);
+      }}
       className="card-paper rounded-lg p-4 space-y-3"
     >
       <p className="text-sm text-ink-soft">
-        为 <code>chars</code> 表填字段。已有值的字段会被跳过(避免覆盖人工填写)。需要先清空才能重新生成。
+        为 <code>chars</code>{' '}
+        表填字段。已有值的字段会被跳过(避免覆盖人工填写)。需要先清空才能重新生成。
       </p>
       <FieldCheckboxes options={DICT_FIELDS} value={fields} onChange={setFields} />
       <CharInput value={chars} onChange={setChars} />
-      <button type="submit" disabled={loading}
-        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50">
+      <button
+        type="submit"
+        disabled={loading}
+        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
+      >
         {loading ? '生成中…' : '生成'}
       </button>
       <ResultPanel result={result} error={error} fieldLabels={fieldLabels} />
@@ -209,15 +262,21 @@ function EtymologyTab() {
 
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); submit(chars, { etymology_story: true }); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit(chars, { etymology_story: true });
+      }}
       className="card-paper rounded-lg p-4 space-y-3"
     >
       <p className="text-sm text-ink-soft">
         为 <code>char_etymology</code> 表填字源演变故事。已有 story 的字会被跳过。
       </p>
       <CharInput value={chars} onChange={setChars} />
-      <button type="submit" disabled={loading}
-        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50">
+      <button
+        type="submit"
+        disabled={loading}
+        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
+      >
         {loading ? '生成中…' : '生成字源'}
       </button>
       <ResultPanel result={result} error={error} fieldLabels={{ etymology_story: '字源' }} />
@@ -233,20 +292,29 @@ function RareTab() {
   });
   const { loading, result, error, submit } = useSubmit();
 
-  const fieldLabels: Record<string, string> = Object.fromEntries(RARE_FIELDS.map((f) => [f.key, f.label]));
+  const fieldLabels: Record<string, string> = Object.fromEntries(
+    RARE_FIELDS.map((f) => [f.key, f.label]),
+  );
 
   return (
     <form
-      onSubmit={(e) => { e.preventDefault(); submit(chars, fields); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit(chars, fields);
+      }}
       className="card-paper rounded-lg p-4 space-y-3"
     >
       <p className="text-sm text-ink-soft">
-        为 <code>rare_chars</code> 表填释义和/或故事。已有值的字段会被跳过。字必须在 rare_chars 表中存在。
+        为 <code>rare_chars</code> 表填释义和/或故事。已有值的字段会被跳过。字必须在 rare_chars
+        表中存在。
       </p>
       <FieldCheckboxes options={RARE_FIELDS} value={fields} onChange={setFields} />
       <CharInput value={chars} onChange={setChars} />
-      <button type="submit" disabled={loading}
-        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50">
+      <button
+        type="submit"
+        disabled={loading}
+        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
+      >
         {loading ? '生成中…' : '生成'}
       </button>
       <ResultPanel result={result} error={error} fieldLabels={fieldLabels} />
@@ -280,7 +348,11 @@ function useBatchRunner() {
   const [lastError, setLastError] = useState<string | null>(null);
   const offsetRef = useRef(0);
   const pauseRef = useRef(false);
-  const bodyRef = useRef<{ level: number; fields: Record<string, boolean>; concurrency: number } | null>(null);
+  const bodyRef = useRef<{
+    level: number;
+    fields: Record<string, boolean>;
+    concurrency: number;
+  } | null>(null);
 
   async function runOnce() {
     const body = bodyRef.current;
@@ -318,7 +390,9 @@ function useBatchRunner() {
       } else if (pauseRef.current) {
         setStatus('paused');
       } else {
-        setTimeout(() => { if (!pauseRef.current) runOnce(); }, 800);
+        setTimeout(() => {
+          if (!pauseRef.current) runOnce();
+        }, 800);
       }
     } catch (err) {
       setLastError((err as Error).message);
@@ -390,16 +464,22 @@ function BatchTab() {
   const [concurrency, setConcurrency] = useState(4);
   const runner = useBatchRunner();
 
-  const fieldLabels: Record<string, string> = Object.fromEntries(ALL_BATCH_FIELDS.map((f) => [f.key, f.label]));
-  const visibleFields = level === 3
-    ? ALL_BATCH_FIELDS
-    : ALL_BATCH_FIELDS.filter((f) => f.key !== 'rare_meaning' && f.key !== 'rare_story');
-  const pct = runner.progress.totalChars > 0
-    ? Math.round((runner.progress.processed / runner.progress.totalChars) * 100)
-    : 0;
-  const etaMs = runner.progress.processed > 0 && !runner.status.includes('done') && runner.status !== 'error'
-    ? (runner.progress.elapsedMs / runner.progress.processed) * (runner.progress.totalChars - runner.progress.processed)
-    : 0;
+  const fieldLabels: Record<string, string> = Object.fromEntries(
+    ALL_BATCH_FIELDS.map((f) => [f.key, f.label]),
+  );
+  const visibleFields =
+    level === 3
+      ? ALL_BATCH_FIELDS
+      : ALL_BATCH_FIELDS.filter((f) => f.key !== 'rare_meaning' && f.key !== 'rare_story');
+  const pct =
+    runner.progress.totalChars > 0
+      ? Math.round((runner.progress.processed / runner.progress.totalChars) * 100)
+      : 0;
+  const etaMs =
+    runner.progress.processed > 0 && !runner.status.includes('done') && runner.status !== 'error'
+      ? (runner.progress.elapsedMs / runner.progress.processed) *
+        (runner.progress.totalChars - runner.progress.processed)
+      : 0;
   const fmtTime = (ms: number) => {
     if (!ms) return '—';
     const s = Math.round(ms / 1000);
@@ -414,7 +494,9 @@ function BatchTab() {
   return (
     <div className="card-paper rounded-lg p-4 space-y-4">
       <p className="text-sm text-ink-soft">
-        按级别遍历 <code>chars</code> 表,逐 30 字一批自动循环。已有值的字段会跳过(避免覆盖)。后台已配置的 AI 端点会处理 L1/L2/L3 的全部内容生成。
+        按级别遍历 <code>chars</code> 表,逐 30
+        字一批自动循环。已有值的字段会跳过(避免覆盖)。后台已配置的 AI 端点会处理 L1/L2/L3
+        的全部内容生成。
       </p>
 
       <div>
@@ -442,7 +524,12 @@ function BatchTab() {
 
       <div>
         <div className="text-sm font-semibold mb-2">
-          字段(全默认勾选){level !== 3 && <span className="text-xs text-ink-soft font-normal ml-2">L3 才会有"罕见字释义/故事"</span>}
+          字段(全默认勾选)
+          {level !== 3 && (
+            <span className="text-xs text-ink-soft font-normal ml-2">
+              L3 才会有"罕见字释义/故事"
+            </span>
+          )}
         </div>
         <FieldCheckboxes options={visibleFields} value={fields} onChange={setFields} />
       </div>
@@ -457,7 +544,9 @@ function BatchTab() {
             className="ml-2 border border-ink/30 rounded px-2 py-1 bg-paper"
           >
             {[1, 2, 3, 4, 6, 8].map((n) => (
-              <option key={n} value={n}>{n}</option>
+              <option key={n} value={n}>
+                {n}
+              </option>
             ))}
           </select>
         </label>
@@ -466,30 +555,41 @@ function BatchTab() {
 
       <div className="flex gap-2">
         {runner.status === 'idle' || runner.status === 'done' || runner.status === 'error' ? (
-          <button type="button"
+          <button
+            type="button"
             onClick={() => {
               const applicableFields: Record<string, boolean> = {};
               for (const f of visibleFields) applicableFields[f.key] = !!fields[f.key];
               runner.start(level, applicableFields, concurrency);
             }}
             disabled={!visibleFields.some((f) => fields[f.key])}
-            className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50">
+            className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
+          >
             ▶ 开始生成
           </button>
         ) : runner.status === 'running' ? (
-          <button type="button" onClick={runner.pause}
-            className="text-sm px-4 py-2 rounded bg-paper-warm border border-ink/30 hover:bg-ink/10">
+          <button
+            type="button"
+            onClick={runner.pause}
+            className="text-sm px-4 py-2 rounded bg-paper-warm border border-ink/30 hover:bg-ink/10"
+          >
             ⏸ 暂停
           </button>
         ) : (
-          <button type="button" onClick={runner.resume}
-            className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80">
+          <button
+            type="button"
+            onClick={runner.resume}
+            className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80"
+          >
             ▶ 继续
           </button>
         )}
         {runner.status !== 'idle' && (
-          <button type="button" onClick={runner.reset}
-            className="text-sm px-4 py-2 rounded border border-ink/30 hover:bg-ink/10">
+          <button
+            type="button"
+            onClick={runner.reset}
+            className="text-sm px-4 py-2 rounded border border-ink/30 hover:bg-ink/10"
+          >
             重置
           </button>
         )}
@@ -500,13 +600,27 @@ function BatchTab() {
       )}
 
       {(runner.progress.totalChars > 0 || runner.status === 'running') && (
-        <BatchProgressView progress={runner.progress} status={runner.status} pct={pct} etaMs={etaMs} fmtTime={fmtTime} fieldLabels={fieldLabels} />
+        <BatchProgressView
+          progress={runner.progress}
+          status={runner.status}
+          pct={pct}
+          etaMs={etaMs}
+          fmtTime={fmtTime}
+          fieldLabels={fieldLabels}
+        />
       )}
     </div>
   );
 }
 
-function BatchProgressView({ progress, status, pct, etaMs, fmtTime, fieldLabels }: {
+function BatchProgressView({
+  progress,
+  status,
+  pct,
+  etaMs,
+  fmtTime,
+  fieldLabels,
+}: {
   progress: BatchProgress;
   status: BatchStatus;
   pct: number;
@@ -517,7 +631,9 @@ function BatchProgressView({ progress, status, pct, etaMs, fmtTime, fieldLabels 
   return (
     <div className="mt-2 space-y-3">
       <div className="flex justify-between text-sm">
-        <span>{progress.processed} / {progress.totalChars} ({pct}%)</span>
+        <span>
+          {progress.processed} / {progress.totalChars} ({pct}%)
+        </span>
         <span className="text-ink-soft">
           {status === 'running' && `运行中… 剩余约 ${fmtTime(etaMs)}`}
           {status === 'paused' && '已暂停'}
@@ -552,7 +668,9 @@ function BatchProgressView({ progress, status, pct, etaMs, fmtTime, fieldLabels 
             <div>最近错误(共 {allErrors.length}):</div>
             <ul className="mt-1 ml-4 space-y-0.5">
               {show.map((e, i) => (
-                <li key={i}>{e.char}: {e.message}</li>
+                <li key={i}>
+                  {e.char}: {e.message}
+                </li>
               ))}
             </ul>
           </div>

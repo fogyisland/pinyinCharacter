@@ -33,40 +33,42 @@ These apply to every task unless a task overrides them.
 
 ### New (5 source + 4 tests = 9 files)
 
-| Path | Purpose |
-|---|---|
-| `lib/era-fonts.ts` | Curated registry + `DEFAULT_ERA_FONTS` + `getActiveEraFonts()` resolver |
-| `app/api/admin/font-config/route.ts` | GET + PUT for era font config |
-| `app/admin/settings/fonts/page.tsx` | RSC wrapper for admin font settings page |
-| `components/admin/FontConfigForm.tsx` | 'use client' form with 5 era dropdowns |
-| `scripts/migrations/2026-06-28-era-font-defaults.sql` | Seed 5 default `app_config` rows |
-| `tests/unit/lib/era-fonts.test.ts` | Unit tests for registry + resolver |
-| `tests/unit/app/api/admin/font-config.test.ts` | API tests for GET + PUT |
-| `tests/unit/components/admin/FontConfigForm.test.tsx` | Form tests (renders + save) |
-| `tests/integration/etymology-era-font.test.ts` | End-to-end: set app_config → /etymology HTML reflects |
+| Path                                                  | Purpose                                                                 |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| `lib/era-fonts.ts`                                    | Curated registry + `DEFAULT_ERA_FONTS` + `getActiveEraFonts()` resolver |
+| `app/api/admin/font-config/route.ts`                  | GET + PUT for era font config                                           |
+| `app/admin/settings/fonts/page.tsx`                   | RSC wrapper for admin font settings page                                |
+| `components/admin/FontConfigForm.tsx`                 | 'use client' form with 5 era dropdowns                                  |
+| `scripts/migrations/2026-06-28-era-font-defaults.sql` | Seed 5 default `app_config` rows                                        |
+| `tests/unit/lib/era-fonts.test.ts`                    | Unit tests for registry + resolver                                      |
+| `tests/unit/app/api/admin/font-config.test.ts`        | API tests for GET + PUT                                                 |
+| `tests/unit/components/admin/FontConfigForm.test.tsx` | Form tests (renders + save)                                             |
+| `tests/integration/etymology-era-font.test.ts`        | End-to-end: set app_config → /etymology HTML reflects                   |
 
 ### Modified (8 files)
 
-| Path | Change |
-|---|---|
-| `app/globals.css` | Add 4 `@font-face` blocks (Oracular, OracularInverted, WangHanzongWeibei, WangHanzongXingshu) |
-| `lib/config.ts` | Add 5 `KEY_VALIDATORS` entries |
-| `components/etymology/EtymologyMorph.tsx` | Drop hardcoded `ERA_FONT_FAMILY`; accept `eraFonts` prop |
-| `app/etymology/[char]/page.tsx` | Fetch `getActiveEraFonts()` and pass to EtymologyMorph |
-| `scripts/init-db.ts` | Append 5 INSERTs to inline DDL for fresh installs |
-| `scripts/download-ancient-fonts.ts` | Add 4 `FontEntry` rows for new fonts |
-| `components/admin/AdminSidebar.tsx` | Add 「字源字体」 link under settings group |
-| `docs/superpowers/specs/...` | (spec already committed; no further edits needed) |
+| Path                                      | Change                                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `app/globals.css`                         | Add 4 `@font-face` blocks (Oracular, OracularInverted, WangHanzongWeibei, WangHanzongXingshu) |
+| `lib/config.ts`                           | Add 5 `KEY_VALIDATORS` entries                                                                |
+| `components/etymology/EtymologyMorph.tsx` | Drop hardcoded `ERA_FONT_FAMILY`; accept `eraFonts` prop                                      |
+| `app/etymology/[char]/page.tsx`           | Fetch `getActiveEraFonts()` and pass to EtymologyMorph                                        |
+| `scripts/init-db.ts`                      | Append 5 INSERTs to inline DDL for fresh installs                                             |
+| `scripts/download-ancient-fonts.ts`       | Add 4 `FontEntry` rows for new fonts                                                          |
+| `components/admin/AdminSidebar.tsx`       | Add 「字源字体」 link under settings group                                                    |
+| `docs/superpowers/specs/...`              | (spec already committed; no further edits needed)                                             |
 
 ---
 
 ### Task 1: Foundation — register 4 new TTF files in CSS + download script
 
 **Files:**
+
 - Modify: `app/globals.css:204` (append after existing ancient-script block)
 - Modify: `scripts/download-ancient-fonts.ts:72` (append 4 new `FontEntry` rows to the `FONTS` array)
 
 **Interfaces:**
+
 - Produces: 4 new `font-family` IDs usable in `EtymologyMorph`: `Oracular`, `OracularInverted`, `WangHanzongWeibei`, `WangHanzongXingshu`.
 
 - [ ] **Step 1: Append 4 `@font-face` declarations to globals.css**
@@ -74,30 +76,33 @@ These apply to every task unless a task overrides them.
 Open `app/globals.css`. After the existing `@font-face { font-family: 'KaiTi' ... }` block (line 204), append:
 
 ```css
-
 /* ============ Era font alternatives (added 2026-06-28) ============ */
 @font-face {
   font-family: 'Oracular';
-  src: url('/fonts/Oracular-Regular.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/Oracular-Regular.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'OracularInverted';
-  src: url('/fonts/Oracular-Inverted.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/Oracular-Inverted.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongWeibei';
-  src: url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongXingshu';
-  src: url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
-       url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+  src:
+    url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
+    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
   font-display: swap;
 }
 ```
@@ -146,10 +151,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(fonts
 ### Task 2: lib/era-fonts.ts — curated registry + defaults + resolver
 
 **Files:**
+
 - Create: `lib/era-fonts.ts`
 - Create: `tests/unit/lib/era-fonts.test.ts`
 
 **Interfaces:**
+
 - Exports: `EraFontOption`, `ERA_FONTS`, `DEFAULT_ERA_FONTS`, `getActiveEraFonts()`
 - Consumes: `ERAS` from `lib/etymology-types` (already exports this), `getAllConfig` from `lib/config.ts`
 - Produces: a typed `Record<Era, string>` map that downstream tasks (`EtymologyMorph`, admin form) rely on.
@@ -157,9 +164,11 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(fonts
 - [ ] **Step 1: Read existing types to confirm ERAS shape**
 
 Run:
+
 ```bash
 grep -n "export.*ERAS\|export.*Era " lib/etymology-types.ts
 ```
+
 Expected: `export const ERAS = [...]` and `export type Era = 'jiaguwen' | 'jinwen' | ...`. Note the import path for use in Step 3.
 
 - [ ] **Step 2: Write failing tests**
@@ -198,7 +207,7 @@ describe('ERA_FONTS registry', () => {
     }
   });
 
-  it('default id for each era appears in that era\'s curated list', () => {
+  it("default id for each era appears in that era's curated list", () => {
     for (const era of ERAS) {
       const ids = ERA_FONTS[era].map((o) => o.id);
       expect(ids).toContain(DEFAULT_ERA_FONTS[era]);
@@ -273,27 +282,77 @@ export interface EraFontOption {
 
 export const ERA_FONTS: Record<Era, EraFontOption[]> = {
   jiaguwen: [
-    { id: 'Oracular',         label: 'Oracular (默认)',         file: 'Oracular-Regular.ttf',  desc: '32MB, 甲骨文, 1531 BMP chars' },
-    { id: 'OracularInverted', label: 'Oracular 阴文',           file: 'Oracular-Inverted.ttf', desc: '白底黑字, 类似真实甲骨' },
-    { id: 'YinQiJiaGuWen',    label: 'Founder 甲骨文',          file: 'founder-jiaguwen.ttf',  desc: '方正甲骨文, 旧默认, 2.7MB' },
+    {
+      id: 'Oracular',
+      label: 'Oracular (默认)',
+      file: 'Oracular-Regular.ttf',
+      desc: '32MB, 甲骨文, 1531 BMP chars',
+    },
+    {
+      id: 'OracularInverted',
+      label: 'Oracular 阴文',
+      file: 'Oracular-Inverted.ttf',
+      desc: '白底黑字, 类似真实甲骨',
+    },
+    {
+      id: 'YinQiJiaGuWen',
+      label: 'Founder 甲骨文',
+      file: 'founder-jiaguwen.ttf',
+      desc: '方正甲骨文, 旧默认, 2.7MB',
+    },
   ],
   jinwen: [
-    { id: 'WangHanzongWeibei', label: '王汉宗魏碑 (默认)',     file: 'wang-hanzong-weibei.ttf', desc: '10MB, 魏碑 ≈ 金文风格' },
-    { id: 'HanDianJinWen',     label: 'BabelStone Han',         file: 'BabelStoneHanBasic.ttf',  desc: '25MB, 通用甲骨/金文/简帛 fallback' },
+    {
+      id: 'WangHanzongWeibei',
+      label: '王汉宗魏碑 (默认)',
+      file: 'wang-hanzong-weibei.ttf',
+      desc: '10MB, 魏碑 ≈ 金文风格',
+    },
+    {
+      id: 'HanDianJinWen',
+      label: 'BabelStone Han',
+      file: 'BabelStoneHanBasic.ttf',
+      desc: '25MB, 通用甲骨/金文/简帛 fallback',
+    },
   ],
   xiaozhuan: [
-    { id: 'QuanZiKuShuoWen',   label: '全字庫說文解字 (默认)', file: 'quanziku-shuowen.ttf',    desc: '10MB, 专用小篆' },
-    { id: 'HanDianJinWen',     label: 'BabelStone Han',         file: 'BabelStoneHanBasic.ttf',  desc: '25MB, 通用 fallback' },
+    {
+      id: 'QuanZiKuShuoWen',
+      label: '全字庫說文解字 (默认)',
+      file: 'quanziku-shuowen.ttf',
+      desc: '10MB, 专用小篆',
+    },
+    {
+      id: 'HanDianJinWen',
+      label: 'BabelStone Han',
+      file: 'BabelStoneHanBasic.ttf',
+      desc: '25MB, 通用 fallback',
+    },
   ],
   lishu: [
-    { id: 'WangHanzongLishu',  label: '王漢宗中隸書繁 (默认)', file: 'wang-hanzong-lishu.ttf',  desc: '8.1MB, 专用隶书' },
-    { id: 'ZCOOLXiaoWei',      label: '站酷小薇',              file: 'zcool-xiaowei.ttf',       desc: '6.1MB, 现代隶书感' },
+    {
+      id: 'WangHanzongLishu',
+      label: '王漢宗中隸書繁 (默认)',
+      file: 'wang-hanzong-lishu.ttf',
+      desc: '8.1MB, 专用隶书',
+    },
+    { id: 'ZCOOLXiaoWei', label: '站酷小薇', file: 'zcool-xiaowei.ttf', desc: '6.1MB, 现代隶书感' },
   ],
   kaishu: [
-    { id: 'ZCOOLXiaoWei',      label: '站酷小薇 (默认)',       file: 'zcool-xiaowei.ttf',       desc: '6.1MB, react-pdf 兼容' },
-    { id: 'KaiTi',             label: '系统楷体',              file: null,                      desc: 'local(KaiTi) / STKaiti / BiauKai' },
-    { id: 'Iansui',            label: '汉仪润圆',              file: 'Iansui-Regular.woff2',    desc: '1.2MB, 圆润楷书' },
-    { id: 'MaShanZheng',       label: '马善政',                file: 'ma-shan-zheng.woff2',     desc: '3.2MB, 楷书带毛笔感' },
+    {
+      id: 'ZCOOLXiaoWei',
+      label: '站酷小薇 (默认)',
+      file: 'zcool-xiaowei.ttf',
+      desc: '6.1MB, react-pdf 兼容',
+    },
+    { id: 'KaiTi', label: '系统楷体', file: null, desc: 'local(KaiTi) / STKaiti / BiauKai' },
+    { id: 'Iansui', label: '汉仪润圆', file: 'Iansui-Regular.woff2', desc: '1.2MB, 圆润楷书' },
+    {
+      id: 'MaShanZheng',
+      label: '马善政',
+      file: 'ma-shan-zheng.woff2',
+      desc: '3.2MB, 楷书带毛笔感',
+    },
   ],
 };
 
@@ -338,11 +397,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(era-f
 ### Task 3: KEY_VALIDATORS + SQL migration + init-db.ts update
 
 **Files:**
+
 - Modify: `lib/config.ts:3-45` (add 5 entries to KEY_VALIDATORS)
 - Create: `scripts/migrations/2026-06-28-era-font-defaults.sql`
 - Modify: `scripts/init-db.ts` (append 5 INSERTs to the inline DDL block)
 
 **Interfaces:**
+
 - Produces: 5 `app_config` keys `era.${era}.font` accepted by `setConfig` / `setConfigBatch`; new SQL migration file for prod upgrade; inline seed for fresh `init-db.ts` runs.
 
 - [ ] **Step 1: Add 5 KEY_VALIDATORS to lib/config.ts**
@@ -395,15 +456,19 @@ Open `scripts/init-db.ts`. Find the existing DDL array (starts at line 15 with `
 - [ ] **Step 4: Apply SQL migration to local piyin_dev**
 
 Run:
+
 ```bash
 "E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev < "E:/ToolDevelop/PinYinCharacter/scripts/migrations/2026-06-28-era-font-defaults.sql"
 ```
+
 Expected: silent success.
 
 Verify:
+
 ```bash
 "E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev -e "SELECT \`key\`, value FROM app_config WHERE \`key\` LIKE 'era.%';"
 ```
+
 Expected: 5 rows, one per era, with the values from the migration.
 
 - [ ] **Step 5: Run tsc to verify**
@@ -423,19 +488,23 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(confi
 ### Task 4: EtymologyMorph accepts eraFonts prop + RSC fetches config
 
 **Files:**
+
 - Modify: `components/etymology/EtymologyMorph.tsx:14-20,133` (drop hardcoded map, add prop)
 - Modify: `app/etymology/[char]/page.tsx` (fetch `getActiveEraFonts()` and pass to component)
 
 **Interfaces:**
+
 - Consumes: `getActiveEraFonts()` from `lib/era-fonts.ts` (Task 2); `ERA_FONT_FALLBACK` constant defined inline.
 - Produces: EtymologyMorph's `eraFonts` prop shape — `Record<Era, string>` — is the consumer-side contract for what gets passed as `font-family`.
 
 - [ ] **Step 1: Read current EtymologyMorph to confirm hardcoded map location**
 
 Run:
+
 ```bash
 grep -n "ERA_FONT_FAMILY\|fontFamily:" components/etymology/EtymologyMorph.tsx
 ```
+
 Expected: `ERA_FONT_FAMILY` defined around line 14-20; `fontFamily: ERA_FONT_FAMILY[era.era]` around line 133.
 
 - [ ] **Step 2: Modify EtymologyMorph.tsx**
@@ -483,13 +552,8 @@ import { getActiveEraFonts } from '@/lib/era-fonts';
 
 export default async function EtymologyPage({ params }: { params: Promise<{ char: string }> }) {
   const { char } = await params;
-  const [eraGlyphs, eraFonts] = await Promise.all([
-    getEraGlyphs(char),
-    getActiveEraFonts(),
-  ]);
-  return (
-    <EtymologyMorph char={char} eraGlyphs={eraGlyphs} eraFonts={eraFonts} />
-  );
+  const [eraGlyphs, eraFonts] = await Promise.all([getEraGlyphs(char), getActiveEraFonts()]);
+  return <EtymologyMorph char={char} eraGlyphs={eraGlyphs} eraFonts={eraFonts} />;
 }
 ```
 
@@ -509,6 +573,7 @@ Per memory `dev-build-cache-stomp`: kill `pnpm dev` on port 4444 first.
 powershell -Command "Get-NetTCPConnection -LocalPort 4444 -State Listen | Select-Object OwningProcess | ForEach-Object { Stop-Process -Id \$_.OwningProcess -Force }"
 pnpm build
 ```
+
 Expected: build succeeds. If build complains about EtymologyMorph prop changes, recheck Step 2.
 
 - [ ] **Step 6: Commit**
@@ -523,20 +588,24 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(etymo
 ### Task 5: Admin API — GET/PUT /api/admin/font-config
 
 **Files:**
+
 - Create: `app/api/admin/font-config/route.ts`
 - Create: `tests/unit/app/api/admin/font-config.test.ts`
 
 **Interfaces:**
+
 - Consumes: `requireAdmin` (existing), `getAllConfig`/`setConfigBatch` (existing), `auditLog` from `lib/audit.ts`.
 - Produces: GET returns `Record<Era, string>` shape; PUT accepts same shape, validates per key via `setConfigBatch`, audits each change.
 
 - [ ] **Step 1: Read existing admin route for pattern**
 
 Run:
+
 ```bash
 ls app/api/admin/
 grep -l "requireAdmin" app/api/admin/**/route.ts | head -3
 ```
+
 Pick one (e.g. `app/api/admin/ai-config/route.ts` or similar) and read its full contents to mirror the auth + audit pattern.
 
 - [ ] **Step 2: Write failing API tests**
@@ -627,7 +696,13 @@ describe('PUT /api/admin/font-config', () => {
   it('returns 400 when an invalid font id is submitted', async () => {
     const req = new NextRequest('http://localhost/api/admin/font-config', {
       method: 'PUT',
-      body: JSON.stringify({ jiaguwen: 'NotARealFont', jinwen: 'WangHanzongWeibei', xiaozhuan: 'QuanZiKuShuoWen', lishu: 'WangHanzongLishu', kaishu: 'ZCOOLXiaoWei' }),
+      body: JSON.stringify({
+        jiaguwen: 'NotARealFont',
+        jinwen: 'WangHanzongWeibei',
+        xiaozhuan: 'QuanZiKuShuoWen',
+        lishu: 'WangHanzongLishu',
+        kaishu: 'ZCOOLXiaoWei',
+      }),
     });
     const res = await PUT(req);
     expect(res.status).toBe(400);
@@ -730,10 +805,12 @@ export async function PUT(req: NextRequest) {
       userId: admin.id,
       action: 'admin.font_config.update',
       metadata: {
-        changes: changes.map((c) => {
-          const label = ERA_FONTS[c.era].find((o) => o.id === c.to)?.label ?? c.to;
-          return `${c.era}: ${c.from} → ${label}`;
-        }).join('; '),
+        changes: changes
+          .map((c) => {
+            const label = ERA_FONTS[c.era].find((o) => o.id === c.to)?.label ?? c.to;
+            return `${c.era}: ${c.from} → ${label}`;
+          })
+          .join('; '),
       },
     });
   }
@@ -752,6 +829,7 @@ Expected: PASS (6 tests).
 powershell -Command "Get-NetTCPConnection -LocalPort 4444 -State Listen | Select-Object OwningProcess | ForEach-Object { Stop-Process -Id \$_.OwningProcess -Force }"
 pnpm build
 ```
+
 Expected: build succeeds.
 
 - [ ] **Step 7: Commit**
@@ -766,21 +844,25 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(admin
 ### Task 6: Admin UI — /admin/settings/fonts page + form + sidebar link
 
 **Files:**
+
 - Create: `app/admin/settings/fonts/page.tsx`
 - Create: `components/admin/FontConfigForm.tsx`
 - Create: `tests/unit/components/admin/FontConfigForm.test.tsx`
 - Modify: `components/admin/AdminSidebar.tsx` (add 「字源字体」 link)
 
 **Interfaces:**
+
 - Consumes: `getActiveEraFonts()` (Task 2), `ERA_FONTS` (Task 2), `requireAdmin()` (existing), `PUT /api/admin/font-config` (Task 5).
 - Produces: a working admin page that lets an admin change 5 era font dropdowns.
 
 - [ ] **Step 1: Read AdminSidebar.tsx to confirm the existing settings group structure**
 
 Run:
+
 ```bash
 grep -n "settings\|字\|font" components/admin/AdminSidebar.tsx | head -20
 ```
+
 Look for the existing settings group where you'll add the link.
 
 - [ ] **Step 2: Write failing form tests**
@@ -838,7 +920,10 @@ describe('FontConfigForm', () => {
   });
 
   it('shows an error message when PUT returns non-ok', async () => {
-    (global.fetch as any).mockResolvedValue({ ok: false, json: async () => ({ error: 'invalid font id for kaishu' }) });
+    (global.fetch as any).mockResolvedValue({
+      ok: false,
+      json: async () => ({ error: 'invalid font id for kaishu' }),
+    });
     render(<FontConfigForm initial={initial} />);
     fireEvent.click(screen.getByRole('button', { name: /保存/ }));
     expect(await screen.findByText(/invalid font id/)).toBeInTheDocument();
@@ -914,9 +999,7 @@ export function FontConfigForm({ initial }: Props) {
     <div className="space-y-6">
       {ERAS.map((era, i) => (
         <div key={era}>
-          <label className="block text-sm font-medium text-ink mb-1">
-            {ERA_LABEL[era]}
-          </label>
+          <label className="block text-sm font-medium text-ink mb-1">{ERA_LABEL[era]}</label>
           <select
             value={fonts[era]}
             onChange={(e) => setFonts((prev) => ({ ...prev, [era]: e.target.value }))}
@@ -946,7 +1029,9 @@ export function FontConfigForm({ initial }: Props) {
           {saving ? '保存中…' : '保存'}
         </button>
         {savedAt && (
-          <span className="text-xs text-ink-faint">已于 {savedAt.toLocaleTimeString('zh-CN')} 保存</span>
+          <span className="text-xs text-ink-faint">
+            已于 {savedAt.toLocaleTimeString('zh-CN')} 保存
+          </span>
         )}
         {error && <span className="text-xs text-red-600">{error}</span>}
       </div>
@@ -1004,6 +1089,7 @@ Open `components/admin/AdminSidebar.tsx`. Find the existing settings group (look
 powershell -Command "Get-NetTCPConnection -LocalPort 4444 -State Listen | Select-Object OwningProcess | ForEach-Object { Stop-Process -Id \$_.OwningProcess -Force }"
 pnpm build
 ```
+
 Expected: build succeeds (new routes registered).
 
 - [ ] **Step 9: Commit**
@@ -1018,19 +1104,23 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(admin
 ### Task 7: Integration test — config change → /etymology HTML reflects new font
 
 **Files:**
+
 - Create: `tests/integration/etymology-era-font.test.ts`
 
 **Interfaces:**
+
 - Consumes: real MySQL DB (via `getPool` from `lib/db.ts`), `setConfig` / `getConfig` from `lib/config.ts`, `EtymologyPage` rendering.
 - Produces: end-to-end proof that admin-set config reaches the rendered HTML.
 
 - [ ] **Step 1: Read an existing integration test for the pattern**
 
 Run:
+
 ```bash
 ls tests/integration/ | head -10
 grep -l "setConfig\|getConfig" tests/integration/**/*.test.ts | head -2
 ```
+
 Pick one and read its setup to confirm: pool init, cleanup, fetch pattern.
 
 - [ ] **Step 2: Write the integration test**
@@ -1090,22 +1180,27 @@ Expected: PASS (2 tests). Verify the cleanup actually fires — temporarily insp
 - [ ] **Step 4: Verify EtymologyPage actually renders the chosen font (smoke check)**
 
 Run:
+
 ```bash
 pnpm dev &
 sleep 5
 # In another terminal — or use curl directly:
 curl -s http://localhost:4444/etymology/永 | grep -o "font-family:[^\"]*" | head -5
 ```
+
 Expected: at least one of the output lines is `font-family: Oracular` (matches Task 2 default).
 
 Then change the config and re-fetch:
+
 ```bash
 "E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev -e "UPDATE app_config SET value='OracularInverted' WHERE \`key\`='era.jiaguwen.font';"
 curl -s http://localhost:4444/etymology/永 | grep -o "font-family:[^\"]*" | head -5
 ```
+
 Expected: at least one line now shows `font-family: OracularInverted`.
 
 Restore after smoke:
+
 ```bash
 "E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev -e "UPDATE app_config SET value='Oracular' WHERE \`key\`='era.jiaguwen.font';"
 # Kill dev server
@@ -1124,6 +1219,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "test(etymo
 ### Task 8: Final regression — tsc + build + full vitest + memory
 
 **Files:**
+
 - Modify: `memory/MEMORY.md` and create `memory/plan-era-font-admin-status.md`
 
 - [ ] **Step 1: Kill dev + full tsc + build**
@@ -1133,6 +1229,7 @@ powershell -Command "Get-NetTCPConnection -LocalPort 4444 -State Listen | Select
 pnpm tsc --noEmit
 pnpm build
 ```
+
 Expected: both clean.
 
 - [ ] **Step 2: Run full vitest suite**
@@ -1154,6 +1251,7 @@ name: Plan era-font-admin — shipped 2026-06-28, awaiting human smoke
 description: 5 era→font mappings (甲骨文/金文/小篆/隶书/楷书) now configurable via /admin/settings/fonts; defaults Oracular + 王汉宗魏碑 + 全字庫說文解字 + 王汉宗隶书 + 站酷小薇
 type: project
 ---
+
 # Plan era-font-admin — shipped 2026-06-28
 
 8 commits on local main (intentional deferred fill — run `git log --oneline -8` after Step 6 to capture):
@@ -1168,6 +1266,7 @@ type: project
 8. Final regression (this commit)
 
 **Key design decisions:**
+
 - v1 = global default per era, no per-char override (char_etymology.era_${era}_font columns reserved but unused)
 - Curated font list per era (no free text), prevents admin from entering non-existent font names
 - All 4 new @font-face cascade to BabelStone Han Basic as fallback (existing pattern, 56K+ CJK CPs)
@@ -1175,6 +1274,7 @@ type: project
 - Wang Hanzong kaiti-zhuyin.ttf NOT offered in dropdown — has visible 注音 marks on every glyph
 
 **Status:** tsc + build clean, ~22 new tests pass. NOT pushed (no prod env per memory `no-prod-env-2026-06-21`). Only human browser smoke remains:
+
 1. Visit /etymology/永 → 甲骨文 renders with Oracular
 2. Visit /admin/settings/fonts → 5 dropdowns show current defaults
 3. Change 甲骨文 → Oracular Inverted, save → reload /etymology/永 → 甲骨文 inverted

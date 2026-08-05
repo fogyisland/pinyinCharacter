@@ -20,8 +20,8 @@ export function InitHeader({ currentStep }: { currentStep: 0 | 1 | 2 }) {
                 completed
                   ? 'border-green-600 bg-green-50 text-green-700'
                   : active
-                  ? 'border-seal bg-seal text-white'
-                  : 'border-ink/20 bg-paper-soft text-ink-faint'
+                    ? 'border-seal bg-seal text-white'
+                    : 'border-ink/20 bg-paper-soft text-ink-faint'
               }`}
             >
               {completed ? <Check className="h-4 w-4" /> : <s.Icon className="h-4 w-4" />}

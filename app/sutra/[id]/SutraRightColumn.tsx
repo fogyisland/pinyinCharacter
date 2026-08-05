@@ -26,7 +26,7 @@ export function SutraRightColumn({ sutraId, sutraSlug, sutraTitle, chunk, userId
       <div className="flex items-center justify-between mb-2 worksheet-no-print">
         <button
           type="button"
-          onClick={() => setCopyMode(v => !v)}
+          onClick={() => setCopyMode((v) => !v)}
           className={
             'rounded-md border px-3 py-1.5 text-sm transition-colors ' +
             (copyMode
@@ -56,7 +56,10 @@ export function SutraRightColumn({ sutraId, sutraSlug, sutraTitle, chunk, userId
       </div>
       {!copyMode && (
         <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">
-          <PrintButton endpoint={`/api/sutra/${sutraSlug}/print`} sourceId={`${sutraSlug}#${chunk.id}`} />
+          <PrintButton
+            endpoint={`/api/sutra/${sutraSlug}/print`}
+            sourceId={`${sutraSlug}#${chunk.id}`}
+          />
           <SaveAsWorksheetButton id={sutraId} title={sutraTitle} chunk={chunk} />
         </div>
       )}

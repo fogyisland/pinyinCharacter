@@ -5,6 +5,7 @@
 **Goal:** Three small, independent changes — (1) add a 古籍 nav link to a placeholder page, (2) move SMTP config from `.env` to `app_config` with a full admin UI, (3) filter admin-only sections out of the public `/guide` page.
 
 **Architecture:**
+
 - Nav + placeholder = pure presentation, no DB.
 - SMTP = new `lib/smtp-config.ts` reading `app_config` with env fallback; admin UI mirrors the existing `ai.*` pattern (`/admin/ai` page + `/api/admin/ai/config` route). Same `app_config` validators pattern as `lib/config.ts`.
 - Guide filter = pure function added to `app/guide/page.tsx` that drops H2 sections by heading; tested in isolation.
@@ -25,6 +26,7 @@
 ## File Structure
 
 **New files (6):**
+
 - `app/ancient-texts/page.tsx` — RSC placeholder page
 - `lib/smtp-config.ts` — typed DB reader with env fallback
 - `app/admin/email/page.tsx` — RSC admin page (loads current values)
@@ -33,10 +35,12 @@
 - `app/api/admin/email/test/route.ts` — POST: send a test email
 
 **New tests (2):**
+
 - `tests/unit/lib/guide-filter.test.ts` — 6 tests for the blocklist
 - `tests/unit/lib/smtp-config.test.ts` — tests for DB vs env precedence (extends email tests, see Task 3)
 
 **Edit (8):**
+
 - `lib/design.ts` — add 古籍 to `NAV_LINKS`
 - `components/Header.tsx` — filter `/ancient-texts` in safeMode
 - `app/guide/page.tsx` — export `filterUserReadme` + use it
@@ -51,6 +55,7 @@
 ## Task 1: Ancient Texts nav + placeholder page
 
 **Files:**
+
 - Edit: `lib/design.ts:9-19` (add 1 entry to `NAV_LINKS`)
 - Edit: `components/Header.tsx:17` (extend safeMode filter)
 - Create: `app/ancient-texts/page.tsx` (RSC)
@@ -124,11 +129,15 @@ export default function AncientTextsPage() {
             <h2 className="text-sm font-semibold text-ink">先逛逛这些</h2>
             <ul className="text-sm text-ink-soft space-y-1 list-disc list-inside">
               <li>
-                <Link href="/sutra" className="text-seal hover:underline">佛经</Link>
+                <Link href="/sutra" className="text-seal hover:underline">
+                  佛经
+                </Link>
                 <span className="ml-1">— 已有的佛经阅读模块,带分章/拼音注释</span>
               </li>
               <li>
-                <Link href="/dictionary" className="text-seal hover:underline">字典</Link>
+                <Link href="/dictionary" className="text-seal hover:underline">
+                  字典
+                </Link>
                 <span className="ml-1">— 查字形、字义、字源、读音</span>
               </li>
             </ul>
@@ -146,6 +155,7 @@ If `components/common/PageContainer` doesn't exist as named, mirror `/about`'s i
 ### Step 4: Verify
 
 Run:
+
 ```bash
 pnpm tsc --noEmit
 pnpm build
@@ -154,6 +164,7 @@ pnpm build
 Expected: both succeed. Build output should show `ƒ /ancient-texts` in the route summary.
 
 Then hit the dev server:
+
 ```bash
 curl -s -o /dev/null -w "ancient-texts: %{http_code}\n" http://localhost:4444/ancient-texts
 curl -s http://localhost:4444/ancient-texts | grep -oE '古籍|先逛逛这些|/sutra|/dictionary' | sort -u
@@ -179,6 +190,7 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>"
 ## Task 2: /guide filter — drop admin sections
 
 **Files:**
+
 - Create: `tests/unit/lib/guide-filter.test.ts` (failing test first)
 - Create: `app/guide/filter.ts` (co-located filter — Next.js 15 forbids arbitrary named exports from `app/**/page.tsx`)
 - Edit: `app/guide/page.tsx` (import + use `filterUserReadme`)
@@ -288,6 +300,7 @@ describe('filterUserReadme', () => {
 ### Step 2: Run the test, expect FAIL
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/guide-filter.test.ts 2>&1 | tail -30
 ```
@@ -299,12 +312,7 @@ Expected: FAIL with `filterUserReadme is not a function` (or similar). The impor
 Next.js 15 forbids arbitrary named exports from `app/**/page.tsx` (the generated `.next/types/app/.../page.ts` type contract rejects them with a `checkFields` error). The filter must live in a co-located file. Create `app/guide/filter.ts`:
 
 ```ts
-const BLOCKED_H2_SECTIONS = [
-  '## 启动',
-  '## 测试',
-  '## 管理员后台扩展',
-  '## 环境变量',
-] as const;
+const BLOCKED_H2_SECTIONS = ['## 启动', '## 测试', '## 管理员后台扩展', '## 环境变量'] as const;
 
 /**
  * Drop H2 sections that are admin/deployment-only from the README so that
@@ -326,16 +334,20 @@ export function filterUserReadme(md: string): string {
 ```
 
 Then in `app/guide/page.tsx`, add the import at the top:
+
 ```ts
 import { filterUserReadme } from './filter';
 ```
 
 And in the default export, change:
+
 ```ts
 const md = readReadme();
 const html = renderMarkdown(md);
 ```
+
 to:
+
 ```ts
 const md = filterUserReadme(readReadme());
 const html = renderMarkdown(md);
@@ -344,6 +356,7 @@ const html = renderMarkdown(md);
 ### Step 4: Run the test, expect PASS
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/guide-filter.test.ts 2>&1 | tail -20
 ```
@@ -449,16 +462,17 @@ export async function getMailTransport(): Promise<MailTransport> {
  * working until an admin saves new values.
  */
 export async function getSmtpConfig(): Promise<SmtpConfig | null> {
-  const [dbTransport, dbHost, dbPort, dbSecure, dbUser, dbPass, dbFrom, dbFromName] = await Promise.all([
-    getConfig(KEYS.transport),
-    getConfig(KEYS.host),
-    getConfig(KEYS.port),
-    getConfig(KEYS.secure),
-    getConfig(KEYS.user),
-    getConfig(KEYS.pass),
-    getConfig(KEYS.from),
-    getConfig(KEYS.from_name),
-  ]);
+  const [dbTransport, dbHost, dbPort, dbSecure, dbUser, dbPass, dbFrom, dbFromName] =
+    await Promise.all([
+      getConfig(KEYS.transport),
+      getConfig(KEYS.host),
+      getConfig(KEYS.port),
+      getConfig(KEYS.secure),
+      getConfig(KEYS.user),
+      getConfig(KEYS.pass),
+      getConfig(KEYS.from),
+      getConfig(KEYS.from_name),
+    ]);
 
   // DB transport must be 'smtp' to return a non-null config.
   if (dbTransport !== 'smtp') return null;
@@ -531,7 +545,9 @@ export async function sendEmail(msg: EmailMessage): Promise<void> {
 
   const cfg = await getSmtpConfig();
   if (!cfg) {
-    throw new EmailNotConfiguredError('SMTP is not fully configured (set smtp.transport, smtp.host, smtp.from in app_config or SMTP_* in env)');
+    throw new EmailNotConfiguredError(
+      'SMTP is not fully configured (set smtp.transport, smtp.host, smtp.from in app_config or SMTP_* in env)',
+    );
   }
   if (!cfg.from) {
     throw new EmailNotConfiguredError('MAIL_FROM is not set');
@@ -623,14 +639,14 @@ describe('sendEmail', () => {
     // also clear DB to make sure env path triggers
     await getPool().query(`DELETE FROM app_config WHERE \`key\` = 'smtp.host'`);
     await expect(
-      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' })
+      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' }),
     ).rejects.toBeInstanceOf(EmailNotConfiguredError);
   });
 
   it('MAIL_TRANSPORT=foo throws EmailNotConfiguredError', async () => {
     process.env.MAIL_TRANSPORT = 'foo';
     await expect(
-      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' })
+      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' }),
     ).rejects.toBeInstanceOf(EmailNotConfiguredError);
   });
 
@@ -643,7 +659,7 @@ describe('sendEmail', () => {
     // because localhost:25 isn't real, but the failure mode is EmailSendError,
     // not console output.
     await expect(
-      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' })
+      sendEmail({ to: 'x@y.com', subject: 's', html: 'h', text: 't' }),
     ).rejects.toBeInstanceOf(EmailSendError);
     expect(consoleSpy).not.toHaveBeenCalled();
   });
@@ -692,8 +708,8 @@ export default async function AdminEmailPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">邮件</h1>
       <p className="text-sm text-ink-soft max-w-2xl">
-        邮件发送配置。写入 <code>app_config</code> 表,优先级高于 <code>SMTP_*</code> 环境变量。
-        在 <code>smtp.transport=console</code> 时只把邮件内容打印到服务器日志(开发用)。
+        邮件发送配置。写入 <code>app_config</code> 表,优先级高于 <code>SMTP_*</code> 环境变量。 在{' '}
+        <code>smtp.transport=console</code> 时只把邮件内容打印到服务器日志(开发用)。
       </p>
       <SmtpConfigForm initial={initial} />
     </div>
@@ -743,7 +759,10 @@ export function SmtpConfigForm({ initial }: { initial: SmtpConfigInitial }) {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setErr(null); setOk(null); setTestResult(null);
+    setBusy(true);
+    setErr(null);
+    setOk(null);
+    setTestResult(null);
     const body: Record<string, string> = {
       'smtp.transport': form.transport,
       'smtp.host': form.host,
@@ -763,7 +782,7 @@ export function SmtpConfigForm({ initial }: { initial: SmtpConfigInitial }) {
       const j = await res.json();
       if (!j.ok) throw new Error(j.error?.message ?? '保存失败');
       setOk('配置已保存');
-      setForm(f => ({ ...f, pass: '' })); // clear pass field after save
+      setForm((f) => ({ ...f, pass: '' })); // clear pass field after save
       router.refresh();
     } catch (e) {
       setErr((e as Error).message);
@@ -777,7 +796,8 @@ export function SmtpConfigForm({ initial }: { initial: SmtpConfigInitial }) {
       setTestResult({ ok: false, message: '请输入收件邮箱' });
       return;
     }
-    setTestBusy(true); setTestResult(null);
+    setTestBusy(true);
+    setTestResult(null);
     try {
       const res = await fetch('/api/admin/email/test', {
         method: 'POST',
@@ -798,39 +818,66 @@ export function SmtpConfigForm({ initial }: { initial: SmtpConfigInitial }) {
     <div className="space-y-6 max-w-xl">
       <form onSubmit={save} className="card-paper rounded-lg p-4 space-y-3">
         {err && <p className="text-sm text-seal">{err}</p>}
-        {ok && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{ok}</p>}
+        {ok && (
+          <p className="text-sm text-green-700 inline-flex items-center gap-1">
+            <Check className="h-3.5 w-3.5" />
+            {ok}
+          </p>
+        )}
 
         <div>
           <label className="text-sm font-medium">传输方式</label>
           <div className="mt-1 flex gap-4 text-sm">
             <label className="flex items-center gap-1.5">
-              <input type="radio" name="transport" value="console"
+              <input
+                type="radio"
+                name="transport"
+                value="console"
                 checked={form.transport === 'console'}
-                onChange={() => setForm(f => ({ ...f, transport: 'console' }))} />
+                onChange={() => setForm((f) => ({ ...f, transport: 'console' }))}
+              />
               console(只打印)
             </label>
             <label className="flex items-center gap-1.5">
-              <input type="radio" name="transport" value="smtp"
+              <input
+                type="radio"
+                name="transport"
+                value="smtp"
                 checked={form.transport === 'smtp'}
-                onChange={() => setForm(f => ({ ...f, transport: 'smtp' }))} />
+                onChange={() => setForm((f) => ({ ...f, transport: 'smtp' }))}
+              />
               smtp(实际发送)
             </label>
           </div>
         </div>
 
-        <Field label="SMTP 主机" placeholder="smtp.example.com"
-          value={form.host} onChange={v => setForm(f => ({ ...f, host: v }))} />
+        <Field
+          label="SMTP 主机"
+          placeholder="smtp.example.com"
+          value={form.host}
+          onChange={(v) => setForm((f) => ({ ...f, host: v }))}
+        />
         <div className="grid grid-cols-3 gap-2">
-          <Field label="端口" placeholder="587"
-            value={form.port} onChange={v => setForm(f => ({ ...f, port: v }))} />
+          <Field
+            label="端口"
+            placeholder="587"
+            value={form.port}
+            onChange={(v) => setForm((f) => ({ ...f, port: v }))}
+          />
           <label className="flex items-end gap-2 text-sm pb-2">
-            <input type="checkbox" checked={form.secure}
-              onChange={e => setForm(f => ({ ...f, secure: e.target.checked }))} />
+            <input
+              type="checkbox"
+              checked={form.secure}
+              onChange={(e) => setForm((f) => ({ ...f, secure: e.target.checked }))}
+            />
             <span>SSL/TLS (465)</span>
           </label>
         </div>
-        <Field label="用户名" value={form.user}
-          onChange={v => setForm(f => ({ ...f, user: v }))} />
+        <Field
+          label="用户名"
+          value={form.user}
+          onChange={(v) => setForm((f) => ({ ...f, user: v }))}
+        />
         <div>
           <label className="text-sm font-medium">
             密码 (SMTP 密码 / 授权码)
@@ -842,53 +889,81 @@ export function SmtpConfigForm({ initial }: { initial: SmtpConfigInitial }) {
             <input
               type={showPass ? 'text' : 'password'}
               value={form.pass}
-              onChange={e => setForm(f => ({ ...f, pass: e.target.value }))}
+              onChange={(e) => setForm((f) => ({ ...f, pass: e.target.value }))}
               placeholder={initial.passSet ? '(未修改)' : ''}
               className="flex-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
             />
-            <button type="button" onClick={() => setShowPass(s => !s)}
+            <button
+              type="button"
+              onClick={() => setShowPass((s) => !s)}
               className="px-2 border border-paper-warm rounded text-ink-soft hover:bg-paper-deep"
-              aria-label={showPass ? '隐藏密码' : '显示密码'}>
+              aria-label={showPass ? '隐藏密码' : '显示密码'}
+            >
               {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
-        <Field label="发件邮箱 (From)" placeholder="noreply@example.com"
-          value={form.from} onChange={v => setForm(f => ({ ...f, from: v }))} />
-        <Field label="发件人名称 (可选)" placeholder="字·韵"
-          value={form.fromName} onChange={v => setForm(f => ({ ...f, fromName: v }))} />
+        <Field
+          label="发件邮箱 (From)"
+          placeholder="noreply@example.com"
+          value={form.from}
+          onChange={(v) => setForm((f) => ({ ...f, from: v }))}
+        />
+        <Field
+          label="发件人名称 (可选)"
+          placeholder="字·韵"
+          value={form.fromName}
+          onChange={(v) => setForm((f) => ({ ...f, fromName: v }))}
+        />
 
-        <button type="submit" disabled={busy}
-          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={busy}
+          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+        >
           {busy ? '保存中…' : '保存'}
         </button>
       </form>
 
       <div className="card-paper rounded-lg p-4 space-y-3">
         <h2 className="text-sm font-semibold text-ink">发送测试邮件</h2>
-        <p className="text-xs text-ink-soft">使用上方保存的配置发送一封测试邮件到指定收件人,验证 SMTP 设置是否正确。</p>
+        <p className="text-xs text-ink-soft">
+          使用上方保存的配置发送一封测试邮件到指定收件人,验证 SMTP 设置是否正确。
+        </p>
         <div className="flex gap-2">
           <input
             type="email"
             value={testTo}
-            onChange={e => setTestTo(e.target.value)}
+            onChange={(e) => setTestTo(e.target.value)}
             placeholder="your@email.com"
             className="flex-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           />
-          <button type="button" onClick={sendTest} disabled={testBusy || !testTo}
-            className="text-sm px-3 py-1.5 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50">
+          <button
+            type="button"
+            onClick={sendTest}
+            disabled={testBusy || !testTo}
+            className="text-sm px-3 py-1.5 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50"
+          >
             {testBusy ? '发送中…' : '发送'}
           </button>
         </div>
         {testResult && (
-          <p className={`text-sm ${testResult.ok ? 'text-green-700' : 'text-seal'}`}>{testResult.message}</p>
+          <p className={`text-sm ${testResult.ok ? 'text-green-700' : 'text-seal'}`}>
+            {testResult.message}
+          </p>
         )}
       </div>
     </div>
   );
 }
 
-function Field({ label, value, onChange, placeholder, type = 'text' }: {
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = 'text',
+}: {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -898,8 +973,13 @@ function Field({ label, value, onChange, placeholder, type = 'text' }: {
   return (
     <div>
       <label className="text-sm font-medium">{label}</label>
-      <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+      />
     </div>
   );
 }
@@ -1044,11 +1124,13 @@ pnpm test tests/unit/lib/email.test.ts tests/unit/lib/guide-filter.test.ts
 ```
 
 Expected:
+
 - tsc clean
 - Build succeeds; new routes appear: `ƒ /admin/email`, `ƒ /api/admin/email/config`, `ƒ /api/admin/email/test`
 - All tests pass (8 email + 6 guide-filter)
 
 Then smoke in browser:
+
 ```bash
 curl -s -o /dev/null -w "admin/email: %{http_code}\n" -b "session=<admin-cookie>" http://localhost:4444/admin/email
 ```

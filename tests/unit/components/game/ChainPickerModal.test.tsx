@@ -5,7 +5,11 @@ import { ChainPickerModal } from '@/components/game/ChainPickerModal';
 import type { CharInfo } from '@/lib/chain-types';
 
 const ci = (char: string, pinyin: string): CharInfo => ({
-  char, pinyin, meaning: '', radical: '阝', tone: 1,
+  char,
+  pinyin,
+  meaning: '',
+  radical: '阝',
+  tone: 1,
 });
 
 beforeEach(() => {

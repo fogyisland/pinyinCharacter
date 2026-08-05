@@ -120,6 +120,7 @@ Already has `event` ENUM and JSON `metadata`. Admin actions add new event types:
 ### 4.6 Seed
 
 After DDL runs, seed `app_config` with these defaults if empty:
+
 - `ai.model` = `"gpt-4o-mini"`
 - `ai.rate_limit_per_user_per_day` = `"5"`
 - `ai.timeout_ms` = `"30000"`
@@ -207,7 +208,10 @@ export async function isUserDisabled(userId: number): Promise<boolean>;
 export async function getConfig(key: string): Promise<string | null>;
 export async function setConfig(key: string, value: string, byUserId: number | null): Promise<void>;
 export async function getAllConfig(): Promise<Record<string, string>>;
-export async function setConfigBatch(updates: Record<string, string>, byUserId: number): Promise<void>;
+export async function setConfigBatch(
+  updates: Record<string, string>,
+  byUserId: number,
+): Promise<void>;
 // validates `value` shape for known keys (number coercion for *_ms, integer for rate_limit, float for temperature)
 ```
 
@@ -228,29 +232,29 @@ All admin routes under `/api/admin/*` require `is_admin=1` (reusing Plan B+'s `r
 
 ### 6.2 New routes — Users
 
-| Method | Path | Body | Returns |
-|---|---|---|---|
-| POST | `/api/admin/users/[id]/disable` | — | `{ ok: true }` |
-| POST | `/api/admin/users/[id]/enable` | — | `{ ok: true }` |
-| GET  | `/api/admin/users/[id]/activity` | — | `{ items: UnifiedLogEntry[] }` last 100 events (audit + downloads + ai_calls) for this user |
+| Method | Path                             | Body | Returns                                                                                     |
+| ------ | -------------------------------- | ---- | ------------------------------------------------------------------------------------------- |
+| POST   | `/api/admin/users/[id]/disable`  | —    | `{ ok: true }`                                                                              |
+| POST   | `/api/admin/users/[id]/enable`   | —    | `{ ok: true }`                                                                              |
+| GET    | `/api/admin/users/[id]/activity` | —    | `{ items: UnifiedLogEntry[] }` last 100 events (audit + downloads + ai_calls) for this user |
 
 ### 6.3 New routes — Unified Logs
 
-| Method | Path | Query | Returns |
-|---|---|---|---|
-| GET | `/api/admin/logs` | `type?`, `userId?`, `ip?`, `from?`, `to?`, `page?`, `pageSize?` | `{ items: UnifiedLogEntry[], total, page, pageSize }` |
+| Method | Path              | Query                                                           | Returns                                               |
+| ------ | ----------------- | --------------------------------------------------------------- | ----------------------------------------------------- |
+| GET    | `/api/admin/logs` | `type?`, `userId?`, `ip?`, `from?`, `to?`, `page?`, `pageSize?` | `{ items: UnifiedLogEntry[], total, page, pageSize }` |
 
 `UnifiedLogEntry` shape (uniform across sources):
 
 ```ts
 interface UnifiedLogEntry {
-  id: string | number;       // string for composite keys (e.g. `audit:42`), number for primary keys
+  id: string | number; // string for composite keys (e.g. `audit:42`), number for primary keys
   source: 'audit' | 'download' | 'ai_call';
-  event: string;             // e.g. 'login', 'download_logged', 'ai_call'
+  event: string; // e.g. 'login', 'download_logged', 'ai_call'
   userId: number | null;
   username: string | null;
   ip: string | null;
-  createdAt: string;         // ISO
+  createdAt: string; // ISO
   metadata: Record<string, unknown>;
 }
 ```
@@ -261,21 +265,22 @@ Page size cap 100.
 
 ### 6.4 New routes — Downloads
 
-| Method | Path | Query | Returns |
-|---|---|---|---|
-| GET | `/api/admin/downloads` | `userId?`, `sourceType?`, `from?`, `to?`, `page?`, `pageSize?` | `{ items, total, page, pageSize }` |
-| GET | `/api/admin/downloads/stats?days=7` | — | `{ total, bySourceType: { worksheet: N, poem: N, ... }, topUsers: { userId, username, count }[] }` |
+| Method | Path                                | Query                                                          | Returns                                                                                            |
+| ------ | ----------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/downloads`              | `userId?`, `sourceType?`, `from?`, `to?`, `page?`, `pageSize?` | `{ items, total, page, pageSize }`                                                                 |
+| GET    | `/api/admin/downloads/stats?days=7` | —                                                              | `{ total, bySourceType: { worksheet: N, poem: N, ... }, topUsers: { userId, username, count }[] }` |
 
 ### 6.5 New routes — AI
 
-| Method | Path | Query / Body | Returns |
-|---|---|---|---|
-| GET | `/api/admin/ai/calls` | `feature?`, `status?`, `userId?`, `from?`, `to?`, `page?`, `pageSize?` | `{ items, total, page, pageSize }` |
-| GET | `/api/admin/ai/stats?days=7` | — | `{ total, byDay: { date, count }[], errorRate, p50Duration, p95Duration, topUsers: ... }` |
-| GET | `/api/admin/ai/config` | — | `{ model, rateLimitPerUserPerDay, timeoutMs, temperature }` |
-| PUT | `/api/admin/ai/config` | `{ model?, rateLimitPerUserPerDay?, timeoutMs?, temperature? }` | `{ ok: true }` |
+| Method | Path                         | Query / Body                                                           | Returns                                                                                   |
+| ------ | ---------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| GET    | `/api/admin/ai/calls`        | `feature?`, `status?`, `userId?`, `from?`, `to?`, `page?`, `pageSize?` | `{ items, total, page, pageSize }`                                                        |
+| GET    | `/api/admin/ai/stats?days=7` | —                                                                      | `{ total, byDay: { date, count }[], errorRate, p50Duration, p95Duration, topUsers: ... }` |
+| GET    | `/api/admin/ai/config`       | —                                                                      | `{ model, rateLimitPerUserPerDay, timeoutMs, temperature }`                               |
+| PUT    | `/api/admin/ai/config`       | `{ model?, rateLimitPerUserPerDay?, timeoutMs?, temperature? }`        | `{ ok: true }`                                                                            |
 
 Config validation rules:
+
 - `model`: non-empty string ≤ 64 chars
 - `rateLimitPerUserPerDay`: integer 0..1000
 - `timeoutMs`: integer 1000..300000
@@ -302,29 +307,35 @@ Config validation rules:
 ### 7.3 Pages
 
 #### `/admin` (improve)
+
 4 new stat cards on top: **总下载数 (7d)**, **AI 调用 (7d)**, **AI 错误率 (7d)**, **禁用账号数**. Each is clickable into the relevant filter view.
 
 #### `/admin/users` (improve)
+
 - Filter chips: **全部 / 管理员 / 禁用**.
 - Per-row actions: **查看活动**, **禁用** / **启用** (toggle based on `disabled_at`), **重置密码** (existing), **提升/降级** (existing). Destructive actions get a confirm modal.
 - Username cell clickable → `/admin/users/[id]`.
 
 #### `/admin/users/[id]` (improve)
+
 - New "活动" tab alongside existing fields. Shows last 100 events (audit + downloads + ai_calls) for this user. "加载更多" button loads next 100 via `?after=...`.
 - Existing promote/demote/reset buttons. New "禁用账号" destructive button with confirmation modal. When user is disabled, show a banner at top: "此账号已被禁用 since {disabledAt}".
 
 #### `/admin/logs` (new)
+
 - Filter bar: event type dropdown, user ID search, IP search, date range (default = last 7 days), free-text search across metadata.
 - Table: timestamp, source badge (color-coded: audit=ink, download=scroll, ai_call=seal), event, user (link if exists), short metadata preview. 50 rows/page.
 - Row click → side panel with full JSON metadata viewer.
 
 #### `/admin/downloads` (new)
+
 - Top: 4 stat cards (total today, total 7d, top user 7d, top source 7d).
 - Filters: source type, user, date range.
 - Table: timestamp, user (link), source type badge, format badge, status badge, duration, source_id. 50 rows/page.
 - Row click → navigates to source.
 
 #### `/admin/ai` (new)
+
 - Top: 3 stat cards (calls 7d, error rate 7d, p95 duration 7d).
 - Two tabs: **调用记录** (default) + **配置**.
 - Calls tab: filters by feature, status, user, date. Table: timestamp, user, feature, model, status badge, duration, short error. 50 rows/page.
@@ -346,12 +357,14 @@ Config validation rules:
 ### 8.1 Print hooks
 
 Add a `PrintButton` to:
+
 - `app/worksheet/[id]/page.tsx` (and `app/worksheet/page.tsx` preview)
 - `app/poetry/[id]/page.tsx`
 - `app/sutra/[id]/page.tsx`
 - `app/rare-chars/[char]/page.tsx`
 
 Each calls the corresponding POST endpoint:
+
 - `POST /api/worksheets/[id]/print` — body: `{ sourceId: worksheet.id }`
 - `POST /api/poetry/[id]/print` — body: `{ sourceId: poem.id }`
 - `POST /api/sutra/[slug]/print` — body: `{ sourceId: "{slug}#{chunkId}" }` (chunk picker selects which chunk to print)
@@ -415,6 +428,7 @@ export async function generateStory(char: string, meaning: string, userId: numbe
 ### 9.4 E2E manual smoke (human)
 
 12-step checklist:
+
 1. Sign in as non-admin → header dropdown has no "后台管理".
 2. Sign in as admin → it does.
 3. /admin shows 4 new stat cards with non-zero numbers (after seeding).

@@ -57,7 +57,13 @@ describe('DictionaryDetailAddToWorksheet — opens dialog instead of silent add'
 
   it('confirming the dialog calls appendCharToWorksheetApi with the right args', async () => {
     mockAppend.mockResolvedValue({
-      worksheetId: 1, title: '我的字帖', added: true, addedCount: 1, skipped: 0, charCount: 6, created: false,
+      worksheetId: 1,
+      title: '我的字帖',
+      added: true,
+      addedCount: 1,
+      skipped: 0,
+      charCount: 6,
+      created: false,
     });
     render(<DictionaryDetailAddToWorksheet char="永" />);
     fireEvent.click(screen.getByRole('button', { name: /\+ 字帖/ }));
@@ -66,7 +72,9 @@ describe('DictionaryDetailAddToWorksheet — opens dialog instead of silent add'
     });
     fireEvent.click(screen.getByRole('button', { name: /确认/ }));
     await waitFor(() => {
-      expect(mockAppend).toHaveBeenCalledWith(expect.objectContaining({ chars: ['永'], worksheetId: 1 }));
+      expect(mockAppend).toHaveBeenCalledWith(
+        expect.objectContaining({ chars: ['永'], worksheetId: 1 }),
+      );
     });
   });
 });

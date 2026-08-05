@@ -1,14 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-} from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
 export interface BarChartTopProps {
   data: Array<{ label: string; value: number }>;
@@ -23,11 +15,7 @@ function defaultFormat(v: number): string {
   return v.toLocaleString('zh-CN');
 }
 
-export function BarChartTop({
-  data,
-  formatValue = defaultFormat,
-  href,
-}: BarChartTopProps) {
+export function BarChartTop({ data, formatValue = defaultFormat, href }: BarChartTopProps) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -49,15 +37,8 @@ export function BarChartTop({
   }
 
   return (
-    <ResponsiveContainer
-      width="100%"
-      height={Math.max(120, data.length * 32)}
-    >
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ top: 4, right: 24, bottom: 4, left: 8 }}
-      >
+    <ResponsiveContainer width="100%" height={Math.max(120, data.length * 32)}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, bottom: 4, left: 8 }}>
         <XAxis type="number" hide />
         <YAxis
           dataKey="label"
@@ -75,7 +56,13 @@ export function BarChartTop({
               key={entry.label}
               fill={DEFAULT_COLORS[i % DEFAULT_COLORS.length]}
               cursor={href ? 'pointer' : 'default'}
-              onClick={href ? () => { window.location.href = href(entry.label); } : undefined}
+              onClick={
+                href
+                  ? () => {
+                      window.location.href = href(entry.label);
+                    }
+                  : undefined
+              }
             />
           ))}
         </Bar>

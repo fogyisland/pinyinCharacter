@@ -14,7 +14,9 @@ export { backfillCharEtymology };
 if (require.main === module) {
   backfillCharEtymology()
     .then((stats) => {
-      console.log(`[backfill-char-etymology] inserted=${stats.inserted} skipped=${stats.skipped} failed=${stats.failed ?? 'none'}`);
+      console.log(
+        `[backfill-char-etymology] inserted=${stats.inserted} skipped=${stats.skipped} failed=${stats.failed ?? 'none'}`,
+      );
       return closePool();
     })
     .catch((err) => {

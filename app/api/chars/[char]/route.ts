@@ -10,7 +10,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cha
     const { char } = await params;
     const decoded = decodeURIComponent(char);
     const parsed = charParamSchema.safeParse({ char: decoded });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const result = await getCharDetail(decoded);
     if (!result) return notFound('not_found', 'char not found');
     return NextResponse.json({ ok: true, data: result });

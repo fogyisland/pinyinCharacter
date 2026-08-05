@@ -11,7 +11,9 @@ const BASE = process.env.TEST_BASE_URL ?? 'http://localhost:4444';
 
 describe('GET /api/game/round', () => {
   it.skip('accepts ?hskLevel=1 and embeds revealConfig', async () => {
-    const res = await fetch(`${BASE}/api/game/round?count=3&mode=tone&hskLevel=1&source=chars-level-1`);
+    const res = await fetch(
+      `${BASE}/api/game/round?count=3&mode=tone&hskLevel=1&source=chars-level-1`,
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
     const data = await res.json();

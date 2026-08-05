@@ -23,22 +23,37 @@ async function main() {
 
   // ─── 1. Schema-level: 表存在性 + 列定义 ──────────────────────────
   const expectedTables = [
-    'activate', 'app_config', 'audit_log',
-    'char_etymology', 'chars', 'classics',
-    'downloads', 'email_send_history', 'history',
-    'membership_plan_features', 'membership_plans', 'memberships',
-    'password_resets', 'payment_orders', 'poems',
-    'rare_chars', 'scheduler_run_history', 'sutra_copy_progress',
-    'sutras', 'users', 'worksheets', 'ai_calls',
+    'activate',
+    'app_config',
+    'audit_log',
+    'char_etymology',
+    'chars',
+    'classics',
+    'downloads',
+    'email_send_history',
+    'history',
+    'membership_plan_features',
+    'membership_plans',
+    'memberships',
+    'password_resets',
+    'payment_orders',
+    'poems',
+    'rare_chars',
+    'scheduler_run_history',
+    'sutra_copy_progress',
+    'sutras',
+    'users',
+    'worksheets',
+    'ai_calls',
   ];
   const [gotTables] = await conn.query('SHOW TABLES');
-  const haveTables = new Set(gotTables.map(r => Object.values(r)[0]));
+  const haveTables = new Set(gotTables.map((r) => Object.values(r)[0]));
   for (const t of expectedTables) {
     if (!haveTables.has(t)) issues.push(`MISSING TABLE: ${t}`);
   }
   console.log(`[1] 表清单: 期望 ${expectedTables.length} 张, 实际 ${gotTables.length} 张`);
   if (haveTables.size !== expectedTables.length) {
-    const extra = [...haveTables].filter(t => !expectedTables.includes(t));
+    const extra = [...haveTables].filter((t) => !expectedTables.includes(t));
     if (extra.length) issues.push(`EXTRA TABLES: ${extra.join(', ')}`);
   }
 
@@ -62,9 +77,20 @@ async function main() {
   console.log();
   console.log('[3] 空表警告 (排除预期为 0 的活动表)');
   console.log('-'.repeat(72));
-  const allowedEmpty = ['downloads', 'email_send_history', 'history', 'memberships',
-    'password_resets', 'payment_orders', 'sutra_copy_progress', 'worksheets',
-    'char_etymology', 'scheduler_run_history', 'ai_calls', 'audit_log'];
+  const allowedEmpty = [
+    'downloads',
+    'email_send_history',
+    'history',
+    'memberships',
+    'password_resets',
+    'payment_orders',
+    'sutra_copy_progress',
+    'worksheets',
+    'char_etymology',
+    'scheduler_run_history',
+    'ai_calls',
+    'audit_log',
+  ];
   for (const t of expectedTables) {
     if (counts[t] === 0 && !allowedEmpty.includes(t)) {
       issues.push(`UNEXPECTED EMPTY: ${t}`);
@@ -87,7 +113,9 @@ async function main() {
     FROM poems
   `);
   const pi = poemIssues[0];
-  console.log(`  总数: ${pi.total}, 无 title: ${pi.no_title}, 无 author: ${pi.no_author} (汉朝匿名古诗,合法), 无 dynasty: ${pi.no_dynasty}, 无 form: ${pi.no_form}, 无 content(<10字): ${pi.no_content}`);
+  console.log(
+    `  总数: ${pi.total}, 无 title: ${pi.no_title}, 无 author: ${pi.no_author} (汉朝匿名古诗,合法), 无 dynasty: ${pi.no_dynasty}, 无 form: ${pi.no_form}, 无 content(<10字): ${pi.no_content}`,
+  );
   // Only treat title/dynasty/form/content empty as real issues; author-empty is legit for anonymous
   if (Number(pi.no_title) || Number(pi.no_dynasty) || Number(pi.no_form) || Number(pi.no_content))
     issues.push(`poems has incomplete rows`);
@@ -105,9 +133,10 @@ async function main() {
     FROM sutras
   `);
   const si = sutraRows[0];
-  console.log(`  总数: ${si.total}, 无 title: ${si.no_title}, 无 slug: ${si.no_slug}, 无 source: ${si.no_source}`);
-  if (Number(si.no_title) || Number(si.no_source))
-    issues.push(`sutras has incomplete rows`);
+  console.log(
+    `  总数: ${si.total}, 无 title: ${si.no_title}, 无 slug: ${si.no_slug}, 无 source: ${si.no_source}`,
+  );
+  if (Number(si.no_title) || Number(si.no_source)) issues.push(`sutras has incomplete rows`);
 
   // ─── 6. classics: 字段完整性 ─────────────────────────────────────
   console.log();
@@ -124,12 +153,15 @@ async function main() {
     FROM classics
   `);
   const ci = classicsRows[0];
-  console.log(`  总数: ${ci.total}, 分类数: ${ci.cats}, 无 title: ${ci.no_title}, 无 category: ${ci.no_category}, 无 slug: ${ci.no_slug}, 无 source: ${ci.no_source}`);
+  console.log(
+    `  总数: ${ci.total}, 分类数: ${ci.cats}, 无 title: ${ci.no_title}, 无 category: ${ci.no_category}, 无 slug: ${ci.no_slug}, 无 source: ${ci.no_source}`,
+  );
   console.log(`  分类分布:`);
-  const [cats] = await conn.query(`SELECT category, COUNT(*) AS n FROM classics GROUP BY category ORDER BY n DESC`);
-  for (const r of cats) console.log(`    ${(r.category||'?').padEnd(16)} ${r.n}`);
-  if (Number(ci.no_title) || Number(ci.no_slug))
-    issues.push(`classics has incomplete rows`);
+  const [cats] = await conn.query(
+    `SELECT category, COUNT(*) AS n FROM classics GROUP BY category ORDER BY n DESC`,
+  );
+  for (const r of cats) console.log(`    ${(r.category || '?').padEnd(16)} ${r.n}`);
+  if (Number(ci.no_title) || Number(ci.no_slug)) issues.push(`classics has incomplete rows`);
 
   // ─── 7. chars: 字段完整性 + level 分布 ───────────────────────────
   console.log();
@@ -149,12 +181,15 @@ async function main() {
   `);
   const chi = charRows[0];
   console.log(`  总数: ${chi.total}, level 数: ${chi.levels}`);
-  console.log(`  无 char: ${chi.no_char}, 无 level: ${chi.no_level}, 无 radical: ${chi.no_radical} (data/radicals.json 覆盖 7906/7910; 剩 4 个 CJK Ext B/C 超生僻字无 kRSUnicode), 无 stroke: ${chi.no_stroke}, 无 codepoint: ${chi.no_codepoint}`);
+  console.log(
+    `  无 char: ${chi.no_char}, 无 level: ${chi.no_level}, 无 radical: ${chi.no_radical} (data/radicals.json 覆盖 7906/7910; 剩 4 个 CJK Ext B/C 超生僻字无 kRSUnicode), 无 stroke: ${chi.no_stroke}, 无 codepoint: ${chi.no_codepoint}`,
+  );
   console.log(`  level 分布:`);
-  const [levels] = await conn.query(`SELECT level, COUNT(*) AS n FROM chars GROUP BY level ORDER BY level`);
+  const [levels] = await conn.query(
+    `SELECT level, COUNT(*) AS n FROM chars GROUP BY level ORDER BY level`,
+  );
   for (const r of levels) console.log(`    level ${r.level}  ${r.n}`);
-  if (Number(chi.no_char))
-    issues.push(`chars has incomplete rows`);
+  if (Number(chi.no_char)) issues.push(`chars has incomplete rows`);
 
   // ─── 8. rare_chars: 字段完整性 ───────────────────────────────────
   console.log();
@@ -169,26 +204,35 @@ async function main() {
     FROM rare_chars
   `);
   const rci = rcRows[0];
-  console.log(`  总数: ${rci.total}, 无 char: ${rci.no_char}, 无 pinyin: ${rci.no_pinyin}, 无 needs_review: ${rci.no_review}`);
+  console.log(
+    `  总数: ${rci.total}, 无 char: ${rci.no_char}, 无 pinyin: ${rci.no_pinyin}, 无 needs_review: ${rci.no_review}`,
+  );
 
   // ─── 9. app_config: 必须有 setup_completed ───────────────────────
   console.log();
   console.log('[9] app_config 必须 key 存在');
   console.log('-'.repeat(72));
   const requiredKeys = [
-    'setup.completed', 'setup.completed_at', 'setup.route_enabled',
-    'ai.model', 'ai.rate_limit_per_user_per_day', 'ai.timeout_ms', 'ai.temperature',
-    'tts.voice_male', 'tts.voice_female', 'tts.audio_format',
+    'setup.completed',
+    'setup.completed_at',
+    'setup.route_enabled',
+    'ai.model',
+    'ai.rate_limit_per_user_per_day',
+    'ai.timeout_ms',
+    'ai.temperature',
+    'tts.voice_male',
+    'tts.voice_female',
+    'tts.audio_format',
   ];
   const [appCfg] = await conn.query(`SELECT \`key\`, value FROM app_config ORDER BY \`key\``);
-  const cfgMap = new Map(appCfg.map(r => [r.key, r.value]));
+  const cfgMap = new Map(appCfg.map((r) => [r.key, r.value]));
   console.log(`  总 key 数: ${appCfg.length}`);
   for (const k of requiredKeys) {
     if (!cfgMap.has(k)) {
       console.log(`  ⚠ MISSING: ${k}`);
       issues.push(`app_config missing key: ${k}`);
     } else {
-      console.log(`  ✓ ${k} = ${(cfgMap.get(k)||'').slice(0, 60)}`);
+      console.log(`  ✓ ${k} = ${(cfgMap.get(k) || '').slice(0, 60)}`);
     }
   }
 
@@ -213,10 +257,17 @@ async function main() {
   console.log();
   console.log('[11] membership_plans + features');
   console.log('-'.repeat(72));
-  const [planRows] = await conn.query(`SELECT id, plan_key, display_name, amount, currency, enabled FROM membership_plans ORDER BY display_order`);
+  const [planRows] = await conn.query(
+    `SELECT id, plan_key, display_name, amount, currency, enabled FROM membership_plans ORDER BY display_order`,
+  );
   console.log(`  plans: ${planRows.length}`);
-  for (const p of planRows) console.log(`    [${p.id}] ${p.plan_key} ${p.display_name} ${p.amount} ${p.currency} enabled=${p.enabled}`);
-  const [featRows] = await conn.query(`SELECT COUNT(*) AS n, COUNT(DISTINCT plan_id) AS plans FROM membership_plan_features`);
+  for (const p of planRows)
+    console.log(
+      `    [${p.id}] ${p.plan_key} ${p.display_name} ${p.amount} ${p.currency} enabled=${p.enabled}`,
+    );
+  const [featRows] = await conn.query(
+    `SELECT COUNT(*) AS n, COUNT(DISTINCT plan_id) AS plans FROM membership_plan_features`,
+  );
   console.log(`  features: ${featRows[0].n} 行, 覆盖 ${featRows[0].plans} 个 plan`);
   if (planRows.length < 4) issues.push(`only ${planRows.length} membership plans, expected ≥4`);
 
@@ -229,7 +280,9 @@ async function main() {
     issues.push('activate singleton missing');
   } else {
     const a = actRows[0];
-    console.log(`  short_name=${a.short_name}, is_activated=${a.is_activated}, is_expired=${a.is_expired}, lock=${a.lock}`);
+    console.log(
+      `  short_name=${a.short_name}, is_activated=${a.is_activated}, is_expired=${a.is_expired}, lock=${a.lock}`,
+    );
   }
 
   // ─── 13. JSON 文件 vs DB 一致性 ──────────────────────────────────
@@ -237,7 +290,7 @@ async function main() {
   console.log('[13] JSON 文件 vs DB slim schema (meaning/story 列预期 NULL,数据来自 JSON)');
   console.log('-'.repeat(72));
   const contentDir = path.join(process.cwd(), 'data', 'content');
-  const jsonCount = fs.readdirSync(contentDir).filter(f => f.endsWith('.json')).length;
+  const jsonCount = fs.readdirSync(contentDir).filter((f) => f.endsWith('.json')).length;
   console.log(`  data/content/ JSON 文件数: ${jsonCount}`);
   // chars 表 N 行, JSON 应为 N 个(如果不是 slim schema 之前的部分)
   const charsTotal = counts.chars;
@@ -293,7 +346,7 @@ async function main() {
   console.log('-'.repeat(72));
   for (const t of ['chars', 'poems', 'classics', 'sutras', 'rare_chars']) {
     const [idx] = await conn.query(`SHOW INDEX FROM \`${t}\``);
-    const cols = [...new Set(idx.map(r => r.Column))].filter(c => c);
+    const cols = [...new Set(idx.map((r) => r.Column))].filter((c) => c);
     console.log(`  ${t.padEnd(14)} 索引列: ${cols.join(', ')}`);
   }
 
@@ -307,9 +360,15 @@ async function main() {
     const sutrasManifest = JSON.parse(fs.readFileSync('data/sutras/manifest.json', 'utf8'));
     const charsManifest = JSON.parse(fs.readFileSync('data/content-manifest.json', 'utf8'));
     console.log(`  poems-manifest.json: ${poemsManifest.items?.length || poemsManifest.count} 条`);
-    console.log(`  classics-manifest.json: ${classicsManifest.books?.length || classicsManifest.length} 本`);
-    console.log(`  sutras/manifest.json: ${sutrasManifest.items?.length || sutrasManifest.entries?.length} 条`);
-    console.log(`  content-manifest.json: ${charsManifest.entries?.length || Object.keys(charsManifest).length}`);
+    console.log(
+      `  classics-manifest.json: ${classicsManifest.books?.length || classicsManifest.length} 本`,
+    );
+    console.log(
+      `  sutras/manifest.json: ${sutrasManifest.items?.length || sutrasManifest.entries?.length} 条`,
+    );
+    console.log(
+      `  content-manifest.json: ${charsManifest.entries?.length || Object.keys(charsManifest).length}`,
+    );
   } catch (e) {
     console.log(`  ERR: ${e.message}`);
   }
@@ -329,7 +388,7 @@ async function main() {
   process.exit(issues.length ? 1 : 0);
 }
 
-main().catch(e => {
+main().catch((e) => {
   console.error('FATAL:', e.message);
   process.exit(2);
 });

@@ -1,11 +1,11 @@
 import type { Era } from '@/lib/etymology-types';
 
 export const ERA_DATES: Record<Era, { range: string }> = {
-  jiaguwen:  { range: '商代晚期 (~1200-1046 BC)' },
-  jinwen:    { range: '西周 (~1046-771 BC)' },
+  jiaguwen: { range: '商代晚期 (~1200-1046 BC)' },
+  jinwen: { range: '西周 (~1046-771 BC)' },
   xiaozhuan: { range: '秦 (~221-206 BC)' },
-  lishu:     { range: '汉 (~206 BC-220 AD)' },
-  kaishu:    { range: '魏晋至今 (~220 AD+)' },
+  lishu: { range: '汉 (~206 BC-220 AD)' },
+  kaishu: { range: '魏晋至今 (~220 AD+)' },
 };
 
 export type CharLevel = 1 | 2 | 3;

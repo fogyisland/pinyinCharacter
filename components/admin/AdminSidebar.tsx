@@ -57,10 +57,18 @@ const GROUPS: NavGroup[] = [
   },
 ];
 
-function NavLinks({ items, currentPath, onNavigate }: { items: NavItem[]; currentPath: string; onNavigate?: () => void }) {
+function NavLinks({
+  items,
+  currentPath,
+  onNavigate,
+}: {
+  items: NavItem[];
+  currentPath: string;
+  onNavigate?: () => void;
+}) {
   return (
     <>
-      {items.map(item => {
+      {items.map((item) => {
         const isActive = item.exact ? currentPath === item.href : currentPath.startsWith(item.href);
         return (
           <Link
@@ -80,7 +88,15 @@ function NavLinks({ items, currentPath, onNavigate }: { items: NavItem[]; curren
   );
 }
 
-function Section({ group, currentPath, onNavigate }: { group: NavGroup; currentPath: string; onNavigate?: () => void }) {
+function Section({
+  group,
+  currentPath,
+  onNavigate,
+}: {
+  group: NavGroup;
+  currentPath: string;
+  onNavigate?: () => void;
+}) {
   return (
     <div className="flex flex-col gap-0.5 mb-1">
       <div className="px-3 pt-3 pb-1 text-[10px] font-medium text-ink-soft/50 select-none">
@@ -93,9 +109,10 @@ function Section({ group, currentPath, onNavigate }: { group: NavGroup; currentP
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
   const isProd = process.env.NODE_ENV === 'production';
-  const groups = GROUPS
-    .map(g => ({ ...g, items: g.items.filter(item => !item.devOnly || !isProd) }))
-    .filter(g => g.items.length > 0);
+  const groups = GROUPS.map((g) => ({
+    ...g,
+    items: g.items.filter((item) => !item.devOnly || !isProd),
+  })).filter((g) => g.items.length > 0);
   const [mobileOpen, setMobileOpen] = useState(false);
   return (
     <>
@@ -114,7 +131,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
 
       {/* 桌面端侧栏(md 及以上) */}
       <nav className="hidden md:flex flex-col w-40 border-r border-paper-warm min-h-[calc(100vh-4rem)] p-2">
-        {groups.map(group => (
+        {groups.map((group) => (
           <Section key={group.label} group={group} currentPath={currentPath} />
         ))}
       </nav>
@@ -127,7 +144,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
         >
           <div
             className="absolute right-0 top-0 h-full w-64 max-w-[calc(100vw-2rem)] bg-paper-soft p-4 shadow-paper-lg overflow-y-auto"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
               <span className="font-kai text-lg text-ink">管理后台</span>
@@ -140,8 +157,13 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
               </button>
             </div>
             <nav className="flex flex-col">
-              {groups.map(group => (
-                <Section key={group.label} group={group} currentPath={currentPath} onNavigate={() => setMobileOpen(false)} />
+              {groups.map((group) => (
+                <Section
+                  key={group.label}
+                  group={group}
+                  currentPath={currentPath}
+                  onNavigate={() => setMobileOpen(false)}
+                />
               ))}
             </nav>
           </div>

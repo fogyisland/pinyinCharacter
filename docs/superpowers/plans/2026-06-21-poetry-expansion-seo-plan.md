@@ -4,7 +4,8 @@
 
 **Goal:** Add 5 new poem collections (乐府 203, 古诗十九首 19, 曹操诗集 ~20, 纳兰性德 ~350, 辞赋 47) + 1 pianwen book (训蒙骈句) + form (体裁) filter on existing 190K poems + comprehensive site-wide SEO (dynamic sitemap, JSON-LD, canonical URLs on /poetry, /ancient, /chars detail pages).
 
-**Architecture:** 
+**Architecture:**
+
 - Add `form` index + `category` column to `poems`, ALTER `dynasty` ENUM→VARCHAR. Backfill `form` on all 190K existing rows via structural inference (五言/七言/绝句/律诗) + source-tag merge (乐府/古风/词牌名/套数/小令).
 - New content via 2 new build scripts: `build-poems-extra.ts` (chinese-poetry JSON + guwendao.net poem scrape) writes to `poems` table + `data/poems/<slug>.json`; `build-pianwen.ts` (guwendao.net book scrape) writes to `classics` table + `data/classics/xunmeng-pianju.json`.
 - Form filter UI: client component with chips multi-select, URL-synced `?form=...`. /poetry page (already client component) gets `useState` for form filter.
@@ -30,10 +31,12 @@
 ### Task 1: Schema migration script + idempotency
 
 **Files:**
+
 - Create: `scripts/migrate-poems-schema.ts`
 - Test: `tests/unit/scripts/migrate-poems-schema.test.ts`
 
 **Interfaces:**
+
 - Consumes: `pool` from `lib/db.ts`
 - Produces: idempotent migration that brings `poems` table to target schema (dynasty VARCHAR, category column + index, form VARCHAR(32) + index)
 
@@ -84,20 +87,26 @@ Expected: FAIL — module `scripts/migrate-poems-schema` not found
 import { getPool, closePool } from '../lib/db';
 
 const TARGET_DDL = {
-  dynasty: "ALTER TABLE poems MODIFY COLUMN dynasty VARCHAR(16) NOT NULL",
-  category: "ALTER TABLE poems ADD COLUMN category VARCHAR(32) DEFAULT NULL AFTER dynasty",
-  categoryIndex: "ALTER TABLE poems ADD INDEX idx_category (category)",
-  form: "ALTER TABLE poems MODIFY COLUMN form VARCHAR(32) DEFAULT NULL",
-  formIndex: "ALTER TABLE poems ADD INDEX idx_form (form)",
+  dynasty: 'ALTER TABLE poems MODIFY COLUMN dynasty VARCHAR(16) NOT NULL',
+  category: 'ALTER TABLE poems ADD COLUMN category VARCHAR(32) DEFAULT NULL AFTER dynasty',
+  categoryIndex: 'ALTER TABLE poems ADD INDEX idx_category (category)',
+  form: 'ALTER TABLE poems MODIFY COLUMN form VARCHAR(32) DEFAULT NULL',
+  formIndex: 'ALTER TABLE poems ADD INDEX idx_form (form)',
 } as const;
 
-interface ColumnInfo { COLUMN_NAME: string; COLUMN_TYPE: string; }
-interface IndexInfo { INDEX_NAME: string; COLUMN_NAME: string; }
+interface ColumnInfo {
+  COLUMN_NAME: string;
+  COLUMN_TYPE: string;
+}
+interface IndexInfo {
+  INDEX_NAME: string;
+  COLUMN_NAME: string;
+}
 
 async function columnExists(pool: any, column: string): Promise<boolean> {
   const [rows] = await pool.execute<any[]>(
     `SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = ?`,
-    [column]
+    [column],
   );
   return Array.isArray(rows) && rows.length > 0;
 }
@@ -105,7 +114,7 @@ async function columnExists(pool: any, column: string): Promise<boolean> {
 async function indexExists(pool: any, index: string): Promise<boolean> {
   const [rows] = await pool.execute<any[]>(
     `SELECT INDEX_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND INDEX_NAME = ?`,
-    [index]
+    [index],
   );
   return Array.isArray(rows) && rows.length > 0;
 }
@@ -117,9 +126,13 @@ export async function migratePoemsSchema(): Promise<{ ran: string[]; skipped: st
 
   // 1. dynasty ENUM -> VARCHAR(16) — check by column type containing 'enum'
   const [dynastyRows] = await pool.execute<any[]>(
-    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'dynasty'`
+    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'dynasty'`,
   );
-  if (Array.isArray(dynastyRows) && dynastyRows[0] && dynastyRows[0].COLUMN_TYPE?.includes('enum')) {
+  if (
+    Array.isArray(dynastyRows) &&
+    dynastyRows[0] &&
+    dynastyRows[0].COLUMN_TYPE?.includes('enum')
+  ) {
     await pool.execute(TARGET_DDL.dynasty);
     ran.push('dynasty');
   } else {
@@ -144,7 +157,7 @@ export async function migratePoemsSchema(): Promise<{ ran: string[]; skipped: st
 
   // 4. form column widening
   const [formRows] = await pool.execute<any[]>(
-    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'form'`
+    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'form'`,
   );
   if (Array.isArray(formRows) && formRows[0] && formRows[0].COLUMN_TYPE?.includes('varchar(32)')) {
     skipped.push('form');
@@ -166,10 +179,12 @@ export async function migratePoemsSchema(): Promise<{ ran: string[]; skipped: st
 }
 
 if (require.main === module) {
-  migratePoemsSchema().then(() => closePool()).catch((err) => {
-    console.error('[migrate-poems-schema] failed:', err);
-    process.exit(1);
-  });
+  migratePoemsSchema()
+    .then(() => closePool())
+    .catch((err) => {
+      console.error('[migrate-poems-schema] failed:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -209,10 +224,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 2: Existing form normalization (one-time UPDATE)
 
 **Files:**
+
 - Create: `scripts/normalize-existing-form.ts`
 - Test: `tests/unit/scripts/normalize-existing-form.test.ts`
 
 **Interfaces:**
+
 - Consumes: `pool` from `lib/db.ts`
 - Produces: one-shot UPDATEs that rename existing form values to canonical naming
 
@@ -234,7 +251,9 @@ describe('normalizeExistingForm', () => {
     const { normalizeExistingForm } = await import('../../../scripts/normalize-existing-form');
     const pool = getPool();
     await normalizeExistingForm();
-    const updateCalls = (pool.execute as any).mock.calls.filter((c: any) => c[0].startsWith('UPDATE'));
+    const updateCalls = (pool.execute as any).mock.calls.filter((c: any) =>
+      c[0].startsWith('UPDATE'),
+    );
     expect(updateCalls.length).toBe(4);
   });
 
@@ -242,10 +261,10 @@ describe('normalizeExistingForm', () => {
     const { getPool } = await import('../../../lib/db');
     const { NORMALIZE_MAP } = await import('../../../scripts/normalize-existing-form');
     expect(NORMALIZE_MAP).toEqual({
-      '五言律诗': '五律',
-      '七言律诗': '七律',
-      '五言古诗': '五言古风',
-      '七言古诗': '七言古风',
+      五言律诗: '五律',
+      七言律诗: '七律',
+      五言古诗: '五言古风',
+      七言古诗: '七言古风',
     });
   });
 });
@@ -263,20 +282,20 @@ Expected: FAIL — module not found
 import { getPool, closePool } from '../lib/db';
 
 export const NORMALIZE_MAP: Record<string, string> = {
-  '五言律诗': '五律',
-  '七言律诗': '七律',
-  '五言古诗': '五言古风',
-  '七言古诗': '七言古风',
+  五言律诗: '五律',
+  七言律诗: '七律',
+  五言古诗: '五言古风',
+  七言古诗: '七言古风',
 };
 
 export async function normalizeExistingForm(): Promise<{ updated: number }> {
   const pool = getPool();
   let updated = 0;
   for (const [from, to] of Object.entries(NORMALIZE_MAP)) {
-    const [result] = await pool.execute<any>(
-      `UPDATE poems SET form = ? WHERE form = ?`,
-      [to, from]
-    );
+    const [result] = await pool.execute<any>(`UPDATE poems SET form = ? WHERE form = ?`, [
+      to,
+      from,
+    ]);
     const n = (result as any)?.affectedRows ?? 0;
     updated += n;
     console.log(`[normalize] ${from} -> ${to}: ${n} rows updated`);
@@ -285,13 +304,15 @@ export async function normalizeExistingForm(): Promise<{ updated: number }> {
 }
 
 if (require.main === module) {
-  normalizeExistingForm().then((r) => {
-    console.log(`[normalize] total updated: ${r.updated}`);
-    return closePool();
-  }).catch((err) => {
-    console.error('[normalize] failed:', err);
-    process.exit(1);
-  });
+  normalizeExistingForm()
+    .then((r) => {
+      console.log(`[normalize] total updated: ${r.updated}`);
+      return closePool();
+    })
+    .catch((err) => {
+      console.error('[normalize] failed:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -329,10 +350,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 3: Form inference pure function + unit tests
 
 **Files:**
+
 - Create: `lib/poetry/infer-form.ts`
 - Test: `tests/unit/lib/poetry/infer-form.test.ts`
 
 **Interfaces:**
+
 - Consumes: `paragraphs: string[]` (lines of poem), `type: string | null` (from chinese-poetry), `rhythmic: string | null` (词牌名), `category: string`
 - Produces: `FormResult { primary: string | null; source: 'inferred' | 'source-tag' | 'passthrough'; confidence: number }`
 
@@ -362,35 +385,64 @@ describe('inferFormFromParagraphs', () => {
 
   it('classifies 5-char 8-line as 五律', () => {
     const r = inferFormFromParagraphs([
-      '国破山河在', '城春草木深', '感时花溅泪', '恨别鸟惊心',
-      '烽火连三月', '家书抵万金', '白头搔更短', '浑欲不胜簪',
+      '国破山河在',
+      '城春草木深',
+      '感时花溅泪',
+      '恨别鸟惊心',
+      '烽火连三月',
+      '家书抵万金',
+      '白头搔更短',
+      '浑欲不胜簪',
     ]);
     expect(r.primary).toBe('五律');
   });
 
   it('classifies 7-char 8-line as 七律', () => {
     const r = inferFormFromParagraphs([
-      '丞相祠堂何处寻', '锦官城外柏森森', '映阶碧草自春色', '隔叶黄鹂空好音',
-      '三顾频烦天下计', '两朝开济老臣心', '出师未捷身先死', '长使英雄泪满襟',
+      '丞相祠堂何处寻',
+      '锦官城外柏森森',
+      '映阶碧草自春色',
+      '隔叶黄鹂空好音',
+      '三顾频烦天下计',
+      '两朝开济老臣心',
+      '出师未捷身先死',
+      '长使英雄泪满襟',
     ]);
     expect(r.primary).toBe('七律');
   });
 
   it('classifies 5-char 6-line as 五言古风', () => {
-    const r = inferFormFromParagraphs(['青青河畔草', '郁郁园中柳', '盈盈楼上女', '皎皎当窗牖', '娥娥红粉妆', '纤纤出素手']);
+    const r = inferFormFromParagraphs([
+      '青青河畔草',
+      '郁郁园中柳',
+      '盈盈楼上女',
+      '皎皎当窗牖',
+      '娥娥红粉妆',
+      '纤纤出素手',
+    ]);
     expect(r.primary).toBe('五言古风');
   });
 
   it('classifies 7-char 6-line as 七言古风', () => {
     const r = inferFormFromParagraphs([
-      '燕山雪花大如席', '片片吹落轩辕台', '幽州思妇十二月', '停歌罢笑双蛾摧',
-      '谁念北风凌马足', '群狐寒夜啸如雷',
+      '燕山雪花大如席',
+      '片片吹落轩辕台',
+      '幽州思妇十二月',
+      '停歌罢笑双蛾摧',
+      '谁念北风凌马足',
+      '群狐寒夜啸如雷',
     ]);
     expect(r.primary).toBe('七言古风');
   });
 
   it('classifies mixed 5+7 line as 杂言古风', () => {
-    const r = inferFormFromParagraphs(['唧唧复唧唧', '木兰当户织', '不闻机杼声', '唯闻女叹息', '问女何所思']);
+    const r = inferFormFromParagraphs([
+      '唧唧复唧唧',
+      '木兰当户织',
+      '不闻机杼声',
+      '唯闻女叹息',
+      '问女何所思',
+    ]);
     expect(r.primary).toBe('杂言古风');
   });
 
@@ -400,7 +452,12 @@ describe('inferFormFromParagraphs', () => {
   });
 
   it('ignores punctuation when counting characters', () => {
-    const r = inferFormFromParagraphs(['床前明月光，', '疑是地上霜。', '举头望明月，', '低头思故乡。']);
+    const r = inferFormFromParagraphs([
+      '床前明月光，',
+      '疑是地上霜。',
+      '举头望明月，',
+      '低头思故乡。',
+    ]);
     expect(r.primary).toBe('五绝');
   });
 
@@ -460,7 +517,7 @@ describe('mergeForm', () => {
   it('returns null when both are null', () => {
     const m = mergeForm(
       { primary: null, source: 'inferred' as const, confidence: 0 },
-      { primary: null, source: 'source-tag' as const, confidence: 0 }
+      { primary: null, source: 'source-tag' as const, confidence: 0 },
     );
     expect(m.primary).toBeNull();
   });
@@ -490,7 +547,7 @@ function countChars(line: string): number {
 }
 
 export function inferFormFromParagraphs(paragraphs: string[]): FormResult {
-  const lines = paragraphs.map(p => p.trim()).filter(p => p.length > 0);
+  const lines = paragraphs.map((p) => p.trim()).filter((p) => p.length > 0);
   if (lines.length === 0) return { primary: null, source: 'inferred', confidence: 0 };
 
   const lengths = lines.map(countChars);
@@ -531,15 +588,19 @@ export function inferFormFromParagraphs(paragraphs: string[]): FormResult {
 }
 
 const SOURCE_TAG_MAP: Record<string, string> = {
-  '五言绝句': '五绝',
-  '七言绝句': '七绝',
-  '五言律诗': '五律',
-  '七言律诗': '七律',
-  '五言古诗': '五言古风',
-  '七言古诗': '七言古风',
+  五言绝句: '五绝',
+  七言绝句: '七绝',
+  五言律诗: '五律',
+  七言律诗: '七律',
+  五言古诗: '五言古风',
+  七言古诗: '七言古风',
 };
 
-export function resolveFormFromSource(type: string | null, rhythmic: string | null, category: string): FormResult {
+export function resolveFormFromSource(
+  type: string | null,
+  rhythmic: string | null,
+  category: string,
+): FormResult {
   // 词: passthrough 词牌名
   if (category === 'song' && rhythmic && rhythmic.length > 0) {
     return { primary: rhythmic, source: 'passthrough', confidence: 1.0 };
@@ -578,10 +639,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 4: Form backfill script + integration test
 
 **Files:**
+
 - Create: `scripts/build-form-tags.ts`
 - Test: `tests/integration/scripts/build-form-tags.test.ts`
 
 **Interfaces:**
+
 - Consumes: `pool`, `inferFormFromParagraphs`, `resolveFormFromSource`, `mergeForm`
 - Produces: `backfillForm({ dryRun, batchSize, whereFormNull })` — runs UPDATE on poems table, logs stats
 
@@ -601,14 +664,27 @@ vi.mock('../../../lib/db', () => ({
 describe('backfillForm', () => {
   it('processes all rows in batches', async () => {
     mockQuery
-      .mockResolvedValueOnce([[{ id: 1, paragraphs: '["床前明月光","疑是地上霜","举头望明月","低头思故乡"]', type: null, rhythmic: null, dynasty: 'tang' }]])
+      .mockResolvedValueOnce([
+        [
+          {
+            id: 1,
+            paragraphs: '["床前明月光","疑是地上霜","举头望明月","低头思故乡"]',
+            type: null,
+            rhythmic: null,
+            dynasty: 'tang',
+          },
+        ],
+      ])
       .mockResolvedValueOnce([[]]);
     mockExecute.mockResolvedValue([{ affectedRows: 1 }]);
 
     const { backfillForm } = await import('../../../scripts/build-form-tags');
     const result = await backfillForm({ batchSize: 100, whereFormNull: true });
     expect(result.formSet).toBe(1);
-    expect(mockExecute).toHaveBeenCalledWith(expect.stringContaining('UPDATE poems SET form'), expect.any(Array));
+    expect(mockExecute).toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE poems SET form'),
+      expect.any(Array),
+    );
   });
 
   it('--dry-run does not call UPDATE', async () => {
@@ -632,7 +708,11 @@ Expected: FAIL — module not found
 ```ts
 // scripts/build-form-tags.ts
 import { getPool, closePool } from '../lib/db';
-import { inferFormFromParagraphs, resolveFormFromSource, mergeForm } from '../lib/poetry/infer-form';
+import {
+  inferFormFromParagraphs,
+  resolveFormFromSource,
+  mergeForm,
+} from '../lib/poetry/infer-form';
 
 interface BackfillArgs {
   batchSize?: number;
@@ -650,7 +730,12 @@ interface BackfillResult {
 function parseJsonArray(s: unknown): string[] {
   if (Array.isArray(s)) return s as string[];
   if (typeof s === 'string') {
-    try { const v = JSON.parse(s); return Array.isArray(v) ? v : []; } catch { return []; }
+    try {
+      const v = JSON.parse(s);
+      return Array.isArray(v) ? v : [];
+    } catch {
+      return [];
+    }
   }
   return [];
 }
@@ -669,7 +754,7 @@ export async function backfillForm(args: BackfillArgs = {}): Promise<BackfillRes
   while (true) {
     const [rows] = await pool.query<any[]>(
       `SELECT id, category, dynasty, paragraphs, type, rhythmic, form FROM poems ${whereClause} ORDER BY id LIMIT ? OFFSET ?`,
-      [batchSize, offset]
+      [batchSize, offset],
     );
     if (!Array.isArray(rows) || rows.length === 0) break;
 
@@ -692,16 +777,20 @@ export async function backfillForm(args: BackfillArgs = {}): Promise<BackfillRes
     offset += batchSize;
   }
 
-  console.log(`[build-form-tags] scanned=${scanned} formSet=${formSet} formNull=${formNull} dryRun=${dryRun}`);
+  console.log(
+    `[build-form-tags] scanned=${scanned} formSet=${formSet} formNull=${formNull} dryRun=${dryRun}`,
+  );
   return { scanned, formSet, formNull, dryRun };
 }
 
 if (require.main === module) {
   const dryRun = process.argv.includes('--dry-run');
-  backfillForm({ dryRun }).then(() => closePool()).catch((err) => {
-    console.error('[build-form-tags] failed:', err);
-    process.exit(1);
-  });
+  backfillForm({ dryRun })
+    .then(() => closePool())
+    .catch((err) => {
+      console.error('[build-form-tags] failed:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -739,11 +828,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 5: Extract guwendao.net scraping primitives to lib
 
 **Files:**
+
 - Create: `lib/guwendao-scraper.ts`
 - Test: `tests/unit/lib/guwendao-scraper.test.ts`
 - Modify: `scripts/build-classics-guwendao.ts` (refactor to import from lib)
 
 **Interfaces:**
+
 - Produces:
   - `fetchChapterList(bookId: string): Promise<string[]>` — list of chapter IDs for a book
   - `scrapeChapterContent(bookId: string, chapterId: string): Promise<{ title: string; paragraphs: string[] }>`
@@ -763,7 +854,8 @@ describe('guwendao scraper primitives', () => {
   it('fetchChapterList returns array of chapter ids', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => '<html><a href="/guwen/bookv_abc.aspx">1</a><a href="/guwen/bookv_def.aspx">2</a></html>',
+      text: async () =>
+        '<html><a href="/guwen/bookv_abc.aspx">1</a><a href="/guwen/bookv_def.aspx">2</a></html>',
     });
     const { fetchChapterList } = await import('@/lib/guwendao-scraper');
     const ids = await fetchChapterList('xxx');
@@ -773,7 +865,8 @@ describe('guwendao scraper primitives', () => {
   it('scrapePoemList for yuefu parses shiwenv_ links', async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
-      text: async () => '<html><a href="/shiwenv_aaa.aspx">poem1</a><a href="/shiwenv_bbb.aspx">poem2</a></html>',
+      text: async () =>
+        '<html><a href="/shiwenv_aaa.aspx">poem1</a><a href="/shiwenv_bbb.aspx">poem2</a></html>',
     });
     const { scrapePoemList } = await import('@/lib/guwendao-scraper');
     const ids = await scrapePoemList('yuefu');
@@ -822,7 +915,7 @@ async function fetchText(path: string): Promise<string> {
 export async function fetchChapterList(bookId: string): Promise<string[]> {
   const html = await fetchText(`/guwen/book_${bookId}.aspx`);
   const matches = [...html.matchAll(/bookv_([0-9a-f]+)\.aspx/g)];
-  return [...new Set(matches.map(m => m[1]))];
+  return [...new Set(matches.map((m) => m[1]))];
 }
 
 export interface ChapterContent {
@@ -830,10 +923,14 @@ export interface ChapterContent {
   paragraphs: string[];
 }
 
-export async function scrapeChapterContent(bookId: string, chapterId: string): Promise<ChapterContent> {
+export async function scrapeChapterContent(
+  bookId: string,
+  chapterId: string,
+): Promise<ChapterContent> {
   const html = await fetchText(`/guwen/bookv_${chapterId}.aspx`);
   // title: <h1>...</h1> or first .book-title
-  const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/) || html.match(/class="book-title"[^>]*>([^<]+)</);
+  const titleMatch =
+    html.match(/<h1[^>]*>([^<]+)<\/h1>/) || html.match(/class="book-title"[^>]*>([^<]+)</);
   const title = titleMatch ? titleMatch[1].trim() : '';
   // content: <div class="contson">...</div>
   const contentMatch = html.match(/<div class="contson"[^>]*>([\s\S]*?)<\/div>/);
@@ -844,8 +941,8 @@ export async function scrapeChapterContent(bookId: string, chapterId: string): P
     .replace(/<br\s*\/?>/g, '\n')
     .replace(/<\/p>/g, '\n')
     .split('\n')
-    .map(s => s.replace(/<[^>]+>/g, '').trim())
-    .filter(s => s.length > 0);
+    .map((s) => s.replace(/<[^>]+>/g, '').trim())
+    .filter((s) => s.length > 0);
   return { title, paragraphs };
 }
 
@@ -854,7 +951,7 @@ export type PoemCategory = 'yuefu' | 'shijiu' | 'cifu';
 export async function scrapePoemList(category: PoemCategory): Promise<string[]> {
   const html = await fetchText(`/gushi/${category}.aspx`);
   const matches = [...html.matchAll(/shiwenv_([0-9a-f]+)\.aspx/g)];
-  return [...new Set(matches.map(m => m[1]))];
+  return [...new Set(matches.map((m) => m[1]))];
 }
 
 export interface PoemPage {
@@ -869,9 +966,13 @@ export async function scrapePoemPage(poemId: string): Promise<PoemPage> {
   const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
   const title = titleMatch ? titleMatch[1].trim() : '';
   // author + dynasty: pattern "作者：李白 · 唐" or class="sons"
-  const authorMatch = html.match(/作者[：:]\s*<a[^>]*>([^<]+)<\/a>/) || html.match(/class="sons"[^>]*>[\s\S]*?>([^<]+)</);
+  const authorMatch =
+    html.match(/作者[：:]\s*<a[^>]*>([^<]+)<\/a>/) ||
+    html.match(/class="sons"[^>]*>[\s\S]*?>([^<]+)</);
   const author = authorMatch ? authorMatch[1].trim() : '';
-  const dynastyMatch = html.match(/[·・]([南北朝汉魏晋隋唐宋元明清]+)(?=\s*<)/) || html.match(/朝代[：:]\s*([南北朝汉魏晋隋唐宋元明清]+)/);
+  const dynastyMatch =
+    html.match(/[·・]([南北朝汉魏晋隋唐宋元明清]+)(?=\s*<)/) ||
+    html.match(/朝代[：:]\s*([南北朝汉魏晋隋唐宋元明清]+)/);
   const dynasty = dynastyMatch ? dynastyMatch[1].trim() : '';
   // content: same pattern as chapters
   const { paragraphs } = await scrapeChapterContent('', poemId); // reuse parser
@@ -908,10 +1009,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "refactor(s
 ### Task 6: New poem collection ingest (poems-extra)
 
 **Files:**
+
 - Create: `scripts/build-poems-extra.ts`
 - Test: `tests/integration/scripts/build-poems-extra.test.ts`
 
 **Interfaces:**
+
 - Consumes: `pool`, `inferFormFromParagraphs`, `resolveFormFromSource`, `mergeForm`, `scrapePoemList`, `scrapePoemPage`
 - Produces: rows in `poems` table (UNIQUE KEY (dynasty, title, author) prevents dupes) + `data/poems/<slug>.json`
 
@@ -939,7 +1042,9 @@ describe('buildPoemsExtra', () => {
   it('ingests yuefu poems with correct fields', async () => {
     mockScrape.scrapePoemList.mockResolvedValueOnce(['aaa']);
     mockScrape.scrapePoemPage.mockResolvedValueOnce({
-      title: '长歌行', author: '佚名', dynasty: '汉',
+      title: '长歌行',
+      author: '佚名',
+      dynasty: '汉',
       paragraphs: ['青青园中葵', '朝露待日晞', '阳春布德泽', '万物生光辉'],
     });
     mockQuery.mockResolvedValue([[]]); // no existing row
@@ -948,7 +1053,9 @@ describe('buildPoemsExtra', () => {
     const { buildPoemsExtra } = await import('../../../scripts/build-poems-extra');
     const n = await buildPoemsExtra({ onlyCategory: '汉乐府' });
     expect(n.inserted).toBe(1);
-    const insertCall = mockExecute.mock.calls.find((c: any) => c[0].startsWith('INSERT INTO poems'));
+    const insertCall = mockExecute.mock.calls.find((c: any) =>
+      c[0].startsWith('INSERT INTO poems'),
+    );
     expect(insertCall).toBeDefined();
     expect(insertCall[1]).toContain('汉乐府');
     expect(insertCall[1]).toContain('汉');
@@ -960,7 +1067,12 @@ describe('buildPoemsExtra', () => {
     mockQuery.mockReset();
     mockExecute.mockReset();
     mockScrape.scrapePoemList.mockResolvedValueOnce(['aaa']);
-    mockScrape.scrapePoemPage.mockResolvedValueOnce({ title: 'X', author: 'Y', dynasty: '汉', paragraphs: ['1','2','3','4'] });
+    mockScrape.scrapePoemPage.mockResolvedValueOnce({
+      title: 'X',
+      author: 'Y',
+      dynasty: '汉',
+      paragraphs: ['1', '2', '3', '4'],
+    });
     mockQuery.mockResolvedValueOnce([[{ id: 99 }]]); // existing row found
     const { buildPoemsExtra } = await import('../../../scripts/build-poems-extra');
     const n = await buildPoemsExtra({ onlyCategory: '汉乐府' });
@@ -982,7 +1094,11 @@ import { createHash } from 'node:crypto';
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPool, closePool } from '../lib/db';
-import { inferFormFromParagraphs, resolveFormFromSource, mergeForm } from '../lib/poetry/infer-form';
+import {
+  inferFormFromParagraphs,
+  resolveFormFromSource,
+  mergeForm,
+} from '../lib/poetry/infer-form';
 import { scrapePoemList, scrapePoemPage } from '../lib/guwendao-scraper';
 
 const DATA_DIR = join(process.cwd(), 'data', 'poems');
@@ -992,21 +1108,25 @@ interface CollectionConfig {
   title: string;
   category: string;
   dynasty: string;
-  source: string;  // 'guwendao:<category>' or 'chinese-poetry:<path>'
-  fetch: () => Promise<Array<{ title: string; author: string; dynasty: string; paragraphs: string[] }>>;
+  source: string; // 'guwendao:<category>' or 'chinese-poetry:<path>'
+  fetch: () => Promise<
+    Array<{ title: string; author: string; dynasty: string; paragraphs: string[] }>
+  >;
 }
 
 const CP_BASE = 'https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master';
 
 async function fetchChinesePoetry(path: string, normalize: 'paragraphs' | 'para' = 'paragraphs') {
-  const res = await fetch(CP_BASE + path, { headers: { 'User-Agent': 'pinyin-character-build/1.0' } });
+  const res = await fetch(CP_BASE + path, {
+    headers: { 'User-Agent': 'pinyin-character-build/1.0' },
+  });
   if (!res.ok) throw new Error(`fetch ${path} → ${res.status}`);
   const raw: any[] = JSON.parse(await res.text());
   return raw.map((p) => ({
     title: p.title,
     author: p.author || '佚名',
     dynasty: '',
-    paragraphs: normalize === 'para' ? (p.para || []) : (p.paragraphs || []),
+    paragraphs: normalize === 'para' ? p.para || [] : p.paragraphs || [],
   }));
 }
 
@@ -1078,7 +1198,9 @@ export interface BuildResult {
   byCollection: Record<string, number>;
 }
 
-export async function buildPoemsExtra({ onlyCategory }: { onlyCategory?: string } = {}): Promise<BuildResult> {
+export async function buildPoemsExtra({
+  onlyCategory,
+}: { onlyCategory?: string } = {}): Promise<BuildResult> {
   const pool = getPool();
   const result: BuildResult = { inserted: 0, skipped: 0, byCollection: {} };
 
@@ -1101,16 +1223,28 @@ export async function buildPoemsExtra({ onlyCategory }: { onlyCategory?: string 
       const hash = contentHash(p.paragraphs);
       const [existing] = await pool.query<any[]>(
         `SELECT id FROM poems WHERE dynasty = ? AND title = ? AND author = ? LIMIT 1`,
-        [col.dynasty, p.title, p.author]
+        [col.dynasty, p.title, p.author],
       );
       if (Array.isArray(existing) && existing.length > 0) {
         result.skipped++;
         continue;
       }
-      const form = mergeForm(inferFormFromParagraphs(p.paragraphs), resolveFormFromSource(null, null, col.category));
+      const form = mergeForm(
+        inferFormFromParagraphs(p.paragraphs),
+        resolveFormFromSource(null, null, col.category),
+      );
       await pool.execute(
         `INSERT INTO poems (dynasty, category, title, author, form, content, pinyin, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [col.dynasty, col.category, p.title, p.author, form.primary, JSON.stringify(p.paragraphs), JSON.stringify(p.paragraphs.map(() => [])), col.source]
+        [
+          col.dynasty,
+          col.category,
+          p.title,
+          p.author,
+          form.primary,
+          JSON.stringify(p.paragraphs),
+          JSON.stringify(p.paragraphs.map(() => [])),
+          col.source,
+        ],
       );
       result.inserted++;
     }
@@ -1126,10 +1260,12 @@ export async function buildPoemsExtra({ onlyCategory }: { onlyCategory?: string 
 }
 
 if (require.main === module) {
-  buildPoemsExtra().then(() => closePool()).catch((err) => {
-    console.error('[build-poems-extra] failed:', err);
-    process.exit(1);
-  });
+  buildPoemsExtra()
+    .then(() => closePool())
+    .catch((err) => {
+      console.error('[build-poems-extra] failed:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -1167,10 +1303,12 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 7: 训蒙骈句 ingest (classics)
 
 **Files:**
+
 - Create: `scripts/build-pianwen.ts`
 - Test: `tests/integration/scripts/build-pianwen.test.ts`
 
 **Interfaces:**
+
 - Consumes: `pool`, `fetchChapterList`, `scrapeChapterContent`
 - Produces: 1 row in `classics` table + `data/classics/xunmeng-pianju.json`
 
@@ -1204,7 +1342,9 @@ describe('buildPianwen', () => {
     const { buildPianwen } = await import('../../../scripts/build-pianwen');
     const r = await buildPianwen();
     expect(r.chapters).toBe(2);
-    const insertCall = mockExecute.mock.calls.find((c: any) => c[0].startsWith('INSERT INTO classics'));
+    const insertCall = mockExecute.mock.calls.find((c: any) =>
+      c[0].startsWith('INSERT INTO classics'),
+    );
     expect(insertCall).toBeDefined();
     expect(insertCall[1]).toContain('xunmeng-pianju');
     expect(insertCall[1]).toContain('pianwen');
@@ -1227,11 +1367,14 @@ import { getPool, closePool } from '../lib/db';
 import { fetchChapterList, scrapeChapterContent } from '../lib/guwendao-scraper';
 
 const DATA_DIR = join(process.cwd(), 'data', 'classics');
-const BOOK_ID = '427c5eea5943';  // 训蒙骈句
+const BOOK_ID = '427c5eea5943'; // 训蒙骈句
 const SLUG = 'xunmeng-pianju';
 const SOURCE = 'guwendao.net/训蒙骈句';
 
-export interface PianwenResult { chapters: number; bytes: number; }
+export interface PianwenResult {
+  chapters: number;
+  bytes: number;
+}
 
 export async function buildPianwen(): Promise<PianwenResult> {
   const pool = getPool();
@@ -1245,9 +1388,15 @@ export async function buildPianwen(): Promise<PianwenResult> {
   }
 
   const json = {
-    slug: SLUG, title: '训蒙骈句', category: 'pianwen' as const,
-    author: '萧良有/司祢', era: '明/清', source: SOURCE,
-    bookId: BOOK_ID, bookTitle: '训蒙骈句', chapterRange: { from: 1, to: chunks.length },
+    slug: SLUG,
+    title: '训蒙骈句',
+    category: 'pianwen' as const,
+    author: '萧良有/司祢',
+    era: '明/清',
+    source: SOURCE,
+    bookId: BOOK_ID,
+    bookTitle: '训蒙骈句',
+    chapterRange: { from: 1, to: chunks.length },
     chunks,
   };
   const filePath = join(DATA_DIR, `${SLUG}.json`);
@@ -1257,17 +1406,21 @@ export async function buildPianwen(): Promise<PianwenResult> {
   await pool.execute(
     `INSERT INTO classics (slug, title, category, author, era, chunks, source) VALUES (?, ?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE title=VALUES(title), category=VALUES(category), author=VALUES(author), era=VALUES(era), chunks=VALUES(chunks), source=VALUES(source)`,
-    [SLUG, '训蒙骈句', 'pianwen', '萧良有/司祢', '明/清', chunksJson, SOURCE]
+    [SLUG, '训蒙骈句', 'pianwen', '萧良有/司祢', '明/清', chunksJson, SOURCE],
   );
-  console.log(`[build-pianwen] ${chunks.length} chapters, ${chunksJson.length} bytes JSON → ${filePath}`);
+  console.log(
+    `[build-pianwen] ${chunks.length} chapters, ${chunksJson.length} bytes JSON → ${filePath}`,
+  );
   return { chapters: chunks.length, bytes: chunksJson.length };
 }
 
 if (require.main === module) {
-  buildPianwen().then(() => closePool()).catch((err) => {
-    console.error('[build-pianwen] failed:', err);
-    process.exit(1);
-  });
+  buildPianwen()
+    .then(() => closePool())
+    .catch((err) => {
+      console.error('[build-pianwen] failed:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -1298,11 +1451,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(class
 ### Task 8: API + form filter query (lib/api-poetry.ts)
 
 **Files:**
+
 - Modify: `lib/poetry.ts` (add `getAvailableForms`, support `forms` in `ListPoemsArgs`, support `category` filter)
 - Modify: `lib/poetry-types.ts` (extend `Dynasty` to support non-tang/song; add `PoemCategory` type)
 - Test: `tests/unit/lib/poetry.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `getAvailableForms(category: string): Promise<string[]>` — returns SHI_FORMS for 诗类, top 30 词牌名 for song, ['小令','套数'] for yuan
   - `listPoems({ dynasty?, category?, forms?, q?, page?, pageSize? })` — supports multiple filters
@@ -1323,7 +1478,9 @@ describe('getAvailableForms', () => {
   it('returns 诗类 fixed forms for tang', async () => {
     const { getAvailableForms } = await import('@/lib/poetry');
     const forms = await getAvailableForms('tang');
-    expect(forms).toEqual(expect.arrayContaining(['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '乐府']));
+    expect(forms).toEqual(
+      expect.arrayContaining(['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '乐府']),
+    );
   });
 
   it('returns 词牌名 top 30 for song (from DB)', async () => {
@@ -1370,7 +1527,7 @@ Expected: FAIL
 
 ```ts
 // lib/poetry-types.ts (replace Dynasty type)
-export type Dynasty = string;  // 'tang' | 'song' | '汉' | '魏' | '清' | 'mixed' | etc.
+export type Dynasty = string; // 'tang' | 'song' | '汉' | '魏' | '清' | 'mixed' | etc.
 
 export interface PoemListItem {
   id: number;
@@ -1400,6 +1557,7 @@ export interface PoemListResult {
 - [ ] **Step 4: Modify lib/poetry.ts**
 
 Replace entire file with:
+
 ```ts
 // lib/poetry.ts
 import { getPool } from './db';
@@ -1407,7 +1565,16 @@ import type { Dynasty, PoemDetail, PoemListItem, PoemListResult } from './poetry
 
 const PAGE_SIZE = 24;
 
-export const SHI_FORMS = ['五绝', '七绝', '五律', '七律', '五言古风', '七言古风', '杂言古风', '乐府'] as const;
+export const SHI_FORMS = [
+  '五绝',
+  '七绝',
+  '五律',
+  '七律',
+  '五言古风',
+  '七言古风',
+  '杂言古风',
+  '乐府',
+] as const;
 const YUAN_FORMS = ['小令', '套数'] as const;
 const SHI_CATEGORIES = new Set(['tang', '汉乐府', '古诗十九首', '魏', '骈文']);
 
@@ -1447,9 +1614,9 @@ export async function getAvailableForms(category: string): Promise<string[]> {
     const pool = getPool();
     const [rows] = await pool.query<any[]>(
       `SELECT rhythmic, COUNT(*) AS n FROM poems WHERE category = ? AND rhythmic IS NOT NULL GROUP BY rhythmic ORDER BY n DESC LIMIT 30`,
-      [category]
+      [category],
     );
-    return (rows as any[]).map(r => r.rhythmic);
+    return (rows as any[]).map((r) => r.rhythmic);
   }
   if (SHI_CATEGORIES.has(category)) return [...SHI_FORMS];
   return [];
@@ -1462,20 +1629,32 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
   const offset = (page - 1) * pageSize;
   const conditions: string[] = [];
   const params: any[] = [];
-  if (args.dynasty) { conditions.push('dynasty = ?'); params.push(args.dynasty); }
-  if (args.category) { conditions.push('category = ?'); params.push(args.category); }
+  if (args.dynasty) {
+    conditions.push('dynasty = ?');
+    params.push(args.dynasty);
+  }
+  if (args.category) {
+    conditions.push('category = ?');
+    params.push(args.category);
+  }
   if (args.forms && args.forms.length > 0) {
     const placeholders = args.forms.map(() => '?').join(',');
     conditions.push(`form IN (${placeholders})`);
     params.push(...args.forms);
   }
   const { where: searchWhere, params: searchParams } = buildSearchWhere(args.q ?? '');
-  if (searchWhere) { conditions.push(searchWhere); params.push(...searchParams); }
+  if (searchWhere) {
+    conditions.push(searchWhere);
+    params.push(...searchParams);
+  }
   const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const sql = `SELECT id, title, author, dynasty, category, form FROM poems ${where} ORDER BY id ASC LIMIT ? OFFSET ?`;
   const [rows] = await pool.query<any[]>(sql, [...params, pageSize, offset]);
-  const [[{ total }]] = await pool.query<any[]>(`SELECT COUNT(*) AS total FROM poems ${where}`, params);
+  const [[{ total }]] = await pool.query<any[]>(
+    `SELECT COUNT(*) AS total FROM poems ${where}`,
+    params,
+  );
 
   return {
     items: (rows as any[]).map(mapRow),
@@ -1491,7 +1670,9 @@ function parseJsonArray<T>(s: any, fallback: T): T {
     try {
       const v = JSON.parse(s);
       return Array.isArray(v) ? v : T;
-    } catch { return fallback; }
+    } catch {
+      return fallback;
+    }
   }
   return fallback;
 }
@@ -1509,7 +1690,7 @@ export async function getPoem(id: number): Promise<PoemDetail | null> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, title, author, dynasty, category, form, content, pinyin, appreciation FROM poems WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   if (!Array.isArray(rows) || rows.length === 0) return null;
   return mapDetailRow((rows as any[])[0]);
@@ -1518,7 +1699,7 @@ export async function getPoem(id: number): Promise<PoemDetail | null> {
 export async function getRandomPoem(): Promise<PoemDetail | null> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
-    `SELECT id, title, author, dynasty, category, form, content, pinyin, appreciation FROM poems ORDER BY RAND() LIMIT 1`
+    `SELECT id, title, author, dynasty, category, form, content, pinyin, appreciation FROM poems ORDER BY RAND() LIMIT 1`,
   );
   if (!Array.isArray(rows) || rows.length === 0) return null;
   return mapDetailRow((rows as any[])[0]);
@@ -1543,12 +1724,14 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 9: FormFilterBar component + /poetry page integration
 
 **Files:**
+
 - Create: `components/poetry/FormFilterBar.tsx`
 - Modify: `app/poetry/page.tsx` (add form filter state + URL sync)
 - Modify: `lib/api-poetry.ts` (add `forms` param to `listPoemsRequest`)
 - Test: `tests/unit/components/poetry/FormFilterBar.test.tsx`
 
 **Interfaces:**
+
 - `FormFilterBar({ category, selectedForms, onChange, availableForms }: Props): JSX.Element`
 
 - [ ] **Step 1: Write failing component test**
@@ -1567,7 +1750,7 @@ describe('FormFilterBar', () => {
         availableForms={['五绝', '七绝', '五律']}
         selectedForms={[]}
         onChange={() => {}}
-      />
+      />,
     );
     expect(screen.getByText('五绝')).toBeDefined();
     expect(screen.getByText('七绝')).toBeDefined();
@@ -1582,7 +1765,7 @@ describe('FormFilterBar', () => {
         availableForms={['五绝', '七绝']}
         selectedForms={['五绝']}
         onChange={onChange}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('七绝'));
     expect(onChange).toHaveBeenCalledWith(['五绝', '七绝']);
@@ -1596,7 +1779,7 @@ describe('FormFilterBar', () => {
         availableForms={['五绝', '七绝']}
         selectedForms={['五绝', '七绝']}
         onChange={onChange}
-      />
+      />,
     );
     fireEvent.click(screen.getByText('五绝'));
     expect(onChange).toHaveBeenCalledWith(['七绝']);
@@ -1622,11 +1805,16 @@ interface FormFilterBarProps {
   onChange: (forms: string[]) => void;
 }
 
-export function FormFilterBar({ category, availableForms, selectedForms, onChange }: FormFilterBarProps) {
+export function FormFilterBar({
+  category,
+  availableForms,
+  selectedForms,
+  onChange,
+}: FormFilterBarProps) {
   if (availableForms.length === 0) return null;
   const toggle = (form: string) => {
     if (selectedForms.includes(form)) {
-      onChange(selectedForms.filter(f => f !== form));
+      onChange(selectedForms.filter((f) => f !== form));
     } else {
       onChange([...selectedForms, form]);
     }
@@ -1634,7 +1822,7 @@ export function FormFilterBar({ category, availableForms, selectedForms, onChang
   return (
     <div className="flex flex-wrap gap-2 my-4" data-category={category}>
       <span className="text-sm text-ink-faint self-center mr-2">体裁：</span>
-      {availableForms.map(form => {
+      {availableForms.map((form) => {
         const isSelected = selectedForms.includes(form);
         return (
           <button
@@ -1665,7 +1853,13 @@ Expected: PASS
 
 ```ts
 // lib/api-poetry.ts (add forms to listPoemsRequest)
-export async function listPoemsRequest(args: { dynasty?: string; category?: string; q?: string; forms?: string[]; page?: number }): Promise<PoemListResult> {
+export async function listPoemsRequest(args: {
+  dynasty?: string;
+  category?: string;
+  q?: string;
+  forms?: string[];
+  page?: number;
+}): Promise<PoemListResult> {
   const sp = new URLSearchParams();
   if (args.dynasty) sp.set('dynasty', args.dynasty);
   if (args.category) sp.set('category', args.category);
@@ -1706,7 +1900,7 @@ export default function PoetryListPage() {
   const searchParams = useSearchParams();
   const [category, setCategory] = useState<string>(searchParams.get('category') || 'tang');
   const [selectedForms, setSelectedForms] = useState<string[]>(
-    (searchParams.get('form') || '').split(',').filter(Boolean)
+    (searchParams.get('form') || '').split(',').filter(Boolean),
   );
   const [availableForms, setAvailableForms] = useState<string[]>([]);
   const [q, setQ] = useState('');
@@ -1719,10 +1913,12 @@ export default function PoetryListPage() {
   // Fetch available forms when category changes
   useEffect(() => {
     let cancelled = false;
-    getAvailableFormsRequest(category).then(forms => {
+    getAvailableFormsRequest(category).then((forms) => {
       if (!cancelled) setAvailableForms(forms);
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [category]);
 
   // Sync URL when form/category changes
@@ -1741,15 +1937,26 @@ export default function PoetryListPage() {
     setError(null);
     const handle = setTimeout(async () => {
       try {
-        const r = await listPoemsRequest({ category, q: q || undefined, forms: selectedForms.length > 0 ? selectedForms : undefined, page });
-        if (!cancelled) { setItems(r.items); setTotal(r.total); }
+        const r = await listPoemsRequest({
+          category,
+          q: q || undefined,
+          forms: selectedForms.length > 0 ? selectedForms : undefined,
+          page,
+        });
+        if (!cancelled) {
+          setItems(r.items);
+          setTotal(r.total);
+        }
       } catch (err) {
         if (!cancelled) setError((err as Error).message);
       } finally {
         if (!cancelled) setLoading(false);
       }
     }, 300);
-    return () => { cancelled = true; clearTimeout(handle); };
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [category, q, page, selectedForms]);
 
   return (
@@ -1761,19 +1968,37 @@ export default function PoetryListPage() {
         <PoemSearch
           category={category}
           q={q}
-          onCategoryChange={(c) => { setCategory(c); setPage(1); setSelectedForms([]); }}
-          onQChange={(v) => { setQ(v); setPage(1); }}
+          onCategoryChange={(c) => {
+            setCategory(c);
+            setPage(1);
+            setSelectedForms([]);
+          }}
+          onQChange={(v) => {
+            setQ(v);
+            setPage(1);
+          }}
         />
         <FormFilterBar
           category={category}
           availableForms={availableForms}
           selectedForms={selectedForms}
-          onChange={(forms) => { setSelectedForms(forms); setPage(1); }}
+          onChange={(forms) => {
+            setSelectedForms(forms);
+            setPage(1);
+          }}
         />
-        {error ? <ErrorState message={error} onRetry={() => setPage(p => p)} /> : loading ? <LoadingSpinner /> : items.length === 0 ? <EmptyState title="无匹配诗作" /> : (
+        {error ? (
+          <ErrorState message={error} onRetry={() => setPage((p) => p)} />
+        ) : loading ? (
+          <LoadingSpinner />
+        ) : items.length === 0 ? (
+          <EmptyState title="无匹配诗作" />
+        ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mt-6">
-              {items.map(p => <PoemCard key={p.id} poem={p} />)}
+              {items.map((p) => (
+                <PoemCard key={p.id} poem={p} />
+              ))}
             </div>
             <PoemPagination page={page} pageSize={24} total={total} onPageChange={setPage} />
           </>
@@ -1818,11 +2043,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 10: API routes for /api/poetry + /api/poetry/forms
 
 **Files:**
+
 - Create: `app/api/poetry/route.ts`
 - Create: `app/api/poetry/forms/route.ts`
 - Test: `tests/integration/api/poetry-list.test.ts`
 
 **Interfaces:**
+
 - `GET /api/poetry?category=...&forms=五绝,七绝&q=...&page=1` → `PoemListResult`
 - `GET /api/poetry/forms?category=...` → `{ forms: string[] }`
 
@@ -1845,7 +2072,9 @@ describe('GET /api/poetry', () => {
       .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[{ total: 0 }]]);
     const { GET } = await import('@/app/api/poetry/route');
-    const req = new Request('http://localhost/api/poetry?category=tang&forms=%E4%BA%94%E7%BB%9D%2C%E4%B8%83%E7%BB%9D&page=1');
+    const req = new Request(
+      'http://localhost/api/poetry?category=tang&forms=%E4%BA%94%E7%BB%9D%2C%E4%B8%83%E7%BB%9D&page=1',
+    );
     const res = await GET(req as any);
     expect(res.status).toBe(200);
     const sql = mockQuery.mock.calls[0][0];
@@ -1944,6 +2173,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 11: SEO config + JSON-LD + metadata builders
 
 **Files:**
+
 - Create: `lib/seo/config.ts`
 - Create: `lib/seo/metadata.ts`
 - Create: `lib/seo/jsonld.ts`
@@ -1952,6 +2182,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 - Test: `tests/unit/lib/seo/jsonld.test.ts`
 
 **Interfaces:**
+
 - `SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'`
 - `SITE_NAME = '字·韵'`
 - `SITE_LOCALE = 'zh_CN'`
@@ -1963,7 +2194,25 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ```ts
 // tests/unit/lib/seo/metadata.test.ts
 import { describe, it, expect, vi } from 'vitest';
-vi.mock('@/lib/db', () => ({ getPool: () => ({ query: vi.fn().mockResolvedValue([[{ id: 1, title: '静夜思', author: '李白', dynasty: 'tang', category: 'tang', content: JSON.stringify(['床前明月光','疑是地上霜','举头望明月','低头思故乡']), pinyin: '[]', appreciation: null }]]), execute: vi.fn() }) }));
+vi.mock('@/lib/db', () => ({
+  getPool: () => ({
+    query: vi.fn().mockResolvedValue([
+      [
+        {
+          id: 1,
+          title: '静夜思',
+          author: '李白',
+          dynasty: 'tang',
+          category: 'tang',
+          content: JSON.stringify(['床前明月光', '疑是地上霜', '举头望明月', '低头思故乡']),
+          pinyin: '[]',
+          appreciation: null,
+        },
+      ],
+    ]),
+    execute: vi.fn(),
+  }),
+}));
 
 describe('generatePoemMetadata', () => {
   it('returns unique title, description, canonical', async () => {
@@ -1980,11 +2229,25 @@ describe('generatePoemMetadata', () => {
 ```ts
 // tests/unit/lib/seo/jsonld.test.ts
 import { describe, it, expect } from 'vitest';
-import { buildCreativeWork, buildBook, buildDefinedTerm, buildBreadcrumbList, buildOrganization, buildWebSite } from '@/lib/seo/jsonld';
+import {
+  buildCreativeWork,
+  buildBook,
+  buildDefinedTerm,
+  buildBreadcrumbList,
+  buildOrganization,
+  buildWebSite,
+} from '@/lib/seo/jsonld';
 
 describe('JSON-LD builders', () => {
   it('buildCreativeWork includes required fields', () => {
-    const json = buildCreativeWork({ title: '静夜思', author: '李白', dynasty: 'tang', content: ['床前明月光'], category: 'tang', form: '五绝' });
+    const json = buildCreativeWork({
+      title: '静夜思',
+      author: '李白',
+      dynasty: 'tang',
+      content: ['床前明月光'],
+      category: 'tang',
+      form: '五绝',
+    });
     expect(json['@context']).toBe('https://schema.org');
     expect(json['@type']).toBe('CreativeWork');
     expect(json.name).toBe('静夜思');
@@ -2005,7 +2268,11 @@ describe('JSON-LD builders', () => {
   });
 
   it('buildBreadcrumbList with multiple items', () => {
-    const json = buildBreadcrumbList([{ name: '首页', url: '/' }, { name: '字典', url: '/chars' }, { name: '学', url: '/chars/学' }]);
+    const json = buildBreadcrumbList([
+      { name: '首页', url: '/' },
+      { name: '字典', url: '/chars' },
+      { name: '学', url: '/chars/学' },
+    ]);
     expect(json.itemListElement.length).toBe(3);
   });
 
@@ -2053,23 +2320,44 @@ import { SITE_NAME, SITE_URL } from './config';
 import { buildCanonicalUrl } from './canonical';
 
 const DYNASTY_LABEL: Record<string, string> = {
-  tang: '唐', song: '宋', yuan: '元',
-  '汉': '汉', '魏': '魏', '清': '清', '汉末': '汉末', '魏晋': '魏晋', '南北朝': '南北朝',
-  '三国': '三国', 'mixed': '历代',
+  tang: '唐',
+  song: '宋',
+  yuan: '元',
+  汉: '汉',
+  魏: '魏',
+  清: '清',
+  汉末: '汉末',
+  魏晋: '魏晋',
+  南北朝: '南北朝',
+  三国: '三国',
+  mixed: '历代',
 };
 
-interface PoemRow { id: number; title: string; author: string; dynasty: string; category: string | null; content: string | null; form: string | null; }
+interface PoemRow {
+  id: number;
+  title: string;
+  author: string;
+  dynasty: string;
+  category: string | null;
+  content: string | null;
+  form: string | null;
+}
 
 function parseParagraphs(content: string | null): string[] {
   if (!content) return [];
-  try { const v = JSON.parse(content); return Array.isArray(v) ? v : []; } catch { return []; }
+  try {
+    const v = JSON.parse(content);
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function generatePoemMetadata(id: number): Promise<Metadata> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, title, author, dynasty, category, content, form FROM poems WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   if (!Array.isArray(rows) || rows.length === 0) return { title: `未找到 | ${SITE_NAME}` };
   const p = (rows as any[])[0] as PoemRow;
@@ -2091,7 +2379,7 @@ export async function generateClassicMetadata(slug: string): Promise<Metadata> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT slug, title, author, era FROM classics WHERE slug = ? LIMIT 1`,
-    [slug]
+    [slug],
   );
   if (!Array.isArray(rows) || rows.length === 0) return { title: `未找到 | ${SITE_NAME}` };
   const c = (rows as any[])[0];
@@ -2110,7 +2398,7 @@ export async function generateCharMetadata(char: string): Promise<Metadata> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT c.char, c.pinyin, m.meaning_zh FROM chars c LEFT JOIN char_meanings m ON c.id = m.char_id WHERE c.char = ? LIMIT 1`,
-    [char]
+    [char],
   );
   if (!Array.isArray(rows) || rows.length === 0) return { title: `${char} | ${SITE_NAME}` };
   const r = (rows as any[])[0];
@@ -2134,7 +2422,14 @@ export async function generateCharMetadata(char: string): Promise<Metadata> {
 // lib/seo/jsonld.ts
 import { SITE_URL, SITE_NAME } from './config';
 
-interface PoemForJsonLd { title: string; author: string; dynasty: string; content: string[]; category: string | null; form: string | null; }
+interface PoemForJsonLd {
+  title: string;
+  author: string;
+  dynasty: string;
+  content: string[];
+  category: string | null;
+  form: string | null;
+}
 
 export function buildCreativeWork(p: PoemForJsonLd) {
   return {
@@ -2149,7 +2444,11 @@ export function buildCreativeWork(p: PoemForJsonLd) {
   };
 }
 
-interface BookForJsonLd { title: string; author: string | null; era: string | null; }
+interface BookForJsonLd {
+  title: string;
+  author: string | null;
+  era: string | null;
+}
 export function buildBook(b: BookForJsonLd) {
   return {
     '@context': 'https://schema.org',
@@ -2161,7 +2460,10 @@ export function buildBook(b: BookForJsonLd) {
   };
 }
 
-interface TermForJsonLd { char: string; meaning_zh: string | null; }
+interface TermForJsonLd {
+  char: string;
+  meaning_zh: string | null;
+}
 export function buildDefinedTerm(t: TermForJsonLd) {
   return {
     '@context': 'https://schema.org',
@@ -2228,6 +2530,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 ### Task 12: app/sitemap.ts + app/robots.ts + 3 sub-sitemap routes
 
 **Files:**
+
 - Create: `app/sitemap.ts`
 - Create: `app/robots.ts`
 - Create: `app/sitemap/poetry.xml/route.ts`
@@ -2236,6 +2539,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 - Test: `tests/integration/app/sitemap.test.ts`
 
 **Interfaces:**
+
 - `GET /sitemap.xml` → Next.js auto-generated sitemap index
 - `GET /sitemap/poetry.xml` → XML with all poem URLs (~10MB)
 - `GET /sitemap/ancient.xml` → XML with all classic URLs
@@ -2253,7 +2557,12 @@ vi.mock('../../../lib/db', () => ({ getPool: () => ({ query: mockQuery, execute:
 describe('sitemap routes', () => {
   it('GET /sitemap/poetry.xml returns XML with poem URLs', async () => {
     mockQuery.mockReset();
-    mockQuery.mockResolvedValueOnce([[{ id: 1, updated_at: new Date() }, { id: 2, updated_at: new Date() }]]);
+    mockQuery.mockResolvedValueOnce([
+      [
+        { id: 1, updated_at: new Date() },
+        { id: 2, updated_at: new Date() },
+      ],
+    ]);
     const { GET } = await import('@/app/sitemap/poetry.xml/route');
     const res = await GET();
     expect(res.status).toBe(200);
@@ -2319,13 +2628,18 @@ export const revalidate = 3600;
 export async function GET() {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(`SELECT id, updated_at FROM poems ORDER BY id`);
-  const urls = (rows as any[]).map(r => {
-    const lastmod = r.updated_at instanceof Date ? r.updated_at.toISOString() : new Date(r.updated_at).toISOString();
-    return `<url><loc>${SITE_URL}/poetry/${r.id}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`;
-  }).join('');
+  const urls = (rows as any[])
+    .map((r) => {
+      const lastmod =
+        r.updated_at instanceof Date
+          ? r.updated_at.toISOString()
+          : new Date(r.updated_at).toISOString();
+      return `<url><loc>${SITE_URL}/poetry/${r.id}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`;
+    })
+    .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }
 ```
@@ -2340,13 +2654,18 @@ export const revalidate = 3600;
 export async function GET() {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(`SELECT slug, updated_at FROM classics ORDER BY slug`);
-  const urls = (rows as any[]).map(r => {
-    const lastmod = r.updated_at instanceof Date ? r.updated_at.toISOString() : new Date(r.updated_at).toISOString();
-    return `<url><loc>${SITE_URL}/ancient/${r.slug}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`;
-  }).join('');
+  const urls = (rows as any[])
+    .map((r) => {
+      const lastmod =
+        r.updated_at instanceof Date
+          ? r.updated_at.toISOString()
+          : new Date(r.updated_at).toISOString();
+      return `<url><loc>${SITE_URL}/ancient/${r.slug}</loc><lastmod>${lastmod}</lastmod><priority>0.7</priority></url>`;
+    })
+    .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }
 ```
@@ -2361,13 +2680,18 @@ export const revalidate = 3600;
 export async function GET() {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(`SELECT char, updated_at FROM chars ORDER BY id`);
-  const urls = (rows as any[]).map(r => {
-    const lastmod = r.updated_at instanceof Date ? r.updated_at.toISOString() : new Date(r.updated_at).toISOString();
-    return `<url><loc>${SITE_URL}/chars/${encodeURIComponent(r.char)}</loc><lastmod>${lastmod}</lastmod><priority>0.6</priority></url>`;
-  }).join('');
+  const urls = (rows as any[])
+    .map((r) => {
+      const lastmod =
+        r.updated_at instanceof Date
+          ? r.updated_at.toISOString()
+          : new Date(r.updated_at).toISOString();
+      return `<url><loc>${SITE_URL}/chars/${encodeURIComponent(r.char)}</loc><lastmod>${lastmod}</lastmod><priority>0.6</priority></url>`;
+    })
+    .join('');
   return new Response(
     `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`,
-    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } }
+    { headers: { 'Content-Type': 'application/xml; charset=utf-8' } },
   );
 }
 ```
@@ -2404,6 +2728,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 ### Task 13: Detail page metadata + JSON-LD injection (poetry/ancient/chars)
 
 **Files:**
+
 - Modify: `app/poetry/[id]/page.tsx` (add `generateMetadata` + JSON-LD `<script>`)
 - Modify: `app/ancient/[slug]/page.tsx` (same)
 - Modify: `app/chars/[char]/page.tsx` (same)
@@ -2412,6 +2737,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 - Test: (manual smoke + verify in browser View Source)
 
 **Interfaces:**
+
 - Each detail page exports `generateMetadata` from `lib/seo/metadata.ts`
 - Each detail page injects JSON-LD via `<script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />`
 - BreadcrumbList appended on each detail page

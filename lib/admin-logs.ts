@@ -51,7 +51,9 @@ export interface ListUnifiedLogsResult {
  * truly exact page boundaries per source, we'd need a single UNION ALL with a
  * global LIMIT — that's a future optimization if needed.
  */
-export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promise<ListUnifiedLogsResult> {
+export async function listUnifiedLogs(
+  opts: ListUnifiedLogsOptions = {},
+): Promise<ListUnifiedLogsResult> {
   const page = Math.max(opts.page ?? 1, 1);
   const pageSize = Math.min(Math.max(opts.pageSize ?? 50, 1), 100);
   const offset = (page - 1) * pageSize;
@@ -66,11 +68,26 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
   const auditWhere: string[] = [];
   const auditParams: any[] = [];
   if (includeAudit) {
-    if (opts.type) { auditWhere.push(`a.event = ?`); auditParams.push(opts.type); }
-    if (opts.userId) { auditWhere.push(`a.user_id = ?`); auditParams.push(opts.userId); }
-    if (opts.ip) { auditWhere.push(`a.ip = ?`); auditParams.push(opts.ip); }
-    if (opts.from) { auditWhere.push(`a.created_at >= ?`); auditParams.push(opts.from); }
-    if (opts.to) { auditWhere.push(`a.created_at <= ?`); auditParams.push(opts.to); }
+    if (opts.type) {
+      auditWhere.push(`a.event = ?`);
+      auditParams.push(opts.type);
+    }
+    if (opts.userId) {
+      auditWhere.push(`a.user_id = ?`);
+      auditParams.push(opts.userId);
+    }
+    if (opts.ip) {
+      auditWhere.push(`a.ip = ?`);
+      auditParams.push(opts.ip);
+    }
+    if (opts.from) {
+      auditWhere.push(`a.created_at >= ?`);
+      auditParams.push(opts.from);
+    }
+    if (opts.to) {
+      auditWhere.push(`a.created_at <= ?`);
+      auditParams.push(opts.to);
+    }
   }
   const auditSql = includeAudit && auditWhere.length ? `WHERE ${auditWhere.join(' AND ')}` : '';
 
@@ -84,9 +101,18 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
     if (opts.type && opts.type !== 'download_logged') {
       dlWhere.push('1 = 0');
     }
-    if (opts.userId) { dlWhere.push(`d.user_id = ?`); dlParams.push(opts.userId); }
-    if (opts.from) { dlWhere.push(`d.created_at >= ?`); dlParams.push(opts.from); }
-    if (opts.to) { dlWhere.push(`d.created_at <= ?`); dlParams.push(opts.to); }
+    if (opts.userId) {
+      dlWhere.push(`d.user_id = ?`);
+      dlParams.push(opts.userId);
+    }
+    if (opts.from) {
+      dlWhere.push(`d.created_at >= ?`);
+      dlParams.push(opts.from);
+    }
+    if (opts.to) {
+      dlWhere.push(`d.created_at <= ?`);
+      dlParams.push(opts.to);
+    }
   }
   const dlSql = includeDownloads && dlWhere.length ? `WHERE ${dlWhere.join(' AND ')}` : '';
 
@@ -94,10 +120,22 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
   const aiWhere: string[] = [];
   const aiParams: any[] = [];
   if (includeAi) {
-    if (opts.type) { aiWhere.push(`a.feature = ?`); aiParams.push(opts.type); }
-    if (opts.userId) { aiWhere.push(`a.user_id = ?`); aiParams.push(opts.userId); }
-    if (opts.from) { aiWhere.push(`a.created_at >= ?`); aiParams.push(opts.from); }
-    if (opts.to) { aiWhere.push(`a.created_at <= ?`); aiParams.push(opts.to); }
+    if (opts.type) {
+      aiWhere.push(`a.feature = ?`);
+      aiParams.push(opts.type);
+    }
+    if (opts.userId) {
+      aiWhere.push(`a.user_id = ?`);
+      aiParams.push(opts.userId);
+    }
+    if (opts.from) {
+      aiWhere.push(`a.created_at >= ?`);
+      aiParams.push(opts.from);
+    }
+    if (opts.to) {
+      aiWhere.push(`a.created_at <= ?`);
+      aiParams.push(opts.to);
+    }
   }
   const aiSql = includeAi && aiWhere.length ? `WHERE ${aiWhere.join(' AND ')}` : '';
 
@@ -112,10 +150,7 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
          ${auditSql} ORDER BY a.created_at DESC, a.id DESC LIMIT ? OFFSET ?`,
         [...auditParams, pageSize, offset],
       ),
-      pool.query<any[]>(
-        `SELECT COUNT(*) AS n FROM audit_log a ${auditSql}`,
-        auditParams,
-      ),
+      pool.query<any[]>(`SELECT COUNT(*) AS n FROM audit_log a ${auditSql}`, auditParams),
     );
   }
   if (includeDownloads) {
@@ -126,10 +161,7 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
          ${dlSql} ORDER BY d.created_at DESC, d.id DESC LIMIT ? OFFSET ?`,
         [...dlParams, pageSize, offset],
       ),
-      pool.query<any[]>(
-        `SELECT COUNT(*) AS n FROM downloads d ${dlSql}`,
-        dlParams,
-      ),
+      pool.query<any[]>(`SELECT COUNT(*) AS n FROM downloads d ${dlSql}`, dlParams),
     );
   }
   if (includeAi) {
@@ -140,10 +172,7 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
          ${aiSql} ORDER BY a.created_at DESC, a.id DESC LIMIT ? OFFSET ?`,
         [...aiParams, pageSize, offset],
       ),
-      pool.query<any[]>(
-        `SELECT COUNT(*) AS n FROM ai_calls a ${aiSql}`,
-        aiParams,
-      ),
+      pool.query<any[]>(`SELECT COUNT(*) AS n FROM ai_calls a ${aiSql}`, aiParams),
     );
   }
 
@@ -151,30 +180,57 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
 
   // Walk the results in source order, taking rows then counts alternately.
   let cursor = 0;
-  const auditRows = includeAudit ? (results[cursor++])[0] : [];
-  const auditCount = includeAudit ? Number((results[cursor++])[0][0].n) : 0;
-  const dlRows = includeDownloads ? (results[cursor++])[0] : [];
-  const dlCount = includeDownloads ? Number((results[cursor++])[0][0].n) : 0;
-  const aiRows = includeAi ? (results[cursor++])[0] : [];
-  const aiCount = includeAi ? Number((results[cursor++])[0][0].n) : 0;
+  const auditRows = includeAudit ? results[cursor++][0] : [];
+  const auditCount = includeAudit ? Number(results[cursor++][0][0].n) : 0;
+  const dlRows = includeDownloads ? results[cursor++][0] : [];
+  const dlCount = includeDownloads ? Number(results[cursor++][0][0].n) : 0;
+  const aiRows = includeAi ? results[cursor++][0] : [];
+  const aiCount = includeAi ? Number(results[cursor++][0][0].n) : 0;
 
   const total = auditCount + dlCount + aiCount;
 
   const items: UnifiedLogEntry[] = [
     ...auditRows.map((r: any) => ({
-      id: `audit:${r.id}`, source: 'audit' as const, event: r.event, userId: r.user_id,
-      username: r.username, ip: r.ip, createdAt: toIso(r.created_at),
+      id: `audit:${r.id}`,
+      source: 'audit' as const,
+      event: r.event,
+      userId: r.user_id,
+      username: r.username,
+      ip: r.ip,
+      createdAt: toIso(r.created_at),
       metadata: typeof r.metadata === 'string' ? safeParse(r.metadata) : (r.metadata ?? {}),
     })),
     ...dlRows.map((r: any) => ({
-      id: `download:${r.id}`, source: 'download' as const, event: 'download_logged', userId: r.user_id,
-      username: r.username, ip: null, createdAt: toIso(r.created_at),
-      metadata: { sourceType: r.source_type, sourceId: r.source_id, status: r.status, format: r.format, durationMs: r.duration_ms },
+      id: `download:${r.id}`,
+      source: 'download' as const,
+      event: 'download_logged',
+      userId: r.user_id,
+      username: r.username,
+      ip: null,
+      createdAt: toIso(r.created_at),
+      metadata: {
+        sourceType: r.source_type,
+        sourceId: r.source_id,
+        status: r.status,
+        format: r.format,
+        durationMs: r.duration_ms,
+      },
     })),
     ...aiRows.map((r: any) => ({
-      id: `ai_call:${r.id}`, source: 'ai_call' as const, event: r.feature, userId: r.user_id,
-      username: r.username, ip: null, createdAt: toIso(r.created_at),
-      metadata: { model: r.model, status: r.status, durationMs: r.duration_ms, error: r.error, ...(typeof r.metadata === 'string' ? safeParse(r.metadata) : (r.metadata ?? {})) },
+      id: `ai_call:${r.id}`,
+      source: 'ai_call' as const,
+      event: r.feature,
+      userId: r.user_id,
+      username: r.username,
+      ip: null,
+      createdAt: toIso(r.created_at),
+      metadata: {
+        model: r.model,
+        status: r.status,
+        durationMs: r.duration_ms,
+        error: r.error,
+        ...(typeof r.metadata === 'string' ? safeParse(r.metadata) : (r.metadata ?? {})),
+      },
     })),
   ].sort((a, b) => {
     const dt = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
@@ -195,5 +251,9 @@ function toIso(d: any): string {
   return String(d);
 }
 function safeParse(s: string): Record<string, unknown> {
-  try { return JSON.parse(s); } catch { return {}; }
+  try {
+    return JSON.parse(s);
+  } catch {
+    return {};
+  }
 }

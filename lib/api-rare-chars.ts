@@ -16,14 +16,17 @@ export interface ListResultClient {
   pageSize: number;
 }
 
-export async function fetchRareChars(opts: { q?: string; page?: number } = {}): Promise<ListResultClient> {
+export async function fetchRareChars(
+  opts: { q?: string; page?: number } = {},
+): Promise<ListResultClient> {
   const params = new URLSearchParams();
   if (opts.q) params.set('q', opts.q);
   if (opts.page) params.set('page', String(opts.page));
   const res = await fetch(`/api/rare-chars?${params.toString()}`);
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
     throw new Error(msg);
   }
   return data.data;
@@ -33,7 +36,8 @@ export async function fetchRareChar(char: string): Promise<RareCharClient> {
   const res = await fetch(`/api/rare-chars/${encodeURIComponent(char)}`);
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
     throw new Error(msg);
   }
   return data.data;
@@ -50,7 +54,8 @@ export async function fetchDailyChar(date?: string): Promise<{
   const res = await fetch(url);
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'fetch failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
     throw new Error(msg);
   }
   return data.data;
@@ -60,7 +65,8 @@ export async function printRareCharRequest(char: string): Promise<{ char: string
   const res = await fetch(`/api/rare-chars/${encodeURIComponent(char)}/print`, { method: 'POST' });
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'print failed';
+    const msg =
+      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'print failed');
     throw new Error(msg);
   }
   return data.data;

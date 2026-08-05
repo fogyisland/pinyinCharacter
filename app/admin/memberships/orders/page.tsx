@@ -21,11 +21,14 @@ const STATUS_BADGE: Record<PaymentOrderStatus, string> = {
   expired: 'bg-gray-200 text-gray-700',
 };
 
-interface PageProps { searchParams: Promise<{ status?: string; userId?: string; q?: string; page?: string }>; }
+interface PageProps {
+  searchParams: Promise<{ status?: string; userId?: string; q?: string; page?: string }>;
+}
 
 export default async function AdminOrdersPage({ searchParams }: PageProps) {
   const sp = await searchParams;
-  const status = (STATUSES.some(s => s.key === sp.status) ? sp.status : undefined) as PaymentOrderStatus | undefined;
+  const status = (STATUSES.some((s) => s.key === sp.status) ? sp.status : undefined) as
+    PaymentOrderStatus | undefined;
   const userId = sp.userId && /^\d+$/.test(sp.userId) ? Number(sp.userId) : undefined;
   const q = sp.q?.trim() || undefined;
   const page = Math.max(Number(sp.page) || 1, 1);
@@ -38,33 +41,62 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold">PayPal 订单</h1>
-          <p className="text-sm text-ink-soft">查看支付订单状态、调试 webhook 失败、追踪卡在 created/approved 状态的订单。</p>
+          <p className="text-sm text-ink-soft">
+            查看支付订单状态、调试 webhook 失败、追踪卡在 created/approved 状态的订单。
+          </p>
         </div>
-        <Link href="/admin/memberships" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">← 返回会员列表</Link>
+        <Link
+          href="/admin/memberships"
+          className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+        >
+          ← 返回会员列表
+        </Link>
       </div>
 
       <form className="card-paper rounded p-3 flex flex-wrap gap-2 items-end text-sm" method="get">
-        <FilterChip
-          active={!status && !userId && !q}
-          href="/admin/memberships/orders"
-        >全部</FilterChip>
-        {STATUSES.map(s => (
+        <FilterChip active={!status && !userId && !q} href="/admin/memberships/orders">
+          全部
+        </FilterChip>
+        {STATUSES.map((s) => (
           <FilterChip
             key={s.key}
             active={status === s.key}
             href={buildHref({ status: s.key, userId, q, page: 1 })}
-          >{s.label}</FilterChip>
+          >
+            {s.label}
+          </FilterChip>
         ))}
-        {status && <FilterChip active={true} href={buildHref({ status: null, userId, q, page: 1 })}>×</FilterChip>}
+        {status && (
+          <FilterChip active={true} href={buildHref({ status: null, userId, q, page: 1 })}>
+            ×
+          </FilterChip>
+        )}
       </form>
 
       <form className="card-paper rounded p-3 flex flex-wrap gap-2 items-end text-sm" method="get">
-        <input type="number" name="userId" placeholder="用户 ID" defaultValue={userId ?? ''}
-          className="border border-ink/20 rounded px-2 py-1 w-24 bg-paper-soft" />
-        <input type="text" name="q" placeholder="PayPal 订单号" defaultValue={q ?? ''}
-          className="border border-ink/20 rounded px-2 py-1 w-48 bg-paper-soft" />
-        <button type="submit" className="btn-seal text-sm">筛选</button>
-        <Link href="/admin/memberships/orders" className="px-3 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep">清空</Link>
+        <input
+          type="number"
+          name="userId"
+          placeholder="用户 ID"
+          defaultValue={userId ?? ''}
+          className="border border-ink/20 rounded px-2 py-1 w-24 bg-paper-soft"
+        />
+        <input
+          type="text"
+          name="q"
+          placeholder="PayPal 订单号"
+          defaultValue={q ?? ''}
+          className="border border-ink/20 rounded px-2 py-1 w-48 bg-paper-soft"
+        />
+        <button type="submit" className="btn-seal text-sm">
+          筛选
+        </button>
+        <Link
+          href="/admin/memberships/orders"
+          className="px-3 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep"
+        >
+          清空
+        </Link>
       </form>
 
       <div className="card-paper rounded-lg overflow-x-auto">
@@ -81,55 +113,110 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
             </tr>
           </thead>
           <tbody>
-            {list.items.map(r => (
+            {list.items.map((r) => (
               <tr key={r.id} className="border-t">
-                <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">{new Date(r.createdAt).toLocaleString('zh-CN')}</td>
+                <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">
+                  {new Date(r.createdAt).toLocaleString('zh-CN')}
+                </td>
                 <td className="px-3 py-2">
-                  {r.username
-                    ? <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</Link>
-                    : <span className="text-ink-faint">#{r.userId}</span>}
+                  {r.username ? (
+                    <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
+                      {r.username}
+                    </Link>
+                  ) : (
+                    <span className="text-ink-faint">#{r.userId}</span>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-xs">
                   <div>{r.planDisplayName || '—'}</div>
                   <div className="text-ink-faint">{r.planKey}</div>
                 </td>
                 <td className="px-3 py-2">
-                  <span className={`text-xs px-2 py-0.5 rounded ${STATUS_BADGE[r.status]}`}>{r.status}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded ${STATUS_BADGE[r.status]}`}>
+                    {r.status}
+                  </span>
                 </td>
-                <td className="px-3 py-2 text-xs">{r.currency === 'USD' ? '$' : '¥'}{r.amount}</td>
-                <td className="px-3 py-2 text-xs font-mono text-ink-soft max-w-xs truncate" title={r.paypalOrderId}>{r.paypalOrderId}</td>
-                <td className="px-3 py-2 text-xs text-ink-soft">{r.paidAt ? new Date(r.paidAt).toLocaleString('zh-CN') : '—'}</td>
+                <td className="px-3 py-2 text-xs">
+                  {r.currency === 'USD' ? '$' : '¥'}
+                  {r.amount}
+                </td>
+                <td
+                  className="px-3 py-2 text-xs font-mono text-ink-soft max-w-xs truncate"
+                  title={r.paypalOrderId}
+                >
+                  {r.paypalOrderId}
+                </td>
+                <td className="px-3 py-2 text-xs text-ink-soft">
+                  {r.paidAt ? new Date(r.paidAt).toLocaleString('zh-CN') : '—'}
+                </td>
               </tr>
             ))}
             {list.items.length === 0 && (
-              <tr><td colSpan={7} className="px-3 py-6 text-center text-ink-faint">暂无订单</td></tr>
+              <tr>
+                <td colSpan={7} className="px-3 py-6 text-center text-ink-faint">
+                  暂无订单
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
       <div className="flex items-center justify-between text-xs text-ink-faint">
-        <span>共 {list.total} 条 · 第 {page} / {totalPages} 页</span>
+        <span>
+          共 {list.total} 条 · 第 {page} / {totalPages} 页
+        </span>
         <div className="flex gap-2">
-          <Link href={buildHref({ status: status ?? null, userId, q, page: Math.max(1, page - 1) })}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page <= 1 ? 'opacity-50 pointer-events-none' : ''}`}>上一页</Link>
-          <Link href={buildHref({ status: status ?? null, userId, q, page: Math.min(totalPages, page + 1) })}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page >= totalPages ? 'opacity-50 pointer-events-none' : ''}`}>下一页</Link>
+          <Link
+            href={buildHref({ status: status ?? null, userId, q, page: Math.max(1, page - 1) })}
+            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page <= 1 ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            上一页
+          </Link>
+          <Link
+            href={buildHref({
+              status: status ?? null,
+              userId,
+              q,
+              page: Math.min(totalPages, page + 1),
+            })}
+            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page >= totalPages ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            下一页
+          </Link>
         </div>
       </div>
     </div>
   );
 }
 
-function FilterChip({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
+function FilterChip({
+  active,
+  href,
+  children,
+}: {
+  active: boolean;
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Link href={href} className={`text-xs px-3 py-1.5 rounded border transition-colors ${
-      active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
-    }`}>{children}</Link>
+    <Link
+      href={href}
+      className={`text-xs px-3 py-1.5 rounded border transition-colors ${
+        active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
 
-function buildHref(opts: { status: PaymentOrderStatus | null; userId?: number; q?: string; page: number }) {
+function buildHref(opts: {
+  status: PaymentOrderStatus | null;
+  userId?: number;
+  q?: string;
+  page: number;
+}) {
   const params = new URLSearchParams();
   if (opts.status) params.set('status', opts.status);
   if (opts.userId !== undefined) params.set('userId', String(opts.userId));

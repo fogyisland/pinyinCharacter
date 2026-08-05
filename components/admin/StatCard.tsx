@@ -1,8 +1,16 @@
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 
-export function StatCard({ label, value, icon: Icon, href }: {
-  label: string; value: string | number; icon: LucideIcon; href?: string;
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  href,
+}: {
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
+  href?: string;
 }) {
   const content = (
     <div className="rounded-lg border border-paper-warm bg-paper p-4 flex items-center gap-3 hover:bg-paper-warm transition-colors">

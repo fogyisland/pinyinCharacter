@@ -6,22 +6,22 @@ Plan B's Task 25 is 9 manual UI steps. Since the dev server is up and the DB is 
 
 ## What was verified (15 / 15 checks)
 
-| # | Plan B step | API check | Result |
-|---|---|---|---|
-| 1 | Register alice | POST /api/auth/register userA | ✓ 200 |
-| 2 | Register second user | POST /api/auth/register userB | ✓ 200 |
-| 3 | Login alice | POST /api/auth/login (cookie: auth_token) | ✓ cookie captured |
-| 4 | Login second user | POST /api/auth/login | ✓ cookie captured |
-| 5 | Type 你好世界 → 1 history record | POST /api/history kind=text2pinyin | ✓ id=3 (returns new id; auto-increment still increments on dedupe) |
-| 6 | Re-type → dedupe (1 record) | POST same again | ✓ **same id** returned (dedupe within 60s) |
-| 7 | Viterbi 拼音→汉字 → 1 more record | POST /api/history kind=pinyin2text | ✓ id=4 |
-| 8 | /history shows 2 | GET /api/history | ✓ count=2 |
-| 9 | Favorite one → /history?favorite=true shows 1 | PATCH is_favorite=true, then GET ?favorite=true | ✓ count=1 |
-| 10 | /profile totalChars ≥ 5, favoriteChars ≥ 5 | GET /api/stats | ✓ total=6 favorites=4 |
-| 11 | Cross-user isolation: B's list empty | GET /api/history as B | ✓ count=0 |
-| 12 | B can't delete A's record | DELETE /api/history/[A's id] as B | ✓ 404 |
-| 13 | A deletes own record | DELETE /api/history/[A's id] as A | ✓ 204 |
-| 14 | Logout | POST /api/auth/logout | ✓ 204 |
+| #   | Plan B step                                   | API check                                       | Result                                                             |
+| --- | --------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------ |
+| 1   | Register alice                                | POST /api/auth/register userA                   | ✓ 200                                                              |
+| 2   | Register second user                          | POST /api/auth/register userB                   | ✓ 200                                                              |
+| 3   | Login alice                                   | POST /api/auth/login (cookie: auth_token)       | ✓ cookie captured                                                  |
+| 4   | Login second user                             | POST /api/auth/login                            | ✓ cookie captured                                                  |
+| 5   | Type 你好世界 → 1 history record              | POST /api/history kind=text2pinyin              | ✓ id=3 (returns new id; auto-increment still increments on dedupe) |
+| 6   | Re-type → dedupe (1 record)                   | POST same again                                 | ✓ **same id** returned (dedupe within 60s)                         |
+| 7   | Viterbi 拼音→汉字 → 1 more record             | POST /api/history kind=pinyin2text              | ✓ id=4                                                             |
+| 8   | /history shows 2                              | GET /api/history                                | ✓ count=2                                                          |
+| 9   | Favorite one → /history?favorite=true shows 1 | PATCH is_favorite=true, then GET ?favorite=true | ✓ count=1                                                          |
+| 10  | /profile totalChars ≥ 5, favoriteChars ≥ 5    | GET /api/stats                                  | ✓ total=6 favorites=4                                              |
+| 11  | Cross-user isolation: B's list empty          | GET /api/history as B                           | ✓ count=0                                                          |
+| 12  | B can't delete A's record                     | DELETE /api/history/[A's id] as B               | ✓ 404                                                              |
+| 13  | A deletes own record                          | DELETE /api/history/[A's id] as A               | ✓ 204                                                              |
+| 14  | Logout                                        | POST /api/auth/logout                           | ✓ 204                                                              |
 
 ## What I cannot test (browser-only)
 

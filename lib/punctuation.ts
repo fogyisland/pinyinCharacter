@@ -1,9 +1,25 @@
 export const SENT_END: ReadonlySet<string> = new Set(['。', '！', '？']);
 
 const PUNCT: ReadonlySet<string> = new Set([
-  '。', '，', '！', '？', '；', '：', '、',
-  '“', '”', '‘', '’',
-  '「', '」', '（', '）', '(', ')', '…', '—',
+  '。',
+  '，',
+  '！',
+  '？',
+  '；',
+  '：',
+  '、',
+  '“',
+  '”',
+  '‘',
+  '’',
+  '「',
+  '」',
+  '（',
+  '）',
+  '(',
+  ')',
+  '…',
+  '—',
 ]);
 
 export function isPunct(ch: string): boolean {
@@ -12,7 +28,9 @@ export function isPunct(ch: string): boolean {
 }
 
 export function stripPunct(s: string): string {
-  return Array.from(s).filter(ch => !isPunct(ch)).join('');
+  return Array.from(s)
+    .filter((ch) => !isPunct(ch))
+    .join('');
 }
 
 /**
@@ -27,7 +45,7 @@ export function stripPunct(s: string): string {
  */
 export function buildBreakpoints(chunk: { content: string[] }): Set<number> {
   const set = new Set<number>();
-  const chars = chunk.content.flatMap(line => Array.from(line));
+  const chars = chunk.content.flatMap((line) => Array.from(line));
   let cellIdx = 0;
   for (let i = 0; i < chars.length; i++) {
     const ch = chars[i]!;

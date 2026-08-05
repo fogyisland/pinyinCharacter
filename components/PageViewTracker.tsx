@@ -9,7 +9,7 @@ export function PageViewTracker() {
   const pathname = usePathname();
   useEffect(() => {
     if (!pathname) return;
-    if (EXCLUDE_PREFIXES.some(p => pathname.startsWith(p))) return;
+    if (EXCLUDE_PREFIXES.some((p) => pathname.startsWith(p))) return;
     fetch('/api/track/pageview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

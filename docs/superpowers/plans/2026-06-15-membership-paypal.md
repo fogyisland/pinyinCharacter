@@ -16,62 +16,62 @@
 
 ### New files (28)
 
-| Path | Responsibility | LoC |
-|---|---|---|
-| `scripts/migrate-membership.ts` | Idempotent migration: 4 tables + 4 plans + 16 feature rows | 100 |
-| `lib/membership.ts` | Plan CRUD, grant/revoke, feature queries | 280 |
-| `lib/membership-stats.ts` | Aggregate stats for admin list page | 60 |
-| `lib/paypal.ts` | Config reader, OAuth token cache, create/capture/verify | 180 |
-| `lib/payment-orders.ts` | payment_orders table CRUD | 50 |
-| `app/api/admin/memberships/route.ts` | GET (list) + POST (grant) | 90 |
-| `app/api/admin/memberships/[id]/revoke/route.ts` | POST revoke | 50 |
-| `app/api/admin/memberships/plans/route.ts` | GET list plans | 50 |
-| `app/api/admin/memberships/plans/[id]/route.ts` | PATCH plan | 70 |
-| `app/api/admin/memberships/plans/seed/route.ts` | POST re-seed | 25 |
-| `app/api/admin/paypal/config/route.ts` | GET + PUT (mask secrets) | 90 |
-| `app/api/admin/paypal/test-connection/route.ts` | POST (test auth) | 40 |
-| `app/api/membership/plans/route.ts` | Public plan list (enabled only) | 25 |
-| `app/api/membership/checkout/route.ts` | Create PayPal order | 70 |
-| `app/api/membership/orders/[id]/route.ts` | Order status for success page | 40 |
-| `app/api/membership/me/route.ts` | Current user's active membership | 35 |
-| `app/api/webhooks/paypal/route.ts` | Signature verify + event handler | 130 |
-| `app/api/ai/char-explain/route.ts` | Gated AI explain endpoint | 60 |
-| `app/admin/memberships/page.tsx` | Admin list + stats | 250 |
-| `app/admin/memberships/plans/page.tsx` | Plan editor | 200 |
-| `app/admin/memberships/config/page.tsx` | PayPal config UI | 180 |
-| `app/membership/page.tsx` | User plan grid | 120 |
-| `app/membership/success/page.tsx` | Client poll success | 80 |
-| `app/membership/cancel/page.tsx` | Static cancel | 20 |
-| `components/admin/memberships/PlanRow.tsx` | Editable plan row | 120 |
-| `components/admin/memberships/ManualGrantDrawer.tsx` | Grant form drawer | 150 |
-| `components/admin/memberships/RevokeButton.tsx` | Revoke confirm | 60 |
-| `components/membership/PlanCard.tsx` | Plan display + buy | 80 |
-| `components/membership/CheckoutButton.tsx` | Checkout client island | 60 |
-| `components/membership/MembershipStatusCard.tsx` | Profile status | 50 |
+| Path                                                 | Responsibility                                             | LoC |
+| ---------------------------------------------------- | ---------------------------------------------------------- | --- |
+| `scripts/migrate-membership.ts`                      | Idempotent migration: 4 tables + 4 plans + 16 feature rows | 100 |
+| `lib/membership.ts`                                  | Plan CRUD, grant/revoke, feature queries                   | 280 |
+| `lib/membership-stats.ts`                            | Aggregate stats for admin list page                        | 60  |
+| `lib/paypal.ts`                                      | Config reader, OAuth token cache, create/capture/verify    | 180 |
+| `lib/payment-orders.ts`                              | payment_orders table CRUD                                  | 50  |
+| `app/api/admin/memberships/route.ts`                 | GET (list) + POST (grant)                                  | 90  |
+| `app/api/admin/memberships/[id]/revoke/route.ts`     | POST revoke                                                | 50  |
+| `app/api/admin/memberships/plans/route.ts`           | GET list plans                                             | 50  |
+| `app/api/admin/memberships/plans/[id]/route.ts`      | PATCH plan                                                 | 70  |
+| `app/api/admin/memberships/plans/seed/route.ts`      | POST re-seed                                               | 25  |
+| `app/api/admin/paypal/config/route.ts`               | GET + PUT (mask secrets)                                   | 90  |
+| `app/api/admin/paypal/test-connection/route.ts`      | POST (test auth)                                           | 40  |
+| `app/api/membership/plans/route.ts`                  | Public plan list (enabled only)                            | 25  |
+| `app/api/membership/checkout/route.ts`               | Create PayPal order                                        | 70  |
+| `app/api/membership/orders/[id]/route.ts`            | Order status for success page                              | 40  |
+| `app/api/membership/me/route.ts`                     | Current user's active membership                           | 35  |
+| `app/api/webhooks/paypal/route.ts`                   | Signature verify + event handler                           | 130 |
+| `app/api/ai/char-explain/route.ts`                   | Gated AI explain endpoint                                  | 60  |
+| `app/admin/memberships/page.tsx`                     | Admin list + stats                                         | 250 |
+| `app/admin/memberships/plans/page.tsx`               | Plan editor                                                | 200 |
+| `app/admin/memberships/config/page.tsx`              | PayPal config UI                                           | 180 |
+| `app/membership/page.tsx`                            | User plan grid                                             | 120 |
+| `app/membership/success/page.tsx`                    | Client poll success                                        | 80  |
+| `app/membership/cancel/page.tsx`                     | Static cancel                                              | 20  |
+| `components/admin/memberships/PlanRow.tsx`           | Editable plan row                                          | 120 |
+| `components/admin/memberships/ManualGrantDrawer.tsx` | Grant form drawer                                          | 150 |
+| `components/admin/memberships/RevokeButton.tsx`      | Revoke confirm                                             | 60  |
+| `components/membership/PlanCard.tsx`                 | Plan display + buy                                         | 80  |
+| `components/membership/CheckoutButton.tsx`           | Checkout client island                                     | 60  |
+| `components/membership/MembershipStatusCard.tsx`     | Profile status                                             | 50  |
 
 ### New tests (10)
 
-| Path | Covers |
-|---|---|
-| `tests/unit/lib/membership.test.ts` | plan CRUD, grant, revoke, hasFeature, getMyFeatures |
-| `tests/unit/lib/paypal.test.ts` | token cache, getPayPalConfig, verify (mocked fetch) |
-| `tests/integration/api/admin-memberships.test.ts` | admin grant/list/revoke |
-| `tests/integration/api/admin-memberships-plans.test.ts` | plan PATCH, seed |
-| `tests/integration/api/admin-paypal-config.test.ts` | config GET/PUT, masking |
-| `tests/integration/api/membership-plans.test.ts` | public list (enabled only) |
-| `tests/integration/api/membership-checkout.test.ts` | create PayPal order (mocked) |
-| `tests/integration/api/membership-me.test.ts` | current user status |
-| `tests/integration/api/webhooks-paypal.test.ts` | signature verify + idempotency |
-| `tests/integration/api/ai-char-explain.test.ts` | feature gate |
+| Path                                                    | Covers                                              |
+| ------------------------------------------------------- | --------------------------------------------------- |
+| `tests/unit/lib/membership.test.ts`                     | plan CRUD, grant, revoke, hasFeature, getMyFeatures |
+| `tests/unit/lib/paypal.test.ts`                         | token cache, getPayPalConfig, verify (mocked fetch) |
+| `tests/integration/api/admin-memberships.test.ts`       | admin grant/list/revoke                             |
+| `tests/integration/api/admin-memberships-plans.test.ts` | plan PATCH, seed                                    |
+| `tests/integration/api/admin-paypal-config.test.ts`     | config GET/PUT, masking                             |
+| `tests/integration/api/membership-plans.test.ts`        | public list (enabled only)                          |
+| `tests/integration/api/membership-checkout.test.ts`     | create PayPal order (mocked)                        |
+| `tests/integration/api/membership-me.test.ts`           | current user status                                 |
+| `tests/integration/api/webhooks-paypal.test.ts`         | signature verify + idempotency                      |
+| `tests/integration/api/ai-char-explain.test.ts`         | feature gate                                        |
 
 ### Modified files (4)
 
-| Path | Change |
-|---|---|
-| `lib/audit.ts` | Add 6 events to `AuditEvent` union |
-| `lib/api-admin.ts` | Add membership + paypal client wrappers |
-| `components/admin/AdminSidebar.tsx` | Add `/admin/memberships` link |
-| `components/Header.tsx` | Add "会员" link for logged-in users |
+| Path                                | Change                                  |
+| ----------------------------------- | --------------------------------------- |
+| `lib/audit.ts`                      | Add 6 events to `AuditEvent` union      |
+| `lib/api-admin.ts`                  | Add membership + paypal client wrappers |
+| `components/admin/AdminSidebar.tsx` | Add `/admin/memberships` link           |
+| `components/Header.tsx`             | Add "会员" link for logged-in users     |
 
 ---
 
@@ -96,6 +96,7 @@ The webhook handler treats `CHECKOUT.ORDER.APPROVED` as "user clicked pay" and c
 ## Task 1: DB migration script — create all 4 tables
 
 **Files:**
+
 - Create: `scripts/migrate-membership.ts`
 - Test: `tests/integration/api/admin-memberships.test.ts` (will be created in Task 8)
 
@@ -181,15 +182,51 @@ const DDL = [
 ];
 
 const SEED_PLANS = [
-  { plan_key: 'monthly_usd', display_name: '月度会员', duration_days: 30, amount: '3.00', currency: 'USD', enabled: 1, display_order: 1 },
-  { plan_key: 'yearly_usd', display_name: '年度会员', duration_days: 365, amount: '15.00', currency: 'USD', enabled: 1, display_order: 2 },
-  { plan_key: 'monthly_cny', display_name: '月度会员', duration_days: 30, amount: '15.00', currency: 'CNY', enabled: 0, display_order: 3 },
-  { plan_key: 'yearly_cny', display_name: '年度会员', duration_days: 365, amount: '100.00', currency: 'CNY', enabled: 0, display_order: 4 },
+  {
+    plan_key: 'monthly_usd',
+    display_name: '月度会员',
+    duration_days: 30,
+    amount: '3.00',
+    currency: 'USD',
+    enabled: 1,
+    display_order: 1,
+  },
+  {
+    plan_key: 'yearly_usd',
+    display_name: '年度会员',
+    duration_days: 365,
+    amount: '15.00',
+    currency: 'USD',
+    enabled: 1,
+    display_order: 2,
+  },
+  {
+    plan_key: 'monthly_cny',
+    display_name: '月度会员',
+    duration_days: 30,
+    amount: '15.00',
+    currency: 'CNY',
+    enabled: 0,
+    display_order: 3,
+  },
+  {
+    plan_key: 'yearly_cny',
+    display_name: '年度会员',
+    duration_days: 365,
+    amount: '100.00',
+    currency: 'CNY',
+    enabled: 0,
+    display_order: 4,
+  },
 ];
 
 const ALL_FEATURES = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'];
 
-export async function migrateMembership(): Promise<{ created: number; seeded: number; featureRows: number }> {
+export async function migrateMembership(): Promise<{
+  created: number;
+  seeded: number;
+  featureRows: number;
+}> {
   const pool = getPool();
   for (const sql of DDL) await pool.query(sql);
 
@@ -199,7 +236,15 @@ export async function migrateMembership(): Promise<{ created: number; seeded: nu
       `INSERT IGNORE INTO membership_plans
          (plan_key, display_name, duration_days, amount, currency, enabled, display_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [p.plan_key, p.display_name, p.duration_days, p.amount, p.currency, p.enabled, p.display_order],
+      [
+        p.plan_key,
+        p.display_name,
+        p.duration_days,
+        p.amount,
+        p.currency,
+        p.enabled,
+        p.display_order,
+      ],
     );
     seeded += (res as any).affectedRows > 0 ? 1 : 0;
   }
@@ -222,12 +267,17 @@ export async function migrateMembership(): Promise<{ created: number; seeded: nu
 
 async function main() {
   const r = await migrateMembership();
-  console.error(`[migrate-membership] tables=4, plans seeded=${r.seeded}, feature_rows=${r.featureRows}`);
+  console.error(
+    `[migrate-membership] tables=4, plans seeded=${r.seeded}, feature_rows=${r.featureRows}`,
+  );
   await closePool();
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 ```
 
@@ -238,6 +288,7 @@ pnpm tsx --env-file=.env scripts/migrate-membership.ts
 ```
 
 Expected output:
+
 ```
 [migrate-membership] tables=4, plans seeded=4, feature_rows=16
 ```
@@ -276,6 +327,7 @@ git commit -m "feat(membership): idempotent migration — 4 tables + 4 plans + 1
 ## Task 2: `lib/membership.ts` — types, plan list, getPlanByKey
 
 **Files:**
+
 - Create: `lib/membership.ts`
 - Test: `tests/unit/lib/membership.test.ts`
 
@@ -288,8 +340,13 @@ Create `tests/unit/lib/membership.test.ts`:
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { getPool, closePool } from '@/lib/db';
 import {
-  PLAN_KEYS, type PlanKey, type MembershipFeature,
-  listPlans, getPlanByKey, getPlanById, seedDefaultPlans,
+  PLAN_KEYS,
+  type PlanKey,
+  type MembershipFeature,
+  listPlans,
+  getPlanByKey,
+  getPlanById,
+  seedDefaultPlans,
 } from '@/lib/membership';
 
 const HAS_DB = !!process.env.DATABASE_URL_TEST;
@@ -297,7 +354,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('membership plans', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -329,7 +387,9 @@ d('membership plans', () => {
     await pool.query('DELETE FROM membership_plans');
   });
 
-  afterAll(async () => { await closePool(); });
+  afterAll(async () => {
+    await closePool();
+  });
 
   it('PLAN_KEYS has exactly 4 plan keys', () => {
     expect(PLAN_KEYS).toEqual(['monthly_usd', 'yearly_usd', 'monthly_cny', 'yearly_cny']);
@@ -353,7 +413,7 @@ d('membership plans', () => {
     const all = await listPlans();
     const enabled = await listPlans({ enabledOnly: true });
     expect(enabled.length).toBeLessThan(all.length);
-    expect(enabled.every(p => p.enabled)).toBe(true);
+    expect(enabled.every((p) => p.enabled)).toBe(true);
   });
 
   it('getPlanByKey returns full row with features', async () => {
@@ -397,18 +457,17 @@ import { getPool } from './db';
 import { cache } from 'react';
 
 export const PLAN_KEYS = ['monthly_usd', 'yearly_usd', 'monthly_cny', 'yearly_cny'] as const;
-export type PlanKey = typeof PLAN_KEYS[number];
+export type PlanKey = (typeof PLAN_KEYS)[number];
 
 export type MembershipCurrency = 'CNY' | 'USD';
-export type MembershipFeature =
-  | 'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts';
+export type MembershipFeature = 'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts';
 
 export interface MembershipPlanRow {
   id: number;
   planKey: PlanKey;
   displayName: string;
   durationDays: number;
-  amount: string;       // DECIMAL(10,2) as string for precision
+  amount: string; // DECIMAL(10,2) as string for precision
   currency: MembershipCurrency;
   enabled: boolean;
   displayOrder: number;
@@ -416,9 +475,14 @@ export interface MembershipPlanRow {
 }
 
 interface PlanDbRow {
-  id: number; plan_key: string; display_name: string;
-  duration_days: number; amount: string; currency: MembershipCurrency;
-  enabled: number; display_order: number;
+  id: number;
+  plan_key: string;
+  display_name: string;
+  duration_days: number;
+  amount: string;
+  currency: MembershipCurrency;
+  enabled: number;
+  display_order: number;
 }
 
 async function loadFeatures(planId: number): Promise<MembershipFeature[]> {
@@ -426,7 +490,7 @@ async function loadFeatures(planId: number): Promise<MembershipFeature[]> {
     `SELECT feature_key FROM membership_plan_features WHERE plan_id = ?`,
     [planId],
   );
-  return rows.map(r => r.feature_key as MembershipFeature);
+  return rows.map((r) => r.feature_key as MembershipFeature);
 }
 
 function mapPlanRow(r: PlanDbRow, features: MembershipFeature[]): MembershipPlanRow {
@@ -443,13 +507,15 @@ function mapPlanRow(r: PlanDbRow, features: MembershipFeature[]): MembershipPlan
   };
 }
 
-export async function listPlans(opts: { enabledOnly?: boolean } = {}): Promise<MembershipPlanRow[]> {
+export async function listPlans(
+  opts: { enabledOnly?: boolean } = {},
+): Promise<MembershipPlanRow[]> {
   const where = opts.enabledOnly ? 'WHERE enabled = 1' : '';
   const [rows] = await getPool().query<PlanDbRow[]>(
     `SELECT id, plan_key, display_name, duration_days, amount, currency, enabled, display_order
      FROM membership_plans ${where} ORDER BY display_order ASC`,
   );
-  return Promise.all(rows.map(async r => mapPlanRow(r, await loadFeatures(r.id))));
+  return Promise.all(rows.map(async (r) => mapPlanRow(r, await loadFeatures(r.id))));
 }
 
 export async function getPlanByKey(key: PlanKey): Promise<MembershipPlanRow | null> {
@@ -473,12 +539,49 @@ export async function getPlanById(id: number): Promise<MembershipPlanRow | null>
 }
 
 const SEED_PLANS = [
-  { plan_key: 'monthly_usd', display_name: '月度会员', duration_days: 30, amount: '3.00', currency: 'USD', enabled: 1, display_order: 1 },
-  { plan_key: 'yearly_usd', display_name: '年度会员', duration_days: 365, amount: '15.00', currency: 'USD', enabled: 1, display_order: 2 },
-  { plan_key: 'monthly_cny', display_name: '月度会员', duration_days: 30, amount: '15.00', currency: 'CNY', enabled: 0, display_order: 3 },
-  { plan_key: 'yearly_cny', display_name: '年度会员', duration_days: 365, amount: '100.00', currency: 'CNY', enabled: 0, display_order: 4 },
+  {
+    plan_key: 'monthly_usd',
+    display_name: '月度会员',
+    duration_days: 30,
+    amount: '3.00',
+    currency: 'USD',
+    enabled: 1,
+    display_order: 1,
+  },
+  {
+    plan_key: 'yearly_usd',
+    display_name: '年度会员',
+    duration_days: 365,
+    amount: '15.00',
+    currency: 'USD',
+    enabled: 1,
+    display_order: 2,
+  },
+  {
+    plan_key: 'monthly_cny',
+    display_name: '月度会员',
+    duration_days: 30,
+    amount: '15.00',
+    currency: 'CNY',
+    enabled: 0,
+    display_order: 3,
+  },
+  {
+    plan_key: 'yearly_cny',
+    display_name: '年度会员',
+    duration_days: 365,
+    amount: '100.00',
+    currency: 'CNY',
+    enabled: 0,
+    display_order: 4,
+  },
 ];
-const ALL_FEATURES: MembershipFeature[] = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'];
+const ALL_FEATURES: MembershipFeature[] = [
+  'unlimited_history',
+  'download_pdf',
+  'ai_calls',
+  'priority_tts',
+];
 
 export async function seedDefaultPlans(): Promise<number> {
   const pool = getPool();
@@ -488,7 +591,15 @@ export async function seedDefaultPlans(): Promise<number> {
       `INSERT IGNORE INTO membership_plans
          (plan_key, display_name, duration_days, amount, currency, enabled, display_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [p.plan_key, p.display_name, p.duration_days, p.amount, p.currency, p.enabled, p.display_order],
+      [
+        p.plan_key,
+        p.display_name,
+        p.duration_days,
+        p.amount,
+        p.currency,
+        p.enabled,
+        p.display_order,
+      ],
     );
     if ((res as any).affectedRows > 0) inserted++;
   }
@@ -508,33 +619,61 @@ export async function seedDefaultPlans(): Promise<number> {
 
 export type GrantSource = 'manual' | 'paypal';
 export interface GrantMembershipArgs {
-  targetUserId: number; planKey: PlanKey; note?: string | null;
-  grantedBy: number | null; source: GrantSource; sourcePaymentOrderId?: number | null;
+  targetUserId: number;
+  planKey: PlanKey;
+  note?: string | null;
+  grantedBy: number | null;
+  source: GrantSource;
+  sourcePaymentOrderId?: number | null;
 }
-export interface GrantedMembership { id: number; expiresAt: Date; }
+export interface GrantedMembership {
+  id: number;
+  expiresAt: Date;
+}
 export async function grantMembership(_args: GrantMembershipArgs): Promise<GrantedMembership> {
   throw new Error('grantMembership not yet implemented');
 }
 
 export interface MembershipRow {
-  id: number; userId: number; username: string | null;
-  planKey: string; source: GrantSource; amount: string | null; currency: string | null;
-  grantedAt: string; expiresAt: string; revokedAt: string | null; note: string | null;
+  id: number;
+  userId: number;
+  username: string | null;
+  planKey: string;
+  source: GrantSource;
+  amount: string | null;
+  currency: string | null;
+  grantedAt: string;
+  expiresAt: string;
+  revokedAt: string | null;
+  note: string | null;
   grantedBy: number | null;
 }
-export interface ListMembershipsOpts { userId?: number; planKey?: string; page?: number; pageSize?: number; }
-export interface ListMembershipsResult { items: MembershipRow[]; total: number; page: number; pageSize: number; }
+export interface ListMembershipsOpts {
+  userId?: number;
+  planKey?: string;
+  page?: number;
+  pageSize?: number;
+}
+export interface ListMembershipsResult {
+  items: MembershipRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 export async function listMemberships(_opts: ListMembershipsOpts): Promise<ListMembershipsResult> {
   throw new Error('listMemberships not yet implemented');
 }
 
-export async function revokeMembership(_id: number, _by: number, _reason?: string): Promise<MembershipRow> {
+export async function revokeMembership(
+  _id: number,
+  _by: number,
+  _reason?: string,
+): Promise<MembershipRow> {
   throw new Error('revokeMembership not yet implemented');
 }
 
 export type ActiveMembership =
-  | { active: true; planKey: PlanKey; expiresAt: string; expiresInDays: number }
-  | { active: false };
+  { active: true; planKey: PlanKey; expiresAt: string; expiresInDays: number } | { active: false };
 export const getMyActiveMembership = cache(async (userId: number): Promise<ActiveMembership> => {
   throw new Error('getMyActiveMembership not yet implemented');
 });
@@ -567,6 +706,7 @@ git commit -m "feat(membership): plan types + list/get/seed — Task 2"
 ## Task 3: `lib/membership.ts` — grant, list, revoke
 
 **Files:**
+
 - Modify: `lib/membership.ts`
 - Test: `tests/unit/lib/membership.test.ts` (extend)
 
@@ -575,66 +715,96 @@ git commit -m "feat(membership): plan types + list/get/seed — Task 2"
 Append to `tests/unit/lib/membership.test.ts` (inside `d('membership plans', ...)` block, after the existing tests but before the closing `});`):
 
 ```ts
-  // --- grant / list / revoke ---------------------------------------
+// --- grant / list / revoke ---------------------------------------
 
-  let testUserId: number;
-  beforeEach(async () => {
-    const pool = getPool();
-    await pool.query(`INSERT INTO users (username, password_hash) VALUES ('mem_test_${Date.now()}', 'x')`);
-    const [r] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
-    testUserId = Number(r[0].id);
-  });
+let testUserId: number;
+beforeEach(async () => {
+  const pool = getPool();
+  await pool.query(
+    `INSERT INTO users (username, password_hash) VALUES ('mem_test_${Date.now()}', 'x')`,
+  );
+  const [r] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
+  testUserId = Number(r[0].id);
+});
 
-  afterEach(async () => {
-    const pool = getPool();
-    await pool.query(`DELETE FROM memberships WHERE user_id = ?`, [testUserId]);
-    await pool.query(`DELETE FROM users WHERE id = ?`, [testUserId]);
-  });
+afterEach(async () => {
+  const pool = getPool();
+  await pool.query(`DELETE FROM memberships WHERE user_id = ?`, [testUserId]);
+  await pool.query(`DELETE FROM users WHERE id = ?`, [testUserId]);
+});
 
-  it('grantMembership inserts row with expires_at = now + duration_days', async () => {
-    await seedDefaultPlans();
-    const result = await grantMembership({
-      targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual',
-    });
-    expect(result.id).toBeGreaterThan(0);
-    const days = Math.round((result.expiresAt.getTime() - Date.now()) / 86400_000);
-    expect(days).toBeGreaterThanOrEqual(29);
-    expect(days).toBeLessThanOrEqual(31);
+it('grantMembership inserts row with expires_at = now + duration_days', async () => {
+  await seedDefaultPlans();
+  const result = await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  expect(result.id).toBeGreaterThan(0);
+  const days = Math.round((result.expiresAt.getTime() - Date.now()) / 86400_000);
+  expect(days).toBeGreaterThanOrEqual(29);
+  expect(days).toBeLessThanOrEqual(31);
+});
 
-  it('grantMembership extends from current active expires_at (renewal)', async () => {
-    await seedDefaultPlans();
-    const first = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
-    const second = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
-    // Second expiry should be ~60 days from now (extends by 30)
-    const days = Math.round((second.expiresAt.getTime() - Date.now()) / 86400_000);
-    expect(days).toBeGreaterThanOrEqual(58);
-    expect(days).toBeLessThanOrEqual(62);
+it('grantMembership extends from current active expires_at (renewal)', async () => {
+  await seedDefaultPlans();
+  const first = await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  const second = await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
+  });
+  // Second expiry should be ~60 days from now (extends by 30)
+  const days = Math.round((second.expiresAt.getTime() - Date.now()) / 86400_000);
+  expect(days).toBeGreaterThanOrEqual(58);
+  expect(days).toBeLessThanOrEqual(62);
+});
 
-  it('grantMembership with invalid planKey throws', async () => {
-    await expect(
-      grantMembership({ targetUserId: testUserId, planKey: 'nope' as any, grantedBy: null, source: 'manual' }),
-    ).rejects.toThrow();
-  });
+it('grantMembership with invalid planKey throws', async () => {
+  await expect(
+    grantMembership({
+      targetUserId: testUserId,
+      planKey: 'nope' as any,
+      grantedBy: null,
+      source: 'manual',
+    }),
+  ).rejects.toThrow();
+});
 
-  it('listMemberships returns paginated rows joined with username', async () => {
-    await seedDefaultPlans();
-    await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
-    const result = await listMemberships({ userId: testUserId, pageSize: 10 });
-    expect(result.total).toBe(1);
-    expect(result.items[0].userId).toBe(testUserId);
-    expect(result.items[0].planKey).toBe('monthly_usd');
-    expect(result.items[0].source).toBe('manual');
+it('listMemberships returns paginated rows joined with username', async () => {
+  await seedDefaultPlans();
+  await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  const result = await listMemberships({ userId: testUserId, pageSize: 10 });
+  expect(result.total).toBe(1);
+  expect(result.items[0].userId).toBe(testUserId);
+  expect(result.items[0].planKey).toBe('monthly_usd');
+  expect(result.items[0].source).toBe('manual');
+});
 
-  it('revokeMembership sets revoked_at and is idempotent (second call throws already_revoked)', async () => {
-    await seedDefaultPlans();
-    const m = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
-    const r = await revokeMembership(m.id, testUserId, 'test reason');
-    expect(r.revokedAt).not.toBeNull();
-    await expect(revokeMembership(m.id, testUserId)).rejects.toThrow(/already_revoked/);
+it('revokeMembership sets revoked_at and is idempotent (second call throws already_revoked)', async () => {
+  await seedDefaultPlans();
+  const m = await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  const r = await revokeMembership(m.id, testUserId, 'test reason');
+  expect(r.revokedAt).not.toBeNull();
+  await expect(revokeMembership(m.id, testUserId)).rejects.toThrow(/already_revoked/);
+});
 ```
 
 - [ ] **Step 2: Run the test to verify the new tests fail**
@@ -670,8 +840,15 @@ export async function grantMembership(args: GrantMembershipArgs): Promise<Grante
        (user_id, plan_key, source, amount, currency, source_payment_order_id, granted_by, note, expires_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      args.targetUserId, args.planKey, args.source, plan.amount, plan.currency,
-      args.sourcePaymentOrderId ?? null, args.grantedBy, args.note ?? null, expiresAt,
+      args.targetUserId,
+      args.planKey,
+      args.source,
+      plan.amount,
+      plan.currency,
+      args.sourcePaymentOrderId ?? null,
+      args.grantedBy,
+      args.note ?? null,
+      expiresAt,
     ],
   );
   return { id: Number((res as any).insertId), expiresAt };
@@ -683,8 +860,14 @@ export async function listMemberships(opts: ListMembershipsOpts): Promise<ListMe
   const offset = (page - 1) * pageSize;
   const where: string[] = [];
   const params: any[] = [];
-  if (opts.userId !== undefined) { where.push('m.user_id = ?'); params.push(opts.userId); }
-  if (opts.planKey) { where.push('m.plan_key = ?'); params.push(opts.planKey); }
+  if (opts.userId !== undefined) {
+    where.push('m.user_id = ?');
+    params.push(opts.userId);
+  }
+  if (opts.planKey) {
+    where.push('m.plan_key = ?');
+    params.push(opts.planKey);
+  }
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   const pool = getPool();
@@ -703,20 +886,31 @@ export async function listMemberships(opts: ListMembershipsOpts): Promise<ListMe
   );
 
   return {
-    items: (rows as any[]).map(r => ({
-      id: Number(r.id), userId: Number(r.user_id), username: r.username,
-      planKey: r.plan_key, source: r.source as GrantSource,
+    items: (rows as any[]).map((r) => ({
+      id: Number(r.id),
+      userId: Number(r.user_id),
+      username: r.username,
+      planKey: r.plan_key,
+      source: r.source as GrantSource,
       amount: r.amount != null ? String(r.amount) : null,
-      currency: r.currency, grantedAt: new Date(r.granted_at).toISOString(),
+      currency: r.currency,
+      grantedAt: new Date(r.granted_at).toISOString(),
       expiresAt: new Date(r.expires_at).toISOString(),
       revokedAt: r.revoked_at ? new Date(r.revoked_at).toISOString() : null,
-      note: r.note, grantedBy: r.granted_by != null ? Number(r.granted_by) : null,
+      note: r.note,
+      grantedBy: r.granted_by != null ? Number(r.granted_by) : null,
     })),
-    total: Number(total), page, pageSize,
+    total: Number(total),
+    page,
+    pageSize,
   };
 }
 
-export async function revokeMembership(id: number, by: number, reason?: string): Promise<MembershipRow> {
+export async function revokeMembership(
+  id: number,
+  by: number,
+  reason?: string,
+): Promise<MembershipRow> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT id, revoked_at FROM memberships WHERE id = ? LIMIT 1`,
@@ -730,7 +924,7 @@ export async function revokeMembership(id: number, by: number, reason?: string):
     [by, reason ?? null, id],
   );
   const refreshed = await listMemberships({ userId: undefined });
-  const found = refreshed.items.find(i => i.id === id);
+  const found = refreshed.items.find((i) => i.id === id);
   if (!found) throw new Error('membership_not_found');
   return found;
 }
@@ -756,6 +950,7 @@ git commit -m "feat(membership): grant + list + revoke (renewal extends from cur
 ## Task 4: `lib/membership.ts` — getMyActiveMembership + hasFeature + getMyFeatures
 
 **Files:**
+
 - Modify: `lib/membership.ts`
 - Test: `tests/unit/lib/membership.test.ts` (extend)
 
@@ -764,52 +959,72 @@ git commit -m "feat(membership): grant + list + revoke (renewal extends from cur
 Append to `tests/unit/lib/membership.test.ts` (inside the `d('membership plans', ...)` block, before the closing `});`):
 
 ```ts
-  // --- getMyActiveMembership + hasFeature + getMyFeatures -------
+// --- getMyActiveMembership + hasFeature + getMyFeatures -------
 
-  it('getMyActiveMembership returns active:false for user with no membership', async () => {
-    const r = await getMyActiveMembership(testUserId);
-    expect(r.active).toBe(false);
-  });
+it('getMyActiveMembership returns active:false for user with no membership', async () => {
+  const r = await getMyActiveMembership(testUserId);
+  expect(r.active).toBe(false);
+});
 
-  it('getMyActiveMembership returns active:true with expiresAt + planKey', async () => {
-    await seedDefaultPlans();
-    await grantMembership({ targetUserId: testUserId, planKey: 'yearly_usd', grantedBy: null, source: 'manual' });
-    const r = await getMyActiveMembership(testUserId);
-    expect(r.active).toBe(true);
-    if (r.active) {
-      expect(r.planKey).toBe('yearly_usd');
-      expect(r.expiresInDays).toBeGreaterThan(360);
-    }
+it('getMyActiveMembership returns active:true with expiresAt + planKey', async () => {
+  await seedDefaultPlans();
+  await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'yearly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  const r = await getMyActiveMembership(testUserId);
+  expect(r.active).toBe(true);
+  if (r.active) {
+    expect(r.planKey).toBe('yearly_usd');
+    expect(r.expiresInDays).toBeGreaterThan(360);
+  }
+});
 
-  it('getMyActiveMembership ignores revoked rows', async () => {
-    await seedDefaultPlans();
-    const m = await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
-    await revokeMembership(m.id, testUserId);
-    const r = await getMyActiveMembership(testUserId);
-    expect(r.active).toBe(false);
+it('getMyActiveMembership ignores revoked rows', async () => {
+  await seedDefaultPlans();
+  const m = await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  await revokeMembership(m.id, testUserId);
+  const r = await getMyActiveMembership(testUserId);
+  expect(r.active).toBe(false);
+});
 
-  it('hasFeature returns true for active plan that includes the feature', async () => {
-    await seedDefaultPlans();
-    await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
-    const ok = await hasFeature(testUserId, 'ai_calls');
-    expect(ok).toBe(true);
+it('hasFeature returns true for active plan that includes the feature', async () => {
+  await seedDefaultPlans();
+  await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  const ok = await hasFeature(testUserId, 'ai_calls');
+  expect(ok).toBe(true);
+});
 
-  it('hasFeature returns false for user with no membership', async () => {
-    const ok = await hasFeature(testUserId, 'ai_calls');
-    expect(ok).toBe(false);
-  });
+it('hasFeature returns false for user with no membership', async () => {
+  const ok = await hasFeature(testUserId, 'ai_calls');
+  expect(ok).toBe(false);
+});
 
-  it('getMyFeatures returns a Set with 4 features for active plan', async () => {
-    await seedDefaultPlans();
-    await grantMembership({ targetUserId: testUserId, planKey: 'monthly_usd', grantedBy: null, source: 'manual' });
-    const set = await getMyFeatures(testUserId);
-    expect(set).toBeInstanceOf(Set);
-    expect(set.size).toBe(4);
-    expect(set.has('ai_calls')).toBe(true);
+it('getMyFeatures returns a Set with 4 features for active plan', async () => {
+  await seedDefaultPlans();
+  await grantMembership({
+    targetUserId: testUserId,
+    planKey: 'monthly_usd',
+    grantedBy: null,
+    source: 'manual',
   });
+  const set = await getMyFeatures(testUserId);
+  expect(set).toBeInstanceOf(Set);
+  expect(set.size).toBe(4);
+  expect(set.has('ai_calls')).toBe(true);
+});
 ```
 
 - [ ] **Step 2: Run the new tests to verify they fail**
@@ -853,7 +1068,7 @@ export const getMyFeatures = cache(async (userId: number): Promise<Set<Membershi
      WHERE m.user_id = ? AND m.revoked_at IS NULL AND m.expires_at > NOW()`,
     [userId],
   );
-  return new Set(rows.map(r => r.feature_key as MembershipFeature));
+  return new Set(rows.map((r) => r.feature_key as MembershipFeature));
 });
 
 export async function hasFeature(userId: number, feature: MembershipFeature): Promise<boolean> {
@@ -889,6 +1104,7 @@ git commit -m "feat(membership): getMyActiveMembership + hasFeature + getMyFeatu
 ## Task 5: Audit event union — add 6 membership events
 
 **Files:**
+
 - Modify: `lib/audit.ts:3-13`
 
 - [ ] **Step 1: Add the new events to the `AuditEvent` union**
@@ -897,18 +1113,33 @@ Edit `lib/audit.ts`, replace the `AuditEvent` type with:
 
 ```ts
 export type AuditEvent =
-  | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete'
-  | 'password_reset_request' | 'password_reset_complete'
-  | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote'
-  | 'user_disabled' | 'user_reenabled'
-  | 'ai_config_updated' | 'ai_call_logged'
+  | 'register'
+  | 'login'
+  | 'logout'
+  | 'history_create'
+  | 'history_delete'
+  | 'password_reset_request'
+  | 'password_reset_complete'
+  | 'admin_user_delete'
+  | 'admin_user_password_reset'
+  | 'admin_user_promote'
+  | 'admin_user_demote'
+  | 'user_disabled'
+  | 'user_reenabled'
+  | 'ai_config_updated'
+  | 'ai_call_logged'
   | 'tts_config_updated'
-  | 'worksheet_saved' | 'worksheet_deleted'
-  | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved'
-  | 'membership_granted' | 'membership_granted_paypal' | 'membership_revoked'
-  | 'paypal_config_updated' | 'paypal_webhook_received' | 'paypal_webhook_rejected';
+  | 'worksheet_saved'
+  | 'worksheet_deleted'
+  | 'poem_saved'
+  | 'sutra_saved'
+  | 'rare_char_card_saved'
+  | 'membership_granted'
+  | 'membership_granted_paypal'
+  | 'membership_revoked'
+  | 'paypal_config_updated'
+  | 'paypal_webhook_received'
+  | 'paypal_webhook_rejected';
 ```
 
 - [ ] **Step 2: Verify the type compiles**
@@ -924,22 +1155,33 @@ Expected: no errors.
 Edit `tests/unit/lib/audit.test.ts`, replace the events array with:
 
 ```ts
-  it('exports the 22 expected events', () => {
-    const events: AuditEvent[] = [
-      'register', 'login', 'logout',
-      'history_create', 'history_delete',
-      'password_reset_request', 'password_reset_complete',
-      'admin_user_delete', 'admin_user_password_reset',
-      'admin_user_promote', 'admin_user_demote',
-      'user_disabled', 'user_reenabled',
-      'ai_config_updated', 'ai_call_logged',
-      'tts_config_updated',
-      'worksheet_saved', 'worksheet_deleted',
-      'poem_saved', 'sutra_saved', 'rare_char_card_saved',
-      'membership_granted',
-    ];
-    expect(events).toHaveLength(22);
-  });
+it('exports the 22 expected events', () => {
+  const events: AuditEvent[] = [
+    'register',
+    'login',
+    'logout',
+    'history_create',
+    'history_delete',
+    'password_reset_request',
+    'password_reset_complete',
+    'admin_user_delete',
+    'admin_user_password_reset',
+    'admin_user_promote',
+    'admin_user_demote',
+    'user_disabled',
+    'user_reenabled',
+    'ai_config_updated',
+    'ai_call_logged',
+    'tts_config_updated',
+    'worksheet_saved',
+    'worksheet_deleted',
+    'poem_saved',
+    'sutra_saved',
+    'rare_char_card_saved',
+    'membership_granted',
+  ];
+  expect(events).toHaveLength(22);
+});
 ```
 
 - [ ] **Step 4: Run the test**
@@ -962,6 +1204,7 @@ git commit -m "feat(audit): add 6 membership + PayPal event types"
 ## Task 6: API — list + grant + revoke memberships
 
 **Files:**
+
 - Create: `app/api/admin/memberships/route.ts`
 - Create: `app/api/admin/memberships/[id]/revoke/route.ts`
 - Test: `tests/integration/api/admin-memberships.test.ts`
@@ -986,8 +1229,12 @@ const testCookieStore: Record<string, Bag> = {};
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: (n: string) => testCookieStore[n],
-    set: (o: any) => { testCookieStore[o.name] = { value: o.value }; },
-    delete: (n: string) => { delete testCookieStore[n]; },
+    set: (o: any) => {
+      testCookieStore[o.name] = { value: o.value };
+    },
+    delete: (n: string) => {
+      delete testCookieStore[n];
+    },
   }),
 }));
 
@@ -997,7 +1244,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('admin/memberships routes', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -1044,13 +1292,19 @@ d('admin/memberships routes', () => {
       );
       const [r] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
       for (const f of ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts']) {
-        await pool.execute(`INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`, [Number((r[0] as any).id), f]);
+        await pool.execute(
+          `INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`,
+          [Number((r[0] as any).id), f],
+        );
       }
     }
 
     // Seed admin + user
     const hash = await hashPassword('longenoughpwd');
-    await pool.execute(`INSERT INTO users (username, password_hash, is_admin) VALUES ('adm_mem', ?, 1)`, [hash]);
+    await pool.execute(
+      `INSERT INTO users (username, password_hash, is_admin) VALUES ('adm_mem', ?, 1)`,
+      [hash],
+    );
     const [a] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
     adminId = Number((a[0] as any).id);
     await pool.execute(`INSERT INTO users (username, password_hash) VALUES ('usr_mem', ?)`, [hash]);
@@ -1079,7 +1333,8 @@ d('admin/memberships routes', () => {
 
   it('POST /api/admin/memberships — grants a membership and writes audit', async () => {
     const req = new NextRequest('http://localhost/api/admin/memberships', {
-      method: 'POST', headers: jsonHeader(),
+      method: 'POST',
+      headers: jsonHeader(),
       body: JSON.stringify({ userId, planKey: 'monthly_usd' }),
     });
     const res = await grantHandler(req);
@@ -1098,7 +1353,8 @@ d('admin/memberships routes', () => {
 
   it('POST with unknown planKey returns 404', async () => {
     const req = new NextRequest('http://localhost/api/admin/memberships', {
-      method: 'POST', headers: jsonHeader(),
+      method: 'POST',
+      headers: jsonHeader(),
       body: JSON.stringify({ userId, planKey: 'unknown' }),
     });
     const res = await grantHandler(req);
@@ -1106,13 +1362,20 @@ d('admin/memberships routes', () => {
   });
 
   it('GET /api/admin/memberships — lists rows for the user', async () => {
-    const gr = await grantHandler(new NextRequest('http://localhost/api/admin/memberships', {
-      method: 'POST', headers: jsonHeader(),
-      body: JSON.stringify({ userId, planKey: 'monthly_usd' }),
-    }));
+    const gr = await grantHandler(
+      new NextRequest('http://localhost/api/admin/memberships', {
+        method: 'POST',
+        headers: jsonHeader(),
+        body: JSON.stringify({ userId, planKey: 'monthly_usd' }),
+      }),
+    );
     const { data: granted } = await gr.json();
 
-    const res = await listHandler(new NextRequest(`http://localhost/api/admin/memberships?userId=${userId}`, { headers: cookieHeader() }));
+    const res = await listHandler(
+      new NextRequest(`http://localhost/api/admin/memberships?userId=${userId}`, {
+        headers: cookieHeader(),
+      }),
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.data.total).toBe(1);
@@ -1121,23 +1384,35 @@ d('admin/memberships routes', () => {
   });
 
   it('POST /api/admin/memberships/[id]/revoke — revokes and writes audit', async () => {
-    const gr = await grantHandler(new NextRequest('http://localhost/api/admin/memberships', {
-      method: 'POST', headers: jsonHeader(),
-      body: JSON.stringify({ userId, planKey: 'monthly_usd' }),
-    }));
+    const gr = await grantHandler(
+      new NextRequest('http://localhost/api/admin/memberships', {
+        method: 'POST',
+        headers: jsonHeader(),
+        body: JSON.stringify({ userId, planKey: 'monthly_usd' }),
+      }),
+    );
     const { data: granted } = await gr.json();
 
-    const rev = await revokeHandler(new NextRequest(`http://localhost/api/admin/memberships/${granted.id}/revoke`, {
-      method: 'POST', headers: jsonHeader(),
-      body: JSON.stringify({ reason: 'test' }),
-    }), { params: Promise.resolve({ id: String(granted.id) }) });
+    const rev = await revokeHandler(
+      new NextRequest(`http://localhost/api/admin/memberships/${granted.id}/revoke`, {
+        method: 'POST',
+        headers: jsonHeader(),
+        body: JSON.stringify({ reason: 'test' }),
+      }),
+      { params: Promise.resolve({ id: String(granted.id) }) },
+    );
     const revBody = await rev.json();
     expect(rev.status).toBe(200);
     expect(revBody.data.revokedAt).not.toBeNull();
 
-    const second = await revokeHandler(new NextRequest(`http://localhost/api/admin/memberships/${granted.id}/revoke`, {
-      method: 'POST', headers: jsonHeader(), body: JSON.stringify({}),
-    }), { params: Promise.resolve({ id: String(granted.id) }) });
+    const second = await revokeHandler(
+      new NextRequest(`http://localhost/api/admin/memberships/${granted.id}/revoke`, {
+        method: 'POST',
+        headers: jsonHeader(),
+        body: JSON.stringify({}),
+      }),
+      { params: Promise.resolve({ id: String(granted.id) }) },
+    );
     expect(second.status).toBe(409);
   });
 
@@ -1145,9 +1420,11 @@ d('admin/memberships routes', () => {
     // Login as non-admin
     const usrTok = await signSession({ id: userId, username: 'usr_mem' });
     testCookieStore['auth_token'] = { value: usrTok };
-    const res = await listHandler(new NextRequest('http://localhost/api/admin/memberships', {
-      headers: { cookie: `auth_token=${usrTok}` },
-    }));
+    const res = await listHandler(
+      new NextRequest('http://localhost/api/admin/memberships', {
+        headers: { cookie: `auth_token=${usrTok}` },
+      }),
+    );
     expect(res.status).toBe(403);
     testCookieStore['auth_token'] = { value: adminToken };
   });
@@ -1205,7 +1482,9 @@ export async function POST(req: NextRequest) {
     const plan = await getPlanByKey(parsed.data.planKey);
     if (!plan) return notFound('plan_not_found', `plan ${parsed.data.planKey} not found`);
     // Ensure target user exists
-    const [u] = await getPool().query<any[]>(`SELECT id FROM users WHERE id = ? LIMIT 1`, [parsed.data.userId]);
+    const [u] = await getPool().query<any[]>(`SELECT id FROM users WHERE id = ? LIMIT 1`, [
+      parsed.data.userId,
+    ]);
     if (u.length === 0) return notFound('user_not_found', `user ${parsed.data.userId} not found`);
 
     const result = await grantMembership({
@@ -1260,14 +1539,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       await writeAudit({
         userId: auth.user.id,
         event: 'membership_revoked',
-        metadata: { membershipId: id, targetUserId: row.userId, reason: parsed.data.reason ?? null },
+        metadata: {
+          membershipId: id,
+          targetUserId: row.userId,
+          reason: parsed.data.reason ?? null,
+        },
       });
       return NextResponse.json({ ok: true, data: row });
     } catch (err) {
       const msg = (err as Error).message;
       if (msg === 'membership_not_found') return notFound('membership_not_found', msg);
       if (msg === 'already_revoked') {
-        return NextResponse.json({ ok: false, error: { code: 'already_revoked', message: msg } }, { status: 409 });
+        return NextResponse.json(
+          { ok: false, error: { code: 'already_revoked', message: msg } },
+          { status: 409 },
+        );
       }
       throw err;
     }
@@ -1295,6 +1581,7 @@ git commit -m "feat(membership): admin list + grant + revoke API with audit"
 ## Task 7: API client wrapper for admin membership endpoints
 
 **Files:**
+
 - Modify: `lib/api-admin.ts` (append)
 
 - [ ] **Step 1: Add the client wrapper types and functions**
@@ -1318,11 +1605,21 @@ export interface AdminMembershipRow {
   note: string | null;
   grantedBy: number | null;
 }
-export interface AdminMembershipListData { items: AdminMembershipRow[]; total: number; page: number; pageSize: number; }
+export interface AdminMembershipListData {
+  items: AdminMembershipRow[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
-export async function listAdminMembershipsRequest(params: {
-  userId?: number; planKey?: string; page?: number; pageSize?: number;
-} = {}): Promise<ApiResult<AdminMembershipListData>> {
+export async function listAdminMembershipsRequest(
+  params: {
+    userId?: number;
+    planKey?: string;
+    page?: number;
+    pageSize?: number;
+  } = {},
+): Promise<ApiResult<AdminMembershipListData>> {
   const sp = new URLSearchParams();
   if (params.userId !== undefined) sp.set('userId', String(params.userId));
   if (params.planKey) sp.set('planKey', params.planKey);
@@ -1333,17 +1630,24 @@ export async function listAdminMembershipsRequest(params: {
 }
 
 export async function grantAdminMembershipRequest(body: {
-  userId: number; planKey: string; note?: string;
+  userId: number;
+  planKey: string;
+  note?: string;
 }): Promise<ApiResult<{ id: number; expiresAt: string }>> {
   return call('/api/admin/memberships', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-export async function revokeAdminMembershipRequest(id: number, reason?: string): Promise<ApiResult<AdminMembershipRow>> {
+export async function revokeAdminMembershipRequest(
+  id: number,
+  reason?: string,
+): Promise<ApiResult<AdminMembershipRow>> {
   return call(`/api/admin/memberships/${id}/revoke`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ reason }),
   });
 }
@@ -1369,6 +1673,7 @@ git commit -m "feat(api-admin): client wrappers for admin memberships endpoints"
 ## Task 8: Admin memberships list page (RSC) — server-rendered with stats
 
 **Files:**
+
 - Create: `app/admin/memberships/page.tsx`
 - Create: `lib/membership-stats.ts`
 - Test: covered by Task 6 integration tests (lib functions), plus manual smoke
@@ -1433,7 +1738,9 @@ export const dynamic = 'force-dynamic';
 
 const PAGE_SIZE = 50;
 
-interface PageProps { searchParams: Promise<{ userId?: string; planKey?: string; page?: string }>; }
+interface PageProps {
+  searchParams: Promise<{ userId?: string; planKey?: string; page?: string }>;
+}
 
 export default async function AdminMembershipsPage({ searchParams }: PageProps) {
   const sp = await searchParams;
@@ -1453,8 +1760,18 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
         <h1 className="text-xl font-semibold">会员</h1>
         <div className="flex gap-2">
           <ManualGrantDrawer />
-          <Link href="/admin/memberships/plans" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">套餐设置</Link>
-          <Link href="/admin/memberships/config" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">支付配置</Link>
+          <Link
+            href="/admin/memberships/plans"
+            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+          >
+            套餐设置
+          </Link>
+          <Link
+            href="/admin/memberships/config"
+            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+          >
+            支付配置
+          </Link>
         </div>
       </div>
 
@@ -1462,12 +1779,23 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
         <Stat label="总开通" value={stats.total} icon={Crown} />
         <Stat label="当前活跃" value={stats.active} icon={Users} />
         <Stat label="本月新增" value={stats.newThisMonth} icon={TrendingUp} />
-        <Stat label="本月收入 (USD)" value={`$${stats.revenueThisMonth.toFixed(2)}`} icon={DollarSign} />
+        <Stat
+          label="本月收入 (USD)"
+          value={`$${stats.revenueThisMonth.toFixed(2)}`}
+          icon={DollarSign}
+        />
       </div>
 
       <div className="card-paper rounded-lg p-3 flex flex-wrap gap-2 items-end text-sm">
-        <FilterChip active={!userId && !planKey} href="/admin/memberships">全部</FilterChip>
-        <FilterChip active={!!userId} href={userId ? '/admin/memberships' : `/admin/memberships?userId=${userId ?? ''}`}>{userId ? `用户 #${userId}` : '按用户'}</FilterChip>
+        <FilterChip active={!userId && !planKey} href="/admin/memberships">
+          全部
+        </FilterChip>
+        <FilterChip
+          active={!!userId}
+          href={userId ? '/admin/memberships' : `/admin/memberships?userId=${userId ?? ''}`}
+        >
+          {userId ? `用户 #${userId}` : '按用户'}
+        </FilterChip>
       </div>
 
       <div className="card-paper rounded-lg overflow-x-auto">
@@ -1485,24 +1813,42 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
             </tr>
           </thead>
           <tbody>
-            {list.items.map(r => (
+            {list.items.map((r) => (
               <tr key={r.id} className="border-t">
-                <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">{new Date(r.grantedAt).toLocaleString('zh-CN')}</td>
+                <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">
+                  {new Date(r.grantedAt).toLocaleString('zh-CN')}
+                </td>
                 <td className="px-3 py-2">
-                  {r.username
-                    ? <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">{r.username}</Link>
-                    : <span className="text-ink-faint">#{r.userId}</span>}
+                  {r.username ? (
+                    <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
+                      {r.username}
+                    </Link>
+                  ) : (
+                    <span className="text-ink-faint">#{r.userId}</span>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-xs">{r.planKey}</td>
                 <td className="px-3 py-2">
-                  <span className={`text-xs px-2 py-0.5 rounded ${r.source === 'paypal' ? 'bg-green-100 text-green-800' : 'bg-paper-deep text-ink-soft'}`}>{r.source}</span>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded ${r.source === 'paypal' ? 'bg-green-100 text-green-800' : 'bg-paper-deep text-ink-soft'}`}
+                  >
+                    {r.source}
+                  </span>
                 </td>
-                <td className="px-3 py-2 text-xs">{r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}</td>
-                <td className="px-3 py-2 text-xs">{new Date(r.expiresAt).toLocaleDateString('zh-CN')}</td>
+                <td className="px-3 py-2 text-xs">
+                  {r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}
+                </td>
+                <td className="px-3 py-2 text-xs">
+                  {new Date(r.expiresAt).toLocaleDateString('zh-CN')}
+                </td>
                 <td className="px-3 py-2">
-                  {r.revokedAt
-                    ? <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
-                    : <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">活跃</span>}
+                  {r.revokedAt ? (
+                    <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
+                  ) : (
+                    <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">
+                      活跃
+                    </span>
+                  )}
                 </td>
                 <td className="px-3 py-2">
                   {!r.revokedAt && <RevokeButton membershipId={r.id} />}
@@ -1510,19 +1856,33 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
               </tr>
             ))}
             {list.items.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">暂无会员</td></tr>
+              <tr>
+                <td colSpan={8} className="px-3 py-6 text-center text-ink-faint">
+                  暂无会员
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
       </div>
 
       <div className="flex items-center justify-between text-xs text-ink-faint">
-        <span>共 {list.total} 条 · 第 {page} / {totalPages} 页</span>
+        <span>
+          共 {list.total} 条 · 第 {page} / {totalPages} 页
+        </span>
         <div className="flex gap-2">
-          <Link href={`/admin/memberships?page=${Math.max(1, page - 1)}`}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page <= 1 ? 'opacity-50 pointer-events-none' : ''}`}>上一页</Link>
-          <Link href={`/admin/memberships?page=${Math.min(totalPages, page + 1)}`}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page >= totalPages ? 'opacity-50 pointer-events-none' : ''}`}>下一页</Link>
+          <Link
+            href={`/admin/memberships?page=${Math.max(1, page - 1)}`}
+            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page <= 1 ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            上一页
+          </Link>
+          <Link
+            href={`/admin/memberships?page=${Math.min(totalPages, page + 1)}`}
+            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page >= totalPages ? 'opacity-50 pointer-events-none' : ''}`}
+          >
+            下一页
+          </Link>
         </div>
       </div>
     </div>
@@ -1541,11 +1901,24 @@ function Stat({ label, value, icon: Icon }: { label: string; value: string | num
   );
 }
 
-function FilterChip({ active, href, children }: { active: boolean; href: string; children: React.ReactNode }) {
+function FilterChip({
+  active,
+  href,
+  children,
+}: {
+  active: boolean;
+  href: string;
+  children: React.ReactNode;
+}) {
   return (
-    <Link href={href} className={`text-xs px-3 py-1.5 rounded border transition-colors ${
-      active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
-    }`}>{children}</Link>
+    <Link
+      href={href}
+      className={`text-xs px-3 py-1.5 rounded border transition-colors ${
+        active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
+      }`}
+    >
+      {children}
+    </Link>
   );
 }
 ```
@@ -1570,6 +1943,7 @@ git commit -m "feat(membership): admin list page + stats (drawer/button stubs in
 ## Task 9: `ManualGrantDrawer` + `RevokeButton` components
 
 **Files:**
+
 - Create: `components/admin/memberships/ManualGrantDrawer.tsx`
 - Create: `components/admin/memberships/RevokeButton.tsx`
 
@@ -1593,34 +1967,64 @@ export function RevokeButton({ membershipId }: { membershipId: number }) {
   const [reason, setReason] = useState('');
 
   const onRevoke = useCallback(async () => {
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     const r = await revokeAdminMembershipRequest(membershipId, reason || undefined);
     setBusy(false);
-    if (!r.ok) { setErr(r.error.message); return; }
+    if (!r.ok) {
+      setErr(r.error.message);
+      return;
+    }
     setConfirming(false);
     router.refresh();
   }, [membershipId, reason, router]);
 
   if (!confirming) {
     return (
-      <button type="button" onClick={() => setConfirming(true)}
-        className="text-xs px-2 py-1 border border-seal/30 text-seal rounded hover:bg-seal/5 inline-flex items-center gap-1">
-        <Ban className="h-3 w-3" />撤销
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="text-xs px-2 py-1 border border-seal/30 text-seal rounded hover:bg-seal/5 inline-flex items-center gap-1"
+      >
+        <Ban className="h-3 w-3" />
+        撤销
       </button>
     );
   }
 
   return (
     <div className="flex items-center gap-1">
-      <input value={reason} onChange={e => setReason(e.target.value)} placeholder="原因(可选)"
-        className="text-xs border border-paper-warm rounded px-1 py-0.5 w-24" />
-      <button type="button" onClick={onRevoke} disabled={busy}
-        className="text-xs px-2 py-1 bg-seal text-paper rounded hover:bg-seal/80 disabled:opacity-50 inline-flex items-center gap-1">
-        <Check className="h-3 w-3" />确认
+      <input
+        value={reason}
+        onChange={(e) => setReason(e.target.value)}
+        placeholder="原因(可选)"
+        className="text-xs border border-paper-warm rounded px-1 py-0.5 w-24"
+      />
+      <button
+        type="button"
+        onClick={onRevoke}
+        disabled={busy}
+        className="text-xs px-2 py-1 bg-seal text-paper rounded hover:bg-seal/80 disabled:opacity-50 inline-flex items-center gap-1"
+      >
+        <Check className="h-3 w-3" />
+        确认
       </button>
-      <button type="button" onClick={() => { setConfirming(false); setErr(null); }}
-        className="text-xs px-2 py-1 border border-ink/20 rounded text-ink hover:bg-paper-deep">取消</button>
-      {err && <span className="text-xs text-seal inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{err}</span>}
+      <button
+        type="button"
+        onClick={() => {
+          setConfirming(false);
+          setErr(null);
+        }}
+        className="text-xs px-2 py-1 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+      >
+        取消
+      </button>
+      {err && (
+        <span className="text-xs text-seal inline-flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          {err}
+        </span>
+      )}
     </div>
   );
 }
@@ -1638,7 +2042,16 @@ import { useRouter } from 'next/navigation';
 import { UserPlus, X, Check, AlertTriangle } from 'lucide-react';
 import { grantAdminMembershipRequest, listAdminPlansRequest } from '@/lib/api-admin';
 
-interface Plan { id: number; planKey: string; displayName: string; durationDays: number; amount: string; currency: string; enabled: boolean; features: string[]; }
+interface Plan {
+  id: number;
+  planKey: string;
+  displayName: string;
+  durationDays: number;
+  amount: string;
+  currency: string;
+  enabled: boolean;
+  features: string[];
+}
 
 export function ManualGrantDrawer() {
   const router = useRouter();
@@ -1653,61 +2066,119 @@ export function ManualGrantDrawer() {
 
   useEffect(() => {
     if (!open) return;
-    listAdminPlansRequest().then(r => {
+    listAdminPlansRequest().then((r) => {
       if (r.ok) {
         setPlans(r.data.items as any);
-        const first = (r.data.items as Plan[]).find(p => p.enabled) ?? r.data.items[0];
+        const first = (r.data.items as Plan[]).find((p) => p.enabled) ?? r.data.items[0];
         if (first) setPlanKey(first.planKey);
       }
     });
   }, [open]);
 
-  const onGrant = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true); setErr(null); setMsg(null);
-    const uid = Number(userId);
-    if (!Number.isInteger(uid) || uid <= 0) { setBusy(false); setErr('userId 必须是正整数'); return; }
-    if (!planKey) { setBusy(false); setErr('请选择套餐'); return; }
-    const r = await grantAdminMembershipRequest({ userId: uid, planKey, note: note || undefined });
-    setBusy(false);
-    if (!r.ok) { setErr(r.error.message); return; }
-    setMsg(`已开通,到期 ${new Date(r.data.expiresAt).toLocaleDateString('zh-CN')}`);
-    setUserId(''); setNote('');
-    router.refresh();
-  }, [userId, planKey, note, router]);
+  const onGrant = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setBusy(true);
+      setErr(null);
+      setMsg(null);
+      const uid = Number(userId);
+      if (!Number.isInteger(uid) || uid <= 0) {
+        setBusy(false);
+        setErr('userId 必须是正整数');
+        return;
+      }
+      if (!planKey) {
+        setBusy(false);
+        setErr('请选择套餐');
+        return;
+      }
+      const r = await grantAdminMembershipRequest({
+        userId: uid,
+        planKey,
+        note: note || undefined,
+      });
+      setBusy(false);
+      if (!r.ok) {
+        setErr(r.error.message);
+        return;
+      }
+      setMsg(`已开通,到期 ${new Date(r.data.expiresAt).toLocaleDateString('zh-CN')}`);
+      setUserId('');
+      setNote('');
+      router.refresh();
+    },
+    [userId, planKey, note, router],
+  );
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)}
-        className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 inline-flex items-center gap-1">
-        <UserPlus className="h-4 w-4" />手动开通
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 inline-flex items-center gap-1"
+      >
+        <UserPlus className="h-4 w-4" />
+        手动开通
       </button>
       {open && (
         <div className="fixed inset-0 z-30 bg-ink/40" onClick={() => setOpen(false)}>
-          <form onSubmit={onGrant}
+          <form
+            onSubmit={onGrant}
             className="absolute right-0 top-0 h-full w-80 bg-paper-soft p-5 shadow-paper-lg overflow-y-auto"
-            onClick={e => e.stopPropagation()}>
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-5">
               <h2 className="font-kai text-lg text-ink">手动开通会员</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label="关闭"><X className="h-5 w-5" /></button>
+              <button type="button" onClick={() => setOpen(false)} aria-label="关闭">
+                <X className="h-5 w-5" />
+              </button>
             </div>
-            {err && <p className="text-sm text-seal mb-3 inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />{err}</p>}
-            {msg && <p className="text-sm text-green-700 mb-3 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{msg}</p>}
+            {err && (
+              <p className="text-sm text-seal mb-3 inline-flex items-center gap-1">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                {err}
+              </p>
+            )}
+            {msg && (
+              <p className="text-sm text-green-700 mb-3 inline-flex items-center gap-1">
+                <Check className="h-3.5 w-3.5" />
+                {msg}
+              </p>
+            )}
             <label className="text-xs text-ink-soft">用户 ID</label>
-            <input value={userId} onChange={e => setUserId(e.target.value)} type="number" min="1"
-              className="w-full mt-1 mb-3 border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+            <input
+              value={userId}
+              onChange={(e) => setUserId(e.target.value)}
+              type="number"
+              min="1"
+              className="w-full mt-1 mb-3 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            />
             <label className="text-xs text-ink-soft">套餐</label>
-            <select value={planKey} onChange={e => setPlanKey(e.target.value)}
-              className="w-full mt-1 mb-3 border border-paper-warm rounded px-2 py-1 text-sm bg-paper">
-              {plans.map(p => <option key={p.planKey} value={p.planKey}>
-                {p.displayName} · {p.currency === 'USD' ? '$' : '¥'}{p.amount} · {p.durationDays} 天 {p.enabled ? '' : '(未启用)'}
-              </option>)}
+            <select
+              value={planKey}
+              onChange={(e) => setPlanKey(e.target.value)}
+              className="w-full mt-1 mb-3 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            >
+              {plans.map((p) => (
+                <option key={p.planKey} value={p.planKey}>
+                  {p.displayName} · {p.currency === 'USD' ? '$' : '¥'}
+                  {p.amount} · {p.durationDays} 天 {p.enabled ? '' : '(未启用)'}
+                </option>
+              ))}
             </select>
             <label className="text-xs text-ink-soft">备注 (可选)</label>
-            <input value={note} onChange={e => setNote(e.target.value)} type="text" maxLength={255}
-              className="w-full mt-1 mb-4 border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
-            <button type="submit" disabled={busy}
-              className="w-full text-sm px-3 py-2 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              type="text"
+              maxLength={255}
+              className="w-full mt-1 mb-4 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            />
+            <button
+              type="submit"
+              disabled={busy}
+              className="w-full text-sm px-3 py-2 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+            >
               {busy ? '开通中…' : '确认开通'}
             </button>
           </form>
@@ -1726,11 +2197,20 @@ Append to `lib/api-admin.ts`:
 // --- H12: Admin plans (list only here; PATCH + seed in later tasks) ----
 
 export interface AdminPlanRow {
-  id: number; planKey: string; displayName: string;
-  durationDays: number; amount: string; currency: string;
-  enabled: boolean; displayOrder: number; features: string[];
+  id: number;
+  planKey: string;
+  displayName: string;
+  durationDays: number;
+  amount: string;
+  currency: string;
+  enabled: boolean;
+  displayOrder: number;
+  features: string[];
 }
-export interface AdminPlanListData { items: AdminPlanRow[]; total: number; }
+export interface AdminPlanListData {
+  items: AdminPlanRow[];
+  total: number;
+}
 
 export async function listAdminPlansRequest(): Promise<ApiResult<AdminPlanListData>> {
   return call('/api/admin/memberships/plans', { method: 'GET' });
@@ -1757,6 +2237,7 @@ git commit -m "feat(membership): admin ManualGrantDrawer + RevokeButton + plans 
 ## Task 10: Sidebar entry + smoke-verify M1
 
 **Files:**
+
 - Modify: `components/admin/AdminSidebar.tsx`
 
 - [ ] **Step 1: Add the sidebar link**
@@ -1816,6 +2297,7 @@ Expected: `{"ok":true,"data":{"id":1,"expiresAt":"2026-07-15T..."}}`.
 - [ ] **Step 4: Open in browser, verify the admin page**
 
 Navigate to `http://localhost:4444/admin/memberships`:
+
 - 4 stat cards visible (total/active/newMonth/revenue)
 - 1 row in table (just granted)
 - "手动开通" button visible at top
@@ -1836,6 +2318,7 @@ git commit -m "feat(membership): add 会员 sidebar entry — M1 complete"
 ## Task 11: `lib/membership.ts` — updatePlan, PlanPatch type
 
 **Files:**
+
 - Modify: `lib/membership.ts`
 - Test: `tests/unit/lib/membership.test.ts` (extend)
 
@@ -1844,31 +2327,36 @@ git commit -m "feat(membership): add 会员 sidebar entry — M1 complete"
 Append to `tests/unit/lib/membership.test.ts` (inside `d('membership plans', ...)` block, before the closing `});`):
 
 ```ts
-  // --- updatePlan ----------------------------------------------
+// --- updatePlan ----------------------------------------------
 
-  it('updatePlan changes displayName, amount, enabled, displayOrder', async () => {
-    await seedDefaultPlans();
-    const p = await getPlanByKey('monthly_usd' as PlanKey);
-    const updated = await updatePlan(p!.id, { displayName: '月卡 (新)', amount: '3.50', enabled: false, displayOrder: 10 });
-    expect(updated.displayName).toBe('月卡 (新)');
-    expect(updated.amount).toBe('3.50');
-    expect(updated.enabled).toBe(false);
-    expect(updated.displayOrder).toBe(10);
+it('updatePlan changes displayName, amount, enabled, displayOrder', async () => {
+  await seedDefaultPlans();
+  const p = await getPlanByKey('monthly_usd' as PlanKey);
+  const updated = await updatePlan(p!.id, {
+    displayName: '月卡 (新)',
+    amount: '3.50',
+    enabled: false,
+    displayOrder: 10,
   });
+  expect(updated.displayName).toBe('月卡 (新)');
+  expect(updated.amount).toBe('3.50');
+  expect(updated.enabled).toBe(false);
+  expect(updated.displayOrder).toBe(10);
+});
 
-  it('updatePlan replaces feature set', async () => {
-    await seedDefaultPlans();
-    const p = await getPlanByKey('yearly_usd' as PlanKey);
-    const updated = await updatePlan(p!.id, { features: ['ai_calls'] });
-    expect(updated.features).toEqual(['ai_calls']);
-  });
+it('updatePlan replaces feature set', async () => {
+  await seedDefaultPlans();
+  const p = await getPlanByKey('yearly_usd' as PlanKey);
+  const updated = await updatePlan(p!.id, { features: ['ai_calls'] });
+  expect(updated.features).toEqual(['ai_calls']);
+});
 
-  it('updatePlan with empty patch returns the same plan', async () => {
-    await seedDefaultPlans();
-    const p = await getPlanByKey('monthly_usd' as PlanKey);
-    const updated = await updatePlan(p!.id, {});
-    expect(updated.displayName).toBe(p!.displayName);
-  });
+it('updatePlan with empty patch returns the same plan', async () => {
+  await seedDefaultPlans();
+  const p = await getPlanByKey('monthly_usd' as PlanKey);
+  const updated = await updatePlan(p!.id, {});
+  expect(updated.displayName).toBe(p!.displayName);
+});
 ```
 
 - [ ] **Step 2: Run the new tests to verify they fail**
@@ -1885,8 +2373,11 @@ Append the following to `lib/membership.ts`:
 
 ```ts
 export interface PlanPatch {
-  displayName?: string; durationDays?: number; amount?: string;
-  enabled?: boolean; displayOrder?: number;
+  displayName?: string;
+  durationDays?: number;
+  amount?: string;
+  enabled?: boolean;
+  displayOrder?: number;
   features?: MembershipFeature[];
 }
 
@@ -1894,23 +2385,41 @@ export async function updatePlan(id: number, patch: PlanPatch): Promise<Membersh
   const pool = getPool();
   const sets: string[] = [];
   const params: any[] = [];
-  if (patch.displayName !== undefined) { sets.push('display_name = ?'); params.push(patch.displayName); }
-  if (patch.durationDays !== undefined) { sets.push('duration_days = ?'); params.push(patch.durationDays); }
-  if (patch.amount !== undefined) { sets.push('amount = ?'); params.push(patch.amount); }
-  if (patch.enabled !== undefined) { sets.push('enabled = ?'); params.push(patch.enabled ? 1 : 0); }
-  if (patch.displayOrder !== undefined) { sets.push('display_order = ?'); params.push(patch.displayOrder); }
+  if (patch.displayName !== undefined) {
+    sets.push('display_name = ?');
+    params.push(patch.displayName);
+  }
+  if (patch.durationDays !== undefined) {
+    sets.push('duration_days = ?');
+    params.push(patch.durationDays);
+  }
+  if (patch.amount !== undefined) {
+    sets.push('amount = ?');
+    params.push(patch.amount);
+  }
+  if (patch.enabled !== undefined) {
+    sets.push('enabled = ?');
+    params.push(patch.enabled ? 1 : 0);
+  }
+  if (patch.displayOrder !== undefined) {
+    sets.push('display_order = ?');
+    params.push(patch.displayOrder);
+  }
 
   if (sets.length > 0) {
-    await pool.execute(
-      `UPDATE membership_plans SET ${sets.join(', ')} WHERE id = ?`,
-      [...params, id],
-    );
+    await pool.execute(`UPDATE membership_plans SET ${sets.join(', ')} WHERE id = ?`, [
+      ...params,
+      id,
+    ]);
   }
 
   if (patch.features !== undefined) {
     await pool.execute(`DELETE FROM membership_plan_features WHERE plan_id = ?`, [id]);
     for (const f of patch.features) {
-      await pool.execute(`INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`, [id, f]);
+      await pool.execute(
+        `INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`,
+        [id, f],
+      );
     }
   }
 
@@ -1940,6 +2449,7 @@ git commit -m "feat(membership): updatePlan (display name, amount, enabled, feat
 ## Task 12: API — plan list, PATCH, seed
 
 **Files:**
+
 - Create: `app/api/admin/memberships/plans/route.ts`
 - Create: `app/api/admin/memberships/plans/[id]/route.ts`
 - Create: `app/api/admin/memberships/plans/seed/route.ts`
@@ -1964,8 +2474,12 @@ const testCookieStore: Record<string, Bag> = {};
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: (n: string) => testCookieStore[n],
-    set: (o: any) => { testCookieStore[o.name] = { value: o.value }; },
-    delete: (n: string) => { delete testCookieStore[n]; },
+    set: (o: any) => {
+      testCookieStore[o.name] = { value: o.value };
+    },
+    delete: (n: string) => {
+      delete testCookieStore[n];
+    },
   }),
 }));
 
@@ -1975,7 +2489,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('admin/memberships/plans routes', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -1992,7 +2507,10 @@ d('admin/memberships/plans routes', () => {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
     const hash = await hashPassword('longenoughpwd');
-    await pool.execute(`INSERT INTO users (username, password_hash, is_admin) VALUES ('adm_plans', ?, 1)`, [hash]);
+    await pool.execute(
+      `INSERT INTO users (username, password_hash, is_admin) VALUES ('adm_plans', ?, 1)`,
+      [hash],
+    );
     const [a] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
     adminId = Number((a[0] as any).id);
     adminToken = await signSession({ id: adminId, username: 'adm_plans' });
@@ -2018,7 +2536,12 @@ d('admin/memberships/plans routes', () => {
   const json = (b: any) => ({ ...hdr(), 'content-type': 'application/json' });
 
   it('POST /seed creates 4 plans + 16 features', async () => {
-    const res = await seedHandler(new NextRequest('http://localhost/api/admin/memberships/plans/seed', { method: 'POST', headers: hdr() }));
+    const res = await seedHandler(
+      new NextRequest('http://localhost/api/admin/memberships/plans/seed', {
+        method: 'POST',
+        headers: hdr(),
+      }),
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.data.seeded).toBe(4);
@@ -2027,22 +2550,45 @@ d('admin/memberships/plans routes', () => {
   });
 
   it('GET returns enabledOnly filter', async () => {
-    await seedHandler(new NextRequest('http://localhost/api/admin/memberships/plans/seed', { method: 'POST', headers: hdr() }));
-    const res = await listHandler(new NextRequest('http://localhost/api/admin/memberships/plans?enabledOnly=1', { headers: hdr() }));
+    await seedHandler(
+      new NextRequest('http://localhost/api/admin/memberships/plans/seed', {
+        method: 'POST',
+        headers: hdr(),
+      }),
+    );
+    const res = await listHandler(
+      new NextRequest('http://localhost/api/admin/memberships/plans?enabledOnly=1', {
+        headers: hdr(),
+      }),
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.data.items.every((p: any) => p.enabled)).toBe(true);
   });
 
   it('PATCH updates plan fields and writes audit', async () => {
-    await seedHandler(new NextRequest('http://localhost/api/admin/memberships/plans/seed', { method: 'POST', headers: hdr() }));
-    const list = await listHandler(new NextRequest('http://localhost/api/admin/memberships/plans', { headers: hdr() }));
-    const { data: { items } } = await list.json();
+    await seedHandler(
+      new NextRequest('http://localhost/api/admin/memberships/plans/seed', {
+        method: 'POST',
+        headers: hdr(),
+      }),
+    );
+    const list = await listHandler(
+      new NextRequest('http://localhost/api/admin/memberships/plans', { headers: hdr() }),
+    );
+    const {
+      data: { items },
+    } = await list.json();
     const target = items.find((p: any) => p.planKey === 'monthly_usd');
 
-    const res = await patchHandler(new NextRequest(`http://localhost/api/admin/memberships/plans/${target.id}`, {
-      method: 'PATCH', headers: json({ displayName: '月卡', amount: '4.00' }), body: JSON.stringify({ displayName: '月卡', amount: '4.00' }),
-    }), { params: Promise.resolve({ id: String(target.id) }) });
+    const res = await patchHandler(
+      new NextRequest(`http://localhost/api/admin/memberships/plans/${target.id}`, {
+        method: 'PATCH',
+        headers: json({ displayName: '月卡', amount: '4.00' }),
+        body: JSON.stringify({ displayName: '月卡', amount: '4.00' }),
+      }),
+      { params: Promise.resolve({ id: String(target.id) }) },
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.data.plan.displayName).toBe('月卡');
@@ -2105,10 +2651,15 @@ import { updatePlan, type PlanPatch } from '@/lib/membership';
 const PatchSchema = z.object({
   displayName: z.string().min(1).max(64).optional(),
   durationDays: z.number().int().min(1).max(3650).optional(),
-  amount: z.string().regex(/^\d+\.\d{2}$/).optional(),
+  amount: z
+    .string()
+    .regex(/^\d+\.\d{2}$/)
+    .optional(),
   enabled: z.boolean().optional(),
   displayOrder: z.number().int().min(0).max(999).optional(),
-  features: z.array(z.enum(['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'])).optional(),
+  features: z
+    .array(z.enum(['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts']))
+    .optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -2162,6 +2713,7 @@ git commit -m "feat(membership): plans list/PATCH/seed API"
 ## Task 13: `lib/paypal.ts` — config reader, access token cache, verify stub
 
 **Files:**
+
 - Create: `lib/paypal.ts`
 - Test: `tests/unit/lib/paypal.test.ts`
 
@@ -2180,7 +2732,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('paypal', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -2195,7 +2748,9 @@ d('paypal', () => {
     _resetTokenCacheForTest();
   });
 
-  afterAll(async () => { await closePool(); });
+  afterAll(async () => {
+    await closePool();
+  });
 
   it('getPayPalConfig returns null if any required key missing', async () => {
     const pool = getPool();
@@ -2207,12 +2762,23 @@ d('paypal', () => {
     const pool = getPool();
     await pool.query(`DELETE FROM app_config WHERE \`key\` LIKE 'paypal.%'`);
     for (const [k, v] of [
-      ['paypal.mode', 'sandbox'], ['paypal.client_id', 'cid'], ['paypal.client_secret', 'csec'], ['paypal.webhook_id', 'wid'],
+      ['paypal.mode', 'sandbox'],
+      ['paypal.client_id', 'cid'],
+      ['paypal.client_secret', 'csec'],
+      ['paypal.webhook_id', 'wid'],
     ]) {
-      await pool.query(`INSERT INTO app_config (\`key\`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value=VALUES(value)`, [k, v]);
+      await pool.query(
+        `INSERT INTO app_config (\`key\`, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value=VALUES(value)`,
+        [k, v],
+      );
     }
     const cfg = await getPayPalConfig();
-    expect(cfg).toEqual({ mode: 'sandbox', clientId: 'cid', clientSecret: 'csec', webhookId: 'wid' });
+    expect(cfg).toEqual({
+      mode: 'sandbox',
+      clientId: 'cid',
+      clientSecret: 'csec',
+      webhookId: 'wid',
+    });
   });
 
   it('getPayPalAccessToken caches the token (1 fetch per mode+clientId)', async () => {
@@ -2222,14 +2788,29 @@ d('paypal', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const t1 = await getPayPalAccessToken({ mode: 'sandbox', clientId: 'a', clientSecret: 'b', webhookId: 'w' });
-    const t2 = await getPayPalAccessToken({ mode: 'sandbox', clientId: 'a', clientSecret: 'b', webhookId: 'w' });
+    const t1 = await getPayPalAccessToken({
+      mode: 'sandbox',
+      clientId: 'a',
+      clientSecret: 'b',
+      webhookId: 'w',
+    });
+    const t2 = await getPayPalAccessToken({
+      mode: 'sandbox',
+      clientId: 'a',
+      clientSecret: 'b',
+      webhookId: 'w',
+    });
     expect(t1).toBe('tok-123');
     expect(t2).toBe('tok-123');
     expect(fetchMock).toHaveBeenCalledTimes(1);
 
     // different clientId → different cache key → second fetch
-    const t3 = await getPayPalAccessToken({ mode: 'sandbox', clientId: 'b', clientSecret: 'b', webhookId: 'w' });
+    const t3 = await getPayPalAccessToken({
+      mode: 'sandbox',
+      clientId: 'b',
+      clientSecret: 'b',
+      webhookId: 'w',
+    });
     expect(fetchMock).toHaveBeenCalledTimes(2);
 
     vi.unstubAllGlobals();
@@ -2265,10 +2846,16 @@ import { getPool } from './db';
 
 export type PayPalMode = 'sandbox' | 'live';
 export interface PayPalConfig {
-  mode: PayPalMode; clientId: string; clientSecret: string; webhookId: string;
+  mode: PayPalMode;
+  clientId: string;
+  clientSecret: string;
+  webhookId: string;
 }
 
-interface TokenEntry { token: string; expiresAt: number; }
+interface TokenEntry {
+  token: string;
+  expiresAt: number;
+}
 const tokenCache: Map<string, TokenEntry> = new Map();
 const TOKEN_TTL_MS = 50 * 60 * 1000;
 
@@ -2299,11 +2886,14 @@ export async function getPayPalAccessToken(cfg: PayPalConfig): Promise<string> {
   const auth = Buffer.from(`${cfg.clientId}:${cfg.clientSecret}`).toString('base64');
   const res = await fetch(`${BASE(cfg.mode)}/v1/oauth2/token`, {
     method: 'POST',
-    headers: { authorization: `Basic ${auth}`, 'content-type': 'application/x-www-form-urlencoded' },
+    headers: {
+      authorization: `Basic ${auth}`,
+      'content-type': 'application/x-www-form-urlencoded',
+    },
     body: 'grant_type=client_credentials',
   });
   if (!res.ok) throw new Error(`paypal_oauth_failed: ${res.status}`);
-  const j = await res.json() as { access_token: string; expires_in: number };
+  const j = (await res.json()) as { access_token: string; expires_in: number };
   tokenCache.set(key, { token: j.access_token, expiresAt: Date.now() + TOKEN_TTL_MS });
   return j.access_token;
 }
@@ -2313,10 +2903,17 @@ export function _resetTokenCacheForTest(): void {
 }
 
 // Stubs for Tasks 14, 19 — filled later
-export interface PayPalOrder { id: string; status: string; links: { href: string; rel: string }[]; }
+export interface PayPalOrder {
+  id: string;
+  status: string;
+  links: { href: string; rel: string }[];
+}
 export async function createPayPalOrder(_args: {
-  amount: string; currency: 'CNY' | 'USD'; description: string;
-  returnUrl: string; cancelUrl: string;
+  amount: string;
+  currency: 'CNY' | 'USD';
+  description: string;
+  returnUrl: string;
+  cancelUrl: string;
 }): Promise<PayPalOrder> {
   throw new Error('createPayPalOrder not yet implemented');
 }
@@ -2324,7 +2921,8 @@ export async function capturePayPalOrder(_orderId: string): Promise<unknown> {
   throw new Error('capturePayPalOrder not yet implemented');
 }
 export async function verifyWebhookSignature(_args: {
-  rawBody: string; headers: Record<string, string>;
+  rawBody: string;
+  headers: Record<string, string>;
 }): Promise<boolean> {
   throw new Error('verifyWebhookSignature not yet implemented');
 }
@@ -2350,6 +2948,7 @@ git commit -m "feat(paypal): config reader + access token cache (module-level, 5
 ## Task 14: API — PayPal config GET + PUT (masked secrets)
 
 **Files:**
+
 - Create: `app/api/admin/paypal/config/route.ts`
 - Test: `tests/integration/api/admin-paypal-config.test.ts`
 
@@ -2371,8 +2970,12 @@ const testCookieStore: Record<string, Bag> = {};
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: (n: string) => testCookieStore[n],
-    set: (o: any) => { testCookieStore[o.name] = { value: o.value }; },
-    delete: (n: string) => { delete testCookieStore[n]; },
+    set: (o: any) => {
+      testCookieStore[o.name] = { value: o.value };
+    },
+    delete: (n: string) => {
+      delete testCookieStore[n];
+    },
   }),
 }));
 
@@ -2381,7 +2984,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('admin/paypal/config routes', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -2392,7 +2996,10 @@ d('admin/paypal/config routes', () => {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
 
     const hash = await hashPassword('longenoughpwd');
-    await pool.execute(`INSERT INTO users (username, password_hash, is_admin) VALUES ('adm_paypal', ?, 1)`, [hash]);
+    await pool.execute(
+      `INSERT INTO users (username, password_hash, is_admin) VALUES ('adm_paypal', ?, 1)`,
+      [hash],
+    );
     const [a] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
     adminId = Number((a[0] as any).id);
     adminToken = await signSession({ id: adminId, username: 'adm_paypal' });
@@ -2416,16 +3023,28 @@ d('admin/paypal/config routes', () => {
   const json = (b: any) => ({ ...hdr(), 'content-type': 'application/json' });
 
   it('GET returns all 4 fields masked when not set', async () => {
-    const res = await GET(new NextRequest('http://localhost/api/admin/paypal/config', { headers: hdr() }));
+    const res = await GET(
+      new NextRequest('http://localhost/api/admin/paypal/config', { headers: hdr() }),
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
-    expect(body.data).toEqual({ mode: 'sandbox', hasClientId: false, hasSecret: false, hasWebhookId: false, webhookUrl: expect.stringContaining('/api/webhooks/paypal') });
+    expect(body.data).toEqual({
+      mode: 'sandbox',
+      hasClientId: false,
+      hasSecret: false,
+      hasWebhookId: false,
+      webhookUrl: expect.stringContaining('/api/webhooks/paypal'),
+    });
   });
 
   it('PUT updates mode and writes audit', async () => {
-    const res = await PUT(new NextRequest('http://localhost/api/admin/paypal/config', {
-      method: 'PUT', headers: json({}), body: JSON.stringify({ mode: 'live' }),
-    }));
+    const res = await PUT(
+      new NextRequest('http://localhost/api/admin/paypal/config', {
+        method: 'PUT',
+        headers: json({}),
+        body: JSON.stringify({ mode: 'live' }),
+      }),
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.data.mode).toBe('live');
@@ -2437,10 +3056,16 @@ d('admin/paypal/config routes', () => {
   });
 
   it('PUT writes secret and masks on subsequent GET', async () => {
-    await PUT(new NextRequest('http://localhost/api/admin/paypal/config', {
-      method: 'PUT', headers: json({}), body: JSON.stringify({ clientSecret: 'super-secret-1234567890' }),
-    }));
-    const get = await GET(new NextRequest('http://localhost/api/admin/paypal/config', { headers: hdr() }));
+    await PUT(
+      new NextRequest('http://localhost/api/admin/paypal/config', {
+        method: 'PUT',
+        headers: json({}),
+        body: JSON.stringify({ clientSecret: 'super-secret-1234567890' }),
+      }),
+    );
+    const get = await GET(
+      new NextRequest('http://localhost/api/admin/paypal/config', { headers: hdr() }),
+    );
     const { data } = await get.json();
     expect(data.hasSecret).toBe(true);
     // Confirm raw value is not returned anywhere
@@ -2553,6 +3178,7 @@ git commit -m "feat(paypal): admin config GET/PUT with masked secrets + audit"
 ## Task 15: API — PayPal test-connection
 
 **Files:**
+
 - Create: `app/api/admin/paypal/test-connection/route.ts`
 
 - [ ] **Step 1: Implement the route**
@@ -2612,6 +3238,7 @@ git commit -m "feat(paypal): test-connection endpoint (uses cached token)"
 ## Task 16: `lib/paypal.ts` — createPayPalOrder + capturePayPalOrder (real impls)
 
 **Files:**
+
 - Modify: `lib/paypal.ts`
 - Test: extend `tests/unit/lib/paypal.test.ts`
 
@@ -2620,58 +3247,86 @@ git commit -m "feat(paypal): test-connection endpoint (uses cached token)"
 Append to `tests/unit/lib/paypal.test.ts`:
 
 ```ts
-  // --- createPayPalOrder / capturePayPalOrder ---------------------
+// --- createPayPalOrder / capturePayPalOrder ---------------------
 
-  it('createPayPalOrder posts to /v2/checkout/orders and returns id+approvalUrl', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce({
-      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
-    }).mockResolvedValueOnce({
-      ok: true, json: async () => ({ id: 'PAY-123', status: 'CREATED', links: [
-        { rel: 'approve', href: 'https://www.sandbox.paypal.com/checkoutnow?token=PAY-123' },
-        { rel: 'self', href: 'https://api-m.sandbox.paypal.com/v2/checkout/orders/PAY-123' },
-      ] }),
+it('createPayPalOrder posts to /v2/checkout/orders and returns id+approvalUrl', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        id: 'PAY-123',
+        status: 'CREATED',
+        links: [
+          { rel: 'approve', href: 'https://www.sandbox.paypal.com/checkoutnow?token=PAY-123' },
+          { rel: 'self', href: 'https://api-m.sandbox.paypal.com/v2/checkout/orders/PAY-123' },
+        ],
+      }),
     });
-    vi.stubGlobal('fetch', fetchMock);
+  vi.stubGlobal('fetch', fetchMock);
 
-    const { createPayPalOrder } = await import('@/lib/paypal');
-    const order = await createPayPalOrder({
-      amount: '3.00', currency: 'USD', description: '月卡',
-      returnUrl: 'https://x.test/success', cancelUrl: 'https://x.test/cancel',
-    });
-    expect(order.id).toBe('PAY-123');
-    expect(order.links.find(l => l.rel === 'approve')?.href).toContain('PAY-123');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    vi.unstubAllGlobals();
+  const { createPayPalOrder } = await import('@/lib/paypal');
+  const order = await createPayPalOrder({
+    amount: '3.00',
+    currency: 'USD',
+    description: '月卡',
+    returnUrl: 'https://x.test/success',
+    cancelUrl: 'https://x.test/cancel',
   });
+  expect(order.id).toBe('PAY-123');
+  expect(order.links.find((l) => l.rel === 'approve')?.href).toContain('PAY-123');
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  vi.unstubAllGlobals();
+});
 
-  it('createPayPalOrder throws on non-2xx', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce({
-      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
-    }).mockResolvedValueOnce({
-      ok: false, status: 422, text: async () => 'invalid',
+it('createPayPalOrder throws on non-2xx', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    })
+    .mockResolvedValueOnce({
+      ok: false,
+      status: 422,
+      text: async () => 'invalid',
     });
-    vi.stubGlobal('fetch', fetchMock);
-    const { createPayPalOrder } = await import('@/lib/paypal');
-    await expect(createPayPalOrder({
-      amount: '3.00', currency: 'USD', description: 'x',
-      returnUrl: 'https://x/s', cancelUrl: 'https://x/c',
-    })).rejects.toThrow(/paypal_create_failed/);
-    vi.unstubAllGlobals();
-  });
+  vi.stubGlobal('fetch', fetchMock);
+  const { createPayPalOrder } = await import('@/lib/paypal');
+  await expect(
+    createPayPalOrder({
+      amount: '3.00',
+      currency: 'USD',
+      description: 'x',
+      returnUrl: 'https://x/s',
+      cancelUrl: 'https://x/c',
+    }),
+  ).rejects.toThrow(/paypal_create_failed/);
+  vi.unstubAllGlobals();
+});
 
-  it('capturePayPalOrder posts to /capture and returns the response', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce({
-      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
-    }).mockResolvedValueOnce({
-      ok: true, json: async () => ({ id: 'PAY-123', status: 'COMPLETED' }),
+it('capturePayPalOrder posts to /capture and returns the response', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ id: 'PAY-123', status: 'COMPLETED' }),
     });
-    vi.stubGlobal('fetch', fetchMock);
-    const { capturePayPalOrder } = await import('@/lib/paypal');
-    const r = await capturePayPalOrder('PAY-123') as any;
-    expect(r.status).toBe('COMPLETED');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    vi.unstubAllGlobals();
-  });
+  vi.stubGlobal('fetch', fetchMock);
+  const { capturePayPalOrder } = await import('@/lib/paypal');
+  const r = (await capturePayPalOrder('PAY-123')) as any;
+  expect(r.status).toBe('COMPLETED');
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  vi.unstubAllGlobals();
+});
 ```
 
 - [ ] **Step 2: Run the new tests to verify they fail**
@@ -2688,8 +3343,11 @@ Replace the `createPayPalOrder` and `capturePayPalOrder` stubs with:
 
 ```ts
 export async function createPayPalOrder(args: {
-  amount: string; currency: 'CNY' | 'USD'; description: string;
-  returnUrl: string; cancelUrl: string;
+  amount: string;
+  currency: 'CNY' | 'USD';
+  description: string;
+  returnUrl: string;
+  cancelUrl: string;
 }): Promise<PayPalOrder> {
   const cfg = await getPayPalConfig();
   if (!cfg) throw new Error('paypal_not_configured');
@@ -2699,10 +3357,12 @@ export async function createPayPalOrder(args: {
     headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
     body: JSON.stringify({
       intent: 'CAPTURE',
-      purchase_units: [{
-        amount: { currency_code: args.currency, value: args.amount },
-        description: args.description,
-      }],
+      purchase_units: [
+        {
+          amount: { currency_code: args.currency, value: args.amount },
+          description: args.description,
+        },
+      ],
       application_context: { return_url: args.returnUrl, cancel_url: args.cancelUrl },
     }),
   });
@@ -2743,6 +3403,7 @@ git commit -m "feat(paypal): createOrder + captureOrder real impls"
 ## Task 17: Admin plans editor + PayPal config page
 
 **Files:**
+
 - Create: `app/admin/memberships/plans/page.tsx`
 - Create: `app/admin/memberships/config/page.tsx`
 - Create: `components/admin/memberships/PlanRow.tsx`
@@ -2756,14 +3417,21 @@ Append to `lib/api-admin.ts`:
 // --- Plan PATCH ---------------------------------------------------
 
 export interface UpdatePlanBody {
-  displayName?: string; durationDays?: number; amount?: string;
-  enabled?: boolean; displayOrder?: number;
+  displayName?: string;
+  durationDays?: number;
+  amount?: string;
+  enabled?: boolean;
+  displayOrder?: number;
   features?: ('unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts')[];
 }
 
-export async function updateAdminPlanRequest(id: number, body: UpdatePlanBody): Promise<ApiResult<{ plan: AdminPlanRow }>> {
+export async function updateAdminPlanRequest(
+  id: number,
+  body: UpdatePlanBody,
+): Promise<ApiResult<{ plan: AdminPlanRow }>> {
   return call(`/api/admin/memberships/plans/${id}`, {
-    method: 'PATCH', headers: { 'content-type': 'application/json' },
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
@@ -2788,15 +3456,20 @@ export async function getAdminPayPalConfigRequest(): Promise<ApiResult<AdminPayP
 
 export async function updateAdminPayPalConfigRequest(body: {
   mode?: 'sandbox' | 'live';
-  clientId?: string; clientSecret?: string; webhookId?: string;
+  clientId?: string;
+  clientSecret?: string;
+  webhookId?: string;
 }): Promise<ApiResult<{ mode: 'sandbox' | 'live'; changed: string[] }>> {
   return call('/api/admin/paypal/config', {
-    method: 'PUT', headers: { 'content-type': 'application/json' },
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   });
 }
 
-export async function testPayPalConnectionRequest(): Promise<ApiResult<{ ok: true; message: string }>> {
+export async function testPayPalConnectionRequest(): Promise<
+  ApiResult<{ ok: true; message: string }>
+> {
   return call('/api/admin/paypal/test-connection', { method: 'POST' });
 }
 ```
@@ -2815,7 +3488,10 @@ import { updateAdminPlanRequest, type AdminPlanRow as Plan } from '@/lib/api-adm
 
 const ALL_FEATURES = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'] as const;
 const FEATURE_LABELS: Record<string, string> = {
-  unlimited_history: '无限历史', download_pdf: 'PDF 下载', ai_calls: 'AI 调用', priority_tts: '优先 TTS',
+  unlimited_history: '无限历史',
+  download_pdf: 'PDF 下载',
+  ai_calls: 'AI 调用',
+  priority_tts: '优先 TTS',
 };
 
 export function PlanRow({ plan }: { plan: Plan }) {
@@ -2829,26 +3505,45 @@ export function PlanRow({ plan }: { plan: Plan }) {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const dirty = displayName !== plan.displayName || amount !== plan.amount
-    || String(plan.durationDays) !== durationDays || enabled !== plan.enabled
-    || String(plan.displayOrder) !== displayOrder
-    || features.length !== plan.features.length || features.some(f => !plan.features.includes(f));
+  const dirty =
+    displayName !== plan.displayName ||
+    amount !== plan.amount ||
+    String(plan.durationDays) !== durationDays ||
+    enabled !== plan.enabled ||
+    String(plan.displayOrder) !== displayOrder ||
+    features.length !== plan.features.length ||
+    features.some((f) => !plan.features.includes(f));
 
   const onSave = useCallback(async () => {
-    setBusy(true); setMsg(null); setErr(null);
+    setBusy(true);
+    setMsg(null);
+    setErr(null);
     const r = await updateAdminPlanRequest(plan.id, {
-      displayName, amount, durationDays: Number(durationDays), enabled, displayOrder: Number(displayOrder), features: features as any,
+      displayName,
+      amount,
+      durationDays: Number(durationDays),
+      enabled,
+      displayOrder: Number(displayOrder),
+      features: features as any,
     });
     setBusy(false);
-    if (!r.ok) { setErr(r.error.message); return; }
+    if (!r.ok) {
+      setErr(r.error.message);
+      return;
+    }
     setMsg('已保存');
     router.refresh();
   }, [plan.id, displayName, amount, durationDays, enabled, displayOrder, features, router]);
 
   const onReset = () => {
-    setDisplayName(plan.displayName); setAmount(plan.amount); setDurationDays(String(plan.durationDays));
-    setEnabled(plan.enabled); setDisplayOrder(String(plan.displayOrder)); setFeatures(plan.features);
-    setErr(null); setMsg(null);
+    setDisplayName(plan.displayName);
+    setAmount(plan.amount);
+    setDurationDays(String(plan.durationDays));
+    setEnabled(plan.enabled);
+    setDisplayOrder(String(plan.displayOrder));
+    setFeatures(plan.features);
+    setErr(null);
+    setMsg(null);
   };
 
   return (
@@ -2858,31 +3553,51 @@ export function PlanRow({ plan }: { plan: Plan }) {
         <div className="text-xs text-ink-faint">{plan.currency}</div>
       </td>
       <td className="px-3 py-2">
-        <input value={displayName} onChange={e => setDisplayName(e.target.value)}
-          className="w-32 border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+        <input
+          value={displayName}
+          onChange={(e) => setDisplayName(e.target.value)}
+          className="w-32 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+        />
       </td>
       <td className="px-3 py-2">
-        <input type="number" min="1" value={durationDays} onChange={e => setDurationDays(e.target.value)}
-          className="w-20 border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+        <input
+          type="number"
+          min="1"
+          value={durationDays}
+          onChange={(e) => setDurationDays(e.target.value)}
+          className="w-20 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+        />
       </td>
       <td className="px-3 py-2">
-        <input value={amount} onChange={e => setAmount(e.target.value)}
-          className="w-20 border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+        <input
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          className="w-20 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+        />
       </td>
       <td className="px-3 py-2 text-center">
-        <input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />
+        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
       </td>
       <td className="px-3 py-2">
-        <input type="number" min="0" value={displayOrder} onChange={e => setDisplayOrder(e.target.value)}
-          className="w-16 border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+        <input
+          type="number"
+          min="0"
+          value={displayOrder}
+          onChange={(e) => setDisplayOrder(e.target.value)}
+          className="w-16 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+        />
       </td>
       <td className="px-3 py-2">
         <div className="flex flex-wrap gap-1">
-          {ALL_FEATURES.map(f => {
+          {ALL_FEATURES.map((f) => {
             const on = features.includes(f);
             return (
-              <button key={f} type="button" onClick={() => setFeatures(on ? features.filter(x => x !== f) : [...features, f])}
-                className={`text-xs px-2 py-0.5 rounded border ${on ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink-soft'}`}>
+              <button
+                key={f}
+                type="button"
+                onClick={() => setFeatures(on ? features.filter((x) => x !== f) : [...features, f])}
+                className={`text-xs px-2 py-0.5 rounded border ${on ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink-soft'}`}
+              >
                 {FEATURE_LABELS[f]}
               </button>
             );
@@ -2892,18 +3607,37 @@ export function PlanRow({ plan }: { plan: Plan }) {
       <td className="px-3 py-2">
         {dirty && (
           <div className="flex flex-col gap-1">
-            <button type="button" onClick={onSave} disabled={busy}
-              className="text-xs px-2 py-1 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50 inline-flex items-center gap-1">
-              <Save className="h-3 w-3" />保存
+            <button
+              type="button"
+              onClick={onSave}
+              disabled={busy}
+              className="text-xs px-2 py-1 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50 inline-flex items-center gap-1"
+            >
+              <Save className="h-3 w-3" />
+              保存
             </button>
-            <button type="button" onClick={onReset}
-              className="text-xs px-2 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep inline-flex items-center gap-1">
-              <RotateCcw className="h-3 w-3" />还原
+            <button
+              type="button"
+              onClick={onReset}
+              className="text-xs px-2 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep inline-flex items-center gap-1"
+            >
+              <RotateCcw className="h-3 w-3" />
+              还原
             </button>
           </div>
         )}
-        {msg && <span className="text-xs text-green-700 inline-flex items-center gap-1"><Check className="h-3 w-3" />{msg}</span>}
-        {err && <span className="text-xs text-seal inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{err}</span>}
+        {msg && (
+          <span className="text-xs text-green-700 inline-flex items-center gap-1">
+            <Check className="h-3 w-3" />
+            {msg}
+          </span>
+        )}
+        {err && (
+          <span className="text-xs text-seal inline-flex items-center gap-1">
+            <AlertTriangle className="h-3 w-3" />
+            {err}
+          </span>
+        )}
       </td>
     </tr>
   );
@@ -2933,7 +3667,12 @@ export default async function AdminPlansPage() {
         </div>
         <div className="flex gap-2">
           {plans.length === 0 && <SeedPlansButton />}
-          <Link href="/admin/memberships" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">← 返回会员列表</Link>
+          <Link
+            href="/admin/memberships"
+            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+          >
+            ← 返回会员列表
+          </Link>
         </div>
       </div>
       <div className="card-paper rounded-lg overflow-x-auto">
@@ -2951,9 +3690,15 @@ export default async function AdminPlansPage() {
             </tr>
           </thead>
           <tbody>
-            {plans.map(p => <PlanRow key={p.id} plan={p} />)}
+            {plans.map((p) => (
+              <PlanRow key={p.id} plan={p} />
+            ))}
             {plans.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">暂无套餐,点右上「初始化」</td></tr>
+              <tr>
+                <td colSpan={8} className="px-3 py-6 text-center text-ink-faint">
+                  暂无套餐,点右上「初始化」
+                </td>
+              </tr>
             )}
           </tbody>
         </table>
@@ -2984,8 +3729,12 @@ export function SeedPlansButton() {
     if (r.ok) router.refresh();
   }, [router]);
   return (
-    <button type="button" onClick={onClick} disabled={busy}
-      className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={busy}
+      className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+    >
       {busy ? '初始化中…' : '初始化 4 档套餐'}
     </button>
   );
@@ -3002,12 +3751,18 @@ Create `app/admin/memberships/config/page.tsx`:
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Check, AlertTriangle, ExternalLink, Wifi } from 'lucide-react';
-import { getAdminPayPalConfigRequest, updateAdminPayPalConfigRequest, testPayPalConnectionRequest } from '@/lib/api-admin';
+import {
+  getAdminPayPalConfigRequest,
+  updateAdminPayPalConfigRequest,
+  testPayPalConnectionRequest,
+} from '@/lib/api-admin';
 
 export default function AdminPayPalConfigPage() {
   const [cfg, setCfg] = useState<{
     mode: 'sandbox' | 'live';
-    hasClientId: boolean; hasSecret: boolean; hasWebhookId: boolean;
+    hasClientId: boolean;
+    hasSecret: boolean;
+    hasWebhookId: boolean;
     webhookUrl: string;
   } | null>(null);
   const [clientId, setClientId] = useState('');
@@ -3019,35 +3774,53 @@ export default function AdminPayPalConfigPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setMsg(null); setErr(null);
+    setMsg(null);
+    setErr(null);
     const r = await getAdminPayPalConfigRequest();
     if (r.ok) setCfg(r.data);
     else setErr(r.error.message);
   }, []);
 
-  useEffect(() => { load(); }, [load]);
-
-  const onSave = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
-    setBusy(true); setMsg(null); setErr(null);
-    const body: any = {};
-    if (cfg) body.mode = cfg.mode;
-    if (clientId) body.clientId = clientId;
-    if (clientSecret) body.clientSecret = clientSecret;
-    if (webhookId) body.webhookId = webhookId;
-    const r = await updateAdminPayPalConfigRequest(body);
-    setBusy(false);
-    if (!r.ok) { setErr(r.error.message); return; }
-    setMsg(`已保存 (${r.data.changed.join(', ')})`);
-    setClientId(''); setClientSecret(''); setWebhookId('');
+  useEffect(() => {
     load();
-  }, [cfg, clientId, clientSecret, webhookId, load]);
+  }, [load]);
+
+  const onSave = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      setBusy(true);
+      setMsg(null);
+      setErr(null);
+      const body: any = {};
+      if (cfg) body.mode = cfg.mode;
+      if (clientId) body.clientId = clientId;
+      if (clientSecret) body.clientSecret = clientSecret;
+      if (webhookId) body.webhookId = webhookId;
+      const r = await updateAdminPayPalConfigRequest(body);
+      setBusy(false);
+      if (!r.ok) {
+        setErr(r.error.message);
+        return;
+      }
+      setMsg(`已保存 (${r.data.changed.join(', ')})`);
+      setClientId('');
+      setClientSecret('');
+      setWebhookId('');
+      load();
+    },
+    [cfg, clientId, clientSecret, webhookId, load],
+  );
 
   const onTest = useCallback(async () => {
-    setTesting(true); setMsg(null); setErr(null);
+    setTesting(true);
+    setMsg(null);
+    setErr(null);
     const r = await testPayPalConnectionRequest();
     setTesting(false);
-    if (!r.ok) { setErr(r.error.message); return; }
+    if (!r.ok) {
+      setErr(r.error.message);
+      return;
+    }
     setMsg(r.data.message);
   }, []);
 
@@ -3057,21 +3830,49 @@ export default function AdminPayPalConfigPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold">支付配置 (PayPal)</h1>
-        <Link href="/admin/memberships" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">← 返回会员列表</Link>
+        <Link
+          href="/admin/memberships"
+          className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+        >
+          ← 返回会员列表
+        </Link>
       </div>
 
       <div className="card-paper rounded-lg p-4 space-y-4 max-w-2xl">
-        {err && <p className="text-sm text-seal inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />{err}</p>}
-        {msg && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{msg}</p>}
+        {err && (
+          <p className="text-sm text-seal inline-flex items-center gap-1">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            {err}
+          </p>
+        )}
+        {msg && (
+          <p className="text-sm text-green-700 inline-flex items-center gap-1">
+            <Check className="h-3.5 w-3.5" />
+            {msg}
+          </p>
+        )}
 
         <div className="flex items-center gap-3 text-sm">
           <span className="text-ink-soft">状态:</span>
-          {cfg.hasClientId && cfg.hasSecret && cfg.hasWebhookId
-            ? <span className="text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />已配置</span>
-            : <span className="text-seal inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />未完整</span>}
-          <button type="button" onClick={onTest} disabled={testing}
-            className="ml-auto text-xs px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep inline-flex items-center gap-1">
-            <Wifi className="h-3 w-3" />{testing ? '测试中…' : '测试连接'}
+          {cfg.hasClientId && cfg.hasSecret && cfg.hasWebhookId ? (
+            <span className="text-green-700 inline-flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" />
+              已配置
+            </span>
+          ) : (
+            <span className="text-seal inline-flex items-center gap-1">
+              <AlertTriangle className="h-3.5 w-3.5" />
+              未完整
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onTest}
+            disabled={testing}
+            className="ml-auto text-xs px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep inline-flex items-center gap-1"
+          >
+            <Wifi className="h-3 w-3" />
+            {testing ? '测试中…' : '测试连接'}
           </button>
         </div>
 
@@ -3079,35 +3880,62 @@ export default function AdminPayPalConfigPage() {
           <div>
             <label className="text-sm font-medium">模式</label>
             <div className="flex gap-3 mt-1">
-              {(['sandbox', 'live'] as const).map(m => (
+              {(['sandbox', 'live'] as const).map((m) => (
                 <label key={m} className="flex items-center gap-1 text-sm">
-                  <input type="radio" checked={cfg.mode === m} onChange={() => setCfg({ ...cfg, mode: m })} />
+                  <input
+                    type="radio"
+                    checked={cfg.mode === m}
+                    onChange={() => setCfg({ ...cfg, mode: m })}
+                  />
                   {m === 'sandbox' ? 'Sandbox (测试)' : 'Live (生产)'}
                 </label>
               ))}
             </div>
           </div>
           <Field label={`Client ID ${cfg.hasClientId ? '(已配置,留空不改)' : ''}`}>
-            <input value={clientId} onChange={e => setClientId(e.target.value)} className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+            <input
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            />
           </Field>
           <Field label={`Client Secret ${cfg.hasSecret ? '(已配置,留空不改)' : ''}`}>
-            <input value={clientSecret} onChange={e => setClientSecret(e.target.value)} type="password" className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+            <input
+              value={clientSecret}
+              onChange={(e) => setClientSecret(e.target.value)}
+              type="password"
+              className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            />
           </Field>
           <Field label={`Webhook ID ${cfg.hasWebhookId ? '(已配置,留空不改)' : ''}`}>
-            <input value={webhookId} onChange={e => setWebhookId(e.target.value)} className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper" />
+            <input
+              value={webhookId}
+              onChange={(e) => setWebhookId(e.target.value)}
+              className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            />
           </Field>
           <div>
             <label className="text-sm font-medium">Webhook URL (PayPal 后台填这个)</label>
             <div className="mt-1 flex items-center gap-2">
-              <code className="flex-1 text-xs bg-paper-deep px-2 py-1 rounded font-mono">{cfg.webhookUrl}</code>
-              <a href="https://developer.paypal.com/dashboard/applications" target="_blank" rel="noopener"
-                className="text-xs text-seal hover:underline inline-flex items-center gap-1">
-                PayPal 后台<ExternalLink className="h-3 w-3" />
+              <code className="flex-1 text-xs bg-paper-deep px-2 py-1 rounded font-mono">
+                {cfg.webhookUrl}
+              </code>
+              <a
+                href="https://developer.paypal.com/dashboard/applications"
+                target="_blank"
+                rel="noopener"
+                className="text-xs text-seal hover:underline inline-flex items-center gap-1"
+              >
+                PayPal 后台
+                <ExternalLink className="h-3 w-3" />
               </a>
             </div>
           </div>
-          <button type="submit" disabled={busy}
-            className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={busy}
+            className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+          >
             {busy ? '保存中…' : '保存'}
           </button>
         </form>
@@ -3158,6 +3986,7 @@ git commit -m "feat(membership): admin plans editor + PayPal config UI — M2 co
 ## Task 18: `lib/payment-orders.ts` — CRUD for payment_orders
 
 **Files:**
+
 - Create: `lib/payment-orders.ts`
 - Test: covered indirectly by Task 20/24 (will use the helpers)
 
@@ -3169,22 +3998,42 @@ import { getPool } from './db';
 export type PaymentOrderStatus = 'created' | 'approved' | 'paid' | 'failed' | 'expired';
 
 export interface PaymentOrder {
-  id: number; userId: number; planId: number; paypalOrderId: string;
-  status: PaymentOrderStatus; amount: string; currency: 'CNY' | 'USD';
-  approvalUrl: string | null; createdAt: string; updatedAt: string; paidAt: string | null;
+  id: number;
+  userId: number;
+  planId: number;
+  paypalOrderId: string;
+  status: PaymentOrderStatus;
+  amount: string;
+  currency: 'CNY' | 'USD';
+  approvalUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+  paidAt: string | null;
 }
 
 interface DbRow {
-  id: number; user_id: number; plan_id: number; paypal_order_id: string;
-  status: PaymentOrderStatus; amount: string; currency: 'CNY' | 'USD';
+  id: number;
+  user_id: number;
+  plan_id: number;
+  paypal_order_id: string;
+  status: PaymentOrderStatus;
+  amount: string;
+  currency: 'CNY' | 'USD';
   approval_url: string | null;
-  created_at: Date; updated_at: Date; paid_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+  paid_at: Date | null;
 }
 
 function mapRow(r: DbRow): PaymentOrder {
   return {
-    id: Number(r.id), userId: Number(r.user_id), planId: Number(r.plan_id),
-    paypalOrderId: r.paypal_order_id, status: r.status, amount: String(r.amount), currency: r.currency,
+    id: Number(r.id),
+    userId: Number(r.user_id),
+    planId: Number(r.plan_id),
+    paypalOrderId: r.paypal_order_id,
+    status: r.status,
+    amount: String(r.amount),
+    currency: r.currency,
     approvalUrl: r.approval_url,
     createdAt: new Date(r.created_at).toISOString(),
     updatedAt: new Date(r.updated_at).toISOString(),
@@ -3193,8 +4042,12 @@ function mapRow(r: DbRow): PaymentOrder {
 }
 
 export async function createPaymentOrder(args: {
-  userId: number; planId: number; paypalOrderId: string;
-  amount: string; currency: 'CNY' | 'USD'; approvalUrl: string | null;
+  userId: number;
+  planId: number;
+  paypalOrderId: string;
+  amount: string;
+  currency: 'CNY' | 'USD';
+  approvalUrl: string | null;
 }): Promise<number> {
   const [res] = await getPool().execute<any>(
     `INSERT INTO payment_orders (user_id, plan_id, paypal_order_id, status, amount, currency, approval_url)
@@ -3225,7 +4078,9 @@ export async function getPaymentOrderById(id: number): Promise<PaymentOrder | nu
 }
 
 export async function updatePaymentOrderStatus(
-  paypalOrderId: string, status: PaymentOrderStatus, paidAt: Date | null = null,
+  paypalOrderId: string,
+  status: PaymentOrderStatus,
+  paidAt: Date | null = null,
 ): Promise<void> {
   await getPool().execute(
     `UPDATE payment_orders SET status = ?, paid_at = COALESCE(?, paid_at) WHERE paypal_order_id = ?`,
@@ -3254,6 +4109,7 @@ git commit -m "feat(membership): payment_orders CRUD helpers"
 ## Task 19: `lib/paypal.ts` — verifyWebhookSignature (real impl)
 
 **Files:**
+
 - Modify: `lib/paypal.ts`
 - Test: extend `tests/unit/lib/paypal.test.ts`
 
@@ -3262,51 +4118,62 @@ git commit -m "feat(membership): payment_orders CRUD helpers"
 Append to `tests/unit/lib/paypal.test.ts`:
 
 ```ts
-  it('verifyWebhookSignature posts to /v1/notifications/verify-webhook-signature', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce({
-      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
-    }).mockResolvedValueOnce({
-      ok: true, json: async () => ({ verification_status: 'SUCCESS' }),
+it('verifyWebhookSignature posts to /v1/notifications/verify-webhook-signature', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ verification_status: 'SUCCESS' }),
     });
-    vi.stubGlobal('fetch', fetchMock);
-    const { verifyWebhookSignature } = await import('@/lib/paypal');
-    const ok = await verifyWebhookSignature({
-      cfg: { mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' },
-      rawBody: '{"id":"WH-1"}',
-      headers: {
-        'paypal-auth-algo': 'SHA256withRSA',
-        'paypal-cert-url': 'https://api.paypal.com/cert.pem',
-        'paypal-transmission-id': 'abc-123',
-        'paypal-transmission-sig': 'sig',
-        'paypal-transmission-time': '2026-06-15T00:00:00Z',
-      },
-    });
-    expect(ok).toBe(true);
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    vi.unstubAllGlobals();
+  vi.stubGlobal('fetch', fetchMock);
+  const { verifyWebhookSignature } = await import('@/lib/paypal');
+  const ok = await verifyWebhookSignature({
+    cfg: { mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' },
+    rawBody: '{"id":"WH-1"}',
+    headers: {
+      'paypal-auth-algo': 'SHA256withRSA',
+      'paypal-cert-url': 'https://api.paypal.com/cert.pem',
+      'paypal-transmission-id': 'abc-123',
+      'paypal-transmission-sig': 'sig',
+      'paypal-transmission-time': '2026-06-15T00:00:00Z',
+    },
   });
+  expect(ok).toBe(true);
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+  vi.unstubAllGlobals();
+});
 
-  it('verifyWebhookSignature returns false on non-2xx', async () => {
-    const fetchMock = vi.fn().mockResolvedValueOnce({
-      ok: true, json: async () => ({ access_token: 'tok', expires_in: 3600 }),
-    }).mockResolvedValueOnce({
-      ok: true, json: async () => ({ verification_status: 'FAILURE' }),
+it('verifyWebhookSignature returns false on non-2xx', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ access_token: 'tok', expires_in: 3600 }),
+    })
+    .mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ verification_status: 'FAILURE' }),
     });
-    vi.stubGlobal('fetch', fetchMock);
-    const { verifyWebhookSignature } = await import('@/lib/paypal');
-    const ok = await verifyWebhookSignature({
-      cfg: { mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' },
-      rawBody: '{}', headers: {
-        'paypal-auth-algo': 'SHA256withRSA',
-        'paypal-cert-url': 'https://x/cert.pem',
-        'paypal-transmission-id': 't',
-        'paypal-transmission-sig': 's',
-        'paypal-transmission-time': '2026-06-15T00:00:00Z',
-      },
-    });
-    expect(ok).toBe(false);
-    vi.unstubAllGlobals();
+  vi.stubGlobal('fetch', fetchMock);
+  const { verifyWebhookSignature } = await import('@/lib/paypal');
+  const ok = await verifyWebhookSignature({
+    cfg: { mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' },
+    rawBody: '{}',
+    headers: {
+      'paypal-auth-algo': 'SHA256withRSA',
+      'paypal-cert-url': 'https://x/cert.pem',
+      'paypal-transmission-id': 't',
+      'paypal-transmission-sig': 's',
+      'paypal-transmission-time': '2026-06-15T00:00:00Z',
+    },
   });
+  expect(ok).toBe(false);
+  vi.unstubAllGlobals();
+});
 ```
 
 - [ ] **Step 2: Run the new tests to verify they fail**
@@ -3323,7 +4190,9 @@ Replace the `verifyWebhookSignature` stub with:
 
 ```ts
 export async function verifyWebhookSignature(args: {
-  cfg: PayPalConfig; rawBody: string; headers: Record<string, string>;
+  cfg: PayPalConfig;
+  rawBody: string;
+  headers: Record<string, string>;
 }): Promise<boolean> {
   const token = await getPayPalAccessToken(args.cfg);
   const res = await fetch(`${BASE(args.cfg.mode)}/v1/notifications/verify-webhook-signature`, {
@@ -3340,7 +4209,7 @@ export async function verifyWebhookSignature(args: {
     }),
   });
   if (!res.ok) return false;
-  const j = await res.json() as { verification_status: string };
+  const j = (await res.json()) as { verification_status: string };
   return j.verification_status === 'SUCCESS';
 }
 ```
@@ -3365,6 +4234,7 @@ git commit -m "feat(paypal): verifyWebhookSignature real impl"
 ## Task 20: API — `/api/membership/plans` (public enabled-only list)
 
 **Files:**
+
 - Create: `app/api/membership/plans/route.ts`
 - Test: `tests/integration/api/membership-plans.test.ts`
 
@@ -3379,7 +4249,9 @@ import { getPool, closePool } from '@/lib/db';
 import { GET } from '@/app/api/membership/plans/route';
 
 const HAS_DB = !!process.env.DATABASE_URL_TEST;
-vi.mock('next/headers', () => ({ cookies: () => ({ get: () => undefined, set: () => {}, delete: () => {} }) }));
+vi.mock('next/headers', () => ({
+  cookies: () => ({ get: () => undefined, set: () => {}, delete: () => {} }),
+}));
 
 const d = HAS_DB ? describe : describe.skip;
 
@@ -3407,7 +4279,9 @@ d('public /api/membership/plans', () => {
     await pool.query(`DELETE FROM membership_plans`);
   });
 
-  afterAll(async () => { await closePool(); });
+  afterAll(async () => {
+    await closePool();
+  });
 
   it('returns only enabled plans (CNY plans disabled by default)', async () => {
     const pool = getPool();
@@ -3475,6 +4349,7 @@ git commit -m "feat(membership): public plans endpoint (enabled only)"
 ## Task 21: API — `/api/membership/checkout` (create PayPal order)
 
 **Files:**
+
 - Create: `app/api/membership/checkout/route.ts`
 - Test: `tests/integration/api/membership-checkout.test.ts`
 
@@ -3496,8 +4371,12 @@ const testCookieStore: Record<string, Bag> = {};
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: (n: string) => testCookieStore[n],
-    set: (o: any) => { testCookieStore[o.name] = { value: o.value }; },
-    delete: (n: string) => { delete testCookieStore[n]; },
+    set: (o: any) => {
+      testCookieStore[o.name] = { value: o.value };
+    },
+    delete: (n: string) => {
+      delete testCookieStore[n];
+    },
   }),
 }));
 
@@ -3506,7 +4385,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('POST /api/membership/checkout', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -3533,7 +4413,8 @@ d('POST /api/membership/checkout', () => {
         paid_at TIMESTAMP NULL,
         PRIMARY KEY (id), UNIQUE KEY uk_paypal_order (paypal_order_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
-    ]) await pool.query(sql);
+    ])
+      await pool.query(sql);
 
     const hash = await hashPassword('longenoughpwd');
     await pool.execute(`INSERT INTO users (username, password_hash) VALUES ('usr_co', ?)`, [hash]);
@@ -3562,7 +4443,8 @@ d('POST /api/membership/checkout', () => {
 
   it('rejects unauthenticated requests with 401', async () => {
     const req = new NextRequest('http://localhost/api/membership/checkout', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ planKey: 'monthly_usd' }),
     });
     const res = await POST(req);
@@ -3572,7 +4454,8 @@ d('POST /api/membership/checkout', () => {
   it('returns 404 for disabled plan', async () => {
     testCookieStore['auth_token'] = { value: userToken };
     const req = new NextRequest('http://localhost/api/membership/checkout', {
-      method: 'POST', headers: { 'content-type': 'application/json', cookie: `auth_token=${userToken}` },
+      method: 'POST',
+      headers: { 'content-type': 'application/json', cookie: `auth_token=${userToken}` },
       body: JSON.stringify({ planKey: 'nonexistent' }),
     });
     const res = await POST(req);
@@ -3596,7 +4479,13 @@ Create `app/api/membership/checkout/route.ts`:
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withErrorHandling, badRequest, notFound, unauthorized, serviceUnavailable } from '@/lib/api-handler';
+import {
+  withErrorHandling,
+  badRequest,
+  notFound,
+  unauthorized,
+  serviceUnavailable,
+} from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
 import { getPlanByKey, PLAN_KEYS } from '@/lib/membership';
 import { createPayPalOrder } from '@/lib/paypal';
@@ -3612,12 +4501,15 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return badRequest('validation', parsed.error.message);
 
     const plan = await getPlanByKey(parsed.data.planKey);
-    if (!plan || !plan.enabled) return notFound('plan_not_found_or_disabled', `plan ${parsed.data.planKey}`);
+    if (!plan || !plan.enabled)
+      return notFound('plan_not_found_or_disabled', `plan ${parsed.data.planKey}`);
 
     let order;
     try {
       order = await createPayPalOrder({
-        amount: plan.amount, currency: plan.currency, description: plan.displayName,
+        amount: plan.amount,
+        currency: plan.currency,
+        description: plan.displayName,
         returnUrl: `${new URL(req.url).origin}/membership/success`,
         cancelUrl: `${new URL(req.url).origin}/membership/cancel`,
       });
@@ -3625,10 +4517,14 @@ export async function POST(req: NextRequest) {
       return serviceUnavailable('paypal_unavailable', (err as Error).message);
     }
 
-    const approveLink = order.links.find(l => l.rel === 'approve');
+    const approveLink = order.links.find((l) => l.rel === 'approve');
     const orderId = await createPaymentOrder({
-      userId: user.id, planId: plan.id, paypalOrderId: order.id,
-      amount: plan.amount, currency: plan.currency, approvalUrl: approveLink?.href ?? null,
+      userId: user.id,
+      planId: plan.id,
+      paypalOrderId: order.id,
+      amount: plan.amount,
+      currency: plan.currency,
+      approvalUrl: approveLink?.href ?? null,
     });
 
     return NextResponse.json({
@@ -3659,6 +4555,7 @@ git commit -m "feat(membership): checkout endpoint — creates PayPal order + pa
 ## Task 22: API — `/api/membership/orders/[id]` and `/api/membership/me`
 
 **Files:**
+
 - Create: `app/api/membership/orders/[id]/route.ts`
 - Create: `app/api/membership/me/route.ts`
 - Test: `tests/integration/api/membership-me.test.ts`
@@ -3681,8 +4578,12 @@ const testCookieStore: Record<string, Bag> = {};
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: (n: string) => testCookieStore[n],
-    set: (o: any) => { testCookieStore[o.name] = { value: o.value }; },
-    delete: (n: string) => { delete testCookieStore[n]; },
+    set: (o: any) => {
+      testCookieStore[o.name] = { value: o.value };
+    },
+    delete: (n: string) => {
+      delete testCookieStore[n];
+    },
   }),
 }));
 
@@ -3691,7 +4592,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('GET /api/membership/me', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -3719,7 +4621,8 @@ d('GET /api/membership/me', () => {
         revoked_at TIMESTAMP NULL, revoked_by BIGINT NULL, revoke_reason VARCHAR(255) NULL,
         PRIMARY KEY (id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
-    ]) await pool.query(sql);
+    ])
+      await pool.query(sql);
 
     const hash = await hashPassword('longenoughpwd');
     await pool.execute(`INSERT INTO users (username, password_hash) VALUES ('usr_me', ?)`, [hash]);
@@ -3744,7 +4647,11 @@ d('GET /api/membership/me', () => {
 
   it('returns active:false for user with no membership', async () => {
     testCookieStore['auth_token'] = { value: userToken };
-    const res = await meHandler(new NextRequest('http://localhost/api/membership/me', { headers: { cookie: `auth_token=${userToken}` } }));
+    const res = await meHandler(
+      new NextRequest('http://localhost/api/membership/me', {
+        headers: { cookie: `auth_token=${userToken}` },
+      }),
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.data.active).toBe(false);
@@ -3762,7 +4669,11 @@ d('GET /api/membership/me', () => {
     );
 
     testCookieStore['auth_token'] = { value: userToken };
-    const res = await meHandler(new NextRequest('http://localhost/api/membership/me', { headers: { cookie: `auth_token=${userToken}` } }));
+    const res = await meHandler(
+      new NextRequest('http://localhost/api/membership/me', {
+        headers: { cookie: `auth_token=${userToken}` },
+      }),
+    );
     const body = await res.json();
     expect(body.data.active).toBe(true);
     if (body.data.active) expect(body.data.planKey).toBe('yearly_usd');
@@ -3860,6 +4771,7 @@ git commit -m "feat(membership): /me + /orders/[id] endpoints (user-side)"
 ## Task 23: API — `/api/webhooks/paypal` (signature verify + handler)
 
 **Files:**
+
 - Create: `app/api/webhooks/paypal/route.ts`
 - Test: `tests/integration/api/webhooks-paypal.test.ts`
 
@@ -3876,13 +4788,22 @@ import { NextRequest } from 'next/server';
 
 const HAS_DB = !!process.env.DATABASE_URL_TEST;
 
-vi.mock('next/headers', () => ({ cookies: () => ({ get: () => undefined, set: () => {}, delete: () => {} }) }));
+vi.mock('next/headers', () => ({
+  cookies: () => ({ get: () => undefined, set: () => {}, delete: () => {} }),
+}));
 // Mock paypal module so we can control verifyWebhookSignature
 const verifyMock = vi.fn();
 const captureMock = vi.fn();
 vi.mock('@/lib/paypal', async () => {
   const actual = await vi.importActual<any>('@/lib/paypal');
-  return { ...actual, verifyWebhookSignature: verifyMock, capturePayPalOrder: captureMock, getPayPalConfig: vi.fn().mockResolvedValue({ mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' }) };
+  return {
+    ...actual,
+    verifyWebhookSignature: verifyMock,
+    capturePayPalOrder: captureMock,
+    getPayPalConfig: vi
+      .fn()
+      .mockResolvedValue({ mode: 'sandbox', clientId: 'c', clientSecret: 's', webhookId: 'w' }),
+  };
 });
 
 let userId: number, planId: number;
@@ -3890,7 +4811,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('POST /api/webhooks/paypal', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -3925,7 +4847,8 @@ d('POST /api/webhooks/paypal', () => {
         paid_at TIMESTAMP NULL,
         PRIMARY KEY (id), UNIQUE KEY uk_paypal_order (paypal_order_id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
-    ]) await pool.query(sql);
+    ])
+      await pool.query(sql);
 
     await pool.execute(`INSERT INTO users (username, password_hash) VALUES ('usr_wh', 'x')`);
     const [u] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
@@ -3958,7 +4881,14 @@ d('POST /api/webhooks/paypal', () => {
   function buildReq(event: any): NextRequest {
     return new NextRequest('http://localhost/api/webhooks/paypal', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', 'paypal-auth-algo': 'SHA256withRSA', 'paypal-cert-url': 'https://x/cert', 'paypal-transmission-id': 't', 'paypal-transmission-sig': 's', 'paypal-transmission-time': '2026-06-15T00:00:00Z' },
+      headers: {
+        'content-type': 'application/json',
+        'paypal-auth-algo': 'SHA256withRSA',
+        'paypal-cert-url': 'https://x/cert',
+        'paypal-transmission-id': 't',
+        'paypal-transmission-sig': 's',
+        'paypal-transmission-time': '2026-06-15T00:00:00Z',
+      },
       body: JSON.stringify(event),
     });
   }
@@ -3968,7 +4898,9 @@ d('POST /api/webhooks/paypal', () => {
     const event = { id: 'WH-1', event_type: 'CHECKOUT.ORDER.APPROVED', resource: { id: 'PAY-1' } };
     const res = await POST(buildReq(event));
     expect(res.status).toBe(401);
-    const [audit] = await getPool().query<any[]>(`SELECT event FROM audit_log WHERE event = 'paypal_webhook_rejected'`);
+    const [audit] = await getPool().query<any[]>(
+      `SELECT event FROM audit_log WHERE event = 'paypal_webhook_rejected'`,
+    );
     expect(audit.length).toBe(1);
   });
 
@@ -3980,10 +4912,14 @@ d('POST /api/webhooks/paypal', () => {
       `INSERT INTO payment_orders (user_id, plan_id, paypal_order_id, status, amount, currency) VALUES (?, ?, 'PAY-1', 'created', '3.00', 'USD')`,
       [userId, planId],
     );
-    const res = await POST(buildReq({ id: 'WH-1', event_type: 'CHECKOUT.ORDER.APPROVED', resource: { id: 'PAY-1' } }));
+    const res = await POST(
+      buildReq({ id: 'WH-1', event_type: 'CHECKOUT.ORDER.APPROVED', resource: { id: 'PAY-1' } }),
+    );
     expect(res.status).toBe(200);
     expect(captureMock).toHaveBeenCalledWith('PAY-1');
-    const [r] = await pool.query<any[]>(`SELECT status FROM payment_orders WHERE paypal_order_id = 'PAY-1'`);
+    const [r] = await pool.query<any[]>(
+      `SELECT status FROM payment_orders WHERE paypal_order_id = 'PAY-1'`,
+    );
     expect(r[0].status).toBe('approved');
   });
 
@@ -3996,14 +4932,25 @@ d('POST /api/webhooks/paypal', () => {
     );
     const orderId = Number((ins as any).insertId);
 
-    const res = await POST(buildReq({ id: 'WH-2', event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { supplementary_data: { related_ids: { order_id: 'PAY-2' } } } }));
+    const res = await POST(
+      buildReq({
+        id: 'WH-2',
+        event_type: 'PAYMENT.CAPTURE.COMPLETED',
+        resource: { supplementary_data: { related_ids: { order_id: 'PAY-2' } } },
+      }),
+    );
     expect(res.status).toBe(200);
-    const [m] = await pool.query<any[]>(`SELECT plan_key, source, source_payment_order_id FROM memberships WHERE user_id = ?`, [userId]);
+    const [m] = await pool.query<any[]>(
+      `SELECT plan_key, source, source_payment_order_id FROM memberships WHERE user_id = ?`,
+      [userId],
+    );
     expect(m.length).toBe(1);
     expect(m[0].plan_key).toBe('monthly_usd');
     expect(m[0].source).toBe('paypal');
     expect(Number(m[0].source_payment_order_id)).toBe(orderId);
-    const [p] = await pool.query<any[]>(`SELECT status, paid_at FROM payment_orders WHERE paypal_order_id = 'PAY-2'`);
+    const [p] = await pool.query<any[]>(
+      `SELECT status, paid_at FROM payment_orders WHERE paypal_order_id = 'PAY-2'`,
+    );
     expect(p[0].status).toBe('paid');
     expect(p[0].paid_at).not.toBeNull();
     // Verify audit write
@@ -4012,8 +4959,13 @@ d('POST /api/webhooks/paypal', () => {
     );
     expect(audit.length).toBe(1);
     expect(audit[0].user_id).toBeNull();
-    const meta = typeof audit[0].metadata === 'string' ? JSON.parse(audit[0].metadata) : audit[0].metadata;
-    expect(meta).toMatchObject({ targetUserId: userId, planKey: 'monthly_usd', paymentOrderId: orderId });
+    const meta =
+      typeof audit[0].metadata === 'string' ? JSON.parse(audit[0].metadata) : audit[0].metadata;
+    expect(meta).toMatchObject({
+      targetUserId: userId,
+      planKey: 'monthly_usd',
+      paymentOrderId: orderId,
+    });
   });
 
   it('duplicate PAYMENT.CAPTURE.COMPLETED is noop (UNIQUE catches)', async () => {
@@ -4024,17 +4976,25 @@ d('POST /api/webhooks/paypal', () => {
       [userId, planId],
     );
     const orderId = Number((ins as any).insertId);
-    const event = { id: 'WH-3', event_type: 'PAYMENT.CAPTURE.COMPLETED', resource: { supplementary_data: { related_ids: { order_id: 'PAY-3' } } } };
+    const event = {
+      id: 'WH-3',
+      event_type: 'PAYMENT.CAPTURE.COMPLETED',
+      resource: { supplementary_data: { related_ids: { order_id: 'PAY-3' } } },
+    };
     await POST(buildReq(event));
     const second = await POST(buildReq(event));
     expect(second.status).toBe(200);
-    const [m] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM memberships WHERE user_id = ?`, [userId]);
+    const [m] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM memberships WHERE user_id = ?`, [
+      userId,
+    ]);
     expect(Number(m[0].n)).toBe(1);
   });
 
   it('unrecognized event type returns 200 noop (PayPal retry-safe)', async () => {
     verifyMock.mockResolvedValueOnce(true);
-    const res = await POST(buildReq({ id: 'WH-4', event_type: 'CUSTOMER.DISPUTE.CREATED', resource: {} }));
+    const res = await POST(
+      buildReq({ id: 'WH-4', event_type: 'CUSTOMER.DISPUTE.CREATED', resource: {} }),
+    );
     expect(res.status).toBe(200);
     const [p] = await getPool().query<any[]>(`SELECT COUNT(*) AS n FROM payment_orders`);
     expect(Number(p[0].n)).toBe(0);
@@ -4066,23 +5026,36 @@ import { getPool } from '@/lib/db';
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
     const cfg = await getPayPalConfig();
-    if (!cfg) return NextResponse.json({ ok: false, error: 'paypal_not_configured' }, { status: 503 });
+    if (!cfg)
+      return NextResponse.json({ ok: false, error: 'paypal_not_configured' }, { status: 503 });
 
     const rawBody = await req.text();
     const headerObj: Record<string, string> = {};
     for (const [k, v] of req.headers.entries()) headerObj[k.toLowerCase()] = v;
     const ok = await verifyWebhookSignature({ cfg, rawBody, headers: headerObj });
     if (!ok) {
-      await writeAudit({ userId: null, event: 'paypal_webhook_rejected', metadata: { reason: 'signature_invalid' } });
+      await writeAudit({
+        userId: null,
+        event: 'paypal_webhook_rejected',
+        metadata: { reason: 'signature_invalid' },
+      });
       return NextResponse.json({ ok: false, error: 'invalid_signature' }, { status: 401 });
     }
 
     let event: any;
-    try { event = JSON.parse(rawBody); } catch { return NextResponse.json({ ok: true }); }
-    await writeAudit({ userId: null, event: 'paypal_webhook_received', metadata: { event_type: event.event_type, paypal_order_id: event.resource?.id } });
+    try {
+      event = JSON.parse(rawBody);
+    } catch {
+      return NextResponse.json({ ok: true });
+    }
+    await writeAudit({
+      userId: null,
+      event: 'paypal_webhook_received',
+      metadata: { event_type: event.event_type, paypal_order_id: event.resource?.id },
+    });
 
-    const orderId: string | undefined = event.resource?.id
-      ?? event.resource?.supplementary_data?.related_ids?.order_id;
+    const orderId: string | undefined =
+      event.resource?.id ?? event.resource?.supplementary_data?.related_ids?.order_id;
     if (!orderId) return NextResponse.json({ ok: true });
 
     const order = await getPaymentOrder(orderId);
@@ -4092,9 +5065,14 @@ export async function POST(req: NextRequest) {
       case 'CHECKOUT.ORDER.APPROVED': {
         if (order.status === 'created') {
           await updatePaymentOrderStatus(orderId, 'approved');
-          try { await capturePayPalOrder(orderId); } catch (err) {
+          try {
+            await capturePayPalOrder(orderId);
+          } catch (err) {
             await updatePaymentOrderStatus(orderId, 'failed');
-            return NextResponse.json({ ok: true, data: { captured: false, error: (err as Error).message } });
+            return NextResponse.json({
+              ok: true,
+              data: { captured: false, error: (err as Error).message },
+            });
           }
         }
         return NextResponse.json({ ok: true });
@@ -4103,7 +5081,10 @@ export async function POST(req: NextRequest) {
         if (order.status === 'paid') return NextResponse.json({ ok: true });
         await updatePaymentOrderStatus(orderId, 'paid', new Date());
         // Look up plan_key via planId
-        const [planRows] = await getPool().query<any[]>(`SELECT plan_key, currency FROM membership_plans WHERE id = ?`, [order.planId]);
+        const [planRows] = await getPool().query<any[]>(
+          `SELECT plan_key, currency FROM membership_plans WHERE id = ?`,
+          [order.planId],
+        );
         if (planRows.length === 0) return NextResponse.json({ ok: true });
         const planKey = planRows[0].plan_key;
         try {
@@ -4158,6 +5139,7 @@ git commit -m "feat(paypal): webhook handler with signature verify + idempotency
 ## Task 24: AI endpoint — `/api/ai/char-explain` (gated by `ai_calls`)
 
 **Files:**
+
 - Create: `app/api/ai/char-explain/route.ts`
 - Test: `tests/integration/api/ai-char-explain.test.ts`
 
@@ -4179,8 +5161,12 @@ const testCookieStore: Record<string, Bag> = {};
 vi.mock('next/headers', () => ({
   cookies: () => ({
     get: (n: string) => testCookieStore[n],
-    set: (o: any) => { testCookieStore[o.name] = { value: o.value }; },
-    delete: (n: string) => { delete testCookieStore[n]; },
+    set: (o: any) => {
+      testCookieStore[o.name] = { value: o.value };
+    },
+    delete: (n: string) => {
+      delete testCookieStore[n];
+    },
   }),
 }));
 
@@ -4193,7 +5179,8 @@ const d = HAS_DB ? describe : describe.skip;
 
 d('POST /api/ai/char-explain', () => {
   beforeAll(async () => {
-    if (!process.env.JWT_SECRET) process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
+    if (!process.env.JWT_SECRET)
+      process.env.JWT_SECRET = 'integration-test-secret-must-be-32+chars-long';
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST!;
     const pool = getPool();
     await pool.query('SELECT 1');
@@ -4221,7 +5208,8 @@ d('POST /api/ai/char-explain', () => {
         revoked_at TIMESTAMP NULL, revoked_by BIGINT NULL, revoke_reason VARCHAR(255) NULL,
         PRIMARY KEY (id)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
-    ]) await pool.query(sql);
+    ])
+      await pool.query(sql);
 
     const hash = await hashPassword('longenoughpwd');
     await pool.execute(`INSERT INTO users (username, password_hash) VALUES ('usr_ai', ?)`, [hash]);
@@ -4247,18 +5235,25 @@ d('POST /api/ai/char-explain', () => {
   });
 
   it('returns 401 when not logged in', async () => {
-    const res = await POST(new NextRequest('http://localhost/api/ai/char-explain', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ char: '水' }),
-    }));
+    const res = await POST(
+      new NextRequest('http://localhost/api/ai/char-explain', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ char: '水' }),
+      }),
+    );
     expect(res.status).toBe(401);
   });
 
   it('returns 403 membership_required when user has no membership', async () => {
     testCookieStore['auth_token'] = { value: userToken };
-    const res = await POST(new NextRequest('http://localhost/api/ai/char-explain', {
-      method: 'POST', headers: { 'content-type': 'application/json', cookie: `auth_token=${userToken}` },
-      body: JSON.stringify({ char: '水' }),
-    }));
+    const res = await POST(
+      new NextRequest('http://localhost/api/ai/char-explain', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie: `auth_token=${userToken}` },
+        body: JSON.stringify({ char: '水' }),
+      }),
+    );
     expect(res.status).toBe(403);
     const body = await res.json();
     expect(body.error.code).toBe('membership_required');
@@ -4270,7 +5265,10 @@ d('POST /api/ai/char-explain', () => {
       `INSERT INTO membership_plans (plan_key, display_name, duration_days, amount, currency, enabled, display_order) VALUES ('monthly_usd', '月', 30, '3.00', 'USD', 1, 1)`,
     );
     const [p] = await pool.query<any[]>(`SELECT LAST_INSERT_ID() AS id`);
-    await pool.execute(`INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, 'ai_calls')`, [Number((p[0] as any).id)]);
+    await pool.execute(
+      `INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, 'ai_calls')`,
+      [Number((p[0] as any).id)],
+    );
     await pool.execute(
       `INSERT INTO memberships (user_id, plan_key, source, expires_at) VALUES (?, 'monthly_usd', 'manual', ?)`,
       [userId, new Date(Date.now() + 30 * 86400_000)],
@@ -4278,10 +5276,13 @@ d('POST /api/ai/char-explain', () => {
     explainMock.mockResolvedValueOnce('水是生命之源,五行之一。');
 
     testCookieStore['auth_token'] = { value: userToken };
-    const res = await POST(new NextRequest('http://localhost/api/ai/char-explain', {
-      method: 'POST', headers: { 'content-type': 'application/json', cookie: `auth_token=${userToken}` },
-      body: JSON.stringify({ char: '水' }),
-    }));
+    const res = await POST(
+      new NextRequest('http://localhost/api/ai/char-explain', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', cookie: `auth_token=${userToken}` },
+        body: JSON.stringify({ char: '水' }),
+      }),
+    );
     const body = await res.json();
     expect(res.status).toBe(200);
     expect(body.data.explanation).toContain('生命之源');
@@ -4302,7 +5303,10 @@ Expected: FAIL with module-not-found.
 Edit `lib/char-ai.ts`, append at the end:
 
 ```ts
-export interface CharExplainInput { char: string; pinyin: string; }
+export interface CharExplainInput {
+  char: string;
+  pinyin: string;
+}
 export async function explainChar(input: CharExplainInput): Promise<string> {
   const text = await callLlm({
     system: '你是一位汉语言文字学家,擅长简洁解释汉字。',
@@ -4338,12 +5342,13 @@ export async function POST(req: NextRequest) {
     if (!user) return unauthorized('unauthenticated', 'login required');
     const parsed = Schema.safeParse(await req.json());
     if (!parsed.success) return badRequest('validation', parsed.error.message);
-    if (!await hasFeature(user.id, 'ai_calls')) {
+    if (!(await hasFeature(user.id, 'ai_calls'))) {
       return forbidden('membership_required', '需要 AI 调用会员');
     }
     // Look up pinyin
     const [rows] = await getPool().query<any[]>(
-      `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [parsed.data.char],
+      `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`,
+      [parsed.data.char],
     );
     if (rows.length === 0) return badRequest('char_not_found', 'char not in dictionary');
     const pinyin = String(rows[0].pinyin);
@@ -4352,14 +5357,22 @@ export async function POST(req: NextRequest) {
     try {
       const explanation = await explainChar({ char: parsed.data.char, pinyin });
       await logAiCall({
-        userId: user.id, feature: 'char-explain', model: 'unknown', status: 'ok',
-        durationMs: Date.now() - start, metadata: { char: parsed.data.char },
+        userId: user.id,
+        feature: 'char-explain',
+        model: 'unknown',
+        status: 'ok',
+        durationMs: Date.now() - start,
+        metadata: { char: parsed.data.char },
       });
       return NextResponse.json({ ok: true, data: { explanation } });
     } catch (err) {
       await logAiCall({
-        userId: user.id, feature: 'char-explain', model: 'unknown', status: 'error',
-        durationMs: Date.now() - start, error: (err as Error).message,
+        userId: user.id,
+        feature: 'char-explain',
+        model: 'unknown',
+        status: 'error',
+        durationMs: Date.now() - start,
+        error: (err as Error).message,
         metadata: { char: parsed.data.char },
       });
       throw err;
@@ -4388,6 +5401,7 @@ git commit -m "feat(membership): gated /api/ai/char-explain endpoint (ai_calls f
 ## Task 25: `/membership` page + `PlanCard` + `CheckoutButton`
 
 **Files:**
+
 - Create: `app/membership/page.tsx`
 - Create: `components/membership/PlanCard.tsx`
 - Create: `components/membership/CheckoutButton.tsx`
@@ -4401,20 +5415,30 @@ Create `components/membership/MembershipBadge.tsx`:
 import { Crown } from 'lucide-react';
 import Link from 'next/link';
 
-export function MembershipBadge({ active, planKey, expiresAt }: {
-  active: boolean; planKey?: string; expiresAt?: string;
+export function MembershipBadge({
+  active,
+  planKey,
+  expiresAt,
+}: {
+  active: boolean;
+  planKey?: string;
+  expiresAt?: string;
 }) {
   if (!active) {
     return (
-      <Link href="/membership"
-        className="text-xs px-3 py-1 rounded bg-seal text-paper hover:bg-seal/80 inline-flex items-center gap-1">
-        <Crown className="h-3 w-3" />开通会员
+      <Link
+        href="/membership"
+        className="text-xs px-3 py-1 rounded bg-seal text-paper hover:bg-seal/80 inline-flex items-center gap-1"
+      >
+        <Crown className="h-3 w-3" />
+        开通会员
       </Link>
     );
   }
   return (
     <span className="text-xs px-3 py-1 rounded bg-success/15 text-success inline-flex items-center gap-1">
-      <Crown className="h-3 w-3" />{planKey} · 到期 {expiresAt ? new Date(expiresAt).toLocaleDateString('zh-CN') : ''}
+      <Crown className="h-3 w-3" />
+      {planKey} · 到期 {expiresAt ? new Date(expiresAt).toLocaleDateString('zh-CN') : ''}
     </span>
   );
 }
@@ -4436,15 +5460,20 @@ export function CheckoutButton({ planKey, label }: { planKey: string; label: str
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const onClick = useCallback(async () => {
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     const res = await fetch('/api/membership/checkout', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ planKey }),
       credentials: 'same-origin',
     });
     const j = await res.json();
     setBusy(false);
-    if (!j.ok) { setErr(j.error.message); return; }
+    if (!j.ok) {
+      setErr(j.error.message);
+      return;
+    }
     if (j.data.approvalUrl) {
       // Pass orderId via query for success page polling
       const url = new URL(j.data.approvalUrl);
@@ -4456,11 +5485,21 @@ export function CheckoutButton({ planKey, label }: { planKey: string; label: str
   }, [planKey]);
   return (
     <div>
-      <button type="button" onClick={onClick} disabled={busy}
-        className="w-full text-sm px-4 py-2 bg-seal text-paper rounded hover:bg-seal/80 disabled:opacity-50 inline-flex items-center justify-center gap-1">
-        <CreditCard className="h-4 w-4" />{busy ? '跳转中…' : label}
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={busy}
+        className="w-full text-sm px-4 py-2 bg-seal text-paper rounded hover:bg-seal/80 disabled:opacity-50 inline-flex items-center justify-center gap-1"
+      >
+        <CreditCard className="h-4 w-4" />
+        {busy ? '跳转中…' : label}
       </button>
-      {err && <p className="text-xs text-seal mt-1 inline-flex items-center gap-1"><AlertTriangle className="h-3 w-3" />{err}</p>}
+      {err && (
+        <p className="text-xs text-seal mt-1 inline-flex items-center gap-1">
+          <AlertTriangle className="h-3 w-3" />
+          {err}
+        </p>
+      )}
     </div>
   );
 }
@@ -4475,13 +5514,23 @@ import { Crown } from 'lucide-react';
 import { CheckoutButton } from './CheckoutButton';
 
 const FEATURE_LABELS: Record<string, string> = {
-  unlimited_history: '无限历史记录', download_pdf: 'PDF 下载', ai_calls: 'AI 释义', priority_tts: '优先 TTS',
+  unlimited_history: '无限历史记录',
+  download_pdf: 'PDF 下载',
+  ai_calls: 'AI 释义',
+  priority_tts: '优先 TTS',
 };
 
-export function PlanCard({ plan, isLoggedIn }: {
+export function PlanCard({
+  plan,
+  isLoggedIn,
+}: {
   plan: {
-    id: number; planKey: string; displayName: string;
-    durationDays: number; amount: string; currency: 'CNY' | 'USD';
+    id: number;
+    planKey: string;
+    displayName: string;
+    durationDays: number;
+    amount: string;
+    currency: 'CNY' | 'USD';
     features: string[];
   };
   isLoggedIn: boolean;
@@ -4494,20 +5543,27 @@ export function PlanCard({ plan, isLoggedIn }: {
         <h3 className="font-kai text-lg text-ink">{plan.displayName}</h3>
       </div>
       <div className="text-3xl font-serif text-ink">
-        {symbol}{plan.amount}
+        {symbol}
+        {plan.amount}
         <span className="text-xs text-ink-soft ml-1">/ {plan.durationDays} 天</span>
       </div>
       <ul className="text-sm space-y-1 text-ink-soft flex-1">
-        {plan.features.map(f => (
+        {plan.features.map((f) => (
           <li key={f} className="inline-flex items-center gap-1">
             <span className="text-success">✓</span> {FEATURE_LABELS[f] ?? f}
           </li>
         ))}
       </ul>
-      {isLoggedIn
-        ? <CheckoutButton planKey={plan.planKey} label="立即开通" />
-        : <a href={`/?auth=login&next=/membership`}
-            className="block text-center text-sm px-4 py-2 border border-ink/20 rounded text-ink hover:bg-paper-deep">登录后开通</a>}
+      {isLoggedIn ? (
+        <CheckoutButton planKey={plan.planKey} label="立即开通" />
+      ) : (
+        <a
+          href={`/?auth=login&next=/membership`}
+          className="block text-center text-sm px-4 py-2 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+        >
+          登录后开通
+        </a>
+      )}
     </div>
   );
 }
@@ -4533,7 +5589,7 @@ export default async function MembershipPage() {
   const [plans, user, active] = await Promise.all([
     listPlans({ enabledOnly: true }),
     getCurrentUser(),
-    getCurrentUser().then(u => u ? getMyActiveMembership(u.id) : null),
+    getCurrentUser().then((u) => (u ? getMyActiveMembership(u.id) : null)),
   ]);
 
   return (
@@ -4550,14 +5606,21 @@ export default async function MembershipPage() {
             />
           </div>
         )}
-        {plans.length === 0
-          ? <p className="text-sm text-ink-faint">暂无可用套餐,请稍后再来。</p>
-          : <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
-              {plans.map(p => <PlanCard key={p.id} plan={p} isLoggedIn={!!user} />)}
-            </div>}
+        {plans.length === 0 ? (
+          <p className="text-sm text-ink-faint">暂无可用套餐,请稍后再来。</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+            {plans.map((p) => (
+              <PlanCard key={p.id} plan={p} isLoggedIn={!!user} />
+            ))}
+          </div>
+        )}
         <p className="text-xs text-ink-faint mt-8">
-          支付由 PayPal 处理。开通后会员时长自动累加到当前到期日。
-          如需发票请联系 <Link href="/?contact=1" className="text-seal hover:underline">客服</Link>。
+          支付由 PayPal 处理。开通后会员时长自动累加到当前到期日。 如需发票请联系{' '}
+          <Link href="/?contact=1" className="text-seal hover:underline">
+            客服
+          </Link>
+          。
         </p>
       </PageContainer>
       <Footer />
@@ -4587,6 +5650,7 @@ git commit -m "feat(membership): /membership page + PlanCard + CheckoutButton"
 ## Task 26: `/membership/success` (polling) + `/membership/cancel`
 
 **Files:**
+
 - Create: `app/membership/success/page.tsx`
 - Create: `app/membership/cancel/page.tsx`
 
@@ -4611,7 +5675,10 @@ function SuccessInner() {
   const [planName, setPlanName] = useState<string | null>(null);
 
   const poll = useCallback(async () => {
-    if (!orderId) { setStatus('failed'); return; }
+    if (!orderId) {
+      setStatus('failed');
+      return;
+    }
     const res = await fetch(`/api/membership/orders/${orderId}`, { credentials: 'same-origin' });
     const j = await res.json();
     if (!j.ok) return; // keep polling
@@ -4627,7 +5694,10 @@ function SuccessInner() {
     poll();
     const t = setInterval(poll, 2000);
     const stop = setTimeout(() => clearInterval(t), 30000);
-    return () => { clearInterval(t); clearTimeout(stop); };
+    return () => {
+      clearInterval(t);
+      clearTimeout(stop);
+    };
   }, [poll]);
 
   return (
@@ -4644,7 +5714,12 @@ function SuccessInner() {
           <Check className="h-12 w-12 mx-auto text-success" />
           <h1 className="font-kai text-xl">开通成功!</h1>
           {planName && <p className="text-sm text-ink-soft">{planName} 已激活。</p>}
-          <Link href="/profile" className="inline-block text-sm px-4 py-2 bg-ink text-paper rounded hover:bg-ink/80">查看我的会员</Link>
+          <Link
+            href="/profile"
+            className="inline-block text-sm px-4 py-2 bg-ink text-paper rounded hover:bg-ink/80"
+          >
+            查看我的会员
+          </Link>
         </>
       )}
       {status === 'failed' && (
@@ -4652,7 +5727,12 @@ function SuccessInner() {
           <AlertTriangle className="h-12 w-12 mx-auto text-seal" />
           <h1 className="font-kai text-xl">支付未完成</h1>
           <p className="text-sm text-ink-soft">订单可能已过期或被取消。如已扣款请联系客服。</p>
-          <Link href="/membership" className="inline-block text-sm px-4 py-2 border border-ink/20 rounded text-ink hover:bg-paper-deep">重试</Link>
+          <Link
+            href="/membership"
+            className="inline-block text-sm px-4 py-2 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+          >
+            重试
+          </Link>
         </>
       )}
     </main>
@@ -4690,7 +5770,12 @@ export default function MembershipCancelPage() {
         <X className="h-12 w-12 mx-auto text-ink-soft" />
         <h1 className="font-kai text-xl">支付已取消</h1>
         <p className="text-sm text-ink-soft">您可以稍后再来。</p>
-        <Link href="/membership" className="inline-block text-sm px-4 py-2 bg-ink text-paper rounded hover:bg-ink/80">返回套餐</Link>
+        <Link
+          href="/membership"
+          className="inline-block text-sm px-4 py-2 bg-ink text-paper rounded hover:bg-ink/80"
+        >
+          返回套餐
+        </Link>
       </main>
       <Footer />
     </>
@@ -4718,6 +5803,7 @@ git commit -m "feat(membership): /success (polling) + /cancel pages"
 ## Task 27: `/profile` membership status card + Header link
 
 **Files:**
+
 - Create: `components/membership/MembershipStatusCard.tsx`
 - Modify: `app/profile/page.tsx`
 - Modify: `components/Header.tsx` (add "会员" link)
@@ -4742,14 +5828,22 @@ export async function MembershipStatusCard({ userId }: { userId: number }) {
       </div>
       {m.active ? (
         <div className="space-y-1 text-sm">
-          <p>当前套餐: <span className="font-medium">{m.planKey}</span></p>
-          <p>到期时间: <span className="font-medium">{new Date(m.expiresAt).toLocaleDateString('zh-CN')}</span> (还剩 {m.expiresInDays} 天)</p>
+          <p>
+            当前套餐: <span className="font-medium">{m.planKey}</span>
+          </p>
+          <p>
+            到期时间:{' '}
+            <span className="font-medium">{new Date(m.expiresAt).toLocaleDateString('zh-CN')}</span>{' '}
+            (还剩 {m.expiresInDays} 天)
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
           <p className="text-sm text-ink-soft">您还不是会员</p>
-          <Link href="/membership"
-            className="inline-flex items-center gap-1 text-sm px-3 py-1.5 bg-seal text-paper rounded hover:bg-seal/80">
+          <Link
+            href="/membership"
+            className="inline-flex items-center gap-1 text-sm px-3 py-1.5 bg-seal text-paper rounded hover:bg-seal/80"
+          >
             开通会员 <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
@@ -4778,6 +5872,7 @@ Edit `app/profile/page.tsx`, import and add the card after the stat cards grid. 
 ```
 
 And update the import line:
+
 ```tsx
 import { MembershipStatusCard } from '@/components/membership/MembershipStatusCard';
 ```
@@ -4821,6 +5916,7 @@ git commit -m "feat(membership): /profile status card + 会员 nav link"
 ## Task 28: Final smoke test + add new event types to admin logs filter
 
 **Files:**
+
 - Modify: `app/admin/logs/page.tsx` (add 6 new events to `EVENT_TYPES`)
 
 - [ ] **Step 1: Find and update the EVENT_TYPES constant**
@@ -4830,8 +5926,12 @@ Read `app/admin/logs/page.tsx` to find the `EVENT_TYPES` constant. Append the 6 
 ```ts
 const EVENT_TYPES = [
   // ... existing events ...
-  'membership_granted', 'membership_granted_paypal', 'membership_revoked',
-  'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
+  'membership_granted',
+  'membership_granted_paypal',
+  'membership_revoked',
+  'paypal_config_updated',
+  'paypal_webhook_received',
+  'paypal_webhook_rejected',
 ];
 ```
 
@@ -4844,6 +5944,7 @@ pnpm dev &
 ```
 
 Then run through the full flow:
+
 1. Login as admin
 2. Visit `/admin/memberships` — see 4 plans in /plans page, 0 memberships in /memberships list
 3. Click "初始化 4 档套餐" — verify 4 rows appear
@@ -4900,6 +6001,7 @@ Expected: all green. Manual smoke (Task 28 step 2) confirms the user-facing flow
 ## Rollback plan
 
 If something goes wrong post-deploy:
+
 1. `pnpm tsc --noEmit` will catch type errors before deploy
 2. The migration is idempotent — re-run if interrupted
 3. Webhook is retry-safe — duplicate events are noop
@@ -4915,6 +6017,3 @@ If something goes wrong post-deploy:
 - 多币种换汇
 
 ---
-
-
-

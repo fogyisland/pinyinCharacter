@@ -34,18 +34,18 @@ describe('getTopPaths', () => {
   });
 
   it('uses COUNT(DISTINCT COALESCE(user_id, ip)) for unique visitors', async () => {
-    queryResults['FROM page_views'] = [[
-      { path: '/x', views: 5, unique_visitors: 3 },
-    ]];
+    queryResults['FROM page_views'] = [[{ path: '/x', views: 5, unique_visitors: 3 }]];
     await getTopPaths(7, 10);
     expect(queryLog[0].sql).toMatch(/COUNT\(DISTINCT COALESCE\(user_id, ip\)\)/);
   });
 
   it('groups by path, orders by views DESC, maps {path, views, unique}', async () => {
-    queryResults['FROM page_views'] = [[
-      { path: '/a', views: 100, unique_visitors: 50 },
-      { path: '/b', views: 50, unique_visitors: 30 },
-    ]];
+    queryResults['FROM page_views'] = [
+      [
+        { path: '/a', views: 100, unique_visitors: 50 },
+        { path: '/b', views: 50, unique_visitors: 30 },
+      ],
+    ];
     const result = await getTopPaths(7, 10);
     expect(result).toEqual([
       { path: '/a', views: 100, unique: 50 },

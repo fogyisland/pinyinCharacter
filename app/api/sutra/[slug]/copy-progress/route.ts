@@ -29,7 +29,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
 
     const [rows] = await getPool().query<any[]>(
       `SELECT id, chunks FROM sutras WHERE slug = ? LIMIT 1`,
-      [slug]
+      [slug],
     );
     const row = rows[0];
     if (!row) return notFound('sutra_not_found', 'sutra not found');
@@ -50,13 +50,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     const { slug } = await params;
     if (!slug) return badRequest('bad_slug', 'slug required');
 
-    const body = await req.json().catch(() => ({} as any));
+    const body = await req.json().catch(() => ({}) as any);
     const chunkIdx = Number(body?.chunkIdx);
-    if (!Number.isInteger(chunkIdx) || chunkIdx < 0) return badRequest('bad_chunk', 'chunkIdx invalid');
+    if (!Number.isInteger(chunkIdx) || chunkIdx < 0)
+      return badRequest('bad_chunk', 'chunkIdx invalid');
 
     const [rows] = await getPool().query<any[]>(
       `SELECT id, chunks FROM sutras WHERE slug = ? LIMIT 1`,
-      [slug]
+      [slug],
     );
     const row = rows[0];
     if (!row) return notFound('sutra_not_found', 'sutra not found');

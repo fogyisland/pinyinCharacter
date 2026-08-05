@@ -29,7 +29,8 @@ export function CampaignForm() {
   }
 
   async function save() {
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     try {
       const res = await fetch('/api/admin/email/campaigns', {
         method: 'POST',
@@ -75,7 +76,10 @@ export function CampaignForm() {
         <label className="block text-sm font-medium text-ink-soft mb-1">HTML 正文</label>
         <textarea
           value={htmlBody}
-          onChange={(e) => { setHtmlBody(e.target.value); syncTextFromHtml(e.target.value); }}
+          onChange={(e) => {
+            setHtmlBody(e.target.value);
+            syncTextFromHtml(e.target.value);
+          }}
           rows={10}
           placeholder="<p>新版描红模式上线,现在你可以...</p>"
           className="w-full border border-paper-warm rounded px-3 py-2 text-sm font-mono"

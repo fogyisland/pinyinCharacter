@@ -34,7 +34,11 @@ const FONTS: Array<{ path: string; eras: EraKey[]; role: 'primary' | 'fallback' 
   { path: 'public/fonts/founder-jiaguwen.ttf', eras: ['jiaguwen'], role: 'primary' },
   { path: 'public/fonts/quanziku-shuowen.ttf', eras: ['xiaozhuan'], role: 'primary' },
   { path: 'public/fonts/wang-hanzong-lishu.ttf', eras: ['lishu'], role: 'primary' },
-  { path: 'public/fonts/BabelStoneHanBasic.ttf', eras: ['jiaguwen', 'jinwen', 'xiaozhuan', 'lishu'], role: 'fallback' },
+  {
+    path: 'public/fonts/BabelStoneHanBasic.ttf',
+    eras: ['jiaguwen', 'jinwen', 'xiaozhuan', 'lishu'],
+    role: 'fallback',
+  },
 ];
 
 function listCharsFromContentDir(): string[] {
@@ -44,7 +48,7 @@ function listCharsFromContentDir(): string[] {
 
 function isBmpChar(c: string): boolean {
   const cp = c.codePointAt(0);
-  return cp != null && cp <= 0xFFFF;
+  return cp != null && cp <= 0xffff;
 }
 
 async function main() {
@@ -100,7 +104,9 @@ async function main() {
     coverage[char] = charCov;
     processed++;
     if (processed % 1000 === 0) {
-      console.log(`[coverage] ${processed}/${bmpCount} (${((Date.now() - start) / 1000).toFixed(1)}s)`);
+      console.log(
+        `[coverage] ${processed}/${bmpCount} (${((Date.now() - start) / 1000).toFixed(1)}s)`,
+      );
     }
   }
 
@@ -114,14 +120,20 @@ async function main() {
       if (c[era]) stats[era]++;
     }
   }
-  const anyTrue = Object.values(coverage).filter((c) => c.jiaguwen || c.jinwen || c.xiaozhuan || c.lishu).length;
+  const anyTrue = Object.values(coverage).filter(
+    (c) => c.jiaguwen || c.jinwen || c.xiaozhuan || c.lishu,
+  ).length;
 
   console.log(`\n[coverage] done in ${((Date.now() - start) / 1000).toFixed(1)}s`);
   console.log(`[coverage] chars scanned: ${bmpCount} (skipped supp-plane: ${suppSkipped})`);
-  console.log(`[coverage] chars with ≥1 era: ${anyTrue} (${((anyTrue / bmpCount) * 100).toFixed(1)}%)`);
+  console.log(
+    `[coverage] chars with ≥1 era: ${anyTrue} (${((anyTrue / bmpCount) * 100).toFixed(1)}%)`,
+  );
   console.log(`[coverage] per-era coverage:`);
   for (const era of Object.keys(stats) as EraKey[]) {
-    console.log(`[coverage]   ${era.padEnd(10)} ${stats[era]} (${((stats[era] / bmpCount) * 100).toFixed(1)}%)`);
+    console.log(
+      `[coverage]   ${era.padEnd(10)} ${stats[era]} (${((stats[era] / bmpCount) * 100).toFixed(1)}%)`,
+    );
   }
   console.log(`[coverage] wrote: ${OUT_PATH}`);
 }

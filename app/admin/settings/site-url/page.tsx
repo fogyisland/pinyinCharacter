@@ -19,9 +19,9 @@ export default async function AdminSiteUrlPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">站点设置</h1>
       <p className="text-sm text-ink-soft max-w-2xl">
-        设置站点的对外 URL(例如 <code>https://pinyin.example.com</code>)。
-        写入 <code>app_config.site.url</code> 后, sitemap、robots、canonical 链接、JSON-LD 都会使用这个值,
-        避免外部爬虫看到 <code>localhost:3000</code>。
+        设置站点的对外 URL(例如 <code>https://pinyin.example.com</code>)。 写入{' '}
+        <code>app_config.site.url</code> 后, sitemap、robots、canonical 链接、JSON-LD
+        都会使用这个值, 避免外部爬虫看到 <code>localhost:3000</code>。
       </p>
       <SiteUrlForm initial={{ url, source }} />
     </div>

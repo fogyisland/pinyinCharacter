@@ -57,15 +57,15 @@ info:         #4F6B8C   灰蓝（不抢戏）
 
 字体使用规则：
 
-| 用途 | 字体 | 字号/字重 | 字距 |
-|---|---|---|---|
-| H1 / Hero 标题 | LXGW WenKai | 36-48px / 400 | normal |
-| H2 / 区块标题 | LXGW WenKai | 24-28px / 400 | normal |
-| H3 / 卡片标题 | Noto Sans SC | 18-20px / 600 | normal |
-| 正文 | Noto Sans SC | 14-16px / 400 | normal |
-| 标签 / 徽章 | Noto Sans SC | 11-12px / 500 | letter-spacing: 0.1em |
-| 装饰小字（"字·韵"） | LXGW WenKai | 11-12px / 400 | letter-spacing: 0.3em |
-| 表格 / 等宽 | 系统 mono | 13-14px / 400 | normal |
+| 用途                | 字体         | 字号/字重     | 字距                  |
+| ------------------- | ------------ | ------------- | --------------------- |
+| H1 / Hero 标题      | LXGW WenKai  | 36-48px / 400 | normal                |
+| H2 / 区块标题       | LXGW WenKai  | 24-28px / 400 | normal                |
+| H3 / 卡片标题       | Noto Sans SC | 18-20px / 600 | normal                |
+| 正文                | Noto Sans SC | 14-16px / 400 | normal                |
+| 标签 / 徽章         | Noto Sans SC | 11-12px / 500 | letter-spacing: 0.1em |
+| 装饰小字（"字·韵"） | LXGW WenKai  | 11-12px / 400 | letter-spacing: 0.3em |
+| 表格 / 等宽         | 系统 mono    | 13-14px / 400 | normal                |
 
 ### 1.3 间距 / 圆角 / 阴影
 
@@ -110,22 +110,22 @@ const hanSans = Noto_Sans_SC({ subsets: ['latin'], weight: ['400', '500', '600',
 ```css
 @layer base {
   body {
-    background-color: #F4ECD8;
+    background-color: #f4ecd8;
     background-image:
-      radial-gradient(circle at 20% 30%, rgba(178,43,43,0.018) 0%, transparent 40%),
-      radial-gradient(circle at 80% 70%, rgba(58,42,20,0.025) 0%, transparent 50%);
+      radial-gradient(circle at 20% 30%, rgba(178, 43, 43, 0.018) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(58, 42, 20, 0.025) 0%, transparent 50%);
   }
 }
 
 @layer utilities {
   .paper-rule {
-    background-image: linear-gradient(to right, transparent, rgba(139,111,58,0.4), transparent);
+    background-image: linear-gradient(to right, transparent, rgba(139, 111, 58, 0.4), transparent);
     height: 1px;
   }
   .stamp {
     display: inline-block;
-    border: 2px solid #B22B2B;
-    color: #B22B2B;
+    border: 2px solid #b22b2b;
+    color: #b22b2b;
     padding: 4px 10px;
     font-family: var(--font-wenkai);
     transform: rotate(-4deg);
@@ -338,34 +338,41 @@ const hanSans = Noto_Sans_SC({ subsets: ['latin'], weight: ['400', '500', '600',
 ## 11. 实施分阶段 (Implementation Phases)
 
 **Phase 1 — 基础 (1 PR)：tokens + 字体 + layout**
+
 - tailwind.config.ts 扩展（颜色/字体/阴影）
 - app/globals.css 加 paper 背景、装饰 utility
 - app/layout.tsx 加载 3 字体 + 应用 body 样式
 - 替换散落的 `bg-gray-50` / `text-blue-600` / `bg-green-100` → token
 
 **Phase 2 — 共享组件 + Header/Footer (1 PR)**
+
 - LoadingSpinner / EmptyState / ErrorState 重做
 - Header.tsx 重写 + MobileMenu
 - Footer.tsx 新建
 - ConfirmDialog / AuthModal 调样式
 
 **Phase 3 — 首页 (1 PR)**
+
 - Hero.tsx / BentoGrid.tsx / ValueProps.tsx
 - app/page.tsx 改为 Hero + Bento + ValueProps + Footer，不直接堆功能组件
 
 **Phase 4 — 功能页 (2 PR)**
+
 - PR1: 罕见字库 list + 详情
 - PR2: 字帖 4 页 + 游戏
 
 **Phase 5 — 用户系统 + 管理 (1 PR)**
+
 - /login /forgot-password /reset-password /profile /history
 - /admin/* 4 个页面
 
 **Phase 6 — 错误/空/移动端收尾 (1 PR)**
+
 - 404 / error / loading 全站统一
 - 移动端适配
 
 **Phase 7 — 验收 (1 commit)**
+
 - `pnpm build` 验证
 - 浏览器 smoke（手测首页 + 3 个内页 + 1 个管理页 + 404 + 移动端）
 

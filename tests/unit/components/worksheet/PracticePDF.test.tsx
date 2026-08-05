@@ -48,7 +48,9 @@ const ALL_PAPER_SIZES: PaperSize[] = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 
 // without polluting the production code with a wider return type.
 const renderPdf = (paperSize: PaperSize, cellStyle: CellStyle = 'pen-square', siteHost = '') =>
   pdf(
-    createElement(PracticePDF, { paperSize, cellStyle, siteHost }) as unknown as Parameters<typeof pdf>[0],
+    createElement(PracticePDF, { paperSize, cellStyle, siteHost }) as unknown as Parameters<
+      typeof pdf
+    >[0],
   );
 
 // react-pdf writes one /Type /Page per page; /Type /Pages is the catalog

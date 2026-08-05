@@ -7,6 +7,12 @@ export async function dropPoemsTable(): Promise<void> {
 
 if (require.main === module) {
   dropPoemsTable()
-    .then(() => { console.log('[drop-poems-table] poems table dropped'); process.exit(0); })
-    .catch(err => { console.error('[drop-poems-table] failed:', err); process.exit(1); });
+    .then(() => {
+      console.log('[drop-poems-table] poems table dropped');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('[drop-poems-table] failed:', err);
+      process.exit(1);
+    });
 }

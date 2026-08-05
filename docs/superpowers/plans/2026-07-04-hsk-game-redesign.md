@@ -25,59 +25,61 @@
 
 ### Created
 
-| Path | Responsibility |
-|------|----------------|
-| `data/hsk-vocab.json` | HSK 1.0 public-domain vocab (≈150 words → ≈300 unique chars) keyed by level |
-| `scripts/migrations/2026-07-04-hsk-level.sql` | `ALTER TABLE chars ADD COLUMN hsk_level TINYINT NULL; CREATE INDEX …` |
-| `scripts/import-hsk.ts` | One-pass idempotent `INSERT … ON DUPLICATE KEY UPDATE` from JSON |
-| `lib/reveal.ts` | `HskLevel`, `RevealElement`, `RevealConfig`, `REVEAL_BY_LEVEL`, `getRevealConfig(game, level)` |
-| `tests/unit/lib/reveal.test.ts` | REVEAL_BY_LEVEL matrix + `getRevealConfig` per-game rules |
-| `tests/integration/scripts/import-hsk.test.ts` | Verify HSK 1.0 chars imported + idempotent |
-| `tests/integration/api/game-round.test.ts` | `?hskLevel=N` happy + zod reject + Cache-Control header |
-| `tests/integration/api/chain-chars.test.ts` | Same coverage on chain endpoint |
+| Path                                           | Responsibility                                                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `data/hsk-vocab.json`                          | HSK 1.0 public-domain vocab (≈150 words → ≈300 unique chars) keyed by level                    |
+| `scripts/migrations/2026-07-04-hsk-level.sql`  | `ALTER TABLE chars ADD COLUMN hsk_level TINYINT NULL; CREATE INDEX …`                          |
+| `scripts/import-hsk.ts`                        | One-pass idempotent `INSERT … ON DUPLICATE KEY UPDATE` from JSON                               |
+| `lib/reveal.ts`                                | `HskLevel`, `RevealElement`, `RevealConfig`, `REVEAL_BY_LEVEL`, `getRevealConfig(game, level)` |
+| `tests/unit/lib/reveal.test.ts`                | REVEAL_BY_LEVEL matrix + `getRevealConfig` per-game rules                                      |
+| `tests/integration/scripts/import-hsk.test.ts` | Verify HSK 1.0 chars imported + idempotent                                                     |
+| `tests/integration/api/game-round.test.ts`     | `?hskLevel=N` happy + zod reject + Cache-Control header                                        |
+| `tests/integration/api/chain-chars.test.ts`    | Same coverage on chain endpoint                                                                |
 
 ### Modified (existing files)
 
-| Path | Change |
-|------|--------|
-| `lib/pinyin-syllable.ts` | `expandLastLetter` → identity (rollback i/u/ü wildcards) |
-| `tests/unit/lib/pinyin-syllable.test.ts` | Rewrite wildcard assertions → identity |
-| `tests/unit/lib/chain-rules.test.ts` | Drop you→衣 type cross-spelling cases; keep last-letter-exact cases |
-| `lib/difficulty.ts` | `HskLevel` type + `hskLevel` field on `GameConfig` + `sourceForHsk(level)` |
-| `lib/use-difficulty.ts` | Persist `hskLevel` to localStorage alongside existing `difficulty` key |
-| `tests/unit/lib/difficulty.test.ts` | Extend with `sourceForHsk` mapping tests |
-| `lib/game-round.ts` | `buildRound(content, count, seed, mode, hskLevel)` filters by `chars.hsk_level` with fallback to `chars.level` |
-| `tests/unit/lib/game-round.test.ts` | Extend with HSK filter tests |
-| `app/api/game/round/route.ts` | zod-validate `hskLevel` 1-6; embed `revealConfig` in response; emit `Cache-Control: no-store` |
-| `lib/api-chain.ts` | Cache key `(source, hskLevel)`; export `fetchChainChars(source, hskLevel)` |
-| `tests/unit/lib/api-chain.test.ts` | Cache-key + hskLevel param tests; per-test re-import for module-cached state |
-| `app/api/chain/chars/route.ts` | Accept `hskLevel`; filter + fallback; per-page try/catch (W2 fold-in); `Cache-Control: no-store` |
-| `components/game/ChainGame.tsx` | Pass `hskLevel`; useEffect AbortController cleanup (W3 fold-in) |
-| `tests/unit/components/game/ChainGame.test.tsx` | Tests for AbortController + reveal config threading |
-| `components/game/GameModeTabs.tsx` | HSK 1-6 picker chip row; reads/writes `useDifficulty.hskLevel` |
-| `components/game/FallbackBanner.tsx` | NEW — banner shown when server can't satisfy hskLevel filter |
-| `components/game/ToneRadicalGame.tsx` | Local `hskLevel` state; fetch with param; on-demand bumps `mismatches` |
-| `tests/unit/components/game/ToneRadicalGame.test.tsx` | Reveal threading + on-demand score bump |
-| `components/game/ToneRadicalChar.tsx` | `revealConfig` props; conditional render of Pinyin/Radical/Meaning tokens; on-demand click |
-| `components/game/DragMatchGame.tsx` | Same as ToneRadical wiring |
-| `tests/unit/components/game/DragMatchGame.test.tsx` | Same coverage as ToneRadical |
-| `components/game/CharDropZone.tsx` | Same as ToneRadicalChar |
-| `components/game/ChainGame.tsx` (already modified above) | + reveal threading |
-| `components/game/ChainScroll.tsx` | Reveal-aware char cell |
-| `tests/unit/components/game/{ToneRadicalChar,CharDropZone,ChainScroll}.test.tsx` | with/without hints render + click reveals |
-| `components/game/FallbackBanner.tsx` (new) | `「HSK N 字库尚在补充中…」` notice when hskLevel unavailable |
+| Path                                                                             | Change                                                                                                         |
+| -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `lib/pinyin-syllable.ts`                                                         | `expandLastLetter` → identity (rollback i/u/ü wildcards)                                                       |
+| `tests/unit/lib/pinyin-syllable.test.ts`                                         | Rewrite wildcard assertions → identity                                                                         |
+| `tests/unit/lib/chain-rules.test.ts`                                             | Drop you→衣 type cross-spelling cases; keep last-letter-exact cases                                            |
+| `lib/difficulty.ts`                                                              | `HskLevel` type + `hskLevel` field on `GameConfig` + `sourceForHsk(level)`                                     |
+| `lib/use-difficulty.ts`                                                          | Persist `hskLevel` to localStorage alongside existing `difficulty` key                                         |
+| `tests/unit/lib/difficulty.test.ts`                                              | Extend with `sourceForHsk` mapping tests                                                                       |
+| `lib/game-round.ts`                                                              | `buildRound(content, count, seed, mode, hskLevel)` filters by `chars.hsk_level` with fallback to `chars.level` |
+| `tests/unit/lib/game-round.test.ts`                                              | Extend with HSK filter tests                                                                                   |
+| `app/api/game/round/route.ts`                                                    | zod-validate `hskLevel` 1-6; embed `revealConfig` in response; emit `Cache-Control: no-store`                  |
+| `lib/api-chain.ts`                                                               | Cache key `(source, hskLevel)`; export `fetchChainChars(source, hskLevel)`                                     |
+| `tests/unit/lib/api-chain.test.ts`                                               | Cache-key + hskLevel param tests; per-test re-import for module-cached state                                   |
+| `app/api/chain/chars/route.ts`                                                   | Accept `hskLevel`; filter + fallback; per-page try/catch (W2 fold-in); `Cache-Control: no-store`               |
+| `components/game/ChainGame.tsx`                                                  | Pass `hskLevel`; useEffect AbortController cleanup (W3 fold-in)                                                |
+| `tests/unit/components/game/ChainGame.test.tsx`                                  | Tests for AbortController + reveal config threading                                                            |
+| `components/game/GameModeTabs.tsx`                                               | HSK 1-6 picker chip row; reads/writes `useDifficulty.hskLevel`                                                 |
+| `components/game/FallbackBanner.tsx`                                             | NEW — banner shown when server can't satisfy hskLevel filter                                                   |
+| `components/game/ToneRadicalGame.tsx`                                            | Local `hskLevel` state; fetch with param; on-demand bumps `mismatches`                                         |
+| `tests/unit/components/game/ToneRadicalGame.test.tsx`                            | Reveal threading + on-demand score bump                                                                        |
+| `components/game/ToneRadicalChar.tsx`                                            | `revealConfig` props; conditional render of Pinyin/Radical/Meaning tokens; on-demand click                     |
+| `components/game/DragMatchGame.tsx`                                              | Same as ToneRadical wiring                                                                                     |
+| `tests/unit/components/game/DragMatchGame.test.tsx`                              | Same coverage as ToneRadical                                                                                   |
+| `components/game/CharDropZone.tsx`                                               | Same as ToneRadicalChar                                                                                        |
+| `components/game/ChainGame.tsx` (already modified above)                         | + reveal threading                                                                                             |
+| `components/game/ChainScroll.tsx`                                                | Reveal-aware char cell                                                                                         |
+| `tests/unit/components/game/{ToneRadicalChar,CharDropZone,ChainScroll}.test.tsx` | with/without hints render + click reveals                                                                      |
+| `components/game/FallbackBanner.tsx` (new)                                       | `「HSK N 字库尚在补充中…」` notice when hskLevel unavailable                                                   |
 
 ---
 
 ## Task 1: HSK data import — schema migration + import script + integration test
 
 **Files:**
+
 - Create: `data/hsk-vocab.json`
 - Create: `scripts/migrations/2026-07-04-hsk-level.sql`
 - Create: `scripts/import-hsk.ts`
 - Create: `tests/integration/scripts/import-hsk.test.ts`
 
 **Interfaces:**
+
 - Consumes: `data/hsk-vocab.json` shape `{ "1": Array<{char, pinyin, meaning_zh, pos}> , ... }`
 - Produces: `mysql2` connection loop calling `INSERT … ON DUPLICATE KEY UPDATE hsk_level=VALUES(hsk_level)`
 - Exports a Node-runnable script invoked via `npx tsx scripts/import-hsk.ts`
@@ -148,10 +150,12 @@ describe('import-hsk', () => {
   beforeAll(async () => {
     conn = await mysql.createConnection(DB_URL);
     // Ensure the column is present; if migration hasn't run, this throws.
-    await conn.query("SELECT hsk_level FROM chars LIMIT 1");
+    await conn.query('SELECT hsk_level FROM chars LIMIT 1');
   });
 
-  afterAll(async () => { await conn.end(); });
+  afterAll(async () => {
+    await conn.end();
+  });
 
   it('round-trips HSK 1.0 entries idempotently', async () => {
     const { runImport } = await import('../../../scripts/import-hsk');
@@ -159,11 +163,13 @@ describe('import-hsk', () => {
 
     const vocab = JSON.parse(readFileSync(JSON_PATH, 'utf8'));
     const expected = new Set(
-      vocab['1'].map((v: { char: string }) => v.char).filter((c: string, i: number, a: string[]) => a.indexOf(c) === i)
+      vocab['1']
+        .map((v: { char: string }) => v.char)
+        .filter((c: string, i: number, a: string[]) => a.indexOf(c) === i),
     );
 
     const [rows] = await conn.query<mysql.RowDataPacket[]>(
-      "SELECT char FROM chars WHERE hsk_level = 1"
+      'SELECT char FROM chars WHERE hsk_level = 1',
     );
     const imported = new Set(rows.map((r) => r.char));
     expect(imported.size).toBe(expected.size);
@@ -174,7 +180,7 @@ describe('import-hsk', () => {
     const before = rows.length;
     await runImport();
     const [rows2] = await conn.query<mysql.RowDataPacket[]>(
-      "SELECT char FROM chars WHERE hsk_level = 1"
+      'SELECT char FROM chars WHERE hsk_level = 1',
     );
     expect(rows2.length).toBe(before);
   });
@@ -216,7 +222,7 @@ export async function runImport(): Promise<void> {
         // INSERT…ON DUPLICATE KEY UPDATE keyed on PK (char).
         await conn.execute(
           'INSERT INTO chars (char, hsk_level) VALUES (?, ?) ON DUPLICATE KEY UPDATE hsk_level = VALUES(hsk_level)',
-          [e.char, lvl]
+          [e.char, lvl],
         );
       }
     }
@@ -227,8 +233,14 @@ export async function runImport(): Promise<void> {
 
 if (require.main === module) {
   runImport()
-    .then(() => { console.log('import-hsk: done'); process.exit(0); })
-    .catch((err) => { console.error(err); process.exit(1); });
+    .then(() => {
+      console.log('import-hsk: done');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -254,10 +266,12 @@ git commit -m "feat(hsk-data): import HSK 1.0 vocab into chars.hsk_level [YYYY-M
 ## Task 2: lib/reveal.ts — reveal model types and helpers
 
 **Files:**
+
 - Create: `lib/reveal.ts`
 - Create: `tests/unit/lib/reveal.test.ts`
 
 **Interfaces:**
+
 - Produces types `RevealElement`, `HskLevel`, `GameMode`, `RevealConfig` consumed by Tasks 5, 6, 8, 9, 10.
 - Function `getRevealConfig(game, level): RevealConfig` consumed by all 3 game components.
 
@@ -332,18 +346,18 @@ export const REVEAL_BY_LEVEL: Record<
   Pick<RevealConfig, 'cellHints' | 'allowOnDemandHints'>
 > = {
   1: { cellHints: ['pinyin', 'meaning', 'radical'], allowOnDemandHints: false },
-  2: { cellHints: ['pinyin', 'meaning'],            allowOnDemandHints: false },
-  3: { cellHints: ['pinyin'],                       allowOnDemandHints: false },
-  4: { cellHints: ['pinyin'],                       allowOnDemandHints: true  },
-  5: { cellHints: [],                               allowOnDemandHints: true  },
-  6: { cellHints: [],                               allowOnDemandHints: true  },
+  2: { cellHints: ['pinyin', 'meaning'], allowOnDemandHints: false },
+  3: { cellHints: ['pinyin'], allowOnDemandHints: false },
+  4: { cellHints: ['pinyin'], allowOnDemandHints: true },
+  5: { cellHints: [], allowOnDemandHints: true },
+  6: { cellHints: [], allowOnDemandHints: true },
 };
 
 const NO_RADICAL_GAMES: ReadonlySet<GameMode> = new Set(['drag-match', 'chain']);
 const PENALTY_BY_GAME: Record<GameMode, number> = {
   'tone-radical': 1,
   'drag-match': 1,
-  'chain': 0,
+  chain: 0,
 };
 
 export function getRevealConfig(game: GameMode, level: HskLevel): RevealConfig {
@@ -379,17 +393,20 @@ git commit -m "feat(reveal): add lib/reveal.ts model + getRevealConfig per game 
 ## Task 3: Chain rule rollback — strict last-letter, drop wildcard
 
 **Files:**
+
 - Modify: `lib/pinyin-syllable.ts:15-20`
 - Modify: `tests/unit/lib/pinyin-syllable.test.ts`
 - Modify: `tests/unit/lib/chain-rules.test.ts`
 
 **Interfaces:**
+
 - Consumes: `getLastLetter`, `expandLastLetter` from `lib/pinyin-syllable.ts` (used by `lib/chain-rules.ts`).
 - Produces: `expandLastLetter(letter)` returns `[letter]` only. `isValidNext` and downstream unchanged.
 
 - [ ] **Step 3.1: Audit existing tests for cross-spelling bridging**
 
 Read `tests/unit/lib/pinyin-syllable.test.ts` and `tests/unit/lib/chain-rules.test.ts` end-to-end. Identify cases that rely on:
+
 - `expandLastLetter('i')` returning `['i', 'y']`
 - `expandLastLetter('u')` returning `['u', 'w', 'y', 'j', 'q', 'x', 'l', 'n']`
 - `expandLastLetter('v')` or `'ü'` returning the extended sets
@@ -443,18 +460,18 @@ Keep cases that don't rely on cross-spelling bridging. Delete any case that asse
 Open the file and rewrite the cross-spelling cases inline. Example replacement pattern (apply to ALL `你 → 衣`-style assertions):
 
 ```ts
-  // Strict last-letter: 你 (nǐ, last 'i') only chains to chars with first letter 'i'.
-  it('你 chains to 期 (qī, first i) — strict last-letter match', () => {
-    expect(matchesChainRule('nǐ', 'qī')).toBe(true);
-  });
+// Strict last-letter: 你 (nǐ, last 'i') only chains to chars with first letter 'i'.
+it('你 chains to 期 (qī, first i) — strict last-letter match', () => {
+  expect(matchesChainRule('nǐ', 'qī')).toBe(true);
+});
 
-  it('你 does NOT chain to 衣 (yī, first y) — different spelling, same sound', () => {
-    expect(matchesChainRule('nǐ', 'yī')).toBe(false);
-  });
+it('你 does NOT chain to 衣 (yī, first y) — different spelling, same sound', () => {
+  expect(matchesChainRule('nǐ', 'yī')).toBe(false);
+});
 
-  it('姑 (gū, last u) does NOT chain to 女 (nǚ, first n) — even though ü is u-glide', () => {
-    expect(matchesChainRule('gū', 'nǚ')).toBe(false);
-  });
+it('姑 (gū, last u) does NOT chain to 女 (nǚ, first n) — even though ü is u-glide', () => {
+  expect(matchesChainRule('gū', 'nǚ')).toBe(false);
+});
 ```
 
 - [ ] **Step 3.4: Run the test to verify RED (old behavior)**
@@ -503,11 +520,13 @@ git commit -m "fix(chain): strict last-letter rule, drop i/u/ü wildcard [YYYY-M
 ## Task 4: lib/difficulty.ts + useDifficulty — HSK mapping + persistence
 
 **Files:**
+
 - Modify: `lib/difficulty.ts`
 - Modify: `lib/use-difficulty.ts`
 - Modify: `tests/unit/lib/difficulty.test.ts`
 
 **Interfaces:**
+
 - Produces `HskLevel`, `sourceForHsk(level)`, and `hskLevel` field on `GameConfig`.
 - `useDifficulty()` hook returns `{ difficulty, hskLevel, setDifficulty, setHskLevel }`.
 
@@ -624,12 +643,14 @@ git commit -m "feat(difficulty): HSK 1-6 mapping + useDifficulty persists hskLev
 ## Task 5: lib/game-round.ts + /api/game/round — server filter + revealConfig embed
 
 **Files:**
+
 - Modify: `lib/game-round.ts`
 - Modify: `app/api/game/round/route.ts`
 - Modify: `tests/unit/lib/game-round.test.ts`
 - Create: `tests/integration/api/game-round.test.ts`
 
 **Interfaces:**
+
 - Consumes: `HskLevel`, `getRevealConfig` from earlier tasks.
 - Produces: `buildRound(content, count, seed, mode, hskLevel)` — same signature + hskLevel param.
 - API route accepts `?hskLevel=N`, embeds `{ chars, revealConfig: { cellHints, allowOnDemandHints, onDemandPenalty } }` in response, sets `Cache-Control: no-store`.
@@ -643,21 +664,21 @@ import type { HskLevel } from '@/lib/difficulty';
 
 it('filters chars by hsk_level when provided', async () => {
   const chars: CharInfo[] = [
-    { char: '你', level: 1, hsk_level: 1, /* ... */ },
-    { char: '好', level: 1, hsk_level: 1, /* ... */ },
-    { char: '罕', level: 2, hsk_level: null, /* ... */ },  // fallback
+    { char: '你', level: 1, hsk_level: 1 /* ... */ },
+    { char: '好', level: 1, hsk_level: 1 /* ... */ },
+    { char: '罕', level: 2, hsk_level: null /* ... */ }, // fallback
   ] as any;
 
   const round = await buildRound(chars, 1, 42, 'tone', 1);
-  expect(round.chars.map((c: any) => c.char)).toEqual(['你']);  // or '好' depending on shuffle
+  expect(round.chars.map((c: any) => c.char)).toEqual(['你']); // or '好' depending on shuffle
   // Strict assertion: only chars with hsk_level === 1 included.
   expect(round.chars.every((c: any) => c.hsk_level === 1)).toBe(true);
 });
 
 it('falls back to chars.level when hsk_level is null', async () => {
   const chars: CharInfo[] = [
-    { char: '罕', level: 2, hsk_level: null, /* ... */ },
-    { char: '你', level: 1, hsk_level: 1, /* ... */ },
+    { char: '罕', level: 2, hsk_level: null /* ... */ },
+    { char: '你', level: 1, hsk_level: 1 /* ... */ },
   ] as any;
   // No hskLevel param → null → fall back to existing level behavior.
   const round = await buildRound(chars, 5, 42, 'tone');
@@ -671,7 +692,12 @@ Locate the existing `buildRound` function. Change the signature:
 
 ```ts
 // Before
-export function buildRound(content: CharInfo[], count: number, seed: number, mode: string): Promise<RoundType>;
+export function buildRound(
+  content: CharInfo[],
+  count: number,
+  seed: number,
+  mode: string,
+): Promise<RoundType>;
 
 // After
 export function buildRound(
@@ -679,16 +705,14 @@ export function buildRound(
   count: number,
   seed: number,
   mode: 'tone' | 'radical' | 'pinyin',
-  hskLevel?: HskLevel | null,  // null = no HSK filter, fall back to level
+  hskLevel?: HskLevel | null, // null = no HSK filter, fall back to level
 ): Promise<RoundType>;
 ```
 
 Inside the function, add a pre-filter step before pagination:
 
 ```ts
-const filtered = hskLevel != null
-  ? content.filter((c) => c.hsk_level === hskLevel)
-  : content;  // fallback to existing level-based logic
+const filtered = hskLevel != null ? content.filter((c) => c.hsk_level === hskLevel) : content; // fallback to existing level-based logic
 ```
 
 If `filtered.length === 0`, fall back to `chars.level` filtering (existing behavior). Don't crash.
@@ -713,7 +737,10 @@ import type { HskLevel } from '@/lib/difficulty';
 
 const QuerySchema = z.object({
   count: z.coerce.number().int().min(1).max(20).default(6),
-  seed: z.coerce.number().int().default(() => Math.floor(Math.random() * 1e9)),
+  seed: z.coerce
+    .number()
+    .int()
+    .default(() => Math.floor(Math.random() * 1e9)),
   source: z.enum(['chars-level-1', 'chars-level-1-2', 'chars-all']).default('chars-level-1-2'),
   mode: z.enum(['tone', 'radical', 'pinyin']).default('tone'),
   hskLevel: z.coerce.number().int().min(1).max(6).optional(),
@@ -743,7 +770,7 @@ return Response.json(
     headers: {
       'Cache-Control': 'no-store',
     },
-  }
+  },
 );
 ```
 
@@ -768,9 +795,12 @@ const QuerySchema = z.object({
 // Compute fallback flag from the result rows:
 const hskFallback = hskLevel != null && rows.some((r) => r.hsk_level == null);
 
-return Response.json({ chars: rows, hskFallback }, {
-  headers: { 'Cache-Control': 'no-store' },
-});
+return Response.json(
+  { chars: rows, hskFallback },
+  {
+    headers: { 'Cache-Control': 'no-store' },
+  },
+);
 ```
 
 `lib/chars.ts` (the helper used by `/api/chars/route.ts`) — read first; if it doesn't accept hskLevel, add an optional parameter and an internal `WHERE hsk_level = ?` clause when set.
@@ -785,7 +815,9 @@ const BASE = process.env.TEST_BASE_URL ?? 'http://localhost:4444';
 
 describe('GET /api/game/round', () => {
   it('accepts ?hskLevel=1 and embeds revealConfig', async () => {
-    const res = await fetch(`${BASE}/api/game/round?count=3&mode=tone&hskLevel=1&source=chars-level-1`);
+    const res = await fetch(
+      `${BASE}/api/game/round?count=3&mode=tone&hskLevel=1&source=chars-level-1`,
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control')).toBe('no-store');
     const data = await res.json();
@@ -822,6 +854,7 @@ git commit -m "feat(api): game/round accepts hskLevel + embeds revealConfig [YYY
 ## Task 6: Chain endpoint + client cache + W2/W3 fold-ins
 
 **Files:**
+
 - Modify: `app/api/chain/chars/route.ts`
 - Modify: `lib/api-chain.ts`
 - Modify: `components/game/ChainGame.tsx`
@@ -830,6 +863,7 @@ git commit -m "feat(api): game/round accepts hskLevel + embeds revealConfig [YYY
 - Modify: `tests/unit/components/game/ChainGame.test.tsx`
 
 **Interfaces:**
+
 - `fetchChainChars(source, hskLevel)` — cache key includes hskLevel.
 - API route accepts `?hskLevel=N`, filters + per-page try/catch (W2), `Cache-Control: no-store`.
 - `ChainGame.tsx` useEffect AbortController cleanup (W3).
@@ -896,10 +930,7 @@ for (const page of pages) {
   }
 }
 
-return Response.json(
-  { chars, hskFallback },
-  { headers: { 'Cache-Control': 'no-store' } }
-);
+return Response.json({ chars, hskFallback }, { headers: { 'Cache-Control': 'no-store' } });
 ```
 
 - [ ] **Step 6.4: Update `lib/api-chain.ts`**
@@ -909,7 +940,7 @@ Extend cache key + signature:
 ```ts
 import type { HskLevel } from './difficulty';
 
-type CacheKey = string;  // `${source}::hsk${level ?? 0}`
+type CacheKey = string; // `${source}::hsk${level ?? 0}`
 const cache = new Map<CacheKey, Promise<ChainChar[]>>();
 
 export async function fetchChainChars(
@@ -918,14 +949,19 @@ export async function fetchChainChars(
 ): Promise<ChainChar[]> {
   const key = `${source}::hsk${hskLevel ?? 0}`;
   if (!cache.has(key)) {
-    cache.set(key, fetch(`/api/chain/chars?source=${source}&hskLevel=${hskLevel ?? ''}`)
-      .then((r) => r.json())
-      .then((d: { chars: ChainChar[] }) => d.chars));
+    cache.set(
+      key,
+      fetch(`/api/chain/chars?source=${source}&hskLevel=${hskLevel ?? ''}`)
+        .then((r) => r.json())
+        .then((d: { chars: ChainChar[] }) => d.chars),
+    );
   }
   return cache.get(key)!;
 }
 
-export function __resetChainCache(): void { cache.clear(); }
+export function __resetChainCache(): void {
+  cache.clear();
+}
 ```
 
 - [ ] **Step 6.5: Update `components/game/ChainGame.tsx` useEffect (W3 fold-in)**
@@ -967,12 +1003,14 @@ git commit -m "feat(chain): hskLevel filter + W2 try/catch + W3 abort + no-store
 ## Task 7: GameModeTabs — HSK picker chip row + FallbackBanner
 
 **Files:**
+
 - Modify: `components/game/GameModeTabs.tsx`
 - Create: `components/game/FallbackBanner.tsx` (new per spec §3)
 - Add (or extend test): `tests/unit/components/game/GameModeTabs.test.tsx`
 - Create: `tests/unit/components/game/FallbackBanner.test.tsx`
 
 **Interfaces:**
+
 - Consumes `useDifficulty()` hook from Task 4.
 - Renders 6 chips, persists selection via `setHskLevel`.
 - `FallbackBanner` shows when `chars.hsk_level IS NULL` after fallback; reads from a probe endpoint or is driven by the round response metadata.
@@ -1117,12 +1155,14 @@ git commit -m "feat(tabs): GameModeTabs HSK 1-6 picker + FallbackBanner [YYYY-MM
 ## Task 8: ToneRadicalGame + ToneRadicalChar — reveal + on-demand
 
 **Files:**
+
 - Modify: `components/game/ToneRadicalGame.tsx`
 - Modify: `components/game/ToneRadicalChar.tsx`
 - Modify (or add): `tests/unit/components/game/ToneRadicalGame.test.tsx`
 - Modify (or add): `tests/unit/components/game/ToneRadicalChar.test.tsx`
 
 **Interfaces:**
+
 - Consumes `getRevealConfig`, `ToneRadicalChar` props extended with `revealConfig`, `onDemandReveal`.
 
 - [ ] **Step 8.1: Add RED tests**
@@ -1138,9 +1178,13 @@ beforeEach(() => cleanup());
 
 it('renders all hints at HSK 1', async () => {
   const { ToneRadicalChar } = await import('@/components/game/ToneRadicalChar');
-  const cfg = { cellHints: ['pinyin', 'meaning', 'radical'], allowOnDemandHints: false, onDemandPenalty: 1 };
+  const cfg = {
+    cellHints: ['pinyin', 'meaning', 'radical'],
+    allowOnDemandHints: false,
+    onDemandPenalty: 1,
+  };
   const { container } = render(
-    <ToneRadicalChar char="你" revealConfig={cfg as any} onDemandReveal={vi.fn()} />
+    <ToneRadicalChar char="你" revealConfig={cfg as any} onDemandReveal={vi.fn()} />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeTruthy();
   expect(container.querySelector('[data-hint="meaning"]')).toBeTruthy();
@@ -1152,7 +1196,7 @@ it('hides all hints at HSK 6; allows click-to-reveal', async () => {
   const cfg = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 1 };
   const onDemand = vi.fn();
   const { container, getByLabelText } = render(
-    <ToneRadicalChar char="你" revealConfig={cfg as any} onDemandReveal={onDemand} />
+    <ToneRadicalChar char="你" revealConfig={cfg as any} onDemandReveal={onDemand} />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeFalsy();
   fireEvent.click(getByLabelText('显示拼音'));
@@ -1163,7 +1207,7 @@ it('at HSK 1 (allowOnDemandHints=false) no click-to-reveal button is shown', asy
   const { ToneRadicalChar } = await import('@/components/game/ToneRadicalChar');
   const cfg = { cellHints: ['pinyin'], allowOnDemandHints: false, onDemandPenalty: 1 };
   const { queryByLabelText } = render(
-    <ToneRadicalChar char="你" revealConfig={cfg as any} onDemandReveal={vi.fn()} />
+    <ToneRadicalChar char="你" revealConfig={cfg as any} onDemandReveal={vi.fn()} />,
   );
   expect(queryByLabelText('显示拼音')).toBeNull();
 });
@@ -1187,16 +1231,16 @@ const [hskFallback, setHskFallback] = useState(false);
 // In the fetch:
 const data = await res.json();
 setChars(data.chars);
-setHskFallback(data.hskFallback ?? true);  // default to true on missing flag
+setHskFallback(data.hskFallback ?? true); // default to true on missing flag
 setRevealConfig(getRevealConfig('tone-radical', hskLevel));
 ```
 
 In the JSX above the game grid:
 
 ```tsx
-{isFormView && (
-  <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
-)}
+{
+  isFormView && <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />;
+}
 ```
 
 - [ ] **Step 8.4: Update `ToneRadicalChar.tsx`**
@@ -1226,11 +1270,17 @@ const HINT_LABEL: Record<RevealElement, string> = {
   meaning: '显示含义',
 };
 
-export function ToneRadicalChar({ char, pinyin, radical, meaning, revealConfig, onDemandReveal }: Props) {
+export function ToneRadicalChar({
+  char,
+  pinyin,
+  radical,
+  meaning,
+  revealConfig,
+  onDemandReveal,
+}: Props) {
   const [revealed, setRevealed] = useState<Set<RevealElement>>(new Set());
 
-  const isVisible = (el: RevealElement) =>
-    revealConfig.cellHints.includes(el) || revealed.has(el);
+  const isVisible = (el: RevealElement) => revealConfig.cellHints.includes(el) || revealed.has(el);
 
   const handleClick = (el: RevealElement) => {
     if (!revealConfig.allowOnDemandHints) return;
@@ -1279,12 +1329,15 @@ import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 const { hskLevel } = useDifficulty();
 const revealConfig = useMemo(() => getRevealConfig('tone-radical', hskLevel), [hskLevel]);
 
-const handleDemand = useCallback((el: RevealElement) => {
-  setMismatches((m) => m + revealConfig.onDemandPenalty);
-}, [revealConfig.onDemandPenalty]);
+const handleDemand = useCallback(
+  (el: RevealElement) => {
+    setMismatches((m) => m + revealConfig.onDemandPenalty);
+  },
+  [revealConfig.onDemandPenalty],
+);
 
 // Pass to ToneRadicalChar:
-<ToneRadicalChar char={cell.char} revealConfig={revealConfig} onDemandReveal={handleDemand} />
+<ToneRadicalChar char={cell.char} revealConfig={revealConfig} onDemandReveal={handleDemand} />;
 ```
 
 - [ ] **Step 8.5: Run tests**
@@ -1307,6 +1360,7 @@ git commit -m "feat(tone-game): revealConfig threaded + on-demand bumps mismatch
 ## Task 9: DragMatchGame + CharDropZone — same pattern as Task 8
 
 **Files:**
+
 - Modify: `components/game/DragMatchGame.tsx` — fetch with `?hskLevel=N` from `/api/chars` (per Task 5.5), thread reveal config, on-demand bumps `mismatches`
 - Modify: `components/game/CharDropZone.tsx` — same shape as `ToneRadicalChar` (revealConfig prop, conditional render of Pinyin/Meaning tokens; NO radical element for drag-match)
 - Modify (or add): `tests/unit/components/game/DragMatchGame.test.tsx`
@@ -1327,7 +1381,13 @@ it('shows pinyin + meaning at HSK 1 (no radical in drag-match)', async () => {
   const { CharDropZone } = await import('@/components/game/CharDropZone');
   const cfg = { cellHints: ['pinyin', 'meaning'], allowOnDemandHints: false, onDemandPenalty: 1 };
   const { container } = render(
-    <CharDropZone char="你" pinyin="nǐ" meaning="you" revealConfig={cfg as any} onDemandReveal={vi.fn()} />
+    <CharDropZone
+      char="你"
+      pinyin="nǐ"
+      meaning="you"
+      revealConfig={cfg as any}
+      onDemandReveal={vi.fn()}
+    />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeTruthy();
   expect(container.querySelector('[data-hint="meaning"]')).toBeTruthy();
@@ -1339,7 +1399,7 @@ it('hides everything at HSK 6; click-to-reveal only when allowOnDemandHints', as
   const cfg = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 1 };
   const onDemand = vi.fn();
   const { container, getByLabelText } = render(
-    <CharDropZone char="你" pinyin="nǐ" revealConfig={cfg as any} onDemandReveal={onDemand} />
+    <CharDropZone char="你" pinyin="nǐ" revealConfig={cfg as any} onDemandReveal={onDemand} />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeFalsy();
   fireEvent.click(getByLabelText('显示拼音'));
@@ -1383,8 +1443,7 @@ const HINT_LABEL: Record<RevealElement, string> = {
 export function CharDropZone({ char, pinyin, meaning, revealConfig, onDemandReveal }: Props) {
   const [revealed, setRevealed] = useState<Set<RevealElement>>(new Set());
 
-  const isVisible = (el: RevealElement) =>
-    revealConfig.cellHints.includes(el) || revealed.has(el);
+  const isVisible = (el: RevealElement) => revealConfig.cellHints.includes(el) || revealed.has(el);
 
   const handleClick = (el: RevealElement) => {
     if (!revealConfig.allowOnDemandHints) return;
@@ -1430,16 +1489,24 @@ import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 const { hskLevel } = useDifficulty();
 const revealConfig = useMemo(() => getRevealConfig('drag-match', hskLevel), [hskLevel]);
 
-const handleDemand = useCallback((el: RevealElement) => {
-  setMismatches((m) => m + revealConfig.onDemandPenalty);
-}, [revealConfig.onDemandPenalty]);
+const handleDemand = useCallback(
+  (el: RevealElement) => {
+    setMismatches((m) => m + revealConfig.onDemandPenalty);
+  },
+  [revealConfig.onDemandPenalty],
+);
 
 // Fetch with hskLevel:
 const res = await fetch(`/api/chars?source=${source}&hskLevel=${hskLevel}&page=1`);
 
 // Pass to CharDropZone:
-<CharDropZone char={cell.char} pinyin={cell.pinyin} meaning={cell.meaning_zh}
-              revealConfig={revealConfig} onDemandReveal={handleDemand} />
+<CharDropZone
+  char={cell.char}
+  pinyin={cell.pinyin}
+  meaning={cell.meaning_zh}
+  revealConfig={revealConfig}
+  onDemandReveal={handleDemand}
+/>;
 ```
 
 - [ ] **Step 9.4: Run tests to verify GREEN**
@@ -1462,6 +1529,7 @@ git commit -m "feat(drag-game): revealConfig threaded + on-demand bumps mismatch
 ## Task 10: ChainGame + ChainScroll — reveal config + free on-demand
 
 **Files:**
+
 - Modify: `components/game/ChainGame.tsx` (already updated in Task 6 for AbortController; thread reveal here)
 - Modify: `components/game/ChainScroll.tsx`
 - Modify (or add): `tests/unit/components/game/ChainScroll.test.tsx`
@@ -1477,7 +1545,11 @@ it('renders only the char cell at HSK 6 with click-to-reveal buttons', async () 
   const { ChainScroll } = await import('@/components/game/ChainScroll');
   const cfg = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 0 };
   const { container, getByLabelText } = render(
-    <ChainScroll chars={[{ char: '你' } as any]} revealConfig={cfg as any} onDemandReveal={vi.fn()} />
+    <ChainScroll
+      chars={[{ char: '你' } as any]}
+      revealConfig={cfg as any}
+      onDemandReveal={vi.fn()}
+    />,
   );
   expect(container.querySelector('[data-hint="pinyin"]')).toBeFalsy();
   fireEvent.click(getByLabelText('显示拼音'));
@@ -1492,8 +1564,10 @@ it('renders only the char cell at HSK 6 with click-to-reveal buttons', async () 
 
 ```tsx
 const revealConfig = useMemo(() => getRevealConfig('chain', hskLevel), [hskLevel]);
-const handleDemand = useCallback((el: RevealElement) => { /* no-op for chain */ }, []);
-<ChainScroll chars={chars} revealConfig={revealConfig} onDemandReveal={handleDemand} />
+const handleDemand = useCallback((el: RevealElement) => {
+  /* no-op for chain */
+}, []);
+<ChainScroll chars={chars} revealConfig={revealConfig} onDemandReveal={handleDemand} />;
 ```
 
 - [ ] **Step 10.4: Run tests**
@@ -1594,7 +1668,7 @@ After all 11 tasks:
 8. `feat(tone-game): revealConfig threaded + on-demand bumps mismatches [HH.MM]`
 9. `feat(drag-game): revealConfig threaded + on-demand bumps mismatches [HH.MM]`
 10. `feat(chain-game): revealConfig threaded + free on-demand (no penalty) [HH.MM]`
-11. *(verification task; no commit unless fixes needed)*
+11. _(verification task; no commit unless fixes needed)_
 
 ---
 
@@ -1608,4 +1682,5 @@ After all 11 tasks:
 - **Integration tests** (`tests/integration/api/*.test.ts`) require dev server. Skippable if not in CI; mark `.skip` and note "run manually after `npx next dev -p 4444`" in a follow-up.
 - **The `lib/difficulty.ts` schema augmentation** in Task 4.3 uses module augmentation (`declare module`) which only works if `GameConfig` is an interface. If it's a type alias, edit the alias directly.
 </content>
+
 </invoke>

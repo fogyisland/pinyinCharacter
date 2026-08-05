@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-06-11-pinyin-character-plan-d-design.md`
 
 **Reference patterns:**
+
 - DB queries: `lib/history.ts`, `lib/admin.ts`
 - API routes: `app/api/admin/users/route.ts`
 - Audit: `lib/audit.ts`
@@ -26,6 +27,7 @@
 ### Task 1: DDL — add `rare_chars` and `worksheets` tables
 
 **Files:**
+
 - Modify: `scripts/init-db.ts` (add 2 new DDL blocks at the end of the `CREATE TABLE` sequence)
 - Modify: `.env.example` (add LLM env vars)
 
@@ -96,11 +98,13 @@ export async function truncateAll(): Promise<void> {
 - [ ] **Step 3: Apply DDL locally and verify**
 
 Run:
+
 ```bash
 pnpm tsx --env-file=.env scripts/init-db.ts
 ```
 
 Expected output (exact lines may differ):
+
 ```
 [init-db] connecting to MySQL at mysql://piyin:.../piyin
 [init-db] table users OK
@@ -124,6 +128,7 @@ git commit -m "feat(db): add rare_chars + worksheets tables (Plan D)"
 ### Task 2: `lib/rare-chars.ts` — list / get / search / pickDailyChar
 
 **Files:**
+
 - Create: `lib/rare-chars.ts`
 - Test: `tests/unit/lib/rare-chars.test.ts`
 
@@ -197,6 +202,7 @@ describe('rare-chars pure helpers', () => {
 - [ ] **Step 2: Run tests, verify they fail**
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/rare-chars.test.ts
 ```
@@ -270,12 +276,12 @@ export async function listChars(opts: { q?: string; page?: number } = {}): Promi
      FROM rare_chars ${where}
      ORDER BY char ASC
      LIMIT ? OFFSET ?`,
-    [...params, pageSize, offset]
+    [...params, pageSize, offset],
   );
 
   const [[{ total }]] = await pool.query<any[]>(
     `SELECT COUNT(*) AS total FROM rare_chars ${where}`,
-    params
+    params,
   );
 
   return {
@@ -291,7 +297,7 @@ export async function getChar(c: string): Promise<RareChar | null> {
   const [rows] = await pool.execute<any[]>(
     `SELECT char, pinyin, meaning, story, needs_review, generated_by, generated_at, created_at
      FROM rare_chars WHERE char = ? LIMIT 1`,
-    [c]
+    [c],
   );
   return rows.length > 0 ? mapRow(rows[0]) : null;
 }
@@ -299,7 +305,7 @@ export async function getChar(c: string): Promise<RareChar | null> {
 export async function getAllChars(): Promise<string[]> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
-    `SELECT char FROM rare_chars WHERE meaning <> '' ORDER BY char ASC`
+    `SELECT char FROM rare_chars WHERE meaning <> '' ORDER BY char ASC`,
   );
   return rows.map((r) => r.char as string);
 }
@@ -314,7 +320,7 @@ export async function getDailyChar(dateStr: string): Promise<{
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT char, pinyin, meaning, story
-     FROM rare_chars WHERE meaning <> '' ORDER BY char ASC LIMIT 5000`
+     FROM rare_chars WHERE meaning <> '' ORDER BY char ASC LIMIT 5000`,
   );
   if (rows.length === 0) return null;
   const chars = rows.map((r) => r.char as string);
@@ -346,6 +352,7 @@ function mapRow(r: any): RareChar {
 - [ ] **Step 4: Run tests, verify they pass**
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/rare-chars.test.ts
 ```
@@ -364,6 +371,7 @@ git commit -m "feat(lib): rare-chars list/get/search/pickDailyChar + tests"
 ### Task 3: `lib/worksheet.ts` — CRUD + `generateLayout`
 
 **Files:**
+
 - Create: `lib/worksheet.ts`
 - Test: `tests/unit/lib/worksheet.test.ts`
 
@@ -468,6 +476,7 @@ describe('worksheet pure helpers', () => {
 - [ ] **Step 2: Run tests, verify they fail**
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/worksheet.test.ts
 ```
@@ -545,7 +554,7 @@ export async function saveWorksheet(args: SaveWorksheetArgs): Promise<number> {
   const pool = getPool();
   const [result] = await pool.execute<any>(
     `INSERT INTO worksheets (user_id, title, content, cell_style) VALUES (?, ?, ?, ?)`,
-    [args.userId, args.title, JSON.stringify(args.content), args.cellStyle]
+    [args.userId, args.title, JSON.stringify(args.content), args.cellStyle],
   );
   const id = result.insertId as number;
   await writeAudit({
@@ -563,7 +572,7 @@ export async function listUserWorksheets(userId: number): Promise<Worksheet[]> {
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, title, content, cell_style, created_at
      FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
-    [userId]
+    [userId],
   );
   return rows.map(mapRow);
 }
@@ -573,17 +582,17 @@ export async function getWorksheet(id: number): Promise<Worksheet | null> {
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, title, content, cell_style, created_at
      FROM worksheets WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   return rows.length > 0 ? mapRow(rows[0]) : null;
 }
 
 export async function deleteWorksheet(id: number, userId: number): Promise<boolean> {
   const pool = getPool();
-  const [result] = await pool.execute<any>(
-    `DELETE FROM worksheets WHERE id = ? AND user_id = ?`,
-    [id, userId]
-  );
+  const [result] = await pool.execute<any>(`DELETE FROM worksheets WHERE id = ? AND user_id = ?`, [
+    id,
+    userId,
+  ]);
   const affected = (result.affectedRows as number) ?? 0;
   if (affected > 0) {
     await writeAudit({ userId, event: 'worksheet_deleted', metadata: { worksheetId: id } });
@@ -615,17 +624,25 @@ Open `lib/audit.ts`. Update the `AuditEvent` union:
 
 ```ts
 export type AuditEvent =
-  | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete'
-  | 'password_reset_request' | 'password_reset_complete'
-  | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote'
-  | 'worksheet_saved' | 'worksheet_deleted';
+  | 'register'
+  | 'login'
+  | 'logout'
+  | 'history_create'
+  | 'history_delete'
+  | 'password_reset_request'
+  | 'password_reset_complete'
+  | 'admin_user_delete'
+  | 'admin_user_password_reset'
+  | 'admin_user_promote'
+  | 'admin_user_demote'
+  | 'worksheet_saved'
+  | 'worksheet_deleted';
 ```
 
 - [ ] **Step 5: Run all tests, verify they pass**
 
 Run:
+
 ```bash
 pnpm test
 ```
@@ -644,6 +661,7 @@ git commit -m "feat(lib): worksheet CRUD + generateLayout + 2 audit events"
 ### Task 4: `lib/validators.ts` + `lib/api-handler.ts`
 
 **Files:**
+
 - Create: `lib/validators.ts`
 - Create: `lib/api-handler.ts`
 - Test: `tests/unit/lib/validators.test.ts`
@@ -697,19 +715,19 @@ describe('validators', () => {
 
     it('rejects empty content', () => {
       expect(() =>
-        saveWorksheetSchema.parse({ title: 't', content: [], cellStyle: 'brush' })
+        saveWorksheetSchema.parse({ title: 't', content: [], cellStyle: 'brush' }),
       ).toThrow();
     });
 
     it('rejects non-CJK char', () => {
       expect(() =>
-        saveWorksheetSchema.parse({ title: 't', content: ['a'], cellStyle: 'brush' })
+        saveWorksheetSchema.parse({ title: 't', content: ['a'], cellStyle: 'brush' }),
       ).toThrow();
     });
 
     it('rejects invalid cellStyle', () => {
       expect(() =>
-        saveWorksheetSchema.parse({ title: 't', content: ['你'], cellStyle: 'xyz' })
+        saveWorksheetSchema.parse({ title: 't', content: ['你'], cellStyle: 'xyz' }),
       ).toThrow();
     });
   });
@@ -719,6 +737,7 @@ describe('validators', () => {
 - [ ] **Step 3: Run tests, verify they fail**
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/validators.test.ts
 ```
@@ -751,10 +770,7 @@ export const charParamSchema = z.object({
 
 export const saveWorksheetSchema = z.object({
   title: z.string().min(1).max(80),
-  content: z
-    .array(z.string().regex(SINGLE_CJK))
-    .min(1)
-    .max(500),
+  content: z.array(z.string().regex(SINGLE_CJK)).min(1).max(500),
   cellStyle: z.enum(['brush', 'square']),
 });
 ```
@@ -799,6 +815,7 @@ export function unauthorized(message = 'unauthorized') {
 - [ ] **Step 6: Run tests, verify they pass**
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/validators.test.ts
 ```
@@ -819,6 +836,7 @@ git commit -m "feat(lib): zod validators + api-handler error wrapper"
 ### Task 5: `lib/llm.ts` + `lib/ai-rare-chars.ts`
 
 **Files:**
+
 - Create: `lib/llm.ts`
 - Create: `lib/ai-rare-chars.ts`
 
@@ -846,7 +864,10 @@ export interface LLMChatResponse {
 }
 
 export class LLMError extends Error {
-  constructor(message: string, public readonly status?: number) {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
     super(message);
     this.name = 'LLMError';
   }
@@ -886,7 +907,7 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
 
 Create `lib/ai-rare-chars.ts`:
 
-```ts
+````ts
 import { getPool } from './db';
 import { llmChat, LLMError } from './llm';
 
@@ -925,7 +946,7 @@ const SYSTEM_PROMPT = `你是一位小学语文老师。请为每个汉字写:
  */
 export async function batchGenerateStories(
   inputs: BatchInput[],
-  options: GenerateOptions
+  options: GenerateOptions,
 ): Promise<number> {
   const apiKey = process.env.LLM_API_KEY;
   const baseUrl = process.env.LLM_BASE_URL;
@@ -966,7 +987,7 @@ export async function batchGenerateStories(
               `UPDATE rare_chars
                SET meaning = ?, story = ?, generated_by = ?, generated_at = NOW(), needs_review = 1
                WHERE char = ?`,
-              [item.meaning, item.story, generatedBy, item.char]
+              [item.meaning, item.story, generatedBy, item.char],
             );
             updated++;
           }
@@ -1001,11 +1022,12 @@ function parseJsonArray(content: string): BatchOutput[] {
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
-```
+````
 
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 pnpm exec tsc --noEmit
 ```
@@ -1024,6 +1046,7 @@ git commit -m "feat(lib): LLM client + batch story generation"
 ### Task 6: `scripts/fetch-rare-chars.ts`
 
 **Files:**
+
 - Create: `scripts/fetch-rare-chars.ts`
 
 This task is a one-shot script. No unit test (it touches network + DB). The smoke test in Phase 7 verifies it works.
@@ -1061,7 +1084,10 @@ const SOURCE_URL =
   'https://raw.githubusercontent.com/elkmovie/通用规范汉字表/master/《通用规范汉字表》三级字表.txt';
 const DICT_PATH = join(process.cwd(), 'data', 'pinyin-hanzi.json');
 
-interface DictEntry { char: string; freq: number; }
+interface DictEntry {
+  char: string;
+  freq: number;
+}
 type Dict = Record<string, DictEntry[]>;
 
 function loadDict(): Map<string, string> {
@@ -1111,7 +1137,7 @@ async function main() {
         `INSERT INTO rare_chars (char, pinyin, meaning, story)
          VALUES (?, ?, '', '')
          ON DUPLICATE KEY UPDATE pinyin = VALUES(pinyin)`,
-        [char, pinyinStr]
+        [char, pinyinStr],
       );
       if (result.affectedRows === 1) inserted++;
       else if (result.affectedRows === 2) updated++;
@@ -1132,6 +1158,7 @@ main().catch((err) => {
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 pnpm exec tsc --noEmit
 ```
@@ -1150,6 +1177,7 @@ git commit -m "feat(scripts): fetch-rare-chars imports 通用规范汉字表 三
 ### Task 7: `scripts/generate-stories.ts` + `scripts/show-stats.ts`
 
 **Files:**
+
 - Create: `scripts/generate-stories.ts`
 - Create: `scripts/show-stats.ts`
 
@@ -1190,7 +1218,7 @@ async function main() {
   const pool = getPool();
 
   const [rows] = await pool.query<any[]>(
-    `SELECT char, pinyin FROM rare_chars WHERE meaning = '' ORDER BY char ASC`
+    `SELECT char, pinyin FROM rare_chars WHERE meaning = '' ORDER BY char ASC`,
   );
   console.log(`[generate-stories] ${rows.length} chars need stories`);
 
@@ -1234,14 +1262,14 @@ async function main() {
        SUM(CASE WHEN meaning <> '' THEN 1 ELSE 0 END) AS meaning_filled,
        SUM(CASE WHEN story <> '' THEN 1 ELSE 0 END) AS story_filled,
        SUM(CASE WHEN needs_review = 1 THEN 1 ELSE 0 END) AS needs_review
-     FROM rare_chars`
+     FROM rare_chars`,
   );
   const [bySource] = await pool.query<any[]>(
     `SELECT generated_by, COUNT(*) AS n
      FROM rare_chars
      WHERE generated_by IS NOT NULL
      GROUP BY generated_by
-     ORDER BY n DESC`
+     ORDER BY n DESC`,
   );
 
   console.log(`总数:           ${totals.total}`);
@@ -1266,6 +1294,7 @@ main().catch((err) => {
 - [ ] **Step 3: Typecheck**
 
 Run:
+
 ```bash
 pnpm exec tsc --noEmit
 ```
@@ -1286,6 +1315,7 @@ git commit -m "feat(scripts): AI story generation + stats reporter"
 ### Task 8: `GET /api/rare-chars` (list + search) + integration test
 
 **Files:**
+
 - Create: `app/api/rare-chars/route.ts`
 - Create: `tests/integration/rare-chars-list.test.ts`
 
@@ -1320,7 +1350,7 @@ integrationDescribe('GET /api/rare-chars (integration)', () => {
       `INSERT INTO rare_chars (char, pinyin, meaning, story) VALUES
        ('龘','dá','古龙','龙行龘龘'),
        ('齉','nàng','鼻音','鼻子齉了'),
-       ('你','ni','代词','你叫什么')`
+       ('你','ni','代词','你叫什么')`,
     );
     const r = await GET(makeReq(''));
     const j = await r.json();
@@ -1355,6 +1385,7 @@ integrationDescribe('GET /api/rare-chars (integration)', () => {
 - [ ] **Step 2: Run test, verify it fails**
 
 Run:
+
 ```bash
 pnpm test tests/integration/rare-chars-list.test.ts
 ```
@@ -1405,6 +1436,7 @@ git commit -m "feat(api): GET /api/rare-chars list+search + integration test"
 ### Task 9: `GET /api/rare-chars/[char]` (detail) + integration test
 
 **Files:**
+
 - Create: `app/api/rare-chars/[char]/route.ts`
 - Create: `tests/integration/rare-chars-detail.test.ts`
 
@@ -1426,7 +1458,7 @@ beforeAll(async () => {
   const pool = getPool();
   await pool.execute(`TRUNCATE TABLE rare_chars`);
   await pool.execute(
-    `INSERT INTO rare_chars (char, pinyin, meaning, story) VALUES ('龘','dá','古龙','龙行龘龘')`
+    `INSERT INTO rare_chars (char, pinyin, meaning, story) VALUES ('龘','dá','古龙','龙行龘龘')`,
   );
 });
 
@@ -1466,6 +1498,7 @@ integrationDescribe('GET /api/rare-chars/[char] (integration)', () => {
 - [ ] **Step 2: Run test, verify it fails**
 
 Run:
+
 ```bash
 pnpm test tests/integration/rare-chars-detail.test.ts
 ```
@@ -1482,10 +1515,7 @@ import { getChar } from '@/lib/rare-chars';
 import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
 import { charParamSchema } from '@/lib/validators';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ char: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ char: string }> }) {
   return withErrorHandling(async () => {
     const { char } = await params;
     const parsed = charParamSchema.safeParse({ char: decodeURIComponent(char) });
@@ -1517,6 +1547,7 @@ git commit -m "feat(api): GET /api/rare-chars/[char] detail + integration test"
 ### Task 10: `GET /api/rare-chars/daily` + integration test
 
 **Files:**
+
 - Create: `app/api/rare-chars/daily/route.ts`
 - Create: `tests/integration/rare-chars-daily.test.ts`
 
@@ -1541,7 +1572,7 @@ beforeAll(async () => {
   for (const c of chars) {
     await pool.execute(
       `INSERT INTO rare_chars (char, pinyin, meaning, story) VALUES (?, 'a', 'm', 's')`,
-      [c]
+      [c],
     );
   }
 });
@@ -1646,6 +1677,7 @@ git commit -m "feat(api): GET /api/rare-chars/daily + integration test"
 ### Task 11: `GET/POST /api/worksheets` + integration test
 
 **Files:**
+
 - Create: `app/api/worksheets/route.ts`
 - Create: `tests/integration/worksheets.test.ts`
 
@@ -1670,17 +1702,23 @@ const { POST: login } = await import('@/app/api/auth/login/route');
 const { GET: listSheets, POST: createSheet } = await import('@/app/api/worksheets/route');
 
 async function regUser(username: string) {
-  return register(new Request('http://x/api/auth/register', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username, password: 'longenoughpwd' }),
-  }) as any);
+  return register(
+    new Request('http://x/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'longenoughpwd' }),
+    }) as any,
+  );
 }
 
 async function loginAndCookie(username: string) {
-  const r = await login(new Request('http://x/api/auth/login', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username, password: 'longenoughpwd' }),
-  }) as any);
+  const r = await login(
+    new Request('http://x/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'longenoughpwd' }),
+    }) as any,
+  );
   const cookie = r.headers.get('set-cookie')!.split(';')[0];
   return { cookie };
 }
@@ -1693,10 +1731,13 @@ function withCookie(cookie: string, req: Request): Request {
 
 integrationDescribe('GET/POST /api/worksheets (integration)', () => {
   it('POST requires auth', async () => {
-    const r = await createSheet(new Request('http://x/api/worksheets', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
-    }) as any);
+    const r = await createSheet(
+      new Request('http://x/api/worksheets', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+      }) as any,
+    );
     expect(r.status).toBe(401);
   });
 
@@ -1704,10 +1745,16 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    const r = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'My sheet', content: ['你', '好'], cellStyle: 'brush' }),
-    })) as any);
+    const r = await createSheet(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 'My sheet', content: ['你', '好'], cellStyle: 'brush' }),
+        }),
+      ) as any,
+    );
     const j = await r.json();
     expect(r.status).toBe(200);
     expect(j.data.id).toBeGreaterThan(0);
@@ -1717,10 +1764,16 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    const r = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: [], cellStyle: 'brush' }),
-    })) as any);
+    const r = await createSheet(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 't', content: [], cellStyle: 'brush' }),
+        }),
+      ) as any,
+    );
     expect(r.status).toBe(400);
   });
 
@@ -1728,10 +1781,16 @@ integrationDescribe('GET/POST /api/worksheets (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 'first', content: ['你'], cellStyle: 'brush' }),
-    })) as any);
+    await createSheet(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 'first', content: ['你'], cellStyle: 'brush' }),
+        }),
+      ) as any,
+    );
     const r = await listSheets(withCookie(cookie, new Request('http://x/api/worksheets')) as any);
     const j = await r.json();
     expect(r.status).toBe(200);
@@ -1806,6 +1865,7 @@ git commit -m "feat(api): GET/POST /api/worksheets + integration test"
 ### Task 12: `GET/DELETE /api/worksheets/[id]` + integration test
 
 **Files:**
+
 - Create: `app/api/worksheets/[id]/route.ts`
 - Modify: `tests/integration/worksheets.test.ts` (add 2 more cases)
 
@@ -1821,13 +1881,22 @@ integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    const created = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
-    })) as any);
+    const created = await createSheet(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+        }),
+      ) as any,
+    );
     const id = (await created.json()).data.id;
     const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
-    const r = await getSheet(withCookie(cookie, new Request(`http://x/api/worksheets/${id}`)) as any, ctx);
+    const r = await getSheet(
+      withCookie(cookie, new Request(`http://x/api/worksheets/${id}`)) as any,
+      ctx,
+    );
     const j = await r.json();
     expect(r.status).toBe(200);
     expect(j.data.id).toBe(id);
@@ -1837,15 +1906,27 @@ integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    const created = await createSheet(withCookie(cookie, new Request('http://x/api/worksheets', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
-    })) as any);
+    const created = await createSheet(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+        }),
+      ) as any,
+    );
     const id = (await created.json()).data.id;
     const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
-    const r = await delSheet(withCookie(cookie, new Request(`http://x/api/worksheets/${id}`, { method: 'DELETE' })) as any, ctx);
+    const r = await delSheet(
+      withCookie(cookie, new Request(`http://x/api/worksheets/${id}`, { method: 'DELETE' })) as any,
+      ctx,
+    );
     expect(r.status).toBe(204);
-    const r2 = await getSheet(withCookie(cookie, new Request(`http://x/api/worksheets/${id}`)) as any, ctx);
+    const r2 = await getSheet(
+      withCookie(cookie, new Request(`http://x/api/worksheets/${id}`)) as any,
+      ctx,
+    );
     expect(r2.status).toBe(404);
   });
 
@@ -1856,13 +1937,22 @@ integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
     await regUser(u2);
     const { cookie: c1 } = await loginAndCookie(u1);
     const { cookie: c2 } = await loginAndCookie(u2);
-    const created = await createSheet(withCookie(c1, new Request('http://x/api/worksheets', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
-    })) as any);
+    const created = await createSheet(
+      withCookie(
+        c1,
+        new Request('http://x/api/worksheets', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 't', content: ['你'], cellStyle: 'brush' }),
+        }),
+      ) as any,
+    );
     const id = (await created.json()).data.id;
     const ctx = { params: Promise.resolve({ id: String(id) }) } as any;
-    const r = await getSheet(withCookie(c2, new Request(`http://x/api/worksheets/${id}`)) as any, ctx);
+    const r = await getSheet(
+      withCookie(c2, new Request(`http://x/api/worksheets/${id}`)) as any,
+      ctx,
+    );
     expect(r.status).toBe(403);
   });
 
@@ -1871,7 +1961,10 @@ integrationDescribe('GET/DELETE /api/worksheets/[id] (integration)', () => {
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
     const ctx = { params: Promise.resolve({ id: '9999999' }) } as any;
-    const r = await getSheet(withCookie(cookie, new Request('http://x/api/worksheets/9999999')) as any, ctx);
+    const r = await getSheet(
+      withCookie(cookie, new Request('http://x/api/worksheets/9999999')) as any,
+      ctx,
+    );
     expect(r.status).toBe(404);
   });
 });
@@ -1893,12 +1986,15 @@ Create `app/api/worksheets/[id]/route.ts`:
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorksheet, deleteWorksheet } from '@/lib/worksheet';
-import { withErrorHandling, notFound, forbidden, unauthorized, badRequest } from '@/lib/api-handler';
+import {
+  withErrorHandling,
+  notFound,
+  forbidden,
+  unauthorized,
+  badRequest,
+} from '@/lib/api-handler';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
@@ -1912,10 +2008,7 @@ export async function GET(
   });
 }
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
@@ -1953,6 +2046,7 @@ git commit -m "feat(api): GET/DELETE /api/worksheets/[id] + integration test"
 ### Task 13: Common — `EmptyState` + `LoadingSpinner`
 
 **Files:**
+
 - Create: `components/common/EmptyState.tsx`
 - Create: `components/common/LoadingSpinner.tsx`
 
@@ -2021,6 +2115,7 @@ git commit -m "feat(components): EmptyState + LoadingSpinner"
 ### Task 14: `rare/RareCharCard` + unit test
 
 **Files:**
+
 - Create: `components/rare/RareCharCard.tsx`
 - Create: `tests/unit/components/RareCharCard.test.tsx`
 
@@ -2120,6 +2215,7 @@ git commit -m "feat(components): RareCharCard with truncate + tests"
 ### Task 15: `rare/DailyCharBanner` + `rare/RareCharSearch` (client)
 
 **Files:**
+
 - Create: `components/rare/DailyCharBanner.tsx`
 - Create: `components/rare/RareCharSearch.tsx`
 
@@ -2214,6 +2310,7 @@ git commit -m "feat(components): DailyCharBanner + debounced RareCharSearch"
 ### Task 16: `rare/RareCharPagination` + `rare/RareCharDetail`
 
 **Files:**
+
 - Create: `components/rare/RareCharPagination.tsx`
 - Create: `components/rare/RareCharDetail.tsx`
 
@@ -2319,6 +2416,7 @@ git commit -m "feat(components): RareCharPagination + RareCharDetail"
 ### Task 17: `worksheet/StylePicker` + `worksheet/WorksheetCell` (SVG) + tests
 
 **Files:**
+
 - Create: `components/worksheet/StylePicker.tsx`
 - Create: `components/worksheet/WorksheetCell.tsx`
 - Create: `tests/unit/components/WorksheetCell.test.tsx`
@@ -2472,6 +2570,7 @@ git commit -m "feat(components): WorksheetCell (SVG) + StylePicker"
 ### Task 18: `worksheet/TextInputTab` + `worksheet/LibrarySelectTab`
 
 **Files:**
+
 - Create: `components/worksheet/TextInputTab.tsx`
 - Create: `components/worksheet/LibrarySelectTab.tsx`
 
@@ -2503,9 +2602,7 @@ export function TextInputTab({ value, onChange }: Props) {
         rows={8}
         className="w-full rounded-md border border-gray-300 p-3 font-serif text-lg focus:border-blue-500 focus:outline-none"
       />
-      <p className="mt-2 text-xs text-gray-500">
-        {value.length} / 500 字
-      </p>
+      <p className="mt-2 text-xs text-gray-500">{value.length} / 500 字</p>
     </div>
   );
 }
@@ -2576,9 +2673,7 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
               type="button"
               onClick={() => toggle(c.char)}
               className={`flex flex-col items-center rounded border p-2 text-center transition ${
-                isSelected
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-400'
+                isSelected ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-400'
               }`}
               title={c.meaning}
             >
@@ -2610,6 +2705,7 @@ git commit -m "feat(components): TextInputTab + LibrarySelectTab"
 ### Task 19: `worksheet/WorksheetGenerator` (form state container)
 
 **Files:**
+
 - Create: `components/worksheet/WorksheetGenerator.tsx`
 
 - [ ] **Step 1: Implement `WorksheetGenerator`**
@@ -2656,7 +2752,11 @@ export function WorksheetGenerator() {
       const res = await fetch('/api/worksheets', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: title || `字帖 ${new Date().toLocaleDateString()}`, content, cellStyle }),
+        body: JSON.stringify({
+          title: title || `字帖 ${new Date().toLocaleDateString()}`,
+          content,
+          cellStyle,
+        }),
       });
       const data = await res.json();
       if (data.ok) {
@@ -2755,6 +2855,7 @@ git commit -m "feat(components): WorksheetGenerator (form state container)"
 ### Task 20: `worksheet/WorksheetPreview` + `worksheet/WorksheetHistoryList`
 
 **Files:**
+
 - Create: `components/worksheet/WorksheetPreview.tsx`
 - Create: `components/worksheet/WorksheetHistoryList.tsx`
 
@@ -2848,9 +2949,7 @@ interface Props {
 
 export function WorksheetHistoryList({ worksheets }: Props) {
   if (worksheets.length === 0) {
-    return (
-      <div className="py-8 text-center text-gray-500">还没有保存的字帖</div>
-    );
+    return <div className="py-8 text-center text-gray-500">还没有保存的字帖</div>;
   }
   return (
     <ul className="divide-y rounded border">
@@ -2891,6 +2990,7 @@ git commit -m "feat(components): WorksheetPreview (print-ready) + HistoryList"
 ### Task 21: `game/DraggablePinyin` + `game/CharDropZone`
 
 **Files:**
+
 - Create: `components/game/DraggablePinyin.tsx`
 - Create: `components/game/CharDropZone.tsx`
 
@@ -2985,6 +3085,7 @@ git commit -m "feat(components): DraggablePinyin + CharDropZone (HTML5 DnD)"
 ### Task 22: `game/DragMatchGame` (state machine)
 
 **Files:**
+
 - Create: `components/game/DragMatchGame.tsx`
 
 - [ ] **Step 1: Implement `DragMatchGame`**
@@ -3102,10 +3203,7 @@ export function DragMatchGame() {
           >
             再来一局
           </button>
-          <a
-            href="/"
-            className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-100"
-          >
+          <a href="/" className="rounded-md border border-gray-300 px-4 py-2 hover:bg-gray-100">
             返回首页
           </a>
         </div>
@@ -3174,6 +3272,7 @@ git commit -m "feat(components): DragMatchGame state machine"
 ### Task 23: `lib/api-rare-chars.ts` + `lib/api-worksheet.ts` (client wrappers)
 
 **Files:**
+
 - Create: `lib/api-rare-chars.ts`
 - Create: `lib/api-worksheet.ts`
 
@@ -3202,7 +3301,9 @@ export interface ListResultClient {
   pageSize: number;
 }
 
-export async function fetchRareChars(opts: { q?: string; page?: number } = {}): Promise<ListResultClient> {
+export async function fetchRareChars(
+  opts: { q?: string; page?: number } = {},
+): Promise<ListResultClient> {
   const params = new URLSearchParams();
   if (opts.q) params.set('q', opts.q);
   if (opts.page) params.set('page', String(opts.page));
@@ -3291,6 +3392,7 @@ git commit -m "feat(lib): client API wrappers for rare-chars and worksheets"
 ### Task 24: `/rare-chars` page (list + search + daily banner)
 
 **Files:**
+
 - Create: `app/rare-chars/page.tsx`
 
 - [ ] **Step 1: Implement the page**
@@ -3385,6 +3487,7 @@ git commit -m "feat(pages): /rare-chars list with daily banner + search + pagina
 ### Task 25: `/rare-chars/[char]` page
 
 **Files:**
+
 - Create: `app/rare-chars/[char]/page.tsx`
 
 - [ ] **Step 1: Implement the page**
@@ -3428,6 +3531,7 @@ git commit -m "feat(pages): /rare-chars/[char] detail view"
 ### Task 26: `/worksheet` page (form + preview single page)
 
 **Files:**
+
 - Create: `app/worksheet/page.tsx`
 
 - [ ] **Step 1: Implement the page**
@@ -3465,6 +3569,7 @@ git commit -m "feat(pages): /worksheet generator (form + preview)"
 ### Task 27: `/worksheet/history` + `/worksheet/[id]` pages
 
 **Files:**
+
 - Create: `app/worksheet/history/page.tsx`
 - Create: `app/worksheet/[id]/page.tsx`
 
@@ -3489,7 +3594,10 @@ export default async function WorksheetHistoryPage() {
     <div className="mx-auto max-w-3xl p-4">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-2xl font-bold">我的字帖</h1>
-        <Link href="/worksheet" className="rounded-md bg-blue-600 px-3 py-1 text-white hover:bg-blue-700">
+        <Link
+          href="/worksheet"
+          className="rounded-md bg-blue-600 px-3 py-1 text-white hover:bg-blue-700"
+        >
           新建字帖
         </Link>
       </div>
@@ -3544,7 +3652,12 @@ export default async function WorksheetDetailPage({ params }: Props) {
         {ws.content.length} 字 · {ws.cellStyle === 'brush' ? '毛笔格' : '田字格'} ·{' '}
         {new Date(ws.createdAt).toLocaleString()}
       </p>
-      <WorksheetPreview title={undefined} content={ws.content} cellStyle={ws.cellStyle} showHeader={false} />
+      <WorksheetPreview
+        title={undefined}
+        content={ws.content}
+        cellStyle={ws.cellStyle}
+        showHeader={false}
+      />
     </div>
   );
 }
@@ -3601,6 +3714,7 @@ git commit -m "feat(pages): /worksheet/history + /worksheet/[id]"
 ### Task 28: `/game` page + Header updates + print CSS
 
 **Files:**
+
 - Create: `app/game/page.tsx`
 - Modify: `components/Header.tsx` (add 3 nav links)
 - Modify: `app/globals.css` (add `@media print` + new component styles)
@@ -3618,9 +3732,7 @@ export default function GamePage() {
   return (
     <div className="mx-auto max-w-4xl p-4">
       <h1 className="mb-4 text-2xl font-bold">识字游戏</h1>
-      <p className="mb-4 text-sm text-gray-600">
-        从字库随机取 8 个字,把它们和对应的拼音配对。
-      </p>
+      <p className="mb-4 text-sm text-gray-600">从字库随机取 8 个字,把它们和对应的拼音配对。</p>
       <DragMatchGame />
     </div>
   );
@@ -3649,7 +3761,8 @@ Open `app/globals.css`. Append at the end:
   body * {
     visibility: hidden;
   }
-  .worksheet-grid, .worksheet-grid * {
+  .worksheet-grid,
+  .worksheet-grid * {
     visibility: visible;
   }
   .worksheet-grid {
@@ -3741,6 +3854,7 @@ git commit -m "docs: Plan D smoke test results"
 ### Task 30: README + `.env.example` updates
 
 **Files:**
+
 - Modify: `README.md` (add new section)
 - Modify: `.env.example` (add LLM env vars if not already done in Task 1)
 
@@ -3748,7 +3862,7 @@ git commit -m "docs: Plan D smoke test results"
 
 Open `README.md`. After the existing "密码找回 + 管理员后台 (v1 / Plan B+)" section, add:
 
-```markdown
+````markdown
 ## 罕见字库 + 字帖生成器 + 识字游戏 (v1 / Plan D)
 
 - **罕见字库**:从《通用规范汉字表》三级导入 ~1600 字,每字含拼音、释义、故事(AI 生成)。`/rare-chars` 浏览 + 搜索,`/rare-chars/[char]` 详情。
@@ -3762,16 +3876,18 @@ pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts
 pnpm tsx --env-file=.env scripts/generate-stories.ts --provider openai --model gpt-4o-mini
 pnpm tsx --env-file=.env scripts/show-stats.ts
 ```
+````
 
 需要 `LLM_API_KEY` 和 `LLM_BASE_URL` 在 `.env` 中。脚本可重复运行(已填的释义/故事不覆盖)。
-```
+
+````
 
 - [ ] **Step 2: Commit**
 
 ```bash
 git add README.md .env.example
 git commit -m "docs: Plan D section in README"
-```
+````
 
 ---
 
@@ -3794,6 +3910,7 @@ Expected: all green. If anything fails, dispatch a small fix subagent.
 Use the `superpowers:requesting-code-review` skill or dispatch a review subagent directly. Pass it the full diff of all Plan D commits and the spec.
 
 The subagent checks:
+
 - No Critical or Important issues
 - All 32 estimated commits are present
 - Spec coverage: every requirement in `docs/superpowers/specs/2026-06-11-pinyin-character-plan-d-design.md` is implemented
@@ -3812,6 +3929,7 @@ If the reviewer produced a written summary, save it to `docs/superpowers/notes/2
 ### Task 32: Wrap up — update memory + spec memory
 
 **Files:**
+
 - Modify: `C:\Users\徐鹏\.claude\projects\E--ToolDevelop-PinYinCharacter\memory\MEMORY.md` (add new line)
 - Create: `C:\Users\徐鹏\.claude\projects\E--ToolDevelop-PinYinCharacter\memory\plan-d-status.md`
 
@@ -3829,17 +3947,20 @@ type: project
 Plan D (罕见字库 + 字帖 + 游戏) is **implementation-complete** as of 2026-06-11. 32 commits on main, all unit + integration tests passing.
 
 **Run-once scripts to populate data:**
+
 - `pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts` — imports ~1600 chars
 - `pnpm tsx --env-file=.env scripts/generate-stories.ts --provider openai --model gpt-4o-mini` — AI fills meaning/story
 - `pnpm tsx --env-file=.env scripts/show-stats.ts` — verify counts
 
 **Build pipeline notes:**
+
 - LLM_API_KEY + LLM_BASE_URL in `.env`
 - Provider/model passed as CLI args (not env) so the same key can switch between models
 - AI content tracked in `rare_chars.generated_by` (e.g., "openai:gpt-4o-mini") for audit
 - Idempotent re-runs: `INSERT ... ON DUPLICATE KEY UPDATE pinyin` for fetch, skips rows with `meaning != ''` for generate
 
 **Key design decisions:**
+
 - Worksheet = single client page with form/preview view toggle (no separate /preview route, no sessionStorage)
 - Cell rendering: inline `<svg>` per cell (diagonals + center lines), CSS `@media print` hides form/header
 - Game: HTML5 drag-and-drop, 8 chars × 8 pinyin, no score persistence
@@ -3847,6 +3968,7 @@ Plan D (罕见字库 + 字帖 + 游戏) is **implementation-complete** as of 202
 - Library: public browse, login required only for save/delete
 
 **How to apply:**
+
 - Next session: user runs Task 29 manual smoke (15 steps) against live MySQL
 - If smoke test passes: Plan D done, ask user about next plan (E?)
 - If smoke test fails: triage specific failure and fix in a targeted commit

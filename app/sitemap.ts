@@ -4,13 +4,24 @@ import { readFileSync } from 'node:fs';
 import { loadManifest } from '@/lib/poetry';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
 
-interface ClassicsManifest { updatedAt: string; books: Array<{ slug: string }>; }
-interface ContentManifest { generatedAt: string; }
-interface SutrasManifest { generatedAt: string; items: Array<{ id: number; slug: string }>; }
+interface ClassicsManifest {
+  updatedAt: string;
+  books: Array<{ slug: string }>;
+}
+interface ContentManifest {
+  generatedAt: string;
+}
+interface SutrasManifest {
+  generatedAt: string;
+  items: Array<{ id: number; slug: string }>;
+}
 
 function loadJsonSync<T>(p: string): T | null {
-  try { return JSON.parse(readFileSync(path.join(process.cwd(), p), 'utf8')) as T; }
-  catch { return null; }
+  try {
+    return JSON.parse(readFileSync(path.join(process.cwd(), p), 'utf8')) as T;
+  } catch {
+    return null;
+  }
 }
 
 export const revalidate = 3600;
@@ -26,18 +37,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     Promise.resolve(loadJsonSync<SutrasManifest>('data/sutras/manifest.json')),
   ]);
 
-  const poems = manifest.items.map(i => ({
+  const poems = manifest.items.map((i) => ({
     url: `${base}/poetry/${i.id}`,
     lastModified: manifest.updatedAt,
   }));
 
-  const classicsEntries = (classics?.books ?? []).map(b => ({
+  const classicsEntries = (classics?.books ?? []).map((b) => ({
     url: `${base}/ancient/${b.slug}`,
     lastModified: classics!.updatedAt,
   }));
 
   const sutraMtime = sutrasManifest?.generatedAt ?? manifest.updatedAt;
-  const sutraEntries = (sutrasManifest?.items ?? []).map(s => ({
+  const sutraEntries = (sutrasManifest?.items ?? []).map((s) => ({
     url: `${base}/sutra/${s.slug}`,
     lastModified: sutraMtime,
   }));
@@ -50,9 +61,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     { url: `${base}/`, lastModified: staticDate, priority: 1.0, changeFrequency: 'daily' },
-    { url: `${base}/poetry`, lastModified: manifest.updatedAt, priority: 0.9, changeFrequency: 'daily' },
-    { url: `${base}/ancient`, lastModified: classics?.updatedAt ?? staticDate, priority: 0.9, changeFrequency: 'weekly' },
-    { url: `${base}/dictionary`, lastModified: contentMtime, priority: 0.9, changeFrequency: 'weekly' },
+    {
+      url: `${base}/poetry`,
+      lastModified: manifest.updatedAt,
+      priority: 0.9,
+      changeFrequency: 'daily',
+    },
+    {
+      url: `${base}/ancient`,
+      lastModified: classics?.updatedAt ?? staticDate,
+      priority: 0.9,
+      changeFrequency: 'weekly',
+    },
+    {
+      url: `${base}/dictionary`,
+      lastModified: contentMtime,
+      priority: 0.9,
+      changeFrequency: 'weekly',
+    },
     { url: `${base}/sitemap/poetry.xml`, lastModified: manifest.updatedAt },
     { url: `${base}/sitemap/ancient.xml`, lastModified: classics?.updatedAt ?? staticDate },
     { url: `${base}/sitemap/chars.xml`, lastModified: contentMtime },

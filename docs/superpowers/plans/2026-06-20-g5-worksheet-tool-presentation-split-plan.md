@@ -24,10 +24,12 @@
 ### Task 1: DB migration SQL + init-db.ts ENUM widening
 
 **Files:**
+
 - Create: `scripts/migrations/2026-06-20-worksheet-tool-presentation-split.sql`
 - Modify: `scripts/init-db.ts:130` (cell_style ENUM line)
 
 **Interfaces:**
+
 - Consumes: existing `cell_style ENUM('brush','square','pen','cross') NOT NULL`
 - Produces: widened `cell_style ENUM('brush','square','pen','cross','brush-square','brush-cross','pen-square','pen-cross') NOT NULL` with old rows backfilled
 
@@ -72,10 +74,12 @@ Expected: exit 0 (the ENUM is a string column from the app's perspective; wideni
 - [ ] **Step 4: Apply migration to local piyin_dev**
 
 Run:
+
 ```bash
 mysql -uroot -pAdmin909217 piyin_dev < scripts/migrations/2026-06-20-worksheet-tool-presentation-split.sql
 mysql -uroot -pAdmin909217 piyin_dev -e "SELECT cell_style, COUNT(*) FROM worksheets GROUP BY cell_style"
 ```
+
 Expected: 0 rows with old values; new rows in `'pen-square'` etc. (Existing user worksheets may be 0; that's fine — backfill is the contract.)
 
 - [ ] **Step 5: Commit**
@@ -90,10 +94,12 @@ git commit -m "feat(worksheet): widen cell_style ENUM + backfill old values to c
 ### Task 2: Data model refactor (lib/worksheet-types.ts)
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts`
 - Test: `tests/unit/lib/worksheet-types.test.ts` (update existing tests)
 
 **Interfaces:**
+
 - Consumes: current `CellStyle = 'brush' | 'square' | 'pen' | 'cross'`
 - Produces: `Tool = 'brush' | 'pen'`, `Presentation = 'square' | 'cross'`, `CellStyle = 'brush-square' | 'brush-cross' | 'pen-square' | 'pen-cross'`, helpers `getTool`, `getPresentation`, `composeCellStyle`, `defaultToolFor`, `defaultPresentationFor`, `defaultFontFor` (updated signature)
 
@@ -192,7 +198,10 @@ export type CellStyle = 'brush-square' | 'brush-cross' | 'pen-square' | 'pen-cro
 const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
 const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross'];
 const ALL_CELL_STYLES: readonly CellStyle[] = [
-  'brush-square', 'brush-cross', 'pen-square', 'pen-cross',
+  'brush-square',
+  'brush-cross',
+  'pen-square',
+  'pen-cross',
 ] as const;
 
 // Compose / split helpers
@@ -210,7 +219,7 @@ export function getPresentation(s: CellStyle): Presentation {
 
 // Defaults
 export function defaultToolFor(): Tool {
-  return 'brush';  // matches G3 default
+  return 'brush'; // matches G3 default
 }
 
 export function defaultPresentationFor(): Presentation {
@@ -223,6 +232,7 @@ export function defaultFontFor(tool: Tool): FontFamily {
 ```
 
 Update `cellStyleLabel`:
+
 ```ts
 export function cellStyleLabel(s: CellStyle): string {
   const tool = getTool(s) === 'brush' ? '毛笔' : '钢笔';
@@ -255,10 +265,12 @@ git commit -m "refactor(worksheet): split cellStyle into Tool + Presentation com
 ### Task 3: Validators update (lib/validators.ts)
 
 **Files:**
+
 - Modify: `lib/validators.ts:46` (cellStyle enum in saveWorksheetSchema)
 - Test: `tests/unit/lib/validators.test.ts` (update existing tests for cellStyle)
 
 **Interfaces:**
+
 - Consumes: `saveWorksheetSchema` with `cellStyle: z.enum(['brush', 'square', 'pen', 'cross'])`
 - Produces: `cellStyle: z.enum(['brush-square', 'brush-cross', 'pen-square', 'pen-cross'])`
 
@@ -324,6 +336,7 @@ git commit -m "feat(worksheet): update saveWorksheetSchema to composite cellStyl
 ### Task 4: Split StylePicker into ToolPicker + PresentationPicker
 
 **Files:**
+
 - Create: `components/worksheet/ToolPicker.tsx`
 - Create: `components/worksheet/PresentationPicker.tsx`
 - Modify-or-delete: `components/worksheet/StylePicker.tsx` (delete; no shim — all consumers are updated in Task 5)
@@ -331,6 +344,7 @@ git commit -m "feat(worksheet): update saveWorksheetSchema to composite cellStyl
 - Test: `tests/unit/components/worksheet/PresentationPicker.test.tsx` (new)
 
 **Interfaces:**
+
 - ToolPicker: `{ value: Tool; onChange: (v: Tool) => void }`
 - PresentationPicker: `{ value: Presentation; onChange: (v: Presentation) => void }`
 
@@ -520,12 +534,14 @@ git commit -m "refactor(worksheet): split StylePicker into ToolPicker + Presenta
 ### Task 5: WorksheetGenerator + PaperSizePicker refactor (wires everything together)
 
 **Files:**
+
 - Modify: `components/worksheet/WorksheetGenerator.tsx` (state + handlers + JSX)
 - Modify: `components/worksheet/PaperSizePicker.tsx` (prop signature: `cellStyle` → `tool`)
 - Modify: `components/worksheet/WorksheetCell.tsx` (use `getPresentation` for grid lines)
 - Test: any existing component test that mounts `WorksheetGenerator` or `PaperSizePicker` — update
 
 **Interfaces:**
+
 - PaperSizePicker: `{ value: PaperSize; tool: Tool; onChange: (v: PaperSize) => void }` (was `cellStyle: CellStyle`)
 - WorksheetGenerator state: `tool: Tool`, `presentation: Presentation` (was `cellStyle: CellStyle`)
 
@@ -565,7 +581,9 @@ export function PaperSizePicker({ value, tool, onChange }: Props) {
             checked={value === p.value}
             onChange={() => onChange(p.value)}
           />
-          <span>{p.label} <span className="text-xs text-ink-faint">≈{p.cellsPerPage}字/页</span></span>
+          <span>
+            {p.label} <span className="text-xs text-ink-faint">≈{p.cellsPerPage}字/页</span>
+          </span>
         </label>
       ))}
     </div>
@@ -578,16 +596,21 @@ export function PaperSizePicker({ value, tool, onChange }: Props) {
 Modify `components/worksheet/WorksheetCell.tsx`. Replace the old grid-line conditional (lines 22-30) with presentation-based logic:
 
 ```tsx
-import { getPresentation, fontFamilyCssVar, type CellStyle, type FontFamily } from '@/lib/worksheet-types';
+import {
+  getPresentation,
+  fontFamilyCssVar,
+  type CellStyle,
+  type FontFamily,
+} from '@/lib/worksheet-types';
 // (replace the existing import)
 
 export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: Props) {
   const stroke = '#bbb';
   const fontStack = `${fontFamilyCssVar(fontFamily)}, "Noto Serif SC", serif`;
   const guideFontSize = Math.round(size * 0.6);
-  const presentation = getPresentation(style);  // 'square' | 'cross'
+  const presentation = getPresentation(style); // 'square' | 'cross'
   const showDiagonals = presentation === 'cross';
-  const showHorizontal = true;  // both new presentations have horizontal
+  const showHorizontal = true; // both new presentations have horizontal
   return (
     <svg width={size} height={size} viewBox="0 0 100 100" className="block">
       <rect x={2} y={2} width={96} height={96} fill="none" stroke={stroke} strokeWidth={1} />
@@ -622,40 +645,52 @@ export function WorksheetCell({ char, style, size = 80, fontFamily = 'song' }: P
 In `components/worksheet/WorksheetGenerator.tsx`:
 
 Replace the state declarations (lines 29-31):
+
 ```tsx
-  const [tool, setTool] = useState<Tool>(defaultToolFor());
-  const [presentation, setPresentation] = useState<Presentation>(defaultPresentationFor());
-  const [paperSize, setPaperSize] = useState<PaperSize>(
-    defaultToolFor() === 'brush' ? 'brush-12' : 'A4',
-  );
-  const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor(defaultToolFor()));
+const [tool, setTool] = useState<Tool>(defaultToolFor());
+const [presentation, setPresentation] = useState<Presentation>(defaultPresentationFor());
+const [paperSize, setPaperSize] = useState<PaperSize>(
+  defaultToolFor() === 'brush' ? 'brush-12' : 'A4',
+);
+const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor(defaultToolFor()));
 ```
 
 Add new imports at top (next to the existing `worksheet-types` import):
+
 ```tsx
-import { defaultToolFor, defaultPresentationFor, defaultFontFor, composeCellStyle, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+import {
+  defaultToolFor,
+  defaultPresentationFor,
+  defaultFontFor,
+  composeCellStyle,
+  isBrushSize,
+  paperSizeLabel,
+  fontFamilyLabel,
+} from '@/lib/worksheet-types';
 import type { Tool, Presentation } from '@/lib/worksheet-types';
 ```
 
 Replace `handleCellStyleChange` (lines 53-61) with:
-```tsx
-  function handleToolChange(next: Tool) {
-    setTool(next);
-    if (next === 'brush' && !isBrushSize(paperSize)) {
-      setPaperSize('brush-12');
-    } else if (next === 'pen' && isBrushSize(paperSize)) {
-      setPaperSize('A4');
-    }
-    // fontFamily is preserved (user explicit decision 2026-06-20)
-  }
 
-  function handlePresentationChange(next: Presentation) {
-    setPresentation(next);
-    // paperSize unchanged
+```tsx
+function handleToolChange(next: Tool) {
+  setTool(next);
+  if (next === 'brush' && !isBrushSize(paperSize)) {
+    setPaperSize('brush-12');
+  } else if (next === 'pen' && isBrushSize(paperSize)) {
+    setPaperSize('A4');
   }
+  // fontFamily is preserved (user explicit decision 2026-06-20)
+}
+
+function handlePresentationChange(next: Presentation) {
+  setPresentation(next);
+  // paperSize unchanged
+}
 ```
 
 In the JSX, replace the `StylePicker` block (lines 171-177) with two pickers side-by-side:
+
 ```tsx
         <div>
           <label className="block text-sm font-medium text-ink-soft">工具</label>
@@ -672,24 +707,33 @@ In the JSX, replace the `StylePicker` block (lines 171-177) with two pickers sid
 ```
 
 Add imports at top of file:
+
 ```tsx
 import { ToolPicker } from './ToolPicker';
 import { PresentationPicker } from './PresentationPicker';
 ```
 
 In `handleSave` (around line 79-83), update the body to use the new `cellStyle` composite:
+
 ```tsx
-    const cellStyle = composeCellStyle(tool, presentation);
-    const res = await fetch('/api/worksheets', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: title || `字帖 ${new Date().toLocaleDateString()}`, content, cellStyle, paperSize, fontFamily }),
-    });
+const cellStyle = composeCellStyle(tool, presentation);
+const res = await fetch('/api/worksheets', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    title: title || `字帖 ${new Date().toLocaleDateString()}`,
+    content,
+    cellStyle,
+    paperSize,
+    fontFamily,
+  }),
+});
 ```
 
 Update the preview branch (around line 100-114) and the `WorksheetPreview` JSX (around line 174-191) — `<PaperSizePicker>` now takes `tool` instead of `cellStyle`:
+
 ```tsx
-            <PaperSizePicker value={paperSize} tool={tool} onChange={setPaperSize} />
+<PaperSizePicker value={paperSize} tool={tool} onChange={setPaperSize} />
 ```
 
 In the `<WorksheetPreview>` calls (preview branch and detail page), pass `cellStyle={composeCellStyle(tool, presentation)}`. Both `WorksheetGenerator`'s preview branch and `app/worksheet/[id]/page.tsx` need this — but `app/worksheet/[id]/page.tsx` reads `ws.cellStyle` from DB directly, which is now a composite, so it Just Works.
@@ -705,6 +749,7 @@ Find any tests that import `StylePicker` or use `cellStyle: 'brush'` etc. as com
 - `tests/integration/api/*` — update cellStyle literals in test fixtures
 
 For each, the conversion is mechanical:
+
 - `cellStyle: 'brush'` → either `tool: 'brush', presentation: 'square'` (composed at call site) or `cellStyle: 'brush-cross'`
 - `cellStyle: 'pen'` → `cellStyle: 'pen-square'`
 - `cellStyle: 'square'` → `cellStyle: 'pen-square'`
@@ -718,9 +763,11 @@ Expected: tsc clean; all tests pass (after Step 4 updates).
 - [ ] **Step 6: Run pnpm build (Task 5 touches page-adjacent code; per-task build required)**
 
 Confirm no dev server on 4444 first:
+
 ```bash
 cmd.exe //c "netstat -ano | findstr :4444"
 ```
+
 If empty (no LISTENING), run `pnpm build`. If dev server alive, **skip pnpm build and report** — do not stomp the dev cache.
 
 Run: `pnpm build`

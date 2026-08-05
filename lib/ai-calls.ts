@@ -55,7 +55,10 @@ export async function checkAiRateLimit(userId: number): Promise<boolean> {
 }
 
 export class RateLimitError extends Error {
-  constructor() { super('rate limit exceeded'); this.name = 'RateLimitError'; }
+  constructor() {
+    super('rate limit exceeded');
+    this.name = 'RateLimitError';
+  }
 }
 
 export interface WithAiLoggingArgs {
@@ -97,7 +100,9 @@ export async function withAiLogging<T>(args: WithAiLoggingArgs, fn: () => Promis
  * Threshold mirrors `checkAiRateLimit`: 5/day by default, configurable via
  * `ai.rate_limit_per_user_per_day` (same config key; both paths share the limit).
  */
-export async function checkAnonRateLimit(ip: string): Promise<{ exceeded: boolean; count: number }> {
+export async function checkAnonRateLimit(
+  ip: string,
+): Promise<{ exceeded: boolean; count: number }> {
   const limitStr = await getConfig('ai.rate_limit_per_user_per_day');
   const limit = limitStr ? parseInt(limitStr, 10) : 5;
   if (limit <= 0) return { exceeded: false, count: 0 };

@@ -35,16 +35,12 @@ const FONTS: FontEntry[] = [
   },
   {
     filename: 'Yozai-Regular.ttf',
-    urls: [
-      'https://github.com/lxgw/LxgwYozai/releases/latest/download/Yozai-Regular.ttf',
-    ],
+    urls: ['https://github.com/lxgw/LxgwYozai/releases/latest/download/Yozai-Regular.ttf'],
     label: 'Yozai (悠哉)',
   },
   {
     filename: 'Iansui-Regular.ttf',
-    urls: [
-      'https://github.com/lxgw/LxgwIansui/releases/latest/download/Iansui-Regular.ttf',
-    ],
+    urls: ['https://github.com/lxgw/LxgwIansui/releases/latest/download/Iansui-Regular.ttf'],
     label: 'Iansui (芫荽)',
   },
   {
@@ -56,16 +52,12 @@ const FONTS: FontEntry[] = [
   },
   {
     filename: 'MaShanZheng-Regular.ttf',
-    urls: [
-      'https://github.com/google/fonts/raw/main/ofl/mashanzheng/MaShanZheng-Regular.ttf',
-    ],
+    urls: ['https://github.com/google/fonts/raw/main/ofl/mashanzheng/MaShanZheng-Regular.ttf'],
     label: 'Ma Shan Zheng (马善政体)',
   },
   {
     filename: 'LongCang-Regular.ttf',
-    urls: [
-      'https://github.com/google/fonts/raw/main/ofl/longcang/LongCang-Regular.ttf',
-    ],
+    urls: ['https://github.com/google/fonts/raw/main/ofl/longcang/LongCang-Regular.ttf'],
     label: 'Long Cang (龙藏体)',
   },
 ];
@@ -92,7 +84,9 @@ async function downloadOnce(url: string, dest: string, timeoutMs = 60000): Promi
   }
 }
 
-async function downloadFont(entry: FontEntry): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number }> {
+async function downloadFont(
+  entry: FontEntry,
+): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number }> {
   const dest = resolve(STAGING, entry.filename);
   if (existsSync(dest) && statSync(dest).size > 0) {
     return { status: 'skip' };

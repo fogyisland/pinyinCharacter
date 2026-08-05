@@ -14,9 +14,7 @@ const TONE_DIACRITIC_RE = /[āēīōūǔǎěǐǒùǜàèìòù]/;
 // strict HSK filter (false) or the relaxed per-source pool (true) — used
 // by FallbackBanner in Task 7.
 const QuerySchema = z.object({
-  source: z
-    .enum(['chars-level-1', 'chars-level-1-2', 'chars-all'])
-    .default('chars-all'),
+  source: z.enum(['chars-level-1', 'chars-level-1-2', 'chars-all']).default('chars-all'),
   hskLevel: z.coerce.number().int().min(1).max(6).optional(),
 });
 
@@ -88,8 +86,7 @@ export async function GET(req: NextRequest) {
   // hskFallback: if HSK filter was requested but yielded zero rows
   // (or pages all failed), the client should know to show the
   // FallbackBanner instead of "no valid starter".
-  const hskFallback =
-    hskLevel != null && (allChars.length === 0 || pagesFailed > 0);
+  const hskFallback = hskLevel != null && (allChars.length === 0 || pagesFailed > 0);
   // 2026-07-04: was `public, max-age=3600`. Switched to `no-store`
   // because the prior version of this route returned `[]` for the new
   // `chars-level-1` source (the old route used lib/rare-chars which has

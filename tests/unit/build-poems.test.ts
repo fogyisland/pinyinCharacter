@@ -17,8 +17,8 @@ describe('build-poems JSON-reader pipeline', () => {
     const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as PoemsManifest;
     const files = new Set(
       readdirSync(DATA_DIR)
-        .filter(f => /^\d+\.json$/.test(f))
-        .map(f => Number(f.replace('.json', '')))
+        .filter((f) => /^\d+\.json$/.test(f))
+        .map((f) => Number(f.replace('.json', ''))),
     );
     for (const item of manifest.items) {
       expect(files.has(item.id)).toBe(true);

@@ -11,10 +11,13 @@ async function main() {
      WHERE meaning IS NULL OR meaning = ''
      ORDER BY \`char\` ASC
      LIMIT ? OFFSET ?`,
-    [limit, offset]
+    [limit, offset],
   );
   await conn.end();
   process.stdout.write(JSON.stringify(rows));
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

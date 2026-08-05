@@ -3,13 +3,30 @@ import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
-import { insertNote, listActiveNotes, checkRateLimit, bumpRateLimit, type NoteRow } from '@/lib/notes';
-import { sendEmail, notesNotificationEmail, EmailNotConfiguredError, EmailSendError } from '@/lib/email';
+import {
+  insertNote,
+  listActiveNotes,
+  checkRateLimit,
+  bumpRateLimit,
+  type NoteRow,
+} from '@/lib/notes';
+import {
+  sendEmail,
+  notesNotificationEmail,
+  EmailNotConfiguredError,
+  EmailSendError,
+} from '@/lib/email';
 import { getConfig } from '@/lib/config';
 
 const PostSchema = z.object({
   name: z.string().min(1).max(64),
-  email: z.string().email().max(254).optional().or(z.literal('')).transform((v) => v || undefined),
+  email: z
+    .string()
+    .email()
+    .max(254)
+    .optional()
+    .or(z.literal(''))
+    .transform((v) => v || undefined),
   content: z.string().min(1).max(1000),
 });
 
@@ -31,8 +48,15 @@ export async function POST(req: NextRequest) {
     });
     if (!verdict.allow) {
       return NextResponse.json(
-        { ok: false, error: { code: 'rate_limited', message: verdict.reason, retryAfterSec: verdict.retryAfterSec } },
-        { status: 429, headers: { 'Retry-After': String(verdict.retryAfterSec) } }
+        {
+          ok: false,
+          error: {
+            code: 'rate_limited',
+            message: verdict.reason,
+            retryAfterSec: verdict.retryAfterSec,
+          },
+        },
+        { status: 429, headers: { 'Retry-After': String(verdict.retryAfterSec) } },
       );
     }
 
@@ -43,7 +67,8 @@ export async function POST(req: NextRequest) {
         authorName: parsed.data.name,
         authorEmail: parsed.data.email ?? null,
         content: parsed.data.content,
-        ip, userAgent: ua,
+        ip,
+        userAgent: ua,
       });
     } catch (err) {
       return badRequest('insert_failed', (err as Error).message);
@@ -56,7 +81,8 @@ export async function POST(req: NextRequest) {
       userId: user?.id ?? null,
       event: 'notes_posted',
       metadata: { id: note.id, authorName: parsed.data.name },
-      ip, userAgent: ua,
+      ip,
+      userAgent: ua,
     }).catch(() => {});
 
     // Admin email (fire-and-forget; failures go to audit only)
@@ -70,7 +96,7 @@ export async function GET(req: NextRequest) {
   return withErrorHandling(async () => {
     const limit = Math.min(
       Math.max(parseInt(new URL(req.url).searchParams.get('limit') ?? '50', 10) || 50, 1),
-      100
+      100,
     );
     const rows = await listActiveNotes({ limit });
     const headers = new Headers({ 'Cache-Control': 'no-store' });
@@ -104,9 +130,12 @@ async function sendAdminNotification(note: NoteRow): Promise<void> {
         metadata: { noteId: note.id, to },
       }).catch(() => {});
     } catch (err) {
-      const code = err instanceof EmailNotConfiguredError ? 'email_not_configured'
-        : err instanceof EmailSendError ? 'email_send_failed'
-        : 'unknown';
+      const code =
+        err instanceof EmailNotConfiguredError
+          ? 'email_not_configured'
+          : err instanceof EmailSendError
+            ? 'email_send_failed'
+            : 'unknown';
       await writeAudit({
         userId: null,
         event: 'notes_email_failed',
@@ -120,5 +149,8 @@ async function resolveAdminRecipients(): Promise<string[]> {
   const cfg = await getConfig('notes.admin_emails').catch(() => null);
   const fallback = await getConfig('smtp.from').catch(() => null);
   const raw = (cfg && String(cfg).trim()) || (fallback && String(fallback).trim()) || '';
-  return raw.split(',').map((s) => s.trim()).filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
+  return raw
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s));
 }

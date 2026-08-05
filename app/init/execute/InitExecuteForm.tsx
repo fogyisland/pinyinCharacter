@@ -8,35 +8,123 @@ import { StepGroup } from '@/components/init/StepGroup';
 const STORAGE_KEY = 'piyin.init.admin.creds';
 
 interface SubStep {
-  id: 'tables' | 'app_config' | 'poems' | 'classics' | 'sutras' | 'chars' | 'rare_chars' | 'char_etymology' | 'create_admin' | 'activate' | 'migrations' | 'mark_complete';
+  id:
+    | 'tables'
+    | 'app_config'
+    | 'poems'
+    | 'classics'
+    | 'sutras'
+    | 'chars'
+    | 'rare_chars'
+    | 'char_etymology'
+    | 'create_admin'
+    | 'activate'
+    | 'migrations'
+    | 'mark_complete';
   label: string;
   status: 'idle' | 'running' | 'done' | 'failed';
   detail?: string;
 }
 
 // Response types — mirror scripts/init-db.ts + scripts/migrate.ts return shapes.
-interface InitTablesResponse { statementsRun: number; tablesNow: number; }
-interface InitAppConfigResponse { inserted: number; totalRows: number; }
-interface AutoPopulateResponse { inserted: number; skipped: boolean; failed?: string; }
-interface CreateAdminResponse { userId: number; username: string; }
-interface InitActivateResponse { seeded: boolean; shortName: string; }
-interface MigrateResponse { files: number; statements: number; }
-interface MarkCompleteResponse { completed: true; }
+interface InitTablesResponse {
+  statementsRun: number;
+  tablesNow: number;
+}
+interface InitAppConfigResponse {
+  inserted: number;
+  totalRows: number;
+}
+interface AutoPopulateResponse {
+  inserted: number;
+  skipped: boolean;
+  failed?: string;
+}
+interface CreateAdminResponse {
+  userId: number;
+  username: string;
+}
+interface InitActivateResponse {
+  seeded: boolean;
+  shortName: string;
+}
+interface MigrateResponse {
+  files: number;
+  statements: number;
+}
+interface MarkCompleteResponse {
+  completed: true;
+}
 
 /** Discriminated union: each phase pins its request body + response shape so a
  *  future API field rename surfaces as a tsc error, not a silent mis-format. */
 type Phase =
-  | { id: 'tables';       endpoint: '/api/init/init-tables';    body?: never; format: (d: InitTablesResponse)    => string }
-  | { id: 'app_config';   endpoint: '/api/init/init-app-config'; body?: never; format: (d: InitAppConfigResponse) => string }
-  | { id: 'poems';        endpoint: '/api/init/init-poems';     body?: never; format: (d: AutoPopulateResponse)  => string }
-  | { id: 'classics';     endpoint: '/api/init/init-classics';   body?: never; format: (d: AutoPopulateResponse)  => string }
-  | { id: 'sutras';       endpoint: '/api/init/init-sutras';    body?: never; format: (d: AutoPopulateResponse)  => string }
-  | { id: 'chars';        endpoint: '/api/init/init-chars';     body?: never; format: (d: AutoPopulateResponse)  => string }
-  | { id: 'rare_chars';   endpoint: '/api/init/init-rare-chars'; body?: never; format: (d: AutoPopulateResponse) => string }
-  | { id: 'char_etymology'; endpoint: '/api/init/init-char-etymology'; body?: never; format: (d: AutoPopulateResponse) => string }
-  | { id: 'create_admin'; endpoint: '/api/init/create-admin';   body: { token: string }; format: (d: CreateAdminResponse) => string }
-  | { id: 'activate';     endpoint: '/api/init/init-activate';  body?: never; format: (d: InitActivateResponse)  => string }
-  | { id: 'migrations';   endpoint: '/api/init/migrate';        body?: never; format: (d: MigrateResponse)       => string };
+  | {
+      id: 'tables';
+      endpoint: '/api/init/init-tables';
+      body?: never;
+      format: (d: InitTablesResponse) => string;
+    }
+  | {
+      id: 'app_config';
+      endpoint: '/api/init/init-app-config';
+      body?: never;
+      format: (d: InitAppConfigResponse) => string;
+    }
+  | {
+      id: 'poems';
+      endpoint: '/api/init/init-poems';
+      body?: never;
+      format: (d: AutoPopulateResponse) => string;
+    }
+  | {
+      id: 'classics';
+      endpoint: '/api/init/init-classics';
+      body?: never;
+      format: (d: AutoPopulateResponse) => string;
+    }
+  | {
+      id: 'sutras';
+      endpoint: '/api/init/init-sutras';
+      body?: never;
+      format: (d: AutoPopulateResponse) => string;
+    }
+  | {
+      id: 'chars';
+      endpoint: '/api/init/init-chars';
+      body?: never;
+      format: (d: AutoPopulateResponse) => string;
+    }
+  | {
+      id: 'rare_chars';
+      endpoint: '/api/init/init-rare-chars';
+      body?: never;
+      format: (d: AutoPopulateResponse) => string;
+    }
+  | {
+      id: 'char_etymology';
+      endpoint: '/api/init/init-char-etymology';
+      body?: never;
+      format: (d: AutoPopulateResponse) => string;
+    }
+  | {
+      id: 'create_admin';
+      endpoint: '/api/init/create-admin';
+      body: { token: string };
+      format: (d: CreateAdminResponse) => string;
+    }
+  | {
+      id: 'activate';
+      endpoint: '/api/init/init-activate';
+      body?: never;
+      format: (d: InitActivateResponse) => string;
+    }
+  | {
+      id: 'migrations';
+      endpoint: '/api/init/migrate';
+      body?: never;
+      format: (d: MigrateResponse) => string;
+    };
 
 const INITIAL: SubStep[] = [
   { id: 'tables', label: '创建表结构', status: 'idle' },
@@ -55,7 +143,9 @@ const INITIAL: SubStep[] = [
 
 export function InitExecuteForm() {
   const router = useRouter();
-  const [creds, setCreds] = useState<{ username: string; email?: string; token: string } | null>(null);
+  const [creds, setCreds] = useState<{ username: string; email?: string; token: string } | null>(
+    null,
+  );
   const [subSteps, setSubSteps] = useState<SubStep[]>(INITIAL);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -91,29 +181,42 @@ export function InitExecuteForm() {
     setSubSteps(INITIAL.map((s) => ({ ...s, status: 'idle', detail: undefined })));
 
     const phases: Phase[] = [
-      { id: 'tables', endpoint: '/api/init/init-tables',
-        format: (d) => `${d.statementsRun} 条 DDL 写入完成,当前 ${d.tablesNow} 张表` },
-      { id: 'app_config', endpoint: '/api/init/init-app-config',
-        format: (d) => `${d.totalRows} 条配置 (era 默认 + ai/tts)` },
-      { id: 'poems', endpoint: '/api/init/init-poems',
-        format: summarizeAutoPopulate },
-      { id: 'classics', endpoint: '/api/init/init-classics',
-        format: summarizeAutoPopulate },
-      { id: 'sutras', endpoint: '/api/init/init-sutras',
-        format: summarizeAutoPopulate },
-      { id: 'chars', endpoint: '/api/init/init-chars',
-        format: summarizeAutoPopulate },
-      { id: 'rare_chars', endpoint: '/api/init/init-rare-chars',
-        format: summarizeAutoPopulate },
-      { id: 'char_etymology', endpoint: '/api/init/init-char-etymology',
-        format: summarizeAutoPopulate },
-      { id: 'create_admin', endpoint: '/api/init/create-admin',
+      {
+        id: 'tables',
+        endpoint: '/api/init/init-tables',
+        format: (d) => `${d.statementsRun} 条 DDL 写入完成,当前 ${d.tablesNow} 张表`,
+      },
+      {
+        id: 'app_config',
+        endpoint: '/api/init/init-app-config',
+        format: (d) => `${d.totalRows} 条配置 (era 默认 + ai/tts)`,
+      },
+      { id: 'poems', endpoint: '/api/init/init-poems', format: summarizeAutoPopulate },
+      { id: 'classics', endpoint: '/api/init/init-classics', format: summarizeAutoPopulate },
+      { id: 'sutras', endpoint: '/api/init/init-sutras', format: summarizeAutoPopulate },
+      { id: 'chars', endpoint: '/api/init/init-chars', format: summarizeAutoPopulate },
+      { id: 'rare_chars', endpoint: '/api/init/init-rare-chars', format: summarizeAutoPopulate },
+      {
+        id: 'char_etymology',
+        endpoint: '/api/init/init-char-etymology',
+        format: summarizeAutoPopulate,
+      },
+      {
+        id: 'create_admin',
+        endpoint: '/api/init/create-admin',
         body: { token: creds.token },
-        format: (d) => `已创建 (id=${d.userId})` },
-      { id: 'activate', endpoint: '/api/init/init-activate',
-        format: (d) => d.seeded ? `已写入 (short_name=${d.shortName})` : '已存在,跳过' },
-      { id: 'migrations', endpoint: '/api/init/migrate',
-        format: (d) => `${d.files} 个 SQL 文件 / ${d.statements} 条语句` },
+        format: (d) => `已创建 (id=${d.userId})`,
+      },
+      {
+        id: 'activate',
+        endpoint: '/api/init/init-activate',
+        format: (d) => (d.seeded ? `已写入 (short_name=${d.shortName})` : '已存在,跳过'),
+      },
+      {
+        id: 'migrations',
+        endpoint: '/api/init/migrate',
+        format: (d) => `${d.files} 个 SQL 文件 / ${d.statements} 条语句`,
+      },
     ];
 
     for (const phase of phases) {
@@ -184,7 +287,10 @@ export function InitExecuteForm() {
 
   const groups: { title: string; ids: SubStep['id'][] }[] = [
     { title: '数据库结构', ids: ['tables', 'app_config', 'migrations'] },
-    { title: '数据导入', ids: ['poems', 'classics', 'sutras', 'chars', 'rare_chars', 'char_etymology'] },
+    {
+      title: '数据导入',
+      ids: ['poems', 'classics', 'sutras', 'chars', 'rare_chars', 'char_etymology'],
+    },
     { title: '账号与激活', ids: ['create_admin', 'activate', 'mark_complete'] },
   ];
 
@@ -192,10 +298,10 @@ export function InitExecuteForm() {
     return s === 'done'
       ? 'border-green-300 bg-green-50'
       : s === 'failed'
-      ? 'border-red-300 bg-red-50'
-      : s === 'running'
-      ? 'border-blue-300 bg-blue-50'
-      : 'border-ink/15 bg-paper-soft';
+        ? 'border-red-300 bg-red-50'
+        : s === 'running'
+          ? 'border-blue-300 bg-blue-50'
+          : 'border-ink/15 bg-paper-soft';
   }
 
   function renderCard(s: SubStep) {
@@ -216,16 +322,18 @@ export function InitExecuteForm() {
               s.status === 'done'
                 ? 'text-green-900'
                 : s.status === 'failed'
-                ? 'text-red-900'
-                : s.status === 'running'
-                ? 'text-blue-900'
-                : 'text-ink-soft'
+                  ? 'text-red-900'
+                  : s.status === 'running'
+                    ? 'text-blue-900'
+                    : 'text-ink-soft'
             }`}
           >
             {s.label}
           </div>
           {s.detail && (
-            <div className={`mt-0.5 text-xs ${s.status === 'failed' ? 'text-red-700' : 'text-ink-faint'}`}>
+            <div
+              className={`mt-0.5 text-xs ${s.status === 'failed' ? 'text-red-700' : 'text-ink-faint'}`}
+            >
               {s.detail}
             </div>
           )}
@@ -235,10 +343,10 @@ export function InitExecuteForm() {
             s.status === 'done'
               ? 'text-green-700'
               : s.status === 'failed'
-              ? 'text-red-700'
-              : s.status === 'running'
-              ? 'text-blue-600'
-              : 'text-ink-faint'
+                ? 'text-red-700'
+                : s.status === 'running'
+                  ? 'text-blue-600'
+                  : 'text-ink-faint'
           }`}
         >
           {s.status === 'done' && '完成'}
@@ -258,7 +366,8 @@ export function InitExecuteForm() {
     <>
       <h1 className="mb-2 text-2xl font-semibold text-ink">首次部署 — 第 3 步 / 共 3 步</h1>
       <p className="mb-2 text-sm text-ink-soft">
-        点击下方按钮开始初始化。系统会依次执行以下步骤,每步状态实时显示。<br />
+        点击下方按钮开始初始化。系统会依次执行以下步骤,每步状态实时显示。
+        <br />
         创建管理员:<code className="rounded bg-ink/5 px-1">{creds.username}</code>
         {creds.email ? (
           <>
@@ -270,7 +379,9 @@ export function InitExecuteForm() {
       <div className="mb-6 flex items-center gap-2 rounded-md border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-800">
         <Check className="h-3.5 w-3.5 text-green-700" />
         <span>
-          步骤 0 已完成 — 管理员凭证已在 <code className="rounded bg-green-100 px-1">/init/admin</code> 提交时缓存到服务端,token 有效期 120 秒(create-admin 阶段会消耗它)。
+          步骤 0 已完成 — 管理员凭证已在{' '}
+          <code className="rounded bg-green-100 px-1">/init/admin</code> 提交时缓存到服务端,token
+          有效期 120 秒(create-admin 阶段会消耗它)。
         </span>
       </div>
       <InitHeader currentStep={2} />
@@ -284,7 +395,12 @@ export function InitExecuteForm() {
           const items = g.ids.map((id) => subSteps.find((s) => s.id === id)!).filter(Boolean);
           const completed = items.filter((s) => s.status === 'done').length;
           return (
-            <StepGroup key={g.title} title={g.title} completedCount={completed} total={items.length}>
+            <StepGroup
+              key={g.title}
+              title={g.title}
+              completedCount={completed}
+              total={items.length}
+            >
               {items.map(renderCard)}
             </StepGroup>
           );
@@ -293,7 +409,9 @@ export function InitExecuteForm() {
       <div className="mt-6 flex justify-center">
         {allIdle && (
           <button
-            type="button" onClick={runPhases} disabled={busy}
+            type="button"
+            onClick={runPhases}
+            disabled={busy}
             className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
           >
             开始初始化
@@ -301,7 +419,9 @@ export function InitExecuteForm() {
         )}
         {someFailed && (
           <button
-            type="button" onClick={runPhases} disabled={busy}
+            type="button"
+            onClick={runPhases}
+            disabled={busy}
             className="rounded-md bg-amber-600 px-6 py-2 text-white hover:bg-amber-700 disabled:opacity-50"
           >
             {busy ? '重试中…' : '重试失败步骤'}

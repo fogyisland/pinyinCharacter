@@ -71,56 +71,59 @@
 **`generateLayout` (line 245-265) 改动**: non-four-line 分支 pad 到 cellsPerPage(paperSize) 倍数。
 
 修改前 (line 263-264):
+
 ```ts
-  if (getPresentation(style) === 'four-line') {
-    const perRow = paperSize ? englishCharsPerRow(paperSize) : 88;
-    const rowsTotal = paperSize ? fourLineRowsPerPage(paperSize) : 14;
-    const cells: Cell[] = [];
-    let i = 0;
-    let rowIdx = 0;
-    while (rowIdx < rowsTotal) {
-      const slice = i < content.length ? content.slice(i, i + perRow).join('') : '';
-      cells.push({ char: slice, style, index: rowIdx });
-      i += perRow;
-      rowIdx++;
-    }
-    return cells;
+if (getPresentation(style) === 'four-line') {
+  const perRow = paperSize ? englishCharsPerRow(paperSize) : 88;
+  const rowsTotal = paperSize ? fourLineRowsPerPage(paperSize) : 14;
+  const cells: Cell[] = [];
+  let i = 0;
+  let rowIdx = 0;
+  while (rowIdx < rowsTotal) {
+    const slice = i < content.length ? content.slice(i, i + perRow).join('') : '';
+    cells.push({ char: slice, style, index: rowIdx });
+    i += perRow;
+    rowIdx++;
   }
-  return content.map((char, index) => ({ char, style, index }));
+  return cells;
+}
+return content.map((char, index) => ({ char, style, index }));
 ```
 
 修改后 (替换最后一行 + 加 helper):
+
 ```ts
-  if (getPresentation(style) === 'four-line') {
-    const perRow = paperSize ? englishCharsPerRow(paperSize) : 88;
-    const rowsTotal = paperSize ? fourLineRowsPerPage(paperSize) : 14;
-    const cells: Cell[] = [];
-    let i = 0;
-    let rowIdx = 0;
-    while (rowIdx < rowsTotal) {
-      const slice = i < content.length ? content.slice(i, i + perRow).join('') : '';
-      cells.push({ char: slice, style, index: rowIdx });
-      i += perRow;
-      rowIdx++;
-    }
-    return cells;
-  }
-  // Pad content to next cellsPerPage(paperSize) multiple so the final page
-  // is full of practice cells (empty char === blank cell — WorksheetCell
-  // draws the grid/lines but omits the letter). Without this, a 50-char
-  // worksheet on A4 (88 cells/page) renders only 50 cells and the page
-  // has 38 missing slots — printers / users see a short sheet instead of
-  // a full practice page.
-  const perPage = cellsPerPage(paperSize ?? 'A4');
-  const total = Math.max(perPage, Math.ceil(content.length / perPage) * perPage);
+if (getPresentation(style) === 'four-line') {
+  const perRow = paperSize ? englishCharsPerRow(paperSize) : 88;
+  const rowsTotal = paperSize ? fourLineRowsPerPage(paperSize) : 14;
   const cells: Cell[] = [];
-  for (let i = 0; i < total; i++) {
-    cells.push({ char: i < content.length ? content[i] : '', style, index: i });
+  let i = 0;
+  let rowIdx = 0;
+  while (rowIdx < rowsTotal) {
+    const slice = i < content.length ? content.slice(i, i + perRow).join('') : '';
+    cells.push({ char: slice, style, index: rowIdx });
+    i += perRow;
+    rowIdx++;
   }
   return cells;
+}
+// Pad content to next cellsPerPage(paperSize) multiple so the final page
+// is full of practice cells (empty char === blank cell — WorksheetCell
+// draws the grid/lines but omits the letter). Without this, a 50-char
+// worksheet on A4 (88 cells/page) renders only 50 cells and the page
+// has 38 missing slots — printers / users see a short sheet instead of
+// a full practice page.
+const perPage = cellsPerPage(paperSize ?? 'A4');
+const total = Math.max(perPage, Math.ceil(content.length / perPage) * perPage);
+const cells: Cell[] = [];
+for (let i = 0; i < total; i++) {
+  cells.push({ char: i < content.length ? content[i] : '', style, index: i });
+}
+return cells;
 ```
 
 边界:
+
 - `content.length === 0` (前端 `canPreview` 已禁用,但 defensive): `Math.max(perPage, ...)` 保证返回 perPage 个空白 cells,合理
 - `content.length === perPage` (恰好 1 页): `Math.ceil(perPage/perPage) * perPage = perPage`,total = perPage,0 空白 — 正确
 - `content.length < perPage`: total = perPage,补 `perPage - content.length` 个空白 — 正确
@@ -135,27 +138,29 @@
 **修改 line 72-76** (`non-four-line styles fall through to per-char cells` 测试) — 断言改成 "non-four-line also pads":
 
 修改前:
+
 ```ts
-  it('non-four-line styles fall through to per-char cells', () => {
-    const cells = generateLayout(['A', 'b', 'C'], 'pen-square');
-    expect(cells).toHaveLength(3);
-    expect(cells.map((c) => c.char)).toEqual(['A', 'b', 'C']);
-  });
+it('non-four-line styles fall through to per-char cells', () => {
+  const cells = generateLayout(['A', 'b', 'C'], 'pen-square');
+  expect(cells).toHaveLength(3);
+  expect(cells.map((c) => c.char)).toEqual(['A', 'b', 'C']);
+});
 ```
 
 修改后:
+
 ```ts
-  it('non-four-line styles pad to cellsPerPage multiple (blank cells fill the page)', () => {
-    // 3 chars + A4 (88 cells/page) → 88 cells (3 chars + 85 blanks)
-    const cells = generateLayout(['A', 'b', 'C'], 'pen-square', 'A4');
-    expect(cells).toHaveLength(88);
-    expect(cells[0].char).toBe('A');
-    expect(cells[1].char).toBe('b');
-    expect(cells[2].char).toBe('C');
-    expect(cells[3].char).toBe('');
-    expect(cells[87].char).toBe('');
-    expect(cells.map((c) => c.style)).toEqual(Array(88).fill('pen-square'));
-  });
+it('non-four-line styles pad to cellsPerPage multiple (blank cells fill the page)', () => {
+  // 3 chars + A4 (88 cells/page) → 88 cells (3 chars + 85 blanks)
+  const cells = generateLayout(['A', 'b', 'C'], 'pen-square', 'A4');
+  expect(cells).toHaveLength(88);
+  expect(cells[0].char).toBe('A');
+  expect(cells[1].char).toBe('b');
+  expect(cells[2].char).toBe('C');
+  expect(cells[3].char).toBe('');
+  expect(cells[87].char).toBe('');
+  expect(cells.map((c) => c.style)).toEqual(Array(88).fill('pen-square'));
+});
 ```
 
 **加 4 个新 cases** (在 line 76 后,放在同一个 describe block `generateLayout — four-line row packing (English trace)` 后面,新建 describe `generateLayout — auto-fill empty cells (CJK grid + lined)`):
@@ -166,39 +171,39 @@ describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
     const chars = Array.from({ length: 50 }, (_, i) => String.fromCharCode(0x4e00 + i));
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
-    expect(cells.slice(0, 50).map(c => c.char)).toEqual(chars);
-    expect(cells.slice(50).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(0, 50).map((c) => c.char)).toEqual(chars);
+    expect(cells.slice(50).every((c) => c.char === '')).toBe(true);
   });
 
   it('1 char + A4 → 88 cells (one-char-per-page practice mode)', () => {
     const cells = generateLayout(['你'], 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
     expect(cells[0].char).toBe('你');
-    expect(cells.slice(1).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
   });
 
   it('88 chars + A4 → 88 cells (exact fit, zero blanks)', () => {
     const chars = Array.from({ length: 88 }, () => '字');
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
-    expect(cells.every(c => c.char === '字')).toBe(true);
+    expect(cells.every((c) => c.char === '字')).toBe(true);
   });
 
   it('89 chars + A4 → 176 cells (cross-page: page 1 full, page 2 = 1 char + 87 blanks)', () => {
     const chars = Array.from({ length: 89 }, (_, i) => `字${i}`);
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(176);
-    expect(cells.slice(0, 88).every(c => c.char !== '')).toBe(true);
+    expect(cells.slice(0, 88).every((c) => c.char !== '')).toBe(true);
     expect(cells[88].char).toBe(`字88`);
-    expect(cells.slice(89).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(89).every((c) => c.char === '')).toBe(true);
   });
 
   it('100 chars + A3 (per=168) → 168 cells (100 chars + 68 blanks; A3 sized)', () => {
     const chars = Array.from({ length: 100 }, (_, i) => `字${i}`);
     const cells = generateLayout(chars, 'brush-square', 'A3');
     expect(cells).toHaveLength(168);
-    expect(cells.slice(0, 100).map(c => c.char)).toEqual(chars);
-    expect(cells.slice(100).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(0, 100).map((c) => c.char)).toEqual(chars);
+    expect(cells.slice(100).every((c) => c.char === '')).toBe(true);
   });
 
   it('pads lined style too (pen-lined cells are blank ruled lines, no letter)', () => {
@@ -206,7 +211,7 @@ describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
     expect(cells).toHaveLength(88);
     expect(cells[0].char).toBe('爱');
     expect(cells[1].char).toBe('国');
-    expect(cells.slice(2).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(2).every((c) => c.char === '')).toBe(true);
   });
 });
 ```

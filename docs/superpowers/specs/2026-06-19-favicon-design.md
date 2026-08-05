@@ -35,13 +35,13 @@ A one-time build script (`scripts/build-favicon.ts`, run via `pnpm favicon:build
 
 ### 2. Files created
 
-| File | Source | Size | Purpose |
-|------|--------|------|---------|
-| `app/icon.png` | sharp resize from logo.png | 32×32 | Next.js App Router "icon" route — modern browser favicon. Next.js auto-injects the `<link rel="icon" type="image/png">` in `<head>`. |
-| `app/apple-icon.png` | sharp resize from logo.png | 180×180 | iOS home-screen icon, Safari pinned-tab, default for "Add to Home Screen" on iOS. Next.js auto-injects `<link rel="apple-touch-icon">`. |
-| `app/favicon.ico` | sharp multi-size ICO | 16+32+48 (multi) | Legacy browsers (IE, very old Chrome, some QR-code scanners). Next.js auto-injects `<link rel="icon" type="image/x-icon">`. |
-| `public/favicon.ico` | same as app/favicon.ico | 16+32+48 (multi) | Belt-and-suspenders fallback for the root `/favicon.ico` path that some tools (browsers, third-party link previews, OpenGraph crawlers) probe independently of Next.js routing. The file is duplicated to `app/` AND `public/`; if a future cleanup removes the `app/` copy, the `public/` copy still works. |
-| `public/manifest.json` | hand-written | ~400 B | PWA web app manifest — used by Chrome, Edge, Firefox, iOS Safari when the user "installs" the page. |
+| File                   | Source                     | Size             | Purpose                                                                                                                                                                                                                                                                                                      |
+| ---------------------- | -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `app/icon.png`         | sharp resize from logo.png | 32×32            | Next.js App Router "icon" route — modern browser favicon. Next.js auto-injects the `<link rel="icon" type="image/png">` in `<head>`.                                                                                                                                                                         |
+| `app/apple-icon.png`   | sharp resize from logo.png | 180×180          | iOS home-screen icon, Safari pinned-tab, default for "Add to Home Screen" on iOS. Next.js auto-injects `<link rel="apple-touch-icon">`.                                                                                                                                                                      |
+| `app/favicon.ico`      | sharp multi-size ICO       | 16+32+48 (multi) | Legacy browsers (IE, very old Chrome, some QR-code scanners). Next.js auto-injects `<link rel="icon" type="image/x-icon">`.                                                                                                                                                                                  |
+| `public/favicon.ico`   | same as app/favicon.ico    | 16+32+48 (multi) | Belt-and-suspenders fallback for the root `/favicon.ico` path that some tools (browsers, third-party link previews, OpenGraph crawlers) probe independently of Next.js routing. The file is duplicated to `app/` AND `public/`; if a future cleanup removes the `app/` copy, the `public/` copy still works. |
+| `public/manifest.json` | hand-written               | ~400 B           | PWA web app manifest — used by Chrome, Edge, Firefox, iOS Safari when the user "installs" the page.                                                                                                                                                                                                          |
 
 ### 3. `app/layout.tsx` changes
 
@@ -114,6 +114,7 @@ None. All 5 generated files are committed. There is no transient state.
 ## Open questions
 
 None at spec time. The design was iterated with the user across 3 questions:
+
 1. "Is the Logo really missing?" — clarification revealed it's the favicon slot, not the header
 2. "Which asset?" — user picked `/logo.png` (the 370×370 source)
 3. "How many files?" — user picked the full PWA-ready set

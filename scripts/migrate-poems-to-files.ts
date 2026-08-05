@@ -9,23 +9,36 @@ const MANIFEST_PATH = path.join(process.cwd(), 'data', 'poems-manifest.json');
 function parseJson<T>(s: unknown, fallback: T): T {
   if (Array.isArray(s)) return s as T;
   if (typeof s === 'string') {
-    try { const v = JSON.parse(s); return Array.isArray(v) ? (v as T) : fallback; } catch { return fallback; }
+    try {
+      const v = JSON.parse(s);
+      return Array.isArray(v) ? (v as T) : fallback;
+    } catch {
+      return fallback;
+    }
   }
   return fallback;
 }
 
-export async function migratePoemsToFiles(): Promise<{ written: number; skipped: number; manifestWritten: boolean }> {
+export async function migratePoemsToFiles(): Promise<{
+  written: number;
+  skipped: number;
+  manifestWritten: boolean;
+}> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT id, dynasty, category, title, author, form, content, pinyin, appreciation, source
-     FROM poems ORDER BY id ASC`
+     FROM poems ORDER BY id ASC`,
   );
   const arr = rows as any[];
 
   await fs.mkdir(DATA_DIR, { recursive: true });
 
   let existing: Set<string> = new Set();
-  try { existing = new Set(await fs.readdir(DATA_DIR)); } catch { /* dir may not exist yet */ }
+  try {
+    existing = new Set(await fs.readdir(DATA_DIR));
+  } catch {
+    /* dir may not exist yet */
+  }
 
   const manifestItems: PoemManifestItem[] = [];
   let written = 0;
@@ -38,25 +51,42 @@ export async function migratePoemsToFiles(): Promise<{ written: number; skipped:
     const fileName = `${id}.json`;
     const filePath = path.join(DATA_DIR, fileName);
     const body = {
-      id, title: r.title, author: r.author, dynasty: r.dynasty,
-      category: r.category ?? null, form: r.form ?? null,
-      content, pinyin, appreciation: r.appreciation ?? null, source: r.source ?? null,
+      id,
+      title: r.title,
+      author: r.author,
+      dynasty: r.dynasty,
+      category: r.category ?? null,
+      form: r.form ?? null,
+      content,
+      pinyin,
+      appreciation: r.appreciation ?? null,
+      source: r.source ?? null,
     };
     if (existing.has(fileName)) {
       let same = false;
       try {
         const cur = JSON.parse(await fs.readFile(filePath, 'utf8'));
         same = JSON.stringify(cur) === JSON.stringify(body);
-      } catch { /* treat as different */ }
-      if (same) { skipped++; }
-      else { await fs.writeFile(filePath, JSON.stringify(body, null, 2), 'utf8'); written++; }
+      } catch {
+        /* treat as different */
+      }
+      if (same) {
+        skipped++;
+      } else {
+        await fs.writeFile(filePath, JSON.stringify(body, null, 2), 'utf8');
+        written++;
+      }
     } else {
       await fs.writeFile(filePath, JSON.stringify(body, null, 2), 'utf8');
       written++;
     }
     manifestItems.push({
-      id, title: r.title, author: r.author, dynasty: r.dynasty,
-      category: r.category ?? null, form: r.form ?? null,
+      id,
+      title: r.title,
+      author: r.author,
+      dynasty: r.dynasty,
+      category: r.category ?? null,
+      form: r.form ?? null,
       contentLineCount: content.length,
     });
   }
@@ -78,7 +108,9 @@ export async function migratePoemsToFiles(): Promise<{ written: number; skipped:
     if (parsed && typeof parsed === 'object' && Array.isArray(parsed.items)) {
       existingManifest = parsed as PoemsManifest;
     }
-  } catch { /* no existing manifest or unreadable */ }
+  } catch {
+    /* no existing manifest or unreadable */
+  }
 
   // Structural equality: compare count + items, ignoring updatedAt.
   // Items are compared field-by-field to avoid byte-order or key-order false negatives.
@@ -122,6 +154,12 @@ export async function migratePoemsToFiles(): Promise<{ written: number; skipped:
 
 if (require.main === module) {
   migratePoemsToFiles()
-    .then((r) => { console.log(`[migrate-poems-to-files] written=${r.written} skipped=${r.skipped}`); process.exit(0); })
-    .catch((err) => { console.error('[migrate-poems-to-files] failed:', err); process.exit(1); });
+    .then((r) => {
+      console.log(`[migrate-poems-to-files] written=${r.written} skipped=${r.skipped}`);
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('[migrate-poems-to-files] failed:', err);
+      process.exit(1);
+    });
 }

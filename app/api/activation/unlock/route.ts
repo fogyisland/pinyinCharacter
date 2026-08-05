@@ -23,9 +23,15 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return badRequest('invalid_input', 'Activation code is required (4-128 chars).');
     }
-    const envCodes = (process.env.BOOMING_ACTIVATION_CODES ?? '').split(',').map(s => s.trim()).filter(Boolean);
+    const envCodes = (process.env.BOOMING_ACTIVATION_CODES ?? '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (envCodes.length === 0) {
-      return badRequest('not_configured', 'Server has no activation codes configured. Set BOOMING_ACTIVATION_CODES env var.');
+      return badRequest(
+        'not_configured',
+        'Server has no activation codes configured. Set BOOMING_ACTIVATION_CODES env var.',
+      );
     }
     if (!envCodes.includes(parsed.data.code)) {
       // Audit the failed attempt — useful for spotting brute-force or
@@ -38,7 +44,9 @@ export async function POST(req: NextRequest) {
           ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
           userAgent: req.headers.get('user-agent') ?? null,
         });
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
       return badRequest('invalid_code', 'Activation code is not valid.');
     }
     const before = await getActivationStatus();
@@ -54,7 +62,9 @@ export async function POST(req: NextRequest) {
         ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
         userAgent: req.headers.get('user-agent') ?? null,
       });
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
     return NextResponse.json({ ok: true, data: { unlocked: true } });
   });
 }

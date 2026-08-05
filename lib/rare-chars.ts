@@ -73,7 +73,9 @@ async function readRareContent(char: string): Promise<DbContentRow> {
       meaning: content.rare?.meaning ?? null,
       story: content.etymology.story,
       generated_by: content.etymology.generated_by ?? null,
-      generated_at: content.etymology.generated_at ? new Date(content.etymology.generated_at) : null,
+      generated_at: content.etymology.generated_at
+        ? new Date(content.etymology.generated_at)
+        : null,
       created_at: null,
     };
   }
@@ -92,10 +94,16 @@ async function readRareContent(char: string): Promise<DbContentRow> {
     const [rows] = await pool.execute<any[]>(
       `SELECT meaning, story, generated_by, generated_at, created_at
        FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
-      [char]
+      [char],
     );
     if (rows.length === 0) {
-      return { meaning: null, story: null, generated_by: null, generated_at: null, created_at: null };
+      return {
+        meaning: null,
+        story: null,
+        generated_by: null,
+        generated_at: null,
+        created_at: null,
+      };
     }
     return rows[0];
   } catch {
@@ -116,7 +124,9 @@ function hydrate(char: string, pinyin: string, needsReview: boolean, db: DbConte
   };
 }
 
-export async function listChars(opts: { q?: string; page?: number; minMeaning?: boolean } = {}): Promise<ListResult> {
+export async function listChars(
+  opts: { q?: string; page?: number; minMeaning?: boolean } = {},
+): Promise<ListResult> {
   const pool = getPool();
   const page = Math.max(1, opts.page ?? 1);
   const pageSize = 80;
@@ -135,20 +145,22 @@ export async function listChars(opts: { q?: string; page?: number; minMeaning?: 
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin, needs_review FROM rare_chars ${finalWhere}
      ORDER BY \`char\` ASC LIMIT ? OFFSET ?`,
-    [...params, pageSize, offset]
+    [...params, pageSize, offset],
   );
 
   const [[{ total }]] = await pool.query<any[]>(
     `SELECT COUNT(*) AS total FROM rare_chars ${finalWhere}`,
-    params
+    params,
   );
 
   // Hydrate content for each row in parallel.
   const hydrated = await Promise.all(
-    (rows as Array<{ char: string; pinyin: string; needs_review: number | boolean }>).map(async (r) => {
-      const db = await readRareContent(r.char);
-      return hydrate(r.char, r.pinyin, Boolean(r.needs_review), db);
-    })
+    (rows as Array<{ char: string; pinyin: string; needs_review: number | boolean }>).map(
+      async (r) => {
+        const db = await readRareContent(r.char);
+        return hydrate(r.char, r.pinyin, Boolean(r.needs_review), db);
+      },
+    ),
   );
 
   return {
@@ -163,11 +175,11 @@ export async function getChar(c: string): Promise<RareChar | null> {
   // Filter to BMP-only at the application boundary: mysql2 binary protocol
   // corrupts 4-byte UTF-8 params (supp-plane chars). Returning null here
   // means the corrupted value never reaches the driver.
-  if (!c || (c.codePointAt(0) ?? 0) > 0xFFFF) return null;
+  if (!c || (c.codePointAt(0) ?? 0) > 0xffff) return null;
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT \`char\`, pinyin, needs_review FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
-    [c]
+    [c],
   );
   if (rows.length === 0) return null;
   const r = rows[0];
@@ -184,7 +196,7 @@ export async function getDailyChar(dateStr: string): Promise<{
 } | null> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
-    `SELECT \`char\`, pinyin FROM rare_chars ORDER BY \`char\` ASC LIMIT 5000`
+    `SELECT \`char\`, pinyin FROM rare_chars ORDER BY \`char\` ASC LIMIT 5000`,
   );
   if (rows.length === 0) return null;
   const chars = rows.map((r) => r.char as string);
@@ -212,7 +224,7 @@ export async function getRandomStoryChar(): Promise<RareChar | null> {
      FROM chars c
      LEFT JOIN rare_chars r ON c.\`char\` COLLATE utf8mb4_unicode_ci = r.\`char\` COLLATE utf8mb4_unicode_ci
      ORDER BY RAND() LIMIT ?`,
-    [1]
+    [1],
   );
   if (rows.length === 0) return null;
   const r = rows[0];

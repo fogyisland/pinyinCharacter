@@ -11,7 +11,7 @@ import { DEFAULT_TEXT_GRID, TEXT_GRID_STORAGE_KEY, type TextGridMode } from '@/l
 import { isPunct, stripPunct } from '@/lib/punctuation';
 
 const WRITING_MODE: Record<SutraReading, string> = {
-  'horizontal': 'horizontal-tb',
+  horizontal: 'horizontal-tb',
   'vertical-rtl': 'vertical-rl',
   'vertical-ltr': 'vertical-lr',
 };
@@ -81,7 +81,7 @@ export function ClassicReader({ chunk, book }: Props) {
     });
   }
 
-  const prefill = encodeURIComponent(charsAndPinyin.map(c => c.ch).join(''));
+  const prefill = encodeURIComponent(charsAndPinyin.map((c) => c.ch).join(''));
   const worksheetHref = `/worksheet?source=ancient&book=${book.slug}&chapterIdx=${chunk.id - 1}&prefill=${prefill}`;
 
   const currentIdx = chunk.id - 1;
@@ -112,7 +112,11 @@ export function ClassicReader({ chunk, book }: Props) {
       ) : (
         <article
           className="font-serif text-lg sm:text-xl text-ink leading-loose"
-          style={isVertical ? { writingMode: WRITING_MODE[reading] as 'vertical-rl' | 'vertical-lr' } : undefined}
+          style={
+            isVertical
+              ? { writingMode: WRITING_MODE[reading] as 'vertical-rl' | 'vertical-lr' }
+              : undefined
+          }
         >
           {chunk.content.map((line, lineIdx) => (
             <p key={lineIdx} className={isVertical ? 'mx-3 inline-block' : 'my-1.5'}>
@@ -135,7 +139,9 @@ export function ClassicReader({ chunk, book }: Props) {
         <button
           type="button"
           disabled={!prevChunk}
-          onClick={() => prevChunk && (window.location.href = `/ancient/${book.slug}?chunk=${prevChunk.id - 1}`)}
+          onClick={() =>
+            prevChunk && (window.location.href = `/ancient/${book.slug}?chunk=${prevChunk.id - 1}`)
+          }
           className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40 disabled:cursor-not-allowed"
         >
           ← 上一章
@@ -149,7 +155,9 @@ export function ClassicReader({ chunk, book }: Props) {
         <button
           type="button"
           disabled={!nextChunk}
-          onClick={() => nextChunk && (window.location.href = `/ancient/${book.slug}?chunk=${nextChunk.id - 1}`)}
+          onClick={() =>
+            nextChunk && (window.location.href = `/ancient/${book.slug}?chunk=${nextChunk.id - 1}`)
+          }
           className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40 disabled:cursor-not-allowed"
         >
           下一章 →

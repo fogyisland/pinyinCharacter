@@ -10,7 +10,9 @@ const MANIFEST_PATH = path.join(process.cwd(), 'data', 'poems-manifest.json');
 
 let cache: PoemsManifest | null = null;
 
-export function invalidateManifestCache(): void { cache = null; }
+export function invalidateManifestCache(): void {
+  cache = null;
+}
 
 export async function loadManifest(): Promise<PoemsManifest> {
   if (cache) return cache;

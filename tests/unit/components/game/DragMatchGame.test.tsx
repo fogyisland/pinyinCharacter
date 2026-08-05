@@ -22,8 +22,32 @@ vi.mock('@/lib/use-difficulty', () => ({
 }));
 
 const sampleChars = [
-  { char: '安', pinyin: 'ān', pinyinAlt: [], radical: '宀', strokeCount: 6, meaningZh: 'peace', meaningEn: 'peace', unicodeCodepoint: '5B89', variants: [], hskLevel: 1, level: 1 as const },
-  { char: '那', pinyin: 'nà', pinyinAlt: [], radical: '阝', strokeCount: 6, meaningZh: 'that', meaningEn: 'that', unicodeCodepoint: '90A3', variants: [], hskLevel: 1, level: 1 as const },
+  {
+    char: '安',
+    pinyin: 'ān',
+    pinyinAlt: [],
+    radical: '宀',
+    strokeCount: 6,
+    meaningZh: 'peace',
+    meaningEn: 'peace',
+    unicodeCodepoint: '5B89',
+    variants: [],
+    hskLevel: 1,
+    level: 1 as const,
+  },
+  {
+    char: '那',
+    pinyin: 'nà',
+    pinyinAlt: [],
+    radical: '阝',
+    strokeCount: 6,
+    meaningZh: 'that',
+    meaningEn: 'that',
+    unicodeCodepoint: '90A3',
+    variants: [],
+    hskLevel: 1,
+    level: 1 as const,
+  },
 ];
 
 function mockFetchChars(json: unknown) {
@@ -43,11 +67,19 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
       configurable: true,
       value: {
         getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => { store.set(k, v); },
-        removeItem: (k: string) => { store.delete(k); },
-        clear: () => { store.clear(); },
+        setItem: (k: string, v: string) => {
+          store.set(k, v);
+        },
+        removeItem: (k: string) => {
+          store.delete(k);
+        },
+        clear: () => {
+          store.clear();
+        },
         key: (i: number) => Array.from(store.keys())[i] ?? null,
-        get length() { return store.size; },
+        get length() {
+          return store.size;
+        },
       },
     });
   });
@@ -57,7 +89,11 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
     // DragMatchGame makes two fetches: fetchChars for the pool and a
     // /api/chars probe to read hskFallback. Return identical shape for
     // both.
-    mockFetchChars({ ok: true, data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 }, hskFallback: false });
+    mockFetchChars({
+      ok: true,
+      data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 },
+      hskFallback: false,
+    });
     const { DragMatchGame } = await import('@/components/game/DragMatchGame');
     render(<DragMatchGame />);
     await waitFor(() => {
@@ -71,7 +107,11 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
 
   it('on-demand reveal click bumps mismatches by onDemandPenalty (HSK 6)', async () => {
     mockState.hskLevel = 6;
-    mockFetchChars({ ok: true, data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 }, hskFallback: false });
+    mockFetchChars({
+      ok: true,
+      data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 },
+      hskFallback: false,
+    });
     const { DragMatchGame } = await import('@/components/game/DragMatchGame');
     render(<DragMatchGame />);
     await waitFor(() => {
@@ -113,7 +153,11 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
 
   it('does NOT render FallbackBanner when hskFallback=false', async () => {
     mockState.hskLevel = 1;
-    mockFetchChars({ ok: true, data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 }, hskFallback: false });
+    mockFetchChars({
+      ok: true,
+      data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 },
+      hskFallback: false,
+    });
     const { DragMatchGame } = await import('@/components/game/DragMatchGame');
     render(<DragMatchGame />);
     await waitFor(() => {

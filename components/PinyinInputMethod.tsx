@@ -10,9 +10,9 @@ import { applyDifficulty } from '@/lib/pinyin-input-difficulty';
 import { ReadAloudButton } from './ReadAloudButton';
 
 export function PinyinInputMethod() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const script = useAppStore(s => s.script);
-  const user = useAppStore(s => s.user);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const script = useAppStore((s) => s.script);
+  const user = useAppStore((s) => s.user);
   const [buffer, setBuffer] = useState('');
   const [committed, setCommitted] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -37,7 +37,7 @@ export function PinyinInputMethod() {
   const pick = (i: number) => {
     const c = candidates[i];
     if (!c) return;
-    setCommitted(prev => prev + c.char);
+    setCommitted((prev) => prev + c.char);
     setBuffer('');
     setCandidates([]);
     inputRef.current?.focus();
@@ -45,9 +45,9 @@ export function PinyinInputMethod() {
 
   const backspace = () => {
     if (buffer) {
-      setBuffer(b => b.slice(0, -1));
+      setBuffer((b) => b.slice(0, -1));
     } else if (committed) {
-      setCommitted(c => c.slice(0, -1));
+      setCommitted((c) => c.slice(0, -1));
     }
   };
 
@@ -65,7 +65,9 @@ export function PinyinInputMethod() {
     idleRef.current = setTimeout(() => {
       if (committed.length >= 2) void saveHistory(committed);
     }, 6000);
-    return () => { if (idleRef.current) clearTimeout(idleRef.current); };
+    return () => {
+      if (idleRef.current) clearTimeout(idleRef.current);
+    };
   }, [committed, user]);
 
   async function saveHistory(input: string) {
@@ -74,10 +76,16 @@ export function PinyinInputMethod() {
     if (last && last.input === input && Date.now() - last.ts < 60_000) return;
     try {
       await createHistoryRequest({
-        kind: 'pinyin2text', input, output: input, char_count: input.length, dedup: true,
+        kind: 'pinyin2text',
+        input,
+        output: input,
+        char_count: input.length,
+        dedup: true,
       });
       lastSavedRef.current = { input, ts: Date.now() };
-    } catch (e) { console.error('history save failed', e); }
+    } catch (e) {
+      console.error('history save failed', e);
+    }
   }
 
   return (
@@ -88,7 +96,7 @@ export function PinyinInputMethod() {
       <input
         ref={inputRef}
         value={buffer}
-        onChange={e => {
+        onChange={(e) => {
           // Accept only letters, digits, apostrophe
           const v = e.target.value.replace(/[^a-zA-Z1-5']/g, '');
           setBuffer(v);
@@ -117,7 +125,9 @@ export function PinyinInputMethod() {
       <div className="min-h-[2rem] p-2 bg-paper-deep rounded border text-lg">
         {committed}
         {buffer && <span className="text-seal ml-1">|{buffer}</span>}
-        {!committed && !buffer && <span className="text-ink-faint text-sm">在上方输入拼音，选择候选字</span>}
+        {!committed && !buffer && (
+          <span className="text-ink-faint text-sm">在上方输入拼音，选择候选字</span>
+        )}
       </div>
       {candidates.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -136,8 +146,21 @@ export function PinyinInputMethod() {
       )}
       <div className="flex gap-2">
         <ReadAloudButton text={committed} label="🔊 朗读" />
-        <button type="button" onClick={() => navigator.clipboard.writeText(committed)} className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep" disabled={!committed}>复制</button>
-        <button type="button" onClick={clear} className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep">清空</button>
+        <button
+          type="button"
+          onClick={() => navigator.clipboard.writeText(committed)}
+          className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep"
+          disabled={!committed}
+        >
+          复制
+        </button>
+        <button
+          type="button"
+          onClick={clear}
+          className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep"
+        >
+          清空
+        </button>
       </div>
     </div>
   );

@@ -12,19 +12,21 @@ export function PinyinOutput({ tokens, withSpaces: withSpacesProp }: Props) {
   const [internalWithSpaces, setInternalWithSpaces] = useState(true);
   const controlled = withSpacesProp !== undefined;
   const withSpaces = controlled ? withSpacesProp : internalWithSpaces;
-  const [readings, setReadings] = useState<Record<number, number>>({});  // index -> reading index
+  const [readings, setReadings] = useState<Record<number, number>>({}); // index -> reading index
 
   if (tokens.length === 0) {
     return <div className="text-ink-faint text-sm">在上方输入汉字，拼音会显示在这里</div>;
   }
 
-  const text = tokens.map((t, i) => {
-    const idx = readings[i] ?? 0;
-    return t.readings[idx] ?? '?';
-  }).join(withSpaces ? ' ' : '');
+  const text = tokens
+    .map((t, i) => {
+      const idx = readings[i] ?? 0;
+      return t.readings[idx] ?? '?';
+    })
+    .join(withSpaces ? ' ' : '');
 
   const cycleReading = (i: number) => {
-    setReadings(prev => {
+    setReadings((prev) => {
       const cur = prev[i] ?? 0;
       const next = (cur + 1) % tokens[i]!.readings.length;
       return { ...prev, [i]: next };
@@ -43,7 +45,7 @@ export function PinyinOutput({ tokens, withSpaces: withSpacesProp }: Props) {
             <input
               type="checkbox"
               checked={withSpaces}
-              onChange={e => setInternalWithSpaces(e.target.checked)}
+              onChange={(e) => setInternalWithSpaces(e.target.checked)}
             />
             带空格
           </label>

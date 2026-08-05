@@ -6,7 +6,7 @@ import { resetPasswordRequest } from '@/lib/api-auth';
 import { validatePasswordConfirmation } from '@/lib/auth-client';
 
 export function ResetForm({ token, username }: { token: string; username: string }) {
-  const setUser = useAppStore(s => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -16,13 +16,21 @@ export function ResetForm({ token, username }: { token: string; username: string
     e.preventDefault();
     setError(null);
     const cErr = validatePasswordConfirmation(pw, pw2);
-    if (cErr) { setError(cErr); return; }
-    if (pw.length < 8) { setError('密码至少 8 位'); return; }
+    if (cErr) {
+      setError(cErr);
+      return;
+    }
+    if (pw.length < 8) {
+      setError('密码至少 8 位');
+      return;
+    }
     setSubmitting(true);
     const r = await resetPasswordRequest(token, pw);
     if (r.ok) {
       setUser(r.data.user);
-      setTimeout(() => { window.location.href = '/'; }, 1000);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 1000);
     } else {
       setSubmitting(false);
       setError(r.error.message);
@@ -34,17 +42,30 @@ export function ResetForm({ token, username }: { token: string; username: string
       <p className="text-sm text-ink-soft">你好,{username}。请输入新密码 (至少 8 位)。</p>
       <div>
         <label className="block text-sm mb-1 text-ink">新密码</label>
-        <input type="password" value={pw} onChange={e => setPw(e.target.value)}
-          className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none" required minLength={8} maxLength={72} />
+        <input
+          type="password"
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+          className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
+          required
+          minLength={8}
+          maxLength={72}
+        />
       </div>
       <div>
         <label className="block text-sm mb-1 text-ink">再次输入</label>
-        <input type="password" value={pw2} onChange={e => setPw2(e.target.value)}
-          className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none" required minLength={8} maxLength={72} />
+        <input
+          type="password"
+          value={pw2}
+          onChange={(e) => setPw2(e.target.value)}
+          className="w-full border border-ink/20 rounded px-3 py-2 bg-paper-soft focus:border-seal focus:outline-none"
+          required
+          minLength={8}
+          maxLength={72}
+        />
       </div>
       {error && <p className="text-sm text-seal">{error}</p>}
-      <button type="submit" disabled={submitting}
-        className="w-full btn-seal disabled:opacity-50">
+      <button type="submit" disabled={submitting} className="w-full btn-seal disabled:opacity-50">
         {submitting ? '提交中…' : '重置密码'}
       </button>
     </form>

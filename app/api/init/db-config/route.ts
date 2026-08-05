@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
-import { testDbConnection, buildDatabaseUrl, writeEnvVars, generateJwtSecret, reloadProcessEnvFromFile, isSetupRouteEnabled } from '@/lib/setup';
+import {
+  testDbConnection,
+  buildDatabaseUrl,
+  writeEnvVars,
+  generateJwtSecret,
+  reloadProcessEnvFromFile,
+  isSetupRouteEnabled,
+} from '@/lib/setup';
 import { closePool } from '@/lib/db';
 
 const dbConfigSchema = z.object({
   host: z.string().min(1).max(255),
   port: z.number().int().min(1).max(65535),
   user: z.string().min(1).max(64),
-  password: z.string().max(128),  // Empty password allowed
-  database: z.string().min(1).max(64).regex(/^[a-zA-Z0-9_]+$/, 'Schema name must be alphanumeric + underscore'),
+  password: z.string().max(128), // Empty password allowed
+  database: z
+    .string()
+    .min(1)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_]+$/, 'Schema name must be alphanumeric + underscore'),
 });
 
 /**
@@ -23,12 +34,15 @@ const dbConfigSchema = z.object({
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
     if (!(await isSetupRouteEnabled())) {
-      return badRequest('setup_disabled', '/init is disabled. Ask an admin to enable it via /admin/settings/setup.');
+      return badRequest(
+        'setup_disabled',
+        '/init is disabled. Ask an admin to enable it via /admin/settings/setup.',
+      );
     }
     const body = await req.json();
     const parsed = dbConfigSchema.safeParse(body);
     if (!parsed.success) {
-      return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
+      return badRequest('invalid_input', parsed.error.issues.map((i) => i.message).join('; '));
     }
     const cfg = parsed.data;
     const conn = await testDbConnection(cfg);
@@ -55,7 +69,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       data: {
-        databaseUrl,    // echo back so the UI can show "connected to mysql://..."
+        databaseUrl, // echo back so the UI can show "connected to mysql://..."
         host: cfg.host,
         database: cfg.database,
         // Never return the raw JWT_SECRET to the client — the user doesn't

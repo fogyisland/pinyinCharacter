@@ -11,6 +11,7 @@
 **Out of scope:** 简繁真实实现、响应式深度优化、E2E 测试、密码找回、邮箱验证、OAuth、用户主动删除账号、管理员后台（→ Plan B+）、字帖/生僻字库（→ Plan D）。
 
 **Pre-requisites:**
+
 - Node 20+
 - pnpm 9+
 - 项目根目录：`E:\ToolDevelop\PinYinCharacter`
@@ -89,6 +90,7 @@ README.md                        ~
 ## Task 1: 安装新依赖 + 写 .env.example
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\package.json`
 - Modify: `E:\ToolDevelop\PinYinCharacter\.env.example`
 
@@ -145,6 +147,7 @@ git commit -m "feat(deps): add mysql2, bcryptjs, jsonwebtoken + .env.example"
 ## Task 2: DB pool + init-db 脚本
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\db.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\scripts\init-db.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\db.test.ts`
@@ -236,8 +239,14 @@ export async function initDb(): Promise<void> {
 
 if (require.main === module) {
   initDb()
-    .then(() => { console.log('DB initialized'); return closePool(); })
-    .catch((err) => { console.error(err); process.exit(1); });
+    .then(() => {
+      console.log('DB initialized');
+      return closePool();
+    })
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -293,6 +302,7 @@ git commit -m "feat(db): mysql2 pool + init-db script + tests"
 ## Task 3: 把 initDb 接入 instrumentation 启动钩子
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\instrumentation.ts`
 
 - [ ] **Step 1: 修改 instrumentation.ts**
@@ -330,6 +340,7 @@ git commit -m "feat(server): run initDb on server startup (Plan B)"
 ## Task 4: auth lib（JWT + cookie + getCurrentUser）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\auth.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\auth.test.ts`
 
@@ -340,7 +351,10 @@ import { cookies } from 'next/headers';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 
-export interface User { id: number; username: string; }
+export interface User {
+  id: number;
+  username: string;
+}
 export interface SessionPayload extends JwtPayload {
   userId: number;
   username: string;
@@ -366,11 +380,10 @@ export async function verifyPassword(plain: string, hash: string): Promise<boole
 }
 
 export async function signSession(user: User): Promise<string> {
-  return jwt.sign(
-    { userId: user.id, username: user.username },
-    getSecret(),
-    { algorithm: 'HS256', expiresIn: `${SESSION_DAYS}d` }
-  );
+  return jwt.sign({ userId: user.id, username: user.username }, getSecret(), {
+    algorithm: 'HS256',
+    expiresIn: `${SESSION_DAYS}d`,
+  });
 }
 
 export async function verifySession(token: string): Promise<SessionPayload | null> {
@@ -395,7 +408,10 @@ export interface SetSessionCookieOptions {
   secure: boolean;
 }
 
-export async function setSessionCookie(token: string, opts: SetSessionCookieOptions): Promise<void> {
+export async function setSessionCookie(
+  token: string,
+  opts: SetSessionCookieOptions,
+): Promise<void> {
   (await cookies()).set({
     name: COOKIE_NAME,
     value: token,
@@ -432,13 +448,19 @@ export function validatePassword(s: string): string | null {
 ```ts
 import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import {
-  hashPassword, verifyPassword, signSession, verifySession,
-  validateUsername, validatePassword,
+  hashPassword,
+  verifyPassword,
+  signSession,
+  verifySession,
+  validateUsername,
+  validatePassword,
 } from '@/lib/auth';
 
 const TEST_SECRET = 'x'.repeat(40);
 
-beforeAll(() => { process.env.JWT_SECRET = TEST_SECRET; });
+beforeAll(() => {
+  process.env.JWT_SECRET = TEST_SECRET;
+});
 
 describe('auth lib', () => {
   it('hashes and verifies a password', async () => {
@@ -502,6 +524,7 @@ git commit -m "feat(auth): JWT sign/verify, cookie helpers, password hashing + t
 ## Task 5: audit lib
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\audit.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\audit.test.ts`
 
@@ -510,9 +533,7 @@ git commit -m "feat(auth): JWT sign/verify, cookie helpers, password hashing + t
 ```ts
 import { getPool } from './db';
 
-export type AuditEvent =
-  | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete';
+export type AuditEvent = 'register' | 'login' | 'logout' | 'history_create' | 'history_delete';
 
 export interface AuditEntry {
   userId: number | null;
@@ -533,7 +554,7 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
       entry.metadata ? JSON.stringify(entry.metadata) : null,
       entry.ip ?? null,
       entry.userAgent ?? null,
-    ]
+    ],
   );
 }
 ```
@@ -548,7 +569,13 @@ import { writeAudit, type AuditEvent } from '@/lib/audit';
 
 describe('audit lib', () => {
   it('exports the 5 expected events', () => {
-    const events: AuditEvent[] = ['register', 'login', 'logout', 'history_create', 'history_delete'];
+    const events: AuditEvent[] = [
+      'register',
+      'login',
+      'logout',
+      'history_create',
+      'history_delete',
+    ];
     expect(events).toHaveLength(5);
   });
 
@@ -578,6 +605,7 @@ git commit -m "feat(audit): writeAudit lib + type-only unit test"
 ## Task 6: history lib（CRUD）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\history.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\history.test.ts`
 
@@ -619,7 +647,7 @@ export async function createHistory(input: CreateHistoryInput): Promise<number> 
   const [res] = await pool.execute<any>(
     `INSERT INTO history (user_id, kind, input, output, char_count)
      VALUES (?, ?, ?, ?, ?)`,
-    [input.userId, input.kind, input.input, input.output ?? null, input.charCount]
+    [input.userId, input.kind, input.input, input.output ?? null, input.charCount],
   );
   return Number(res.insertId);
 }
@@ -628,33 +656,33 @@ export async function listHistory(opts: ListHistoryOptions): Promise<HistoryRow[
   const pool = getPool();
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const offset = Math.max(opts.offset ?? 0, 0);
-  const where = opts.favoriteOnly
-    ? 'WHERE user_id = ? AND is_favorite = 1'
-    : 'WHERE user_id = ?';
+  const where = opts.favoriteOnly ? 'WHERE user_id = ? AND is_favorite = 1' : 'WHERE user_id = ?';
   const [rows] = await pool.execute<any[]>(
     `SELECT * FROM history ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-    [opts.userId, limit, offset]
+    [opts.userId, limit, offset],
   );
   return rows as HistoryRow[];
 }
 
 export async function setFavorite(
-  userId: number, historyId: number, isFavorite: boolean
+  userId: number,
+  historyId: number,
+  isFavorite: boolean,
 ): Promise<boolean> {
   const pool = getPool();
   const [res] = await pool.execute<any>(
     `UPDATE history SET is_favorite = ? WHERE id = ? AND user_id = ?`,
-    [isFavorite ? 1 : 0, historyId, userId]
+    [isFavorite ? 1 : 0, historyId, userId],
   );
   return res.affectedRows > 0;
 }
 
 export async function deleteHistory(userId: number, historyId: number): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
-    `DELETE FROM history WHERE id = ? AND user_id = ?`,
-    [historyId, userId]
-  );
+  const [res] = await pool.execute<any>(`DELETE FROM history WHERE id = ? AND user_id = ?`, [
+    historyId,
+    userId,
+  ]);
   return res.affectedRows > 0;
 }
 
@@ -670,7 +698,7 @@ export async function getStats(userId: number): Promise<Stats> {
        COALESCE(SUM(char_count), 0) AS total,
        COALESCE(SUM(CASE WHEN is_favorite = 1 THEN char_count ELSE 0 END), 0) AS favorites
      FROM history WHERE user_id = ?`,
-    [userId]
+    [userId],
   );
   return {
     total: Number(rows[0]?.total ?? 0),
@@ -680,7 +708,10 @@ export async function getStats(userId: number): Promise<Stats> {
 
 /** 用于去重：返回最近 N 秒内同 kind+input 的记录 id（若有） */
 export async function findRecentDuplicate(
-  userId: number, kind: HistoryKind, input: string, withinSeconds = 60
+  userId: number,
+  kind: HistoryKind,
+  input: string,
+  withinSeconds = 60,
 ): Promise<number | null> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
@@ -688,7 +719,7 @@ export async function findRecentDuplicate(
      WHERE user_id = ? AND kind = ? AND input = ?
        AND created_at > (NOW() - INTERVAL ? SECOND)
      ORDER BY created_at DESC LIMIT 1`,
-    [userId, kind, input, withinSeconds]
+    [userId, kind, input, withinSeconds],
   );
   return rows.length > 0 ? Number(rows[0].id) : null;
 }
@@ -734,6 +765,7 @@ git commit -m "feat(history): CRUD lib + type-only test"
 ## Task 7: 集成测试基础设施
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\integration\setup.ts`
 
 - [ ] **Step 1: 写 `tests/integration/setup.ts`**
@@ -785,8 +817,12 @@ if (HAS_DB) {
     process.env.DATABASE_URL = process.env.DATABASE_URL_TEST;
     await initDb();
   });
-  afterEach(async () => { await truncateAll(); });
-  afterAll(async () => { await closePool(); });
+  afterEach(async () => {
+    await truncateAll();
+  });
+  afterAll(async () => {
+    await closePool();
+  });
 }
 ```
 
@@ -810,6 +846,7 @@ git commit -m "test(integration): skip-aware DB setup helpers"
 ## Task 8: 4 个 auth API 路由
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\auth\register\route.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\auth\login\route.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\auth\logout\route.ts`
@@ -822,24 +859,44 @@ git commit -m "test(integration): skip-aware DB setup helpers"
 import { NextRequest, NextResponse } from 'next/server';
 import { getPool } from '@/lib/db';
 import {
-  hashPassword, signSession, setSessionCookie,
-  validateUsername, validatePassword,
+  hashPassword,
+  signSession,
+  setSessionCookie,
+  validateUsername,
+  validatePassword,
 } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
 
-interface Body { username?: string; password?: string; }
+interface Body {
+  username?: string;
+  password?: string;
+}
 
 export async function POST(req: NextRequest) {
   let body: Body;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
 
   const username = (body.username ?? '').trim();
   const password = body.password ?? '';
   const uErr = validateUsername(username);
-  if (uErr) return NextResponse.json({ ok: false, error: { code: 'invalid_username', message: uErr } }, { status: 400 });
+  if (uErr)
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_username', message: uErr } },
+      { status: 400 },
+    );
   const pErr = validatePassword(password);
-  if (pErr) return NextResponse.json({ ok: false, error: { code: 'invalid_password', message: pErr } }, { status: 400 });
+  if (pErr)
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_password', message: pErr } },
+      { status: 400 },
+    );
 
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(`SELECT COUNT(*) AS n FROM users`);
@@ -850,12 +907,15 @@ export async function POST(req: NextRequest) {
   try {
     const [res] = await pool.execute<any>(
       `INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)`,
-      [username, hash, isFirst ? 1 : 0]
+      [username, hash, isFirst ? 1 : 0],
     );
     userId = Number(res.insertId);
   } catch (e: any) {
     if (e?.code === 'ER_DUP_ENTRY') {
-      return NextResponse.json({ ok: false, error: { code: 'username_taken', message: '用户名已被占用' } }, { status: 409 });
+      return NextResponse.json(
+        { ok: false, error: { code: 'username_taken', message: '用户名已被占用' } },
+        { status: 409 },
+      );
     }
     throw e;
   }
@@ -879,27 +939,42 @@ import { getPool } from '@/lib/db';
 import { verifyPassword, signSession, setSessionCookie } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
 
-interface Body { username?: string; password?: string; }
+interface Body {
+  username?: string;
+  password?: string;
+}
 
 export async function POST(req: NextRequest) {
   let body: Body;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
 
   const username = (body.username ?? '').trim();
   const password = body.password ?? '';
   if (!username || !password) {
-    return NextResponse.json({ ok: false, error: { code: 'missing_fields', message: '用户名和密码必填' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'missing_fields', message: '用户名和密码必填' } },
+      { status: 400 },
+    );
   }
 
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, username, password_hash FROM users WHERE username = ? LIMIT 1`,
-    [username]
+    [username],
   );
   const row = rows[0];
   if (!row || !(await verifyPassword(password, row.password_hash))) {
-    return NextResponse.json({ ok: false, error: { code: 'bad_credentials', message: '用户名或密码错误' } }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_credentials', message: '用户名或密码错误' } },
+      { status: 401 },
+    );
   }
 
   const user = { id: Number(row.id), username: row.username };
@@ -940,7 +1015,10 @@ import { getCurrentUser } from '@/lib/auth';
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) {
-    return NextResponse.json({ ok: false, error: { code: 'unauthenticated', message: '未登录' } }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+      { status: 401 },
+    );
   }
   return NextResponse.json({ ok: true, data: { user } });
 }
@@ -980,12 +1058,16 @@ function makeReq(url: string, body?: any, cookie?: string) {
 
 integrationDescribe('POST /api/auth/register', () => {
   it('rejects too-short username', async () => {
-    const r = await register(makeReq('http://x', { username: 'ab', password: 'longenoughpwd' }) as any);
+    const r = await register(
+      makeReq('http://x', { username: 'ab', password: 'longenoughpwd' }) as any,
+    );
     expect(r.status).toBe(400);
   });
 
   it('rejects too-short password', async () => {
-    const r = await register(makeReq('http://x', { username: 'validuser', password: 'short' }) as any);
+    const r = await register(
+      makeReq('http://x', { username: 'validuser', password: 'short' }) as any,
+    );
     expect(r.status).toBe(400);
   });
 
@@ -1000,16 +1082,24 @@ integrationDescribe('POST /api/auth/register', () => {
 
     // Verify is_admin = true
     const pool = getPool();
-    const [rows] = await pool.execute<any[]>(`SELECT is_admin FROM users WHERE id = ?`, [j.data.user.id]);
+    const [rows] = await pool.execute<any[]>(`SELECT is_admin FROM users WHERE id = ?`, [
+      j.data.user.id,
+    ]);
     expect(rows[0].is_admin).toBe(1);
   });
 
   it('second user is not admin', async () => {
-    await register(makeReq('http://x', { username: uniqueUsername('a'), password: 'longenoughpwd' }) as any);
-    const r2 = await register(makeReq('http://x', { username: uniqueUsername('b'), password: 'longenoughpwd' }) as any);
+    await register(
+      makeReq('http://x', { username: uniqueUsername('a'), password: 'longenoughpwd' }) as any,
+    );
+    const r2 = await register(
+      makeReq('http://x', { username: uniqueUsername('b'), password: 'longenoughpwd' }) as any,
+    );
     const j2 = await r2.json();
     const pool = getPool();
-    const [rows] = await pool.execute<any[]>(`SELECT is_admin FROM users WHERE id = ?`, [j2.data.user.id]);
+    const [rows] = await pool.execute<any[]>(`SELECT is_admin FROM users WHERE id = ?`, [
+      j2.data.user.id,
+    ]);
     expect(rows[0].is_admin).toBe(0);
   });
 });
@@ -1059,6 +1149,7 @@ pnpm test
 期望：5+ 个集成测试 skip（无 DB），旧的 34+ 单元测试通过。
 
 如要本地验证集成测试：
+
 ```bash
 export DATABASE_URL_TEST='mysql://root@password@localhost:3306/pinyin_test'
 pnpm test
@@ -1076,6 +1167,7 @@ git commit -m "feat(api): auth register/login/logout/me routes + tests"
 ## Task 9: history POST/GET API
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\history\route.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\integration\history.test.ts`
 
@@ -1089,7 +1181,11 @@ import { writeAudit } from '@/lib/audit';
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ ok: false, error: { code: 'unauthenticated', message: '未登录' } }, { status: 401 });
+  if (!user)
+    return NextResponse.json(
+      { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+      { status: 401 },
+    );
 
   const sp = req.nextUrl.searchParams;
   const favorite = sp.get('favorite') === 'true';
@@ -1110,21 +1206,43 @@ interface PostBody {
 
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ ok: false, error: { code: 'unauthenticated', message: '未登录' } }, { status: 401 });
+  if (!user)
+    return NextResponse.json(
+      { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+      { status: 401 },
+    );
 
   let body: PostBody;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
 
   const { kind, input, output, char_count: charCount, dedup = true } = body;
   if (!kind || (kind !== 'text2pinyin' && kind !== 'pinyin2text')) {
-    return NextResponse.json({ ok: false, error: { code: 'invalid_kind', message: 'kind 必须为 text2pinyin 或 pinyin2text' } }, { status: 400 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: { code: 'invalid_kind', message: 'kind 必须为 text2pinyin 或 pinyin2text' },
+      },
+      { status: 400 },
+    );
   }
   if (typeof input !== 'string' || !input) {
-    return NextResponse.json({ ok: false, error: { code: 'invalid_input', message: 'input 必填' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_input', message: 'input 必填' } },
+      { status: 400 },
+    );
   }
   if (typeof charCount !== 'number' || charCount < 0 || charCount > 100000) {
-    return NextResponse.json({ ok: false, error: { code: 'invalid_char_count', message: 'char_count 不合法' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_char_count', message: 'char_count 不合法' } },
+      { status: 400 },
+    );
   }
 
   if (dedup) {
@@ -1132,10 +1250,22 @@ export async function POST(req: NextRequest) {
     if (dup) return NextResponse.json({ ok: true, data: { id: dup, deduped: true } });
   }
 
-  const id = await createHistory({ userId: user.id, kind, input, output: output ?? null, charCount });
+  const id = await createHistory({
+    userId: user.id,
+    kind,
+    input,
+    output: output ?? null,
+    charCount,
+  });
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
-  await writeAudit({ userId: user.id, event: 'history_create', metadata: { kind, charCount, id }, ip, userAgent: ua });
+  await writeAudit({
+    userId: user.id,
+    event: 'history_create',
+    metadata: { kind, charCount, id },
+    ip,
+    userAgent: ua,
+  });
   return NextResponse.json({ ok: true, data: { id, deduped: false } });
 }
 ```
@@ -1168,7 +1298,9 @@ function makeReq(url: string, body?: any) {
 
 integrationDescribe('POST /api/history', () => {
   it('returns 401 when not logged in', async () => {
-    const r = await historyPost(makeReq('http://x', { kind: 'text2pinyin', input: 'a', char_count: 1 }) as any);
+    const r = await historyPost(
+      makeReq('http://x', { kind: 'text2pinyin', input: 'a', char_count: 1 }) as any,
+    );
     expect(r.status).toBe(401);
   });
 
@@ -1183,7 +1315,9 @@ integrationDescribe('POST /api/history', () => {
     // 实际更稳妥的是用 cookieStore: 通过 next/headers stub
     // 这里为简化，直接 verify DB 状态
     const pool = getPool();
-    const [before] = await pool.execute<any[]>(`SELECT COUNT(*) AS n FROM audit_log WHERE event='register'`);
+    const [before] = await pool.execute<any[]>(
+      `SELECT COUNT(*) AS n FROM audit_log WHERE event='register'`,
+    );
     expect(Number(before[0].n)).toBeGreaterThanOrEqual(1);
   });
 });
@@ -1209,6 +1343,7 @@ git commit -m "feat(api): history POST (with dedup) + GET (with filter/paginatio
 ## Task 10: history PATCH/DELETE API
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\history\[id]\route.ts`
 
 - [ ] **Step 1: 写 `app/api/history/[id]/route.ts`**
@@ -1219,46 +1354,88 @@ import { getCurrentUser } from '@/lib/auth';
 import { setFavorite, deleteHistory } from '@/lib/history';
 import { writeAudit } from '@/lib/audit';
 
-interface Ctx { params: Promise<{ id: string }>; }
+interface Ctx {
+  params: Promise<{ id: string }>;
+}
 
 export async function PATCH(req: NextRequest, ctx: Ctx) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ ok: false, error: { code: 'unauthenticated', message: '未登录' } }, { status: 401 });
+  if (!user)
+    return NextResponse.json(
+      { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+      { status: 401 },
+    );
 
   const { id: idStr } = await ctx.params;
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ ok: false, error: { code: 'invalid_id', message: 'id 不合法' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_id', message: 'id 不合法' } },
+      { status: 400 },
+    );
   }
 
   let body: { is_favorite?: boolean };
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
   if (typeof body.is_favorite !== 'boolean') {
-    return NextResponse.json({ ok: false, error: { code: 'invalid_is_favorite', message: 'is_favorite 必填且为 boolean' } }, { status: 400 });
+    return NextResponse.json(
+      {
+        ok: false,
+        error: { code: 'invalid_is_favorite', message: 'is_favorite 必填且为 boolean' },
+      },
+      { status: 400 },
+    );
   }
 
   const ok = await setFavorite(user.id, id, body.is_favorite);
-  if (!ok) return NextResponse.json({ ok: false, error: { code: 'not_found', message: '记录不存在' } }, { status: 404 });
+  if (!ok)
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_found', message: '记录不存在' } },
+      { status: 404 },
+    );
   return NextResponse.json({ ok: true, data: { id, is_favorite: body.is_favorite } });
 }
 
 export async function DELETE(req: NextRequest, ctx: Ctx) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ ok: false, error: { code: 'unauthenticated', message: '未登录' } }, { status: 401 });
+  if (!user)
+    return NextResponse.json(
+      { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+      { status: 401 },
+    );
 
   const { id: idStr } = await ctx.params;
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) {
-    return NextResponse.json({ ok: false, error: { code: 'invalid_id', message: 'id 不合法' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'invalid_id', message: 'id 不合法' } },
+      { status: 400 },
+    );
   }
 
   const ok = await deleteHistory(user.id, id);
-  if (!ok) return NextResponse.json({ ok: false, error: { code: 'not_found', message: '记录不存在' } }, { status: 404 });
+  if (!ok)
+    return NextResponse.json(
+      { ok: false, error: { code: 'not_found', message: '记录不存在' } },
+      { status: 404 },
+    );
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
-  await writeAudit({ userId: user.id, event: 'history_delete', metadata: { id }, ip, userAgent: ua });
+  await writeAudit({
+    userId: user.id,
+    event: 'history_delete',
+    metadata: { id },
+    ip,
+    userAgent: ua,
+  });
   return new NextResponse(null, { status: 204 });
 }
 ```
@@ -1281,6 +1458,7 @@ git commit -m "feat(api): history PATCH (favorite) + DELETE"
 ## Task 11: stats API
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\api\stats\route.ts`
 
 - [ ] **Step 1: 写 `app/api/stats/route.ts`**
@@ -1292,7 +1470,11 @@ import { getStats } from '@/lib/history';
 
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ ok: false, error: { code: 'unauthenticated', message: '未登录' } }, { status: 401 });
+  if (!user)
+    return NextResponse.json(
+      { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+      { status: 401 },
+    );
   const stats = await getStats(user.id);
   return NextResponse.json({ ok: true, data: stats });
 }
@@ -1311,6 +1493,7 @@ git commit -m "feat(api): stats endpoint (total + favorites char counts)"
 ## Task 12: store 加 user 字段
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\lib\store.ts`
 
 - [ ] **Step 1: 修改 `lib/store.ts`**
@@ -1325,7 +1508,10 @@ import { persist } from 'zustand/middleware';
 
 export type Script = 'simplified' | 'traditional';
 
-export interface User { id: number; username: string; }
+export interface User {
+  id: number;
+  username: string;
+}
 
 interface AppState {
   safeMode: boolean;
@@ -1339,15 +1525,15 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      safeMode: true,                  // 默认开
+      safeMode: true, // 默认开
       script: 'simplified',
       user: null,
       setSafeMode: (safeMode) => set({ safeMode }),
       setScript: (script) => set({ script }),
       setUser: (user) => set({ user }),
     }),
-    { name: 'pinyin-app-state' }
-  )
+    { name: 'pinyin-app-state' },
+  ),
 );
 ```
 
@@ -1364,6 +1550,7 @@ git commit -m "feat(store): add user field"
 ## Task 13: API fetch wrappers（api-auth.ts + api-history.ts）
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\api-auth.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\lib\api-history.ts`
 - Create: `E:\ToolDevelop\PinYinCharacter\tests\unit\lib\api-history.test.ts`
@@ -1374,8 +1561,7 @@ git commit -m "feat(store): add user field"
 import type { User } from './store';
 
 export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string } };
+  { ok: true; data: T } | { ok: false; error: { code: string; message: string } };
 
 async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(path, { ...init, credentials: 'same-origin' });
@@ -1383,16 +1569,24 @@ async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   return j as ApiResult<T>;
 }
 
-export async function registerRequest(username: string, password: string): Promise<ApiResult<{ user: User }>> {
+export async function registerRequest(
+  username: string,
+  password: string,
+): Promise<ApiResult<{ user: User }>> {
   return call('/api/auth/register', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
 }
 
-export async function loginRequest(username: string, password: string): Promise<ApiResult<{ user: User }>> {
+export async function loginRequest(
+  username: string,
+  password: string,
+): Promise<ApiResult<{ user: User }>> {
   return call('/api/auth/login', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
 }
@@ -1411,8 +1605,7 @@ export async function meRequest(): Promise<ApiResult<{ user: User }>> {
 ```ts
 export type HistoryKind = 'text2pinyin' | 'pinyin2text';
 export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string } };
+  { ok: true; data: T } | { ok: false; error: { code: string; message: string } };
 
 export interface HistoryRow {
   id: number;
@@ -1425,7 +1618,10 @@ export interface HistoryRow {
   created_at: string;
 }
 
-export interface Stats { total: number; favorites: number; }
+export interface Stats {
+  total: number;
+  favorites: number;
+}
 
 async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(path, { ...init, credentials: 'same-origin' });
@@ -1434,7 +1630,9 @@ async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   return j as ApiResult<T>;
 }
 
-export async function listHistoryRequest(opts: { favorite?: boolean; limit?: number; offset?: number } = {}): Promise<ApiResult<{ history: HistoryRow[] }>> {
+export async function listHistoryRequest(
+  opts: { favorite?: boolean; limit?: number; offset?: number } = {},
+): Promise<ApiResult<{ history: HistoryRow[] }>> {
   const sp = new URLSearchParams();
   if (opts.favorite) sp.set('favorite', 'true');
   if (opts.limit !== undefined) sp.set('limit', String(opts.limit));
@@ -1451,16 +1649,23 @@ export interface CreateHistoryArgs {
   dedup?: boolean;
 }
 
-export async function createHistoryRequest(args: CreateHistoryArgs): Promise<ApiResult<{ id: number; deduped: boolean }>> {
+export async function createHistoryRequest(
+  args: CreateHistoryArgs,
+): Promise<ApiResult<{ id: number; deduped: boolean }>> {
   return call('/api/history', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(args),
   });
 }
 
-export async function setFavoriteRequest(id: number, isFavorite: boolean): Promise<ApiResult<{ id: number; is_favorite: boolean }>> {
+export async function setFavoriteRequest(
+  id: number,
+  isFavorite: boolean,
+): Promise<ApiResult<{ id: number; is_favorite: boolean }>> {
   return call(`/api/history/${id}`, {
-    method: 'PATCH', headers: { 'content-type': 'application/json' },
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ is_favorite: isFavorite }),
   });
 }
@@ -1504,6 +1709,7 @@ git commit -m "feat(client): api-auth and api-history fetch wrappers + test"
 ## Task 14: AuthModal 组件
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\components\AuthModal.tsx`
 
 - [ ] **Step 1: 写 `components/AuthModal.tsx`**
@@ -1524,7 +1730,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const setUser = useAppStore(s => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
 
   if (!open) return null;
 
@@ -1533,40 +1739,57 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
     setError(null);
     const uErr = validateUsername(username);
     const pErr = validatePassword(password);
-    if (uErr || pErr) { setError(uErr || pErr); return; }
+    if (uErr || pErr) {
+      setError(uErr || pErr);
+      return;
+    }
 
     setBusy(true);
-    const r = mode === 'login'
-      ? await loginRequest(username, password)
-      : await registerRequest(username, password);
+    const r =
+      mode === 'login'
+        ? await loginRequest(username, password)
+        : await registerRequest(username, password);
     setBusy(false);
 
-    if (!r.ok) { setError(r.error.message); return; }
+    if (!r.ok) {
+      setError(r.error.message);
+      return;
+    }
     setUser(r.data.user);
     onClose();
   }
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5" onClick={e => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg shadow-xl w-full max-w-sm p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex gap-2 mb-4 border-b">
           <button
             type="button"
             className={`px-3 py-2 ${mode === 'login' ? 'border-b-2 border-blue-500 font-semibold' : 'text-gray-500'}`}
             onClick={() => setMode('login')}
-          >登录</button>
+          >
+            登录
+          </button>
           <button
             type="button"
             className={`px-3 py-2 ${mode === 'register' ? 'border-b-2 border-blue-500 font-semibold' : 'text-gray-500'}`}
             onClick={() => setMode('register')}
-          >注册</button>
+          >
+            注册
+          </button>
         </div>
         <form onSubmit={submit} className="space-y-3">
           <input
             className="w-full border rounded px-3 py-2"
             placeholder="用户名 (3-32 字符)"
             value={username}
-            onChange={e => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value)}
             autoComplete={mode === 'login' ? 'username' : 'username'}
             disabled={busy}
           />
@@ -1575,7 +1798,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
             type="password"
             placeholder="密码 (≥ 8 字符)"
             value={password}
-            onChange={e => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
             disabled={busy}
           />
@@ -1585,7 +1808,7 @@ export function AuthModal({ open, onClose }: { open: boolean; onClose: () => voi
             disabled={busy}
             className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 disabled:opacity-50"
           >
-            {busy ? '...' : (mode === 'login' ? '登录' : '注册')}
+            {busy ? '...' : mode === 'login' ? '登录' : '注册'}
           </button>
         </form>
       </div>
@@ -1623,6 +1846,7 @@ git commit -m "feat(ui): AuthModal (login/register tabs)"
 ## Task 15: UserMenu 组件
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\components\UserMenu.tsx`
 
 - [ ] **Step 1: 写 `components/UserMenu.tsx`**
@@ -1635,8 +1859,8 @@ import { useAppStore } from '@/lib/store';
 import { logoutRequest } from '@/lib/api-auth';
 
 export function UserMenu() {
-  const user = useAppStore(s => s.user);
-  const setUser = useAppStore(s => s.setUser);
+  const user = useAppStore((s) => s.user);
+  const setUser = useAppStore((s) => s.setUser);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -1662,14 +1886,28 @@ export function UserMenu() {
       <button
         type="button"
         className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
-        onClick={() => setOpen(o => !o)}
-      >{user.username} ⌄</button>
+        onClick={() => setOpen((o) => !o)}
+      >
+        {user.username} ⌄
+      </button>
       {open && (
         <div className="absolute right-0 mt-1 w-44 bg-white border rounded shadow-lg py-1 z-20">
-          <a href="/profile" className="block px-3 py-1.5 hover:bg-gray-50">我的主页</a>
-          <a href="/history" className="block px-3 py-1.5 hover:bg-gray-50">历史记录</a>
-          <a href="/history?favorite=true" className="block px-3 py-1.5 hover:bg-gray-50">收藏夹</a>
-          <button type="button" onClick={logout} className="block w-full text-left px-3 py-1.5 hover:bg-gray-50 text-red-600">退出登录</button>
+          <a href="/profile" className="block px-3 py-1.5 hover:bg-gray-50">
+            我的主页
+          </a>
+          <a href="/history" className="block px-3 py-1.5 hover:bg-gray-50">
+            历史记录
+          </a>
+          <a href="/history?favorite=true" className="block px-3 py-1.5 hover:bg-gray-50">
+            收藏夹
+          </a>
+          <button
+            type="button"
+            onClick={logout}
+            className="block w-full text-left px-3 py-1.5 hover:bg-gray-50 text-red-600"
+          >
+            退出登录
+          </button>
         </div>
       )}
     </div>
@@ -1690,6 +1928,7 @@ git commit -m "feat(ui): UserMenu dropdown (profile/history/favorites/logout)"
 ## Task 16: Header 更新（登录按钮 vs 头像菜单）
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\components\Header.tsx`
 
 - [ ] **Step 1: 修改 `components/Header.tsx`**
@@ -1706,8 +1945,8 @@ import { AuthModal } from './AuthModal';
 import { useAppStore } from '@/lib/store';
 
 export function Header() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const user = useAppStore(s => s.user);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const user = useAppStore((s) => s.user);
   const [authOpen, setAuthOpen] = useState(false);
 
   return (
@@ -1728,7 +1967,9 @@ export function Header() {
               type="button"
               onClick={() => setAuthOpen(true)}
               className="text-sm px-3 py-1.5 border rounded hover:bg-gray-50"
-            >登录 / 注册</button>
+            >
+              登录 / 注册
+            </button>
           )}
         </div>
       </div>
@@ -1751,6 +1992,7 @@ git commit -m "feat(ui): Header shows login button or UserMenu based on auth sta
 ## Task 17: layout 同步 user 状态
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\app\layout.tsx`
 
 - [ ] **Step 1: 修改 `app/layout.tsx`**
@@ -1789,15 +2031,21 @@ import { meRequest } from '@/lib/api-auth';
 import { useAppStore } from '@/lib/store';
 
 export function AuthSync() {
-  const setUser = useAppStore(s => s.setUser);
+  const setUser = useAppStore((s) => s.setUser);
   useEffect(() => {
     let cancelled = false;
-    meRequest().then(r => {
-      if (cancelled) return;
-      if (r.ok) setUser(r.data.user);
-      else setUser(null);
-    }).catch(() => { /* 网络错误保持 store 原值 */ });
-    return () => { cancelled = true; };
+    meRequest()
+      .then((r) => {
+        if (cancelled) return;
+        if (r.ok) setUser(r.data.user);
+        else setUser(null);
+      })
+      .catch(() => {
+        /* 网络错误保持 store 原值 */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [setUser]);
   return null;
 }
@@ -1816,6 +2064,7 @@ git commit -m "feat(client): sync user state from /api/auth/me on mount"
 ## Task 18: HistoryList 组件
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\components\HistoryList.tsx`
 
 - [ ] **Step 1: 写 `components/HistoryList.tsx`**
@@ -1840,22 +2089,24 @@ export function HistoryList({ rows: initial }: { rows: HistoryRow[] }) {
   const [rows, setRows] = useState(initial);
 
   if (rows.length === 0) {
-    return <p className="text-sm text-gray-500 py-8 text-center">还没有记录，先去试试上面的工具。</p>;
+    return (
+      <p className="text-sm text-gray-500 py-8 text-center">还没有记录，先去试试上面的工具。</p>
+    );
   }
 
   async function toggleFav(id: number, current: 0 | 1) {
     const newVal = current === 1 ? false : true;
     // 乐观更新
-    setRows(rs => rs.map(r => r.id === id ? { ...r, is_favorite: newVal ? 1 : 0 } : r));
+    setRows((rs) => rs.map((r) => (r.id === id ? { ...r, is_favorite: newVal ? 1 : 0 } : r)));
     const r = await setFavoriteRequest(id, newVal);
     if (!r.ok) {
       // 回滚
-      setRows(rs => rs.map(rr => rr.id === id ? { ...rr, is_favorite: current } : rr));
+      setRows((rs) => rs.map((rr) => (rr.id === id ? { ...rr, is_favorite: current } : rr)));
     }
   }
 
   async function del(id: number) {
-    setRows(rs => rs.filter(r => r.id !== id));
+    setRows((rs) => rs.filter((r) => r.id !== id));
     const r = await deleteHistoryRequest(id);
     if (!r.ok) {
       // 失败就重 fetch
@@ -1865,29 +2116,37 @@ export function HistoryList({ rows: initial }: { rows: HistoryRow[] }) {
 
   return (
     <ul className="divide-y">
-      {rows.map(r => (
+      {rows.map((r) => (
         <li key={r.id} className="py-3 flex items-center gap-3">
-          <span className="text-xs text-gray-500 w-16 shrink-0">{r.kind === 'text2pinyin' ? '字→拼' : '拼→字'}</span>
+          <span className="text-xs text-gray-500 w-16 shrink-0">
+            {r.kind === 'text2pinyin' ? '字→拼' : '拼→字'}
+          </span>
           <div className="flex-1 min-w-0">
             <div className="truncate text-sm">{r.input}</div>
             {r.output && <div className="truncate text-xs text-gray-500">→ {r.output}</div>}
           </div>
           <span className="text-xs text-gray-500 shrink-0">{r.char_count} 字</span>
-          <span className="text-xs text-gray-400 shrink-0 w-16 text-right">{timeAgo(r.created_at)}</span>
+          <span className="text-xs text-gray-400 shrink-0 w-16 text-right">
+            {timeAgo(r.created_at)}
+          </span>
           <button
             type="button"
             onClick={() => toggleFav(r.id, r.is_favorite)}
             className={`text-lg shrink-0 ${r.is_favorite ? 'text-yellow-500' : 'text-gray-300 hover:text-gray-400'}`}
             aria-label={r.is_favorite ? '取消收藏' : '收藏'}
             title={r.is_favorite ? '取消收藏' : '收藏'}
-          >★</button>
+          >
+            ★
+          </button>
           <button
             type="button"
             onClick={() => del(r.id)}
             className="text-gray-400 hover:text-red-500 shrink-0"
             aria-label="删除"
             title="删除"
-          >🗑</button>
+          >
+            🗑
+          </button>
         </li>
       ))}
     </ul>
@@ -1908,6 +2167,7 @@ git commit -m "feat(ui): HistoryList with favorite toggle and delete (no confirm
 ## Task 19: /history 页面
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\history\page.tsx`
 
 - [ ] **Step 1: 写 `app/history/page.tsx`**
@@ -1959,6 +2219,7 @@ git commit -m "feat(ui): /history page (server component, with favorite filter)"
 ## Task 20: /profile 页面
 
 **Files:**
+
 - Create: `E:\ToolDevelop\PinYinCharacter\app\profile\page.tsx`
 
 - [ ] **Step 1: 写 `app/profile/page.tsx`**
@@ -2013,11 +2274,13 @@ git commit -m "feat(ui): /profile page (total + favorites stats)"
 ## Task 21: TextToPinyin 自动入库（debounce + 去重）
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\components\TextToPinyin.tsx`
 
 - [ ] **Step 1: 修改 `components/TextToPinyin.tsx`**
 
 修改部分：在原组件基础上加：
+
 - import `useEffect, useRef` from react
 - import `createHistoryRequest` from `@/lib/api-history`
 - import `useAppStore` from `@/lib/store`
@@ -2033,7 +2296,12 @@ git commit -m "feat(ui): /profile page (total + favorites stats)"
 import { useEffect, useRef, useState } from 'react';
 import { PinyinOutput } from './PinyinOutput';
 import { ReadAloudButton } from './ReadAloudButton';
-import { textToPinyin, renderWithSpaces, renderWithoutSpaces, type PinyinToken } from '@/lib/pinyin-client';
+import {
+  textToPinyin,
+  renderWithSpaces,
+  renderWithoutSpaces,
+  type PinyinToken,
+} from '@/lib/pinyin-client';
 import { useAppStore } from '@/lib/store';
 import { createHistoryRequest } from '@/lib/api-history';
 
@@ -2041,13 +2309,16 @@ export function TextToPinyin() {
   const [text, setText] = useState('');
   const [withSpaces, setWithSpaces] = useState(true);
   const [tokens, setTokens] = useState<PinyinToken[]>([]);
-  const user = useAppStore(s => s.user);
+  const user = useAppStore((s) => s.user);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<{ input: string; ts: number } | null>(null);
 
   // 字 → 拼音：实时
   useEffect(() => {
-    if (!text.trim()) { setTokens([]); return; }
+    if (!text.trim()) {
+      setTokens([]);
+      return;
+    }
     setTokens(textToPinyin(text));
   }, [text]);
 
@@ -2056,17 +2327,24 @@ export function TextToPinyin() {
     if (!user) return;
     if (!text.trim()) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => { void saveHistory(text); }, 1500);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    debounceRef.current = setTimeout(() => {
+      void saveHistory(text);
+    }, 1500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, user]);
 
   // unmount 时 flush
-  useEffect(() => () => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (user && text.trim()) void saveHistory(text);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      if (user && text.trim()) void saveHistory(text);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [],
+  );
 
   async function saveHistory(input: string) {
     if (!user) return;
@@ -2074,14 +2352,22 @@ export function TextToPinyin() {
     if (last && last.input === input && Date.now() - last.ts < 60_000) return;
     try {
       await createHistoryRequest({
-        kind: 'text2pinyin', input, output: null, char_count: input.length, dedup: true,
+        kind: 'text2pinyin',
+        input,
+        output: null,
+        char_count: input.length,
+        dedup: true,
       });
       lastSavedRef.current = { input, ts: Date.now() };
-    } catch (e) { console.error('history save failed', e); }
+    } catch (e) {
+      console.error('history save failed', e);
+    }
   }
 
   const rendered = text.trim()
-    ? (withSpaces ? renderWithSpaces(tokens) : renderWithoutSpaces(tokens))
+    ? withSpaces
+      ? renderWithSpaces(tokens)
+      : renderWithoutSpaces(tokens)
     : '';
 
   return (
@@ -2090,7 +2376,11 @@ export function TextToPinyin() {
         <h2 className="text-base font-semibold">字 → 拼音</h2>
         <div className="flex items-center gap-3 text-sm">
           <label className="flex items-center gap-1">
-            <input type="checkbox" checked={withSpaces} onChange={e => setWithSpaces(e.target.checked)} />
+            <input
+              type="checkbox"
+              checked={withSpaces}
+              onChange={(e) => setWithSpaces(e.target.checked)}
+            />
             带空格
           </label>
         </div>
@@ -2099,7 +2389,7 @@ export function TextToPinyin() {
         className="w-full border rounded p-2 min-h-24"
         placeholder="输入汉字，如「你好世界」"
         value={text}
-        onChange={e => setText(e.target.value)}
+        onChange={(e) => setText(e.target.value)}
       />
       {rendered && (
         <div className="space-y-2">
@@ -2109,13 +2399,19 @@ export function TextToPinyin() {
             <button
               type="button"
               className="text-sm px-3 py-1 border rounded hover:bg-gray-50"
-              onClick={async () => { await navigator.clipboard.writeText(rendered); }}
-            >复制</button>
+              onClick={async () => {
+                await navigator.clipboard.writeText(rendered);
+              }}
+            >
+              复制
+            </button>
             <button
               type="button"
               className="text-sm px-3 py-1 border rounded hover:bg-gray-50 ml-auto"
               onClick={() => setText('')}
-            >清空</button>
+            >
+              清空
+            </button>
           </div>
         </div>
       )}
@@ -2137,15 +2433,17 @@ git commit -m "feat(ui): TextToPinyin auto-save (1.5s debounce + dedup)"
 ## Task 22: PinyinInputMethod 自动入库
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\components\PinyinInputMethod.tsx`
 
 - [ ] **Step 1: 修改 `components/PinyinInputMethod.tsx`**
 
 修改要点：
+
 - 顶部加 imports: `import { useEffect, useRef } from 'react';` (可能已存在) + `import { createHistoryRequest } from '@/lib/api-history';` + `import { useAppStore } from '@/lib/store';`
 - 在组件内拿 user 和 committed:
   ```tsx
-  const user = useAppStore(s => s.user);
+  const user = useAppStore((s) => s.user);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSavedRef = useRef<{ input: string; ts: number } | null>(null);
   ```
@@ -2158,7 +2456,9 @@ git commit -m "feat(ui): TextToPinyin auto-save (1.5s debounce + dedup)"
     idleRef.current = setTimeout(() => {
       if (committed.length >= 2) void saveHistory(committed);
     }, 6000);
-    return () => { if (idleRef.current) clearTimeout(idleRef.current); };
+    return () => {
+      if (idleRef.current) clearTimeout(idleRef.current);
+    };
   }, [committed, user]);
 
   async function saveHistory(input: string) {
@@ -2167,10 +2467,16 @@ git commit -m "feat(ui): TextToPinyin auto-save (1.5s debounce + dedup)"
     if (last && last.input === input && Date.now() - last.ts < 60_000) return;
     try {
       await createHistoryRequest({
-        kind: 'pinyin2text', input, output: input, char_count: input.length, dedup: true,
+        kind: 'pinyin2text',
+        input,
+        output: input,
+        char_count: input.length,
+        dedup: true,
       });
       lastSavedRef.current = { input, ts: Date.now() };
-    } catch (e) { console.error('history save failed', e); }
+    } catch (e) {
+      console.error('history save failed', e);
+    }
   }
   ```
 
@@ -2189,11 +2495,13 @@ git commit -m "feat(ui): PinyinInputMethod auto-save (6s idle or clear)"
 ## Task 23: PinyinFullSentence 自动入库（点转换时）
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\components\PinyinFullSentence.tsx`
 
 - [ ] **Step 1: 修改 `components/PinyinFullSentence.tsx`**
 
 修改要点：
+
 - import `createHistoryRequest`, `useAppStore`
 - 拿 `user`
 - 在点 转换 的 onClick 里，调用 `fetchSentence` 之后同时 `void createHistoryRequest({...})`（不去重，因为用户可能重复测；不，**要**去重避免短时间重复点击）
@@ -2229,6 +2537,7 @@ git commit -m "feat(ui): PinyinFullSentence auto-save on convert"
 ## Task 24: README + .env.example 更新
 
 **Files:**
+
 - Modify: `E:\ToolDevelop\PinYinCharacter\README.md`
 - (`.env.example` 已在 Task 1 完成)
 
@@ -2250,12 +2559,12 @@ git commit -m "feat(ui): PinyinFullSentence auto-save on convert"
 
 复制 `.env.example` 为 `.env` 并填入：
 
-| 变量 | 必填 | 说明 |
-|---|---|---|
-| `DATABASE_URL` | ✓ | MySQL 连接串，例 `mysql://root:pw@localhost:3306/pinyin` |
-| `JWT_SECRET` | ✓ | 32+ 字节随机串，例 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
-| `DATABASE_URL_TEST` |   | 集成测试用，缺省时 skip |
-| `COOKIE_SECURE` |   | 生产环境设为 `true` 让 cookie 带 Secure 标志 |
+| 变量                | 必填 | 说明                                                                                             |
+| ------------------- | ---- | ------------------------------------------------------------------------------------------------ |
+| `DATABASE_URL`      | ✓    | MySQL 连接串，例 `mysql://root:pw@localhost:3306/pinyin`                                         |
+| `JWT_SECRET`        | ✓    | 32+ 字节随机串，例 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
+| `DATABASE_URL_TEST` |      | 集成测试用，缺省时 skip                                                                          |
+| `COOKIE_SECURE`     |      | 生产环境设为 `true` 让 cookie 带 Secure 标志                                                     |
 ```
 
 - [ ] **Step 2: 跑测试 + Commit**
@@ -2315,6 +2624,7 @@ git status  # 通常应无
 ## 完成标准 (Definition of Done)
 
 Plan B 完成需满足：
+
 1. ✅ `pnpm test` 全部通过（集成测试 skip 当无 DB）
 2. ✅ `pnpm dev` 启动无错误，DB 自动建表
 3. ✅ Task 25 全部 9 个手动验证步骤通过

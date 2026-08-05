@@ -10,22 +10,31 @@
  */
 import mysql from 'mysql2/promise';
 
-const PROD_URL = process.env.DATABASE_URL_REMOTE
-  ?? 'mysql://piyin:Admin909217@139.5.108.245:3306/piyin';
+const PROD_URL =
+  process.env.DATABASE_URL_REMOTE ?? 'mysql://piyin:Admin909217@139.5.108.245:3306/piyin';
 const LOCAL_URL = process.env.DATABASE_URL;
 if (!LOCAL_URL) throw new Error('DATABASE_URL (local) is required');
 
 const CHUNK = 500;
 
-async function pull(prod: mysql.Connection, local: mysql.Connection, table: string, cols: string[]) {
-  const colList = cols.map(c => '`' + c + '`').join(',');
+async function pull(
+  prod: mysql.Connection,
+  local: mysql.Connection,
+  table: string,
+  cols: string[],
+) {
+  const colList = cols.map((c) => '`' + c + '`').join(',');
   const placeholders = '(' + cols.map(() => '?').join(',') + ')';
 
   const [cnt] = await prod.query<any[]>(`SELECT COUNT(*) AS n FROM ${table}`);
   console.log(`${table}: ${cnt[0].n} rows in prod`);
 
-  const [minMax] = await prod.query<any[]>(`SELECT MIN(\`char\`) AS mn, MAX(\`char\`) AS mx FROM ${table}`);
-  console.log(`  codepoint range: ${minMax[0].mn} (U+${minMax[0].mn.codePointAt(0)!.toString(16).toUpperCase()}) - ${minMax[0].mx} (U+${minMax[0].mx.codePointAt(0)!.toString(16).toUpperCase()})`);
+  const [minMax] = await prod.query<any[]>(
+    `SELECT MIN(\`char\`) AS mn, MAX(\`char\`) AS mx FROM ${table}`,
+  );
+  console.log(
+    `  codepoint range: ${minMax[0].mn} (U+${minMax[0].mn.codePointAt(0)!.toString(16).toUpperCase()}) - ${minMax[0].mx} (U+${minMax[0].mx.codePointAt(0)!.toString(16).toUpperCase()})`,
+  );
 
   let offset = 0;
   let pulled = 0;
@@ -43,7 +52,7 @@ async function pull(prod: mysql.Connection, local: mysql.Connection, table: stri
     for (const r of rows) {
       for (const c of cols) values.push(r[c]);
     }
-    const flat = rows.map(r => cols.map(c => r[c]));
+    const flat = rows.map((r) => cols.map((c) => r[c]));
     const [res] = await local.query<any>(
       `INSERT IGNORE INTO ${table} (${colList}) VALUES ${flat.map(() => placeholders).join(',')}`,
       flat.flat(),
@@ -57,8 +66,8 @@ async function pull(prod: mysql.Connection, local: mysql.Connection, table: stri
 }
 
 async function main() {
-  const prod = await mysql.createConnection({uri: PROD_URL});
-  const local = await mysql.createConnection({uri: LOCAL_URL, charset: 'utf8mb4'});
+  const prod = await mysql.createConnection({ uri: PROD_URL });
+  const local = await mysql.createConnection({ uri: LOCAL_URL, charset: 'utf8mb4' });
 
   console.log('=== CHARS ===');
   const [cCols] = await prod.query<any[]>('SHOW COLUMNS FROM chars');
@@ -81,4 +90,7 @@ async function main() {
   console.log('DONE');
 }
 
-main().catch(e => { console.error('ERR', e); process.exit(1); });
+main().catch((e) => {
+  console.error('ERR', e);
+  process.exit(1);
+});

@@ -3,15 +3,18 @@
 ## Context
 
 字典页面(`/dictionary`)目前:
+
 1. 没有 level 筛选 UI — 但后端 `listChars({ level })` 已支持,URL 传 `?level=1` 也能用,只是没暴露给用户
 2. 字符格是 server 渲染的 `<Link>`,无法触发右键菜单
 3. 详情页 (`/dictionary/<char>`) 上的「+ 字帖」是 `<Link>`,跳到 `/worksheet?text=...`,而不是直接 append
 
 字源 (`/etymology/<char>`) 和故事 (`/stories/<char>`) 页面 404,因为:
+
 - `getEtymology` 要求 `char_etymology` 表里有一行,大多数字(2026-06-17 slim migration 后)只有 JSON content
 - `getChar` (故事页用的) 读 `rare_chars` 表,大多数字没有 `rare_chars` 行
 
 用户希望:
+
 1. 字典页加 level 切换(全部 / 一级 / 二级 / 三级)
 2. 字符格右键 → 一项菜单「添加到我的字帖」→ 单字追加到一个属于当前用户的 worksheet 标题固定为「我的字帖」
 3. 详情页「+ 字帖」改成内联按钮,不跳页
@@ -57,6 +60,7 @@
 **`components/dictionary/DictionaryCharGrid.tsx`** 改为薄壳:`export function DictionaryCharGrid(props) { return <DictionaryCharGridClient {...props} /> }`。保持 server-friendly 的 type 表面。
 
 **`components/dictionary/CharContextMenu.tsx`**('use client',固定定位):
+
 - props: `{ x: number; y: number; char: string; onClose: () => void }`
 - 单一项:`添加到「我的字帖」`
 - `position: fixed; left: x; top: y; z-index: 50`,深色背 + 浅色 hover
@@ -64,8 +68,9 @@
 - `useEffect` 注册 + 清理,unmount 自动解绑
 
 **触发流程** (`DictionaryCharGridClient`):
+
 ```ts
-const [menu, setMenu] = useState<{x,y,char} | null>(null);
+const [menu, setMenu] = useState<{ x; y; char } | null>(null);
 const onContextMenu = (e: React.MouseEvent, c: string) => {
   e.preventDefault();
   setMenu({ x: e.clientX, y: e.clientY, char: c });
@@ -94,7 +99,7 @@ export async function appendCharToMyWorksheet(userId: number, char: string): Pro
   // 1) 找现有
   const [rows] = await pool.query<any[]>(
     `SELECT id, content FROM worksheets WHERE user_id = ? AND title = ? LIMIT 1`,
-    [userId, MY_WORKSHEET_TITLE]
+    [userId, MY_WORKSHEET_TITLE],
   );
 
   if (rows.length === 0) {
@@ -102,15 +107,21 @@ export async function appendCharToMyWorksheet(userId: number, char: string): Pro
     const [ins] = await pool.execute<any>(
       `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family)
        VALUES (?, ?, JSON_ARRAY(?), ?, ?, ?)`,
-      [userId, MY_WORKSHEET_TITLE, char, DEFAULT_CELL_STYLE, DEFAULT_PAPER_SIZE, DEFAULT_FONT_FAMILY]
+      [
+        userId,
+        MY_WORKSHEET_TITLE,
+        char,
+        DEFAULT_CELL_STYLE,
+        DEFAULT_PAPER_SIZE,
+        DEFAULT_FONT_FAMILY,
+      ],
     );
     return { worksheetId: ins.insertId, added: true };
   }
 
   const worksheet = rows[0];
-  const content: string[] = typeof worksheet.content === 'string'
-    ? JSON.parse(worksheet.content)
-    : worksheet.content;
+  const content: string[] =
+    typeof worksheet.content === 'string' ? JSON.parse(worksheet.content) : worksheet.content;
   if (content.includes(char)) {
     return { worksheetId: worksheet.id, added: false };
   }
@@ -118,7 +129,7 @@ export async function appendCharToMyWorksheet(userId: number, char: string): Pro
   // 2b) 追加
   await pool.execute<any>(
     `UPDATE worksheets SET content = JSON_ARRAY_APPEND(content, '$', ?) WHERE id = ?`,
-    [char, worksheet.id]
+    [char, worksheet.id],
   );
   return { worksheetId: worksheet.id, added: true };
 }
@@ -159,11 +170,9 @@ export async function POST(req: NextRequest) {
 
 ```ts
 export const appendToWorksheetSchema = z.object({
-  char: z
-    .string()
-    .refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
-      error: 'must be a single CJK char',
-    }),
+  char: z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
+    error: 'must be a single CJK char',
+  }),
 });
 ```
 
@@ -182,7 +191,11 @@ case 'worksheet_char_appended':
 import { create } from 'zustand';
 
 export type ToastKind = 'success' | 'error' | 'info';
-export interface Toast { id: number; kind: ToastKind; text: string; }
+export interface Toast {
+  id: number;
+  kind: ToastKind;
+  text: string;
+}
 
 interface ToastState {
   toasts: Toast[];
@@ -205,6 +218,7 @@ export const useToastStore = create<ToastState>((set) => ({
 ```
 
 **新文件 `components/common/Toast.tsx`**('use client'):
+
 - `<ToastViewport>`: 订阅 `useToastStore`,`position: fixed; bottom: 24px; right: 24px; z-index: 100`
 - 每条 toast:`<div>` 圆角 + 浅深色背景(success=绿,error=红,info=灰),× 关闭按钮(可选用 `dismiss`)
 - 全局只挂一个,在 `app/layout.tsx` body 内、children 后
@@ -216,7 +230,9 @@ export const useToastStore = create<ToastState>((set) => ({
 **`lib/api-worksheet.ts`** 加:
 
 ```ts
-export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksheetId: number; added: boolean }> {
+export async function appendCharToMyWorksheetApi(
+  char: string,
+): Promise<{ worksheetId: number; added: boolean }> {
   const res = await fetch('/api/worksheets/append', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -224,7 +240,7 @@ export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksh
   });
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'add failed';
+    const msg = typeof data.error === 'string' ? data.error : (data.error?.message ?? 'add failed');
     throw new Error(msg);
   }
   return data.data;
@@ -239,7 +255,10 @@ const toast = useToastStore((s) => s.push);
 const handleAdd = async (char: string) => {
   try {
     const { added } = await appendCharToMyWorksheetApi(char);
-    toast(added ? 'success' : 'info', added ? `已添加「${char}」到「我的字帖」` : `「${char}」已经在「我的字帖」里了`);
+    toast(
+      added ? 'success' : 'info',
+      added ? `已添加「${char}」到「我的字帖」` : `「${char}」已经在「我的字帖」里了`,
+    );
   } catch (e) {
     const msg = e instanceof Error ? e.message : 'unknown';
     if (msg.includes('401') || msg.includes('Unauthorized') || msg.includes('login')) {
@@ -254,7 +273,9 @@ const handleAdd = async (char: string) => {
 错误识别:API handler 用 `unauthorized()` 返 401,client 看 `res.ok === false` 抛的 message 里 'unauthorized' / 'Unauthorized' / 状态码不行 — 改用 `res.status === 401` 显式判断更稳:
 
 ```ts
-export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksheetId: number; added: boolean }> {
+export async function appendCharToMyWorksheetApi(
+  char: string,
+): Promise<{ worksheetId: number; added: boolean }> {
   const res = await fetch('/api/worksheets/append', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -265,7 +286,7 @@ export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksh
   }
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'add failed';
+    const msg = typeof data.error === 'string' ? data.error : (data.error?.message ?? 'add failed');
     throw new Error(msg);
   }
   return data.data;
@@ -273,6 +294,7 @@ export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksh
 ```
 
 client catch:
+
 ```ts
 if (e instanceof Error && 'code' in e && (e as any).code === 'unauthorized') {
   toast('error', '请先登录后再添加');
@@ -297,7 +319,10 @@ export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
     setBusy(true);
     try {
       const { added } = await appendCharToMyWorksheetApi(char);
-      push(added ? 'success' : 'info', added ? `已添加「${char}」到「我的字帖」` : `「${char}」已经在「我的字帖」里了`);
+      push(
+        added ? 'success' : 'info',
+        added ? `已添加「${char}」到「我的字帖」` : `「${char}」已经在「我的字帖」里了`,
+      );
     } catch (e) {
       const err = e as Error & { code?: string };
       if (err.code === 'unauthorized') {
@@ -311,7 +336,11 @@ export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
   };
 
   return (
-    <button onClick={onClick} disabled={busy} className="px-3 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-50">
+    <button
+      onClick={onClick}
+      disabled={busy}
+      className="px-3 py-2 text-sm text-ink-soft hover:text-ink disabled:opacity-50"
+    >
       {busy ? '添加中…' : '+ 字帖'}
     </button>
   );
@@ -321,7 +350,9 @@ export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
 **修改 `components/dictionary/DictionaryDetailTabs.tsx`**: 把
 
 ```tsx
-<Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="...">+ 字帖</Link>
+<Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="...">
+  + 字帖
+</Link>
 ```
 
 替换为
@@ -378,7 +409,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin, story FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
   if (rows.length === 0 || !rows[0].story) return null;
   return { char: rows[0].char, story: rows[0].story, pinyin: rows[0].pinyin };
@@ -390,6 +421,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
 ## 文件清单
 
 **新建:**
+
 - `lib/worksheet-append.ts`
 - `app/api/worksheets/append/route.ts`
 - `lib/toast-store.ts`
@@ -402,6 +434,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
 - `tests/integration/api/worksheets-append.test.ts`
 
 **修改:**
+
 - `components/dictionary/DictionaryClient.tsx` — 加 level 切换按钮
 - `components/dictionary/DictionaryCharGrid.tsx` — 改为薄壳 wrapper
 - `components/dictionary/DictionaryDetailTabs.tsx` — `+ 字帖` Link → button
@@ -415,6 +448,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
 ## 测试
 
 **单元 (`tests/unit/lib/worksheet-append.test.ts`):**
+
 - `appendCharToMyWorksheet`: 首次调用创建 worksheet 并返回 `added: true`
 - 第二次调用追加到同一 worksheet,`added: true`
 - 同字再调用返回 `added: false`,content 不变
@@ -422,6 +456,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
 - 异常:char 不合法 → 应在 validator 层拦,这里只测纯逻辑
 
 **集成 (`tests/integration/api/worksheets-append.test.ts`):**
+
 - 已登录 POST `{char:'我'}` → 200,`{worksheetId, added:true}`,DB worksheets 多一行
 - 再次 POST 同 char → 200,`added:false`,DB content 不变
 - POST 不同 char → 200,`added:true`,DB content 多一项(JSON order 保持 append 顺序)
@@ -429,6 +464,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
 - POST `{char:''}` 或 `{char:'我我'}` → 400 (validator reject)
 
 **端到端:**
+
 - 人类浏览器冒烟:登录 → /dictionary → 切 level → 看页数变 → 右键 → 菜单出现 → 点 → toast 出现 → 跳 /worksheet/<id> 看到新字(此步人类手动,不自动化)
 
 ## 风险
@@ -436,6 +472,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
 ### R1:并发可能创建多个「我的字帖」
 
 **场景:** 用户连续两次右键(基本不会,但脚本 / 自动化可能),两个 POST 并发:
+
 - 两个都看到「没找到」 → 两个都 INSERT → 第二次追加到一个 worksheet,第一个孤立
 - worksheets 表上没 `(user_id, title)` UNIQUE
 

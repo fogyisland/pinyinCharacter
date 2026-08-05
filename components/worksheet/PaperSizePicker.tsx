@@ -29,7 +29,9 @@ export function PaperSizePicker({ value, tool, onChange }: Props) {
             checked={value === p.value}
             onChange={() => onChange(p.value)}
           />
-          <span>{p.label} <span className="text-xs text-ink-faint">≈{p.cellsPerPage}字/页</span></span>
+          <span>
+            {p.label} <span className="text-xs text-ink-faint">≈{p.cellsPerPage}字/页</span>
+          </span>
         </label>
       ))}
     </div>

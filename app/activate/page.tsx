@@ -41,11 +41,16 @@ export default function ActivatePage() {
         if (d.data?.ready && d.data.isLocked === false) {
           router.replace('/');
         }
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     tick();
     const t = setInterval(tick, 5000);
-    return () => { cancelled = true; clearInterval(t); };
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
   }, [router]);
 
   async function handleUnlock(e: React.FormEvent) {
@@ -84,12 +89,21 @@ export default function ActivatePage() {
 
         {status?.ready && (
           <div className="mt-4 rounded-md border border-ink/15 bg-paper-soft p-3 text-left text-xs text-ink-soft">
-            <div><span className="text-ink-faint">实例标识:</span> <code className="font-mono">{status.shortName}</code></div>
+            <div>
+              <span className="text-ink-faint">实例标识:</span>{' '}
+              <code className="font-mono">{status.shortName}</code>
+            </div>
             {status.expireDate && (
-              <div className="mt-1"><span className="text-ink-faint">到期时间:</span> {new Date(status.expireDate).toLocaleString('zh-CN')}</div>
+              <div className="mt-1">
+                <span className="text-ink-faint">到期时间:</span>{' '}
+                {new Date(status.expireDate).toLocaleString('zh-CN')}
+              </div>
             )}
             {status.lastCloudSyncAt && (
-              <div className="mt-1"><span className="text-ink-faint">最近云端同步:</span> {new Date(status.lastCloudSyncAt).toLocaleString('zh-CN')}</div>
+              <div className="mt-1">
+                <span className="text-ink-faint">最近云端同步:</span>{' '}
+                {new Date(status.lastCloudSyncAt).toLocaleString('zh-CN')}
+              </div>
             )}
           </div>
         )}
@@ -106,28 +120,46 @@ export default function ActivatePage() {
         )}
       </div>
 
-      <form onSubmit={handleUnlock} className="mt-6 space-y-3 rounded-md border border-ink/20 bg-paper-soft p-6">
+      <form
+        onSubmit={handleUnlock}
+        className="mt-6 space-y-3 rounded-md border border-ink/20 bg-paper-soft p-6"
+      >
         <h2 className="text-base font-medium text-ink">输入激活码解锁</h2>
         <p className="text-xs text-ink-faint">
           激活码由平台运营方提供。提交后将立即清除本实例的锁定标记。
         </p>
         <input
-          type="text" required minLength={4} maxLength={128} value={code}
+          type="text"
+          required
+          minLength={4}
+          maxLength={128}
+          value={code}
           onChange={(e) => setCode(e.target.value)}
           placeholder="BOOM-XXXX-XXXX-XXXX"
           className="w-full rounded-md border border-ink/20 px-3 py-2 font-mono"
         />
-        {err && <div className="rounded-md border border-seal/30 bg-seal/5 p-2 text-sm text-seal">{err}</div>}
+        {err && (
+          <div className="rounded-md border border-seal/30 bg-seal/5 p-2 text-sm text-seal">
+            {err}
+          </div>
+        )}
         {ok && (
           <div className="rounded-md border border-green-300 bg-green-50 p-2 text-sm text-green-700">
             <Unlock className="mr-1 inline h-4 w-4" /> 解锁成功,正在跳转…
           </div>
         )}
         <button
-          type="submit" disabled={busy}
+          type="submit"
+          disabled={busy}
           className="flex w-full items-center justify-center gap-2 rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
         >
-          {busy ? <><Loader2 className="h-4 w-4 animate-spin" /> 验证中…</> : '解锁'}
+          {busy ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" /> 验证中…
+            </>
+          ) : (
+            '解锁'
+          )}
         </button>
       </form>
     </div>

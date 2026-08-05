@@ -63,7 +63,7 @@ export function ResponsiveTable<T>({
       </div>
     );
   }
-  const titleIdx = columns.findIndex(c => c.mobileTitle);
+  const titleIdx = columns.findIndex((c) => c.mobileTitle);
   return (
     <>
       {/* Desktop table (md+) */}
@@ -71,15 +71,18 @@ export function ResponsiveTable<T>({
         <table className="w-full text-sm">
           <thead className="bg-paper-deep text-left">
             <tr>
-              {columns.map(c => (
-                <th key={c.key} className={`px-3 py-2 whitespace-nowrap ${c.headerClassName ?? ''}`}>
+              {columns.map((c) => (
+                <th
+                  key={c.key}
+                  className={`px-3 py-2 whitespace-nowrap ${c.headerClassName ?? ''}`}
+                >
                   {c.header}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {rows.map(r => {
+            {rows.map((r) => {
               const cells = flattenCells(children(r));
               return (
                 <tr key={rowKey(r)} className="border-t">
@@ -97,7 +100,7 @@ export function ResponsiveTable<T>({
 
       {/* Mobile cards (<md) */}
       <div className={`md:hidden space-y-2 ${className}`}>
-        {rows.map(r => {
+        {rows.map((r) => {
           const cells = flattenCells(children(r));
           return (
             <div key={rowKey(r)} className="card-paper rounded-lg p-3">

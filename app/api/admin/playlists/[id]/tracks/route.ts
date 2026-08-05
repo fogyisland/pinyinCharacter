@@ -16,7 +16,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!auth.ok) return auth.response;
     const { id: idStr } = await params;
     const playlistId = Number(idStr);
-    if (!Number.isInteger(playlistId) || playlistId <= 0) return badRequest('validation', 'invalid id');
+    if (!Number.isInteger(playlistId) || playlistId <= 0)
+      return badRequest('validation', 'invalid id');
 
     let body: Record<string, unknown>;
     try {
@@ -25,7 +26,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       return badRequest('validation', 'invalid JSON');
     }
     const trackId = Number(body.trackId);
-    if (!Number.isInteger(trackId) || trackId <= 0) return badRequest('validation', 'trackId required');
+    if (!Number.isInteger(trackId) || trackId <= 0)
+      return badRequest('validation', 'trackId required');
 
     const playlist = await getPlaylist(playlistId);
     if (!playlist) return notFound('not_found', 'playlist not found');
@@ -56,11 +58,13 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     if (!auth.ok) return auth.response;
     const { id: idStr } = await params;
     const playlistId = Number(idStr);
-    if (!Number.isInteger(playlistId) || playlistId <= 0) return badRequest('validation', 'invalid id');
+    if (!Number.isInteger(playlistId) || playlistId <= 0)
+      return badRequest('validation', 'invalid id');
 
     const trackIdRaw = req.nextUrl.searchParams.get('trackId');
     const trackId = Number(trackIdRaw);
-    if (!Number.isInteger(trackId) || trackId <= 0) return badRequest('validation', 'trackId required');
+    if (!Number.isInteger(trackId) || trackId <= 0)
+      return badRequest('validation', 'trackId required');
 
     const playlist = await getPlaylist(playlistId);
     if (!playlist) return notFound('not_found', 'playlist not found');
@@ -86,7 +90,8 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!auth.ok) return auth.response;
     const { id: idStr } = await params;
     const playlistId = Number(idStr);
-    if (!Number.isInteger(playlistId) || playlistId <= 0) return badRequest('validation', 'invalid id');
+    if (!Number.isInteger(playlistId) || playlistId <= 0)
+      return badRequest('validation', 'invalid id');
 
     let body: Record<string, unknown>;
     try {

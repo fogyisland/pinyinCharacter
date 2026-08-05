@@ -73,18 +73,20 @@
 // lib/config.ts (扩展)
 const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   // ... existing 4 AI keys
-  'tts.voice_male':   (v) => /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v),
+  'tts.voice_male': (v) => /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v),
   'tts.voice_female': (v) => /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(v),
-  'tts.audio_format': (v) => [
-    'audio-24khz-48kbitrate-mono-mp3',
-    'audio-24khz-96kbitrate-mono-mp3',
-    'audio-16khz-32kbitrate-mono-mp3',
-    'audio-16khz-128kbitrate-mono-mp3',
-  ].includes(v),
+  'tts.audio_format': (v) =>
+    [
+      'audio-24khz-48kbitrate-mono-mp3',
+      'audio-24khz-96kbitrate-mono-mp3',
+      'audio-16khz-32kbitrate-mono-mp3',
+      'audio-16khz-128kbitrate-mono-mp3',
+    ].includes(v),
 };
 ```
 
 **默认值** (init 时插入,idempotent):
+
 ```
 tts.voice_male   = 'zh-CN-YunjianNeural'
 tts.voice_female = 'zh-CN-XiaoxiaoNeural'
@@ -98,10 +100,12 @@ tts.audio_format = 'audio-24khz-48kbitrate-mono-mp3'
 **Endpoint**: `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1`
 
 **必需 query params**:
+
 - `TrustedClientToken=6A5AA1D4EAFF4E9FB37E23D68491D6F4` (公开常量)
 - `ConnectionId=<random uuid>`
 
 **必需 headers**:
+
 - `Pragma: no-cache`
 - `Cache-Control: no-cache`
 - `Origin: chrome-extension://jdiccldimpdaibmpdkjnbmckianbfold`
@@ -110,6 +114,7 @@ tts.audio_format = 'audio-24khz-48kbitrate-mono-mp3'
 - `User-Agent: Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/...Safari/537.36 Edge/...`
 
 **消息序列** (binary frame + text frame 交替):
+
 1. text frame: `{"context":{"system":{"name":"SpeechSDK","version":"1.0.0","build":"..."},"os":{"platform":"Win32","name":"Windows","version":"10"}}}`
 2. text frame SSML config: `X-Timestamp:<date>\r\nContent-Type:application/ssml+xml\r\nX-Path:voice\r\n\r\n<SSML>...</SSML>` (注意末尾要有两个 CRLF)
 3. text frame speech config: `X-Timestamp:<date>\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"synthesis":{"audio":{"metadataOptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`
@@ -168,8 +173,8 @@ app/globals.css                       [MOD] .card-paper 改 transparent bg
 // 502: { error: 'edge tts upstream failed' }
 // 504: { error: 'edge tts timeout' }
 
-export const runtime = 'nodejs';   // WebSocket 需要 Node runtime, 不能 edge
-export const maxDuration = 30;     // 30s 上限
+export const runtime = 'nodejs'; // WebSocket 需要 Node runtime, 不能 edge
+export const maxDuration = 30; // 30s 上限
 
 const MAX_TEXT_LEN = 1000;
 
@@ -188,7 +193,7 @@ export async function POST(req: Request) {
   const voiceName = voice === 'male' ? voice_male : voice_female;
 
   try {
-    const buffer = await synthesize(text, voiceName, audio_format, 15_000);  // 15s timeout
+    const buffer = await synthesize(text, voiceName, audio_format, 15_000); // 15s timeout
     return new Response(buffer, {
       headers: {
         'Content-Type': 'audio/mpeg',
@@ -214,9 +219,9 @@ const EDGE_WSS = 'wss://speech.platform.bing.com/consumer/speech/synthesize/read
 const TRUSTED_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 
 interface SynthesizeOpts {
-  voiceName: string;     // 'zh-CN-YunjianNeural'
-  audioFormat: string;   // 'audio-24khz-48kbitrate-mono-mp3'
-  timeoutMs?: number;    // default 15000
+  voiceName: string; // 'zh-CN-YunjianNeural'
+  audioFormat: string; // 'audio-24khz-48kbitrate-mono-mp3'
+  timeoutMs?: number; // default 15000
 }
 
 export async function synthesize(text: string, opts: SynthesizeOpts): Promise<Buffer> {
@@ -228,10 +233,7 @@ export async function synthesize(text: string, opts: SynthesizeOpts): Promise<Bu
 
 // Build SSML for plain text (escape XML special chars)
 export function buildSsml(text: string, voiceName: string): string {
-  const escaped = text
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='zh-CN'>
     <voice name='${voiceName}'>${escaped}</voice>
   </speak>`;
@@ -249,8 +251,8 @@ export type Voice = 'male' | 'female';
 let currentAudio: HTMLAudioElement | null = null;
 
 export interface SpeakOpts {
-  voice?: Voice;          // default 'female'
-  rate?: number;          // 0.5-2, default 1, audio playspeed
+  voice?: Voice; // default 'female'
+  rate?: number; // 0.5-2, default 1, audio playspeed
   onEnd?: () => void;
 }
 
@@ -291,7 +293,9 @@ export function stopSpeaking(): void {
 }
 
 // Deprecated: 旧 browser speech 路径, 保留以防破坏 import
-export function pickChineseVoice(): null { return null; }
+export function pickChineseVoice(): null {
+  return null;
+}
 ```
 
 ### 3.5 ReadAloudButton 改动
@@ -304,13 +308,11 @@ interface Props {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'paper' | 'ink' | 'seal';
   className?: string;
-  voice?: 'male' | 'female';   // [NEW] default 'male'
+  voice?: 'male' | 'female'; // [NEW] default 'male'
   title?: string;
 }
 
-export function ReadAloudButton({
-  text, voice = 'male', /* ... */
-}) {
+export function ReadAloudButton({ text, voice = 'male' /* ... */ }) {
   // speak() 现在是 async,但我们不让 button 等 promise
   // isSpeaking 在点击时立即设 true,onEnd 回调设 false
   // 如果 fetch 失败 onEnd 也会被调用
@@ -366,6 +368,7 @@ export default async function TtsConfigPage() {
 ```
 
 **Form 形态**:
+
 - 男声: `<select>` with 3 个 Edge voice (YunjianNeural / YunxiNeural / YunyangNeural)
 - 女声: `<select>` with 3 个 Edge voice (XiaoxiaoNeural / XiaoyiNeural / XiaomengNeural)
 - Audio format: `<select>` with 4 个 mp3 bitrate
@@ -376,13 +379,16 @@ export default async function TtsConfigPage() {
 ```css
 /* app/globals.css */
 .card-paper {
-  background: transparent;        /* [CHANGED] from #FFFAEE */
-  border: 1px solid rgba(58, 42, 20, 0.10);
+  background: transparent; /* [CHANGED] from #FFFAEE */
+  border: 1px solid rgba(58, 42, 20, 0.1);
   box-shadow: var(--shadow-paper);
-  transition: box-shadow 200ms, border-color 200ms, background-color 200ms;  /* 加 bg transition */
+  transition:
+    box-shadow 200ms,
+    border-color 200ms,
+    background-color 200ms; /* 加 bg transition */
 }
 .card-paper:hover {
-  border-color: #B22B2B;
+  border-color: #b22b2b;
   box-shadow: var(--shadow-paper-md);
 }
 ```
@@ -443,21 +449,25 @@ export async function PUT(req: Request) {
 ### 4.4 测试
 
 #### Unit (`tests/unit/lib/tts-edge.test.ts`)
+
 - `buildSsml('hello <world>', 'zh-CN-YunjianNeural')` → 含 XML 转义
 - `synthesize` mock WebSocket,验证发送的 SSML + config frames
 - timeout 触发 → throw Error('TIMEOUT')
 
 #### Unit (`tests/unit/lib/tts-config.test.ts`)
+
 - `getTtsConfig()` 没值时返回 defaults (zh-CN-YunjianNeural / XiaoxiaoNeural / audio-24khz-48kbitrate-mono-mp3)
 - 有值时返回 DB 里的值
 
 #### Integration (`tests/integration/api/tts.test.ts`)
+
 - POST /api/tts 无 text → 400
 - POST /api/tts {voice: 'invalid'} → 400
 - POST /api/tts {text: '你好', voice: 'female'} → 200 audio/mpeg (需要真实网络,无网络 skip)
 - POST /api/tts text 超长 (1001 chars) → 400
 
 #### Smoke (人工)
+
 - /admin/tts 改男声为 YunxiNeural,刷新页面验证
 - 字典页 /dictionary/一 点「读字」听男声
 - 字典页 /dictionary/一 点「读音」(有 pinyin 的字) 听女声
@@ -473,31 +483,31 @@ export async function PUT(req: Request) {
 
 ## 5. 风险与缓解
 
-| 风险 | 缓解 |
-|---|---|
-| Edge TTS 协议变化 (Microsoft 改 endpoint/token) | 用成熟的 edge-tts 开源协议参考;监测 fallback 到浏览器 speech |
-| WebSocket 在 Next.js dev/prod 行为差异 | 固定 `runtime = 'nodejs'`,不用 edge runtime |
-| 服务器 CPU/内存打满(高频朗读) | maxDuration=30s + text 长度上限 1000;后续加 rate limit |
-| Edge TTS 服务下线(地域限制) | 在 lib/tts.ts::speak() catch 块中,如果 status === 502/504 提示用户「请检查网络或稍后重试」;不自动降级到浏览器 speech(用户体验不一致) |
-| 浏览器 `new Audio()` autoplay 拦截(首次无用户手势) | ReadAloudButton 一定在点击事件触发,无 autoplay 问题 |
-| 儿童内容/版权文本被合成 | 仅合成用户主动点击的、站点内文本,无外部输入;无需额外过滤 |
-| `card-paper` 改 transparent 后其他页面 hover bg 变化 | 检查所有 `card-paper` 使用处;outline 卡片 (BentoGrid 第 3-5 张) 的 bg-paper-soft 会丢,补回 hover bg |
+| 风险                                                 | 缓解                                                                                                                                 |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Edge TTS 协议变化 (Microsoft 改 endpoint/token)      | 用成熟的 edge-tts 开源协议参考;监测 fallback 到浏览器 speech                                                                         |
+| WebSocket 在 Next.js dev/prod 行为差异               | 固定 `runtime = 'nodejs'`,不用 edge runtime                                                                                          |
+| 服务器 CPU/内存打满(高频朗读)                        | maxDuration=30s + text 长度上限 1000;后续加 rate limit                                                                               |
+| Edge TTS 服务下线(地域限制)                          | 在 lib/tts.ts::speak() catch 块中,如果 status === 502/504 提示用户「请检查网络或稍后重试」;不自动降级到浏览器 speech(用户体验不一致) |
+| 浏览器 `new Audio()` autoplay 拦截(首次无用户手势)   | ReadAloudButton 一定在点击事件触发,无 autoplay 问题                                                                                  |
+| 儿童内容/版权文本被合成                              | 仅合成用户主动点击的、站点内文本,无外部输入;无需额外过滤                                                                             |
+| `card-paper` 改 transparent 后其他页面 hover bg 变化 | 检查所有 `card-paper` 使用处;outline 卡片 (BentoGrid 第 3-5 张) 的 bg-paper-soft 会丢,补回 hover bg                                  |
 
 ---
 
 ## 6. 执行顺序 (Phase)
 
-| Phase | 内容 | 验证 |
-|---|---|---|
-| **P1: 修白字 bug** | globals.css `.card-paper` 改 transparent | 首页 BentoGrid 5 卡文字可见 |
-| **P2: lib/tts-edge + WebSocket** | 实现 synthesize + buildSsml + unit test | `pnpm test tests/unit/lib/tts-edge.test.ts` |
-| **P3: lib/tts-config + KEY_VALIDATORS** | 加 3 个 key + 默认 seed | `pnpm test tests/unit/lib/tts-config.test.ts` |
-| **P4: app/api/tts/route.ts** | POST handler,fetch + buffer | `pnpm test tests/integration/api/tts.test.ts` |
-| **P5: lib/tts.ts 改造** | speak 改 fetch + new Audio() | type-check |
-| **P6: ReadAloudButton 加 voice prop** | 默认 male,DictionaryDetailTabs 用 male/female | type-check |
-| **P7: /admin/tts 页面 + api/admin/config** | 表单 + PUT handler | admin 登录后能改并保存 |
-| **P8: AdminNav 入口** | 加「语音设置」 | nav 显示 |
-| **P9: 浏览器 smoke** | 字典页读字/读音 + admin 改 voice + 首页无白字 | 人工 |
+| Phase                                      | 内容                                          | 验证                                          |
+| ------------------------------------------ | --------------------------------------------- | --------------------------------------------- |
+| **P1: 修白字 bug**                         | globals.css `.card-paper` 改 transparent      | 首页 BentoGrid 5 卡文字可见                   |
+| **P2: lib/tts-edge + WebSocket**           | 实现 synthesize + buildSsml + unit test       | `pnpm test tests/unit/lib/tts-edge.test.ts`   |
+| **P3: lib/tts-config + KEY_VALIDATORS**    | 加 3 个 key + 默认 seed                       | `pnpm test tests/unit/lib/tts-config.test.ts` |
+| **P4: app/api/tts/route.ts**               | POST handler,fetch + buffer                   | `pnpm test tests/integration/api/tts.test.ts` |
+| **P5: lib/tts.ts 改造**                    | speak 改 fetch + new Audio()                  | type-check                                    |
+| **P6: ReadAloudButton 加 voice prop**      | 默认 male,DictionaryDetailTabs 用 male/female | type-check                                    |
+| **P7: /admin/tts 页面 + api/admin/config** | 表单 + PUT handler                            | admin 登录后能改并保存                        |
+| **P8: AdminNav 入口**                      | 加「语音设置」                                | nav 显示                                      |
+| **P9: 浏览器 smoke**                       | 字典页读字/读音 + admin 改 voice + 首页无白字 | 人工                                          |
 
 ---
 
@@ -534,6 +544,7 @@ GET /api/chars/random?count=20&difficulty=medium
 ```
 
 Query schema (`lib/validators.ts`):
+
 ```typescript
 export const charsRandomQuerySchema = z.object({
   count: z.coerce.number().int().min(1).max(100).default(20),
@@ -542,6 +553,7 @@ export const charsRandomQuerySchema = z.object({
 ```
 
 Response:
+
 ```json
 {
   "ok": true,
@@ -552,14 +564,16 @@ Response:
 ```
 
 Lib (`lib/chars.ts` 扩展):
+
 ```typescript
 export async function getRandomChars(opts: {
   count: number;
   difficulty: 'easy' | 'medium' | 'hard';
-}): Promise<Char[]>
+}): Promise<Char[]>;
 ```
 
 SQL:
+
 ```sql
 SELECT `char`, level, pinyin, meaning_zh
 FROM chars
@@ -572,6 +586,7 @@ LIMIT ?
 ```
 
 **不做**:
+
 - 不用 `rare_chars` 表 (它没 level 列, 也不全)
 - 不存 server-side seed (用户要的就是随机)
 - 不做去重/历史 (用户每次点都重抽)
@@ -579,12 +594,14 @@ LIMIT ?
 ### 8.3 UI
 
 **新组件** `components/worksheet/RandomTab.tsx`:
+
 - 字数 input: number, min=1, max=100, default=20
 - 难度 select: easy/medium/hard, default=medium
 - "随机生成" 按钮 → fetch API → 跳到 preview
 - 错误态: API 失败显示红色提示
 
 **`WorksheetGenerator.tsx` 变更**:
+
 - `Tab = 'text' | 'library' | 'random'`
 - 增加第三个按钮「随机生成」
 - 选中 random tab 时渲染 `<RandomTab>`,RandomTab 内部 fetch 后回调 `onChange(chars)` 灌入 content,然后触发 `setView('preview')` (传 props)
@@ -592,12 +609,12 @@ LIMIT ?
 
 ### 8.4 风险
 
-| 风险 | 缓解 |
-|---|---|
-| 抽到 4-byte UTF-8 字 (mysql2 已知 bug) | SQL 过滤 `REGEXP '^[一-鿿]$'`,只返 BMP |
-| `ORDER BY RAND() LIMIT 100` 性能 | chars 表 8105 行,毫秒级;不优化 |
-| 用户连点抽到同样字 | 不去重,符合"随机"语义 |
-| 抽到 pinyin 为空的字 | 仍 OK,字帖只画字,读音由 preview 渲染层补 |
+| 风险                                   | 缓解                                     |
+| -------------------------------------- | ---------------------------------------- |
+| 抽到 4-byte UTF-8 字 (mysql2 已知 bug) | SQL 过滤 `REGEXP '^[一-鿿]$'`,只返 BMP   |
+| `ORDER BY RAND() LIMIT 100` 性能       | chars 表 8105 行,毫秒级;不优化           |
+| 用户连点抽到同样字                     | 不去重,符合"随机"语义                    |
+| 抽到 pinyin 为空的字                   | 仍 OK,字帖只画字,读音由 preview 渲染层补 |
 
 ---
 
@@ -614,11 +631,11 @@ LIMIT ?
 
 ### 9.2 文件变更
 
-| 文件 | 变更 |
-|---|---|
-| `app/pinyin/page.tsx` | 新建 (15 行, 套 PageContainer 包装 TextToPinyin) |
-| `app/page.tsx` | 删 TextToPinyin import + 删 `<section>` (4 行删除) |
-| `lib/design.ts` | NAV_LINKS 插 1 行 |
+| 文件                  | 变更                                               |
+| --------------------- | -------------------------------------------------- |
+| `app/pinyin/page.tsx` | 新建 (15 行, 套 PageContainer 包装 TextToPinyin)   |
+| `app/page.tsx`        | 删 TextToPinyin import + 删 `<section>` (4 行删除) |
+| `lib/design.ts`       | NAV_LINKS 插 1 行                                  |
 
 ### 9.3 不做 (YAGNI)
 

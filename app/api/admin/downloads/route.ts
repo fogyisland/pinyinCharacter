@@ -16,7 +16,10 @@ export async function GET(req: NextRequest) {
     let sourceType: DownloadSourceType | undefined;
     if (sourceTypeRaw) {
       if (!VALID_SOURCE_TYPES.includes(sourceTypeRaw as DownloadSourceType)) {
-        return badRequest('bad_source_type', `sourceType must be one of ${VALID_SOURCE_TYPES.join('|')}`);
+        return badRequest(
+          'bad_source_type',
+          `sourceType must be one of ${VALID_SOURCE_TYPES.join('|')}`,
+        );
       }
       sourceType = sourceTypeRaw as DownloadSourceType;
     }

@@ -33,56 +33,58 @@
 
 ### New files (9)
 
-| Path | Responsibility |
-|---|---|
-| `lib/init-credentials.ts` | In-memory `Map<token, credentials>` with 30s TTL + interval GC |
-| `app/api/init/init-db/route.ts` | 410 shim for the deleted endpoint (catches old client bundles) |
-| `app/api/init/stash-admin/route.ts` | POST: validates admin schema, returns token |
-| `app/init/db/page.tsx` | RSC shell: redirects to `/init/admin` if DATABASE_URL set |
-| `app/init/db/InitDbForm.tsx` | Client form: host/port/user/password/database, autoComplete, clear password after submit |
-| `app/init/admin/page.tsx` | RSC shell: redirects to `/init/db` (no DB) or `/init/execute` (admin_done) |
-| `app/init/admin/InitAdminForm.tsx` | Client form: username/password/email, calls `/stash-admin`, stores token in sessionStorage |
-| `app/init/execute/page.tsx` | RSC shell: redirects to `/init` (already done) or `/init/db` (no DB) |
-| `app/init/execute/InitExecuteForm.tsx` | Client form: 9 phases grouped into 3 StepGroups, runs sequentially |
-| `components/init/InitHeader.tsx` | Server component: 3-step indicator with Database / User / Rocket icons |
-| `components/init/StepGroup.tsx` | Client component: collapsible card with `▼/▶` + completion counter |
+| Path                                   | Responsibility                                                                             |
+| -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `lib/init-credentials.ts`              | In-memory `Map<token, credentials>` with 30s TTL + interval GC                             |
+| `app/api/init/init-db/route.ts`        | 410 shim for the deleted endpoint (catches old client bundles)                             |
+| `app/api/init/stash-admin/route.ts`    | POST: validates admin schema, returns token                                                |
+| `app/init/db/page.tsx`                 | RSC shell: redirects to `/init/admin` if DATABASE_URL set                                  |
+| `app/init/db/InitDbForm.tsx`           | Client form: host/port/user/password/database, autoComplete, clear password after submit   |
+| `app/init/admin/page.tsx`              | RSC shell: redirects to `/init/db` (no DB) or `/init/execute` (admin_done)                 |
+| `app/init/admin/InitAdminForm.tsx`     | Client form: username/password/email, calls `/stash-admin`, stores token in sessionStorage |
+| `app/init/execute/page.tsx`            | RSC shell: redirects to `/init` (already done) or `/init/db` (no DB)                       |
+| `app/init/execute/InitExecuteForm.tsx` | Client form: 9 phases grouped into 3 StepGroups, runs sequentially                         |
+| `components/init/InitHeader.tsx`       | Server component: 3-step indicator with Database / User / Rocket icons                     |
+| `components/init/StepGroup.tsx`        | Client component: collapsible card with `▼/▶` + completion counter                         |
 
 (That's 11, not 9. The spec counted only top-level files; per-page client forms are colocated as the project does elsewhere — see `app/login/page.tsx` etc. 11 new + 4 modified + 10 test = 25 files total.)
 
 ### Modified files (4)
 
-| Path | Change |
-|---|---|
-| `app/init/page.tsx` | Full rewrite as RSC orchestrator (sets cookie on AlreadyDoneCard) |
-| `middleware.ts` | Drop `!DATABASE_URL` branch — cookie is sole gate |
-| `app/api/init/create-admin/route.ts` | Body `{username,password,email}` → `{token}`; consume server-side |
-| `app/api/init/admin/route.ts` | After validation pass, write `setup.wizard.admin_done='true'` to app_config |
-| `lib/setup.ts` | Add `isInitWizardAdminDone()` exported helper |
+| Path                                 | Change                                                                      |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| `app/init/page.tsx`                  | Full rewrite as RSC orchestrator (sets cookie on AlreadyDoneCard)           |
+| `middleware.ts`                      | Drop `!DATABASE_URL` branch — cookie is sole gate                           |
+| `app/api/init/create-admin/route.ts` | Body `{username,password,email}` → `{token}`; consume server-side           |
+| `app/api/init/admin/route.ts`        | After validation pass, write `setup.wizard.admin_done='true'` to app_config |
+| `lib/setup.ts`                       | Add `isInitWizardAdminDone()` exported helper                               |
 
 ### Test files (10)
 
-| Path | Coverage |
-|---|---|
-| `tests/unit/lib/init-credentials.test.ts` | Token round-trip + expiry + GC (Task 1) |
-| `tests/unit/app/api/init/init-db-shim.test.ts` | 410 + error code shape (Task 2) |
-| `tests/unit/lib/middleware-redirect.test.ts` | Cookie gate: redirects when missing, allows when set (Task 3) |
-| `tests/unit/lib/setup-wizard-flag.test.ts` | `isInitWizardAdminDone` 5 cases (Task 4) |
-| `tests/unit/app/api/init/stash-admin.test.ts` | Valid → token; invalid → 400; setup_disabled → 400 (Task 5) |
-| `tests/unit/app/api/init/admin-flag.test.ts` | `admin` route writes `setup.wizard.admin_done` (Task 6) |
-| `tests/unit/app/api/init/create-admin.test.ts` | Valid token → 200; expired → 401; missing → 400 (Task 7) |
-| `tests/unit/components/init/InitHeader.test.tsx` | 3-step indicator (Task 8) |
-| `tests/unit/components/init/StepGroup.test.tsx` | Collapsible card + counter (Task 8) |
-| `tests/integration/init-wizard.test.ts` | Full 9-phase chain on scratch DB + cookie assertion (Task 13) |
+| Path                                             | Coverage                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------- |
+| `tests/unit/lib/init-credentials.test.ts`        | Token round-trip + expiry + GC (Task 1)                       |
+| `tests/unit/app/api/init/init-db-shim.test.ts`   | 410 + error code shape (Task 2)                               |
+| `tests/unit/lib/middleware-redirect.test.ts`     | Cookie gate: redirects when missing, allows when set (Task 3) |
+| `tests/unit/lib/setup-wizard-flag.test.ts`       | `isInitWizardAdminDone` 5 cases (Task 4)                      |
+| `tests/unit/app/api/init/stash-admin.test.ts`    | Valid → token; invalid → 400; setup_disabled → 400 (Task 5)   |
+| `tests/unit/app/api/init/admin-flag.test.ts`     | `admin` route writes `setup.wizard.admin_done` (Task 6)       |
+| `tests/unit/app/api/init/create-admin.test.ts`   | Valid token → 200; expired → 401; missing → 400 (Task 7)      |
+| `tests/unit/components/init/InitHeader.test.tsx` | 3-step indicator (Task 8)                                     |
+| `tests/unit/components/init/StepGroup.test.tsx`  | Collapsible card + counter (Task 8)                           |
+| `tests/integration/init-wizard.test.ts`          | Full 9-phase chain on scratch DB + cookie assertion (Task 13) |
 
 ---
 
 ### Task 1: `lib/init-credentials.ts` token store
 
 **Files:**
+
 - Create: `lib/init-credentials.ts`
 - Create: `tests/unit/lib/init-credentials.test.ts`
 
 **Interfaces:**
+
 - Produces: `stashAdminCredentials(input) → string` (32-hex token)
 - Produces: `consumeAdminCredentials(token) → {username,password,email?} | null` (one-shot, null on miss/expiry)
 - Produces: `gcExpired() → void` (also auto-runs every 60s via `setInterval(...).unref()`)
@@ -93,9 +95,16 @@ Create `tests/unit/lib/init-credentials.test.ts`:
 
 ```ts
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { stashAdminCredentials, consumeAdminCredentials, gcExpired, _resetStoreForTest } from '@/lib/init-credentials';
+import {
+  stashAdminCredentials,
+  consumeAdminCredentials,
+  gcExpired,
+  _resetStoreForTest,
+} from '@/lib/init-credentials';
 
-beforeEach(() => { _resetStoreForTest(); });
+beforeEach(() => {
+  _resetStoreForTest();
+});
 
 describe('stashAdminCredentials', () => {
   it('returns a 32-char hex token', () => {
@@ -106,8 +115,16 @@ describe('stashAdminCredentials', () => {
 
 describe('consumeAdminCredentials', () => {
   it('returns the same credentials that were stashed', () => {
-    const t = stashAdminCredentials({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
-    expect(consumeAdminCredentials(t)).toEqual({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
+    const t = stashAdminCredentials({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
+    expect(consumeAdminCredentials(t)).toEqual({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
   });
 
   it('is one-shot (second call returns null)', () => {
@@ -168,14 +185,20 @@ const TTL_MS = 30_000;
 
 /** Stash admin credentials and return a 32-char hex token. Token is single-use
  *  and expires after 30 seconds. The password NEVER leaves server memory. */
-export function stashAdminCredentials(input: { username: string; password: string; email?: string }): string {
+export function stashAdminCredentials(input: {
+  username: string;
+  password: string;
+  email?: string;
+}): string {
   const token = randomBytes(16).toString('hex');
   STORE.set(token, { ...input, expiresAt: Date.now() + TTL_MS });
   return token;
 }
 
 /** Consume a token (one-shot). Returns credentials or null on miss/expiry. */
-export function consumeAdminCredentials(token: string): { username: string; password: string; email?: string } | null {
+export function consumeAdminCredentials(
+  token: string,
+): { username: string; password: string; email?: string } | null {
   const v = STORE.get(token);
   if (!v) return null;
   if (v.expiresAt < Date.now()) {
@@ -222,10 +245,12 @@ git commit -m "feat(init): token-based admin credentials store (30s TTL) [2026-0
 ### Task 2: `/api/init/init-db` 410 shim
 
 **Files:**
+
 - Create: `app/api/init/init-db/route.ts`
 - Create: `tests/unit/app/api/init/init-db-shim.test.ts`
 
 **Interfaces:**
+
 - Produces: `POST /api/init/init-db` returns `{ok:false, error:{code:'stale_build', message:...}}` with status 410
 - Produces: `GET /api/init/init-db` also returns 410 (defensive)
 
@@ -306,10 +331,12 @@ git commit -m "feat(init): 410 shim for old /api/init/init-db endpoint [2026-07-
 ### Task 3: `middleware.ts` cookie-only gate
 
 **Files:**
+
 - Modify: `middleware.ts`
 - Create: `tests/unit/lib/middleware-redirect.test.ts`
 
 **Interfaces:**
+
 - Produces: `middleware(req)` returns `NextResponse.next()` for whitelisted paths or cookie-set browsers; `NextResponse.redirect('/init')` otherwise
 
 - [ ] **Step 1: Write failing tests**
@@ -493,6 +520,7 @@ mv .env.bak-middleware-test .env
 ```
 
 Expected output:
+
 ```
 Status: 307, Location: http://localhost:4444/init
 ```
@@ -509,11 +537,13 @@ git commit -m "refactor(middleware): cookie-only setup gate [2026-07-07 HH.MM]"
 ### Task 4: `lib/setup.ts` helper + `/api/init/status` adds `adminDone`
 
 **Files:**
+
 - Modify: `lib/setup.ts` (add `isInitWizardAdminDone` after `isSetupRouteEnabled`)
 - Modify: `app/api/init/status/route.ts` (include `adminDone` field)
 - Create: `tests/unit/lib/setup-wizard-flag.test.ts`
 
 **Interfaces:**
+
 - Produces: `isInitWizardAdminDone() → Promise<boolean>` (reads `app_config.setup.wizard.admin_done`)
 
 - [ ] **Step 1: Write failing test**
@@ -642,10 +672,12 @@ git commit -m "feat(init): isInitWizardAdminDone helper + status.adminDone field
 ### Task 5: `/api/init/stash-admin` endpoint
 
 **Files:**
+
 - Create: `app/api/init/stash-admin/route.ts`
 - Create: `tests/unit/app/api/init/stash-admin.test.ts`
 
 **Interfaces:**
+
 - Produces: `POST /api/init/stash-admin` with `{username, password, email?}` → `{ok:true, data:{token, expiresInSec:30}}`
 - Produces: 400 `invalid_input` on schema failure
 - Produces: 400 `setup_disabled` when route is locked
@@ -694,12 +726,20 @@ describe('POST /api/init/stash-admin', () => {
     expect(body.ok).toBe(true);
     expect(body.data.token).toBe('abc123def456abc123def456abc12345');
     expect(body.data.expiresInSec).toBe(30);
-    expect(mockedStash).toHaveBeenCalledWith({ username: 'admin', password: 'supersecret', email: undefined });
+    expect(mockedStash).toHaveBeenCalledWith({
+      username: 'admin',
+      password: 'supersecret',
+      email: undefined,
+    });
   });
 
   it('passes email when provided', async () => {
     await POST(postReq({ username: 'admin', password: 'supersecret', email: 'a@b.com' }));
-    expect(mockedStash).toHaveBeenCalledWith({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
+    expect(mockedStash).toHaveBeenCalledWith({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
   });
 
   it('rejects short username', async () => {
@@ -748,7 +788,11 @@ import { isSetupRouteEnabled } from '@/lib/setup';
 import { stashAdminCredentials } from '@/lib/init-credentials';
 
 const stashAdminSchema = z.object({
-  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
+  username: z
+    .string()
+    .min(3)
+    .max(32)
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
   password: z.string().min(8).max(72),
   email: z.string().email().max(255).optional(),
 });
@@ -765,7 +809,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = stashAdminSchema.safeParse(body);
     if (!parsed.success) {
-      return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
+      return badRequest('invalid_input', parsed.error.issues.map((i) => i.message).join('; '));
     }
     const token = stashAdminCredentials(parsed.data);
     return NextResponse.json({ ok: true, data: { token, expiresInSec: 30 } });
@@ -790,10 +834,12 @@ git commit -m "feat(init): /api/init/stash-admin returns 30s token [2026-07-07 H
 ### Task 6: `/api/init/admin` writes `setup.wizard.admin_done`
 
 **Files:**
+
 - Modify: `app/api/init/admin/route.ts` (add flag write)
 - Create: `tests/unit/app/api/init/admin-flag.test.ts`
 
 **Interfaces:**
+
 - Produces: After validation pass, writes `setup.wizard.admin_done='true'` to `app_config`
 - Existing behavior (validation-only, no user INSERT) preserved
 
@@ -885,7 +931,11 @@ import { getPool } from '@/lib/db';
  * (which consumes the token from /api/init/stash-admin).
  */
 const adminSchema = z.object({
-  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
+  username: z
+    .string()
+    .min(3)
+    .max(32)
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
   password: z.string().min(8).max(72),
   email: z.string().email().max(255).optional(),
 });
@@ -898,7 +948,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = adminSchema.safeParse(body);
     if (!parsed.success) {
-      return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
+      return badRequest('invalid_input', parsed.error.issues.map((i) => i.message).join('; '));
     }
     // Write the wizard marker so the orchestrator can skip step 2 on re-entry.
     await getPool().query(
@@ -927,10 +977,12 @@ git commit -m "feat(init): admin route writes setup.wizard.admin_done marker [20
 ### Task 7: `/api/init/create-admin` accepts `{token}`
 
 **Files:**
+
 - Modify: `app/api/init/create-admin/route.ts` (body change)
 - Create: `tests/unit/app/api/init/create-admin.test.ts`
 
 **Interfaces:**
+
 - Produces: `POST /api/init/create-admin` with `{token: 32-hex-string}` → `{ok:true, data:{userId, username}}`
 - Produces: 400 `invalid_input` on missing/malformed token
 - Produces: 401 `token_expired` on unknown/expired token
@@ -980,7 +1032,11 @@ function postReq(body: unknown): NextRequest {
 
 describe('POST /api/init/create-admin (token-based)', () => {
   it('consumes token and creates user', async () => {
-    mockedConsume.mockReturnValueOnce({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
+    mockedConsume.mockReturnValueOnce({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
     const res = await POST(postReq({ token: 'a'.repeat(32) }));
     expect(res.status).toBe(200);
     const body = await res.json();
@@ -1029,6 +1085,7 @@ describe('POST /api/init/create-admin (token-based)', () => {
 
 Run: `npx vitest run tests/unit/app/api/init/create-admin.test.ts`
 Expected: FAIL — multiple ways:
+
 - Current body is `{username, password, email}` so `tokenSchema.safeParse({token})` is fine but current route uses `createAdminSchema`
 - The 5 tests reference `consumeAdminCredentials` which is mocked but the current route doesn't import it
 - First test will pass mock-consume but the current route doesn't call it, so `createAdminUserMock` won't be called and assertion fails
@@ -1056,7 +1113,10 @@ import { consumeAdminCredentials } from '@/lib/init-credentials';
  * consumed or expired.
  */
 const tokenSchema = z.object({
-  token: z.string().length(32).regex(/^[0-9a-f]+$/i, 'token must be 32 hex chars'),
+  token: z
+    .string()
+    .length(32)
+    .regex(/^[0-9a-f]+$/i, 'token must be 32 hex chars'),
 });
 
 export async function POST(req: NextRequest) {
@@ -1074,7 +1134,10 @@ export async function POST(req: NextRequest) {
     }
     const creds = consumeAdminCredentials(parsed.data.token);
     if (!creds) {
-      return unauthorized('token_expired', 'admin credentials token expired or invalid; please re-enter on /init/admin');
+      return unauthorized(
+        'token_expired',
+        'admin credentials token expired or invalid; please re-enter on /init/admin',
+      );
     }
     const { createAdminUser } = await import('@/scripts/init-db');
     const stats = await createAdminUser({
@@ -1104,12 +1167,14 @@ git commit -m "feat(init): create-admin accepts token, consumes server-side cred
 ### Task 8: `components/init/InitHeader` + `StepGroup`
 
 **Files:**
+
 - Create: `components/init/InitHeader.tsx`
 - Create: `components/init/StepGroup.tsx`
 - Create: `tests/unit/components/init/InitHeader.test.tsx`
 - Create: `tests/unit/components/init/StepGroup.test.tsx`
 
 **Interfaces:**
+
 - Produces: `<InitHeader currentStep={0|1|2} />` — 3-step indicator (RSC)
 - Produces: `<StepGroup title completedCount total defaultOpen children />` — collapsible card (client)
 
@@ -1153,7 +1218,7 @@ describe('StepGroup', () => {
     const { getByText } = render(
       <StepGroup title="数据库结构" completedCount={1} total={3}>
         <div data-testid="child">child content</div>
-      </StepGroup>
+      </StepGroup>,
     );
     expect(getByText('数据库结构')).toBeTruthy();
     expect(getByText('(1/3 完成)')).toBeTruthy();
@@ -1163,7 +1228,7 @@ describe('StepGroup', () => {
     const { getByTestId } = render(
       <StepGroup title="g" completedCount={0} total={2} defaultOpen>
         <div data-testid="child">c</div>
-      </StepGroup>
+      </StepGroup>,
     );
     expect(getByTestId('child')).toBeTruthy();
   });
@@ -1202,8 +1267,8 @@ export function InitHeader({ currentStep }: { currentStep: 0 | 1 | 2 }) {
                 completed
                   ? 'border-green-600 bg-green-50 text-green-700'
                   : active
-                  ? 'border-seal bg-seal text-white'
-                  : 'border-ink/20 bg-paper-soft text-ink-faint'
+                    ? 'border-seal bg-seal text-white'
+                    : 'border-ink/20 bg-paper-soft text-ink-faint'
               }`}
             >
               {completed ? <Check className="h-4 w-4" /> : <s.Icon className="h-4 w-4" />}
@@ -1247,11 +1312,7 @@ export function StepGroup({
   const [open, setOpen] = useState(defaultOpen);
   const allDone = completedCount === total;
   return (
-    <div
-      className={`rounded-md border-2 ${
-        allDone ? 'border-green-300' : 'border-ink/15'
-      }`}
-    >
+    <div className={`rounded-md border-2 ${allDone ? 'border-green-300' : 'border-ink/15'}`}>
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -1292,9 +1353,11 @@ git commit -m "feat(init): InitHeader + StepGroup reusable wizard components [20
 ### Task 9: `/init` RSC orchestrator (sets cookie on AlreadyDoneCard)
 
 **Files:**
+
 - Modify: `app/init/page.tsx` (full rewrite — currently a 'use client' component)
 
 **Interfaces:**
+
 - Produces: RSC that reads `isSetupComplete()` and either sets the `setup_completed=1` cookie + renders `<AlreadyDoneCard>` or `redirect('/init/db')`
 
 - [ ] **Step 1: Write minimal implementation**
@@ -1336,9 +1399,7 @@ function AlreadyDoneCard() {
       <div className="rounded-md border border-green-300 bg-green-50 p-6 text-center">
         <Check className="mx-auto h-12 w-12 text-green-700" />
         <h2 className="mt-3 text-lg font-medium text-ink">系统已初始化完成</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          首次部署已完成,此页面已自动锁定。
-        </p>
+        <p className="mt-1 text-sm text-ink-soft">首次部署已完成,此页面已自动锁定。</p>
         <Link
           href="/login"
           className="mt-4 inline-block rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80"
@@ -1390,10 +1451,12 @@ git commit -m "feat(init): RSC orchestrator sets setup_completed cookie on lock 
 ### Task 10: `/init/db` page (Step 1 — DB config)
 
 **Files:**
+
 - Create: `app/init/db/page.tsx`
 - Create: `app/init/db/InitDbForm.tsx`
 
 **Interfaces:**
+
 - Produces: `/init/db` — RSC shell redirects to `/init/admin` if `DATABASE_URL` is set; otherwise renders `<InitDbForm />`
 - Produces: `<InitDbForm />` — client form, host/port/user/password/database, calls `/api/init/db-config`, clears password from state on success, `router.push('/init/admin')`
 
@@ -1459,7 +1522,14 @@ export function InitDbForm() {
         return;
       }
       // Clear password from state so a back-nav doesn't render the value.
-      setCfg({ ...DEFAULT_DB, host: cfg.host, port: cfg.port, user: cfg.user, database: cfg.database, password: '' });
+      setCfg({
+        ...DEFAULT_DB,
+        host: cfg.host,
+        port: cfg.port,
+        user: cfg.user,
+        database: cfg.database,
+        password: '',
+      });
       router.push('/init/admin');
     } catch (e) {
       setErr((e as Error).message);
@@ -1479,12 +1549,18 @@ export function InitDbForm() {
           {err}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6"
+      >
         <div className="grid grid-cols-2 gap-3">
           <div className="col-span-2">
             <label className="block text-sm font-medium text-ink-soft">主机</label>
             <input
-              type="text" required autoComplete="off" value={cfg.host}
+              type="text"
+              required
+              autoComplete="off"
+              value={cfg.host}
               onChange={(e) => setCfg({ ...cfg, host: e.target.value })}
               placeholder="例如 127.0.0.1 或 db.example.com"
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
@@ -1493,7 +1569,12 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">端口</label>
             <input
-              type="number" required min={1} max={65535} autoComplete="off" value={cfg.port}
+              type="number"
+              required
+              min={1}
+              max={65535}
+              autoComplete="off"
+              value={cfg.port}
               onChange={(e) => setCfg({ ...cfg, port: Number(e.target.value) })}
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
             />
@@ -1501,7 +1582,10 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">Schema</label>
             <input
-              type="text" required autoComplete="off" value={cfg.database}
+              type="text"
+              required
+              autoComplete="off"
+              value={cfg.database}
               onChange={(e) => setCfg({ ...cfg, database: e.target.value })}
               placeholder="pinyin"
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
@@ -1510,7 +1594,10 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">用户名</label>
             <input
-              type="text" required autoComplete="off" value={cfg.user}
+              type="text"
+              required
+              autoComplete="off"
+              value={cfg.user}
               onChange={(e) => setCfg({ ...cfg, user: e.target.value })}
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
             />
@@ -1518,7 +1605,9 @@ export function InitDbForm() {
           <div>
             <label className="block text-sm font-medium text-ink-soft">密码</label>
             <input
-              type="password" autoComplete="current-password" value={cfg.password}
+              type="password"
+              autoComplete="current-password"
+              value={cfg.password}
               onChange={(e) => setCfg({ ...cfg, password: e.target.value })}
               className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
             />
@@ -1528,7 +1617,8 @@ export function InitDbForm() {
           连接测试会自动创建 schema (如果不存在)。生产环境请使用专用账号,不要 root。
         </p>
         <button
-          type="submit" disabled={busy}
+          type="submit"
+          disabled={busy}
           className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
         >
           {busy ? '测试连接…' : '测试连接并保存'}
@@ -1558,10 +1648,12 @@ git commit -m "feat(init): /init/db page with autoComplete + clear-password fix 
 ### Task 11: `/init/admin` page (Step 2 — admin creds → token)
 
 **Files:**
+
 - Create: `app/init/admin/page.tsx`
 - Create: `app/init/admin/InitAdminForm.tsx`
 
 **Interfaces:**
+
 - Produces: `/init/admin` — RSC shell:
   - no `DATABASE_URL` → `redirect('/init/db')`
   - `isInitWizardAdminDone()` → `redirect('/init/execute')`
@@ -1656,14 +1748,22 @@ export function InitAdminForm() {
           {err}
         </div>
       )}
-      <form onSubmit={handleSubmit} className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-md border border-ink/20 bg-paper-soft p-6"
+      >
         <div>
           <label className="block text-sm font-medium text-ink-soft">
             用户名 (3-32 字符,a-z A-Z 0-9 _)
           </label>
           <input
-            type="text" required minLength={3} maxLength={32} autoComplete="username"
-            value={username} onChange={(e) => setUsername(e.target.value)}
+            type="text"
+            required
+            minLength={3}
+            maxLength={32}
+            autoComplete="username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             pattern="[a-zA-Z0-9_]+"
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
@@ -1671,21 +1771,28 @@ export function InitAdminForm() {
         <div>
           <label className="block text-sm font-medium text-ink-soft">密码 (≥8 字符)</label>
           <input
-            type="password" required minLength={8} autoComplete="new-password"
-            value={password} onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            required
+            minLength={8}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
         </div>
         <div>
           <label className="block text-sm font-medium text-ink-soft">邮箱 (可选)</label>
           <input
-            type="email" autoComplete="email"
-            value={email} onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
         </div>
         <button
-          type="submit" disabled={busy}
+          type="submit"
+          disabled={busy}
           className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
         >
           {busy ? '提交中…' : '下一步'}
@@ -1715,10 +1822,12 @@ git commit -m "feat(init): /init/admin page with token-based credential flow [20
 ### Task 12: `/init/execute` page (Step 3 — 9 phases in 3 groups)
 
 **Files:**
+
 - Create: `app/init/execute/page.tsx`
 - Create: `app/init/execute/InitExecuteForm.tsx`
 
 **Interfaces:**
+
 - Produces: `/init/execute` — RSC shell:
   - no `DATABASE_URL` → `redirect('/init/db')`
   - `isSetupComplete()` → `redirect('/init')` (orchestrator shows locked card + sets cookie)
@@ -1763,7 +1872,16 @@ import { StepGroup } from '@/components/init/StepGroup';
 const STORAGE_KEY = 'piyin.init.admin.creds';
 
 interface SubStep {
-  id: 'tables' | 'app_config' | 'poems' | 'sutras' | 'chars' | 'create_admin' | 'activate' | 'migrations' | 'mark_complete';
+  id:
+    | 'tables'
+    | 'app_config'
+    | 'poems'
+    | 'sutras'
+    | 'chars'
+    | 'create_admin'
+    | 'activate'
+    | 'migrations'
+    | 'mark_complete';
   label: string;
   status: 'idle' | 'running' | 'done' | 'failed';
   detail?: string;
@@ -1783,7 +1901,9 @@ const INITIAL: SubStep[] = [
 
 export function InitExecuteForm() {
   const router = useRouter();
-  const [creds, setCreds] = useState<{ username: string; email?: string; token: string } | null>(null);
+  const [creds, setCreds] = useState<{ username: string; email?: string; token: string } | null>(
+    null,
+  );
   const [subSteps, setSubSteps] = useState<SubStep[]>(INITIAL);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -1818,24 +1938,41 @@ export function InitExecuteForm() {
     setErr(null);
     setSubSteps(INITIAL.map((s) => ({ ...s, status: 'idle', detail: undefined })));
 
-    const phases: Array<{ id: SubStep['id']; endpoint: string; body?: any; format: (d: any) => string }> = [
-      { id: 'tables', endpoint: '/api/init/init-tables',
-        format: (d) => `${d.statementsRun} 条 DDL 写入完成,当前 ${d.tablesNow} 张表` },
-      { id: 'app_config', endpoint: '/api/init/init-app-config',
-        format: (d) => `${d.totalRows} 条配置 (era 默认 + ai/tts)` },
-      { id: 'poems', endpoint: '/api/init/init-poems',
-        format: summarizeAutoPopulate },
-      { id: 'sutras', endpoint: '/api/init/init-sutras',
-        format: summarizeAutoPopulate },
-      { id: 'chars', endpoint: '/api/init/init-chars',
-        format: summarizeAutoPopulate },
-      { id: 'create_admin', endpoint: '/api/init/create-admin',
+    const phases: Array<{
+      id: SubStep['id'];
+      endpoint: string;
+      body?: any;
+      format: (d: any) => string;
+    }> = [
+      {
+        id: 'tables',
+        endpoint: '/api/init/init-tables',
+        format: (d) => `${d.statementsRun} 条 DDL 写入完成,当前 ${d.tablesNow} 张表`,
+      },
+      {
+        id: 'app_config',
+        endpoint: '/api/init/init-app-config',
+        format: (d) => `${d.totalRows} 条配置 (era 默认 + ai/tts)`,
+      },
+      { id: 'poems', endpoint: '/api/init/init-poems', format: summarizeAutoPopulate },
+      { id: 'sutras', endpoint: '/api/init/init-sutras', format: summarizeAutoPopulate },
+      { id: 'chars', endpoint: '/api/init/init-chars', format: summarizeAutoPopulate },
+      {
+        id: 'create_admin',
+        endpoint: '/api/init/create-admin',
         body: { token: creds.token },
-        format: (d) => `已创建 (id=${d.userId})` },
-      { id: 'activate', endpoint: '/api/init/init-activate',
-        format: (d) => d.seeded ? `已写入 (short_name=${d.shortName})` : '已存在,跳过' },
-      { id: 'migrations', endpoint: '/api/init/migrate',
-        format: (d) => `${d.files} 个 SQL 文件 / ${d.statements} 条语句` },
+        format: (d) => `已创建 (id=${d.userId})`,
+      },
+      {
+        id: 'activate',
+        endpoint: '/api/init/init-activate',
+        format: (d) => (d.seeded ? `已写入 (short_name=${d.shortName})` : '已存在,跳过'),
+      },
+      {
+        id: 'migrations',
+        endpoint: '/api/init/migrate',
+        format: (d) => `${d.files} 个 SQL 文件 / ${d.statements} 条语句`,
+      },
     ];
 
     for (const phase of phases) {
@@ -1902,10 +2039,10 @@ export function InitExecuteForm() {
     return s === 'done'
       ? 'border-green-300 bg-green-50'
       : s === 'failed'
-      ? 'border-red-300 bg-red-50'
-      : s === 'running'
-      ? 'border-blue-300 bg-blue-50'
-      : 'border-ink/15 bg-paper-soft';
+        ? 'border-red-300 bg-red-50'
+        : s === 'running'
+          ? 'border-blue-300 bg-blue-50'
+          : 'border-ink/15 bg-paper-soft';
   }
 
   function renderCard(s: SubStep) {
@@ -1926,16 +2063,18 @@ export function InitExecuteForm() {
               s.status === 'done'
                 ? 'text-green-900'
                 : s.status === 'failed'
-                ? 'text-red-900'
-                : s.status === 'running'
-                ? 'text-blue-900'
-                : 'text-ink-soft'
+                  ? 'text-red-900'
+                  : s.status === 'running'
+                    ? 'text-blue-900'
+                    : 'text-ink-soft'
             }`}
           >
             {s.label}
           </div>
           {s.detail && (
-            <div className={`mt-0.5 text-xs ${s.status === 'failed' ? 'text-red-700' : 'text-ink-faint'}`}>
+            <div
+              className={`mt-0.5 text-xs ${s.status === 'failed' ? 'text-red-700' : 'text-ink-faint'}`}
+            >
               {s.detail}
             </div>
           )}
@@ -1945,10 +2084,10 @@ export function InitExecuteForm() {
             s.status === 'done'
               ? 'text-green-700'
               : s.status === 'failed'
-              ? 'text-red-700'
-              : s.status === 'running'
-              ? 'text-blue-600'
-              : 'text-ink-faint'
+                ? 'text-red-700'
+                : s.status === 'running'
+                  ? 'text-blue-600'
+                  : 'text-ink-faint'
           }`}
         >
           {s.status === 'done' && '完成'}
@@ -1968,7 +2107,8 @@ export function InitExecuteForm() {
     <>
       <h1 className="mb-2 text-2xl font-semibold text-ink">首次部署 — 第 3 步 / 共 3 步</h1>
       <p className="mb-6 text-sm text-ink-soft">
-        点击下方按钮开始初始化。系统会依次执行以下步骤,每步状态实时显示。<br />
+        点击下方按钮开始初始化。系统会依次执行以下步骤,每步状态实时显示。
+        <br />
         创建管理员:<code className="rounded bg-ink/5 px-1">{creds.username}</code>
         {creds.email ? (
           <>
@@ -1988,7 +2128,12 @@ export function InitExecuteForm() {
           const items = g.ids.map((id) => subSteps.find((s) => s.id === id)!).filter(Boolean);
           const completed = items.filter((s) => s.status === 'done').length;
           return (
-            <StepGroup key={g.title} title={g.title} completedCount={completed} total={items.length}>
+            <StepGroup
+              key={g.title}
+              title={g.title}
+              completedCount={completed}
+              total={items.length}
+            >
               {items.map(renderCard)}
             </StepGroup>
           );
@@ -1997,7 +2142,9 @@ export function InitExecuteForm() {
       <div className="mt-6 flex justify-center">
         {allIdle && (
           <button
-            type="button" onClick={runPhases} disabled={busy}
+            type="button"
+            onClick={runPhases}
+            disabled={busy}
             className="rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80 disabled:opacity-50"
           >
             开始初始化
@@ -2005,7 +2152,9 @@ export function InitExecuteForm() {
         )}
         {someFailed && (
           <button
-            type="button" onClick={runPhases} disabled={busy}
+            type="button"
+            onClick={runPhases}
+            disabled={busy}
             className="rounded-md bg-amber-600 px-6 py-2 text-white hover:bg-amber-700 disabled:opacity-50"
           >
             {busy ? '重试中…' : '重试失败步骤'}
@@ -2044,9 +2193,11 @@ git commit -m "feat(init): /init/execute page with 3 grouped StepGroups [2026-07
 ### Task 13: Full-chain integration test on scratch DB
 
 **Files:**
+
 - Create: `tests/integration/init-wizard.test.ts`
 
 **Interfaces:**
+
 - Produces: Integration test that creates scratch DB `piyin_wizard_test`, runs full 9-phase chain, asserts cookie set + setup.completed=true in app_config
 
 - [ ] **Step 1: Write integration test**
@@ -2069,7 +2220,9 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
     const mysql = await import('mysql2/promise');
     const admin = await mysql.createConnection(adminUrl);
     await admin.query(`DROP DATABASE IF EXISTS \`${SCRATCH_DB}\``);
-    await admin.query(`CREATE DATABASE \`${SCRATCH_DB}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    await admin.query(
+      `CREATE DATABASE \`${SCRATCH_DB}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    );
     await admin.end();
 
     // Point the running test process at the scratch DB.
@@ -2122,7 +2275,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
       new NextRequest('http://localhost/api/init/stash-admin', {
         method: 'POST',
         body: JSON.stringify({ username: 'wizardtest', password: 'supersecret', email: 'w@x.com' }),
-      })
+      }),
     );
     expect(stashRes.status).toBe(200);
     const stashBody = await stashRes.json();
@@ -2134,7 +2287,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
       new NextRequest('http://localhost/api/init/create-admin', {
         method: 'POST',
         body: JSON.stringify({ token: stashBody.data.token }),
-      })
+      }),
     );
     expect(res.status).toBe(200);
     body = await res.json();
@@ -2147,7 +2300,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
       new NextRequest('http://localhost/api/init/create-admin', {
         method: 'POST',
         body: JSON.stringify({ token: stashBody.data.token }),
-      })
+      }),
     );
     expect(replayRes.status).toBe(401);
 

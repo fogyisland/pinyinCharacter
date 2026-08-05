@@ -1,7 +1,14 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { stashAdminCredentials, consumeAdminCredentials, gcExpired, _resetStoreForTest } from '@/lib/init-credentials';
+import {
+  stashAdminCredentials,
+  consumeAdminCredentials,
+  gcExpired,
+  _resetStoreForTest,
+} from '@/lib/init-credentials';
 
-beforeEach(() => { _resetStoreForTest(); });
+beforeEach(() => {
+  _resetStoreForTest();
+});
 
 describe('stashAdminCredentials', () => {
   it('returns a 32-char hex token', () => {
@@ -12,8 +19,16 @@ describe('stashAdminCredentials', () => {
 
 describe('consumeAdminCredentials', () => {
   it('returns the same credentials that were stashed', () => {
-    const t = stashAdminCredentials({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
-    expect(consumeAdminCredentials(t)).toEqual({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
+    const t = stashAdminCredentials({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
+    expect(consumeAdminCredentials(t)).toEqual({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
   });
 
   it('is one-shot (second call returns null)', () => {

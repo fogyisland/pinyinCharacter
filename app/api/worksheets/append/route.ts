@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { withErrorHandling, badRequest, unauthorized, notFound, forbidden } from '@/lib/api-handler';
+import {
+  withErrorHandling,
+  badRequest,
+  unauthorized,
+  notFound,
+  forbidden,
+} from '@/lib/api-handler';
 import { appendToWorksheetSchema } from '@/lib/validators';
 import { appendCharToWorksheet, WorksheetAccessError } from '@/lib/worksheet-append';
 import { logUserAction } from '@/lib/audit';

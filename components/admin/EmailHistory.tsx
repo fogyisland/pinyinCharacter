@@ -25,7 +25,8 @@ export function EmailHistory() {
   const [err, setErr] = useState<string | null>(null);
 
   const fetchItems = useCallback(async () => {
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     try {
       const r = await fetch('/api/admin/email/history?limit=50');
       const j = await r.json();
@@ -38,22 +39,32 @@ export function EmailHistory() {
     }
   }, []);
 
-  useEffect(() => { void fetchItems(); }, [fetchItems]);
+  useEffect(() => {
+    void fetchItems();
+  }, [fetchItems]);
 
   return (
     <div className="card-paper rounded-lg p-4 space-y-2">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-ink-soft inline-flex items-center gap-1">
-          <Mail className="h-3.5 w-3.5" />发送历史 (最近 50 条)
+          <Mail className="h-3.5 w-3.5" />
+          发送历史 (最近 50 条)
         </h2>
-        <button type="button" onClick={() => void fetchItems()} disabled={busy}
-          className="text-xs text-ink-soft hover:text-ink disabled:opacity-50 inline-flex items-center gap-1">
-          <RefreshCw className="h-3 w-3" />刷新
+        <button
+          type="button"
+          onClick={() => void fetchItems()}
+          disabled={busy}
+          className="text-xs text-ink-soft hover:text-ink disabled:opacity-50 inline-flex items-center gap-1"
+        >
+          <RefreshCw className="h-3 w-3" />
+          刷新
         </button>
       </div>
       {err && <p className="text-xs text-seal">{err}</p>}
       {items.length === 0 && !err && (
-        <p className="text-xs text-ink-faint">暂无发送记录 — 触发一次密码重置或管理员发件测试后会出现。</p>
+        <p className="text-xs text-ink-faint">
+          暂无发送记录 — 触发一次密码重置或管理员发件测试后会出现。
+        </p>
       )}
       {items.length > 0 && (
         <div className="overflow-x-auto">
@@ -69,16 +80,25 @@ export function EmailHistory() {
               </tr>
             </thead>
             <tbody>
-              {items.map(it => (
+              {items.map((it) => (
                 <tr key={it.id} className="border-t">
-                  <td className="px-2 py-1 text-xs text-ink-soft whitespace-nowrap">{new Date(it.sentAt).toLocaleString('zh-CN')}</td>
+                  <td className="px-2 py-1 text-xs text-ink-soft whitespace-nowrap">
+                    {new Date(it.sentAt).toLocaleString('zh-CN')}
+                  </td>
                   <td className="px-2 py-1 text-xs font-mono">{it.to}</td>
                   <td className="px-2 py-1 text-xs">{it.subject}</td>
                   <td className="px-2 py-1 text-xs text-ink-soft">{it.template ?? '—'}</td>
                   <td className="px-2 py-1 text-xs">
-                    <span className={`inline-block px-1.5 py-0.5 rounded ${STATUS_COLORS[it.status] ?? 'bg-paper-deep'}`}>{it.status}</span>
+                    <span
+                      className={`inline-block px-1.5 py-0.5 rounded ${STATUS_COLORS[it.status] ?? 'bg-paper-deep'}`}
+                    >
+                      {it.status}
+                    </span>
                   </td>
-                  <td className="px-2 py-1 text-xs text-seal max-w-[200px] truncate" title={it.error ?? ''}>
+                  <td
+                    className="px-2 py-1 text-xs text-seal max-w-[200px] truncate"
+                    title={it.error ?? ''}
+                  >
                     {it.error ?? '—'}
                   </td>
                 </tr>

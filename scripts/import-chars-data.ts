@@ -14,7 +14,7 @@ async function main() {
 
   console.log(`Importing ${chars.length} chars...`);
   let imported = 0;
-  let skipped = 0;
+  const skipped = 0;
 
   for (let i = 0; i < chars.length; i++) {
     const char = chars[i];
@@ -24,7 +24,7 @@ async function main() {
 
     await pool.execute(
       `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES (?, ?, ?, ?)`,
-      [char, level, radical, unicodeCodepoint]
+      [char, level, radical, unicodeCodepoint],
     );
     imported++;
 

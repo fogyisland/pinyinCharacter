@@ -20,7 +20,7 @@ let bigramsLoaded = false;
 function loadBigrams(): void {
   if (bigramsLoaded) return;
   bigrams = JSON.parse(
-    readFileSync(join(process.cwd(), 'data', 'bigrams.json'), 'utf8')
+    readFileSync(join(process.cwd(), 'data', 'bigrams.json'), 'utf8'),
   ) as Bigrams;
   bigramsLoaded = true;
 }
@@ -33,11 +33,7 @@ const BAD_SCORE = -1000;
 const TOP_K = 20;
 const MAX_TOKEN_LEN = 4;
 
-export function convertSentence(
-  pinyinStr: string,
-  safeMode: boolean,
-  script: Script
-): string {
+export function convertSentence(pinyinStr: string, safeMode: boolean, script: Script): string {
   if (!pinyinStr.trim()) return '';
   loadBigrams();
 
@@ -99,7 +95,10 @@ export function convertSentence(
   return out.join('');
 }
 
-interface Token { str: string; len: number; }
+interface Token {
+  str: string;
+  len: number;
+}
 
 function tokenize(pinyinStr: string): Token[] {
   // Strip apostrophes (they're used for disambiguation like xi'an, but tokenize on the rest)

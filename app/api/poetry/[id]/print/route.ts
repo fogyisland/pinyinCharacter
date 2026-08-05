@@ -17,8 +17,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
     const userAgent = req.headers.get('user-agent') ?? null;
     await logDownload({
-      userId: auth.user.id, format: 'print', sourceType: 'poem', sourceId: String(pid),
-      ip, userAgent,
+      userId: auth.user.id,
+      format: 'print',
+      sourceType: 'poem',
+      sourceId: String(pid),
+      ip,
+      userAgent,
     });
     await logUserAction(req, auth.user.id, 'poem_saved', {
       action: 'print',

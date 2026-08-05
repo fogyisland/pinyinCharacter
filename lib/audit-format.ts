@@ -7,39 +7,74 @@
  */
 
 export type AuditEvent =
-  | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete'
-  | 'password_reset_request' | 'password_reset_complete'
-  | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote'
-  | 'user_disabled' | 'user_reenabled'
-  | 'ai_config_updated' | 'ai_call_logged'
+  | 'register'
+  | 'login'
+  | 'logout'
+  | 'history_create'
+  | 'history_delete'
+  | 'password_reset_request'
+  | 'password_reset_complete'
+  | 'admin_user_delete'
+  | 'admin_user_password_reset'
+  | 'admin_user_promote'
+  | 'admin_user_demote'
+  | 'user_disabled'
+  | 'user_reenabled'
+  | 'ai_config_updated'
+  | 'ai_call_logged'
   | 'tts_config_updated'
-  | 'scheduler_config_updated' | 'scheduler_manual_trigger'
-  | 'worksheet_saved' | 'worksheet_char_appended' | 'worksheet_deleted' | 'worksheet_batch_printed'
-  | 'poem_saved' | 'sutra_saved' | 'rare_char_card_saved'
-  | 'membership_granted' | 'membership_granted_paypal' | 'membership_revoked'
+  | 'scheduler_config_updated'
+  | 'scheduler_manual_trigger'
+  | 'worksheet_saved'
+  | 'worksheet_char_appended'
+  | 'worksheet_deleted'
+  | 'worksheet_batch_printed'
+  | 'poem_saved'
+  | 'sutra_saved'
+  | 'rare_char_card_saved'
+  | 'membership_granted'
+  | 'membership_granted_paypal'
+  | 'membership_revoked'
   | 'membership_checkout_started'
-  | 'paypal_config_updated' | 'paypal_webhook_received' | 'paypal_webhook_rejected'
-  | 'admin_chars_generated' | 'admin_chars_init_seed'
+  | 'paypal_config_updated'
+  | 'paypal_webhook_received'
+  | 'paypal_webhook_rejected'
+  | 'admin_chars_generated'
+  | 'admin_chars_init_seed'
   | 'admin_membership_plans_seeded'
   | 'admin_about_intro_regenerated'
-  | 'smtp_config_updated' | 'smtp_test_sent'
-  | 'welcome_email_sent' | 'welcome_email_failed'
-  | 'verification_email_sent' | 'verification_email_failed'
-  | 'verification_resent' | 'verification_resend_failed'
+  | 'smtp_config_updated'
+  | 'smtp_test_sent'
+  | 'welcome_email_sent'
+  | 'welcome_email_failed'
+  | 'verification_email_sent'
+  | 'verification_email_failed'
+  | 'verification_resent'
+  | 'verification_resend_failed'
   | 'email_verified'
-  | 'campaign_created' | 'campaign_armed' | 'campaign_preview_sent'
+  | 'campaign_created'
+  | 'campaign_armed'
+  | 'campaign_preview_sent'
   | 'marketing_unsubscribed'
   | 'site_url_updated'
-  | 'setup_route_enable' | 'setup_route_disable'
-  | 'activation_lock' | 'activation_unlock'
+  | 'setup_route_enable'
+  | 'setup_route_disable'
+  | 'activation_lock'
+  | 'activation_unlock'
   | 'admin.font_config.update'
-  | 'admin.audio.upload' | 'admin.audio.update' | 'admin.audio.delete'
-  | 'admin.playlist.create' | 'admin.playlist.update' | 'admin.playlist.delete'
-  | 'admin.playlist.add_track' | 'admin.playlist.remove_track' | 'admin.playlist.reorder'
-  | 'notes_posted' | 'notes_deleted'
-  | 'notes_email_sent' | 'notes_email_failed'
+  | 'admin.audio.upload'
+  | 'admin.audio.update'
+  | 'admin.audio.delete'
+  | 'admin.playlist.create'
+  | 'admin.playlist.update'
+  | 'admin.playlist.delete'
+  | 'admin.playlist.add_track'
+  | 'admin.playlist.remove_track'
+  | 'admin.playlist.reorder'
+  | 'notes_posted'
+  | 'notes_deleted'
+  | 'notes_email_sent'
+  | 'notes_email_failed'
   | 'notes_admin_emails_updated';
 
 /**
@@ -48,39 +83,74 @@ export type AuditEvent =
  * AND in the union AND in EVENT_LABEL below — tests assert coverage.
  */
 export const AUDIT_EVENTS = [
-  'register', 'login', 'logout',
-  'history_create', 'history_delete',
-  'password_reset_request', 'password_reset_complete',
-  'admin_user_delete', 'admin_user_password_reset',
-  'admin_user_promote', 'admin_user_demote',
-  'user_disabled', 'user_reenabled',
-  'ai_config_updated', 'ai_call_logged',
+  'register',
+  'login',
+  'logout',
+  'history_create',
+  'history_delete',
+  'password_reset_request',
+  'password_reset_complete',
+  'admin_user_delete',
+  'admin_user_password_reset',
+  'admin_user_promote',
+  'admin_user_demote',
+  'user_disabled',
+  'user_reenabled',
+  'ai_config_updated',
+  'ai_call_logged',
   'tts_config_updated',
-  'scheduler_config_updated', 'scheduler_manual_trigger',
-  'worksheet_saved', 'worksheet_char_appended', 'worksheet_deleted', 'worksheet_batch_printed',
-  'poem_saved', 'sutra_saved', 'rare_char_card_saved',
-  'membership_granted', 'membership_granted_paypal', 'membership_revoked',
+  'scheduler_config_updated',
+  'scheduler_manual_trigger',
+  'worksheet_saved',
+  'worksheet_char_appended',
+  'worksheet_deleted',
+  'worksheet_batch_printed',
+  'poem_saved',
+  'sutra_saved',
+  'rare_char_card_saved',
+  'membership_granted',
+  'membership_granted_paypal',
+  'membership_revoked',
   'membership_checkout_started',
-  'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
-  'admin_chars_generated', 'admin_chars_init_seed',
+  'paypal_config_updated',
+  'paypal_webhook_received',
+  'paypal_webhook_rejected',
+  'admin_chars_generated',
+  'admin_chars_init_seed',
   'admin_membership_plans_seeded',
   'admin_about_intro_regenerated',
-  'smtp_config_updated', 'smtp_test_sent',
-  'welcome_email_sent', 'welcome_email_failed',
-  'verification_email_sent', 'verification_email_failed',
-  'verification_resent', 'verification_resend_failed',
+  'smtp_config_updated',
+  'smtp_test_sent',
+  'welcome_email_sent',
+  'welcome_email_failed',
+  'verification_email_sent',
+  'verification_email_failed',
+  'verification_resent',
+  'verification_resend_failed',
   'email_verified',
-  'campaign_created', 'campaign_armed', 'campaign_preview_sent',
+  'campaign_created',
+  'campaign_armed',
+  'campaign_preview_sent',
   'marketing_unsubscribed',
   'site_url_updated',
-  'setup_route_enable', 'setup_route_disable',
-  'activation_lock', 'activation_unlock',
+  'setup_route_enable',
+  'setup_route_disable',
+  'activation_lock',
+  'activation_unlock',
   'admin.font_config.update',
-  'admin.audio.upload', 'admin.audio.update', 'admin.audio.delete',
-  'admin.playlist.create', 'admin.playlist.update', 'admin.playlist.delete',
-  'admin.playlist.add_track', 'admin.playlist.remove_track', 'admin.playlist.reorder',
-  'notes_posted', 'notes_deleted',
-  'notes_email_sent', 'notes_email_failed',
+  'admin.audio.upload',
+  'admin.audio.update',
+  'admin.audio.delete',
+  'admin.playlist.create',
+  'admin.playlist.update',
+  'admin.playlist.delete',
+  'admin.playlist.add_track',
+  'admin.playlist.remove_track',
+  'admin.playlist.reorder',
+  'notes_posted',
+  'notes_deleted',
+  'notes_email_sent',
+  'notes_email_failed',
   'notes_admin_emails_updated',
 ] as const satisfies readonly AuditEvent[];
 
@@ -166,7 +236,10 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
  * Format an audit event + metadata into a short Chinese sentence for display
  * in the admin log UI. Keep one branch per event so changes stay localized.
  */
-export function formatLogMessage(event: string, metadata: Record<string, unknown> | null | undefined): string {
+export function formatLogMessage(
+  event: string,
+  metadata: Record<string, unknown> | null | undefined,
+): string {
   const m = metadata ?? {};
   const num = (v: unknown, suffix = ''): string =>
     typeof v === 'number' ? `${v}${suffix}` : typeof v === 'string' ? `${v}${suffix}` : '';
@@ -175,32 +248,50 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
   const truncate = (v: unknown, n: number): string => str(v).slice(0, n);
 
   switch (event) {
-    case 'register':              return '注册新账号';
-    case 'login':                 return `登录${str(m.username) ? `(${str(m.username)})` : ''}`;
-    case 'logout':                return '退出登录';
+    case 'register':
+      return '注册新账号';
+    case 'login':
+      return `登录${str(m.username) ? `(${str(m.username)})` : ''}`;
+    case 'logout':
+      return '退出登录';
     case 'history_create': {
-      const action = str(m.action) === 'favorite' ? '收藏' : str(m.action) === 'view' ? '查看' : '记录';
+      const action =
+        str(m.action) === 'favorite' ? '收藏' : str(m.action) === 'view' ? '查看' : '记录';
       const char = str(m.char) || str(m.word) || '?';
       return `${action}「${char}」`;
     }
-    case 'history_delete':        return `删除历史记录 #${num(m.id) || str(m.id) || '?'}`;
-    case 'password_reset_request':  return `请求重置密码${str(m.email) ? `(${str(m.email)})` : ''}`;
-    case 'password_reset_complete': return '完成密码重置';
+    case 'history_delete':
+      return `删除历史记录 #${num(m.id) || str(m.id) || '?'}`;
+    case 'password_reset_request':
+      return `请求重置密码${str(m.email) ? `(${str(m.email)})` : ''}`;
+    case 'password_reset_complete':
+      return '完成密码重置';
 
-    case 'admin_user_delete':       return `删除用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
-    case 'admin_user_password_reset': return `重置用户 #${num(m.targetUserId) || '?'} 的密码${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
-    case 'admin_user_promote':      return `提升 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''} 为管理员`;
-    case 'admin_user_demote':        return `降级 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''} 为普通用户`;
-    case 'user_disabled':           return `禁用用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
-    case 'user_reenabled':          return `重新启用用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
+    case 'admin_user_delete':
+      return `删除用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
+    case 'admin_user_password_reset':
+      return `重置用户 #${num(m.targetUserId) || '?'} 的密码${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
+    case 'admin_user_promote':
+      return `提升 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''} 为管理员`;
+    case 'admin_user_demote':
+      return `降级 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''} 为普通用户`;
+    case 'user_disabled':
+      return `禁用用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
+    case 'user_reenabled':
+      return `重新启用用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
 
-    case 'ai_config_updated':       return `更新 AI 配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
-    case 'ai_call_logged':          return `AI 调用: ${str(m.feature) || '?'}`;
+    case 'ai_config_updated':
+      return `更新 AI 配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
+    case 'ai_call_logged':
+      return `AI 调用: ${str(m.feature) || '?'}`;
 
-    case 'tts_config_updated':      return `更新 TTS 配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
+    case 'tts_config_updated':
+      return `更新 TTS 配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
 
-    case 'scheduler_config_updated': return `更新定时器配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
-    case 'scheduler_manual_trigger': return `手动触发定时器 (${num(m.taskCount) || '?'} 个任务, 成功 ${num(m.okCount) || '?'})`;
+    case 'scheduler_config_updated':
+      return `更新定时器配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
+    case 'scheduler_manual_trigger':
+      return `手动触发定时器 (${num(m.taskCount) || '?'} 个任务, 成功 ${num(m.okCount) || '?'})`;
 
     case 'worksheet_saved': {
       const action = str(m.action) === 'print' ? '打印字帖' : '保存字帖';
@@ -208,8 +299,10 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
     }
     case 'worksheet_char_appended':
       return `${m.added === false ? '已存在' : '追加'}「${str(m.char) || '?'}」到「我的字帖」 (#${num(m.worksheetId) || '?'})`;
-    case 'worksheet_deleted':       return `删除字帖 #${num(m.worksheetId) || num(m.id) || '?'}${str(m.title) ? `「${str(m.title)}」` : ''}`;
-    case 'worksheet_batch_printed': return `批量打印 ${num(m.count) || '?'} 张字帖 (${Array.isArray(m.ids) ? m.ids.map(String).join(', ') || '?' : '?'})`;
+    case 'worksheet_deleted':
+      return `删除字帖 #${num(m.worksheetId) || num(m.id) || '?'}${str(m.title) ? `「${str(m.title)}」` : ''}`;
+    case 'worksheet_batch_printed':
+      return `批量打印 ${num(m.count) || '?'} 张字帖 (${Array.isArray(m.ids) ? m.ids.map(String).join(', ') || '?' : '?'})`;
     case 'poem_saved': {
       const action = str(m.action) === 'print' ? '打印古诗' : '保存古诗';
       return `${action}「${str(m.title) || str(m.poemId) || '?'}」`;
@@ -223,14 +316,21 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
       return `${action}「${str(m.char) || '?'}」`;
     }
 
-    case 'membership_granted':         return `管理员开通会员 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''} (${str(m.plan) || '?'})`;
-    case 'membership_granted_paypal':  return `PayPal 开通会员 #${num(m.targetUserId) || '?'} (${str(m.plan) || '?'})`;
-    case 'membership_revoked':         return `撤销会员 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
-    case 'membership_checkout_started':return `开始结账 (${str(m.planKey) || '?'}${str(m.paypalOrderId) ? `, order=${str(m.paypalOrderId).slice(0, 10)}…` : ''})`;
+    case 'membership_granted':
+      return `管理员开通会员 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''} (${str(m.plan) || '?'})`;
+    case 'membership_granted_paypal':
+      return `PayPal 开通会员 #${num(m.targetUserId) || '?'} (${str(m.plan) || '?'})`;
+    case 'membership_revoked':
+      return `撤销会员 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
+    case 'membership_checkout_started':
+      return `开始结账 (${str(m.planKey) || '?'}${str(m.paypalOrderId) ? `, order=${str(m.paypalOrderId).slice(0, 10)}…` : ''})`;
 
-    case 'paypal_config_updated':      return '更新 PayPal 配置';
-    case 'paypal_webhook_received':    return `收到 PayPal 回调${str(m.eventType) ? ` (${str(m.eventType)})` : ''}`;
-    case 'paypal_webhook_rejected':    return `拒绝 PayPal 回调: ${str(m.reason) || '?'}`;
+    case 'paypal_config_updated':
+      return '更新 PayPal 配置';
+    case 'paypal_webhook_received':
+      return `收到 PayPal 回调${str(m.eventType) ? ` (${str(m.eventType)})` : ''}`;
+    case 'paypal_webhook_rejected':
+      return `拒绝 PayPal 回调: ${str(m.reason) || '?'}`;
 
     case 'admin_chars_generated': {
       const lvl = num(m.level);
@@ -247,8 +347,10 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
     case 'admin_chars_init_seed':
       return `${str(m.action) === 'clear' ? '清空' : '种子'} 测试数据${num(m.inserted) ? ` (${num(m.inserted)} 字)` : num(m.removed) ? ` (删除 ${num(m.removed)} 字)` : ''}`;
 
-    case 'admin_membership_plans_seeded': return `种子会员套餐 (${num(m.seeded) || '?'} 个)`;
-    case 'admin_about_intro_regenerated': return `重新生成关于页介绍 (${num(m.charCount) || '?'} 字, ${num(m.durationMs) || '?'}ms, ${str(m.model) || '?'})`;
+    case 'admin_membership_plans_seeded':
+      return `种子会员套餐 (${num(m.seeded) || '?'} 个)`;
+    case 'admin_about_intro_regenerated':
+      return `重新生成关于页介绍 (${num(m.charCount) || '?'} 字, ${num(m.durationMs) || '?'}ms, ${str(m.model) || '?'})`;
 
     case 'smtp_config_updated':
       return `更新邮件配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
@@ -266,21 +368,35 @@ export function formatLogMessage(event: string, metadata: Record<string, unknown
       return `解锁平台实例 ${str(m.shortName) ? `「${str(m.shortName)}」` : ''}${str(m.source) ? ` (${str(m.source)})` : ''}`;
     case 'admin.font_config.update':
       return `更新字源字体配置${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
-    case 'admin.audio.upload':       return `上传音频「${str(m.title) || '?'}」(${str(m.filename) || '?'}, ${num(m.sizeBytes) || '?'} bytes)`;
-    case 'admin.audio.update':       return `更新音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
-    case 'admin.audio.delete':       return `删除音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」(${str(m.filename) || '?'})`;
-    case 'admin.playlist.create':    return `新建播放列表「${str(m.title) || '?'}」${m.isDefault === true ? ' (设为默认)' : ''}`;
-    case 'admin.playlist.update':    return `更新播放列表 #${num(m.id) || '?'}「${str(m.title) || '?'}」${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
-    case 'admin.playlist.delete':    return `删除播放列表 #${num(m.id) || '?'}「${str(m.title) || '?'}」`;
-    case 'admin.playlist.add_track': return `向播放列表「${str(m.playlistTitle) || '?'}」添加曲目「${str(m.trackTitle) || '?'}」`;
-    case 'admin.playlist.remove_track': return `从播放列表「${str(m.playlistTitle) || '?'}」移除曲目「${str(m.trackTitle) || '?'}」`;
-    case 'admin.playlist.reorder':   return `重排播放列表「${str(m.playlistTitle) || '?'}」(${num(m.trackCount) || '?'} 首)`;
+    case 'admin.audio.upload':
+      return `上传音频「${str(m.title) || '?'}」(${str(m.filename) || '?'}, ${num(m.sizeBytes) || '?'} bytes)`;
+    case 'admin.audio.update':
+      return `更新音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
+    case 'admin.audio.delete':
+      return `删除音频 #${num(m.id) || '?'}「${str(m.title) || '?'}」(${str(m.filename) || '?'})`;
+    case 'admin.playlist.create':
+      return `新建播放列表「${str(m.title) || '?'}」${m.isDefault === true ? ' (设为默认)' : ''}`;
+    case 'admin.playlist.update':
+      return `更新播放列表 #${num(m.id) || '?'}「${str(m.title) || '?'}」${str(m.changes) ? ` (${str(m.changes)})` : ''}`;
+    case 'admin.playlist.delete':
+      return `删除播放列表 #${num(m.id) || '?'}「${str(m.title) || '?'}」`;
+    case 'admin.playlist.add_track':
+      return `向播放列表「${str(m.playlistTitle) || '?'}」添加曲目「${str(m.trackTitle) || '?'}」`;
+    case 'admin.playlist.remove_track':
+      return `从播放列表「${str(m.playlistTitle) || '?'}」移除曲目「${str(m.trackTitle) || '?'}」`;
+    case 'admin.playlist.reorder':
+      return `重排播放列表「${str(m.playlistTitle) || '?'}」(${num(m.trackCount) || '?'} 首)`;
 
-    case 'notes_posted':       return `收到新留言 #${num(m.id) || '?'}「${str(m.authorName) || '匿名'}」${str(m.content) ? `: ${truncate(str(m.content), 40)}` : ''}`;
-    case 'notes_deleted':      return `删除留言 #${num(m.id) || '?'}${str(m.authorName) ? `「${str(m.authorName)}」` : ''}`;
-    case 'notes_email_sent':   return `留言通知邮件发送 (to=${str(m.to) || '?'}, id=${num(m.noteId) || '?'})`;
-    case 'notes_email_failed': return `留言通知邮件失败 (id=${num(m.noteId) || '?'}, error=${str(m.error) || '?'})`;
-    case 'notes_admin_emails_updated': return `更新通知邮箱 (${num(m.count) || '?'} 个收件人)`;
+    case 'notes_posted':
+      return `收到新留言 #${num(m.id) || '?'}「${str(m.authorName) || '匿名'}」${str(m.content) ? `: ${truncate(str(m.content), 40)}` : ''}`;
+    case 'notes_deleted':
+      return `删除留言 #${num(m.id) || '?'}${str(m.authorName) ? `「${str(m.authorName)}」` : ''}`;
+    case 'notes_email_sent':
+      return `留言通知邮件发送 (to=${str(m.to) || '?'}, id=${num(m.noteId) || '?'})`;
+    case 'notes_email_failed':
+      return `留言通知邮件失败 (id=${num(m.noteId) || '?'}, error=${str(m.error) || '?'})`;
+    case 'notes_admin_emails_updated':
+      return `更新通知邮箱 (${num(m.count) || '?'} 个收件人)`;
 
     default: {
       const keys = Object.keys(m);

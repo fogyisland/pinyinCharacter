@@ -18,7 +18,7 @@ interface Props {
 type Phase = 'copying' | 'collapsing' | 'sealed';
 
 const WRITING_MODE: Record<SutraReading, string> = {
-  'horizontal': 'horizontal-tb',
+  horizontal: 'horizontal-tb',
   'vertical-rtl': 'vertical-rl',
   'vertical-ltr': 'vertical-lr',
 };
@@ -65,7 +65,9 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
       if (p?.completedAt) setPhase('sealed');
     }
     void load();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chunk.id, sutraId]);
 
@@ -104,23 +106,28 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ chunkIdx: chunk.id, writtenChars }),
-      }).then(r => {
+      }).then((r) => {
         if (!r.ok) setError('进度保存失败');
       });
     }, DEBOUNCE_MS);
-    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, [writtenChars, sutraId, chunk.id, userId, phase]);
 
-  const handleCharClick = useCallback((idx: number) => {
-    if (!userId) return;
-    setPhase('copying'); // reset from sealed if user re-clicks after a reset
-    setWrittenChars(prev => {
-      if (prev[idx]) return prev;
-      const next = prev.slice();
-      next[idx] = true;
-      return next;
-    });
-  }, [userId]);
+  const handleCharClick = useCallback(
+    (idx: number) => {
+      if (!userId) return;
+      setPhase('copying'); // reset from sealed if user re-clicks after a reset
+      setWrittenChars((prev) => {
+        if (prev[idx]) return prev;
+        const next = prev.slice();
+        next[idx] = true;
+        return next;
+      });
+    },
+    [userId],
+  );
 
   const handleReset = useCallback(() => {
     if (!window.confirm('将清除本段抄经进度，确定？')) return;
@@ -147,10 +154,18 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
       >
         <CopySeal className="copy-seal--enter" />
         <div className="mt-8 flex gap-3">
-          <button type="button" onClick={handleReset} className="rounded-md border border-ink/20 px-4 py-2 hover:bg-ink/5">
+          <button
+            type="button"
+            onClick={handleReset}
+            className="rounded-md border border-ink/20 px-4 py-2 hover:bg-ink/5"
+          >
             重新抄写
           </button>
-          <button type="button" onClick={onExit} className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80">
+          <button
+            type="button"
+            onClick={onExit}
+            className="rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80"
+          >
             退出抄经
           </button>
         </div>
@@ -163,8 +178,7 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
       data-testid="copy-view"
       data-reading={reading}
       className={
-        'copy-view' +
-        (phase === 'collapsing' ? ' copy-view--collapse copy-view--collapsing' : '')
+        'copy-view' + (phase === 'collapsing' ? ' copy-view--collapse copy-view--collapsing' : '')
       }
     >
       <div className="copy-progress mb-3">
@@ -174,7 +188,9 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="mt-1 text-xs text-ink-faint">已抄 {writtenCount} / {total} 字</p>
+        <p className="mt-1 text-xs text-ink-faint">
+          已抄 {writtenCount} / {total} 字
+        </p>
       </div>
 
       {disabled && (
@@ -183,7 +199,10 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
           className="mb-3 rounded border-l-4 border-seal bg-paper-warm p-3 text-sm text-ink-soft"
         >
           请登录后开始抄经，进度将自动保存。
-          <a className="ml-2 text-seal underline" href={`/login?next=${encodeURIComponent(`/sutra/${sutraId}?chunk=${chunk.id}`)}`}>
+          <a
+            className="ml-2 text-seal underline"
+            href={`/login?next=${encodeURIComponent(`/sutra/${sutraId}?chunk=${chunk.id}`)}`}
+          >
             登录
           </a>
         </div>
@@ -197,7 +216,10 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
         style={{ writingMode: WRITING_MODE[reading] as any }}
       >
         {chunk.content.map((line, li) => (
-          <p key={li} className={reading === 'horizontal' ? 'my-1.5' : 'mx-3 inline-block align-top'}>
+          <p
+            key={li}
+            className={reading === 'horizontal' ? 'my-1.5' : 'mx-3 inline-block align-top'}
+          >
             {[...line].map((ch, ci) => {
               const safeIdx = lineStartsAt(chunk, li) + ci;
               return (

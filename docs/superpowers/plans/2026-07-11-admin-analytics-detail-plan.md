@@ -32,6 +32,7 @@
 ### Schema notes (verified against Wave 0 init-db.ts)
 
 `page_views` table (per `scripts/init-db.ts` + page-views plan):
+
 ```sql
 id BIGINT, user_id BIGINT NULL, path VARCHAR(255), ip VARCHAR(45) NULL,
 user_agent VARCHAR(255) NULL, created_at DATETIME(3),
@@ -45,10 +46,12 @@ This means `WHERE created_at >= ... AND path IS NOT NULL GROUP BY path` can use 
 ### Task 1: `getTopPaths` helper (TDD)
 
 **Files:**
+
 - Modify: `lib/admin-pageviews.ts` (extend with `getTopPaths` + `TopPage` interface; preserve existing `getPageViewStats`)
 - Create: `tests/unit/lib/admin-pageviews.test.ts` (~80 LoC, 5 cases)
 
 **Interfaces:**
+
 - Produces: `TopPage` interface `{path: string; views: number; unique: number}` + `getTopPaths(days: number, limit: number): Promise<TopPage[]>` — consumed by Task 2's `app/admin/analytics/page.tsx`
 
 - [ ] **Step 1: Write failing tests for `getTopPaths`**
@@ -92,18 +95,18 @@ describe('getTopPaths', () => {
   });
 
   it('uses COUNT(DISTINCT COALESCE(user_id, ip)) for unique visitors', async () => {
-    queryResults['FROM page_views'] = [[
-      { path: '/x', views: 5, unique_visitors: 3 },
-    ]];
+    queryResults['FROM page_views'] = [[{ path: '/x', views: 5, unique_visitors: 3 }]];
     await getTopPaths(7, 10);
     expect(queryLog[0].sql).toMatch(/COUNT\(DISTINCT COALESCE\(user_id, ip\)\)/);
   });
 
   it('groups by path, orders by views DESC, maps {path, views, unique}', async () => {
-    queryResults['FROM page_views'] = [[
-      { path: '/a', views: 100, unique_visitors: 50 },
-      { path: '/b', views: 50, unique_visitors: 30 },
-    ]];
+    queryResults['FROM page_views'] = [
+      [
+        { path: '/a', views: 100, unique_visitors: 50 },
+        { path: '/b', views: 50, unique_visitors: 30 },
+      ],
+    ];
     const result = await getTopPaths(7, 10);
     expect(result).toEqual([
       { path: '/a', views: 100, unique: 50 },
@@ -180,6 +183,7 @@ Run: `npx tsc --noEmit`
 Expected: exit 0, no output.
 
 Fold Wave 1 follow-up #4 into this commit (trailing newlines on 3 chart files):
+
 - Read `components/admin/charts/Sparkline.tsx` — confirm missing trailing newline
 - Read `components/admin/charts/BarChartTop.tsx` — confirm missing trailing newline
 - Read `components/admin/charts/index.ts` — confirm missing trailing newline
@@ -196,8 +200,8 @@ git add lib/admin-pageviews.ts tests/unit/lib/admin-pageviews.test.ts \
 git commit -m "feat(admin-pageviews): add getTopPaths(days, limit) + 5 unit tests [2026-07-11 HH.MM]
 
   - lib/admin-pageviews.ts: TopPage {path, views, unique} interface +
-    getTopPaths(days, limit) — single SELECT with COUNT(*) views + 
-    COUNT(DISTINCT COALESCE(user_id, ip)) unique, GROUP BY path 
+    getTopPaths(days, limit) — single SELECT with COUNT(*) views +
+    COUNT(DISTINCT COALESCE(user_id, ip)) unique, GROUP BY path
     ORDER BY views DESC LIMIT ?; uses idx_pv_path_created + idx_pv_created
   - tests/unit/lib/admin-pageviews.test.ts: 5 cases (mock-pool pattern;
     SQL clause check, unique SQL check, mapping check, empty fallback,
@@ -212,10 +216,12 @@ git commit -m "feat(admin-pageviews): add getTopPaths(days, limit) + 5 unit test
 ### Task 2: `/admin/analytics` page + `<CopyPathCell/>` client island
 
 **Files:**
+
 - Create: `app/admin/analytics/page.tsx` (~110 LoC)
 - Create: `components/admin/analytics/CopyPathCell.tsx` (~15 LoC)
 
 **Interfaces:**
+
 - Consumes: `parseRange`, `rangeToDays` from `@/lib/admin-range` (Wave 1)
 - Consumes: `getTopPaths` from `@/lib/admin-pageviews` (Task 1)
 - Consumes: `BarChartTop` from `@/components/admin/charts` (Wave 1)
@@ -385,6 +391,7 @@ If the build fails with "Dynamic server usage" error: ensure both `export const 
 - [ ] **Step 4: Manual smoke (dev server)**
 
 Run:
+
 ```bash
 npx next dev -p 4447 &
 DEV_PID=$!
@@ -401,6 +408,7 @@ Expected: HTTP 307 redirect to `/?auth=login` (admin auth gate at `/admin/layout
 If full admin login isn't feasible in the smoke step, at minimum confirm the 307 redirect happens (route exists, no 404). A 404 would mean the page isn't registered.
 
 After smoke:
+
 ```bash
 kill $DEV_PID
 ```
@@ -414,12 +422,12 @@ git add app/admin/analytics/page.tsx components/admin/analytics/CopyPathCell.tsx
 git commit -m "feat(admin-analytics-page): /admin/analytics top-20 paths + ?range= filter [2026-07-11 HH.MM+10]
 
   - app/admin/analytics/page.tsx: server component, parseRange(7d default)
-    → getTopPaths(days, 20) → renders 4 URL-driven tabs + BarChartTop + 
+    → getTopPaths(days, 20) → renders 4 URL-driven tabs + BarChartTop +
     3-col detail table (Path/Views/Unique)
   - components/admin/analytics/CopyPathCell.tsx: ~15 LoC client island;
-    navigator.clipboard.writeText + 1.5s toast, silent fallback on 
+    navigator.clipboard.writeText + 1.5s toast, silent fallback on
     unsupported browsers
-  - No new deps; consumes Wave 1 helpers (parseRange, BarChartTop) + 
+  - No new deps; consumes Wave 1 helpers (parseRange, BarChartTop) +
     Task 1 getTopPaths
   - All range tabs are <Link>s — server-rendered, no client JS for filter
   - Resolves the 404 from page-views StatCard href targets"
@@ -430,6 +438,7 @@ git commit -m "feat(admin-analytics-page): /admin/analytics top-20 paths + ?rang
 ### Task 3: Sidebar entry + REDEPLOY v9 + Wave 1 report move
 
 **Files:**
+
 - Modify: `components/admin/AdminSidebar.tsx` (+1 LoC, sidebar entry)
 - Modify: `REDEPLOY-2026-07-09.md` (v8 → v9, add Wave 2 commit SHA + section)
 - Move: `.superpowers/sdd/wave1-foundation-report.md` → `docs/superpowers/sdd/wave1-foundation-report.md` (Wave 1 follow-up #1)
@@ -466,6 +475,7 @@ git add docs/superpowers/sdd/wave1-foundation-report.md
 ```
 
 Verify the file is at the new path and the old path is gone:
+
 ```bash
 ls docs/superpowers/sdd/wave1-foundation-report.md
 ls .superpowers/sdd/wave1-foundation-report.md 2>&1 | grep -i 'no such'
@@ -478,11 +488,13 @@ Read the current doc first to find the right edit anchors. Two edits:
 **Edit A** — bump version + commit count in the opening summary:
 
 Current opening (per `REDEPLOY-2026-07-09.md` line 3):
+
 ```markdown
 23 commits on local main to ship (5 wizard+poems + 2 worksheet color + 1 image fallback + 2 user-report fixes + 5 data-alignment + 3 wizard auto-seed + **5 page_views (仪表盘 PV/UV)**):
 ```
 
 Replace with:
+
 ```markdown
 25 commits on local main to ship (...previous sections... + 5 page_views + **3 admin-analytics Wave 2 (admin/analytics 详情页)**):
 
@@ -529,6 +541,7 @@ Expected: `✓ Compiled successfully`, 196 routes (no new routes added this task
 
 Run: `git status --short`
 Expected: see only:
+
 - `M REDEPLOY-2026-07-09.md`
 - `M components/admin/AdminSidebar.tsx`
 - `?? docs/superpowers/sdd/wave1-foundation-report.md` (new tracked file from move)
@@ -540,12 +553,12 @@ Expected: see only:
 git add components/admin/AdminSidebar.tsx REDEPLOY-2026-07-09.md docs/superpowers/sdd/wave1-foundation-report.md
 git commit -m "feat(admin-sidebar+redeploy): Wave 2 sidebar entry + REDEPLOY v9 + Wave 1 report move [2026-07-11 HH.MM+15]
 
-  - components/admin/AdminSidebar.tsx: 访问分析 entry in 运维 group 
+  - components/admin/AdminSidebar.tsx: 访问分析 entry in 运维 group
     (last position after 语音设置). Links to /admin/analytics (Wave 2 page).
   - REDEPLOY-2026-07-09.md: v8 → v9 — add Wave 2 commit SHAs + verify step
     for /admin/analytics (defaults to 7d, 4 tabs, click-to-copy, empty state)
-  - docs/superpowers/sdd/wave1-foundation-report.md: moved from 
-    .superpowers/sdd/ (gitignored) so the Wave 1 implementation report 
+  - docs/superpowers/sdd/wave1-foundation-report.md: moved from
+    .superpowers/sdd/ (gitignored) so the Wave 1 implementation report
     survives in git history (Wave 1 follow-up #1)
   - 25 commits on local main now ready to ship (was 22 in v8)"
 ```
@@ -565,18 +578,18 @@ Run these gates to confirm Wave 2 is ship-ready:
 
 ## Files Summary
 
-| File | Action | LoC |
-|---|---|---|
-| `lib/admin-pageviews.ts` | Modify (+50) | +50 |
-| `tests/unit/lib/admin-pageviews.test.ts` | Create | +80 |
-| `app/admin/analytics/page.tsx` | Create | +110 |
-| `components/admin/analytics/CopyPathCell.tsx` | Create | +15 |
-| `components/admin/AdminSidebar.tsx` | Modify (+1) | +1 |
-| `REDEPLOY-2026-07-09.md` | Modify (v8 → v9) | +30 |
-| `components/admin/charts/Sparkline.tsx` | Modify (trailing newline) | 0 |
-| `components/admin/charts/BarChartTop.tsx` | Modify (trailing newline) | 0 |
-| `components/admin/charts/index.ts` | Modify (trailing newline) | 0 |
-| `.superpowers/sdd/wave1-foundation-report.md` → `docs/superpowers/sdd/wave1-foundation-report.md` | Move | 0 |
+| File                                                                                              | Action                    | LoC  |
+| ------------------------------------------------------------------------------------------------- | ------------------------- | ---- |
+| `lib/admin-pageviews.ts`                                                                          | Modify (+50)              | +50  |
+| `tests/unit/lib/admin-pageviews.test.ts`                                                          | Create                    | +80  |
+| `app/admin/analytics/page.tsx`                                                                    | Create                    | +110 |
+| `components/admin/analytics/CopyPathCell.tsx`                                                     | Create                    | +15  |
+| `components/admin/AdminSidebar.tsx`                                                               | Modify (+1)               | +1   |
+| `REDEPLOY-2026-07-09.md`                                                                          | Modify (v8 → v9)          | +30  |
+| `components/admin/charts/Sparkline.tsx`                                                           | Modify (trailing newline) | 0    |
+| `components/admin/charts/BarChartTop.tsx`                                                         | Modify (trailing newline) | 0    |
+| `components/admin/charts/index.ts`                                                                | Modify (trailing newline) | 0    |
+| `.superpowers/sdd/wave1-foundation-report.md` → `docs/superpowers/sdd/wave1-foundation-report.md` | Move                      | 0    |
 
 **Total: ~286 LoC across 6 new/modified code files + 1 doc + 3 cosmetic trailing-newline fixes + 1 file move.**
 

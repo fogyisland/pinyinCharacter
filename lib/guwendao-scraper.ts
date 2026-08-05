@@ -46,7 +46,7 @@ async function fetchText(path: string): Promise<string> {
 export async function fetchChapterList(bookId: string): Promise<string[]> {
   const html = await fetchText(`/guwen/book_${bookId}.aspx`);
   const matches = [...html.matchAll(/bookv_([0-9a-f]+)\.aspx/g)];
-  return [...new Set(matches.map(m => m[1]))];
+  return [...new Set(matches.map((m) => m[1]))];
 }
 
 export interface ChapterContent {
@@ -55,7 +55,8 @@ export interface ChapterContent {
 }
 
 function parseChapterHtml(html: string): { title: string; paragraphs: string[] } {
-  const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/) || html.match(/class="book-title"[^>]*>([^<]+)</);
+  const titleMatch =
+    html.match(/<h1[^>]*>([^<]+)<\/h1>/) || html.match(/class="book-title"[^>]*>([^<]+)</);
   const title = titleMatch ? titleMatch[1].trim() : '';
   const contentMatch = html.match(/<div class="contson"[^>]*>([\s\S]*?)<\/div>/);
   if (!contentMatch) return { title, paragraphs: [] };
@@ -64,12 +65,15 @@ function parseChapterHtml(html: string): { title: string; paragraphs: string[] }
     .replace(/<br\s*\/?>/g, '\n')
     .replace(/<\/p>/g, '\n')
     .split('\n')
-    .map(s => decodeEntities(s.replace(/<[^>]+>/g, '')).trim())
-    .filter(s => s.length > 0);
+    .map((s) => decodeEntities(s.replace(/<[^>]+>/g, '')).trim())
+    .filter((s) => s.length > 0);
   return { title, paragraphs };
 }
 
-export async function scrapeChapterContent(bookId: string, chapterId: string): Promise<ChapterContent> {
+export async function scrapeChapterContent(
+  bookId: string,
+  chapterId: string,
+): Promise<ChapterContent> {
   const html = await fetchText(`/guwen/bookv_${chapterId}.aspx`);
   return parseChapterHtml(html);
 }
@@ -79,7 +83,7 @@ export type PoemCategory = 'yuefu' | 'shijiu' | 'cifu';
 export async function scrapePoemList(category: PoemCategory): Promise<string[]> {
   const html = await fetchText(`/gushi/${category}.aspx`);
   const matches = [...html.matchAll(/shiwenv_([0-9a-f]+)\.aspx/g)];
-  return [...new Set(matches.map(m => m[1]))];
+  return [...new Set(matches.map((m) => m[1]))];
 }
 
 export interface PoemPage {
@@ -95,9 +99,13 @@ function parsePoemHtml(html: string): PoemPage {
   // author + dynasty: pattern "作者：李白 · 唐" or class="sons"
   // Dynasty character class covers 单 (汉/魏/晋/唐/宋/元/明/清) +
   // modifiers (东/西/南北) + the 5-dynasties era (五代, 907-960).
-  const authorMatch = html.match(/作者[：:]\s*<a[^>]*>([^<]+)<\/a>/) || html.match(/class="sons"[^>]*>[\s\S]*?>([^<]+)</);
+  const authorMatch =
+    html.match(/作者[：:]\s*<a[^>]*>([^<]+)<\/a>/) ||
+    html.match(/class="sons"[^>]*>[\s\S]*?>([^<]+)</);
   const author = authorMatch ? authorMatch[1].trim() : '';
-  const dynastyMatch = html.match(/[·・]([东西南北朝汉魏晋隋唐宋元明清五代]+)(?=\s*<)/) || html.match(/朝代[：:]\s*([东西南北朝汉魏晋隋唐宋元明清五代]+)/);
+  const dynastyMatch =
+    html.match(/[·・]([东西南北朝汉魏晋隋唐宋元明清五代]+)(?=\s*<)/) ||
+    html.match(/朝代[：:]\s*([东西南北朝汉魏晋隋唐宋元明清五代]+)/);
   const dynasty = dynastyMatch ? dynastyMatch[1].trim() : '';
   // paragraph body sits in <div class="contson"> just like chapter pages
   const { paragraphs } = parseChapterHtml(html);

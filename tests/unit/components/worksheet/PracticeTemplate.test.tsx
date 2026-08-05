@@ -14,7 +14,9 @@ vi.mock('@react-pdf/renderer', async () => {
   return {
     ...actual,
     PDFDownloadLink: ({ children, fileName }: { children: unknown; fileName?: string }) => (
-      <a data-testid="pdf-link" data-filename={fileName}>{typeof children === 'function' ? children({ loading: false }) : children}</a>
+      <a data-testid="pdf-link" data-filename={fileName}>
+        {typeof children === 'function' ? children({ loading: false }) : children}
+      </a>
     ),
   };
 });
@@ -85,7 +87,9 @@ describe('PracticeTemplate — pen-english option (four-line English trace)', ()
   it('renders a 钢笔·英文描红 option in the 格子形式 select', () => {
     render(<PracticeTemplate />);
     const select = screen.getByLabelText('格子形式') as HTMLSelectElement;
-    const labels = within(select).getAllByRole('option').map((o) => o.textContent);
+    const labels = within(select)
+      .getAllByRole('option')
+      .map((o) => o.textContent);
     expect(labels).toContain('钢笔 · 英文描红');
   });
 

@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { getWorksheet, deleteWorksheet, renameWorksheet } from '@/lib/worksheet';
-import { withErrorHandling, notFound, forbidden, unauthorized, badRequest, conflict } from '@/lib/api-handler';
+import {
+  withErrorHandling,
+  notFound,
+  forbidden,
+  unauthorized,
+  badRequest,
+  conflict,
+} from '@/lib/api-handler';
 import { renameWorksheetSchema } from '@/lib/validators';
 import { logUserAction } from '@/lib/audit';
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
@@ -22,10 +26,7 @@ export async function GET(
   });
 }
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
@@ -55,10 +56,7 @@ export async function PATCH(
   });
 }
 
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();

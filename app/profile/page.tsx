@@ -39,7 +39,7 @@ export default async function ProfilePage() {
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
         <SectionTitle subtitle="你的汉字学习足迹">个人主页</SectionTitle>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
-          {statCards.map(s => (
+          {statCards.map((s) => (
             <div key={s.label} className="card-paper p-4 text-center">
               <div className="font-kai text-3xl text-ink">{s.value}</div>
               <div className="text-xs text-ink-soft mt-1">{s.label}</div>

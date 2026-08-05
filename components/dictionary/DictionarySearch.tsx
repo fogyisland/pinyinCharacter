@@ -31,7 +31,9 @@ export function DictionarySearch() {
         maxLength={32}
         className="flex-1 rounded border border-ink/30 bg-paper px-3 py-2 text-sm focus:border-seal focus:outline-none"
       />
-      <button type="submit" className="btn-seal text-sm px-4">搜索</button>
+      <button type="submit" className="btn-seal text-sm px-4">
+        搜索
+      </button>
     </form>
   );
 }

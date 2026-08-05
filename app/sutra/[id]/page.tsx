@@ -44,9 +44,13 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
 
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
-        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵
+        </div>
         <div className="worksheet-no-print mb-2">
           <Link
             href={backLink.href}
@@ -56,11 +60,18 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
           </Link>
         </div>
         <div className="worksheet-no-print">
-          <SutraMeta title={sutra.title} chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null} />
+          <SutraMeta
+            title={sutra.title}
+            chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null}
+          />
         </div>
         <div className="flex gap-6">
           <Suspense fallback={null}>
-            <SutraChunkPickerClient sutraId={sutra.id} chunks={sutra.chunks as SutraChunk[]} activeId={activeChunkId} />
+            <SutraChunkPickerClient
+              sutraId={sutra.id}
+              chunks={sutra.chunks as SutraChunk[]}
+              activeId={activeChunkId}
+            />
           </Suspense>
           <div className="flex-1">
             <SutraRightColumn

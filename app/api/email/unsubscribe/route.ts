@@ -24,6 +24,12 @@ export async function GET(req: NextRequest) {
   await setMarketingOptOut(userId, true);
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
   const ua = req.headers.get('user-agent') ?? null;
-  await writeAudit({ userId, event: 'marketing_unsubscribed', metadata: { via: 'link' }, ip, userAgent: ua });
+  await writeAudit({
+    userId,
+    event: 'marketing_unsubscribed',
+    metadata: { via: 'link' },
+    ip,
+    userAgent: ua,
+  });
   return NextResponse.redirect(`${siteUrl}/?unsub=ok`, { status: 303 });
 }

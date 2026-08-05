@@ -11,7 +11,7 @@ function countChars(line: string): number {
 }
 
 export function inferFormFromParagraphs(paragraphs: string[]): FormResult {
-  const lines = paragraphs.map(p => p.trim()).filter(p => p.length > 0);
+  const lines = paragraphs.map((p) => p.trim()).filter((p) => p.length > 0);
   if (lines.length === 0) return { primary: null, source: 'inferred', confidence: 0 };
 
   const lengths = lines.map(countChars);
@@ -52,15 +52,19 @@ export function inferFormFromParagraphs(paragraphs: string[]): FormResult {
 }
 
 const SOURCE_TAG_MAP: Record<string, string> = {
-  '五言绝句': '五绝',
-  '七言绝句': '七绝',
-  '五言律诗': '五律',
-  '七言律诗': '七律',
-  '五言古诗': '五言古风',
-  '七言古诗': '七言古风',
+  五言绝句: '五绝',
+  七言绝句: '七绝',
+  五言律诗: '五律',
+  七言律诗: '七律',
+  五言古诗: '五言古风',
+  七言古诗: '七言古风',
 };
 
-export function resolveFormFromSource(type: string | null, rhythmic: string | null, category: string): FormResult {
+export function resolveFormFromSource(
+  type: string | null,
+  rhythmic: string | null,
+  category: string,
+): FormResult {
   // 词: passthrough 词牌名
   if (category === 'song' && rhythmic && rhythmic.length > 0) {
     return { primary: rhythmic, source: 'passthrough', confidence: 1.0 };

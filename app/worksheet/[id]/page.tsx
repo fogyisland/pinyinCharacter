@@ -40,9 +40,8 @@ export default async function WorksheetDetailPage({ params }: Props) {
           </div>
         </div>
         <p className="worksheet-no-print mb-4 text-sm text-ink-faint">
-          {paperSizeLabel(ws.paperSize)} · {fontFamilyLabel(ws.fontFamily)} · {ws.content.length} 字 ·{' '}
-          {cellStyleLabel(ws.cellStyle)} ·{' '}
-          {new Date(ws.createdAt).toLocaleString()}
+          {paperSizeLabel(ws.paperSize)} · {fontFamilyLabel(ws.fontFamily)} · {ws.content.length} 字
+          · {cellStyleLabel(ws.cellStyle)} · {new Date(ws.createdAt).toLocaleString()}
         </p>
         <div className="card-paper p-5">
           <WorksheetPreview

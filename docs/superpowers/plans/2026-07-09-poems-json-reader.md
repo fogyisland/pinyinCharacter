@@ -28,14 +28,15 @@
 
 **Architecture comparison**:
 
-| | Sutras (already refactored, commit 092a4135) | Poems (target) |
-|---|---|---|
-| Single source of truth | `data/sutras/{manifest.json, *.json}` ✅ | `data/poems/{manifest.json, *.json}` ✅ |
-| Runtime reader | `lib/sutras-fs.ts` | `lib/poetry/loader.ts` |
-| Init phase build script | `build-sutras.ts` reads local JSON ✅ | `build-poems.ts` **fetches GitHub** ❌ |
-| Pre-processed pinyin in JSON? | Yes (after `enrich-sutra-pinyin.ts`) | **Yes already** (built once by build-poems-extra.ts) |
+|                               | Sutras (already refactored, commit 092a4135) | Poems (target)                                       |
+| ----------------------------- | -------------------------------------------- | ---------------------------------------------------- |
+| Single source of truth        | `data/sutras/{manifest.json, *.json}` ✅     | `data/poems/{manifest.json, *.json}` ✅              |
+| Runtime reader                | `lib/sutras-fs.ts`                           | `lib/poetry/loader.ts`                               |
+| Init phase build script       | `build-sutras.ts` reads local JSON ✅        | `build-poems.ts` **fetches GitHub** ❌               |
+| Pre-processed pinyin in JSON? | Yes (after `enrich-sutra-pinyin.ts`)         | **Yes already** (built once by build-poems-extra.ts) |
 
 **User decisions**:
+
 1. Keep `build-poems-extra.ts` untouched — it adds the 5 extra collections (汉乐府 / 古诗十九首 / 辞赋 / 曹操诗集 / 纳兰性德) and writes per-collection JSON files at `data/poems/<slug>.json`. Out of scope for this plan; those are intermediate and not consumed by the runtime loader anyway.
 2. Don't drop the `poems` MySQL table DDL — mirrors the sutras pattern (table exists as a DB mirror even though FS is canonical).
 3. Skip the `enrich-pinyin` step — pinyin is already in the JSON.
@@ -93,7 +94,7 @@
              JSON.stringify(poem.pinyin),
              poem.appreciation,
              poem.source ?? 'prebuilt-json:data/poems',
-           ]
+           ],
          );
          inserted++;
        }
@@ -124,16 +125,19 @@
 ### Task 1: Refactor `scripts/build-poems.ts` to read local JSON
 
 **Files:**
+
 - Modify: `scripts/build-poems.ts` (full rewrite, 167 → ~60 lines)
 - Test: `tests/unit/build-poems.test.ts` (new, ~70 lines)
 
 **Interfaces:**
+
 - Consumes: `data/poems-manifest.json` (PoemsManifest from `lib/poetry-types.ts:55-60`), `data/poems/<id>.json` (PoemDetail from `lib/poetry-types.ts:11-15`)
 - Produces: `export async function buildPoems(): Promise<number>` — returns count of UPSERTs performed (idempotent: re-running yields inserted=manifest.items.length)
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/build-poems.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -154,8 +158,8 @@ describe('build-poems JSON-reader pipeline', () => {
     const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8')) as PoemsManifest;
     const files = new Set(
       readdirSync(DATA_DIR)
-        .filter(f => /^\d+\.json$/.test(f))
-        .map(f => Number(f.replace('.json', '')))
+        .filter((f) => /^\d+\.json$/.test(f))
+        .map((f) => Number(f.replace('.json', ''))),
     );
     for (const item of manifest.items) {
       expect(files.has(item.id)).toBe(true);
@@ -197,6 +201,7 @@ Expected: 4/4 PASS
 - [ ] **Step 3: Rewrite `scripts/build-poems.ts`**
 
 Replace entire file with:
+
 ```ts
 /**
  * Mirror data/poems-manifest.json + data/poems/<id>.json into the poems MySQL
@@ -255,7 +260,7 @@ export async function buildPoems(): Promise<number> {
         JSON.stringify(poem.pinyin),
         poem.appreciation,
         poem.source ?? DEFAULT_SOURCE_TAG,
-      ]
+      ],
     );
     inserted++;
   }
@@ -302,6 +307,7 @@ git commit -m "refactor(poems): replace GitHub fetch with data/poems/*.json read
 ### Task 2: Add wizard-level smoke (dev walkthrough confirms poems phase no longer fetches remote)
 
 **Files:**
+
 - Modify: none (manual verification only)
 - Test: existing `tests/integration/init-wizard.test.ts` already covers `init-poems`
 
@@ -316,12 +322,14 @@ Expected: 1 test passes (or skip if DATABASE_URL not set; pre-existing import-hs
 
 Start dev server: `npx next dev -p 4444`
 Reset DB to empty (mirror earlier walkthrough):
+
 ```bash
 set -a && . ./.env && set +a
 npx tsx -e "import('./lib/db').then(async ({getPool, closePool}) => { const p = getPool(); await p.query('DROP DATABASE IF EXISTS pinyin'); await p.query('CREATE DATABASE pinyin CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'); await closePool(); process.exit(0); });"
 ```
 
 Run the wizard's poems endpoint and observe no fetch attempt to `raw.githubusercontent.com`:
+
 ```bash
 T0=$(date +%s)
 curl -s -X POST http://localhost:4444/api/init/init-poems -b /tmp/jar.txt -c /tmp/jar.txt
@@ -332,6 +340,7 @@ echo "elapsed: $((T1-T0))s"  # Should be < 5s (was 36s before — fetches 2×190
 Expected: `{"ok":true,"data":{"inserted":1160,"skipped":false}}` with elapsed < 5s.
 
 Verify DB has all 1160 rows:
+
 ```bash
 set -a && . ./.env && set +a
 npx tsx -e "import('./lib/db').then(async ({getPool, closePool}) => { const p = getPool(); const [[{cnt}]] = await p.query('SELECT COUNT(*) AS cnt FROM poems'); console.log('poems rows:', cnt); await closePool(); process.exit(0); });"
@@ -350,6 +359,7 @@ If Task 1 already committed everything, this task adds no commit. If any manual 
 ### Task 3: Rebundle Up/ deploy bundle (per `deploy-bundler-up.md`)
 
 **Files:**
+
 - Modify: `Up/scripts/build-poems.ts`, `Up/tests/unit/build-poems.test.ts`, `Up/package.json` (regenerated by `copy-to-up.py`)
 
 - [ ] **Step 1: Verify local main is clean**
@@ -374,6 +384,7 @@ ls Up/data/poems/1.json Up/data/poems-manifest.json  # Both exist
 - [ ] **Step 4: Update Up/REDEPLOY-2026-07-09.md with the new commit**
 
 Append a new section to `Up/REDEPLOY-2026-07-09.md`:
+
 ```markdown
 ## Addendum — plan-poems-json-reader (1 commit)
 

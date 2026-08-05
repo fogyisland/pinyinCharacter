@@ -12,7 +12,7 @@ describe('StepGroup', () => {
     const { getByText } = render(
       <StepGroup title="数据库结构" completedCount={1} total={3}>
         <div data-testid="child">child content</div>
-      </StepGroup>
+      </StepGroup>,
     );
     expect(getByText('数据库结构')).toBeTruthy();
     expect(getByText('(1/3 完成)')).toBeTruthy();
@@ -22,7 +22,7 @@ describe('StepGroup', () => {
     const { getByTestId } = render(
       <StepGroup title="g" completedCount={0} total={2} defaultOpen>
         <div data-testid="child">c</div>
-      </StepGroup>
+      </StepGroup>,
     );
     expect(getByTestId('child')).toBeTruthy();
   });

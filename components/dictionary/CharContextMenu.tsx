@@ -44,7 +44,10 @@ export function CharContextMenu({ x, y, char, onAdd, onClose }: Props) {
       onClick={(e) => e.stopPropagation()}
     >
       <button
-        onClick={() => { onAdd(char); onClose(); }}
+        onClick={() => {
+          onAdd(char);
+          onClose();
+        }}
         className="block w-full text-left px-4 py-2 hover:bg-paper text-ink"
       >
         添加到字帖…

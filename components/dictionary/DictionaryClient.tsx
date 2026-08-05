@@ -38,7 +38,8 @@ export function DictionaryClient({ chars, total, page, pageSize }: Props) {
   };
 
   const activeLevel = sp.get('level');
-  const activeLevelNum = activeLevel === '1' ? 1 : activeLevel === '2' ? 2 : activeLevel === '3' ? 3 : undefined;
+  const activeLevelNum =
+    activeLevel === '1' ? 1 : activeLevel === '2' ? 2 : activeLevel === '3' ? 3 : undefined;
 
   const switchLevel = (lvl: 1 | 2 | 3 | undefined) => {
     const params = new URLSearchParams(sp.toString());
@@ -60,7 +61,9 @@ export function DictionaryClient({ chars, total, page, pageSize }: Props) {
               key={l.label}
               onClick={() => switchLevel(l.value)}
               className={`text-sm px-3 py-1 rounded ${
-                activeLevelNum === l.value ? 'bg-ink text-paper' : 'bg-paper-warm text-ink-soft border border-ink/20'
+                activeLevelNum === l.value
+                  ? 'bg-ink text-paper'
+                  : 'bg-paper-warm text-ink-soft border border-ink/20'
               }`}
             >
               {l.label}
@@ -71,7 +74,9 @@ export function DictionaryClient({ chars, total, page, pageSize }: Props) {
           <button
             onClick={() => switchView('pinyin')}
             className={`text-sm px-3 py-1 rounded ${
-              view === 'pinyin' ? 'bg-ink text-paper' : 'bg-paper-warm text-ink-soft border border-ink/20'
+              view === 'pinyin'
+                ? 'bg-ink text-paper'
+                : 'bg-paper-warm text-ink-soft border border-ink/20'
             }`}
           >
             按拼音
@@ -79,7 +84,9 @@ export function DictionaryClient({ chars, total, page, pageSize }: Props) {
           <button
             onClick={() => switchView('radical')}
             className={`text-sm px-3 py-1 rounded ${
-              view === 'radical' ? 'bg-ink text-paper' : 'bg-paper-warm text-ink-soft border border-ink/20'
+              view === 'radical'
+                ? 'bg-ink text-paper'
+                : 'bg-paper-warm text-ink-soft border border-ink/20'
             }`}
           >
             按部首
@@ -108,7 +115,11 @@ export function DictionaryClient({ chars, total, page, pageSize }: Props) {
       <div className="mt-6 flex justify-center gap-3 text-sm text-ink-soft">
         {page > 1 && (
           <a
-            href={`/dictionary?${(() => { const p = new URLSearchParams(sp.toString()); p.set('page', String(page - 1)); return p.toString(); })()}`}
+            href={`/dictionary?${(() => {
+              const p = new URLSearchParams(sp.toString());
+              p.set('page', String(page - 1));
+              return p.toString();
+            })()}`}
             className="hover:text-ink"
           >
             ‹ 上一页
@@ -119,7 +130,11 @@ export function DictionaryClient({ chars, total, page, pageSize }: Props) {
         </span>
         {page * pageSize < total && (
           <a
-            href={`/dictionary?${(() => { const p = new URLSearchParams(sp.toString()); p.set('page', String(page + 1)); return p.toString(); })()}`}
+            href={`/dictionary?${(() => {
+              const p = new URLSearchParams(sp.toString());
+              p.set('page', String(page + 1));
+              return p.toString();
+            })()}`}
             className="hover:text-ink"
           >
             下一页 ›

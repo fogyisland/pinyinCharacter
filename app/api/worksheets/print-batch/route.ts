@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     const [rows] = await getPool().query<any[]>(
       `SELECT id, title, content, paper_size, cell_style, font_family
        FROM worksheets WHERE user_id = ? AND id IN (${placeholders})`,
-      [auth.user.id, ...worksheetIds]
+      [auth.user.id, ...worksheetIds],
     );
     if (rows.length !== worksheetIds.length) return notFound('not_found', 'worksheet not found');
 
@@ -40,7 +40,12 @@ export async function POST(req: NextRequest) {
     const userAgent = req.headers.get('user-agent') ?? null;
     for (const ws of rows) {
       await logDownload({
-        userId: auth.user.id, format: 'print', sourceType: 'worksheet', sourceId: String(ws.id), ip, userAgent,
+        userId: auth.user.id,
+        format: 'print',
+        sourceType: 'worksheet',
+        sourceId: String(ws.id),
+        ip,
+        userAgent,
       });
     }
     await logUserAction(req, auth.user.id, 'worksheet_batch_printed', {

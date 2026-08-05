@@ -55,9 +55,7 @@ export function FontConfigForm({ initial }: Props) {
     <div className="space-y-6">
       {ERAS.map((era) => (
         <div key={era}>
-          <label className="block text-sm font-medium text-ink mb-1">
-            {ERA_LABEL[era]}
-          </label>
+          <label className="block text-sm font-medium text-ink mb-1">{ERA_LABEL[era]}</label>
           <select
             value={fonts[era]}
             onChange={(e) => setFonts((prev) => ({ ...prev, [era]: e.target.value }))}
@@ -87,7 +85,9 @@ export function FontConfigForm({ initial }: Props) {
           {saving ? '保存中…' : '保存'}
         </button>
         {savedAt && (
-          <span className="text-xs text-ink-faint">已于 {savedAt.toLocaleTimeString('zh-CN')} 保存</span>
+          <span className="text-xs text-ink-faint">
+            已于 {savedAt.toLocaleTimeString('zh-CN')} 保存
+          </span>
         )}
         {error && <span className="text-xs text-red-600">{error}</span>}
       </div>

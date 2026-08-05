@@ -56,9 +56,7 @@ describe('rangeToDays', () => {
 
 describe('rangeToSinceClause', () => {
   it('produces DATE_SUB(CURDATE(), INTERVAL ? DAY)', () => {
-    expect(rangeToSinceClause('7d').sql).toBe(
-      'created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)',
-    );
+    expect(rangeToSinceClause('7d').sql).toBe('created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)');
   });
 
   it('params match rangeToDays', () => {

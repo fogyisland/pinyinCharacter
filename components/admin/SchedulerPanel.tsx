@@ -6,18 +6,20 @@ import { Power, Play, Check, AlertTriangle, Clock, History } from 'lucide-react'
 import type { SchedulerConfig, SchedulerRunGroup } from '@/lib/scheduler-config';
 
 const INTERVAL_OPTIONS = [
-  { value: 5,    label: '5 分钟' },
-  { value: 15,   label: '15 分钟' },
-  { value: 30,   label: '30 分钟' },
-  { value: 60,   label: '1 小时' },
-  { value: 180,  label: '3 小时' },
-  { value: 360,  label: '6 小时' },
-  { value: 720,  label: '12 小时' },
+  { value: 5, label: '5 分钟' },
+  { value: 15, label: '15 分钟' },
+  { value: 30, label: '30 分钟' },
+  { value: 60, label: '1 小时' },
+  { value: 180, label: '3 小时' },
+  { value: 360, label: '6 小时' },
+  { value: 720, label: '12 小时' },
   { value: 1440, label: '24 小时' },
 ];
 
-const TASK_LABELS: Record<keyof Pick<SchedulerConfig,
-  'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh'>, string> = {
+const TASK_LABELS: Record<
+  keyof Pick<SchedulerConfig, 'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh'>,
+  string
+> = {
   taskContentRefresh: '内容补充 (LLM)',
   taskDailyChar: '今日汉字 (预热)',
   taskStatsRefresh: '系统统计 (DB 探活)',
@@ -29,7 +31,12 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
   const [cfg, setCfg] = useState(initial);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
-  const [triggerResults, setTriggerResults] = useState<null | Array<{ name: string; ok: boolean; summary: string; error?: string }>>(null);
+  const [triggerResults, setTriggerResults] = useState<null | Array<{
+    name: string;
+    ok: boolean;
+    summary: string;
+    error?: string;
+  }>>(null);
   const [history, setHistory] = useState<SchedulerRunGroup[] | null>(null);
   const [historyErr, setHistoryErr] = useState<string | null>(null);
 
@@ -41,14 +48,20 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
     try {
       const r = await fetch('/api/admin/scheduler/history?limit=5');
       const j = await r.json();
-      if (j?.ok) { setHistory(j.data.runs); setHistoryErr(null); }
-      else { setHistoryErr(j?.error?.message ?? '加载失败'); }
+      if (j?.ok) {
+        setHistory(j.data.runs);
+        setHistoryErr(null);
+      } else {
+        setHistoryErr(j?.error?.message ?? '加载失败');
+      }
     } catch (e) {
       setHistoryErr(e instanceof Error ? e.message : '加载失败');
     }
   }, []);
 
-  useEffect(() => { fetchHistory(); }, [fetchHistory]);
+  useEffect(() => {
+    fetchHistory();
+  }, [fetchHistory]);
 
   async function postJson<T>(url: string, body: object): Promise<T> {
     const res = await fetch(url, {
@@ -62,7 +75,8 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
   }
 
   async function update(patch: Partial<SchedulerConfig>) {
-    setBusy('save'); setMsg(null);
+    setBusy('save');
+    setMsg(null);
     try {
       const next = await postJson<SchedulerConfig>('/api/admin/scheduler', patch);
       setCfg(next);
@@ -77,17 +91,23 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
 
   async function runNow() {
     if (!confirm('确认立即跑一遍所有启用的任务?')) return;
-    setBusy('trigger'); setMsg(null); setTriggerResults(null);
+    setBusy('trigger');
+    setMsg(null);
+    setTriggerResults(null);
     try {
       const d = await postJson<{ results: typeof triggerResults; ranAt: string }>(
-        '/api/admin/scheduler/trigger', {});
+        '/api/admin/scheduler/trigger',
+        {},
+      );
       setTriggerResults(d.results);
       setMsg({ kind: 'ok', text: `已跑完,记录于 ${new Date(d.ranAt).toLocaleString('zh-CN')}` });
       // Reload config to update lastRunAt / lastResult.
       try {
         const refreshed = await fetch('/api/admin/scheduler').then((r) => r.json());
         if (refreshed.ok) setCfg(refreshed.data);
-      } catch { /* swallow */ }
+      } catch {
+        /* swallow */
+      }
       refresh();
       // Reload per-task history so the table reflects the new run.
       void fetchHistory();
@@ -118,9 +138,17 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
           <div>
             <div className="text-xs text-ink-faint">开关</div>
             <div className="font-mono">
-              {cfg.enabled
-                ? <span className="text-green-700 inline-flex items-center gap-1"><Power className="h-3.5 w-3.5" />运行中</span>
-                : <span className="text-ink-soft inline-flex items-center gap-1"><Power className="h-3.5 w-3.5" />已停止</span>}
+              {cfg.enabled ? (
+                <span className="text-green-700 inline-flex items-center gap-1">
+                  <Power className="h-3.5 w-3.5" />
+                  运行中
+                </span>
+              ) : (
+                <span className="text-ink-soft inline-flex items-center gap-1">
+                  <Power className="h-3.5 w-3.5" />
+                  已停止
+                </span>
+              )}
             </div>
           </div>
           <div>
@@ -154,7 +182,8 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
 
         <div>
           <label className="text-sm font-medium flex items-center gap-1">
-            <Clock className="h-3.5 w-3.5" />间隔
+            <Clock className="h-3.5 w-3.5" />
+            间隔
           </label>
           <select
             value={cfg.intervalMin}
@@ -162,8 +191,10 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
             disabled={busy !== null}
             className="ml-2 mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           >
-            {INTERVAL_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            {INTERVAL_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
             ))}
           </select>
         </div>
@@ -177,7 +208,9 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
                   type="checkbox"
                   checked={cfg[k]}
                   disabled={busy !== null}
-                  onChange={(e) => void update({ [k]: e.target.checked } as Partial<SchedulerConfig>)}
+                  onChange={(e) =>
+                    void update({ [k]: e.target.checked } as Partial<SchedulerConfig>)
+                  }
                   className="h-4 w-4"
                 />
                 {TASK_LABELS[k]}
@@ -203,12 +236,14 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
       {triggerResults && (
         <div className="card-paper rounded-lg p-4 space-y-2">
           <h2 className="text-sm font-semibold text-ink-soft">本次执行结果</h2>
-          {triggerResults.length === 0 && <p className="text-xs text-ink-faint">无任务可执行 (未勾选任何任务)</p>}
+          {triggerResults.length === 0 && (
+            <p className="text-xs text-ink-faint">无任务可执行 (未勾选任何任务)</p>
+          )}
           <ul className="space-y-1 text-sm">
             {triggerResults.map((r) => (
               <li key={r.name} className="font-mono text-xs">
-                <span className={r.ok ? 'text-green-700' : 'text-seal'}>{r.ok ? '✓' : '✗'}</span>
-                {' '}<span className="text-ink-soft">{r.name}:</span> {r.summary}
+                <span className={r.ok ? 'text-green-700' : 'text-seal'}>{r.ok ? '✓' : '✗'}</span>{' '}
+                <span className="text-ink-soft">{r.name}:</span> {r.summary}
                 {r.error && <span className="text-seal"> — {r.error}</span>}
               </li>
             ))}
@@ -220,10 +255,15 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
       <div className="card-paper rounded-lg p-4 space-y-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-ink-soft inline-flex items-center gap-1">
-            <History className="h-3.5 w-3.5" />最近执行历史
+            <History className="h-3.5 w-3.5" />
+            最近执行历史
           </h2>
-          <button type="button" onClick={() => void fetchHistory()} disabled={busy !== null}
-            className="text-xs text-ink-soft hover:text-ink disabled:opacity-50">
+          <button
+            type="button"
+            onClick={() => void fetchHistory()}
+            disabled={busy !== null}
+            className="text-xs text-ink-soft hover:text-ink disabled:opacity-50"
+          >
             刷新
           </button>
         </div>
@@ -234,8 +274,8 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
         )}
         {history && history.length > 0 && (
           <ul className="space-y-2 text-sm">
-            {history.map(run => {
-              const anyFail = run.tasks.some(t => !t.ok);
+            {history.map((run) => {
+              const anyFail = run.tasks.some((t) => !t.ok);
               return (
                 <li key={run.runId} className="border border-paper-warm rounded p-2">
                   <div className="flex items-center justify-between text-xs text-ink-soft">
@@ -243,9 +283,11 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
                     <span>{new Date(run.startedAt).toLocaleString('zh-CN')}</span>
                   </div>
                   <ul className="mt-1 space-y-0.5">
-                    {run.tasks.map(t => (
+                    {run.tasks.map((t) => (
                       <li key={t.id} className="font-mono text-xs flex items-start gap-1">
-                        <span className={t.ok ? 'text-green-700' : 'text-seal'}>{t.ok ? '✓' : '✗'}</span>
+                        <span className={t.ok ? 'text-green-700' : 'text-seal'}>
+                          {t.ok ? '✓' : '✗'}
+                        </span>
                         <span className="text-ink-soft shrink-0">{t.taskName}:</span>
                         <span className="text-ink break-all flex-1">
                           {t.summary}
@@ -274,7 +316,7 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
         <h2 className="text-sm font-semibold text-ink-soft">外部 cron 兜底</h2>
         <p>在 Vercel / serverless 部署中,setInterval 不一定生效。请用外部 cron 调:</p>
         <pre className="bg-paper-deep p-2 rounded text-xs overflow-x-auto">
-{`curl -X POST https://YOUR_DOMAIN/api/admin/scheduler/trigger \\
+          {`curl -X POST https://YOUR_DOMAIN/api/admin/scheduler/trigger \\
   -H "Cookie: <admin session>"`}
         </pre>
         <p>需要登录态。生产环境建议配合 admin Bearer Token (未来扩展)。</p>
@@ -282,19 +324,25 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
 
       {hasError && (
         <p className="text-xs text-seal inline-flex items-center gap-1">
-          <AlertTriangle className="h-3.5 w-3.5" />上次执行有任务失败,见上方「执行结果」。
+          <AlertTriangle className="h-3.5 w-3.5" />
+          上次执行有任务失败,见上方「执行结果」。
         </p>
       )}
       {!hasError && cfg.lastResult && (
         <p className="text-xs text-green-700 inline-flex items-center gap-1">
-          <Check className="h-3.5 w-3.5" />上次执行全部成功。
+          <Check className="h-3.5 w-3.5" />
+          上次执行全部成功。
         </p>
       )}
     </div>
   );
 }
 
-function ToggleSwitch({ checked, disabled, onChange }: {
+function ToggleSwitch({
+  checked,
+  disabled,
+  onChange,
+}: {
   checked: boolean;
   disabled: boolean;
   onChange: (v: boolean) => void;

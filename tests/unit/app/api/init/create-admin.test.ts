@@ -37,7 +37,11 @@ function postReq(body: unknown): NextRequest {
 
 describe('POST /api/init/create-admin (token-based)', () => {
   it('consumes token and creates user', async () => {
-    mockedConsume.mockReturnValueOnce({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
+    mockedConsume.mockReturnValueOnce({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
     const res = await POST(postReq({ token: 'a'.repeat(32) }));
     expect(res.status).toBe(200);
     const body = await res.json();

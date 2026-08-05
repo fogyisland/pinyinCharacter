@@ -16,13 +16,17 @@ const CATEGORIES: Array<{ value: string; label: string }> = [
 
 export function ClassicCategoryNav({ current, counts }: Props) {
   return (
-    <nav className="flex gap-2 overflow-x-auto pb-2 mb-6 border-b border-ink/10" aria-label="古籍分类">
+    <nav
+      className="flex gap-2 overflow-x-auto pb-2 mb-6 border-b border-ink/10"
+      aria-label="古籍分类"
+    >
       {CATEGORIES.map((c) => {
         const active = current === c.value;
         const href = c.value === 'all' ? '/ancient' : `/ancient?category=${c.value}`;
-        const n = c.value === 'all'
-          ? Object.values(counts).reduce((s, v) => s + v, 0)
-          : (counts[c.value] ?? 0);
+        const n =
+          c.value === 'all'
+            ? Object.values(counts).reduce((s, v) => s + v, 0)
+            : (counts[c.value] ?? 0);
         return (
           <Link
             key={c.value}

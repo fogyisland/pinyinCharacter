@@ -27,7 +27,13 @@ const DIFFICULTY_LABELS = {
   hard: '困难 (level 1+2+3 全字库)',
 } as const;
 
-export function RandomTab({ title, onTitleChange, onPicked, paperSize, hasContent = false }: Props) {
+export function RandomTab({
+  title,
+  onTitleChange,
+  onPicked,
+  paperSize,
+  hasContent = false,
+}: Props) {
   // 字数 is fully derived from the selected paper size — no manual input,
   // no 100-char cap (A3 = 168, A4 = 88, B5 = 48, brush-12/24/28 = 12/24/28).
   const count = cellsPerPage(paperSize);
@@ -44,12 +50,16 @@ export function RandomTab({ title, onTitleChange, onPicked, paperSize, hasConten
       setErr('请先填写字帖标题');
       return;
     }
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     try {
       const res = await fetch(`/api/chars/random?count=${count}&difficulty=${difficulty}`);
       const j = await res.json();
-      if (!j.ok) { setErr(j.error?.message ?? '生成失败'); return; }
-      const chars = (j.data.chars as RandomChar[]).map(c => c.char);
+      if (!j.ok) {
+        setErr(j.error?.message ?? '生成失败');
+        return;
+      }
+      const chars = (j.data.chars as RandomChar[]).map((c) => c.char);
       onPicked(chars);
     } catch (e) {
       setErr((e as Error).message);
@@ -68,7 +78,7 @@ export function RandomTab({ title, onTitleChange, onPicked, paperSize, hasConten
         <input
           type="text"
           value={title}
-          onChange={e => onTitleChange(e.target.value.slice(0, 80))}
+          onChange={(e) => onTitleChange(e.target.value.slice(0, 80))}
           maxLength={80}
           placeholder="给字帖起个名字..."
           className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
@@ -85,21 +95,26 @@ export function RandomTab({ title, onTitleChange, onPicked, paperSize, hasConten
         <div>
           <label className="text-sm font-medium text-ink-soft">难度</label>
           <select
-            value={difficulty} onChange={e => setDifficulty(e.target.value as any)}
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as any)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           >
-            {(['easy', 'medium', 'hard'] as const).map(d => (
-              <option key={d} value={d}>{DIFFICULTY_LABELS[d]}</option>
+            {(['easy', 'medium', 'hard'] as const).map((d) => (
+              <option key={d} value={d}>
+                {DIFFICULTY_LABELS[d]}
+              </option>
             ))}
           </select>
         </div>
       </div>
       {err && <p className="text-sm text-red-600">{err}</p>}
       <button
-        type="button" onClick={handleGenerate} disabled={busy}
+        type="button"
+        onClick={handleGenerate}
+        disabled={busy}
         className="rounded-md bg-ink px-4 py-2 text-paper-soft hover:bg-ink/80 disabled:opacity-50"
       >
-        {busy ? '抽字中…' : (hasContent ? '重新生成' : '随机生成')}
+        {busy ? '抽字中…' : hasContent ? '重新生成' : '随机生成'}
       </button>
     </div>
   );

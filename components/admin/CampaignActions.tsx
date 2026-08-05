@@ -15,12 +15,15 @@ export function CampaignActions({ id, status }: Props) {
 
   async function call(action: 'preview' | 'send'): Promise<void> {
     const key = action;
-    setBusy(key); setMsg(null);
+    setBusy(key);
+    setMsg(null);
     try {
       const res = await fetch(`/api/admin/email/campaigns/${id}/${action}`, { method: 'POST' });
       const data = await res.json();
       if (!data.ok) throw new Error(data.error?.message ?? `${action} failed`);
-      setMsg(action === 'preview' ? '预览已发到你的邮箱' : `已入队 ${data.data?.queued ?? 0} 个收件人`);
+      setMsg(
+        action === 'preview' ? '预览已发到你的邮箱' : `已入队 ${data.data?.queued ?? 0} 个收件人`,
+      );
       router.refresh();
     } catch (e) {
       setMsg('失败: ' + (e instanceof Error ? e.message : String(e)));

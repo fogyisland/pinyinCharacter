@@ -10,11 +10,7 @@ import {
   POEM_FONT_STORAGE_KEY,
   type PoemFont,
 } from '@/lib/poetry-types';
-import {
-  DEFAULT_TEXT_GRID,
-  TEXT_GRID_STORAGE_KEY,
-  type TextGridMode,
-} from '@/lib/text-grid';
+import { DEFAULT_TEXT_GRID, TEXT_GRID_STORAGE_KEY, type TextGridMode } from '@/lib/text-grid';
 
 const VALID_FONTS = new Set<PoemFont>(['kai', 'xiao-kai', 'li-shu', 'zhuan-shu', 'mao-bi']);
 const VALID_GRIDS = new Set<TextGridMode>(['default', 'tian', 'mi']);

@@ -5,7 +5,11 @@ import { isSetupRouteEnabled } from '@/lib/setup';
 import { stashAdminCredentials } from '@/lib/init-credentials';
 
 const stashAdminSchema = z.object({
-  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
+  username: z
+    .string()
+    .min(3)
+    .max(32)
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username must be alphanumeric + underscore'),
   password: z.string().min(8).max(72),
   email: z.string().email().max(255).optional(),
 });
@@ -25,7 +29,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = stashAdminSchema.safeParse(body);
     if (!parsed.success) {
-      return badRequest('invalid_input', parsed.error.issues.map(i => i.message).join('; '));
+      return badRequest('invalid_input', parsed.error.issues.map((i) => i.message).join('; '));
     }
     const token = stashAdminCredentials(parsed.data);
     return NextResponse.json({ ok: true, data: { token, expiresInSec: 120 } });

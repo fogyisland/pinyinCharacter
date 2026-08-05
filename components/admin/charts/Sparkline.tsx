@@ -39,7 +39,11 @@ export function Sparkline({ data, height = 32, color, trend }: SparklineProps) {
   }
 
   if (data.length === 0) {
-    return <div style={{ height, width: 80 }} className="text-xs text-muted-foreground">—</div>;
+    return (
+      <div style={{ height, width: 80 }} className="text-xs text-muted-foreground">
+        —
+      </div>
+    );
   }
 
   const points: SparkPoint[] = data.map((v, i) => ({ i, v }));

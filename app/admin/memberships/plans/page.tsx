@@ -16,7 +16,12 @@ export default async function AdminPlansPage() {
         </div>
         <div className="flex gap-2">
           {plans.length === 0 && <SeedPlansButton />}
-          <Link href="/admin/memberships" className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep">← 返回会员列表</Link>
+          <Link
+            href="/admin/memberships"
+            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
+          >
+            ← 返回会员列表
+          </Link>
         </div>
       </div>
       <div className="card-paper rounded-lg overflow-x-auto">
@@ -34,9 +39,15 @@ export default async function AdminPlansPage() {
             </tr>
           </thead>
           <tbody>
-            {plans.map(p => <PlanRow key={p.id} plan={p} />)}
+            {plans.map((p) => (
+              <PlanRow key={p.id} plan={p} />
+            ))}
             {plans.length === 0 && (
-              <tr><td colSpan={8} className="px-3 py-6 text-center text-ink-faint">暂无套餐,点右上「初始化」</td></tr>
+              <tr>
+                <td colSpan={8} className="px-3 py-6 text-center text-ink-faint">
+                  暂无套餐,点右上「初始化」
+                </td>
+              </tr>
             )}
           </tbody>
         </table>

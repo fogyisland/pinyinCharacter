@@ -61,15 +61,15 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
      ${whereSql}
      ORDER BY u.created_at DESC
      LIMIT ? OFFSET ?`,
-    [...params, limit, offset]
+    [...params, limit, offset],
   );
   const [countRows] = await pool.execute<any[]>(
     `SELECT COUNT(*) AS n FROM users u ${whereSql}`,
-    params
+    params,
   );
 
   return {
-    users: rows.map(r => ({
+    users: rows.map((r) => ({
       id: Number(r.id),
       username: r.username,
       isAdmin: r.is_admin === 1 || r.is_admin === true,
@@ -101,7 +101,7 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
        FROM history GROUP BY user_id
      ) h ON h.user_id = u.id
      WHERE u.id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   if (rows.length === 0) return null;
   const r = rows[0];
@@ -116,7 +116,7 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
   };
   const [hist] = await pool.execute<any[]>(
     `SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`,
-    [id]
+    [id],
   );
   return { user, recentHistory: hist as HistoryRow[] };
 }
@@ -134,32 +134,47 @@ export interface AuditLogRow {
 export interface AuditLogOptions {
   userId?: number;
   event?: AuditEvent;
-  from?: string;     // ISO date
-  to?: string;       // ISO date
+  from?: string; // ISO date
+  to?: string; // ISO date
   limit?: number;
   offset?: number;
 }
-export interface AuditLogResult { rows: AuditLogRow[]; total: number; }
+export interface AuditLogResult {
+  rows: AuditLogRow[];
+  total: number;
+}
 
 export async function getAuditLog(opts: AuditLogOptions = {}): Promise<AuditLogResult> {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const offset = Math.max(opts.offset ?? 0, 0);
   const wheres: string[] = [];
   const params: any[] = [];
-  if (opts.userId !== undefined) { wheres.push('user_id = ?'); params.push(opts.userId); }
-  if (opts.event) { wheres.push('event = ?'); params.push(opts.event); }
-  if (opts.from) { wheres.push('created_at >= ?'); params.push(opts.from); }
-  if (opts.to) { wheres.push('created_at <= ?'); params.push(opts.to); }
+  if (opts.userId !== undefined) {
+    wheres.push('user_id = ?');
+    params.push(opts.userId);
+  }
+  if (opts.event) {
+    wheres.push('event = ?');
+    params.push(opts.event);
+  }
+  if (opts.from) {
+    wheres.push('created_at >= ?');
+    params.push(opts.from);
+  }
+  if (opts.to) {
+    wheres.push('created_at <= ?');
+    params.push(opts.to);
+  }
   const where = wheres.length ? `WHERE ${wheres.join(' AND ')}` : '';
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, event, metadata, ip, user_agent, created_at
      FROM audit_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
-    [...params, limit, offset]
+    [...params, limit, offset],
   );
   const [countRows] = await pool.execute<any[]>(
     `SELECT COUNT(*) AS n FROM audit_log ${where}`,
-    params
+    params,
   );
   return { rows: rows as AuditLogRow[], total: Number(countRows[0]?.n ?? 0) };
 }
@@ -180,7 +195,7 @@ export async function getSystemStats(): Promise<SystemStats> {
        (SELECT COUNT(*) FROM users WHERE is_admin = 1) AS admins,
        (SELECT COUNT(*) FROM history) AS history,
        (SELECT COUNT(*) FROM history WHERE is_favorite = 1) AS favorites,
-       (SELECT COUNT(*) FROM audit_log) AS audit`
+       (SELECT COUNT(*) FROM audit_log) AS audit`,
   );
   const r = rows[0] ?? {};
   return {
@@ -196,35 +211,32 @@ export async function countOtherAdmins(excludeUserId: number): Promise<number> {
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT COUNT(*) AS n FROM users WHERE is_admin = 1 AND id != ?`,
-    [excludeUserId]
+    [excludeUserId],
   );
   return Number(rows[0]?.n ?? 0);
 }
 
 export async function deleteUserCascade(id: number): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
-    `DELETE FROM users WHERE id = ?`,
-    [id]
-  );
+  const [res] = await pool.execute<any>(`DELETE FROM users WHERE id = ?`, [id]);
   return res.affectedRows > 0;
 }
 
 export async function setUserAdmin(id: number, isAdmin: boolean): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
-    `UPDATE users SET is_admin = ? WHERE id = ?`,
-    [isAdmin ? 1 : 0, id]
-  );
+  const [res] = await pool.execute<any>(`UPDATE users SET is_admin = ? WHERE id = ?`, [
+    isAdmin ? 1 : 0,
+    id,
+  ]);
   return res.affectedRows > 0;
 }
 
 export async function setUserPasswordHash(id: number, hash: string): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
-    `UPDATE users SET password_hash = ? WHERE id = ?`,
-    [hash, id]
-  );
+  const [res] = await pool.execute<any>(`UPDATE users SET password_hash = ? WHERE id = ?`, [
+    hash,
+    id,
+  ]);
   return res.affectedRows > 0;
 }
 
@@ -237,24 +249,20 @@ export function generateTempPassword(): string {
 
 export async function disableUser(id: number, byAdminId: number): Promise<void> {
   const pool = getPool();
-  await pool.query(
-    `UPDATE users SET disabled_at = NOW() WHERE id = ? AND disabled_at IS NULL`,
-    [id]
-  );
+  await pool.query(`UPDATE users SET disabled_at = NOW() WHERE id = ? AND disabled_at IS NULL`, [
+    id,
+  ]);
 }
 
 export async function enableUser(id: number, byAdminId: number): Promise<void> {
   const pool = getPool();
-  await pool.query(
-    `UPDATE users SET disabled_at = NULL WHERE id = ?`,
-    [id]
-  );
+  await pool.query(`UPDATE users SET disabled_at = NULL WHERE id = ?`, [id]);
 }
 
 export async function isUserDisabled(userId: number): Promise<boolean> {
   const [rows] = await getPool().query<any[]>(
     `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
-    [userId]
+    [userId],
   );
   if (rows.length === 0) return false;
   return rows[0].disabled_at !== null;

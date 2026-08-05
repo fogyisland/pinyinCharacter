@@ -24,39 +24,41 @@
 
 ## File Structure
 
-| File | Responsibility |
-|------|---------------|
-| `lib/worksheet-append.ts` (NEW) | Server-only: find-or-create "我的字帖", append char with dedup |
-| `lib/validators.ts` (MODIFY) | Add `appendToWorksheetSchema` |
-| `lib/audit-format.ts` (MODIFY) | Add `worksheet_char_appended` to union + formatLogMessage case |
-| `app/api/worksheets/append/route.ts` (NEW) | POST handler: auth + validate + lib + audit |
-| `tests/integration/api/worksheets-append.test.ts` (NEW) | API endpoint integration tests |
-| `tests/unit/lib/worksheet-append.test.ts` (NEW) | Server lib DB-touching unit tests (require DATABASE_URL_TEST) |
-| `tests/unit/lib/audit.test.ts` (MODIFY) | Bump event count from 33 → 34, add formatLogMessage case |
-| `lib/toast-store.ts` (NEW) | zustand client store: toasts[], push, dismiss |
-| `components/common/Toast.tsx` (NEW) | `<ToastViewport />` client component, renders toast list |
-| `app/layout.tsx` (MODIFY) | Mount `<ToastViewport />` after `{children}` |
-| `lib/api-worksheet.ts` (MODIFY) | Add `appendCharToMyWorksheetApi(char)` client helper |
-| `components/dictionary/CharContextMenu.tsx` (NEW) | Client: fixed-position single-item context menu |
-| `components/dictionary/DictionaryCharGridClient.tsx` (NEW) | Client: wraps char grid, handles onContextMenu + toast on add |
-| `components/dictionary/DictionaryCharGrid.tsx` (MODIFY) | Slim wrapper that delegates to `DictionaryCharGridClient` |
-| `components/dictionary/DictionaryClient.tsx` (MODIFY) | Add level filter buttons (全部 / 一级 / 二级 / 三级) |
-| `components/dictionary/DictionaryDetailAddToWorksheet.tsx` (NEW) | Client button on `/dictionary/<char>` calling append API |
-| `components/dictionary/DictionaryDetailTabs.tsx` (MODIFY) | Replace `+ 字帖` `<Link>` with the new client button |
-| `lib/etymology.ts` (MODIFY) | `getEtymology` reads from JSON when no `char_etymology` row exists; returns minimal record |
-| `components/etymology/EtymologyTimeline.tsx` (MODIFY) | Render story section even when eraGlyphs are empty (JSON-only path) |
-| `lib/story.ts` (NEW) | `getHanziStory(char)` reads from `data/content/<char>.json`, falls back to `rare_chars` |
-| `app/stories/[char]/page.tsx` (MODIFY) | Use `getHanziStory` instead of `getChar`; 404 only when no JSON + no rare_chars story |
+| File                                                             | Responsibility                                                                             |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `lib/worksheet-append.ts` (NEW)                                  | Server-only: find-or-create "我的字帖", append char with dedup                             |
+| `lib/validators.ts` (MODIFY)                                     | Add `appendToWorksheetSchema`                                                              |
+| `lib/audit-format.ts` (MODIFY)                                   | Add `worksheet_char_appended` to union + formatLogMessage case                             |
+| `app/api/worksheets/append/route.ts` (NEW)                       | POST handler: auth + validate + lib + audit                                                |
+| `tests/integration/api/worksheets-append.test.ts` (NEW)          | API endpoint integration tests                                                             |
+| `tests/unit/lib/worksheet-append.test.ts` (NEW)                  | Server lib DB-touching unit tests (require DATABASE_URL_TEST)                              |
+| `tests/unit/lib/audit.test.ts` (MODIFY)                          | Bump event count from 33 → 34, add formatLogMessage case                                   |
+| `lib/toast-store.ts` (NEW)                                       | zustand client store: toasts[], push, dismiss                                              |
+| `components/common/Toast.tsx` (NEW)                              | `<ToastViewport />` client component, renders toast list                                   |
+| `app/layout.tsx` (MODIFY)                                        | Mount `<ToastViewport />` after `{children}`                                               |
+| `lib/api-worksheet.ts` (MODIFY)                                  | Add `appendCharToMyWorksheetApi(char)` client helper                                       |
+| `components/dictionary/CharContextMenu.tsx` (NEW)                | Client: fixed-position single-item context menu                                            |
+| `components/dictionary/DictionaryCharGridClient.tsx` (NEW)       | Client: wraps char grid, handles onContextMenu + toast on add                              |
+| `components/dictionary/DictionaryCharGrid.tsx` (MODIFY)          | Slim wrapper that delegates to `DictionaryCharGridClient`                                  |
+| `components/dictionary/DictionaryClient.tsx` (MODIFY)            | Add level filter buttons (全部 / 一级 / 二级 / 三级)                                       |
+| `components/dictionary/DictionaryDetailAddToWorksheet.tsx` (NEW) | Client button on `/dictionary/<char>` calling append API                                   |
+| `components/dictionary/DictionaryDetailTabs.tsx` (MODIFY)        | Replace `+ 字帖` `<Link>` with the new client button                                       |
+| `lib/etymology.ts` (MODIFY)                                      | `getEtymology` reads from JSON when no `char_etymology` row exists; returns minimal record |
+| `components/etymology/EtymologyTimeline.tsx` (MODIFY)            | Render story section even when eraGlyphs are empty (JSON-only path)                        |
+| `lib/story.ts` (NEW)                                             | `getHanziStory(char)` reads from `data/content/<char>.json`, falls back to `rare_chars`    |
+| `app/stories/[char]/page.tsx` (MODIFY)                           | Use `getHanziStory` instead of `getChar`; 404 only when no JSON + no rare_chars story      |
 
 ---
 
 ## Task 1: Server lib — find-or-create + append
 
 **Files:**
+
 - Create: `lib/worksheet-append.ts`
 - Test: `tests/unit/lib/worksheet-append.test.ts`
 
 **Interfaces:**
+
 - Consumes: `getPool()` from `@/lib/db`
 - Produces: `appendCharToMyWorksheet(userId: number, char: string): Promise<{ worksheetId: number; added: boolean }>`
 
@@ -81,7 +83,7 @@ async function insertUser(username: string): Promise<number> {
   const pool = getPool();
   const [r] = await pool.execute<any>(
     `INSERT INTO users (username, password_hash) VALUES (?, 'x')`,
-    [username]
+    [username],
   );
   return r.insertId as number;
 }
@@ -106,10 +108,11 @@ d('appendCharToMyWorksheet', () => {
     expect(r.added).toBe(true);
     expect(r.worksheetId).toBeGreaterThan(0);
 
-    const [rows] = await getPool().query<any[]>(
-      `SELECT content FROM worksheets WHERE id = ?`, [r.worksheetId]
-    );
-    const content = typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
+    const [rows] = await getPool().query<any[]>(`SELECT content FROM worksheets WHERE id = ?`, [
+      r.worksheetId,
+    ]);
+    const content =
+      typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
     expect(content).toEqual(['我']);
   });
 
@@ -120,10 +123,11 @@ d('appendCharToMyWorksheet', () => {
     expect(r2.added).toBe(true);
     expect(r2.worksheetId).toBe(r1.worksheetId);
 
-    const [rows] = await getPool().query<any[]>(
-      `SELECT content FROM worksheets WHERE id = ?`, [r1.worksheetId]
-    );
-    const content = typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
+    const [rows] = await getPool().query<any[]>(`SELECT content FROM worksheets WHERE id = ?`, [
+      r1.worksheetId,
+    ]);
+    const content =
+      typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
     expect(content).toEqual(['我', '你']);
   });
 
@@ -134,10 +138,11 @@ d('appendCharToMyWorksheet', () => {
     expect(r2.added).toBe(false);
     expect(r2.worksheetId).toBe(r1.worksheetId);
 
-    const [rows] = await getPool().query<any[]>(
-      `SELECT content FROM worksheets WHERE id = ?`, [r1.worksheetId]
-    );
-    const content = typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
+    const [rows] = await getPool().query<any[]>(`SELECT content FROM worksheets WHERE id = ?`, [
+      r1.worksheetId,
+    ]);
+    const content =
+      typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
     expect(content).toEqual(['我']);
   });
 
@@ -150,7 +155,7 @@ d('appendCharToMyWorksheet', () => {
 
     const [all] = await getPool().query<any[]>(
       `SELECT user_id, title FROM worksheets WHERE title = '我的字帖' AND user_id IN (?, ?)`,
-      [u1, u2]
+      [u1, u2],
     );
     expect(all).toHaveLength(2);
   });
@@ -192,22 +197,28 @@ export async function appendCharToMyWorksheet(userId: number, char: string): Pro
 
   const [rows] = await pool.query<any[]>(
     `SELECT id, content FROM worksheets WHERE user_id = ? AND title = ? LIMIT 1`,
-    [userId, MY_WORKSHEET_TITLE]
+    [userId, MY_WORKSHEET_TITLE],
   );
 
   if (rows.length === 0) {
     const [ins] = await pool.execute<any>(
       `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family)
        VALUES (?, ?, JSON_ARRAY(?), ?, ?, ?)`,
-      [userId, MY_WORKSHEET_TITLE, char, DEFAULT_CELL_STYLE, DEFAULT_PAPER_SIZE, DEFAULT_FONT_FAMILY]
+      [
+        userId,
+        MY_WORKSHEET_TITLE,
+        char,
+        DEFAULT_CELL_STYLE,
+        DEFAULT_PAPER_SIZE,
+        DEFAULT_FONT_FAMILY,
+      ],
     );
     return { worksheetId: ins.insertId as number, added: true };
   }
 
   const worksheet = rows[0];
-  const content: string[] = typeof worksheet.content === 'string'
-    ? JSON.parse(worksheet.content)
-    : worksheet.content;
+  const content: string[] =
+    typeof worksheet.content === 'string' ? JSON.parse(worksheet.content) : worksheet.content;
 
   if (content.includes(char)) {
     return { worksheetId: worksheet.id, added: false };
@@ -215,7 +226,7 @@ export async function appendCharToMyWorksheet(userId: number, char: string): Pro
 
   await pool.execute<any>(
     `UPDATE worksheets SET content = JSON_ARRAY_APPEND(content, '$', ?) WHERE id = ?`,
-    [char, worksheet.id]
+    [char, worksheet.id],
   );
   return { worksheetId: worksheet.id, added: true };
 }
@@ -238,11 +249,13 @@ git commit -m "feat(worksheet-append): server lib for find-or-create 我的字�
 ## Task 2: Zod validator + audit event
 
 **Files:**
+
 - Modify: `lib/validators.ts` (add `appendToWorksheetSchema`)
 - Modify: `lib/audit-format.ts` (add `worksheet_char_appended` event + formatLogMessage case)
 - Modify: `tests/unit/lib/audit.test.ts` (bump count + new formatLogMessage case)
 
 **Interfaces:**
+
 - Produces: `appendToWorksheetSchema = z.object({ char: z.string().refine(...) })` from `@/lib/validators`
 - Produces: `worksheet_char_appended` event in `AuditEvent` union, formatLogMessage returns "追加/已存在 「X」到「我的字帖」 (#Y)"
 
@@ -255,22 +268,39 @@ Find the existing `events` array and append `'worksheet_char_appended'`:
 ```ts
 it('exports the 34 expected events', () => {
   const events: AuditEvent[] = [
-    'register', 'login', 'logout',
-    'history_create', 'history_delete',
-    'password_reset_request', 'password_reset_complete',
-    'admin_user_delete', 'admin_user_password_reset',
-    'admin_user_promote', 'admin_user_demote',
-    'user_disabled', 'user_reenabled',
-    'ai_config_updated', 'ai_call_logged',
+    'register',
+    'login',
+    'logout',
+    'history_create',
+    'history_delete',
+    'password_reset_request',
+    'password_reset_complete',
+    'admin_user_delete',
+    'admin_user_password_reset',
+    'admin_user_promote',
+    'admin_user_demote',
+    'user_disabled',
+    'user_reenabled',
+    'ai_config_updated',
+    'ai_call_logged',
     'tts_config_updated',
-    'scheduler_config_updated', 'scheduler_manual_trigger',
-    'worksheet_saved', 'worksheet_deleted',
+    'scheduler_config_updated',
+    'scheduler_manual_trigger',
+    'worksheet_saved',
+    'worksheet_deleted',
     'worksheet_char_appended',
-    'poem_saved', 'sutra_saved', 'rare_char_card_saved',
-    'membership_granted', 'membership_granted_paypal', 'membership_revoked',
+    'poem_saved',
+    'sutra_saved',
+    'rare_char_card_saved',
+    'membership_granted',
+    'membership_granted_paypal',
+    'membership_revoked',
     'membership_checkout_started',
-    'paypal_config_updated', 'paypal_webhook_received', 'paypal_webhook_rejected',
-    'admin_chars_generated', 'admin_chars_init_seed',
+    'paypal_config_updated',
+    'paypal_webhook_received',
+    'paypal_webhook_rejected',
+    'admin_chars_generated',
+    'admin_chars_init_seed',
     'admin_membership_plans_seeded',
   ];
   expect(events).toHaveLength(34);
@@ -281,13 +311,15 @@ Also append a new test for the formatLogMessage case (place after the existing f
 
 ```ts
 it('formatLogMessage renders worksheet_char_appended for new append', () => {
-  expect(formatLogMessage('worksheet_char_appended', { worksheetId: 42, char: '我', added: true }))
-    .toBe('追加「我」到「我的字帖」 (#42)');
+  expect(
+    formatLogMessage('worksheet_char_appended', { worksheetId: 42, char: '我', added: true }),
+  ).toBe('追加「我」到「我的字帖」 (#42)');
 });
 
 it('formatLogMessage renders worksheet_char_appended when char already exists', () => {
-  expect(formatLogMessage('worksheet_char_appended', { worksheetId: 42, char: '我', added: false }))
-    .toBe('已存在「我」到「我的字帖」 (#42)');
+  expect(
+    formatLogMessage('worksheet_char_appended', { worksheetId: 42, char: '我', added: false }),
+  ).toBe('已存在「我」到「我的字帖」 (#42)');
 });
 ```
 
@@ -302,11 +334,9 @@ Edit `lib/validators.ts`. Find the line right after `export const charParamSchem
 
 ```ts
 export const appendToWorksheetSchema = z.object({
-  char: z
-    .string()
-    .refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
-      error: 'must be a single CJK char',
-    }),
+  char: z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
+    error: 'must be a single CJK char',
+  }),
 });
 ```
 
@@ -347,10 +377,12 @@ git commit -m "feat(audit): worksheet_char_appended event + appendToWorksheetSch
 ## Task 3: API route + integration tests
 
 **Files:**
+
 - Create: `app/api/worksheets/append/route.ts`
 - Create: `tests/integration/api/worksheets-append.test.ts`
 
 **Interfaces:**
+
 - Consumes: `appendCharToMyWorksheet` from `@/lib/worksheet-append`, `appendToWorksheetSchema` from `@/lib/validators`, `logUserAction` from `@/lib/audit`
 - Produces: `POST /api/worksheets/append` — body `{ char: string }` → `{ ok: true, data: { worksheetId, added } }`
 
@@ -376,17 +408,23 @@ const { POST: append } = await import('@/app/api/worksheets/append/route');
 import { afterEach } from 'vitest';
 
 async function regUser(username: string) {
-  return register(new Request('http://x/api/auth/register', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username, password: 'longenoughpwd' }),
-  }) as any);
+  return register(
+    new Request('http://x/api/auth/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'longenoughpwd' }),
+    }) as any,
+  );
 }
 
 async function loginAndCookie(username: string) {
-  const r = await login(new Request('http://x/api/auth/login', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ username, password: 'longenoughpwd' }),
-  }) as any);
+  const r = await login(
+    new Request('http://x/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ username, password: 'longenoughpwd' }),
+    }) as any,
+  );
   const cookie = r.headers.get('set-cookie')!.split(';')[0];
   return { cookie };
 }
@@ -398,13 +436,18 @@ function withCookie(cookie: string, req: Request): Request {
 }
 
 integrationDescribe('POST /api/worksheets/append (integration)', () => {
-  afterEach(async () => { await truncateAll(); });
+  afterEach(async () => {
+    await truncateAll();
+  });
 
   it('rejects unauthenticated request with 401', async () => {
-    const r = await append(new Request('http://x/api/worksheets/append', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ char: '我' }),
-    }) as any);
+    const r = await append(
+      new Request('http://x/api/worksheets/append', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ char: '我' }),
+      }) as any,
+    );
     expect(r.status).toBe(401);
   });
 
@@ -412,10 +455,16 @@ integrationDescribe('POST /api/worksheets/append (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    const r = await append(withCookie(cookie, new Request('http://x/api/worksheets/append', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ char: '我我' }),
-    })) as any);
+    const r = await append(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets/append', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ char: '我我' }),
+        }),
+      ) as any,
+    );
     expect(r.status).toBe(400);
   });
 
@@ -423,10 +472,16 @@ integrationDescribe('POST /api/worksheets/append (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    const r = await append(withCookie(cookie, new Request('http://x/api/worksheets/append', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ char: '我' }),
-    })) as any);
+    const r = await append(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets/append', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ char: '我' }),
+        }),
+      ) as any,
+    );
     expect(r.status).toBe(200);
     const j = await r.json();
     expect(j.ok).toBe(true);
@@ -438,25 +493,38 @@ integrationDescribe('POST /api/worksheets/append (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    const r1 = await append(withCookie(cookie, new Request('http://x/api/worksheets/append', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ char: '我' }),
-    })) as any);
+    const r1 = await append(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets/append', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ char: '我' }),
+        }),
+      ) as any,
+    );
     const j1 = await r1.json();
-    const r2 = await append(withCookie(cookie, new Request('http://x/api/worksheets/append', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ char: '你' }),
-    })) as any);
+    const r2 = await append(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets/append', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ char: '你' }),
+        }),
+      ) as any,
+    );
     const j2 = await r2.json();
 
     expect(j1.data.worksheetId).toBe(j2.data.worksheetId);
     expect(j2.data.added).toBe(true);
 
     const { getPool } = await import('@/lib/db');
-    const [rows] = await getPool().query<any[]>(
-      `SELECT content FROM worksheets WHERE id = ?`, [j2.data.worksheetId]
-    );
-    const content = typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
+    const [rows] = await getPool().query<any[]>(`SELECT content FROM worksheets WHERE id = ?`, [
+      j2.data.worksheetId,
+    ]);
+    const content =
+      typeof rows[0].content === 'string' ? JSON.parse(rows[0].content) : rows[0].content;
     expect(content).toEqual(['我', '你']);
   });
 
@@ -464,14 +532,26 @@ integrationDescribe('POST /api/worksheets/append (integration)', () => {
     const u = uniqueUsername('ws');
     await regUser(u);
     const { cookie } = await loginAndCookie(u);
-    await append(withCookie(cookie, new Request('http://x/api/worksheets/append', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ char: '我' }),
-    })) as any);
-    const r2 = await append(withCookie(cookie, new Request('http://x/api/worksheets/append', {
-      method: 'POST', headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ char: '我' }),
-    })) as any);
+    await append(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets/append', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ char: '我' }),
+        }),
+      ) as any,
+    );
+    const r2 = await append(
+      withCookie(
+        cookie,
+        new Request('http://x/api/worksheets/append', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ char: '我' }),
+        }),
+      ) as any,
+    );
     const j2 = await r2.json();
     expect(j2.data.added).toBe(false);
   });
@@ -539,11 +619,13 @@ git commit -m "feat(worksheets-append): POST /api/worksheets/append endpoint + i
 ## Task 4: Toast infrastructure
 
 **Files:**
+
 - Create: `lib/toast-store.ts`
 - Create: `components/common/Toast.tsx`
 - Modify: `app/layout.tsx`
 
 **Interfaces:**
+
 - Produces: `useToastStore` (zustand) with `toasts: Toast[]`, `push(kind, text)`, `dismiss(id)`
 - Produces: `<ToastViewport />` client component that renders the toast list at fixed bottom-right
 
@@ -679,12 +761,14 @@ git commit -m "feat(toast): zustand store + ToastViewport mounted in root layout
 ## Task 5: Right-click menu + client wiring
 
 **Files:**
+
 - Create: `lib/api-worksheet.ts` modification — add `appendCharToMyWorksheetApi`
 - Create: `components/dictionary/CharContextMenu.tsx`
 - Create: `components/dictionary/DictionaryCharGridClient.tsx`
 - Modify: `components/dictionary/DictionaryCharGrid.tsx` — slim wrapper
 
 **Interfaces:**
+
 - Produces: client helper `appendCharToMyWorksheetApi(char)` — throws `Error { code: 'unauthorized' }` on 401, otherwise returns `{ worksheetId, added }`
 - Produces: `<CharContextMenu x y char onClose />` — single-item menu, fixed position, Esc/click-outside closes
 - Produces: `<DictionaryCharGridClient chars />` — same rendering as current grid but with `onContextMenu` to open menu + add-to-worksheet handler
@@ -694,7 +778,9 @@ git commit -m "feat(toast): zustand store + ToastViewport mounted in root layout
 Edit `lib/api-worksheet.ts`. Append at the bottom:
 
 ```ts
-export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksheetId: number; added: boolean }> {
+export async function appendCharToMyWorksheetApi(
+  char: string,
+): Promise<{ worksheetId: number; added: boolean }> {
   const res = await fetch('/api/worksheets/append', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -705,7 +791,7 @@ export async function appendCharToMyWorksheetApi(char: string): Promise<{ worksh
   }
   const data = await res.json();
   if (!data.ok) {
-    const msg = typeof data.error === 'string' ? data.error : data.error?.message ?? 'add failed';
+    const msg = typeof data.error === 'string' ? data.error : (data.error?.message ?? 'add failed');
     throw new Error(msg);
   }
   return data.data;
@@ -755,7 +841,10 @@ export function CharContextMenu({ x, y, char, onAdd, onClose }: Props) {
       onClick={(e) => e.stopPropagation()}
     >
       <button
-        onClick={() => { onAdd(char); onClose(); }}
+        onClick={() => {
+          onAdd(char);
+          onClose();
+        }}
         className="block w-full text-left px-4 py-2 hover:bg-paper text-ink"
       >
         添加到「我的字帖」
@@ -779,7 +868,11 @@ import { useToastStore } from '@/lib/toast-store';
 import { appendCharToMyWorksheetApi } from '@/lib/api-worksheet';
 import { CharContextMenu } from './CharContextMenu';
 
-interface MenuState { x: number; y: number; char: string; }
+interface MenuState {
+  x: number;
+  y: number;
+  char: string;
+}
 
 export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
   const [menu, setMenu] = useState<MenuState | null>(null);
@@ -879,9 +972,11 @@ git commit -m "feat(dictionary): right-click '添加到我的字帖' menu + clie
 ## Task 6: Dictionary level filter
 
 **Files:**
+
 - Modify: `components/dictionary/DictionaryClient.tsx`
 
 **Interfaces:**
+
 - Produces: 4-button level filter group on `/dictionary` page (全部 / 一级 / 二级 / 三级)
 - URL state: `?level=1|2|3` (already plumbed through `app/dictionary/page.tsx` → `listChars`)
 
@@ -904,7 +999,8 @@ Inside the component, after the `switchView` definition, add:
 
 ```ts
 const activeLevel = sp.get('level');
-const activeLevelNum = activeLevel === '1' ? 1 : activeLevel === '2' ? 2 : activeLevel === '3' ? 3 : undefined;
+const activeLevelNum =
+  activeLevel === '1' ? 1 : activeLevel === '2' ? 2 : activeLevel === '3' ? 3 : undefined;
 
 const switchLevel = (lvl: 1 | 2 | 3 | undefined) => {
   const params = new URLSearchParams(sp.toString());
@@ -926,7 +1022,9 @@ Then in the JSX, insert a new button group AFTER the existing `字典 · {total}
       key={l.label}
       onClick={() => switchLevel(l.value)}
       className={`text-sm px-3 py-1 rounded ${
-        activeLevelNum === l.value ? 'bg-ink text-paper' : 'bg-paper-warm text-ink-soft border border-ink/20'
+        activeLevelNum === l.value
+          ? 'bg-ink text-paper'
+          : 'bg-paper-warm text-ink-soft border border-ink/20'
       }`}
     >
       {l.label}
@@ -971,10 +1069,12 @@ git commit -m "feat(dictionary): level filter buttons (全部/一级/二级/三�
 ## Task 7: Dictionary detail page — inline add-to-worksheet
 
 **Files:**
+
 - Create: `components/dictionary/DictionaryDetailAddToWorksheet.tsx`
 - Modify: `components/dictionary/DictionaryDetailTabs.tsx` (replace the `+ 字帖` `<Link>` with the new client button)
 
 **Interfaces:**
+
 - Consumes: `useToastStore` from `@/lib/toast-store`, `appendCharToMyWorksheetApi` from `@/lib/api-worksheet`
 - Produces: `<DictionaryDetailAddToWorksheet char={c.char} />` — client button that calls the append API and toasts feedback
 
@@ -1029,7 +1129,7 @@ export function DictionaryDetailAddToWorksheet({ char }: { char: string }) {
 
 - [ ] **Step 2: Replace the existing `+ 字帖` link in DictionaryDetailTabs**
 
-Edit `components/dictionary/DictionaryDetailTabs.tsx`. 
+Edit `components/dictionary/DictionaryDetailTabs.tsx`.
 
 Add an import at the top alongside the other imports:
 
@@ -1040,7 +1140,12 @@ import { DictionaryDetailAddToWorksheet } from './DictionaryDetailAddToWorksheet
 Find the line:
 
 ```tsx
-<Link href={`/worksheet?text=${encodeURIComponent(char.char)}`} className="px-3 py-2 text-sm text-ink-soft hover:text-ink">+ 字帖</Link>
+<Link
+  href={`/worksheet?text=${encodeURIComponent(char.char)}`}
+  className="px-3 py-2 text-sm text-ink-soft hover:text-ink"
+>
+  + 字帖
+</Link>
 ```
 
 Replace it with:
@@ -1070,9 +1175,11 @@ git commit -m "feat(dictionary-detail): inline +字帖 button on char page (no n
 ## Task 8: Fix /etymology/<char> 404 — read etymology_story from JSON
 
 **Files:**
+
 - Modify: `lib/etymology.ts` — `getEtymology` returns minimal record when no `char_etymology` row exists but JSON content exists
 
 **Interfaces:**
+
 - Produces: `getEtymology(char): Promise<Etymology | null>` where the returned object has eraGlyphs defaulting to all `hasGlyph: false` and `story` from JSON when DB row is missing
 
 **Context:** Post 2026-06-17 slim migration, most chars have etymology_story in `data/content/<char>.json` only — no `char_etymology` row. The current `if (rows.length === 0) return null` makes `/etymology/<char>` 404 for them. Fix: if no row, return a minimal record so the page renders the JSON story.
@@ -1123,10 +1230,12 @@ git commit -m "fix(etymology): read story from JSON when no char_etymology row (
 ## Task 9: Fix /stories/<char> 404 — read hanzi_story from JSON
 
 **Files:**
+
 - Create: `lib/story.ts`
 - Modify: `app/stories/[char]/page.tsx` — use new `getHanziStory` instead of `getChar`
 
 **Interfaces:**
+
 - Produces: `getHanziStory(char): Promise<{ char: string; story: string; pinyin?: string } | null>` — reads from JSON first, falls back to `rare_chars`
 
 **Context:** Same root cause as Task 8. `/stories/<char>` reads from `rare_chars` table only — most chars don't have a rare_chars row, so the page 404s even though their `data/content/<char>.json` has a `hanzi_story` field.
@@ -1161,7 +1270,7 @@ export async function getHanziStory(char: string): Promise<HanziStory | null> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin, story FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
   if (rows.length === 0 || !rows[0].story) return null;
   return { char: rows[0].char, story: rows[0].story, pinyin: rows[0].pinyin };
@@ -1194,15 +1303,17 @@ And replace `if (!data || !data.story) notFound();` — keep as-is (data.story c
 Replace `<StoryClient initialChar={data as unknown as RareCharClient} />` with a wrapper that adapts the slimmer `HanziStory` shape to whatever `StoryClient` needs. **Action for implementer:** read `app/stories/StoryClient.tsx` to see what fields it reads from `initialChar`, then write a small adapter inline:
 
 ```tsx
-{(() => {
-  const adapted = {
-    char: data.char,
-    story: data.story,
-    pinyin: data.pinyin ?? '',
-    // ... other fields StoryClient reads, with sensible defaults
-  };
-  return <StoryClient initialChar={adapted as any} />;
-})()}
+{
+  (() => {
+    const adapted = {
+      char: data.char,
+      story: data.story,
+      pinyin: data.pinyin ?? '',
+      // ... other fields StoryClient reads, with sensible defaults
+    };
+    return <StoryClient initialChar={adapted as any} />;
+  })();
+}
 ```
 
 The implementer MUST open `StoryClient.tsx` first to learn its actual prop shape, then write the adapter. (The dict-detail Tabs pattern; cannot be fully verbatim without seeing StoryClient.)
@@ -1229,6 +1340,7 @@ git commit -m "fix(stories): read hanzi_story from JSON (slim-DB path) so /stori
 ## Self-Review
 
 **Spec coverage:**
+
 - Level filter ✓ (Task 6)
 - Right-click menu single item ✓ (Task 5)
 - "我的字帖" model: per-user, fixed title, dedup ✓ (Tasks 1, 3)
@@ -1245,17 +1357,20 @@ git commit -m "fix(stories): read hanzi_story from JSON (slim-DB path) so /stori
 **Placeholder scan:** no TBD/TODO/FIXME; all steps have full code.
 
 **Type consistency:**
+
 - `AppendResult = { worksheetId: number; added: boolean }` used uniformly across Tasks 1, 3, 5
 - `useToastStore.push(kind, text)` signature consistent across Tasks 4, 5
 - `appendCharToMyWorksheetApi` throws `Error & { code: 'unauthorized' }` matches catch in Task 5
 
 **Risks:**
+
 - Tasks 1 and 3 both truncate worksheets (Task 3's `truncateAll` between tests) — fine, they don't run together
 - Task 4 only does manual smoke — that's by design; Task 5 exercises the toast end-to-end
 
 ## Verification (whole plan)
 
 After all tasks:
+
 1. `pnpm tsc --noEmit` clean
 2. `pnpm test tests/unit/lib/audit.test.ts` — all pass (count bumped to 34 + 2 new formatLogMessage cases)
 3. `pnpm test tests/integration/api/worksheets-append.test.ts` — 5/5

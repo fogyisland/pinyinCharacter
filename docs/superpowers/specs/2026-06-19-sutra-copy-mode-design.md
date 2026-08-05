@@ -15,6 +15,7 @@ Add an in-place "抄经" (scripture copying) interaction to `/sutra/[id]` that t
 - No "copy mode" or progress table exists today.
 
 User decisions confirmed in brainstorm:
+
 1. Entry point = same-page toggle button on `/sutra/[id]` (not a separate route).
 2. Reading direction = honor the user's existing preference from `useSutraReading` (no lock).
 3. Persistence = DB-backed (`sutra_copy_progress` table), per-(user, sutra, chunk).
@@ -25,19 +26,34 @@ User decisions confirmed in brainstorm:
 ### Components
 
 **New:** `lib/sutra-copy-progress.ts` (`'server-only'`)
+
 ```ts
 export interface CopyProgress {
-  writtenChars: boolean[];   // flat array matching chunk.content joined
+  writtenChars: boolean[]; // flat array matching chunk.content joined
   startedAt: Date;
   updatedAt: Date;
   completedAt: Date | null;
 }
-export async function getProgress(userId: number, sutraId: number, chunkIdx: number): Promise<CopyProgress | null>;
-export async function upsertProgress(userId: number, sutraId: number, chunkIdx: number, writtenChars: boolean[]): Promise<void>;
-export async function markComplete(userId: number, sutraId: number, chunkIdx: number): Promise<void>;
+export async function getProgress(
+  userId: number,
+  sutraId: number,
+  chunkIdx: number,
+): Promise<CopyProgress | null>;
+export async function upsertProgress(
+  userId: number,
+  sutraId: number,
+  chunkIdx: number,
+  writtenChars: boolean[],
+): Promise<void>;
+export async function markComplete(
+  userId: number,
+  sutraId: number,
+  chunkIdx: number,
+): Promise<void>;
 ```
 
 **New:** `migrations/2026-06-19-sutra-copy-progress.sql`
+
 ```sql
 CREATE TABLE sutra_copy_progress (
   user_id INT UNSIGNED NOT NULL,
@@ -53,15 +69,18 @@ CREATE TABLE sutra_copy_progress (
 ```
 
 **New:** `app/api/sutra/[id]/copy-progress/route.ts`
+
 ```ts
 // GET  /api/sutra/[id]/copy-progress?chunk=N  →  { progress: CopyProgress | null }
 // POST /api/sutra/[id]/copy-progress  body: { chunkIdx, writtenChars, completed?: bool }
 ```
+
 - Both routes require `requireUser()`; 401 to anonymous.
 - POST is idempotent: upsert by `(user_id, sutra_id, chunk_idx)`.
 - Validation: `chunkIdx` 0..chunks.length-1 (server-side lookup of sutra to enforce).
 
 **New:** `components/sutra/SutraCopyView.tsx` (`'use client'`)
+
 - Props: `{ chunk: SutraChunk; sutraId: number; userId: number | null; reading: SutraReading; onExit: () => void }`
 - State: `writtenChars: boolean[]` (initialized from API GET on mount); `phase: 'copying' | 'collapsing' | 'sealed'`.
 - Layout:
@@ -73,12 +92,14 @@ CREATE TABLE sutra_copy_progress (
 - Sealed phase: replace body with `<CopySeal onReset={...} onExit={onExit} />`.
 
 **New:** `components/sutra/CopySeal.tsx`
+
 - Inline SVG: 80×80 viewBox `<circle cx=40 cy=40 r=36 stroke=#B22B2B strokeWidth=1.5 fill=none>` + `<text x=40 y=44 textAnchor=middle fontSize=10 fill=#B22B2B fontFamily="Noto Serif SC, serif">功德圆满</text>`. Centered in viewport via `fixed inset-0 flex items-center justify-center`.
 - Below seal: two buttons "重新抄写" + "退出抄经".
 - `onReset`: parent resets state via `setWrittenChars(new Array(N).fill(false))` + re-POST (clears completed_at via DELETE-then-POST or upsert with empty array).
 - `onExit`: parent calls `onExit()` to switch back to SutraTextView.
 
 **Modified:** `components/sutra/SutraReadingClient.tsx`
+
 - Add state `copyMode: boolean`.
 - Add button "进入抄经" / "退出抄经" next to the `ReadingModePicker` in the toolbar row.
 - When `copyMode === true`: render `<SutraCopyView />` instead of `<SutraTextView />`.
@@ -86,23 +107,24 @@ CREATE TABLE sutra_copy_progress (
 - When chunk changes (`chunk.id` via prop): SutraCopyView re-mounts with new chunk → fetch fresh progress.
 
 **Modified:** `app/sutra/[id]/page.tsx`
+
 - Pass `sutra.id` and `user?.id ?? null` to `SutraReadingClient` (currently only passes `chunk`).
 - No DB query added; client component fetches its own progress.
 
 ### Visual specs
 
-| Element | CSS |
-|---------|-----|
-| Unwritten char color | `rgba(0, 0, 0, 0.15)` |
-| Written char color | `#2c251e` |
-| Char transition | `color 0.4s ease-in-out` |
-| Char container | inline-block, padding 4px 6px |
-| Char hover (unwritten, interactive) | bg `rgba(222, 203, 183, 0.15)`, cursor pointer |
-| Char disabled (anonymous) | cursor default, pointer-events none, hover unchanged |
-| Progress bar | top fixed thin (4px) bar, fill `#B22B2B`, width = % written |
-| Collapse animation | `transform: scale(X\|Y)(0); opacity: 0` over 1.2s `cubic-bezier(0.25, 1, 0.5, 1)`; `transform-origin: center`; direction = scaleX for `horizontal`, scaleY for `vertical-rtl`/`vertical-ltr` |
-| Seal entrance | `transform: scale(0.5)` → `scale(1)` + `opacity: 0` → `opacity: 1`, 0.6s ease-out, `transform-origin: center` |
-| Banner (anon) | `bg-paper-warm border-l-4 border-seal text-sm p-3`, text "请登录后开始抄经，进度将自动保存" + link to `/login?next=...` |
+| Element                             | CSS                                                                                                                                                                                          |
+| ----------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unwritten char color                | `rgba(0, 0, 0, 0.15)`                                                                                                                                                                        |
+| Written char color                  | `#2c251e`                                                                                                                                                                                    |
+| Char transition                     | `color 0.4s ease-in-out`                                                                                                                                                                     |
+| Char container                      | inline-block, padding 4px 6px                                                                                                                                                                |
+| Char hover (unwritten, interactive) | bg `rgba(222, 203, 183, 0.15)`, cursor pointer                                                                                                                                               |
+| Char disabled (anonymous)           | cursor default, pointer-events none, hover unchanged                                                                                                                                         |
+| Progress bar                        | top fixed thin (4px) bar, fill `#B22B2B`, width = % written                                                                                                                                  |
+| Collapse animation                  | `transform: scale(X\|Y)(0); opacity: 0` over 1.2s `cubic-bezier(0.25, 1, 0.5, 1)`; `transform-origin: center`; direction = scaleX for `horizontal`, scaleY for `vertical-rtl`/`vertical-ltr` |
+| Seal entrance                       | `transform: scale(0.5)` → `scale(1)` + `opacity: 0` → `opacity: 1`, 0.6s ease-out, `transform-origin: center`                                                                                |
+| Banner (anon)                       | `bg-paper-warm border-l-4 border-seal text-sm p-3`, text "请登录后开始抄经，进度将自动保存" + link to `/login?next=...`                                                                      |
 
 ### Interaction flow
 
@@ -156,11 +178,13 @@ CREATE TABLE sutra_copy_progress (
 ## Test plan
 
 **Unit** (`tests/unit/lib/sutra-copy-progress.test.ts`):
+
 - `getProgress` returns null for fresh user.
 - `upsertProgress` inserts a row, idempotent on (user, sutra, chunk).
 - `markComplete` sets completed_at only when writtenChars all true; no-op if any false.
 
 **Integration** (`tests/integration/api/sutra-copy-progress.test.ts`):
+
 - GET anonymous → 401.
 - POST anonymous → 401.
 - GET authenticated new user → 200 with `progress: null`.
@@ -168,6 +192,7 @@ CREATE TABLE sutra_copy_progress (
 - POST with invalid chunkIdx → 400.
 
 **Component** (`tests/unit/components/sutra/sutra-copy-view.test.tsx`):
+
 - Renders all chars in faint color by default.
 - Click on char (with userId) → DOM class `copy-char--written`.
 - After last click → root has `copy-view--collapse` class after 500ms.
@@ -175,6 +200,7 @@ CREATE TABLE sutra_copy_progress (
 - Sealed phase → renders CopySeal with reset/exit buttons.
 
 **Manual smoke:**
+
 - `/sutra/1` with logged-in user → click "进入抄经" → all chars faint → click through to last → seal fades in → click "退出抄经" → back to reading view.
 - Reload page mid-copy → progress persists (chars previously clicked show as inked).
 - Switch chunks → fresh progress loads for new chunk.
@@ -187,6 +213,7 @@ CREATE TABLE sutra_copy_progress (
 ## Files touched
 
 **New (6):**
+
 - `migrations/2026-06-19-sutra-copy-progress.sql`
 - `lib/sutra-copy-progress.ts`
 - `app/api/sutra/[id]/copy-progress/route.ts`
@@ -195,5 +222,6 @@ CREATE TABLE sutra_copy_progress (
 - Tests: `tests/unit/lib/sutra-copy-progress.test.ts`, `tests/unit/components/sutra/sutra-copy-view.test.tsx`, `tests/integration/api/sutra-copy-progress.test.ts`
 
 **Modified (2):**
+
 - `components/sutra/SutraReadingClient.tsx` (add copyMode state, toggle button, swap view)
 - `app/sutra/[id]/page.tsx` (pass userId + sutraId to client)

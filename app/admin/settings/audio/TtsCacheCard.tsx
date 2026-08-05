@@ -17,7 +17,7 @@ async function fetchWithTimeout(url: string, init: RequestInit, ms: number): Pro
     return await Promise.race([
       fetch(url, { ...init, signal: controller.signal }),
       new Promise<Response>((_, reject) =>
-        setTimeout(() => reject(new Error('请求超时（5s）')), ms)
+        setTimeout(() => reject(new Error('请求超时（5s）')), ms),
       ),
     ]);
   } finally {
@@ -44,14 +44,20 @@ export function TtsCacheCard() {
     }
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   async function handleClear() {
     if (!confirm('确认清除全部 TTS 音频缓存？下次播放将重新合成。')) return;
     setBusy(true);
     setErr(null);
     try {
-      const res = await fetchWithTimeout('/api/admin/tts-cache', { method: 'DELETE' }, TTS_CACHE_TIMEOUT_MS);
+      const res = await fetchWithTimeout(
+        '/api/admin/tts-cache',
+        { method: 'DELETE' },
+        TTS_CACHE_TIMEOUT_MS,
+      );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await load();
     } catch (e) {
@@ -73,7 +79,8 @@ export function TtsCacheCard() {
       ) : (
         <div className="flex items-center justify-between gap-3">
           <div className="text-sm text-ink">
-            <span className="font-medium">{count}</span> 条 · <span className="font-medium">{formatBytes(bytes ?? 0)}</span>
+            <span className="font-medium">{count}</span> 条 ·{' '}
+            <span className="font-medium">{formatBytes(bytes ?? 0)}</span>
           </div>
           <button
             type="button"

@@ -14,13 +14,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     if (!slug) return badRequest('bad_slug', 'invalid slug');
     const body = await req.json().catch(() => ({}));
     const sourceId = (body?.sourceId as string) ?? '';
-    if (!sourceId.startsWith(`${slug}#`)) return badRequest('bad_sourceId', 'sourceId must start with slug#');
+    if (!sourceId.startsWith(`${slug}#`))
+      return badRequest('bad_sourceId', 'sourceId must start with slug#');
     const chunkId = sourceId.slice(slug.length + 1);
     // Verify the sutra exists. Prefer FS (data/sutras/<slug>.json); fall back
     // to DB for legacy installs that haven't run export-sutras yet.
     let exists = sutraExistsBySlug(slug);
     if (!exists) {
-      const [rows] = await getPool().query<any[]>(`SELECT 1 FROM sutras WHERE slug = ? LIMIT 1`, [slug]);
+      const [rows] = await getPool().query<any[]>(`SELECT 1 FROM sutras WHERE slug = ? LIMIT 1`, [
+        slug,
+      ]);
       exists = rows.length > 0;
     }
     if (!exists) return notFound('not_found', 'sutra not found');
@@ -29,8 +32,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
     const userAgent = req.headers.get('user-agent') ?? null;
     await logDownload({
-      userId: auth.user.id, format: 'print', sourceType: 'sutra', sourceId,
-      ip, userAgent,
+      userId: auth.user.id,
+      format: 'print',
+      sourceType: 'sutra',
+      sourceId,
+      ip,
+      userAgent,
     });
     await logUserAction(req, auth.user.id, 'sutra_saved', {
       action: 'print',

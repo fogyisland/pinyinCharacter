@@ -41,9 +41,7 @@ function AlreadyDoneCard() {
       <div className="rounded-md border border-green-300 bg-green-50 p-6 text-center">
         <Check className="mx-auto h-12 w-12 text-green-700" />
         <h2 className="mt-3 text-lg font-medium text-ink">系统已初始化完成</h2>
-        <p className="mt-1 text-sm text-ink-soft">
-          首次部署已完成,此页面已自动锁定。
-        </p>
+        <p className="mt-1 text-sm text-ink-soft">首次部署已完成,此页面已自动锁定。</p>
         <Link
           href="/login"
           className="mt-4 inline-block rounded-md bg-seal px-6 py-2 text-white hover:bg-seal/80"

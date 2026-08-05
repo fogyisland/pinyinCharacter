@@ -15,6 +15,7 @@
 ## File Structure
 
 **New files:**
+
 - `data/radicals.json` — char → radical mapping (~10k entries, committed)
 - `scripts/build-radicals.ts` — generates radicals.json from npm `cjk-radicals`
 - `lib/pinyin-tone.ts` — `toneFromPinyin(py): 1|2|3|4|5` (pure, client-safe)
@@ -31,6 +32,7 @@
 - `tests/integration/api/game-round.test.ts`
 
 **Modified:**
+
 - `app/game/page.tsx` — host GameModeTabs
 - `lib/validators.ts` — add `gameRoundQuerySchema`
 - `lib/api-rare-chars.ts` — add `fetchGameRound()` client wrapper (or new `lib/api-game.ts`)
@@ -41,6 +43,7 @@
 ### Task 1: Generate radicals.json data
 
 **Files:**
+
 - Create: `scripts/build-radicals.ts`
 - Create: `data/radicals.json` (generated, committed)
 - Modify: `package.json` (add `radicals:build` script)
@@ -60,9 +63,11 @@ node -e "const r = require('cjk-radicals'); const sample = Object.entries(r).sli
 ```
 
 Expect output like (shape varies — adjust script accordingly):
+
 ```json
 [["你", {"radical":"亻","strokes":2}], ...]
 ```
+
 or `[["你", "亻"], ...]`. The script must handle both.
 
 - [ ] **Step 3: Write build-radicals.ts**
@@ -110,6 +115,7 @@ console.log(`Wrote ${Object.keys(out).length} radicals to ${outPath}`);
 - [ ] **Step 4: Add script to package.json**
 
 In `package.json` `scripts` section, add:
+
 ```json
 "radicals:build": "tsx scripts/build-radicals.ts"
 ```
@@ -145,6 +151,7 @@ git commit -m "feat(data): bundled radicals.json from cjk-radicals (N entries)"
 ### Task 2: lib/pinyin-tone.ts (TDD)
 
 **Files:**
+
 - Create: `lib/pinyin-tone.ts`
 - Create: `tests/unit/lib/pinyin-tone.test.ts`
 
@@ -206,12 +213,30 @@ Create `lib/pinyin-tone.ts`:
 export type Tone = 1 | 2 | 3 | 4 | 5;
 
 const TONE_MAP: Record<string, Tone> = {
-  'ā': 1, 'á': 2, 'ǎ': 3, 'à': 4,
-  'ē': 1, 'é': 2, 'ě': 3, 'è': 4,
-  'ī': 1, 'í': 2, 'ǐ': 3, 'ì': 4,
-  'ō': 1, 'ó': 2, 'ǒ': 3, 'ò': 4,
-  'ū': 1, 'ú': 2, 'ǔ': 3, 'ù': 4,
-  'ǖ': 1, 'ǘ': 2, 'ǚ': 3, 'ǜ': 4,
+  ā: 1,
+  á: 2,
+  ǎ: 3,
+  à: 4,
+  ē: 1,
+  é: 2,
+  ě: 3,
+  è: 4,
+  ī: 1,
+  í: 2,
+  ǐ: 3,
+  ì: 4,
+  ō: 1,
+  ó: 2,
+  ǒ: 3,
+  ò: 4,
+  ū: 1,
+  ú: 2,
+  ǔ: 3,
+  ù: 4,
+  ǖ: 1,
+  ǘ: 2,
+  ǚ: 3,
+  ǜ: 4,
 };
 
 export function toneFromPinyin(py: string): Tone {
@@ -244,6 +269,7 @@ git commit -m "feat(lib): toneFromPinyin pure fn (ā→1 ... ǜ→4, no mark →
 ### Task 3: lib/radical.ts (TDD, server-only)
 
 **Files:**
+
 - Create: `lib/radical.ts`
 - Create: `tests/unit/lib/radical.test.ts`
 
@@ -256,11 +282,11 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { initRadicalMap, getRadical, _resetRadicalMapForTest } from '@/lib/radical';
 
 const FIXTURE: Record<string, string> = {
-  '你': '亻',
-  '好': '女',
-  '妈': '女',
-  '河': '氵',
-  '花': '艹',
+  你: '亻',
+  好: '女',
+  妈: '女',
+  河: '氵',
+  花: '艹',
 };
 
 describe('radical (with injected fixture)', () => {
@@ -352,6 +378,7 @@ Note: `server-only` package is already used elsewhere in the project. If not yet
 ### Task 4: /api/radicals route (cached)
 
 **Files:**
+
 - Create: `app/api/radicals/route.ts`
 - Create: `tests/integration/api/radicals.test.ts` (light test)
 
@@ -417,6 +444,7 @@ git commit -m "feat(api): GET /api/radicals with 24h cache"
 ### Task 5: validators — gameRoundQuerySchema
 
 **Files:**
+
 - Modify: `lib/validators.ts`
 - Modify: `tests/unit/lib/validators.test.ts` (append test)
 
@@ -494,6 +522,7 @@ git commit -m "feat(validators): gameRoundQuerySchema (count 1-8, optional seed)
 ### Task 6: /api/game/round route (TDD)
 
 **Files:**
+
 - Create: `app/api/game/round/route.ts`
 - Create: `tests/integration/api/game-round.test.ts`
 
@@ -518,7 +547,7 @@ integrationDescribe('GET /api/game/round (integration)', () => {
        ('好','hǎo','good','', false),
        ('河','hé','river','', false),
        ('花','huā','flower','', false),
-       ('草','cǎo','grass','', false)`
+       ('草','cǎo','grass','', false)`,
     );
     const { GET } = await import('@/app/api/game/round/route');
     const req = new Request('http://localhost/api/game/round?count=4');
@@ -544,7 +573,7 @@ integrationDescribe('GET /api/game/round (integration)', () => {
     // 龘 is a CJK char unlikely to be in radicals.json
     await pool.execute(
       `INSERT INTO rare_chars (\`char\`, pinyin, meaning, story, needs_review) VALUES
-       ('龘','dá','rare','', false)`
+       ('龘','dá','rare','', false)`,
     );
     const { GET } = await import('@/app/api/game/round/route');
     const r = await GET(new Request('http://localhost/api/game/round') as any);
@@ -674,10 +703,7 @@ export async function GET(req: NextRequest) {
     }
     const payload = await buildRound(parsed.data.count, parsed.data.seed);
     if (!payload) {
-      return serviceUnavailable(
-        'no_chars',
-        'not enough rare chars with radicals to build a round',
-      );
+      return serviceUnavailable('no_chars', 'not enough rare chars with radicals to build a round');
     }
     return NextResponse.json({ ok: true, data: payload });
   });
@@ -706,6 +732,7 @@ git commit -m "feat(api): GET /api/game/round returns 4 chars + tone/radical ans
 ### Task 7: ToneToken + RadicalToken + ToneRadicalChar components
 
 **Files:**
+
 - Create: `components/game/ToneToken.tsx`
 - Create: `components/game/RadicalToken.tsx`
 - Create: `components/game/ToneRadicalChar.tsx`
@@ -788,13 +815,17 @@ import { RadicalToken } from '@/components/game/RadicalToken';
 
 describe('RadicalToken', () => {
   it('renders the radical char', () => {
-    const { container } = render(<RadicalToken radical="氵" matched={false} onDragStart={() => {}} />);
+    const { container } = render(
+      <RadicalToken radical="氵" matched={false} onDragStart={() => {}} />,
+    );
     expect(container.textContent).toBe('氵');
   });
   it('fires onDragStart with radical value', () => {
     const fn = vi.fn();
     const { container } = render(<RadicalToken radical="艹" matched={false} onDragStart={fn} />);
-    fireEvent.dragStart(container.querySelector('[draggable]')!, { dataTransfer: { setData: vi.fn() } });
+    fireEvent.dragStart(container.querySelector('[draggable]')!, {
+      dataTransfer: { setData: vi.fn() },
+    });
     expect(fn).toHaveBeenCalledWith('艹');
   });
 });
@@ -846,14 +877,26 @@ import { ToneRadicalChar } from '@/components/game/ToneRadicalChar';
 describe('ToneRadicalChar', () => {
   it('renders the char with pinyin and empty slots', () => {
     const { container } = render(
-      <ToneRadicalChar char="妈" pinyin="mā" matchedTone={null} matchedRadical={null} onDrop={() => {}} />,
+      <ToneRadicalChar
+        char="妈"
+        pinyin="mā"
+        matchedTone={null}
+        matchedRadical={null}
+        onDrop={() => {}}
+      />,
     );
     expect(container.textContent).toContain('妈');
     expect(container.textContent).toContain('mā');
   });
   it('shows matched values in slots', () => {
     const { container } = render(
-      <ToneRadicalChar char="妈" pinyin="mā" matchedTone={1} matchedRadical="女" onDrop={() => {}} />,
+      <ToneRadicalChar
+        char="妈"
+        pinyin="mā"
+        matchedTone={1}
+        matchedRadical="女"
+        onDrop={() => {}}
+      />,
     );
     expect(container.textContent).toContain('1');
     expect(container.textContent).toContain('女');
@@ -861,7 +904,13 @@ describe('ToneRadicalChar', () => {
   it('calls onDrop with slot kind and payload', () => {
     const fn = vi.fn();
     const { container } = render(
-      <ToneRadicalChar char="妈" pinyin="mā" matchedTone={null} matchedRadical={null} onDrop={fn} />,
+      <ToneRadicalChar
+        char="妈"
+        pinyin="mā"
+        matchedTone={null}
+        matchedRadical={null}
+        onDrop={fn}
+      />,
     );
     const toneSlot = container.querySelectorAll('[data-slot]')[0]!;
     fireEvent.drop(toneSlot, { dataTransfer: { getData: () => '1' } });
@@ -921,7 +970,12 @@ export function ToneRadicalChar({ char, pinyin, matchedTone, matchedRadical, onD
       <div className="font-kai text-5xl text-ink">{char}</div>
       <div className="font-mono text-sm text-ink-faint">{pinyin}</div>
       <div className="flex gap-2">
-        <DropSlot kind="tone" label="声调槽" matched={matchedTone ? String(matchedTone) : null} onDrop={onDrop} />
+        <DropSlot
+          kind="tone"
+          label="声调槽"
+          matched={matchedTone ? String(matchedTone) : null}
+          onDrop={onDrop}
+        />
         <DropSlot kind="radical" label="部首槽" matched={matchedRadical} onDrop={onDrop} />
       </div>
     </div>
@@ -951,6 +1005,7 @@ git commit -m "feat(game): ToneToken, RadicalToken, ToneRadicalChar (drop zones)
 ### Task 8: ToneRadicalGame main component (TDD)
 
 **Files:**
+
 - Create: `lib/api-game.ts` (client wrapper for /api/game/round)
 - Create: `components/game/ToneRadicalGame.tsx`
 - Create: `tests/unit/components/ToneRadicalGame.test.tsx`
@@ -1012,10 +1067,10 @@ const ROUND = {
     { char: '你', pinyin: 'nǐ', meaning: 'you' },
   ],
   charToAnswer: {
-    '妈': { tone: 1, radical: '女' },
-    '好': { tone: 3, radical: '女' },
-    '花': { tone: 1, radical: '艹' },
-    '你': { tone: 3, radical: '亻' },
+    妈: { tone: 1, radical: '女' },
+    好: { tone: 3, radical: '女' },
+    花: { tone: 1, radical: '艹' },
+    你: { tone: 3, radical: '亻' },
   },
   toneChoices: [1, 2, 3, 4, 5] as const,
   radicalChoices: ['女', '艹', '亻'],
@@ -1047,7 +1102,8 @@ describe('ToneRadicalGame', () => {
     for (const [char, ans] of Object.entries(ROUND.charToAnswer)) {
       const toneSlot = document.querySelector(`[data-slot="tone"]`)!; // first remaining
       // simpler: just dispatch on char ordering — we use first char's slot
-      void char; void ans;
+      void char;
+      void ans;
       break;
     }
     // Since fully simulating drag is brittle, we test the contract: game is in
@@ -1127,7 +1183,9 @@ export function ToneRadicalGame() {
     }
   };
 
-  useEffect(() => { void loadGame(); }, []);
+  useEffect(() => {
+    void loadGame();
+  }, []);
 
   useEffect(() => {
     if (phase === 'finished') return;
@@ -1208,8 +1266,14 @@ export function ToneRadicalGame() {
     <div className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between text-sm text-ink-soft">
         <div>用时: {formatTime(elapsedMs)}</div>
-        <div>第 {phase === 'round1' ? '一' : '二'} 轮 · 错配: {mismatches}</div>
-        <button type="button" onClick={() => setPhase('finished')} className="text-ink-faint hover:underline">
+        <div>
+          第 {phase === 'round1' ? '一' : '二'} 轮 · 错配: {mismatches}
+        </div>
+        <button
+          type="button"
+          onClick={() => setPhase('finished')}
+          className="text-ink-faint hover:underline"
+        >
           放弃
         </button>
       </div>
@@ -1277,6 +1341,7 @@ git commit -m "feat(game): ToneRadicalGame state machine (2 rounds + finish)"
 ### Task 9: GameModeTabs + /game page
 
 **Files:**
+
 - Create: `components/game/GameModeTabs.tsx`
 - Modify: `app/game/page.tsx`
 
@@ -1382,6 +1447,7 @@ git commit -m "feat(game): /game tabs (tone-radical default, pinyin-char seconda
 ### Task 10: README + scripts docs
 
 **Files:**
+
 - Modify: `README.md` (mention the new game + radicals:build script)
 - Modify: `docs/superpowers/specs/2026-06-13-second-mini-game-design.md` (mark implemented — append "Status: implemented 2026-06-13")
 
@@ -1400,6 +1466,7 @@ If README has a "字帖 / Worksheets" section, add after it:
 ### 趣味识字 — 第二款游戏: 声调·部首
 
 `/game` 页提供两个 tab:
+
 - **声调·部首** (默认) — 给 4 个汉字,把对应的声调数字 (1-5) 和部首拖到字上
 - **拼音·字** — 给 4 个汉字,把对应的拼音拖到字上
 
@@ -1409,6 +1476,7 @@ If README has a "字帖 / Worksheets" section, add after it:
 - [ ] **Step 3: Add the build script to README's scripts table**
 
 If README has a scripts table, add the row:
+
 ```markdown
 | `pnpm radicals:build` | 从 npm `cjk-radicals` 生成 `data/radicals.json` |
 ```
@@ -1464,6 +1532,7 @@ Expected: 10 commits since `5e4a554` (the display refactor). If any failed, fix 
 ## Self-Review
 
 **Spec coverage:**
+
 - [x] Bundled radicals.json → Task 1
 - [x] Tone parsing (pure) → Task 2
 - [x] getRadical server-only → Task 3
@@ -1481,12 +1550,14 @@ Expected: 10 commits since `5e4a554` (the display refactor). If any failed, fix 
 
 **Placeholder scan:** No "TBD"/"TODO"/"add error handling" — all code concrete.
 
-**Type consistency:** 
+**Type consistency:**
+
 - `Tone = 1|2|3|4|5` used everywhere (lib/pinyin-tone.ts, api-game.ts, ToneRadicalGame.tsx, ToneRadicalChar.tsx, ToneToken.tsx).
 - `RoundChar` shape matches across GameRound, charToAnswer, listChars output.
 - `RadicalToken` prop name `radical: string` consistent.
 
 **Out of scope reminders (intentionally not implemented):**
+
 - Multiple difficulty levels (3x3/4x4/5x5) — fixed at 4
 - Leaderboard / time tracking across sessions
 - Custom radical subset
@@ -1500,6 +1571,7 @@ Expected: 10 commits since `5e4a554` (the display refactor). If any failed, fix 
 Plan complete and saved to `docs/superpowers/plans/2026-06-13-second-mini-game-plan.md`. 11 tasks, ~4h implementation + smoke.
 
 Two execution options:
+
 1. **Subagent-Driven (recommended)** — fresh subagent per task, two-stage review between tasks
 2. **Inline Execution** — execute in this session with executing-plans
 

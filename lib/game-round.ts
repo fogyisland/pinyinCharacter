@@ -82,7 +82,14 @@ export async function buildRound(
   // latter has the `level` column we need to filter on; rare_chars is
   // L3-only. Single page is enough for 3-6 chars/round, but we still
   // shuffle in case the first page doesn't have enough usable chars.
-  const allPages: Array<{ char: string; pinyin: string; meaning: string; radical: string; level: 1 | 2 | 3; hskLevel?: number | null }> = [];
+  const allPages: Array<{
+    char: string;
+    pinyin: string;
+    meaning: string;
+    radical: string;
+    level: 1 | 2 | 3;
+    hskLevel?: number | null;
+  }> = [];
   for (let page = 1; page <= 100; page++) {
     // 2026-07-04: pass `hskLevel` to listChars so the SQL WHERE pre-filters
     // (avoids fetching thousands of rows just to drop them). When `hskLevel`
@@ -183,7 +190,12 @@ export async function buildRound(
   return {
     round: {
       mode,
-      chars: picked.map(({ char, pinyin, meaning, radical }) => ({ char, pinyin, meaning, radical })),
+      chars: picked.map(({ char, pinyin, meaning, radical }) => ({
+        char,
+        pinyin,
+        meaning,
+        radical,
+      })),
       charToAnswer,
       toneChoices,
       radicalChoices: finalRadicals,

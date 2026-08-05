@@ -47,12 +47,12 @@ The user has explicitly asked for a complete Plan G2 that ties these together:
 
 Four fonts, all SIL Open Font License 1.1:
 
-| Font | File under `public/fonts/` | Tailwind token | CSS `font-family` |
-|---|---|---|---|
-| LXGW WenKai GB (霞鹜文楷 GB) | `LXGWWenKaiGB-Regular.woff2` | `--font-lxgw-wenkai-gb` | `'LXGW WenKai GB', serif` |
-| Yozai (悠哉) | `Yozai-Regular.woff2` | `--font-yozai` | `'Yozai', serif` |
-| Iansui (芫荽) | `Iansui-Regular.woff2` | `--font-iansui` | `'Iansui', serif` |
-| Zen Kaku Gothic Thin (思源ゴシック 极细) | `ZenKakuGothicNew-Thin.woff2` | `--font-zen-kaku-thin` | `'Zen Kaku Gothic New', sans-serif` |
+| Font                                     | File under `public/fonts/`    | Tailwind token          | CSS `font-family`                   |
+| ---------------------------------------- | ----------------------------- | ----------------------- | ----------------------------------- |
+| LXGW WenKai GB (霞鹜文楷 GB)             | `LXGWWenKaiGB-Regular.woff2`  | `--font-lxgw-wenkai-gb` | `'LXGW WenKai GB', serif`           |
+| Yozai (悠哉)                             | `Yozai-Regular.woff2`         | `--font-yozai`          | `'Yozai', serif`                    |
+| Iansui (芫荽)                            | `Iansui-Regular.woff2`        | `--font-iansui`         | `'Iansui', serif`                   |
+| Zen Kaku Gothic Thin (思源ゴシック 极细) | `ZenKakuGothicNew-Thin.woff2` | `--font-zen-kaku-thin`  | `'Zen Kaku Gothic New', sans-serif` |
 
 Existing fonts keep their tokens (`--font-han-serif`, `--font-han-sans`, `--font-wenkai`).
 
@@ -60,8 +60,7 @@ Existing fonts keep their tokens (`--font-han-serif`, `--font-han-sans`, `--font
 
 ```ts
 export type FontFamily =
-  | 'song' | 'kai' | 'hei'
-  | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin';
+  'song' | 'kai' | 'hei' | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin';
 
 export const FONT_FAMILIES: {
   value: FontFamily;
@@ -71,13 +70,23 @@ export const FONT_FAMILIES: {
 }[] = [
   // system
   { value: 'song', label: '宋体', cssVar: 'var(--font-han-serif)', group: 'system' },
-  { value: 'kai',  label: '楷体', cssVar: 'var(--font-wenkai)',    group: 'system' },
-  { value: 'hei',  label: '黑体', cssVar: 'var(--font-han-sans)',  group: 'system' },
+  { value: 'kai', label: '楷体', cssVar: 'var(--font-wenkai)', group: 'system' },
+  { value: 'hei', label: '黑体', cssVar: 'var(--font-han-sans)', group: 'system' },
   // hard-pen
-  { value: 'wenkai-gb',     label: '霞鹜文楷 GB', cssVar: 'var(--font-lxgw-wenkai-gb)', group: 'hard-pen' },
-  { value: 'yozai',         label: '悠哉',         cssVar: 'var(--font-yozai)',         group: 'hard-pen' },
-  { value: 'iansui',        label: '芫荽',         cssVar: 'var(--font-iansui)',        group: 'hard-pen' },
-  { value: 'zen-kaku-thin', label: '思源极细黑',   cssVar: 'var(--font-zen-kaku-thin)', group: 'hard-pen' },
+  {
+    value: 'wenkai-gb',
+    label: '霞鹜文楷 GB',
+    cssVar: 'var(--font-lxgw-wenkai-gb)',
+    group: 'hard-pen',
+  },
+  { value: 'yozai', label: '悠哉', cssVar: 'var(--font-yozai)', group: 'hard-pen' },
+  { value: 'iansui', label: '芫荽', cssVar: 'var(--font-iansui)', group: 'hard-pen' },
+  {
+    value: 'zen-kaku-thin',
+    label: '思源极细黑',
+    cssVar: 'var(--font-zen-kaku-thin)',
+    group: 'hard-pen',
+  },
 ];
 ```
 
@@ -117,6 +126,7 @@ export const FONT_FAMILIES: {
 ```
 
 Tokens also exposed in `@theme {}` so Tailwind utilities work:
+
 ```css
 @theme {
   --font-lxgw-wenkai-gb: 'LXGW WenKai GB', serif;
@@ -204,10 +214,14 @@ const OUT = resolve(ROOT, 'public/fonts');
 const GLYPHS_FILE = resolve(__dirname, 'gb2312-7000.txt');
 
 const TARGETS = [
-  { in: 'LXGWWenKaiGB-Regular.ttf',     out: 'LXGWWenKaiGB-Regular.woff2',     family: 'LXGW WenKai GB' },
-  { in: 'Yozai-Regular.ttf',            out: 'Yozai-Regular.woff2',            family: 'Yozai' },
-  { in: 'Iansui-Regular.ttf',           out: 'Iansui-Regular.woff2',           family: 'Iansui' },
-  { in: 'ZenKakuGothicNew-Thin.otf',    out: 'ZenKakuGothicNew-Thin.woff2',    family: 'Zen Kaku Gothic New' },
+  { in: 'LXGWWenKaiGB-Regular.ttf', out: 'LXGWWenKaiGB-Regular.woff2', family: 'LXGW WenKai GB' },
+  { in: 'Yozai-Regular.ttf', out: 'Yozai-Regular.woff2', family: 'Yozai' },
+  { in: 'Iansui-Regular.ttf', out: 'Iansui-Regular.woff2', family: 'Iansui' },
+  {
+    in: 'ZenKakuGothicNew-Thin.otf',
+    out: 'ZenKakuGothicNew-Thin.woff2',
+    family: 'Zen Kaku Gothic New',
+  },
 ];
 
 async function main() {
@@ -221,7 +235,10 @@ async function main() {
   }
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+main().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});
 ```
 
 The script reads each source TTF/OTF from `scripts/fonts/staging/` (gitignored — populated by the download script below) and writes WOFF2 to `public/fonts/`.
@@ -232,11 +249,11 @@ Mirrors the pattern of `scripts/download-ancient-fonts.ts`. For each of the 4 fo
 
 URL sources (all OFL 1.1; primary URL first, fallback URLs as belt-and-braces):
 
-| Font | Primary URL |
-|---|---|
-| LXGW WenKai GB | `https://github.com/lxgw/LxgwWenkaiGB/releases/latest/download/LXGWWenKaiGB-Regular.ttf` |
-| Yozai | `https://github.com/lxgw/LxgwYozai/releases/latest/download/Yozai-Regular.ttf` |
-| Iansui | `https://github.com/lxgw/LxgwIansui/releases/latest/download/Iansui-Regular.ttf` |
+| Font                     | Primary URL                                                                                        |
+| ------------------------ | -------------------------------------------------------------------------------------------------- |
+| LXGW WenKai GB           | `https://github.com/lxgw/LxgwWenkaiGB/releases/latest/download/LXGWWenKaiGB-Regular.ttf`           |
+| Yozai                    | `https://github.com/lxgw/LxgwYozai/releases/latest/download/Yozai-Regular.ttf`                     |
+| Iansui                   | `https://github.com/lxgw/LxgwIansui/releases/latest/download/Iansui-Regular.ttf`                   |
 | Zen Kaku Gothic New Thin | `https://github.com/googlefonts/zen-kakugothic/releases/download/v1.0.0/ZenKakuGothicNew-Thin.otf` |
 
 `pnpm fonts:download-hard-pen` runs the download; `pnpm fonts:subset` runs the subset; `pnpm fonts:hard-pen` chains both.
@@ -267,8 +284,8 @@ In `lib/worksheet-page-count.ts:3-7`:
 ```ts
 const CELLS_PER_PAGE: Record<PaperSize, number> = {
   A3: 132,
-  A4: 88,   // was 96 — looser for hard-pen practice
-  B5: 60,   // was 66 — proportional reduction
+  A4: 88, // was 96 — looser for hard-pen practice
+  B5: 60, // was 66 — proportional reduction
 };
 ```
 
@@ -279,7 +296,9 @@ const CELLS_PER_PAGE: Record<PaperSize, number> = {
 In `components/worksheet/WorksheetPreview.tsx`, add a header at the **top of the `.worksheet-grid` wrapper** (so it falls inside the existing `@media print` visibility-visible rule). On screen it's just a topbar above the cells; on print it appears once at the top of the worksheet block.
 
 ```tsx
-<div className={`worksheet-grid mx-auto grid min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}>
+<div
+  className={`worksheet-grid mx-auto grid min-w-[640px] max-w-3xl gap-2 print:min-w-0 ${sizeClass}`}
+>
   <div className="col-span-full flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
     <div className="flex items-center gap-2">
       <img src="/logo.svg" alt="字·韵" className="h-6 w-6" />
@@ -313,30 +332,35 @@ This project bundles the following fonts, all under the SIL Open Font License 1.
 (https://scripts.sil.org/OFL).
 
 ## LXGW WenKai GB (霞鹜文楷 GB)
+
 - Version: ...
 - Copyright: © 2020-2026 LXGW. All rights reserved.
 - Source: https://github.com/lxgw/LxgwWenkaiGB
 - License: SIL OFL 1.1 — see OFL.txt
 
 ## Yozai (悠哉)
+
 - Version: ...
 - Copyright: © 2022-2026 LXGW.
 - Source: https://github.com/lxgw/LxgwYozai
 - License: SIL OFL 1.1
 
 ## Iansui (芫荽)
+
 - Version: ...
 - Copyright: © 2021-2026 LXGW.
 - Source: https://github.com/lxgw/LxgwIansui
 - License: SIL OFL 1.1
 
 ## Zen Kaku Gothic New (思源ゴシック)
+
 - Version: 1.0.0
 - Copyright: © 2022 Adobe Inc., Google Inc.
 - Source: https://github.com/googlefonts/zen-kakugothic
 - License: SIL OFL 1.1
 
 ## BabelStone Han Basic + Extra
+
 - Version: ...
 - Copyright: © 2019 BabelStone.
 - Source: https://www.babelstone.co.uk/Fonts/BabelStoneHan.html
@@ -350,6 +374,7 @@ Each new font ships with its full OFL.txt copied from upstream into `public/font
 ## File Inventory
 
 ### New files
+
 - `scripts/fonts/gb2312-7000.txt` — static char-set text (committed)
 - `scripts/fonts/build-gb2312-7000.ts` — one-shot generator (kept for regeneration)
 - `scripts/fonts/download-hard-pen-fonts.ts` — TTF download
@@ -361,6 +386,7 @@ Each new font ships with its full OFL.txt copied from upstream into `public/font
 - `THIRD_PARTY_LICENSES.md` (repo root)
 
 ### Modified files
+
 - `app/globals.css` — 4 `@font-face` + 4 `:root` tokens + 4 `@theme` tokens
 - `lib/worksheet-types.ts` — extend `FontFamily` union; add `group` to `FONT_FAMILIES`
 - `lib/worksheet-page-count.ts` — A4: 96→88; B5: 66→60
@@ -370,11 +396,13 @@ Each new font ships with its full OFL.txt copied from upstream into `public/font
 - `.gitignore` — add `scripts/fonts/staging/`
 
 ### Tests (new)
+
 - `tests/unit/lib/worksheet-types.test.ts` — `FONT_FAMILIES` has 7 entries with correct groups
 - `tests/unit/components/worksheet/FontFamilyPicker.test.tsx` — renders 2 optgroups + 7 options; selecting dispatches `onChange`
 - `tests/unit/components/worksheet/WorksheetPreview.test.tsx` — print header renders Logo + 字体名 + tagline
 
 ### Test updates
+
 - `tests/unit/lib/worksheet-page-count.test.ts` (existing at `tests/unit/lib/worksheet-page-count.test.ts:7-8`) — update A4/B5 expected values to 88/60
 
 ---

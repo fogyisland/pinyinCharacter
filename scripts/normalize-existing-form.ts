@@ -12,20 +12,17 @@
 import { getPool, closePool } from '../lib/db';
 
 export const NORMALIZE_MAP: Record<string, string> = {
-  '五言律诗': '五律',
-  '七言律诗': '七律',
-  '五言古诗': '五言古风',
-  '七言古诗': '七言古风',
+  五言律诗: '五律',
+  七言律诗: '七律',
+  五言古诗: '五言古风',
+  七言古诗: '七言古风',
 };
 
 export async function normalizeExistingForm(): Promise<{ updated: number }> {
   const pool = getPool();
   let updated = 0;
   for (const [from, to] of Object.entries(NORMALIZE_MAP)) {
-    const [result] = await pool.query<any>(
-      `UPDATE poems SET form = ? WHERE form = ?`,
-      [to, from]
-    );
+    const [result] = await pool.query<any>(`UPDATE poems SET form = ? WHERE form = ?`, [to, from]);
     const n = (result as any)?.affectedRows ?? 0;
     updated += n;
     console.log(`[normalize] ${from} -> ${to}: ${n} rows updated`);

@@ -23,14 +23,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       await writeAudit({
         userId: auth.user.id,
         event: 'membership_revoked',
-        metadata: { membershipId: id, targetUserId: row.userId, reason: parsed.data.reason ?? null },
+        metadata: {
+          membershipId: id,
+          targetUserId: row.userId,
+          reason: parsed.data.reason ?? null,
+        },
       });
       return NextResponse.json({ ok: true, data: row });
     } catch (err) {
       const msg = (err as Error).message;
       if (msg === 'membership_not_found') return notFound('membership_not_found', msg);
       if (msg === 'already_revoked') {
-        return NextResponse.json({ ok: false, error: { code: 'already_revoked', message: msg } }, { status: 409 });
+        return NextResponse.json(
+          { ok: false, error: { code: 'already_revoked', message: msg } },
+          { status: 409 },
+        );
       }
       throw err;
     }

@@ -8,13 +8,26 @@ export async function saveWorksheet(args: SaveWorksheetArgs): Promise<number> {
   const pool = getPool();
   const [result] = await pool.execute<any>(
     `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family) VALUES (?, ?, ?, ?, ?, ?)`,
-    [args.userId, args.title, JSON.stringify(args.content), args.cellStyle, args.paperSize, args.fontFamily]
+    [
+      args.userId,
+      args.title,
+      JSON.stringify(args.content),
+      args.cellStyle,
+      args.paperSize,
+      args.fontFamily,
+    ],
   );
   const id = result.insertId as number;
   await writeAudit({
     userId: args.userId,
     event: 'worksheet_saved',
-    metadata: { worksheetId: id, charCount: args.content.length, cellStyle: args.cellStyle, paperSize: args.paperSize, fontFamily: args.fontFamily },
+    metadata: {
+      worksheetId: id,
+      charCount: args.content.length,
+      cellStyle: args.cellStyle,
+      paperSize: args.paperSize,
+      fontFamily: args.fontFamily,
+    },
     ip: args.ip,
     userAgent: args.userAgent,
   });
@@ -26,7 +39,7 @@ export async function listUserWorksheets(userId: number): Promise<Worksheet[]> {
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, title, content, cell_style, paper_size, font_family, created_at
      FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
-    [userId]
+    [userId],
   );
   return rows.map(mapRow);
 }
@@ -49,7 +62,7 @@ export async function listUserWorksheetsLightweight(userId: number): Promise<Wor
   const [rows] = await pool.execute<any[]>(
     `SELECT id, title, JSON_LENGTH(content) AS char_count, created_at
      FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
-    [userId]
+    [userId],
   );
   return rows.map((r) => ({
     id: r.id,
@@ -64,17 +77,17 @@ export async function getWorksheet(id: number): Promise<Worksheet | null> {
   const [rows] = await pool.execute<any[]>(
     `SELECT id, user_id, title, content, cell_style, paper_size, font_family, created_at
      FROM worksheets WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   return rows.length > 0 ? mapRow(rows[0]) : null;
 }
 
 export async function deleteWorksheet(id: number, userId: number): Promise<boolean> {
   const pool = getPool();
-  const [result] = await pool.execute<any>(
-    `DELETE FROM worksheets WHERE id = ? AND user_id = ?`,
-    [id, userId]
-  );
+  const [result] = await pool.execute<any>(`DELETE FROM worksheets WHERE id = ? AND user_id = ?`, [
+    id,
+    userId,
+  ]);
   const affected = (result.affectedRows as number) ?? 0;
   if (affected > 0) {
     await writeAudit({ userId, event: 'worksheet_deleted', metadata: { worksheetId: id } });
@@ -83,19 +96,18 @@ export async function deleteWorksheet(id: number, userId: number): Promise<boole
 }
 
 export type RenameResult =
-  | { ok: true; title: string }
-  | { ok: false; code: 'not_found' | 'not_owner' | 'duplicate' };
+  { ok: true; title: string } | { ok: false; code: 'not_found' | 'not_owner' | 'duplicate' };
 
 export async function renameWorksheet(
   id: number,
   userId: number,
-  newTitle: string
+  newTitle: string,
 ): Promise<RenameResult> {
   const pool = getPool();
   // Ownership check first (avoids leaking existence via duplicate detection).
   const [own] = await pool.execute<any[]>(
     `SELECT id, user_id FROM worksheets WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   if (own.length === 0) return { ok: false, code: 'not_found' };
   if (own[0].user_id !== userId) return { ok: false, code: 'not_owner' };
@@ -103,14 +115,11 @@ export async function renameWorksheet(
   // Reject duplicate title for same user (keep selector results stable).
   const [dup] = await pool.execute<any[]>(
     `SELECT id FROM worksheets WHERE user_id = ? AND title = ? AND id <> ? LIMIT 1`,
-    [userId, newTitle, id]
+    [userId, newTitle, id],
   );
   if (dup.length > 0) return { ok: false, code: 'duplicate' };
 
-  await pool.execute<any>(
-    `UPDATE worksheets SET title = ? WHERE id = ?`,
-    [newTitle, id]
-  );
+  await pool.execute<any>(`UPDATE worksheets SET title = ? WHERE id = ?`, [newTitle, id]);
   return { ok: true, title: newTitle };
 }
 

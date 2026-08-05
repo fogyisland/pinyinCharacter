@@ -3,33 +3,48 @@ import { getPool } from '@/lib/db';
 import { verifyPassword, signSession, setSessionCookie } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
 
-interface Body { username?: string; password?: string; }
+interface Body {
+  username?: string;
+  password?: string;
+}
 
 export async function POST(req: NextRequest) {
   let body: Body;
-  try { body = await req.json(); }
-  catch { return NextResponse.json({ ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_json', message: '请求体不是合法 JSON' } },
+      { status: 400 },
+    );
+  }
 
   const username = (body.username ?? '').trim();
   const password = body.password ?? '';
   if (!username || !password) {
-    return NextResponse.json({ ok: false, error: { code: 'missing_fields', message: '用户名和密码必填' } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'missing_fields', message: '用户名和密码必填' } },
+      { status: 400 },
+    );
   }
 
   const pool = getPool();
   const [rows] = await pool.execute<any[]>(
     `SELECT id, username, password_hash, is_admin, disabled_at FROM users WHERE username = ? LIMIT 1`,
-    [username]
+    [username],
   );
   const row = rows[0];
   if (!row || !(await verifyPassword(password, row.password_hash))) {
-    return NextResponse.json({ ok: false, error: { code: 'bad_credentials', message: '用户名或密码错误' } }, { status: 401 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_credentials', message: '用户名或密码错误' } },
+      { status: 401 },
+    );
   }
 
   if (row.disabled_at !== null) {
     return NextResponse.json(
       { ok: false, error: { code: 'account_disabled', message: '账号已被禁用' } },
-      { status: 403 }
+      { status: 403 },
     );
   }
 

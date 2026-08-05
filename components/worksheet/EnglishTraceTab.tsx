@@ -31,9 +31,12 @@ export function EnglishTraceTab({ value, onChange }: Props) {
 
   function parseAndEmit(raw: string, mode: CaseMode) {
     const filtered = raw.match(LATIN_ONLY) ?? [];
-    const transformed = mode === 'upper' ? filtered.map((c) => c.toUpperCase())
-      : mode === 'lower' ? filtered.map((c) => c.toLowerCase())
-      : filtered;
+    const transformed =
+      mode === 'upper'
+        ? filtered.map((c) => c.toUpperCase())
+        : mode === 'lower'
+          ? filtered.map((c) => c.toLowerCase())
+          : filtered;
     onChange(transformed);
   }
 
@@ -53,7 +56,8 @@ export function EnglishTraceTab({ value, onChange }: Props) {
     <div className="space-y-3">
       <div>
         <label htmlFor="english-input" className="block text-sm font-medium text-ink-soft">
-          字母输入 <span className="text-xs text-ink-faint">(只接受 A-Z / a-z,空格和标点自动过滤)</span>
+          字母输入{' '}
+          <span className="text-xs text-ink-faint">(只接受 A-Z / a-z,空格和标点自动过滤)</span>
         </label>
         <textarea
           id="english-input"
@@ -63,9 +67,7 @@ export function EnglishTraceTab({ value, onChange }: Props) {
           className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2 font-mono text-base"
           rows={4}
         />
-        <p className="mt-1 text-xs text-ink-faint">
-          已输入 {charCount} 个字母
-        </p>
+        <p className="mt-1 text-xs text-ink-faint">已输入 {charCount} 个字母</p>
       </div>
       <div>
         <span className="block text-sm font-medium text-ink-soft mb-1">大小写</span>

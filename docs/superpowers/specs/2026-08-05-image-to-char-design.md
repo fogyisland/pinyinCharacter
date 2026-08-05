@@ -78,16 +78,16 @@ Concurrent discovery during exploration: `app/api/ai/char-explain/route.ts` is m
 
 ### Files (8 operations, ~336 LoC)
 
-| File | Action | LoC | Purpose |
-|---|---|---|---|
-| `lib/llm.ts` | Modify (ContentPart union) | +15 | Extend `LLMMessage.content` to `string \| ContentPart[]`; add `ContentPart` type. Backward-compatible: existing text-only call sites unchanged. |
-| `lib/ai-calls.ts` | Modify (+checkAnonRateLimit) | +15 | New `checkAnonRateLimit(ip)` queries `ai_calls` for `user_id IS NULL AND IP-based identifier` within today. Returns count. Threshold = 5/day/IP. |
-| `app/api/ai/char-recognize/route.ts` | Create | ~80 | New API route. POST only. Validates/gates/calls LLM/hard-validates response. |
-| `app/api/ai/char-explain/route.ts` | Modify (add rate limit) | +5 | Inline fix: add `checkAiRateLimit(user.id)` call before `logAiCall`. 1-2 lines. |
-| `components/TextToPinyin.tsx` | Modify (+📷 button) | +60 | New hidden file input + camera icon button + handleFile + toast state. Append char to textarea on success. |
-| `lib/admin-activity.ts` | Modify (+recognize entry) | +1 | Add `recognize: '拍照识别'` to `AI_FEATURE_ZH` map. |
-| `tests/unit/lib/llm.test.ts` | Create | ~60 | 5 multimodal cases (text+image, image-only, mixed, detail field, type safety). |
-| `tests/unit/api/char-recognize.test.ts` | Create | ~100 | 5 route cases (anon success, anon over-limit, no-membership, image-invalid, not-recognized). |
+| File                                    | Action                       | LoC  | Purpose                                                                                                                                          |
+| --------------------------------------- | ---------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib/llm.ts`                            | Modify (ContentPart union)   | +15  | Extend `LLMMessage.content` to `string \| ContentPart[]`; add `ContentPart` type. Backward-compatible: existing text-only call sites unchanged.  |
+| `lib/ai-calls.ts`                       | Modify (+checkAnonRateLimit) | +15  | New `checkAnonRateLimit(ip)` queries `ai_calls` for `user_id IS NULL AND IP-based identifier` within today. Returns count. Threshold = 5/day/IP. |
+| `app/api/ai/char-recognize/route.ts`    | Create                       | ~80  | New API route. POST only. Validates/gates/calls LLM/hard-validates response.                                                                     |
+| `app/api/ai/char-explain/route.ts`      | Modify (add rate limit)      | +5   | Inline fix: add `checkAiRateLimit(user.id)` call before `logAiCall`. 1-2 lines.                                                                  |
+| `components/TextToPinyin.tsx`           | Modify (+📷 button)          | +60  | New hidden file input + camera icon button + handleFile + toast state. Append char to textarea on success.                                       |
+| `lib/admin-activity.ts`                 | Modify (+recognize entry)    | +1   | Add `recognize: '拍照识别'` to `AI_FEATURE_ZH` map.                                                                                              |
+| `tests/unit/lib/llm.test.ts`            | Create                       | ~60  | 5 multimodal cases (text+image, image-only, mixed, detail field, type safety).                                                                   |
+| `tests/unit/api/char-recognize.test.ts` | Create                       | ~100 | 5 route cases (anon success, anon over-limit, no-membership, image-invalid, not-recognized).                                                     |
 
 ### Key Interfaces
 
@@ -99,7 +99,7 @@ export type ContentPart =
 
 export interface LLMMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string | ContentPart[];  // was: string
+  content: string | ContentPart[]; // was: string
 }
 
 // lib/ai-calls.ts (new)
@@ -117,7 +117,17 @@ export async function POST(req: NextRequest): Promise<NextResponse>;
 // Server-side response type
 type RecognizeResponse =
   | { ok: true; char: string }
-  | { ok: false; error: 'rate_limited' | 'membership_required' | 'invalid_image' | 'not_recognized' | 'timeout' | 'provider_error'; message: string };
+  | {
+      ok: false;
+      error:
+        | 'rate_limited'
+        | 'membership_required'
+        | 'invalid_image'
+        | 'not_recognized'
+        | 'timeout'
+        | 'provider_error';
+      message: string;
+    };
 ```
 
 ### Component Layout
@@ -144,17 +154,17 @@ type RecognizeResponse =
 
 ### Data Flow (error matrix)
 
-| Scenario | HTTP | error code | Client Toast |
-|---|---|---|---|
-| Anonymous OK (≤5/day) | 200 | (success) | (none) |
-| Anonymous 6th call | 429 | `rate_limited` (anon) | "今日试用次数已用完,请登录后继续使用" |
-| Logged-in no `ai_calls` | 403 | `membership_required` | "拍照识别需要 AI 会员权限" |
-| Logged-in + feature, 5/day exceeded | 429 | `rate_limited` (user) | "今日次数已用完,明天再来" |
-| Image format/size invalid | 400 | `invalid_image` | "图片格式或大小不支持" |
-| LLM returns non-CJK / multi-char | 502 | `not_recognized` | "未识别到汉字,请重试" |
-| LLM timeout (> ai.timeout_ms) | 504 | `timeout` | "识别超时,请重试" |
-| LLM provider error | 502 | `provider_error` | "识别服务暂时不可用" |
-| Network error | (catch) | — | "网络异常,请重试" |
+| Scenario                            | HTTP    | error code            | Client Toast                          |
+| ----------------------------------- | ------- | --------------------- | ------------------------------------- |
+| Anonymous OK (≤5/day)               | 200     | (success)             | (none)                                |
+| Anonymous 6th call                  | 429     | `rate_limited` (anon) | "今日试用次数已用完,请登录后继续使用" |
+| Logged-in no `ai_calls`             | 403     | `membership_required` | "拍照识别需要 AI 会员权限"            |
+| Logged-in + feature, 5/day exceeded | 429     | `rate_limited` (user) | "今日次数已用完,明天再来"             |
+| Image format/size invalid           | 400     | `invalid_image`       | "图片格式或大小不支持"                |
+| LLM returns non-CJK / multi-char    | 502     | `not_recognized`      | "未识别到汉字,请重试"                 |
+| LLM timeout (> ai.timeout_ms)       | 504     | `timeout`             | "识别超时,请重试"                     |
+| LLM provider error                  | 502     | `provider_error`      | "识别服务暂时不可用"                  |
+| Network error                       | (catch) | —                     | "网络异常,请重试"                     |
 
 ### Anonymous Rate Limit Storage
 
@@ -172,6 +182,7 @@ CREATE TABLE IF NOT EXISTS ai_calls (
 `user_id BIGINT NULL` ✅ already allowed. No `ip` column yet — need to add via migration.
 
 **Plan**:
+
 - Add migration `scripts/migrations/2026-08-05-ai-calls-ip.sql`:
   ```sql
   ALTER TABLE ai_calls ADD COLUMN ip VARCHAR(45) NULL AFTER user_id;
@@ -186,6 +197,7 @@ CREATE TABLE IF NOT EXISTS ai_calls (
 - Migration is idempotent (`ADD COLUMN IF NOT EXISTS` is MySQL 8.0.29+; for older, use a `SELECT` check first).
 
 **Files affected**:
+
 - `scripts/migrations/2026-08-05-ai-calls-ip.sql` (new, ~5 lines)
 - `lib/ai-calls.ts::checkAnonRateLimit` (new, ~15 lines)
 
@@ -194,6 +206,7 @@ CREATE TABLE IF NOT EXISTS ai_calls (
 ### Testing
 
 `tests/unit/lib/llm.test.ts` (5 cases, mock mode):
+
 ```typescript
 describe('LLM multimodal content', () => {
   it('serializes text-only content as string (backward compat)', async () => {
@@ -214,6 +227,7 @@ describe('LLM multimodal content', () => {
 ```
 
 `tests/unit/api/char-recognize.test.ts` (5 cases, mock LLM + ai-calls):
+
 ```typescript
 describe('POST /api/ai/char-recognize', () => {
   it('anonymous: 5 calls succeed, 6th returns 429 rate_limited', async () => {
@@ -306,17 +320,17 @@ feat(pinyin-camera): append-to-textarea 📷 button on /pinyin [2026-08-05 HH.MM
 
 ### Files Summary
 
-| File | Action | LoC |
-|---|---|---|
-| `lib/llm.ts` | Modify (ContentPart union) | +15 |
-| `lib/ai-calls.ts` | Modify (+checkAnonRateLimit) | +15 |
-| `app/api/ai/char-recognize/route.ts` | Create | ~80 |
-| `app/api/ai/char-explain/route.ts` | Modify (add rate limit) | +5 |
-| `components/TextToPinyin.tsx` | Modify (+📷 button) | +60 |
-| `lib/admin-activity.ts` | Modify (+recognize entry) | +1 |
-| `scripts/migrations/2026-08-05-ai-calls-ip.sql` | Create (anon-ip column + index) | ~5 |
-| `tests/unit/lib/llm.test.ts` | Create | ~60 |
-| `tests/unit/api/char-recognize.test.ts` | Create | ~100 |
+| File                                            | Action                          | LoC  |
+| ----------------------------------------------- | ------------------------------- | ---- |
+| `lib/llm.ts`                                    | Modify (ContentPart union)      | +15  |
+| `lib/ai-calls.ts`                               | Modify (+checkAnonRateLimit)    | +15  |
+| `app/api/ai/char-recognize/route.ts`            | Create                          | ~80  |
+| `app/api/ai/char-explain/route.ts`              | Modify (add rate limit)         | +5   |
+| `components/TextToPinyin.tsx`                   | Modify (+📷 button)             | +60  |
+| `lib/admin-activity.ts`                         | Modify (+recognize entry)       | +1   |
+| `scripts/migrations/2026-08-05-ai-calls-ip.sql` | Create (anon-ip column + index) | ~5   |
+| `tests/unit/lib/llm.test.ts`                    | Create                          | ~60  |
+| `tests/unit/api/char-recognize.test.ts`         | Create                          | ~100 |
 
 **Total: ~341 LoC across 9 files.**
 

@@ -11,6 +11,7 @@
 **Out of scope (Plan B/C):** 用户系统、历史/收藏/统计、简繁切换实际效果、移动端深度优化、E2E 测试。
 
 **Pre-requisites:**
+
 - Node 20+
 - pnpm 9+
 - 项目根目录：`E:\ToolDevelop\PinYinCharacter`
@@ -75,6 +76,7 @@ pinyin-character/
 ## Task 1: 脚手架与依赖
 
 **Files:**
+
 - Create: `package.json`
 - Create: `tsconfig.json`
 - Create: `next.config.ts`
@@ -87,6 +89,7 @@ pinyin-character/
 - [ ] **Step 1: 初始化 package.json**
 
 创建 `package.json`：
+
 ```json
 {
   "name": "pinyin-character",
@@ -173,6 +176,7 @@ export default config;
 - [ ] **Step 5: tailwind + postcss**
 
 `tailwind.config.ts`:
+
 ```ts
 import type { Config } from 'tailwindcss';
 
@@ -188,6 +192,7 @@ export default config;
 ```
 
 `postcss.config.mjs`:
+
 ```js
 export default {
   plugins: {
@@ -228,7 +233,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
 ```tsx
 export default function Home() {
-  return <main className="p-8"><h1 className="text-2xl">字↔拼音 工具</h1></main>;
+  return (
+    <main className="p-8">
+      <h1 className="text-2xl">字↔拼音 工具</h1>
+    </main>
+  );
 }
 ```
 
@@ -249,6 +258,7 @@ git commit -m "chore: scaffold Next.js 15 + TypeScript + Tailwind"
 ## Task 2: Vitest 配置
 
 **Files:**
+
 - Create: `vitest.config.ts`
 - Create: `tests/unit/server/.gitkeep`
 - Create: `tests/unit/lib/.gitkeep`
@@ -276,6 +286,7 @@ export default defineConfig({
 - [ ] **Step 2: 创建测试目录占位**
 
 Run:
+
 ```bash
 mkdir -p "E:/ToolDevelop/PinYinCharacter/tests/unit/server"
 mkdir -p "E:/ToolDevelop/PinYinCharacter/tests/unit/lib"
@@ -300,6 +311,7 @@ git commit -m "chore: add vitest config and test directories"
 ## Task 3: 数据准备脚本
 
 **Files:**
+
 - Create: `scripts/build-dict.ts`
 - Create: `data/.gitkeep`
 
@@ -308,6 +320,7 @@ git commit -m "chore: add vitest config and test directories"
 这个脚本从开源数据生成 `pinyin-hanzi.json` / `bigrams.json` / `bad-words.json`。**实现思路**：
 
 `scripts/build-dict.ts`:
+
 ```ts
 /**
  * Build dictionary JSON files from open-source Chinese data.
@@ -327,15 +340,14 @@ import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DATA_DIR = join(process.cwd(), 'data');
-const PYTHON_PINYIN_URL = 'https://raw.githubusercontent.com/mozillazg/python-pinyin/master/pypinyin/phrase-pinyin-data/jidian4_pinyin.txt';
+const PYTHON_PINYIN_URL =
+  'https://raw.githubusercontent.com/mozillazg/python-pinyin/master/pypinyin/phrase-pinyin-data/jidian4_pinyin.txt';
 const JIEBA_URL = 'https://raw.githubusercontent.com/fxsjy/jieba/master/jieba/dict.txt';
 
 // Hand-curated seed list; expand in PRs
 const SEED_BAD_WORDS = {
   chars: [],
-  words: [
-    '操你妈', '滚蛋', '妈的', '草泥马',
-  ],
+  words: ['操你妈', '滚蛋', '妈的', '草泥马'],
 };
 
 async function fetchText(url: string): Promise<string> {
@@ -344,7 +356,10 @@ async function fetchText(url: string): Promise<string> {
   return res.text();
 }
 
-interface DictEntry { char: string; freq: number; }
+interface DictEntry {
+  char: string;
+  freq: number;
+}
 type Dict = Record<string, DictEntry[]>;
 type Bigrams = Record<string, Record<string, number>>;
 
@@ -368,15 +383,16 @@ function parsePinyinDict(text: string): { dict: Dict; bigrams: Bigrams } {
       const noTone = py.replace(/[1-5]$/, '');
       // Freq: words containing this char boost freq (use word count = 1 for now)
       const arr = (dict[noTone] ||= []);
-      const existing = arr.find(e => e.char === ch);
+      const existing = arr.find((e) => e.char === ch);
       if (existing) existing.freq += 1;
       else arr.push({ char: ch, freq: 1 });
     });
     // Bigrams from this word
     for (let i = 0; i < word.length - 1; i++) {
-      const a = word[i], b = word[i + 1];
+      const a = word[i],
+        b = word[i + 1];
       if (!a || !b) continue;
-      ((bigrams[a] ||= {})[b] ||= 0);
+      (bigrams[a] ||= {})[b] ||= 0;
       bigrams[a][b] += 1;
     }
   }
@@ -406,7 +422,7 @@ async function main() {
   console.log('  data/bad-words.json');
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
@@ -434,12 +450,14 @@ git commit -m "feat(dict): script to build pinyin-hanzi, bigrams, bad-words"
 ## Task 4: 服务端词典加载
 
 **Files:**
+
 - Create: `server/dictionary.ts`
 - Test: `tests/unit/server/dictionary.test.ts`
 
 - [ ] **Step 1: 写失败测试**
 
 `tests/unit/server/dictionary.test.ts`:
+
 ```ts
 import { describe, it, expect, beforeAll } from 'vitest';
 import { loadDictionaries, getCandidates } from '@/server/dictionary';
@@ -479,11 +497,15 @@ Expected: FAIL "Cannot find module '@/server/dictionary'"
 - [ ] **Step 3: 实现 dictionary.ts**
 
 `server/dictionary.ts`:
+
 ```ts
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-export interface DictEntry { char: string; freq: number; }
+export interface DictEntry {
+  char: string;
+  freq: number;
+}
 export type Script = 'simplified' | 'traditional';
 
 let dict: Record<string, DictEntry[]> = {};
@@ -492,14 +514,17 @@ let loaded = false;
 export function loadDictionaries(): void {
   if (loaded) return;
   const dataDir = join(process.cwd(), 'data');
-  dict = JSON.parse(readFileSync(join(dataDir, 'pinyin-hanzi.json'), 'utf8')) as Record<string, DictEntry[]>;
+  dict = JSON.parse(readFileSync(join(dataDir, 'pinyin-hanzi.json'), 'utf8')) as Record<
+    string,
+    DictEntry[]
+  >;
   loaded = true;
 }
 
 export function getCandidates(
   pinyinStr: string,
-  _safeMode: boolean,   // 留作 Plan B 接入
-  _script: Script       // 留作 Plan C 接入
+  _safeMode: boolean, // 留作 Plan B 接入
+  _script: Script, // 留作 Plan C 接入
 ): DictEntry[] {
   if (!loaded) loadDictionaries();
   return dict[pinyinStr] ?? [];
@@ -523,6 +548,7 @@ git commit -m "feat(server): dictionary loader and getCandidates"
 ## Task 5: 儿童模式过滤
 
 **Files:**
+
 - Create: `server/filter.ts`
 - Modify: `server/dictionary.ts` (注入 bad words)
 - Test: `tests/unit/server/filter.test.ts`
@@ -531,6 +557,7 @@ git commit -m "feat(server): dictionary loader and getCandidates"
 - [ ] **Step 1: 写失败测试**
 
 `tests/unit/server/filter.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { filterCandidates } from '@/server/filter';
@@ -550,7 +577,7 @@ describe('filterCandidates', () => {
   it('removes bad chars when safeMode is true', () => {
     const out = filterCandidates(sample, true);
     expect(out).toHaveLength(2);
-    expect(out.find(c => c.char === '脏字A')).toBeUndefined();
+    expect(out.find((c) => c.char === '脏字A')).toBeUndefined();
   });
 
   it('returns empty when all are bad', () => {
@@ -568,6 +595,7 @@ Expected: FAIL "Cannot find module '@/server/filter'"
 - [ ] **Step 3: 实现 filter.ts**
 
 `server/filter.ts`:
+
 ```ts
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -579,9 +607,10 @@ let loaded = false;
 
 function loadBadWords(): void {
   if (loaded) return;
-  const data = JSON.parse(
-    readFileSync(join(process.cwd(), 'data', 'bad-words.json'), 'utf8')
-  ) as { chars: string[]; words: string[] };
+  const data = JSON.parse(readFileSync(join(process.cwd(), 'data', 'bad-words.json'), 'utf8')) as {
+    chars: string[];
+    words: string[];
+  };
   badChars = new Set(data.chars);
   badWords = new Set(data.words);
   loaded = true;
@@ -590,7 +619,7 @@ function loadBadWords(): void {
 export function filterCandidates(candidates: DictEntry[], safeMode: boolean): DictEntry[] {
   if (!safeMode) return candidates;
   if (!loaded) loadBadWords();
-  return candidates.filter(c => !badChars.has(c.char));
+  return candidates.filter((c) => !badChars.has(c.char));
 }
 
 export function isBadText(text: string, safeMode: boolean): boolean {
@@ -620,7 +649,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { filterCandidates } from './filter';
 
-export interface DictEntry { char: string; freq: number; }
+export interface DictEntry {
+  char: string;
+  freq: number;
+}
 export type Script = 'simplified' | 'traditional';
 
 let dict: Record<string, DictEntry[]> = {};
@@ -629,15 +661,14 @@ let loaded = false;
 export function loadDictionaries(): void {
   if (loaded) return;
   const dataDir = join(process.cwd(), 'data');
-  dict = JSON.parse(readFileSync(join(dataDir, 'pinyin-hanzi.json'), 'utf8')) as Record<string, DictEntry[]>;
+  dict = JSON.parse(readFileSync(join(dataDir, 'pinyin-hanzi.json'), 'utf8')) as Record<
+    string,
+    DictEntry[]
+  >;
   loaded = true;
 }
 
-export function getCandidates(
-  pinyinStr: string,
-  safeMode: boolean,
-  _script: Script
-): DictEntry[] {
+export function getCandidates(pinyinStr: string, safeMode: boolean, _script: Script): DictEntry[] {
   if (!loaded) loadDictionaries();
   const raw = dict[pinyinStr] ?? [];
   return filterCandidates(raw, safeMode);
@@ -676,12 +707,14 @@ git commit -m "feat(server): child-mode filter integration with dictionary"
 ## Task 6: 候选 API 路由
 
 **Files:**
+
 - Create: `app/api/pinyin/candidates/route.ts`
 - Test: `tests/api/candidates.test.ts`
 
 - [ ] **Step 1: 写失败测试**
 
 `tests/api/candidates.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { GET } from '@/app/api/pinyin/candidates/route';
@@ -692,7 +725,10 @@ describe('GET /api/pinyin/candidates', () => {
     const req = new Request(url);
     const res = await GET(req as never);
     expect(res.status).toBe(200);
-    const json = await res.json() as { ok: boolean; data: { candidates: { char: string; freq: number }[] } };
+    const json = (await res.json()) as {
+      ok: boolean;
+      data: { candidates: { char: string; freq: number }[] };
+    };
     expect(json.ok).toBe(true);
     expect(json.data.candidates.length).toBeGreaterThan(0);
   });
@@ -709,7 +745,7 @@ describe('GET /api/pinyin/candidates', () => {
     const req = new Request(url);
     const res = await GET(req as never);
     expect(res.status).toBe(200);
-    const json = await res.json() as { ok: boolean; data: { candidates: unknown[] } };
+    const json = (await res.json()) as { ok: boolean; data: { candidates: unknown[] } };
     expect(json.data.candidates).toEqual([]);
   });
 });
@@ -723,6 +759,7 @@ Expected: FAIL "Cannot find module '@/app/api/pinyin/candidates/route'"
 - [ ] **Step 3: 实现路由**
 
 `app/api/pinyin/candidates/route.ts`:
+
 ```ts
 import { NextResponse } from 'next/server';
 import { getCandidates } from '@/server/dictionary';
@@ -733,7 +770,10 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const pinyin = url.searchParams.get('pinyin');
   if (!pinyin) {
-    return NextResponse.json({ ok: false, error: 'pinyin required', code: 'missing_pinyin' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'pinyin required', code: 'missing_pinyin' },
+      { status: 400 },
+    );
   }
   const safeMode = url.searchParams.get('safeMode') === 'true';
   const script = (url.searchParams.get('script') ?? 'simplified') as 'simplified' | 'traditional';
@@ -759,12 +799,14 @@ git commit -m "feat(api): /api/pinyin/candidates route"
 ## Task 7: Viterbi 整句转换（核心算法）
 
 **Files:**
+
 - Create: `server/sentence-converter.ts`
 - Test: `tests/unit/server/sentence-converter.test.ts`
 
 - [ ] **Step 1: 写失败测试**
 
 `tests/unit/server/sentence-converter.test.ts`:
+
 ```ts
 import { describe, it, expect, beforeAll } from 'vitest';
 import { loadDictionaries } from '@/server/dictionary';
@@ -804,6 +846,7 @@ Expected: FAIL "Cannot find module '@/server/sentence-converter'"
 - [ ] **Step 3: 实现 sentence-converter.ts**
 
 `server/sentence-converter.ts`:
+
 ```ts
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -818,7 +861,7 @@ let bigramsLoaded = false;
 function loadBigrams(): void {
   if (bigramsLoaded) return;
   bigrams = JSON.parse(
-    readFileSync(join(process.cwd(), 'data', 'bigrams.json'), 'utf8')
+    readFileSync(join(process.cwd(), 'data', 'bigrams.json'), 'utf8'),
   ) as Bigrams;
   bigramsLoaded = true;
 }
@@ -831,11 +874,7 @@ const BAD_SCORE = -1000;
 const TOP_K = 20;
 const MAX_TOKEN_LEN = 4;
 
-export function convertSentence(
-  pinyinStr: string,
-  safeMode: boolean,
-  script: Script
-): string {
+export function convertSentence(pinyinStr: string, safeMode: boolean, script: Script): string {
   if (!pinyinStr.trim()) return '';
   loadBigrams();
 
@@ -876,7 +915,7 @@ export function convertSentence(
           }
         }
       } else {
-        bestPrevScore = 0;  // start state
+        bestPrevScore = 0; // start state
       }
       const total = baseScore + safePenalty + bestPrevScore;
 
@@ -903,7 +942,10 @@ export function convertSentence(
   return out.join('');
 }
 
-interface Token { str: string; len: number; }
+interface Token {
+  str: string;
+  len: number;
+}
 
 function tokenize(pinyinStr: string): Token[] {
   // Greedy: at each position, try the longest matching pinyin key
@@ -957,12 +999,14 @@ git commit -m "feat(server): Viterbi-based full sentence pinyin-to-hanzi convert
 ## Task 8: 整句 API 路由
 
 **Files:**
+
 - Create: `app/api/pinyin/sentence/route.ts`
 - Test: `tests/api/sentence.test.ts`
 
 - [ ] **Step 1: 写失败测试**
 
 `tests/api/sentence.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { GET } from '@/app/api/pinyin/sentence/route';
@@ -973,7 +1017,7 @@ describe('GET /api/pinyin/sentence', () => {
     const req = new Request(url);
     const res = await GET(req as never);
     expect(res.status).toBe(200);
-    const json = await res.json() as { ok: boolean; data: { sentence: string } };
+    const json = (await res.json()) as { ok: boolean; data: { sentence: string } };
     expect(json.data.sentence).toBe('你好');
   });
 
@@ -994,6 +1038,7 @@ Expected: FAIL "Cannot find module '@/app/api/pinyin/sentence/route'"
 - [ ] **Step 3: 实现路由**
 
 `app/api/pinyin/sentence/route.ts`:
+
 ```ts
 import { NextResponse } from 'next/server';
 import { convertSentence } from '@/server/sentence-converter';
@@ -1004,7 +1049,10 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const pinyin = url.searchParams.get('pinyin');
   if (!pinyin) {
-    return NextResponse.json({ ok: false, error: 'pinyin required', code: 'missing_pinyin' }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: 'pinyin required', code: 'missing_pinyin' },
+      { status: 400 },
+    );
   }
   const safeMode = url.searchParams.get('safeMode') === 'true';
   const script = (url.searchParams.get('script') ?? 'simplified') as 'simplified' | 'traditional';
@@ -1030,12 +1078,14 @@ git commit -m "feat(api): /api/pinyin/sentence route"
 ## Task 9: 客户端 - pinyin-pro 包装
 
 **Files:**
+
 - Create: `lib/pinyin-client.ts`
 - Test: `tests/unit/lib/pinyin-client.test.ts`
 
 - [ ] **Step 1: 写失败测试**
 
 `tests/unit/lib/pinyin-client.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest';
 import { textToPinyin, renderWithSpaces, renderWithoutSpaces } from '@/lib/pinyin-client';
@@ -1087,12 +1137,13 @@ Expected: FAIL "Cannot find module '@/lib/pinyin-client'"
 - [ ] **Step 3: 实现 pinyin-client.ts**
 
 `lib/pinyin-client.ts`:
+
 ```ts
 import { pinyin } from 'pinyin-pro';
 
 export interface PinyinToken {
   char: string;
-  readings: string[];   // 多音字：所有读音
+  readings: string[]; // 多音字：所有读音
 }
 
 const HAN_RANGE = /[一-鿿㐀-䶿]/;
@@ -1108,11 +1159,11 @@ export function textToPinyin(text: string): PinyinToken[] {
 }
 
 export function renderWithSpaces(tokens: PinyinToken[]): string {
-  return tokens.map(t => t.readings[0] ?? '?').join(' ');
+  return tokens.map((t) => t.readings[0] ?? '?').join(' ');
 }
 
 export function renderWithoutSpaces(tokens: PinyinToken[]): string {
-  return tokens.map(t => t.readings[0] ?? '?').join('');
+  return tokens.map((t) => t.readings[0] ?? '?').join('');
 }
 ```
 
@@ -1133,16 +1184,18 @@ git commit -m "feat(client): pinyin-pro wrapper for client-side text-to-pinyin"
 ## Task 10: 客户端 - TTS 包装
 
 **Files:**
+
 - Create: `lib/tts.ts`
 
 - [ ] **Step 1: 实现 tts.ts**
 
 `lib/tts.ts`:
+
 ```ts
 'use client';
 
 export interface SpeakOpts {
-  rate?: number;            // 0.1 - 10
+  rate?: number; // 0.1 - 10
   onBoundary?: (charIndex: number) => void;
   onEnd?: () => void;
 }
@@ -1151,9 +1204,7 @@ export function pickChineseVoice(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   return (
-    voices.find(v => v.lang === 'zh-CN') ??
-    voices.find(v => v.lang.startsWith('zh')) ??
-    null
+    voices.find((v) => v.lang === 'zh-CN') ?? voices.find((v) => v.lang.startsWith('zh')) ?? null
   );
 }
 
@@ -1188,11 +1239,13 @@ git commit -m "feat(client): SpeechSynthesis wrapper for TTS"
 ## Task 11: 客户端 - 状态管理 (zustand)
 
 **Files:**
+
 - Create: `lib/store.ts`
 
 - [ ] **Step 1: 实现 store.ts**
 
 `lib/store.ts`:
+
 ```ts
 'use client';
 
@@ -1211,13 +1264,13 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      safeMode: true,                  // 默认开
+      safeMode: true, // 默认开
       script: 'simplified',
       setSafeMode: (safeMode) => set({ safeMode }),
       setScript: (script) => set({ script }),
     }),
-    { name: 'pinyin-app-state' }
-  )
+    { name: 'pinyin-app-state' },
+  ),
 );
 ```
 
@@ -1233,22 +1286,25 @@ git commit -m "feat(client): zustand store with safeMode and script"
 ## Task 12: 客户端 - API wrapper
 
 **Files:**
+
 - Create: `lib/api.ts`
 
 - [ ] **Step 1: 实现 api.ts**
 
 `lib/api.ts`:
-```ts
-export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: string; code?: string };
 
-export interface Candidate { char: string; freq: number; }
+```ts
+export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string; code?: string };
+
+export interface Candidate {
+  char: string;
+  freq: number;
+}
 
 export async function fetchCandidates(
   pinyin: string,
   safeMode: boolean,
-  script: 'simplified' | 'traditional'
+  script: 'simplified' | 'traditional',
 ): Promise<ApiResult<{ candidates: Candidate[] }>> {
   const params = new URLSearchParams({ pinyin, safeMode: String(safeMode), script });
   const res = await fetch(`/api/pinyin/candidates?${params}`);
@@ -1258,7 +1314,7 @@ export async function fetchCandidates(
 export async function fetchSentence(
   pinyin: string,
   safeMode: boolean,
-  script: 'simplified' | 'traditional'
+  script: 'simplified' | 'traditional',
 ): Promise<ApiResult<{ sentence: string }>> {
   const params = new URLSearchParams({ pinyin, safeMode: String(safeMode), script });
   const res = await fetch(`/api/pinyin/sentence?${params}`);
@@ -1278,6 +1334,7 @@ git commit -m "feat(client): api wrapper for pinyin endpoints"
 ## Task 13: 客户端 - opencc 占位
 
 **Files:**
+
 - Create: `lib/opencc.ts`
 
 - [ ] **Step 1: 实现 opencc.ts（占位实现）**
@@ -1285,6 +1342,7 @@ git commit -m "feat(client): api wrapper for pinyin endpoints"
 Plan C 会用 `opencc-js` 替换为真实实现。占位先返回原文，保证 Plan A 可工作。
 
 `lib/opencc.ts`:
+
 ```ts
 // 占位：Plan C 替换为 opencc-js 实现
 export function toTraditional(text: string): string {
@@ -1308,19 +1366,21 @@ git commit -m "feat(client): opencc placeholder (to be implemented in Plan C)"
 ## Task 14: 组件 - SafeModeToggle
 
 **Files:**
+
 - Create: `components/SafeModeToggle.tsx`
 
 - [ ] **Step 1: 实现 SafeModeToggle**
 
 `components/SafeModeToggle.tsx`:
+
 ```tsx
 'use client';
 
 import { useAppStore } from '@/lib/store';
 
 export function SafeModeToggle() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const setSafeMode = useAppStore(s => s.setSafeMode);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const setSafeMode = useAppStore((s) => s.setSafeMode);
   return (
     <label className="flex items-center gap-2 cursor-pointer select-none">
       <span className="text-sm">🔒 儿童模式</span>
@@ -1356,17 +1416,19 @@ git commit -m "feat(ui): SafeModeToggle component"
 ## Task 15: 组件 - Header
 
 **Files:**
+
 - Create: `components/Header.tsx`
 
 - [ ] **Step 1: 实现 Header**
 
 `components/Header.tsx`:
+
 ```tsx
 import { SafeModeToggle } from './SafeModeToggle';
 import { useAppStore } from '@/lib/store';
 
 export function Header() {
-  const safeMode = useAppStore(s => s.safeMode);
+  const safeMode = useAppStore((s) => s.safeMode);
   return (
     <header className="border-b bg-white sticky top-0 z-10">
       <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -1397,11 +1459,13 @@ git commit -m "feat(ui): Header with safe mode indicator"
 ## Task 16: 组件 - PinyinOutput
 
 **Files:**
+
 - Create: `components/PinyinOutput.tsx`
 
 - [ ] **Step 1: 实现 PinyinOutput**
 
 `components/PinyinOutput.tsx`:
+
 ```tsx
 'use client';
 
@@ -1414,19 +1478,21 @@ interface Props {
 
 export function PinyinOutput({ tokens }: Props) {
   const [withSpaces, setWithSpaces] = useState(true);
-  const [readings, setReadings] = useState<Record<number, number>>({});  // index -> reading index
+  const [readings, setReadings] = useState<Record<number, number>>({}); // index -> reading index
 
   if (tokens.length === 0) {
     return <div className="text-gray-400 text-sm">在上方输入汉字，拼音会显示在这里</div>;
   }
 
-  const text = tokens.map((t, i) => {
-    const idx = readings[i] ?? 0;
-    return t.readings[idx] ?? '?';
-  }).join(withSpaces ? ' ' : '');
+  const text = tokens
+    .map((t, i) => {
+      const idx = readings[i] ?? 0;
+      return t.readings[idx] ?? '?';
+    })
+    .join(withSpaces ? ' ' : '');
 
   const cycleReading = (i: number) => {
-    setReadings(prev => {
+    setReadings((prev) => {
       const cur = prev[i] ?? 0;
       const next = (cur + 1) % tokens[i]!.readings.length;
       return { ...prev, [i]: next };
@@ -1444,7 +1510,7 @@ export function PinyinOutput({ tokens }: Props) {
           <input
             type="checkbox"
             checked={withSpaces}
-            onChange={e => setWithSpaces(e.target.checked)}
+            onChange={(e) => setWithSpaces(e.target.checked)}
           />
           带空格
         </label>
@@ -1497,11 +1563,13 @@ git commit -m "feat(ui): PinyinOutput with polyphone cycling and spacing toggle"
 ## Task 17: 组件 - ReadAloudButton
 
 **Files:**
+
 - Create: `components/ReadAloudButton.tsx`
 
 - [ ] **Step 1: 实现 ReadAloudButton**
 
 `components/ReadAloudButton.tsx`:
+
 ```tsx
 'use client';
 
@@ -1543,11 +1611,13 @@ git commit -m "feat(ui): ReadAloudButton for TTS"
 ## Task 18: 组件 - TextToPinyin
 
 **Files:**
+
 - Create: `components/TextToPinyin.tsx`
 
 - [ ] **Step 1: 实现 TextToPinyin**
 
 `components/TextToPinyin.tsx`:
+
 ```tsx
 'use client';
 
@@ -1565,7 +1635,7 @@ export function TextToPinyin() {
       <h2 className="text-base font-semibold">汉字 → 拼音</h2>
       <textarea
         value={text}
-        onChange={e => setText(e.target.value)}
+        onChange={(e) => setText(e.target.value)}
         placeholder="输入或粘贴中文…"
         rows={3}
         className="w-full p-2 border rounded resize-y focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -1598,11 +1668,13 @@ git commit -m "feat(ui): TextToPinyin section"
 ## Task 19: 组件 - PinyinInputMethod（输入码点选）
 
 **Files:**
+
 - Create: `components/PinyinInputMethod.tsx`
 
 - [ ] **Step 1: 实现 PinyinInputMethod**
 
 `components/PinyinInputMethod.tsx`:
+
 ```tsx
 'use client';
 
@@ -1612,8 +1684,8 @@ import { useAppStore } from '@/lib/store';
 import { ReadAloudButton } from './ReadAloudButton';
 
 export function PinyinInputMethod() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const script = useAppStore(s => s.script);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const script = useAppStore((s) => s.script);
   const [buffer, setBuffer] = useState('');
   const [committed, setCommitted] = useState('');
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -1635,7 +1707,7 @@ export function PinyinInputMethod() {
   const pick = (i: number) => {
     const c = candidates[i];
     if (!c) return;
-    setCommitted(prev => prev + c.char);
+    setCommitted((prev) => prev + c.char);
     setBuffer('');
     setCandidates([]);
     inputRef.current?.focus();
@@ -1643,9 +1715,9 @@ export function PinyinInputMethod() {
 
   const backspace = () => {
     if (buffer) {
-      setBuffer(b => b.slice(0, -1));
+      setBuffer((b) => b.slice(0, -1));
     } else if (committed) {
-      setCommitted(c => c.slice(0, -1));
+      setCommitted((c) => c.slice(0, -1));
     }
   };
 
@@ -1660,7 +1732,7 @@ export function PinyinInputMethod() {
       <input
         ref={inputRef}
         value={buffer}
-        onChange={e => {
+        onChange={(e) => {
           // Accept only letters, digits, apostrophe
           const v = e.target.value.replace(/[^a-zA-Z1-5']/g, '');
           setBuffer(v);
@@ -1689,7 +1761,9 @@ export function PinyinInputMethod() {
       <div className="min-h-[2rem] p-2 bg-gray-50 rounded border text-lg">
         {committed}
         {buffer && <span className="text-blue-500 ml-1">|{buffer}</span>}
-        {!committed && !buffer && <span className="text-gray-400 text-sm">在上方输入拼音，选择候选字</span>}
+        {!committed && !buffer && (
+          <span className="text-gray-400 text-sm">在上方输入拼音，选择候选字</span>
+        )}
       </div>
       {candidates.length > 0 && (
         <div className="flex flex-wrap gap-2">
@@ -1708,8 +1782,21 @@ export function PinyinInputMethod() {
       )}
       <div className="flex gap-2">
         <ReadAloudButton text={committed} label="🔊 朗读" />
-        <button type="button" onClick={() => navigator.clipboard.writeText(committed)} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100" disabled={!committed}>复制</button>
-        <button type="button" onClick={clear} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100">清空</button>
+        <button
+          type="button"
+          onClick={() => navigator.clipboard.writeText(committed)}
+          className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100"
+          disabled={!committed}
+        >
+          复制
+        </button>
+        <button
+          type="button"
+          onClick={clear}
+          className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100"
+        >
+          清空
+        </button>
       </div>
     </div>
   );
@@ -1728,11 +1815,13 @@ git commit -m "feat(ui): PinyinInputMethod (input method mode)"
 ## Task 20: 组件 - PinyinFullSentence（整句）
 
 **Files:**
+
 - Create: `components/PinyinFullSentence.tsx`
 
 - [ ] **Step 1: 实现 PinyinFullSentence**
 
 `components/PinyinFullSentence.tsx`:
+
 ```tsx
 'use client';
 
@@ -1742,8 +1831,8 @@ import { useAppStore } from '@/lib/store';
 import { ReadAloudButton } from './ReadAloudButton';
 
 export function PinyinFullSentence() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const script = useAppStore(s => s.script);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const script = useAppStore((s) => s.script);
   const [pinyin, setPinyin] = useState('');
   const [result, setResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -1765,7 +1854,7 @@ export function PinyinFullSentence() {
     <div className="space-y-3">
       <input
         value={pinyin}
-        onChange={e => setPinyin(e.target.value)}
+        onChange={(e) => setPinyin(e.target.value)}
         placeholder="输入完整带调拼音串 (如: ni3hao3, wo3jiao4xu2peng2)"
         className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
       />
@@ -1779,8 +1868,21 @@ export function PinyinFullSentence() {
           {loading ? '转换中…' : '转换'}
         </button>
         <ReadAloudButton text={result} />
-        <button type="button" onClick={() => navigator.clipboard.writeText(result)} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100" disabled={!result}>复制</button>
-        <button type="button" onClick={clear} className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100">清空</button>
+        <button
+          type="button"
+          onClick={() => navigator.clipboard.writeText(result)}
+          className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100"
+          disabled={!result}
+        >
+          复制
+        </button>
+        <button
+          type="button"
+          onClick={clear}
+          className="px-3 py-1.5 text-sm border rounded hover:bg-gray-100"
+        >
+          清空
+        </button>
       </div>
       {result ? (
         <div className="min-h-[2rem] p-2 bg-gray-50 rounded border text-lg">{result}</div>
@@ -1804,11 +1906,13 @@ git commit -m "feat(ui): PinyinFullSentence (full sentence mode)"
 ## Task 21: 主页面装配
 
 **Files:**
+
 - Modify: `app/page.tsx`
 
 - [ ] **Step 1: 实现主页面**
 
 `app/page.tsx`:
+
 ```tsx
 import { Header } from '@/components/Header';
 import { TextToPinyin } from '@/components/TextToPinyin';
@@ -1859,6 +1963,7 @@ git commit -m "feat(ui): assemble main page with all sections"
 ## Task 22: 词典启动加载钩子
 
 **Files:**
+
 - Modify: `server/dictionary.ts` (export check)
 - Create: `instrumentation.ts`
 
@@ -1867,6 +1972,7 @@ git commit -m "feat(ui): assemble main page with all sections"
 Next.js 15 支持 `instrumentation.ts` 在 server 启动时运行。
 
 `instrumentation.ts`:
+
 ```ts
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
@@ -1893,6 +1999,7 @@ git commit -m "feat(server): preload dictionaries at server start"
 ## Task 23: README + .env.example
 
 **Files:**
+
 - Create: `README.md`
 - Create: `.env.example`
 
@@ -1907,7 +2014,7 @@ git commit -m "feat(server): preload dictionaries at server start"
 
 - [ ] **Step 2: README.md**
 
-```markdown
+````markdown
 # 字 ↔ 拼音 工具
 
 在线汉字与拼音互转工具。
@@ -1929,6 +2036,7 @@ pnpm install
 pnpm dict:build       # 生成词典文件
 pnpm dev              # http://localhost:3000
 ```
+````
 
 ## 测试
 
@@ -1948,14 +2056,15 @@ pnpm test:watch       # 监听
 
 - Plan B：用户注册、历史、收藏、统计
 - Plan C：简繁真实实现、响应式优化、E2E 测试
-```
+
+````
 
 - [ ] **Step 3: Commit**
 
 ```bash
 git add README.md .env.example
 git commit -m "docs: README and env example"
-```
+````
 
 ---
 

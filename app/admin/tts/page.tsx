@@ -31,7 +31,7 @@ export default function AdminTtsPage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    getTtsConfigRequest().then(r => {
+    getTtsConfigRequest().then((r) => {
       if (r.ok) setCfg(r.data);
       else setErr(r.error.message);
     });
@@ -39,7 +39,9 @@ export default function AdminTtsPage() {
 
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    setBusy(true); setMsg(null); setErr(null);
+    setBusy(true);
+    setMsg(null);
+    setErr(null);
     const r = await updateTtsConfigRequest({
       'tts.voice_male': cfg['tts.voice_male'] ?? '',
       'tts.voice_female': cfg['tts.voice_female'] ?? '',
@@ -47,50 +49,79 @@ export default function AdminTtsPage() {
     });
     setBusy(false);
     if (!r.ok) setErr(r.error.message);
-    else { setMsg('配置已保存'); }
+    else {
+      setMsg('配置已保存');
+    }
   }
 
   return (
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">语音设置</h1>
-      <p className="text-sm text-ink-soft">站点全局默认音色,字典页「读字」用男声、「读音」用女声。</p>
+      <p className="text-sm text-ink-soft">
+        站点全局默认音色,字典页「读字」用男声、「读音」用女声。
+      </p>
 
-      {err && <p className="text-sm text-seal inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" />{err}</p>}
-      {msg && <p className="text-sm text-green-700 inline-flex items-center gap-1"><Check className="h-3.5 w-3.5" />{msg}</p>}
+      {err && (
+        <p className="text-sm text-seal inline-flex items-center gap-1">
+          <AlertTriangle className="h-3.5 w-3.5" />
+          {err}
+        </p>
+      )}
+      {msg && (
+        <p className="text-sm text-green-700 inline-flex items-center gap-1">
+          <Check className="h-3.5 w-3.5" />
+          {msg}
+        </p>
+      )}
 
       <form onSubmit={save} className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
         <div>
           <label className="text-sm font-medium">男声默认 (读字)</label>
           <select
             value={cfg['tts.voice_male'] ?? ''}
-            onChange={e => setCfg(c => ({ ...c, 'tts.voice_male': e.target.value }))}
+            onChange={(e) => setCfg((c) => ({ ...c, 'tts.voice_male': e.target.value }))}
             className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           >
-            {VOICES.male.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
+            {VOICES.male.map((v) => (
+              <option key={v.value} value={v.value}>
+                {v.label}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="text-sm font-medium">女声默认 (读音)</label>
           <select
             value={cfg['tts.voice_female'] ?? ''}
-            onChange={e => setCfg(c => ({ ...c, 'tts.voice_female': e.target.value }))}
+            onChange={(e) => setCfg((c) => ({ ...c, 'tts.voice_female': e.target.value }))}
             className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           >
-            {VOICES.female.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
+            {VOICES.female.map((v) => (
+              <option key={v.value} value={v.value}>
+                {v.label}
+              </option>
+            ))}
           </select>
         </div>
         <div>
           <label className="text-sm font-medium">音频格式</label>
           <select
             value={cfg['tts.audio_format'] ?? ''}
-            onChange={e => setCfg(c => ({ ...c, 'tts.audio_format': e.target.value }))}
+            onChange={(e) => setCfg((c) => ({ ...c, 'tts.audio_format': e.target.value }))}
             className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
           >
-            {FORMATS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+            {FORMATS.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
           </select>
         </div>
-        <button type="submit" disabled={busy}
-          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50">
+        <button
+          type="submit"
+          disabled={busy}
+          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+        >
           {busy ? '保存中…' : '保存'}
         </button>
       </form>

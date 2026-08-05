@@ -32,9 +32,7 @@ describe('POST /api/init/admin — wizard flag', () => {
   it('writes setup.wizard.admin_done after validation pass', async () => {
     const res = await POST(postReq({ username: 'admin', password: 'supersecret' }));
     expect(res.status).toBe(200);
-    expect(queryMock).toHaveBeenCalledWith(
-      expect.stringContaining("'setup.wizard.admin_done'"),
-    );
+    expect(queryMock).toHaveBeenCalledWith(expect.stringContaining("'setup.wizard.admin_done'"));
     expect(queryMock.mock.calls[0][0]).toMatch(/ON DUPLICATE KEY UPDATE/);
   });
 

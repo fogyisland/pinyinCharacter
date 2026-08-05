@@ -16,11 +16,10 @@ export async function checkPoemsManifest(): Promise<{ ok: boolean; issues: strin
   const raw = await fs.readFile(MANIFEST_PATH, 'utf8');
   const manifest = JSON.parse(raw) as PoemsManifest;
 
-  const files = (await fs.readdir(DATA_DIR))
-    .filter(f => /^\d+\.json$/.test(f));
+  const files = (await fs.readdir(DATA_DIR)).filter((f) => /^\d+\.json$/.test(f));
 
-  const fileIds = new Set(files.map(f => Number(f.replace(/\.json$/, ''))));
-  const manifestIds = new Set(manifest.items.map(i => i.id));
+  const fileIds = new Set(files.map((f) => Number(f.replace(/\.json$/, ''))));
+  const manifestIds = new Set(manifest.items.map((i) => i.id));
 
   for (const id of manifestIds) {
     if (!fileIds.has(id)) issues.push(`file for id ${id} missing`);
@@ -37,11 +36,17 @@ export async function checkPoemsManifest(): Promise<{ ok: boolean; issues: strin
 
 if (require.main === module) {
   checkPoemsManifest()
-    .then(r => {
-      if (r.ok) { console.log('[check-poems-manifest] OK'); process.exit(0); }
+    .then((r) => {
+      if (r.ok) {
+        console.log('[check-poems-manifest] OK');
+        process.exit(0);
+      }
       console.error('[check-poems-manifest] FAILED:');
       for (const i of r.issues) console.error('  -', i);
       process.exit(1);
     })
-    .catch(err => { console.error('[check-poems-manifest] error:', err); process.exit(1); });
+    .catch((err) => {
+      console.error('[check-poems-manifest] error:', err);
+      process.exit(1);
+    });
 }

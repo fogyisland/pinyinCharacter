@@ -3,7 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { X, FilePlus2, FolderOpen, Loader2, Check } from 'lucide-react';
-import { listWorksheetsLightweight, appendCharToWorksheetApi, type WorksheetSummary } from '@/lib/api-worksheet';
+import {
+  listWorksheetsLightweight,
+  appendCharToWorksheetApi,
+  type WorksheetSummary,
+} from '@/lib/api-worksheet';
 
 interface Props {
   open: boolean;
@@ -12,7 +16,12 @@ interface Props {
   title?: string;
   onClose: () => void;
   /** Called when the append succeeds so the parent can refresh its state. */
-  onAdded?: (result: { worksheetId: number; title: string; added: boolean; created: boolean }) => void;
+  onAdded?: (result: {
+    worksheetId: number;
+    title: string;
+    added: boolean;
+    created: boolean;
+  }) => void;
 }
 
 type Mode = 'existing' | 'new';
@@ -59,9 +68,8 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
 
   if (!open) return null;
 
-  const defaultHeader = chars.length === 1
-    ? `添加「${chars[0]}」到字帖`
-    : `添加 ${chars.length} 个字到字帖`;
+  const defaultHeader =
+    chars.length === 1 ? `添加「${chars[0]}」到字帖` : `添加 ${chars.length} 个字到字帖`;
 
   async function go() {
     setErr(null);
@@ -113,8 +121,14 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
   const canSubmit = !busy && (mode === 'new' ? newTitle.trim().length > 0 : !!selectedId);
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-paper rounded-lg shadow-lg w-full max-w-sm p-5" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="bg-paper rounded-lg shadow-lg w-full max-w-sm p-5"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-start justify-between mb-3">
           <h3 className="text-base font-semibold">{title ?? defaultHeader}</h3>
           <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink">
@@ -125,7 +139,8 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
         {err && <p className="text-sm text-seal mb-2">{err}</p>}
         {success && (
           <p className="text-sm text-green-700 mb-2 inline-flex items-center gap-1">
-            <Check className="h-3.5 w-3.5" />{success}
+            <Check className="h-3.5 w-3.5" />
+            {success}
           </p>
         )}
 
@@ -191,10 +206,20 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
         )}
 
         <div className="flex justify-end gap-2 mt-5">
-          <button type="button" onClick={onClose} disabled={busy}
-            className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep">取消</button>
-          <button type="button" onClick={go} disabled={!canSubmit}
-            className="px-3 py-1.5 text-sm text-white bg-seal rounded hover:bg-seal/80 disabled:opacity-50">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={busy}
+            className="px-3 py-1.5 text-sm border rounded hover:bg-paper-deep"
+          >
+            取消
+          </button>
+          <button
+            type="button"
+            onClick={go}
+            disabled={!canSubmit}
+            className="px-3 py-1.5 text-sm text-white bg-seal rounded hover:bg-seal/80 disabled:opacity-50"
+          >
             {busy ? '添加中…' : '确认'}
           </button>
         </div>

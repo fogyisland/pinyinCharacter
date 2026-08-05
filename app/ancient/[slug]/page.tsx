@@ -38,7 +38,8 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
   if (!book) notFound();
 
   const requested = Number(sp.chunk ?? '0');
-  const activeIdx = Number.isInteger(requested) && requested >= 0 && requested < book.chunks.length ? requested : 0;
+  const activeIdx =
+    Number.isInteger(requested) && requested >= 0 && requested < book.chunks.length ? requested : 0;
   const activeChunk = book.chunks[activeIdx]!;
 
   // Audio: feed every chapter (chunk) to SutraAudioPlayer. SutraAudioPlayer
@@ -55,23 +56,36 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
     <>
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildBook({ title: book.title, author: book.author, era: book.era })) }}
+
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            buildBook({ title: book.title, author: book.author, era: book.era }),
+          ),
+        }}
       />
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(await buildBreadcrumbList([
-          { name: '首页', url: '/' },
-          { name: '古籍', url: '/ancient' },
-          { name: book.title, url: `/ancient/${book.slug}` },
-        ])) }}
+
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(
+            await buildBreadcrumbList([
+              { name: '首页', url: '/' },
+              { name: '古籍', url: '/ancient' },
+              { name: book.title, url: `/ancient/${book.slug}` },
+            ]),
+          ),
+        }}
       />
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
         <div className="max-w-5xl mx-auto py-6 space-y-4">
           <div className="worksheet-no-print">
-            <Link href="/ancient" className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal">
+            <Link
+              href="/ancient"
+              className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal"
+            >
               ← 返回古籍列表
             </Link>
           </div>
@@ -87,7 +101,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
             <Suspense fallback={null}>
               <ClassicChunkPicker
                 slug={book.slug}
-                chunks={book.chunks.map(c => ({ id: c.id, label: c.label }))}
+                chunks={book.chunks.map((c) => ({ id: c.id, label: c.label }))}
                 activeId={activeChunk.id}
               />
             </Suspense>

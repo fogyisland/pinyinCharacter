@@ -11,6 +11,7 @@
 **Reference:** Design spec at `docs/superpowers/specs/2026-06-12-admin-platform-expansion-design.md`. Mirror existing admin code: `lib/admin.ts`, `lib/auth.ts`, `lib/audit.ts`, `app/api/admin/users/[id]/promote/route.ts`, `components/UserMenu.tsx`, `app/admin/layout.tsx`, `app/admin/users/page.tsx`. Mirror poem/sutra patterns: `lib/api-*.ts`, components under `components/<area>/`.
 
 **Read first (orient yourself):**
+
 - `lib/auth.ts` — `getCurrentUser`, `getCurrentUserWithAdmin`, `requireAdmin`, `requireUser`
 - `lib/api-handler.ts` — `withErrorHandling`, `badRequest`, `notFound`, `forbidden`, `unauthorized`
 - `lib/audit.ts` — `writeAudit`, `AuditEvent` union
@@ -25,6 +26,7 @@
 ## File Structure
 
 **New files (server libs + types):**
+
 - `lib/downloads.ts` — `logDownload(...)`, type aliases
 - `lib/ai-calls.ts` — `logAiCall(...)`, `checkAiRateLimit(...)`, `withAiLogging(...)`
 - `lib/config.ts` — `getConfig`, `setConfig`, `getAllConfig`, `setConfigBatch`
@@ -33,6 +35,7 @@
 - `lib/admin-ai.ts` — `listAiCalls(...)`, `getAiStats(...)`, `getAiConfig`, `updateAiConfig`
 
 **New API routes (all under `/api/admin/*`):**
+
 - `app/api/admin/users/[id]/disable/route.ts` — POST
 - `app/api/admin/users/[id]/enable/route.ts` — POST
 - `app/api/admin/users/[id]/activity/route.ts` — GET
@@ -44,12 +47,14 @@
 - `app/api/admin/ai/config/route.ts` — GET, PUT
 
 **New public logging endpoints (user-facing, called by PrintButton):**
+
 - `app/api/worksheets/[id]/print/route.ts` — POST
 - `app/api/poetry/[id]/print/route.ts` — POST
 - `app/api/sutra/[slug]/print/route.ts` — POST
 - `app/api/rare-chars/[char]/print/route.ts` — POST
 
 **New UI components:**
+
 - `components/admin/AdminSidebar.tsx` — admin nav
 - `components/admin/StatCard.tsx` — small KPI card
 - `components/admin/SourceBadge.tsx` — source color-coded badge
@@ -58,11 +63,13 @@
 - `components/common/PrintButton.tsx` — print action button (calls /print, then window.print())
 
 **New pages:**
+
 - `app/admin/logs/page.tsx`
 - `app/admin/downloads/page.tsx`
 - `app/admin/ai/page.tsx`
 
 **New client API wrappers:**
+
 - Extend `lib/api-admin.ts` with: `disableUserRequest`, `enableUserRequest`, `getUserActivityRequest`, `listAdminLogsRequest`, `listAdminDownloadsRequest`, `getDownloadStatsRequest`, `listAiCallsRequest`, `getAiStatsRequest`, `getAiConfigRequest`, `updateAiConfigRequest`
 - Extend `lib/api-worksheet.ts` with: `printWorksheetRequest`
 - Extend `lib/api-poetry.ts` with: `printPoemRequest`
@@ -70,6 +77,7 @@
 - Extend `lib/api-rare-chars.ts` with: `printRareCharRequest`
 
 **Tests:**
+
 - `tests/unit/lib/downloads.test.ts` (2)
 - `tests/unit/lib/ai-calls.test.ts` (3 — including withAiLogging)
 - `tests/unit/lib/config.test.ts` (3)
@@ -89,6 +97,7 @@
 - `tests/integration/api/print-logging.test.ts` (3)
 
 **Modified files:**
+
 - `scripts/init-db.ts` — DDL for 3 new tables + `users.disabled_at` ALTER + seed `app_config`
 - `lib/validators.ts` — new schemas (admin logs/downloads/ai-config queries, admin user filter, print body)
 - `lib/admin.ts` — `disableUser`, `enableUser`, `isUserDisabled`, extend `listUsers` to support `?disabled=true` filter and include `disabled_at` in response
@@ -119,6 +128,7 @@
 ### Task 1: DDL — add 3 new tables + users.disabled_at + seed app_config
 
 **Files:**
+
 - Modify: `scripts/init-db.ts` (append DDL strings, add seed block in `initDb()`)
 
 - [ ] **Step 1: Add 3 new tables + ALTER users**
@@ -236,6 +246,7 @@ git commit -m "feat(admin): DDL for downloads, ai_calls, app_config, users.disab
 ### Task 2: lib/downloads.ts (logDownload) + tests
 
 **Files:**
+
 - Create: `lib/downloads.ts`
 - Create: `tests/unit/lib/downloads.test.ts`
 
@@ -367,6 +378,7 @@ git commit -m "feat(admin): lib/downloads.ts with fail-soft logDownload"
 ### Task 3: lib/ai-calls.ts (logAiCall, checkAiRateLimit, withAiLogging) + tests
 
 **Files:**
+
 - Create: `lib/ai-calls.ts`
 - Create: `tests/unit/lib/ai-calls.test.ts`
 
@@ -512,7 +524,10 @@ export async function checkAiRateLimit(userId: number): Promise<boolean> {
 }
 
 export class RateLimitError extends Error {
-  constructor() { super('rate limit exceeded'); this.name = 'RateLimitError'; }
+  constructor() {
+    super('rate limit exceeded');
+    this.name = 'RateLimitError';
+  }
 }
 
 export interface WithAiLoggingArgs {
@@ -566,6 +581,7 @@ git commit -m "feat(admin): lib/ai-calls.ts with logAiCall, checkAiRateLimit, wi
 ### Task 4: lib/config.ts (getConfig, setConfig, getAllConfig, setConfigBatch) + tests
 
 **Files:**
+
 - Create: `lib/config.ts`
 - Create: `tests/unit/lib/config.test.ts`
 
@@ -603,9 +619,7 @@ describe('config', () => {
   });
 
   it('setConfigBatch validates values', async () => {
-    await expect(
-      setConfigBatch({ 'test.timeout': '30000' }, 0),
-    ).resolves.toBeUndefined();
+    await expect(setConfigBatch({ 'test.timeout': '30000' }, 0)).resolves.toBeUndefined();
     // a key that doesn't match a known shape should still store
     expect(await getConfig('test.timeout')).toBe('30000');
   });
@@ -648,7 +662,11 @@ export async function getConfig(key: string): Promise<string | null> {
   return rows.length ? rows[0].value : null;
 }
 
-export async function setConfig(key: string, value: string, byUserId: number | null): Promise<void> {
+export async function setConfig(
+  key: string,
+  value: string,
+  byUserId: number | null,
+): Promise<void> {
   const validator = KEY_VALIDATORS[key];
   if (validator && !validator(value)) {
     throw new Error(`Invalid value for ${key}: ${value}`);
@@ -667,7 +685,10 @@ export async function getAllConfig(): Promise<Record<string, string>> {
   return out;
 }
 
-export async function setConfigBatch(updates: Record<string, string>, byUserId: number): Promise<void> {
+export async function setConfigBatch(
+  updates: Record<string, string>,
+  byUserId: number,
+): Promise<void> {
   for (const [k, v] of Object.entries(updates)) {
     await setConfig(k, v, byUserId);
   }
@@ -691,6 +712,7 @@ git commit -m "feat(admin): lib/config.ts with validated get/set/batch"
 ### Task 5: lib/admin.ts extensions (disableUser, enableUser, isUserDisabled, listUsers + disabled filter) + tests
 
 **Files:**
+
 - Modify: `lib/admin.ts` (add 3 functions + extend listUsers)
 - Create: `tests/unit/lib/admin-extensions.test.ts`
 
@@ -704,9 +726,9 @@ Open `lib/admin.ts`. Find the end of the file and append these functions. Also l
 export interface ListUsersOptions {
   limit?: number;
   offset?: number;
-  q?: string;             // search by username LIKE
-  isAdmin?: boolean;      // filter to admins only
-  disabled?: boolean;     // filter to disabled only
+  q?: string; // search by username LIKE
+  isAdmin?: boolean; // filter to admins only
+  disabled?: boolean; // filter to disabled only
 }
 export interface AdminUserRowExtended extends AdminUserRow {
   disabledAt: Date | null;
@@ -719,8 +741,14 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
 
   const where: string[] = [];
   const params: any[] = [];
-  if (opts.q) { where.push(`u.username LIKE ?`); params.push(`%${opts.q}%`); }
-  if (typeof opts.isAdmin === 'boolean') { where.push(`u.is_admin = ?`); params.push(opts.isAdmin ? 1 : 0); }
+  if (opts.q) {
+    where.push(`u.username LIKE ?`);
+    params.push(`%${opts.q}%`);
+  }
+  if (typeof opts.isAdmin === 'boolean') {
+    where.push(`u.is_admin = ?`);
+    params.push(opts.isAdmin ? 1 : 0);
+  }
   if (typeof opts.disabled === 'boolean') {
     where.push(opts.disabled ? `u.disabled_at IS NOT NULL` : `u.disabled_at IS NULL`);
   }
@@ -748,7 +776,7 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
   );
 
   return {
-    users: rows.map(r => ({
+    users: rows.map((r) => ({
       id: Number(r.id),
       username: r.username,
       isAdmin: r.is_admin === 1 || r.is_admin === true,
@@ -763,7 +791,9 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
 
 export async function disableUser(id: number, byAdminId: number): Promise<void> {
   const pool = getPool();
-  await pool.query(`UPDATE users SET disabled_at = NOW() WHERE id = ? AND disabled_at IS NULL`, [id]);
+  await pool.query(`UPDATE users SET disabled_at = NOW() WHERE id = ? AND disabled_at IS NULL`, [
+    id,
+  ]);
 }
 
 export async function enableUser(id: number, byAdminId: number): Promise<void> {
@@ -821,8 +851,8 @@ describe('admin-extensions', () => {
     await disableUser(userId, 0);
     const all = await listUsers({ limit: 200 });
     const only = await listUsers({ disabled: true, limit: 200 });
-    expect(only.users.find(u => u.id === userId)).toBeTruthy();
-    expect(all.users.find(u => u.id === userId && u.disabledAt)).toBeTruthy();
+    expect(only.users.find((u) => u.id === userId)).toBeTruthy();
+    expect(all.users.find((u) => u.id === userId && u.disabledAt)).toBeTruthy();
     await enableUser(userId, 0);
   });
 });
@@ -845,6 +875,7 @@ git commit -m "feat(admin): lib/admin.ts disableUser/enableUser/isUserDisabled +
 ### Task 6: lib/auth.ts + lib/audit.ts updates (disabled_at enforcement + new audit events) + tests
 
 **Files:**
+
 - Modify: `lib/auth.ts` (check `disabled_at` in getCurrentUser and login)
 - Modify: `lib/audit.ts` (extend AuditEvent union)
 - Create: `tests/unit/lib/auth-disabled.test.ts`
@@ -855,14 +886,23 @@ Open `lib/audit.ts`. Replace the `AuditEvent` type with:
 
 ```ts
 export type AuditEvent =
-  | 'register' | 'login' | 'logout'
-  | 'history_create' | 'history_delete'
-  | 'password_reset_request' | 'password_reset_complete'
-  | 'admin_user_delete' | 'admin_user_password_reset'
-  | 'admin_user_promote' | 'admin_user_demote'
-  | 'user_disabled' | 'user_reenabled'
-  | 'ai_config_updated' | 'ai_call_logged'
-  | 'worksheet_saved' | 'worksheet_deleted';
+  | 'register'
+  | 'login'
+  | 'logout'
+  | 'history_create'
+  | 'history_delete'
+  | 'password_reset_request'
+  | 'password_reset_complete'
+  | 'admin_user_delete'
+  | 'admin_user_password_reset'
+  | 'admin_user_promote'
+  | 'admin_user_demote'
+  | 'user_disabled'
+  | 'user_reenabled'
+  | 'ai_config_updated'
+  | 'ai_call_logged'
+  | 'worksheet_saved'
+  | 'worksheet_deleted';
 ```
 
 - [ ] **Step 2: Update lib/auth.ts to check disabled_at**
@@ -953,6 +993,7 @@ git commit -m "feat(auth): enforce users.disabled_at in getCurrentUser + login; 
 ### Task 7: POST /api/admin/users/[id]/disable + /enable + integration tests
 
 **Files:**
+
 - Create: `app/api/admin/users/[id]/disable/route.ts`
 - Create: `app/api/admin/users/[id]/enable/route.ts`
 - Create: `tests/integration/api/admin-users-disable.test.ts`
@@ -981,7 +1022,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (!Number.isInteger(userId) || userId <= 0) return badRequest('bad_id', 'invalid id');
     if (userId === auth.user.id) return badRequest('self_disable', 'cannot disable yourself');
     await disableUser(userId, auth.user.id);
-    await writeAudit({ userId: auth.user.id, event: 'user_disabled', metadata: { targetUserId: userId } });
+    await writeAudit({
+      userId: auth.user.id,
+      event: 'user_disabled',
+      metadata: { targetUserId: userId },
+    });
     return NextResponse.json({ ok: true, data: { id: userId } });
   });
 }
@@ -1006,7 +1051,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const userId = parseInt(id, 10);
     if (!Number.isInteger(userId) || userId <= 0) return badRequest('bad_id', 'invalid id');
     await enableUser(userId, auth.user.id);
-    await writeAudit({ userId: auth.user.id, event: 'user_reenabled', metadata: { targetUserId: userId } });
+    await writeAudit({
+      userId: auth.user.id,
+      event: 'user_reenabled',
+      metadata: { targetUserId: userId },
+    });
     return NextResponse.json({ ok: true, data: { id: userId } });
   });
 }
@@ -1074,6 +1123,7 @@ git commit -m "feat(admin): POST /api/admin/users/[id]/{disable,enable} + tests"
 ### Task 8: GET /api/admin/users/[id]/activity + integration test
 
 **Files:**
+
 - Create: `app/api/admin/users/[id]/activity/route.ts`
 - Create: `tests/integration/api/admin-users-activity.test.ts` (or extend the disable test file)
 
@@ -1121,20 +1171,47 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     ]);
 
     const items = [
-      ...audit[0].map(r => ({
-        id: `audit:${r.id}`, source: 'audit', event: r.event, userId,
-        username: null, ip: r.ip, createdAt: r.created_at,
+      ...audit[0].map((r) => ({
+        id: `audit:${r.id}`,
+        source: 'audit',
+        event: r.event,
+        userId,
+        username: null,
+        ip: r.ip,
+        createdAt: r.created_at,
         metadata: typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata,
       })),
-      ...downloads[0].map(r => ({
-        id: `download:${r.id}`, source: 'download', event: 'download_logged', userId,
-        username: null, ip: null, createdAt: r.created_at,
-        metadata: { sourceType: r.source_type, sourceId: r.source_id, status: r.status, format: r.format, durationMs: r.duration_ms },
+      ...downloads[0].map((r) => ({
+        id: `download:${r.id}`,
+        source: 'download',
+        event: 'download_logged',
+        userId,
+        username: null,
+        ip: null,
+        createdAt: r.created_at,
+        metadata: {
+          sourceType: r.source_type,
+          sourceId: r.source_id,
+          status: r.status,
+          format: r.format,
+          durationMs: r.duration_ms,
+        },
       })),
-      ...aiCalls[0].map(r => ({
-        id: `ai_call:${r.id}`, source: 'ai_call', event: r.feature, userId,
-        username: null, ip: null, createdAt: r.created_at,
-        metadata: { model: r.model, status: r.status, durationMs: r.duration_ms, error: r.error, ...(typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata ?? {}) },
+      ...aiCalls[0].map((r) => ({
+        id: `ai_call:${r.id}`,
+        source: 'ai_call',
+        event: r.feature,
+        userId,
+        username: null,
+        ip: null,
+        createdAt: r.created_at,
+        metadata: {
+          model: r.model,
+          status: r.status,
+          durationMs: r.duration_ms,
+          error: r.error,
+          ...(typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata ?? {})),
+        },
       })),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -1164,6 +1241,7 @@ git commit -m "feat(admin): GET /api/admin/users/[id]/activity (audit + download
 ### Task 9: lib/admin-logs.ts (listUnifiedLogs) + tests + GET /api/admin/logs
 
 **Files:**
+
 - Create: `lib/admin-logs.ts`
 - Create: `tests/unit/lib/admin-logs.test.ts`
 - Create: `app/api/admin/logs/route.ts`
@@ -1188,10 +1266,10 @@ export interface UnifiedLogEntry {
 }
 
 export interface ListUnifiedLogsOptions {
-  type?: string;        // event type filter (matches audit_log.event OR 'download_logged' OR 'ai_call' etc.)
+  type?: string; // event type filter (matches audit_log.event OR 'download_logged' OR 'ai_call' etc.)
   userId?: number;
   ip?: string;
-  from?: string;        // ISO date
+  from?: string; // ISO date
   to?: string;
   page?: number;
   pageSize?: number;
@@ -1203,7 +1281,9 @@ export interface ListUnifiedLogsResult {
   pageSize: number;
 }
 
-export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promise<ListUnifiedLogsResult> {
+export async function listUnifiedLogs(
+  opts: ListUnifiedLogsOptions = {},
+): Promise<ListUnifiedLogsResult> {
   const page = Math.max(opts.page ?? 1, 1);
   const pageSize = Math.min(Math.max(opts.pageSize ?? 50, 1), 100);
   const offset = (page - 1) * pageSize;
@@ -1213,20 +1293,45 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
   // Build source-specific WHERE clauses
   const auditWhere: string[] = [];
   const auditParams: any[] = [];
-  if (opts.type) { auditWhere.push(`a.event = ?`); auditParams.push(opts.type); }
-  if (opts.userId) { auditWhere.push(`a.user_id = ?`); auditParams.push(opts.userId); }
-  if (opts.ip) { auditWhere.push(`a.ip = ?`); auditParams.push(opts.ip); }
-  if (opts.from) { auditWhere.push(`a.created_at >= ?`); auditParams.push(opts.from); }
-  if (opts.to) { auditWhere.push(`a.created_at <= ?`); auditParams.push(opts.to); }
+  if (opts.type) {
+    auditWhere.push(`a.event = ?`);
+    auditParams.push(opts.type);
+  }
+  if (opts.userId) {
+    auditWhere.push(`a.user_id = ?`);
+    auditParams.push(opts.userId);
+  }
+  if (opts.ip) {
+    auditWhere.push(`a.ip = ?`);
+    auditParams.push(opts.ip);
+  }
+  if (opts.from) {
+    auditWhere.push(`a.created_at >= ?`);
+    auditParams.push(opts.from);
+  }
+  if (opts.to) {
+    auditWhere.push(`a.created_at <= ?`);
+    auditParams.push(opts.to);
+  }
   const auditSql = auditWhere.length ? `WHERE ${auditWhere.join(' AND ')}` : '';
 
   const dlWhere: string[] = [];
   const dlParams: any[] = [];
-  const includeDownloads = !opts.type || opts.type === 'download_logged' || opts.type === 'download';
+  const includeDownloads =
+    !opts.type || opts.type === 'download_logged' || opts.type === 'download';
   if (includeDownloads) {
-    if (opts.userId) { dlWhere.push(`d.user_id = ?`); dlParams.push(opts.userId); }
-    if (opts.from) { dlWhere.push(`d.created_at >= ?`); dlParams.push(opts.from); }
-    if (opts.to) { dlWhere.push(`d.created_at <= ?`); dlParams.push(opts.to); }
+    if (opts.userId) {
+      dlWhere.push(`d.user_id = ?`);
+      dlParams.push(opts.userId);
+    }
+    if (opts.from) {
+      dlWhere.push(`d.created_at >= ?`);
+      dlParams.push(opts.from);
+    }
+    if (opts.to) {
+      dlWhere.push(`d.created_at <= ?`);
+      dlParams.push(opts.to);
+    }
   }
   const dlSql = includeDownloads && dlWhere.length ? `WHERE ${dlWhere.join(' AND ')}` : '';
 
@@ -1234,10 +1339,22 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
   const aiParams: any[] = [];
   const includeAi = !opts.type || opts.type.startsWith('ai_') || opts.type === 'ai_call';
   if (includeAi) {
-    if (opts.type && opts.type.startsWith('ai_')) { aiWhere.push(`a.status = ?`); aiParams.push(opts.type.replace('ai_', '')); }
-    if (opts.userId) { aiWhere.push(`a.user_id = ?`); aiParams.push(opts.userId); }
-    if (opts.from) { aiWhere.push(`a.created_at >= ?`); aiParams.push(opts.from); }
-    if (opts.to) { aiWhere.push(`a.created_at <= ?`); aiParams.push(opts.to); }
+    if (opts.type && opts.type.startsWith('ai_')) {
+      aiWhere.push(`a.status = ?`);
+      aiParams.push(opts.type.replace('ai_', ''));
+    }
+    if (opts.userId) {
+      aiWhere.push(`a.user_id = ?`);
+      aiParams.push(opts.userId);
+    }
+    if (opts.from) {
+      aiWhere.push(`a.created_at >= ?`);
+      aiParams.push(opts.from);
+    }
+    if (opts.to) {
+      aiWhere.push(`a.created_at <= ?`);
+      aiParams.push(opts.to);
+    }
   }
   const aiSql = includeAi && aiWhere.length ? `WHERE ${aiWhere.join(' AND ')}` : '';
 
@@ -1249,34 +1366,65 @@ export async function listUnifiedLogs(opts: ListUnifiedLogsOptions = {}): Promis
      ${auditSql} ORDER BY a.created_at DESC LIMIT 200`,
     auditParams,
   );
-  const [dlRows] = includeDownloads ? await pool.query<any[]>(
-    `SELECT d.id, d.user_id, u.username, d.source_type, d.source_id, d.status, d.format, d.duration_ms, d.created_at
+  const [dlRows] = includeDownloads
+    ? await pool.query<any[]>(
+        `SELECT d.id, d.user_id, u.username, d.source_type, d.source_id, d.status, d.format, d.duration_ms, d.created_at
      FROM downloads d LEFT JOIN users u ON u.id = d.user_id
      ${dlSql} ORDER BY d.created_at DESC LIMIT 200`,
-    dlParams,
-  ) : [[]];
-  const [aiRows] = includeAi ? await pool.query<any[]>(
-    `SELECT a.id, a.user_id, u.username, a.feature, a.model, a.status, a.duration_ms, a.error, a.metadata, a.created_at
+        dlParams,
+      )
+    : [[]];
+  const [aiRows] = includeAi
+    ? await pool.query<any[]>(
+        `SELECT a.id, a.user_id, u.username, a.feature, a.model, a.status, a.duration_ms, a.error, a.metadata, a.created_at
      FROM ai_calls a LEFT JOIN users u ON u.id = a.user_id
      ${aiSql} ORDER BY a.created_at DESC LIMIT 200`,
-    aiParams,
-  ) : [[]];
+        aiParams,
+      )
+    : [[]];
 
   const items: UnifiedLogEntry[] = [
     ...auditRows.map((r: any) => ({
-      id: `audit:${r.id}`, source: 'audit', event: r.event, userId: r.user_id,
-      username: r.username, ip: r.ip, createdAt: r.created_at,
+      id: `audit:${r.id}`,
+      source: 'audit',
+      event: r.event,
+      userId: r.user_id,
+      username: r.username,
+      ip: r.ip,
+      createdAt: r.created_at,
       metadata: typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata ?? {}),
     })),
     ...dlRows.map((r: any) => ({
-      id: `download:${r.id}`, source: 'download', event: 'download_logged', userId: r.user_id,
-      username: r.username, ip: null, createdAt: r.created_at,
-      metadata: { sourceType: r.source_type, sourceId: r.source_id, status: r.status, format: r.format, durationMs: r.duration_ms },
+      id: `download:${r.id}`,
+      source: 'download',
+      event: 'download_logged',
+      userId: r.user_id,
+      username: r.username,
+      ip: null,
+      createdAt: r.created_at,
+      metadata: {
+        sourceType: r.source_type,
+        sourceId: r.source_id,
+        status: r.status,
+        format: r.format,
+        durationMs: r.duration_ms,
+      },
     })),
     ...aiRows.map((r: any) => ({
-      id: `ai_call:${r.id}`, source: 'ai_call', event: r.feature, userId: r.user_id,
-      username: r.username, ip: null, createdAt: r.created_at,
-      metadata: { model: r.model, status: r.status, durationMs: r.duration_ms, error: r.error, ...(typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata ?? {})) },
+      id: `ai_call:${r.id}`,
+      source: 'ai_call',
+      event: r.feature,
+      userId: r.user_id,
+      username: r.username,
+      ip: null,
+      createdAt: r.created_at,
+      metadata: {
+        model: r.model,
+        status: r.status,
+        durationMs: r.duration_ms,
+        error: r.error,
+        ...(typeof r.metadata === 'string' ? JSON.parse(r.metadata) : (r.metadata ?? {})),
+      },
     })),
   ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
@@ -1336,6 +1484,7 @@ git commit -m "feat(admin): unified /api/admin/logs across audit + downloads + a
 ### Task 10: lib/admin-downloads.ts + GET /api/admin/downloads + /stats
 
 **Files:**
+
 - Create: `lib/admin-downloads.ts`
 - Create: `tests/unit/lib/admin-downloads.test.ts`
 - Create: `app/api/admin/downloads/route.ts`
@@ -1381,10 +1530,22 @@ export async function listDownloads(opts: ListDownloadsOptions = {}): Promise<Li
   const offset = (page - 1) * pageSize;
   const where: string[] = [];
   const params: any[] = [];
-  if (opts.userId) { where.push('d.user_id = ?'); params.push(opts.userId); }
-  if (opts.sourceType) { where.push('d.source_type = ?'); params.push(opts.sourceType); }
-  if (opts.from) { where.push('d.created_at >= ?'); params.push(opts.from); }
-  if (opts.to) { where.push('d.created_at <= ?'); params.push(opts.to); }
+  if (opts.userId) {
+    where.push('d.user_id = ?');
+    params.push(opts.userId);
+  }
+  if (opts.sourceType) {
+    where.push('d.source_type = ?');
+    params.push(opts.sourceType);
+  }
+  if (opts.from) {
+    where.push('d.created_at >= ?');
+    params.push(opts.from);
+  }
+  if (opts.to) {
+    where.push('d.created_at <= ?');
+    params.push(opts.to);
+  }
   const sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
@@ -1398,12 +1559,20 @@ export async function listDownloads(opts: ListDownloadsOptions = {}): Promise<Li
     params,
   );
   return {
-    items: rows.map(r => ({
-      id: Number(r.id), userId: Number(r.user_id), username: r.username,
-      format: r.format, sourceType: r.source_type, sourceId: r.source_id,
-      status: r.status, durationMs: r.duration_ms, createdAt: r.created_at,
+    items: rows.map((r) => ({
+      id: Number(r.id),
+      userId: Number(r.user_id),
+      username: r.username,
+      format: r.format,
+      sourceType: r.source_type,
+      sourceId: r.source_id,
+      status: r.status,
+      durationMs: r.duration_ms,
+      createdAt: r.created_at,
     })),
-    total: Number(countRows[0].n), page, pageSize,
+    total: Number(countRows[0].n),
+    page,
+    pageSize,
   };
 }
 
@@ -1435,8 +1604,18 @@ export async function getDownloadStats(days = 7): Promise<DownloadStats> {
   );
   return {
     total: Number(totalRows[0].n),
-    bySourceType: { worksheet: 0, poem: 0, sutra: 0, 'rare-char-card': 0, ...Object.fromEntries(bySrc.map((r: any) => [r.source_type, Number(r.n)])) } as any,
-    topUsers: topUsers.map((r: any) => ({ userId: Number(r.user_id), username: r.username, count: Number(r.n) })),
+    bySourceType: {
+      worksheet: 0,
+      poem: 0,
+      sutra: 0,
+      'rare-char-card': 0,
+      ...Object.fromEntries(bySrc.map((r: any) => [r.source_type, Number(r.n)])),
+    } as any,
+    topUsers: topUsers.map((r: any) => ({
+      userId: Number(r.user_id),
+      username: r.username,
+      count: Number(r.n),
+    })),
   };
 }
 ```
@@ -1448,6 +1627,7 @@ Test listDownloads filtering and getDownloadStats aggregation.
 - [ ] **Step 3: Create the two API routes**
 
 `app/api/admin/downloads/route.ts`:
+
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api-handler';
@@ -1461,7 +1641,7 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
     const result = await listDownloads({
       userId: sp.get('userId') ? parseInt(sp.get('userId')!, 10) : undefined,
-      sourceType: sp.get('sourceType') as any ?? undefined,
+      sourceType: (sp.get('sourceType') as any) ?? undefined,
       from: sp.get('from') ?? undefined,
       to: sp.get('to') ?? undefined,
       page: sp.get('page') ? parseInt(sp.get('page')!, 10) : undefined,
@@ -1473,6 +1653,7 @@ export async function GET(req: NextRequest) {
 ```
 
 `app/api/admin/downloads/stats/route.ts`:
+
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api-handler';
@@ -1511,6 +1692,7 @@ git commit -m "feat(admin): /api/admin/downloads list + stats"
 ### Task 11: lib/admin-ai.ts + GET /api/admin/ai/calls + /stats
 
 **Files:**
+
 - Create: `lib/admin-ai.ts`
 - Create: `tests/unit/lib/admin-ai.test.ts`
 - Create: `app/api/admin/ai/calls/route.ts`
@@ -1560,11 +1742,26 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
   const offset = (page - 1) * pageSize;
   const where: string[] = [];
   const params: any[] = [];
-  if (opts.feature) { where.push('a.feature = ?'); params.push(opts.feature); }
-  if (opts.status) { where.push('a.status = ?'); params.push(opts.status); }
-  if (opts.userId) { where.push('a.user_id = ?'); params.push(opts.userId); }
-  if (opts.from) { where.push('a.created_at >= ?'); params.push(opts.from); }
-  if (opts.to) { where.push('a.created_at <= ?'); params.push(opts.to); }
+  if (opts.feature) {
+    where.push('a.feature = ?');
+    params.push(opts.feature);
+  }
+  if (opts.status) {
+    where.push('a.status = ?');
+    params.push(opts.status);
+  }
+  if (opts.userId) {
+    where.push('a.user_id = ?');
+    params.push(opts.userId);
+  }
+  if (opts.from) {
+    where.push('a.created_at >= ?');
+    params.push(opts.from);
+  }
+  if (opts.to) {
+    where.push('a.created_at <= ?');
+    params.push(opts.to);
+  }
   const sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
@@ -1575,25 +1772,34 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
     [...params, pageSize, offset],
   );
   const [countRows] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM ai_calls a ${sql}`, params,
+    `SELECT COUNT(*) AS n FROM ai_calls a ${sql}`,
+    params,
   );
   return {
-    items: rows.map(r => ({
-      id: Number(r.id), userId: r.user_id, username: r.username,
-      feature: r.feature, model: r.model, status: r.status,
-      promptTokens: r.prompt_tokens, completionTokens: r.completion_tokens,
-      durationMs: r.duration_ms, error: r.error,
+    items: rows.map((r) => ({
+      id: Number(r.id),
+      userId: r.user_id,
+      username: r.username,
+      feature: r.feature,
+      model: r.model,
+      status: r.status,
+      promptTokens: r.prompt_tokens,
+      completionTokens: r.completion_tokens,
+      durationMs: r.duration_ms,
+      error: r.error,
       metadata: typeof r.metadata === 'string' ? JSON.parse(r.metadata) : r.metadata,
       createdAt: r.created_at,
     })),
-    total: Number(countRows[0].n), page, pageSize,
+    total: Number(countRows[0].n),
+    page,
+    pageSize,
   };
 }
 
 export interface AiStats {
   total: number;
   byDay: { date: string; count: number }[];
-  errorRate: number;          // 0..1
+  errorRate: number; // 0..1
   p50Duration: number | null; // ms
   p95Duration: number | null; // ms
   topUsers: { userId: number; username: string; count: number }[];
@@ -1643,7 +1849,11 @@ export async function getAiStats(days = 7): Promise<AiStats> {
     errorRate: total > 0 ? Number(errRate[0].errs) / total : 0,
     p50Duration: p(0.5),
     p95Duration: p(0.95),
-    topUsers: topUsers.map((r: any) => ({ userId: Number(r.user_id), username: r.username, count: Number(r.n) })),
+    topUsers: topUsers.map((r: any) => ({
+      userId: Number(r.user_id),
+      username: r.username,
+      count: Number(r.n),
+    })),
   };
 }
 ```
@@ -1677,6 +1887,7 @@ git commit -m "feat(admin): /api/admin/ai/calls + /stats"
 ### Task 12: GET / PUT /api/admin/ai/config + integration test
 
 **Files:**
+
 - Create: `app/api/admin/ai/config/route.ts`
 - Create: `tests/integration/api/admin-ai-config.test.ts` (4 tests)
 
@@ -1689,8 +1900,13 @@ import { requireAdmin } from '@/lib/auth';
 import { getAllConfig, setConfigBatch } from '@/lib/config';
 import { writeAudit } from '@/lib/audit';
 
-const CONFIG_KEYS = ['ai.model', 'ai.rate_limit_per_user_per_day', 'ai.timeout_ms', 'ai.temperature'] as const;
-type AiConfigKey = typeof CONFIG_KEYS[number];
+const CONFIG_KEYS = [
+  'ai.model',
+  'ai.rate_limit_per_user_per_day',
+  'ai.timeout_ms',
+  'ai.temperature',
+] as const;
+type AiConfigKey = (typeof CONFIG_KEYS)[number];
 
 export async function GET(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -1745,6 +1961,7 @@ git commit -m "feat(admin): GET/PUT /api/admin/ai/config with validation + audit
 ### Task 13: 4 print POST endpoints + integration tests
 
 **Files:**
+
 - Create: `app/api/worksheets/[id]/print/route.ts`
 - Create: `app/api/poetry/[id]/print/route.ts`
 - Create: `app/api/sutra/[slug]/print/route.ts`
@@ -1756,6 +1973,7 @@ git commit -m "feat(admin): GET/PUT /api/admin/ai/config with validation + audit
 All 4 routes follow the same pattern. Below is the worksheets version; the other 3 are nearly identical with the sourceType and sourceId changed. Each requires auth via `requireUser` (NOT `requireAdmin` — this is a user-facing action).
 
 `app/api/worksheets/[id]/print/route.ts`:
+
 ```ts
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, badRequest, notFound, forbidden } from '@/lib/api-handler';
@@ -1771,28 +1989,41 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params;
     const wid = parseInt(id, 10);
     if (!Number.isInteger(wid) || wid <= 0) return badRequest('bad_id', 'invalid id');
-    const [rows] = await getPool().query<any[]>(`SELECT id FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`, [wid, auth.user.id]);
+    const [rows] = await getPool().query<any[]>(
+      `SELECT id FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`,
+      [wid, auth.user.id],
+    );
     if (rows.length === 0) return notFound('not_found', 'worksheet not found');
     await logDownload({
-      userId: auth.user.id, format: 'print', sourceType: 'worksheet', sourceId: String(wid),
+      userId: auth.user.id,
+      format: 'print',
+      sourceType: 'worksheet',
+      sourceId: String(wid),
       ip: req.headers.get('x-forwarded-for') ?? null,
     });
-    await writeAudit({ userId: auth.user.id, event: 'worksheet_saved', metadata: { action: 'print', worksheetId: wid } });
+    await writeAudit({
+      userId: auth.user.id,
+      event: 'worksheet_saved',
+      metadata: { action: 'print', worksheetId: wid },
+    });
     return NextResponse.json({ ok: true, data: { id: wid } });
   });
 }
 ```
 
 For the other 3:
+
 - `app/api/poetry/[id]/print/route.ts`: same shape, `sourceType: 'poem'`, `sourceId: String(pid)`. No DB existence check (poems are public).
 - `app/api/sutra/[slug]/print/route.ts`: same shape, `sourceType: 'sutra'`, `sourceId` is the body's `chunkId` (read JSON body to get `{ sourceId: 'slug#chunkId' }`).
 - `app/api/rare-chars/[char]/print/route.ts`: same shape, `sourceType: 'rare-char-card'`, `sourceId: char`.
 
 For the sutra route, the body parsing:
+
 ```ts
 const body = await req.json().catch(() => ({}));
 const sourceId = (body.sourceId as string) ?? ''; // expected: '{slug}#{chunkId}'
-if (!sourceId.startsWith(`${slug}#`)) return badRequest('bad_sourceId', 'sourceId must start with slug#');
+if (!sourceId.startsWith(`${slug}#`))
+  return badRequest('bad_sourceId', 'sourceId must start with slug#');
 ```
 
 - [ ] **Step 2: Integration test (3 tests)**
@@ -1816,6 +2047,7 @@ git commit -m "feat(print): 4 print POST endpoints logging to downloads table"
 ### Task 14: Extend client API wrappers (lib/api-*.ts) for new routes
 
 **Files:**
+
 - Modify: `lib/api-admin.ts` — add wrappers for the 9 new admin routes
 - Modify: `lib/api-worksheet.ts` — add `printWorksheetRequest`
 - Modify: `lib/api-poetry.ts` — add `printPoemRequest`
@@ -1829,25 +2061,43 @@ Open `lib/api-admin.ts` and find the existing `promoteUserRequest` function. Mir
 - [ ] **Step 2: Add the new admin wrappers to lib/api-admin.ts**
 
 Append:
+
 ```ts
 export const disableUserRequest = (id: number) => postJson(`/api/admin/users/${id}/disable`, {});
-export const enableUserRequest  = (id: number) => postJson(`/api/admin/users/${id}/enable`,  {});
+export const enableUserRequest = (id: number) => postJson(`/api/admin/users/${id}/enable`, {});
 export const getUserActivityRequest = (id: number, after?: string) => {
   const qs = after ? `?after=${encodeURIComponent(after)}` : '';
   return getJson(`/api/admin/users/${id}/activity${qs}`);
 };
 export const listAdminLogsRequest = (params: {
-  type?: string; userId?: number; ip?: string; from?: string; to?: string;
-  page?: number; pageSize?: number;
+  type?: string;
+  userId?: number;
+  ip?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
 }) => getJson(`/api/admin/logs${buildQuery(params)}`);
 
 export const listAdminDownloadsRequest = (params: {
-  userId?: number; sourceType?: string; from?: string; to?: string; page?: number; pageSize?: number;
+  userId?: number;
+  sourceType?: string;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
 }) => getJson(`/api/admin/downloads${buildQuery(params)}`);
-export const getDownloadStatsRequest = (days = 7) => getJson(`/api/admin/downloads/stats?days=${days}`);
+export const getDownloadStatsRequest = (days = 7) =>
+  getJson(`/api/admin/downloads/stats?days=${days}`);
 
 export const listAiCallsRequest = (params: {
-  feature?: string; status?: string; userId?: number; from?: string; to?: string; page?: number; pageSize?: number;
+  feature?: string;
+  status?: string;
+  userId?: number;
+  from?: string;
+  to?: string;
+  page?: number;
+  pageSize?: number;
 }) => getJson(`/api/admin/ai/calls${buildQuery(params)}`);
 export const getAiStatsRequest = (days = 7) => getJson(`/api/admin/ai/stats?days=${days}`);
 export const getAiConfigRequest = () => getJson('/api/admin/ai/config');
@@ -1882,12 +2132,14 @@ git commit -m "feat(api): client wrappers for new admin + print endpoints"
 ### Task 15: AdminSidebar component + tests
 
 **Files:**
+
 - Create: `components/admin/AdminSidebar.tsx`
 - Create: `tests/unit/components/admin/AdminSidebar.test.tsx`
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/components/admin/AdminSidebar.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
@@ -1921,6 +2173,7 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement AdminSidebar**
 
 Create `components/admin/AdminSidebar.tsx`:
+
 ```tsx
 'use client';
 import Link from 'next/link';
@@ -1936,7 +2189,7 @@ const ITEMS = [
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
   return (
     <nav className="flex md:flex-col gap-1 md:w-40 border-b md:border-b-0 md:border-r border-paper-warm md:min-h-[calc(100vh-4rem)] p-2">
-      {ITEMS.map(item => {
+      {ITEMS.map((item) => {
         const isActive = item.exact ? currentPath === item.href : currentPath.startsWith(item.href);
         return (
           <Link
@@ -1973,6 +2226,7 @@ git commit -m "feat(admin): AdminSidebar with 5 areas + active highlight"
 ### Task 16: StatCard component + tests + wire AdminSidebar into app/admin/layout.tsx
 
 **Files:**
+
 - Create: `components/admin/StatCard.tsx`
 - Create: `tests/unit/components/admin/StatCard.test.tsx`
 - Modify: `app/admin/layout.tsx`
@@ -1980,6 +2234,7 @@ git commit -m "feat(admin): AdminSidebar with 5 areas + active highlight"
 - [ ] **Step 1: Write StatCard test**
 
 `tests/unit/components/admin/StatCard.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
@@ -2000,12 +2255,21 @@ describe('StatCard', () => {
 - [ ] **Step 2: Implement StatCard**
 
 `components/admin/StatCard.tsx`:
+
 ```tsx
 import Link from 'next/link';
 import type { LucideIcon } from 'lucide-react';
 
-export function StatCard({ label, value, icon: Icon, href }: {
-  label: string; value: string | number; icon: LucideIcon; href?: string;
+export function StatCard({
+  label,
+  value,
+  icon: Icon,
+  href,
+}: {
+  label: string;
+  value: string | number;
+  icon: LucideIcon;
+  href?: string;
 }) {
   const content = (
     <div className="rounded-lg border border-paper-warm bg-paper p-4 flex items-center gap-3 hover:bg-paper-warm transition-colors">
@@ -2027,6 +2291,7 @@ Open `app/admin/layout.tsx`. The existing layout already enforces `requireAdmin`
 The current path can be read via `headers()` (using `next/headers`'s `headers()` — get `x-invoke-path` or use `usePathname` in a client wrapper). Cleanest approach: extract a small client component `AdminShell` that uses `usePathname` and renders `AdminSidebar` + `children` slot.
 
 Create `components/admin/AdminShell.tsx`:
+
 ```tsx
 'use client';
 import { usePathname } from 'next/navigation';
@@ -2065,6 +2330,7 @@ git commit -m "feat(admin): AdminShell + StatCard, wire sidebar into /admin layo
 ### Task 17: UserMenu — add 后台管理 entry + tests
 
 **Files:**
+
 - Modify: `components/UserMenu.tsx`
 - Create: `tests/unit/components/UserMenu.test.tsx` (or extend existing test if present)
 
@@ -2075,16 +2341,16 @@ Locate `components/UserMenu.tsx` and find where the user dropdown items are rend
 - [ ] **Step 2: Add the admin entry**
 
 Inside the user menu dropdown (where 个人中心 / 退出 are rendered), add:
+
 ```tsx
-{user.isAdmin && (
-  <Link
-    href="/admin"
-    className="block px-4 py-2 text-sm text-ink hover:bg-paper-warm"
-  >
-    <Shield className="inline h-4 w-4 mr-2" />
-    后台管理
-  </Link>
-)}
+{
+  user.isAdmin && (
+    <Link href="/admin" className="block px-4 py-2 text-sm text-ink hover:bg-paper-warm">
+      <Shield className="inline h-4 w-4 mr-2" />
+      后台管理
+    </Link>
+  );
+}
 ```
 
 Add `import { Shield } from 'lucide-react';` at the top.
@@ -2112,6 +2378,7 @@ git commit -m "feat(header): UserMenu shows '后台管理' entry for admins"
 ### Task 18: SourceBadge + JsonPanel components + tests, enrich /admin dashboard with 4 stat cards
 
 **Files:**
+
 - Create: `components/admin/SourceBadge.tsx`
 - Create: `tests/unit/components/admin/SourceBadge.test.tsx`
 - Create: `components/admin/JsonPanel.tsx`
@@ -2121,6 +2388,7 @@ git commit -m "feat(header): UserMenu shows '后台管理' entry for admins"
 - [ ] **Step 1: Write SourceBadge test**
 
 `tests/unit/components/admin/SourceBadge.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
@@ -2139,6 +2407,7 @@ describe('SourceBadge', () => {
 - [ ] **Step 2: Implement SourceBadge**
 
 `components/admin/SourceBadge.tsx`:
+
 ```tsx
 const COLORS: Record<string, string> = {
   audit: 'bg-ink/10 text-ink',
@@ -2146,13 +2415,16 @@ const COLORS: Record<string, string> = {
   ai_call: 'bg-seal/10 text-seal',
 };
 export function SourceBadge({ source }: { source: 'audit' | 'download' | 'ai_call' }) {
-  return <span className={`inline-block px-2 py-0.5 rounded text-xs ${COLORS[source]}`}>{source}</span>;
+  return (
+    <span className={`inline-block px-2 py-0.5 rounded text-xs ${COLORS[source]}`}>{source}</span>
+  );
 }
 ```
 
 - [ ] **Step 3: Implement JsonPanel**
 
 `components/admin/JsonPanel.tsx` (client component with collapse toggle):
+
 ```tsx
 'use client';
 import { useState } from 'react';
@@ -2160,10 +2432,14 @@ export function JsonPanel({ data }: { data: unknown }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="text-xs">
-      <button className="text-seal hover:underline" onClick={() => setOpen(o => !o)}>
+      <button className="text-seal hover:underline" onClick={() => setOpen((o) => !o)}>
         {open ? '收起' : '查看'} JSON
       </button>
-      {open && <pre className="mt-2 p-2 bg-paper-warm rounded overflow-auto">{JSON.stringify(data, null, 2)}</pre>}
+      {open && (
+        <pre className="mt-2 p-2 bg-paper-warm rounded overflow-auto">
+          {JSON.stringify(data, null, 2)}
+        </pre>
+      )}
     </div>
   );
 }
@@ -2174,10 +2450,16 @@ export function JsonPanel({ data }: { data: unknown }) {
 Look at the existing `app/api/admin/stats/route.ts` (from Plan B+). If it already returns `totalUsers`, `totalHistory`, etc., add 4 new fields: `downloads7d` (call `getDownloadStats(7)`), `aiCalls7d`, `aiErrorRate7d` (call `getAiStats(7)`), `disabledUsersCount` (a new tiny query: `SELECT COUNT(*) FROM users WHERE disabled_at IS NOT NULL`).
 
 If the route doesn't exist or has a different shape, create the simple `GET /api/admin/stats` route that returns:
+
 ```ts
 {
-  totalUsers, totalHistory, totalFavorites,
-  downloads7d, aiCalls7d, aiErrorRate7d, disabledUsersCount
+  (totalUsers,
+    totalHistory,
+    totalFavorites,
+    downloads7d,
+    aiCalls7d,
+    aiErrorRate7d,
+    disabledUsersCount);
 }
 ```
 
@@ -2207,6 +2489,7 @@ git commit -m "feat(admin): SourceBadge + JsonPanel; /admin dashboard with 4 sta
 ### Task 19: LogRow component + tests; enrich /admin/users (filter chips + action buttons)
 
 **Files:**
+
 - Create: `components/admin/LogRow.tsx`
 - Create: `tests/unit/components/admin/LogRow.test.tsx`
 - Modify: `app/admin/users/page.tsx`
@@ -2214,6 +2497,7 @@ git commit -m "feat(admin): SourceBadge + JsonPanel; /admin dashboard with 4 sta
 - [ ] **Step 1: Write LogRow test (2 tests)**
 
 `tests/unit/components/admin/LogRow.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
@@ -2223,8 +2507,14 @@ import { LogRow } from '@/components/admin/LogRow';
 import type { UnifiedLogEntry } from '@/lib/admin-logs';
 
 const baseEntry: UnifiedLogEntry = {
-  id: 'audit:1', source: 'audit', event: 'login', userId: 7, username: 'alice',
-  ip: '127.0.0.1', createdAt: '2026-06-12T10:00:00Z', metadata: {},
+  id: 'audit:1',
+  source: 'audit',
+  event: 'login',
+  userId: 7,
+  username: 'alice',
+  ip: '127.0.0.1',
+  createdAt: '2026-06-12T10:00:00Z',
+  metadata: {},
 };
 
 describe('LogRow', () => {
@@ -2244,24 +2534,43 @@ describe('LogRow', () => {
 - [ ] **Step 2: Implement LogRow**
 
 `components/admin/LogRow.tsx`:
+
 ```tsx
 import Link from 'next/link';
 import { SourceBadge } from './SourceBadge';
 import type { UnifiedLogEntry } from '@/lib/admin-logs';
 
-export function LogRow({ entry, onClick }: {
+export function LogRow({
+  entry,
+  onClick,
+}: {
   entry: UnifiedLogEntry;
   onClick?: (entry: UnifiedLogEntry) => void;
 }) {
   return (
-    <tr className="border-b border-paper-warm hover:bg-paper-warm/50 cursor-pointer" onClick={() => onClick?.(entry)}>
-      <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">{new Date(entry.createdAt).toLocaleString('zh-CN')}</td>
-      <td className="px-3 py-2"><SourceBadge source={entry.source} /></td>
+    <tr
+      className="border-b border-paper-warm hover:bg-paper-warm/50 cursor-pointer"
+      onClick={() => onClick?.(entry)}
+    >
+      <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">
+        {new Date(entry.createdAt).toLocaleString('zh-CN')}
+      </td>
+      <td className="px-3 py-2">
+        <SourceBadge source={entry.source} />
+      </td>
       <td className="px-3 py-2 text-sm">{entry.event}</td>
       <td className="px-3 py-2 text-sm">
-        {entry.username ? <Link href={`/admin/users/${entry.userId}`} className="text-seal hover:underline">{entry.username}</Link> : '—'}
+        {entry.username ? (
+          <Link href={`/admin/users/${entry.userId}`} className="text-seal hover:underline">
+            {entry.username}
+          </Link>
+        ) : (
+          '—'
+        )}
       </td>
-      <td className="px-3 py-2 text-xs text-ink-soft max-w-xs truncate">{JSON.stringify(entry.metadata)}</td>
+      <td className="px-3 py-2 text-xs text-ink-soft max-w-xs truncate">
+        {JSON.stringify(entry.metadata)}
+      </td>
     </tr>
   );
 }
@@ -2295,6 +2604,7 @@ git commit -m "feat(admin): LogRow + /admin/users filter chips + disable/enable 
 ### Task 20: Enrich /admin/users/[id] with activity tab + disable UI
 
 **Files:**
+
 - Modify: `app/admin/users/[id]/page.tsx`
 
 (No new test — this is mostly composing existing pieces.)
@@ -2328,11 +2638,13 @@ git commit -m "feat(admin): /admin/users/[id] activity tab + disable UI"
 ### Task 21: Build /admin/logs page
 
 **Files:**
+
 - Create: `app/admin/logs/page.tsx`
 
 - [ ] **Step 1: Create the page**
 
 This page is a client component (lots of filter state). It needs:
+
 - A filter bar (use lucide icons next to inputs): event type dropdown (with the 13 known event types from the spec), user ID input, IP input, date range (default = last 7 days), free-text search.
 - A results table using `<LogRow>`.
 - Pagination controls at the bottom.
@@ -2345,6 +2657,7 @@ For simplicity, do it all as a client component that uses `'use client'` and rea
 - [ ] **Step 2: Manual visual check**
 
 After the page is built: `cd "E:\ToolDevelop\PinYinCharacter" && pnpm dev` and visit http://localhost:4444/admin/logs. Verify:
+
 - The 4 default filters render
 - The table shows rows after a few seconds
 - Row click opens a side panel with JSON
@@ -2363,11 +2676,13 @@ git commit -m "feat(admin): /admin/logs unified log viewer page"
 ### Task 22: Build /admin/downloads page
 
 **Files:**
+
 - Create: `app/admin/downloads/page.tsx`
 
 - [ ] **Step 1: Create the page**
 
 Same pattern as /admin/logs but simpler:
+
 - 4 stat cards at top (total today, total 7d, top user 7d, top source 7d) — use `<StatCard>` with the data from `getDownloadStatsRequest(7)` and `listAdminDownloadsRequest({ pageSize: 0 })` for the "today" count.
 - Filter bar: source type dropdown, user search, date range.
 - Table: timestamp, user (link), source type badge (use `<SourceBadge>` for the sourceType), format badge, status badge, duration, source_id. Row click navigates to the source page (e.g. `/worksheet/{id}`, `/poetry/{id}`, `/sutra/{slug}`, `/rare-chars/{char}`).
@@ -2388,11 +2703,13 @@ git commit -m "feat(admin): /admin/downloads page with stats + filters + table"
 ### Task 23: Build /admin/ai page (calls tab + config tab)
 
 **Files:**
+
 - Create: `app/admin/ai/page.tsx`
 
 - [ ] **Step 1: Create the page**
 
 Two-tab layout:
+
 - **调用记录** (default): 3 stat cards (calls 7d, error rate 7d, p95 duration 7d), filter bar (feature, status, user, date), table (timestamp, user, feature, model, status badge, duration, short error).
 - **配置**: form with the 4 AI config fields (model, rate_limit_per_user_per_day, timeout_ms, temperature). Save button shows a confirm modal listing what's changing. On save → `updateAiConfigRequest(...)`.
 
@@ -2416,12 +2733,14 @@ git commit -m "feat(admin): /admin/ai page with calls + config tabs"
 ### Task 24: PrintButton component + tests
 
 **Files:**
+
 - Create: `components/common/PrintButton.tsx`
 - Create: `tests/unit/components/common/PrintButton.test.tsx`
 
 - [ ] **Step 1: Write the failing test**
 
 `tests/unit/components/common/PrintButton.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
@@ -2431,14 +2750,18 @@ import { PrintButton } from '@/components/common/PrintButton';
 
 describe('PrintButton', () => {
   beforeEach(() => {
-    (global as any).fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true, data: { id: 1 } }) });
+    (global as any).fetch = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ ok: true, data: { id: 1 } }) });
     (global as any).window.print = vi.fn();
   });
 
   it('calls the endpoint and window.print on click', async () => {
     render(<PrintButton endpoint="/api/poetry/1/print" label="打印" />);
     fireEvent.click(screen.getByText('打印'));
-    await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/poetry/1/print', { method: 'POST' }));
+    await waitFor(() =>
+      expect(fetch).toHaveBeenCalledWith('/api/poetry/1/print', { method: 'POST' }),
+    );
     await waitFor(() => expect(window.print).toHaveBeenCalled());
   });
 });
@@ -2452,13 +2775,20 @@ Expected: FAIL — module not found.
 - [ ] **Step 3: Implement PrintButton**
 
 `components/common/PrintButton.tsx`:
+
 ```tsx
 'use client';
 import { useState } from 'react';
 import { Printer } from 'lucide-react';
 
-export function PrintButton({ endpoint, label = '打印', sourceId }: {
-  endpoint: string; label?: string; sourceId?: string;
+export function PrintButton({
+  endpoint,
+  label = '打印',
+  sourceId,
+}: {
+  endpoint: string;
+  label?: string;
+  sourceId?: string;
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -2514,6 +2844,7 @@ git commit -m "feat(common): PrintButton with fail-soft error + window.print cal
 ### Task 25: Wire 4 print entry points into existing pages
 
 **Files:**
+
 - Modify: `app/worksheet/[id]/page.tsx`
 - Modify: `app/worksheet/page.tsx`
 - Modify: `app/poetry/[id]/page.tsx`
@@ -2551,6 +2882,7 @@ git commit -m "feat(print): wire PrintButton into 5 detail pages"
 ### Task 26: Wrap ai-rare-chars with withAiLogging
 
 **Files:**
+
 - Modify: `lib/ai-rare-chars.ts`
 
 - [ ] **Step 1: Read lib/ai-rare-chars.ts**
@@ -2602,6 +2934,7 @@ git commit -m "feat(ai): wrap generateStory with withAiLogging + read model from
 ### Task 27: README + .env.example updates
 
 **Files:**
+
 - Modify: `README.md` — add a section documenting new admin pages and 4 print endpoints
 - Modify: `.env.example` — no new env vars needed (AI config is in DB now), but add a comment about app_config
 
@@ -2619,6 +2952,7 @@ In addition to the Plan B+ admin (users, audit, stats), the platform now include
 - **/admin/ai** — AI call log + editable config (model, rate limit, timeout, temperature)
 
 Admin-only API routes (require `is_admin=1`):
+
 - `POST /api/admin/users/[id]/disable` — soft-disable a user
 - `POST /api/admin/users/[id]/enable` — re-enable
 - `GET  /api/admin/users/[id]/activity` — last 100 events for a user
@@ -2631,6 +2965,7 @@ Admin-only API routes (require `is_admin=1`):
 - `PUT  /api/admin/ai/config` — update AI config (validates each value)
 
 User-facing print logging endpoints:
+
 - `POST /api/worksheets/[id]/print`
 - `POST /api/poetry/[id]/print`
 - `POST /api/sutra/[slug]/print` — body: `{ sourceId: "{slug}#{chunkId}" }`
@@ -2640,6 +2975,7 @@ User-facing print logging endpoints:
 - [ ] **Step 2: Add note to .env.example**
 
 Open `.env.example`. If there's a section about AI / LLM config, add a comment:
+
 ```
 # Plan H moved AI config (model, rate limit, timeout, temperature) into the
 # `app_config` table, editable at /admin/ai (Config tab). No env vars needed
@@ -2659,6 +2995,7 @@ git commit -m "docs: README + .env.example updated for Plan H admin expansion"
 ### Task 28: Final code review + human manual smoke
 
 **Files:**
+
 - (no code changes — review only)
 
 - [ ] **Step 1: Run full test suite + typecheck + build**
@@ -2669,6 +3006,7 @@ Expected: all tests pass, no TS errors, build succeeds.
 - [ ] **Step 2: Final cross-cutting code review (yourself or dispatch a subagent)**
 
 Verify:
+
 - All 4 new admin pages render and link to each other
 - All 9 new admin API routes enforce `requireAdmin`
 - All 4 print endpoints enforce `requireUser` (not admin)
@@ -2681,6 +3019,7 @@ Verify:
 - [ ] **Step 3: Commit any cleanup**
 
 If the review surfaces issues (unused imports, dead code, comment fixes), commit them in one cleanup commit:
+
 ```bash
 git add -A
 git commit -m "chore(plan-h): code review cleanups"

@@ -17,7 +17,10 @@ const createSchema = z.object({
 export async function GET() {
   const user = await getCurrentUserWithAdmin();
   if (!user?.isAdmin) {
-    return NextResponse.json({ ok: false, error: { code: 'forbidden', message: 'admin only' } }, { status: 403 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'forbidden', message: 'admin only' } },
+      { status: 403 },
+    );
   }
   const rows = await listCampaigns();
   return NextResponse.json({ ok: true, data: rows });
@@ -26,15 +29,29 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUserWithAdmin();
   if (!user?.isAdmin) {
-    return NextResponse.json({ ok: false, error: { code: 'forbidden', message: 'admin only' } }, { status: 403 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'forbidden', message: 'admin only' } },
+      { status: 403 },
+    );
   }
   let body: unknown;
-  try { body = await req.json(); } catch { return NextResponse.json({ ok: false, error: { code: 'bad_json' } }, { status: 400 }); }
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ ok: false, error: { code: 'bad_json' } }, { status: 400 });
+  }
   const parsed = createSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ ok: false, error: { code: 'bad_input', message: parsed.error.issues[0]?.message } }, { status: 400 });
+    return NextResponse.json(
+      { ok: false, error: { code: 'bad_input', message: parsed.error.issues[0]?.message } },
+      { status: 400 },
+    );
   }
   const id = await createCampaign({ ...parsed.data, createdBy: user.id });
-  await writeAudit({ userId: user.id, event: 'campaign_created', metadata: { campaign_id: id, audience: parsed.data.audience, subject: parsed.data.subject } });
+  await writeAudit({
+    userId: user.id,
+    event: 'campaign_created',
+    metadata: { campaign_id: id, audience: parsed.data.audience, subject: parsed.data.subject },
+  });
   return NextResponse.json({ ok: true, data: { id } });
 }

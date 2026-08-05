@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
     const isDefaultRaw = form.get('isDefault');
 
     if (!(file instanceof File)) return badRequest('validation', 'missing file');
-    if (typeof title !== 'string' || !title.trim()) return badRequest('validation', 'title required');
+    if (typeof title !== 'string' || !title.trim())
+      return badRequest('validation', 'title required');
     if (file.size > MAX_FILE_BYTES) {
       return badRequest('too_large', `file exceeds ${MAX_FILE_BYTES} bytes`);
     }
@@ -62,7 +63,10 @@ export async function POST(req: NextRequest) {
       await getPool().execute(`DELETE FROM audio_tracks WHERE id = ?`, [placeholderId]);
       throw e;
     }
-    await getPool().execute(`UPDATE audio_tracks SET filename = ? WHERE id = ?`, [filename, placeholderId]);
+    await getPool().execute(`UPDATE audio_tracks SET filename = ? WHERE id = ?`, [
+      filename,
+      placeholderId,
+    ]);
 
     await writeAudit({
       userId: auth.user.id,

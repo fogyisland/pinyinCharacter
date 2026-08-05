@@ -38,16 +38,25 @@ function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-export function EtymologyMorph({ char, eraGlyphs, story, level, eraFonts = DEFAULT_ERA_FONTS }: Props) {
+export function EtymologyMorph({
+  char,
+  eraGlyphs,
+  story,
+  level,
+  eraFonts = DEFAULT_ERA_FONTS,
+}: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(() => !prefersReducedMotion());
 
   // Filter to eras that have glyph data (skip missing per spec).
   const eras = eraGlyphs.filter((g) => g.hasGlyph);
 
-  const goTo = useCallback((i: number) => {
-    setCurrentIndex(((i % eras.length) + eras.length) % eras.length);
-  }, [eras.length]);
+  const goTo = useCallback(
+    (i: number) => {
+      setCurrentIndex(((i % eras.length) + eras.length) % eras.length);
+    },
+    [eras.length],
+  );
 
   const goNext = useCallback(() => {
     setCurrentIndex((i) => (i + 1) % Math.max(1, eras.length));
@@ -65,32 +74,31 @@ export function EtymologyMorph({ char, eraGlyphs, story, level, eraFonts = DEFAU
   }, [isPlaying, eras.length, goNext]);
 
   // Keyboard
-  const onKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'ArrowRight') {
-      e.preventDefault();
-      goNext();
-    } else if (e.key === 'ArrowLeft') {
-      e.preventDefault();
-      goPrev();
-    } else if (e.key === ' ') {
-      e.preventDefault();
-      setIsPlaying((p) => !p);
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      goTo(0);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      goTo(eras.length - 1);
-    }
-  }, [goNext, goPrev, goTo, eras.length]);
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goNext();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        setIsPlaying((p) => !p);
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        goTo(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        goTo(eras.length - 1);
+      }
+    },
+    [goNext, goPrev, goTo, eras.length],
+  );
 
   // Empty state
   if (eras.length === 0) {
-    return (
-      <div className="text-center py-12 text-ink-faint">
-        暂无字源数据
-      </div>
-    );
+    return <div className="text-center py-12 text-ink-faint">暂无字源数据</div>;
   }
 
   const currentEra = eras[currentIndex];
@@ -106,13 +114,13 @@ export function EtymologyMorph({ char, eraGlyphs, story, level, eraFonts = DEFAU
       {/* Header row: char + level badge + coverage hint */}
       <div className="flex items-baseline gap-3 mb-4 flex-wrap">
         <h2 className="text-3xl font-kai text-ink">{char}</h2>
-        <span className="text-xs px-2 py-0.5 rounded bg-paper-warm
-                         border border-ink-faint/30 text-ink-soft">
+        <span
+          className="text-xs px-2 py-0.5 rounded bg-paper-warm
+                         border border-ink-faint/30 text-ink-soft"
+        >
           {LEVEL_LABEL[level]}
         </span>
-        <span className="text-xs text-ink-faint">
-          {coverageHint(eras.length, level)}
-        </span>
+        <span className="text-xs text-ink-faint">{coverageHint(eras.length, level)}</span>
       </div>
 
       {/* Big glyph stage — all eras stacked absolutely */}
@@ -191,9 +199,7 @@ export function EtymologyMorph({ char, eraGlyphs, story, level, eraFonts = DEFAU
           <span className="text-ink-faint text-sm">演变 ·</span> {story}
         </div>
       ) : (
-        <div className="text-sm text-ink-faint text-center py-6">
-          字源故事即将生成
-        </div>
+        <div className="text-sm text-ink-faint text-center py-6">字源故事即将生成</div>
       )}
 
       <div className="text-xs text-ink-faint text-center mt-4">

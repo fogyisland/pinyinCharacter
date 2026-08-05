@@ -38,7 +38,7 @@ const SYSTEM_PROMPT = `你是一位小学语文老师。请为每个汉字写:
  */
 export async function batchGenerateStories(
   inputs: BatchInput[],
-  options: GenerateOptions
+  options: GenerateOptions,
 ): Promise<number> {
   // Read connection config from app_config (managed via /admin/ai) with env-var fallback.
   const dbBaseUrl = await getConfig('ai.base_url');
@@ -55,8 +55,14 @@ export async function batchGenerateStories(
     async () => {
       const apiKey = dbApiKey ?? process.env.LLM_API_KEY;
       const baseUrl = dbBaseUrl ?? process.env.LLM_BASE_URL;
-      if (!apiKey) throw new Error('LLM api key not configured (set ai.api_key in /admin/ai or LLM_API_KEY env)');
-      if (!baseUrl) throw new Error('LLM base URL not configured (set ai.base_url in /admin/ai or LLM_BASE_URL env)');
+      if (!apiKey)
+        throw new Error(
+          'LLM api key not configured (set ai.api_key in /admin/ai or LLM_API_KEY env)',
+        );
+      if (!baseUrl)
+        throw new Error(
+          'LLM base URL not configured (set ai.base_url in /admin/ai or LLM_BASE_URL env)',
+        );
 
       const batchSize = options.batchSize ?? 50;
       const sleepMs = options.sleepMs ?? 2000;
@@ -92,7 +98,7 @@ export async function batchGenerateStories(
                   `UPDATE rare_chars
                    SET meaning = ?, story = ?, generated_by = ?, generated_at = NOW(), needs_review = 1
                    WHERE \`char\` = ?`,
-                  [item.meaning, item.story, generatedBy, item.char]
+                  [item.meaning, item.story, generatedBy, item.char],
                 );
                 updated++;
               }
@@ -183,8 +189,14 @@ function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-export interface RareCharContentInput { char: string; pinyin: string; }
-export interface RareCharContent { meaning: string; story: string; }
+export interface RareCharContentInput {
+  char: string;
+  pinyin: string;
+}
+export interface RareCharContent {
+  meaning: string;
+  story: string;
+}
 
 /**
  * Single-char generator for the admin UI. Uses the same SYSTEM_PROMPT as the
@@ -207,11 +219,12 @@ export async function generateRareCharContent(
   if (mockMode !== 'true' && !apiKey) throw new Error('LLM api key not configured');
   if (mockMode !== 'true' && !baseUrl) throw new Error('LLM base URL not configured');
 
-  const singleLine = wantMeaning && wantStory
-    ? 'meaning (10-30 字) and story (50-200 字)'
-    : wantMeaning
-      ? 'meaning only (10-30 字)'
-      : 'story only (50-200 字)';
+  const singleLine =
+    wantMeaning && wantStory
+      ? 'meaning (10-30 字) and story (50-200 字)'
+      : wantMeaning
+        ? 'meaning only (10-30 字)'
+        : 'story only (50-200 字)';
 
   const userPrompt = `汉字:「${input.char}」(拼音: ${input.pinyin})\n请只返回 ${singleLine}。`;
 
@@ -230,7 +243,7 @@ export async function generateRareCharContent(
         maxTokens: 600,
       });
       const arr = parseJsonArray(res.content);
-      const item = arr.find(x => x.char === input.char) ?? arr[0];
+      const item = arr.find((x) => x.char === input.char) ?? arr[0];
       if (!item) throw new Error('LLM returned empty content');
       return {
         meaning: wantMeaning ? String(item.meaning ?? '') : '',

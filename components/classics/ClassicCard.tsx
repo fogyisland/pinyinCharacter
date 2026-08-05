@@ -4,10 +4,10 @@ import type { ClassicListItem } from '@/lib/classics-types';
 const CATEGORY_LABELS: Record<string, string> = {
   'four-books': '四书',
   'five-classics': '五经',
-  'mengxue': '蒙学',
-  'philosophy': '诸子',
-  'history': '史书',
-  'other': '其他',
+  mengxue: '蒙学',
+  philosophy: '诸子',
+  history: '史书',
+  other: '其他',
 };
 
 export function ClassicCard({ item }: { item: ClassicListItem }) {

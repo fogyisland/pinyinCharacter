@@ -14,14 +14,18 @@
  * For serverless / Vercel deployments, callers should hit the
  * /api/admin/scheduler/trigger endpoint via external cron.
  */
-import { readSchedulerConfig, recordSchedulerRun, recordTaskRun, newRunId, type SchedulerConfig } from './scheduler-config';
+import {
+  readSchedulerConfig,
+  recordSchedulerRun,
+  recordTaskRun,
+  newRunId,
+  type SchedulerConfig,
+} from './scheduler-config';
 import { ALL_TASKS, runTask, type TaskName, type TaskResult } from './scheduler-tasks';
 
 declare global {
-  // eslint-disable-next-line no-var
   var __pinYinSchedulerState:
-    | { timer: NodeJS.Timeout | null; config: SchedulerConfig; running: boolean }
-    | undefined;
+    { timer: NodeJS.Timeout | null; config: SchedulerConfig; running: boolean } | undefined;
 }
 
 function initState(): { timer: NodeJS.Timeout | null; config: SchedulerConfig; running: boolean } {
@@ -82,15 +86,18 @@ async function runTick(cfg: SchedulerConfig): Promise<void> {
         summary: result.summary,
         error: result.error ?? null,
       });
-    } catch { /* swallow — history is best-effort */ }
+    } catch {
+      /* swallow — history is best-effort */
+    }
   }
-  const summary = results
-    .map((r) => `${r.ok ? '✓' : '✗'} ${r.name}: ${r.summary}`)
-    .join(' | ');
+  const summary = results.map((r) => `${r.ok ? '✓' : '✗'} ${r.name}: ${r.summary}`).join(' | ');
   await recordSchedulerRun(summary);
 }
 
-function scheduleInterval(state: { timer: NodeJS.Timeout | null; config: SchedulerConfig; running: boolean }, intervalMs: number) {
+function scheduleInterval(
+  state: { timer: NodeJS.Timeout | null; config: SchedulerConfig; running: boolean },
+  intervalMs: number,
+) {
   if (state.timer) {
     clearInterval(state.timer);
     state.timer = null;
@@ -115,7 +122,9 @@ function scheduleInterval(state: { timer: NodeJS.Timeout | null; config: Schedul
       console.error('[scheduler] tick failed', e);
       try {
         await recordSchedulerRun(`tick failed: ${e instanceof Error ? e.message : String(e)}`);
-      } catch { /* swallow */ }
+      } catch {
+        /* swallow */
+      }
     } finally {
       state.running = false;
     }
@@ -175,11 +184,15 @@ export async function runSchedulerNow(cfg?: SchedulerConfig): Promise<TaskResult
         summary: result.summary,
         error: result.error ?? null,
       });
-    } catch { /* swallow — history is best-effort */ }
+    } catch {
+      /* swallow — history is best-effort */
+    }
   }
-  const summary = results
-    .map((r) => `${r.ok ? '✓' : '✗'} ${r.name}: ${r.summary}`)
-    .join(' | ');
-  try { await recordSchedulerRun(summary); } catch { /* swallow */ }
+  const summary = results.map((r) => `${r.ok ? '✓' : '✗'} ${r.name}: ${r.summary}`).join(' | ');
+  try {
+    await recordSchedulerRun(summary);
+  } catch {
+    /* swallow */
+  }
   return results;
 }

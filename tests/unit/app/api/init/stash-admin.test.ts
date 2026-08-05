@@ -37,12 +37,20 @@ describe('POST /api/init/stash-admin', () => {
     expect(body.ok).toBe(true);
     expect(body.data.token).toBe('abc123def456abc123def456abc12345');
     expect(body.data.expiresInSec).toBe(120);
-    expect(mockedStash).toHaveBeenCalledWith({ username: 'admin', password: 'supersecret', email: undefined });
+    expect(mockedStash).toHaveBeenCalledWith({
+      username: 'admin',
+      password: 'supersecret',
+      email: undefined,
+    });
   });
 
   it('passes email when provided', async () => {
     await POST(postReq({ username: 'admin', password: 'supersecret', email: 'a@b.com' }));
-    expect(mockedStash).toHaveBeenCalledWith({ username: 'admin', password: 'supersecret', email: 'a@b.com' });
+    expect(mockedStash).toHaveBeenCalledWith({
+      username: 'admin',
+      password: 'supersecret',
+      email: 'a@b.com',
+    });
   });
 
   it('rejects short username', async () => {

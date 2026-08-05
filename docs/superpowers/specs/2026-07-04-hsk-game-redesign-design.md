@@ -61,6 +61,7 @@
 ### HSK vocab source
 
 `data/hsk-vocab.json` (new) — public domain HSK 1.0 vocab list, ≈150 words → ≈300 unique chars. Format:
+
 ```json
 {
   "1": [
@@ -72,11 +73,13 @@
   "6": []
 }
 ```
+
 Round 1 ships with HSK 1.0 only. HSK 2-6 entries are populated in subsequent import rounds using the established 30-char/round bulk pattern (memory `bulk-content-generation-pattern.md`).
 
 ### Migration
 
 `scripts/migrations/2026-07-04-hsk-level.sql` (new):
+
 ```sql
 ALTER TABLE chars ADD COLUMN hsk_level TINYINT NULL;
 CREATE INDEX idx_chars_hsk_level ON chars (hsk_level);
@@ -89,6 +92,7 @@ CREATE INDEX idx_chars_hsk_level ON chars (hsk_level);
 ### Difficulty config
 
 `lib/difficulty.ts` extends `GameConfig` with a `hskLevel` field. Source mapping:
+
 ```ts
 function sourceForHsk(level: HskLevel): CharSource {
   // HSK 1 lands in round 1; HSK 2-6 fall back to existing char pools
@@ -113,19 +117,22 @@ export type GameMode = 'tone-radical' | 'drag-match' | 'chain';
 export type RevealConfig = {
   cellHints: ReadonlyArray<RevealElement>;
   allowOnDemandHints: boolean;
-  onDemandPenalty: number;  // 0 in chain (no score); 1 in tone/drag
+  onDemandPenalty: number; // 0 in chain (no score); 1 in tone/drag
 };
 
-const REVEAL_BY_LEVEL: Record<HskLevel, {
-  cellHints: ReadonlyArray<RevealElement>;
-  allowOnDemandHints: boolean;
-}> = {
+const REVEAL_BY_LEVEL: Record<
+  HskLevel,
+  {
+    cellHints: ReadonlyArray<RevealElement>;
+    allowOnDemandHints: boolean;
+  }
+> = {
   1: { cellHints: ['pinyin', 'meaning', 'radical'], allowOnDemandHints: false },
-  2: { cellHints: ['pinyin', 'meaning'],            allowOnDemandHints: false },
-  3: { cellHints: ['pinyin'],                       allowOnDemandHints: false },
-  4: { cellHints: ['pinyin'],                       allowOnDemandHints: true  },
-  5: { cellHints: [],                               allowOnDemandHints: true  },
-  6: { cellHints: [],                               allowOnDemandHints: true  },
+  2: { cellHints: ['pinyin', 'meaning'], allowOnDemandHints: false },
+  3: { cellHints: ['pinyin'], allowOnDemandHints: false },
+  4: { cellHints: ['pinyin'], allowOnDemandHints: true },
+  5: { cellHints: [], allowOnDemandHints: true },
+  6: { cellHints: [], allowOnDemandHints: true },
 };
 
 export function getRevealConfig(game: GameMode, level: HskLevel): RevealConfig;
@@ -134,13 +141,15 @@ export function getRevealConfig(game: GameMode, level: HskLevel): RevealConfig;
 ### Game-specific override hooks
 
 `getRevealConfig` reads REVEAL_BY_LEVEL then layers game-specific tweaks:
+
 - **`drag-match` and `chain`**: drop `radical` from `cellHints` even at HSK 1 — those games have no radical context on the char cell, only `pinyin` and/or `meaning` apply. The REVEAL_BY_LEVEL `radical` entry is filtered out by `getRevealConfig('drag-match' | 'chain', level)`.
-- **`tone-radical`**: keep `radical` in `cellHints` at HSK 1-3 — and **separately**, the radical *drop-token* on the right (which is a quiz answer the user drags onto the cell, not a hint about the cell) is rendered unconditionally; drop tokens are not affected by reveal config.
+- **`tone-radical`**: keep `radical` in `cellHints` at HSK 1-3 — and **separately**, the radical _drop-token_ on the right (which is a quiz answer the user drags onto the cell, not a hint about the cell) is rendered unconditionally; drop tokens are not affected by reveal config.
 - **`onDemandPenalty`**: `1` for `tone-radical` and `drag-match` (each on-demand reveal is +1 mismatch); `0` for `chain` (no score system in the chain game).
 
 ### Cell components (modified)
 
 `ToneRadicalChar`, `CharDropZone`, and the per-char cell inside `ChainScroll` each gain:
+
 - prop `revealConfig: RevealConfig`
 - prop `onDemandReveal: (element: RevealElement) => void`
 - internal state `revealedOnDemand: Set<RevealElement>` accumulating hidden hints the user has clicked to expose
@@ -157,26 +166,27 @@ Existing `mismatches: number` counter is bumped by `onDemandPenalty` on each rev
 
 ### Files modified
 
-| File | Change |
-|------|--------|
-| `lib/reveal.ts` | NEW — types + `REVEAL_BY_LEVEL` + `getRevealConfig` |
-| `lib/pinyin-syllable.ts` | `expandLastLetter` → identity (rollback `i/u/ü → expanded sets`) |
-| `lib/difficulty.ts` | Add `HskLevel`, `hskLevel` field on `GameConfig`, `sourceForHsk()` |
-| `lib/game-round.ts` | `buildRound(content, count, seed, mode, hskLevel)` filters by `chars.hsk_level === N` with fallback to `chars.level` |
-| `lib/api-chain.ts` | Extend `fetchChainChars(source, hskLevel)`; pass hskLevel to API |
-| `app/api/game/round/route.ts` | Accept + zod-validate `hskLevel∈{1..6}`; embed `revealConfig` in response; add `Cache-Control: no-store` |
-| `app/api/chain/chars/route.ts` | Accept `hskLevel`; filter by `chars.hsk_level` with fallback; add `Cache-Control: no-store` |
-| `components/game/GameModeTabs.tsx` | Add HSK 1-6 picker chip row, persisted via `useDifficulty`'s localStorage |
-| `components/game/ToneRadicalGame.tsx` | Local `hskLevel` state; pass to fetch + reveal props; on-demand reveal bumps `mismatches` |
-| `components/game/DragMatchGame.tsx` | Same as ToneRadical |
-| `components/game/ChainGame.tsx` | Pass `hskLevel` to `fetchChainChars`; reveal props threaded; on-demand free (no penalty) |
-| `components/game/ToneRadicalChar.tsx` | Reveal-aware render + on-demand click |
-| `components/game/CharDropZone.tsx` | Same |
-| `components/game/ChainScroll.tsx` | Same for chain char cells |
+| File                                  | Change                                                                                                               |
+| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `lib/reveal.ts`                       | NEW — types + `REVEAL_BY_LEVEL` + `getRevealConfig`                                                                  |
+| `lib/pinyin-syllable.ts`              | `expandLastLetter` → identity (rollback `i/u/ü → expanded sets`)                                                     |
+| `lib/difficulty.ts`                   | Add `HskLevel`, `hskLevel` field on `GameConfig`, `sourceForHsk()`                                                   |
+| `lib/game-round.ts`                   | `buildRound(content, count, seed, mode, hskLevel)` filters by `chars.hsk_level === N` with fallback to `chars.level` |
+| `lib/api-chain.ts`                    | Extend `fetchChainChars(source, hskLevel)`; pass hskLevel to API                                                     |
+| `app/api/game/round/route.ts`         | Accept + zod-validate `hskLevel∈{1..6}`; embed `revealConfig` in response; add `Cache-Control: no-store`             |
+| `app/api/chain/chars/route.ts`        | Accept `hskLevel`; filter by `chars.hsk_level` with fallback; add `Cache-Control: no-store`                          |
+| `components/game/GameModeTabs.tsx`    | Add HSK 1-6 picker chip row, persisted via `useDifficulty`'s localStorage                                            |
+| `components/game/ToneRadicalGame.tsx` | Local `hskLevel` state; pass to fetch + reveal props; on-demand reveal bumps `mismatches`                            |
+| `components/game/DragMatchGame.tsx`   | Same as ToneRadical                                                                                                  |
+| `components/game/ChainGame.tsx`       | Pass `hskLevel` to `fetchChainChars`; reveal props threaded; on-demand free (no penalty)                             |
+| `components/game/ToneRadicalChar.tsx` | Reveal-aware render + on-demand click                                                                                |
+| `components/game/CharDropZone.tsx`    | Same                                                                                                                 |
+| `components/game/ChainScroll.tsx`     | Same for chain char cells                                                                                            |
 
 ### Fallback UI (HSK 2-6 hardcoded)
 
 When `chars.hsk_level` is NULL (post-`sourceForHsk` fallback), UI surfaces a banner:
+
 > 「HSK N 字库尚在补充中—当前以 HSK N-1 字池代替」
 
 The banner is informational, not blocking; the game proceeds with the fallback pool and the HSK label still reads literal "HSK N".
@@ -184,6 +194,7 @@ The banner is informational, not blocking; the game proceeds with the fallback p
 ### Pinyin chain rule strictness (mandatory)
 
 `lib/pinyin-syllable.ts`:
+
 ```ts
 export function expandLastLetter(letter: string): string[] {
   return [letter];
@@ -191,6 +202,7 @@ export function expandLastLetter(letter: string): string[] {
 ```
 
 Strict semantics:
+
 - ✓ `你` (nǐ, last `i`) → `期` (qī, first `i`)
 - ✗ `你` (nǐ) → `衣` (yī, first `y`) — different spelling even though same sound
 - ✗ `姑` (gū, last `u`) → `女` (nǚ, first `n`) — even though ü is read with u-glide

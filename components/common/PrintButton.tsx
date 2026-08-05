@@ -14,7 +14,13 @@ interface Props {
   loginRedirect?: string;
 }
 
-export function PrintButton({ endpoint, label = '打印', sourceId, gate = null, loginRedirect }: Props) {
+export function PrintButton({
+  endpoint,
+  label = '打印',
+  sourceId,
+  gate = null,
+  loginRedirect,
+}: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [canPrint, setCanPrint] = useState<boolean | null>(null);
@@ -42,7 +48,9 @@ export function PrintButton({ endpoint, label = '打印', sourceId, gate = null,
         if (!cancelled) setCanPrint(true);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [endpoint, gate]);
 
   const onClick = async () => {
@@ -81,9 +89,7 @@ export function PrintButton({ endpoint, label = '打印', sourceId, gate = null,
   }
 
   if (!user) {
-    const href = loginRedirect
-      ? `/login?redirect=${encodeURIComponent(loginRedirect)}`
-      : '/login';
+    const href = loginRedirect ? `/login?redirect=${encodeURIComponent(loginRedirect)}` : '/login';
     return (
       <Link
         href={href}

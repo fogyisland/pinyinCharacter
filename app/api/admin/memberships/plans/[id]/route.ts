@@ -7,10 +7,15 @@ import { updatePlan, type PlanPatch } from '@/lib/membership';
 const PatchSchema = z.object({
   displayName: z.string().min(1).max(64).optional(),
   durationDays: z.number().int().min(1).max(3650).optional(),
-  amount: z.string().regex(/^\d+\.\d{2}$/).optional(),
+  amount: z
+    .string()
+    .regex(/^\d+\.\d{2}$/)
+    .optional(),
   enabled: z.boolean().optional(),
   displayOrder: z.number().int().min(0).max(999).optional(),
-  features: z.array(z.enum(['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'])).optional(),
+  features: z
+    .array(z.enum(['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts']))
+    .optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

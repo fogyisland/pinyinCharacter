@@ -11,7 +11,11 @@ import { prefetchTts } from '@/lib/tts-cache';
 
 const LIST_PREFETCH_CAP = 24;
 
-interface MenuState { x: number; y: number; char: string; }
+interface MenuState {
+  x: number;
+  y: number;
+  char: string;
+}
 
 export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
   const router = useRouter();
@@ -46,8 +50,11 @@ export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
   // so click-to-play is instant. Skips chars already cached (prefetchTts no-ops).
   // requestIdleCallback keeps it off the main thread; falls back to setTimeout.
   useEffect(() => {
-    const ric = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number })
-      .requestIdleCallback;
+    const ric = (
+      window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      }
+    ).requestIdleCallback;
     const cic = (window as unknown as { cancelIdleCallback?: (handle: number) => void })
       .cancelIdleCallback;
 

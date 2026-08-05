@@ -69,9 +69,7 @@ function auditToItem(row: AuditRow): ActivityItem {
 }
 
 function downloadToItem(row: DownloadRow): ActivityItem {
-  const target = row.source_id
-    ? `${row.source_type} #${row.source_id}`
-    : row.source_type;
+  const target = row.source_id ? `${row.source_type} #${row.source_id}` : row.source_type;
   return {
     at: row.created_at,
     type: 'download',

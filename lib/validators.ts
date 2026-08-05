@@ -39,13 +39,17 @@ export const appendToWorksheetSchema = z
       })
       .optional(),
     chars: z
-      .array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
-        error: 'each entry must be a single CJK char',
-      }))
+      .array(
+        z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s), {
+          error: 'each entry must be a single CJK char',
+        }),
+      )
       .min(1)
       .max(500)
       .transform((arr) => arr.filter((c) => WORKSHEET_CHAR.test(c)))
-      .refine((arr) => arr.length >= 1, { message: 'at least one CJK char required after filtering punctuation' })
+      .refine((arr) => arr.length >= 1, {
+        message: 'at least one CJK char required after filtering punctuation',
+      })
       .optional(),
     worksheetId: z.coerce.number().int().positive().optional(),
     newTitle: z.string().min(1).max(80).optional(),
@@ -64,9 +68,14 @@ export const printBatchSchema = z.object({
 });
 
 export const renameWorksheetSchema = z.object({
-  title: z.string().min(1).max(80).transform((s) => s.trim()).refine((s) => s.length >= 1, {
-    error: 'title must be 1-80 non-blank chars',
-  }),
+  title: z
+    .string()
+    .min(1)
+    .max(80)
+    .transform((s) => s.trim())
+    .refine((s) => s.length >= 1, {
+      error: 'title must be 1-80 non-blank chars',
+    }),
 });
 
 export const saveWorksheetSchema = z.object({
@@ -76,25 +85,42 @@ export const saveWorksheetSchema = z.object({
     .min(1)
     .max(500)
     .transform((arr) => arr.filter((c) => WORKSHEET_CHAR.test(c)))
-    .refine((arr) => arr.length >= 1, { message: 'at least one CJK char required after filtering punctuation' }),
+    .refine((arr) => arr.length >= 1, {
+      message: 'at least one CJK char required after filtering punctuation',
+    }),
   cellStyle: z.enum([
-    'brush-square', 'brush-cross',
-    'pen-square',   'pen-cross',
-    'brush-trace-square', 'brush-trace-cross',
+    'brush-square',
+    'brush-cross',
+    'pen-square',
+    'pen-cross',
+    'brush-trace-square',
+    'brush-trace-cross',
   ]),
   paperSize: z.enum(['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']).default('A4'),
-  fontFamily: z.enum([
-    'song', 'kai', 'hei',
-    'wenkai-gb', 'yozai', 'iansui', 'zen-kaku-thin',
-    'ma-shan-zheng', 'long-cang',
-  ]).default('song'),
+  fontFamily: z
+    .enum([
+      'song',
+      'kai',
+      'hei',
+      'wenkai-gb',
+      'yozai',
+      'iansui',
+      'zen-kaku-thin',
+      'ma-shan-zheng',
+      'long-cang',
+    ])
+    .default('song'),
 });
 
 export const poemListQuerySchema = z.object({
   dynasty: z.string().min(1).max(32).default('tang'),
   category: z.string().min(1).max(32).optional(),
   forms: z.string().max(256).optional(),
-  q: z.string().max(64).transform((s) => s.trim()).optional(),
+  q: z
+    .string()
+    .max(64)
+    .transform((s) => s.trim())
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(24),
 });
@@ -114,14 +140,24 @@ export const sutraIdParamSchema = z.object({
 });
 
 export const classicsListQuerySchema = z.object({
-  category: z.enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other', 'pianwen']).optional(),
-  q: z.string().max(64).transform((s) => s.trim()).optional(),
+  category: z
+    .enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other', 'pianwen'])
+    .optional(),
+  q: z
+    .string()
+    .max(64)
+    .transform((s) => s.trim())
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(50).default(12),
 });
 
 export const classicSlugParamSchema = z.object({
-  slug: z.string().regex(/^[a-z0-9-]+$/).min(1).max(64),
+  slug: z
+    .string()
+    .regex(/^[a-z0-9-]+$/)
+    .min(1)
+    .max(64),
 });
 
 export const gameRoundQuerySchema = z.object({
@@ -146,8 +182,15 @@ export const gameRoundQuerySchema = z.object({
 });
 
 export const charsListQuerySchema = z.object({
-  q: z.string().max(32).transform((s) => s.trim()).optional(),
-  letter: z.string().regex(/^[A-Z]$/).optional(),
+  q: z
+    .string()
+    .max(32)
+    .transform((s) => s.trim())
+    .optional(),
+  letter: z
+    .string()
+    .regex(/^[A-Z]$/)
+    .optional(),
   radical: z.string().max(8).optional(),
   level: z.coerce.number().int().min(1).max(3).optional(),
   // 2026-07-04: HSK 1-6 filter for /game progressive reveal (DragMatch
@@ -165,21 +208,29 @@ export const charsRandomQuerySchema = z.object({
 export const etymologyCharParamSchema = charParamSchema;
 
 export const adminGenerateEtymologySchema = z.object({
-  chars: z.array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s))).min(1).max(100),
+  chars: z
+    .array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s)))
+    .min(1)
+    .max(100),
 });
 
-const adminGenerateFieldsSchema = z.object({
-  pinyin_alt: z.boolean().optional(),
-  meaning_zh: z.boolean().optional(),
-  meaning_en: z.boolean().optional(),
-  variants: z.boolean().optional(),
-  etymology_story: z.boolean().optional(),
-  rare_meaning: z.boolean().optional(),
-  rare_story: z.boolean().optional(),
-}).refine((o) => Object.values(o).some(Boolean), { message: 'at least one field required' });
+const adminGenerateFieldsSchema = z
+  .object({
+    pinyin_alt: z.boolean().optional(),
+    meaning_zh: z.boolean().optional(),
+    meaning_en: z.boolean().optional(),
+    variants: z.boolean().optional(),
+    etymology_story: z.boolean().optional(),
+    rare_meaning: z.boolean().optional(),
+    rare_story: z.boolean().optional(),
+  })
+  .refine((o) => Object.values(o).some(Boolean), { message: 'at least one field required' });
 
 export const adminGenerateCharsSchema = z.object({
-  chars: z.array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s))).min(1).max(100),
+  chars: z
+    .array(z.string().refine((s) => Array.from(s).length === 1 && SINGLE_CJK.test(s)))
+    .min(1)
+    .max(100),
   fields: adminGenerateFieldsSchema,
 });
 
@@ -198,14 +249,23 @@ export const adminCronConfigSchema = z.object({
 
 export const adminSchedulerConfigSchema = z.object({
   enabled: z.boolean().optional(),
-  intervalMin: z.number().int().min(1).max(24 * 60).optional(),
+  intervalMin: z
+    .number()
+    .int()
+    .min(1)
+    .max(24 * 60)
+    .optional(),
   taskContentRefresh: z.boolean().optional(),
   taskDailyChar: z.boolean().optional(),
   taskStatsRefresh: z.boolean().optional(),
 });
 
 export const registerSchema = z.object({
-  username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_\-]+$/, '用户名仅支持字母数字下划线短横'),
+  username: z
+    .string()
+    .min(3)
+    .max(32)
+    .regex(/^[a-zA-Z0-9_\-]+$/, '用户名仅支持字母数字下划线短横'),
   email: z.string().email('邮箱格式不正确'),
   password: z.string().min(8).max(128),
 });

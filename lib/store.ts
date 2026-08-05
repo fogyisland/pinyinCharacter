@@ -5,7 +5,11 @@ import { persist } from 'zustand/middleware';
 
 export type Script = 'simplified' | 'traditional';
 
-export interface User { id: number; username: string; isAdmin?: boolean; }
+export interface User {
+  id: number;
+  username: string;
+  isAdmin?: boolean;
+}
 
 interface AppState {
   safeMode: boolean;
@@ -23,8 +27,8 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      safeMode: true,                  // 默认开
-      showPinyin: true,                // 默认显示拼音 (poetry + sutra worksheets)
+      safeMode: true, // 默认开
+      showPinyin: true, // 默认显示拼音 (poetry + sutra worksheets)
       script: 'simplified',
       user: null,
       authOpen: false,
@@ -34,6 +38,6 @@ export const useAppStore = create<AppState>()(
       setUser: (user) => set({ user }),
       setAuthOpen: (authOpen) => set({ authOpen }),
     }),
-    { name: 'pinyin-app-state' }
-  )
+    { name: 'pinyin-app-state' },
+  ),
 );

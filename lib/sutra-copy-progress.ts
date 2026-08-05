@@ -28,14 +28,14 @@ function parseWrittenChars(raw: string | boolean[]): boolean[] {
 export async function getProgress(
   userId: number,
   sutraId: number,
-  chunkIdx: number
+  chunkIdx: number,
 ): Promise<CopyProgress | null> {
   const [rows] = await getPool().query<any[]>(
     `SELECT written_chars, started_at, updated_at, completed_at
        FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?
        LIMIT 1`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
   if (rows.length === 0) return null;
   const r = rows[0] as DbRow;
@@ -52,7 +52,7 @@ export async function upsertProgress(
   sutraId: number,
   chunkIdx: number,
   writtenChars: boolean[],
-  opts: { completedAt?: Date | null } = {}
+  opts: { completedAt?: Date | null } = {},
 ): Promise<void> {
   const completedAt = opts.completedAt === undefined ? null : opts.completedAt;
   await getPool().execute(
@@ -62,19 +62,19 @@ export async function upsertProgress(
      ON DUPLICATE KEY UPDATE
        written_chars = VALUES(written_chars),
        completed_at  = VALUES(completed_at)`,
-    [userId, sutraId, chunkIdx, JSON.stringify(writtenChars), completedAt]
+    [userId, sutraId, chunkIdx, JSON.stringify(writtenChars), completedAt],
   );
 }
 
 export async function markComplete(
   userId: number,
   sutraId: number,
-  chunkIdx: number
+  chunkIdx: number,
 ): Promise<void> {
   const [rows] = await getPool().query<any[]>(
     `SELECT written_chars FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ? LIMIT 1`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
   if (rows.length === 0) return;
   const written = parseWrittenChars(rows[0].written_chars);
@@ -83,18 +83,18 @@ export async function markComplete(
     `UPDATE sutra_copy_progress
        SET completed_at = NOW()
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
 }
 
 export async function deleteProgress(
   userId: number,
   sutraId: number,
-  chunkIdx: number
+  chunkIdx: number,
 ): Promise<void> {
   await getPool().execute(
     `DELETE FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?`,
-    [userId, sutraId, chunkIdx]
+    [userId, sutraId, chunkIdx],
   );
 }

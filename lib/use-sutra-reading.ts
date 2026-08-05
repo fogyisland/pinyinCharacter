@@ -7,7 +7,9 @@ function isValid(v: string | null): v is SutraReading {
   return v === 'horizontal' || v === 'vertical-rtl' || v === 'vertical-ltr';
 }
 
-export function useSutraReading(storageKey = 'pinyin:sutra-reading'): [SutraReading, (next: SutraReading) => void] {
+export function useSutraReading(
+  storageKey = 'pinyin:sutra-reading',
+): [SutraReading, (next: SutraReading) => void] {
   const [reading, setReading] = useState<SutraReading>(DEFAULT_SUTRA_READING);
 
   useEffect(() => {

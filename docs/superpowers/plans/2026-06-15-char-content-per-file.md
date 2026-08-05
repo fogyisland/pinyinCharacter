@@ -13,6 +13,7 @@
 ## File Structure
 
 **Create**:
+
 - `lib/content.ts` — 双源读: getContent(char) → file-or-DB
 - `lib/content-types.ts` — CharContent interface
 - `scripts/schemas/content.ts` — zod schemas
@@ -29,9 +30,11 @@
 - `scripts/import-content.test.ts` — import 解析逻辑 (mock DB) 测试
 
 **Modify**:
+
 - `scripts/init-db.ts` — 加 char_story DDL (idempotent)
 
 **Delete**:
+
 - `data/char-meaning-batch-0001..0217.json` (217 个)
 - `data/story-batch-0000..0047.json` (48 个)
 - `data/etymology/` (空目录)
@@ -43,6 +46,7 @@
 ### Task 1: git rm 217 + 48 旧批次 + 1 个空目录
 
 **Files:**
+
 - Delete: `data/char-meaning-batch-*.json` (217 个)
 - Delete: `data/story-batch-*.json` (48 个)
 - Delete: `data/etymology/` (空目录)
@@ -81,6 +85,7 @@ git commit -m "chore(data): remove legacy batch files (per-char content takes ov
 ### Task 2: 给 scripts/init-db.ts 加 char_story 表
 
 **Files:**
+
 - Modify: `scripts/init-db.ts:48` (在 char_etymology 之后插入新表 DDL)
 
 - [ ] **Step 1: 写测试 — initDb 应创建 char_story 表**
@@ -106,9 +111,9 @@ integrationDescribe('initDb char_story', () => {
     const [rows] = await pool.query<any[]>(
       `SELECT COLUMN_NAME, DATA_TYPE FROM information_schema.columns
        WHERE table_schema = DATABASE() AND table_name = 'char_story'
-       ORDER BY ORDINAL_POSITION`
+       ORDER BY ORDINAL_POSITION`,
     );
-    const cols = rows.map(r => r.COLUMN_NAME);
+    const cols = rows.map((r) => r.COLUMN_NAME);
     expect(cols).toContain('char');
     expect(cols).toContain('story');
     expect(cols).toContain('generated_by');
@@ -156,6 +161,7 @@ tsx --env-file=.env -e "import('./scripts/init-db').then(m => m.initDb())"
 ```
 
 预期: 没有报错。验证:
+
 ```bash
 node --env-file=.env -e "
   import('mysql2/promise').then(async ({default: mysql}) => {
@@ -191,6 +197,7 @@ git commit -m "feat(db): add char_story table for per-char content (DDL only, no
 ### Task 3: zod schemas (scripts/schemas/content.ts)
 
 **Files:**
+
 - Create: `scripts/schemas/content.ts`
 - Create: `tests/unit/scripts/schemas/content.test.ts`
 
@@ -226,22 +233,31 @@ describe('CharContentSchema', () => {
   });
 
   it('rejects etymology_story too short', () => {
-    expect(() => CharContentSchema.parse({
-      char: '一', pinyin: 'yī', etymology_story: '短'
-    })).toThrow();
+    expect(() =>
+      CharContentSchema.parse({
+        char: '一',
+        pinyin: 'yī',
+        etymology_story: '短',
+      }),
+    ).toThrow();
   });
 
   it('rejects hanzi_story too long', () => {
-    expect(() => CharContentSchema.parse({
-      char: '一', pinyin: 'yī', hanzi_story: 'x'.repeat(81)
-    })).toThrow();
+    expect(() =>
+      CharContentSchema.parse({
+        char: '一',
+        pinyin: 'yī',
+        hanzi_story: 'x'.repeat(81),
+      }),
+    ).toThrow();
   });
 });
 
 describe('ContentManifestSchema', () => {
   it('accepts initial all-zero manifest', () => {
     const r = ContentManifestSchema.parse({
-      version: 1, totalChars: 8105,
+      version: 1,
+      totalChars: 8105,
       byField: { meaning_zh: 0, etymology_story: 0, hanzi_story: 0 },
       generatedAt: '2026-06-15T10:00:00.000Z',
     });
@@ -249,11 +265,14 @@ describe('ContentManifestSchema', () => {
   });
 
   it('rejects wrong version', () => {
-    expect(() => ContentManifestSchema.parse({
-      version: 2, totalChars: 8105,
-      byField: { meaning_zh: 0, etymology_story: 0, hanzi_story: 0 },
-      generatedAt: '2026-06-15T10:00:00.000Z',
-    })).toThrow();
+    expect(() =>
+      ContentManifestSchema.parse({
+        version: 2,
+        totalChars: 8105,
+        byField: { meaning_zh: 0, etymology_story: 0, hanzi_story: 0 },
+        generatedAt: '2026-06-15T10:00:00.000Z',
+      }),
+    ).toThrow();
   });
 });
 ```
@@ -317,6 +336,7 @@ git commit -m "feat(content): zod schemas for CharContent + ContentManifest"
 ### Task 4: lib/content.ts getContent (双源读路径)
 
 **Files:**
+
 - Create: `lib/content-types.ts`
 - Create: `lib/content.ts`
 - Create: `tests/unit/lib/content.test.ts`
@@ -368,13 +388,19 @@ describe('getContent', () => {
 
   it('returns from file when data/content/<char>.json exists', async () => {
     vi.mocked(existsSync).mockReturnValue(true);
-    vi.mocked(readFileSync).mockReturnValue(JSON.stringify({
-      char: '一', pinyin: 'yī', meaning_zh: '一,数之始也。',
-    }));
+    vi.mocked(readFileSync).mockReturnValue(
+      JSON.stringify({
+        char: '一',
+        pinyin: 'yī',
+        meaning_zh: '一,数之始也。',
+      }),
+    );
 
     const result = await getContent('一');
     expect(result).toEqual({
-      char: '一', pinyin: 'yī', meaning_zh: '一,数之始也。',
+      char: '一',
+      pinyin: 'yī',
+      meaning_zh: '一,数之始也。',
     });
     expect(mockedQuery).not.toHaveBeenCalled();
   });
@@ -383,8 +409,8 @@ describe('getContent', () => {
     vi.mocked(existsSync).mockReturnValue(false);
     mockedQuery
       .mockResolvedValueOnce([[{ pinyin: 'yī', meaning_zh: '一,数之始。' }]]) // chars
-      .mockResolvedValueOnce([[{ story: '甲骨文作一...' }]])                  // char_etymology
-      .mockResolvedValueOnce([[]])                                            // char_story (no row)
+      .mockResolvedValueOnce([[{ story: '甲骨文作一...' }]]) // char_etymology
+      .mockResolvedValueOnce([[]]); // char_story (no row)
 
     const result = await getContent('一');
     expect(result?.char).toBe('一');
@@ -396,7 +422,7 @@ describe('getContent', () => {
 
   it('returns null when no file + DB has no chars row', async () => {
     vi.mocked(existsSync).mockReturnValue(false);
-    mockedQuery.mockResolvedValueOnce([[]]);  // chars miss
+    mockedQuery.mockResolvedValueOnce([[]]); // chars miss
 
     const result = await getContent('䨺');
     expect(result).toBeNull();
@@ -407,7 +433,7 @@ describe('getContent', () => {
     mockedQuery
       .mockResolvedValueOnce([[{ pinyin: 'yī', meaning_zh: null }]])
       .mockResolvedValueOnce([[]])
-      .mockResolvedValueOnce([[]])
+      .mockResolvedValueOnce([[]]);
 
     const result = await getContent('一');
     expect(result?.meaning_zh).toBeUndefined();
@@ -440,7 +466,7 @@ const CONTENT_DIR = join(process.cwd(), 'data', 'content');
 
 export async function getContent(
   char: string,
-  opts: GetContentOptions = {}
+  opts: GetContentOptions = {},
 ): Promise<CharContent | null> {
   // 1. 读文件 (除非 dbOnly)
   if (!opts.dbOnly) {
@@ -455,17 +481,17 @@ export async function getContent(
   const pool = getPool();
   const [charRows] = await pool.query<any[]>(
     `SELECT pinyin, meaning_zh FROM chars WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
   if (charRows.length === 0) return null;
 
   const [etymRows] = await pool.query<any[]>(
     `SELECT story FROM char_etymology WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
   const [storyRows] = await pool.query<any[]>(
     `SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
 
   const c = charRows[0];
@@ -499,6 +525,7 @@ git commit -m "feat(content): getContent with file-first + DB-fallback read path
 ### Task 5: scripts/select-next-chars.ts (选题 30 字)
 
 **Files:**
+
 - Create: `scripts/select-next-chars.ts`
 - Create: `scripts/select-next-chars.test.ts`
 
@@ -537,9 +564,11 @@ describe('selectNextChars', () => {
     // First: count meaning_zh in DB → 6498 (all done)
     mockedQuery.mockResolvedValueOnce([[{ n: 6498 }]]);
     // Then: list 30 chars (any) for hanzi_story gap
-    mockedQuery.mockResolvedValueOnce([[
-      { char: '龘' }, { char: '䨺' }, { char: '䨻' },
-    ].concat(Array.from({ length: 27 }, (_, i) => ({ char: String.fromCodePoint(0x3400 + i) })))]);
+    mockedQuery.mockResolvedValueOnce([
+      [{ char: '龘' }, { char: '䨺' }, { char: '䨻' }].concat(
+        Array.from({ length: 27 }, (_, i) => ({ char: String.fromCodePoint(0x3400 + i) })),
+      ),
+    ]);
 
     const result = await selectNextChars(30);
     expect(result).toHaveLength(30);
@@ -550,31 +579,45 @@ describe('selectNextChars', () => {
     vi.mocked(existsSync).mockReturnValue(false);
     vi.mocked(readdirSync).mockReturnValue(['一.json', '丁.json'] as any);
     vi.mocked(readFileSync).mockImplementation((p) => {
-      if (String(p).endsWith('一.json')) return JSON.stringify({ char: '一', pinyin: 'yī', meaning_zh: 'x', etymology_story: 'y'.repeat(150), hanzi_story: 'z'.repeat(20) });
-      if (String(p).endsWith('丁.json')) return JSON.stringify({ char: '丁', pinyin: 'dīng', meaning_zh: 'x' });
+      if (String(p).endsWith('一.json'))
+        return JSON.stringify({
+          char: '一',
+          pinyin: 'yī',
+          meaning_zh: 'x',
+          etymology_story: 'y'.repeat(150),
+          hanzi_story: 'z'.repeat(20),
+        });
+      if (String(p).endsWith('丁.json'))
+        return JSON.stringify({ char: '丁', pinyin: 'dīng', meaning_zh: 'x' });
       return '{}';
     });
     // meaning_zh: DB has 6498, files have 2 → gap = 0 → skip to next field
     mockedQuery
-      .mockResolvedValueOnce([[{ n: 6498 }]])           // meaning_zh count
-      .mockResolvedValueOnce([[]])                       // hanzi_story chars (none)
-      .mockResolvedValueOnce([[                          // etymology_story chars (skip 一 which has it)
-        { char: '七' }, { char: '万' },
-      ].concat(Array.from({ length: 28 }, (_, i) => ({ char: String.fromCodePoint(0x3400 + i) })))]);
+      .mockResolvedValueOnce([[{ n: 6498 }]]) // meaning_zh count
+      .mockResolvedValueOnce([[]]) // hanzi_story chars (none)
+      .mockResolvedValueOnce([
+        [
+          // etymology_story chars (skip 一 which has it)
+          { char: '七' },
+          { char: '万' },
+        ].concat(
+          Array.from({ length: 28 }, (_, i) => ({ char: String.fromCodePoint(0x3400 + i) })),
+        ),
+      ]);
 
     const result = await selectNextChars(30);
     expect(result.length).toBeLessThanOrEqual(30);
     // 一 should NOT appear (has etymology_story)
-    expect(result.find(r => r.char === '一')).toBeUndefined();
+    expect(result.find((r) => r.char === '一')).toBeUndefined();
   });
 
   it('returns empty array when all 3 fields fully covered', async () => {
     vi.mocked(existsSync).mockReturnValue(false);
     vi.mocked(readdirSync).mockReturnValue([]);
     mockedQuery
-      .mockResolvedValueOnce([[{ n: 8105 }]])  // meaning_zh all
-      .mockResolvedValueOnce([[]])             // hanzi_story all
-      .mockResolvedValueOnce([[]]);            // etymology_story all
+      .mockResolvedValueOnce([[{ n: 8105 }]]) // meaning_zh all
+      .mockResolvedValueOnce([[]]) // hanzi_story all
+      .mockResolvedValueOnce([[]]); // etymology_story all
 
     const result = await selectNextChars(30);
     expect(result).toEqual([]);
@@ -625,7 +668,7 @@ interface ExistingFile {
 function scanContentDir(): Map<string, ExistingFile> {
   const result = new Map<string, ExistingFile>();
   if (!existsSync(CONTENT_DIR)) return result;
-  const files = readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json'));
+  const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json'));
   for (const f of files) {
     const char = f.replace(/\.json$/, '');
     try {
@@ -648,7 +691,7 @@ async function listCharsMissing(
   field: 'meaning_zh' | 'etymology_story' | 'hanzi_story',
   limit: number,
   existing: Map<string, ExistingFile>,
-  levels: Array<1 | 2 | 3>
+  levels: Array<1 | 2 | 3>,
 ): Promise<string[]> {
   const chars: string[] = [];
   for (const level of levels) {
@@ -686,9 +729,9 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
 
   // 1. meaning_zh 缺口
   const [[{ n: meaningInDb }]] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM chars WHERE meaning_zh IS NOT NULL AND meaning_zh != ''`
+    `SELECT COUNT(*) AS n FROM chars WHERE meaning_zh IS NOT NULL AND meaning_zh != ''`,
   );
-  const meaningInFiles = [...existing.values()].filter(v => v.meaning_zh).length;
+  const meaningInFiles = [...existing.values()].filter((v) => v.meaning_zh).length;
   const meaningGap = 8105 - Number(meaningInDb) - meaningInFiles;
 
   if (meaningGap > 0) {
@@ -703,7 +746,7 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
 
   // 2. hanzi_story 缺口 (仅 level 3, 1607)
   const hanziTarget = 1607;
-  const hanziInFiles = [...existing.values()].filter(v => v.hanzi_story).length;
+  const hanziInFiles = [...existing.values()].filter((v) => v.hanzi_story).length;
   const hanziGap = hanziTarget - hanziInFiles;
 
   if (hanziGap > 0) {
@@ -719,7 +762,7 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
 
   // 3. etymology_story 缺口 (仅 level 1+2, 6498)
   const etymTarget = 6498;
-  const etymInFiles = [...existing.values()].filter(v => v.etymology_story).length;
+  const etymInFiles = [...existing.values()].filter((v) => v.etymology_story).length;
   const etymGap = etymTarget - etymInFiles;
 
   if (etymGap > 0) {
@@ -746,7 +789,10 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 ```
 
@@ -770,6 +816,7 @@ git commit -m "feat(content): selectNextChars CLI for round-by-round char select
 ### Task 6: scripts/update-content-manifest.ts
 
 **Files:**
+
 - Create: `scripts/update-content-manifest.ts`
 - Create: `scripts/update-content-manifest.test.ts`
 
@@ -814,7 +861,7 @@ describe('updateContentManifest', () => {
     expect(writeFileSync).toHaveBeenCalledWith(
       expect.stringContaining('content-manifest.json'),
       expect.stringContaining('"version": 1'),
-      'utf8'
+      'utf8',
     );
   });
 
@@ -823,9 +870,17 @@ describe('updateContentManifest', () => {
     vi.mocked(readdirSync).mockReturnValue(['一.json', '丁.json', '㐀.json'] as any);
     vi.mocked(readFileSync).mockImplementation(((p: any) => {
       const path = String(p);
-      if (path.endsWith('一.json')) return JSON.stringify({ char: '一', pinyin: 'yī', meaning_zh: 'm', etymology_story: 'e'.repeat(150) });
-      if (path.endsWith('丁.json')) return JSON.stringify({ char: '丁', pinyin: 'dīng', meaning_zh: 'm' });
-      if (path.endsWith('㐀.json')) return JSON.stringify({ char: '㐀', pinyin: 'x', hanzi_story: 'h'.repeat(20) });
+      if (path.endsWith('一.json'))
+        return JSON.stringify({
+          char: '一',
+          pinyin: 'yī',
+          meaning_zh: 'm',
+          etymology_story: 'e'.repeat(150),
+        });
+      if (path.endsWith('丁.json'))
+        return JSON.stringify({ char: '丁', pinyin: 'dīng', meaning_zh: 'm' });
+      if (path.endsWith('㐀.json'))
+        return JSON.stringify({ char: '㐀', pinyin: 'x', hanzi_story: 'h'.repeat(20) });
       return '{}';
     }) as any);
     vi.mocked(writeFileSync).mockReturnValue(undefined);
@@ -883,7 +938,7 @@ export async function updateContentManifest(): Promise<ContentManifest> {
   }
 
   const byField = { meaning_zh: 0, etymology_story: 0, hanzi_story: 0 };
-  const files = readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json'));
+  const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json'));
 
   for (const f of files) {
     try {
@@ -904,7 +959,7 @@ export async function updateContentManifest(): Promise<ContentManifest> {
     generatedAt: new Date().toISOString(),
   };
 
-  ContentManifestSchema.parse(manifest);  // sanity check
+  ContentManifestSchema.parse(manifest); // sanity check
   writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
   console.error(`[manifest] byField: ${JSON.stringify(byField)} → ${MANIFEST_PATH}`);
 
@@ -916,7 +971,10 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 ```
 
@@ -940,6 +998,7 @@ git commit -m "feat(content): updateContentManifest scans files + writes byField
 ### Task 7: scripts/import-content.ts (DB 增量 import)
 
 **Files:**
+
 - Create: `scripts/import-content.ts`
 - Create: `tests/integration/scripts/import-content.test.ts`
 
@@ -974,15 +1033,30 @@ integrationDescribe('importContent', () => {
 
     // Write 3 test JSONs
     if (!existsSync(CONTENT_DIR)) mkdirSync(CONTENT_DIR, { recursive: true });
-    writeFileSync(join(CONTENT_DIR, '一.json'), JSON.stringify({
-      char: '一', pinyin: 'yī', meaning_zh: '一,数之始。',
-    }));
-    writeFileSync(join(CONTENT_DIR, '丁.json'), JSON.stringify({
-      char: '丁', pinyin: 'dīng', etymology_story: '甲骨文作丁,象形。'.repeat(5),
-    }));
-    writeFileSync(join(CONTENT_DIR, '㐀.json'), JSON.stringify({
-      char: '㐀', pinyin: 'x', hanzi_story: '《说文》载㐀,罕用字。',
-    }));
+    writeFileSync(
+      join(CONTENT_DIR, '一.json'),
+      JSON.stringify({
+        char: '一',
+        pinyin: 'yī',
+        meaning_zh: '一,数之始。',
+      }),
+    );
+    writeFileSync(
+      join(CONTENT_DIR, '丁.json'),
+      JSON.stringify({
+        char: '丁',
+        pinyin: 'dīng',
+        etymology_story: '甲骨文作丁,象形。'.repeat(5),
+      }),
+    );
+    writeFileSync(
+      join(CONTENT_DIR, '㐀.json'),
+      JSON.stringify({
+        char: '㐀',
+        pinyin: 'x',
+        hanzi_story: '《说文》载㐀,罕用字。',
+      }),
+    );
 
     const { importContent } = await import('@/scripts/import-content');
     const result = await importContent();
@@ -993,13 +1067,19 @@ integrationDescribe('importContent', () => {
     expect(result.imported.hanzi_story).toContain('㐀');
 
     // Verify DB state
-    const [charRows] = await pool.query<any[]>(`SELECT meaning_zh FROM chars WHERE \`char\` = '一'`);
+    const [charRows] = await pool.query<any[]>(
+      `SELECT meaning_zh FROM chars WHERE \`char\` = '一'`,
+    );
     expect(charRows[0].meaning_zh).toBe('一,数之始。');
 
-    const [etymRows] = await pool.query<any[]>(`SELECT story FROM char_etymology WHERE \`char\` = '丁'`);
+    const [etymRows] = await pool.query<any[]>(
+      `SELECT story FROM char_etymology WHERE \`char\` = '丁'`,
+    );
     expect(etymRows[0].story.length).toBeGreaterThan(140);
 
-    const [storyRows] = await pool.query<any[]>(`SELECT story FROM char_story WHERE \`char\` = '㐀'`);
+    const [storyRows] = await pool.query<any[]>(
+      `SELECT story FROM char_story WHERE \`char\` = '㐀'`,
+    );
     expect(storyRows[0].story).toBe('《说文》载㐀,罕用字。');
 
     // Cleanup test files
@@ -1014,9 +1094,14 @@ integrationDescribe('importContent', () => {
       ('䲢', 3, 'U+4CA2', 'EXISTING_MEANING')
       ON DUPLICATE KEY UPDATE meaning_zh = VALUES(meaning_zh)`);
 
-    writeFileSync(join(CONTENT_DIR, '䲢.json'), JSON.stringify({
-      char: '䲢', pinyin: 'téng', meaning_zh: 'OVERWRITE_ATTEMPT',
-    }));
+    writeFileSync(
+      join(CONTENT_DIR, '䲢.json'),
+      JSON.stringify({
+        char: '䲢',
+        pinyin: 'téng',
+        meaning_zh: 'OVERWRITE_ATTEMPT',
+      }),
+    );
 
     const { importContent } = await import('@/scripts/import-content');
     await importContent();
@@ -1078,7 +1163,7 @@ export async function importContent(): Promise<ImportResult> {
     return result;
   }
 
-  const files = readdirSync(CONTENT_DIR).filter(f => f.endsWith('.json'));
+  const files = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.json'));
 
   for (const f of files) {
     result.scanned++;
@@ -1092,7 +1177,7 @@ export async function importContent(): Promise<ImportResult> {
         const [r] = await pool.query<any>(
           `UPDATE chars SET meaning_zh = ?
            WHERE \`char\` = ? AND (meaning_zh IS NULL OR meaning_zh = '')`,
-          [parsed.meaning_zh, char]
+          [parsed.meaning_zh, char],
         );
         if (r.affectedRows > 0) result.imported.meaning_zh.push(char);
       }
@@ -1108,7 +1193,7 @@ export async function importContent(): Promise<ImportResult> {
              story = VALUES(story),
              generated_by = VALUES(generated_by),
              generated_at = VALUES(generated_at)`,
-          [char, parsed.etymology_story]
+          [char, parsed.etymology_story],
         );
         result.imported.etymology_story.push(char);
       }
@@ -1122,7 +1207,7 @@ export async function importContent(): Promise<ImportResult> {
              story = VALUES(story),
              generated_by = VALUES(generated_by),
              generated_at = VALUES(generated_at)`,
-          [char, parsed.hanzi_story]
+          [char, parsed.hanzi_story],
         );
         result.imported.hanzi_story.push(char);
       }
@@ -1134,11 +1219,13 @@ export async function importContent(): Promise<ImportResult> {
     }
   }
 
-  console.error(`[import] scanned=${result.scanned} ` +
-    `meaning_zh=${result.imported.meaning_zh.length} ` +
-    `etymology_story=${result.imported.etymology_story.length} ` +
-    `hanzi_story=${result.imported.hanzi_story.length} ` +
-    `errors=${result.errors.length}`);
+  console.error(
+    `[import] scanned=${result.scanned} ` +
+      `meaning_zh=${result.imported.meaning_zh.length} ` +
+      `etymology_story=${result.imported.etymology_story.length} ` +
+      `hanzi_story=${result.imported.hanzi_story.length} ` +
+      `errors=${result.errors.length}`,
+  );
 
   return result;
 }
@@ -1149,7 +1236,10 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch(err => { console.error(err); process.exit(1); });
+  main().catch((err) => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 ```
 
@@ -1183,6 +1273,7 @@ git commit -m "feat(content): importContent upserts file content to DB (3 tables
 ### Task 8: 跑 update-content-manifest 写空 manifest
 
 **Files:**
+
 - Create: `data/content-manifest.json`
 
 - [ ] **Step 1: 创建 data/content/ 目录 (空)**
@@ -1200,6 +1291,7 @@ pnpm tsx scripts/update-content-manifest.ts
 ```
 
 预期输出 (stderr):
+
 ```
 [manifest] byField: {"meaning_zh":0,"etymology_story":0,"hanzi_story":0} → E:\...\data\content-manifest.json
 ```
@@ -1211,6 +1303,7 @@ cat "E:/ToolDevelop/PinYinCharacter/data/content-manifest.json"
 ```
 
 预期:
+
 ```json
 {
   "version": 1,
@@ -1247,6 +1340,7 @@ pnpm tsx scripts/select-next-chars.ts
 ```
 
 预期输出 (stdout): 30 行 JSON,例:
+
 ```json
 {"char":"严","fieldsToFill":["meaning_zh"]}
 {"char":"丟","fieldsToFill":["meaning_zh"]}
@@ -1254,6 +1348,7 @@ pnpm tsx scripts/select-next-chars.ts
 ```
 
 预期输出 (stderr):
+
 ```
 Selected 30 chars for next round.
 ```
@@ -1274,6 +1369,7 @@ cat /tmp/round-1-picks.json | head -5
 ### Task 10: 写 30 个 data/content/<char>.json
 
 **Files:**
+
 - Create: `data/content/<char>.json` × 30 (实际字符由 Task 9 决定)
 
 - [ ] **Step 1: 读出 Round 1 选中的 30 字**
@@ -1287,6 +1383,7 @@ cat /tmp/round-1-picks.json
 - [ ] **Step 2: 为每个 char 手写 JSON**
 
 **写盘示例** (Windows / Git Bash):
+
 ```bash
 # 对于选中 "{char: '严', fieldsToFill: ['meaning_zh']}" 的字
 cat > "E:/ToolDevelop/PinYinCharacter/data/content/严.json" <<'EOF'
@@ -1299,17 +1396,20 @@ EOF
 ```
 
 **字段写法约定**:
+
 - `meaning_zh` (~30-50 字): `一字,意指XX也。 《说文》载,XX,...`
 - `etymology_story` (140-180 字): `甲骨文作X,... 金文作X,... 小篆作X,... 隶书作X,... 楷书定形为X,XX也。`
 - `hanzi_story` (30-50 字): `《XX》载,X... 古方书偶记其XX。`
 
 **对每个 char**:
+
 1. 查其 pinyin (pypinyin 或手敲)
 2. 查其在 general-standard-chinese-characters.json 中的位置确定 level
 3. 按 `fieldsToFill` 写对应字段
 4. 写入 `data/content/<char>.json` (UTF-8, no BOM)
 
 **注意**:
+
 - 字符文件名: Windows / Git Bash 都接受 CJK, 直接 `data/content/严.json` 即可
 - 不要写 `null` 字段, 字段没填就 omit
 - 字段串里不要带真实换行, 用 `,` `。` `;` 句读
@@ -1338,6 +1438,7 @@ pnpm tsx scripts/import-content.ts
 ```
 
 预期输出 (stderr):
+
 ```
 [import] scanned=30 meaning_zh=30 etymology_story=0 hanzi_story=0 errors=0
 ```
@@ -1377,6 +1478,7 @@ git commit -m "feat(content): Round 1 — 30 chars (meaning_zh)"
 ### Task 11: 写 memory 文档 loop recipe
 
 **Files:**
+
 - Modify: `C:\Users\徐鹏\.claude\projects\E--ToolDevelop-PinYinCharacter\memory\MEMORY.md`
 - Modify or Create: `C:\Users\徐鹏\.claude\projects\E--ToolDevelop-PinYinCharacter\memory\bulk-content-generation-pattern.md` (修订)
 
@@ -1388,14 +1490,15 @@ git commit -m "feat(content): Round 1 — 30 chars (meaning_zh)"
 ## Round 流程 (per-char 模式, 2026-06-15+)
 
 每轮 30 字 (去重后, 一字可填多字段), 文件形态 `data/content/<char>.json`:
-
 ```
+
 1. 选题: pnpm tsx scripts/select-next-chars.ts > /tmp/round-N-picks.json
 2. 查 pinyin: pypinyin 或手敲 (不写代码生成)
 3. 手写 30 个 JSON, 按 fieldsToFill 写对应字段
 4. 跑 manifest: pnpm tsx scripts/update-content-manifest.ts
 5. 跑 import: pnpm tsx scripts/import-content.ts
 6. console 报「可 /compact」
+
 ```
 
 **字段优先级** (由 select-next-chars 自动处理):
@@ -1453,6 +1556,7 @@ pnpm build
 - [ ] **Step 4: 浏览器 smoke**
 
 启动 dev server,访问:
+
 - `/dictionary/严` — 应显示 meaning_zh (Round 1 选中的字)
 - `/etymology/严` — 如果 Round 1 没填 etymology_story, 应显示「暂无」(已有回退逻辑)
 - `/dictionary/一` — 应显示 meaning_zh (DB 回退)
@@ -1460,6 +1564,7 @@ pnpm build
 - [ ] **Step 5: 输出 Phase 6+ 的循环说明**
 
 向用户报告:
+
 - Phase 1-5 完成,所有 infrastructure 就绪
 - Round 1 (30 字) 落库, manifest byField 反映状态
 - 后续轮次用户只需说「继续」,会自动: 选 30 字 → 列字段缺口 → 等手写 JSON → 跑 manifest + import

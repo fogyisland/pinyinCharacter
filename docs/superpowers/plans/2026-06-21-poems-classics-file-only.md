@@ -29,12 +29,14 @@
 ### Task 1: Migration script — DB rows → per-poem files + manifest
 
 **Files:**
+
 - Create: `scripts/migrate-poems-to-files.ts`
 - Delete: `data/poems/caocao.json`, `data/poems/cifu.json`, `data/poems/nalan.json`, `data/poems/shijiu.json`, `data/poems/yuefu.json` (these become obsolete once the migration runs successfully)
 - Create: `tests/integration/scripts/migrate-poems-to-files.test.ts`
 - Modify: `lib/poetry-types.ts` (add `PoemsManifest`, `PoemManifestItem` types — needed by the script)
 
 **Interfaces:**
+
 - Consumes: `lib/db.getPool()` returns a mysql2 pool. Schema (T1): `poems(id, dynasty, category, title, author, form, content JSON, pinyin JSON, appreciation, source, created_at)`.
 - Produces:
   - `data/poems/<id>.json` — one per row. Schema per spec §"File schemas".
@@ -55,22 +57,52 @@ const mockReadFile = vi.fn();
 const mockMkdir = vi.fn();
 const mockReaddir = vi.fn();
 vi.mock('fs/promises', () => ({
-  default: { writeFile: mockWriteFile, readFile: mockReadFile, mkdir: mockMkdir, readdir: mockReaddir },
-  writeFile: mockWriteFile, readFile: mockReadFile, mkdir: mockMkdir, readdir: mockReaddir,
+  default: {
+    writeFile: mockWriteFile,
+    readFile: mockReadFile,
+    mkdir: mockMkdir,
+    readdir: mockReaddir,
+  },
+  writeFile: mockWriteFile,
+  readFile: mockReadFile,
+  mkdir: mockMkdir,
+  readdir: mockReaddir,
 }));
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('migratePoemsToFiles', () => {
   it('reads 2 rows and writes 2 files + 1 manifest', async () => {
-    mockQuery.mockResolvedValueOnce([[
-      { id: 1, dynasty: '唐', category: 'tang', title: '静夜思', author: '李白', form: '五绝',
-        content: JSON.stringify(['床前明月光，']), pinyin: JSON.stringify([['chuáng']]),
-        appreciation: null, source: 'chinese-poetry:/x/001.json' },
-      { id: 2, dynasty: '唐', category: 'tang', title: '登鹳雀楼', author: '王之涣', form: '五绝',
-        content: JSON.stringify(['白日依山尽，']), pinyin: JSON.stringify([['bái']]),
-        appreciation: null, source: 'chinese-poetry:/x/002.json' },
-    ]]);
+    mockQuery.mockResolvedValueOnce([
+      [
+        {
+          id: 1,
+          dynasty: '唐',
+          category: 'tang',
+          title: '静夜思',
+          author: '李白',
+          form: '五绝',
+          content: JSON.stringify(['床前明月光，']),
+          pinyin: JSON.stringify([['chuáng']]),
+          appreciation: null,
+          source: 'chinese-poetry:/x/001.json',
+        },
+        {
+          id: 2,
+          dynasty: '唐',
+          category: 'tang',
+          title: '登鹳雀楼',
+          author: '王之涣',
+          form: '五绝',
+          content: JSON.stringify(['白日依山尽，']),
+          pinyin: JSON.stringify([['bái']]),
+          appreciation: null,
+          source: 'chinese-poetry:/x/002.json',
+        },
+      ],
+    ]);
     mockMkdir.mockResolvedValueOnce(undefined);
 
     const { migratePoemsToFiles } = await import('@/scripts/migrate-poems-to-files');
@@ -84,27 +116,63 @@ describe('migratePoemsToFiles', () => {
     // First file: data/poems/1.json with the expected content
     expect(mockWriteFile.mock.calls[0][0]).toMatch(/\/data\/poems\/1\.json$/);
     const body = JSON.parse(mockWriteFile.mock.calls[0][1] as string);
-    expect(body).toMatchObject({ id: 1, title: '静夜思', author: '李白', form: '五绝',
-      content: ['床前明月光，'] });
+    expect(body).toMatchObject({
+      id: 1,
+      title: '静夜思',
+      author: '李白',
+      form: '五绝',
+      content: ['床前明月光，'],
+    });
     // Manifest call
-    const manifestCall = mockWriteFile.mock.calls.find(c => /poems-manifest\.json$/.test(c[0] as string));
+    const manifestCall = mockWriteFile.mock.calls.find((c) =>
+      /poems-manifest\.json$/.test(c[0] as string),
+    );
     expect(manifestCall).toBeDefined();
     const manifest = JSON.parse(manifestCall![1] as string);
     expect(manifest.count).toBe(2);
     expect(manifest.items).toHaveLength(2);
-    expect(manifest.items[0]).toMatchObject({ id: 1, title: '静夜思', form: '五绝', contentLineCount: 1 });
+    expect(manifest.items[0]).toMatchObject({
+      id: 1,
+      title: '静夜思',
+      form: '五绝',
+      contentLineCount: 1,
+    });
   });
 
   it('idempotent re-run with all files present returns skipped=2 manifestWritten=false', async () => {
     // First query: SELECT rows
-    mockQuery.mockResolvedValueOnce([[
-      { id: 1, dynasty: '唐', category: 'tang', title: 'A', author: 'X', form: '五绝',
-        content: JSON.stringify(['a']), pinyin: JSON.stringify([['a']]), appreciation: null, source: 's' },
-    ]]);
+    mockQuery.mockResolvedValueOnce([
+      [
+        {
+          id: 1,
+          dynasty: '唐',
+          category: 'tang',
+          title: 'A',
+          author: 'X',
+          form: '五绝',
+          content: JSON.stringify(['a']),
+          pinyin: JSON.stringify([['a']]),
+          appreciation: null,
+          source: 's',
+        },
+      ],
+    ]);
     // readdir for existing files (all poem files exist with matching content)
     mockReaddir.mockResolvedValueOnce(['1.json']);
-    mockReadFile.mockResolvedValueOnce(JSON.stringify({ id: 1, title: 'A', author: 'X', dynasty: '唐',
-      category: 'tang', form: '五绝', content: ['a'], pinyin: [['a']], appreciation: null, source: 's' }));
+    mockReadFile.mockResolvedValueOnce(
+      JSON.stringify({
+        id: 1,
+        title: 'A',
+        author: 'X',
+        dynasty: '唐',
+        category: 'tang',
+        form: '五绝',
+        content: ['a'],
+        pinyin: [['a']],
+        appreciation: null,
+        source: 's',
+      }),
+    );
     mockMkdir.mockResolvedValueOnce(undefined);
 
     const { migratePoemsToFiles } = await import('@/scripts/migrate-poems-to-files');
@@ -161,23 +229,36 @@ const MANIFEST_PATH = path.join(DATA_DIR, 'poems-manifest.json');
 function parseJson<T>(s: unknown, fallback: T): T {
   if (Array.isArray(s)) return s as T;
   if (typeof s === 'string') {
-    try { const v = JSON.parse(s); return Array.isArray(v) ? (v as T) : fallback; } catch { return fallback; }
+    try {
+      const v = JSON.parse(s);
+      return Array.isArray(v) ? (v as T) : fallback;
+    } catch {
+      return fallback;
+    }
   }
   return fallback;
 }
 
-export async function migratePoemsToFiles(): Promise<{ written: number; skipped: number; manifestWritten: boolean }> {
+export async function migratePoemsToFiles(): Promise<{
+  written: number;
+  skipped: number;
+  manifestWritten: boolean;
+}> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT id, dynasty, category, title, author, form, content, pinyin, appreciation, source
-     FROM poems ORDER BY id ASC`
+     FROM poems ORDER BY id ASC`,
   );
   const arr = rows as any[];
 
   await fs.mkdir(DATA_DIR, { recursive: true });
 
   let existing: Set<string> = new Set();
-  try { existing = new Set(await fs.readdir(DATA_DIR)); } catch { /* dir may not exist yet */ }
+  try {
+    existing = new Set(await fs.readdir(DATA_DIR));
+  } catch {
+    /* dir may not exist yet */
+  }
 
   const manifestItems: PoemManifestItem[] = [];
   let written = 0;
@@ -190,25 +271,42 @@ export async function migratePoemsToFiles(): Promise<{ written: number; skipped:
     const fileName = `${id}.json`;
     const filePath = path.join(DATA_DIR, fileName);
     const body = {
-      id, title: r.title, author: r.author, dynasty: r.dynasty,
-      category: r.category ?? null, form: r.form ?? null,
-      content, pinyin, appreciation: r.appreciation ?? null, source: r.source ?? null,
+      id,
+      title: r.title,
+      author: r.author,
+      dynasty: r.dynasty,
+      category: r.category ?? null,
+      form: r.form ?? null,
+      content,
+      pinyin,
+      appreciation: r.appreciation ?? null,
+      source: r.source ?? null,
     };
     if (existing.has(fileName)) {
       let same = false;
       try {
         const cur = JSON.parse(await fs.readFile(filePath, 'utf8'));
         same = JSON.stringify(cur) === JSON.stringify(body);
-      } catch { /* treat as different */ }
-      if (same) { skipped++; }
-      else { await fs.writeFile(filePath, JSON.stringify(body, null, 2), 'utf8'); written++; }
+      } catch {
+        /* treat as different */
+      }
+      if (same) {
+        skipped++;
+      } else {
+        await fs.writeFile(filePath, JSON.stringify(body, null, 2), 'utf8');
+        written++;
+      }
     } else {
       await fs.writeFile(filePath, JSON.stringify(body, null, 2), 'utf8');
       written++;
     }
     manifestItems.push({
-      id, title: r.title, author: r.author, dynasty: r.dynasty,
-      category: r.category ?? null, form: r.form ?? null,
+      id,
+      title: r.title,
+      author: r.author,
+      dynasty: r.dynasty,
+      category: r.category ?? null,
+      form: r.form ?? null,
       contentLineCount: content.length,
     });
   }
@@ -226,8 +324,14 @@ export async function migratePoemsToFiles(): Promise<{ written: number; skipped:
 
 if (require.main === module) {
   migratePoemsToFiles()
-    .then((r) => { console.log(`[migrate-poems-to-files] written=${r.written} skipped=${r.skipped}`); process.exit(0); })
-    .catch((err) => { console.error('[migrate-poems-to-files] failed:', err); process.exit(1); });
+    .then((r) => {
+      console.log(`[migrate-poems-to-files] written=${r.written} skipped=${r.skipped}`);
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('[migrate-poems-to-files] failed:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -239,13 +343,16 @@ Expected: 2/2 PASS in <100 ms
 - [ ] **Step 6: tsc + live run on piyin_dev**
 
 Run:
+
 ```bash
 pnpm tsc --noEmit
 DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/migrate-poems-to-files.ts
 ```
+
 Expected: tsc clean; live run prints `written=0 skipped=1161` on second run (idempotent). First run should print `written=1161 skipped=0`.
 
 Verify:
+
 ```bash
 ls data/poems/ | grep -E '^[0-9]+\.json$' | wc -l   # expect 1161
 head -c 500 data/poems/1.json                       # expect valid JSON with id=1
@@ -255,9 +362,11 @@ head -c 500 data/poems-manifest.json                # expect { version: 1, count
 - [ ] **Step 7: Delete the 5 per-collection files**
 
 Run:
+
 ```bash
 git rm data/poems/caocao.json data/poems/cifu.json data/poems/nalan.json data/poems/shijiu.json data/poems/yuefu.json
 ```
+
 Expected: 5 files removed (they're now superseded by `data/poems/<id>.json`).
 
 - [ ] **Step 8: Commit**
@@ -272,6 +381,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 2: lib/poetry loader + queries
 
 **Files:**
+
 - Create: `lib/poetry/loader.ts`
 - Create: `lib/poetry/queries.ts`
 - Create: `lib/poetry/index.ts`
@@ -280,6 +390,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 - Create: `tests/unit/lib/poetry/queries.test.ts`
 
 **Interfaces:**
+
 - Consumes: `data/poems-manifest.json`, `data/poems/<id>.json` on disk. Types from `lib/poetry-types.ts`.
 - Produces (all in `lib/poetry`):
   - `loadManifest(): Promise<PoemsManifest>` — module-cached. Throws on missing/unparseable.
@@ -303,12 +414,30 @@ vi.mock('fs/promises', () => ({
   readFile: mockReadFile,
 }));
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('loadManifest', () => {
   it('reads manifest once and caches subsequent calls', async () => {
-    mockReadFile.mockResolvedValueOnce(JSON.stringify({ version: 1, updatedAt: '2026-06-21', count: 1,
-      items: [{ id: 1, title: 'A', author: 'X', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 }] }));
+    mockReadFile.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 1,
+        updatedAt: '2026-06-21',
+        count: 1,
+        items: [
+          {
+            id: 1,
+            title: 'A',
+            author: 'X',
+            dynasty: '唐',
+            category: 'tang',
+            form: '五绝',
+            contentLineCount: 4,
+          },
+        ],
+      }),
+    );
     const { loadManifest, invalidateManifestCache } = await import('@/lib/poetry/loader');
     invalidateManifestCache();
     const a = await loadManifest();
@@ -333,10 +462,20 @@ describe('loadPoem', () => {
   });
 
   it('returns parsed PoemDetail on success', async () => {
-    mockReadFile.mockResolvedValueOnce(JSON.stringify({
-      id: 1, title: '静夜思', author: '李白', dynasty: '唐', category: 'tang', form: '五绝',
-      content: ['床前明月光，'], pinyin: [['chuáng']], appreciation: null, source: 's',
-    }));
+    mockReadFile.mockResolvedValueOnce(
+      JSON.stringify({
+        id: 1,
+        title: '静夜思',
+        author: '李白',
+        dynasty: '唐',
+        category: 'tang',
+        form: '五绝',
+        content: ['床前明月光，'],
+        pinyin: [['chuáng']],
+        appreciation: null,
+        source: 's',
+      }),
+    );
     const { loadPoem } = await import('@/lib/poetry/loader');
     const p = await loadPoem(1);
     expect(p).toMatchObject({ id: 1, title: '静夜思', form: '五绝' });
@@ -362,7 +501,9 @@ const MANIFEST_PATH = path.join(process.cwd(), 'data', 'poems-manifest.json');
 
 let cache: PoemsManifest | null = null;
 
-export function invalidateManifestCache(): void { cache = null; }
+export function invalidateManifestCache(): void {
+  cache = null;
+}
 
 export async function loadManifest(): Promise<PoemsManifest> {
   if (cache) return cache;
@@ -404,9 +545,33 @@ const mockManifest = {
   updatedAt: '2026-06-21',
   count: 3,
   items: [
-    { id: 1, title: '静夜思', author: '李白', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 },
-    { id: 2, title: '登鹳雀楼', author: '王之涣', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 },
-    { id: 3, title: '春晓', author: '孟浩然', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 },
+    {
+      id: 1,
+      title: '静夜思',
+      author: '李白',
+      dynasty: '唐',
+      category: 'tang',
+      form: '五绝',
+      contentLineCount: 4,
+    },
+    {
+      id: 2,
+      title: '登鹳雀楼',
+      author: '王之涣',
+      dynasty: '唐',
+      category: 'tang',
+      form: '五绝',
+      contentLineCount: 4,
+    },
+    {
+      id: 3,
+      title: '春晓',
+      author: '孟浩然',
+      dynasty: '唐',
+      category: 'tang',
+      form: '五绝',
+      contentLineCount: 4,
+    },
   ],
 };
 
@@ -432,7 +597,7 @@ describe('listPoems', () => {
     const { listPoems } = await import('@/lib/poetry/queries');
     const r = await listPoems({ dynasty: 'tang', form: '五绝' });
     expect(r.total).toBe(3);
-    expect(r.items.map(i => i.id)).toEqual([1, 2, 3]);
+    expect(r.items.map((i) => i.id)).toEqual([1, 2, 3]);
   });
 
   it('returns empty for form with no matches', async () => {
@@ -459,7 +624,16 @@ describe('listPoems', () => {
 
 describe('getPoem', () => {
   it('loads via loader', async () => {
-    mockLoadPoem.mockResolvedValueOnce({ id: 1, title: '静夜思', author: '李白', dynasty: 'tang', form: '五绝', content: ['床前明月光，'], pinyin: [], appreciation: null });
+    mockLoadPoem.mockResolvedValueOnce({
+      id: 1,
+      title: '静夜思',
+      author: '李白',
+      dynasty: 'tang',
+      form: '五绝',
+      content: ['床前明月光，'],
+      pinyin: [],
+      appreciation: null,
+    });
     const { getPoem } = await import('@/lib/poetry/queries');
     const p = await getPoem(1);
     expect(p?.title).toBe('静夜思');
@@ -469,8 +643,16 @@ describe('getPoem', () => {
 
 describe('getRandomPoem', () => {
   it('returns one item matching filters', async () => {
-    mockLoadPoem.mockResolvedValue({ id: 1, title: 'A', author: 'X', dynasty: 'tang', form: '五绝',
-      content: ['a'], pinyin: [['a']], appreciation: null });
+    mockLoadPoem.mockResolvedValue({
+      id: 1,
+      title: 'A',
+      author: 'X',
+      dynasty: 'tang',
+      form: '五绝',
+      content: ['a'],
+      pinyin: [['a']],
+      appreciation: null,
+    });
     const { getRandomPoem } = await import('@/lib/poetry/queries');
     const p = await getRandomPoem({ dynasty: 'tang' });
     expect(p).not.toBeNull();
@@ -529,22 +711,31 @@ function matchesQ(item: { title: string; author: string }, q: string): boolean {
   const trimmed = q.trim();
   if (!trimmed) return true;
   const first = firstChar(trimmed);
-  return item.title.includes(trimmed) || item.author.includes(trimmed) || (first.length > 0 && item.title.includes(first));
+  return (
+    item.title.includes(trimmed) ||
+    item.author.includes(trimmed) ||
+    (first.length > 0 && item.title.includes(first))
+  );
 }
 
 export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
   const manifest = await loadManifest();
   const page = Math.max(1, args.page ?? 1);
   const pageSize = Math.max(1, Math.min(MAX_PAGE_SIZE, args.pageSize ?? DEFAULT_PAGE_SIZE));
-  const filtered = manifest.items.filter(i =>
-    i.dynasty === args.dynasty &&
-    (args.form == null || i.form === args.form) &&
-    matchesQ({ title: i.title, author: i.author }, args.q ?? '')
+  const filtered = manifest.items.filter(
+    (i) =>
+      i.dynasty === args.dynasty &&
+      (args.form == null || i.form === args.form) &&
+      matchesQ({ title: i.title, author: i.author }, args.q ?? ''),
   );
   const start = (page - 1) * pageSize;
   const slice = filtered.slice(start, start + pageSize);
-  const items: PoemListItem[] = slice.map(i => ({
-    id: i.id, title: i.title, author: i.author, dynasty: i.dynasty as Dynasty, form: i.form,
+  const items: PoemListItem[] = slice.map((i) => ({
+    id: i.id,
+    title: i.title,
+    author: i.author,
+    dynasty: i.dynasty as Dynasty,
+    form: i.form,
   }));
   return { items, total: filtered.length, page, pageSize };
 }
@@ -553,11 +744,15 @@ export async function getPoem(id: number): Promise<PoemDetail | null> {
   return loadPoem(id);
 }
 
-export async function getRandomPoem(opts?: { dynasty?: Dynasty; form?: string | null }): Promise<PoemDetail | null> {
+export async function getRandomPoem(opts?: {
+  dynasty?: Dynasty;
+  form?: string | null;
+}): Promise<PoemDetail | null> {
   const manifest = await loadManifest();
-  const candidates = manifest.items.filter(i =>
-    (!opts?.dynasty || i.dynasty === opts.dynasty) &&
-    (opts?.form == null || i.form === opts.form)
+  const candidates = manifest.items.filter(
+    (i) =>
+      (!opts?.dynasty || i.dynasty === opts.dynasty) &&
+      (opts?.form == null || i.form === opts.form),
   );
   if (candidates.length === 0) return null;
   const pick = candidates[Math.floor(Math.random() * candidates.length)];
@@ -597,9 +792,11 @@ export type { ListPoemsArgs } from './queries';
 - [ ] **Step 9: Run all new tests, verify PASS**
 
 Run:
+
 ```bash
 pnpm test tests/unit/lib/poetry/
 ```
+
 Expected: loader (4) + queries (8) = 12 tests PASS
 
 - [ ] **Step 10: Delete the old DB test**
@@ -619,6 +816,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 3: Rewire API routes + delete lib/poetry.ts
 
 **Files:**
+
 - Modify: `app/api/poetry/route.ts` (swap import from `@/lib/poetry` to `@/lib/poetry`)
 - Modify: `app/api/poetry/[id]/route.ts`
 - Modify: `app/api/poetry/random/route.ts`
@@ -631,9 +829,11 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 - [ ] **Step 1: Find every site that imports from `@/lib/poetry`**
 
 Run:
+
 ```bash
 grep -rn "from '@/lib/poetry'" --include='*.ts' --include='*.tsx' app/ components/ lib/api-poetry.ts 2>/dev/null
 ```
+
 Expected output: a list of files to touch. Verify each matches the Files list above; flag any new ones.
 
 - [ ] **Step 2: Update each route to import from `@/lib/poetry` (the barrel)**
@@ -642,13 +842,14 @@ For each file in the Files list, change:
 
 ```ts
 // FROM
-import { listPoems, getPoem, getRandomPoem, buildSearchWhere, /* ... */ } from '@/lib/poetry';
+import { listPoems, getPoem, getRandomPoem, buildSearchWhere /* ... */ } from '@/lib/poetry';
 
 // TO
-import { listPoems, getPoem, getRandomPoem, /* ... */ } from '@/lib/poetry';
+import { listPoems, getPoem, getRandomPoem /* ... */ } from '@/lib/poetry';
 ```
 
 Special cases:
+
 - `lib/poetry.ts` exports `buildSearchWhere` for tests. The new `queries.ts` does NOT export this (search is now in-memory `matchesQ`). If any non-test file imports `buildSearchWhere`, remove the import. (Check via `grep -rn "buildSearchWhere" --include='*.ts' --include='*.tsx' app/ components/` — expected: no results.)
 - `lib/poetry.ts` returns `dynasty` as the raw DB value (`tang`, `song`, `唐`, `宋`). The new `queries.ts` returns `dynasty` from the manifest item — which is the raw string from DB (`唐`, `宋`). The route handlers convert as needed; **verify** each handler still maps dynasty correctly to the `Dynasty` union type (`'tang' | 'song'`). Add an explicit cast `as Dynasty` if TS complains.
 
@@ -682,11 +883,18 @@ vi.mock('@/lib/poetry', () => ({
   invalidateManifestCache: vi.fn(),
 }));
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('GET /api/poetry', () => {
   it('returns 200 with items array', async () => {
-    mockListPoems.mockResolvedValueOnce({ items: [{ id: 1, title: 'A', author: 'X', dynasty: 'tang', form: null }], total: 1, page: 1, pageSize: 24 });
+    mockListPoems.mockResolvedValueOnce({
+      items: [{ id: 1, title: 'A', author: 'X', dynasty: 'tang', form: null }],
+      total: 1,
+      page: 1,
+      pageSize: 24,
+    });
     const { GET } = await import('@/app/api/poetry/route');
     const r = await GET(new Request('http://x/api/poetry?dynasty=tang') as any);
     const j = await r.json();
@@ -699,7 +907,9 @@ describe('GET /api/poetry', () => {
     mockListPoems.mockResolvedValueOnce({ items: [], total: 0, page: 1, pageSize: 24 });
     const { GET } = await import('@/app/api/poetry/route');
     await GET(new Request('http://x/api/poetry?dynasty=song&q=test&page=2') as any);
-    expect(mockListPoems).toHaveBeenCalledWith(expect.objectContaining({ dynasty: 'song', q: 'test', page: 2 }));
+    expect(mockListPoems).toHaveBeenCalledWith(
+      expect.objectContaining({ dynasty: 'song', q: 'test', page: 2 }),
+    );
   });
 });
 ```
@@ -709,16 +919,19 @@ Apply the same pattern to `poetry-detail.test.ts` (mock `getPoem`) and `poetry-r
 - [ ] **Step 5: tsc + build + tests**
 
 Run:
+
 ```bash
 pnpm tsc --noEmit
 pnpm test
 pnpm build
 ```
+
 Expected: tsc clean, all tests pass, build succeeds. (This task touches `app/api/poetry/*` and `app/poetry/[id]/page.tsx`, so per memory `feedback-per-task-build-check`, `pnpm build` is required.)
 
 - [ ] **Step 6: Live smoke against dev server**
 
 Run:
+
 ```bash
 DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm dev &
 sleep 5
@@ -731,6 +944,7 @@ echo
 curl -s "http://localhost:4444/api/poetry/forms" | head -c 300
 kill %1 2>/dev/null
 ```
+
 Expected: 200 OK with valid JSON for each, no DB connection errors in logs.
 
 - [ ] **Step 7: Commit**
@@ -745,11 +959,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "refactor(p
 ### Task 4: Sitemap + JSON-LD on detail page
 
 **Files:**
+
 - Create: `app/sitemap.ts`
 - Create: `app/poetry/[id]/jsonld.ts` (helper for JSON-LD)
 - Modify: `app/poetry/[id]/page.tsx` (inject JSON-LD via metadata.other or a small client component)
 
 **Interfaces:**
+
 - Consumes: `loadManifest()` from `lib/poetry`, `getPoem(id)` from `lib/poetry`, `lib/site-config.ts` for `NEXT_PUBLIC_SITE_URL`.
 - Produces:
   - `app/sitemap.ts` default export — Next.js sitemap returning array of `{ url, lastModified }` entries for `/poetry/<id>` (and existing `/poetry`, `/ancient/<slug>`, `/sutra/<id>` entries — preserve current behavior, just add poems).
@@ -769,9 +985,16 @@ import { describe, it, expect } from 'vitest';
 describe('buildPoemJsonLd', () => {
   it('produces CreativeWork with author and text', async () => {
     const { buildPoemJsonLd } = await import('@/app/poetry/[id]/jsonld');
-    const p = { id: 1, title: '静夜思', author: '李白', dynasty: 'tang', form: '五绝',
+    const p = {
+      id: 1,
+      title: '静夜思',
+      author: '李白',
+      dynasty: 'tang',
+      form: '五绝',
       content: ['床前明月光，', '疑是地上霜。', '举头望明月，', '低头思故乡。'],
-      pinyin: [], appreciation: null } as any;
+      pinyin: [],
+      appreciation: null,
+    } as any;
     const ld = buildPoemJsonLd(p);
     expect(ld['@context']).toBe('https://schema.org');
     expect(ld['@type']).toBe('CreativeWork');
@@ -850,12 +1073,20 @@ import { loadManifest } from '@/lib/poetry';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 
-interface ClassicsManifest { books: Array<{ slug: string }>; }
-interface SutrasManifest { items?: Array<{ id: number }>; sutras?: Array<{ id: number }>; }
+interface ClassicsManifest {
+  books: Array<{ slug: string }>;
+}
+interface SutrasManifest {
+  items?: Array<{ id: number }>;
+  sutras?: Array<{ id: number }>;
+}
 
 async function loadJson<T>(p: string): Promise<T | null> {
-  try { return JSON.parse(await fs.readFile(path.join(process.cwd(), p), 'utf8')) as T; }
-  catch { return null; }
+  try {
+    return JSON.parse(await fs.readFile(path.join(process.cwd(), p), 'utf8')) as T;
+  } catch {
+    return null;
+  }
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -863,18 +1094,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const classics = await loadJson<ClassicsManifest>('data/classics-manifest.json');
   const sutras = await loadJson<SutrasManifest>('data/sutras-manifest.json');
 
-  const poems = manifest.items.map(i => ({
+  const poems = manifest.items.map((i) => ({
     url: `${SITE_URL}/poetry/${i.id}`,
     lastModified: manifest.updatedAt,
   }));
 
-  const classicsEntries = (classics?.books ?? []).map(b => ({
+  const classicsEntries = (classics?.books ?? []).map((b) => ({
     url: `${SITE_URL}/ancient/${b.slug}`,
     lastModified: new Date().toISOString(),
   }));
 
   const sutraIds = sutras?.items ?? sutras?.sutras ?? [];
-  const sutraEntries = sutraIds.map(s => ({
+  const sutraEntries = sutraIds.map((s) => ({
     url: `${SITE_URL}/sutra/${s.id}`,
     lastModified: new Date().toISOString(),
   }));
@@ -893,6 +1124,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 - [ ] **Step 8: tsc + build + sitemap check**
 
 Run:
+
 ```bash
 pnpm tsc --noEmit
 pnpm build
@@ -904,6 +1136,7 @@ curl -s "http://localhost:4444/poetry/1" -o /tmp/page1.html
 grep -c 'application/ld+json' /tmp/page1.html
 kill %1 2>/dev/null
 ```
+
 Expected: build succeeds; sitemap.xml contains 1161 `/poetry/<id>` entries; detail page contains 1 `<script type="application/ld+json">` block.
 
 - [ ] **Step 9: Commit**
@@ -918,6 +1151,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 ### Task 5: Convert print route + DROP poems table + manifest consistency check
 
 **Files:**
+
 - Modify: `app/api/poetry/[id]/print/route.ts` (replace raw SQL with `getPoem()` from `@/lib/poetry`)
 - Modify: `tests/integration/api/print-logging.test.ts` (replace `INSERT INTO poems` setup with mock-based fixture or file seed)
 - Create: `scripts/drop-poems-table.ts`
@@ -925,6 +1159,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(seo):
 - Create: `tests/integration/scripts/check-poems-manifest.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `scripts/drop-poems-table.ts` exports `dropPoemsTable(): Promise<void>` — `DROP TABLE IF EXISTS poems`. Idempotent.
   - `scripts/check-poems-manifest.ts` exports `checkPoemsManifest(): Promise<{ ok: boolean; issues: string[] }>` — verifies `manifest.count === fs.readdir('data/poems').length - 1` (minus manifest), every manifest id has a file, every file is in manifest.
@@ -977,7 +1212,16 @@ vi.mock('@/lib/poetry', () => ({
 }));
 
 // In the test that exercises the poem print branch:
-mockGetPoem.mockResolvedValueOnce({ id: poemId, title: 'mock title', author: 'X', dynasty: 'tang', form: null, content: [], pinyin: [], appreciation: null });
+mockGetPoem.mockResolvedValueOnce({
+  id: poemId,
+  title: 'mock title',
+  author: 'X',
+  dynasty: 'tang',
+  form: null,
+  content: [],
+  pinyin: [],
+  appreciation: null,
+});
 ```
 
 Then remove the `INSERT INTO poems` line for the poem branch and remove `TRUNCATE TABLE poems` if present.
@@ -989,11 +1233,13 @@ Pick Approach A. The test file already mocks `next/headers`; adding a `vi.mock('
 - [ ] **Step 3: tsc + build + run the affected tests**
 
 Run:
+
 ```bash
 pnpm tsc --noEmit
 pnpm test tests/integration/api/print-logging.test.ts
 pnpm build
 ```
+
 Expected: tsc clean, print-logging test passes (mocked), build green.
 
 - [ ] **Step 4: Write failing test for checkPoemsManifest**
@@ -1006,20 +1252,43 @@ const mockReadFile = vi.fn();
 const mockReaddir = vi.fn();
 vi.mock('fs/promises', () => ({
   default: { readFile: mockReadFile, readdir: mockReaddir },
-  readFile: mockReadFile, readdir: mockReaddir,
+  readFile: mockReadFile,
+  readdir: mockReaddir,
 }));
 
-beforeEach(() => { vi.clearAllMocks(); });
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 describe('checkPoemsManifest', () => {
   it('ok when manifest matches files', async () => {
-    mockReadFile.mockResolvedValueOnce(JSON.stringify({
-      version: 1, updatedAt: '2026-06-21', count: 2,
-      items: [
-        { id: 1, title: 'A', author: 'X', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 },
-        { id: 2, title: 'B', author: 'Y', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 },
-      ],
-    }));
+    mockReadFile.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 1,
+        updatedAt: '2026-06-21',
+        count: 2,
+        items: [
+          {
+            id: 1,
+            title: 'A',
+            author: 'X',
+            dynasty: '唐',
+            category: 'tang',
+            form: '五绝',
+            contentLineCount: 4,
+          },
+          {
+            id: 2,
+            title: 'B',
+            author: 'Y',
+            dynasty: '唐',
+            category: 'tang',
+            form: '五绝',
+            contentLineCount: 4,
+          },
+        ],
+      }),
+    );
     mockReaddir.mockResolvedValueOnce(['1.json', '2.json', 'poems-manifest.json']);
     const { checkPoemsManifest } = await import('@/scripts/check-poems-manifest');
     const r = await checkPoemsManifest();
@@ -1028,13 +1297,33 @@ describe('checkPoemsManifest', () => {
   });
 
   it('flags missing file', async () => {
-    mockReadFile.mockResolvedValueOnce(JSON.stringify({
-      version: 1, updatedAt: '2026-06-21', count: 2,
-      items: [
-        { id: 1, title: 'A', author: 'X', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 },
-        { id: 2, title: 'B', author: 'Y', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 },
-      ],
-    }));
+    mockReadFile.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 1,
+        updatedAt: '2026-06-21',
+        count: 2,
+        items: [
+          {
+            id: 1,
+            title: 'A',
+            author: 'X',
+            dynasty: '唐',
+            category: 'tang',
+            form: '五绝',
+            contentLineCount: 4,
+          },
+          {
+            id: 2,
+            title: 'B',
+            author: 'Y',
+            dynasty: '唐',
+            category: 'tang',
+            form: '五绝',
+            contentLineCount: 4,
+          },
+        ],
+      }),
+    );
     mockReaddir.mockResolvedValueOnce(['1.json']); // 2.json missing
     const { checkPoemsManifest } = await import('@/scripts/check-poems-manifest');
     const r = await checkPoemsManifest();
@@ -1043,10 +1332,24 @@ describe('checkPoemsManifest', () => {
   });
 
   it('flags orphan file', async () => {
-    mockReadFile.mockResolvedValueOnce(JSON.stringify({
-      version: 1, updatedAt: '2026-06-21', count: 1,
-      items: [{ id: 1, title: 'A', author: 'X', dynasty: '唐', category: 'tang', form: '五绝', contentLineCount: 4 }],
-    }));
+    mockReadFile.mockResolvedValueOnce(
+      JSON.stringify({
+        version: 1,
+        updatedAt: '2026-06-21',
+        count: 1,
+        items: [
+          {
+            id: 1,
+            title: 'A',
+            author: 'X',
+            dynasty: '唐',
+            category: 'tang',
+            form: '五绝',
+            contentLineCount: 4,
+          },
+        ],
+      }),
+    );
     mockReaddir.mockResolvedValueOnce(['1.json', '99.json']); // 99.json not in manifest
     const { checkPoemsManifest } = await import('@/scripts/check-poems-manifest');
     const r = await checkPoemsManifest();
@@ -1078,11 +1381,12 @@ export async function checkPoemsManifest(): Promise<{ ok: boolean; issues: strin
   const raw = await fs.readFile(MANIFEST_PATH, 'utf8');
   const manifest = JSON.parse(raw) as PoemsManifest;
 
-  const files = (await fs.readdir(DATA_DIR))
-    .filter(f => f.endsWith('.json') && f !== 'poems-manifest.json');
+  const files = (await fs.readdir(DATA_DIR)).filter(
+    (f) => f.endsWith('.json') && f !== 'poems-manifest.json',
+  );
 
-  const fileIds = new Set(files.map(f => Number(f.replace(/\.json$/, ''))));
-  const manifestIds = new Set(manifest.items.map(i => i.id));
+  const fileIds = new Set(files.map((f) => Number(f.replace(/\.json$/, ''))));
+  const manifestIds = new Set(manifest.items.map((i) => i.id));
 
   for (const id of manifestIds) {
     if (!fileIds.has(id)) issues.push(`file for id ${id} missing`);
@@ -1099,13 +1403,19 @@ export async function checkPoemsManifest(): Promise<{ ok: boolean; issues: strin
 
 if (require.main === module) {
   checkPoemsManifest()
-    .then(r => {
-      if (r.ok) { console.log('[check-poems-manifest] OK'); process.exit(0); }
+    .then((r) => {
+      if (r.ok) {
+        console.log('[check-poems-manifest] OK');
+        process.exit(0);
+      }
       console.error('[check-poems-manifest] FAILED:');
       for (const i of r.issues) console.error('  -', i);
       process.exit(1);
     })
-    .catch(err => { console.error('[check-poems-manifest] error:', err); process.exit(1); });
+    .catch((err) => {
+      console.error('[check-poems-manifest] error:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -1117,9 +1427,11 @@ Expected: 3/3 PASS
 - [ ] **Step 8: Live run on piyin_dev**
 
 Run:
+
 ```bash
 pnpm tsx scripts/check-poems-manifest.ts
 ```
+
 Expected: `[check-poems-manifest] OK`
 
 - [ ] **Step 9: Implement drop-poems-table.ts**
@@ -1136,8 +1448,14 @@ export async function dropPoemsTable(): Promise<void> {
 
 if (require.main === module) {
   dropPoemsTable()
-    .then(() => { console.log('[drop-poems-table] poems table dropped'); process.exit(0); })
-    .catch(err => { console.error('[drop-poems-table] failed:', err); process.exit(1); });
+    .then(() => {
+      console.log('[drop-poems-table] poems table dropped');
+      process.exit(0);
+    })
+    .catch((err) => {
+      console.error('[drop-poems-table] failed:', err);
+      process.exit(1);
+    });
 }
 ```
 
@@ -1146,13 +1464,16 @@ if (require.main === module) {
 - [ ] **Step 10: Run DROP on piyin_dev, then verify app still works**
 
 Run:
+
 ```bash
 DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/drop-poems-table.ts
 "/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SHOW TABLES LIKE 'poems';"
 ```
+
 Expected: prints "poems table dropped"; second command returns empty (table gone).
 
 Then start dev and re-curl the API:
+
 ```bash
 DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm dev &
 sleep 5
@@ -1161,6 +1482,7 @@ echo
 curl -s "http://localhost:4444/api/poetry/1" | head -c 300
 kill %1 2>/dev/null
 ```
+
 Expected: both return 200 OK with valid JSON. App is fully file-only.
 
 - [ ] **Step 11: tsc + commit**
@@ -1176,6 +1498,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 ### Task 6: Prod push (per memory: dev first, then prod)
 
 **Files:**
+
 - No code changes. Operations only.
 
 **Steps:**
@@ -1183,11 +1506,13 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 - [ ] **Step 1: Verify piyin_dev is fully migrated**
 
 Run:
+
 ```bash
 "/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SHOW TABLES LIKE 'poems';"
 ls data/poems/ | grep -E '^[0-9]+\.json$' | wc -l
 pnpm tsx scripts/check-poems-manifest.ts
 ```
+
 Expected: table gone; 1161 files; manifest OK.
 
 - [ ] **Step 2: SSH to prod host and verify DATABASE_URL**
@@ -1195,6 +1520,7 @@ Expected: table gone; 1161 files; manifest OK.
 ```bash
 ssh prod "echo \$DATABASE_URL"
 ```
+
 Expected: `mysql://...@...:3306/piyin` (or equivalent). Confirm the schema name.
 
 - [ ] **Step 3: Push commit(s) to origin**
@@ -1203,6 +1529,7 @@ Expected: `mysql://...@...:3306/piyin` (or equivalent). Confirm the schema name.
 git log --oneline 56253eff..HEAD
 git push origin main
 ```
+
 Expected: 5 new commits pushed (Tasks 1–5). Note: if you're not on main, switch first.
 
 - [ ] **Step 4: On prod: pull, migrate, drop, build, restart**
@@ -1214,6 +1541,7 @@ ssh prod "cd /path/to/app && DATABASE_URL=\$DATABASE_URL pnpm tsx scripts/check-
 ssh prod "cd /path/to/app && DATABASE_URL=\$DATABASE_URL pnpm tsx scripts/drop-poems-table.ts"
 ssh prod "cd /path/to/app && pnpm build && pm2 restart pinyin-character || systemctl restart pinyin-character"
 ```
+
 Expected: each step succeeds; `check-poems-manifest` prints OK; `drop-poems-table` prints "dropped"; build succeeds; service restarts.
 
 - [ ] **Step 5: Smoke prod**
@@ -1225,6 +1553,7 @@ curl -s "https://pinyin-character.example.com/api/poetry/1" | head -c 300
 echo
 curl -s "https://pinyin-character.example.com/sitemap.xml" | head -c 500
 ```
+
 Expected: 200 OK for all three; sitemap contains `/poetry/<id>` entries.
 
 - [ ] **Step 6: No commit**
@@ -1237,8 +1566,10 @@ In `E:\ToolDevelop\PinYinCharacter\.superpowers\sdd\progress.md`, append a new s
 
 ```markdown
 ## Plan: Poems + Classics File-Only Refactor (2026-06-21)
+
 Spec: `docs/superpowers/specs/2026-06-21-poems-classics-file-only-design.md`
 Commits: <commit-range-1>..<commit-range-2>
+
 - [ ] Task 1: Migration script (idempotent DB → files + manifest)
 - [ ] Task 2: loader.ts + queries.ts (pure functions + tests)
 - [ ] Task 3: Rewire routes + delete lib/poetry.ts
@@ -1250,6 +1581,7 @@ Commits: <commit-range-1>..<commit-range-2>
 Mark each task's `- [ ]` → `- [x]` as it completes; record commit hashes in the `Commits:` line.
 
 Commit the ledger update:
+
 ```bash
 git add .superpowers/sdd/progress.md
 git -c user.email=claude@anthropic.com -c user.name=claude commit -m "docs(ledger): poems file-only refactor complete"

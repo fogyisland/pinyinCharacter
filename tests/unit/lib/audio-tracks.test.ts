@@ -69,10 +69,31 @@ beforeEach(() => {
 
 describe('listTracks', () => {
   it('returns mapped rows in the default order (is_default DESC, id ASC)', async () => {
-    queryResults['FROM audio_tracks'] = [[
-      { id: 2, title: '心经', filename: '2.mp3', size_bytes: 12345, is_default: 1, uploaded_by: 1, created_at: new Date('2026-06-29T10:00:00Z'), updated_at: new Date('2026-06-29T10:00:00Z') },
-      { id: 1, title: '大悲咒', filename: '1.mp3', size_bytes: 67890, is_default: 0, uploaded_by: null, created_at: new Date('2026-06-29T09:00:00Z'), updated_at: new Date('2026-06-29T09:00:00Z') },
-    ], []];
+    queryResults['FROM audio_tracks'] = [
+      [
+        {
+          id: 2,
+          title: '心经',
+          filename: '2.mp3',
+          size_bytes: 12345,
+          is_default: 1,
+          uploaded_by: 1,
+          created_at: new Date('2026-06-29T10:00:00Z'),
+          updated_at: new Date('2026-06-29T10:00:00Z'),
+        },
+        {
+          id: 1,
+          title: '大悲咒',
+          filename: '1.mp3',
+          size_bytes: 67890,
+          is_default: 0,
+          uploaded_by: null,
+          created_at: new Date('2026-06-29T09:00:00Z'),
+          updated_at: new Date('2026-06-29T09:00:00Z'),
+        },
+      ],
+      [],
+    ];
     const tracks = await listTracks();
     expect(tracks).toHaveLength(2);
     expect(tracks[0].id).toBe(2);
@@ -90,9 +111,21 @@ describe('listTracks', () => {
 
   it('serializes Date columns to ISO strings', async () => {
     const d = new Date('2026-06-29T10:00:00Z');
-    queryResults['FROM audio_tracks'] = [[
-      { id: 1, title: 't', filename: '1.mp3', size_bytes: 100, is_default: 1, uploaded_by: null, created_at: d, updated_at: d },
-    ], []];
+    queryResults['FROM audio_tracks'] = [
+      [
+        {
+          id: 1,
+          title: 't',
+          filename: '1.mp3',
+          size_bytes: 100,
+          is_default: 1,
+          uploaded_by: null,
+          created_at: d,
+          updated_at: d,
+        },
+      ],
+      [],
+    ];
     const t = (await listTracks())[0];
     expect(t.createdAt).toBe('2026-06-29T10:00:00.000Z');
   });
@@ -100,9 +133,21 @@ describe('listTracks', () => {
 
 describe('getTrack', () => {
   it('returns a mapped track when found', async () => {
-    queryResults['FROM audio_tracks'] = [[
-      { id: 5, title: '大悲咒', filename: '5.mp3', size_bytes: 999, is_default: 0, uploaded_by: null, created_at: '2026-06-29T00:00:00Z', updated_at: '2026-06-29T00:00:00Z' },
-    ], []];
+    queryResults['FROM audio_tracks'] = [
+      [
+        {
+          id: 5,
+          title: '大悲咒',
+          filename: '5.mp3',
+          size_bytes: 999,
+          is_default: 0,
+          uploaded_by: null,
+          created_at: '2026-06-29T00:00:00Z',
+          updated_at: '2026-06-29T00:00:00Z',
+        },
+      ],
+      [],
+    ];
     const t = await getTrack(5);
     expect(t?.id).toBe(5);
     expect(t?.title).toBe('大悲咒');
@@ -116,9 +161,7 @@ describe('getTrack', () => {
 
 describe('getActiveTrack', () => {
   it('returns src as /audio/<filename> for the first row (is_default DESC)', async () => {
-    queryResults['FROM audio_tracks'] = [[
-      { id: 3, title: '心经', filename: '3.mp3' },
-    ], []];
+    queryResults['FROM audio_tracks'] = [[{ id: 3, title: '心经', filename: '3.mp3' }], []];
     const a = await getActiveTrack();
     expect(a).toEqual({ src: '/audio/3.mp3', title: '心经' });
   });
@@ -180,7 +223,9 @@ describe('updateTrack', () => {
     expect(clear).toBeDefined();
     expect(clear!.params).toEqual([1]);
     // The subsequent UPDATE for THIS row uses is_default=1 + WHERE id=?
-    const upd = queryLog.find((q) => /UPDATE audio_tracks SET is_default = \? WHERE id = \?/.test(q.sql));
+    const upd = queryLog.find((q) =>
+      /UPDATE audio_tracks SET is_default = \? WHERE id = \?/.test(q.sql),
+    );
     expect(upd).toBeDefined();
     expect(upd!.params).toEqual([1, 1]); // is_default=1, id=1
   });

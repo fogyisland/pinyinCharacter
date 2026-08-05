@@ -29,6 +29,7 @@
 ## File Structure
 
 ### New files
+
 - `components/worksheet/BrushModePicker.tsx` — 3-button picker for `brush-12` / `brush-24` / `brush-28`.
 - `components/worksheet/BrushModePicker.test.tsx` — render + onChange + selected-state tests.
 - `scripts/migrations/2026-06-19-brush-paper-size.sql` — `ALTER TABLE worksheets MODIFY paper_size ENUM(...)`.
@@ -38,6 +39,7 @@
 - `public/fonts/long-cang.woff2` — subset WOFF2 output (produced by `pnpm fonts:subset` on network host).
 
 ### Modified files
+
 - `scripts/fonts/download-hard-pen-fonts.ts` — add 2 brush font entries to `FONTS` array.
 - `scripts/fonts/subset-hard-pen-fonts.mjs` — add 2 entries to `TARGETS` array.
 - `scripts/fonts/copy-ofl.ts` — add 2 font entries to copy list.
@@ -60,6 +62,7 @@
 - `tests/unit/components/worksheet/RandomTab.test.tsx` — update existing test to pass `title` prop; add empty-title-blocks-generate test.
 
 ### Untouched (verified)
+
 - `app/api/worksheets/route.ts` — uses `saveWorksheetSchema` (extended) + `validateWorksheetInput` (extended). No route-shape change.
 - `app/api/chars/random/route.ts` — unchanged. Random tab still calls this.
 - `app/worksheet/new/page.tsx` and `app/worksheet/[id]/page.tsx` — unchanged. They consume `Worksheet` and `WorksheetPreview` which handle the new types.
@@ -72,6 +75,7 @@
 ### Task 1: Brush font pipeline + assets (download, subset, copy OFL, license doc, @font-face, tokens)
 
 **Files:**
+
 - Modify: `scripts/fonts/download-hard-pen-fonts.ts` (add 2 `FONTS` entries)
 - Modify: `scripts/fonts/subset-hard-pen-fonts.mjs` (add 2 `TARGETS` entries)
 - Modify: `scripts/fonts/copy-ofl.ts` (add 2 font entries)
@@ -83,6 +87,7 @@
 - Create: `public/fonts/long-cang.woff2` (committed asset — same)
 
 **Interfaces:**
+
 - Consumes: existing G2 download + subset + OFL-copy scripts (unchanged APIs).
 - Produces: 2 new WOFF2 files in `public/fonts/`, 2 new OFL.txt files, 2 new @font-face declarations, 2 new Tailwind/font tokens.
 
@@ -167,11 +172,13 @@ Open `THIRD_PARTY_LICENSES.md`. After the existing 4 hard-pen entries, add 2 new
 
 ```markdown
 ## Ma Shan Zheng (马善政体)
+
 - Upstream: https://github.com/google/fonts/tree/main/ofl/mashanzheng
 - Copyright: © 2024 The Ma Shan Zheng Project Authors.
 - License: SIL OFL 1.1
 
 ## Long Cang (龙藏体)
+
 - Upstream: https://github.com/google/fonts/tree/main/ofl/longcang
 - Copyright: © 2024 The Long Cang Project Authors.
 - License: SIL OFL 1.1
@@ -215,12 +222,14 @@ git commit -m "feat(worksheet): add 2 OFL brush fonts (Ma Shan Zheng + Long Cang
 ### Task 2: Extend FontFamily union + FONT_FAMILIES + FontFamilyPicker (TDD)
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts` (extend `FontFamily` union + `FONT_FAMILIES` array)
 - Modify: `components/worksheet/FontFamilyPicker.tsx` (extend `GROUPS` constant)
 - Modify: `tests/unit/lib/worksheet-types.test.ts` (update existing 4 tests for 9 fonts + 3 groups)
 - Modify: `tests/unit/components/worksheet/FontFamilyPicker.test.tsx` (update from 7 to 9 options, 3 optgroups)
 
 **Interfaces:**
+
 - Consumes: existing `FontFamily` union (7 values) and `FONT_FAMILIES` array (7 entries).
 - Produces: extended `FontFamily` union (9 values) and `FONT_FAMILIES` array (9 entries with `group: 'system' | 'hard-pen' | 'brush'`). The picker shows 3 `<optgroup>`s.
 
@@ -230,9 +239,15 @@ Open `lib/worksheet-types.ts`. Change the `FontFamily` type (around line 5-7) to
 
 ```ts
 export type FontFamily =
-  | 'song' | 'kai' | 'hei'
-  | 'wenkai-gb' | 'yozai' | 'iansui' | 'zen-kaku-thin'
-  | 'ma-shan-zheng' | 'long-cang';
+  | 'song'
+  | 'kai'
+  | 'hei'
+  | 'wenkai-gb'
+  | 'yozai'
+  | 'iansui'
+  | 'zen-kaku-thin'
+  | 'ma-shan-zheng'
+  | 'long-cang';
 ```
 
 In the `FONT_FAMILIES` array (around line 46-59), change the `group` field type to include `'brush'`:
@@ -245,16 +260,31 @@ export const FONT_FAMILIES: {
   group: 'system' | 'hard-pen' | 'brush';
 }[] = [
   // existing 7 entries unchanged
-  { value: 'song',          label: '宋体',         cssVar: 'var(--font-han-serif)',         group: 'system' },
-  { value: 'kai',           label: '楷体',         cssVar: 'var(--font-wenkai)',            group: 'system' },
-  { value: 'hei',           label: '黑体',         cssVar: 'var(--font-han-sans)',          group: 'system' },
-  { value: 'wenkai-gb',     label: '霞鹜文楷 GB',  cssVar: 'var(--font-lxgw-wenkai-gb)',    group: 'hard-pen' },
-  { value: 'yozai',         label: '悠哉',         cssVar: 'var(--font-yozai)',             group: 'hard-pen' },
-  { value: 'iansui',        label: '芫荽',         cssVar: 'var(--font-iansui)',            group: 'hard-pen' },
-  { value: 'zen-kaku-thin', label: '思源极细黑',   cssVar: 'var(--font-zen-kaku-thin)',     group: 'hard-pen' },
+  { value: 'song', label: '宋体', cssVar: 'var(--font-han-serif)', group: 'system' },
+  { value: 'kai', label: '楷体', cssVar: 'var(--font-wenkai)', group: 'system' },
+  { value: 'hei', label: '黑体', cssVar: 'var(--font-han-sans)', group: 'system' },
+  {
+    value: 'wenkai-gb',
+    label: '霞鹜文楷 GB',
+    cssVar: 'var(--font-lxgw-wenkai-gb)',
+    group: 'hard-pen',
+  },
+  { value: 'yozai', label: '悠哉', cssVar: 'var(--font-yozai)', group: 'hard-pen' },
+  { value: 'iansui', label: '芫荽', cssVar: 'var(--font-iansui)', group: 'hard-pen' },
+  {
+    value: 'zen-kaku-thin',
+    label: '思源极细黑',
+    cssVar: 'var(--font-zen-kaku-thin)',
+    group: 'hard-pen',
+  },
   // NEW brush group (G3)
-  { value: 'ma-shan-zheng', label: '马善政体 (毛笔正书)', cssVar: 'var(--font-ma-shan-zheng)', group: 'brush' },
-  { value: 'long-cang',     label: '龙藏体 (草书)',       cssVar: 'var(--font-long-cang)',      group: 'brush' },
+  {
+    value: 'ma-shan-zheng',
+    label: '马善政体 (毛笔正书)',
+    cssVar: 'var(--font-ma-shan-zheng)',
+    group: 'brush',
+  },
+  { value: 'long-cang', label: '龙藏体 (草书)', cssVar: 'var(--font-long-cang)', group: 'brush' },
 ];
 ```
 
@@ -286,9 +316,15 @@ describe('FONT_FAMILIES (G3)', () => {
   it('covers the FontFamily union', () => {
     const values = new Set(FONT_FAMILIES.map((f) => f.value));
     const expected: FontFamily[] = [
-      'song', 'kai', 'hei',
-      'wenkai-gb', 'yozai', 'iansui', 'zen-kaku-thin',
-      'ma-shan-zheng', 'long-cang',
+      'song',
+      'kai',
+      'hei',
+      'wenkai-gb',
+      'yozai',
+      'iansui',
+      'zen-kaku-thin',
+      'ma-shan-zheng',
+      'long-cang',
     ];
     for (const e of expected) expect(values.has(e)).toBe(true);
   });
@@ -315,9 +351,9 @@ Open `components/worksheet/FontFamilyPicker.tsx`. Change the `GROUPS` constant (
 
 ```ts
 const GROUPS = [
-  { key: 'system',   label: '系统字体' },
+  { key: 'system', label: '系统字体' },
   { key: 'hard-pen', label: '硬笔字体' },
-  { key: 'brush',    label: '毛笔字体' },
+  { key: 'brush', label: '毛笔字体' },
 ] as const;
 ```
 
@@ -407,12 +443,14 @@ git commit -m "feat(worksheet): extend FontFamily to 9 (add brush group)"
 ### Task 3: Widen PaperSize union + isBrushSize + cellsPerPage (TDD)
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts` (extend `PaperSize` union, `PAPER_SIZES` array, add `BRUSH_PAPER_SIZES` const + `BrushPaperSize` type + `isBrushSize()` predicate)
 - Modify: `lib/worksheet-page-count.ts` (extend `CELLS_PER_PAGE` map)
 - Modify: `tests/unit/lib/worksheet-page-count.test.ts` (add brush mode tests)
 - Modify: `tests/unit/lib/worksheet-types.test.ts` (add `isBrushSize` + `BrushPaperSize` tests)
 
 **Interfaces:**
+
 - Consumes: existing `PaperSize` union (3 values), `PAPER_SIZES` array (3 entries), `cellsPerPage()` function.
 - Produces: extended `PaperSize` union (6 values), `PAPER_SIZES` array (6 entries), `BRUSH_PAPER_SIZES` tuple, `BrushPaperSize` type, `isBrushSize()` type predicate, `cellsPerPage('brush-12')` returns 12 etc.
 
@@ -451,7 +489,7 @@ Add the brush types/predicate after the `FONT_FAMILIES` array (around line 60, b
 
 ```ts
 export const BRUSH_PAPER_SIZES = ['brush-12', 'brush-24', 'brush-28'] as const;
-export type BrushPaperSize = typeof BRUSH_PAPER_SIZES[number];
+export type BrushPaperSize = (typeof BRUSH_PAPER_SIZES)[number];
 
 export function isBrushSize(p: PaperSize): p is BrushPaperSize {
   return (BRUSH_PAPER_SIZES as readonly string[]).includes(p);
@@ -461,13 +499,18 @@ export function isBrushSize(p: PaperSize): p is BrushPaperSize {
 Extend the `PAPER_SIZES` array (line 40-44) to include 3 new entries:
 
 ```ts
-export const PAPER_SIZES: { value: PaperSize; label: string; cols: number; cellsPerPage: number }[] = [
-  { value: 'A3',       label: 'A3 · 大',       cols: 12, cellsPerPage: cellsPerPage('A3') },
-  { value: 'A4',       label: 'A4 · 标准',     cols: 8,  cellsPerPage: cellsPerPage('A4') },
-  { value: 'B5',       label: 'B5 · 小',       cols: 6,  cellsPerPage: cellsPerPage('B5') },
-  { value: 'brush-12', label: '12 字 · 毛笔',  cols: 4,  cellsPerPage: 12 },
-  { value: 'brush-24', label: '24 字 · 毛笔',  cols: 6,  cellsPerPage: 24 },
-  { value: 'brush-28', label: '28 字 · 毛笔',  cols: 7,  cellsPerPage: 28 },
+export const PAPER_SIZES: {
+  value: PaperSize;
+  label: string;
+  cols: number;
+  cellsPerPage: number;
+}[] = [
+  { value: 'A3', label: 'A3 · 大', cols: 12, cellsPerPage: cellsPerPage('A3') },
+  { value: 'A4', label: 'A4 · 标准', cols: 8, cellsPerPage: cellsPerPage('A4') },
+  { value: 'B5', label: 'B5 · 小', cols: 6, cellsPerPage: cellsPerPage('B5') },
+  { value: 'brush-12', label: '12 字 · 毛笔', cols: 4, cellsPerPage: 12 },
+  { value: 'brush-24', label: '24 字 · 毛笔', cols: 6, cellsPerPage: 24 },
+  { value: 'brush-28', label: '28 字 · 毛笔', cols: 7, cellsPerPage: 28 },
 ];
 ```
 
@@ -539,10 +582,12 @@ git commit -m "feat(worksheet): widen paper_size to 6 + brush type predicate + b
 ### Task 4: BrushModePicker component (TDD)
 
 **Files:**
+
 - Create: `components/worksheet/BrushModePicker.tsx`
 - Create: `tests/unit/components/worksheet/BrushModePicker.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `BrushPaperSize` type from `lib/worksheet-types`.
 - Produces: a 3-button picker component (`<button>` row) for `brush-12` / `brush-24` / `brush-28`. Visual pattern: same as `PaperSizePicker` A3/A4/B5 radios, but using buttons instead of radios (per the spec).
 
@@ -658,10 +703,12 @@ git commit -m "feat(worksheet): BrushModePicker (12/24/28 char modes)"
 ### Task 5: PaperSizePicker conditional (TDD)
 
 **Files:**
+
 - Modify: `components/worksheet/PaperSizePicker.tsx` (extend to accept `cellStyle`, branch on it)
 - Create: `tests/unit/components/worksheet/PaperSizePicker.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `CellStyle` + `PaperSize` types, `BrushModePicker` component, `isBrushSize()` predicate.
 - Produces: When `cellStyle === 'brush'`, render `<BrushModePicker>`. Otherwise render the existing A3/A4/B5 radio group. Defensive narrowing for `value` not being a brush size when `cellStyle === 'brush'`.
 
@@ -768,7 +815,9 @@ export function PaperSizePicker({ value, cellStyle, onChange }: Props) {
             checked={value === p.value}
             onChange={() => onChange(p.value)}
           />
-          <span>{p.label} <span className="text-xs text-ink-faint">≈{p.cellsPerPage}字/页</span></span>
+          <span>
+            {p.label} <span className="text-xs text-ink-faint">≈{p.cellsPerPage}字/页</span>
+          </span>
         </label>
       ))}
     </div>
@@ -798,12 +847,14 @@ git commit -m "feat(worksheet): PaperSizePicker renders BrushModePicker when cel
 ### Task 6: DB migration + init-db + saveWorksheetSchema (TDD)
 
 **Files:**
+
 - Create: `scripts/migrations/2026-06-19-brush-paper-size.sql`
 - Modify: `scripts/init-db.ts` (widen `paper_size` column declaration)
 - Modify: `lib/validators.ts` (widen `saveWorksheetSchema` `paperSize` enum + `fontFamily` enum)
 - Modify: `tests/unit/lib/worksheet-types.test.ts` (add `validateWorksheetInput` paperSize guard tests)
 
 **Interfaces:**
+
 - Consumes: existing DB schema (paper_size ENUM 3 values) + zod schema (paperSize enum 3 values, fontFamily enum 3 values).
 - Produces: SQL migration (idempotent ALTER) + updated init-db.ts + widened zod schema (paperSize 6 values, fontFamily 9 values) + 3 new `validateWorksheetInput` tests.
 
@@ -853,7 +904,10 @@ Open `lib/worksheet-types.ts`. Find the `ValidationResult` type (line 79-81) and
 
 ```ts
 export type ValidationResult =
-  | { ok: true; data: { title: string; content: string[]; cellStyle: CellStyle; paperSize: PaperSize } }
+  | {
+      ok: true;
+      data: { title: string; content: string[]; cellStyle: CellStyle; paperSize: PaperSize };
+    }
   | { ok: false; error: string };
 
 const VALID_PAPER_SIZES = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'] as const;
@@ -895,7 +949,12 @@ export function validateWorksheetInput(input: {
   }
   return {
     ok: true,
-    data: { title: input.title, content: input.content as string[], cellStyle: input.cellStyle, paperSize },
+    data: {
+      title: input.title,
+      content: input.content as string[],
+      cellStyle: input.cellStyle,
+      paperSize,
+    },
   };
 }
 ```
@@ -933,17 +992,22 @@ Open `lib/validators.ts`. Find the `saveWorksheetSchema` (lines 40-49). Change i
 ```ts
 export const saveWorksheetSchema = z.object({
   title: z.string().min(1).max(80),
-  content: z
-    .array(z.string().regex(SINGLE_CJK))
-    .min(1)
-    .max(500),
+  content: z.array(z.string().regex(SINGLE_CJK)).min(1).max(500),
   cellStyle: z.enum(['brush', 'square', 'pen', 'cross']),
   paperSize: z.enum(['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']).default('A4'),
-  fontFamily: z.enum([
-    'song', 'kai', 'hei',
-    'wenkai-gb', 'yozai', 'iansui', 'zen-kaku-thin',
-    'ma-shan-zheng', 'long-cang',
-  ]).default('song'),
+  fontFamily: z
+    .enum([
+      'song',
+      'kai',
+      'hei',
+      'wenkai-gb',
+      'yozai',
+      'iansui',
+      'zen-kaku-thin',
+      'ma-shan-zheng',
+      'long-cang',
+    ])
+    .default('song'),
 });
 ```
 
@@ -965,11 +1029,13 @@ git commit -m "feat(worksheet): widen paper_size to 6 (DB + zod + validateWorksh
 ### Task 7: Larger brush cells (200/150/120 px) + grid classes
 
 **Files:**
+
 - Modify: `components/worksheet/WorksheetCell.tsx` (replace fixed `fontSize={60}` with `Math.round(size * 0.6)`)
 - Modify: `components/worksheet/WorksheetPreview.tsx` (add `cellSizeFor()` helper, pass `size` to `<WorksheetCell>`)
 - Modify: `app/globals.css` (add 3 new `.worksheet-grid--brush-NN` classes)
 
 **Interfaces:**
+
 - Consumes: existing `WorksheetCell` `size` prop (default 80), existing `WorksheetPreview` `paperSize` prop.
 - Produces: `WorksheetCell` renders the practice char at `size * 0.6` font-size; `WorksheetPreview` passes `cellSizeFor(paperSize)` to each cell; 3 new CSS grid classes for 4/6/7 cols.
 
@@ -1010,10 +1076,14 @@ import { PrintButton } from '@/components/common/PrintButton';
 
 function cellSizeFor(p: PaperSize): number {
   switch (p) {
-    case 'brush-12': return 200;
-    case 'brush-24': return 150;
-    case 'brush-28': return 120;
-    default:         return 80;   // A3/A4/B5 keep 80px (G2 default)
+    case 'brush-12':
+      return 200;
+    case 'brush-24':
+      return 150;
+    case 'brush-28':
+      return 120;
+    default:
+      return 80; // A3/A4/B5 keep 80px (G2 default)
   }
 }
 ```
@@ -1027,11 +1097,18 @@ export function WorksheetPreview(props: Props) {
   const sizeClass = `worksheet-grid--${props.paperSize.toLowerCase()}`;
   const cellSize = cellSizeFor(props.paperSize);
   // ... rest unchanged ...
-  {cells.map((cell) => (
-    <div key={cell.index} className="worksheet-cell">
-      <WorksheetCell char={cell.char} style={cell.style} size={cellSize} fontFamily={props.fontFamily} />
-    </div>
-  ))}
+  {
+    cells.map((cell) => (
+      <div key={cell.index} className="worksheet-cell">
+        <WorksheetCell
+          char={cell.char}
+          style={cell.style}
+          size={cellSize}
+          fontFamily={props.fontFamily}
+        />
+      </div>
+    ));
+  }
 }
 ```
 
@@ -1040,9 +1117,15 @@ export function WorksheetPreview(props: Props) {
 Open `app/globals.css`. Find the existing `.worksheet-grid--a3/a4/b5` block (lines 110-112). Add 3 more classes right after:
 
 ```css
-.worksheet-grid--brush-12 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.worksheet-grid--brush-24 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-.worksheet-grid--brush-28 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.worksheet-grid--brush-12 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.worksheet-grid--brush-24 {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.worksheet-grid--brush-28 {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
 ```
 
 - [ ] **Step 4: Type-check + visually verify in browser**
@@ -1066,11 +1149,13 @@ git commit -m "feat(worksheet): larger brush cells (200/150/120 px by mode) + 3 
 ### Task 8: defaultFontFor + WorksheetGenerator auto-pick wiring (TDD)
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts` (add `defaultFontFor()` helper)
 - Modify: `components/worksheet/WorksheetGenerator.tsx` (change `setCellStyle` to `handleCellStyleChange`, change initial `fontFamily` state)
 - Modify: `tests/unit/lib/worksheet-types.test.ts` (add `defaultFontFor` tests)
 
 **Interfaces:**
+
 - Consumes: `CellStyle` + `FontFamily` types.
 - Produces: `defaultFontFor(cellStyle)` returns the first font of the matching group; `WorksheetGenerator.handleCellStyleChange` flips `paperSize` and `fontFamily` based on the new cell style.
 
@@ -1109,10 +1194,14 @@ Open `lib/worksheet-types.ts`. Add the helper next to `isBrushSize` (after the b
 ```ts
 export function defaultFontFor(cellStyle: CellStyle): FontFamily {
   switch (cellStyle) {
-    case 'brush':  return 'ma-shan-zheng';
-    case 'pen':    return 'wenkai-gb';
-    case 'square': return 'song';
-    case 'cross':  return 'song';
+    case 'brush':
+      return 'ma-shan-zheng';
+    case 'pen':
+      return 'wenkai-gb';
+    case 'square':
+      return 'song';
+    case 'cross':
+      return 'song';
   }
 }
 ```
@@ -1127,17 +1216,25 @@ Expected: 11 (existing) + 4 (new defaultFontFor) = 15 tests pass.
 Open `components/worksheet/WorksheetGenerator.tsx`. Make these changes:
 
 1. Update the import line (line 5-6) to add `defaultFontFor` and `isBrushSize`:
+
    ```tsx
    import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
-   import { defaultFontFor, isBrushSize, paperSizeLabel, fontFamilyLabel } from '@/lib/worksheet-types';
+   import {
+     defaultFontFor,
+     isBrushSize,
+     paperSizeLabel,
+     fontFamilyLabel,
+   } from '@/lib/worksheet-types';
    ```
 
 2. Change the initial `fontFamily` state (line 31) to use `defaultFontFor`:
+
    ```tsx
    const [fontFamily, setFontFamily] = useState<FontFamily>(defaultFontFor('brush'));
    ```
 
 3. Add a `handleCellStyleChange` function inside the component (after the `useEffect` blocks, around line 53):
+
    ```tsx
    function handleCellStyleChange(next: CellStyle) {
      setCellStyle(next);
@@ -1151,6 +1248,7 @@ Open `components/worksheet/WorksheetGenerator.tsx`. Make these changes:
    ```
 
 4. Change the `<StylePicker>` props (line 160) from `onChange={setCellStyle}` to `onChange={handleCellStyleChange}`:
+
    ```tsx
    <StylePicker value={cellStyle} onChange={handleCellStyleChange} />
    ```
@@ -1179,11 +1277,13 @@ git commit -m "feat(worksheet): auto-pick font by cell style + defaultFontFor + 
 ### Task 9: Title required on RandomTab (TDD)
 
 **Files:**
+
 - Modify: `components/worksheet/RandomTab.tsx` (add `title` + `onTitleChange` props, add input, guard `handleGenerate`)
 - Modify: `components/worksheet/WorksheetGenerator.tsx` (pass `title` + `setTitle` to `<RandomTab>`)
 - Modify: `tests/unit/components/worksheet/RandomTab.test.tsx` (update existing test to pass new props, add empty-title-blocks-generate test)
 
 **Interfaces:**
+
 - Consumes: existing `RandomTab` props (`onPicked`); existing `WorksheetGenerator` `title` state.
 - Produces: `RandomTab` requires a `title` prop and emits `onTitleChange`. Empty title blocks `handleGenerate` with `请先填写字帖标题` error. `WorksheetGenerator` passes `title` + `setTitle` to `<RandomTab>`.
 
@@ -1301,12 +1401,16 @@ export function RandomTab({ title, onTitleChange, onPicked }: Props) {
       setErr('请先填写字帖标题');
       return;
     }
-    setBusy(true); setErr(null);
+    setBusy(true);
+    setErr(null);
     try {
       const res = await fetch(`/api/chars/random?count=${count}&difficulty=${difficulty}`);
       const j = await res.json();
-      if (!j.ok) { setErr(j.error?.message ?? '生成失败'); return; }
-      const chars = (j.data.chars as RandomChar[]).map(c => c.char);
+      if (!j.ok) {
+        setErr(j.error?.message ?? '生成失败');
+        return;
+      }
+      const chars = (j.data.chars as RandomChar[]).map((c) => c.char);
       onPicked(chars);
     } catch (e) {
       setErr((e as Error).message);
@@ -1325,7 +1429,7 @@ export function RandomTab({ title, onTitleChange, onPicked }: Props) {
         <input
           type="text"
           value={title}
-          onChange={e => onTitleChange(e.target.value.slice(0, 80))}
+          onChange={(e) => onTitleChange(e.target.value.slice(0, 80))}
           maxLength={80}
           placeholder="给字帖起个名字..."
           className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
@@ -1335,26 +1439,34 @@ export function RandomTab({ title, onTitleChange, onPicked }: Props) {
         <div>
           <label className="text-sm font-medium text-ink-soft">字数 (1-100)</label>
           <input
-            type="number" min={1} max={100} value={count}
-            onChange={e => setCount(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
+            type="number"
+            min={1}
+            max={100}
+            value={count}
+            onChange={(e) => setCount(Math.max(1, Math.min(100, Number(e.target.value) || 1)))}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           />
         </div>
         <div>
           <label className="text-sm font-medium text-ink-soft">难度</label>
           <select
-            value={difficulty} onChange={e => setDifficulty(e.target.value as any)}
+            value={difficulty}
+            onChange={(e) => setDifficulty(e.target.value as any)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           >
-            {(['easy', 'medium', 'hard'] as const).map(d => (
-              <option key={d} value={d}>{DIFFICULTY_LABELS[d]}</option>
+            {(['easy', 'medium', 'hard'] as const).map((d) => (
+              <option key={d} value={d}>
+                {DIFFICULTY_LABELS[d]}
+              </option>
             ))}
           </select>
         </div>
       </div>
       {err && <p className="text-sm text-red-600">{err}</p>}
       <button
-        type="button" onClick={handleGenerate} disabled={busy}
+        type="button"
+        onClick={handleGenerate}
+        disabled={busy}
         className="rounded-md bg-ink px-4 py-2 text-paper-soft hover:bg-ink/80 disabled:opacity-50"
       >
         {busy ? '抽字中…' : '随机生成'}
@@ -1413,6 +1525,7 @@ Expected: exit 0, no output.
 
 Run: `pnpm test`
 Expected: 475-485 passing tests + 1 pre-existing `etymology.test.ts` fail (documented in MEMORY, unrelated to G3). The G3-specific tests should all be green:
+
 - `tests/unit/lib/worksheet-types.test.ts` (15 tests: 7 FONT_FAMILIES, 3 isBrushSize, 4 validateWorksheetInput, 4 defaultFontFor = wait, recount: 4 FONT_FAMILIES + 3 isBrushSize + 4 validateWorksheetInput + 4 defaultFontFor = 15 tests)
 - `tests/unit/lib/worksheet-page-count.test.ts` (9 tests: 3 existing describe blocks + 3 new brush tests)
 - `tests/unit/components/worksheet/FontFamilyPicker.test.tsx` (5 tests)

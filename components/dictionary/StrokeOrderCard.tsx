@@ -137,7 +137,9 @@ export function StrokeOrderCard({ char, className }: Props) {
   if (error) {
     return (
       <article className={className}>
-        <p role="alert">暂无该字笔画数据 <span className="text-xs text-ink-faint">[{error}]</span></p>
+        <p role="alert">
+          暂无该字笔画数据 <span className="text-xs text-ink-faint">[{error}]</span>
+        </p>
       </article>
     );
   }
@@ -149,10 +151,7 @@ export function StrokeOrderCard({ char, className }: Props) {
         <span className="badge">新功能</span>
       </header>
       <div className="flex flex-col md:flex-row gap-6 items-center">
-        <div
-          className="relative"
-          style={{ width: SIZE, height: SIZE }}
-        >
+        <div className="relative" style={{ width: SIZE, height: SIZE }}>
           <svg
             className="absolute inset-0 pointer-events-none"
             viewBox="0 0 100 100"
@@ -162,10 +161,7 @@ export function StrokeOrderCard({ char, className }: Props) {
             <line x1="50" y1="0" x2="50" y2="100" stroke="#666" strokeWidth="0.4" />
             <line x1="0" y1="50" x2="100" y2="50" stroke="#666" strokeWidth="0.4" />
           </svg>
-          <div
-            ref={containerRef}
-            className={`absolute inset-0 ${isReady ? '' : 'invisible'}`}
-          />
+          <div ref={containerRef} className={`absolute inset-0 ${isReady ? '' : 'invisible'}`} />
           {!isReady && (
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div role="status" aria-label="Loading" className="spinner" />
@@ -175,11 +171,7 @@ export function StrokeOrderCard({ char, className }: Props) {
         {isReady && (
           <div className="flex flex-col gap-3">
             <div className="flex gap-2">
-              <button
-                onClick={replay}
-                aria-label="重新播放笔画动画"
-                className="btn"
-              >
+              <button onClick={replay} aria-label="重新播放笔画动画" className="btn">
                 ⟲
               </button>
               <button

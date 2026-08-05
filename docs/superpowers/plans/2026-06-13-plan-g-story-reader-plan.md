@@ -12,32 +12,34 @@
 
 ## 文件结构 (本计划)
 
-| 文件 | 责任 |
-|---|---|
-| `lib/rare-chars.ts` | +`getRandomStoryChar()` (Task 1) |
-| `lib/story-history.ts` | localStorage helpers (Task 2) |
-| `app/api/stories/random/route.ts` | GET 随机 char (Task 3) |
-| `lib/api-stories.ts` | client fetchRandomStory (Task 4) |
-| `app/stories/StoryClient.tsx` | 'use client' 顶层 reader 组件 (Task 5) |
-| `app/stories/page.tsx` | RSC random shell (Task 6) |
-| `app/stories/[char]/page.tsx` | RSC specific char shell (Task 7) |
-| `components/rare/DailyCharBanner.tsx` | href → /stories/[char] (Task 8) |
-| `README.md` | +说明 (Task 9) |
-| `tests/unit/lib/story-history.test.ts` | localStorage 测试 (Task 2) |
-| `tests/integration/api/stories-random.test.ts` | API 测试 (Task 3) |
-| `tests/unit/components/StoryClient.test.tsx` | 组件测试 (Task 5) |
+| 文件                                           | 责任                                   |
+| ---------------------------------------------- | -------------------------------------- |
+| `lib/rare-chars.ts`                            | +`getRandomStoryChar()` (Task 1)       |
+| `lib/story-history.ts`                         | localStorage helpers (Task 2)          |
+| `app/api/stories/random/route.ts`              | GET 随机 char (Task 3)                 |
+| `lib/api-stories.ts`                           | client fetchRandomStory (Task 4)       |
+| `app/stories/StoryClient.tsx`                  | 'use client' 顶层 reader 组件 (Task 5) |
+| `app/stories/page.tsx`                         | RSC random shell (Task 6)              |
+| `app/stories/[char]/page.tsx`                  | RSC specific char shell (Task 7)       |
+| `components/rare/DailyCharBanner.tsx`          | href → /stories/[char] (Task 8)        |
+| `README.md`                                    | +说明 (Task 9)                         |
+| `tests/unit/lib/story-history.test.ts`         | localStorage 测试 (Task 2)             |
+| `tests/integration/api/stories-random.test.ts` | API 测试 (Task 3)                      |
+| `tests/unit/components/StoryClient.test.tsx`   | 组件测试 (Task 5)                      |
 
 ---
 
 ### Task 1: getRandomStoryChar() server fn
 
 **Files:**
+
 - Modify: `lib/rare-chars.ts` (add fn at end, after `getDailyChar`)
 - Test: `tests/unit/lib/rare-chars.test.ts` (new file)
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/lib/rare-chars.test.ts`:
+
 ```ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
@@ -59,16 +61,30 @@ describe('getRandomStoryChar', () => {
   });
 
   it('returns mapped RareChar when row exists', async () => {
-    queryMock.mockResolvedValue([[{
-      char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有龙',
-      needs_review: 1, generated_by: 'openai:gpt-4o-mini',
-      generated_at: new Date('2026-05-12T08:30:00Z'), created_at: new Date('2026-05-12T08:00:00Z'),
-    }]]);
+    queryMock.mockResolvedValue([
+      [
+        {
+          char: '龘',
+          pinyin: 'dá',
+          meaning: '古龙',
+          story: '从前有龙',
+          needs_review: 1,
+          generated_by: 'openai:gpt-4o-mini',
+          generated_at: new Date('2026-05-12T08:30:00Z'),
+          created_at: new Date('2026-05-12T08:00:00Z'),
+        },
+      ],
+    ]);
     const r = await getRandomStoryChar();
     expect(r).toEqual({
-      char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有龙',
-      needsReview: true, generatedBy: 'openai:gpt-4o-mini',
-      generatedAt: new Date('2026-05-12T08:30:00Z'), createdAt: new Date('2026-05-12T08:00:00Z'),
+      char: '龘',
+      pinyin: 'dá',
+      meaning: '古龙',
+      story: '从前有龙',
+      needsReview: true,
+      generatedBy: 'openai:gpt-4o-mini',
+      generatedAt: new Date('2026-05-12T08:30:00Z'),
+      createdAt: new Date('2026-05-12T08:00:00Z'),
     });
   });
 
@@ -92,6 +108,7 @@ Expected: FAIL (function not exported)
 - [ ] **Step 3: Add getRandomStoryChar to lib/rare-chars.ts**
 
 Append to `lib/rare-chars.ts` (after `getDailyChar`):
+
 ```ts
 export async function getRandomStoryChar(): Promise<RareChar | null> {
   const pool = getPool();
@@ -100,7 +117,7 @@ export async function getRandomStoryChar(): Promise<RareChar | null> {
      FROM rare_chars
      WHERE story <> ''
      ORDER BY RAND()
-     LIMIT 1`
+     LIMIT 1`,
   );
   return rows.length > 0 ? mapRow(rows[0]) : null;
 }
@@ -123,15 +140,17 @@ git commit -m "feat(lib): getRandomStoryChar — random char with non-empty stor
 ### Task 2: lib/story-history.ts (localStorage helpers)
 
 **Files:**
+
 - Create: `lib/story-history.ts`
 - Test: `tests/unit/lib/story-history.test.ts` (new)
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/lib/story-history.test.ts`:
+
 ```ts
 // @vitest-environment happy-dom
-import {describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { getReadChars, addReadChar, clearReadHistory } from '@/lib/story-history';
 
 const KEY = 'pinyin-character:read-stories';
@@ -173,7 +192,9 @@ describe('story-history', () => {
 
   it('returns [] silently when localStorage throws', () => {
     const original = Storage.prototype.getItem;
-    Storage.prototype.getItem = () => { throw new Error('QuotaExceeded'); };
+    Storage.prototype.getItem = () => {
+      throw new Error('QuotaExceeded');
+    };
     expect(getReadChars()).toEqual([]);
     Storage.prototype.getItem = original;
   });
@@ -188,6 +209,7 @@ Expected: FAIL (module not found)
 - [ ] **Step 3: Implement lib/story-history.ts**
 
 Create `lib/story-history.ts`:
+
 ```ts
 const STORAGE_KEY = 'pinyin-character:read-stories';
 const MAX_HISTORY = 500;
@@ -244,12 +266,14 @@ git commit -m "feat(lib): story-history localStorage helpers (get/add/clear)"
 ### Task 3: GET /api/stories/random route
 
 **Files:**
+
 - Create: `app/api/stories/random/route.ts`
 - Test: `tests/integration/api/stories-random.test.ts` (new)
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/integration/api/stories-random.test.ts`:
+
 ```ts
 import { integrationDescribe, installTestEnv, truncateAll } from '../setup';
 import { getPool } from '@/lib/db';
@@ -275,7 +299,7 @@ integrationDescribe('GET /api/stories/random', () => {
     const pool = getPool();
     await pool.execute(
       `INSERT INTO rare_chars (char, pinyin, meaning, story) VALUES (?, ?, ?, ?)`,
-      ['龘', 'dá', '古龙', '从前有一条龙']
+      ['龘', 'dá', '古龙', '从前有一条龙'],
     );
     const { GET } = await import('@/app/api/stories/random/route');
     const r = await GET(new Request('http://x/api/stories/random') as any);
@@ -293,7 +317,7 @@ integrationDescribe('GET /api/stories/random', () => {
     const pool = getPool();
     await pool.execute(
       `INSERT INTO rare_chars (char, pinyin, meaning, story) VALUES (?, ?, ?, ?)`,
-      ['X', 'x', 'no story', '']
+      ['X', 'x', 'no story', ''],
     );
     const { GET } = await import('@/app/api/stories/random/route');
     const r = await GET(new Request('http://x/api/stories/random') as any);
@@ -310,6 +334,7 @@ Expected: FAIL (route not found)
 - [ ] **Step 3: Implement route**
 
 Create `app/api/stories/random/route.ts`:
+
 ```ts
 import { NextResponse } from 'next/server';
 import { getRandomStoryChar } from '@/lib/rare-chars';
@@ -345,19 +370,20 @@ git commit -m "feat(api): GET /api/stories/random (200/503 NO_STORIES)"
 ### Task 4: lib/api-stories.ts client wrapper
 
 **Files:**
+
 - Create: `lib/api-stories.ts`
 
 - [ ] **Step 1: Write the file**
 
 Create `lib/api-stories.ts`:
+
 ```ts
 import type { RareCharClient } from './api-rare-chars';
 
 export async function fetchRandomStory(): Promise<RareCharClient> {
   const res = await fetch('/api/stories/random');
   const data = (await res.json()) as
-    | { ok: true; data: RareCharClient }
-    | { ok: false; error: { code: string; message?: string } };
+    { ok: true; data: RareCharClient } | { ok: false; error: { code: string; message?: string } };
   if (!data.ok) {
     throw new Error(`fetchRandomStory failed: ${data.error.code}`);
   }
@@ -382,12 +408,14 @@ git commit -m "feat(lib): fetchRandomStory client wrapper"
 ### Task 5: StoryClient component (state + UI + TTS + keyboard)
 
 **Files:**
+
 - Create: `app/stories/StoryClient.tsx`
 - Test: `tests/unit/components/StoryClient.test.tsx` (new)
 
 - [ ] **Step 1: Write the failing test**
 
 Create `tests/unit/components/StoryClient.test.tsx`:
+
 ```tsx
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
@@ -413,15 +441,25 @@ const mockedSpeak = speak as unknown as ReturnType<typeof vi.fn>;
 const mockedStop = stopSpeaking as unknown as ReturnType<typeof vi.fn>;
 
 const INITIAL = {
-  char: '龘', pinyin: 'dá', meaning: '古龙', story: '从前有一条龙',
-  needsReview: true, generatedBy: 'openai:gpt-4o-mini',
-  generatedAt: '2026-05-12T08:30:00Z', createdAt: '2026-05-12T08:00:00Z',
+  char: '龘',
+  pinyin: 'dá',
+  meaning: '古龙',
+  story: '从前有一条龙',
+  needsReview: true,
+  generatedBy: 'openai:gpt-4o-mini',
+  generatedAt: '2026-05-12T08:30:00Z',
+  createdAt: '2026-05-12T08:00:00Z',
 };
 
 const NEXT = {
-  char: '好', pinyin: 'hǎo', meaning: 'good', story: '好事发生',
-  needsReview: true, generatedBy: 'openai:gpt-4o-mini',
-  generatedAt: '2026-05-12T08:30:00Z', createdAt: '2026-05-12T08:00:00Z',
+  char: '好',
+  pinyin: 'hǎo',
+  meaning: 'good',
+  story: '好事发生',
+  needsReview: true,
+  generatedBy: 'openai:gpt-4o-mini',
+  generatedAt: '2026-05-12T08:30:00Z',
+  createdAt: '2026-05-12T08:00:00Z',
 };
 
 beforeEach(() => {
@@ -487,7 +525,10 @@ describe('StoryClient', () => {
   it('点 朗读 calls speak with current story', () => {
     render(<StoryClient initialChar={INITIAL} />);
     fireEvent.click(screen.getByRole('button', { name: /朗读/ }));
-    expect(mockedSpeak).toHaveBeenCalledWith(expect.stringContaining('从前有一条龙'), expect.any(Object));
+    expect(mockedSpeak).toHaveBeenCalledWith(
+      expect.stringContaining('从前有一条龙'),
+      expect.any(Object),
+    );
   });
 
   it('点 加字帖 link has correct href', () => {
@@ -514,6 +555,7 @@ Expected: FAIL (module not found)
 - [ ] **Step 3: Implement StoryClient**
 
 Create `app/stories/StoryClient.tsx`:
+
 ```tsx
 'use client';
 
@@ -615,12 +657,17 @@ export function StoryClient({ initialChar }: Props) {
   return (
     <div className="mx-auto max-w-2xl">
       <header className="mb-6 flex items-center justify-between text-sm text-ink-soft">
-        <Link href="/rare-chars" className="hover:text-seal">← 返回字库</Link>
+        <Link href="/rare-chars" className="hover:text-seal">
+          ← 返回字库
+        </Link>
         <span aria-label="已读进度">已读 {readCount} 字</span>
       </header>
 
       {error && (
-        <div role="alert" className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800">
+        <div
+          role="alert"
+          className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-800"
+        >
           {error}
         </div>
       )}
@@ -628,15 +675,16 @@ export function StoryClient({ initialChar }: Props) {
       <article className="card-paper text-center">
         <h1 className="font-kai text-9xl font-bold text-ink leading-none">{current.char}</h1>
         <p className="mt-4 text-3xl text-ink-soft">{current.pinyin}</p>
-        {current.meaning && (
-          <p className="mt-2 text-sm text-ink-faint">{current.meaning}</p>
-        )}
+        {current.meaning && <p className="mt-2 text-sm text-ink-faint">{current.meaning}</p>}
         <p className="mt-8 whitespace-pre-line px-4 text-left font-serif text-base leading-relaxed text-ink">
           {current.story}
         </p>
       </article>
 
-      <nav aria-label="故事操作" className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center">
+      <nav
+        aria-label="故事操作"
+        className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:flex-wrap sm:justify-center"
+      >
         <button
           type="button"
           onClick={handlePrev}
@@ -694,11 +742,13 @@ git commit -m "feat(story): StoryClient reader (state + TTS + keyboard + localSt
 ### Task 6: app/stories/page.tsx (server shell, random initial)
 
 **Files:**
+
 - Create: `app/stories/page.tsx`
 
 - [ ] **Step 1: Implement the page**
 
 Create `app/stories/page.tsx`:
+
 ```tsx
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
@@ -716,13 +766,12 @@ export default async function StoriesPage() {
   if (!initial) {
     return (
       <>
-        <Suspense><Header /></Suspense>
+        <Suspense>
+          <Header />
+        </Suspense>
         <PageContainer>
           <SectionTitle subtitle="AI 生成的汉字故事">读故事</SectionTitle>
-          <EmptyState
-            title="暂无可读的故事"
-            description="故事库还是空的,去字库逛逛看?"
-          />
+          <EmptyState title="暂无可读的故事" description="故事库还是空的,去字库逛逛看?" />
         </PageContainer>
         <Footer />
       </>
@@ -730,9 +779,13 @@ export default async function StoriesPage() {
   }
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
-        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵 · 一日一读</div>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵 · 一日一读
+        </div>
         <SectionTitle subtitle="从 rare_chars 表中随机翻一个故事读">读故事</SectionTitle>
         <StoryClient initialChar={initial} />
       </PageContainer>
@@ -759,11 +812,13 @@ git commit -m "feat(story): /stories server shell (random initial char)"
 ### Task 7: app/stories/[char]/page.tsx (specific char entry)
 
 **Files:**
+
 - Create: `app/stories/[char]/page.tsx`
 
 - [ ] **Step 1: Implement the page**
 
 Create `app/stories/[char]/page.tsx`:
+
 ```tsx
 import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
@@ -787,9 +842,13 @@ export default async function StoryForCharPage({ params }: Props) {
   if (!data || !data.story) notFound();
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
-        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵 · 一日一读</div>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵 · 一日一读
+        </div>
         <SectionTitle subtitle="AI 生成的小故事">读故事</SectionTitle>
         <StoryClient initialChar={data} />
       </PageContainer>
@@ -816,15 +875,19 @@ git commit -m "feat(story): /stories/[char] server shell (fixed entry from daily
 ### Task 8: DailyCharBanner link → /stories/[char]
 
 **Files:**
+
 - Modify: `components/rare/DailyCharBanner.tsx:13`
 
 - [ ] **Step 1: Edit the link href**
 
 In `components/rare/DailyCharBanner.tsx` line 13, change:
+
 ```tsx
 href={`/rare-chars/${encodeURIComponent(char)}`}
 ```
+
 to:
+
 ```tsx
 href={`/stories/${encodeURIComponent(char)}`}
 ```
@@ -846,6 +909,7 @@ git commit -m "feat(story): daily char banner now links to story reader"
 ### Task 9: README + final verification
 
 **Files:**
+
 - Modify: `README.md` (add a section about /stories)
 
 - [ ] **Step 1: Add /stories section to README**
@@ -856,6 +920,7 @@ Find an appropriate spot in `README.md` (e.g. after the 「字·韵」 features 
 ### 读故事 (/stories)
 
 单字翻页阅读器, 从 `rare_chars` 表里随机抽一个有 AI 生成故事的字阅读. 支持:
+
 - 键盘快捷键 (→ 下一个 / ← 上一个 / L 朗读 / Esc 停止)
 - TTS 朗读 (Web Speech API)
 - localStorage 进度 ("已读 X 字" 持久化)
@@ -867,6 +932,7 @@ Find an appropriate spot in `README.md` (e.g. after the 「字·韵」 features 
 - [ ] **Step 2: Run full verification**
 
 Run all three in sequence:
+
 ```bash
 pnpm tsc --noEmit
 pnpm vitest run tests/unit/lib/story-history.test.ts tests/unit/lib/rare-chars.test.ts tests/unit/components/StoryClient.test.tsx tests/integration/api/stories-random.test.ts
@@ -874,6 +940,7 @@ pnpm build
 ```
 
 Expected:
+
 - tsc: 0 errors
 - vitest: all Plan G tests pass (or skip if no DB)
 - build: success

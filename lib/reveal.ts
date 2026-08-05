@@ -13,18 +13,18 @@ export const REVEAL_BY_LEVEL: Record<
   Pick<RevealConfig, 'cellHints' | 'allowOnDemandHints'>
 > = {
   1: { cellHints: ['pinyin', 'meaning', 'radical'], allowOnDemandHints: false },
-  2: { cellHints: ['pinyin', 'meaning'],            allowOnDemandHints: false },
-  3: { cellHints: ['pinyin'],                       allowOnDemandHints: false },
-  4: { cellHints: ['pinyin'],                       allowOnDemandHints: true  },
-  5: { cellHints: [],                               allowOnDemandHints: true  },
-  6: { cellHints: [],                               allowOnDemandHints: true  },
+  2: { cellHints: ['pinyin', 'meaning'], allowOnDemandHints: false },
+  3: { cellHints: ['pinyin'], allowOnDemandHints: false },
+  4: { cellHints: ['pinyin'], allowOnDemandHints: true },
+  5: { cellHints: [], allowOnDemandHints: true },
+  6: { cellHints: [], allowOnDemandHints: true },
 };
 
 const NO_RADICAL_GAMES: ReadonlySet<GameMode> = new Set(['drag-match', 'chain']);
 const PENALTY_BY_GAME: Record<GameMode, number> = {
   'tone-radical': 1,
   'drag-match': 1,
-  'chain': 0,
+  chain: 0,
 };
 
 export function getRevealConfig(game: GameMode, level: HskLevel): RevealConfig {

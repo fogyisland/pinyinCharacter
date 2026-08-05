@@ -27,7 +27,10 @@ export async function HomePoemCard() {
       className="card-paper p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 group relative overflow-hidden"
     >
       {/* Decorative oversized char */}
-      <div className="absolute -right-2 -top-4 font-kai text-[160px] sm:text-[200px] leading-none text-ink/[0.04] pointer-events-none select-none" aria-hidden="true">
+      <div
+        className="absolute -right-2 -top-4 font-kai text-[160px] sm:text-[200px] leading-none text-ink/[0.04] pointer-events-none select-none"
+        aria-hidden="true"
+      >
         诗
       </div>
       {/* Big char badge */}
@@ -42,8 +45,7 @@ export async function HomePoemCard() {
           <span className="text-xs text-ink-faint">每日一诗</span>
         </div>
         <div className="font-serif text-lg sm:text-xl text-ink leading-tight mb-1">
-          《{poem.title}》
-          <span className="text-ink-soft text-sm ml-2">· {poem.author}</span>
+          《{poem.title}》<span className="text-ink-soft text-sm ml-2">· {poem.author}</span>
         </div>
         <div className="font-kai text-sm sm:text-base text-ink-soft truncate flex items-center gap-1.5">
           <Quote size={12} className="flex-shrink-0 text-ink-faint" />

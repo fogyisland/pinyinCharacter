@@ -22,7 +22,7 @@ export async function writeAudit(entry: AuditEntry): Promise<void> {
       entry.metadata ? JSON.stringify(entry.metadata) : null,
       entry.ip ?? null,
       entry.userAgent ?? null,
-    ]
+    ],
   );
 }
 

@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     await writeAudit({
       userId: auth.user.id,
       event: 'smtp_config_updated',
-      metadata: { keys: Object.keys(updates).map((k) => SECRET_KEYS.has(k) ? '***' : k) },
+      metadata: { keys: Object.keys(updates).map((k) => (SECRET_KEYS.has(k) ? '***' : k)) },
     });
     const all = await getAllConfig();
     const config: Record<string, string | null> = {

@@ -29,8 +29,8 @@ const sampleRound: GameRound = {
     { char: '那', pinyin: 'nà', meaning: 'that', radical: '阝' },
   ],
   charToAnswer: {
-    '安': { tone: 1, radical: '宀', pinyin: 'ān' },
-    '那': { tone: 4, radical: '阝', pinyin: 'nà' },
+    安: { tone: 1, radical: '宀', pinyin: 'ān' },
+    那: { tone: 4, radical: '阝', pinyin: 'nà' },
   },
   toneChoices: [1, 2, 3, 4],
   radicalChoices: ['宀', '阝'],
@@ -56,11 +56,19 @@ describe('ToneRadicalGame — HSK reveal wiring (Task 8)', () => {
       configurable: true,
       value: {
         getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => { store.set(k, v); },
-        removeItem: (k: string) => { store.delete(k); },
-        clear: () => { store.clear(); },
+        setItem: (k: string, v: string) => {
+          store.set(k, v);
+        },
+        removeItem: (k: string) => {
+          store.delete(k);
+        },
+        clear: () => {
+          store.clear();
+        },
         key: (i: number) => Array.from(store.keys())[i] ?? null,
-        get length() { return store.size; },
+        get length() {
+          return store.size;
+        },
       },
     });
   });

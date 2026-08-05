@@ -29,7 +29,11 @@ async function digest(text: string): Promise<string> {
 }
 
 function isAvailable(): boolean {
-  return typeof caches !== 'undefined' && typeof crypto !== 'undefined' && typeof crypto.subtle !== 'undefined';
+  return (
+    typeof caches !== 'undefined' &&
+    typeof crypto !== 'undefined' &&
+    typeof crypto.subtle !== 'undefined'
+  );
 }
 
 export async function getCachedTts(voice: string, text: string): Promise<Blob | null> {
@@ -50,7 +54,10 @@ export async function putCachedTts(voice: string, text: string, blob: Blob): Pro
   try {
     const key = await digest(`${voice}|${text}`);
     const cache = await caches.open(CACHE_NAME);
-    await cache.put(`/tts-cache/${key}`, new Response(blob, { headers: { 'Content-Type': 'audio/mpeg' } }));
+    await cache.put(
+      `/tts-cache/${key}`,
+      new Response(blob, { headers: { 'Content-Type': 'audio/mpeg' } }),
+    );
   } catch {
     // best-effort: quota errors or private-mode caches are non-fatal
   }

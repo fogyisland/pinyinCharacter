@@ -33,7 +33,11 @@ export interface ListAiCallsResult {
 }
 
 function safeParse(s: string): Record<string, unknown> {
-  try { return JSON.parse(s); } catch { return {}; }
+  try {
+    return JSON.parse(s);
+  } catch {
+    return {};
+  }
 }
 
 export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAiCallsResult> {
@@ -42,11 +46,26 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
   const offset = (page - 1) * pageSize;
   const where: string[] = [];
   const params: any[] = [];
-  if (opts.feature) { where.push('a.feature = ?'); params.push(opts.feature); }
-  if (opts.status) { where.push('a.status = ?'); params.push(opts.status); }
-  if (opts.userId) { where.push('a.user_id = ?'); params.push(opts.userId); }
-  if (opts.from) { where.push('a.created_at >= ?'); params.push(opts.from); }
-  if (opts.to) { where.push('a.created_at <= ?'); params.push(opts.to); }
+  if (opts.feature) {
+    where.push('a.feature = ?');
+    params.push(opts.feature);
+  }
+  if (opts.status) {
+    where.push('a.status = ?');
+    params.push(opts.status);
+  }
+  if (opts.userId) {
+    where.push('a.user_id = ?');
+    params.push(opts.userId);
+  }
+  if (opts.from) {
+    where.push('a.created_at >= ?');
+    params.push(opts.from);
+  }
+  if (opts.to) {
+    where.push('a.created_at <= ?');
+    params.push(opts.to);
+  }
   const sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
@@ -57,25 +76,34 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
     [...params, pageSize, offset],
   );
   const [countRows] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM ai_calls a ${sql}`, params,
+    `SELECT COUNT(*) AS n FROM ai_calls a ${sql}`,
+    params,
   );
   return {
-    rows: rows.map(r => ({
-      id: Number(r.id), userId: r.user_id, username: r.username,
-      feature: r.feature, model: r.model, status: r.status,
-      promptTokens: r.prompt_tokens, completionTokens: r.completion_tokens,
-      durationMs: r.duration_ms, error: r.error,
+    rows: rows.map((r) => ({
+      id: Number(r.id),
+      userId: r.user_id,
+      username: r.username,
+      feature: r.feature,
+      model: r.model,
+      status: r.status,
+      promptTokens: r.prompt_tokens,
+      completionTokens: r.completion_tokens,
+      durationMs: r.duration_ms,
+      error: r.error,
       metadata: typeof r.metadata === 'string' ? safeParse(r.metadata) : r.metadata,
       createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at),
     })),
-    total: Number(countRows[0].n), page, pageSize,
+    total: Number(countRows[0].n),
+    page,
+    pageSize,
   };
 }
 
 export interface AiStats {
   total: number;
   byDay: { date: string; count: number }[];
-  errorRate: number;          // 0..1
+  errorRate: number; // 0..1
   p50Duration: number | null; // ms
   p95Duration: number | null; // ms
   topUsers: { userId: number; username: string; count: number }[];
@@ -137,6 +165,10 @@ export async function getAiStats(days = 7): Promise<AiStats> {
     errorRate: total > 0 ? Number(errRate[0].errs) / total : 0,
     p50Duration: p(0.5),
     p95Duration: p(0.95),
-    topUsers: topUsers.map((r: any) => ({ userId: Number(r.user_id), username: r.username, count: Number(r.n) })),
+    topUsers: topUsers.map((r: any) => ({
+      userId: Number(r.user_id),
+      username: r.username,
+      count: Number(r.n),
+    })),
   };
 }

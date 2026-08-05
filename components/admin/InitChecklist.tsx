@@ -31,9 +31,9 @@ const STATUS_ROW: Record<StepStatus, string> = {
  */
 export function InitChecklist({ report }: { report: InitReport }) {
   const { context, steps } = report;
-  const okCount = steps.filter(s => s.status === 'ok').length;
-  const warnCount = steps.filter(s => s.status === 'warn').length;
-  const failCount = steps.filter(s => s.status === 'fail').length;
+  const okCount = steps.filter((s) => s.status === 'ok').length;
+  const warnCount = steps.filter((s) => s.status === 'warn').length;
+  const failCount = steps.filter((s) => s.status === 'fail').length;
 
   return (
     <div className="space-y-6">
@@ -53,8 +53,9 @@ export function InitChecklist({ report }: { report: InitReport }) {
             <dd className="font-mono text-xs">
               {context.dbUrlParts ? (
                 <>
-                  {context.dbUrlParts.user}@{context.dbUrlParts.host}:{context.dbUrlParts.port}/{context.dbUrlParts.database}
-                  {' '}<span className="text-ink-soft">(密码 {context.dbUrlParts.password})</span>
+                  {context.dbUrlParts.user}@{context.dbUrlParts.host}:{context.dbUrlParts.port}/
+                  {context.dbUrlParts.database}{' '}
+                  <span className="text-ink-soft">(密码 {context.dbUrlParts.password})</span>
                 </>
               ) : (
                 <span className="text-seal">无法解析 DATABASE_URL</span>
@@ -120,18 +121,20 @@ export function InitChecklist({ report }: { report: InitReport }) {
           </p>
         </div>
         <ul className="space-y-2">
-          {steps.map(step => (
+          {steps.map((step) => (
             <li
               key={step.id}
               data-testid={`step-${step.id}`}
               className={`flex items-start gap-3 rounded-md border p-3 ${STATUS_ROW[step.status]}`}
             >
               <span className="mt-0.5">
-                {step.status === 'ok'
-                  ? <Check className="h-5 w-5 text-green-700" />
-                  : step.status === 'warn'
-                    ? <AlertTriangle className="h-5 w-5 text-amber-600" />
-                    : <X className="h-5 w-5 text-seal" />}
+                {step.status === 'ok' ? (
+                  <Check className="h-5 w-5 text-green-700" />
+                ) : step.status === 'warn' ? (
+                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                ) : (
+                  <X className="h-5 w-5 text-seal" />
+                )}
               </span>
               <div className="flex-1 min-w-0">
                 <div className="flex items-baseline gap-2">
@@ -141,9 +144,7 @@ export function InitChecklist({ report }: { report: InitReport }) {
                   </span>
                 </div>
                 <p className="text-xs text-ink-soft mt-0.5">{step.description}</p>
-                {step.details && (
-                  <p className="text-xs font-mono mt-1 break-all">{step.details}</p>
-                )}
+                {step.details && <p className="text-xs font-mono mt-1 break-all">{step.details}</p>}
               </div>
               {step.fixHref && (
                 <a

@@ -69,7 +69,7 @@ if (!blob) {
     throw new Error(`TTS failed: HTTP ${res.status}`);
   }
   blob = await res.blob();
-  await putCachedTts(voice, batch, blob);  // best-effort
+  await putCachedTts(voice, batch, blob); // best-effort
 }
 const url = URL.createObjectURL(blob);
 // ... rest unchanged
@@ -88,7 +88,7 @@ export async function prefetchTts(voice: string, text: string): Promise<void> {
   if (!isAvailable()) return;
   if (!text || text.length > BATCH_MAX_CHARS) return;
   const cached = await getCachedTts(voice, text);
-  if (cached) return;  // already there
+  if (cached) return; // already there
   try {
     const res = await fetch('/api/tts', {
       method: 'POST',
@@ -98,7 +98,9 @@ export async function prefetchTts(voice: string, text: string): Promise<void> {
     if (!res.ok) return;
     const blob = await res.blob();
     await putCachedTts(voice, text, blob);
-  } catch { /* network / quota errors are non-fatal */ }
+  } catch {
+    /* network / quota errors are non-fatal */
+  }
 }
 
 // Wipe the cache by deleting the named cache.
@@ -107,7 +109,9 @@ export async function clearTtsCache(): Promise<void> {
   if (!isAvailable()) return;
   try {
     await caches.delete(CACHE_NAME);
-  } catch { /* best-effort */ }
+  } catch {
+    /* best-effort */
+  }
 }
 
 // Best-effort entry count + estimated size (bytes).
@@ -140,7 +144,7 @@ export async function getTtsCacheSize(): Promise<{ count: number; bytes: number 
 
 ```tsx
 import { prefetchTts } from '@/lib/tts-cache';
-import { BATCH_MAX_CHARS } from '@/lib/tts';  // OR hardcode 500
+import { BATCH_MAX_CHARS } from '@/lib/tts'; // OR hardcode 500
 
 const LIST_PREFETCH_CAP = 24;
 
@@ -153,16 +157,19 @@ useEffect(() => {
 
   const targets = chars
     .slice(0, LIST_PREFETCH_CAP)
-    .map(c => c.char)
-    .filter(t => t.length > 0 && t.length <= BATCH_MAX_CHARS);
+    .map((c) => c.char)
+    .filter((t) => t.length > 0 && t.length <= BATCH_MAX_CHARS);
 
   const cancel = targets.map((text, i) =>
-    schedule(() => { prefetchTts('female', text).catch(() => {}); })
+    schedule(() => {
+      prefetchTts('female', text).catch(() => {});
+    }),
   );
-  return () => cancel.forEach(handle => {
-    if ('cancelIdleCallback' in window) (window as any).cancelIdleCallback?.(handle);
-    else clearTimeout(handle);
-  });
+  return () =>
+    cancel.forEach((handle) => {
+      if ('cancelIdleCallback' in window) (window as any).cancelIdleCallback?.(handle);
+      else clearTimeout(handle);
+    });
 }, [chars]);
 ```
 
@@ -182,11 +189,11 @@ import { prefetchTts } from '@/lib/tts-cache';
 import { useToastStore } from '@/lib/toast-store';
 
 interface Props {
-  relatedChars: string[];  // chars sharing the same radical (capped at 20 by parent)
+  relatedChars: string[]; // chars sharing the same radical (capped at 20 by parent)
 }
 
 export function DetailPrefetchButton({ relatedChars }: Props) {
-  const pushToast = useToastStore(s => s.push);
+  const pushToast = useToastStore((s) => s.push);
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -201,8 +208,12 @@ export function DetailPrefetchButton({ relatedChars }: Props) {
   }
 
   return (
-    <button type="button" onClick={handleClick} disabled={loading || relatedChars.length === 0}
-      className="rounded border border-ink/30 px-3 py-1 text-sm hover:bg-paper-deep disabled:opacity-50">
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={loading || relatedChars.length === 0}
+      className="rounded border border-ink/30 px-3 py-1 text-sm hover:bg-paper-deep disabled:opacity-50"
+    >
       {loading ? '预取中…' : `预取同部首 (${relatedChars.length})`}
     </button>
   );
@@ -277,6 +288,7 @@ The `getTtsCacheSize()` may be slow for large caches — wrap in 5s timeout via 
 ### Unit tests
 
 **`tests/unit/lib/tts.test.ts`** (modify existing):
+
 - Mock `global.caches` with an in-memory Map-backed implementation
 - Verify `speak()` calls `getCachedTts` before fetch
 - Verify `speak()` calls `putCachedTts` after fetch
@@ -284,6 +296,7 @@ The `getTtsCacheSize()` may be slow for large caches — wrap in 5s timeout via 
 - Verify non-cached playback still works (regression — don't break current tests)
 
 **`tests/unit/lib/tts-cache.test.ts`** (NEW, ~80 lines):
+
 - `getCachedTts` returns null when cache empty / unavailable
 - `putCachedTts` roundtrip with `getCachedTts`
 - `prefetchTts` calls fetch on miss, no-ops on hit
@@ -292,6 +305,7 @@ The `getTtsCacheSize()` may be slow for large caches — wrap in 5s timeout via 
 - `getTtsCacheSize` returns count + bytes
 
 **`tests/unit/api/admin/tts-cache.test.ts`** (NEW, ~60 lines):
+
 - GET without auth → 403
 - GET with admin → returns size
 - DELETE without auth → 403

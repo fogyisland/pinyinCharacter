@@ -5,6 +5,7 @@
 **Goal:** Ship 9 atomic fixes (5 SEO + 1 mysql2 protocol migration + 3 code-hygiene) that produce visible SEO improvements + eliminate the supp-plane character silent corruption + establish a working ESLint baseline. No schema changes, no deploy-shape changes, no public-API behavior changes.
 
 **Architecture:** 3 independent sub-features wrapped into 1 plan (low risk per task, simple review):
+
 - **A. SEO 完整化**: robots.txt `/init` disallow + `/sutra/[id]` JSON-LD (Book + BreadcrumbList) + new `/etymology/[char]` sub-sitemap + metadata for 4 list pages (`/pinyin`, `/dictionary`, `/rare-chars`, `/game`) + site-wide Organization + WebSite JSON-LD in root layout.
 - **B. `.execute()` → `.query()` 全量替换**: ~30+ sites across `lib/admin*`, `lib/membership`, `lib/playlists`, `lib/email-*`, `lib/audit`, `lib/password-reset`, `lib/page-views`, `lib/payment-orders`, `lib/audio-tracks`, `lib/activation`, `lib/ai-rare-chars`, `lib/sutra-copy-progress`. Eliminates supp-plane (U+10000+) silent data corruption on WHERE/JOIN params. ESLint rule added to prevent regression.
 - **C. 代码质量清理**: ESLint + Prettier flat-config (`next lint` is currently a no-op) + 60+ unused-export removal (6 `lib/api-*.ts` files partially deleted + ~25 scattered symbols) + 3 console.logs cleaned.
@@ -22,6 +23,7 @@ A pre-implementation audit (4 parallel Explore agents, 2026-08-05) gathered ~40 
 3. **ESLint is a no-op**: `npm run lint` runs Next's stub without any config — no CI gate, no auto-discovery of the 60+ dead exports or 475 `any` usages.
 
 Wave 1 deliberately does NOT touch:
+
 - Schema changes (Wave 2 may add `audit_log.ip` index + `chars.hsk_level` index)
 - Caching strategy (`unstable_cache`, `experimental.staleTimes`) — Wave 2
 - Font preload / `next/font` migration / `unicode-range` — Wave 2/3
@@ -57,9 +59,21 @@ Wave 1 deliberately does NOT touch:
 // app/robots.ts (modify)
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: '*', allow: '/', disallow: ['/admin', '/api', '/account', '/init',
-                                                      '/login', '/register', '/forgot-password',
-                                                      '/reset-password', '/activate'] },
+    rules: {
+      userAgent: '*',
+      allow: '/',
+      disallow: [
+        '/admin',
+        '/api',
+        '/account',
+        '/init',
+        '/login',
+        '/register',
+        '/forgot-password',
+        '/reset-password',
+        '/activate',
+      ],
+    },
     sitemap: `${getRuntimeSiteUrl()}/sitemap.xml`,
   };
 }
@@ -71,13 +85,21 @@ export default function robots(): MetadataRoute.Robots {
 
 ```tsx
 const jsonLd = [
-  buildBook({ name: data.title, author: data.translator, inLanguage: 'zh-Hans',
-              url: `${baseUrl}/sutra/${id}`, datePublished: data.creationDate }),
-  buildBreadcrumbList([{ name: '首页', url: baseUrl },
-                       { name: '佛经', url: `${baseUrl}/sutra/${id}` }]),
+  buildBook({
+    name: data.title,
+    author: data.translator,
+    inLanguage: 'zh-Hans',
+    url: `${baseUrl}/sutra/${id}`,
+    datePublished: data.creationDate,
+  }),
+  buildBreadcrumbList([
+    { name: '首页', url: baseUrl },
+    { name: '佛经', url: `${baseUrl}/sutra/${id}` },
+  ]),
 ];
-return <script type="application/ld+json"
-               dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
+return (
+  <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+);
 ```
 
 #### A.3 `/etymology/[char]` 新 sub-sitemap
@@ -92,14 +114,16 @@ const [rows] = await getPool().query<any[]>(
   `SELECT c.\`char\` FROM chars c
      INNER JOIN char_etymology e ON c.\`char\` = e.\`char\`
      WHERE c.\`char\` REGEXP '^[一-鿿]$'    -- BMP CJK only
-     LIMIT 50000`
+     LIMIT 50000`,
 );
-const urls = rows.map(r => ({
+const urls = rows.map((r) => ({
   loc: `${base_url}/etymology/${encodeURIComponent(r.char)}`,
-  changefreq: 'monthly', priority: 0.5,
+  changefreq: 'monthly',
+  priority: 0.5,
 }));
-return new Response(generateSitemapXml(urls),
-  { headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'public, max-age=3600' } });
+return new Response(generateSitemapXml(urls), {
+  headers: { 'Content-Type': 'application/xml', 'Cache-Control': 'public, max-age=3600' },
+});
 ```
 
 预估 ~8000 URLs × ~150 bytes = ~1.2 MB (远低于 Google 50000 / 50 MB 上限)。
@@ -108,12 +132,12 @@ return new Response(generateSitemapXml(urls),
 
 每个 list 页 `export const metadata: Metadata = buildMetadata({ ... })`:
 
-| Path | Title | Description |
-|---|---|---|
-| `/pinyin` | 汉字拼音互转工具 | 汉字与拼音实时互转, 支持多音字识别、AI 拍照识别、AI 字义解释 |
-| `/dictionary` | 汉字字典 | 8105 个汉字查询, 含拼音、笔顺、字源、部首、组词 |
-| `/rare-chars` | 罕见字库 | 1412 个罕见汉字, 含读音、释义、字源 |
-| `/game` | 汉字小游戏 | 声调匹配、部首匹配、拼音接龙, 在游戏中学习汉字 |
+| Path          | Title            | Description                                                  |
+| ------------- | ---------------- | ------------------------------------------------------------ |
+| `/pinyin`     | 汉字拼音互转工具 | 汉字与拼音实时互转, 支持多音字识别、AI 拍照识别、AI 字义解释 |
+| `/dictionary` | 汉字字典         | 8105 个汉字查询, 含拼音、笔顺、字源、部首、组词              |
+| `/rare-chars` | 罕见字库         | 1412 个罕见汉字, 含读音、释义、字源                          |
+| `/game`       | 汉字小游戏       | 声调匹配、部首匹配、拼音接龙, 在游戏中学习汉字               |
 
 `buildMetadata()` 已有 OG + canonical 支持, 直接调用。Description 控制在 80-140 中文字符。
 
@@ -123,16 +147,28 @@ return new Response(generateSitemapXml(urls),
 
 ```tsx
 const siteJsonLd = [
-  buildOrganization({ name: '汉字与拼音', url: getRuntimeSiteUrl(),
-                     logo: `${getRuntimeSiteUrl()}/logo.png` }),
-  buildWebSite({ name: '汉字与拼音', url: getRuntimeSiteUrl(),
-                 inLanguage: 'zh-Hans',
-                 potentialAction: { '@type': 'SearchAction',
-                                    target: `${getRuntimeSiteUrl()}/dictionary?q={search_term_string}`,
-                                    'query-input': 'required name=search_term_string' } }),
+  buildOrganization({
+    name: '汉字与拼音',
+    url: getRuntimeSiteUrl(),
+    logo: `${getRuntimeSiteUrl()}/logo.png`,
+  }),
+  buildWebSite({
+    name: '汉字与拼音',
+    url: getRuntimeSiteUrl(),
+    inLanguage: 'zh-Hans',
+    potentialAction: {
+      '@type': 'SearchAction',
+      target: `${getRuntimeSiteUrl()}/dictionary?q={search_term_string}`,
+      'query-input': 'required name=search_term_string',
+    },
+  }),
 ];
-return <script type="application/ld+json"
-               dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />;
+return (
+  <script
+    type="application/ld+json"
+    dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+  />
+);
 ```
 
 注: `target` 指向 `/dictionary?q=...` (现状) 而不是 `/search?q=...` (不存在)。`/dictionary` 已经支持 `?q=` 查询参数 (`app/dictionary/page.tsx:7` `searchParams: Promise<{ q?: string; ... }>`), 所以这是正确路由。如果未来 `/dictionary` 删除查询参数, `potentialAction` 也需相应删。
@@ -141,23 +177,24 @@ return <script type="application/ld+json"
 
 **审计发现的 ~30 处** (按风险度排序):
 
-| 模块 | 处数 | 风险度 |
-|---|---|---|
-| `lib/admin.ts` | 12 | 高 (audit log metadata 含 user-agent, 可能 supp-plane) |
-| `lib/playlists.ts` | 6 | 中 |
-| `lib/membership.ts` | 5 | 高 (email + username 路径) |
-| `lib/email-campaigns.ts` | 5 | 高 (email 正文可能含 supp-plane) |
-| `lib/email-verification.ts` | 3 | 中 |
-| `lib/audit.ts` | 2 | 高 (metadata 任意 JSON) |
-| `lib/password-reset.ts` | 2 | 中 |
-| `lib/page-views.ts` | 2 | 中 (path 可能含 supp-plane path segment) |
-| `lib/payment-orders.ts` | 2 | 中 |
-| `lib/audio-tracks.ts` | 2 | 低 (BMP 字符) |
-| `lib/activation.ts` | 1 | 中 |
-| `lib/ai-rare-chars.ts` | 1 | 高 (char 字段) |
-| `lib/sutra-copy-progress.ts` | 1 | 低 |
+| 模块                         | 处数 | 风险度                                                 |
+| ---------------------------- | ---- | ------------------------------------------------------ |
+| `lib/admin.ts`               | 12   | 高 (audit log metadata 含 user-agent, 可能 supp-plane) |
+| `lib/playlists.ts`           | 6    | 中                                                     |
+| `lib/membership.ts`          | 5    | 高 (email + username 路径)                             |
+| `lib/email-campaigns.ts`     | 5    | 高 (email 正文可能含 supp-plane)                       |
+| `lib/email-verification.ts`  | 3    | 中                                                     |
+| `lib/audit.ts`               | 2    | 高 (metadata 任意 JSON)                                |
+| `lib/password-reset.ts`      | 2    | 中                                                     |
+| `lib/page-views.ts`          | 2    | 中 (path 可能含 supp-plane path segment)               |
+| `lib/payment-orders.ts`      | 2    | 中                                                     |
+| `lib/audio-tracks.ts`        | 2    | 低 (BMP 字符)                                          |
+| `lib/activation.ts`          | 1    | 中                                                     |
+| `lib/ai-rare-chars.ts`       | 1    | 高 (char 字段)                                         |
+| `lib/sutra-copy-progress.ts` | 1    | 低                                                     |
 
 **API 差异 (关键陷阱)**:
+
 - `.execute<T>()` 返回 `Promise<[T, FieldPacket[]]>` (tuple)
 - `.query<T>()` 返回 `Promise<T[]>` (裸数组)
 - 99% 代码用 `[rows]` 解构 → 1:1 替换
@@ -165,6 +202,7 @@ return <script type="application/ld+json"
 - 还有极个别代码用 `rows` 第 2 元素 (FieldPacket) — grep `FieldPacket` 验证 (审计未见)
 
 **TDD-first 迁移**:
+
 1. 新建 `tests/unit/lib/mysql-protocol-migration.test.ts`: 验证 1 个 `.query()`-migrated 查询 (e.g. `getSystemStats()`) 在 BMP + supp-plane (U+2C27C) 输入下行为一致
 2. 用 `grep -rn "\.execute(" --include="*.ts" lib/ app/ scripts/ > /tmp/execute-sites.txt` 列表
 3. 逐文件 Edit `replace_all`: `.execute(` → `.query(`, 每个文件后跑该文件相关 unit test
@@ -172,6 +210,7 @@ return <script type="application/ld+json"
 5. ESLint rule 加 `no-restricted-syntax` 禁止 `pool.execute(` 和 `getPool().execute(`
 
 **行为预期**:
+
 - BMP-only 数据 (99.99% 流量): 完全一致 (binary vs text protocol 在 ASCII / BMP 范围内等价)
 - Supp-plane 数据 (U+10000+): 行为从 **silently corrupted** 变为 **正确** — 这是 bug fix
 
@@ -193,26 +232,42 @@ export default [
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: { parser: tsParser, parserOptions: { project: './tsconfig.json' } },
-    plugins: { '@typescript-eslint': tsPlugin, react: reactPlugin,
-               'react-hooks': reactHooksPlugin },
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
+    },
     rules: {
-      'no-unused-vars': 'off',  // delegated to TS
+      'no-unused-vars': 'off', // delegated to TS
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
-      '@typescript-eslint/no-explicit-any': 'warn',  // Wave 1 只 warn, Wave 3 收紧
+      '@typescript-eslint/no-explicit-any': 'warn', // Wave 1 只 warn, Wave 3 收紧
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      'eqeqeq': ['error', 'always', { null: 'ignore' }],
+      eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-console': ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
-      'no-restricted-syntax': ['error',
-        { selector: "MemberExpression[object.property.name='pool'][property.name='execute']",
-          message: 'Use pool.query() instead of pool.execute() — see mysql2-supp-plane-bug' },
-        { selector: "CallExpression[callee.property.name='execute']",
-          message: 'Use .query() instead of .execute() — see mysql2-supp-plane-bug' }],
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.property.name='pool'][property.name='execute']",
+          message: 'Use pool.query() instead of pool.execute() — see mysql2-supp-plane-bug',
+        },
+        {
+          selector: "CallExpression[callee.property.name='execute']",
+          message: 'Use .query() instead of .execute() — see mysql2-supp-plane-bug',
+        },
+      ],
     },
   },
   {
-    ignores: ['.next/**', 'node_modules/**', 'Up/**', 'scripts/build-*/**',
-              'tests/fixtures/**', 'public/**', 'data/**'],
+    ignores: [
+      '.next/**',
+      'node_modules/**',
+      'Up/**',
+      'scripts/build-*/**',
+      'tests/fixtures/**',
+      'public/**',
+      'data/**',
+    ],
   },
 ];
 ```
@@ -220,24 +275,35 @@ export default [
 新建 `.prettierrc`:
 
 ```json
-{ "semi": true, "singleQuote": true, "trailingComma": "all",
-  "printWidth": 100, "tabWidth": 2, "arrowParens": "always" }
+{
+  "semi": true,
+  "singleQuote": true,
+  "trailingComma": "all",
+  "printWidth": 100,
+  "tabWidth": 2,
+  "arrowParens": "always"
+}
 ```
 
 `package.json` scripts 更新:
 
 ```json
-{ "lint": "eslint .", "lint:fix": "eslint . --fix",
+{
+  "lint": "eslint .",
+  "lint:fix": "eslint . --fix",
   "format": "prettier --write .",
-  "format:check": "prettier --check ." }
+  "format:check": "prettier --check ."
+}
 ```
 
 **第一阶段执行**:
+
 1. 跑 `npx eslint . --fix` 一次性 autofix
 2. 跑 `npx eslint .` 看剩余 errors (应为 0, 因为 `no-explicit-any` 是 warn)
 3. 跑 `npx prettier --check .` 看格式化问题, 跑 `npx prettier --write .` 修
 
 **不开启的规则** (Wave 3 再加):
+
 - `noUncheckedIndexedAccess`
 - `@typescript-eslint/no-explicit-any` (warn → error)
 - `@typescript-eslint/consistent-type-imports`
@@ -246,6 +312,7 @@ export default [
 #### C.2 死代码清理 (~60+ 符号)
 
 **整文件删除候选** (先 grep 确认 0 引用):
+
 - `lib/opencc.ts` 整体 (opencc-js 全未用, `grep -rn "opencc" --include="*.ts" --include="*.tsx" app/ components/ lib/` 验证)
 - `lib/api-worksheet.ts` (5 fns: `listWorksheets`, `fetchWorksheet`, `saveWorksheetApi`, `printWorksheetRequest`, `appendCharToMyWorksheetApi`)
 - `lib/api-rare-chars.ts` (4 fns: `fetchRareChars`, `fetchRareChar`, `fetchDailyChar`, `printRareCharRequest`; 保留 `RareCharClient` type)
@@ -255,6 +322,7 @@ export default [
 - `lib/api-admin.ts` (3 fns: `adminListUsers`, `adminGetUser`, `listAdminMembershipsRequest`)
 
 **单符号删除候选** (Edit 工具精确删除):
+
 - `lib/activation.ts:setLock`
 - `lib/radical.ts:initRadicalMap`, `_resetRadicalMapForTest`, `getRadical`
 - `lib/audit-format.ts:AUDIT_EVENTS`, `EVENT_LABEL`
@@ -278,17 +346,18 @@ export default [
 - `lib/worksheet-types.ts:BRUSH_PAPER_SIZES`
 
 **验证步骤** (每个删除后):
+
 1. 跑 `npx tsc --noEmit` (类型错误应 0)
 2. 跑 `npx vitest run` (相关 test 应 pass)
 3. 跑 `npm run lint` (no-unused-vars 应为 warn 而非 error, 但 new code 不能引入新的 unused)
 
 #### C.3 3 处 console.log 清理
 
-| 文件:行 | 当前 | 改为 |
-|---|---|---|
-| `lib/email.ts:49` | `console.log('[email] sending to', to)` | `console.debug('[email] sending to', to)` (保留 dev 可见) |
-| `lib/scheduler.ts:143` | `console.log('[scheduler] started')` | `console.info('[scheduler] started')` (合规, startup 信息) |
-| `components/game/ChainGame.tsx:43` | `console.log('chain state:', state)` | 删除 (debug 残留) |
+| 文件:行                            | 当前                                    | 改为                                                       |
+| ---------------------------------- | --------------------------------------- | ---------------------------------------------------------- |
+| `lib/email.ts:49`                  | `console.log('[email] sending to', to)` | `console.debug('[email] sending to', to)` (保留 dev 可见)  |
+| `lib/scheduler.ts:143`             | `console.log('[scheduler] started')`    | `console.info('[scheduler] started')` (合规, startup 信息) |
+| `components/game/ChainGame.tsx:43` | `console.log('chain state:', state)`    | 删除 (debug 残留)                                          |
 
 ### Architecture (cross-cutting)
 
@@ -319,15 +388,17 @@ export default [
 ### Files Summary
 
 **新建 (3 files)**:
-| File | LoC |
-|---|---|
-| `eslint.config.mjs` | +50 |
-| `.prettierrc` | +5 |
-| `app/sitemap/etymology.xml/route.ts` | +30 |
+
+| File                                              | LoC |
+| ------------------------------------------------- | --- |
+| `eslint.config.mjs`                               | +50 |
+| `.prettierrc`                                     | +5  |
+| `app/sitemap/etymology.xml/route.ts`              | +30 |
 | `tests/unit/lib/mysql-protocol-migration.test.ts` | +80 |
-| `tests/integration/seo.test.ts` | +40 |
+| `tests/integration/seo.test.ts`                   | +40 |
 
 **修改 (~50 files, 净 -140 LoC)**:
+
 - `app/robots.ts` (+1)
 - `app/sutra/[id]/page.tsx` (+20)
 - `app/pinyin/page.tsx` (+10)
@@ -342,20 +413,21 @@ export default [
 - 3 console.log sites
 
 **删除 (1 file)**:
+
 - `lib/opencc.ts` (~30 LoC, opencc-js 全未用)
 
 **Total**: ~10 new files + ~50 modified + ~3 deleted; net LoC ~-140.
 
 ### Testing Strategy
 
-| Test | Type | Purpose |
-|---|---|---|
-| `tests/unit/lib/mysql-protocol-migration.test.ts` | unit | 1 BMP + 1 supp-plane query, validates `.query()` semantics |
-| `tests/integration/seo.test.ts` | integration | `curl localhost:3000/sitemap.xml` includes etymology URLs; `curl localhost:3000/sutra/<id>` includes Book JSON-LD |
-| `tests/integration/lint.test.ts` | integration | `npm run lint` exit 0 (after autofix) |
-| `npx vitest run` (full) | regression | no broken existing tests |
-| `npx tsc --noEmit` | typecheck | no new type errors |
-| `npm run build` | build | no route table regressions |
+| Test                                              | Type        | Purpose                                                                                                           |
+| ------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| `tests/unit/lib/mysql-protocol-migration.test.ts` | unit        | 1 BMP + 1 supp-plane query, validates `.query()` semantics                                                        |
+| `tests/integration/seo.test.ts`                   | integration | `curl localhost:3000/sitemap.xml` includes etymology URLs; `curl localhost:3000/sutra/<id>` includes Book JSON-LD |
+| `tests/integration/lint.test.ts`                  | integration | `npm run lint` exit 0 (after autofix)                                                                             |
+| `npx vitest run` (full)                           | regression  | no broken existing tests                                                                                          |
+| `npx tsc --noEmit`                                | typecheck   | no new type errors                                                                                                |
+| `npm run build`                                   | build       | no route table regressions                                                                                        |
 
 ### Verification (端到端)
 
@@ -374,12 +446,14 @@ export default [
 ### Out of Scope (deferred to Wave 2/3)
 
 **Wave 2 (medium-effort structural)** — to be specced separately after Wave 1 ships:
+
 - Frontend: `next/font/local` for critical fonts + `<link rel="preload">` for hero fonts + `recharts` dynamic import in `components/admin/charts/*` + `pinyin-pro` lazy import in `TextToPinyin`
 - Backend: `unstable_cache()` for `/api/sutras` list + `/api/rare-chars/daily` + `/api/admin/*/stats`; `experimental.staleTimes` config; missing indexes (`audit_log.ip`, `chars.hsk_level`); `Promise.all` rewrites in `lib/admin-downloads.ts` + `lib/admin-ai.ts`; SELECT+COUNT Promise.all pattern fix
 - SEO: `hreflang` for zh-CN/zh-TW; `force-dynamic` → ISR review for 13+ pages; sub-sitemap split for sutras
 - Operational: sharp-linux-x64 install → revert `images.unoptimized`
 
 **Wave 3 (heavy architectural)** — to be specced separately after Wave 2 ships:
+
 - Code quality: `useApiQuery` / `useApiMutation` hook + 5 oversized file splits (`GenerateCharsForm`, `SutraAudioPlayer`, `PlaylistsPanel`, `admin/ai/page`, `WorksheetGenerator`) + tighten `any` (475 → <100) + `noUncheckedIndexedAccess` enable + test coverage push to 50%
 - Frontend: `unicode-range` for 13 `@font-face` blocks + remove `public/fonts/*.ttf` after subsetting + remove `public/ziyun.png` (build artifact)
 - Backend: real `sutras` chunks schema split (separate column or table)

@@ -14,7 +14,7 @@ interface Props {
 export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
   const router = useRouter();
   const pathname = usePathname();
-  const user = useAppStore(s => s.user);
+  const user = useAppStore((s) => s.user);
   const [saving, setSaving] = useState(false);
   const [hint, setHint] = useState<string | null>(null);
 
@@ -33,7 +33,7 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
       // rejects non-CJK chars, so filter to SINGLE_CJK (CJK ideographs +
       // CJK punctuation + fullwidth) before sending.
       const SINGLE_CJK = /^[㐀-鿿　-〿＀-￯]$/;
-      const chars = Array.from(chunk.content.join('')).filter(ch => SINGLE_CJK.test(ch));
+      const chars = Array.from(chunk.content.join('')).filter((ch) => SINGLE_CJK.test(ch));
       // Schema max=500 chars per worksheet. Split long sutra chunks into
       // multiple worksheets titled "《XXX》Y (1/3)" etc, so users can save
       // the whole chunk instead of getting 400 "Invalid input".
@@ -94,9 +94,7 @@ export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
       >
         {saving ? '保存中…' : '保存到字帖'}
       </button>
-      {hint && !user && (
-        <span className="text-xs text-ink-soft">{hint}</span>
-      )}
+      {hint && !user && <span className="text-xs text-ink-soft">{hint}</span>}
     </div>
   );
 }

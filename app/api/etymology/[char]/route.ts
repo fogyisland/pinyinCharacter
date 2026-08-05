@@ -11,8 +11,12 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cha
     const { char } = await params;
     const decoded = decodeURIComponent(char);
     const parsed = etymologyCharParamSchema.safeParse({ char: decoded });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
-    const [etymology, adjacent] = await Promise.all([getEtymology(decoded), getAdjacentChars(decoded)]);
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    const [etymology, adjacent] = await Promise.all([
+      getEtymology(decoded),
+      getAdjacentChars(decoded),
+    ]);
     if (!etymology) return notFound('not_found', 'etymology not found');
     const data: EtymologyClient = {
       ...etymology,

@@ -10,7 +10,13 @@ import { UserMenu } from './UserMenu';
 import { useAppStore } from '@/lib/store';
 import { BRAND, filterNavLinks, NAV_GROUPS, type NavGroupId, type NavLink } from '@/lib/design';
 
-const GROUP_ORDER: readonly NavGroupId[] = ['dictionary', 'worksheet', 'classics', 'game', 'feedback'];
+const GROUP_ORDER: readonly NavGroupId[] = [
+  'dictionary',
+  'worksheet',
+  'classics',
+  'game',
+  'feedback',
+];
 
 function DesktopNav({ links, currentPath }: { links: readonly NavLink[]; currentPath: string }) {
   // Walk links in original group order; insert a wider gap when the group changes.
@@ -20,7 +26,9 @@ function DesktopNav({ links, currentPath }: { links: readonly NavLink[]; current
       {links.map((item) => {
         const isFirstInGroup = item.group !== prevGroup;
         const separator = !isFirstInGroup && (
-          <span aria-hidden="true" className="px-1 text-ink-faint/50 select-none">·</span>
+          <span aria-hidden="true" className="px-1 text-ink-faint/50 select-none">
+            ·
+          </span>
         );
         prevGroup = item.group;
         const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
@@ -45,7 +53,15 @@ function DesktopNav({ links, currentPath }: { links: readonly NavLink[]; current
   );
 }
 
-function MobileNav({ links, currentPath, onNavigate }: { links: readonly NavLink[]; currentPath: string; onNavigate: () => void }) {
+function MobileNav({
+  links,
+  currentPath,
+  onNavigate,
+}: {
+  links: readonly NavLink[];
+  currentPath: string;
+  onNavigate: () => void;
+}) {
   const byGroup = new Map<NavGroupId, NavLink[]>();
   for (const id of GROUP_ORDER) byGroup.set(id, []);
   for (const l of links) byGroup.get(l.group)?.push(l);
@@ -61,7 +77,8 @@ function MobileNav({ links, currentPath, onNavigate }: { links: readonly NavLink
             </div>
             <div className="flex flex-col">
               {items.map((item) => {
-                const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
+                const isActive =
+                  currentPath === item.href || currentPath.startsWith(item.href + '/');
                 return (
                   <Link
                     key={item.href}
@@ -126,7 +143,10 @@ export function Header() {
               <Link href="/login" className="btn-seal text-sm">
                 登录
               </Link>
-              <Link href="/register" className="hidden sm:inline text-sm text-ink-soft hover:text-seal">
+              <Link
+                href="/register"
+                className="hidden sm:inline text-sm text-ink-soft hover:text-seal"
+              >
                 注册
               </Link>
             </>
@@ -165,7 +185,11 @@ export function Header() {
                 <X size={22} />
               </button>
             </div>
-            <MobileNav links={links} currentPath={currentPath} onNavigate={() => setMobileOpen(false)} />
+            <MobileNav
+              links={links}
+              currentPath={currentPath}
+              onNavigate={() => setMobileOpen(false)}
+            />
             {!user && (
               <div className="mt-6 pt-4 border-t border-ink/10 flex flex-col gap-2">
                 <Link

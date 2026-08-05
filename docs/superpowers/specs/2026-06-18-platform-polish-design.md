@@ -21,13 +21,16 @@ Each change is small enough to be a single focused task; together they form one 
 ## Change 1 — 古籍 nav + placeholder page
 
 ### Goal
+
 Add a discoverable entry for the forthcoming 古籍 module. Page is a stub; content arrives in a follow-up plan.
 
 ### Nav
+
 - Append `{ href: '/ancient-texts', label: '古籍' }` to `NAV_LINKS` in `lib/design.ts:9-19`, placed after `{ href: '/sutra', label: '佛经' }` to group cultural-content modules.
 - Add `'ancient-texts'` to the `safeMode` filter in `components/Header.tsx:17` so it disappears in 儿童模式 (same rule as 佛经 — classical/ancient texts not appropriate for safe mode).
 
 ### Page — `app/ancient-texts/page.tsx` (RSC)
+
 - Mirrors `/about` shell: `<Suspense><Header/></Suspense>` → `PageContainer` → `Footer`.
 - Title "古籍 / Classical Texts" (`<h1 className="text-3xl font-bold text-ink">`).
 - Body paragraph explaining the planned scope: 经史子集, original text with sentence breaks and annotations, pinyin glosses for difficult characters and phrases.
@@ -37,6 +40,7 @@ Add a discoverable entry for the forthcoming 古籍 module. Page is a stub; cont
 - No API, no DB.
 
 ### Files
+
 - **Edit:** `lib/design.ts`, `components/Header.tsx`
 - **New:** `app/ancient-texts/page.tsx`
 
@@ -45,9 +49,11 @@ Add a discoverable entry for the forthcoming 古籍 module. Page is a stub; cont
 ## Change 2 — SMTP → `app_config` + full admin UI
 
 ### Goal
+
 Move SMTP credentials from `.env` to the `app_config` table and surface them in a dedicated admin page that mirrors the existing `ai.*` / `paypal.*` admin patterns. `.env` values become a fallback so existing deployments don't break.
 
 ### Reading layer — new `lib/smtp-config.ts`
+
 ```ts
 export type MailTransport = 'console' | 'smtp';
 export interface SmtpConfig {
@@ -64,11 +70,13 @@ export interface SmtpConfig {
 export async function getMailTransport(): Promise<MailTransport>;
 export async function getSmtpConfig(): Promise<SmtpConfig | null>;
 ```
+
 - Reads `smtp.*` keys from `app_config` via existing `getConfig()`.
 - `getMailTransport()` returns `'smtp'` only if `smtp.transport` is `'smtp'` AND `smtp.host` is non-empty.
 - **Fallback chain:** if a key is missing from DB, fall back to `process.env.SMTP_*`. `MAIL_FROM` and `MAIL_FROM_NAME` env vars are also accepted as last-resort defaults. This keeps existing `.env`-only deployments working until an admin saves the new values.
 
 ### Rewrite `lib/email.ts`
+
 - `sendEmail()` becomes:
   ```
   transport = await getMailTransport()
@@ -82,20 +90,22 @@ export async function getSmtpConfig(): Promise<SmtpConfig | null>;
 - Remove direct `process.env.SMTP_*` reads; centralize in `lib/smtp-config.ts`.
 
 ### DB keys (all string-typed, namespace `smtp.*`)
-| Key | Validator | Default |
-|---|---|---|
-| `smtp.transport` | enum `console` \| `smtp` | `console` |
-| `smtp.host` | non-empty when transport=smtp | — |
-| `smtp.port` | integer (1-65535) | `587` |
-| `smtp.secure` | boolean string | `false` |
-| `smtp.user` | string | — |
-| `smtp.pass` | string | — |
-| `smtp.from` | email-format when transport=smtp | — |
-| `smtp.from_name` | string | — |
+
+| Key              | Validator                        | Default   |
+| ---------------- | -------------------------------- | --------- |
+| `smtp.transport` | enum `console` \| `smtp`         | `console` |
+| `smtp.host`      | non-empty when transport=smtp    | —         |
+| `smtp.port`      | integer (1-65535)                | `587`     |
+| `smtp.secure`    | boolean string                   | `false`   |
+| `smtp.user`      | string                           | —         |
+| `smtp.pass`      | string                           | —         |
+| `smtp.from`      | email-format when transport=smtp | —         |
+| `smtp.from_name` | string                           | —         |
 
 Extend `KEY_VALIDATORS` in `lib/config.ts:3-27` to include these.
 
 ### Admin UI
+
 - **New page** `app/admin/email/page.tsx` (RSC) — server-loads current `getSmtpConfig()` + `getMailTransport()` + `getConfig('smtp.*')` for each key, hands values to client form.
 - **New client component** `components/admin/SmtpConfigForm.tsx`:
   - Form fields: transport (radio: console/smtp), host, port, secure (checkbox), user, password (input with show/hide toggle), from, fromName.
@@ -108,18 +118,22 @@ Extend `KEY_VALIDATORS` in `lib/config.ts:3-27` to include these.
 - **Sidebar** — add `{ href: '/admin/email', label: '邮件' }` to `components/admin/AdminSidebar.tsx`, placed after 语音设置.
 
 ### Audit events (extend `AuditEvent` union in `lib/audit-format.ts`)
+
 - `smtp_config_updated` — `metadata: { keys: string[] }` (which fields were saved)
 - `smtp_test_sent` — `metadata: { to: string, ok: boolean, error?: string }`
 
 Add `formatLogMessage` cases:
+
 - `smtp_config_updated` → "更新邮件配置(enabled、host、…)"
 - `smtp_test_sent` → "测试邮件发送 (to=…, ok=true)" / "测试邮件发送失败 (to=…, error=…)"
 
 ### Files
+
 - **New:** `lib/smtp-config.ts`, `app/admin/email/page.tsx`, `components/admin/SmtpConfigForm.tsx`, `app/api/admin/email/config/route.ts`, `app/api/admin/email/test/route.ts`
 - **Edit:** `lib/email.ts`, `lib/config.ts`, `lib/audit-format.ts`, `components/admin/AdminSidebar.tsx`
 
 ### Backwards compat
+
 Existing deployments with `SMTP_*` in `.env` continue to work — `getSmtpConfig()` falls back to env values. Once an admin saves via UI, DB values take precedence.
 
 ---
@@ -127,18 +141,22 @@ Existing deployments with `SMTP_*` in `.env` continue to work — `getSmtpConfig
 ## Change 3 — Guide: drop admin sections via code blocklist
 
 ### Goal
+
 `/guide` should only show README sections that are useful to end users. Admin / deployment / testing sections are excluded.
 
 ### Blocklist (H2 headings to drop, plus all content until the next H2)
+
 - `## 启动` — admin/setup
 - `## 测试` — dev
 - `## 管理员后台扩展` — admin-only
 - `## 环境变量` — admin/deployment
 
 ### Keep (user-facing, even though the heading also mentions admin)
+
 - `## 密码找回 + 管理员后台 (v1 / Plan B+)` — users need to know how to reset their password. Admin dashboard coverage here is brief; mixing is acceptable for a public doc.
 
 ### Implementation
+
 - Edit `app/guide/page.tsx`. After `readReadme()` returns, run a new `filterUserReadme(md: string): string` step before `renderMarkdown()`.
 - Algorithm:
   ```
@@ -155,6 +173,7 @@ Existing deployments with `SMTP_*` in `.env` continue to work — `getSmtpConfig
 - The H1 title (project name) and H2 sections before the first blocklist hit (e.g. "功能", "技术栈", "账号系统") all pass through.
 
 ### Tests
+
 - Add `tests/unit/app/guide-filter.test.ts` with 6 cases:
   1. removes `## 启动` section
   2. removes `## 测试` section
@@ -164,6 +183,7 @@ Existing deployments with `SMTP_*` in `.env` continue to work — `getSmtpConfig
   6. keeps H1 + first user section intact when no blocklist match
 
 ### Files
+
 - **Edit:** `app/guide/page.tsx`
 - **New:** `tests/unit/app/guide-filter.test.ts`
 

@@ -19,25 +19,37 @@ export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T | Ne
           ...(e.ttsErrorName ? { ttsErrorName: e.ttsErrorName } : {}),
         },
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
 
 export function badRequest(code: string, message: string, init?: ResponseInit) {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 400, ...(init ?? {}) });
+  return NextResponse.json(
+    { ok: false, error: { code, message } },
+    { status: 400, ...(init ?? {}) },
+  );
 }
 
 export function notFound(code = 'not_found', message = 'not_found', init?: ResponseInit) {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 404, ...(init ?? {}) });
+  return NextResponse.json(
+    { ok: false, error: { code, message } },
+    { status: 404, ...(init ?? {}) },
+  );
 }
 
 export function forbidden(code = 'forbidden', message = 'forbidden', init?: ResponseInit) {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 403, ...(init ?? {}) });
+  return NextResponse.json(
+    { ok: false, error: { code, message } },
+    { status: 403, ...(init ?? {}) },
+  );
 }
 
 export function unauthorized(code = 'unauthorized', message = 'unauthorized', init?: ResponseInit) {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 401, ...(init ?? {}) });
+  return NextResponse.json(
+    { ok: false, error: { code, message } },
+    { status: 401, ...(init ?? {}) },
+  );
 }
 
 export function serviceUnavailable(code: string, message: string) {

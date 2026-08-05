@@ -82,13 +82,7 @@ export async function createTrack(input: CreateTrackInput): Promise<number> {
     const [res] = await conn.execute<any>(
       `INSERT INTO audio_tracks (title, filename, size_bytes, is_default, uploaded_by)
        VALUES (?, ?, ?, ?, ?)`,
-      [
-        input.title,
-        input.filename,
-        input.sizeBytes,
-        input.isDefault ? 1 : 0,
-        input.uploadedBy,
-      ],
+      [input.title, input.filename, input.sizeBytes, input.isDefault ? 1 : 0, input.uploadedBy],
     );
     const newId = Number(res.insertId);
     await conn.commit();
@@ -108,10 +102,7 @@ export interface UpdateTrackInput {
 
 /** Updates a track's title and/or default flag. Preserves the
  *  single-default invariant when isDefault=true. */
-export async function updateTrack(
-  id: number,
-  input: UpdateTrackInput,
-): Promise<void> {
+export async function updateTrack(id: number, input: UpdateTrackInput): Promise<void> {
   const pool = getPool();
   const conn = await pool.getConnection();
   try {
@@ -131,10 +122,7 @@ export async function updateTrack(
     }
     if (sets.length > 0) {
       params.push(id);
-      await conn.query(
-        `UPDATE audio_tracks SET ${sets.join(', ')} WHERE id = ?`,
-        params,
-      );
+      await conn.query(`UPDATE audio_tracks SET ${sets.join(', ')} WHERE id = ?`, params);
     }
     await conn.commit();
   } catch (e) {

@@ -4,8 +4,16 @@ import { useState } from 'react';
 import { adminResetUserPassword } from '@/lib/api-admin';
 import { ConfirmDialog } from './ConfirmDialog';
 
-export function ResetPasswordDialog({ userId, username, open, onClose }: {
-  userId: number; username: string; open: boolean; onClose: () => void;
+export function ResetPasswordDialog({
+  userId,
+  username,
+  open,
+  onClose,
+}: {
+  userId: number;
+  username: string;
+  open: boolean;
+  onClose: () => void;
 }) {
   const [temp, setTemp] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -13,14 +21,17 @@ export function ResetPasswordDialog({ userId, username, open, onClose }: {
   const [error, setError] = useState<string | null>(null);
 
   if (open && temp === null && !error) {
-    adminResetUserPassword(userId).then(r => {
+    adminResetUserPassword(userId).then((r) => {
       if (r.ok) setTemp(r.data.tempPassword);
       else setError(r.error.message);
     });
   }
 
   function close() {
-    setTemp(null); setCopied(false); setHandedOff(false); setError(null);
+    setTemp(null);
+    setCopied(false);
+    setHandedOff(false);
+    setError(null);
     onClose();
   }
 
@@ -44,8 +55,14 @@ export function ResetPasswordDialog({ userId, username, open, onClose }: {
       {temp && (
         <>
           <div className="flex items-center gap-2 mb-2">
-            <code className="flex-1 bg-paper-deep px-3 py-2 rounded text-sm font-mono break-all">{temp}</code>
-            <button type="button" onClick={copy} className="text-sm px-2 py-1 border rounded hover:bg-paper-deep">
+            <code className="flex-1 bg-paper-deep px-3 py-2 rounded text-sm font-mono break-all">
+              {temp}
+            </code>
+            <button
+              type="button"
+              onClick={copy}
+              className="text-sm px-2 py-1 border rounded hover:bg-paper-deep"
+            >
               {copied ? '已复制' : '复制'}
             </button>
           </div>

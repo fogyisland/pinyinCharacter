@@ -28,10 +28,10 @@
 
 ## File Structure
 
-| File | Role | Change |
-|------|------|--------|
-| `lib/worksheet-types.ts` | worksheet 域 helpers (Cell / Worksheet / generateLayout / validateWorksheetInput 等) | modify `generateLayout` (line 264) — 把 `content.map(...)` 换成 pad 逻辑 |
-| `tests/unit/lib/worksheet-types.test.ts` | worksheet-types 的单元测试 | modify line 72-76 现有 case (改断言) + append 6 个新 case (新 describe block) |
+| File                                     | Role                                                                                 | Change                                                                        |
+| ---------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- |
+| `lib/worksheet-types.ts`                 | worksheet 域 helpers (Cell / Worksheet / generateLayout / validateWorksheetInput 等) | modify `generateLayout` (line 264) — 把 `content.map(...)` 换成 pad 逻辑      |
+| `tests/unit/lib/worksheet-types.test.ts` | worksheet-types 的单元测试                                                           | modify line 72-76 现有 case (改断言) + append 6 个新 case (新 describe block) |
 
 没有新文件。
 
@@ -40,6 +40,7 @@
 ## Task 1: Write failing tests (RED phase)
 
 **Files:**
+
 - Modify: `tests/unit/lib/worksheet-types.test.ts:72-76` (replace assertion in existing `it`) + append new `describe` block after line 77
 
 **Consumes:** `generateLayout` from `@/lib/worksheet-types` (already imported at line 8)
@@ -50,17 +51,17 @@
 Open `tests/unit/lib/worksheet-types.test.ts` and replace the existing `it('non-four-line styles fall through to per-char cells', ...)` block (lines 72-76) with the following:
 
 ```ts
-  it('non-four-line styles pad to cellsPerPage multiple (blank cells fill the page)', () => {
-    // 3 chars + A4 (88 cells/page) → 88 cells (3 chars + 85 blanks)
-    const cells = generateLayout(['A', 'b', 'C'], 'pen-square', 'A4');
-    expect(cells).toHaveLength(88);
-    expect(cells[0].char).toBe('A');
-    expect(cells[1].char).toBe('b');
-    expect(cells[2].char).toBe('C');
-    expect(cells[3].char).toBe('');
-    expect(cells[87].char).toBe('');
-    expect(cells.map((c) => c.style)).toEqual(Array(88).fill('pen-square'));
-  });
+it('non-four-line styles pad to cellsPerPage multiple (blank cells fill the page)', () => {
+  // 3 chars + A4 (88 cells/page) → 88 cells (3 chars + 85 blanks)
+  const cells = generateLayout(['A', 'b', 'C'], 'pen-square', 'A4');
+  expect(cells).toHaveLength(88);
+  expect(cells[0].char).toBe('A');
+  expect(cells[1].char).toBe('b');
+  expect(cells[2].char).toBe('C');
+  expect(cells[3].char).toBe('');
+  expect(cells[87].char).toBe('');
+  expect(cells.map((c) => c.style)).toEqual(Array(88).fill('pen-square'));
+});
 ```
 
 - [ ] **Step 1.2: Append new describe block for auto-fill behavior**
@@ -70,45 +71,44 @@ At the end of the existing `describe('generateLayout — four-line row packing (
 Find the line `});` that closes the `describe('generateLayout — four-line row packing (English trace)', ...)` block (line 77 — the second `});` after line 72-76's `it` ends). After it, add:
 
 ```ts
-
 describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
   it('50 chars + A4 → 88 cells (50 chars + 38 blanks; 1 page full)', () => {
     const chars = Array.from({ length: 50 }, (_, i) => String.fromCharCode(0x4e00 + i));
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
-    expect(cells.slice(0, 50).map(c => c.char)).toEqual(chars);
-    expect(cells.slice(50).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(0, 50).map((c) => c.char)).toEqual(chars);
+    expect(cells.slice(50).every((c) => c.char === '')).toBe(true);
   });
 
   it('1 char + A4 → 88 cells (one-char-per-page practice mode)', () => {
     const cells = generateLayout(['你'], 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
     expect(cells[0].char).toBe('你');
-    expect(cells.slice(1).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
   });
 
   it('88 chars + A4 → 88 cells (exact fit, zero blanks)', () => {
     const chars = Array.from({ length: 88 }, () => '字');
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(88);
-    expect(cells.every(c => c.char === '字')).toBe(true);
+    expect(cells.every((c) => c.char === '字')).toBe(true);
   });
 
   it('89 chars + A4 → 176 cells (cross-page: page 1 full, page 2 = 1 char + 87 blanks)', () => {
     const chars = Array.from({ length: 89 }, (_, i) => `字${i}`);
     const cells = generateLayout(chars, 'pen-square', 'A4');
     expect(cells).toHaveLength(176);
-    expect(cells.slice(0, 88).every(c => c.char !== '')).toBe(true);
+    expect(cells.slice(0, 88).every((c) => c.char !== '')).toBe(true);
     expect(cells[88].char).toBe(`字88`);
-    expect(cells.slice(89).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(89).every((c) => c.char === '')).toBe(true);
   });
 
   it('100 chars + A3 (per=168) → 168 cells (100 chars + 68 blanks; A3 sized)', () => {
     const chars = Array.from({ length: 100 }, (_, i) => `字${i}`);
     const cells = generateLayout(chars, 'brush-square', 'A3');
     expect(cells).toHaveLength(168);
-    expect(cells.slice(0, 100).map(c => c.char)).toEqual(chars);
-    expect(cells.slice(100).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(0, 100).map((c) => c.char)).toEqual(chars);
+    expect(cells.slice(100).every((c) => c.char === '')).toBe(true);
   });
 
   it('pads lined style too (pen-lined cells are blank ruled lines, no letter)', () => {
@@ -116,7 +116,7 @@ describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
     expect(cells).toHaveLength(88);
     expect(cells[0].char).toBe('爱');
     expect(cells[1].char).toBe('国');
-    expect(cells.slice(2).every(c => c.char === '')).toBe(true);
+    expect(cells.slice(2).every((c) => c.char === '')).toBe(true);
   });
 });
 ```
@@ -124,6 +124,7 @@ describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
 - [ ] **Step 1.3: Run tests to verify they fail (RED)**
 
 Run:
+
 ```bash
 npx vitest run tests/unit/lib/worksheet-types.test.ts
 ```
@@ -131,6 +132,7 @@ npx vitest run tests/unit/lib/worksheet-types.test.ts
 Expected: **6 of 7 new/modified tests FAIL** (the original `non-four-line styles fall through to per-char cells` test will also fail because its assertion was changed). The 4-line tests at the top of the file should still PASS (we didn't touch that branch).
 
 Specifically expect failures with messages like:
+
 - `expected 3 to be 88` (the modified test)
 - `expected 50 to be 88`
 - `expected 1 to be 88`
@@ -152,6 +154,7 @@ git commit -m "test(worksheet-types): pin auto-fill empty cells in generateLayou
 ## Task 2: Implement padding in generateLayout (GREEN phase)
 
 **Files:**
+
 - Modify: `lib/worksheet-types.ts:263-264` (replace the `return content.map(...)` line + add pad loop above it)
 
 **Consumes:** `cellsPerPage` (already re-exported from `./worksheet-page-count` at line 305)
@@ -164,21 +167,21 @@ Open `lib/worksheet-types.ts`. Find the `generateLayout` function (line 245-265)
 Replace line 264 (and the blank line 263.5 — keep the four-line `return` at line 263 intact) with the following block:
 
 ```ts
-  // Pad content to the next cellsPerPage(paperSize) multiple so the final
-  // page is full of practice cells (empty char === blank cell — WorksheetCell
-  // draws the grid/lines but omits the letter). Without this, a 50-char
-  // worksheet on A4 (88 cells/page) renders only 50 cells and the page
-  // has 38 missing slots — printers / users see a short sheet instead of
-  // a full practice page. Math.max guards the empty-content case so we
-  // still return one full page of blanks (defensive — UI hides empty
-  // previews via canPreview, but the helper must not return []).
-  const perPage = cellsPerPage(paperSize ?? 'A4');
-  const total = Math.max(perPage, Math.ceil(content.length / perPage) * perPage);
-  const cells: Cell[] = [];
-  for (let i = 0; i < total; i++) {
-    cells.push({ char: i < content.length ? content[i] : '', style, index: i });
-  }
-  return cells;
+// Pad content to the next cellsPerPage(paperSize) multiple so the final
+// page is full of practice cells (empty char === blank cell — WorksheetCell
+// draws the grid/lines but omits the letter). Without this, a 50-char
+// worksheet on A4 (88 cells/page) renders only 50 cells and the page
+// has 38 missing slots — printers / users see a short sheet instead of
+// a full practice page. Math.max guards the empty-content case so we
+// still return one full page of blanks (defensive — UI hides empty
+// previews via canPreview, but the helper must not return []).
+const perPage = cellsPerPage(paperSize ?? 'A4');
+const total = Math.max(perPage, Math.ceil(content.length / perPage) * perPage);
+const cells: Cell[] = [];
+for (let i = 0; i < total; i++) {
+  cells.push({ char: i < content.length ? content[i] : '', style, index: i });
+}
+return cells;
 ```
 
 So the new tail of `generateLayout` becomes (after the four-line `if` block which is unchanged):
@@ -209,6 +212,7 @@ So the new tail of `generateLayout` becomes (after the four-line `if` block whic
 - [ ] **Step 2.2: Run worksheet-types tests to verify they pass (GREEN)**
 
 Run:
+
 ```bash
 npx vitest run tests/unit/lib/worksheet-types.test.ts
 ```
@@ -218,6 +222,7 @@ Expected: **All tests in the file pass** (the 6 new ones + the 1 modified one in
 - [ ] **Step 2.3: Run full test suite to confirm no regressions**
 
 Run:
+
 ```bash
 npx vitest run
 ```
@@ -229,6 +234,7 @@ If anything fails, investigate before continuing — the helper change must be f
 - [ ] **Step 2.4: Run TypeScript check**
 
 Run:
+
 ```bash
 npx tsc --noEmit
 ```
@@ -238,6 +244,7 @@ Expected: Exit 0, no errors. (The function signature of `generateLayout` is unch
 - [ ] **Step 2.5: Run Next.js build (per memory `feedback-per-task-build-check.md`)**
 
 Run:
+
 ```bash
 npx next build
 ```

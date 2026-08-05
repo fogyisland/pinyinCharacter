@@ -27,28 +27,28 @@
 
 **New files (10):**
 
-| Path | Purpose |
-|------|---------|
-| `lib/pinyin-syllable.ts` | Pure: getLastLetter, expandLastLetter |
-| `lib/chain-types.ts` | `CharInfo` interface |
-| `lib/chain-rules.ts` | Pure: matchesChainRule, getValidNextChars, pickStarter |
-| `lib/common-chars.ts` | Hardcoded COMMON_CHARS constant (~80 chars) for starter pool |
-| `lib/api-chain.ts` | Client fetch + 1h in-memory cache |
-| `app/api/chain/chars/route.ts` | GET endpoint, loops listChars pages |
-| `components/game/ChainPickerModal.tsx` | Grid of valid chars, click → onSelect |
-| `components/game/ChainScroll.tsx` | Horizontal scroll, fading opacity for old chars |
-| `components/game/ChainSummary.tsx` | Game-over screen with restart/share |
-| `components/game/ChainGame.tsx` | Main game, state machine, fetch + render |
-| `tests/unit/lib/pinyin-syllable.test.ts` | ~10 unit tests |
-| `tests/unit/lib/chain-rules.test.ts` | ~15 unit tests |
-| `tests/unit/lib/api-chain.test.ts` | ~3 unit tests |
-| `tests/unit/components/game/ChainPickerModal.test.tsx` | ~5 component tests |
-| `tests/unit/components/game/ChainGame.test.tsx` | ~5 component tests (mock fetch) |
+| Path                                                   | Purpose                                                      |
+| ------------------------------------------------------ | ------------------------------------------------------------ |
+| `lib/pinyin-syllable.ts`                               | Pure: getLastLetter, expandLastLetter                        |
+| `lib/chain-types.ts`                                   | `CharInfo` interface                                         |
+| `lib/chain-rules.ts`                                   | Pure: matchesChainRule, getValidNextChars, pickStarter       |
+| `lib/common-chars.ts`                                  | Hardcoded COMMON_CHARS constant (~80 chars) for starter pool |
+| `lib/api-chain.ts`                                     | Client fetch + 1h in-memory cache                            |
+| `app/api/chain/chars/route.ts`                         | GET endpoint, loops listChars pages                          |
+| `components/game/ChainPickerModal.tsx`                 | Grid of valid chars, click → onSelect                        |
+| `components/game/ChainScroll.tsx`                      | Horizontal scroll, fading opacity for old chars              |
+| `components/game/ChainSummary.tsx`                     | Game-over screen with restart/share                          |
+| `components/game/ChainGame.tsx`                        | Main game, state machine, fetch + render                     |
+| `tests/unit/lib/pinyin-syllable.test.ts`               | ~10 unit tests                                               |
+| `tests/unit/lib/chain-rules.test.ts`                   | ~15 unit tests                                               |
+| `tests/unit/lib/api-chain.test.ts`                     | ~3 unit tests                                                |
+| `tests/unit/components/game/ChainPickerModal.test.tsx` | ~5 component tests                                           |
+| `tests/unit/components/game/ChainGame.test.tsx`        | ~5 component tests (mock fetch)                              |
 
 **Modified files (1):**
 
-| Path | Change |
-|------|--------|
+| Path                               | Change                                                                                       |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- |
 | `components/game/GameModeTabs.tsx` | Add `'pinyin-chain'` to `Mode` union, add 3rd tab button, render `<ChainGame />` when active |
 
 **Total: 14 new files + 1 modified**
@@ -58,10 +58,12 @@
 ## Task 1: `lib/pinyin-syllable.ts` + tests
 
 **Files:**
+
 - Create: `lib/pinyin-syllable.ts`
 - Create: `tests/unit/lib/pinyin-syllable.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing (pure module, no imports)
 - Produces:
   - `function getLastLetter(pinyin: string): string` — returns last letter of pinyin after stripping tone (numeric or diacritic); returns '' for empty
@@ -190,9 +192,11 @@ git commit -m "feat(chain): pinyin-syllable with last-letter + i/u/ü wildcards 
 ## Task 2: `lib/common-chars.ts` (starter pool constant)
 
 **Files:**
+
 - Create: `lib/common-chars.ts`
 
 **Interfaces:**
+
 - Consumes: nothing
 - Produces:
   - `export const COMMON_CHARS: readonly string[]` — ~80 most common Chinese chars (used as starter pool)
@@ -212,14 +216,86 @@ Create `lib/common-chars.ts`:
  * too easy, swap chars here.
  */
 export const COMMON_CHARS: readonly string[] = [
-  '的', '一', '是', '不', '了', '在', '人', '有', '我', '他',
-  '这', '中', '大', '来', '上', '国', '个', '到', '说', '们',
-  '为', '子', '和', '你', '地', '出', '道', '也', '时', '年',
-  '得', '就', '那', '要', '下', '以', '生', '会', '自', '着',
-  '去', '之', '过', '家', '学', '对', '可', '她', '里', '后',
-  '小', '么', '心', '多', '天', '而', '能', '好', '都', '然',
-  '没', '日', '于', '起', '还', '发', '成', '事', '只', '作',
-  '当', '想', '看', '文', '无', '开', '手', '十', '用', '主',
+  '的',
+  '一',
+  '是',
+  '不',
+  '了',
+  '在',
+  '人',
+  '有',
+  '我',
+  '他',
+  '这',
+  '中',
+  '大',
+  '来',
+  '上',
+  '国',
+  '个',
+  '到',
+  '说',
+  '们',
+  '为',
+  '子',
+  '和',
+  '你',
+  '地',
+  '出',
+  '道',
+  '也',
+  '时',
+  '年',
+  '得',
+  '就',
+  '那',
+  '要',
+  '下',
+  '以',
+  '生',
+  '会',
+  '自',
+  '着',
+  '去',
+  '之',
+  '过',
+  '家',
+  '学',
+  '对',
+  '可',
+  '她',
+  '里',
+  '后',
+  '小',
+  '么',
+  '心',
+  '多',
+  '天',
+  '而',
+  '能',
+  '好',
+  '都',
+  '然',
+  '没',
+  '日',
+  '于',
+  '起',
+  '还',
+  '发',
+  '成',
+  '事',
+  '只',
+  '作',
+  '当',
+  '想',
+  '看',
+  '文',
+  '无',
+  '开',
+  '手',
+  '十',
+  '用',
+  '主',
 ];
 ```
 
@@ -240,11 +316,13 @@ git commit -m "feat(chain): COMMON_CHARS starter pool constant [2026-07-03 22.15
 ## Task 3: `lib/chain-types.ts` + `lib/chain-rules.ts` + tests
 
 **Files:**
+
 - Create: `lib/chain-types.ts`
 - Create: `lib/chain-rules.ts`
 - Create: `tests/unit/lib/chain-rules.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `getLastLetter`, `expandLastLetter` from `@/lib/pinyin-syllable` (Task 1)
 - Produces:
@@ -259,10 +337,10 @@ git commit -m "feat(chain): COMMON_CHARS starter pool constant [2026-07-03 22.15
 /** Char info returned by /api/chain/chars and used by ChainGame. */
 export interface CharInfo {
   char: string;
-  pinyin: string;        // 带声调字母: 'dēng'
-  meaning: string;       // 中文释义
-  radical: string;       // 部首 (empty string if unknown)
-  tone: 1 | 2 | 3 | 4;   // 声调 (excludes 轻声)
+  pinyin: string; // 带声调字母: 'dēng'
+  meaning: string; // 中文释义
+  radical: string; // 部首 (empty string if unknown)
+  tone: 1 | 2 | 3 | 4; // 声调 (excludes 轻声)
 }
 ```
 
@@ -287,29 +365,29 @@ const ci = (char: string, pinyin: string, opts: Partial<CharInfo> = {}): CharInf
 
 describe('matchesChainRule', () => {
   it('matches when prev last letter = next first letter', () => {
-    expect(matchesChainRule('ān', 'nà')).toBe(true);  // n → n
-    expect(matchesChainRule('wán', 'ne')).toBe(true);  // n → n
+    expect(matchesChainRule('ān', 'nà')).toBe(true); // n → n
+    expect(matchesChainRule('wán', 'ne')).toBe(true); // n → n
   });
 
   it('rejects mismatched letters', () => {
-    expect(matchesChainRule('ān', 'bāo')).toBe(false);  // n → b
+    expect(matchesChainRule('ān', 'bāo')).toBe(false); // n → b
     expect(matchesChainRule('hǎo', 'dēng')).toBe(false); // o → d
   });
 
   it('handles i wildcard (爱 ài → 一 yī)', () => {
-    expect(matchesChainRule('ài', 'yī')).toBe(true);  // i → y
+    expect(matchesChainRule('ài', 'yī')).toBe(true); // i → y
     expect(matchesChainRule('ài', 'èr')).toBe(false); // i → e
   });
 
   it('handles u wildcard (母 mǔ → 雨 yǔ)', () => {
-    expect(matchesChainRule('mǔ', 'yǔ')).toBe(true);  // u → y
-    expect(matchesChainRule('mǔ', 'jù')).toBe(true);  // u → j (ü pair)
+    expect(matchesChainRule('mǔ', 'yǔ')).toBe(true); // u → y
+    expect(matchesChainRule('mǔ', 'jù')).toBe(true); // u → j (ü pair)
   });
 
   it('handles v/ü wildcard (绿 lǜ → 距 jù)', () => {
-    expect(matchesChainRule('lǜ', 'jù')).toBe(true);  // ü → j
-    expect(matchesChainRule('lǜ', 'xū')).toBe(true);  // ü → x
-    expect(matchesChainRule('lǜ', 'yǔ')).toBe(true);  // ü → y
+    expect(matchesChainRule('lǜ', 'jù')).toBe(true); // ü → j
+    expect(matchesChainRule('lǜ', 'xū')).toBe(true); // ü → x
+    expect(matchesChainRule('lǜ', 'yǔ')).toBe(true); // ü → y
   });
 
   it('returns false for empty pinyin', () => {
@@ -456,11 +534,13 @@ git commit -m "feat(chain): chain-rules (matches/getValid/pickStarter) with test
 ## Task 4: `app/api/chain/chars/route.ts` + `lib/api-chain.ts` + tests
 
 **Files:**
+
 - Create: `app/api/chain/chars/route.ts`
 - Create: `lib/api-chain.ts`
 - Create: `tests/unit/lib/api-chain.test.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `listChars` from `@/lib/rare-chars` (server-only, paginated, pageSize=80)
   - `getRadical` from `@/lib/radical` (client-safe JSON lookup, can call server-side)
@@ -485,7 +565,13 @@ export const runtime = 'nodejs';
 const TONE_DIACRITIC_RE = /[āēīōūǔǎěǐǒùǜàèìòù]/;
 
 export async function GET() {
-  const allChars: Array<{ char: string; pinyin: string; meaning: string; radical: string; tone: 1 | 2 | 3 | 4 }> = [];
+  const allChars: Array<{
+    char: string;
+    pinyin: string;
+    meaning: string;
+    radical: string;
+    tone: 1 | 2 | 3 | 4;
+  }> = [];
   // listChars pageSize is hardcoded 80; loop until exhausted (cap at 100 pages = 8000 chars)
   for (let page = 1; page <= 100; page++) {
     const result = await listChars({ page });
@@ -514,7 +600,10 @@ export async function GET() {
 ```ts
 import type { CharInfo } from './chain-types';
 
-interface CacheEntry { data: CharInfo[]; ts: number }
+interface CacheEntry {
+  data: CharInfo[];
+  ts: number;
+}
 let cache: CacheEntry | null = null;
 const TTL_MS = 60 * 60 * 1000; // 1h
 
@@ -613,10 +702,12 @@ git commit -m "feat(chain): /api/chain/chars endpoint + client fetch with 1h cac
 ## Task 5: `components/game/ChainPickerModal.tsx` + tests
 
 **Files:**
+
 - Create: `components/game/ChainPickerModal.tsx`
 - Create: `tests/unit/components/game/ChainPickerModal.test.tsx`
 
 **Interfaces:**
+
 - Consumes:
   - `CharInfo` from `@/lib/chain-types`
 - Produces:
@@ -639,7 +730,11 @@ import { ChainPickerModal } from '@/components/game/ChainPickerModal';
 import type { CharInfo } from '@/lib/chain-types';
 
 const ci = (char: string, pinyin: string): CharInfo => ({
-  char, pinyin, meaning: '', radical: '宀', tone: 1,
+  char,
+  pinyin,
+  meaning: '',
+  radical: '宀',
+  tone: 1,
 });
 
 describe('ChainPickerModal', () => {
@@ -740,10 +835,12 @@ git commit -m "feat(chain): ChainPickerModal with grid of valid chars [2026-07-0
 ## Task 6: `components/game/ChainScroll.tsx` + `ChainSummary.tsx` (no tests)
 
 **Files:**
+
 - Create: `components/game/ChainScroll.tsx`
 - Create: `components/game/ChainSummary.tsx`
 
 **Interfaces:**
+
 - Consumes:
   - `CharInfo` from `@/lib/chain-types`
 - Produces:
@@ -758,13 +855,7 @@ git commit -m "feat(chain): ChainPickerModal with grid of valid chars [2026-07-0
 import { useMemo } from 'react';
 import type { CharInfo } from '@/lib/chain-types';
 
-export function ChainScroll({
-  chain,
-  charsList,
-}: {
-  chain: string[];
-  charsList: CharInfo[];
-}) {
+export function ChainScroll({ chain, charsList }: { chain: string[]; charsList: CharInfo[] }) {
   const lookup = useMemo(() => new Map(charsList.map((c) => [c.char, c])), [charsList]);
   return (
     <div className="overflow-x-auto rounded-lg border border-ink/10 bg-paper-deep/50 p-4">
@@ -791,13 +882,7 @@ export function ChainScroll({
 ```tsx
 'use client';
 
-export function ChainSummary({
-  chain,
-  onRestart,
-}: {
-  chain: string[];
-  onRestart: () => void;
-}) {
+export function ChainSummary({ chain, onRestart }: { chain: string[]; onRestart: () => void }) {
   const text = chain.join(' → ');
   const handleShare = async () => {
     try {
@@ -854,10 +939,12 @@ git commit -m "feat(chain): ChainScroll + ChainSummary presentational components
 ## Task 7: `components/game/ChainGame.tsx` + tests (main game)
 
 **Files:**
+
 - Create: `components/game/ChainGame.tsx`
 - Create: `tests/unit/components/game/ChainGame.test.tsx`
 
 **Interfaces:**
+
 - Consumes:
   - `fetchChainChars` from `@/lib/api-chain`
   - `getValidNextChars, pickStarter` from `@/lib/chain-rules`
@@ -877,7 +964,11 @@ import { ChainGame } from '@/components/game/ChainGame';
 import type { CharInfo } from '@/lib/chain-types';
 
 const ci = (char: string, pinyin: string): CharInfo => ({
-  char, pinyin, meaning: '', radical: '宀', tone: 1,
+  char,
+  pinyin,
+  meaning: '',
+  radical: '宀',
+  tone: 1,
 });
 
 const sampleChars: CharInfo[] = [
@@ -969,7 +1060,7 @@ describe('ChainGame', () => {
   it('triggers finished state when validNext is empty (dead letter)', async () => {
     // Build chars where starter has 0 valid next chars
     const deadChars: CharInfo[] = [
-      ci('包', 'bāo'),  // ends in o, no char starts with o
+      ci('包', 'bāo'), // ends in o, no char starts with o
     ];
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
@@ -1013,7 +1104,9 @@ export function ChainGame() {
   const [chain, setChain] = useState<string[]>([]);
   const [starter, setStarter] = useState<string>('');
 
-  useEffect(() => { void startGame(); }, []);
+  useEffect(() => {
+    void startGame();
+  }, []);
 
   async function startGame() {
     setPhase('loading');
@@ -1092,10 +1185,7 @@ export function ChainGame() {
           上一个字: {currentLast.char} {currentLast.pinyin}
         </div>
       )}
-      <ChainPickerModal
-        validChars={validNext}
-        onSelect={(c) => setChain((prev) => [...prev, c])}
-      />
+      <ChainPickerModal validChars={validNext} onSelect={(c) => setChain((prev) => [...prev, c])} />
     </div>
   );
 }
@@ -1118,9 +1208,11 @@ git commit -m "feat(chain): ChainGame main component with state machine [2026-07
 ## Task 8: Wire into `GameModeTabs` (3rd tab) + integration
 
 **Files:**
+
 - Modify: `components/game/GameModeTabs.tsx:7-37` (add 'pinyin-chain' to Mode union, add 3rd tab button, render ChainGame)
 
 **Interfaces:**
+
 - Consumes: `ChainGame` (Task 7)
 - Produces: 3-tab GameModeTabs UI
 
@@ -1237,6 +1329,7 @@ Expected: clean compile + build success
 - [ ] **Step 4: Update MEMORY.md with plan status**
 
 Add entry to user's `MEMORY.md` (existing pattern for plan tracking):
+
 - File: `plan-pinyin-solitaire-status.md`
 - Topic: 拼音接龙 mini-game, 8 commits, X tests pass, tsc + build clean, awaiting human browser smoke
 
@@ -1246,31 +1339,33 @@ Add entry to user's `MEMORY.md` (existing pattern for plan tracking):
 
 **1. Spec coverage:**
 
-| Spec section | Task(s) |
-|--------------|---------|
-| 11 locked design decisions | All tasks implement the spec decisions |
-| `lib/pinyin-syllable.ts` (40 lines, 2 exports) | Task 1 |
-| `lib/chain-types.ts` (20 lines) | Task 3 step 1 |
-| `lib/chain-rules.ts` (50 lines, 3 exports) | Task 3 |
-| `lib/api-chain.ts` (30 lines) | Task 4 |
-| `app/api/chain/chars/route.ts` (25 lines) | Task 4 |
-| `components/game/ChainScroll.tsx` (40 lines) | Task 6 |
-| `components/game/ChainPickerModal.tsx` (50 lines) | Task 5 |
-| `components/game/ChainSummary.tsx` (40 lines) | Task 6 |
-| `components/game/ChainGame.tsx` (120 lines) | Task 7 |
-| `components/game/GameModeTabs.tsx` modification | Task 8 |
-| 35 new tests (pinyin-syllable 11, chain-rules 14, api-chain 3, modal 5, game 7) | Tasks 1, 3, 4, 5, 7 |
-| Global Constraints (no prod, npm, tsc+build, etc.) | Task 8 step 4 + Task 9 |
+| Spec section                                                                    | Task(s)                                |
+| ------------------------------------------------------------------------------- | -------------------------------------- |
+| 11 locked design decisions                                                      | All tasks implement the spec decisions |
+| `lib/pinyin-syllable.ts` (40 lines, 2 exports)                                  | Task 1                                 |
+| `lib/chain-types.ts` (20 lines)                                                 | Task 3 step 1                          |
+| `lib/chain-rules.ts` (50 lines, 3 exports)                                      | Task 3                                 |
+| `lib/api-chain.ts` (30 lines)                                                   | Task 4                                 |
+| `app/api/chain/chars/route.ts` (25 lines)                                       | Task 4                                 |
+| `components/game/ChainScroll.tsx` (40 lines)                                    | Task 6                                 |
+| `components/game/ChainPickerModal.tsx` (50 lines)                               | Task 5                                 |
+| `components/game/ChainSummary.tsx` (40 lines)                                   | Task 6                                 |
+| `components/game/ChainGame.tsx` (120 lines)                                     | Task 7                                 |
+| `components/game/GameModeTabs.tsx` modification                                 | Task 8                                 |
+| 35 new tests (pinyin-syllable 11, chain-rules 14, api-chain 3, modal 5, game 7) | Tasks 1, 3, 4, 5, 7                    |
+| Global Constraints (no prod, npm, tsc+build, etc.)                              | Task 8 step 4 + Task 9                 |
 
 **2. Placeholder scan:** No TBD/TODO/fill-in-details found. Every step has concrete code.
 
 **3. Type consistency:**
+
 - `CharInfo` interface defined in Task 3 (chain-types.ts) and used consistently in Tasks 4, 5, 6, 7
 - `getValidNextChars(chars, prevChar, excludeChars)` signature consistent across Tasks 3, 7
 - `pickStarter(allChars, minValid?, maxTries?)` signature consistent in Tasks 3, 7
 - All exports from `pinyin-syllable.ts` consumed in `chain-rules.ts` correctly
 
 **4. Adaptations from spec (noted in Global Constraints):**
+
 - listChars pageSize hardcoded 80 → endpoint loops pages (Task 4)
 - No `usage_rank` → hardcoded COMMON_CHARS (Task 2)
 - getRadical is client-safe JSON, called server-side in endpoint (Task 4)

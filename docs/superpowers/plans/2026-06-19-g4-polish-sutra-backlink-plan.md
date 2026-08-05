@@ -25,11 +25,13 @@
 ## File Structure
 
 ### New files
+
 - `app/sutra/[id]/back-link.ts` — pure function `getSutraBackLink(from)` + `SutraBackSource` type. Task 2.
 - `tests/unit/app/sutra/back-link.test.ts` — 5 vitest tests (3 valid sources, 1 unknown, 1 undefined). Task 2.
 - `scripts/pull-prod-to-dev.ts` — one-off `mysql2` script. Task 6.
 
 ### Modified files
+
 - `tests/unit/components/worksheet/FontFamilyPicker.test.tsx` — append trailing newline. Task 1.
 - `tests/unit/lib/worksheet-types.test.ts` — append trailing newline. Task 1.
 - `scripts/migrations/2026-06-19-brush-paper-size.sql` — append trailing newline. Task 1.
@@ -40,6 +42,7 @@
 - `tests/unit/lib/worksheet-page-count.test.ts` — append 3 tests inside the existing `describe('pageCountFor', ...)` block: empty, exactly-full, one-over-threshold for brush-12/24/28. Task 5.
 
 ### Untouched (verified)
+
 - `app/sutras/page.tsx` (and any other sutra list route) — already calls `<SutraCard>`; the only required change is inside `SutraCard` itself.
 - `app/sutra/[id]/page.tsx` props interface already declares `from?: string` in `searchParams` — no signature change.
 - All worksheet / font / DB code — unchanged.
@@ -51,23 +54,27 @@
 ### Task 1: Trailing newlines in 3 files (`chore`)
 
 **Files:**
+
 - Modify: `tests/unit/components/worksheet/FontFamilyPicker.test.tsx`
 - Modify: `tests/unit/lib/worksheet-types.test.ts`
 - Modify: `scripts/migrations/2026-06-19-brush-paper-size.sql`
 
 **Interfaces:**
+
 - Consumes: (no logic dependencies)
 - Produces: 3 files all end with a single `\n` byte (POSIX text-file convention).
 
 - [ ] **Step 1: Verify each file currently lacks a trailing newline**
 
 Run:
+
 ```bash
 cd "E:/ToolDevelop/PinYinCharacter"
 tail -c 1 tests/unit/components/worksheet/FontFamilyPicker.test.tsx | xxd
 tail -c 1 tests/unit/lib/worksheet-types.test.ts | xxd
 tail -c 1 scripts/migrations/2026-06-19-brush-paper-size.sql | xxd
 ```
+
 Expected: each command prints `00000000: 0000` (a NUL byte placeholder from a missing final newline) OR shows a non-`0a` final byte. If a file already ends in `0a`, skip it and only modify the others.
 
 (For SQL the current last byte is `;` = `0x3b`. For the two test files the last line is closing `});` or similar — confirm by visual check or `tail -c 1 | xxd`.)
@@ -78,8 +85,8 @@ For each file missing a trailing `\n`, append one byte (`0x0a`). Use the Edit to
 
 ```ts
 // Edit on scripts/migrations/2026-06-19-brush-paper-size.sql
-old_string: "MODIFY COLUMN paper_size ENUM('A3','A4','B5','brush-12','brush-24','brush-28') NOT NULL;"
-new_string: "MODIFY COLUMN paper_size ENUM('A3','A4','B5','brush-12','brush-24','brush-28') NOT NULL;\n"
+old_string: "MODIFY COLUMN paper_size ENUM('A3','A4','B5','brush-12','brush-24','brush-28') NOT NULL;";
+new_string: "MODIFY COLUMN paper_size ENUM('A3','A4','B5','brush-12','brush-24','brush-28') NOT NULL;\n";
 ```
 
 For the two test files, pick the closing brace of the last `describe` (or last `});`) as the anchor and append `\n`.
@@ -87,12 +94,14 @@ For the two test files, pick the closing brace of the last `describe` (or last `
 - [ ] **Step 3: Verify trailing newlines now present**
 
 Run:
+
 ```bash
 cd "E:/ToolDevelop/PinYinCharacter"
 tail -c 1 tests/unit/components/worksheet/FontFamilyPicker.test.tsx | xxd
 tail -c 1 tests/unit/lib/worksheet-types.test.ts | xxd
 tail -c 1 scripts/migrations/2026-06-19-brush-paper-size.sql | xxd
 ```
+
 Expected: each command prints `00000000: 0a0a` (single `0a` byte).
 
 - [ ] **Step 4: tsc clean**
@@ -115,10 +124,12 @@ git commit -m "chore: trailing newlines in 3 test/asset files"
 ### Task 2: getSutraBackLink helper + unit tests (TDD)
 
 **Files:**
+
 - Create: `app/sutra/[id]/back-link.ts`
 - Create: `tests/unit/app/sutra/back-link.test.ts`
 
 **Interfaces:**
+
 - Consumes: (no logic dependencies — pure function)
 - Produces: `getSutraBackLink(from: string | undefined): { href: string; label: string }` — used by Task 3.
 
@@ -199,21 +210,26 @@ git commit -m "feat(sutra): back-link helper getSutraBackLink"
 ### Task 3: Wire ?from=sutras through SutraCard + detail page
 
 **Files:**
+
 - Modify: `components/sutra/SutraCard.tsx:6` (change href)
 - Modify: `app/sutra/[id]/page.tsx:37,44-50` (call helper, render back link)
 - Modify: `tests/unit/components/sutra/SutraCard.test.tsx:24-30` (add new test)
 
 **Interfaces:**
+
 - Consumes: `getSutraBackLink(from: string | undefined): { href: string; label: string }` from Task 2.
 - Produces: clicking a SutraCard navigates to `/sutra/[id]?from=sutras`; the detail page renders a back link `<Link href={backLink.href}>{backLink.label}</Link>`.
 
 - [ ] **Step 1: Update SutraCard href to include ?from=sutras**
 
 In `components/sutra/SutraCard.tsx`, change line 6 from:
+
 ```tsx
 href={`/sutra/${sutra.id}`}
 ```
+
 to:
+
 ```tsx
 href={`/sutra/${sutra.id}?from=sutras`}
 ```
@@ -223,13 +239,13 @@ href={`/sutra/${sutra.id}?from=sutras`}
 In `tests/unit/components/sutra/SutraCard.test.tsx`, append a third `it(...)` block (after the existing 2 tests, inside the `describe('SutraCard', ...)` block). The test file already has `// @vitest-environment happy-dom` at the top — do NOT add a second copy.
 
 ```tsx
-  it('links to sutra detail with ?from=sutras so the back button works', () => {
-    const { container } = render(
-      <SutraCard sutra={{ id: 1, title: '心经', slug: 'xinjing', chunkCount: 1, charCount: 260 }} />
-    );
-    const link = container.querySelector('a');
-    expect(link?.getAttribute('href')).toBe('/sutra/1?from=sutras');
-  });
+it('links to sutra detail with ?from=sutras so the back button works', () => {
+  const { container } = render(
+    <SutraCard sutra={{ id: 1, title: '心经', slug: 'xinjing', chunkCount: 1, charCount: 260 }} />,
+  );
+  const link = container.querySelector('a');
+  expect(link?.getAttribute('href')).toBe('/sutra/1?from=sutras');
+});
 ```
 
 - [ ] **Step 3: Run the new test to verify it fails**
@@ -251,20 +267,20 @@ The current file already imports `Link` from `next/link` and `getSutraBackLink` 
 **Change 1** — after line 36 (`const activeChunk = sutra.chunks[activeChunkId]!;`), add the back-link resolution:
 
 ```tsx
-  const backLink = getSutraBackLink(sp.from);
+const backLink = getSutraBackLink(sp.from);
 ```
 
 **Change 2** — after line 43 (`<div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>`), insert a new back-link block before the `字 · 韵` div (so it appears above the brand mark):
 
 ```tsx
-        <div className="worksheet-no-print mb-2">
-          <Link
-            href={backLink.href}
-            className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal transition-colors"
-          >
-            <span aria-hidden="true">←</span> {backLink.label}
-          </Link>
-        </div>
+<div className="worksheet-no-print mb-2">
+  <Link
+    href={backLink.href}
+    className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-seal transition-colors"
+  >
+    <span aria-hidden="true">←</span> {backLink.label}
+  </Link>
+</div>
 ```
 
 Verify the final layout reads (top-to-bottom inside `<PageContainer>`): back-link → 字 · 韵 → SutraMeta → flex row.
@@ -294,19 +310,24 @@ git commit -m "feat(sutra): wire ?from=sutras through SutraCard + detail page"
 ### Task 4: Clear RandomTab title error on title change (`fix(worksheet)`)
 
 **Files:**
+
 - Modify: `components/worksheet/RandomTab.tsx:1,28` (import + useEffect)
 
 **Interfaces:**
+
 - Consumes: existing `useState` import + `err` state + `title` prop.
 - Produces: when the user types in the title input, the `err` state resets to `null` (the red error message disappears).
 
 - [ ] **Step 1: Add useEffect import**
 
 In `components/worksheet/RandomTab.tsx`, change line 1 from:
+
 ```tsx
 import { useState } from 'react';
 ```
+
 to:
+
 ```tsx
 import { useEffect, useState } from 'react';
 ```
@@ -316,9 +337,9 @@ import { useEffect, useState } from 'react';
 After the `const [err, setErr] = useState<string | null>(null);` line (currently line 27, immediately after the existing `useState` calls), add:
 
 ```tsx
-  useEffect(() => {
-    setErr(null);
-  }, [title]);
+useEffect(() => {
+  setErr(null);
+}, [title]);
 ```
 
 (No JSX or other change.)
@@ -346,9 +367,11 @@ git commit -m "fix(worksheet): clear title error when user types"
 ### Task 5: pageCountFor brush-mode coverage (`test(worksheet)`)
 
 **Files:**
+
 - Modify: `tests/unit/lib/worksheet-page-count.test.ts` (append 3 tests)
 
 **Interfaces:**
+
 - Consumes: `pageCountFor(chars: number, size: PaperSize): number` (existing export, already covers A3/A4/B5).
 - Produces: brush-mode coverage for `pageCountFor` matching the `cellsPerPage` brush tests added in G3.3.
 
@@ -357,21 +380,21 @@ git commit -m "fix(worksheet): clear title error when user types"
 Open `tests/unit/lib/worksheet-page-count.test.ts`. The file already has a `describe('pageCountFor', () => { ... });` block (around lines 12-30) followed by a `describe('exceedsFreeLimit', ...)` block and a `describe('cellsPerPage (G3 brush modes)', ...)`. Append 3 new `it(...)` blocks at the end of the `pageCountFor` describe (i.e., before its closing `});`):
 
 ```ts
-  it('returns 1 for empty content on brush modes', () => {
-    expect(pageCountFor(0, 'brush-12')).toBe(1);
-    expect(pageCountFor(0, 'brush-24')).toBe(1);
-    expect(pageCountFor(0, 'brush-28')).toBe(1);
-  });
-  it('returns 1 for exactly cellsPerPage chars on brush modes', () => {
-    expect(pageCountFor(12, 'brush-12')).toBe(1);
-    expect(pageCountFor(24, 'brush-24')).toBe(1);
-    expect(pageCountFor(28, 'brush-28')).toBe(1);
-  });
-  it('returns 2 for one over the threshold on brush modes', () => {
-    expect(pageCountFor(13, 'brush-12')).toBe(2);
-    expect(pageCountFor(25, 'brush-24')).toBe(2);
-    expect(pageCountFor(29, 'brush-28')).toBe(2);
-  });
+it('returns 1 for empty content on brush modes', () => {
+  expect(pageCountFor(0, 'brush-12')).toBe(1);
+  expect(pageCountFor(0, 'brush-24')).toBe(1);
+  expect(pageCountFor(0, 'brush-28')).toBe(1);
+});
+it('returns 1 for exactly cellsPerPage chars on brush modes', () => {
+  expect(pageCountFor(12, 'brush-12')).toBe(1);
+  expect(pageCountFor(24, 'brush-24')).toBe(1);
+  expect(pageCountFor(28, 'brush-28')).toBe(1);
+});
+it('returns 2 for one over the threshold on brush modes', () => {
+  expect(pageCountFor(13, 'brush-12')).toBe(2);
+  expect(pageCountFor(25, 'brush-24')).toBe(2);
+  expect(pageCountFor(29, 'brush-28')).toBe(2);
+});
 ```
 
 The default vitest environment is `node` for this file (no `@vitest-environment` directive at the top) — fine for pure-function tests; no env change needed.
@@ -399,9 +422,11 @@ git commit -m "test(worksheet): pageCountFor brush mode coverage"
 ### Task 6: pull-prod-to-dev helper (`chore(scripts)`)
 
 **Files:**
+
 - Create: `scripts/pull-prod-to-dev.ts`
 
 **Interfaces:**
+
 - Consumes: `process.env.DATABASE_URL_REMOTE` (optional, fallback hard-coded) + `process.env.DATABASE_URL` (required, local target).
 - Produces: rows from `chars` and `rare_chars` in prod copied to local DB via `INSERT IGNORE`. Idempotent.
 
@@ -425,22 +450,31 @@ If the file is missing, create it with this content (use `cat` heredoc or `Write
  */
 import mysql from 'mysql2/promise';
 
-const PROD_URL = process.env.DATABASE_URL_REMOTE
-  ?? 'mysql://piyin:Admin909217@139.5.108.245:3306/piyin';
+const PROD_URL =
+  process.env.DATABASE_URL_REMOTE ?? 'mysql://piyin:Admin909217@139.5.108.245:3306/piyin';
 const LOCAL_URL = process.env.DATABASE_URL;
 if (!LOCAL_URL) throw new Error('DATABASE_URL (local) is required');
 
 const CHUNK = 500;
 
-async function pull(prod: mysql.Connection, local: mysql.Connection, table: string, cols: string[]) {
-  const colList = cols.map(c => '`' + c + '`').join(',');
+async function pull(
+  prod: mysql.Connection,
+  local: mysql.Connection,
+  table: string,
+  cols: string[],
+) {
+  const colList = cols.map((c) => '`' + c + '`').join(',');
   const placeholders = '(' + cols.map(() => '?').join(',') + ')';
 
   const [cnt] = await prod.query<any[]>(`SELECT COUNT(*) AS n FROM ${table}`);
   console.log(`${table}: ${cnt[0].n} rows in prod`);
 
-  const [minMax] = await prod.query<any[]>(`SELECT MIN(\`char\`) AS mn, MAX(\`char\`) AS mx FROM ${table}`);
-  console.log(`  codepoint range: ${minMax[0].mn} (U+${minMax[0].mn.codePointAt(0)!.toString(16).toUpperCase()}) - ${minMax[0].mx} (U+${minMax[0].mx.codePointAt(0)!.toString(16).toUpperCase()})`);
+  const [minMax] = await prod.query<any[]>(
+    `SELECT MIN(\`char\`) AS mn, MAX(\`char\`) AS mx FROM ${table}`,
+  );
+  console.log(
+    `  codepoint range: ${minMax[0].mn} (U+${minMax[0].mn.codePointAt(0)!.toString(16).toUpperCase()}) - ${minMax[0].mx} (U+${minMax[0].mx.codePointAt(0)!.toString(16).toUpperCase()})`,
+  );
 
   let offset = 0;
   let pulled = 0;
@@ -458,7 +492,7 @@ async function pull(prod: mysql.Connection, local: mysql.Connection, table: stri
     for (const r of rows) {
       for (const c of cols) values.push(r[c]);
     }
-    const flat = rows.map(r => cols.map(c => r[c]));
+    const flat = rows.map((r) => cols.map((c) => r[c]));
     const [res] = await local.query<any>(
       `INSERT IGNORE INTO ${table} (${colList}) VALUES ${flat.map(() => placeholders).join(',')}`,
       flat.flat(),
@@ -472,8 +506,8 @@ async function pull(prod: mysql.Connection, local: mysql.Connection, table: stri
 }
 
 async function main() {
-  const prod = await mysql.createConnection({uri: PROD_URL});
-  const local = await mysql.createConnection({uri: LOCAL_URL, charset: 'utf8mb4'});
+  const prod = await mysql.createConnection({ uri: PROD_URL });
+  const local = await mysql.createConnection({ uri: LOCAL_URL, charset: 'utf8mb4' });
 
   console.log('=== CHARS ===');
   const [cCols] = await prod.query<any[]>('SHOW COLUMNS FROM chars');
@@ -496,7 +530,10 @@ async function main() {
   console.log('DONE');
 }
 
-main().catch(e => { console.error('ERR', e); process.exit(1); });
+main().catch((e) => {
+  console.error('ERR', e);
+  process.exit(1);
+});
 ```
 
 - [ ] **Step 2: tsc check on the new file (does it type-check standalone?)**
@@ -542,6 +579,7 @@ git log --oneline e67d3a42..HEAD
 ```
 
 Expected results:
+
 - (1) tsc clean.
 - (2) test suite: 502 (G3 baseline) + 5 (back-link) + 0 (SutraCard — its 3rd test is in the WIP file, not new in G4) + 3 (pageCountFor brush) = 510 passing, with the same 2 pre-existing failures (sutras list perf + etymology test) — totals still show 3 fail.
 - (3) build green, route count still 128.

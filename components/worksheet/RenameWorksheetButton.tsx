@@ -59,12 +59,27 @@ export function RenameWorksheetButton({ id, currentTitle }: Props) {
           disabled={busy}
           className="border border-ink/20 rounded px-2 py-1 text-sm bg-paper w-40"
         />
-        <button type="submit" disabled={busy} className="p-1 text-green-700 hover:bg-paper-deep rounded">
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+        <button
+          type="submit"
+          disabled={busy}
+          className="p-1 text-green-700 hover:bg-paper-deep rounded"
+        >
+          {busy ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Check className="h-3.5 w-3.5" />
+          )}
         </button>
-        <button type="button" disabled={busy}
-          onClick={() => { setEditing(false); setValue(currentTitle); setErr(null); }}
-          className="p-1 text-ink-faint hover:bg-paper-deep rounded">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => {
+            setEditing(false);
+            setValue(currentTitle);
+            setErr(null);
+          }}
+          className="p-1 text-ink-faint hover:bg-paper-deep rounded"
+        >
           <X className="h-3.5 w-3.5" />
         </button>
         {err && <span className="text-xs text-seal ml-1">{err}</span>}

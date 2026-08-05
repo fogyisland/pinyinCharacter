@@ -10,7 +10,9 @@ export default async function AdminCharsPage() {
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">字典 / 字源</h1>
-      <p className="text-sm text-ink-soft mb-4">字典 + 字源 数据覆盖(数据源:<code className="text-xs">data/content/</code> JSON 文件)</p>
+      <p className="text-sm text-ink-soft mb-4">
+        字典 + 字源 数据覆盖(数据源:<code className="text-xs">data/content/</code> JSON 文件)
+      </p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <Stat label="总字符 (chars 表)" value={cov.totalChars} />

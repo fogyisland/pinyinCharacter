@@ -32,7 +32,10 @@ export interface LLMChatResponse {
 }
 
 export class LLMError extends Error {
-  constructor(message: string, public readonly status?: number) {
+  constructor(
+    message: string,
+    public readonly status?: number,
+  ) {
     super(message);
     this.name = 'LLMError';
   }
@@ -54,9 +57,7 @@ export async function llmChat(args: LLMChatArgs): Promise<LLMChatResponse> {
 
   // Accept either "https://api.minimaxi.com/v1" or "https://api.minimaxi.com/v1/chat/completions"
   // — many dashboards show the full path; strip it if present so we don't double-append.
-  const stripped = args.baseUrl
-    .replace(/\/$/, '')
-    .replace(/\/chat\/completions\/?$/, '');
+  const stripped = args.baseUrl.replace(/\/$/, '').replace(/\/chat\/completions\/?$/, '');
   const url = `${stripped}/chat/completions`;
   const thinking = args.thinking ?? 'disabled';
   const res = await fetch(url, {
@@ -141,7 +142,9 @@ function mockReply(input: string | ContentPart[]): string {
     return JSON.stringify([{ char: '?', pinyin: '', meaning: '', story: 'MOCK-rare-st 占位' }]);
   }
   if (prompt.includes('meaning') && prompt.includes('story')) {
-    return JSON.stringify([{ char: '?', pinyin: '', meaning: 'MOCK-rare-mn', story: 'MOCK-rare-st' }]);
+    return JSON.stringify([
+      { char: '?', pinyin: '', meaning: 'MOCK-rare-mn', story: 'MOCK-rare-st' },
+    ]);
   }
   // ai-rare-chars batch path.
   if (prompt.includes('汉字列表')) {
@@ -198,9 +201,16 @@ export async function callLlm(args: CallLlmArgs): Promise<string> {
   const baseUrl = args.baseUrl ?? dbBaseUrl ?? process.env.LLM_BASE_URL;
   const model = args.model ?? dbModel ?? process.env.LLM_MODEL ?? 'gpt-4o-mini';
   const thinking: 'disabled' | 'adaptive' =
-    args.thinking ?? ((dbThinking === 'adaptive' || dbThinking === 'disabled') ? dbThinking : 'disabled');
-  if (!apiKey) throw new LLMError('LLM api key not configured (set ai.api_key in /admin/ai or LLM_API_KEY env)');
-  if (!baseUrl) throw new LLMError('LLM base URL not configured (set ai.base_url in /admin/ai or LLM_BASE_URL env)');
+    args.thinking ??
+    (dbThinking === 'adaptive' || dbThinking === 'disabled' ? dbThinking : 'disabled');
+  if (!apiKey)
+    throw new LLMError(
+      'LLM api key not configured (set ai.api_key in /admin/ai or LLM_API_KEY env)',
+    );
+  if (!baseUrl)
+    throw new LLMError(
+      'LLM base URL not configured (set ai.base_url in /admin/ai or LLM_BASE_URL env)',
+    );
   const res = await llmChat({
     baseUrl,
     apiKey,

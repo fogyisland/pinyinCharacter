@@ -14,9 +14,7 @@ export default async function AdminIndex() {
     getSystemStats(),
     getDownloadStats(7),
     getAiStats(7),
-    getPool().query<any[]>(
-      `SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`,
-    ),
+    getPool().query<any[]>(`SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`),
     getPageViewStats(7),
   ]);
   const disabledUsersCount = Number((disabledRows[0] as any[])[0]?.n ?? 0);
@@ -26,7 +24,12 @@ export default async function AdminIndex() {
     <div className="space-y-6">
       <h1 className="font-kai text-2xl text-ink">仪表盘</h1>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <StatCard label="下载 (7d)" value={downloads.total} icon={Download} href="/admin/downloads" />
+        <StatCard
+          label="下载 (7d)"
+          value={downloads.total}
+          icon={Download}
+          href="/admin/downloads"
+        />
         <StatCard label="AI 调用 (7d)" value={ai.total} icon={Bot} href="/admin/ai" />
         <StatCard
           label="AI 错误率 (7d)"
@@ -35,7 +38,12 @@ export default async function AdminIndex() {
           href="/admin/ai?status=error"
         />
         <StatCard label="今日 PV" value={pageViews.todayPv} icon={Eye} href="/admin/analytics" />
-        <StatCard label="今日独立访客" value={pageViews.todayUv} icon={Users} href="/admin/analytics" />
+        <StatCard
+          label="今日独立访客"
+          value={pageViews.todayUv}
+          icon={Users}
+          href="/admin/analytics"
+        />
         <StatCard
           label="热门页面"
           value={pageViews.topPaths[0]?.path ?? '—'}

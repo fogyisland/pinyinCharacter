@@ -3,8 +3,8 @@
 import { useAppStore } from '@/lib/store';
 
 export function SafeModeToggle() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const setSafeMode = useAppStore(s => s.setSafeMode);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const setSafeMode = useAppStore((s) => s.setSafeMode);
   return (
     <label className="flex items-center gap-2 cursor-pointer select-none">
       <span className="text-sm">🔒 儿童模式</span>

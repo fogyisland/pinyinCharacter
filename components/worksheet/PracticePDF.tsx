@@ -1,8 +1,28 @@
 'use client';
 
-import { Document, Page, View, Text, Image, Svg, Rect, Line, StyleSheet, Font } from '@react-pdf/renderer';
+import {
+  Document,
+  Page,
+  View,
+  Text,
+  Image,
+  Svg,
+  Rect,
+  Line,
+  StyleSheet,
+  Font,
+} from '@react-pdf/renderer';
 import type { CellStyle, PaperSize } from '@/lib/worksheet-types';
-import { PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage, cellStyleLabel, fourLineRowsPerPage, getPresentation, linedHeightPx, linesPerPage } from '@/lib/worksheet-types';
+import {
+  PRACTICE_LAYOUT,
+  PRACTICE_GRID_CELL_SIZE,
+  cellsPerPage,
+  cellStyleLabel,
+  fourLineRowsPerPage,
+  getPresentation,
+  linedHeightPx,
+  linesPerPage,
+} from '@/lib/worksheet-types';
 
 // Register one CJK TTF for header/footer text. react-pdf subsets the font
 // to only the glyphs we use ("字·韵", "空白字帖", domain), so the PDF stays
@@ -45,9 +65,9 @@ const PX_TO_PT = 72 / 96;
 // usable width as the grid cells. The 1.5cm padding matches the
 // `<Page style={padding: '1.5cm'}>` set in `styles.page` below.
 const PAGE_INNER_WIDTH_PT: Record<PaperSize, number> = {
-  A3: 757,        // 841.9 - 2*42.5
-  A4: 510,        // 595.3 - 2*42.5
-  B5: 414,        // 498.9 - 2*42.5
+  A3: 757, // 841.9 - 2*42.5
+  A4: 510, // 595.3 - 2*42.5
+  B5: 414, // 498.9 - 2*42.5
   'brush-12': 510,
   'brush-24': 510,
   'brush-28': 510,
@@ -110,7 +130,15 @@ const styles = StyleSheet.create({
 // outer border + vertical/horizontal center lines (田字格) + 2 diagonals
 // (米字格) + 4 horizontal rules (four-line English). The character itself
 // is omitted (practice template is blank).
-function PracticeCell({ size, paperSize, style }: { size: number; paperSize: PaperSize; style: CellStyle }) {
+function PracticeCell({
+  size,
+  paperSize,
+  style,
+}: {
+  size: number;
+  paperSize: PaperSize;
+  style: CellStyle;
+}) {
   const presentation = getPresentation(style);
   const width = PAGE_INNER_WIDTH_PT[paperSize];
   if (presentation === 'lined') {
@@ -167,12 +195,12 @@ export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
   const presentation = getPresentation(cellStyle);
   const isLined = presentation === 'lined' || presentation === 'four-line';
   // Lined mode: cellSize = row height in pt (CSS px × 72/96). Grid mode: cell side in pt.
-// Brush papers fall back to PRACTICE_LAYOUT (they don't need the practice-grid
-// adjustment — they already fit and have their own per-paper sizing).
-  const cellSize = (isLined
-    ? linedHeightPx(paperSize)
-    : (PRACTICE_GRID_CELL_SIZE[paperSize] ?? PRACTICE_LAYOUT[paperSize].cellSize)
-  ) * PX_TO_PT;
+  // Brush papers fall back to PRACTICE_LAYOUT (they don't need the practice-grid
+  // adjustment — they already fit and have their own per-paper sizing).
+  const cellSize =
+    (isLined
+      ? linedHeightPx(paperSize)
+      : (PRACTICE_GRID_CELL_SIZE[paperSize] ?? PRACTICE_LAYOUT[paperSize].cellSize)) * PX_TO_PT;
   // Row count:
   //   - lined: `linesPerPage` (A4=24, A3=36, B5=14) — rows sit flush, no gap
   //   - four-line: `fourLineRowsPerPage` (A4=16, A3=21, B5=13) — rows have

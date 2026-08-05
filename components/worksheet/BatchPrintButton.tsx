@@ -15,9 +15,7 @@ export function BatchPrintButton({ selectedIds, hasFeature }: Props) {
   const [busy, setBusy] = useState(false);
 
   const count = selectedIds.length;
-  const label = hasFeature
-    ? `批量打印 (${count})`
-    : `批量打印 (${count}) — 需会员`;
+  const label = hasFeature ? `批量打印 (${count})` : `批量打印 (${count}) — 需会员`;
 
   if (!hasFeature) {
     return (

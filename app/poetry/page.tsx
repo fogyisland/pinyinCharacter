@@ -51,7 +51,9 @@ export default function PoetryListPage() {
       setAvailableForms(forms);
       setSelectedForms((prev) => prev.filter((f) => forms.includes(f)));
     });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [dynasty]);
 
   useEffect(() => {
@@ -76,7 +78,10 @@ export default function PoetryListPage() {
         if (!cancelled) setLoading(false);
       }
     }, 300);
-    return () => { cancelled = true; clearTimeout(handle); };
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [dynasty, q, page, tick, selectedForms]);
 
   return (
@@ -88,14 +93,24 @@ export default function PoetryListPage() {
         <PoemSearch
           dynasty={dynasty}
           q={q}
-          onDynastyChange={(d) => { setDynasty(d); setSelectedForms([]); setPage(1); }}
-          onQChange={(v) => { setQ(v); setPage(1); }}
+          onDynastyChange={(d) => {
+            setDynasty(d);
+            setSelectedForms([]);
+            setPage(1);
+          }}
+          onQChange={(v) => {
+            setQ(v);
+            setPage(1);
+          }}
         />
         <FormFilterBar
           category={dynasty}
           availableForms={availableForms}
           selectedForms={selectedForms}
-          onChange={(forms) => { setSelectedForms(forms); setPage(1); }}
+          onChange={(forms) => {
+            setSelectedForms(forms);
+            setPage(1);
+          }}
         />
         {error ? (
           <ErrorState message={error} onRetry={() => setTick((t) => t + 1)} />
@@ -110,12 +125,7 @@ export default function PoetryListPage() {
                 <PoemCard key={p.id} poem={p} backHref={backHref} />
               ))}
             </div>
-            <PoemPagination
-              page={page}
-              pageSize={24}
-              total={total}
-              onPageChange={setPage}
-            />
+            <PoemPagination page={page} pageSize={24} total={total} onPageChange={setPage} />
           </>
         )}
       </PageContainer>

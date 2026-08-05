@@ -3,7 +3,12 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 
-interface Row { id: number; a: string; b: number; c: boolean; }
+interface Row {
+  id: number;
+  a: string;
+  b: number;
+  c: boolean;
+}
 
 const rows: Row[] = [
   { id: 1, a: 'one', b: 10, c: true },
@@ -29,7 +34,7 @@ describe('ResponsiveTable — Fragment children flatten correctly', () => {
             <span>{r.c ? 'yes' : 'no'}</span>
           </>
         )}
-      </ResponsiveTable>
+      </ResponsiveTable>,
     );
     // 2 rows × 3 cols = 6 <td> on desktop table
     const tds = container.querySelectorAll('table td');
@@ -54,7 +59,7 @@ describe('ResponsiveTable — Fragment children flatten correctly', () => {
         ]}
       >
         {(r) => [<span key="a">{r.a}</span>, <span key="b">{r.b}</span>]}
-      </ResponsiveTable>
+      </ResponsiveTable>,
     );
     const tds = container.querySelectorAll('table td');
     expect(tds.length).toBe(4);

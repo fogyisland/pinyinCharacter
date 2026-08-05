@@ -49,9 +49,9 @@ export function toBmp(s: string): string {
   return Array.from(s)
     .filter((ch) => {
       const code = ch.codePointAt(0)!;
-      if (ch.length > 1) return false;             // 4-byte UTF-8 (surrogate pair)
-      if (code >= 0xD800 && code <= 0xDFFF) return false; // surrogate half
-      if (code === 0xFFFD) return false;                  // replacement char
+      if (ch.length > 1) return false; // 4-byte UTF-8 (surrogate pair)
+      if (code >= 0xd800 && code <= 0xdfff) return false; // surrogate half
+      if (code === 0xfffd) return false; // replacement char
       return true;
     })
     .join('');

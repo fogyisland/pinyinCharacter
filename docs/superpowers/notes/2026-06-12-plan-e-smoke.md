@@ -49,6 +49,7 @@ The automated smoke verifies the structural/functional side. The **visual** side
 - Does the mobile drawer (hamburger) feel right at 375px?
 
 Open `http://localhost:3000` in a browser and click through:
+
 1. Home (Hero + Bento + ValueProps + TextToPinyin)
 2. /rare-chars (search + list)
 3. /worksheet (form + preview)

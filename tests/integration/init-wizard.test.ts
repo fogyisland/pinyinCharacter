@@ -20,7 +20,9 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
     const mysql = await import('mysql2/promise');
     const admin = await mysql.createConnection(adminUrl);
     await admin.query(`DROP DATABASE IF EXISTS \`${SCRATCH_DB}\``);
-    await admin.query(`CREATE DATABASE \`${SCRATCH_DB}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
+    await admin.query(
+      `CREATE DATABASE \`${SCRATCH_DB}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`,
+    );
     await admin.end();
 
     // Point the running test process at the scratch DB.
@@ -85,7 +87,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
       new NextRequest('http://localhost/api/init/stash-admin', {
         method: 'POST',
         body: JSON.stringify({ username: 'wizardtest', password: 'supersecret', email: 'w@x.com' }),
-      })
+      }),
     );
     expect(stashRes.status).toBe(200);
     const stashBody = await stashRes.json();
@@ -97,7 +99,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
       new NextRequest('http://localhost/api/init/create-admin', {
         method: 'POST',
         body: JSON.stringify({ token: stashBody.data.token }),
-      })
+      }),
     );
     expect(res.status).toBe(200);
     body = await res.json();
@@ -110,7 +112,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
       new NextRequest('http://localhost/api/init/create-admin', {
         method: 'POST',
         body: JSON.stringify({ token: stashBody.data.token }),
-      })
+      }),
     );
     expect(replayRes.status).toBe(401);
 

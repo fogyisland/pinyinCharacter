@@ -18,12 +18,20 @@ interface Props {
   searchParams: Promise<{ category?: string; q?: string; page?: string }>;
 }
 
-const VALID_CATS = new Set<ClassicCategory>(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other']);
+const VALID_CATS = new Set<ClassicCategory>([
+  'four-books',
+  'five-classics',
+  'mengxue',
+  'philosophy',
+  'history',
+  'other',
+]);
 
 export default async function AncientListPage({ searchParams }: Props) {
   const sp = await searchParams;
   const rawCat = sp.category;
-  const category: ClassicCategory | undefined = rawCat && VALID_CATS.has(rawCat as ClassicCategory) ? (rawCat as ClassicCategory) : undefined;
+  const category: ClassicCategory | undefined =
+    rawCat && VALID_CATS.has(rawCat as ClassicCategory) ? (rawCat as ClassicCategory) : undefined;
   const page = Math.max(1, Number(sp.page ?? '1') || 1);
 
   const [result, counts] = await Promise.all([
@@ -33,7 +41,9 @@ export default async function AncientListPage({ searchParams }: Props) {
 
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
         <div className="max-w-5xl mx-auto py-8 space-y-6">
           <header className="space-y-2">
@@ -54,14 +64,18 @@ export default async function AncientListPage({ searchParams }: Props) {
               placeholder="搜索书名 (如 论语, 弟子规)..."
               className="flex-1 rounded-md border border-ink/20 px-3 py-2 text-sm"
             />
-            <button type="submit" className="rounded-md bg-seal px-4 py-2 text-white text-sm hover:bg-seal/80">
+            <button
+              type="submit"
+              className="rounded-md bg-seal px-4 py-2 text-white text-sm hover:bg-seal/80"
+            >
               搜索
             </button>
           </form>
 
           {result.items.length === 0 ? (
             <p className="py-12 text-center text-ink-faint">
-              暂无数据。先在网络主机跑 <code className="bg-paper-deep px-1 rounded">pnpm run build:classics</code> 导入。
+              暂无数据。先在网络主机跑{' '}
+              <code className="bg-paper-deep px-1 rounded">pnpm run build:classics</code> 导入。
             </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -74,7 +88,10 @@ export default async function AncientListPage({ searchParams }: Props) {
           {result.total > result.pageSize && (
             <div className="flex items-center justify-center gap-2 pt-4">
               {page > 1 && (
-                <a href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page - 1) }).toString()}`} className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep">
+                <a
+                  href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page - 1) }).toString()}`}
+                  className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep"
+                >
                   ← 上一页
                 </a>
               )}
@@ -82,7 +99,10 @@ export default async function AncientListPage({ searchParams }: Props) {
                 第 {page} / {Math.ceil(result.total / result.pageSize)} 页
               </span>
               {page * result.pageSize < result.total && (
-                <a href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page + 1) }).toString()}`} className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep">
+                <a
+                  href={`/ancient?${new URLSearchParams({ ...(category ? { category } : {}), ...(sp.q ? { q: sp.q } : {}), page: String(page + 1) }).toString()}`}
+                  className="px-3 py-1 rounded border border-ink/20 text-sm hover:bg-paper-deep"
+                >
                   下一页 →
                 </a>
               )}

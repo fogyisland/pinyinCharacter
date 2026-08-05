@@ -1,5 +1,12 @@
 import 'server-only';
-import { readFileSync, writeFileSync, renameSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import {
+  readFileSync,
+  writeFileSync,
+  renameSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+} from 'node:fs';
 import { join } from 'node:path';
 import { getPool } from './db';
 import { CharContentSchema, ContentManifestSchema } from '@/scripts/schemas/content';
@@ -28,7 +35,7 @@ function stripThinking(s: string): string {
  */
 export async function getContent(
   char: string,
-  opts: GetContentOptions = {}
+  opts: GetContentOptions = {},
 ): Promise<CharContent | null> {
   // 1. Read from data/content/<char>.json (preferred). The Up/ deploy bundle
   //    ships .json.gz for these; readJsonAutoCached tries .json then .json.gz
@@ -46,30 +53,32 @@ export async function getContent(
   //    char_story table). Read the slim shape first, opportunistically
   //    upgrade to rich cols when present so neither schema breaks us.
   const pool = getPool();
-  const [charRows] = await pool.query<any[]>(
-    `SELECT level, pinyin, meaning_zh, meaning_en, pinyin_alt, variants
+  const [charRows] = await pool
+    .query<any[]>(
+      `SELECT level, pinyin, meaning_zh, meaning_en, pinyin_alt, variants
      FROM chars WHERE \`char\` = ? LIMIT 1`,
-    [char]
-  ).catch(() => {
-    // Slim schema — meaning_zh etc. don't exist; fall back to bare cols.
-    return pool.query<any[]>(
-      `SELECT level, pinyin FROM chars WHERE \`char\` = ? LIMIT 1`,
-      [char]
-    ).then(([rows]) => [rows] as any);
-  });
+      [char],
+    )
+    .catch(() => {
+      // Slim schema — meaning_zh etc. don't exist; fall back to bare cols.
+      return pool
+        .query<any[]>(`SELECT level, pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [char])
+        .then(([rows]) => [rows] as any);
+    });
   if (charRows.length === 0) return null;
 
-  const [etymRows] = await pool.query<any[]>(
-    `SELECT story, generated_by, generated_at FROM char_etymology WHERE \`char\` = ? LIMIT 1`,
-    [char]
-  ).catch(() => [[] as any[]]);
-  const [storyRows] = await pool.query<any[]>(
-    `SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`,
-    [char]
-  ).catch(() => [[] as any[]]);
+  const [etymRows] = await pool
+    .query<any[]>(
+      `SELECT story, generated_by, generated_at FROM char_etymology WHERE \`char\` = ? LIMIT 1`,
+      [char],
+    )
+    .catch(() => [[] as any[]]);
+  const [storyRows] = await pool
+    .query<any[]>(`SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`, [char])
+    .catch(() => [[] as any[]]);
   const [rareRows] = await pool.query<any[]>(
     `SELECT pinyin, meaning, story, generated_by, generated_at FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
-    [char]
+    [char],
   );
 
   const c = charRows[0];
@@ -82,10 +91,18 @@ export async function getContent(
   if (c.meaning_zh) dict.meaning_zh = stripThinking(c.meaning_zh);
   if (c.meaning_en) dict.meaning_en = stripThinking(c.meaning_en);
   if (c.pinyin_alt) {
-    try { dict.pinyin_alt = JSON.parse(c.pinyin_alt); } catch { /* skip */ }
+    try {
+      dict.pinyin_alt = JSON.parse(c.pinyin_alt);
+    } catch {
+      /* skip */
+    }
   }
   if (c.variants) {
-    try { dict.variants = JSON.parse(c.variants); } catch { /* skip */ }
+    try {
+      dict.variants = JSON.parse(c.variants);
+    } catch {
+      /* skip */
+    }
   }
   if (Object.keys(dict).length > 0) content.dict = dict;
 
@@ -110,7 +127,9 @@ export async function getContent(
     };
   }
 
-  const stamps = [content.etymology?.generated_at, content.rare?.generated_at].filter(Boolean) as string[];
+  const stamps = [content.etymology?.generated_at, content.rare?.generated_at].filter(
+    Boolean,
+  ) as string[];
   if (stamps.length > 0) {
     stamps.sort().reverse();
     content.generated_at = stamps[0];
@@ -151,7 +170,7 @@ export interface WriteContentOptions {
 export function writeContent(
   char: string,
   content: Partial<CharContent>,
-  opts: WriteContentOptions = {}
+  opts: WriteContentOptions = {},
 ): CharContent {
   if (!existsSync(CONTENT_DIR)) mkdirSync(CONTENT_DIR, { recursive: true });
 
@@ -198,9 +217,7 @@ export interface ContentCoverage {
  */
 export async function getContentCoverage(): Promise<ContentCoverage> {
   const pool = getPool();
-  const [charRows] = await pool.query<any[]>(
-    `SELECT \`char\`, level FROM chars ORDER BY level`,
-  );
+  const [charRows] = await pool.query<any[]>(`SELECT \`char\`, level FROM chars ORDER BY level`);
   const totalChars = charRows.length;
 
   // Manifest is only used as a hint for the global "已生成字源" stat when

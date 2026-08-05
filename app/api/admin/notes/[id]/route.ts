@@ -19,7 +19,8 @@ export async function DELETE(req: NextRequest, ctx: { params: Promise<{ id: stri
       userId: auth.user.id,
       event: 'notes_deleted',
       metadata: { id },
-      ip, userAgent: ua,
+      ip,
+      userAgent: ua,
     });
     return NextResponse.json({ ok: true, data: { id } });
   });

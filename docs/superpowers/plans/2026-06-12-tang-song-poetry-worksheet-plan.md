@@ -5,6 +5,7 @@
 **Goal:** 在「字·韵」网站添加唐诗三百首 (~320) + 宋词三百首 (~300) 字帖板块,米字格 + 拼音小注,DB 走现有架构,initDb 时自动从 chinese-poetry 拉取灌库,首页 BentoGrid 加「今日一诗」卡片,详情页可"保存到我的字帖"复用 /worksheet 体系。
 
 **Architecture:**
+
 - 服务端: 新增 `poems` 表, `lib/poetry.ts` 三个查询函数 (list/get/random), 3 个 GET API
 - 客户端: `lib/api-poetry.ts` 包装 fetch, 6 个 React 组件, 2 个页面
 - 数据灌入: `scripts/build-poems.ts` 拉 chinese-poetry GitHub, 用 pinyin-pro 算拼音, UPSERT
@@ -17,6 +18,7 @@
 ## File Structure
 
 **New files (20):**
+
 - `lib/poetry-types.ts` — 共享类型 (PoemListItem, PoemDetail, PoemListResult, Dynasty)
 - `lib/poetry.ts` — server-only CRUD (listPoems, getPoem, getRandomPoem)
 - `lib/api-poetry.ts` — client fetch wrappers
@@ -42,6 +44,7 @@
 - `tests/integration/api/poetry-random.test.ts` — random API
 
 **Modified files (3):**
+
 - `scripts/init-db.ts` — 加 poems 表 DDL + 自动灌库
 - `lib/validators.ts` — 加 poemQuerySchema, poemIdParamSchema
 - `lib/design.ts` — NAV_LINKS 加「诗词」
@@ -55,6 +58,7 @@
 ### Task 1: DDL — add poems table to init-db.ts
 
 **Files:**
+
 - Modify: `scripts/init-db.ts:62` (在 rare_chars DDL 之后插入新 DDL)
 - Modify: `tests/integration/setup.ts:26` (TRUNCATE 加 poems)
 - Modify: `package.json:12` (加 `poetry:build` 脚本)
@@ -87,7 +91,7 @@
 打开 `tests/integration/setup.ts`,在 `TRUNCATE TABLE worksheets` 后加:
 
 ```ts
-  await pool.query('TRUNCATE TABLE poems');
+await pool.query('TRUNCATE TABLE poems');
 ```
 
 - [ ] **Step 3: Add poetry:build script to package.json**
@@ -101,6 +105,7 @@
 - [ ] **Step 4: Verify initDb runs without error**
 
 跑:
+
 ```bash
 pnpm exec tsc --noEmit
 ```
@@ -121,6 +126,7 @@ git commit -m "feat(db): add poems table DDL + poetry:build script"
 ### Task 2: lib/poetry-types.ts (shared types, no test)
 
 **Files:**
+
 - Create: `lib/poetry-types.ts`
 
 - [ ] **Step 1: Create the file**
@@ -155,6 +161,7 @@ export interface PoemListResult {
 - [ ] **Step 2: Verify typecheck**
 
 跑:
+
 ```bash
 pnpm exec tsc --noEmit
 ```
@@ -173,6 +180,7 @@ git commit -m "feat(types): add poetry shared types"
 ### Task 3: lib/poetry.ts — listPoems + test
 
 **Files:**
+
 - Create: `lib/poetry.ts`
 - Create: `tests/unit/lib/poetry.test.ts`
 
@@ -249,6 +257,7 @@ describe('poetry listPoems', () => {
 - [ ] **Step 2: Run test, expect failure**
 
 跑:
+
 ```bash
 pnpm test -- tests/unit/lib/poetry.test.ts
 ```
@@ -308,7 +317,7 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
   const [[{ total }]] = await pool.query<any[]>(
     `SELECT COUNT(*) AS total FROM poems
      WHERE dynasty = ? ${where ? 'AND ' + where.replace(/^WHERE\s+/, '') : ''}`,
-    [args.dynasty, ...params]
+    [args.dynasty, ...params],
   );
 
   return {
@@ -323,6 +332,7 @@ export async function listPoems(args: ListPoemsArgs): Promise<PoemListResult> {
 - [ ] **Step 4: Run test, expect pass**
 
 跑:
+
 ```bash
 pnpm test -- tests/unit/lib/poetry.test.ts
 ```
@@ -341,6 +351,7 @@ git commit -m "feat(poetry): listPoems + buildSearchWhere with tests"
 ### Task 4: lib/poetry.ts — getPoem + getRandomPoem + tests
 
 **Files:**
+
 - Modify: `lib/poetry.ts`
 - Modify: `tests/unit/lib/poetry.test.ts`
 
@@ -360,18 +371,34 @@ describe('getPoem', () => {
 
   it('parses JSON content + pinyin', async () => {
     fakePool.execute.mockResolvedValueOnce([
-      [{
-        id: 1, title: '静夜思', author: '李白', dynasty: 'tang', form: '五言绝句',
-        content: JSON.stringify(['床前明月光', '疑是地上霜']),
-        pinyin: JSON.stringify([['chuáng', 'qián'], ['yí', 'shì']]),
-        appreciation: '好诗',
-      }],
+      [
+        {
+          id: 1,
+          title: '静夜思',
+          author: '李白',
+          dynasty: 'tang',
+          form: '五言绝句',
+          content: JSON.stringify(['床前明月光', '疑是地上霜']),
+          pinyin: JSON.stringify([
+            ['chuáng', 'qián'],
+            ['yí', 'shì'],
+          ]),
+          appreciation: '好诗',
+        },
+      ],
     ]);
     const r = await getPoem(1);
     expect(r).toEqual({
-      id: 1, title: '静夜思', author: '李白', dynasty: 'tang', form: '五言绝句',
+      id: 1,
+      title: '静夜思',
+      author: '李白',
+      dynasty: 'tang',
+      form: '五言绝句',
       content: ['床前明月光', '疑是地上霜'],
-      pinyin: [['chuáng', 'qián'], ['yí', 'shì']],
+      pinyin: [
+        ['chuáng', 'qián'],
+        ['yí', 'shì'],
+      ],
       appreciation: '好诗',
     });
   });
@@ -386,12 +413,18 @@ describe('getRandomPoem', () => {
 
   it('returns a parsed poem', async () => {
     fakePool.query.mockResolvedValueOnce([
-      [{
-        id: 5, title: '春晓', author: '孟浩然', dynasty: 'tang', form: '五言绝句',
-        content: JSON.stringify(['春眠不觉晓']),
-        pinyin: JSON.stringify([['chūn', 'mián']]),
-        appreciation: null,
-      }],
+      [
+        {
+          id: 5,
+          title: '春晓',
+          author: '孟浩然',
+          dynasty: 'tang',
+          form: '五言绝句',
+          content: JSON.stringify(['春眠不觉晓']),
+          pinyin: JSON.stringify([['chūn', 'mián']]),
+          appreciation: null,
+        },
+      ],
     ]);
     const r = await getRandomPoem();
     expect(r?.id).toBe(5);
@@ -403,6 +436,7 @@ describe('getRandomPoem', () => {
 - [ ] **Step 2: Run, expect failure**
 
 跑:
+
 ```bash
 pnpm test -- tests/unit/lib/poetry.test.ts
 ```
@@ -440,7 +474,7 @@ export async function getPoem(id: number): Promise<PoemDetail | null> {
   const [rows] = await pool.execute<any[]>(
     `SELECT id, title, author, dynasty, form, content, pinyin, appreciation
      FROM poems WHERE id = ? LIMIT 1`,
-    [id]
+    [id],
   );
   if (!Array.isArray(rows) || rows.length === 0) return null;
   return mapDetailRow((rows as any[])[0]);
@@ -450,7 +484,7 @@ export async function getRandomPoem(): Promise<PoemDetail | null> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT id, title, author, dynasty, form, content, pinyin, appreciation
-     FROM poems ORDER BY RAND() LIMIT 1`
+     FROM poems ORDER BY RAND() LIMIT 1`,
   );
   if (!Array.isArray(rows) || rows.length === 0) return null;
   return mapDetailRow((rows as any[])[0]);
@@ -460,6 +494,7 @@ export async function getRandomPoem(): Promise<PoemDetail | null> {
 - [ ] **Step 4: Run, expect pass**
 
 跑:
+
 ```bash
 pnpm test -- tests/unit/lib/poetry.test.ts
 ```
@@ -480,12 +515,14 @@ git commit -m "feat(poetry): getPoem + getRandomPoem with tests"
 ### Task 5: lib/validators.ts — add poem schemas + test
 
 **Files:**
+
 - Modify: `lib/validators.ts`
 - Modify: `tests/unit/lib/validators.test.ts` (在末尾追加)
 
 - [ ] **Step 1: Read existing validators test to match pattern**
 
 跑:
+
 ```bash
 ls tests/unit/lib/validators.test.ts
 ```
@@ -499,7 +536,11 @@ ls tests/unit/lib/validators.test.ts
 ```ts
 export const poemListQuerySchema = z.object({
   dynasty: z.enum(['tang', 'song']).default('tang'),
-  q: z.string().max(64).transform((s) => s.trim()).optional(),
+  q: z
+    .string()
+    .max(64)
+    .transform((s) => s.trim())
+    .optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(24),
 });
@@ -550,6 +591,7 @@ describe('poemIdParamSchema', () => {
 - [ ] **Step 4: Run validators test**
 
 跑:
+
 ```bash
 pnpm test -- tests/unit/lib/validators.test.ts
 ```
@@ -568,6 +610,7 @@ git commit -m "feat(validators): poem list + id param schemas"
 ### Task 6: GET /api/poetry + integration test
 
 **Files:**
+
 - Create: `app/api/poetry/route.ts`
 - Create: `tests/integration/api/poetry-list.test.ts`
 
@@ -602,7 +645,7 @@ integrationDescribe('GET /api/poetry (integration)', () => {
       `INSERT INTO poems (dynasty, title, author, content, pinyin) VALUES
        ('tang','静夜思','李白', JSON_ARRAY('床前明月光'), JSON_ARRAY(JSON_ARRAY('chuáng'))),
        ('tang','春晓','孟浩然', JSON_ARRAY('春眠不觉晓'), JSON_ARRAY(JSON_ARRAY('chūn'))),
-       ('song','如梦令','李清照', JSON_ARRAY('昨夜雨疏风骤'), JSON_ARRAY(JSON_ARRAY('zuó')))`
+       ('song','如梦令','李清照', JSON_ARRAY('昨夜雨疏风骤'), JSON_ARRAY(JSON_ARRAY('zuó')))`,
     );
     const { GET } = await import('@/app/api/poetry/route');
     const r = await GET(new Request('http://x/api/poetry?dynasty=song') as any);
@@ -618,7 +661,7 @@ integrationDescribe('GET /api/poetry (integration)', () => {
     await pool.execute(
       `INSERT INTO poems (dynasty, title, author, content, pinyin) VALUES
        ('tang','静夜思','李白', JSON_ARRAY(), JSON_ARRAY()),
-       ('tang','春晓','孟浩然', JSON_ARRAY(), JSON_ARRAY())`
+       ('tang','春晓','孟浩然', JSON_ARRAY(), JSON_ARRAY())`,
     );
     const { GET } = await import('@/app/api/poetry/route');
     const r = await GET(new Request('http://x/api/poetry?dynasty=tang&q=静夜') as any);
@@ -638,6 +681,7 @@ integrationDescribe('GET /api/poetry (integration)', () => {
 - [ ] **Step 2: Run, expect failure**
 
 跑:
+
 ```bash
 pnpm test -- tests/integration/api/poetry-list.test.ts
 ```
@@ -663,7 +707,8 @@ export async function GET(req: NextRequest) {
       page: sp.get('page') ?? undefined,
       pageSize: sp.get('pageSize') ?? undefined,
     });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const result = await listPoems(parsed.data);
     return NextResponse.json({ ok: true, data: result });
   });
@@ -673,6 +718,7 @@ export async function GET(req: NextRequest) {
 - [ ] **Step 4: Run, expect pass (or skip if no DB)**
 
 跑:
+
 ```bash
 pnpm test -- tests/integration/api/poetry-list.test.ts
 ```
@@ -691,6 +737,7 @@ git commit -m "feat(api): GET /api/poetry list endpoint"
 ### Task 7: GET /api/poetry/[id] + integration test
 
 **Files:**
+
 - Create: `app/api/poetry/[id]/route.ts`
 - Create: `tests/integration/api/poetry-detail.test.ts`
 
@@ -706,7 +753,9 @@ installTestEnv();
 integrationDescribe('GET /api/poetry/[id] (integration)', () => {
   it('returns 404 for missing id', async () => {
     const { GET } = await import('@/app/api/poetry/[id]/route');
-    const r = await GET(new Request('http://x/api/poetry/99999') as any, { params: Promise.resolve({ id: '99999' }) });
+    const r = await GET(new Request('http://x/api/poetry/99999') as any, {
+      params: Promise.resolve({ id: '99999' }),
+    });
     expect(r.status).toBe(404);
   });
 
@@ -719,18 +768,23 @@ integrationDescribe('GET /api/poetry/[id] (integration)', () => {
        ('tang','静夜思','李白','五言绝句',
         JSON_ARRAY('床前明月光','疑是地上霜'),
         JSON_ARRAY(JSON_ARRAY('chuáng','qián'), JSON_ARRAY('yí','shì')),
-        '此诗写秋夜')`
+        '此诗写秋夜')`,
     );
     const [rows] = await pool.execute<any[]>(`SELECT id FROM poems LIMIT 1`);
     const id = (rows as any[])[0].id;
     const { GET } = await import('@/app/api/poetry/[id]/route');
-    const r = await GET(new Request(`http://x/api/poetry/${id}`) as any, { params: Promise.resolve({ id: String(id) }) });
+    const r = await GET(new Request(`http://x/api/poetry/${id}`) as any, {
+      params: Promise.resolve({ id: String(id) }),
+    });
     const j = await r.json();
     expect(r.status).toBe(200);
     expect(j.ok).toBe(true);
     expect(j.data.title).toBe('静夜思');
     expect(j.data.content).toEqual(['床前明月光', '疑是地上霜']);
-    expect(j.data.pinyin).toEqual([['chuáng', 'qián'], ['yí', 'shì']]);
+    expect(j.data.pinyin).toEqual([
+      ['chuáng', 'qián'],
+      ['yí', 'shì'],
+    ]);
     expect(j.data.appreciation).toBe('此诗写秋夜');
   });
 });
@@ -758,7 +812,8 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
   return withErrorHandling(async () => {
     const { id: idStr } = await ctx.params;
     const parsed = poemIdParamSchema.safeParse({ id: idStr });
-    if (!parsed.success) return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
+    if (!parsed.success)
+      return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     const poem = await getPoem(parsed.data.id);
     if (!poem) return notFound();
     return NextResponse.json({ ok: true, data: poem });
@@ -786,6 +841,7 @@ git commit -m "feat(api): GET /api/poetry/[id] detail endpoint"
 ### Task 8: GET /api/poetry/random + integration test
 
 **Files:**
+
 - Create: `app/api/poetry/random/route.ts`
 - Create: `tests/integration/api/poetry-random.test.ts`
 
@@ -814,7 +870,7 @@ integrationDescribe('GET /api/poetry/random (integration)', () => {
     await pool.execute('TRUNCATE TABLE poems');
     await pool.execute(
       `INSERT INTO poems (dynasty, title, author, content, pinyin) VALUES
-       ('tang','静夜思','李白', JSON_ARRAY(), JSON_ARRAY())`
+       ('tang','静夜思','李白', JSON_ARRAY(), JSON_ARRAY())`,
     );
     const { GET } = await import('@/app/api/poetry/random/route');
     const r = await GET();
@@ -873,6 +929,7 @@ git commit -m "feat(api): GET /api/poetry/random endpoint"
 ### Task 9: scripts/build-poems.ts
 
 **Files:**
+
 - Create: `scripts/build-poems.ts`
 
 - [ ] **Step 1: Create build script**
@@ -940,7 +997,9 @@ export async function buildPoems(): Promise<number> {
   for (const file of FILES) {
     const poems = await fetchFile(file.path);
     for (const p of poems) {
-      const content = Array.isArray(p.paragraphs) ? p.paragraphs.filter((s) => typeof s === 'string') : [];
+      const content = Array.isArray(p.paragraphs)
+        ? p.paragraphs.filter((s) => typeof s === 'string')
+        : [];
       if (content.length === 0) continue;
       const pinyinArr = content.map(linePinyin);
       const appreciation = (p.translation ?? p.appreciation ?? null) || null;
@@ -967,7 +1026,7 @@ export async function buildPoems(): Promise<number> {
           JSON.stringify(pinyinArr),
           appreciation,
           SOURCE_TAG,
-        ]
+        ],
       );
       inserted++;
     }
@@ -1008,6 +1067,7 @@ git commit -m "feat(scripts): build-poems from chinese-poetry with pinyin-pro"
 ### Task 10: Wire build-poems into init-db (auto-populate if empty)
 
 **Files:**
+
 - Modify: `scripts/init-db.ts` (in `initDb` 函数, DDL 跑完后)
 
 - [ ] **Step 1: Modify initDb to call buildPoems when table empty**
@@ -1058,6 +1118,7 @@ git commit -m "feat(init-db): auto-populate poems on first start (fail-soft)"
 ### Task 11: lib/api-poetry.ts (client fetch wrappers)
 
 **Files:**
+
 - Create: `lib/api-poetry.ts`
 
 - [ ] **Step 1: Create file**
@@ -1067,7 +1128,11 @@ git commit -m "feat(init-db): auto-populate poems on first start (fail-soft)"
 ```ts
 import type { Dynasty, PoemListResult, PoemDetail } from './poetry-types';
 
-export async function listPoemsRequest(args: { dynasty: Dynasty; q?: string; page?: number }): Promise<PoemListResult> {
+export async function listPoemsRequest(args: {
+  dynasty: Dynasty;
+  q?: string;
+  page?: number;
+}): Promise<PoemListResult> {
   const sp = new URLSearchParams();
   sp.set('dynasty', args.dynasty);
   if (args.q) sp.set('q', args.q);
@@ -1114,6 +1179,7 @@ git commit -m "feat(api-client): poetry fetch wrappers"
 ### Task 12: components/poetry/PoemMeta + AppreciationBlock
 
 **Files:**
+
 - Create: `components/poetry/PoemMeta.tsx`
 - Create: `components/poetry/AppreciationBlock.tsx`
 
@@ -1190,6 +1256,7 @@ git commit -m "feat(components): PoemMeta + AppreciationBlock"
 ### Task 13: components/poetry/PoemCard + test
 
 **Files:**
+
 - Create: `components/poetry/PoemCard.tsx`
 - Create: `tests/unit/components/poetry/PoemCard.test.tsx`
 
@@ -1206,7 +1273,11 @@ import { PoemCard } from '@/components/poetry/PoemCard';
 
 describe('PoemCard', () => {
   it('renders title, author, and dynasty tag', () => {
-    render(<PoemCard poem={{ id: 1, title: '静夜思', author: '李白', dynasty: 'tang', form: '五言绝句' }} />);
+    render(
+      <PoemCard
+        poem={{ id: 1, title: '静夜思', author: '李白', dynasty: 'tang', form: '五言绝句' }}
+      />,
+    );
     expect(screen.getByText('《静夜思》')).toBeInTheDocument();
     expect(screen.getByText('李白')).toBeInTheDocument();
     expect(screen.getByText('唐')).toBeInTheDocument();
@@ -1214,13 +1285,17 @@ describe('PoemCard', () => {
   });
 
   it('renders 宋 tag for song dynasty', () => {
-    render(<PoemCard poem={{ id: 2, title: '如梦令', author: '李清照', dynasty: 'song', form: null }} />);
+    render(
+      <PoemCard poem={{ id: 2, title: '如梦令', author: '李清照', dynasty: 'song', form: null }} />,
+    );
     expect(screen.getByText('宋')).toBeInTheDocument();
     expect(screen.queryByText('·')).not.toBeInTheDocument();
   });
 
   it('links to /poetry/[id]', () => {
-    render(<PoemCard poem={{ id: 7, title: '春晓', author: '孟浩然', dynasty: 'tang', form: null }} />);
+    render(
+      <PoemCard poem={{ id: 7, title: '春晓', author: '孟浩然', dynasty: 'tang', form: null }} />,
+    );
     const link = screen.getByRole('link');
     expect(link.getAttribute('href')).toBe('/poetry/7');
   });
@@ -1286,6 +1361,7 @@ git commit -m "feat(components): PoemCard with link + paper style"
 ### Task 14: components/poetry/PoemSearch + PoemPagination
 
 **Files:**
+
 - Create: `components/poetry/PoemSearch.tsx`
 - Create: `components/poetry/PoemPagination.tsx`
 
@@ -1406,6 +1482,7 @@ git commit -m "feat(components): PoemSearch tabs + PoemPagination"
 ### Task 15: components/poetry/PoemWorksheet + test
 
 **Files:**
+
 - Create: `components/poetry/PoemWorksheet.tsx`
 - Create: `tests/unit/components/poetry/PoemWorksheet.test.tsx`
 
@@ -1425,20 +1502,18 @@ describe('PoemWorksheet', () => {
     const { container } = render(
       <PoemWorksheet
         content={['床前明月光', '疑是地上霜']}
-        pinyin={[['chuáng', 'qián', 'míng', 'yuè', 'guāng'], ['yí', 'shì', 'dì', 'shàng', 'shuāng']]}
-      />
+        pinyin={[
+          ['chuáng', 'qián', 'míng', 'yuè', 'guāng'],
+          ['yí', 'shì', 'dì', 'shàng', 'shuāng'],
+        ]}
+      />,
     );
     // 2 lines, each with 5 chars
     expect(container.querySelectorAll('.poem-line')).toHaveLength(2);
   });
 
   it('shows pinyin under each char', () => {
-    render(
-      <PoemWorksheet
-        content={['静夜思']}
-        pinyin={[['jìng', 'yè', 'sī']]}
-      />
-    );
+    render(<PoemWorksheet content={['静夜思']} pinyin={[['jìng', 'yè', 'sī']]} />);
     expect(screen.getByText('jìng')).toBeInTheDocument();
     expect(screen.getByText('yè')).toBeInTheDocument();
     expect(screen.getByText('sī')).toBeInTheDocument();
@@ -1455,8 +1530,11 @@ it('renders one line per content entry', () => {
   const { container } = render(
     <PoemWorksheet
       content={['床前明月光', '疑是地上霜']}
-      pinyin={[['chuáng', 'qián', 'míng', 'yuè', 'guāng'], ['yí', 'shì', 'dì', 'shàng', 'shuāng']]}
-    />
+      pinyin={[
+        ['chuáng', 'qián', 'míng', 'yuè', 'guāng'],
+        ['yí', 'shì', 'dì', 'shàng', 'shuāng'],
+      ]}
+    />,
   );
   expect(container.querySelectorAll('.poem-line')).toHaveLength(2);
   expect(container.querySelectorAll('.poem-char')).toHaveLength(10);
@@ -1527,6 +1605,7 @@ git commit -m "feat(components): PoemWorksheet (米字格 + 拼音小注)"
 ### Task 16: app/poetry/page.tsx (list page)
 
 **Files:**
+
 - Create: `app/poetry/page.tsx`
 
 - [ ] **Step 1: Create the list page**
@@ -1575,7 +1654,10 @@ export default function PoetryListPage() {
         if (!cancelled) setLoading(false);
       }
     }, 300);
-    return () => { cancelled = true; clearTimeout(handle); };
+    return () => {
+      cancelled = true;
+      clearTimeout(handle);
+    };
   }, [dynasty, q, page]);
 
   return (
@@ -1587,8 +1669,14 @@ export default function PoetryListPage() {
         <PoemSearch
           dynasty={dynasty}
           q={q}
-          onDynastyChange={(d) => { setDynasty(d); setPage(1); }}
-          onQChange={(v) => { setQ(v); setPage(1); }}
+          onDynastyChange={(d) => {
+            setDynasty(d);
+            setPage(1);
+          }}
+          onQChange={(v) => {
+            setQ(v);
+            setPage(1);
+          }}
         />
         {error ? (
           <ErrorState message={error} onRetry={() => setPage((p) => p)} />
@@ -1603,12 +1691,7 @@ export default function PoetryListPage() {
                 <PoemCard key={p.id} poem={p} />
               ))}
             </div>
-            <PoemPagination
-              page={page}
-              pageSize={24}
-              total={total}
-              onPageChange={setPage}
-            />
+            <PoemPagination page={page} pageSize={24} total={total} onPageChange={setPage} />
           </>
         )}
       </PageContainer>
@@ -1638,6 +1721,7 @@ git commit -m "feat(pages): /poetry list page"
 ### Task 17: app/poetry/[id]/page.tsx (detail page)
 
 **Files:**
+
 - Create: `app/poetry/[id]/page.tsx`
 
 - [ ] **Step 1: Create detail page**
@@ -1675,9 +1759,16 @@ export default async function PoemDetailPage({ params }: Props) {
         <Header />
       </Suspense>
       <PageContainer>
-        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
+        <div className="worksheet-no-print font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵
+        </div>
         <div className="worksheet-no-print">
-          <PoemMeta title={poem.title} author={poem.author} dynasty={poem.dynasty} form={poem.form} />
+          <PoemMeta
+            title={poem.title}
+            author={poem.author}
+            dynasty={poem.dynasty}
+            form={poem.form}
+          />
         </div>
         <div className="card-paper p-5 sm:p-8">
           <PoemWorksheet content={poem.content} pinyin={poem.pinyin} />
@@ -1695,7 +1786,12 @@ export default async function PoemDetailPage({ params }: Props) {
           >
             打印本页
           </button>
-          <SaveAsWorksheetButton id={poem.id} title={poem.title} author={poem.author} content={poem.content} />
+          <SaveAsWorksheetButton
+            id={poem.id}
+            title={poem.title}
+            author={poem.author}
+            content={poem.content}
+          />
         </div>
       </PageContainer>
       <Footer />
@@ -1751,6 +1847,7 @@ git commit -m "feat(pages): /poetry/[id] detail page (save button stub)"
 ### Task 18: SaveAsWorksheetButton — full implementation
 
 **Files:**
+
 - Modify: `app/poetry/[id]/SaveAsWorksheetButton.tsx`
 
 - [ ] **Step 1: Replace stub with real implementation**
@@ -1839,6 +1936,7 @@ git commit -m "feat(pages): SaveAsWorksheetButton with login redirect"
 ### Task 19: components/HomePoemCard + app/page.tsx integration
 
 **Files:**
+
 - Create: `components/HomePoemCard.tsx`
 - Modify: `app/page.tsx`
 
@@ -1855,10 +1953,7 @@ export async function HomePoemCard() {
   const poem = await getRandomPoem();
   if (!poem) {
     return (
-      <Link
-        href="/poetry"
-        className="card-paper p-5 flex flex-col gap-2 group"
-      >
+      <Link href="/poetry" className="card-paper p-5 flex flex-col gap-2 group">
         <div className="font-kai text-3xl">诗</div>
         <div className="font-semibold">古诗词</div>
         <div className="text-xs text-ink-soft">唐诗三百首 · 宋词三百首</div>
@@ -1912,7 +2007,7 @@ export function BentoGrid() {
             </div>
           </div>
         </Link>
-        {ITEMS.slice(1).map(item => (
+        {ITEMS.slice(1).map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -1963,6 +2058,7 @@ git commit -m "feat(home): add HomePoemCard to BentoGrid"
 ### Task 20: lib/design.ts — add 诗词 to NAV_LINKS
 
 **Files:**
+
 - Modify: `lib/design.ts:9`
 
 - [ ] **Step 1: Add 诗词 link**
@@ -2034,6 +2130,7 @@ git status
 ```
 
 如果有未提交的 lockfile 变化,commit:
+
 ```bash
 git add pnpm-lock.yaml
 git commit -m "chore: update lockfile"

@@ -10,6 +10,7 @@
 ## 1. Goal
 
 Extend the Plan B user system with two feature groups:
+
 1. **Self-service password recovery** via email magic link (SMTP or dev console)
 2. **Admin backend** for managing users, viewing audit logs, and inspecting system stats
 
@@ -53,14 +54,14 @@ CREATE TABLE IF NOT EXISTS password_resets (
 
 ### 3.3 New audit events
 
-| `event` value | When | Metadata |
-|---|---|---|
-| `password_reset_request` | User POSTs `/api/auth/forgot` | `{ userExists: boolean }` (logged regardless — see §5.1 anti-enumeration) |
-| `password_reset_complete` | User successfully resets password | `{ resetId: number }` |
-| `admin_user_delete` | Admin deletes a user | `{ targetUserId, targetUsername }` |
-| `admin_user_password_reset` | Admin resets a user's password | `{ targetUserId, targetUsername }` |
-| `admin_user_promote` | Admin promotes user to admin | `{ targetUserId, targetUsername }` |
-| `admin_user_demote` | Admin demotes admin to regular user | `{ targetUserId, targetUsername }` |
+| `event` value               | When                                | Metadata                                                                  |
+| --------------------------- | ----------------------------------- | ------------------------------------------------------------------------- |
+| `password_reset_request`    | User POSTs `/api/auth/forgot`       | `{ userExists: boolean }` (logged regardless — see §5.1 anti-enumeration) |
+| `password_reset_complete`   | User successfully resets password   | `{ resetId: number }`                                                     |
+| `admin_user_delete`         | Admin deletes a user                | `{ targetUserId, targetUsername }`                                        |
+| `admin_user_password_reset` | Admin resets a user's password      | `{ targetUserId, targetUsername }`                                        |
+| `admin_user_promote`        | Admin promotes user to admin        | `{ targetUserId, targetUsername }`                                        |
+| `admin_user_demote`         | Admin demotes admin to regular user | `{ targetUserId, targetUsername }`                                        |
 
 ## 4. Authentication / authorization
 
@@ -71,9 +72,11 @@ The Plan B JWT payload is `{ userId, username }`. Adding `isAdmin` would let a d
 ### 4.2 New `lib/auth.ts` exports
 
 ```ts
-export interface UserWithAdmin extends User { isAdmin: boolean; }
+export interface UserWithAdmin extends User {
+  isAdmin: boolean;
+}
 
-export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null>
+export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null>;
 
 /**
  * Discriminated result used by both API routes and server pages.
@@ -193,7 +196,12 @@ In-memory map `Map<string, number>` keyed by client IP, value = `Date.now()` of 
 ### 6.1 `lib/email.ts`
 
 ```ts
-export interface EmailMessage { to: string; subject: string; html: string; text: string; }
+export interface EmailMessage {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}
 
 export async function sendEmail(msg: EmailMessage): Promise<void>;
 // - Reads MAIL_TRANSPORT env var
@@ -203,16 +211,28 @@ export async function sendEmail(msg: EmailMessage): Promise<void>;
 //           → on success resolve, on failure throw EmailSendError
 // - Other value → throw EmailNotConfiguredError
 
-export class EmailNotConfiguredError extends Error { code = 'email_not_configured' }
-export class EmailSendError extends Error { code = 'email_send_failed' }
+export class EmailNotConfiguredError extends Error {
+  code = 'email_not_configured';
+}
+export class EmailSendError extends Error {
+  code = 'email_send_failed';
+}
 ```
 
 ### 6.2 `lib/email-templates.ts`
 
 ```ts
-export interface PasswordResetArgs { username: string; resetUrl: string; expiresInMinutes: number; }
+export interface PasswordResetArgs {
+  username: string;
+  resetUrl: string;
+  expiresInMinutes: number;
+}
 
-export interface EmailContent { subject: string; html: string; text: string; }
+export interface EmailContent {
+  subject: string;
+  html: string;
+  text: string;
+}
 
 export function passwordResetEmail(args: PasswordResetArgs): EmailContent;
 ```
@@ -278,15 +298,16 @@ Add `nodemailer` to `dependencies`. (`@types/nodemailer` is not needed — `node
 
 Server pages call `lib/admin.ts` functions directly (no HTTP round-trip within the server):
 
-| Path | Server component does | Renders |
-|---|---|---|
-| `/admin` | `redirect('/admin/users')` | (none) |
-| `/admin/users` | `listUsers({ limit: 200, offset: 0 })` from `lib/admin.ts` | Table (id skip, username, registered, history count, fav count, admin badge) + "用户管理" h1 |
+| Path                | Server component does                                                           | Renders                                                                                                                                       |
+| ------------------- | ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/admin`            | `redirect('/admin/users')`                                                      | (none)                                                                                                                                        |
+| `/admin/users`      | `listUsers({ limit: 200, offset: 0 })` from `lib/admin.ts`                      | Table (id skip, username, registered, history count, fav count, admin badge) + "用户管理" h1                                                  |
 | `/admin/users/[id]` | `getUserDetail(id)` from `lib/admin.ts` (returns user + recent 10 history rows) | Detail card (username, registered, isAdmin badge) + recent history table + 3 action buttons (delete, reset password, promote/demote) + modals |
-| `/admin/audit` | `getAuditLog({})` (empty filter, first page) | Table (timestamp, user, event, ip, user-agent snippet) + filter bar (user_id input, event dropdown, date range) + pagination links |
-| `/admin/stats` | `getSystemStats()` from `lib/admin.ts` | 5 stat cards in a grid |
+| `/admin/audit`      | `getAuditLog({})` (empty filter, first page)                                    | Table (timestamp, user, event, ip, user-agent snippet) + filter bar (user_id input, event dropdown, date range) + pagination links            |
+| `/admin/stats`      | `getSystemStats()` from `lib/admin.ts`                                          | 5 stat cards in a grid                                                                                                                        |
 
 All modals are client components:
+
 - `<DeleteUserDialog>` — title "删除用户 {username}", description warning about cascade, input "请输入用户名确认", submit disabled until matches, "删除" button (red, on submit calls DELETE then refreshes)
 - `<ResetPasswordDialog>` — on open, calls POST and gets tempPassword, displays it in a `<code>` block with a "复制" button. Once admin clicks "已转交" checkbox, dialog closes. If dialog reopens, no re-call (state is one-shot).
 - `<ConfirmDialog>` — generic "确认" + cancel + action. Used for promote/demote.
@@ -429,17 +450,18 @@ tests/integration/
 
 ## 11. Risks and mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Email enumeration via timing (forgot endpoint takes longer for existing users) | v1: acceptable. v1.1 (out of scope): always do the email-send path with a no-op when user missing. |
-| Forgot-password rate limit is in-memory → useless if you have multiple server instances | Documented in README; if multi-instance, swap in Redis later |
-| Admin demoting themselves accidentally | Demote page requires a confirmation dialog with the username typed in |
-| `nodemailer` adds ~250KB to client bundle | It's a server-only import; verify Next.js tree-shakes it out of client bundle |
-| Magic link is HTTP, not HTTPS → token leaks | Cookie is httpOnly + sameSite=lax; link is one-time. In production `COOKIE_SECURE=true` + HTTPS terminator is the user's responsibility. |
+| Risk                                                                                    | Mitigation                                                                                                                               |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Email enumeration via timing (forgot endpoint takes longer for existing users)          | v1: acceptable. v1.1 (out of scope): always do the email-send path with a no-op when user missing.                                       |
+| Forgot-password rate limit is in-memory → useless if you have multiple server instances | Documented in README; if multi-instance, swap in Redis later                                                                             |
+| Admin demoting themselves accidentally                                                  | Demote page requires a confirmation dialog with the username typed in                                                                    |
+| `nodemailer` adds ~250KB to client bundle                                               | It's a server-only import; verify Next.js tree-shakes it out of client bundle                                                            |
+| Magic link is HTTP, not HTTPS → token leaks                                             | Cookie is httpOnly + sameSite=lax; link is one-time. In production `COOKIE_SECURE=true` + HTTPS terminator is the user's responsibility. |
 
 ## 12. Plan for the implementation phase
 
 Estimated ~24 commits, executed via the subagent-driven-development skill (same pattern as Plan B):
+
 - Tasks 1-2: deps + env scaffold
 - Tasks 3-5: libs (password-reset, ratelimit, email, email-templates, admin queries)
 - Tasks 6-7: `requireAdmin` + init-db DDL update

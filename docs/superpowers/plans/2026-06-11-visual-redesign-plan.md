@@ -17,25 +17,25 @@
 ```css
 /* tailwind v4: these are used in @theme block in app/globals.css */
 
---color-paper: #F4ECD8;        /* 宣纸米黄 */
---color-paper-soft: #FFFAEE;   /* 浅宣纸 */
---color-paper-deep: #E8DCC0;   /* 深宣纸 */
---color-ink: #3A2A14;          /* 墨黑 */
---color-ink-soft: #5A4530;     /* 浅墨 */
---color-ink-faint: #8B6F3A;    /* 墨痕 */
---color-seal: #B22B2B;         /* 印章红 */
---color-success: #4A7C59;
---color-warning: #C99A3E;
---color-danger: #B22B2B;
---color-info: #4F6B8C;
+--color-paper: #f4ecd8; /* 宣纸米黄 */
+--color-paper-soft: #fffaee; /* 浅宣纸 */
+--color-paper-deep: #e8dcc0; /* 深宣纸 */
+--color-ink: #3a2a14; /* 墨黑 */
+--color-ink-soft: #5a4530; /* 浅墨 */
+--color-ink-faint: #8b6f3a; /* 墨痕 */
+--color-seal: #b22b2b; /* 印章红 */
+--color-success: #4a7c59;
+--color-warning: #c99a3e;
+--color-danger: #b22b2b;
+--color-info: #4f6b8c;
 
---font-kai: var(--font-wenkai);    /* 霞鹜文楷 */
+--font-kai: var(--font-wenkai); /* 霞鹜文楷 */
 --font-han-serif: var(--font-han-serif);
 --font-han-sans: var(--font-han-sans);
 
---shadow-paper: 0 1px 2px rgba(58,42,20,0.06);
---shadow-paper-md: 0 4px 12px rgba(58,42,20,0.10);
---shadow-paper-lg: 0 12px 32px rgba(58,42,20,0.14);
+--shadow-paper: 0 1px 2px rgba(58, 42, 20, 0.06);
+--shadow-paper-md: 0 4px 12px rgba(58, 42, 20, 0.1);
+--shadow-paper-lg: 0 12px 32px rgba(58, 42, 20, 0.14);
 ```
 
 ---
@@ -45,6 +45,7 @@
 ### Task 1: Install lucide-react
 
 **Files:**
+
 - Modify: `package.json`
 
 - [ ] **Step 1: Install lucide-react as dependency**
@@ -73,36 +74,37 @@ git commit -m "chore(deps): add lucide-react for icon system"
 ### Task 2: Define design tokens in app/globals.css
 
 **Files:**
+
 - Modify: `app/globals.css:1-3` (replace `@tailwind` directives + add `@theme` block)
 
 - [ ] **Step 1: Replace app/globals.css with new content**
 
 ```css
-@import "tailwindcss";
+@import 'tailwindcss';
 
 /* ============ Design Tokens (字·韵) ============ */
 @theme {
   /* Colors */
-  --color-paper: #F4ECD8;
-  --color-paper-soft: #FFFAEE;
-  --color-paper-deep: #E8DCC0;
-  --color-ink: #3A2A14;
-  --color-ink-soft: #5A4530;
-  --color-ink-faint: #8B6F3A;
-  --color-seal: #B22B2B;
-  --color-success: #4A7C59;
-  --color-warning: #C99A3E;
-  --color-danger: #B22B2B;
-  --color-info: #4F6B8C;
+  --color-paper: #f4ecd8;
+  --color-paper-soft: #fffaee;
+  --color-paper-deep: #e8dcc0;
+  --color-ink: #3a2a14;
+  --color-ink-soft: #5a4530;
+  --color-ink-faint: #8b6f3a;
+  --color-seal: #b22b2b;
+  --color-success: #4a7c59;
+  --color-warning: #c99a3e;
+  --color-danger: #b22b2b;
+  --color-info: #4f6b8c;
 
   /* Fonts */
   --font-sans: var(--font-han-sans), system-ui, -apple-system, sans-serif;
   --font-serif: var(--font-han-serif), Georgia, serif;
-  --font-kai: var(--font-wenkai), "LXGW WenKai", "Kaiti SC", serif;
+  --font-kai: var(--font-wenkai), 'LXGW WenKai', 'Kaiti SC', serif;
 
   /* Shadows */
   --shadow-paper: 0 1px 2px rgba(58, 42, 20, 0.06);
-  --shadow-paper-md: 0 4px 12px rgba(58, 42, 20, 0.10);
+  --shadow-paper-md: 0 4px 12px rgba(58, 42, 20, 0.1);
   --shadow-paper-lg: 0 12px 32px rgba(58, 42, 20, 0.14);
 
   /* Border radius (small) */
@@ -112,11 +114,11 @@ git commit -m "chore(deps): add lucide-react for icon system"
 /* ============ Base Layer ============ */
 @layer base {
   body {
-    background-color: #F4ECD8;
+    background-color: #f4ecd8;
     background-image:
       radial-gradient(circle at 20% 30%, rgba(178, 43, 43, 0.018) 0%, transparent 40%),
       radial-gradient(circle at 80% 70%, rgba(58, 42, 20, 0.025) 0%, transparent 50%);
-    color: #3A2A14;
+    color: #3a2a14;
     font-family: var(--font-sans);
   }
 }
@@ -129,8 +131,8 @@ git commit -m "chore(deps): add lucide-react for icon system"
   }
   .stamp {
     display: inline-block;
-    border: 2px solid #B22B2B;
-    color: #B22B2B;
+    border: 2px solid #b22b2b;
+    color: #b22b2b;
     padding: 4px 10px;
     font-family: var(--font-kai);
     transform: rotate(-4deg);
@@ -138,8 +140,8 @@ git commit -m "chore(deps): add lucide-react for icon system"
     background: transparent;
   }
   .btn-seal {
-    background-color: #B22B2B;
-    color: #FFFAEE;
+    background-color: #b22b2b;
+    color: #fffaee;
     padding: 8px 18px;
     font-family: var(--font-kai);
     letter-spacing: 0.1em;
@@ -152,24 +154,28 @@ git commit -m "chore(deps): add lucide-react for icon system"
   }
   .btn-ghost {
     background: transparent;
-    color: #3A2A14;
-    border: 1px solid rgba(58, 42, 20, 0.20);
+    color: #3a2a14;
+    border: 1px solid rgba(58, 42, 20, 0.2);
     padding: 8px 18px;
     cursor: pointer;
-    transition: background-color 200ms, border-color 200ms;
+    transition:
+      background-color 200ms,
+      border-color 200ms;
   }
   .btn-ghost:hover {
-    background-color: #FFFAEE;
-    border-color: rgba(58, 42, 20, 0.40);
+    background-color: #fffaee;
+    border-color: rgba(58, 42, 20, 0.4);
   }
   .card-paper {
-    background-color: #FFFAEE;
-    border: 1px solid rgba(58, 42, 20, 0.10);
+    background-color: #fffaee;
+    border: 1px solid rgba(58, 42, 20, 0.1);
     box-shadow: var(--shadow-paper);
-    transition: box-shadow 200ms, border-color 200ms;
+    transition:
+      box-shadow 200ms,
+      border-color 200ms;
   }
   .card-paper:hover {
-    border-color: #B22B2B;
+    border-color: #b22b2b;
     box-shadow: var(--shadow-paper-md);
   }
 }
@@ -179,7 +185,8 @@ git commit -m "chore(deps): add lucide-react for icon system"
   body * {
     visibility: hidden;
   }
-  .worksheet-grid, .worksheet-grid * {
+  .worksheet-grid,
+  .worksheet-grid * {
     visibility: visible;
   }
   .worksheet-grid {
@@ -219,6 +226,7 @@ git commit -m "feat(style): add 字·韵 design tokens (paper/ink/seal + utility
 ### Task 3: Add 3 Chinese fonts via next/font in app/layout.tsx
 
 **Files:**
+
 - Modify: `app/layout.tsx:1-19` (full replacement)
 
 - [ ] **Step 1: Replace app/layout.tsx**
@@ -286,6 +294,7 @@ git commit -m "feat(layout): load 3 Chinese fonts (思源黑/宋 + 霞鹜文楷)
 ### Task 4: Build common lib file for shared design constants
 
 **Files:**
+
 - Create: `lib/design.ts`
 
 - [ ] **Step 1: Create lib/design.ts with shared brand constants**
@@ -328,6 +337,7 @@ git commit -m "feat(lib): add brand constants (字·韵 name + nav links)"
 ### Task 5: Redesign LoadingSpinner
 
 **Files:**
+
 - Modify: `components/common/LoadingSpinner.tsx` (full replacement)
 
 - [ ] **Step 1: Replace components/common/LoadingSpinner.tsx**
@@ -381,6 +391,7 @@ git commit -m "feat(components): redesign LoadingSpinner with seal arc"
 ### Task 6: Redesign EmptyState
 
 **Files:**
+
 - Modify: `components/common/EmptyState.tsx` (full replacement)
 
 - [ ] **Step 1: Replace components/common/EmptyState.tsx**
@@ -399,13 +410,9 @@ type Props = {
 export function EmptyState({ icon, title, description, action }: Props) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="text-ink-faint mb-3">
-        {icon ?? <Inbox size={32} strokeWidth={1.5} />}
-      </div>
+      <div className="text-ink-faint mb-3">{icon ?? <Inbox size={32} strokeWidth={1.5} />}</div>
       <h3 className="text-base font-semibold text-ink mb-1">{title}</h3>
-      {description && (
-        <p className="text-sm text-ink-soft max-w-md mb-4">{description}</p>
-      )}
+      {description && <p className="text-sm text-ink-soft max-w-md mb-4">{description}</p>}
       {action}
       <div className="paper-rule w-24 mt-6" />
     </div>
@@ -425,6 +432,7 @@ git commit -m "feat(components): redesign EmptyState (icon + rule)"
 ### Task 7: Create ErrorState component
 
 **Files:**
+
 - Create: `components/common/ErrorState.tsx`
 
 - [ ] **Step 1: Create components/common/ErrorState.tsx**
@@ -445,9 +453,7 @@ export function ErrorState({ title = '出错了', message, code, onRetry }: Prop
       <AlertCircle size={36} strokeWidth={1.5} className="text-seal mb-3" />
       <h3 className="text-base font-semibold text-ink mb-1">{title}</h3>
       <p className="text-sm text-ink-soft max-w-md mb-2">{message}</p>
-      {code && (
-        <code className="text-xs text-ink-faint font-mono mb-4">[{code}]</code>
-      )}
+      {code && <code className="text-xs text-ink-faint font-mono mb-4">[{code}]</code>}
       {onRetry && (
         <button onClick={onRetry} className="btn-ghost flex items-center gap-2 mt-2">
           <RefreshCw size={14} /> 重试
@@ -471,6 +477,7 @@ git commit -m "feat(components): add ErrorState component"
 ### Task 8: Create PageContainer layout component
 
 **Files:**
+
 - Create: `components/common/PageContainer.tsx`
 
 - [ ] **Step 1: Create components/common/PageContainer.tsx**
@@ -484,11 +491,7 @@ type Props = {
 };
 
 export function PageContainer({ children, className = '' }: Props) {
-  return (
-    <main className={`max-w-5xl mx-auto px-4 py-6 sm:py-8 ${className}`}>
-      {children}
-    </main>
-  );
+  return <main className={`max-w-5xl mx-auto px-4 py-6 sm:py-8 ${className}`}>{children}</main>;
 }
 
 export function SectionTitle({ children, subtitle }: { children: ReactNode; subtitle?: string }) {
@@ -514,6 +517,7 @@ git commit -m "feat(components): add PageContainer + SectionTitle"
 ### Task 9: Redesign Header with logo + nav
 
 **Files:**
+
 - Modify: `components/Header.tsx` (full replacement)
 
 - [ ] **Step 1: Replace components/Header.tsx**
@@ -532,8 +536,8 @@ import { useAppStore } from '@/lib/store';
 import { BRAND, NAV_LINKS } from '@/lib/design';
 
 export function Header() {
-  const safeMode = useAppStore(s => s.safeMode);
-  const user = useAppStore(s => s.user);
+  const safeMode = useAppStore((s) => s.safeMode);
+  const user = useAppStore((s) => s.user);
   const [authOpen, setAuthOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const searchParams = useSearchParams();
@@ -546,11 +550,14 @@ export function Header() {
     <header className="border-b border-ink/10 bg-paper-soft/95 backdrop-blur sticky top-0 z-10">
       <div className="max-w-5xl mx-auto px-4 h-[72px] flex items-center justify-between gap-4">
         <div className="flex items-center gap-8">
-          <Link href="/" className="font-kai text-2xl text-ink tracking-wide hover:text-seal transition-colors">
+          <Link
+            href="/"
+            className="font-kai text-2xl text-ink tracking-wide hover:text-seal transition-colors"
+          >
             {BRAND.name}
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            {NAV_LINKS.map(link => (
+            {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -571,11 +578,7 @@ export function Header() {
           {user ? (
             <UserMenu />
           ) : (
-            <button
-              type="button"
-              onClick={() => setAuthOpen(true)}
-              className="btn-seal text-sm"
-            >
+            <button type="button" onClick={() => setAuthOpen(true)} className="btn-seal text-sm">
               登录 / 注册
             </button>
           )}
@@ -590,10 +593,13 @@ export function Header() {
         </div>
       </div>
       {mobileOpen && (
-        <div className="md:hidden fixed inset-0 z-20 bg-ink/40" onClick={() => setMobileOpen(false)}>
+        <div
+          className="md:hidden fixed inset-0 z-20 bg-ink/40"
+          onClick={() => setMobileOpen(false)}
+        >
           <div
             className="absolute right-0 top-0 h-full w-64 bg-paper-soft p-4 shadow-paper-lg"
-            onClick={e => e.stopPropagation()}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-6">
               <span className="font-kai text-xl">{BRAND.name}</span>
@@ -602,7 +608,7 @@ export function Header() {
               </button>
             </div>
             <nav className="flex flex-col gap-3">
-              {NAV_LINKS.map(link => (
+              {NAV_LINKS.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
@@ -642,6 +648,7 @@ git commit -m "feat(header): redesign with 字·韵 logo + nav + mobile drawer"
 ### Task 10: Create Footer
 
 **Files:**
+
 - Create: `components/Footer.tsx`
 
 - [ ] **Step 1: Create components/Footer.tsx**
@@ -660,7 +667,7 @@ export function Footer() {
             <p className="text-xs text-ink-soft mt-1">{BRAND.shortDesc}</p>
           </div>
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
-            {FOOTER_LINKS.map(link => (
+            {FOOTER_LINKS.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
@@ -694,6 +701,7 @@ git commit -m "feat(components): add Footer with brand + nav links"
 ### Task 11: Create Hero component
 
 **Files:**
+
 - Create: `components/Hero.tsx`
 
 - [ ] **Step 1: Create components/Hero.tsx**
@@ -705,11 +713,10 @@ import { BRAND } from '@/lib/design';
 export function Hero() {
   return (
     <section className="text-center py-10 sm:py-16">
-      <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-4">
-        字 · 韵
-      </div>
+      <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-4">字 · 韵</div>
       <h1 className="font-kai text-3xl sm:text-5xl text-ink leading-tight mb-4">
-        汉字与拼音，<br className="sm:hidden" />
+        汉字与拼音，
+        <br className="sm:hidden" />
         一笔一画皆有意
       </h1>
       <p className="text-sm sm:text-base text-ink-soft max-w-xl mx-auto leading-relaxed mb-8">
@@ -740,6 +747,7 @@ git commit -m "feat(components): add Hero with 文楷 title + seal CTA"
 ### Task 12: Create BentoGrid component
 
 **Files:**
+
 - Create: `components/BentoGrid.tsx`
 
 - [ ] **Step 1: Create components/BentoGrid.tsx**
@@ -757,10 +765,34 @@ type BentoItem = {
 };
 
 const ITEMS: BentoItem[] = [
-  { char: '字', title: '字 ↔ 拼音互转', description: '文本转拼音 + 整句转换', href: '/', variant: 'primary' },
-  { char: '库', title: '罕见字库', description: '1450 个生僻字查询', href: '/rare-chars', variant: 'accent' },
-  { char: '帖', title: '字帖打印', description: '毛笔格/田字格 PDF', href: '/worksheet', variant: 'outline' },
-  { char: '戏', title: '趣味识字游戏', description: '拼音与字配对', href: '/game', variant: 'outline' },
+  {
+    char: '字',
+    title: '字 ↔ 拼音互转',
+    description: '文本转拼音 + 整句转换',
+    href: '/',
+    variant: 'primary',
+  },
+  {
+    char: '库',
+    title: '罕见字库',
+    description: '1450 个生僻字查询',
+    href: '/rare-chars',
+    variant: 'accent',
+  },
+  {
+    char: '帖',
+    title: '字帖打印',
+    description: '毛笔格/田字格 PDF',
+    href: '/worksheet',
+    variant: 'outline',
+  },
+  {
+    char: '戏',
+    title: '趣味识字游戏',
+    description: '拼音与字配对',
+    href: '/game',
+    variant: 'outline',
+  },
 ];
 
 const variantClass = {
@@ -786,7 +818,7 @@ export function BentoGrid() {
             </div>
           </div>
         </Link>
-        {ITEMS.slice(1).map(item => (
+        {ITEMS.slice(1).map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -817,6 +849,7 @@ git commit -m "feat(components): add BentoGrid (1 primary + 3 secondary entries)
 ### Task 13: Create ValueProps component
 
 **Files:**
+
 - Create: `components/ValueProps.tsx`
 
 - [ ] **Step 1: Create components/ValueProps.tsx**
@@ -832,7 +865,7 @@ export function ValueProps() {
   return (
     <section className="py-10">
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {PROPS.map(p => (
+        {PROPS.map((p) => (
           <div key={p.title} className="text-center">
             <div className="font-kai text-3xl text-seal mb-2">{p.icon}</div>
             <div className="font-semibold text-ink mb-1">{p.title}</div>
@@ -857,6 +890,7 @@ git commit -m "feat(components): add ValueProps (3 pillars)"
 ### Task 14: Replace app/page.tsx with new home structure
 
 **Files:**
+
 - Modify: `app/page.tsx` (full replacement)
 
 - [ ] **Step 1: Replace app/page.tsx**
@@ -915,6 +949,7 @@ git commit -m "feat(home): replace with Hero + Bento + ValueProps + Footer"
 ### Task 15: Refresh /rare-chars list page
 
 **Files:**
+
 - Modify: `app/rare-chars/page.tsx`
 
 - [ ] **Step 1: Read current page to understand structure**
@@ -938,15 +973,23 @@ import { RareCharSearch } from '@/components/rare/RareCharSearch';
 import { RareCharCard } from '@/components/rare/RareCharCard';
 import { RareCharPagination } from '@/components/rare/RareCharPagination';
 
-export default async function RareCharsPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
+export default async function RareCharsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
   const { q, page } = await searchParams;
   // ... existing data fetching unchanged ...
   // (Keep existing logic — only change the render wrapper)
   return (
     <>
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
-        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵 · 千字罕见库</div>
+        <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
+          字 · 韵 · 千字罕见库
+        </div>
         <SectionTitle subtitle="通用规范汉字表三级 · 1450 字">罕见字库</SectionTitle>
         {/* ... existing DailyCharBanner + Search + grid + Pagination, wrapped in card-paper for grid items ... */}
       </PageContainer>
@@ -970,6 +1013,7 @@ git commit -m "feat(rare-chars): wrap with PageContainer + title"
 ### Task 16: Refresh /rare-chars/[char] detail
 
 **Files:**
+
 - Modify: `app/rare-chars/[char]/page.tsx`
 
 - [ ] **Step 1: Wrap with PageContainer + add decoration**
@@ -977,7 +1021,9 @@ git commit -m "feat(rare-chars): wrap with PageContainer + title"
 ```tsx
 // In return: replace <main> with:
 <>
-  <Suspense><Header /></Suspense>
+  <Suspense>
+    <Header />
+  </Suspense>
   <PageContainer>
     <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
     {/* existing detail content, but wrap the big char in card-paper with border-l-4 border-seal pl-6 for story */}
@@ -998,6 +1044,7 @@ git commit -m "feat(rare-chars-detail): wrap with PageContainer + seal-accented 
 ### Task 17: Refresh /worksheet page
 
 **Files:**
+
 - Modify: `app/worksheet/page.tsx`
 
 - [ ] **Step 1: Wrap with new chrome**
@@ -1005,7 +1052,9 @@ git commit -m "feat(rare-chars-detail): wrap with PageContainer + seal-accented 
 ```tsx
 // Replace outer return with:
 <>
-  <Suspense><Header /></Suspense>
+  <Suspense>
+    <Header />
+  </Suspense>
   <PageContainer>
     <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
     <SectionTitle subtitle="毛笔格 · 田字格 · 打印友好">字帖生成</SectionTitle>
@@ -1027,6 +1076,7 @@ git commit -m "feat(worksheet): wrap with PageContainer + section title"
 ### Task 18: Refresh /worksheet/history and /worksheet/[id]
 
 **Files:**
+
 - Modify: `app/worksheet/history/page.tsx`
 - Modify: `app/worksheet/[id]/page.tsx`
 
@@ -1046,13 +1096,16 @@ git commit -m "feat(worksheet-history): wrap both list and detail with new chrom
 ### Task 19: Refresh /game page
 
 **Files:**
+
 - Modify: `app/game/page.tsx`
 
 - [ ] **Step 1: Wrap with new chrome**
 
 ```tsx
 <>
-  <Suspense><Header /></Suspense>
+  <Suspense>
+    <Header />
+  </Suspense>
   <PageContainer>
     <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
     <SectionTitle subtitle="把拼音拖到对应的字上">趣味识字</SectionTitle>
@@ -1076,6 +1129,7 @@ git commit -m "feat(game): wrap with new chrome + section title"
 ### Task 20: Refresh auth pages (login / forgot / reset)
 
 **Files:**
+
 - Modify: `app/forgot-password/page.tsx`
 - Modify: `app/forgot-password/ForgotForm.tsx`
 - Modify: `app/reset-password/page.tsx`
@@ -1084,12 +1138,15 @@ git commit -m "feat(game): wrap with new chrome + section title"
 - [ ] **Step 1: Replace blue button with btn-seal in ForgotForm**
 
 In `ForgotForm.tsx`, find:
+
 ```tsx
-className="w-full bg-blue-600 text-white rounded py-2 disabled:opacity-50"
+className = 'w-full bg-blue-600 text-white rounded py-2 disabled:opacity-50';
 ```
+
 Replace with:
+
 ```tsx
-className="w-full btn-seal disabled:opacity-50"
+className = 'w-full btn-seal disabled:opacity-50';
 ```
 
 - [ ] **Step 2: Replace blue button in ResetForm**
@@ -1100,10 +1157,14 @@ Same pattern: `bg-blue-600 text-white rounded py-2` → `btn-seal`.
 
 ```tsx
 <>
-  <Suspense><Header /></Suspense>
+  <Suspense>
+    <Header />
+  </Suspense>
   <PageContainer>
     <div className="max-w-sm mx-auto card-paper p-6 mt-8">
-      <div className="font-kai text-center text-ink-faint tracking-[0.3em] text-xs mb-4">字 · 韵</div>
+      <div className="font-kai text-center text-ink-faint tracking-[0.3em] text-xs mb-4">
+        字 · 韵
+      </div>
       <h1 className="font-kai text-2xl text-center text-ink mb-2">忘记密码</h1>
       <div className="paper-rule w-12 mx-auto mb-6" />
       <ForgotForm />
@@ -1127,6 +1188,7 @@ git commit -m "feat(auth): redesign login-related pages with paper card + seal C
 ### Task 21: Refresh AuthModal
 
 **Files:**
+
 - Modify: `components/AuthModal.tsx`
 
 - [ ] **Step 1: Replace default white card with paper card**
@@ -1145,6 +1207,7 @@ git commit -m "feat(components): redesign AuthModal with paper card"
 ### Task 22: Refresh UserMenu
 
 **Files:**
+
 - Modify: `components/UserMenu.tsx`
 
 - [ ] **Step 1: Replace default white dropdown with paper card**
@@ -1163,18 +1226,21 @@ git commit -m "feat(components): redesign UserMenu dropdown"
 ### Task 23: Refresh /profile
 
 **Files:**
+
 - Modify: `app/profile/page.tsx`
 
 - [ ] **Step 1: Wrap with new chrome + redesign stat cards**
 
 ```tsx
 <>
-  <Suspense><Header /></Suspense>
+  <Suspense>
+    <Header />
+  </Suspense>
   <PageContainer>
     <SectionTitle subtitle="你的汉字学习足迹">个人主页</SectionTitle>
     {/* existing user info, but stat cards now use card-paper + font-kai for big numbers */}
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-      {stats.map(s => (
+      {stats.map((s) => (
         <div key={s.label} className="card-paper p-4 text-center">
           <div className="font-kai text-3xl text-ink">{s.value}</div>
           <div className="text-xs text-ink-soft mt-1">{s.label}</div>
@@ -1198,6 +1264,7 @@ git commit -m "feat(profile): redesign with paper stat cards"
 ### Task 24: Refresh /history
 
 **Files:**
+
 - Modify: `app/history/page.tsx`
 
 - [ ] **Step 1: Wrap with chrome + redesign list items**
@@ -1216,6 +1283,7 @@ git commit -m "feat(history): redesign list with paper cards + seal star"
 ### Task 25: Refresh admin layout + pages
 
 **Files:**
+
 - Modify: `app/admin/layout.tsx`
 - Modify: `app/admin/page.tsx`
 - Modify: `app/admin/users/page.tsx`
@@ -1231,6 +1299,7 @@ In `app/admin/layout.tsx`, find `bg-gray-50` and replace with `bg-paper` (or `bg
 - [ ] **Step 2: Replace `bg-white border rounded` with `card-paper` in all admin pages**
 
 Sed-like replace:
+
 - `bg-white border rounded-lg` → `card-paper rounded-sm` (or just `card-paper` since the class includes border)
 - `bg-gray-50` → `bg-paper-deep`
 - `bg-blue-600 text-white` → `btn-seal`
@@ -1251,6 +1320,7 @@ git commit -m "feat(admin): replace default colors with paper/seal tokens"
 ### Task 26: Create 404 page
 
 **Files:**
+
 - Create: `app/not-found.tsx`
 
 - [ ] **Step 1: Create app/not-found.tsx**
@@ -1271,7 +1341,9 @@ export default function NotFound() {
           <div className="stamp inline-block mt-4">404</div>
           <p className="text-ink-soft mt-6 mb-2">页面不存在，或已被移走</p>
           <p className="text-sm text-ink-faint mb-8">Not Found</p>
-          <Link href="/" className="btn-seal">返回首页</Link>
+          <Link href="/" className="btn-seal">
+            返回首页
+          </Link>
         </div>
       </PageContainer>
       <Footer />
@@ -1292,6 +1364,7 @@ git commit -m "feat: 404 page with big 无 character + stamp"
 ### Task 27: Create global error page
 
 **Files:**
+
 - Create: `app/error.tsx`
 
 - [ ] **Step 1: Create app/error.tsx**
@@ -1304,7 +1377,13 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 
-export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+export default function GlobalError({
+  error,
+  reset,
+}: {
+  error: Error & { digest?: string };
+  reset: () => void;
+}) {
   useEffect(() => {
     console.error(error);
   }, [error]);
@@ -1320,7 +1399,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
           {error.digest && (
             <code className="text-xs text-ink-faint font-mono mb-4 block">[{error.digest}]</code>
           )}
-          <button onClick={reset} className="btn-seal mt-2">刷新重试</button>
+          <button onClick={reset} className="btn-seal mt-2">
+            刷新重试
+          </button>
         </div>
       </PageContainer>
       <Footer />
@@ -1341,6 +1422,7 @@ git commit -m "feat: global error page with big 误 character"
 ### Task 28: Sweep residual `bg-gray-*` / `bg-white` / `bg-blue-*` colors
 
 **Files:**
+
 - All page + component files
 
 - [ ] **Step 1: Find remaining default Tailwind color usages**
@@ -1352,6 +1434,7 @@ cd E:/ToolDevelop/PinYinCharacter && grep -rEn "bg-gray-|text-gray-|bg-white|tex
 - [ ] **Step 2: Replace remaining occurrences**
 
 Apply the substitution table:
+
 - `bg-gray-50` → `bg-paper-deep`
 - `bg-gray-100` → `bg-paper-deep`
 - `bg-white` → `bg-paper-soft` (for cards) or remove (for transparent)
@@ -1390,6 +1473,7 @@ git commit -m "chore(style): sweep remaining default Tailwind colors → paper/i
 ### Task 29: Mobile responsive sweep
 
 **Files:**
+
 - Various
 
 - [ ] **Step 1: Test mobile viewport (375px wide)**
@@ -1401,6 +1485,7 @@ curl -s -A "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0)" http://localhost:3003/ | h
 - [ ] **Step 2: Add mobile-specific tweaks**
 
 Look for any `overflow-x-auto` needs in:
+
 - Worksheet preview (already scrollable)
 - Admin tables (add `overflow-x-auto` wrapper if missing)
 - Long character rows in rare-chars
@@ -1459,6 +1544,7 @@ git add -A && git commit -m "fix: build/typecheck fixes for visual redesign" || 
 - [ ] **Step 1: Open http://localhost:3003 in browser**
 
 Verify:
+
 - [ ] Hero with 文楷 title renders
 - [ ] Bento grid: 1 large dark + 3 small cards
 - [ ] ValueProps 3 columns
@@ -1468,6 +1554,7 @@ Verify:
 - [ ] **Step 2: Navigate to /rare-chars**
 
 Verify:
+
 - [ ] PageContainer wrapper
 - [ ] SectionTitle "罕见字库"
 - [ ] Daily banner with stamp
@@ -1475,17 +1562,20 @@ Verify:
 - [ ] **Step 3: Navigate to /worksheet**
 
 Verify:
+
 - [ ] New chrome + section title
 - [ ] Worksheet form/preview still works
 
 - [ ] **Step 4: Navigate to /game**
 
 Verify:
+
 - [ ] New chrome + 趣味识字 section title
 
 - [ ] **Step 5: Visit /nonexistent → 404**
 
 Verify:
+
 - [ ] Big 「无」 character
 - [ ] 「404」 stamp
 - [ ] "返回首页" button works
@@ -1493,6 +1583,7 @@ Verify:
 - [ ] **Step 6: Test mobile (375px viewport)**
 
 Verify:
+
 - [ ] Header collapses to hamburger
 - [ ] Bento grid stacks to 1 column
 - [ ] No horizontal overflow
@@ -1500,6 +1591,7 @@ Verify:
 - [ ] **Step 7: Document any issues found**
 
 Create a notes file if issues found:
+
 ```bash
 docs/superpowers/notes/2026-06-11-plan-e-smoke.md
 ```

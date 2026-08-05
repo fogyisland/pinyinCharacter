@@ -13,14 +13,14 @@ async function main() {
        SUM(CASE WHEN meaning <> '' THEN 1 ELSE 0 END) AS meaning_filled,
        SUM(CASE WHEN story <> '' THEN 1 ELSE 0 END) AS story_filled,
        SUM(CASE WHEN needs_review = 1 THEN 1 ELSE 0 END) AS needs_review
-     FROM rare_chars`
+     FROM rare_chars`,
   );
   const [bySource] = await pool.query<any[]>(
     `SELECT generated_by, COUNT(*) AS n
      FROM rare_chars
      WHERE generated_by IS NOT NULL
      GROUP BY generated_by
-     ORDER BY n DESC`
+     ORDER BY n DESC`,
   );
 
   console.log(`总数:           ${totals.total}`);

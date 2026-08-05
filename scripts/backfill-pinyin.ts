@@ -60,10 +60,10 @@ export async function backfillPinyin(): Promise<{ updated: number; skipped: numb
       continue;
     }
     const pinyinArr = lines.map(linePinyin);
-    await pool.execute(
-      `UPDATE poems SET pinyin = ? WHERE id = ?`,
-      [JSON.stringify(pinyinArr), r.id],
-    );
+    await pool.execute(`UPDATE poems SET pinyin = ? WHERE id = ?`, [
+      JSON.stringify(pinyinArr),
+      r.id,
+    ]);
     updated++;
     if (updated % 50 === 0) console.log(`[backfill-pinyin] updated ${updated}...`);
   }

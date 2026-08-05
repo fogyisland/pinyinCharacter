@@ -47,16 +47,17 @@ export async function getMailTransport(): Promise<MailTransport> {
  * working until an admin saves new values.
  */
 export async function getSmtpConfig(): Promise<SmtpConfig | null> {
-  const [dbTransport, dbHost, dbPort, dbSecure, dbUser, dbPass, dbFrom, dbFromName] = await Promise.all([
-    getConfig(KEYS.transport),
-    getConfig(KEYS.host),
-    getConfig(KEYS.port),
-    getConfig(KEYS.secure),
-    getConfig(KEYS.user),
-    getConfig(KEYS.pass),
-    getConfig(KEYS.from),
-    getConfig(KEYS.fromName),
-  ]);
+  const [dbTransport, dbHost, dbPort, dbSecure, dbUser, dbPass, dbFrom, dbFromName] =
+    await Promise.all([
+      getConfig(KEYS.transport),
+      getConfig(KEYS.host),
+      getConfig(KEYS.port),
+      getConfig(KEYS.secure),
+      getConfig(KEYS.user),
+      getConfig(KEYS.pass),
+      getConfig(KEYS.from),
+      getConfig(KEYS.fromName),
+    ]);
 
   // Effective transport: DB > env (mirrors getMailTransport). If neither
   // says 'smtp', bail — this keeps getSmtpConfig() symmetric with

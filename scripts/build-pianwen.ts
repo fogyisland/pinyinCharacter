@@ -12,26 +12,57 @@ const SLUG = 'xunmeng-pianju';
 const SOURCE = 'guwendao.net/训蒙骈句';
 const PIANWEN_CATEGORY: ClassicCategory = 'pianwen';
 const PIANWEN_RHYME_TITLES = [
-  '一东','二冬','三江','四支','五微','六鱼','七虞','八齐','九佳','十灰',
-  '十一真','十二文','十三元','十四寒','十五删','十六先','十七萧','十八肴','十九豪','二十歌',
-  '二十一麻','二十二阳','二十三庚','二十四青','二十五蒸','二十六尤','二十七侵','二十八覃','二十九盐','三十咸',
+  '一东',
+  '二冬',
+  '三江',
+  '四支',
+  '五微',
+  '六鱼',
+  '七虞',
+  '八齐',
+  '九佳',
+  '十灰',
+  '十一真',
+  '十二文',
+  '十三元',
+  '十四寒',
+  '十五删',
+  '十六先',
+  '十七萧',
+  '十八肴',
+  '十九豪',
+  '二十歌',
+  '二十一麻',
+  '二十二阳',
+  '二十三庚',
+  '二十四青',
+  '二十五蒸',
+  '二十六尤',
+  '二十七侵',
+  '二十八覃',
+  '二十九盐',
+  '三十咸',
 ];
 const VERBOSE = process.env.BUILD_VERBOSE === '1';
-const log = (msg: string) => { if (VERBOSE) console.log(msg); };
+const log = (msg: string) => {
+  if (VERBOSE) console.log(msg);
+};
 
 type VolumeJson = ClassicFile;
 
 async function ensurePianwenCategory(pool: any): Promise<'widened' | 'already'> {
-  const rows: any[] = (await pool.query(
-    `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classics' AND COLUMN_NAME = 'category'`
-  ))[0] as any[];
+  const rows: any[] = (
+    await pool.query(
+      `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classics' AND COLUMN_NAME = 'category'`,
+    )
+  )[0] as any[];
   const colType: string = rows?.[0]?.COLUMN_TYPE ?? '';
   if (colType.includes("'pianwen'")) return 'already';
   await pool.query(
     `ALTER TABLE classics MODIFY COLUMN category
      ENUM('four-books','five-classics','mengxue','philosophy','history','other','pianwen')
-     NOT NULL DEFAULT 'other'`
+     NOT NULL DEFAULT 'other'`,
   );
   log('[build-pianwen] widened classics.category ENUM to include pianwen');
   return 'widened';
@@ -55,7 +86,9 @@ export async function buildPianwen(): Promise<PianwenResult> {
 
   const filePath = join(DATA_DIR, `${SLUG}.json`);
   if (existsSync(filePath)) {
-    const rows: any[] = (await pool.query(`SELECT 1 FROM classics WHERE slug = ? LIMIT 1`, [SLUG]))[0] as any[];
+    const rows: any[] = (
+      await pool.query(`SELECT 1 FROM classics WHERE slug = ? LIMIT 1`, [SLUG])
+    )[0] as any[];
     if (rows.length > 0) {
       log(`[build-pianwen] ${SLUG} already on disk + DB, skipping`);
       return { chapters: 0, bytes: 0, categoryStatus };
@@ -99,7 +132,7 @@ export async function buildPianwen(): Promise<PianwenResult> {
        author = VALUES(author),
        era = VALUES(era),
        source = VALUES(source)`,
-    [SLUG, '训蒙骈句', PIANWEN_CATEGORY, '萧良有/司祢', '明/清', SOURCE]
+    [SLUG, '训蒙骈句', PIANWEN_CATEGORY, '萧良有/司祢', '明/清', SOURCE],
   );
 
   const manifestRaw = readFileSync(MANIFEST_PATH, 'utf8');
@@ -126,13 +159,20 @@ export async function buildPianwen(): Promise<PianwenResult> {
   writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2), 'utf8');
 
   const result: PianwenResult = { chapters: chunks.length, bytes: json.length, categoryStatus };
-  log(`[build-pianwen] ${SLUG}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB -> ${filePath}`);
+  log(
+    `[build-pianwen] ${SLUG}: ${chunks.length} chapters, ${(json.length / 1024).toFixed(1)} KB -> ${filePath}`,
+  );
   return result;
 }
 
 if (require.main === module) {
   buildPianwen()
-    .then((r) => log(`[done] chapters=${r.chapters} bytes=${r.bytes} categoryStatus=${r.categoryStatus}`))
-    .catch((err) => { console.error(err); process.exit(1); })
+    .then((r) =>
+      log(`[done] chapters=${r.chapters} bytes=${r.bytes} categoryStatus=${r.categoryStatus}`),
+    )
+    .catch((err) => {
+      console.error(err);
+      process.exit(1);
+    })
     .finally(() => closePool());
 }

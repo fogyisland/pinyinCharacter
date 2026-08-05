@@ -98,11 +98,19 @@ function renderBlock(block: Block): string {
       return `<${tag} class="${cls}">${items}</${tag}>`;
     }
     case 'table': {
-      const headerCells = block.headers.map((h) => `<th class="px-2 py-1.5 text-left font-semibold text-ink">${renderInline(h)}</th>`).join('');
-      const bodyRows = block.rows.map((row) => {
-        const cells = row.map((c) => `<td class="px-2 py-1.5 text-ink-soft align-top">${renderInline(c)}</td>`).join('');
-        return `<tr class="border-t border-paper-warm">${cells}</tr>`;
-      }).join('');
+      const headerCells = block.headers
+        .map(
+          (h) => `<th class="px-2 py-1.5 text-left font-semibold text-ink">${renderInline(h)}</th>`,
+        )
+        .join('');
+      const bodyRows = block.rows
+        .map((row) => {
+          const cells = row
+            .map((c) => `<td class="px-2 py-1.5 text-ink-soft align-top">${renderInline(c)}</td>`)
+            .join('');
+          return `<tr class="border-t border-paper-warm">${cells}</tr>`;
+        })
+        .join('');
       return `<div class="overflow-x-auto my-4"><table class="w-full text-sm border border-paper-warm rounded-md">
         <thead class="bg-paper-deep"><tr>${headerCells}</tr></thead>
         <tbody>${bodyRows}</tbody>
@@ -113,7 +121,10 @@ function renderBlock(block: Block): string {
 
 function parseTableRow(line: string): string[] {
   // Trim leading/trailing pipes then split.
-  const trimmed = line.trim().replace(/^\|/, '').replace(/\|\s*$/, '');
+  const trimmed = line
+    .trim()
+    .replace(/^\|/, '')
+    .replace(/\|\s*$/, '');
   return trimmed.split('|').map((c) => c.trim());
 }
 
@@ -133,7 +144,10 @@ export function renderMarkdown(md: string): string {
     const line = lines[i];
 
     // Skip blank lines (they just separate blocks).
-    if (line.trim() === '') { i++; continue; }
+    if (line.trim() === '') {
+      i++;
+      continue;
+    }
 
     // Fenced code block
     const fenceMatch = line.match(/^```(\w*)\s*$/);

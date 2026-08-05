@@ -14,18 +14,18 @@ The existing pattern already proven by `data/classics/<slug>.json` (195 files, i
 
 ## Decisions (locked)
 
-| # | Decision | Choice |
-|---|---|---|
-| 1 | Scope | poems + classics (chars stay on DB) |
-| 2 | Per-poem layout | one file per poem: `data/poems/<id>.json` |
-| 3 | Query mechanism | manifest cached in memory + per-file on-demand reads |
-| 4 | Migration path | one-shot script (idempotent), DROP table last |
-| 5 | Poems table after migration | DROP TABLE poems |
-| 6 | Existing 5 per-collection files (yuefu / shijiu / cifu / caocao / nalan) | discard — DB is source of truth for those 553 rows |
-| 7 | Manifest regeneration | migration script writes it once + verify in CI |
-| 8 | Form filter integration | filter manifest in-memory (no extra IO) |
-| 9 | Sitemap + JSON-LD reads | manifest at build time (same pattern as classics) |
-| 10 | Deferred print-blank-grids request | keep deferred — separate spec after this ships |
+| #   | Decision                                                                 | Choice                                               |
+| --- | ------------------------------------------------------------------------ | ---------------------------------------------------- |
+| 1   | Scope                                                                    | poems + classics (chars stay on DB)                  |
+| 2   | Per-poem layout                                                          | one file per poem: `data/poems/<id>.json`            |
+| 3   | Query mechanism                                                          | manifest cached in memory + per-file on-demand reads |
+| 4   | Migration path                                                           | one-shot script (idempotent), DROP table last        |
+| 5   | Poems table after migration                                              | DROP TABLE poems                                     |
+| 6   | Existing 5 per-collection files (yuefu / shijiu / cifu / caocao / nalan) | discard — DB is source of truth for those 553 rows   |
+| 7   | Manifest regeneration                                                    | migration script writes it once + verify in CI       |
+| 8   | Form filter integration                                                  | filter manifest in-memory (no extra IO)              |
+| 9   | Sitemap + JSON-LD reads                                                  | manifest at build time (same pattern as classics)    |
+| 10  | Deferred print-blank-grids request                                       | keep deferred — separate spec after this ships       |
 
 ## Architecture
 
@@ -87,14 +87,14 @@ Manifest items carry only the fields needed for list / filter / sitemap renderin
 
 ### Components
 
-| File | Responsibility |
-|---|---|
-| `lib/poetry/loader.ts` (NEW) | Read `data/poems-manifest.json` once (cached at module scope). Read one `<id>.json` on demand. Fail loud. |
-| `lib/poetry/queries.ts` (NEW) | Pure functions over the manifest: `listPoems`, `getPoem`, `getRandomPoem`, `listForms`, `listDynasties`. |
-| `lib/poetry/index.ts` (NEW) | Barrel re-exports + type re-exports. |
-| `lib/poetry.ts` (DELETED) | Old DB code. `getPool()` import removed. |
-| `lib/poetry/infer-form.ts` (UNCHANGED) | Pure logic, still useful for new ingests. |
-| `lib/poetry-types.ts` (UNCHANGED) | `PoemListItem`, `PoemDetail`, `Dynasty`. |
+| File                                   | Responsibility                                                                                            |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `lib/poetry/loader.ts` (NEW)           | Read `data/poems-manifest.json` once (cached at module scope). Read one `<id>.json` on demand. Fail loud. |
+| `lib/poetry/queries.ts` (NEW)          | Pure functions over the manifest: `listPoems`, `getPoem`, `getRandomPoem`, `listForms`, `listDynasties`.  |
+| `lib/poetry/index.ts` (NEW)            | Barrel re-exports + type re-exports.                                                                      |
+| `lib/poetry.ts` (DELETED)              | Old DB code. `getPool()` import removed.                                                                  |
+| `lib/poetry/infer-form.ts` (UNCHANGED) | Pure logic, still useful for new ingests.                                                                 |
+| `lib/poetry-types.ts` (UNCHANGED)      | `PoemListItem`, `PoemDetail`, `Dynasty`.                                                                  |
 
 ### Page / route surface (unchanged URLs)
 
@@ -149,14 +149,14 @@ All routes import from `@/lib/poetry` (now barrel to the new modules). `withErro
 
 ## Testing
 
-| Layer | Test type | Coverage |
-|---|---|---|
-| `lib/poetry/queries.ts` | unit (vitest) | filter logic for dynasty/form/q; pagination math; edge cases (empty q, no results, page beyond total); `listForms` aggregation; `getRandomPoem` distribution |
-| `lib/poetry/loader.ts` | unit (vitest, mocked `fs/promises`) | `loadManifest` caches second call; `loadPoem` returns null on ENOENT; throws on parse error; bad manifest propagates |
-| `scripts/migrate-poems-to-files.ts` | integration (vitest, mocked DB + mocked fs) | N rows → N files + manifest; idempotent re-run = 0 writes, 0 diff; preserves all DB columns |
-| Manifest consistency | CI script (`pnpm tsx scripts/check-poems-manifest.ts`) | `manifest.items.length === fs.readdir('data/poems').length - 1`; every manifest id has a file; every file is in manifest |
-| `app/api/poetry/route.ts` | integration (existing, rewritten) | mock `lib/poetry/loader` + `queries`; assert same response shape as before |
-| `app/api/poetry/[id]/route.ts` | integration (existing, rewritten) | 200 / 404 / 400 paths |
+| Layer                               | Test type                                              | Coverage                                                                                                                                                     |
+| ----------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `lib/poetry/queries.ts`             | unit (vitest)                                          | filter logic for dynasty/form/q; pagination math; edge cases (empty q, no results, page beyond total); `listForms` aggregation; `getRandomPoem` distribution |
+| `lib/poetry/loader.ts`              | unit (vitest, mocked `fs/promises`)                    | `loadManifest` caches second call; `loadPoem` returns null on ENOENT; throws on parse error; bad manifest propagates                                         |
+| `scripts/migrate-poems-to-files.ts` | integration (vitest, mocked DB + mocked fs)            | N rows → N files + manifest; idempotent re-run = 0 writes, 0 diff; preserves all DB columns                                                                  |
+| Manifest consistency                | CI script (`pnpm tsx scripts/check-poems-manifest.ts`) | `manifest.items.length === fs.readdir('data/poems').length - 1`; every manifest id has a file; every file is in manifest                                     |
+| `app/api/poetry/route.ts`           | integration (existing, rewritten)                      | mock `lib/poetry/loader` + `queries`; assert same response shape as before                                                                                   |
+| `app/api/poetry/[id]/route.ts`      | integration (existing, rewritten)                      | 200 / 404 / 400 paths                                                                                                                                        |
 
 Per memory `feedback-per-task-build-check`: every task ends with `pnpm build` clean.
 

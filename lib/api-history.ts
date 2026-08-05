@@ -1,7 +1,6 @@
 export type HistoryKind = 'text2pinyin' | 'pinyin2text';
 export type ApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string } };
+  { ok: true; data: T } | { ok: false; error: { code: string; message: string } };
 
 export interface HistoryRow {
   id: number;
@@ -14,7 +13,10 @@ export interface HistoryRow {
   created_at: string | Date;
 }
 
-export interface Stats { total: number; favorites: number; }
+export interface Stats {
+  total: number;
+  favorites: number;
+}
 
 async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(path, { ...init, credentials: 'same-origin' });
@@ -23,7 +25,9 @@ async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   return j as ApiResult<T>;
 }
 
-export async function listHistoryRequest(opts: { favorite?: boolean; limit?: number; offset?: number } = {}): Promise<ApiResult<{ history: HistoryRow[] }>> {
+export async function listHistoryRequest(
+  opts: { favorite?: boolean; limit?: number; offset?: number } = {},
+): Promise<ApiResult<{ history: HistoryRow[] }>> {
   const sp = new URLSearchParams();
   if (opts.favorite) sp.set('favorite', 'true');
   if (opts.limit !== undefined) sp.set('limit', String(opts.limit));
@@ -40,16 +44,23 @@ export interface CreateHistoryArgs {
   dedup?: boolean;
 }
 
-export async function createHistoryRequest(args: CreateHistoryArgs): Promise<ApiResult<{ id: number; deduped: boolean }>> {
+export async function createHistoryRequest(
+  args: CreateHistoryArgs,
+): Promise<ApiResult<{ id: number; deduped: boolean }>> {
   return call('/api/history', {
-    method: 'POST', headers: { 'content-type': 'application/json' },
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify(args),
   });
 }
 
-export async function setFavoriteRequest(id: number, isFavorite: boolean): Promise<ApiResult<{ id: number; is_favorite: boolean }>> {
+export async function setFavoriteRequest(
+  id: number,
+  isFavorite: boolean,
+): Promise<ApiResult<{ id: number; is_favorite: boolean }>> {
   return call(`/api/history/${id}`, {
-    method: 'PATCH', headers: { 'content-type': 'application/json' },
+    method: 'PATCH',
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ is_favorite: isFavorite }),
   });
 }

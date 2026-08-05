@@ -17,8 +17,8 @@ export default async function AdminSetupPage() {
     <div className="space-y-4">
       <h1 className="text-xl font-semibold">初始化向导 (Setup Wizard)</h1>
       <p className="text-sm text-ink-soft max-w-2xl">
-        首次部署完成后,<code>/init</code> 路由默认被锁定。需要重新运行 setup
-        (例如重置 schema 或调试初始化流程) 时,先在此开启。
+        首次部署完成后,<code>/init</code> 路由默认被锁定。需要重新运行 setup (例如重置 schema
+        或调试初始化流程) 时,先在此开启。
       </p>
       <SetupRouteToggle initial={{ completed, enabled }} />
     </div>

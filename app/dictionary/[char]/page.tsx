@@ -44,18 +44,15 @@ export default async function DictionaryDetailPage({ params }: Props) {
     const cp = decoded.codePointAt(0)!.toString(16).toUpperCase();
     return (
       <>
-        <Suspense><Header /></Suspense>
+        <Suspense>
+          <Header />
+        </Suspense>
         <PageContainer>
           <div className="flex items-center justify-between mb-4">
-            <Link
-              href="/dictionary"
-              className="text-sm text-ink-soft hover:text-ink"
-            >
+            <Link href="/dictionary" className="text-sm text-ink-soft hover:text-ink">
               ← 返回字典
             </Link>
-            <span className="text-xs text-ink-faint tracking-widest">
-              字 · 韵 · 字典
-            </span>
+            <span className="text-xs text-ink-faint tracking-widest">字 · 韵 · 字典</span>
           </div>
           <SectionTitle subtitle={`U+${cp} · 增补平面`}>
             <span className="text-7xl font-serif text-ink mr-3 align-middle">{decoded}</span>
@@ -78,23 +75,27 @@ export default async function DictionaryDetailPage({ params }: Props) {
     <>
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildDefinedTerm({ char: data.char, meaning: data.meaningZh })) }}
+
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(buildDefinedTerm({ char: data.char, meaning: data.meaningZh })),
+        }}
       />
       <script
         type="application/ld+json"
-        // eslint-disable-next-line react/no-danger
+
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
             await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '字典', url: '/dictionary' },
               { name: data.char, url: `/dictionary/${encodeURIComponent(data.char)}` },
-            ])
+            ]),
           ),
         }}
       />
-      <Suspense><Header /></Suspense>
+      <Suspense>
+        <Header />
+      </Suspense>
       <PageContainer>
         <div className="flex items-center justify-between mb-4">
           <Link href="/dictionary" className="text-sm text-ink-soft hover:text-ink">
