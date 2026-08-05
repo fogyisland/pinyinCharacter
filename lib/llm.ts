@@ -1,8 +1,12 @@
 import { getConfig } from './config';
 
+export type ContentPart =
+  | { type: 'text'; text: string }
+  | { type: 'image_url'; image_url: { url: string; detail?: 'low' | 'high' | 'auto' } };
+
 export interface LLMMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | ContentPart[];
 }
 
 export interface LLMChatArgs {
@@ -98,7 +102,14 @@ function stripThinking(content: string): string {
  * single-char features (char-ai) and the rare-char single-char path
  * (ai-rare-chars). All non-matching prompts return a generic MOCK string.
  */
-function mockReply(prompt: string): string {
+function mockReply(input: string | ContentPart[]): string {
+  // Vision / multimodal path (char-recognize etc.): return a deterministic CJK char.
+  // The hard validation in /api/ai/char-recognize accepts only length=1 + CJK BMP,
+  // so the mock must return such a char — '中' is the conventional test fixture.
+  if (Array.isArray(input)) {
+    return '中';
+  }
+  const prompt = input;
   // char-ai features. Note: mock return values must NOT contain the same
   // keywords we match on, because meaning_zh writes to chars.meaning_zh and
   // subsequent calls (e.g. variants) interpolate that into their prompt as

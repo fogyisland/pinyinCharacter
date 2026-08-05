@@ -56,6 +56,7 @@ const AI_FEATURE_ZH: Record<string, string> = {
   story: '汉字故事',
   pinyin: '拼音',
   translation: '翻译',
+  recognize: '拍照识别',
 };
 
 function auditToItem(row: AuditRow): ActivityItem {
