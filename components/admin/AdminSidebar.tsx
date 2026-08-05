@@ -27,6 +27,7 @@ const GROUPS: NavGroup[] = [
       { href: '/admin/downloads', label: '下载' },
       { href: '/admin/ai', label: 'AI' },
       { href: '/admin/tts', label: '语音设置' },
+      { href: '/admin/analytics', label: '访问分析' },
     ],
   },
   {
