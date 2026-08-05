@@ -128,14 +128,14 @@ const siteJsonLd = [
   buildWebSite({ name: '汉字与拼音', url: getRuntimeSiteUrl(),
                  inLanguage: 'zh-Hans',
                  potentialAction: { '@type': 'SearchAction',
-                                    target: `${getRuntimeSiteUrl()}/search?q={search_term_string}`,
+                                    target: `${getRuntimeSiteUrl()}/dictionary?q={search_term_string}`,
                                     'query-input': 'required name=search_term_string' } }),
 ];
 return <script type="application/ld+json"
                dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }} />;
 ```
 
-注: 如果未来删 `/search` 路由, `potentialAction` 需相应删 (本 plan 不实现搜索)。
+注: `target` 指向 `/dictionary?q=...` (现状) 而不是 `/search?q=...` (不存在)。`/dictionary` 已经支持 `?q=` 查询参数 (`app/dictionary/page.tsx:7` `searchParams: Promise<{ q?: string; ... }>`), 所以这是正确路由。如果未来 `/dictionary` 删除查询参数, `potentialAction` 也需相应删。
 
 ### Sub-feature B: `.execute()` → `.query()` 全量替换
 
@@ -399,7 +399,7 @@ export default [
 2. **ESLint flat config** 而不是 `.eslintrc.json`: Next 15 推荐 flat config, 且 `next lint` 本身已 deprecate (Next 16 将移除)。直接 flat config 避免后续迁移。
 3. **`@typescript-eslint/no-explicit-any` 只 warn 不 error**: 475 处 any 一刀切 error 会让 lint 失败, 失去 lint 作为质量门的作用。Wave 1 只 warn + 报告, Wave 3 收紧。
 4. **`no-console` 只允许 `warn/error/info/debug`**: 阻止新代码用 `console.log`, 但 `console.debug/info` (startup banner) 合规保留。
-5. **JSON-LD `potentialAction` 假设 `/search` 存在**: 当前不存在搜索页, 但 `WebSite` schema 推荐带 `SearchAction` 占位以解锁 sitelinks searchbox。**Plan 文档必须明确**: 如果用户后续删 `/search` 路由, 这块也要对应删。
+5. **JSON-LD `potentialAction` 指向 `/dictionary?q=` (不是 `/search?q=`)**: 当前 `/search` 路由不存在, 但 `/dictionary` 支持 `?q=` 查询参数, 所以 `target` 指向 `/dictionary?q={search_term_string}` 是正确路由选择。Google 抓取时识别为 sitelinks searchbox。如果未来 `/dictionary` 删除查询参数支持, `potentialAction` 也需相应删。
 6. **死代码删除前置 grep 必须排除 `Up/`**: Up/ 是 gitignored deploy bundle, grep 时会触发大量 false positive。
 7. **不引入 husky + lint-staged**: YAGNI, CI 上跑 `npm run lint` 就够 (且当前无 CI)。
 
