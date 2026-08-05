@@ -281,6 +281,7 @@ const DDL = [
   `CREATE TABLE IF NOT EXISTS ai_calls (
      id          BIGINT       NOT NULL AUTO_INCREMENT,
      user_id     BIGINT       NULL,
+     ip          VARCHAR(45)  NULL,
      feature     VARCHAR(32)  NOT NULL,
      model       VARCHAR(64)  NOT NULL,
      status      ENUM('ok','error','rate-limited') NOT NULL,
@@ -293,6 +294,7 @@ const DDL = [
      PRIMARY KEY (id),
      KEY idx_feature_created (feature, created_at DESC),
      KEY idx_user_created (user_id, created_at DESC),
+     KEY idx_ai_calls_ip_created (ip, created_at DESC),
      KEY idx_status (status, created_at DESC)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 

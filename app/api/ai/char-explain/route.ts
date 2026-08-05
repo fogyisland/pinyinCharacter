@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { hasFeature } from '@/lib/membership';
 import { explainChar } from '@/lib/char-ai';
 import { getPool } from '@/lib/db';
-import { logAiCall } from '@/lib/ai-calls';
+import { logAiCall, checkAiRateLimit } from '@/lib/ai-calls';
 
 const Schema = z.object({ char: z.string().length(1) });
 
@@ -17,6 +17,9 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return badRequest('validation', parsed.error.message);
     if (!await hasFeature(user.id, 'ai_calls')) {
       return forbidden('membership_required', '需要 AI 调用会员');
+    }
+    if (!await checkAiRateLimit(user.id)) {
+      return NextResponse.json({ ok: false, error: 'rate_limited', message: '今日 AI 调用次数已用完' }, { status: 429 });
     }
     const [rows] = await getPool().query<any[]>(
       `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [parsed.data.char],
