@@ -36,3 +36,38 @@ export async function getPageViewStats(days: number = 7): Promise<PageViewStats>
     topPaths: rows.map((r: any) => ({ path: r.path, count: Number(r.count) })),
   };
 }
+
+export interface TopPage {
+  path: string;
+  views: number;
+  unique: number;
+}
+
+/**
+ * Top-N page paths over the last `days` days, ordered by total views DESC.
+ *
+ * Single SELECT on `page_views` using `idx_pv_path_created` + `idx_pv_created`.
+ * `unique` is COUNT(DISTINCT COALESCE(user_id, ip)) so logged-in users are
+ * counted by id and anonymous users by IP — matches the same convention as
+ * `getPageViewStats().todayUv`.
+ */
+export async function getTopPaths(days: number, limit: number): Promise<TopPage[]> {
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT
+       path,
+       COUNT(*) AS views,
+       COUNT(DISTINCT COALESCE(user_id, ip)) AS unique_visitors
+     FROM page_views
+     WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+     GROUP BY path
+     ORDER BY views DESC
+     LIMIT ?`,
+    [days, limit],
+  );
+  return (rows as any[]).map((r) => ({
+    path: r.path,
+    views: Number(r.views),
+    unique: Number(r.unique_visitors),
+  }));
+}
