@@ -15,22 +15,6 @@ const compat = new FlatCompat({
 
 export default [
   ...compat.config({ extends: ['next/core-web-vitals', 'next/typescript'] }),
-  // Define a stub rule for the stale `disable-exhaustive-deps` directive name used in
-  // SutraAudioPlayer.tsx (renamed upstream in a newer release, not yet in v7.1.1). The
-  // plugin from next/typescript is loaded above; we cannot redefine it here, so the stub
-  // lives under a different namespace key and ESLint will recognize the directive.
-  {
-    plugins: {
-      'react-hooks-alias': {
-        rules: {
-          'disable-exhaustive-deps': {
-            meta: { type: 'problem', schema: [], messages: {} },
-            create: () => ({}),
-          },
-        },
-      },
-    },
-  },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
@@ -42,10 +26,6 @@ export default [
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
     },
-    // Register a no-op placeholder for the rule name several files use in
-    // `// eslint-disable-next-line react-hooks/disable-exhaustive-deps` comments
-    // (renamed upstream in a newer release, not yet in v7.1.1). Defining it as
-    // an empty rule keeps the old comments valid without touching source files.
     linterOptions: {
       reportUnusedDisableDirectives: 'off',
     },
@@ -63,8 +43,6 @@ export default [
       '@next/next/no-img-element': 'off',
       '@next/next/no-css-tags': 'off',
       '@next/next/no-html-link-for-pages': 'off',
-      // Stale `disable-exhaustive-deps` directive-name alias: see comment above.
-      'react-hooks/disable-exhaustive-deps': 'off',
       // Brief-specified rules
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
