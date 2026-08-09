@@ -149,7 +149,7 @@ export async function bootstrapScheduler(): Promise<void> {
   if (!cfg.enabled) return;
   const intervalMs = Math.max(1, cfg.intervalMin) * 60_000;
   scheduleInterval(state, intervalMs);
-  console.log(`[scheduler] enabled — interval=${cfg.intervalMin}min tasks=${ALL_TASKS.join(',')}`);
+  console.info(`[scheduler] enabled — interval=${cfg.intervalMin}min tasks=${ALL_TASKS.join(',')}`);
 }
 
 /** Run all enabled tasks right now, regardless of interval. Used by manual trigger. */

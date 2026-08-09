@@ -46,7 +46,7 @@ export async function sendEmail(msg: EmailMessage): Promise<void> {
   const at = new Date();
 
   if (transport === 'console') {
-    console.log(`[email] To: ${msg.to} | Subject: ${msg.subject}\n${msg.text}`);
+    console.debug(`[email] To: ${msg.to} | Subject: ${msg.subject}\n${msg.text}`);
     await recordSend({ msg, status: 'console', at });
     return;
   }

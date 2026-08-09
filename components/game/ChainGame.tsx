@@ -40,12 +40,6 @@ export function ChainGame() {
         const source = CHAIN_GAME_CONFIG[difficulty].source;
         const result = await fetchChainChars(source, hskLevel);
         if (ctrl.signal.aborted) return;
-        console.log('[chain] startGame', {
-          source,
-          hskLevel,
-          count: result.chars.length,
-          hskFallback: result.hskFallback,
-        });
         const s = pickStarter(result.chars);
         if (!s) throw new Error('no valid starter');
         setCharsList(result.chars);
