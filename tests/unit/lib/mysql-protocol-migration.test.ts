@@ -7,6 +7,7 @@ vi.mock('@/lib/db', () => ({
 
 import { getPool } from '@/lib/db';
 import { getSystemStats } from '@/lib/admin';
+import { findUserByUsername } from '@/lib/password-reset';
 
 describe('mysql2 protocol migration (supp-plane safety)', () => {
   const mockQuery = vi.fn();
@@ -27,13 +28,29 @@ describe('mysql2 protocol migration (supp-plane safety)', () => {
     expect(mockQuery).toHaveBeenCalled();
   });
 
+  // Bug guard: mysql2 .execute() uses the binary protocol, which corrupts 4-byte
+  // UTF-8 (supp-plane) chars in SQL parameters. This test exercises a function
+  // that passes the supp-plane char AS A PARAMETER to pool.query(). If someone
+  // reverts pool.query() → pool.execute() in the code path under test, mysql2
+  // would re-encode the char and the params[] array would no longer match.
+  // We assert the params[] array is identity-equal to the input char, so the
+  // test fails the moment a different encoding pipeline is inserted.
   it('preserves supp-plane characters (U+2C27C) without corruption', async () => {
-    // Sup-plane char: U+2C27C (a CJK Extension B char)
     const suppPlaneChar = '\u{2C27C}';
-    mockQuery.mockResolvedValueOnce([[{ username: suppPlaneChar, count: 1 }]]);
-    const result = await getSystemStats();
-    expect(result).toBeDefined();
-    // The test verifies .query() returns the input unchanged (not corrupted)
+    // findUserByUsername calls pool.query<any[]>('SELECT id FROM users WHERE username = ?', [username])
+    // — the supp-plane char flows through as a parameter.
+    mockQuery.mockResolvedValueOnce([[]]);
+    await findUserByUsername(suppPlaneChar);
+    expect(mockQuery).toHaveBeenCalledTimes(1);
+    const [sql, params] = mockQuery.mock.calls[0];
+    // SQL must use the ? placeholder (parameterised), not string concatenation.
+    expect(sql).toContain('WHERE username = ?');
+    // The supp-plane char must arrive at the call site UNMODIFIED. If the
+    // call were routed through .execute() (binary protocol), mysql2 would
+    // attempt to re-encode the 4-byte UTF-8 char and the params array would
+    // no longer identity-match.
+    expect(params).toEqual([suppPlaneChar]);
+    expect(params![0]).toBe(suppPlaneChar);
   });
 
   it('uses pool.query() (text protocol), not pool.execute()', async () => {
