@@ -1,7 +1,7 @@
 import { listChars as listCharsFromTable } from './chars';
 import { ALL_TONES, toneFromPinyin, type Tone } from './pinyin-tone';
 import { seededShuffle } from './shuffle';
-import type { RoundChar, GameRound, RoundMode } from './game-round-types';
+import type { GameRound, RoundMode } from './game-round-types';
 import type { CharSource, HskLevel } from './difficulty';
 
 export type { RoundChar, GameRound, RoundMode } from './game-round-types';

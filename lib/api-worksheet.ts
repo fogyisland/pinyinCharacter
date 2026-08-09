@@ -1,16 +1,3 @@
-import type { CellStyle, Worksheet } from './worksheet-types';
-
-export async function listWorksheets(): Promise<Worksheet[]> {
-  const res = await fetch('/api/worksheets');
-  const data = await res.json();
-  if (!data.ok) {
-    const msg =
-      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
-    throw new Error(msg);
-  }
-  return data.data.worksheets;
-}
-
 export interface WorksheetSummary {
   id: number;
   title: string;
@@ -27,36 +14,6 @@ export async function listWorksheetsLightweight(): Promise<WorksheetSummary[]> {
     throw new Error(msg);
   }
   return data.data.items;
-}
-
-export async function fetchWorksheet(id: number): Promise<Worksheet> {
-  const res = await fetch(`/api/worksheets/${id}`);
-  const data = await res.json();
-  if (!data.ok) {
-    const msg =
-      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'fetch failed');
-    throw new Error(msg);
-  }
-  return data.data;
-}
-
-export async function saveWorksheetApi(input: {
-  title: string;
-  content: string[];
-  cellStyle: CellStyle;
-}): Promise<{ id: number }> {
-  const res = await fetch('/api/worksheets', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(input),
-  });
-  const data = await res.json();
-  if (!data.ok) {
-    const msg =
-      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'save failed');
-    throw new Error(msg);
-  }
-  return data.data;
 }
 
 export async function deleteWorksheetApi(id: number): Promise<void> {
@@ -77,17 +34,6 @@ export async function renameWorksheetApi(id: number, title: string): Promise<{ t
   if (!data.ok) {
     const code = data.error?.code ?? 'rename_failed';
     throw Object.assign(new Error(data.error?.message ?? 'rename failed'), { code });
-  }
-  return data.data;
-}
-
-export async function printWorksheetRequest(id: number): Promise<{ id: number }> {
-  const res = await fetch(`/api/worksheets/${id}/print`, { method: 'POST' });
-  const data = await res.json();
-  if (!data.ok) {
-    const msg =
-      typeof data.error === 'string' ? data.error : (data.error?.message ?? 'print failed');
-    throw new Error(msg);
   }
   return data.data;
 }
@@ -126,12 +72,4 @@ export async function appendCharToWorksheetApi(
     throw new Error(msg);
   }
   return data.data;
-}
-
-/** @deprecated use appendCharToWorksheetApi — kept for callers that only need legacy "我的字帖" mode. */
-export async function appendCharToMyWorksheetApi(
-  char: string,
-): Promise<{ worksheetId: number; added: boolean }> {
-  const r = await appendCharToWorksheetApi({ char });
-  return { worksheetId: r.worksheetId, added: r.added };
 }

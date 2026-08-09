@@ -247,14 +247,14 @@ export function generateTempPassword(): string {
 
 // (Plan H: disable / enable helpers + isUserDisabled guard)
 
-export async function disableUser(id: number, byAdminId: number): Promise<void> {
+export async function disableUser(id: number, _byAdminId: number): Promise<void> {
   const pool = getPool();
   await pool.query(`UPDATE users SET disabled_at = NOW() WHERE id = ? AND disabled_at IS NULL`, [
     id,
   ]);
 }
 
-export async function enableUser(id: number, byAdminId: number): Promise<void> {
+export async function enableUser(id: number, _byAdminId: number): Promise<void> {
   const pool = getPool();
   await pool.query(`UPDATE users SET disabled_at = NULL WHERE id = ?`, [id]);
 }

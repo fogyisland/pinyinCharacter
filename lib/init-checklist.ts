@@ -9,7 +9,7 @@
  *
  * `runInitChecks()` is the only export; the page calls it server-side.
  */
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPool } from './db';
 import { getConfig } from './config';

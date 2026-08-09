@@ -1,5 +1,4 @@
 import type { ApiResult } from './api-auth';
-import type { User } from './store';
 
 export interface AdminUserRow {
   id: number;
@@ -8,10 +7,6 @@ export interface AdminUserRow {
   createdAt: string | Date;
   historyCount: number;
   favoriteCount: number;
-}
-export interface ListUsersData {
-  users: AdminUserRow[];
-  total: number;
 }
 
 export interface AuditLogRow {
@@ -24,39 +19,11 @@ export interface AuditLogRow {
   created_at: string | Date;
 }
 
-export interface UserDetailData {
-  user: AdminUserRow;
-  recentHistory: Array<{
-    id: number;
-    user_id: number;
-    kind: 'text2pinyin' | 'pinyin2text';
-    input: string;
-    output: string | null;
-    is_favorite: 0 | 1;
-    char_count: number;
-    created_at: string | Date;
-  }>;
-}
-
 async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(path, { ...init, credentials: 'same-origin' });
   if (res.status === 204) return { ok: true, data: null as any };
   const j = await res.json();
   return j as ApiResult<T>;
-}
-
-export async function adminListUsers(
-  opts: { limit?: number; offset?: number } = {},
-): Promise<ApiResult<ListUsersData>> {
-  const sp = new URLSearchParams();
-  if (opts.limit !== undefined) sp.set('limit', String(opts.limit));
-  if (opts.offset !== undefined) sp.set('offset', String(opts.offset));
-  const qs = sp.toString();
-  return call(`/api/admin/users${qs ? '?' + qs : ''}`, { method: 'GET' });
-}
-
-export async function adminGetUser(id: number): Promise<ApiResult<UserDetailData>> {
-  return call(`/api/admin/users/${id}`, { method: 'GET' });
 }
 
 export async function adminDeleteUser(
@@ -88,8 +55,6 @@ export async function adminDemoteUser(
   return call(`/api/admin/users/${id}/demote`, { method: 'POST' });
 }
 
-// --- H7: user disable/enable -------------------------------------------
-
 export async function disableUserRequest(
   id: number,
 ): Promise<ApiResult<{ id: number; disabled: true }>> {
@@ -102,8 +67,6 @@ export async function enableUserRequest(
   return call(`/api/admin/users/${id}/enable`, { method: 'POST' });
 }
 
-// --- H8: user activity feed --------------------------------------------
-
 export interface UserActivityItem {
   id: string;
   source: 'audit' | 'download' | 'ai_call';
@@ -114,19 +77,14 @@ export interface UserActivityItem {
   createdAt: string;
   metadata: Record<string, unknown>;
 }
-export interface UserActivityData {
-  items: UserActivityItem[];
-}
 
 export async function getUserActivityRequest(
   id: number,
   after?: string,
-): Promise<ApiResult<UserActivityData>> {
+): Promise<ApiResult<{ items: UserActivityItem[] }>> {
   const qs = after ? `?after=${encodeURIComponent(after)}` : '';
   return call(`/api/admin/users/${id}/activity${qs}`, { method: 'GET' });
 }
-
-// --- H9: unified logs --------------------------------------------------
 
 export interface AdminLogRow {
   id: string;
@@ -137,12 +95,6 @@ export interface AdminLogRow {
   ip: string | null;
   createdAt: string;
   metadata: Record<string, unknown>;
-}
-export interface AdminLogListData {
-  items: AdminLogRow[];
-  total: number;
-  page: number;
-  pageSize: number;
 }
 
 export async function listAdminLogsRequest(
@@ -156,7 +108,7 @@ export async function listAdminLogsRequest(
     page?: number;
     pageSize?: number;
   } = {},
-): Promise<ApiResult<AdminLogListData>> {
+): Promise<ApiResult<{ items: AdminLogRow[]; total: number; page: number; pageSize: number }>> {
   const sp = new URLSearchParams();
   if (params.source) sp.set('source', params.source);
   if (params.type) sp.set('type', params.type);
@@ -169,8 +121,6 @@ export async function listAdminLogsRequest(
   const qs = sp.toString();
   return call(`/api/admin/logs${qs ? '?' + qs : ''}`, { method: 'GET' });
 }
-
-// --- H10: downloads ----------------------------------------------------
 
 export interface AdminDownloadRow {
   id: number;
@@ -185,12 +135,6 @@ export interface AdminDownloadRow {
   userAgent: string | null;
   createdAt: string;
 }
-export interface AdminDownloadListData {
-  items: AdminDownloadRow[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
 
 export async function listAdminDownloadsRequest(
   params: {
@@ -201,7 +145,7 @@ export async function listAdminDownloadsRequest(
     page?: number;
     pageSize?: number;
   } = {},
-): Promise<ApiResult<AdminDownloadListData>> {
+): Promise<ApiResult<{ items: AdminDownloadRow[]; total: number; page: number; pageSize: number }>> {
   const sp = new URLSearchParams();
   if (params.userId !== undefined) sp.set('userId', String(params.userId));
   if (params.sourceType) sp.set('sourceType', params.sourceType);
@@ -217,8 +161,6 @@ export async function getDownloadStatsRequest(days = 7): Promise<ApiResult<unkno
   return call(`/api/admin/downloads/stats?days=${days}`, { method: 'GET' });
 }
 
-// --- H11: AI calls + config -------------------------------------------
-
 export interface AdminAiCallRow {
   id: number;
   userId: number;
@@ -229,12 +171,6 @@ export interface AdminAiCallRow {
   durationMs: number | null;
   error: string | null;
   createdAt: string;
-}
-export interface AdminAiCallListData {
-  rows: AdminAiCallRow[];
-  total: number;
-  page: number;
-  pageSize: number;
 }
 
 export async function listAiCallsRequest(
@@ -247,7 +183,7 @@ export async function listAiCallsRequest(
     page?: number;
     pageSize?: number;
   } = {},
-): Promise<ApiResult<AdminAiCallListData>> {
+): Promise<ApiResult<{ rows: AdminAiCallRow[]; total: number; page: number; pageSize: number }>> {
   const sp = new URLSearchParams();
   if (params.feature) sp.set('feature', params.feature);
   if (params.status) sp.set('status', params.status);
@@ -264,16 +200,15 @@ export async function getAiStatsRequest(days = 7): Promise<ApiResult<unknown>> {
   return call(`/api/admin/ai/stats?days=${days}`, { method: 'GET' });
 }
 
-export type AiConfigMap = Record<string, string>;
-export type AiConfigResponse = { config: AiConfigMap; hasApiKey: boolean };
-
-export async function getAiConfigRequest(): Promise<ApiResult<AiConfigResponse>> {
+export async function getAiConfigRequest(): Promise<
+  ApiResult<{ config: Record<string, string>; hasApiKey: boolean }>
+> {
   return call('/api/admin/ai/config', { method: 'GET' });
 }
 
 export async function updateAiConfigRequest(
   body: Record<string, string | number>,
-): Promise<ApiResult<AiConfigResponse>> {
+): Promise<ApiResult<{ config: Record<string, string>; hasApiKey: boolean }>> {
   return call('/api/admin/ai/config', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },
@@ -295,46 +230,6 @@ export async function updateTtsConfigRequest(
   });
 }
 
-// --- H12: Memberships (admin) ---------------------------------------
-
-export interface AdminMembershipRow {
-  id: number;
-  userId: number;
-  username: string | null;
-  planKey: string;
-  source: 'manual' | 'paypal';
-  amount: string | null;
-  currency: string | null;
-  grantedAt: string;
-  expiresAt: string;
-  revokedAt: string | null;
-  note: string | null;
-  grantedBy: number | null;
-}
-export interface AdminMembershipListData {
-  items: AdminMembershipRow[];
-  total: number;
-  page: number;
-  pageSize: number;
-}
-
-export async function listAdminMembershipsRequest(
-  params: {
-    userId?: number;
-    planKey?: string;
-    page?: number;
-    pageSize?: number;
-  } = {},
-): Promise<ApiResult<AdminMembershipListData>> {
-  const sp = new URLSearchParams();
-  if (params.userId !== undefined) sp.set('userId', String(params.userId));
-  if (params.planKey) sp.set('planKey', params.planKey);
-  if (params.page !== undefined) sp.set('page', String(params.page));
-  if (params.pageSize !== undefined) sp.set('pageSize', String(params.pageSize));
-  const qs = sp.toString();
-  return call(`/api/admin/memberships${qs ? '?' + qs : ''}`, { method: 'GET' });
-}
-
 export async function grantAdminMembershipRequest(body: {
   userId: number;
   planKey: string;
@@ -350,15 +245,28 @@ export async function grantAdminMembershipRequest(body: {
 export async function revokeAdminMembershipRequest(
   id: number,
   reason?: string,
-): Promise<ApiResult<AdminMembershipRow>> {
+): Promise<
+  ApiResult<{
+    id: number;
+    userId: number;
+    username: string | null;
+    planKey: string;
+    source: 'manual' | 'paypal';
+    amount: string | null;
+    currency: string | null;
+    grantedAt: string;
+    expiresAt: string;
+    revokedAt: string | null;
+    note: string | null;
+    grantedBy: number | null;
+  }>
+> {
   return call(`/api/admin/memberships/${id}/revoke`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ reason }),
   });
 }
-
-// --- H12: Admin plans (list only here; PATCH + seed in later tasks) ----
 
 export interface AdminPlanRow {
   id: number;
@@ -371,27 +279,21 @@ export interface AdminPlanRow {
   displayOrder: number;
   features: string[];
 }
-export interface AdminPlanListData {
-  items: AdminPlanRow[];
-  total: number;
-}
 
-export async function listAdminPlansRequest(): Promise<ApiResult<AdminPlanListData>> {
+export async function listAdminPlansRequest(): Promise<ApiResult<{ items: AdminPlanRow[]; total: number }>> {
   return call('/api/admin/memberships/plans', { method: 'GET' });
-}
-
-export interface UpdatePlanBody {
-  displayName?: string;
-  durationDays?: number;
-  amount?: string;
-  enabled?: boolean;
-  displayOrder?: number;
-  features?: ('unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts')[];
 }
 
 export async function updateAdminPlanRequest(
   id: number,
-  body: UpdatePlanBody,
+  body: {
+    displayName?: string;
+    durationDays?: number;
+    amount?: string;
+    enabled?: boolean;
+    displayOrder?: number;
+    features?: ('unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts')[];
+  },
 ): Promise<ApiResult<{ plan: AdminPlanRow }>> {
   return call(`/api/admin/memberships/plans/${id}`, {
     method: 'PATCH',
@@ -404,17 +306,15 @@ export async function seedAdminPlansRequest(): Promise<ApiResult<{ seeded: numbe
   return call('/api/admin/memberships/plans/seed', { method: 'POST' });
 }
 
-// --- PayPal config -----------------------------------------------------
-
-export interface AdminPayPalConfig {
-  mode: 'sandbox' | 'live';
-  hasClientId: boolean;
-  hasSecret: boolean;
-  hasWebhookId: boolean;
-  webhookUrl: string;
-}
-
-export async function getAdminPayPalConfigRequest(): Promise<ApiResult<AdminPayPalConfig>> {
+export async function getAdminPayPalConfigRequest(): Promise<
+  ApiResult<{
+    mode: 'sandbox' | 'live';
+    hasClientId: boolean;
+    hasSecret: boolean;
+    hasWebhookId: boolean;
+    webhookUrl: string;
+  }>
+> {
   return call('/api/admin/paypal/config', { method: 'GET' });
 }
 

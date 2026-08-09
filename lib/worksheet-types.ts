@@ -26,8 +26,6 @@ export type FontFamily =
   | 'zcool-xiaowei'
   | 'zhi-mang-xing';
 
-const ALL_TOOLS: readonly Tool[] = ['brush', 'pen'];
-const ALL_PRESENTATIONS: readonly Presentation[] = ['square', 'cross', 'lined', 'four-line'];
 const ALL_CELL_STYLES: readonly CellStyle[] = [
   'brush-square',
   'brush-cross',

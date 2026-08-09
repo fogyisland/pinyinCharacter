@@ -49,10 +49,6 @@ export async function forgotPasswordRequest(username: string): Promise<ApiResult
   });
 }
 
-export async function getResetInfoRequest(token: string): Promise<ApiResult<{ username: string }>> {
-  return call(`/api/auth/reset-info?token=${encodeURIComponent(token)}`, { method: 'GET' });
-}
-
 export async function resetPasswordRequest(
   token: string,
   newPassword: string,

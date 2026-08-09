@@ -1,5 +1,4 @@
 import { getPool } from './db';
-import { listMemberships } from './membership';
 
 export interface MembershipStats {
   total: number;

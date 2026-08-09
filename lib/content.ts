@@ -5,7 +5,6 @@ import {
   renameSync,
   existsSync,
   mkdirSync,
-  readdirSync,
 } from 'node:fs';
 import { join } from 'node:path';
 import { getPool } from './db';
