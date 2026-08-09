@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { listChars, getDailyChar } from '@/lib/rare-chars';
 import { RareCharCard } from '@/components/rare/RareCharCard';
 import { RareCharSearch } from '@/components/rare/RareCharSearch';
@@ -8,8 +9,18 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '罕见字库',
+    description: '1412 个罕见汉字, 含读音、释义、字源。',
+    path: '/rare-chars',
+    ogType: 'website',
+  });
+}
 
 function todayLocal(): string {
   const d = new Date();

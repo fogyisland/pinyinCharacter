@@ -75,8 +75,13 @@ export async function buildOrganization() {
   };
 }
 
-export async function buildWebSite() {
+export async function buildWebSite(searchTargetTemplate?: string) {
   const base = await getRuntimeSiteUrl();
+  // Caller passes a fully-qualified URL template (e.g.
+  // `https://example.com/dictionary?q={search_term_string}`). Default is the
+  // legacy `/search?q=…` for back-compat with sites that have a /search route;
+  // most sites should pass an explicit template pointing to their real search.
+  const template = searchTargetTemplate || `${base}/search?q={search_term_string}`;
   return {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
@@ -86,7 +91,7 @@ export async function buildWebSite() {
       '@type': 'SearchAction',
       target: {
         '@type': 'EntryPoint',
-        urlTemplate: `${base}/search?q={search_term_string}`,
+        urlTemplate: template,
       },
       'query-input': 'required name=search_term_string',
     },

@@ -12,6 +12,7 @@ import { SutraAudioPlayer } from '@/components/sutra/SutraAudioPlayer';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
 import { SutraRightColumn } from './SutraRightColumn';
 import { getSutraBackLink } from './back-link';
+import { buildBook, buildBreadcrumbList } from '@/lib/seo/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,8 +43,24 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
     text: c.content.join('\n'),
   }));
 
+  // JSON-LD: Book + BreadcrumbList. SutraDetail has no translator/era fields
+  // (only id/title/slug/chunks), so we pass null for author and omit era.
+  const bookJsonLd = buildBook({ title: sutra.title, author: null, era: null });
+  const breadcrumbJsonLd = await buildBreadcrumbList([
+    { name: '首页', url: '/' },
+    { name: sutra.title, url: `/sutra/${sutra.id}` },
+  ]);
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(bookJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <Suspense>
         <Header />
       </Suspense>

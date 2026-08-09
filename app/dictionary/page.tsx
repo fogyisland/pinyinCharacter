@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
@@ -6,8 +7,18 @@ import { listChars } from '@/lib/chars';
 import { DictionaryClient } from '@/components/dictionary/DictionaryClient';
 import { DictionarySearch } from '@/components/dictionary/DictionarySearch';
 import { EmptyState } from '@/components/common/EmptyState';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '汉字字典',
+    description: '8105 个汉字查询, 含拼音、笔顺、字源、部首、组词。',
+    path: '/dictionary',
+    ogType: 'website',
+  });
+}
 
 interface Props {
   searchParams: Promise<{

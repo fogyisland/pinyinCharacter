@@ -5,7 +5,23 @@ import { getRuntimeSiteUrl } from '@/lib/seo/config';
 export default async function robots(): Promise<MetadataRoute.Robots> {
   const base = await getRuntimeSiteUrl();
   return {
-    rules: [{ userAgent: '*', allow: '/', disallow: ['/admin', '/api', '/account'] }],
+    rules: [
+      {
+        userAgent: '*',
+        allow: '/',
+        disallow: [
+          '/admin',
+          '/api',
+          '/account',
+          '/init',
+          '/login',
+          '/register',
+          '/forgot-password',
+          '/reset-password',
+          '/activate',
+        ],
+      },
+    ],
     sitemap: `${base}/sitemap.xml`,
   };
 }
