@@ -48,7 +48,6 @@ export function filterNavLinks(safeMode: boolean): readonly NavLink[] {
 
 export const GITHUB_REPO_URL = 'https://github.com/fogyisland/pinyinCharacter';
 export const GITHUB_ISSUES_URL = `${GITHUB_REPO_URL}/issues`;
-export const GITHUB_NEW_ISSUE_URL = `${GITHUB_REPO_URL}/issues/new`;
 
 export const FOOTER_LINKS = [
   { href: '/about', label: '关于' },

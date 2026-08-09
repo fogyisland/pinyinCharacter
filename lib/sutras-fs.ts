@@ -139,20 +139,3 @@ export function writeSutrasFs(args: {
   return manifest;
 }
 
-/**
- * Stat helper for verification scripts.
- */
-export function sutraFsStats(): { exists: boolean; dirSize: number; fileCount: number } {
-  if (!existsSync(SUTRAS_DIR)) return { exists: false, dirSize: 0, fileCount: 0 };
-  const { readdirSync } = require('node:fs') as typeof import('node:fs');
-  const files = readdirSync(SUTRAS_DIR).filter((f) => f.endsWith('.json'));
-  let size = 0;
-  for (const f of files) {
-    try {
-      size += statSync(join(SUTRAS_DIR, f)).size;
-    } catch {
-      // skip
-    }
-  }
-  return { exists: true, dirSize: size, fileCount: files.length };
-}

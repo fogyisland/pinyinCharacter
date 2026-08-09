@@ -65,9 +65,6 @@ export async function getPayPalAccessToken(cfg: PayPalConfig): Promise<string> {
   return j.access_token;
 }
 
-export function _resetTokenCacheForTest(): void {
-  tokenCache.clear();
-}
 
 export interface PayPalOrder {
   id: string;

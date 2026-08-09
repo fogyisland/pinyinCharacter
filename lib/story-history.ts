@@ -26,11 +26,3 @@ export function addReadChar(char: string): void {
   }
 }
 
-export function clearReadHistory(): void {
-  if (typeof window === 'undefined') return;
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-  } catch {
-    // ignore
-  }
-}

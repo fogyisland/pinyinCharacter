@@ -33,14 +33,6 @@ export const POEM_FONT_CSS: Record<PoemFont, string> = {
   'mao-bi': 'var(--font-ma-shan-zheng)',
 };
 
-export const POEM_FONT_LABEL: Record<PoemFont, string> = {
-  kai: '楷书',
-  'xiao-kai': '小楷',
-  'li-shu': '隶书',
-  'zhuan-shu': '篆书',
-  'mao-bi': '毛笔',
-};
-
 export const POEM_FONT_STORAGE_KEY = 'pinyin:poem-font';
 export const DEFAULT_POEM_FONT: PoemFont = 'kai';
 
