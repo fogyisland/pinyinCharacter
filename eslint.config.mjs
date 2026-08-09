@@ -73,6 +73,22 @@ export default [
       'react-hooks/exhaustive-deps': 'warn',
       eqeqeq: ['error', 'always', { null: 'ignore' }],
       'no-console': ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
+      // mysql2 .execute() uses the binary protocol and corrupts 4-byte UTF-8 (supp-plane) chars;
+      // .query() uses text protocol and preserves them. See mysql2-supp-plane-bug memory.
+      // Mechanical Wave 1 Task 2 migration removed all .execute() sites; forbid new ones.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.property.name='pool'][property.name='execute']",
+          message:
+            "Use pool.query() instead of pool.execute() — see mysql2-supp-plane-bug memory. The binary protocol corrupts 4-byte UTF-8 (supp-plane) chars.",
+        },
+        {
+          selector: "CallExpression[callee.property.name='execute']",
+          message:
+            'Use .query() instead of .execute() for mysql2 — text protocol preserves supp-plane chars (U+10000+).',
+        },
+      ],
     },
   },
   {

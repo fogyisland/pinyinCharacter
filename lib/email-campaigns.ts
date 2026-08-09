@@ -59,7 +59,7 @@ export function verifyUnsubscribeToken(token: string): number | null {
 
 export async function setMarketingOptOut(userId: number, optedOut: boolean): Promise<void> {
   const pool = getPool();
-  await pool.execute(`UPDATE users SET marketing_opted_out = ? WHERE id = ?`, [
+  await pool.query(`UPDATE users SET marketing_opted_out = ? WHERE id = ?`, [
     optedOut ? 1 : 0,
     userId,
   ]);
@@ -99,7 +99,7 @@ export async function createCampaign(args: {
   createdBy: number;
 }): Promise<number> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(
+  const [res] = await pool.query<any>(
     `INSERT INTO email_campaigns (subject, html_body, text_body, audience, status, created_by)
      VALUES (?, ?, ?, ?, 'draft', ?)`,
     [args.subject, args.htmlBody, args.textBody, args.audience, args.createdBy],
@@ -109,7 +109,7 @@ export async function createCampaign(args: {
 
 export async function getCampaign(id: number): Promise<CampaignRow | null> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(`SELECT * FROM email_campaigns WHERE id = ? LIMIT 1`, [
+  const [rows] = await pool.query<any[]>(`SELECT * FROM email_campaigns WHERE id = ? LIMIT 1`, [
     id,
   ]);
   return rows.length > 0 ? (rows[0] as CampaignRow) : null;
@@ -141,7 +141,7 @@ export async function armCampaign(campaignId: number, users: AudienceUser[]): Pr
      VALUES ${placeholders}`,
     params,
   );
-  await pool.execute(
+  await pool.query(
     `UPDATE email_campaigns SET status = 'sending', started_at = COALESCE(started_at, NOW()),
        total_recipients = (SELECT COUNT(*) FROM email_campaign_recipients WHERE campaign_id = ?)
      WHERE id = ?`,
@@ -156,7 +156,7 @@ export async function markRecipient(
   error?: string,
 ): Promise<void> {
   const pool = getPool();
-  await pool.execute(
+  await pool.query(
     `UPDATE email_campaign_recipients
      SET status = ?, sent_at = IF(? IN ('sent','skipped'), NOW(), sent_at), error = ?
      WHERE id = ?`,
@@ -171,7 +171,7 @@ export async function markRecipient(
  */
 export async function finalizeCampaignIfDone(campaignId: number): Promise<CampaignStatus> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT
        SUM(status = 'sent')    AS sent_count,
        SUM(status = 'failed')  AS failed_count,
@@ -183,7 +183,7 @@ export async function finalizeCampaignIfDone(campaignId: number): Promise<Campai
   const sent = Number(r.sent_count ?? 0);
   const failed = Number(r.failed_count ?? 0);
   const pending = Number(r.pending_count ?? 0);
-  await pool.execute(`UPDATE email_campaigns SET sent_count = ?, failed_count = ? WHERE id = ?`, [
+  await pool.query(`UPDATE email_campaigns SET sent_count = ?, failed_count = ? WHERE id = ?`, [
     sent,
     failed,
     campaignId,
@@ -192,7 +192,7 @@ export async function finalizeCampaignIfDone(campaignId: number): Promise<Campai
   const total = sent + failed;
   const newStatus: CampaignStatus =
     total === 0 ? 'failed' : sent / total >= 0.5 ? 'sent' : 'failed';
-  await pool.execute(
+  await pool.query(
     `UPDATE email_campaigns SET status = ?, finished_at = NOW() WHERE id = ? AND status = 'sending'`,
     [newStatus, campaignId],
   );

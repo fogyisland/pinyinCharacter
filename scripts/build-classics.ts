@@ -419,7 +419,7 @@ export async function buildClassicsRefresh(): Promise<number> {
     console.log(
       `[build-classics] ${file.slug}: ${chunks.length} chapters, ${Math.round(bytes / 1024)}KB JSON → ${jsonPath}`,
     );
-    await pool.execute(
+    await pool.query(
       `INSERT INTO classics (slug, title, category, author, era, source)
        VALUES (?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
@@ -459,7 +459,7 @@ export async function buildClassicsFromFiles(): Promise<number> {
   try {
     await conn.beginTransaction();
     for (const book of manifest.books) {
-      await conn.execute(
+      await conn.query(
         `INSERT INTO classics (slug, title, category, author, era, source)
          VALUES (?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE

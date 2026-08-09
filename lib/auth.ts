@@ -115,7 +115,7 @@ export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null> {
   const user = await getCurrentUser();
   if (!user) return null;
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
     [user.id],
   );

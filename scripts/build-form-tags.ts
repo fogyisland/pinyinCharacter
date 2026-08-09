@@ -89,7 +89,7 @@ export async function backfillForm(args: BackfillArgs = {}): Promise<BackfillRes
         continue;
       }
       if (!dryRun) {
-        await pool.execute(`UPDATE poems SET form = ? WHERE id = ?`, [merged.primary, row.id]);
+        await pool.query(`UPDATE poems SET form = ? WHERE id = ?`, [merged.primary, row.id]);
       }
       formSet++;
     }

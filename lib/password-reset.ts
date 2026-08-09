@@ -23,7 +23,7 @@ export interface ResetRow {
 export async function createResetRow(userId: number, rawToken: string): Promise<number> {
   const pool = getPool();
   const hash = hashResetToken(rawToken);
-  const [res] = await pool.execute<any>(
+  const [res] = await pool.query<any>(
     `INSERT INTO password_resets (user_id, token_hash, expires_at)
      VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))`,
     [userId, hash, RESET_TTL_MINUTES],
@@ -34,7 +34,7 @@ export async function createResetRow(userId: number, rawToken: string): Promise<
 export async function findValidResetRow(rawToken: string): Promise<ResetRow | null> {
   const pool = getPool();
   const hash = hashResetToken(rawToken);
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, user_id, token_hash, expires_at, used_at
      FROM password_resets
      WHERE token_hash = ? AND used_at IS NULL AND expires_at > NOW()
@@ -46,13 +46,13 @@ export async function findValidResetRow(rawToken: string): Promise<ResetRow | nu
 
 export async function markResetUsed(id: number): Promise<void> {
   const pool = getPool();
-  await pool.execute(`UPDATE password_resets SET used_at = NOW() WHERE id = ?`, [id]);
+  await pool.query(`UPDATE password_resets SET used_at = NOW() WHERE id = ?`, [id]);
 }
 
 export async function findUserByUsername(username: string): Promise<{ id: number } | null> {
   // v1: 表里没有 email 字段；SMTP mode 下需要把用户的真实 email 路径在 v2 加进 schema
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(`SELECT id FROM users WHERE username = ? LIMIT 1`, [
+  const [rows] = await pool.query<any[]>(`SELECT id FROM users WHERE username = ? LIMIT 1`, [
     username,
   ]);
   if (rows.length === 0) return null;

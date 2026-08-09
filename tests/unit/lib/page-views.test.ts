@@ -50,7 +50,7 @@ describe('recordPageView', () => {
       ip: '203.0.113.5',
       userAgent: 'Mozilla/5.0',
     });
-    const ins = executeLog.find((q) => q.sql.includes('INSERT INTO page_views'));
+    const ins = queryLog.find((q) => q.sql.includes('INSERT INTO page_views'));
     expect(ins).toBeDefined();
     expect(ins!.sql).toContain('(user_id, path, ip, user_agent)');
     expect(ins!.params).toEqual([7, '/char/汉', '203.0.113.5', 'Mozilla/5.0']);
@@ -64,7 +64,7 @@ describe('recordPageView', () => {
       ip: '1.2.3.4',
       userAgent: null,
     });
-    const ins = executeLog.find((q) => q.sql.includes('INSERT INTO page_views'));
+    const ins = queryLog.find((q) => q.sql.includes('INSERT INTO page_views'));
     expect(ins).toBeDefined();
     expect(ins!.params).toEqual([null, '/poems', '1.2.3.4', null]);
     // No defensive coercion: NULL is preserved as JS null
@@ -72,7 +72,7 @@ describe('recordPageView', () => {
     expect(ins!.params[3]).toBeNull();
   });
 
-  it('uses execute() (not query()) so the INSERT is binary-protocol safe', async () => {
+  it('uses query() (not execute()) so the INSERT is text-protocol and preserves supp-plane chars', async () => {
     queryResults['INSERT INTO page_views'] = [{ insertId: 102, affectedRows: 1 }, []];
     await recordPageView({
       userId: 1,
@@ -80,14 +80,14 @@ describe('recordPageView', () => {
       ip: null,
       userAgent: null,
     });
-    // Regression guard for the mysql2 supp-plane bug:
-    // pool.execute() uses the binary protocol and preserves 4-byte UTF-8;
-    // pool.query() uses string interpolation and corrupts supp-plane chars.
-    // The INSERT must go to executeLog and NOT to queryLog.
-    const insertsOnExecute = executeLog.filter((q) => q.sql.includes('INSERT INTO page_views'));
+    // Regression guard for the mysql2 supp-plane bug (see mysql2-supp-plane-bug memory):
+    // pool.execute() uses the binary protocol and CORRUPTS 4-byte UTF-8 (supp-plane) chars;
+    // pool.query() uses text protocol and preserves them. The INSERT must go to queryLog
+    // and NOT to executeLog (Wave 1 Task 2 migration).
     const insertsOnQuery = queryLog.filter((q) => q.sql.includes('INSERT INTO page_views'));
-    expect(insertsOnExecute).toHaveLength(1);
-    expect(insertsOnQuery).toHaveLength(0);
+    const insertsOnExecute = executeLog.filter((q) => q.sql.includes('INSERT INTO page_views'));
+    expect(insertsOnQuery).toHaveLength(1);
+    expect(insertsOnExecute).toHaveLength(0);
   });
 
   it('does NOT truncate path — the API route is responsible for that', async () => {
@@ -96,7 +96,7 @@ describe('recordPageView', () => {
     const longPath = '/' + 'a'.repeat(500);
     queryResults['INSERT INTO page_views'] = [{ insertId: 103, affectedRows: 1 }, []];
     await recordPageView({ userId: null, path: longPath, ip: null, userAgent: null });
-    const ins = executeLog.find((q) => q.sql.includes('INSERT INTO page_views'));
+    const ins = queryLog.find((q) => q.sql.includes('INSERT INTO page_views'));
     expect(ins!.params[1]).toBe(longPath);
     expect((ins!.params[1] as string).length).toBe(501);
   });

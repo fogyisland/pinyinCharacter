@@ -30,13 +30,13 @@ export async function POST(req: NextRequest) {
   const { username, email, password } = parsed.data;
 
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(`SELECT COUNT(*) AS n FROM users`);
+  const [rows] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM users`);
   const isFirst = Number(rows[0]?.n ?? 0) === 0;
 
   const hash = await hashPassword(password);
   let userId: number;
   try {
-    const [res] = await pool.execute<any>(
+    const [res] = await pool.query<any>(
       `INSERT INTO users (username, email, password_hash, is_admin) VALUES (?, ?, ?, ?)`,
       [username, email, hash, isFirst ? 1 : 0],
     );

@@ -55,7 +55,7 @@ export async function upsertProgress(
   opts: { completedAt?: Date | null } = {},
 ): Promise<void> {
   const completedAt = opts.completedAt === undefined ? null : opts.completedAt;
-  await getPool().execute(
+  await getPool().query(
     `INSERT INTO sutra_copy_progress
        (user_id, sutra_id, chunk_idx, written_chars, completed_at)
      VALUES (?, ?, ?, ?, ?)
@@ -79,7 +79,7 @@ export async function markComplete(
   if (rows.length === 0) return;
   const written = parseWrittenChars(rows[0].written_chars);
   if (written.length === 0 || !written.every(Boolean)) return;
-  await getPool().execute(
+  await getPool().query(
     `UPDATE sutra_copy_progress
        SET completed_at = NOW()
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?`,
@@ -92,7 +92,7 @@ export async function deleteProgress(
   sutraId: number,
   chunkIdx: number,
 ): Promise<void> {
-  await getPool().execute(
+  await getPool().query(
     `DELETE FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?`,
     [userId, sutraId, chunkIdx],

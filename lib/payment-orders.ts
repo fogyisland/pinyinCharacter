@@ -54,7 +54,7 @@ export async function createPaymentOrder(args: {
   currency: 'CNY' | 'USD';
   approvalUrl: string | null;
 }): Promise<number> {
-  const [res] = await getPool().execute<any>(
+  const [res] = await getPool().query<any>(
     `INSERT INTO payment_orders (user_id, plan_id, paypal_order_id, status, amount, currency, approval_url)
      VALUES (?, ?, ?, 'created', ?, ?, ?)`,
     [args.userId, args.planId, args.paypalOrderId, args.amount, args.currency, args.approvalUrl],
@@ -87,7 +87,7 @@ export async function updatePaymentOrderStatus(
   status: PaymentOrderStatus,
   paidAt: Date | null = null,
 ): Promise<void> {
-  await getPool().execute(
+  await getPool().query(
     `UPDATE payment_orders SET status = ?, paid_at = COALESCE(?, paid_at) WHERE paypal_order_id = ?`,
     [status, paidAt, paypalOrderId],
   );

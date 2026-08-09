@@ -373,25 +373,25 @@ async function writeBackToDb(
   content: CharContent,
 ): Promise<void> {
   if (content.dict?.meaning_zh) {
-    await pool.execute(`UPDATE chars SET meaning_zh = ? WHERE \`char\` = ?`, [
+    await pool.query(`UPDATE chars SET meaning_zh = ? WHERE \`char\` = ?`, [
       content.dict.meaning_zh,
       char,
     ]);
   }
   if (content.dict?.meaning_en) {
-    await pool.execute(`UPDATE chars SET meaning_en = ? WHERE \`char\` = ?`, [
+    await pool.query(`UPDATE chars SET meaning_en = ? WHERE \`char\` = ?`, [
       content.dict.meaning_en,
       char,
     ]);
   }
   if (content.dict?.pinyin_alt) {
-    await pool.execute(`UPDATE chars SET pinyin_alt = ? WHERE \`char\` = ?`, [
+    await pool.query(`UPDATE chars SET pinyin_alt = ? WHERE \`char\` = ?`, [
       JSON.stringify(content.dict.pinyin_alt),
       char,
     ]);
   }
   if (content.dict?.variants) {
-    await pool.execute(`UPDATE chars SET variants = ? WHERE \`char\` = ?`, [
+    await pool.query(`UPDATE chars SET variants = ? WHERE \`char\` = ?`, [
       JSON.stringify(content.dict.variants),
       char,
     ]);
@@ -399,14 +399,14 @@ async function writeBackToDb(
   // post-2026-06-17 slim-DB: story data lives in data/content/<char>.json,
   // not in char_etymology. Just ensure a row exists for this char.
   if (content.etymology?.story) {
-    await pool.execute(
+    await pool.query(
       `INSERT INTO char_etymology (\`char\`, era_kaishu_has) VALUES (?, 1)
        ON DUPLICATE KEY UPDATE era_kaishu_has = 1`,
       [char],
     );
   }
   if (content.rare?.meaning || content.rare?.story) {
-    await pool.execute(
+    await pool.query(
       `UPDATE rare_chars SET meaning = COALESCE(NULLIF(?, ''), meaning), story = COALESCE(NULLIF(?, ''), story), generated_by = ?, generated_at = NOW() WHERE \`char\` = ?`,
       [
         content.rare.meaning ?? '',

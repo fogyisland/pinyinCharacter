@@ -94,7 +94,7 @@ export async function batchGenerateStories(
               for (const item of parsed) {
                 const match = batch.find((b) => b.char === item.char);
                 if (!match) continue;
-                await conn.execute(
+                await conn.query(
                   `UPDATE rare_chars
                    SET meaning = ?, story = ?, generated_by = ?, generated_at = NOW(), needs_review = 1
                    WHERE \`char\` = ?`,

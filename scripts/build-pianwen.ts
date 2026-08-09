@@ -123,7 +123,7 @@ export async function buildPianwen(): Promise<PianwenResult> {
   const json = JSON.stringify(vol, null, 2);
   writeFileSync(filePath, json, 'utf8');
 
-  await pool.execute(
+  await pool.query(
     `INSERT INTO classics (slug, title, category, author, era, source)
      VALUES (?, ?, ?, ?, ?, ?)
      ON DUPLICATE KEY UPDATE

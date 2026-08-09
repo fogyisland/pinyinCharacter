@@ -6,7 +6,7 @@ export * from './worksheet-types';
 
 export async function saveWorksheet(args: SaveWorksheetArgs): Promise<number> {
   const pool = getPool();
-  const [result] = await pool.execute<any>(
+  const [result] = await pool.query<any>(
     `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family) VALUES (?, ?, ?, ?, ?, ?)`,
     [
       args.userId,
@@ -36,7 +36,7 @@ export async function saveWorksheet(args: SaveWorksheetArgs): Promise<number> {
 
 export async function listUserWorksheets(userId: number): Promise<Worksheet[]> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, user_id, title, content, cell_style, paper_size, font_family, created_at
      FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
     [userId],
@@ -59,7 +59,7 @@ export interface WorksheetSummary {
  */
 export async function listUserWorksheetsLightweight(userId: number): Promise<WorksheetSummary[]> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, title, JSON_LENGTH(content) AS char_count, created_at
      FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
     [userId],
@@ -74,7 +74,7 @@ export async function listUserWorksheetsLightweight(userId: number): Promise<Wor
 
 export async function getWorksheet(id: number): Promise<Worksheet | null> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, user_id, title, content, cell_style, paper_size, font_family, created_at
      FROM worksheets WHERE id = ? LIMIT 1`,
     [id],
@@ -84,7 +84,7 @@ export async function getWorksheet(id: number): Promise<Worksheet | null> {
 
 export async function deleteWorksheet(id: number, userId: number): Promise<boolean> {
   const pool = getPool();
-  const [result] = await pool.execute<any>(`DELETE FROM worksheets WHERE id = ? AND user_id = ?`, [
+  const [result] = await pool.query<any>(`DELETE FROM worksheets WHERE id = ? AND user_id = ?`, [
     id,
     userId,
   ]);
@@ -105,7 +105,7 @@ export async function renameWorksheet(
 ): Promise<RenameResult> {
   const pool = getPool();
   // Ownership check first (avoids leaking existence via duplicate detection).
-  const [own] = await pool.execute<any[]>(
+  const [own] = await pool.query<any[]>(
     `SELECT id, user_id FROM worksheets WHERE id = ? LIMIT 1`,
     [id],
   );
@@ -113,13 +113,13 @@ export async function renameWorksheet(
   if (own[0].user_id !== userId) return { ok: false, code: 'not_owner' };
 
   // Reject duplicate title for same user (keep selector results stable).
-  const [dup] = await pool.execute<any[]>(
+  const [dup] = await pool.query<any[]>(
     `SELECT id FROM worksheets WHERE user_id = ? AND title = ? AND id <> ? LIMIT 1`,
     [userId, newTitle, id],
   );
   if (dup.length > 0) return { ok: false, code: 'duplicate' };
 
-  await pool.execute<any>(`UPDATE worksheets SET title = ? WHERE id = ?`, [newTitle, id]);
+  await pool.query<any>(`UPDATE worksheets SET title = ? WHERE id = ?`, [newTitle, id]);
   return { ok: true, title: newTitle };
 }
 

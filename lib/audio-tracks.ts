@@ -79,7 +79,7 @@ export async function createTrack(input: CreateTrackInput): Promise<number> {
     if (input.isDefault) {
       await conn.query(`UPDATE audio_tracks SET is_default = 0`);
     }
-    const [res] = await conn.execute<any>(
+    const [res] = await conn.query<any>(
       `INSERT INTO audio_tracks (title, filename, size_bytes, is_default, uploaded_by)
        VALUES (?, ?, ?, ?, ?)`,
       [input.title, input.filename, input.sizeBytes, input.isDefault ? 1 : 0, input.uploadedBy],
@@ -141,7 +141,7 @@ export async function deleteTrack(id: number): Promise<{ filename: string } | nu
     [id],
   );
   if (!rows.length) return null;
-  await getPool().execute(`DELETE FROM audio_tracks WHERE id = ?`, [id]);
+  await getPool().query(`DELETE FROM audio_tracks WHERE id = ?`, [id]);
   return { filename: rows[0].filename };
 }
 

@@ -1310,7 +1310,7 @@ export async function buildClassicsGuwendao(): Promise<{ volumes: number; manife
       const { path: jsonPath, bytes } = writeVolumeJson(volJson);
       console.log(`[guwendao] ${vol.slug}: ${chunks.length} chapters, ${kb}KB JSON → ${jsonPath}`);
 
-      await pool.execute(
+      await pool.query(
         `INSERT INTO classics (slug, title, category, author, era, source)
          VALUES (?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE

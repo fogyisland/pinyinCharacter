@@ -47,7 +47,7 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
   }
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at,
             COALESCE(h.total, 0) AS historyCount,
             COALESCE(h.fav, 0) AS favoriteCount
@@ -63,7 +63,7 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
      LIMIT ? OFFSET ?`,
     [...params, limit, offset],
   );
-  const [countRows] = await pool.execute<any[]>(
+  const [countRows] = await pool.query<any[]>(
     `SELECT COUNT(*) AS n FROM users u ${whereSql}`,
     params,
   );
@@ -89,7 +89,7 @@ export interface UserDetail {
 
 export async function getUserDetail(id: number): Promise<UserDetail | null> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at,
             COALESCE(h.total, 0) AS historyCount,
             COALESCE(h.fav, 0) AS favoriteCount
@@ -114,7 +114,7 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
     historyCount: Number(r.historyCount),
     favoriteCount: Number(r.favoriteCount),
   };
-  const [hist] = await pool.execute<any[]>(
+  const [hist] = await pool.query<any[]>(
     `SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`,
     [id],
   );
@@ -167,12 +167,12 @@ export async function getAuditLog(opts: AuditLogOptions = {}): Promise<AuditLogR
   }
   const where = wheres.length ? `WHERE ${wheres.join(' AND ')}` : '';
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, user_id, event, metadata, ip, user_agent, created_at
      FROM audit_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset],
   );
-  const [countRows] = await pool.execute<any[]>(
+  const [countRows] = await pool.query<any[]>(
     `SELECT COUNT(*) AS n FROM audit_log ${where}`,
     params,
   );
@@ -189,7 +189,7 @@ export interface SystemStats {
 
 export async function getSystemStats(): Promise<SystemStats> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT
        (SELECT COUNT(*) FROM users) AS users,
        (SELECT COUNT(*) FROM users WHERE is_admin = 1) AS admins,
@@ -209,7 +209,7 @@ export async function getSystemStats(): Promise<SystemStats> {
 
 export async function countOtherAdmins(excludeUserId: number): Promise<number> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT COUNT(*) AS n FROM users WHERE is_admin = 1 AND id != ?`,
     [excludeUserId],
   );
@@ -218,13 +218,13 @@ export async function countOtherAdmins(excludeUserId: number): Promise<number> {
 
 export async function deleteUserCascade(id: number): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(`DELETE FROM users WHERE id = ?`, [id]);
+  const [res] = await pool.query<any>(`DELETE FROM users WHERE id = ?`, [id]);
   return res.affectedRows > 0;
 }
 
 export async function setUserAdmin(id: number, isAdmin: boolean): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(`UPDATE users SET is_admin = ? WHERE id = ?`, [
+  const [res] = await pool.query<any>(`UPDATE users SET is_admin = ? WHERE id = ?`, [
     isAdmin ? 1 : 0,
     id,
   ]);
@@ -233,7 +233,7 @@ export async function setUserAdmin(id: number, isAdmin: boolean): Promise<boolea
 
 export async function setUserPasswordHash(id: number, hash: string): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.execute<any>(`UPDATE users SET password_hash = ? WHERE id = ?`, [
+  const [res] = await pool.query<any>(`UPDATE users SET password_hash = ? WHERE id = ?`, [
     hash,
     id,
   ]);

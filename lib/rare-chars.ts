@@ -91,7 +91,7 @@ async function readRareContent(char: string): Promise<DbContentRow> {
   // 2. DB fallback (legacy cols may have been dropped)
   try {
     const pool = getPool();
-    const [rows] = await pool.execute<any[]>(
+    const [rows] = await pool.query<any[]>(
       `SELECT meaning, story, generated_by, generated_at, created_at
        FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
       [char],
@@ -177,7 +177,7 @@ export async function getChar(c: string): Promise<RareChar | null> {
   // means the corrupted value never reaches the driver.
   if (!c || (c.codePointAt(0) ?? 0) > 0xffff) return null;
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin, needs_review FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
     [c],
   );
@@ -195,7 +195,7 @@ export async function getDailyChar(dateStr: string): Promise<{
   date: string;
 } | null> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT \`char\`, pinyin FROM rare_chars ORDER BY \`char\` ASC LIMIT 5000`,
   );
   if (rows.length === 0) return null;

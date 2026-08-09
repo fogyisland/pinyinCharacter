@@ -79,7 +79,7 @@ async function appendById(
   chars: string[],
 ): Promise<AppendResult> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, user_id, title, content FROM worksheets WHERE id = ? LIMIT 1`,
     [worksheetId],
   );
@@ -95,7 +95,7 @@ async function appendByTitle(
   chars: string[],
 ): Promise<AppendResult> {
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, title, content FROM worksheets WHERE user_id = ? AND title = ? LIMIT 1`,
     [userId, title],
   );
@@ -103,7 +103,7 @@ async function appendByTitle(
     return applyAppend(rows[0].id, rows[0].title, rows[0].content, chars, false);
   }
   // Brand new worksheet: store all chars at once via JSON_ARRAY of N elements.
-  const [ins] = await pool.execute<any>(
+  const [ins] = await pool.query<any>(
     `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family)
      VALUES (?, ?, CAST(? AS JSON), ?, ?, ?)`,
     [
@@ -150,14 +150,14 @@ async function applyAppend(
     };
   }
   if (toAdd.length === 1) {
-    await pool.execute<any>(
+    await pool.query<any>(
       `UPDATE worksheets SET content = JSON_ARRAY_APPEND(content, '$', ?) WHERE id = ?`,
       [toAdd[0], worksheetId],
     );
   } else {
     // Bulk path: rebuild content as existing + toAdd, write as JSON.
     const merged = [...content, ...toAdd];
-    await pool.execute<any>(`UPDATE worksheets SET content = CAST(? AS JSON) WHERE id = ?`, [
+    await pool.query<any>(`UPDATE worksheets SET content = CAST(? AS JSON) WHERE id = ?`, [
       JSON.stringify(merged),
       worksheetId,
     ]);

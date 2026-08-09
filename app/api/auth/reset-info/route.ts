@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
   }
 
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
+  const [rows] = await pool.query<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
     row.user_id,
   ]);
   if (rows.length === 0) {

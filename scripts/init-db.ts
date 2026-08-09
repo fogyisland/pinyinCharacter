@@ -612,7 +612,7 @@ export async function initChars(): Promise<AutoPopulateResult> {
       const batch = rows.slice(off, off + BATCH);
       const placeholders = batch.map(() => '(?, ?, ?, ?)').join(', ');
       const params = batch.flat();
-      await pool.execute(
+      await pool.query(
         `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES ${placeholders}`,
         params,
       );
@@ -691,7 +691,7 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
     for (let off = 0; off < rows.length; off += BATCH) {
       const batch = rows.slice(off, off + BATCH);
       const placeholders = batch.map(() => '(?)').join(', ');
-      await pool.execute(
+      await pool.query(
         `INSERT IGNORE INTO rare_chars (\`char\`) VALUES ${placeholders}`,
         batch.flat(),
       );
@@ -750,7 +750,7 @@ export async function initCharEtymology(): Promise<AutoPopulateResult> {
     try {
       await conn.beginTransaction();
       for (const ch of missing) {
-        await conn.execute(
+        await conn.query(
           `INSERT IGNORE INTO char_etymology (\`char\`, era_jiaguwen_font, era_jiaguwen_has, era_jinwen_font, era_jinwen_has, era_xiaozhuan_font, era_xiaozhuan_has, era_lishu_font, era_lishu_has, era_kaishu_font, era_kaishu_has) VALUES (?, ?, 0, ?, 0, ?, 0, ?, 0, ?, 1)`,
           [
             ch,
@@ -803,7 +803,7 @@ export async function createAdminUser(input: CreateAdminInput): Promise<CreateAd
   }
   const bcrypt = await import('bcryptjs');
   const hash = await bcrypt.hash(input.password, 10);
-  const [r] = await pool.execute<any>(
+  const [r] = await pool.query<any>(
     `INSERT INTO users (username, email, password_hash, is_admin) VALUES (?, ?, ?, 1)`,
     [input.username, input.email ?? null, hash],
   );
@@ -832,7 +832,7 @@ export async function initActivate(): Promise<InitActivateStats> {
     totalMem: os.totalmem(),
     nodeVersion: process.version,
   });
-  const [r] = await pool.execute(
+  const [r] = await pool.query(
     `INSERT IGNORE INTO activate (id, short_name, installation_data) VALUES (1, ?, ?)`,
     [hostname, installationData],
   );

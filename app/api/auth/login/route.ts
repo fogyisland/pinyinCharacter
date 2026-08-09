@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
   }
 
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT id, username, password_hash, is_admin, disabled_at FROM users WHERE username = ? LIMIT 1`,
     [username],
   );

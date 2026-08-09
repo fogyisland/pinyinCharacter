@@ -145,7 +145,7 @@ async function insertManifestOnlyBooks(): Promise<{ inserted: string[]; skipped:
       skipped.push(slug);
       continue;
     }
-    await pool.execute(
+    await pool.query(
       `INSERT INTO classics (slug, title, category, author, era, source)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [

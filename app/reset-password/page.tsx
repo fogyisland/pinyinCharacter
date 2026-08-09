@@ -36,7 +36,7 @@ export default async function ResetPasswordPage({
   }
 
   const pool = getPool();
-  const [rows] = await pool.execute<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
+  const [rows] = await pool.query<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
     row.user_id,
   ]);
   if (rows.length === 0) return <Shell>{expired}</Shell>;

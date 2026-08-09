@@ -168,7 +168,7 @@ export async function buildPoemsExtra({
         inferFormFromParagraphs(p.paragraphs),
         resolveFormFromSource(null, null, col.category),
       );
-      await pool.execute(
+      await pool.query(
         `INSERT INTO poems (dynasty, category, title, author, form, content, pinyin, source) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           col.dynasty,

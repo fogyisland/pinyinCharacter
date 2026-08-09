@@ -94,7 +94,7 @@ export async function createPlaylist(input: CreatePlaylistInput): Promise<number
     if (input.isDefault) {
       await conn.query(`UPDATE playlists SET is_default = 0`);
     }
-    const [res] = await conn.execute<any>(
+    const [res] = await conn.query<any>(
       `INSERT INTO playlists (title, is_default) VALUES (?, ?)`,
       [input.title, input.isDefault ? 1 : 0],
     );
@@ -147,7 +147,7 @@ export async function updatePlaylist(id: number, input: UpdatePlaylistInput): Pr
 
 export async function deletePlaylist(id: number): Promise<void> {
   // FK ON DELETE CASCADE removes junction rows.
-  await getPool().execute(`DELETE FROM playlists WHERE id = ?`, [id]);
+  await getPool().query(`DELETE FROM playlists WHERE id = ?`, [id]);
 }
 
 /** Appends a track to a playlist at the next available position.
@@ -170,7 +170,7 @@ export async function addTrackToPlaylist(playlistId: number, trackId: number): P
       [playlistId],
     );
     const nextPos = Number(maxRow[0].max_pos) + 1;
-    await conn.execute(
+    await conn.query(
       `INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)`,
       [playlistId, trackId, nextPos],
     );
@@ -199,12 +199,12 @@ export async function removeTrackFromPlaylist(playlistId: number, trackId: numbe
       return;
     }
     const removedPos = Number(rows[0].position);
-    await conn.execute(`DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?`, [
+    await conn.query(`DELETE FROM playlist_tracks WHERE playlist_id = ? AND track_id = ?`, [
       playlistId,
       trackId,
     ]);
     // Re-sequence: shift positions down for rows above the gap.
-    await conn.execute(
+    await conn.query(
       `UPDATE playlist_tracks SET position = position - 1
        WHERE playlist_id = ? AND position > ?`,
       [playlistId, removedPos],
@@ -240,9 +240,9 @@ export async function reorderPlaylistTracks(playlistId: number, trackIds: number
       }
     }
     // Clear and re-insert with positions 1..N.
-    await conn.execute(`DELETE FROM playlist_tracks WHERE playlist_id = ?`, [playlistId]);
+    await conn.query(`DELETE FROM playlist_tracks WHERE playlist_id = ?`, [playlistId]);
     for (let i = 0; i < trackIds.length; i++) {
-      await conn.execute(
+      await conn.query(
         `INSERT INTO playlist_tracks (playlist_id, track_id, position) VALUES (?, ?, ?)`,
         [playlistId, trackIds[i], i + 1],
       );

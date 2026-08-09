@@ -41,7 +41,7 @@ export async function buildPoems(): Promise<number> {
         continue;
       }
       const poem = JSON.parse(readFileSync(filePath, 'utf8')) as PoemDetail;
-      await conn.execute(
+      await conn.query(
         `INSERT INTO poems (dynasty, title, author, form, category, content, pinyin, appreciation, source)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
          ON DUPLICATE KEY UPDATE
@@ -76,12 +76,12 @@ export async function buildPoems(): Promise<number> {
 }
 
 export async function printPoemStats(pool: ReturnType<typeof getPool>): Promise<void> {
-  const [rows] = await pool.execute<any[]>(
+  const [rows] = await pool.query<any[]>(
     `SELECT dynasty, COUNT(*) AS n FROM poems GROUP BY dynasty ORDER BY dynasty`,
   );
   console.log('[build-poems] dynasty distribution:');
   console.table(rows);
-  const [countRows] = await pool.execute<any[]>(`SELECT COUNT(*) AS total FROM poems`);
+  const [countRows] = await pool.query<any[]>(`SELECT COUNT(*) AS total FROM poems`);
   console.log(`[build-poems] total poems: ${(countRows as any[])[0].total}`);
 }
 

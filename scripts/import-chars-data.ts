@@ -22,7 +22,7 @@ async function main() {
     const unicodeCodepoint = `U+${char.codePointAt(0)!.toString(16).toUpperCase().padStart(4, '0')}`;
     const radical = (radicals as Record<string, string>)[char] ?? '';
 
-    await pool.execute(
+    await pool.query(
       `INSERT IGNORE INTO chars (\`char\`, level, radical, unicode_codepoint) VALUES (?, ?, ?, ?)`,
       [char, level, radical, unicodeCodepoint],
     );

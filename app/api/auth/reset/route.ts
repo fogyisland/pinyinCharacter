@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   }
 
   const pool = getPool();
-  const [urows] = await pool.execute<any[]>(`SELECT id, username FROM users WHERE id = ? LIMIT 1`, [
+  const [urows] = await pool.query<any[]>(`SELECT id, username FROM users WHERE id = ? LIMIT 1`, [
     row.user_id,
   ]);
   if (urows.length === 0) {
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
   const user = { id: Number(urows[0].id), username: urows[0].username as string };
 
   const newHash = await hashPassword(newPassword);
-  await pool.execute(`UPDATE users SET password_hash = ? WHERE id = ?`, [newHash, user.id]);
+  await pool.query(`UPDATE users SET password_hash = ? WHERE id = ?`, [newHash, user.id]);
   await markResetUsed(row.id);
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;

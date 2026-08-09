@@ -81,7 +81,7 @@ export async function isExpired(): Promise<boolean> {
  */
 export async function clearLock(): Promise<void> {
   const pool = getPool();
-  await pool.execute(
+  await pool.query(
     `UPDATE activate SET \`lock\` = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
     [ACTIVATION_ROW_ID],
   );
@@ -93,7 +93,7 @@ export async function clearLock(): Promise<void> {
  */
 export async function setLock(locked: boolean, actorUserId: number | null = null): Promise<void> {
   const pool = getPool();
-  await pool.execute(
+  await pool.query(
     `UPDATE activate SET \`lock\` = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
     [locked ? 1 : 0, ACTIVATION_ROW_ID],
   );

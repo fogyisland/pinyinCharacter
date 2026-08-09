@@ -60,10 +60,10 @@ export async function POST(req: NextRequest) {
       await writeFile(target, buf);
     } catch (e) {
       // Roll back the DB row on disk-write failure so we don't leak orphan rows.
-      await getPool().execute(`DELETE FROM audio_tracks WHERE id = ?`, [placeholderId]);
+      await getPool().query(`DELETE FROM audio_tracks WHERE id = ?`, [placeholderId]);
       throw e;
     }
-    await getPool().execute(`UPDATE audio_tracks SET filename = ? WHERE id = ?`, [
+    await getPool().query(`UPDATE audio_tracks SET filename = ? WHERE id = ?`, [
       filename,
       placeholderId,
     ]);

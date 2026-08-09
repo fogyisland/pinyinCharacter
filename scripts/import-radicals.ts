@@ -32,7 +32,7 @@ async function main() {
       unchanged++;
       continue;
     }
-    await pool.execute('UPDATE chars SET radical = ? WHERE `char` = ?', [newRad, row.char]);
+    await pool.query('UPDATE chars SET radical = ? WHERE `char` = ?', [newRad, row.char]);
     if (row.radical) {
       corrections.push({ char: row.char, from: row.radical, to: newRad });
     }

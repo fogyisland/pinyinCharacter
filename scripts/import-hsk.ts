@@ -29,7 +29,7 @@ export async function runImport(): Promise<void> {
       const lvl = Number(level);
       for (const e of entries) {
         // INSERT…ON DUPLICATE KEY UPDATE keyed on PK (char).
-        await conn.execute(
+        await conn.query(
           'INSERT INTO chars (`char`, hsk_level) VALUES (?, ?) ON DUPLICATE KEY UPDATE hsk_level = VALUES(hsk_level)',
           [e.char, lvl],
         );

@@ -13,7 +13,7 @@ export interface AuditEntry {
 
 export async function writeAudit(entry: AuditEntry): Promise<void> {
   const pool = getPool();
-  await pool.execute(
+  await pool.query(
     `INSERT INTO audit_log (user_id, event, metadata, ip, user_agent)
      VALUES (?, ?, ?, ?, ?)`,
     [

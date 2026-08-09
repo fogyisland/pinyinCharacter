@@ -125,7 +125,7 @@ export async function migrateMembership(): Promise<{
 
   let seeded = 0;
   for (const p of SEED_PLANS) {
-    const [res] = await pool.execute<any>(
+    const [res] = await pool.query<any>(
       `INSERT IGNORE INTO membership_plans
          (plan_key, display_name, duration_days, amount, currency, enabled, display_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -147,7 +147,7 @@ export async function migrateMembership(): Promise<{
   let featureRows = 0;
   for (const r of planRows as any[]) {
     for (const f of ALL_FEATURES) {
-      const [res] = await pool.execute<any>(
+      const [res] = await pool.query<any>(
         `INSERT IGNORE INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`,
         [r.id, f],
       );

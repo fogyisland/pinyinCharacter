@@ -18,7 +18,7 @@ export interface PageViewEntry {
  * For analytics queries (today PV/UV, top paths) see `lib/admin-pageviews.ts`.
  */
 export async function recordPageView(entry: PageViewEntry): Promise<void> {
-  await getPool().execute(
+  await getPool().query(
     `INSERT INTO page_views (user_id, path, ip, user_agent)
      VALUES (?, ?, ?, ?)`,
     [entry.userId, entry.path, entry.ip, entry.userAgent],

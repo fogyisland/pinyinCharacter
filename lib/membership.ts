@@ -138,7 +138,7 @@ export async function seedDefaultPlans(): Promise<number> {
   const pool = getPool();
   let inserted = 0;
   for (const p of SEED_PLANS) {
-    const [res] = await pool.execute<any>(
+    const [res] = await pool.query<any>(
       `INSERT IGNORE INTO membership_plans
          (plan_key, display_name, duration_days, amount, currency, enabled, display_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -157,7 +157,7 @@ export async function seedDefaultPlans(): Promise<number> {
   const [planRows] = await pool.query<any[]>(`SELECT id FROM membership_plans`);
   for (const r of planRows as any[]) {
     for (const f of ALL_FEATURES) {
-      await pool.execute(
+      await pool.query(
         `INSERT IGNORE INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`,
         [r.id, f],
       );
@@ -196,7 +196,7 @@ export async function grantMembership(args: GrantMembershipArgs): Promise<Grante
   const baseDate = activeRows.length > 0 ? new Date(activeRows[0].expires_at) : new Date();
   const expiresAt = new Date(baseDate.getTime() + plan.durationDays * 86400_000);
 
-  const [res] = await pool.execute<any>(
+  const [res] = await pool.query<any>(
     `INSERT INTO memberships
        (user_id, plan_key, source, amount, currency, source_payment_order_id, granted_by, note, expires_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -306,7 +306,7 @@ export async function revokeMembership(
   if (rows.length === 0) throw new Error('membership_not_found');
   if (rows[0].revoked_at) throw new Error('already_revoked');
 
-  await pool.execute(
+  await pool.query(
     `UPDATE memberships SET revoked_at = NOW(), revoked_by = ?, revoke_reason = ? WHERE id = ?`,
     [by, reason ?? null, id],
   );
@@ -396,16 +396,16 @@ export async function updatePlan(id: number, patch: PlanPatch): Promise<Membersh
   }
 
   if (sets.length > 0) {
-    await pool.execute(`UPDATE membership_plans SET ${sets.join(', ')} WHERE id = ?`, [
+    await pool.query(`UPDATE membership_plans SET ${sets.join(', ')} WHERE id = ?`, [
       ...params,
       id,
     ]);
   }
 
   if (patch.features !== undefined) {
-    await pool.execute(`DELETE FROM membership_plan_features WHERE plan_id = ?`, [id]);
+    await pool.query(`DELETE FROM membership_plan_features WHERE plan_id = ?`, [id]);
     for (const f of patch.features) {
-      await pool.execute(
+      await pool.query(
         `INSERT INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`,
         [id, f],
       );
