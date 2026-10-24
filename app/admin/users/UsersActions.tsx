@@ -78,11 +78,10 @@ export function UserActions({
     <div className="flex flex-wrap gap-1.5 items-center" onClick={(e) => e.stopPropagation()}>
       {isDisabled ? (
         <AdminButton
-          variant="secondary"
+          variant="success"
           size="sm"
           onClick={onEnable}
           disabled={busy}
-          className="border-success/40 text-success hover:bg-success/10"
         >
           启用
         </AdminButton>

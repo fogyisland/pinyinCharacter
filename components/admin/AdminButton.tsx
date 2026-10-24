@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import type { ComponentPropsWithoutRef, ReactNode } from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'success' | 'danger' | 'ghost';
 export type ButtonSize = 'sm' | 'md';
 
 const VARIANT_CLASS: Record<ButtonVariant, string> = {
   primary: 'bg-seal text-paper-soft border border-transparent hover:bg-seal/90',
   secondary: 'bg-paper-soft text-ink border border-ink/20 hover:bg-paper-deep',
+  success: 'bg-transparent text-success border border-success/40 hover:bg-success/10',
   danger: 'bg-transparent text-danger border border-danger/40 hover:bg-danger/10',
   ghost: 'bg-transparent text-ink-soft border border-transparent hover:bg-paper-deep hover:text-ink',
 };
@@ -43,7 +44,8 @@ export interface AdminButtonProps extends ComponentPropsWithoutRef<'button'> {
  * belongs to the public site's call-to-action) for everything, including
  * small in-table buttons that were supposed to be quiet. This gives the
  * admin one hierarchy: a filled seal button for the main action, an
- * outlined one for secondary actions, a red outlined one for destructive
+ * outlined one for secondary actions, a green outlined one for a
+ * restorative action ("enable"), a red outlined one for destructive
  * ones, and a borderless one for inline actions.
  */
 export function AdminButton({

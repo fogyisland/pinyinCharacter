@@ -105,10 +105,9 @@ export function UserDetailClient({
           <div className="flex gap-2 mt-4 flex-wrap">
             {isDisabled ? (
               <AdminButton
-                variant="secondary"
+                variant="success"
                 size="md"
                 onClick={() => setShowEnable(true)}
-                className="border-success/40 text-success hover:bg-success/10"
               >
                 启用账号
               </AdminButton>
