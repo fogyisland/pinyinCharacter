@@ -1,6 +1,11 @@
-import Link from 'next/link';
+import { BookOpen, ChartPie, Library } from 'lucide-react';
 import { getContentCoverage } from '@/lib/content';
-import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { DataTable } from '@/components/admin/DataTable';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Panel } from '@/components/admin/Panel';
+import { StatCard } from '@/components/admin/StatCard';
+import { AdminLink } from '@/components/admin/AdminButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,28 +14,44 @@ export default async function AdminCharsPage() {
   const pct = cov.totalChars > 0 ? Math.round((cov.withStory / cov.totalChars) * 1000) / 10 : 0;
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-4">字典 / 字源</h1>
-      <p className="text-sm text-ink-soft mb-4">
-        字典 + 字源 数据覆盖(数据源:<code className="text-xs">data/content/</code> JSON 文件)
-      </p>
+      <PageHeader
+        title="字典 / 字源"
+        description={
+          <>
+            字典 + 字源 数据覆盖(数据源:<code className="text-xs">data/content/</code> JSON 文件)
+          </>
+        }
+        actions={
+          <AdminLink href="/admin/chars/generate" variant="primary">
+            手动触发字源生成 →
+          </AdminLink>
+        }
+      />
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <Stat label="总字符 (chars 表)" value={cov.totalChars} />
-        <Stat label="已生成字源 (JSON)" value={cov.withStory} />
-        <Stat label="覆盖率" value={`${pct}%`} />
+        <StatCard label="总字符 (chars 表)" value={cov.totalChars} icon={Library} />
+        <StatCard label="已生成字源 (JSON)" value={cov.withStory} icon={BookOpen} />
+        <StatCard label="覆盖率" value={`${pct}%`} icon={ChartPie} />
       </div>
 
-      <div className="card-paper rounded-lg p-4 mb-6">
-        <h3 className="text-sm font-semibold mb-3 text-ink-soft">按级别</h3>
-        <ResponsiveTable
+      <Panel title="按级别" description="每个级别的字数与字源覆盖情况" flush>
+        <DataTable
           rows={cov.byLevel}
           rowKey={(r) => r.level}
-          emptyMessage="暂无数据"
+          framed={false}
+          caption="按级别的内容覆盖率"
+          empty={
+            <EmptyState
+              icon={ChartPie}
+              title="暂无级别数据"
+              description="字库里还没有分级字符,先导入字库再来看看覆盖率。"
+            />
+          }
           columns={[
             { key: 'level', header: '级别', mobileTitle: true },
-            { key: 'total', header: '总数' },
-            { key: 'with_story', header: '有字源' },
-            { key: 'pct', header: '覆盖率' },
+            { key: 'total', header: '总数', numeric: true },
+            { key: 'with_story', header: '有字源', numeric: true },
+            { key: 'pct', header: '覆盖率', numeric: true },
           ]}
         >
           {(r) => (
@@ -41,24 +62,8 @@ export default async function AdminCharsPage() {
               <span>{`${r.total > 0 ? Math.round((r.with_story / r.total) * 1000) / 10 : 0}%`}</span>
             </>
           )}
-        </ResponsiveTable>
-      </div>
-
-      <Link
-        href="/admin/chars/generate"
-        className="inline-block text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80"
-      >
-        手动触发字源生成 →
-      </Link>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number | string }) {
-  return (
-    <div className="card-paper rounded-lg p-4">
-      <div className="text-xs text-ink-soft">{label}</div>
-      <div className="text-2xl font-serif text-ink mt-1">{value}</div>
+        </DataTable>
+      </Panel>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import {
   TTS_FORMATS,
   TTS_MALE_VOICES,
 } from '@/components/admin/TtsConfigForm';
+import { PageHeader } from '@/components/admin/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,14 +38,16 @@ export default async function AdminTtsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">语音设置</h1>
-      <p className="text-sm text-ink-soft">
-        站点全局默认音色,字典页「读字」用男声、「读音」用女声。
-      </p>
+    <div>
+      <PageHeader
+        title="语音设置"
+        description="站点全局默认音色,字典页「读字」用男声、「读音」用女声。"
+      />
 
-      {error && <p className="text-sm text-seal">配置读取失败：{error}</p>}
+      {error && <p className="text-sm text-danger mb-4">配置读取失败：{error}</p>}
 
+      {/* TtsConfigForm brings its own panel — wrapping it again would stack
+          a card inside a card. */}
       <TtsConfigForm
         initialVoiceMale={voiceMale}
         initialVoiceFemale={voiceFemale}

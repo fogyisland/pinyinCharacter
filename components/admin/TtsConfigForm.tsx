@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { Check, AlertTriangle } from 'lucide-react';
 import { updateTtsConfigRequest } from '@/lib/api-admin';
+import { Panel } from '@/components/admin/Panel';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 export const TTS_MALE_VOICES = [
   { value: 'zh-CN-YunjianNeural', label: '云健 (男 · 沉稳)' },
@@ -69,30 +72,27 @@ export function TtsConfigForm({
   }
 
   return (
-    <>
+    <Panel title="默认音色" description="保存后立即对全站生效。" className="max-w-xl">
       {err && (
-        <p className="text-sm text-seal inline-flex items-center gap-1">
+        <p className="text-sm text-danger inline-flex items-center gap-1 mb-3">
           <AlertTriangle className="h-3.5 w-3.5" />
           {err}
         </p>
       )}
       {msg && (
-        <p className="text-sm text-green-700 inline-flex items-center gap-1">
+        <p className="text-sm text-success inline-flex items-center gap-1 mb-3">
           <Check className="h-3.5 w-3.5" />
           {msg}
         </p>
       )}
 
-      <form onSubmit={save} className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
-        <div>
-          <label className="text-sm font-medium" htmlFor="tts-voice-male">
-            男声默认 (读字)
-          </label>
+      <form onSubmit={save} className="space-y-3">
+        <FormField label="男声默认 (读字)" htmlFor="tts-voice-male">
           <select
             id="tts-voice-male"
             value={voiceMale}
             onChange={(e) => setVoiceMale(e.target.value)}
-            className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            className="adm-input"
           >
             {TTS_MALE_VOICES.map((v) => (
               <option key={v.value} value={v.value}>
@@ -100,16 +100,14 @@ export function TtsConfigForm({
               </option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="text-sm font-medium" htmlFor="tts-voice-female">
-            女声默认 (读音)
-          </label>
+        </FormField>
+
+        <FormField label="女声默认 (读音)" htmlFor="tts-voice-female">
           <select
             id="tts-voice-female"
             value={voiceFemale}
             onChange={(e) => setVoiceFemale(e.target.value)}
-            className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            className="adm-input"
           >
             {TTS_FEMALE_VOICES.map((v) => (
               <option key={v.value} value={v.value}>
@@ -117,16 +115,14 @@ export function TtsConfigForm({
               </option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="text-sm font-medium" htmlFor="tts-audio-format">
-            音频格式
-          </label>
+        </FormField>
+
+        <FormField label="音频格式" htmlFor="tts-audio-format">
           <select
             id="tts-audio-format"
             value={format}
             onChange={(e) => setFormat(e.target.value)}
-            className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+            className="adm-input"
           >
             {TTS_FORMATS.map((f) => (
               <option key={f.value} value={f.value}>
@@ -134,15 +130,12 @@ export function TtsConfigForm({
               </option>
             ))}
           </select>
-        </div>
-        <button
-          type="submit"
-          disabled={busy}
-          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
-        >
+        </FormField>
+
+        <AdminButton type="submit" variant="primary" disabled={busy}>
           {busy ? '保存中…' : '保存'}
-        </button>
+        </AdminButton>
       </form>
-    </>
+    </Panel>
   );
 }
