@@ -9,6 +9,7 @@ import {
 import { generateRareCharContent } from './ai-rare-chars';
 import { withAiLogging } from './ai-calls';
 import { readContentFromFs, writeContent } from './content';
+import { resolvePinyin } from './pinyin-index';
 import type { CharContent } from '@/scripts/schemas/content';
 
 export type FieldName =
@@ -65,7 +66,10 @@ async function loadDictCtx(pool: Pool, char: string): Promise<DictCtx | null> {
   const content = readContentFromFs(char);
   const meaningZh =
     content?.dict?.meaning_zh ?? content?.meaning_zh ?? (await loadDbMeaningZh(pool, char));
-  return { pinyin: rows[0].pinyin ?? '', meaningZh };
+  // `chars.pinyin` has been empty for every row since the 2026-06-17
+  // migration, so the AI prompts used to receive an empty reading. Resolve
+  // it the same way the public pages do.
+  return { pinyin: resolvePinyin(char, rows[0].pinyin), meaningZh };
 }
 
 async function loadDbMeaningZh(pool: Pool, char: string): Promise<string | null> {
