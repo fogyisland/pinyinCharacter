@@ -57,6 +57,8 @@ describe('middleware: static assets bypass the setup gate', () => {
     '/strokes/一.json',
     '/logo.png',
     '/logo.svg',
+    '/logo-sm.webp',
+    '/logo-sm.png',
     '/manifest.json',
     '/robots.txt',
     '/sitemap.xml',

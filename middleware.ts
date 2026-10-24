@@ -41,6 +41,8 @@ const STATIC_ASSET_PREFIXES = [
 const STATIC_ASSET_FILES = new Set([
   '/logo.png',
   '/logo.svg',
+  '/logo-sm.webp',
+  '/logo-sm.png',
   '/manifest.json',
   '/robots.txt',
 ]);
@@ -83,6 +85,6 @@ export const config = {
   // The asset paths are excluded here as well as in the function above so
   // the edge runtime is not even invoked for them.
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|font/|fonts/|strokes/|logo\\.png|logo\\.svg|manifest\\.json|robots\\.txt|sitemap).*)',
+    '/((?!_next/static|_next/image|favicon.ico|font/|fonts/|strokes/|logo\\.png|logo\\.svg|logo-sm\\.webp|logo-sm\\.png|manifest\\.json|robots\\.txt|sitemap).*)',
   ],
 };
