@@ -7,6 +7,7 @@ import { paperSizeLabel, fontFamilyLabel, cellStyleLabel } from '@/lib/worksheet
 import { DeleteWorksheetButton } from './DeleteWorksheetButton';
 import { RenameWorksheetButton } from './RenameWorksheetButton';
 import { BatchPrintButton } from './BatchPrintButton';
+import { formatLocalDateTime } from '@/lib/format';
 
 interface Props {
   worksheets: WorksheetListItem[];
@@ -76,7 +77,7 @@ export function WorksheetHistoryList({ worksheets, hasMulti }: Props) {
                 <div className="text-sm text-ink-faint">
                   {paperSizeLabel(w.paperSize)} · {fontFamilyLabel(w.fontFamily)} ·{' '}
                   {w.charCount} 字 · {cellStyleLabel(w.cellStyle)} ·{' '}
-                  {new Date(w.createdAt).toLocaleString()}
+                  {formatLocalDateTime(w.createdAt)}
                 </div>
               </div>
             </div>

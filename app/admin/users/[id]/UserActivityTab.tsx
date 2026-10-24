@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { LogRow } from '@/components/admin/LogRow';
 import { JsonPanel } from '@/components/admin/JsonPanel';
 import { getUserActivityRequest, type UserActivityItem } from '@/lib/api-admin';
+import { formatDateTime } from '@/lib/format';
 
 const PAGE_SIZE = 50;
 
@@ -120,7 +121,7 @@ export function UserActivityTab({ userId }: { userId: number }) {
               </p>
               <p>
                 <span className="text-ink-soft">时间:</span>{' '}
-                {new Date(selected.createdAt).toLocaleString('zh-CN')}
+                {formatDateTime(selected.createdAt)}
               </p>
               {selected.username && (
                 <p>

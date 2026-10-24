@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { SourceBadge } from './SourceBadge';
 import { formatLogMessage } from '@/lib/audit-format';
 import type { UnifiedLogEntry } from '@/lib/admin-logs';
+import { formatDateTime } from '@/lib/format';
 
 export function LogRow({
   entry,
@@ -21,7 +22,7 @@ export function LogRow({
       onClick={() => onClick?.(entry)}
     >
       <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">
-        {new Date(entry.createdAt).toLocaleString('zh-CN')}
+        {formatDateTime(entry.createdAt)}
       </td>
       <td className="px-3 py-2">
         <SourceBadge source={entry.source} />

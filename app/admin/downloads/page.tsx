@@ -10,6 +10,7 @@ import {
   getDownloadStatsRequest,
   type AdminDownloadRow,
 } from '@/lib/api-admin';
+import { formatDateTime } from '@/lib/format';
 
 const SOURCE_TYPES = [
   { value: '', label: '全部类型' },
@@ -263,7 +264,7 @@ export default function AdminDownloadsPage() {
               {statusBadge(r.status)}
               <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
               <span className="text-xs text-ink-soft">
-                {new Date(r.createdAt).toLocaleString('zh-CN')}
+                {formatDateTime(r.createdAt)}
               </span>
             </>
           );

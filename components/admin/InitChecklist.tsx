@@ -1,5 +1,6 @@
 import { Check, AlertTriangle, X } from 'lucide-react';
 import type { InitReport, StepStatus } from '@/lib/init-checklist';
+import { formatDateTime } from '@/lib/format';
 
 const STATUS_ICON: Record<StepStatus, React.ReactNode> = {
   ok: <Check className="h-4 w-4 text-green-700" aria-label="ok" />,
@@ -103,7 +104,7 @@ export function InitChecklist({ report }: { report: InitReport }) {
                 <div>
                   <dt className="text-ink-soft">创建时间</dt>
                   <dd className="font-mono text-xs">
-                    {new Date(context.firstAdmin.createdAt).toLocaleString('zh-CN')}
+                    {formatDateTime(context.firstAdmin.createdAt)}
                   </dd>
                 </div>
               </>

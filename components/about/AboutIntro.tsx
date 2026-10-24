@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { RefreshCw, Sparkles, Loader2 } from 'lucide-react';
+import { formatDateTime } from '@/lib/format';
 
 export function AboutIntro({
   initialText,
@@ -82,7 +83,7 @@ export function AboutIntro({
 
       {generatedAt && (
         <p className="text-xs text-ink-faint">
-          生成时间: {new Date(generatedAt).toLocaleString('zh-CN')}
+          生成时间: {formatDateTime(generatedAt)}
         </p>
       )}
 

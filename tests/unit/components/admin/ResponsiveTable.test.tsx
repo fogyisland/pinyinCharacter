@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 
@@ -63,5 +63,35 @@ describe('ResponsiveTable — Fragment children flatten correctly', () => {
     );
     const tds = container.querySelectorAll('table td');
     expect(tds.length).toBe(4);
+  });
+
+  it('builds the cells of a row only once, even though it renders twice', () => {
+    // The desktop table and the mobile cards both need the cells. The
+    // children function used to run once per layout, which doubled the work
+    // of building every cell of every row.
+    const children = vi.fn((r: Row) => (
+      <>
+        <span>{r.a}</span>
+        <span>{r.b}</span>
+      </>
+    ));
+
+    const { container } = render(
+      <ResponsiveTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        columns={[
+          { key: 'a', header: 'A' },
+          { key: 'b', header: 'B' },
+        ]}
+      >
+        {children}
+      </ResponsiveTable>,
+    );
+
+    expect(children).toHaveBeenCalledTimes(rows.length);
+    // Both layouts are still rendered from the same cells.
+    expect(container.querySelectorAll('table td').length).toBe(4);
+    expect(container.querySelectorAll('.md\\:hidden span').length).toBe(4);
   });
 });

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { AudioTrack } from '@/lib/audio-tracks';
 import { useToastStore } from '@/lib/toast-store';
+import { formatDateTime } from '@/lib/format';
 
 interface Props {
   initialTracks: AudioTrack[];
@@ -199,7 +200,7 @@ export function AudioTracksForm({ initialTracks }: Props) {
                   </div>
                   <div className="text-xs text-ink-faint mt-0.5">
                     {t.filename} · {fmtBytes(t.sizeBytes)} · 上传于{' '}
-                    {new Date(t.createdAt).toLocaleString('zh-CN')}
+                    {formatDateTime(t.createdAt)}
                   </div>
                   <audio
                     src={`/audio/${t.filename}`}

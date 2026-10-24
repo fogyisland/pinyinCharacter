@@ -3,6 +3,7 @@ import { parseRange, rangeToDays } from '@/lib/admin-range';
 import { getTopPaths } from '@/lib/admin-pageviews';
 import { LazyBarChartTop } from '@/components/admin/charts/LazyBarChartTop';
 import { CopyPathCell } from '@/components/admin/analytics/CopyPathCell';
+import { formatNumber } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -85,10 +86,10 @@ export default async function AnalyticsPage({
                       </div>
                     </td>
                     <td className="py-2 pr-4 text-right tabular-nums">
-                      {p.views.toLocaleString('zh-CN')}
+                      {formatNumber(p.views)}
                     </td>
                     <td className="py-2 pr-4 text-right tabular-nums">
-                      {p.unique.toLocaleString('zh-CN')}
+                      {formatNumber(p.unique)}
                     </td>
                   </tr>
                 ))

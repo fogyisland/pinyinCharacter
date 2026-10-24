@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { NotesForm } from './NotesForm';
+import { formatDateTimeMinute } from '@/lib/format';
 
 export interface ClientNote {
   id: number;
@@ -58,12 +59,5 @@ export function NotesWall({ initial, defaultName }: NotesWallProps) {
 }
 
 function fmtTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTimeMinute(iso);
 }

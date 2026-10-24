@@ -14,6 +14,7 @@ import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { UserActivityTab } from './UserActivityTab';
 import type { AdminUserRow } from '@/lib/api-admin';
 import type { HistoryRow } from '@/lib/api-history';
+import { formatDateTime } from '@/lib/format';
 
 type Tab = 'detail' | 'activity';
 
@@ -76,14 +77,14 @@ export function UserDetailClient({
     <div className="space-y-4">
       {isDisabled && (
         <div className="rounded-lg border border-seal/40 bg-seal/10 p-3 text-sm text-seal">
-          此账号已被禁用 (since {new Date(disabledAt!).toLocaleString('zh-CN')})。
+          此账号已被禁用 (since {formatDateTime(disabledAt!)})。
         </div>
       )}
 
       <div className="card-paper rounded-lg p-4">
         <h1 className="text-xl font-semibold">{user.username}</h1>
         <p className="text-sm text-ink-soft">
-          注册时间: {new Date(user.createdAt).toLocaleString('zh-CN')}
+          注册时间: {formatDateTime(user.createdAt)}
         </p>
         <p className="text-sm text-ink-soft">
           历史: {user.historyCount} / 收藏: {user.favoriteCount}
@@ -197,7 +198,7 @@ export function UserDetailClient({
               {recentHistory.map((r) => (
                 <tr key={r.id} className="border-t">
                   <td className="px-3 py-2 text-ink-soft">
-                    {new Date(r.created_at).toLocaleString('zh-CN')}
+                    {formatDateTime(r.created_at)}
                   </td>
                   <td className="px-3 py-2">{r.kind}</td>
                   <td className="px-3 py-2 truncate max-w-xs">{r.input}</td>

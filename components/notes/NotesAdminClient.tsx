@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { formatDateTimeShort } from '@/lib/format';
 
 export interface AdminNoteRow {
   id: number;
@@ -115,10 +116,5 @@ export function NotesAdminClient({ initial }: NotesAdminClientProps) {
 }
 
 function fmtTime(iso: string): string {
-  return new Date(iso).toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTimeShort(iso);
 }

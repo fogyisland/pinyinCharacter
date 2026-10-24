@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Mail, RefreshCw } from 'lucide-react';
+import { formatDateTime } from '@/lib/format';
 
 interface EmailHistoryItem {
   id: number;
@@ -83,7 +84,7 @@ export function EmailHistory() {
               {items.map((it) => (
                 <tr key={it.id} className="border-t">
                   <td className="px-2 py-1 text-xs text-ink-soft whitespace-nowrap">
-                    {new Date(it.sentAt).toLocaleString('zh-CN')}
+                    {formatDateTime(it.sentAt)}
                   </td>
                   <td className="px-2 py-1 text-xs font-mono">{it.to}</td>
                   <td className="px-2 py-1 text-xs">{it.subject}</td>

@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Search, ChevronLeft, ChevronRight, Filter } from 'lucide-react';
-import { LogRow } from '@/components/admin/LogRow';
 import { JsonPanel } from '@/components/admin/JsonPanel';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { SourceBadge } from '@/components/admin/SourceBadge';
 import { listAdminLogsRequest, type AdminLogRow } from '@/lib/api-admin';
 import { formatLogMessage } from '@/lib/audit-format';
+import { formatDateTime } from '@/lib/format';
 
 // AuditEvent union from lib/audit.ts, plus synthetic events for download/ai_call.
 const EVENT_TYPES = [
@@ -243,7 +243,7 @@ export default function AdminLogsPage() {
                 <SourceBadge source={r.source as any} />
               </div>
               <span className="text-xs text-ink-soft">
-                {new Date(r.createdAt).toLocaleString('zh-CN')}
+                {formatDateTime(r.createdAt)}
               </span>
               {r.username ? (
                 <a href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
@@ -322,7 +322,7 @@ export default function AdminLogsPage() {
               </p>
               <p>
                 <span className="text-ink-soft">时间:</span>{' '}
-                {new Date(selected.createdAt).toLocaleString('zh-CN')}
+                {formatDateTime(selected.createdAt)}
               </p>
               {selected.username && (
                 <p>

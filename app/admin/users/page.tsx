@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { listUsers } from '@/lib/admin';
 import { UserActions } from './UsersActions';
-import { ResponsiveTable, type ResponsiveColumn } from '@/components/admin/ResponsiveTable';
+import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -109,7 +110,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
               {u.username}
             </Link>
             <span className="text-ink-soft text-xs">
-              {new Date(u.createdAt).toLocaleString('zh-CN')}
+              {formatDateTime(u.createdAt)}
             </span>
             <span>{u.historyCount}</span>
             <span>{u.favoriteCount}</span>

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { listCampaigns } from '@/lib/email-campaigns';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,7 +64,7 @@ export default async function CampaignsPage() {
             <span className="text-right tabular-nums block">{c.total_recipients}</span>
             <span className="text-right tabular-nums block">{`${c.sent_count}/${c.failed_count}`}</span>
             <span className="text-ink-soft text-xs">
-              {new Date(c.created_at).toLocaleString('zh-CN')}
+              {formatDateTime(c.created_at)}
             </span>
           </>
         )}

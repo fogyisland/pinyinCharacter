@@ -9,6 +9,7 @@ import { PrintButton } from '@/components/common/PrintButton';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
+import { formatLocalDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,7 @@ export default async function WorksheetDetailPage({ params }: Props) {
         </div>
         <p className="worksheet-no-print mb-4 text-sm text-ink-faint">
           {paperSizeLabel(ws.paperSize)} · {fontFamilyLabel(ws.fontFamily)} · {ws.content.length} 字
-          · {cellStyleLabel(ws.cellStyle)} · {new Date(ws.createdAt).toLocaleString()}
+          · {cellStyleLabel(ws.cellStyle)} · {formatLocalDateTime(ws.createdAt)}
         </p>
         <div className="card-paper p-5">
           <WorksheetPreview

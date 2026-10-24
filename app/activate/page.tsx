@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Lock, Unlock, Loader2, ExternalLink } from 'lucide-react';
+import { formatDateTime } from '@/lib/format';
 
 interface Status {
   ready: boolean;
@@ -96,13 +97,13 @@ export default function ActivatePage() {
             {status.expireDate && (
               <div className="mt-1">
                 <span className="text-ink-faint">到期时间:</span>{' '}
-                {new Date(status.expireDate).toLocaleString('zh-CN')}
+                {formatDateTime(status.expireDate)}
               </div>
             )}
             {status.lastCloudSyncAt && (
               <div className="mt-1">
                 <span className="text-ink-faint">最近云端同步:</span>{' '}
-                {new Date(status.lastCloudSyncAt).toLocaleString('zh-CN')}
+                {formatDateTime(status.lastCloudSyncAt)}
               </div>
             )}
           </div>

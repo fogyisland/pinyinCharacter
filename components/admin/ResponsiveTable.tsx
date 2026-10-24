@@ -64,6 +64,11 @@ export function ResponsiveTable<T>({
     );
   }
   const titleIdx = columns.findIndex((c) => c.mobileTitle);
+  // The children function is called once per row and the resulting cells are
+  // shared by the desktop table and the mobile cards. It used to run twice per
+  // row (once per layout), which doubled the cost of building every cell —
+  // noticeable on the admin tables that format a date per cell.
+  const rowCells = rows.map((row) => flattenCells(children(row)));
   return (
     <>
       {/* Desktop table (md+) */}
@@ -82,8 +87,8 @@ export function ResponsiveTable<T>({
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => {
-              const cells = flattenCells(children(r));
+            {rows.map((r, rowIndex) => {
+              const cells = rowCells[rowIndex];
               return (
                 <tr key={rowKey(r)} className="border-t">
                   {cells.map((cell, i) => (
@@ -100,8 +105,8 @@ export function ResponsiveTable<T>({
 
       {/* Mobile cards (<md) */}
       <div className={`md:hidden space-y-2 ${className}`}>
-        {rows.map((r) => {
-          const cells = flattenCells(children(r));
+        {rows.map((r, rowIndex) => {
+          const cells = rowCells[rowIndex];
           return (
             <div key={rowKey(r)} className="card-paper rounded-lg p-3">
               {titleIdx >= 0 && (

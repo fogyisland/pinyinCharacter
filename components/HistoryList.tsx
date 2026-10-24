@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { HistoryRow } from '@/lib/api-history';
 import { setFavoriteRequest, deleteHistoryRequest } from '@/lib/api-history';
+import { formatDate } from '@/lib/format';
 
 function timeAgo(iso: string | Date): string {
   const t = new Date(iso).getTime();
@@ -10,7 +11,7 @@ function timeAgo(iso: string | Date): string {
   if (sec < 60) return `${sec}秒前`;
   if (sec < 3600) return `${Math.floor(sec / 60)}分钟前`;
   if (sec < 86400) return `${Math.floor(sec / 3600)}小时前`;
-  return new Date(iso).toLocaleDateString('zh-CN');
+  return formatDate(iso);
 }
 
 export function HistoryList({ rows: initial }: { rows: HistoryRow[] }) {

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, X, Check, AlertTriangle } from 'lucide-react';
 import { grantAdminMembershipRequest, listAdminPlansRequest } from '@/lib/api-admin';
+import { formatDate } from '@/lib/format';
 
 interface Plan {
   id: number;
@@ -65,7 +66,7 @@ export function ManualGrantDrawer() {
         setErr(r.error.message);
         return;
       }
-      setMsg(`已开通,到期 ${new Date(r.data.expiresAt).toLocaleDateString('zh-CN')}`);
+      setMsg(`已开通,到期 ${formatDate(r.data.expiresAt)}`);
       setUserId('');
       setNote('');
       router.refresh();

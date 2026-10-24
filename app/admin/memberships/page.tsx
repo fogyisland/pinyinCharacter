@@ -5,6 +5,7 @@ import { ManualGrantDrawer } from '@/components/admin/memberships/ManualGrantDra
 import { RevokeButton } from '@/components/admin/memberships/RevokeButton';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { Crown, Users, TrendingUp, DollarSign } from 'lucide-react';
+import { formatDate, formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,9 +117,9 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
               {r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}
             </span>
             <span className="text-xs text-ink-soft">
-              {new Date(r.grantedAt).toLocaleString('zh-CN')}
+              {formatDateTime(r.grantedAt)}
             </span>
-            <span className="text-xs">{new Date(r.expiresAt).toLocaleDateString('zh-CN')}</span>
+            <span className="text-xs">{formatDate(r.expiresAt)}</span>
             {r.revokedAt ? (
               <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
             ) : (

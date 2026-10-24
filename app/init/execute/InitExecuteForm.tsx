@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { Check, X, Loader2 } from 'lucide-react';
 import { InitHeader } from '@/components/init/InitHeader';
 import { StepGroup } from '@/components/init/StepGroup';
+import { formatNumber } from '@/lib/format';
 
 const STORAGE_KEY = 'piyin.init.admin.creds';
 
@@ -171,7 +172,7 @@ export function InitExecuteForm() {
   function summarizeAutoPopulate(r: { inserted: number; skipped: boolean; failed?: string }) {
     if (r.failed) return `失败: ${r.failed}`;
     if (r.skipped) return '已跳过 (表内已有数据)';
-    return `新增 ${r.inserted.toLocaleString('zh-CN')} 行`;
+    return `新增 ${formatNumber(r.inserted)} 行`;
   }
 
   async function runPhases() {

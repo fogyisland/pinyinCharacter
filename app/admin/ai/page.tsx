@@ -12,6 +12,7 @@ import {
   updateAiConfigRequest,
   type AdminAiCallRow,
 } from '@/lib/api-admin';
+import { formatDateTime } from '@/lib/format';
 
 const STATUS_COLORS: Record<string, string> = {
   ok: 'bg-green-100 text-green-800',
@@ -345,7 +346,7 @@ export default function AdminAiPage() {
                 <span className="text-xs text-ink-soft">{r.model ?? '—'}</span>
                 <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
                 <span className="text-xs text-ink-soft">
-                  {new Date(r.createdAt).toLocaleString('zh-CN')}
+                  {formatDateTime(r.createdAt)}
                 </span>
                 {r.error ? (
                   <>

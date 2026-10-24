@@ -10,6 +10,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts';
+import { formatNumber } from '@/lib/format';
 
 interface SeriesPoint {
   date: string;
@@ -30,7 +31,7 @@ export interface TrendChartProps {
 const DEFAULT_COLORS = ['#5A4530', '#7A9E7E', '#C09060', '#8B6F47'];
 
 function defaultFormat(v: number): string {
-  return v.toLocaleString('zh-CN');
+  return formatNumber(v);
 }
 
 interface MergedPoint extends SeriesPoint {

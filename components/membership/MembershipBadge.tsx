@@ -1,5 +1,6 @@
 import { Crown } from 'lucide-react';
 import Link from 'next/link';
+import { formatDate } from '@/lib/format';
 
 export function MembershipBadge({
   active,
@@ -24,7 +25,7 @@ export function MembershipBadge({
   return (
     <span className="text-xs px-3 py-1 rounded bg-success/15 text-success inline-flex items-center gap-1">
       <Crown className="h-3 w-3" />
-      {planKey} · 到期 {expiresAt ? new Date(expiresAt).toLocaleDateString('zh-CN') : ''}
+      {planKey} · 到期 {expiresAt ? formatDate(expiresAt) : ''}
     </span>
   );
 }

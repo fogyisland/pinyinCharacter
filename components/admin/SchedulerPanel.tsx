@@ -4,6 +4,7 @@ import { useState, useCallback, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Power, Play, Check, AlertTriangle, Clock, History } from 'lucide-react';
 import type { SchedulerConfig, SchedulerRunGroup } from '@/lib/scheduler-config';
+import { formatDateTime } from '@/lib/format';
 
 const INTERVAL_OPTIONS = [
   { value: 5, label: '5 分钟' },
@@ -100,7 +101,7 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
         {},
       );
       setTriggerResults(d.results);
-      setMsg({ kind: 'ok', text: `已跑完,记录于 ${new Date(d.ranAt).toLocaleString('zh-CN')}` });
+      setMsg({ kind: 'ok', text: `已跑完,记录于 ${formatDateTime(d.ranAt)}` });
       // Reload config to update lastRunAt / lastResult.
       try {
         const refreshed = await fetch('/api/admin/scheduler').then((r) => r.json());
@@ -119,7 +120,7 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
   }
 
   const taskKeys = Object.keys(TASK_LABELS) as Array<keyof typeof TASK_LABELS>;
-  const lastRunAt = cfg.lastRunAt ? new Date(cfg.lastRunAt).toLocaleString('zh-CN') : '—';
+  const lastRunAt = cfg.lastRunAt ? formatDateTime(cfg.lastRunAt) : '—';
   const lastResult = cfg.lastResult ?? '—';
   const hasError = cfg.lastResult && cfg.lastResult.includes('✗');
 
@@ -280,7 +281,7 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
                 <li key={run.runId} className="border border-paper-warm rounded p-2">
                   <div className="flex items-center justify-between text-xs text-ink-soft">
                     <span className="font-mono">{run.runId}</span>
-                    <span>{new Date(run.startedAt).toLocaleString('zh-CN')}</span>
+                    <span>{formatDateTime(run.startedAt)}</span>
                   </div>
                   <ul className="mt-1 space-y-0.5">
                     {run.tasks.map((t) => (

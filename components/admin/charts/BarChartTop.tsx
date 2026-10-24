@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
+import { formatNumber } from '@/lib/format';
 
 export interface BarChartTopProps {
   data: Array<{ label: string; value: number }>;
@@ -12,7 +13,7 @@ export interface BarChartTopProps {
 const DEFAULT_COLORS = ['#5A4530', '#7A9E7E', '#C09060', '#8B6F47', '#9c8f7a'];
 
 function defaultFormat(v: number): string {
-  return v.toLocaleString('zh-CN');
+  return formatNumber(v);
 }
 
 export function BarChartTop({ data, formatValue = defaultFormat, href }: BarChartTopProps) {

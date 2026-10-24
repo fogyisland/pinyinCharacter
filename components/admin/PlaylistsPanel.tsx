@@ -4,6 +4,7 @@ import { useState } from 'react';
 import type { AudioTrack } from '@/lib/audio-tracks';
 import type { Playlist, PlaylistWithTracks } from '@/lib/playlists';
 import { useToastStore } from '@/lib/toast-store';
+import { formatDateTime } from '@/lib/format';
 
 interface Props {
   initialPlaylists: Playlist[];
@@ -279,7 +280,7 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
                     <div className="text-xs text-ink-faint">
                       {expandedId === p.id
                         ? `${playlistTracks[p.id]?.length ?? '…'} 首`
-                        : `创建于 ${new Date(p.createdAt).toLocaleString('zh-CN')}`}
+                        : `创建于 ${formatDateTime(p.createdAt)}`}
                     </div>
                   </div>
                   <div className="flex flex-col sm:flex-row gap-1 shrink-0">

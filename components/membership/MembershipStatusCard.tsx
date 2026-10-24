@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Crown, ArrowRight } from 'lucide-react';
 import { getMyActiveMembership } from '@/lib/membership';
+import { formatDate } from '@/lib/format';
 
 export async function MembershipStatusCard({ userId }: { userId: number }) {
   const m = await getMyActiveMembership(userId);
@@ -17,7 +18,7 @@ export async function MembershipStatusCard({ userId }: { userId: number }) {
           </p>
           <p>
             到期时间:{' '}
-            <span className="font-medium">{new Date(m.expiresAt).toLocaleDateString('zh-CN')}</span>{' '}
+            <span className="font-medium">{formatDate(m.expiresAt)}</span>{' '}
             (还剩 {m.expiresInDays} 天)
           </p>
         </div>

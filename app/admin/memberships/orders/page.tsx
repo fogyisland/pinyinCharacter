@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { listPaymentOrders, type PaymentOrderStatus } from '@/lib/payment-orders';
+import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -116,7 +117,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
             {list.items.map((r) => (
               <tr key={r.id} className="border-t">
                 <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">
-                  {new Date(r.createdAt).toLocaleString('zh-CN')}
+                  {formatDateTime(r.createdAt)}
                 </td>
                 <td className="px-3 py-2">
                   {r.username ? (
@@ -147,7 +148,7 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
                   {r.paypalOrderId}
                 </td>
                 <td className="px-3 py-2 text-xs text-ink-soft">
-                  {r.paidAt ? new Date(r.paidAt).toLocaleString('zh-CN') : '—'}
+                  {r.paidAt ? formatDateTime(r.paidAt) : '—'}
                 </td>
               </tr>
             ))}

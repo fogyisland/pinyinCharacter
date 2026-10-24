@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ERAS, type Era } from '@/lib/etymology-types';
 import { ERA_FONTS, DEFAULT_ERA_FONTS } from '@/lib/era-fonts-data';
+import { formatTime } from '@/lib/format';
 
 const ERA_LABEL: Record<Era, string> = {
   jiaguwen: '甲骨文',
@@ -86,7 +87,7 @@ export function FontConfigForm({ initial }: Props) {
         </button>
         {savedAt && (
           <span className="text-xs text-ink-faint">
-            已于 {savedAt.toLocaleTimeString('zh-CN')} 保存
+            已于 {formatTime(savedAt)} 保存
           </span>
         )}
         {error && <span className="text-xs text-red-600">{error}</span>}
