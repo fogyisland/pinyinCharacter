@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { Panel } from '@/components/admin/Panel';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 interface Props {
   id: number;
@@ -36,30 +38,33 @@ export function CampaignActions({ id, status }: Props) {
   const canSend = status === 'draft' || status === 'failed';
 
   return (
-    <div className="border border-paper-warm rounded-md p-4 space-y-3">
-      <h2 className="text-sm font-medium text-ink-soft">操作</h2>
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => call('preview')}
-          disabled={!canPreview || busy !== null}
-          className="px-3 py-1.5 rounded-md border border-ink text-ink text-sm hover:bg-paper-warm disabled:opacity-50"
-        >
-          {busy === 'preview' ? '发送中…' : '预览 (发给自己)'}
-        </button>
-        <button
-          onClick={() => call('send')}
-          disabled={!canSend || busy !== null}
-          className="px-3 py-1.5 rounded-md bg-ink text-paper text-sm hover:opacity-90 disabled:opacity-50"
-        >
-          {busy === 'send' ? '入队中…' : '发送 (异步)'}
-        </button>
+    <Panel title="操作" description="预览会发到你自己的邮箱,发送走异步队列。">
+      <div className="space-y-3">
+        <div className="flex flex-wrap gap-2">
+          <AdminButton
+            type="button"
+            variant="secondary"
+            onClick={() => call('preview')}
+            disabled={!canPreview || busy !== null}
+          >
+            {busy === 'preview' ? '发送中…' : '预览 (发给自己)'}
+          </AdminButton>
+          <AdminButton
+            type="button"
+            variant="primary"
+            onClick={() => call('send')}
+            disabled={!canSend || busy !== null}
+          >
+            {busy === 'send' ? '入队中…' : '发送 (异步)'}
+          </AdminButton>
+        </div>
+        {msg && <p className="text-sm text-ink-soft">{msg}</p>}
+        {status === 'sending' && (
+          <p className="text-xs text-ink-faint">
+            提示:发送中状态由 scheduler 异步处理,每分钟处理 50 封。可刷新查看进度。
+          </p>
+        )}
       </div>
-      {msg && <p className="text-sm text-ink-soft">{msg}</p>}
-      {status === 'sending' && (
-        <p className="text-xs text-ink-faint">
-          提示:发送中状态由 scheduler 异步处理,每分钟处理 50 封。可刷新查看进度。
-        </p>
-      )}
-    </div>
+    </Panel>
   );
 }

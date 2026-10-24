@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
+import { Panel } from '@/components/admin/Panel';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 export interface SiteUrlFormInitial {
   url: string;
@@ -61,58 +64,65 @@ export function SiteUrlForm({ initial }: { initial: SiteUrlFormInitial }) {
   }
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <form onSubmit={save} className="card-paper rounded-lg p-4 space-y-3">
-        {err && <p className="text-sm text-seal">{err}</p>}
-        {ok && (
-          <p className="text-sm text-green-700 inline-flex items-center gap-1">
-            <Check className="h-3.5 w-3.5" />
-            {ok}
-          </p>
-        )}
+    <div className="space-y-4 max-w-2xl">
+      <Panel
+        title="站点 URL"
+        description="写入 app_config.site.url。用于 sitemap、robots、canonical、JSON-LD。"
+      >
+        <form onSubmit={save} className="space-y-3">
+          {err && (
+            <p className="text-sm text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">
+              {err}
+            </p>
+          )}
+          {ok && (
+            <p className="text-sm text-success inline-flex items-center gap-1">
+              <Check className="h-3.5 w-3.5" />
+              {ok}
+            </p>
+          )}
 
-        <div>
-          <label className="text-sm font-medium">站点 URL</label>
-          <input
-            type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            placeholder="https://pinyin.example.com"
-            className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-          />
-          <p className="text-xs text-ink-soft mt-1">
-            写入 <code>app_config.site.url</code>。用于 sitemap、robots、canonical、JSON-LD。
-            当前来源: <code>{initial.source === 'app_config' ? '数据库' : '环境变量'}</code>。
-          </p>
+          <FormField
+            label="站点 URL"
+            htmlFor="site-url"
+            hint={
+              <>
+                当前来源:{' '}
+                <code>{initial.source === 'app_config' ? '数据库' : '环境变量'}</code>。
+              </>
+            }
+          >
+            <input
+              id="site-url"
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="https://pinyin.example.com"
+              className="adm-input"
+            />
+          </FormField>
+
+          <AdminButton type="submit" variant="primary" disabled={busy}>
+            {busy ? '保存中…' : '保存'}
+          </AdminButton>
+        </form>
+      </Panel>
+
+      <Panel
+        title="测试访问"
+        description="仅做客户端格式校验(必须是 http(s) 开头且不超过 256 字符)。完整可达性请用浏览器实际访问。"
+      >
+        <div className="space-y-3">
+          <AdminButton type="button" variant="secondary" onClick={testAccess}>
+            测试访问
+          </AdminButton>
+          {testResult && (
+            <p className={`text-sm ${testResult.ok ? 'text-success' : 'text-danger'}`}>
+              {testResult.message}
+            </p>
+          )}
         </div>
-
-        <button
-          type="submit"
-          disabled={busy}
-          className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
-        >
-          {busy ? '保存中…' : '保存'}
-        </button>
-      </form>
-
-      <div className="card-paper rounded-lg p-4 space-y-3">
-        <h2 className="text-sm font-semibold text-ink">测试访问</h2>
-        <p className="text-xs text-ink-soft">
-          仅做客户端格式校验(必须是 http(s) 开头且不超过 256 字符)。完整可达性请用浏览器实际访问。
-        </p>
-        <button
-          type="button"
-          onClick={testAccess}
-          className="text-sm px-3 py-1.5 border border-ink/20 rounded hover:bg-paper-deep"
-        >
-          测试访问
-        </button>
-        {testResult && (
-          <p className={`text-sm ${testResult.ok ? 'text-green-700' : 'text-seal'}`}>
-            {testResult.message}
-          </p>
-        )}
-      </div>
+      </Panel>
     </div>
   );
 }

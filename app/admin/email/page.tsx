@@ -1,6 +1,7 @@
 import { getAllConfig } from '@/lib/config';
 import { SmtpConfigForm } from '@/components/admin/SmtpConfigForm';
 import { EmailHistory } from '@/components/admin/EmailHistory';
+import { PageHeader } from '@/components/admin/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,14 +19,15 @@ export default async function AdminEmailPage() {
     fromName: all['smtp.from_name'] ?? '',
   };
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">邮件</h1>
-      <p className="text-sm text-ink-soft max-w-2xl">
-        邮件发送配置。写入 <code>app_config</code> 表,优先级高于 <code>SMTP_*</code> 环境变量。 在{' '}
-        <code>smtp.transport=console</code> 时只把邮件内容打印到服务器日志(开发用)。
-      </p>
-      <SmtpConfigForm initial={initial} />
-      <EmailHistory />
+    <div>
+      <PageHeader
+        title="邮件"
+        description="邮件发送配置与发送历史。配置写入 app_config 表,优先级高于 SMTP_* 环境变量。"
+      />
+      <div className="space-y-4">
+        <SmtpConfigForm initial={initial} />
+        <EmailHistory />
+      </div>
     </div>
   );
 }

@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { ERAS, type Era } from '@/lib/etymology-types';
 import { ERA_FONTS, DEFAULT_ERA_FONTS } from '@/lib/era-fonts-data';
 import { formatTime } from '@/lib/format';
+import { Panel } from '@/components/admin/Panel';
+import { FormField } from '@/components/admin/FormField';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 const ERA_LABEL: Record<Era, string> = {
   jiaguwen: '甲骨文',
@@ -53,45 +57,42 @@ export function FontConfigForm({ initial }: Props) {
   }
 
   return (
-    <div className="space-y-6">
-      {ERAS.map((era) => (
-        <div key={era}>
-          <label className="block text-sm font-medium text-ink mb-1">{ERA_LABEL[era]}</label>
-          <select
-            value={fonts[era]}
-            onChange={(e) => setFonts((prev) => ({ ...prev, [era]: e.target.value }))}
-            className="w-full max-w-md border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-            data-testid={`era-${era}-select`}
-            aria-label={ERA_LABEL[era]}
-          >
-            {ERA_FONTS[era].map((opt) => (
-              <option key={opt.id} value={opt.id}>
-                {opt.label} — {opt.desc}
-              </option>
-            ))}
-          </select>
-          {fonts[era] !== DEFAULT_ERA_FONTS[era] && (
-            <p className="mt-1 text-xs text-seal">非默认</p>
-          )}
-        </div>
-      ))}
+    <Panel title="时代字体" description="每个时代一款字体,保存后立即生效。">
+      <div className="space-y-4 max-w-xl">
+        {ERAS.map((era) => (
+          <div key={era}>
+            <FormField label={ERA_LABEL[era]} htmlFor={`era-${era}-select`}>
+              <select
+                id={`era-${era}-select`}
+                value={fonts[era]}
+                onChange={(e) => setFonts((prev) => ({ ...prev, [era]: e.target.value }))}
+                className="adm-input"
+                data-testid={`era-${era}-select`}
+                aria-label={ERA_LABEL[era]}
+              >
+                {ERA_FONTS[era].map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label} — {opt.desc}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+            {fonts[era] !== DEFAULT_ERA_FONTS[era] && (
+              <p className="mt-1">
+                <StatusBadge tone="warning">非默认</StatusBadge>
+              </p>
+            )}
+          </div>
+        ))}
 
-      <div className="flex items-center gap-3 pt-2 border-t border-paper-warm">
-        <button
-          type="button"
-          onClick={onSave}
-          disabled={saving}
-          className="rounded bg-seal px-4 py-1.5 text-white text-sm hover:bg-seal/80 disabled:opacity-50"
-        >
-          {saving ? '保存中…' : '保存'}
-        </button>
-        {savedAt && (
-          <span className="text-xs text-ink-faint">
-            已于 {formatTime(savedAt)} 保存
-          </span>
-        )}
-        {error && <span className="text-xs text-red-600">{error}</span>}
+        <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-ink/10">
+          <AdminButton type="button" variant="primary" onClick={onSave} disabled={saving}>
+            {saving ? '保存中…' : '保存'}
+          </AdminButton>
+          {savedAt && <span className="text-xs text-ink-faint">已于 {formatTime(savedAt)} 保存</span>}
+          {error && <span className="text-xs text-danger">{error}</span>}
+        </div>
       </div>
-    </div>
+    </Panel>
   );
 }

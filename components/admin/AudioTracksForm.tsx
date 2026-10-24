@@ -4,6 +4,12 @@ import { useState } from 'react';
 import type { AudioTrack } from '@/lib/audio-tracks';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateTime } from '@/lib/format';
+import { Panel } from '@/components/admin/Panel';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { AudioLines } from 'lucide-react';
 
 interface Props {
   initialTracks: AudioTrack[];
@@ -130,73 +136,70 @@ export function AudioTracksForm({ initialTracks }: Props) {
   }
 
   return (
-    <div className="space-y-8">
-      <form
-        onSubmit={onUpload}
-        className="border border-ink/20 rounded-md p-4 space-y-3 bg-paper-warm/40"
-      >
-        <h2 className="text-sm font-semibold text-ink">上传新音频</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="block">
-            <span className="text-xs text-ink-soft">标题</span>
+    <div className="space-y-4">
+      <Panel title="上传新音频" description="MP3 文件,单个不超过 50 MB">
+        <form onSubmit={onUpload} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <FormField label="标题" htmlFor="audio-title">
+              <input
+                id="audio-title"
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="如:大悲咒"
+                className="adm-input"
+              />
+            </FormField>
+            <FormField label="MP3 文件 (≤ 50 MB)" htmlFor="audio-file-input">
+              <input
+                id="audio-file-input"
+                type="file"
+                accept="audio/mpeg,.mp3"
+                onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+                className="block w-full text-sm"
+              />
+            </FormField>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-ink">
             <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="如:大悲咒"
-              className="mt-1 block w-full rounded border border-ink/30 bg-paper px-2 py-1 text-sm"
+              type="checkbox"
+              checked={isDefault}
+              onChange={(e) => setIsDefault(e.target.checked)}
             />
+            上传后立即设为默认
           </label>
-          <label className="block">
-            <span className="text-xs text-ink-soft">MP3 文件 (≤ 50 MB)</span>
-            <input
-              id="audio-file-input"
-              type="file"
-              accept="audio/mpeg,.mp3"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-              className="mt-1 block w-full text-sm"
-            />
-          </label>
-        </div>
-        <label className="flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={isDefault}
-            onChange={(e) => setIsDefault(e.target.checked)}
-          />
-          上传后立即设为默认
-        </label>
-        {error && <p className="text-xs text-seal">{error}</p>}
-        <button
-          type="submit"
-          disabled={uploading}
-          className="text-sm px-4 py-1.5 bg-seal text-paper rounded hover:bg-seal/90 disabled:opacity-50"
-        >
-          {uploading ? '上传中…' : '上传'}
-        </button>
-      </form>
+          {error && (
+            <p className="text-xs text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">
+              {error}
+            </p>
+          )}
+          <AdminButton type="submit" variant="primary" disabled={uploading}>
+            {uploading ? '上传中…' : '上传'}
+          </AdminButton>
+        </form>
+      </Panel>
 
-      <div>
-        <h2 className="text-sm font-semibold text-ink mb-3">已上传 ({tracks.length})</h2>
+      <Panel title={`已上传 (${tracks.length})`}>
         {tracks.length === 0 ? (
-          <p className="text-sm text-ink-soft">还没有任何音频。</p>
+          <EmptyState
+            icon={AudioLines}
+            title="还没有任何音频"
+            description="上传一段佛经音频,之后就能在播放列表里排顺序。"
+            className="py-8"
+          />
         ) : (
           <ul className="space-y-2">
             {tracks.map((t) => (
               <li
                 key={t.id}
                 className={`flex items-center gap-3 p-3 rounded border ${
-                  t.isDefault ? 'border-seal bg-seal/5' : 'border-ink/20'
+                  t.isDefault ? 'border-seal/40 bg-seal/5' : 'border-ink/15'
                 }`}
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-ink truncate">{t.title}</span>
-                    {t.isDefault && (
-                      <span className="text-[10px] px-1.5 py-0.5 bg-seal text-paper rounded">
-                        默认
-                      </span>
-                    )}
+                    {t.isDefault && <StatusBadge tone="primary">默认</StatusBadge>}
                   </div>
                   <div className="text-xs text-ink-faint mt-0.5">
                     {t.filename} · {fmtBytes(t.sizeBytes)} · 上传于{' '}
@@ -211,37 +214,35 @@ export function AudioTracksForm({ initialTracks }: Props) {
                 </div>
                 <div className="flex flex-col sm:flex-row gap-1 shrink-0">
                   {!t.isDefault && (
-                    <button
-                      type="button"
+                    <AdminButton
+                      size="sm"
                       disabled={busyId === t.id}
                       onClick={() => onSetDefault(t.id)}
-                      className="text-xs px-2 py-1 border border-ink/30 rounded hover:bg-paper-warm disabled:opacity-50"
                     >
                       设为默认
-                    </button>
+                    </AdminButton>
                   )}
-                  <button
-                    type="button"
+                  <AdminButton
+                    size="sm"
                     disabled={busyId === t.id}
                     onClick={() => onRename(t.id, t.title)}
-                    className="text-xs px-2 py-1 border border-ink/30 rounded hover:bg-paper-warm disabled:opacity-50"
                   >
                     重命名
-                  </button>
-                  <button
-                    type="button"
+                  </AdminButton>
+                  <AdminButton
+                    size="sm"
+                    variant="danger"
                     disabled={busyId === t.id}
                     onClick={() => onDelete(t.id, t)}
-                    className="text-xs px-2 py-1 border border-seal/50 text-seal rounded hover:bg-seal/10 disabled:opacity-50"
                   >
                     删除
-                  </button>
+                  </AdminButton>
                 </div>
               </li>
             ))}
           </ul>
         )}
-      </div>
+      </Panel>
     </div>
   );
 }

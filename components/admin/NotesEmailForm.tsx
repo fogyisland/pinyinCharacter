@@ -4,6 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
 import { parseNotesAdminEmails, isValidEmail } from '@/lib/notes-email-config';
+import { Panel } from '@/components/admin/Panel';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 export interface NotesEmailFormInitial {
   adminEmails: string;
@@ -47,44 +50,45 @@ export function NotesEmailForm({ initial }: { initial: NotesEmailFormInitial }) 
   }
 
   return (
-    <form onSubmit={save} className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
-      {err && <p className="text-sm text-seal">{err}</p>}
-      {ok && (
-        <p className="text-sm text-green-700 inline-flex items-center gap-1">
-          <Check className="h-3.5 w-3.5" />
-          {ok}
-        </p>
-      )}
-
-      <div>
-        <label className="text-sm font-medium">通知邮箱</label>
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder="admin@example.com, dev@example.com"
-          className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-        />
-        <p className="text-xs text-ink-soft mt-1">
-          新留言的邮件通知会发到这里。多个邮箱用英文逗号分隔。留空则回退到「发件人地址」。
-        </p>
-        {hasInvalid && (
-          <p className="text-xs text-yellow-700 mt-1" role="alert">
-            请检查邮箱格式,当前 0 个有效地址
+    <Panel
+      title="通知邮箱"
+      description="新留言的邮件通知会发到这里。多个邮箱用英文逗号分隔,留空则回退到「发件人地址」。"
+    >
+      <form onSubmit={save} className="space-y-3 max-w-xl">
+        {err && (
+          <p className="text-sm text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">
+            {err}
           </p>
         )}
-        {!hasInvalid && trimmed !== '' && validCount > 0 && (
-          <p className="text-xs text-ink-soft mt-1">将通知 {validCount} 个邮箱</p>
+        {ok && (
+          <p className="text-sm text-success inline-flex items-center gap-1">
+            <Check className="h-3.5 w-3.5" />
+            {ok}
+          </p>
         )}
-      </div>
 
-      <button
-        type="submit"
-        disabled={submitDisabled}
-        className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
-      >
-        {busy ? '保存中…' : '保存'}
-      </button>
-    </form>
+        <FormField
+          label="通知邮箱"
+          htmlFor="notes-admin-emails"
+          error={hasInvalid ? '请检查邮箱格式,当前 0 个有效地址' : undefined}
+          hint={
+            !hasInvalid && trimmed !== '' && validCount > 0 ? `将通知 ${validCount} 个邮箱` : undefined
+          }
+        >
+          <input
+            id="notes-admin-emails"
+            type="text"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            placeholder="admin@example.com, dev@example.com"
+            className="adm-input"
+          />
+        </FormField>
+
+        <AdminButton type="submit" variant="primary" disabled={submitDisabled}>
+          {busy ? '保存中…' : '保存'}
+        </AdminButton>
+      </form>
+    </Panel>
   );
 }

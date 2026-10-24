@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Check } from 'lucide-react';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 /**
  * The /admin/ai mock mode switch.
@@ -38,17 +39,17 @@ export function AiMockToggle({ initialEnabled }: { initialEnabled: boolean }) {
   }
 
   return (
-    <div className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
-      {err && <p className="text-sm text-seal">{err}</p>}
+    <div className="rounded-lg border border-ink/10 bg-paper-soft p-4 space-y-3 max-w-xl">
+      {err && <p className="text-sm text-danger">{err}</p>}
       {msg && (
-        <p className="text-sm text-green-700 inline-flex items-center gap-1">
+        <p className="text-sm text-success inline-flex items-center gap-1">
           <Check className="h-3.5 w-3.5" />
           {msg}
         </p>
       )}
 
       <div className="space-y-1">
-        <h2 className="text-sm font-semibold text-ink">AI Mock 模式</h2>
+        <h2 className="font-kai text-base text-ink">AI Mock 模式</h2>
         <p className="text-xs text-ink-soft">
           开启后所有 LLM 调用会短路返回固定占位文本（MOCK-*），不再消耗真实 API 配额。
           适合本地开发、批量生成调试、限速回避。
@@ -59,16 +60,13 @@ export function AiMockToggle({ initialEnabled }: { initialEnabled: boolean }) {
         <span className={`text-sm font-medium ${enabled ? 'text-seal' : 'text-ink-soft'}`}>
           {enabled ? '已开启' : '已关闭'}
         </span>
-        <button
-          type="button"
+        <AdminButton
           onClick={toggle}
           disabled={busy}
-          className={`text-sm px-4 py-1.5 rounded disabled:opacity-50 ${
-            enabled ? 'bg-paper-deep text-ink hover:bg-paper-warm' : 'bg-ink text-paper hover:bg-ink/80'
-          }`}
+          variant={enabled ? 'secondary' : 'primary'}
         >
           {busy ? '切换中…' : enabled ? '关闭 Mock' : '开启 Mock'}
-        </button>
+        </AdminButton>
       </div>
     </div>
   );

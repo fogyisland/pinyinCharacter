@@ -3,6 +3,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Mail, RefreshCw } from 'lucide-react';
 import { formatDateTime } from '@/lib/format';
+import { DataTable } from '@/components/admin/DataTable';
+import { StatusBadge, type BadgeTone } from '@/components/admin/StatusBadge';
+import { EmptyState } from '@/components/admin/EmptyState';
 
 interface EmailHistoryItem {
   id: number;
@@ -14,10 +17,16 @@ interface EmailHistoryItem {
   sentAt: string;
 }
 
-const STATUS_COLORS: Record<string, string> = {
-  sent: 'bg-green-100 text-green-800',
-  failed: 'bg-red-100 text-red-800',
-  console: 'bg-yellow-100 text-yellow-800',
+const STATUS_TONE: Record<EmailHistoryItem['status'], BadgeTone> = {
+  sent: 'success',
+  failed: 'danger',
+  console: 'warning',
+};
+
+const STATUS_LABEL: Record<EmailHistoryItem['status'], string> = {
+  sent: '已发送',
+  failed: '失败',
+  console: '控制台',
 };
 
 export function EmailHistory() {
@@ -45,9 +54,9 @@ export function EmailHistory() {
   }, [fetchItems]);
 
   return (
-    <div className="card-paper rounded-lg p-4 space-y-2">
+    <div className="rounded-lg border border-ink/10 bg-paper-soft p-4 space-y-2">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-ink-soft inline-flex items-center gap-1">
+        <h2 className="font-kai text-base text-ink inline-flex items-center gap-1">
           <Mail className="h-3.5 w-3.5" />
           发送历史 (最近 50 条)
         </h2>
@@ -61,52 +70,46 @@ export function EmailHistory() {
           刷新
         </button>
       </div>
-      {err && <p className="text-xs text-seal">{err}</p>}
+      {err && <p className="text-xs text-danger">{err}</p>}
       {items.length === 0 && !err && (
-        <p className="text-xs text-ink-faint">
-          暂无发送记录 — 触发一次密码重置或管理员发件测试后会出现。
-        </p>
+        <EmptyState
+          icon={Mail}
+          title="暂无发送记录"
+          description="触发一次密码重置或管理员发件测试后会出现。"
+          className="py-8"
+        />
       )}
       {items.length > 0 && (
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-paper-deep text-left text-xs">
-              <tr>
-                <th className="px-2 py-1">时间</th>
-                <th className="px-2 py-1">收件人</th>
-                <th className="px-2 py-1">主题</th>
-                <th className="px-2 py-1">模板</th>
-                <th className="px-2 py-1">状态</th>
-                <th className="px-2 py-1">错误</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((it) => (
-                <tr key={it.id} className="border-t">
-                  <td className="px-2 py-1 text-xs text-ink-soft whitespace-nowrap">
-                    {formatDateTime(it.sentAt)}
-                  </td>
-                  <td className="px-2 py-1 text-xs font-mono">{it.to}</td>
-                  <td className="px-2 py-1 text-xs">{it.subject}</td>
-                  <td className="px-2 py-1 text-xs text-ink-soft">{it.template ?? '—'}</td>
-                  <td className="px-2 py-1 text-xs">
-                    <span
-                      className={`inline-block px-1.5 py-0.5 rounded ${STATUS_COLORS[it.status] ?? 'bg-paper-deep'}`}
-                    >
-                      {it.status}
-                    </span>
-                  </td>
-                  <td
-                    className="px-2 py-1 text-xs text-seal max-w-[200px] truncate"
-                    title={it.error ?? ''}
-                  >
-                    {it.error ?? '—'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable
+          rows={items}
+          rowKey={(it) => it.id}
+          caption="邮件发送历史"
+          maxHeight="medium"
+          empty={null}
+          columns={[
+            { key: 'sentAt', header: '时间', numeric: true, mobileHide: true },
+            { key: 'to', header: '收件人', mobileTitle: true },
+            { key: 'subject', header: '主题' },
+            { key: 'template', header: '模板', mobileHide: true },
+            { key: 'status', header: '状态' },
+            { key: 'error', header: '错误', mobileHide: true },
+          ]}
+        >
+          {(it) => (
+            <>
+              <span className="text-xs text-ink-soft whitespace-nowrap">
+                {formatDateTime(it.sentAt)}
+              </span>
+              <span className="text-xs font-mono break-all">{it.to}</span>
+              <span className="text-xs">{it.subject}</span>
+              <span className="text-xs text-ink-soft">{it.template ?? '—'}</span>
+              <StatusBadge tone={STATUS_TONE[it.status]}>{STATUS_LABEL[it.status]}</StatusBadge>
+              <span className="text-xs text-danger max-w-[200px] truncate" title={it.error ?? ''}>
+                {it.error ?? '—'}
+              </span>
+            </>
+          )}
+        </DataTable>
       )}
     </div>
   );

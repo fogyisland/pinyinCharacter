@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 export function CampaignForm() {
   const router = useRouter();
@@ -49,32 +51,38 @@ export function CampaignForm() {
 
   return (
     <div className="space-y-4 max-w-3xl">
-      <div>
-        <label className="block text-sm font-medium text-ink-soft mb-1">主题</label>
+      <FormField label="主题" htmlFor="campaign-subject">
         <input
+          id="campaign-subject"
           type="text"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           maxLength={255}
           placeholder="例如:新版字帖描红功能上线"
-          className="w-full border border-paper-warm rounded px-3 py-2 text-sm"
+          className="adm-input"
         />
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-ink-soft mb-1">受众</label>
+      </FormField>
+
+      <FormField label="受众" htmlFor="campaign-audience">
         <select
+          id="campaign-audience"
           value={audience}
           onChange={(e) => setAudience(e.target.value as any)}
-          className="border border-paper-warm rounded px-3 py-2 text-sm"
+          className="adm-input"
         >
           <option value="all">所有订阅用户</option>
           <option value="members">会员</option>
           <option value="admins">管理员</option>
         </select>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-ink-soft mb-1">HTML 正文</label>
+      </FormField>
+
+      <FormField
+        label="HTML 正文"
+        htmlFor="campaign-html-body"
+        hint="纯文本版本会自动从 HTML 提取 (去掉标签),如需手动调整可在下方修改。"
+      >
         <textarea
+          id="campaign-html-body"
           value={htmlBody}
           onChange={(e) => {
             setHtmlBody(e.target.value);
@@ -82,30 +90,35 @@ export function CampaignForm() {
           }}
           rows={10}
           placeholder="<p>新版描红模式上线,现在你可以...</p>"
-          className="w-full border border-paper-warm rounded px-3 py-2 text-sm font-mono"
+          className="adm-input font-mono"
         />
-        <p className="text-xs text-ink-faint mt-1">
-          纯文本版本会自动从 HTML 提取 (去掉标签),如需手动调整可在下方修改。
-        </p>
-      </div>
-      <div>
-        <label className="block text-sm font-medium text-ink-soft mb-1">纯文本版本</label>
+      </FormField>
+
+      <FormField label="纯文本版本" htmlFor="campaign-text-body">
         <textarea
+          id="campaign-text-body"
           value={textBody}
           onChange={(e) => setTextBody(e.target.value)}
           rows={6}
-          className="w-full border border-paper-warm rounded px-3 py-2 text-sm"
+          className="adm-input"
         />
-      </div>
-      {err && <p className="text-sm text-red-600">{err}</p>}
+      </FormField>
+
+      {err && (
+        <p className="text-sm text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">
+          {err}
+        </p>
+      )}
+
       <div className="flex gap-2">
-        <button
+        <AdminButton
+          type="button"
+          variant="primary"
           onClick={save}
           disabled={busy || !subject.trim() || !htmlBody.trim()}
-          className="px-4 py-2 rounded-md bg-ink text-paper text-sm hover:opacity-90 disabled:opacity-50"
         >
           {busy ? '保存中…' : '保存为草稿'}
-        </button>
+        </AdminButton>
       </div>
     </div>
   );

@@ -1,8 +1,11 @@
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import { getCampaign } from '@/lib/email-campaigns';
 import { getPool } from '@/lib/db';
 import { CampaignActions } from '@/components/admin/CampaignActions';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Panel } from '@/components/admin/Panel';
+import { StatusBadge, type BadgeTone } from '@/components/admin/StatusBadge';
+import { AdminLink } from '@/components/admin/AdminButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +19,14 @@ const STATUS_LABEL: Record<string, string> = {
   sent: '已发送',
   failed: '失败',
   cancelled: '已取消',
+};
+
+const STATUS_TONE: Record<string, BadgeTone> = {
+  draft: 'neutral',
+  sending: 'info',
+  sent: 'success',
+  failed: 'danger',
+  cancelled: 'warning',
 };
 
 export default async function CampaignDetailPage({ params }: Props) {
@@ -35,46 +46,47 @@ export default async function CampaignDetailPage({ params }: Props) {
   for (const r of recipients) counts[r.status] = Number(r.n);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link href="/admin/email/campaigns" className="text-sm text-ink-soft hover:text-ink">
-            ← 返回列表
-          </Link>
-          <h1 className="text-xl font-semibold mt-1">{c.subject}</h1>
-        </div>
-        <div className="text-sm text-ink-soft">
-          <span className="mr-2">
-            受众: <span className="text-ink">{c.audience}</span>
-          </span>
-          <span className="px-2 py-0.5 rounded bg-paper-warm">
-            {STATUS_LABEL[c.status] ?? c.status}
-          </span>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        eyebrow="营销邮件"
+        title={c.subject}
+        description={
+          <>
+            受众: <span className="text-ink">{c.audience}</span> · 查看正文与发送进度。
+          </>
+        }
+        actions={
+          <>
+            <AdminLink href="/admin/email/campaigns" variant="secondary" size="sm">
+              ← 返回列表
+            </AdminLink>
+            <StatusBadge tone={STATUS_TONE[c.status] ?? 'neutral'}>
+              {STATUS_LABEL[c.status] ?? c.status}
+            </StatusBadge>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <Stat label="收件人" value={c.total_recipients} />
-        <Stat label="待发送" value={counts.pending ?? 0} color="text-blue-700" />
-        <Stat label="已发送" value={counts.sent ?? 0} color="text-emerald-700" />
-        <Stat label="失败" value={counts.failed ?? 0} color="text-red-700" />
+        <Stat label="待发送" value={counts.pending ?? 0} color="text-info" />
+        <Stat label="已发送" value={counts.sent ?? 0} color="text-success" />
+        <Stat label="失败" value={counts.failed ?? 0} color="text-danger" />
         <Stat label="退订跳过" value={counts.skipped ?? 0} color="text-ink-faint" />
       </div>
 
-      <div className="border border-paper-warm rounded-md p-4 space-y-3">
-        <h2 className="text-sm font-medium text-ink-soft">正文 (HTML 预览)</h2>
+      <Panel title="正文 (HTML 预览)" className="mb-4">
         <div
-          className="prose prose-sm max-w-none border border-paper-warm rounded p-3 bg-white"
+          className="prose prose-sm max-w-none border border-ink/10 rounded bg-paper-soft p-3"
           dangerouslySetInnerHTML={{ __html: c.html_body }}
         />
-      </div>
+      </Panel>
 
-      <div className="border border-paper-warm rounded-md p-4 space-y-3">
-        <h2 className="text-sm font-medium text-ink-soft">正文 (纯文本版本)</h2>
-        <pre className="whitespace-pre-wrap text-xs bg-paper-warm/30 p-3 rounded">
+      <Panel title="正文 (纯文本版本)" className="mb-4">
+        <pre className="whitespace-pre-wrap text-xs bg-paper-deep/40 border border-ink/10 rounded p-3 text-ink">
           {c.text_body}
         </pre>
-      </div>
+      </Panel>
 
       <CampaignActions id={c.id} status={c.status} />
     </div>
@@ -83,9 +95,9 @@ export default async function CampaignDetailPage({ params }: Props) {
 
 function Stat({ label, value, color }: { label: string; value: number; color?: string }) {
   return (
-    <div className="border border-paper-warm rounded p-3">
+    <div className="rounded-lg border border-ink/10 bg-paper-soft p-3">
       <div className="text-xs text-ink-soft">{label}</div>
-      <div className={'text-2xl font-semibold tabular-nums ' + (color ?? 'text-ink')}>{value}</div>
+      <div className={`text-2xl font-serif tabular-nums ${color ?? 'text-ink'}`}>{value}</div>
     </div>
   );
 }

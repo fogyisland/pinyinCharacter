@@ -5,6 +5,12 @@ import type { AudioTrack } from '@/lib/audio-tracks';
 import type { Playlist, PlaylistWithTracks } from '@/lib/playlists';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateTime } from '@/lib/format';
+import { Panel } from '@/components/admin/Panel';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { ListMusic } from 'lucide-react';
 
 /**
  * A stable empty track list.
@@ -219,53 +225,55 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
   const availableTracks = tracks;
 
   return (
-    <div className="space-y-6">
-      <form
-        onSubmit={onCreate}
-        className="border border-ink/20 rounded-md p-4 space-y-3 bg-paper-warm/40"
-      >
-        <h3 className="text-sm font-semibold text-ink">新建播放列表</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <label className="block">
-            <span className="text-xs text-ink-soft">标题</span>
-            <input
-              type="text"
-              value={newTitle}
-              onChange={(e) => setNewTitle(e.target.value)}
-              placeholder="如:早课"
-              className="mt-1 block w-full rounded border border-ink/30 bg-paper px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="flex items-end gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={newIsDefault}
-              onChange={(e) => setNewIsDefault(e.target.checked)}
-            />
-            <span>创建后立即设为默认</span>
-          </label>
-        </div>
-        {error && <p className="text-xs text-seal">{error}</p>}
-        <button
-          type="submit"
-          disabled={creating}
-          className="text-sm px-4 py-1.5 bg-seal text-paper rounded hover:bg-seal/90 disabled:opacity-50"
-        >
-          {creating ? '创建中…' : '新建'}
-        </button>
-      </form>
+    <div className="space-y-4">
+      <Panel title="新建播放列表" description="给一组佛经音频编一个播放顺序">
+        <form onSubmit={onCreate} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+            <FormField label="标题" htmlFor="playlist-new-title">
+              <input
+                id="playlist-new-title"
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="如:早课"
+                className="adm-input"
+              />
+            </FormField>
+            <label className="flex items-center gap-2 text-sm text-ink pb-1.5">
+              <input
+                type="checkbox"
+                checked={newIsDefault}
+                onChange={(e) => setNewIsDefault(e.target.checked)}
+              />
+              <span>创建后立即设为默认</span>
+            </label>
+          </div>
+          {error && (
+            <p className="text-xs text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">
+              {error}
+            </p>
+          )}
+          <AdminButton type="submit" variant="primary" disabled={creating}>
+            {creating ? '创建中…' : '新建'}
+          </AdminButton>
+        </form>
+      </Panel>
 
-      <div>
-        <h3 className="text-sm font-semibold text-ink mb-3">已有播放列表 ({playlists.length})</h3>
+      <Panel title={`已有播放列表 (${playlists.length})`}>
         {playlists.length === 0 ? (
-          <p className="text-sm text-ink-soft">还没有任何播放列表。</p>
+          <EmptyState
+            icon={ListMusic}
+            title="还没有任何播放列表"
+            description="在上方新建一个,给佛经音频排一个顺序。"
+            className="py-8"
+          />
         ) : (
           <ul className="space-y-2">
             {playlists.map((p) => (
               <li
                 key={p.id}
                 className={`rounded border ${
-                  p.isDefault ? 'border-seal bg-seal/5' : 'border-ink/20'
+                  p.isDefault ? 'border-seal/40 bg-seal/5' : 'border-ink/15'
                 }`}
               >
                 <div className="flex items-center gap-3 p-3">
@@ -273,6 +281,7 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
                     type="button"
                     onClick={() => toggleExpand(p.id)}
                     aria-label={expandedId === p.id ? '折叠' : '展开'}
+                    aria-expanded={expandedId === p.id}
                     className="text-ink-soft hover:text-ink p-1"
                   >
                     {expandedId === p.id ? '▼' : '▶'}
@@ -280,11 +289,7 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-ink truncate">{p.title}</span>
-                      {p.isDefault && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-seal text-paper rounded">
-                          默认
-                        </span>
-                      )}
+                      {p.isDefault && <StatusBadge tone="primary">默认</StatusBadge>}
                     </div>
                     <div className="text-xs text-ink-faint">
                       {expandedId === p.id
@@ -294,31 +299,29 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
                   </div>
                   <div className="flex flex-col sm:flex-row gap-1 shrink-0">
                     {!p.isDefault && (
-                      <button
-                        type="button"
+                      <AdminButton
+                        size="sm"
                         disabled={busyId === p.id}
                         onClick={() => onSetDefault(p.id)}
-                        className="text-xs px-2 py-1 border border-ink/30 rounded hover:bg-paper-warm disabled:opacity-50"
                       >
                         设为默认
-                      </button>
+                      </AdminButton>
                     )}
-                    <button
-                      type="button"
+                    <AdminButton
+                      size="sm"
                       disabled={busyId === p.id}
                       onClick={() => onRename(p.id, p.title)}
-                      className="text-xs px-2 py-1 border border-ink/30 rounded hover:bg-paper-warm disabled:opacity-50"
                     >
                       重命名
-                    </button>
-                    <button
-                      type="button"
+                    </AdminButton>
+                    <AdminButton
+                      size="sm"
+                      variant="danger"
                       disabled={busyId === p.id}
                       onClick={() => onDelete(p.id, p)}
-                      className="text-xs px-2 py-1 border border-seal/50 text-seal rounded hover:bg-seal/10 disabled:opacity-50"
                     >
                       删除
-                    </button>
+                    </AdminButton>
                   </div>
                 </div>
                 {expandedId === p.id && (
@@ -335,7 +338,7 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
             ))}
           </ul>
         )}
-      </div>
+      </Panel>
     </div>
   );
 }
@@ -366,7 +369,7 @@ function PlaylistTracksEditor({
   }, [availableTracks, currentTracks]);
 
   return (
-    <div className="border-t border-ink/15 p-3 bg-paper-warm/20 space-y-3">
+    <div className="border-t border-ink/10 p-3 bg-paper-deep/25 space-y-3">
       <div>
         <div className="text-xs text-ink-soft mb-2">曲目顺序 ({currentTracks.length})</div>
         {currentTracks.length === 0 ? (
@@ -374,35 +377,36 @@ function PlaylistTracksEditor({
         ) : (
           <ol className="space-y-1">
             {currentTracks.map((t, i) => (
-              <li key={t.id} className="flex items-center gap-2 text-sm bg-paper rounded px-2 py-1">
+              <li
+                key={t.id}
+                className="flex items-center gap-2 text-sm bg-paper-soft rounded px-2 py-1"
+              >
                 <span className="text-xs text-ink-faint tabular-nums w-6">{i + 1}.</span>
                 <span className="flex-1 truncate">{t.title}</span>
-                <button
-                  type="button"
+                <AdminButton
+                  size="sm"
                   disabled={busy || i === 0}
                   onClick={() => onMove(t.id, -1)}
                   aria-label="上移"
-                  className="text-xs px-1.5 py-0.5 border border-ink/20 rounded hover:bg-paper-warm disabled:opacity-30"
                 >
                   ↑
-                </button>
-                <button
-                  type="button"
+                </AdminButton>
+                <AdminButton
+                  size="sm"
                   disabled={busy || i === currentTracks.length - 1}
                   onClick={() => onMove(t.id, 1)}
                   aria-label="下移"
-                  className="text-xs px-1.5 py-0.5 border border-ink/20 rounded hover:bg-paper-warm disabled:opacity-30"
                 >
                   ↓
-                </button>
-                <button
-                  type="button"
+                </AdminButton>
+                <AdminButton
+                  size="sm"
+                  variant="danger"
                   disabled={busy}
                   onClick={() => onRemove(t.id)}
-                  className="text-xs px-1.5 py-0.5 border border-seal/40 text-seal rounded hover:bg-seal/10 disabled:opacity-50"
                 >
                   移除
-                </button>
+                </AdminButton>
               </li>
             ))}
           </ol>
@@ -410,12 +414,12 @@ function PlaylistTracksEditor({
       </div>
 
       <div className="flex gap-2 items-end">
-        <label className="flex-1 block">
-          <span className="text-xs text-ink-soft">添加曲目</span>
+        <FormField label="添加曲目" htmlFor="playlist-add-track" className="flex-1">
           <select
+            id="playlist-add-track"
             value={selectedTrackId}
             onChange={(e) => setSelectedTrackId(Number(e.target.value))}
-            className="mt-1 block w-full rounded border border-ink/30 bg-paper px-2 py-1 text-sm"
+            className="adm-input"
             disabled={addable.length === 0}
           >
             <option value={0}>{addable.length === 0 ? '没有可添加的曲目' : '选择…'}</option>
@@ -425,19 +429,17 @@ function PlaylistTracksEditor({
               </option>
             ))}
           </select>
-        </label>
-        <button
-          type="button"
+        </FormField>
+        <AdminButton
           disabled={busy || selectedTrackId === 0}
           onClick={() => {
             if (selectedTrackId === 0) return;
             onAdd(selectedTrackId);
             setSelectedTrackId(0);
           }}
-          className="text-sm px-3 py-1.5 border border-ink/30 rounded hover:bg-paper-warm disabled:opacity-50"
         >
           添加
-        </button>
+        </AdminButton>
       </div>
     </div>
   );
