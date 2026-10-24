@@ -53,9 +53,6 @@ interface MigrateResponse {
   files: number;
   statements: number;
 }
-interface MarkCompleteResponse {
-  completed: true;
-}
 
 /** Discriminated union: each phase pins its request body + response shape so a
  *  future API field rename surfaces as a tsc error, not a silent mis-format. */

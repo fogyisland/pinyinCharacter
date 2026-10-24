@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
@@ -49,18 +50,46 @@ export async function verifySession(token: string): Promise<SessionPayload | nul
   }
 }
 
-export async function getCurrentUser(): Promise<User | null> {
+/** The signed-in user plus the two DB-owned flags every caller cares about. */
+interface SessionUser extends User {
+  isAdmin: boolean;
+}
+
+/**
+ * Resolve the signed-in user with ONE database round-trip.
+ *
+ * The JWT carries id + username, but is_admin / disabled_at must come from
+ * the DB so that a demotion or a ban takes effect immediately instead of at
+ * JWT expiry. Both columns are read in the same query.
+ *
+ * Wrapped in React's cache() so the admin layout and the page it renders
+ * share a single query per request instead of one each. Outside a React
+ * render (route handlers) cache() degrades to a direct call, which keeps
+ * the behaviour identical.
+ */
+const resolveSessionUser = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   const session = await verifySession(token);
   if (!session) return null;
-  // Check disabled_at
   const [rows] = await getPool().query<any[]>(
-    `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
+    `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
     [session.userId],
   );
-  if (rows.length === 0 || rows[0].disabled_at !== null) return null;
-  return { id: session.userId, username: session.username };
+  if (rows.length === 0) return null;
+  // Disabled since the session was issued (e.g. banned right now).
+  if (rows[0].disabled_at !== null) return null;
+  return {
+    id: session.userId,
+    username: session.username,
+    isAdmin: Boolean(rows[0].is_admin),
+  };
+});
+
+export async function getCurrentUser(): Promise<User | null> {
+  const user = await resolveSessionUser();
+  if (!user) return null;
+  return { id: user.id, username: user.username };
 }
 
 export interface SetSessionCookieOptions {
@@ -106,23 +135,13 @@ export interface UserWithAdmin extends User {
 }
 
 /**
- * Same as getCurrentUser, but also queries is_admin from DB.
+ * Same as getCurrentUser, but also exposes is_admin from the DB.
  * Use this whenever admin privileges need to be checked.
  * Note: is_admin is NOT in the JWT — we re-query on every request so that
  * a demoted admin loses access immediately, not at JWT expiry.
  */
 export async function getCurrentUserWithAdmin(): Promise<UserWithAdmin | null> {
-  const user = await getCurrentUser();
-  if (!user) return null;
-  const pool = getPool();
-  const [rows] = await pool.query<any[]>(
-    `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
-    [user.id],
-  );
-  if (rows.length === 0) return null;
-  // If disabled since the last check (e.g. session was just created), return null
-  if (rows[0].disabled_at !== null) return null;
-  return { ...user, isAdmin: Boolean(rows[0].is_admin) };
+  return resolveSessionUser();
 }
 
 export type RequireAdminResult =

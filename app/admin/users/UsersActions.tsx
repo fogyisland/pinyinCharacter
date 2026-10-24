@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import {
   disableUserRequest,
   enableUserRequest,
-  adminResetUserPassword,
   adminPromoteUser,
   adminDemoteUser,
 } from '@/lib/api-admin';

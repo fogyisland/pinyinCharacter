@@ -2,12 +2,6 @@ import { Check, AlertTriangle, X } from 'lucide-react';
 import type { InitReport, StepStatus } from '@/lib/init-checklist';
 import { formatDateTime } from '@/lib/format';
 
-const STATUS_ICON: Record<StepStatus, React.ReactNode> = {
-  ok: <Check className="h-4 w-4 text-green-700" aria-label="ok" />,
-  warn: <AlertTriangle className="h-4 w-4 text-amber-600" aria-label="warn" />,
-  fail: <X className="h-4 w-4 text-seal" aria-label="fail" />,
-};
-
 const STATUS_LABEL: Record<StepStatus, string> = {
   ok: '完成',
   warn: '建议',

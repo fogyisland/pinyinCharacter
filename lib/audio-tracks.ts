@@ -29,10 +29,15 @@ export interface ActiveAudioTrack {
   title: string;
 }
 
+/** Upper bound for the admin track list. The table is hand-curated
+ *  (one MP3 per row), so 500 is far above any realistic size — the LIMIT
+ *  only keeps a runaway import from pulling an unbounded result set. */
+const MAX_TRACKS = 500;
+
 export async function listTracks(): Promise<AudioTrack[]> {
   const [rows] = await getPool().query<any[]>(
     `SELECT id, title, filename, size_bytes, is_default, uploaded_by, created_at, updated_at
-     FROM audio_tracks ORDER BY is_default DESC, id ASC`,
+     FROM audio_tracks ORDER BY is_default DESC, id ASC LIMIT ${MAX_TRACKS}`,
   );
   return rows.map(rowToTrack);
 }

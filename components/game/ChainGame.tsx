@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchChainChars } from '@/lib/api-chain';
-import { getValidNextChars, pickStarter } from '@/lib/chain-rules';
+import {
+  buildChainCharIndex,
+  getValidNextCharsFromIndex,
+  pickStarter,
+} from '@/lib/chain-rules';
 import type { CharInfo } from '@/lib/chain-types';
 import { CHAIN_GAME_CONFIG } from '@/lib/difficulty';
 import { useDifficulty } from '@/lib/use-difficulty';
@@ -62,9 +66,15 @@ export function ChainGame() {
   }, [ready, difficulty, hskLevel, reloadToken]);
 
   const usedChars = useMemo(() => new Set(chain), [chain]);
+  // The pool can hold thousands of chars; the index is built once per
+  // pool instead of rescanning it on every pick.
+  const charIndex = useMemo(() => buildChainCharIndex(charsList), [charsList]);
   const validNext = useMemo(
-    () => (chain.length === 0 ? [] : getValidNextChars(charsList, chain.at(-1)!, usedChars)),
-    [charsList, chain, usedChars],
+    () =>
+      chain.length === 0
+        ? []
+        : getValidNextCharsFromIndex(charIndex, chain[chain.length - 1]!, usedChars),
+    [charIndex, chain, usedChars],
   );
 
   // 2026-07-04: HSK reveal — chain game has onDemandPenalty=0 so on-demand
@@ -111,7 +121,10 @@ export function ChainGame() {
     );
   }
 
-  const currentLast = charsList.find((c) => c.char === chain.at(-1));
+  // Lookup by index — `charsList.find` rescanned the whole pool on every
+  // render just to show the previous char's pinyin.
+  const currentLast =
+    chain.length === 0 ? undefined : charIndex.byChar.get(chain[chain.length - 1]!);
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">

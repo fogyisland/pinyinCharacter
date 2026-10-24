@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { matchesChainRule, getValidNextChars, pickStarter } from '@/lib/chain-rules';
+import {
+  matchesChainRule,
+  getValidNextChars,
+  getValidNextCharsFromIndex,
+  buildChainCharIndex,
+  pickStarter,
+} from '@/lib/chain-rules';
 import type { CharInfo } from '@/lib/chain-types';
 import { COMMON_CHARS } from '@/lib/common-chars';
 
@@ -100,6 +106,49 @@ describe('getValidNextChars', () => {
     const valid = getValidNextChars(chars, '爱', new Set());
     expect(valid).toEqual([]);
     expect(valid.map((c) => c.char)).not.toContain('一');
+  });
+});
+
+describe('buildChainCharIndex / getValidNextCharsFromIndex', () => {
+  const chars: CharInfo[] = [
+    ci('安', 'ān'),
+    ci('那', 'nà'),
+    ci('呢', 'ne'),
+    ci('包', 'bāo'),
+    ci('爱', 'ài'),
+    ci('期', 'qī'),
+    ci('一', 'yī'),
+    ci('二', 'èr'),
+    ci('母', 'mǔ'),
+    ci('雨', 'yǔ'),
+  ];
+
+  it('resolves the same next chars as the one-shot variant', () => {
+    const index = buildChainCharIndex(chars);
+    for (const prev of ['安', '包', '爱', '母', '雨', '非']) {
+      expect(getValidNextCharsFromIndex(index, prev, new Set()).map((c) => c.char)).toEqual(
+        getValidNextChars(chars, prev, new Set()).map((c) => c.char),
+      );
+    }
+  });
+
+  it('excludes the chars already in the chain', () => {
+    const index = buildChainCharIndex(chars);
+    const valid = getValidNextCharsFromIndex(index, '安', new Set(['那']));
+    expect(valid.map((c) => c.char)).toEqual(['呢']);
+  });
+
+  it('keeps the first occurrence of a duplicated char', () => {
+    // The unindexed implementation used Array.find, which returns the
+    // first match — the index must not switch to the last one.
+    const withDup = [ci('安', 'ān'), ci('安', 'àn'), ci('那', 'nà')];
+    const index = buildChainCharIndex(withDup);
+    expect(index.byChar.get('安')?.pinyin).toBe('ān');
+  });
+
+  it('returns an empty list for a char that is not in the pool', () => {
+    const index = buildChainCharIndex(chars);
+    expect(getValidNextCharsFromIndex(index, '非', new Set())).toEqual([]);
   });
 });
 

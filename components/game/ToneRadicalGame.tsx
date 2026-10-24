@@ -129,16 +129,20 @@ export function ToneRadicalGame() {
   }, [phase]);
 
   // Auto-finish when all chars matched
+  const matchCount = useMemo(() => Object.keys(matches).length, [matches]);
+  // Which token values are already spoken for — memoized because the set
+  // was rebuilt on every render and read once per token row.
+  const matchedValues = useMemo(() => new Set(Object.values(matches)), [matches]);
   useEffect(() => {
     if (phase !== 'playing' || !round) return;
-    if (Object.keys(matches).length === round.chars.length) {
+    if (matchCount === round.chars.length) {
       const t = setTimeout(() => {
         setElapsedMs(Date.now() - startedAt.current);
         setPhase('finished');
       }, 800);
       return () => clearTimeout(t);
     }
-  }, [matches, phase, round]);
+  }, [matchCount, phase, round]);
 
   const handleDrop = (char: string, kind: GameRound['mode'], payload: string) => {
     if (!round || kind !== round.mode) return;
@@ -158,10 +162,10 @@ export function ToneRadicalGame() {
   };
 
   const accuracy = useMemo(() => {
-    const total = mismatches + Object.keys(matches).length;
+    const total = mismatches + matchCount;
     if (total === 0) return 1;
-    return Object.keys(matches).length / total;
-  }, [mismatches, matches]);
+    return matchCount / total;
+  }, [mismatches, matchCount]);
 
   if (error) {
     return (
@@ -215,9 +219,6 @@ export function ToneRadicalGame() {
 
   const mode = round.mode;
   const modeInfo = MODE_LABEL[mode];
-
-  // Compute which token values are still available (not yet matched to any char)
-  const matchedValues = new Set(Object.values(matches));
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

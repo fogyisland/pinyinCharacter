@@ -136,13 +136,26 @@ export function DragMatchGame() {
     }
   };
 
+  // char → pinyin lookup. The board holds up to `cfg.count` chars, and
+  // the old `chars.find(...)` rescanned the whole board on every drop.
+  const pinyinByChar = useMemo(
+    () => new Map(chars.map((c) => [c.char, c.pinyin] as const)),
+    [chars],
+  );
+
+  // The set of already-matched pinyin values — the old code rebuilt
+  // `Object.values(pairs)` once per pinyin row.
+  const matchedPinyins = useMemo(() => new Set(Object.values(pairs)), [pairs]);
+
+  const matchedCount = useMemo(() => Object.keys(pairs).length, [pairs]);
+
   const handleDragStart = (e: React.DragEvent, pinyin: string) => {
     e.dataTransfer.setData('text/plain', pinyin);
   };
 
   const handleDrop = (char: string, pinyin: string) => {
     if (pairs[char]) return; // already matched
-    if (pinyin !== getPinyinFor(char)) {
+    if (pinyin !== pinyinByChar.get(char)) {
       setMismatches((m) => m + 1);
       return;
     }
@@ -156,13 +169,11 @@ export function DragMatchGame() {
     });
   };
 
-  const getPinyinFor = (char: string) => chars.find((c) => c.char === char)?.pinyin ?? '';
-
   const accuracy = useMemo(() => {
-    const total = mismatches + Object.keys(pairs).length;
+    const total = mismatches + matchedCount;
     if (total === 0) return 1;
-    return Object.keys(pairs).length / total;
-  }, [mismatches, pairs]);
+    return matchedCount / total;
+  }, [mismatches, matchedCount]);
 
   if (phase === 'loading') {
     return <div className="py-12 text-center text-ink-faint">加载中...</div>;
@@ -257,7 +268,7 @@ export function DragMatchGame() {
         <div className="space-y-2">
           <h3 className="text-sm font-medium text-ink-soft">拼音(拖动到对应字)</h3>
           {pinyinOrder.map((py) => {
-            const matched = Object.values(pairs).includes(py);
+            const matched = matchedPinyins.has(py);
             return (
               <DraggablePinyin
                 key={py}

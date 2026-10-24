@@ -1,12 +1,11 @@
 'use client';
 
-import { Fragment } from 'react';
+import { Fragment, useMemo } from 'react';
 import type { CellStyle, PaperSize, FontFamily } from '@/lib/worksheet-types';
 import {
   generateLayout,
   getPresentation,
   linedHeightPx,
-  paperSizeLabel,
   fontFamilyLabel,
   fontFamilyCssVar,
 } from '@/lib/worksheet-types';
@@ -67,7 +66,13 @@ type Props = BaseProps | FormProps;
 export function WorksheetPreview(props: Props) {
   const presentation = getPresentation(props.cellStyle);
   const isFourLine = presentation === 'four-line';
-  const cells = generateLayout(props.content, props.cellStyle, props.paperSize);
+  // generateLayout walks the whole content and computes the page break
+  // for every cell — memoized so a re-render (e.g. the save button
+  // flipping to "saved") doesn't redo the work.
+  const cells = useMemo(
+    () => generateLayout(props.content, props.cellStyle, props.paperSize),
+    [props.content, props.cellStyle, props.paperSize],
+  );
   const isFormView = 'onBack' in props;
   const sizeClass = isFourLine ? '' : `worksheet-grid--${props.paperSize.toLowerCase()}`;
   const cellSize = isFourLine ? linedHeightPx(props.paperSize) : cellSizeFor(props.paperSize);

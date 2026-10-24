@@ -1,11 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 interface Char {
   char: string;
   pinyin: string;
   meaning: string;
+}
+
+/** One row of /api/chars — the level pools expose meaningZh, the rare
+ *  pool does not. */
+interface ApiChar {
+  char: string;
+  pinyin: string;
+  meaningZh?: string | null;
 }
 
 type Source = 'rare' | '1' | '2' | '3';
@@ -50,13 +58,15 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
         const newChars: Char[] =
           source === 'rare'
             ? data.data.chars
-            : data.data.chars.map((c: any) => ({
+            : (data.data.chars as ApiChar[]).map((c) => ({
                 char: c.char,
                 pinyin: c.pinyin,
                 meaning: c.meaningZh ?? '',
               }));
         setChars((prev) => (page === 1 ? newChars : [...prev, ...newChars]));
         if (source !== 'rare') setTotal(data.data.total ?? 0);
+      } catch (e) {
+        console.error('failed to load the char library:', e);
       } finally {
         setLoading(false);
       }
@@ -64,8 +74,12 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
     return () => clearTimeout(handle);
   }, [source, q, page]);
 
+  // The selection can hold up to 500 chars and the grid renders every
+  // loaded char — `selected.includes` inside the map was O(n × m).
+  const selectedSet = useMemo(() => new Set(selected), [selected]);
+
   const toggle = (c: string) => {
-    if (selected.includes(c)) onChange(selected.filter((x) => x !== c));
+    if (selectedSet.has(c)) onChange(selected.filter((x) => x !== c));
     else if (selected.length < 500) onChange([...selected, c]);
   };
 
@@ -96,7 +110,7 @@ export function LibrarySelectTab({ selected, onChange }: Props) {
       </div>
       <div className="mt-3 grid max-h-96 grid-cols-6 gap-2 overflow-y-auto sm:grid-cols-8">
         {chars.map((c) => {
-          const isSelected = selected.includes(c.char);
+          const isSelected = selectedSet.has(c.char);
           return (
             <button
               key={c.char}

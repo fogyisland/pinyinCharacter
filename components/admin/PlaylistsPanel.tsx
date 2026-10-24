@@ -314,7 +314,6 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
                 </div>
                 {expandedId === p.id && (
                   <PlaylistTracksEditor
-                    playlist={p}
                     availableTracks={availableTracks}
                     currentTracks={playlistTracks[p.id] ?? []}
                     busy={busyId === p.id}
@@ -333,7 +332,6 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
 }
 
 function PlaylistTracksEditor({
-  playlist,
   availableTracks,
   currentTracks,
   busy,
@@ -341,7 +339,6 @@ function PlaylistTracksEditor({
   onRemove,
   onMove,
 }: {
-  playlist: Playlist;
   availableTracks: AudioTrack[];
   currentTracks: PlaylistWithTracks['tracks'];
   busy: boolean;
