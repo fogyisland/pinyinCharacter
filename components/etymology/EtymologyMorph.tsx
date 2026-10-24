@@ -151,7 +151,7 @@ export function EtymologyMorph({
           onClick={() => setIsPlaying((p) => !p)}
           aria-label={isPlaying ? '暂停' : '播放'}
           className="w-10 h-10 rounded-full bg-paper-warm border border-ink/20
-                     hover:bg-seal hover:text-paper-warm transition text-lg
+                     hover:bg-seal hover:text-paper transition text-lg
                      flex items-center justify-center"
         >
           {isPlaying ? '⏸' : '▶'}
@@ -185,7 +185,7 @@ export function EtymologyMorph({
               className={`px-3 py-1.5 rounded text-xs flex flex-col items-center
                           transition ${
                             isActive
-                              ? 'bg-seal text-paper-warm'
+                              ? 'bg-seal text-paper'
                               : 'bg-paper-warm text-ink-soft hover:bg-paper'
                           }`}
             >

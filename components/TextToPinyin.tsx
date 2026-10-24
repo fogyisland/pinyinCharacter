@@ -194,7 +194,7 @@ export function TextToPinyin() {
           disabled={recognizing}
           aria-label="拍照识别单字"
           title="拍照识别单字"
-          className="absolute right-2 top-2 p-2 rounded hover:bg-muted/50 disabled:opacity-50"
+          className="absolute right-2 top-2 p-2 rounded hover:bg-paper-deep/50 disabled:opacity-50"
         >
           {recognizing ? (
             <span className="inline-block w-5 h-5 border-2 border-ink-soft border-t-transparent rounded-full animate-spin" />

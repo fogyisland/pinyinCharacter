@@ -363,7 +363,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className, textUrlTemp
               type="button"
               onClick={togglePlay}
               aria-label={playing ? '暂停' : '播放'}
-              className="w-9 h-9 rounded-full bg-seal text-paper-warm flex items-center justify-center hover:bg-seal/90 transition-colors flex-shrink-0"
+              className="w-9 h-9 rounded-full bg-seal text-paper flex items-center justify-center hover:bg-seal/90 transition-colors flex-shrink-0"
             >
               {playing ? <PauseIcon /> : <PlayIcon />}
             </button>
@@ -417,8 +417,8 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className, textUrlTemp
           title={errored ? '合成失败' : (currentChunk?.title ?? playlistTitle ?? '')}
           className={`w-12 h-12 rounded-full shadow-lg flex items-center justify-center transition-colors ${
             errored
-              ? 'bg-ink-soft/70 text-paper-warm hover:bg-ink-soft'
-              : 'bg-seal text-paper-warm hover:bg-seal/90'
+              ? 'bg-ink-soft/70 text-paper hover:bg-ink-soft'
+              : 'bg-seal text-paper hover:bg-seal/90'
           }`}
         >
           {errored ? <AlertIcon /> : playing ? <PauseIcon /> : <PlayIcon />}
