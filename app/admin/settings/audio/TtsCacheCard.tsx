@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { AdminButton } from '@/components/admin/AdminButton';
+import { LoadingState } from '@/components/admin/LoadingState';
 
 function formatBytes(b: number): string {
   if (b < 1024) return `${b} B`;
@@ -76,7 +77,7 @@ export function TtsCacheCard() {
         </p>
       )}
       {count === null ? (
-        <p className="text-xs text-ink-faint">加载中…</p>
+        <LoadingState variant="inline" label="正在统计缓存…" />
       ) : (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm text-ink">

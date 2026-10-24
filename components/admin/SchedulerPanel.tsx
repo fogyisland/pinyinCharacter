@@ -8,6 +8,7 @@ import { formatDateTime } from '@/lib/format';
 import { Panel } from '@/components/admin/Panel';
 import { FormField } from '@/components/admin/FormField';
 import { AdminButton } from '@/components/admin/AdminButton';
+import { LoadingState } from '@/components/admin/LoadingState';
 
 const INTERVAL_OPTIONS = [
   { value: 5, label: '5 分钟' },
@@ -288,7 +289,7 @@ export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
         }
       >
         {historyErr && <p className="text-xs text-danger">{historyErr}</p>}
-        {history === null && !historyErr && <p className="text-xs text-ink-faint">加载中…</p>}
+        {history === null && !historyErr && <LoadingState variant="inline" label="正在读取历史记录…" />}
         {history !== null && history.length === 0 && (
           <p className="text-xs text-ink-faint">暂无历史记录 — 触发或自动跑过一次后会出现。</p>
         )}

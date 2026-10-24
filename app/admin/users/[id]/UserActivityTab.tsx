@@ -6,6 +6,7 @@ import { getUserActivityRequest } from '@/lib/api-admin';
 import { formatDateTime } from '@/lib/format';
 import { DataTable } from '@/components/admin/DataTable';
 import { EmptyState } from '@/components/admin/EmptyState';
+import { LoadingState } from '@/components/admin/LoadingState';
 import { SourceBadge } from '@/components/admin/SourceBadge';
 import { AdminButton } from '@/components/admin/AdminButton';
 import { History } from 'lucide-react';
@@ -84,7 +85,7 @@ export function UserActivityTab({ userId }: { userId: number }) {
               className="py-8"
             />
           ) : (
-            <p className="py-10 text-center text-ink-faint text-sm">加载中…</p>
+            <LoadingState label="正在读取活动记录…" className="py-8" />
           )
         }
         columns={[
