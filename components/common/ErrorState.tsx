@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 type Props = {
@@ -5,9 +6,14 @@ type Props = {
   message: string;
   code?: string;
   onRetry?: () => void;
+  /**
+   * Href of a retry link. Server-rendered pages cannot hand a callback to
+   * the client, so they point the retry at a URL instead.
+   */
+  retryHref?: string;
 };
 
-export function ErrorState({ title = '出错了', message, code, onRetry }: Props) {
+export function ErrorState({ title = '出错了', message, code, onRetry, retryHref }: Props) {
   return (
     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
       <AlertCircle size={36} strokeWidth={1.5} className="text-seal mb-3" />
@@ -18,6 +24,11 @@ export function ErrorState({ title = '出错了', message, code, onRetry }: Prop
         <button onClick={onRetry} className="btn-ghost flex items-center gap-2 mt-2">
           <RefreshCw size={14} /> 重试
         </button>
+      )}
+      {!onRetry && retryHref && (
+        <Link href={retryHref} className="btn-ghost flex items-center gap-2 mt-2">
+          <RefreshCw size={14} /> 重试
+        </Link>
       )}
       <div className="paper-rule w-24 mt-6" />
     </div>
