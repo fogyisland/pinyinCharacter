@@ -9,7 +9,7 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Image
-              src="/logo.png"
+              src="/logo-sm.webp"
               alt={BRAND.name}
               width={40}
               height={40}

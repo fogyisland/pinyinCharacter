@@ -107,6 +107,8 @@ location /strokes/     { proxy_pass http://127.0.0.1:4444; expires 1y; add_heade
 location /font/        { proxy_pass http://127.0.0.1:4444; expires 1y; add_header Cache-Control "public, immutable"; }
 location /fonts/       { proxy_pass http://127.0.0.1:4444; expires 1y; add_header Cache-Control "public, immutable"; }
 location /logo.png     { proxy_pass http://127.0.0.1:4444; expires 1d; }
+location /logo-sm.webp { proxy_pass http://127.0.0.1:4444; expires 30d; }
+location /logo-sm.png  { proxy_pass http://127.0.0.1:4444; expires 30d; }
 location /favicon.ico  { proxy_pass http://127.0.0.1:4444; expires 1d; }
 location /manifest.json { proxy_pass http://127.0.0.1:4444; expires 1d; }
 ```
@@ -163,6 +165,8 @@ server {
     location /font/        { proxy_pass http://pinyin_app; expires 1y; add_header Cache-Control "public, immutable"; }
     location /fonts/       { proxy_pass http://pinyin_app; expires 1y; add_header Cache-Control "public, immutable"; }
     location /logo.png     { proxy_pass http://pinyin_app; expires 1d; }
+    location /logo-sm.webp { proxy_pass http://pinyin_app; expires 30d; }
+    location /logo-sm.png  { proxy_pass http://pinyin_app; expires 30d; }
     location /favicon.ico  { proxy_pass http://pinyin_app; expires 1d; }
     location /manifest.json { proxy_pass http://pinyin_app; expires 1d; }
 

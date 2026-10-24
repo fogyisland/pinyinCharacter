@@ -118,7 +118,7 @@ export function Header() {
           aria-label={BRAND.name}
         >
           <Image
-            src="/logo.png"
+            src="/logo-sm.webp"
             alt={BRAND.name}
             width={40}
             height={40}
@@ -173,7 +173,7 @@ export function Header() {
             <div className="flex justify-between items-center mb-6">
               <span className="font-kai text-xl flex items-center gap-2">
                 <Image
-                  src="/logo.png"
+                  src="/logo-sm.webp"
                   alt={BRAND.name}
                   width={28}
                   height={28}

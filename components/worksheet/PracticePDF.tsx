@@ -225,7 +225,10 @@ export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
       <Page size={PAGE_DIMENSIONS[paperSize]} style={styles.page}>
         <View style={styles.header}>
           <View style={styles.brandRow}>
-            <Image src="/logo.png" style={styles.brandLogo} />
+            {/* The 96px PNG, not the 370px source: react-pdf cannot decode
+                WebP, and every printable worksheet would otherwise embed the
+                full 267 KB logo. */}
+            <Image src="/logo-sm.png" style={styles.brandLogo} />
             <Text style={styles.brand}>字·韵 · {cellStyleLabel(cellStyle)}</Text>
           </View>
           <Text style={styles.subtitle}>空白字帖 · 公益网站，多多支持</Text>

@@ -27,6 +27,7 @@
     "fonts:ancient": "npm run fonts:download && npm run fonts:subset-ancient && npm run fonts:verify-ancient",
     "chars:import": "tsx scripts/import-chars-data.ts",
     "favicon:build": "tsx scripts/build-favicon.ts",
+    "logo:build": "tsx scripts/build-logo-assets.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui"
