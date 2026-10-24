@@ -147,6 +147,10 @@ export function InitExecuteForm() {
   const [subSteps, setSubSteps] = useState<SubStep[]>(INITIAL);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  // The admin token is one-shot and time-limited. When it expires the
+  // create_admin phase fails with 401 token_expired — retrying would replay
+  // the same dead token, so the form sends the user back to step 2 instead.
+  const [credsExpired, setCredsExpired] = useState(false);
 
   useEffect(() => {
     const raw = typeof window !== 'undefined' ? sessionStorage.getItem(STORAGE_KEY) : null;
@@ -176,6 +180,7 @@ export function InitExecuteForm() {
     if (!creds) return;
     setBusy(true);
     setErr(null);
+    setCredsExpired(false);
     setSubSteps(INITIAL.map((s) => ({ ...s, status: 'idle', detail: undefined })));
 
     const phases: Phase[] = [
@@ -231,6 +236,9 @@ export function InitExecuteForm() {
             ? `${data.error.code}: ${data.error.message ?? '失败'}`
             : (data.error?.message ?? '失败');
           update(phase.id, { status: 'failed', detail });
+          if (phase.id === 'create_admin' && data.error?.code === 'token_expired') {
+            setCredsExpired(true);
+          }
           setErr(`${phase.id} 失败: ${detail}`);
           setBusy(false);
           return;
@@ -379,13 +387,22 @@ export function InitExecuteForm() {
         <span>
           步骤 0 已完成 — 管理员凭证已在{' '}
           <code className="rounded bg-green-100 px-1">/init/admin</code> 提交时缓存到服务端,token
-          有效期 120 秒(create-admin 阶段会消耗它)。
+          有效期 10 分钟(create-admin 阶段会消耗它)。
         </span>
       </div>
       <InitHeader currentStep={2} />
       {err && (
         <div className="my-4 rounded-md border border-seal/30 bg-seal/5 p-3 text-sm text-seal">
           {err}
+          {credsExpired && (
+            <p className="mt-2">
+              管理员信息已过期(仅在服务端内存保存 10 分钟)。
+              <a href="/init/admin" className="ml-1 underline">
+                返回第 2 步重新填写
+              </a>
+              ,再回到本页点「开始初始化」。
+            </p>
+          )}
         </div>
       )}
       <div className="space-y-4">
@@ -415,7 +432,7 @@ export function InitExecuteForm() {
             开始初始化
           </button>
         )}
-        {someFailed && (
+        {someFailed && !credsExpired && (
           <button
             type="button"
             onClick={runPhases}
@@ -424,6 +441,14 @@ export function InitExecuteForm() {
           >
             {busy ? '重试中…' : '重试失败步骤'}
           </button>
+        )}
+        {someFailed && credsExpired && (
+          <a
+            href="/init/admin"
+            className="rounded-md bg-amber-600 px-6 py-2 text-white hover:bg-amber-700"
+          >
+            返回第 2 步重新填写管理员信息 →
+          </a>
         )}
         {allDone && (
           <a

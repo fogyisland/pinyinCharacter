@@ -49,7 +49,7 @@ export function InitAdminForm() {
     <>
       <h1 className="mb-2 text-2xl font-semibold text-ink">首次部署 — 第 2 步 / 共 3 步</h1>
       <p className="mb-6 text-sm text-ink-soft">
-        创建第一个管理员账号。密码仅在服务端内存中临时保存 (30 秒),不会写入客户端存储。
+        创建第一个管理员账号。密码仅在服务端内存中临时保存 (10 分钟),不会写入客户端存储。
       </p>
       {err && (
         <div className="mb-4 rounded-md border border-seal/30 bg-seal/5 p-3 text-sm text-seal">
