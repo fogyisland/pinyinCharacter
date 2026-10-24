@@ -1,66 +1,46 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useState } from 'react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
+import { Panel } from '@/components/admin/Panel';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
+import { BatchProgressView, GenerateResult } from './generate/GenerateResult';
+import { useBatchRunner, useSubmit } from './generate/use-generate';
+import {
+  ALL_BATCH_FIELDS,
+  DICT_FIELDS,
+  LEVELS,
+  RARE_FIELDS,
+  TABS,
+  countHanChars,
+  type Tab,
+} from './generate/generate-types';
 
-type Tab = 'dict' | 'etymology' | 'batch' | 'rare';
-
-interface FieldResult {
-  generated: number;
-  skipped: number;
-  errors: { char: string; message: string }[];
-}
-
-interface GenerateResponse {
-  perField: Record<string, FieldResult>;
-  totals: FieldResult;
-}
-
-const DICT_FIELDS = [
-  { key: 'meaning_zh', label: '释义 (中文)' },
-  { key: 'meaning_en', label: '释义 (英文)' },
-  { key: 'pinyin_alt', label: '多音' },
-  { key: 'variants', label: '异体' },
-] as const;
-
-const RARE_FIELDS = [
-  { key: 'rare_meaning', label: '释义' },
-  { key: 'rare_story', label: '故事' },
-] as const;
-
-const ALL_BATCH_FIELDS = [
-  { key: 'meaning_zh', label: '释义(中文)' },
-  { key: 'meaning_en', label: '释义(英文)' },
-  { key: 'pinyin_alt', label: '多音' },
-  { key: 'variants', label: '异体' },
-  { key: 'etymology_story', label: '字源故事' },
-  { key: 'rare_meaning', label: '罕见字释义(L3)' },
-  { key: 'rare_story', label: '罕见字故事(L3)' },
-] as const;
-
-const LEVELS = [
-  { value: 1, label: 'L1', desc: '常用字 (3500 字)' },
-  { value: 2, label: 'L2', desc: '次常用字 (2996 字)' },
-  { value: 3, label: 'L3 / 罕见字', desc: '罕见字 (1412 字)' },
-] as const;
-
+/**
+ * The character generation console of /admin/chars/generate.
+ *
+ * Four ways to fill the character tables: one hand-picked field, the
+ * etymology story, the rare-character fields, and a level-wide batch run.
+ * The panels are the shared admin ones, so the page reads like the rest of
+ * the backend instead of a form that was built before the design system
+ * existed.
+ */
 export function GenerateCharsForm() {
   const [tab, setTab] = useState<Tab>('dict');
 
   return (
-    <div>
-      <div className="flex border-b border-paper-warm mb-4">
-        <TabBtn active={tab === 'dict'} onClick={() => setTab('dict')}>
-          字典字段
-        </TabBtn>
-        <TabBtn active={tab === 'etymology'} onClick={() => setTab('etymology')}>
-          字源
-        </TabBtn>
-        <TabBtn active={tab === 'batch'} onClick={() => setTab('batch')}>
-          按级别批量
-        </TabBtn>
-        <TabBtn active={tab === 'rare'} onClick={() => setTab('rare')}>
-          罕见字
-        </TabBtn>
+    <div className="space-y-4">
+      <div
+        role="tablist"
+        aria-label="生成方式"
+        className="flex flex-wrap gap-1 border-b border-ink/10"
+      >
+        {TABS.map((t) => (
+          <TabBtn key={t.key} active={tab === t.key} onClick={() => setTab(t.key)}>
+            {t.label}
+          </TabBtn>
+        ))}
       </div>
 
       {tab === 'dict' && <DictTab />}
@@ -83,10 +63,12 @@ function TabBtn({
   return (
     <button
       type="button"
+      role="tab"
+      aria-selected={active}
       onClick={onClick}
-      className={`px-4 py-2 text-sm border-b-2 -mb-px ${
+      className={`px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
         active
-          ? 'border-ink text-ink font-semibold'
+          ? 'border-seal text-ink font-semibold'
           : 'border-transparent text-ink-soft hover:text-ink'
       }`}
     >
@@ -95,100 +77,33 @@ function TabBtn({
   );
 }
 
-function CharInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  const count = Array.from(value).filter((c) => /[一-鿿]/.test(c)).length;
+function CharInput({
+  id,
+  value,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const count = countHanChars(value);
   return (
-    <div>
+    <FormField
+      label="汉字"
+      htmlFor={id}
+      hint={`已输入 ${count} 个字(逐字生成,每次最多 100 字)`}
+    >
       <textarea
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         rows={4}
         maxLength={200}
         placeholder="输入汉字,如 一丁七万丈三..."
-        className="w-full border border-ink/30 rounded p-2 text-base font-serif bg-paper"
+        className="adm-input"
       />
-      <span className="text-xs text-ink-soft">已输入 {count} 个字(逐字生成,每次最多 100 字)</span>
-    </div>
+    </FormField>
   );
-}
-
-function useSubmit() {
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<GenerateResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit(chars: string, fields: Record<string, boolean>) {
-    setError(null);
-    setResult(null);
-    const validChars = Array.from(chars).filter((c) => /[一-鿿]/.test(c));
-    if (validChars.length === 0) {
-      setError('请输入至少 1 个汉字');
-      return;
-    }
-    if (!Object.values(fields).some(Boolean)) {
-      setError('请至少勾选 1 个字段');
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/chars/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chars: validChars, fields }),
-      });
-      const j = await res.json();
-      if (!j.ok) {
-        setError(j.error?.message ?? '生成失败');
-        return;
-      }
-      setResult(j.data);
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return { loading, result, error, submit };
-}
-
-function ResultPanel({
-  result,
-  error,
-  fieldLabels,
-}: {
-  result: GenerateResponse | null;
-  error: string | null;
-  fieldLabels: Record<string, string>;
-}) {
-  if (error)
-    return <div className="mt-4 p-3 bg-paper-warm rounded text-sm text-seal">✗ {error}</div>;
-  if (!result) return null;
-  const { totals } = result;
-  return (
-    <div className="mt-4 p-3 bg-paper-warm rounded text-sm space-y-2">
-      <div>
-        ✓ 已生成 <span className="font-semibold">{totals.generated}</span> 个
-      </div>
-      {totals.skipped > 0 && <div>↷ 跳过 {totals.skipped} 个(字段已有值)</div>}
-      {totals.errors.length > 0 && (
-        <div className="text-seal">
-          <div>✗ 失败 {totals.errors.length} 个:</div>
-          <ul className="mt-1 ml-4 text-xs space-y-0.5">
-            {totals.errors.map((e, i) => (
-              <li key={i}>
-                {e.char} ({fieldLabels[labelForError(e.char, totals)] ?? '未知'}): {e.message}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function labelForError(char: string, totals: FieldResult): string {
-  return char;
 }
 
 function FieldCheckboxes<T extends string>({
@@ -203,9 +118,10 @@ function FieldCheckboxes<T extends string>({
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
       {options.map((o) => (
-        <label key={o.key} className="inline-flex items-center gap-1">
+        <label key={o.key} className="inline-flex items-center gap-1 text-ink cursor-pointer">
           <input
             type="checkbox"
+            className="h-4 w-4"
             checked={!!value[o.key]}
             onChange={(e) => onChange({ ...value, [o.key]: e.target.checked })}
           />
@@ -231,28 +147,32 @@ function DictTab() {
   );
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        submit(chars, fields);
-      }}
-      className="card-paper rounded-lg p-4 space-y-3"
+    <Panel
+      title="逐字生成"
+      description={
+        <>
+          为 <code>chars</code> 表填字段。已有值的字段会被跳过(避免覆盖人工填写)。需要先清空才能重新生成。
+        </>
+      }
     >
-      <p className="text-sm text-ink-soft">
-        为 <code>chars</code>{' '}
-        表填字段。已有值的字段会被跳过(避免覆盖人工填写)。需要先清空才能重新生成。
-      </p>
-      <FieldCheckboxes options={DICT_FIELDS} value={fields} onChange={setFields} />
-      <CharInput value={chars} onChange={setChars} />
-      <button
-        type="submit"
-        disabled={loading}
-        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(chars, fields);
+        }}
+        className="space-y-4"
       >
-        {loading ? '生成中…' : '生成'}
-      </button>
-      <ResultPanel result={result} error={error} fieldLabels={fieldLabels} />
-    </form>
+        <div>
+          <div className="text-sm font-medium text-ink mb-2">要生成的字段</div>
+          <FieldCheckboxes options={DICT_FIELDS} value={fields} onChange={setFields} />
+        </div>
+        <CharInput id="dict-chars" value={chars} onChange={setChars} />
+        <AdminButton type="submit" variant="primary" disabled={loading}>
+          {loading ? '生成中…' : '生成'}
+        </AdminButton>
+        <GenerateResult result={result} error={error} fieldLabels={fieldLabels} />
+      </form>
+    </Panel>
   );
 }
 
@@ -261,26 +181,28 @@ function EtymologyTab() {
   const { loading, result, error, submit } = useSubmit();
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        submit(chars, { etymology_story: true });
-      }}
-      className="card-paper rounded-lg p-4 space-y-3"
+    <Panel
+      title="字源故事"
+      description={
+        <>
+          为 <code>char_etymology</code> 表填字源演变故事。已有 story 的字会被跳过。
+        </>
+      }
     >
-      <p className="text-sm text-ink-soft">
-        为 <code>char_etymology</code> 表填字源演变故事。已有 story 的字会被跳过。
-      </p>
-      <CharInput value={chars} onChange={setChars} />
-      <button
-        type="submit"
-        disabled={loading}
-        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(chars, { etymology_story: true });
+        }}
+        className="space-y-4"
       >
-        {loading ? '生成中…' : '生成字源'}
-      </button>
-      <ResultPanel result={result} error={error} fieldLabels={{ etymology_story: '字源' }} />
-    </form>
+        <CharInput id="etymology-chars" value={chars} onChange={setChars} />
+        <AdminButton type="submit" variant="primary" disabled={loading}>
+          {loading ? '生成中…' : '生成字源'}
+        </AdminButton>
+        <GenerateResult result={result} error={error} fieldLabels={{ etymology_story: '字源' }} />
+      </form>
+    </Panel>
   );
 }
 
@@ -297,185 +219,37 @@ function RareTab() {
   );
 
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        submit(chars, fields);
-      }}
-      className="card-paper rounded-lg p-4 space-y-3"
+    <Panel
+      title="罕见字"
+      description={
+        <>
+          为 <code>rare_chars</code> 表填释义和/或故事。已有值的字段会被跳过。字必须在{' '}
+          <code>rare_chars</code> 表中存在。
+        </>
+      }
     >
-      <p className="text-sm text-ink-soft">
-        为 <code>rare_chars</code> 表填释义和/或故事。已有值的字段会被跳过。字必须在 rare_chars
-        表中存在。
-      </p>
-      <FieldCheckboxes options={RARE_FIELDS} value={fields} onChange={setFields} />
-      <CharInput value={chars} onChange={setChars} />
-      <button
-        type="submit"
-        disabled={loading}
-        className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(chars, fields);
+        }}
+        className="space-y-4"
       >
-        {loading ? '生成中…' : '生成'}
-      </button>
-      <ResultPanel result={result} error={error} fieldLabels={fieldLabels} />
-    </form>
+        <div>
+          <div className="text-sm font-medium text-ink mb-2">要生成的字段</div>
+          <FieldCheckboxes options={RARE_FIELDS} value={fields} onChange={setFields} />
+        </div>
+        <CharInput id="rare-chars" value={chars} onChange={setChars} />
+        <AdminButton type="submit" variant="primary" disabled={loading}>
+          {loading ? '生成中…' : '生成'}
+        </AdminButton>
+        <GenerateResult result={result} error={error} fieldLabels={fieldLabels} />
+      </form>
+    </Panel>
   );
 }
 
 // --- 按级别批量 tab ---
-
-type BatchStatus = 'idle' | 'running' | 'paused' | 'done' | 'error';
-
-interface BatchProgress {
-  totalChars: number;
-  processed: number;
-  nextOffset: number;
-  elapsedMs: number;
-  perField: Record<string, FieldProgress>;
-}
-
-/**
- * The per-field progress of a batch run.
- *
- * `errors` holds only the most recent entries — a long batch can produce
- * thousands of them, and keeping every one in the React state made the
- * state grow without bound. The true number lives in `errorCount`.
- */
-interface FieldProgress {
-  generated: number;
-  skipped: number;
-  /** How many errors occurred, including the ones no longer listed. */
-  errorCount: number;
-  errors: { char: string; message: string }[];
-}
-
-/** How many error entries one field keeps in the state. */
-const MAX_FIELD_ERRORS = 200;
-
-const EMPTY_PROGRESS: BatchProgress = {
-  totalChars: 0,
-  processed: 0,
-  nextOffset: 0,
-  elapsedMs: 0,
-  perField: {},
-};
-
-function useBatchRunner() {
-  const [status, setStatus] = useState<BatchStatus>('idle');
-  const [progress, setProgress] = useState<BatchProgress>(EMPTY_PROGRESS);
-  const [lastError, setLastError] = useState<string | null>(null);
-  const offsetRef = useRef(0);
-  const pauseRef = useRef(false);
-  const bodyRef = useRef<{
-    level: number;
-    fields: Record<string, boolean>;
-    concurrency: number;
-  } | null>(null);
-
-  async function runOnce() {
-    const body = bodyRef.current;
-    if (!body) return;
-    setLastError(null);
-    try {
-      const res = await fetch('/api/admin/chars/generate-by-level', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          level: body.level,
-          fields: body.fields,
-          offset: offsetRef.current,
-          limit: 30,
-          concurrency: body.concurrency,
-        }),
-      });
-      const j = await res.json();
-      if (!j.ok) {
-        setLastError(j.error?.message ?? '请求失败');
-        setStatus('error');
-        return;
-      }
-      const d = j.data;
-      offsetRef.current = d.nextOffset;
-      setProgress((prev) => ({
-        totalChars: d.totalChars,
-        processed: prev.processed + d.processed,
-        nextOffset: d.nextOffset,
-        elapsedMs: prev.elapsedMs + d.elapsedMs,
-        perField: mergePerField(prev.perField, d.perField),
-      }));
-      if (d.done) {
-        setStatus('done');
-      } else if (pauseRef.current) {
-        setStatus('paused');
-      } else {
-        setTimeout(() => {
-          if (!pauseRef.current) runOnce();
-        }, 800);
-      }
-    } catch (err) {
-      setLastError((err as Error).message);
-      setStatus('error');
-    }
-  }
-
-  function start(level: number, fields: Record<string, boolean>, concurrency: number) {
-    if (!Object.values(fields).some(Boolean)) {
-      setLastError('请至少勾选 1 个字段');
-      setStatus('error');
-      return;
-    }
-    bodyRef.current = { level, fields, concurrency };
-    offsetRef.current = 0;
-    pauseRef.current = false;
-    setProgress(EMPTY_PROGRESS);
-    setLastError(null);
-    setStatus('running');
-    runOnce();
-  }
-
-  function pause() {
-    pauseRef.current = true;
-    setStatus('paused');
-  }
-
-  function resume() {
-    pauseRef.current = false;
-    setStatus('running');
-    runOnce();
-  }
-
-  function reset() {
-    pauseRef.current = true;
-    bodyRef.current = null;
-    offsetRef.current = 0;
-    setProgress(EMPTY_PROGRESS);
-    setLastError(null);
-    setStatus('idle');
-  }
-
-  return { status, progress, lastError, start, pause, resume, reset };
-}
-
-function mergePerField(
-  a: Record<string, FieldProgress>,
-  b: Record<string, FieldResult>,
-): Record<string, FieldProgress> {
-  const out: Record<string, FieldProgress> = { ...a };
-  for (const k of Object.keys(b)) {
-    const prev = a[k] ?? { generated: 0, skipped: 0, errorCount: 0, errors: [] };
-    const incoming = b[k].errors;
-    out[k] = {
-      generated: prev.generated + b[k].generated,
-      skipped: prev.skipped + b[k].skipped,
-      errorCount: prev.errorCount + incoming.length,
-      // Keep only the most recent errors. The old code appended the whole
-      // list on every batch, which grew the state without bound AND copied
-      // it every time — quadratic work over a long run.
-      errors: prev.errors.concat(incoming).slice(-MAX_FIELD_ERRORS),
-    };
-  }
-  return out;
-}
 
 function BatchTab() {
   const [level, setLevel] = useState<1 | 2 | 3>(1);
@@ -487,9 +261,6 @@ function BatchTab() {
   const [concurrency, setConcurrency] = useState(4);
   const runner = useBatchRunner();
 
-  const fieldLabels: Record<string, string> = Object.fromEntries(
-    ALL_BATCH_FIELDS.map((f) => [f.key, f.label]),
-  );
   const visibleFields =
     level === 3
       ? ALL_BATCH_FIELDS
@@ -499,7 +270,7 @@ function BatchTab() {
       ? Math.round((runner.progress.processed / runner.progress.totalChars) * 100)
       : 0;
   const etaMs =
-    runner.progress.processed > 0 && !runner.status.includes('done') && runner.status !== 'error'
+    runner.progress.processed > 0 && runner.status !== 'done' && runner.status !== 'error'
       ? (runner.progress.elapsedMs / runner.progress.processed) *
         (runner.progress.totalChars - runner.progress.processed)
       : 0;
@@ -514,204 +285,147 @@ function BatchTab() {
     return `${h}h${(m % 60).toString().padStart(2, '0')}m`;
   };
 
+  const isRunning = runner.status === 'running';
+  const canStart = !isRunning && visibleFields.some((f) => fields[f.key]);
+  const hasProgress = runner.progress.totalChars > 0 || isRunning;
+
   return (
-    <div className="card-paper rounded-lg p-4 space-y-4">
-      <p className="text-sm text-ink-soft">
-        按级别遍历 <code>chars</code> 表,逐 30
-        字一批自动循环。已有值的字段会跳过(避免覆盖)。后台已配置的 AI 端点会处理 L1/L2/L3
-        的全部内容生成。
-      </p>
-
-      <div>
-        <div className="text-sm font-semibold mb-2">级别</div>
-        <div className="flex flex-wrap gap-3">
-          {LEVELS.map((l) => (
-            <label key={l.value} className="flex items-start gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="batch-level"
-                value={l.value}
-                checked={level === l.value}
-                onChange={() => setLevel(l.value as 1 | 2 | 3)}
-                disabled={runner.status === 'running'}
-                className="mt-1"
-              />
-              <span>
-                <span className="font-medium">{l.label}</span>
-                <span className="text-xs text-ink-soft ml-1">{l.desc}</span>
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <div className="text-sm font-semibold mb-2">
-          字段(全默认勾选)
-          {level !== 3 && (
-            <span className="text-xs text-ink-soft font-normal ml-2">
-              L3 才会有"罕见字释义/故事"
-            </span>
-          )}
-        </div>
-        <FieldCheckboxes options={visibleFields} value={fields} onChange={setFields} />
-      </div>
-
-      <div>
-        <label className="text-sm font-semibold">
-          并发数 (LLM 同时调用数):
-          <select
-            value={concurrency}
-            onChange={(e) => setConcurrency(Number(e.target.value))}
-            disabled={runner.status === 'running'}
-            className="ml-2 border border-ink/30 rounded px-2 py-1 bg-paper"
-          >
-            {[1, 2, 3, 4, 6, 8].map((n) => (
-              <option key={n} value={n}>
-                {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <span className="text-xs text-ink-soft ml-2">并发越高越快,但易触发限速</span>
-      </div>
-
-      <div className="flex gap-2">
-        {runner.status === 'idle' || runner.status === 'done' || runner.status === 'error' ? (
-          <button
-            type="button"
-            onClick={() => {
-              const applicableFields: Record<string, boolean> = {};
-              for (const f of visibleFields) applicableFields[f.key] = !!fields[f.key];
-              runner.start(level, applicableFields, concurrency);
-            }}
-            disabled={!visibleFields.some((f) => fields[f.key])}
-            className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80 disabled:opacity-50"
-          >
-            ▶ 开始生成
-          </button>
-        ) : runner.status === 'running' ? (
-          <button
-            type="button"
-            onClick={runner.pause}
-            className="text-sm px-4 py-2 rounded bg-paper-warm border border-ink/30 hover:bg-ink/10"
-          >
-            ⏸ 暂停
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={runner.resume}
-            className="text-sm px-4 py-2 rounded bg-ink text-paper hover:bg-ink/80"
-          >
-            ▶ 继续
-          </button>
-        )}
-        {runner.status !== 'idle' && (
-          <button
-            type="button"
-            onClick={runner.reset}
-            className="text-sm px-4 py-2 rounded border border-ink/30 hover:bg-ink/10"
-          >
-            重置
-          </button>
-        )}
-      </div>
-
-      {runner.lastError && (
-        <div className="p-3 bg-paper-warm rounded text-sm text-seal">✗ {runner.lastError}</div>
-      )}
-
-      {(runner.progress.totalChars > 0 || runner.status === 'running') && (
-        <BatchProgressView
-          progress={runner.progress}
-          status={runner.status}
-          pct={pct}
-          etaMs={etaMs}
-          fmtTime={fmtTime}
-          fieldLabels={fieldLabels}
-        />
-      )}
-    </div>
-  );
-}
-
-function BatchProgressView({
-  progress,
-  status,
-  pct,
-  etaMs,
-  fmtTime,
-  fieldLabels,
-}: {
-  progress: BatchProgress;
-  status: BatchStatus;
-  pct: number;
-  etaMs: number;
-  fmtTime: (ms: number) => string;
-  fieldLabels: Record<string, string>;
-}) {
-  return (
-    <div className="mt-2 space-y-3">
-      <div className="flex justify-between text-sm">
-        <span>
-          {progress.processed} / {progress.totalChars} ({pct}%)
-        </span>
-        <span className="text-ink-soft">
-          {status === 'running' && `运行中… 剩余约 ${fmtTime(etaMs)}`}
-          {status === 'paused' && '已暂停'}
-          {status === 'done' && '✓ 全部完成'}
-          {status === 'error' && '已停止(出错)'}
-        </span>
-      </div>
-      <div className="w-full h-2 bg-paper-warm rounded overflow-hidden">
-        <div className="h-full bg-ink transition-all" style={{ width: `${pct}%` }} />
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-        {ALL_BATCH_FIELDS.map((f) => {
-          const r = progress.perField[f.key] ?? {
-            generated: 0,
-            skipped: 0,
-            errorCount: 0,
-            errors: [],
-          };
-          return (
-            <div key={f.key} className="flex justify-between border-b border-paper-warm py-1">
-              <span>{f.label}</span>
-              <span className="space-x-2">
-                <span>✓ {r.generated}</span>
-                {r.skipped > 0 && <span className="text-ink-soft">↷ {r.skipped}</span>}
-                {r.errorCount > 0 && <span className="text-seal">✗ {r.errorCount}</span>}
-              </span>
-            </div>
-          );
-        })}
-      </div>
-      {(() => {
-        const fields = Object.values(progress.perField);
-        const totalErrors = fields.reduce((sum, r) => sum + r.errorCount, 0);
-        if (totalErrors === 0) return null;
-        // The newest error of a field sits at the end of its list, so the
-        // most recent ones come from the tail — walked newest field first.
-        const show = fields
-          .slice()
-          .reverse()
-          .flatMap((r) => r.errors.slice(-10))
-          .slice(0, 10)
-          .reverse();
-        return (
-          <div className="text-xs text-seal">
-            <div>最近错误(共 {totalErrors}):</div>
-            <ul className="mt-1 ml-4 space-y-0.5">
-              {show.map((e, i) => (
-                <li key={i}>
-                  {e.char}: {e.message}
-                </li>
+    <div className="space-y-4">
+      <Panel
+        title="按级别批量"
+        description={
+          <>
+            按级别遍历 <code>chars</code> 表,逐 30 字一批自动循环。已有值的字段会跳过(避免覆盖)。后台已配置的
+            AI 端点会处理 L1/L2/L3 的全部内容生成。
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm font-medium text-ink mb-2">级别</div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {LEVELS.map((l) => (
+                <label
+                  key={l.value}
+                  className={`flex items-start gap-2 rounded border p-2.5 cursor-pointer transition-colors ${
+                    level === l.value
+                      ? 'border-seal/50 bg-seal/5'
+                      : 'border-ink/15 hover:border-ink/30'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="batch-level"
+                    value={l.value}
+                    checked={level === l.value}
+                    onChange={() => setLevel(l.value)}
+                    disabled={isRunning}
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                  />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-medium text-ink">{l.label}</span>
+                    <span className="block text-xs text-ink-soft">{l.desc}</span>
+                  </span>
+                </label>
               ))}
-            </ul>
+            </div>
           </div>
-        );
-      })()}
+
+          <div>
+            <div className="text-sm font-medium text-ink mb-2">
+              字段(全默认勾选)
+              {level !== 3 && (
+                <span className="text-xs text-ink-faint font-normal ml-2">
+                  L3 才会有"罕见字释义/故事"
+                </span>
+              )}
+            </div>
+            <FieldCheckboxes options={visibleFields} value={fields} onChange={setFields} />
+          </div>
+
+          <FormField
+            label="并发数 (LLM 同时调用数)"
+            htmlFor="batch-concurrency"
+            hint="并发越高越快,但易触发限速"
+          >
+            <select
+              id="batch-concurrency"
+              value={concurrency}
+              onChange={(e) => setConcurrency(Number(e.target.value))}
+              disabled={isRunning}
+              className="adm-input max-w-xs"
+            >
+              {[1, 2, 3, 4, 6, 8].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </FormField>
+
+          {runner.lastError && (
+            <div className="rounded border border-danger/30 bg-danger/8 px-3 py-2 text-sm text-danger">
+              ✗ {runner.lastError}
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-2">
+            {runner.status === 'idle' ||
+            runner.status === 'done' ||
+            runner.status === 'error' ? (
+              <AdminButton
+                variant="primary"
+                icon={<Play className="h-3.5 w-3.5" />}
+                disabled={!canStart}
+                onClick={() => {
+                  const applicableFields: Record<string, boolean> = {};
+                  for (const f of visibleFields) applicableFields[f.key] = !!fields[f.key];
+                  runner.start(level, applicableFields, concurrency);
+                }}
+              >
+                开始生成
+              </AdminButton>
+            ) : isRunning ? (
+              <AdminButton
+                variant="secondary"
+                icon={<Pause className="h-3.5 w-3.5" />}
+                onClick={runner.pause}
+              >
+                暂停
+              </AdminButton>
+            ) : (
+              <AdminButton
+                variant="primary"
+                icon={<Play className="h-3.5 w-3.5" />}
+                onClick={runner.resume}
+              >
+                继续
+              </AdminButton>
+            )}
+            {runner.status !== 'idle' && (
+              <AdminButton
+                variant="ghost"
+                icon={<RotateCcw className="h-3.5 w-3.5" />}
+                onClick={runner.reset}
+              >
+                重置
+              </AdminButton>
+            )}
+          </div>
+        </div>
+      </Panel>
+
+      {hasProgress && (
+        <Panel title="执行进度" description="按字段统计的生成情况">
+          <BatchProgressView
+            progress={runner.progress}
+            status={runner.status}
+            pct={pct}
+            etaMs={etaMs}
+            fmtTime={fmtTime}
+          />
+        </Panel>
+      )}
     </div>
   );
 }
