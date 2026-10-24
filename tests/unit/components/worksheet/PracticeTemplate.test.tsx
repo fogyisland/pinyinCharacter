@@ -1,23 +1,25 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, within, cleanup } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeAll, afterAll } from 'vitest';
+import { render, screen, within, cleanup, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-// @react-pdf/renderer is used by PracticeTemplate (dynamic PDFDownloadLink)
-// and by PracticePDF (Font.register at module load). In happy-dom, the
-// renderer throws on instantiation, and Font.register would try to read
-// '/fonts/zcool-xiaowei.ttf' from CWD. Spread the actual module so Font
-// and other named exports survive, then stub only PDFDownloadLink to a
-// plain anchor so we can exercise the UI tree without running react-pdf.
+// The PDF renderer is reached through the lazily loaded
+// `PracticePdfDownloader`, which calls `pdf()` from @react-pdf/renderer.
+// In happy-dom the real renderer cannot lay out a document (and
+// Font.register would try to read '/fonts/zcool-xiaowei.ttf' from CWD), so
+// `pdf()` is stubbed and the call is recorded — that is what lets us assert
+// that the ~1 MB renderer is only pulled in when the visitor asks for a PDF.
+const { pdfMock } = vi.hoisted(() => ({
+  pdfMock: vi.fn(() => ({
+    toBlob: async () => new Blob(['%PDF-1.4'], { type: 'application/pdf' }),
+  })),
+}));
+
 vi.mock('@react-pdf/renderer', async () => {
   const actual = await vi.importActual<typeof import('@react-pdf/renderer')>('@react-pdf/renderer');
   return {
     ...actual,
-    PDFDownloadLink: ({ children, fileName }: { children: unknown; fileName?: string }) => (
-      <a data-testid="pdf-link" data-filename={fileName}>
-        {typeof children === 'function' ? children({ loading: false }) : children}
-      </a>
-    ),
+    pdf: pdfMock,
   };
 });
 
@@ -28,6 +30,16 @@ import { PracticeTemplate } from '@/components/worksheet/PracticeTemplate';
 // `getByLabelText` would then find two elements sharing the same `id`.
 afterEach(() => {
   cleanup();
+  pdfMock.mockClear();
+});
+
+// happy-dom has no object-URL store; the download path needs one.
+const originalCreateObjectURL = URL.createObjectURL;
+beforeAll(() => {
+  URL.createObjectURL = vi.fn(() => 'blob:practice-pdf');
+});
+afterAll(() => {
+  URL.createObjectURL = originalCreateObjectURL;
 });
 
 describe('PracticeTemplate — pen-lined option', () => {
@@ -149,5 +161,28 @@ describe('PracticeTemplate — pen-english option (four-line English trace)', ()
     const firstCell = document.querySelector('.worksheet-cell svg');
     // 田字格 uses viewBox 0 0 100 100, not 0 0 100 38
     expect(firstCell?.getAttribute('viewBox')).toBe('0 0 100 100');
+  });
+});
+
+describe('PracticeTemplate — lazy PDF renderer', () => {
+  it('does not load the PDF renderer before the download button is used', () => {
+    render(<PracticeTemplate />);
+    // @react-pdf/renderer + pdfkit is ~1 MB. It must stay out of the page
+    // until a PDF is actually requested.
+    expect(pdfMock).not.toHaveBeenCalled();
+  });
+
+  it('loads the PDF renderer and generates a document when 下载 PDF is clicked', async () => {
+    const user = userEvent.setup();
+    render(<PracticeTemplate />);
+    const button = screen.getByRole('button', { name: '下载 PDF' });
+    await user.click(button);
+    await waitFor(() => expect(pdfMock).toHaveBeenCalledTimes(1), { timeout: 5000 });
+  });
+
+  it('renders the download button and the print button side by side', () => {
+    render(<PracticeTemplate />);
+    expect(screen.getByRole('button', { name: '下载 PDF' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '打印模板' })).toBeTruthy();
   });
 });

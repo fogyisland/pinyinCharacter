@@ -1,10 +1,9 @@
 'use client';
 /* eslint-disable react-hooks/rules-of-hooks -- useSearchParams wrapped in IIFE try/catch for happy-dom tests (lint false positive) */
 
-import { useEffect, useState, type ComponentType, type ReactElement, type ReactNode } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import type { DocumentProps } from '@react-pdf/renderer';
 import type { CellStyle, PaperSize, Tool } from '@/lib/worksheet-types';
 import {
   PAPER_SIZES,
@@ -20,27 +19,14 @@ import {
   linesPerPage,
 } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
-import { PracticePDF } from './PracticePDF';
 
-// @react-pdf/renderer's main entry is the Node build, which throws when
-// PDFDownloadLink is instantiated on the server. Dynamic import with
-// ssr: false skips the server bundle entirely — only loads in the browser.
-// Cast through `unknown` because next/dynamic's prop inference fights
-// react-pdf's overloaded children (ReactNode | render-prop).
-const PDFDownloadLink = dynamic(
-  () => import('@react-pdf/renderer').then((mod) => mod.PDFDownloadLink),
-  {
-    ssr: false,
-    loading: () => (
-      <span className="rounded border border-seal px-4 py-1.5 text-seal/60 text-sm">…</span>
-    ),
-  },
-) as unknown as ComponentType<{
-  document: ReactElement<DocumentProps>;
-  fileName?: string;
-  className?: string;
-  children?: ReactNode | ((state: { loading: boolean }) => ReactNode);
-}>;
+// The PDF renderer (@react-pdf/renderer + pdfkit + yoga) weighs about 1 MB.
+// It used to sit in this page's initial bundle, because `PracticePDF`
+// imported react-pdf statically — even though most visitors of
+// /worksheet/practice only use the browser's print dialog. The downloader
+// is therefore loaded on demand: the button pulls the module in the first
+// time it is used, and it never reaches the server bundle (ssr: false).
+const PracticePdfDownloader = dynamic(() => import('./PracticePdfDownloader'), { ssr: false });
 
 const PRACTICE_CELL_STYLES: { value: CellStyle; label: string; tool: Tool }[] = [
   { value: 'brush-square', label: '毛笔 · 田字格', tool: 'brush' },
@@ -86,6 +72,26 @@ export function PracticeTemplate() {
   const initialStyle = (sp?.get('style') as CellStyle | null) ?? 'pen-square';
   const [paperSize, setPaperSize] = useState<PaperSize>('A4');
   const [cellStyle, setCellStyle] = useState<CellStyle>(initialStyle);
+  // PDF download: the request counter drives the lazily loaded downloader,
+  // `pdfStatus` drives the button label.
+  const [pdfRunId, setPdfRunId] = useState(0);
+  const [pdfStatus, setPdfStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const handlePdfStatus = useCallback((status: 'loading' | 'done' | 'error') => {
+    setPdfStatus(status);
+    if (status === 'done') setPdfError(null);
+  }, []);
+
+  const handlePdfError = useCallback((message: string) => {
+    setPdfError(message);
+  }, []);
+
+  function handleDownloadPdf() {
+    setPdfError(null);
+    setPdfStatus('idle');
+    setPdfRunId((id) => id + 1);
+  }
 
   // Keep cellStyle in sync if the URL param changes (e.g. headless screenshot).
   useEffect(() => {
@@ -193,15 +199,14 @@ export function PracticeTemplate() {
             自动适配 {count} {isLined ? '行' : '格'} / 页
           </p>
           <div className="flex gap-2 shrink-0">
-            <PDFDownloadLink
-              document={
-                <PracticePDF paperSize={paperSize} cellStyle={cellStyle} siteHost={siteHost} />
-              }
-              fileName={`练字模板-${paperSize}.pdf`}
-              className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10"
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={pdfStatus === 'loading'}
+              className="rounded border border-seal px-4 py-1.5 text-seal text-sm hover:bg-seal/10 disabled:opacity-50"
             >
-              {({ loading }) => (loading ? '生成中…' : '下载 PDF')}
-            </PDFDownloadLink>
+              {pdfStatus === 'loading' ? '生成中…' : '下载 PDF'}
+            </button>
             <button
               type="button"
               onClick={() => window.print()}
@@ -211,6 +216,19 @@ export function PracticeTemplate() {
             </button>
           </div>
         </div>
+        {/* The PDF renderer lives in this lazily loaded component: it is
+            mounted only after the visitor asks for a PDF. */}
+        {pdfRunId > 0 && (
+          <PracticePdfDownloader
+            runId={pdfRunId}
+            paperSize={paperSize}
+            cellStyle={cellStyle}
+            siteHost={siteHost}
+            onStatus={handlePdfStatus}
+            onError={handlePdfError}
+          />
+        )}
+        {pdfError && <p className="mt-2 text-xs text-red-600">{pdfError}</p>}
         <p className="mt-2 text-xs text-ink-faint">
           点「下载 PDF」直接获得自定义排版的
           PDF；点「打印模板」走浏览器打印（对话框里取消「页眉和页脚」）。
