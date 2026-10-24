@@ -4,6 +4,10 @@ import { getTopPaths } from '@/lib/admin-pageviews';
 import { LazyBarChartTop } from '@/components/admin/charts/LazyBarChartTop';
 import { CopyPathCell } from '@/components/admin/analytics/CopyPathCell';
 import { formatNumber } from '@/lib/format';
+import { DataTable } from '@/components/admin/DataTable';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Panel } from '@/components/admin/Panel';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -26,77 +30,69 @@ export default async function AnalyticsPage({
   const topPages = await getTopPaths(days, 20);
 
   return (
-    <div className="p-8 space-y-6 max-w-6xl mx-auto">
-      <header>
-        <h1 className="text-2xl font-serif text-ink">访问分析</h1>
-        <p className="text-sm text-ink-soft mt-1">
-          近 {days} 天 · 共 {topPages.length} 条路径
-        </p>
-      </header>
+    <div>
+      <PageHeader
+        title="访问分析"
+        description={`近 ${days} 天 · 共 ${topPages.length} 条路径`}
+      />
 
-      <nav className="flex gap-2" aria-label="时间范围">
-        {RANGE_TABS.map((tab) => {
-          const active = tab.range === current;
-          return (
-            <Link
-              key={tab.range}
-              href={`/admin/analytics?range=${tab.range}`}
-              aria-current={active ? 'page' : undefined}
-              className={
-                active
-                  ? 'px-4 py-2 rounded bg-paper border border-line text-ink font-medium'
-                  : 'px-4 py-2 rounded bg-muted/30 border border-line/50 text-ink-soft hover:bg-muted/50'
+      <div className="space-y-6">
+        <nav className="flex flex-wrap gap-2" aria-label="时间范围">
+          {RANGE_TABS.map((tab) => {
+            const active = tab.range === current;
+            return (
+              <Link
+                key={tab.range}
+                href={`/admin/analytics?range=${tab.range}`}
+                aria-current={active ? 'page' : undefined}
+                className={`px-3 py-1.5 rounded border text-sm transition-colors ${
+                  active
+                    ? 'bg-ink text-paper border-ink font-medium'
+                    : 'border-ink/20 text-ink-soft hover:bg-paper-deep'
+                }`}
+              >
+                {tab.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Panel title="Top 20 路径" description="按浏览量排列。">
+            <LazyBarChartTop data={topPages.map((p) => ({ label: p.path, value: p.views }))} />
+          </Panel>
+
+          <Panel title="详情表" description="路径的浏览量与独立访客数。点路径可复制。">
+            <DataTable
+              rows={topPages}
+              rowKey={(p) => p.path}
+              caption="访问路径详情"
+              maxHeight="medium"
+              framed={false}
+              empty={
+                <EmptyState
+                  title="暂无数据"
+                  description="这段时间还没有页面访问记录。换个时间范围再看看。"
+                />
               }
+              columns={[
+                { key: 'path', header: '路径', mobileTitle: true, className: 'max-w-0' },
+                { key: 'views', header: '浏览量', numeric: true },
+                { key: 'unique', header: '独立访客', numeric: true },
+              ]}
             >
-              {tab.label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <section className="bg-paper rounded border border-line p-4">
-          <h2 className="text-base font-serif text-ink mb-3">Top 20 路径</h2>
-          <LazyBarChartTop data={topPages.map((p) => ({ label: p.path, value: p.views }))} />
-        </section>
-
-        <section className="bg-paper rounded border border-line p-4">
-          <h2 className="text-base font-serif text-ink mb-3">详情表</h2>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-line text-ink-soft text-left">
-                <th className="py-2 pr-4">路径</th>
-                <th className="py-2 pr-4 text-right">浏览量</th>
-                <th className="py-2 pr-4 text-right">独立访客</th>
-              </tr>
-            </thead>
-            <tbody>
-              {topPages.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="py-6 text-center text-ink-soft text-sm">
-                    暂无数据
-                  </td>
-                </tr>
-              ) : (
-                topPages.map((p) => (
-                  <tr key={p.path} className="border-b border-line/50">
-                    <td className="py-2 pr-4 max-w-0">
-                      <div className="truncate">
-                        <CopyPathCell path={p.path} />
-                      </div>
-                    </td>
-                    <td className="py-2 pr-4 text-right tabular-nums">
-                      {formatNumber(p.views)}
-                    </td>
-                    <td className="py-2 pr-4 text-right tabular-nums">
-                      {formatNumber(p.unique)}
-                    </td>
-                  </tr>
-                ))
+              {(p) => (
+                <>
+                  <span className="block truncate">
+                    <CopyPathCell path={p.path} />
+                  </span>
+                  <span>{formatNumber(p.views)}</span>
+                  <span>{formatNumber(p.unique)}</span>
+                </>
               )}
-            </tbody>
-          </table>
-        </section>
+            </DataTable>
+          </Panel>
+        </div>
       </div>
     </div>
   );

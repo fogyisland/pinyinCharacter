@@ -29,9 +29,9 @@ export type AiCallStatusFilter = 'ok' | 'error' | 'rate-limited';
 
 export const AI_STATUS_OPTIONS: { value: AiCallStatusFilter | ''; label: string }[] = [
   { value: '', label: '全部状态' },
-  { value: 'ok', label: 'ok' },
-  { value: 'error', label: 'error' },
-  { value: 'rate-limited', label: 'rate-limited' },
+  { value: 'ok', label: '成功' },
+  { value: 'error', label: '失败' },
+  { value: 'rate-limited', label: '限流' },
 ];
 
 export interface AiCallsQuery {

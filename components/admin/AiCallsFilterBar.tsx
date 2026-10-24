@@ -8,6 +8,8 @@ import {
   parseAiStatus,
   type AiCallsQuery,
 } from '@/lib/admin-ai-url';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 /** Read a form field as a trimmed string. */
 function field(form: FormData, name: string): string {
@@ -20,6 +22,9 @@ function field(form: FormData, name: string): string {
  *
  * A small client island: the page itself renders on the server, and this
  * island only turns the form into a query string and navigates to it.
+ *
+ * The bar sits inside the page's `Toolbar`, so it only lays its fields out
+ * — the bar's own frame belongs to the toolbar.
  */
 export function AiCallsFilterBar({ query }: { query: AiCallsQuery }) {
   const router = useRouter();
@@ -44,31 +49,22 @@ export function AiCallsFilterBar({ query }: { query: AiCallsQuery }) {
   }
 
   return (
-    <form
-      onSubmit={apply}
-      className="card-paper rounded-lg p-3 grid grid-cols-1 md:grid-cols-6 gap-2 items-end"
-    >
-      <div>
-        <label className="text-xs text-ink-soft" htmlFor="ai-calls-feature">
-          功能
-        </label>
+    <form onSubmit={apply} className="grid w-full grid-cols-1 md:grid-cols-6 gap-2 items-end">
+      <FormField label="功能" htmlFor="ai-calls-feature">
         <input
           id="ai-calls-feature"
           name="feature"
           defaultValue={query.feature}
-          className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+          className="adm-input"
           placeholder="如 rare-char-story"
         />
-      </div>
-      <div>
-        <label className="text-xs text-ink-soft" htmlFor="ai-calls-status">
-          状态
-        </label>
+      </FormField>
+      <FormField label="状态" htmlFor="ai-calls-status">
         <select
           id="ai-calls-status"
           name="status"
           defaultValue={query.status}
-          className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+          className="adm-input"
         >
           {AI_STATUS_OPTIONS.map((s) => (
             <option key={s.value} value={s.value}>
@@ -76,59 +72,42 @@ export function AiCallsFilterBar({ query }: { query: AiCallsQuery }) {
             </option>
           ))}
         </select>
-      </div>
-      <div>
-        <label className="text-xs text-ink-soft" htmlFor="ai-calls-user-id">
-          用户 ID
-        </label>
+      </FormField>
+      <FormField label="用户 ID" htmlFor="ai-calls-user-id">
         <input
           id="ai-calls-user-id"
           name="userId"
           defaultValue={query.userId}
           type="text"
           placeholder="数字 ID"
-          className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+          className="adm-input"
         />
-      </div>
-      <div>
-        <label className="text-xs text-ink-soft" htmlFor="ai-calls-from">
-          从
-        </label>
+      </FormField>
+      <FormField label="从" htmlFor="ai-calls-from">
         <input
           id="ai-calls-from"
           name="from"
           defaultValue={query.from}
           type="date"
-          className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+          className="adm-input"
         />
-      </div>
-      <div>
-        <label className="text-xs text-ink-soft" htmlFor="ai-calls-to">
-          至
-        </label>
+      </FormField>
+      <FormField label="至" htmlFor="ai-calls-to">
         <input
           id="ai-calls-to"
           name="to"
           defaultValue={query.to}
           type="date"
-          className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+          className="adm-input"
         />
-      </div>
+      </FormField>
       <div className="flex gap-2">
-        <button
-          type="submit"
-          className="flex-1 text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 inline-flex items-center justify-center gap-1"
-        >
-          <Filter className="h-3.5 w-3.5" />
+        <AdminButton type="submit" variant="primary" icon={<Filter className="h-3.5 w-3.5" />}>
           筛选
-        </button>
-        <button
-          type="button"
-          onClick={reset}
-          className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
-        >
+        </AdminButton>
+        <AdminButton type="button" onClick={reset} variant="secondary" size="md">
           重置
-        </button>
+        </AdminButton>
       </div>
     </form>
   );
