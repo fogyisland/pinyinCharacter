@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { CharacterJson } from 'hanzi-writer';
 
 interface Props {
   char: string;
@@ -9,9 +10,14 @@ interface Props {
   loopIntervalMs?: number;
 }
 
+/**
+ * The two members of hanzi-writer this component uses. Both return a
+ * promise, which has to be handled — an unhandled rejection in a cleanup
+ * path would surface as a global error.
+ */
 interface HanziWriterLike {
-  loopCharacterAnimation: () => void;
-  pauseAnimation: () => void;
+  loopCharacterAnimation: () => Promise<unknown>;
+  pauseAnimation: () => Promise<unknown>;
 }
 
 const STROKE_COLOR = '#3A2A14';
@@ -21,8 +27,6 @@ const DELAY_BETWEEN_STROKES = 220;
 
 export function LiveStrokeDemo({ char, size = 220, className = '', loopIntervalMs = 4000 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const writerRef = useRef<HanziWriterLike | null>(null);
-  const [isReady, setIsReady] = useState(false);
   const [hasStrokeData, setHasStrokeData] = useState(true);
 
   useEffect(() => {
@@ -30,7 +34,6 @@ export function LiveStrokeDemo({ char, size = 220, className = '', loopIntervalM
     let writer: HanziWriterLike | null = null;
 
     if (containerRef.current) containerRef.current.innerHTML = '';
-    setIsReady(false);
 
     (async () => {
       try {
@@ -52,40 +55,48 @@ export function LiveStrokeDemo({ char, size = 220, className = '', loopIntervalM
           showOutline: true,
           strokeAnimationSpeed: ANIMATION_SPEED,
           delayBetweenStrokes: DELAY_BETWEEN_STROKES,
+          // hanzi-writer loops the character animation on its own; the pause
+          // between two repetitions is its own option. The component used to
+          // restart the animation from a setInterval instead — that timer
+          // never fired (its closure captured a stale `isReady`), and it
+          // would have restarted a running loop anyway.
+          delayBetweenLoops: loopIntervalMs,
           strokeColor: STROKE_COLOR,
           outlineColor: OUTLINE_COLOR,
-          charDataLoader: (cb: (data: unknown) => void) => cb(strokeData),
+          // hanzi-writer calls the loader as (char, onLoad, onError) — the
+          // first argument is the character, not a callback. Handing the
+          // pre-fetched stroke data to `onLoad` is what makes the writer
+          // render it.
+          charDataLoader: (_char, onLoad) => onLoad(strokeData as CharacterJson),
           onLoadCharDataError: () => {
             if (!cancelled) setHasStrokeData(false);
           },
-        } as any) as unknown as HanziWriterLike;
+        });
 
         if (cancelled) {
-          writer.pauseAnimation();
+          void writer.pauseAnimation().catch((err: unknown) => {
+            console.error('暂停笔画动画失败', err);
+          });
           return;
         }
-        writerRef.current = writer;
-        setIsReady(true);
-        writer.loopCharacterAnimation();
-      } catch {
+        void writer.loopCharacterAnimation().catch((err: unknown) => {
+          console.error('笔画动画播放失败', err);
+        });
+      } catch (err) {
+        console.error('笔画动画初始化失败', err);
         if (!cancelled) setHasStrokeData(false);
       }
     })();
 
-    const loop = setInterval(() => {
-      if (writerRef.current && isReady) {
-        writerRef.current.loopCharacterAnimation();
-      }
-    }, loopIntervalMs);
-
     return () => {
       cancelled = true;
-      clearInterval(loop);
-      if (writer) writer.pauseAnimation();
-      writerRef.current = null;
+      if (writer) {
+        void writer.pauseAnimation().catch((err: unknown) => {
+          console.error('暂停笔画动画失败', err);
+        });
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [char, size]);
+  }, [char, size, loopIntervalMs]);
 
   if (!hasStrokeData) {
     return (
