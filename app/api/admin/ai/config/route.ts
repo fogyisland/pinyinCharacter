@@ -3,31 +3,17 @@ import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getAllConfig, setConfigBatch } from '@/lib/config';
 import { writeAudit } from '@/lib/audit';
-
-const CONFIG_KEYS = [
-  'ai.base_url',
-  'ai.model',
-  'ai.api_key',
-  'ai.rate_limit_per_user_per_day',
-  'ai.timeout_ms',
-  'ai.temperature',
-  'ai.thinking',
-  'ai.max_completion_tokens',
-] as const;
-type AiConfigKey = (typeof CONFIG_KEYS)[number];
-const SECRET_KEYS: ReadonlySet<AiConfigKey> = new Set(['ai.api_key']);
+import { AI_CONFIG_KEYS, AI_SECRET_KEYS, hasAiApiKey, maskAiConfig } from '@/lib/ai-config';
 
 export async function GET(_req: NextRequest) {
   return withErrorHandling(async () => {
     const auth = await requireAdmin();
     if (!auth.ok) return auth.response;
     const all = await getAllConfig();
-    const config: Record<string, string> = {};
-    for (const k of CONFIG_KEYS) {
-      config[k] = SECRET_KEYS.has(k) ? '' : (all[k] ?? '');
-    }
-    const hasApiKey = !!all['ai.api_key'];
-    return NextResponse.json({ ok: true, data: { config, hasApiKey } });
+    return NextResponse.json({
+      ok: true,
+      data: { config: maskAiConfig(all), hasApiKey: hasAiApiKey(all) },
+    });
   });
 }
 
@@ -37,7 +23,7 @@ export async function PUT(req: NextRequest) {
     if (!auth.ok) return auth.response;
     const body = await req.json();
     const updates: Record<string, string> = {};
-    for (const k of CONFIG_KEYS) {
+    for (const k of AI_CONFIG_KEYS) {
       if (k in body && body[k] !== undefined) updates[k] = String(body[k]);
     }
     if (Object.keys(updates).length === 0) return badRequest('empty', 'no fields to update');
@@ -50,15 +36,16 @@ export async function PUT(req: NextRequest) {
       userId: auth.user.id,
       event: 'ai_config_updated',
       metadata: Object.fromEntries(
-        Object.entries(updates).map(([k, v]) => [k, SECRET_KEYS.has(k as AiConfigKey) ? '***' : v]),
+        Object.entries(updates).map(([k, v]) => [
+          k,
+          AI_SECRET_KEYS.has(k as (typeof AI_CONFIG_KEYS)[number]) ? '***' : v,
+        ]),
       ),
     });
     const all = await getAllConfig();
-    const config: Record<string, string> = {};
-    for (const k of CONFIG_KEYS) {
-      config[k] = SECRET_KEYS.has(k) ? '' : (all[k] ?? '');
-    }
-    const hasApiKey = !!all['ai.api_key'];
-    return NextResponse.json({ ok: true, data: { config, hasApiKey } });
+    return NextResponse.json({
+      ok: true,
+      data: { config: maskAiConfig(all), hasApiKey: hasAiApiKey(all) },
+    });
   });
 }

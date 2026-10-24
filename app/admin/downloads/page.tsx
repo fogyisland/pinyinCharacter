@@ -1,29 +1,25 @@
-'use client';
-
-import { useEffect, useState, useCallback } from 'react';
-import { Download, ChevronLeft, ChevronRight, Filter, Search } from 'lucide-react';
+import Link from 'next/link';
+import { Download } from 'lucide-react';
+import { getDownloadStats, listDownloads } from '@/lib/admin-downloads';
 import { StatCard } from '@/components/admin/StatCard';
-import { SourceBadge } from '@/components/admin/SourceBadge';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { DownloadsFilterBar } from '@/components/admin/DownloadsFilterBar';
 import {
-  listAdminDownloadsRequest,
-  getDownloadStatsRequest,
-  type AdminDownloadRow,
-} from '@/lib/api-admin';
+  DOWNLOADS_PAGE_SIZE,
+  buildDownloadsHref,
+  parseDownloadsQuery,
+} from '@/lib/admin-downloads-url';
+import { dateRangeToIso, parseUserId, todayDate } from '@/lib/admin-url';
 import { formatDateTime } from '@/lib/format';
+import type { DownloadRow, DownloadStats } from '@/lib/admin-downloads';
 
-const SOURCE_TYPES = [
-  { value: '', label: '全部类型' },
-  { value: 'worksheet', label: '字帖' },
-  { value: 'poem', label: '古诗' },
-  { value: 'sutra', label: '佛经' },
-  { value: 'rare-char-card', label: '生字卡' },
-];
+export const dynamic = 'force-dynamic';
 
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }
 
+/** The page of a downloaded resource — null when the type has no page. */
 function sourceHref(sourceType: string, sourceId: string | null): string | null {
   if (!sourceId) return null;
   if (sourceType === 'worksheet') return `/worksheet/${encodeURIComponent(sourceId)}`;
@@ -47,93 +43,47 @@ function statusBadge(status: string) {
   return <span className={`inline-block px-2 py-0.5 rounded text-xs ${color}`}>{status}</span>;
 }
 
-export default function AdminDownloadsPage() {
-  const [sourceType, setSourceType] = useState('');
-  const [userQ, setUserQ] = useState('');
-  const [from, setFrom] = useState(() => isoDate(new Date(Date.now() - 7 * 86400_000)));
-  const [to, setTo] = useState(() => isoDate(new Date()));
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(50);
+export default async function AdminDownloadsPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const query = parseDownloadsQuery(params);
+  const range = dateRangeToIso(query.from, query.to);
 
-  const [rows, setRows] = useState<AdminDownloadRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-
-  const [stats, setStats] = useState<{
-    total: number;
-    bySourceType: Record<string, number>;
-    topUsers: { userId: number; username: string | null; count: number }[];
-  } | null>(null);
-  const [todayCount, setTodayCount] = useState<number>(0);
-
-  const fetchPage = useCallback(async () => {
-    setBusy(true);
-    setErr(null);
-    try {
-      const r = await listAdminDownloadsRequest({
-        sourceType: sourceType || undefined,
-        // userId is numeric in our wrapper, so we resolve the typed search loosely by
-        // trusting numeric input. Non-numeric strings are ignored client-side.
-        userId: /^\d+$/.test(userQ) ? Number(userQ) : undefined,
-        from: from ? new Date(from).toISOString() : undefined,
-        to: to ? new Date(to + 'T23:59:59').toISOString() : undefined,
-        page,
-        pageSize,
-      });
-      if (!r.ok) {
-        setErr(r.error.message);
-        return;
-      }
-      setRows(r.data.items);
-      setTotal(r.data.total);
-    } finally {
-      setBusy(false);
-    }
-  }, [sourceType, userQ, from, to, page, pageSize]);
-
-  const fetchStats = useCallback(async () => {
-    const r = await getDownloadStatsRequest(7);
-    if (!r.ok) return;
-    const s = r.data as any;
-    setStats({
-      total: Number(s.total ?? 0),
-      bySourceType: s.bySourceType ?? {},
-      topUsers: s.topUsers ?? [],
-    });
-  }, []);
-
-  const fetchToday = useCallback(async () => {
-    const today = isoDate(new Date());
-    const r = await listAdminDownloadsRequest({ from: new Date(today).toISOString(), pageSize: 1 });
-    if (!r.ok) return;
-    setTodayCount(r.data.total);
-  }, []);
-
-  useEffect(() => {
-    fetchPage();
-  }, [fetchPage]);
-  useEffect(() => {
-    fetchStats();
-    fetchToday();
-  }, [fetchStats, fetchToday]);
-
-  function applyFilters(e: React.FormEvent) {
-    e.preventDefault();
-    setPage(1);
-    fetchPage();
-  }
-  function resetFilters() {
-    setSourceType('');
-    setUserQ('');
-    setFrom(isoDate(new Date(Date.now() - 7 * 86400_000)));
-    setTo(isoDate(new Date()));
-    setPage(1);
+  let rows: DownloadRow[] = [];
+  let total = 0;
+  let stats: DownloadStats | null = null;
+  let todayCount = 0;
+  let error: string | null = null;
+  try {
+    const [list, statRows, todayRows] = await Promise.all([
+      listDownloads({
+        userId: parseUserId(query.userId),
+        sourceType: query.sourceType || undefined,
+        from: range.from,
+        to: range.to,
+        page: query.page,
+        pageSize: DOWNLOADS_PAGE_SIZE,
+      }),
+      getDownloadStats(7),
+      listDownloads({ from: new Date(todayDate()).toISOString(), pageSize: 1 }),
+    ]);
+    rows = list.items;
+    total = list.total;
+    stats = statRows;
+    todayCount = todayRows.total;
+  } catch (err) {
+    console.error('[admin/downloads] failed to list the downloads:', err);
+    error = (err as Error).message || '下载记录查询失败';
   }
 
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const topSrc = stats ? Object.entries(stats.bySourceType).sort((a, b) => b[1] - a[1])[0] : null;
+  const totalPages = Math.max(1, Math.ceil(total / DOWNLOADS_PAGE_SIZE));
+  const topSrc = stats
+    ? Object.entries(stats.bySourceType).sort((a, b) => b[1] - a[1])[0]
+    : null;
   const topUser = stats?.topUsers?.[0];
+  const navClass = (disabled: boolean) =>
+    `text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep inline-flex items-center gap-1 ${
+      disabled ? 'opacity-50 pointer-events-none' : ''
+    }`;
 
   return (
     <div className="space-y-4">
@@ -154,78 +104,14 @@ export default function AdminDownloadsPage() {
         />
       </div>
 
-      <form
-        onSubmit={applyFilters}
-        className="card-paper rounded-lg p-3 grid grid-cols-1 md:grid-cols-5 gap-2 items-end"
-      >
-        <div>
-          <label className="text-xs text-ink-soft">来源类型</label>
-          <select
-            value={sourceType}
-            onChange={(e) => setSourceType(e.target.value)}
-            className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-          >
-            {SOURCE_TYPES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="text-xs text-ink-soft">用户 ID</label>
-          <input
-            value={userQ}
-            onChange={(e) => setUserQ(e.target.value)}
-            type="text"
-            placeholder="数字 ID"
-            className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-ink-soft">从</label>
-          <input
-            value={from}
-            onChange={(e) => setFrom(e.target.value)}
-            type="date"
-            className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-          />
-        </div>
-        <div>
-          <label className="text-xs text-ink-soft">至</label>
-          <input
-            value={to}
-            onChange={(e) => setTo(e.target.value)}
-            type="date"
-            className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-          />
-        </div>
-        <div className="flex gap-2">
-          <button
-            type="submit"
-            disabled={busy}
-            className="flex-1 text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50 inline-flex items-center justify-center gap-1"
-          >
-            <Filter className="h-3.5 w-3.5" />
-            筛选
-          </button>
-          <button
-            type="button"
-            onClick={resetFilters}
-            disabled={busy}
-            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
-          >
-            重置
-          </button>
-        </div>
-      </form>
+      <DownloadsFilterBar key={buildDownloadsHref(query)} query={query} />
 
-      {err && <p className="text-sm text-seal">{err}</p>}
+      {error && <p className="text-sm text-seal">下载记录查询失败：{error}</p>}
 
       <ResponsiveTable
         rows={rows}
         rowKey={(r) => r.id}
-        emptyMessage={busy ? '加载中…' : '无数据'}
+        emptyMessage="无数据"
         columns={[
           { key: 'source', header: '资源', mobileTitle: true },
           { key: 'user', header: '用户', mobileHide: true },
@@ -263,37 +149,29 @@ export default function AdminDownloadsPage() {
               <span className="text-xs px-2 py-0.5 rounded bg-paper-deep">{r.format}</span>
               {statusBadge(r.status)}
               <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
-              <span className="text-xs text-ink-soft">
-                {formatDateTime(r.createdAt)}
-              </span>
+              <span className="text-xs text-ink-soft">{formatDateTime(r.createdAt)}</span>
             </>
           );
         }}
       </ResponsiveTable>
 
       <div className="flex items-center justify-between">
-        <span className="text-xs text-ink-faint inline-flex items-center gap-1">
-          <Search className="h-3.5 w-3.5" />共 {total} 条 · 第 {page} / {totalPages} 页
+        <span className="text-xs text-ink-faint">
+          共 {total} 条 · 第 {query.page} / {totalPages} 页
         </span>
         <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={busy || page <= 1}
-            className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1"
+          <Link
+            href={buildDownloadsHref(query, { page: Math.max(1, query.page - 1) })}
+            className={navClass(query.page <= 1)}
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
             上一页
-          </button>
-          <button
-            type="button"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={busy || page >= totalPages}
-            className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1"
+          </Link>
+          <Link
+            href={buildDownloadsHref(query, { page: Math.min(totalPages, query.page + 1) })}
+            className={navClass(query.page >= totalPages)}
           >
             下一页
-            <ChevronRight className="h-3.5 w-3.5" />
-          </button>
+          </Link>
         </div>
       </div>
     </div>

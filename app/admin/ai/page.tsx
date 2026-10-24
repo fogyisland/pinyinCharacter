@@ -1,24 +1,30 @@
-'use client';
-
-import { useEffect, useState, useCallback } from 'react';
-import { Bot, AlertTriangle, ChevronLeft, ChevronRight, Filter, Check } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle, Bot } from 'lucide-react';
+import { getAiStats, listAiCalls } from '@/lib/admin-ai';
+import { getAllConfig, getConfig } from '@/lib/config';
+import { hasAiApiKey, maskAiConfig } from '@/lib/ai-config';
 import { StatCard } from '@/components/admin/StatCard';
-import { JsonPanel } from '@/components/admin/JsonPanel';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
-import {
-  listAiCallsRequest,
-  getAiStatsRequest,
-  getAiConfigRequest,
-  updateAiConfigRequest,
-  type AdminAiCallRow,
-} from '@/lib/api-admin';
+import { AiCallsFilterBar } from '@/components/admin/AiCallsFilterBar';
+import { AiConfigForm } from '@/components/admin/AiConfigForm';
+import { AiMockToggle } from '@/components/admin/AiMockToggle';
+import { AI_TABS, buildAiHref, parseAiCallsQuery, parseAiTab } from '@/lib/admin-ai-url';
+import { dateRangeToIso, parseUserId, readParam } from '@/lib/admin-url';
 import { formatDateTime } from '@/lib/format';
+import type { AiCallRow, AiStats } from '@/lib/admin-ai';
+
+export const dynamic = 'force-dynamic';
+
+interface PageProps {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}
 
 const STATUS_COLORS: Record<string, string> = {
   ok: 'bg-green-100 text-green-800',
   error: 'bg-red-100 text-red-800',
   'rate-limited': 'bg-yellow-100 text-yellow-800',
 };
+
 function StatusBadge({ status }: { status: string }) {
   return (
     <span
@@ -29,190 +35,48 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-const STATUS_OPTIONS = [
-  { value: '', label: '全部状态' },
-  { value: 'ok', label: 'ok' },
-  { value: 'error', label: 'error' },
-  { value: 'rate-limited', label: 'rate-limited' },
-];
-
-function isoDate(d: Date): string {
-  return d.toISOString().slice(0, 10);
+function truncate(text: string, n = 100): string {
+  return text.length > n ? `${text.slice(0, n)}…` : text;
 }
 
-function truncate(s: string | null, n = 100): string {
-  if (!s) return '—';
-  return s.length > n ? s.slice(0, n) + '…' : s;
-}
+export default async function AdminAiPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const tab = parseAiTab(readParam(params, 'tab'));
+  const query = parseAiCallsQuery(params);
 
-type Tab = 'calls' | 'config' | 'mock';
+  let rows: AiCallRow[] = [];
+  let total = 0;
+  let stats: AiStats | null = null;
+  let error: string | null = null;
 
-export default function AdminAiPage() {
-  const [tab, setTab] = useState<Tab>('calls');
-
-  // --- Calls tab state ---
-  const [feature, setFeature] = useState('');
-  const [status, setStatus] = useState('');
-  const [userQ, setUserQ] = useState('');
-  const [from, setFrom] = useState(() => isoDate(new Date(Date.now() - 7 * 86400_000)));
-  const [to, setTo] = useState(() => isoDate(new Date()));
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(50);
-  const [rows, setRows] = useState<AdminAiCallRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [expandedErr, setExpandedErr] = useState<string | null>(null);
-
-  const [stats, setStats] = useState<{
-    total: number;
-    errorRate: number;
-    p95Duration: number | null;
-  } | null>(null);
-
-  const fetchCalls = useCallback(async () => {
-    setBusy(true);
-    setErr(null);
+  if (tab === 'calls') {
+    const range = dateRangeToIso(query.from, query.to);
     try {
-      const r = await listAiCallsRequest({
-        feature: feature || undefined,
-        status: status || undefined,
-        userId: /^\d+$/.test(userQ) ? Number(userQ) : undefined,
-        from: from ? new Date(from).toISOString() : undefined,
-        to: to ? new Date(to + 'T23:59:59').toISOString() : undefined,
-        page,
-        pageSize,
-      });
-      if (!r.ok) {
-        setErr(r.error.message);
-        return;
-      }
-      setRows(r.data.rows);
-      setTotal(r.data.total);
-    } finally {
-      setBusy(false);
-    }
-  }, [feature, status, userQ, from, to, page, pageSize]);
-
-  const fetchStats = useCallback(async () => {
-    const r = await getAiStatsRequest(7);
-    if (!r.ok) return;
-    const s = r.data as any;
-    setStats({
-      total: Number(s.total ?? 0),
-      errorRate: Number(s.errorRate ?? 0),
-      p95Duration: s.p95Duration ?? null,
-    });
-  }, []);
-
-  useEffect(() => {
-    if (tab === 'calls') {
-      fetchCalls();
-      fetchStats();
-    }
-  }, [tab, fetchCalls, fetchStats]);
-
-  function applyCallFilters(e: React.FormEvent) {
-    e.preventDefault();
-    setPage(1);
-    fetchCalls();
-  }
-
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-  // --- Config tab state ---
-  const [config, setConfig] = useState<Record<string, string>>({});
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const [configBusy, setConfigBusy] = useState(false);
-  const [configMsg, setConfigMsg] = useState<string | null>(null);
-  const [configErr, setConfigErr] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (tab !== 'config') return;
-    setConfigMsg(null);
-    setConfigErr(null);
-    getAiConfigRequest().then((r) => {
-      if (!r.ok) setConfigErr(r.error.message);
-      else {
-        setConfig(r.data.config);
-        setHasApiKey(r.data.hasApiKey);
-      }
-    });
-  }, [tab]);
-
-  async function saveConfig(e: React.FormEvent) {
-    e.preventDefault();
-    setConfigBusy(true);
-    setConfigMsg(null);
-    setConfigErr(null);
-    // Skip empty fields so admin doesn't accidentally clear a configured secret
-    // (ai.api_key is masked to '' in GET, would otherwise overwrite on save).
-    const body: Record<string, string> = {};
-    for (const [k, v] of Object.entries(config)) {
-      if (v !== '') body[k] = v;
-    }
-    if (Object.keys(body).length === 0) {
-      setConfigMsg('未修改任何字段');
-      setConfigBusy(false);
-      return;
-    }
-    const r = await updateAiConfigRequest(body);
-    setConfigBusy(false);
-    if (!r.ok) setConfigErr(r.error.message);
-    else {
-      setConfig(r.data.config);
-      setHasApiKey(r.data.hasApiKey);
-      setConfigMsg('配置已保存');
+      const [list, stat] = await Promise.all([
+        listAiCalls({
+          feature: query.feature || undefined,
+          status: query.status || undefined,
+          userId: parseUserId(query.userId),
+          from: range.from,
+          to: range.to,
+          page: query.page,
+          pageSize: 50,
+        }),
+        getAiStats(7),
+      ]);
+      rows = list.rows;
+      total = list.total;
+      stats = stat;
+    } catch (err) {
+      console.error('[admin/ai] failed to list the AI calls:', err);
+      error = (err as Error).message || '调用记录查询失败';
     }
   }
 
-  // --- Mock tab state ---
-  const [mockEnabled, setMockEnabled] = useState(false);
-  const [mockBusy, setMockBusy] = useState(false);
-  const [mockMsg, setMockMsg] = useState<string | null>(null);
-  const [mockErr, setMockErr] = useState<string | null>(null);
-
-  const fetchMock = useCallback(async () => {
-    const r = await fetch('/api/admin/ai/mock');
-    const j = await r.json();
-    if (j?.ok) setMockEnabled(Boolean(j.data?.enabled));
-  }, []);
-
-  useEffect(() => {
-    if (tab === 'mock') {
-      setMockMsg(null);
-      setMockErr(null);
-      fetchMock();
-    }
-  }, [tab, fetchMock]);
-
-  async function toggleMock() {
-    setMockBusy(true);
-    setMockMsg(null);
-    setMockErr(null);
-    const next = !mockEnabled;
-    try {
-      const r = await fetch('/api/admin/ai/mock', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ enabled: next }),
-      });
-      const j = await r.json();
-      if (!j?.ok) throw new Error(j?.error?.message ?? 'toggle failed');
-      setMockEnabled(Boolean(j.data?.enabled));
-      setMockMsg(next ? '已开启 Mock 模式' : '已关闭 Mock 模式');
-    } catch (e: any) {
-      setMockErr(e?.message ?? 'toggle failed');
-    } finally {
-      setMockBusy(false);
-    }
-  }
-
-  const tabClass = (active: boolean) =>
-    `px-4 py-2 text-sm border-b-2 -mb-px ${
-      active
-        ? 'border-ink text-ink font-semibold'
-        : 'border-transparent text-ink-soft hover:text-ink'
+  const totalPages = Math.max(1, Math.ceil(total / 50));
+  const navClass = (disabled: boolean) =>
+    `text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep inline-flex items-center gap-1 ${
+      disabled ? 'opacity-50 pointer-events-none' : ''
     }`;
 
   return (
@@ -220,19 +84,19 @@ export default function AdminAiPage() {
       <h1 className="text-xl font-semibold">AI</h1>
 
       <div className="flex border-b border-paper-warm">
-        <button type="button" onClick={() => setTab('calls')} className={tabClass(tab === 'calls')}>
-          调用记录
-        </button>
-        <button
-          type="button"
-          onClick={() => setTab('config')}
-          className={tabClass(tab === 'config')}
-        >
-          配置
-        </button>
-        <button type="button" onClick={() => setTab('mock')} className={tabClass(tab === 'mock')}>
-          Mock 模式
-        </button>
+        {AI_TABS.map((t) => (
+          <Link
+            key={t.value}
+            href={buildAiHref(t.value, query)}
+            className={`px-4 py-2 text-sm border-b-2 -mb-px ${
+              tab === t.value
+                ? 'border-ink text-ink font-semibold'
+                : 'border-transparent text-ink-soft hover:text-ink'
+            }`}
+          >
+            {t.label}
+          </Link>
+        ))}
       </div>
 
       {tab === 'calls' && (
@@ -251,77 +115,14 @@ export default function AdminAiPage() {
             />
           </div>
 
-          <form
-            onSubmit={applyCallFilters}
-            className="card-paper rounded-lg p-3 grid grid-cols-1 md:grid-cols-6 gap-2 items-end"
-          >
-            <div>
-              <label className="text-xs text-ink-soft">功能</label>
-              <input
-                value={feature}
-                onChange={(e) => setFeature(e.target.value)}
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-                placeholder="如 rare-char-story"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-ink-soft">状态</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-              >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s.value} value={s.value}>
-                    {s.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-ink-soft">用户 ID</label>
-              <input
-                value={userQ}
-                onChange={(e) => setUserQ(e.target.value)}
-                type="text"
-                placeholder="数字 ID"
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-ink-soft">从</label>
-              <input
-                value={from}
-                onChange={(e) => setFrom(e.target.value)}
-                type="date"
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-ink-soft">至</label>
-              <input
-                value={to}
-                onChange={(e) => setTo(e.target.value)}
-                type="date"
-                className="w-full border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={busy}
-              className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50 inline-flex items-center justify-center gap-1"
-            >
-              <Filter className="h-3.5 w-3.5" />
-              筛选
-            </button>
-          </form>
+          <AiCallsFilterBar key={buildAiHref('calls', query)} query={query} />
 
-          {err && <p className="text-sm text-seal">{err}</p>}
+          {error && <p className="text-sm text-seal">调用记录查询失败：{error}</p>}
 
           <ResponsiveTable
             rows={rows}
             rowKey={(r) => r.id}
-            emptyMessage={busy ? '加载中…' : '无数据'}
+            emptyMessage="无数据"
             columns={[
               { key: 'feature', header: '功能', mobileTitle: true },
               { key: 'status', header: '状态' },
@@ -345,29 +146,17 @@ export default function AdminAiPage() {
                 )}
                 <span className="text-xs text-ink-soft">{r.model ?? '—'}</span>
                 <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
-                <span className="text-xs text-ink-soft">
-                  {formatDateTime(r.createdAt)}
-                </span>
+                <span className="text-xs text-ink-soft">{formatDateTime(r.createdAt)}</span>
                 {r.error ? (
-                  <>
-                    <span className="text-seal">{truncate(r.error, 100)}</span>
-                    {r.error.length > 100 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setExpandedErr(expandedErr === String(r.id) ? null : String(r.id))
-                        }
-                        className="ml-2 text-seal hover:underline"
-                      >
-                        {expandedErr === String(r.id) ? '收起' : '展开'}
-                      </button>
-                    )}
-                    {expandedErr === String(r.id) && (
-                      <div className="mt-1">
-                        <JsonPanel data={r.error} />
-                      </div>
-                    )}
-                  </>
+                  <div className="text-seal">
+                    {truncate(r.error)}
+                    <details>
+                      <summary className="cursor-pointer hover:underline">展开完整错误</summary>
+                      <pre className="mt-1 p-2 bg-paper-warm rounded overflow-auto text-xs whitespace-pre-wrap">
+                        {r.error}
+                      </pre>
+                    </details>
+                  </div>
                 ) : (
                   '—'
                 )}
@@ -377,224 +166,73 @@ export default function AdminAiPage() {
 
           <div className="flex items-center justify-between">
             <span className="text-xs text-ink-faint">
-              共 {total} 条 · 第 {page} / {totalPages} 页
+              共 {total} 条 · 第 {query.page} / {totalPages} 页
             </span>
             <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={busy || page <= 1}
-                className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1"
+              <Link
+                href={buildAiHref('calls', query, { page: Math.max(1, query.page - 1) })}
+                className={navClass(query.page <= 1)}
               >
-                <ChevronLeft className="h-3.5 w-3.5" />
                 上一页
-              </button>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={busy || page >= totalPages}
-                className="text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep disabled:opacity-50 inline-flex items-center gap-1"
+              </Link>
+              <Link
+                href={buildAiHref('calls', query, { page: Math.min(totalPages, query.page + 1) })}
+                className={navClass(query.page >= totalPages)}
               >
                 下一页
-                <ChevronRight className="h-3.5 w-3.5" />
-              </button>
+              </Link>
             </div>
           </div>
         </div>
       )}
 
-      {tab === 'config' && (
-        <form onSubmit={saveConfig} className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
-          {configErr && <p className="text-sm text-seal">{configErr}</p>}
-          {configMsg && (
-            <p className="text-sm text-green-700 inline-flex items-center gap-1">
-              <Check className="h-3.5 w-3.5" />
-              {configMsg}
-            </p>
-          )}
+      {tab === 'config' && <ConfigTab />}
 
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-ink">AI 连接配置</h2>
-            <p className="text-xs text-ink-soft">
-              写入 <code>app_config</code> 表,优先级高于环境变量 <code>LLM_API_KEY</code> /{' '}
-              <code>LLM_BASE_URL</code> / <code>LLM_MODEL</code>。
-            </p>
-          </div>
-          <ConfigField
-            label="端点 URL (Base URL)"
-            hint="OpenAI 兼容 API 根地址"
-            placeholder="https://api.openai.com/v1"
-            value={config['ai.base_url'] ?? ''}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.base_url': v }))}
-          />
-          <ConfigField
-            label="连接 KEY (API Key)"
-            hint={hasApiKey ? '已配置,留空不改' : '尚未配置'}
-            type="password"
-            value={config['ai.api_key'] ?? ''}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.api_key': v }))}
-          />
-          <ConfigField
-            label="模型"
-            hint="MiniMax-M3 / MiniMax-M2.7 / MiniMax-M2.7-highspeed / MiniMax-M2.5 / MiniMax-M2.5-highspeed / MiniMax-M2.1 / MiniMax-M2.1-highspeed / MiniMax-M2"
-            placeholder="MiniMax-M3"
-            value={config['ai.model'] ?? ''}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.model': v }))}
-          />
-
-          <div className="pt-2 space-y-1">
-            <h2 className="text-sm font-semibold text-ink">AI 运行参数</h2>
-            <p className="text-xs text-ink-soft">LLM 调用层面的限速/超时/采样。</p>
-          </div>
-          <ConfigField
-            label="限速 (次/用户/日)"
-            placeholder="20"
-            value={config['ai.rate_limit_per_user_per_day'] ?? ''}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.rate_limit_per_user_per_day': v }))}
-          />
-          <ConfigField
-            label="超时 (毫秒)"
-            placeholder="30000"
-            value={config['ai.timeout_ms'] ?? ''}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.timeout_ms': v }))}
-          />
-          <ConfigField
-            label="温度"
-            placeholder="0.3"
-            value={config['ai.temperature'] ?? ''}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.temperature': v }))}
-          />
-          <ConfigSelectField
-            label="思考模式 (thinking)"
-            hint="MiniMax-M3 等推理模型:disabled 直接作答;adaptive 先推理再作答(可能更准但会占用 token 预算)"
-            value={config['ai.thinking'] ?? 'disabled'}
-            options={[
-              { value: 'disabled', label: 'disabled' },
-              { value: 'adaptive', label: 'adaptive' },
-            ]}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.thinking': v }))}
-          />
-          <ConfigField
-            label="最大输出 token (max_completion_tokens)"
-            hint="M3 推荐 131072,M2.x 推荐 65536;上限 524288"
-            placeholder="4096"
-            value={config['ai.max_completion_tokens'] ?? ''}
-            onChange={(v) => setConfig((c) => ({ ...c, 'ai.max_completion_tokens': v }))}
-          />
-
-          <button
-            type="submit"
-            disabled={configBusy}
-            className="text-sm px-4 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
-          >
-            {configBusy ? '保存中…' : '保存'}
-          </button>
-        </form>
-      )}
-
-      {tab === 'mock' && (
-        <div className="card-paper rounded-lg p-4 space-y-3 max-w-xl">
-          {mockErr && <p className="text-sm text-seal">{mockErr}</p>}
-          {mockMsg && (
-            <p className="text-sm text-green-700 inline-flex items-center gap-1">
-              <Check className="h-3.5 w-3.5" />
-              {mockMsg}
-            </p>
-          )}
-
-          <div className="space-y-1">
-            <h2 className="text-sm font-semibold text-ink">AI Mock 模式</h2>
-            <p className="text-xs text-ink-soft">
-              开启后所有 LLM 调用会短路返回固定占位文本（MOCK-*），不再消耗真实 API 配额。
-              适合本地开发、批量生成调试、限速回避。
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 pt-2">
-            <span className={`text-sm font-medium ${mockEnabled ? 'text-seal' : 'text-ink-soft'}`}>
-              {mockEnabled ? '已开启' : '已关闭'}
-            </span>
-            <button
-              type="button"
-              onClick={toggleMock}
-              disabled={mockBusy}
-              className={`text-sm px-4 py-1.5 rounded disabled:opacity-50 ${
-                mockEnabled
-                  ? 'bg-paper-deep text-ink hover:bg-paper-warm'
-                  : 'bg-ink text-paper hover:bg-ink/80'
-              }`}
-            >
-              {mockBusy ? '切换中…' : mockEnabled ? '关闭 Mock' : '开启 Mock'}
-            </button>
-          </div>
-        </div>
-      )}
+      {tab === 'mock' && <MockTab />}
     </div>
   );
 }
 
-function ConfigField({
-  label,
-  hint,
-  value,
-  onChange,
-  type = 'text',
-  placeholder,
-}: {
-  label: string;
-  hint?: string;
-  value: string;
-  onChange: (v: string) => void;
-  type?: 'text' | 'password';
-  placeholder?: string;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-medium">
-        {label}
-        {hint && <span className="ml-2 text-xs text-ink-soft">{hint}</span>}
-      </label>
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-      />
-    </div>
-  );
+/**
+ * The configuration tab. The values are read here (on the server) and handed
+ * to the form island, so opening the tab needs no extra request.
+ */
+async function ConfigTab() {
+  let config: Record<string, string> | null = null;
+  let hasApiKey = false;
+  let error: string | null = null;
+
+  try {
+    const all = await getAllConfig();
+    config = maskAiConfig(all);
+    hasApiKey = hasAiApiKey(all);
+  } catch (err) {
+    console.error('[admin/ai] failed to read the AI config:', err);
+    error = (err as Error).message || '配置读取失败';
+  }
+
+  if (error || !config) {
+    return <p className="text-sm text-seal">配置读取失败：{error ?? '未知错误'}</p>;
+  }
+
+  return <AiConfigForm initialConfig={config} initialHasApiKey={hasApiKey} />;
 }
 
-function ConfigSelectField({
-  label,
-  hint,
-  value,
-  options,
-  onChange,
-}: {
-  label: string;
-  hint?: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (v: string) => void;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-medium">
-        {label}
-        {hint && <span className="ml-2 text-xs text-ink-soft">{hint}</span>}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full mt-1 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-      >
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
+/** The mock mode tab — `ai.mock_mode` decides whether the LLM calls are stubbed. */
+async function MockTab() {
+  let enabled = false;
+  let error: string | null = null;
+
+  try {
+    enabled = (await getConfig('ai.mock_mode')) === 'true';
+  } catch (err) {
+    console.error('[admin/ai] failed to read the mock mode:', err);
+    error = (err as Error).message || 'Mock 状态读取失败';
+  }
+
+  if (error) {
+    return <p className="text-sm text-seal">Mock 状态读取失败：{error}</p>;
+  }
+
+  return <AiMockToggle initialEnabled={enabled} />;
 }
