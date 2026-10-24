@@ -150,7 +150,7 @@ export function StrokeOrderCard({ char, className }: Props) {
         <h3>笔画顺序</h3>
         <span className="badge">新功能</span>
       </header>
-      <div className="flex flex-col md:flex-row gap-6 items-center">
+      <div className="flex flex-col gap-4 items-center">
         <div className="relative" style={{ width: SIZE, height: SIZE }}>
           <svg
             className="absolute inset-0 pointer-events-none"

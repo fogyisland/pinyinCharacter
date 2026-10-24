@@ -10,6 +10,12 @@ import { DetailPrefetchButton } from './DetailPrefetchButton';
 import { prefetchTts } from '@/lib/tts-cache';
 
 export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
+  // The stroke count comes from public/strokes/<char>.json and is 0 for the
+  // ~13% of chars the upstream hanzi-writer data does not cover. Printing
+  // "0 画" there would be a lie, so the count is omitted instead.
+  const radicalValue =
+    char.strokeCount > 0 ? `${char.radical} · ${char.strokeCount} 画` : char.radical || '—';
+
   // Auto-prefetch audios for the first 6 chars sharing the radical. Skips
   // cached entries (prefetchTts no-ops). Cancelled on unmount.
   useEffect(() => {
@@ -66,55 +72,61 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
-        <Field label="拼音" value={char.pinyin} />
-        <Field label="部首" value={`${char.radical} · ${char.strokeCount} 画`} />
-        <Field label="释义" value={char.meaningZh || '—'} multiline />
-        <Field label="英文" value={char.meaningEn || '—'} />
-        <Field label="Unicode" value={char.unicodeCodepoint} />
-        <Field label="异体" value={char.variants.length > 0 ? char.variants.join('、') : '—'} />
-        {char.pinyinAlt.length > 1 && <Field label="多音" value={char.pinyinAlt.join('、')} />}
-        <Field label="级别" value={`通用规范 ${char.level} 级`} />
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+        <div className="min-w-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+            <Field label="拼音" value={char.pinyin} />
+            <Field label="部首" value={radicalValue} />
+            <Field label="释义" value={char.meaningZh || '—'} multiline />
+            <Field label="英文" value={char.meaningEn || '—'} />
+            <Field label="Unicode" value={char.unicodeCodepoint} />
+            <Field label="异体" value={char.variants.length > 0 ? char.variants.join('、') : '—'} />
+            <Field label="级别" value={`通用规范 ${char.level} 级`} />
+            {char.pinyinAlt.length > 1 && (
+              <Field label="多音" value={char.pinyinAlt.join('、')} multiline />
+            )}
+          </div>
+
+          {(char.relatedByRadical.length > 0 || char.relatedByPinyin.length > 0) && (
+            <div className="mt-6 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+              {char.relatedByRadical.length > 0 && (
+                <div>
+                  <span className="text-ink-faint">同部首 ·</span>{' '}
+                  {char.relatedByRadical.map((c) => (
+                    <Link
+                      key={c.char}
+                      href={`/dictionary/${encodeURIComponent(c.char)}`}
+                      className="mr-2 hover:text-seal"
+                    >
+                      {c.char}
+                    </Link>
+                  ))}
+                </div>
+              )}
+              {char.relatedByPinyin.length > 0 && (
+                <div>
+                  <span className="text-ink-faint">同拼音 ·</span>{' '}
+                  {char.relatedByPinyin.map((c) => (
+                    <Link
+                      key={c.char}
+                      href={`/dictionary/${encodeURIComponent(c.char)}`}
+                      className="mr-2 hover:text-seal"
+                    >
+                      {c.char}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {char.char.length === 1 && (
+          <div className="lg:w-[300px]">
+            <StrokeOrderCard char={char.char} />
+          </div>
+        )}
       </div>
-
-      {(char.relatedByRadical.length > 0 || char.relatedByPinyin.length > 0) && (
-        <div className="mt-6 text-sm">
-          {char.relatedByRadical.length > 0 && (
-            <div className="mb-2">
-              <span className="text-ink-faint">同部首 ·</span>{' '}
-              {char.relatedByRadical.map((c) => (
-                <Link
-                  key={c.char}
-                  href={`/dictionary/${encodeURIComponent(c.char)}`}
-                  className="mr-2 hover:text-seal"
-                >
-                  {c.char}
-                </Link>
-              ))}
-            </div>
-          )}
-          {char.relatedByPinyin.length > 0 && (
-            <div>
-              <span className="text-ink-faint">同拼音 ·</span>{' '}
-              {char.relatedByPinyin.map((c) => (
-                <Link
-                  key={c.char}
-                  href={`/dictionary/${encodeURIComponent(c.char)}`}
-                  className="mr-2 hover:text-seal"
-                >
-                  {c.char}
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {char.char.length === 1 && (
-        <div className="mt-6">
-          <StrokeOrderCard char={char.char} />
-        </div>
-      )}
     </div>
   );
 }
