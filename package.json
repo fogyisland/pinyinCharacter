@@ -39,7 +39,6 @@
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
     "bcryptjs": "^3.0.3",
-    "edge-tts-universal": "^1.4.0",
     "hanzi-writer": "^3.7.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.21.0",

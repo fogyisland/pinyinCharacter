@@ -38,15 +38,26 @@ export function ReadAloudButton({
   voice = 'female',
 }: Props) {
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleClick() {
     if (!text) return;
     if (isSpeaking) {
       stopSpeaking();
       setIsSpeaking(false);
-    } else {
-      setIsSpeaking(true);
+      return;
+    }
+    setError(null);
+    setIsSpeaking(true);
+    try {
       await speak(text, { voice, onEnd: () => setIsSpeaking(false) });
+    } catch (e) {
+      // 合成失败时必须把状态复位，否则按钮会一直停在「停止」，
+      // 用户既看不到提示也点不动第二次。
+      setIsSpeaking(false);
+      const message = (e as Error).message;
+      console.error('[朗读失败]', message);
+      setError(message);
     }
   }
 
@@ -56,18 +67,25 @@ export function ReadAloudButton({
   }
 
   return (
-    <button
-      type="button"
-      disabled={!text}
-      onClick={handleClick}
-      onDoubleClick={handleDouble}
-      aria-pressed={isSpeaking}
-      title={title}
-      className={`inline-flex items-center rounded-sm font-kai tracking-widest transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${SIZE_CLASS[size]} ${VARIANT_CLASS[variant]} ${className}`}
-    >
-      <SpeakerIcon active={isSpeaking} />
-      <span>{isSpeaking ? '停止' : (label ?? '朗读')}</span>
-    </button>
+    <>
+      <button
+        type="button"
+        disabled={!text}
+        onClick={handleClick}
+        onDoubleClick={handleDouble}
+        aria-pressed={isSpeaking}
+        title={title}
+        className={`inline-flex items-center rounded-sm font-kai tracking-widest transition-colors duration-150 disabled:opacity-40 disabled:cursor-not-allowed ${SIZE_CLASS[size]} ${VARIANT_CLASS[variant]} ${className}`}
+      >
+        <SpeakerIcon active={isSpeaking} />
+        <span>{isSpeaking ? '停止' : (label ?? '朗读')}</span>
+      </button>
+      {error ? (
+        <span role="alert" title={error} className="ml-1 whitespace-nowrap text-xs text-seal/80">
+          朗读失败
+        </span>
+      ) : null}
+    </>
   );
 }
 

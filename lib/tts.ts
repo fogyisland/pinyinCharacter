@@ -65,6 +65,26 @@ function clearActive(): void {
   active = null;
 }
 
+/**
+ * 读取 `/api/tts` 的错误说明。
+ *
+ * 接口失败时返回 `{ ok:false, error:{ code, message } }`，把这段信息带进异常
+ * 消息，调用方才能告诉用户到底是超时还是上游拒绝，而不是只有一个状态码。
+ */
+async function readErrorDetail(res: Response): Promise<string> {
+  try {
+    const data = (await res.json()) as { error?: { code?: string; message?: string } };
+    const message = data?.error?.message;
+    const code = data?.error?.code;
+    if (message && code) return `${code}: ${message}`;
+    return message ?? '';
+  } catch (error) {
+    // 响应体不是 JSON（例如网关返回的 HTML 错误页）：只保留状态码。
+    console.warn('[tts] 无法解析错误响应体', error);
+    return '';
+  }
+}
+
 export function stopSpeaking(): void {
   clearActive();
 }
@@ -92,7 +112,8 @@ export async function speak(text: string, opts: SpeakOpts & { voice?: Voice } = 
         throw new Error(`TTS network error: ${(e as Error).message}`);
       }
       if (!res.ok) {
-        throw new Error(`TTS failed: HTTP ${res.status}`);
+        const detail = await readErrorDetail(res);
+        throw new Error(`TTS failed: HTTP ${res.status}${detail ? ` — ${detail}` : ''}`);
       }
       blob = await res.blob();
       // Best-effort cache write — quota / private-mode failures don't break playback.
