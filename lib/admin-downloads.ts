@@ -92,24 +92,31 @@ export interface DownloadStats {
 
 export async function getDownloadStats(days = 7): Promise<DownloadStats> {
   const pool = getPool();
-  const [totalRows] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM downloads WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`,
-    [days],
-  );
-  const [bySrc] = await pool.query<any[]>(
-    `SELECT source_type, COUNT(*) AS n FROM downloads
-     WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-     GROUP BY source_type`,
-    [days],
-  );
-  const [topUsers] = await pool.query<any[]>(
-    `SELECT d.user_id, u.username, COUNT(*) AS n
-     FROM downloads d LEFT JOIN users u ON u.id = d.user_id
-     WHERE d.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
-     GROUP BY d.user_id, u.username
-     ORDER BY n DESC LIMIT 5`,
-    [days],
-  );
+  // The three aggregates read the same window of rows and do not depend on
+  // each other — one round trip instead of three.
+  const [totalResult, bySrcResult, topUsersResult] = await Promise.all([
+    pool.query<any[]>(
+      `SELECT COUNT(*) AS n FROM downloads WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`,
+      [days],
+    ),
+    pool.query<any[]>(
+      `SELECT source_type, COUNT(*) AS n FROM downloads
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+       GROUP BY source_type`,
+      [days],
+    ),
+    pool.query<any[]>(
+      `SELECT d.user_id, u.username, COUNT(*) AS n
+       FROM downloads d LEFT JOIN users u ON u.id = d.user_id
+       WHERE d.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+       GROUP BY d.user_id, u.username
+       ORDER BY n DESC LIMIT 5`,
+      [days],
+    ),
+  ]);
+  const totalRows = totalResult[0] as any[];
+  const bySrc = bySrcResult[0] as any[];
+  const topUsers = topUsersResult[0] as any[];
   const bySourceType: any = { worksheet: 0, poem: 0, sutra: 0, 'rare-char-card': 0 };
   for (const r of bySrc) bySourceType[r.source_type] = Number(r.n);
   return {

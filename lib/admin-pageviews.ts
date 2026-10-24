@@ -17,19 +17,26 @@ export interface PageViewStats {
  */
 export async function getPageViewStats(days: number = 7): Promise<PageViewStats> {
   const pool = getPool();
-  const [[{ today_pv }]] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS today_pv FROM page_views WHERE created_at >= CURDATE()`,
-  );
-  const [[{ today_uv }]] = await pool.query<any[]>(
-    `SELECT COUNT(DISTINCT COALESCE(user_id, ip)) AS today_uv
-       FROM page_views WHERE created_at >= CURDATE()`,
-  );
-  const [rows] = await pool.query<any[]>(
-    `SELECT path, COUNT(*) AS count FROM page_views
-       WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
-       GROUP BY path ORDER BY count DESC LIMIT 5`,
-    [days],
-  );
+  // The three aggregates read the same table and do not depend on each
+  // other — one round trip instead of three.
+  const [pvResult, uvResult, pathsResult] = await Promise.all([
+    pool.query<any[]>(
+      `SELECT COUNT(*) AS today_pv FROM page_views WHERE created_at >= CURDATE()`,
+    ),
+    pool.query<any[]>(
+      `SELECT COUNT(DISTINCT COALESCE(user_id, ip)) AS today_uv
+         FROM page_views WHERE created_at >= CURDATE()`,
+    ),
+    pool.query<any[]>(
+      `SELECT path, COUNT(*) AS count FROM page_views
+         WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+         GROUP BY path ORDER BY count DESC LIMIT 5`,
+      [days],
+    ),
+  ]);
+  const [[{ today_pv }]] = pvResult as [any[], any];
+  const [[{ today_uv }]] = uvResult as [any[], any];
+  const rows = pathsResult[0] as any[];
   return {
     todayPv: Number(today_pv),
     todayUv: Number(today_uv),
