@@ -36,7 +36,7 @@ export function LazyBarChartTop(props: BarChartTopProps) {
     return (
       <div
         style={{ height: Math.max(120, props.data.length * 32) }}
-        className="bg-muted/30 rounded animate-pulse"
+        className="bg-paper-deep/40 rounded animate-pulse"
       />
     );
   }

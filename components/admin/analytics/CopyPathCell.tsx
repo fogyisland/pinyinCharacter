@@ -26,7 +26,7 @@ export function CopyPathCell({ path }: { path: string }) {
     <button
       type="button"
       onClick={handleClick}
-      className="text-left text-ink hover:bg-muted/30 px-1 -mx-1 rounded font-mono text-xs"
+      className="text-left text-ink hover:bg-paper-deep/50 px-1 -mx-1 rounded font-mono text-xs"
       title="点击复制路径"
     >
       {copied ? '✓ 已复制' : path}

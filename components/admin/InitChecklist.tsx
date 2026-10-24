@@ -1,6 +1,9 @@
 import { Check, AlertTriangle, X } from 'lucide-react';
 import type { InitReport, StepStatus } from '@/lib/init-checklist';
 import { formatDateTime } from '@/lib/format';
+import { Panel } from '@/components/admin/Panel';
+import { StatusBadge, type BadgeTone } from '@/components/admin/StatusBadge';
+import { AdminLink } from '@/components/admin/AdminButton';
 
 const STATUS_LABEL: Record<StepStatus, string> = {
   ok: '完成',
@@ -8,10 +11,22 @@ const STATUS_LABEL: Record<StepStatus, string> = {
   fail: '必须修复',
 };
 
+const STATUS_TONE: Record<StepStatus, BadgeTone> = {
+  ok: 'success',
+  warn: 'warning',
+  fail: 'danger',
+};
+
 const STATUS_ROW: Record<StepStatus, string> = {
-  ok: 'border-green-200 bg-green-50/40',
-  warn: 'border-amber-200 bg-amber-50/40',
-  fail: 'border-seal/30 bg-seal/5',
+  ok: 'border-success/30 bg-success/8',
+  warn: 'border-warning/35 bg-warning/10',
+  fail: 'border-danger/30 bg-danger/8',
+};
+
+const STATUS_ICON: Record<StepStatus, string> = {
+  ok: 'text-success',
+  warn: 'text-warning',
+  fail: 'text-danger',
 };
 
 /**
@@ -31,14 +46,13 @@ export function InitChecklist({ report }: { report: InitReport }) {
   const failCount = steps.filter((s) => s.status === 'fail').length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Section 1: Current environment */}
-      <section className="card-paper rounded-lg p-4">
-        <h2 className="text-base font-semibold mb-3">当前环境</h2>
+      <Panel title="当前环境" description="运行配置与数据库连通性">
         <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2 text-sm">
           <div>
             <dt className="text-ink-soft">运行环境</dt>
-            <dd className="font-mono">
+            <dd className="font-mono text-ink">
               {context.nodeEnv}
               {context.isProd ? ' (production)' : ' (development)'}
             </dd>
@@ -50,10 +64,10 @@ export function InitChecklist({ report }: { report: InitReport }) {
                 <>
                   {context.dbUrlParts.user}@{context.dbUrlParts.host}:{context.dbUrlParts.port}/
                   {context.dbUrlParts.database}{' '}
-                  <span className="text-ink-soft">(密码 {context.dbUrlParts.password})</span>
+                  <span className="text-ink-faint">(密码 {context.dbUrlParts.password})</span>
                 </>
               ) : (
-                <span className="text-seal">无法解析 DATABASE_URL</span>
+                <span className="text-danger">无法解析 DATABASE_URL</span>
               )}
             </dd>
           </div>
@@ -62,7 +76,7 @@ export function InitChecklist({ report }: { report: InitReport }) {
             <dd className="font-mono text-xs">
               {context.jwtSecretLength} 字节
               {context.jwtSecretIsDevDefault && (
-                <span className="ml-2 text-amber-700">⚠ dev 默认值,prod 不可用</span>
+                <span className="ml-2 text-warning">⚠ dev 默认值,prod 不可用</span>
               )}
             </dd>
           </div>
@@ -71,29 +85,28 @@ export function InitChecklist({ report }: { report: InitReport }) {
             <dd className="font-mono text-xs">
               {context.tableCount} 张
               {context.tableCount < context.expectedTableCount && (
-                <span className="ml-2 text-seal">(期望 ≥ {context.expectedTableCount})</span>
+                <span className="ml-2 text-danger">(期望 ≥ {context.expectedTableCount})</span>
               )}
             </dd>
           </div>
         </dl>
-      </section>
+      </Panel>
 
       {/* Section 2: Admin account */}
-      <section className="card-paper rounded-lg p-4">
-        <h2 className="text-base font-semibold mb-3">管理员账户</h2>
+      <Panel title="管理员账户" description="至少需要一位管理员才能进入后台">
         {context.adminCount === 0 ? (
-          <p className="text-sm text-seal">无管理员 — 需注册后手动改 is_admin=1</p>
+          <p className="text-sm text-danger">无管理员 — 需注册后手动改 is_admin=1</p>
         ) : (
           <dl className="grid grid-cols-1 sm:grid-cols-3 gap-x-6 gap-y-2 text-sm">
             <div>
               <dt className="text-ink-soft">管理员数</dt>
-              <dd className="font-mono">{context.adminCount}</dd>
+              <dd className="font-mono text-ink tabular-nums">{context.adminCount}</dd>
             </div>
             {context.firstAdmin && (
               <>
                 <div>
                   <dt className="text-ink-soft">首个 admin</dt>
-                  <dd className="font-mono">{context.firstAdmin.username}</dd>
+                  <dd className="font-mono text-ink">{context.firstAdmin.username}</dd>
                 </div>
                 <div>
                   <dt className="text-ink-soft">创建时间</dt>
@@ -105,16 +118,13 @@ export function InitChecklist({ report }: { report: InitReport }) {
             )}
           </dl>
         )}
-      </section>
+      </Panel>
 
       {/* Section 3: 12 init steps */}
-      <section>
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-base font-semibold">初始化步骤</h2>
-          <p className="text-xs text-ink-soft">
-            {okCount} 完成 · {warnCount} 建议 · {failCount} 必须修复
-          </p>
-        </div>
+      <Panel
+        title="初始化步骤"
+        description={`${okCount} 完成 · ${warnCount} 建议 · ${failCount} 必须修复`}
+      >
         <ul className="space-y-2">
           {steps.map((step) => (
             <li
@@ -124,35 +134,34 @@ export function InitChecklist({ report }: { report: InitReport }) {
             >
               <span className="mt-0.5">
                 {step.status === 'ok' ? (
-                  <Check className="h-5 w-5 text-green-700" />
+                  <Check className={`h-5 w-5 ${STATUS_ICON.ok}`} />
                 ) : step.status === 'warn' ? (
-                  <AlertTriangle className="h-5 w-5 text-amber-600" />
+                  <AlertTriangle className={`h-5 w-5 ${STATUS_ICON.warn}`} />
                 ) : (
-                  <X className="h-5 w-5 text-seal" />
+                  <X className={`h-5 w-5 ${STATUS_ICON.fail}`} />
                 )}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-medium text-sm">{step.name}</span>
-                  <span className="text-xs text-ink-soft">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-medium text-sm text-ink">{step.name}</span>
+                  <StatusBadge tone={STATUS_TONE[step.status]}>
                     {step.required ? '必须' : '可选'} · {STATUS_LABEL[step.status]}
-                  </span>
+                  </StatusBadge>
                 </div>
                 <p className="text-xs text-ink-soft mt-0.5">{step.description}</p>
-                {step.details && <p className="text-xs font-mono mt-1 break-all">{step.details}</p>}
+                {step.details && (
+                  <p className="text-xs font-mono mt-1 break-all text-ink-soft">{step.details}</p>
+                )}
               </div>
               {step.fixHref && (
-                <a
-                  href={step.fixHref}
-                  className="text-xs px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep whitespace-nowrap"
-                >
+                <AdminLink href={step.fixHref} variant="secondary" size="sm">
                   {step.fixLabel ?? '去修'}
-                </a>
+                </AdminLink>
               )}
             </li>
           ))}
         </ul>
-      </section>
+      </Panel>
     </div>
   );
 }

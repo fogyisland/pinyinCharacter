@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { JsonPanel } from '@/components/admin/JsonPanel';
+import { AdminButton } from '@/components/admin/AdminButton';
 import { formatLogMessage } from '@/lib/audit-format';
 import { formatDateTime } from '@/lib/format';
 import type { UnifiedLogEntry } from '@/lib/admin-logs-types';
@@ -35,24 +36,27 @@ export function LogDetailTrigger({ entry }: { entry: UnifiedLogEntry }) {
 function LogDetail({ entry, onClose }: { entry: UnifiedLogEntry; onClose: () => void }) {
   return (
     <div
-      className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4"
       onClick={onClose}
     >
       <div
-        className="bg-paper rounded-lg shadow-lg w-full max-w-2xl p-5"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`日志详情 ${entry.event}`}
+        className="bg-paper-soft rounded-lg shadow-paper-lg border border-ink/10 w-full max-w-2xl p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-base font-semibold inline-flex items-center gap-1">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <h3 className="font-kai text-base text-ink inline-flex items-center gap-1">
             <Search className="h-4 w-4" />
             {entry.event}
           </h3>
-          <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink text-sm">
+          <AdminButton size="sm" variant="ghost" onClick={onClose}>
             关闭
-          </button>
+          </AdminButton>
         </div>
         <div className="space-y-2 text-sm">
-          <p className="rounded bg-paper-deep px-3 py-2 text-ink">
+          <p className="rounded bg-paper-deep/60 border border-ink/10 px-3 py-2 text-ink">
             {entry.source === 'audit' ? formatLogMessage(entry.event, entry.metadata) : entry.event}
           </p>
           <p>

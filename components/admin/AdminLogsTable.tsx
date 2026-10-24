@@ -1,6 +1,8 @@
-import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { DataTable } from '@/components/admin/DataTable';
 import { SourceBadge } from '@/components/admin/SourceBadge';
 import { LogDetailTrigger } from '@/components/admin/LogDetailTrigger';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { ScrollText } from 'lucide-react';
 import { formatLogMessage } from '@/lib/audit-format';
 import { formatDateTime } from '@/lib/format';
 import type { UnifiedLogEntry } from '@/lib/admin-logs-types';
@@ -18,14 +20,21 @@ import type { UnifiedLogEntry } from '@/lib/admin-logs-types';
  */
 export function AdminLogsTable({ rows }: { rows: UnifiedLogEntry[] }) {
   return (
-    <ResponsiveTable
+    <DataTable
       rows={rows}
       rowKey={(r) => r.id}
-      emptyMessage="无数据"
+      caption="系统与审计日志"
+      empty={
+        <EmptyState
+          icon={ScrollText}
+          title="没有匹配的日志"
+          description="换一个时间范围或来源再试。"
+        />
+      }
       columns={[
         { key: 'event', header: '事件', mobileTitle: true },
         { key: 'source', header: '来源' },
-        { key: 'createdAt', header: '时间', mobileHide: true },
+        { key: 'createdAt', header: '时间', numeric: true, mobileHide: true },
         { key: 'user', header: '用户', mobileHide: true },
         { key: 'summary', header: '元数据', mobileHide: true },
       ]}
@@ -53,6 +62,6 @@ export function AdminLogsTable({ rows }: { rows: UnifiedLogEntry[] }) {
           </>
         );
       }}
-    </ResponsiveTable>
+    </DataTable>
   );
 }

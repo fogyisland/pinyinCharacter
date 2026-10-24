@@ -13,11 +13,11 @@ export function StatCard({
   href?: string;
 }) {
   const content = (
-    <div className="rounded-lg border border-paper-warm bg-paper p-4 flex items-center gap-3 hover:bg-paper-warm transition-colors">
+    <div className="rounded-lg border border-ink/10 bg-paper-soft p-4 flex items-center gap-3 transition-colors hover:border-seal/40">
       <Icon className="h-6 w-6 text-seal shrink-0" />
-      <div>
+      <div className="min-w-0">
         <div className="text-xs text-ink-soft">{label}</div>
-        <div className="text-2xl font-serif text-ink">{value}</div>
+        <div className="text-2xl font-serif text-ink tabular-nums truncate">{value}</div>
       </div>
     </div>
   );

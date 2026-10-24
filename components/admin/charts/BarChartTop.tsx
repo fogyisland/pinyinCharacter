@@ -24,14 +24,14 @@ export function BarChartTop({ data, formatValue = defaultFormat, href }: BarChar
     return (
       <div
         style={{ height: Math.max(120, data.length * 32) }}
-        className="bg-muted/30 rounded animate-pulse"
+        className="bg-paper-deep/40 rounded animate-pulse"
       />
     );
   }
 
   if (data.length === 0) {
     return (
-      <div className="flex items-center justify-center text-muted-foreground text-sm border border-dashed rounded p-8">
+      <div className="flex items-center justify-center text-ink-faint text-sm border border-dashed border-ink/15 rounded p-8">
         暂无数据
       </div>
     );

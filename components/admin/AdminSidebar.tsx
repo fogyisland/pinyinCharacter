@@ -77,7 +77,7 @@ function NavLinks({
             onClick={onNavigate}
             className={
               'px-3 py-1.5 rounded-md text-sm ' +
-              (isActive ? 'bg-ink text-paper' : 'hover:bg-paper-warm text-ink')
+              (isActive ? 'bg-ink text-paper' : 'hover:bg-paper-deep/50 text-ink')
             }
           >
             {item.label}
@@ -117,7 +117,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
   return (
     <>
       {/* 移动端汉堡按钮(放在 nav 之外,父容器 flex 会把它推右) */}
-      <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-paper-warm bg-paper-soft">
+      <div className="md:hidden flex items-center justify-between px-4 py-2 border-b border-ink/10 bg-paper-soft">
         <span className="font-kai text-base text-ink">管理后台</span>
         <button
           type="button"
@@ -130,7 +130,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
       </div>
 
       {/* 桌面端侧栏(md 及以上) */}
-      <nav className="hidden md:flex flex-col w-40 border-r border-paper-warm min-h-[calc(100vh-4rem)] p-2">
+      <nav className="hidden md:flex flex-col w-40 border-r border-ink/10 min-h-[calc(100vh-4rem)] p-2">
         {groups.map((group) => (
           <Section key={group.label} group={group} currentPath={currentPath} />
         ))}

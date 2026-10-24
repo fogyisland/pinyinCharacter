@@ -1,4 +1,4 @@
-import Link from 'next/link';
+import { AdminLink } from '@/components/admin/AdminButton';
 
 export interface PaginationProps {
   /** The 1-based page currently shown. */
@@ -15,10 +15,7 @@ export interface PaginationProps {
   unit?: string;
 }
 
-const navClass = (disabled: boolean) =>
-  `text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep inline-flex items-center gap-1 ${
-    disabled ? 'opacity-50 pointer-events-none' : ''
-  }`;
+const disabledClass = 'opacity-50 pointer-events-none';
 
 /**
  * The page switcher shared by every paged admin list.
@@ -48,22 +45,26 @@ export function Pagination({
           ? `共 0 ${unit}`
           : `第 ${from}–${to} ${unit} · 共 ${total} ${unit} · 第 ${current} / ${pages} 页`}
       </span>
-      <div className="flex gap-2">
-        <Link
+      <nav className="flex gap-2" aria-label="分页">
+        <AdminLink
           href={buildHref(current - 1)}
+          variant="secondary"
+          size="sm"
           aria-disabled={current <= 1}
-          className={navClass(current <= 1)}
+          className={current <= 1 ? disabledClass : ''}
         >
           上一页
-        </Link>
-        <Link
+        </AdminLink>
+        <AdminLink
           href={buildHref(current + 1)}
+          variant="secondary"
+          size="sm"
           aria-disabled={current >= pages}
-          className={navClass(current >= pages)}
+          className={current >= pages ? disabledClass : ''}
         >
           下一页
-        </Link>
-      </div>
+        </AdminLink>
+      </nav>
     </div>
   );
 }
