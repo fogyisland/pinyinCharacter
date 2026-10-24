@@ -33,11 +33,15 @@ export interface PlaylistWithTracks extends Playlist {
   tracks: PlaylistTrackRef[];
 }
 
+/** The most playlists the admin overview will ever load. */
+const MAX_PLAYLISTS = 500;
+
 /** Lists all playlists (no tracks joined). Used by admin overview. */
 export async function listPlaylists(): Promise<Playlist[]> {
   const [rows] = await getPool().query<any[]>(
     `SELECT id, title, is_default, created_at, updated_at
-     FROM playlists ORDER BY is_default DESC, id ASC`,
+     FROM playlists ORDER BY is_default DESC, id ASC LIMIT ?`,
+    [MAX_PLAYLISTS],
   );
   return rows.map(rowToPlaylist);
 }
