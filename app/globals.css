@@ -6,6 +6,16 @@
   --color-paper: #f4ecd8;
   --color-paper-soft: #fffaee;
   --color-paper-deep: #e8dcc0;
+  /*
+   * The warm sand between `paper` and `paper-deep`. It used to be missing
+   * from the token list even though 121 call sites referenced it, so every
+   * `bg-paper-warm` / `border-paper-warm` / `text-paper-warm` silently
+   * rendered nothing: section rules disappeared, hover surfaces never
+   * changed colour, and the light text on a seal-red button had no colour
+   * at all. Tailwind v4 does not read `tailwind.config.ts` on its own, so
+   * the token has to live here.
+   */
+  --color-paper-warm: #ecdfc2;
   --color-ink: #3a2a14;
   --color-ink-soft: #5a4530;
   --color-ink-faint: #8b6f3a;
@@ -132,7 +142,7 @@
   }
 }
 
-/* ============ Admin responsive table ============ */
+/* ============ Admin table ============ */
 /*
  * One <table> serves both the desktop and the phone layout. Below 768px the
  * table collapses into one card per row: the head disappears and every cell
@@ -142,6 +152,30 @@
  * keeps every row in the DOM twice, which is what the admin tables used to
  * ship (50 rows x 7 columns x 2 layouts = 700 cells for the logs page alone).
  */
+
+/*
+ * The desktop layout. The list region scrolls on its own once it is taller
+ * than the height it was given, and the header row is pinned to the top of
+ * that region, so the column names stay readable while the rows scroll
+ * under them.
+ */
+@media (min-width: 768px) {
+  .rt-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: var(--color-paper-deep);
+    box-shadow: inset 0 -1px 0 rgba(58, 42, 20, 0.12);
+  }
+  /* Banded rows: the eye follows one row across the columns. */
+  .rt-table tbody tr:nth-child(even) {
+    background-color: rgba(255, 250, 238, 0.55);
+  }
+  .rt-table tbody tr:hover {
+    background-color: rgba(232, 220, 192, 0.45);
+  }
+}
+
 @media (max-width: 767px) {
   .rt-table,
   .rt-table tbody,
@@ -193,6 +227,68 @@
   .rt-table td[data-mobile='hide'] {
     display: none;
   }
+}
+
+/* ============ Admin surface ============ */
+/*
+ * The public site's `card-paper` lights up seal-red on hover, which is the
+ * right signal for a card you can click. The admin's panels are large static
+ * containers, and a whole panel turning red the moment the pointer crosses
+ * it reads like an error — red is the danger hue in the admin palette now.
+ * The admin surface keeps the paper, the hairline and the shadow, and drops
+ * the hover flourish.
+ */
+.adm-surface .card-paper:hover {
+  border-color: rgba(58, 42, 20, 0.1);
+  box-shadow: var(--shadow-paper);
+}
+
+/* ============ Admin form controls ============ */
+/*
+ * The admin forms each styled their inputs by hand — a border in one place,
+ * a background in another, and a focus ring nowhere. This is the one look
+ * for a text field, a select, and a textarea inside the admin.
+ */
+.adm-input {
+  width: 100%;
+  border: 1px solid rgba(58, 42, 20, 0.22);
+  background-color: var(--color-paper-soft);
+  border-radius: 3px;
+  padding: 6px 10px;
+  font-size: 14px;
+  color: var(--color-ink);
+  transition:
+    border-color 200ms,
+    box-shadow 200ms;
+}
+.adm-input::placeholder {
+  color: var(--color-ink-faint);
+}
+.adm-input:focus-visible {
+  outline: none;
+  border-color: var(--color-seal);
+  box-shadow: 0 0 0 3px rgba(178, 43, 43, 0.14);
+}
+.adm-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+select.adm-input {
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, rgba(58, 42, 20, 0.5) 50%),
+    linear-gradient(135deg, rgba(58, 42, 20, 0.5) 50%, transparent 50%);
+  background-position:
+    calc(100% - 16px) 55%,
+    calc(100% - 11px) 55%;
+  background-size:
+    5px 5px,
+    5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 30px;
+}
+textarea.adm-input {
+  min-height: 96px;
+  line-height: 1.6;
 }
 
 /* ============ Print (worksheet) ============ */
