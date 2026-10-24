@@ -17,6 +17,7 @@ const EMAIL_HOUR_LIMIT = 5;
 
 export interface ListNotesOpts {
   limit?: number;
+  offset?: number;
   includeDeleted?: boolean;
 }
 
@@ -26,11 +27,12 @@ export async function listActiveNotes(opts: ListNotesOpts = {}): Promise<NoteRow
 
 export async function listAllNotesForAdmin(opts: ListNotesOpts = {}): Promise<NoteRow[]> {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+  const offset = Math.max(opts.offset ?? 0, 0);
   const where = opts.includeDeleted ? '' : 'WHERE deleted_at IS NULL';
   const [rows] = await getPool().query<any[]>(
     `SELECT id, author_user_id, author_name, author_email, content, created_at, deleted_at
-     FROM notes ${where} ORDER BY created_at DESC LIMIT ?`,
-    [limit],
+     FROM notes ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    [limit, offset],
   );
   return (rows as any[]).map((r) => ({
     id: Number(r.id),
@@ -41,6 +43,13 @@ export async function listAllNotesForAdmin(opts: ListNotesOpts = {}): Promise<No
     createdAt: r.created_at,
     deletedAt: r.deleted_at,
   }));
+}
+
+/** How many notes the admin list holds, for its pagination. */
+export async function countAllNotesForAdmin(opts: { includeDeleted?: boolean } = {}): Promise<number> {
+  const where = opts.includeDeleted ? '' : 'WHERE deleted_at IS NULL';
+  const [rows] = await getPool().query<any[]>(`SELECT COUNT(*) AS n FROM notes ${where}`);
+  return Number(rows[0]?.n ?? 0);
 }
 
 export interface InsertNoteArgs {
