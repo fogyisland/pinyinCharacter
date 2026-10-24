@@ -1,12 +1,13 @@
 import Link from 'next/link';
-import { listUsers } from '@/lib/admin';
+import { countUserBreakdown, listUsers } from '@/lib/admin';
 import { UserActions } from './UsersActions';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { Pagination } from '@/components/admin/Pagination';
 import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
-const PAGE_SIZE = 200;
+const PAGE_SIZE = 50;
 
 interface PageProps {
   searchParams: Promise<{ adminOnly?: string; disabled?: string; page?: string; q?: string }>;
@@ -19,25 +20,36 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const q = sp.q?.trim() || undefined;
   const page = Math.max(Number(sp.page) || 1, 1);
 
-  // Run all 3 counts in parallel so the chip labels show accurate numbers.
-  // Counts are filtered by q so the chip total reflects "users matching
-  // this search", not the global user table size.
-  const listOpts = { q, limit: PAGE_SIZE, offset: (page - 1) * PAGE_SIZE };
-  const [{ users, total }, { total: totalAdmins }, { total: totalDisabled }] = await Promise.all([
+  // The list and the chip counters are independent queries, so they run
+  // together. The counters come from one conditional-aggregation query
+  // instead of two `listUsers({ limit: 1 })` calls, which used to pay for a
+  // full-table history aggregate each.
+  const [{ users, total }, breakdown] = await Promise.all([
     listUsers({
-      ...listOpts,
+      q,
+      limit: PAGE_SIZE,
+      offset: (page - 1) * PAGE_SIZE,
       isAdmin: adminOnly ? true : undefined,
       disabled: disabled ? true : undefined,
     }),
-    listUsers({ q, limit: 1, isAdmin: true }),
-    listUsers({ q, limit: 1, disabled: true }),
+    countUserBreakdown(q),
   ]);
 
-  const chipHref = (overrides: { adminOnly?: string; disabled?: string }) => {
+  /**
+   * The href of a target page. Changing a filter resets to page 1 — staying
+   * on page 7 of a filter that now has two pages would show an empty list.
+   */
+  const buildHref = (
+    target: number,
+    overrides: { adminOnly?: string; disabled?: string } = {},
+  ) => {
     const params = new URLSearchParams();
     if (q) params.set('q', q);
-    if (overrides.adminOnly) params.set('adminOnly', overrides.adminOnly);
-    if (overrides.disabled) params.set('disabled', overrides.disabled);
+    const admin = overrides.adminOnly ?? (adminOnly ? '1' : '');
+    const dis = overrides.disabled ?? (disabled ? '1' : '');
+    if (admin) params.set('adminOnly', admin);
+    if (dis) params.set('disabled', dis);
+    if (target > 1) params.set('page', String(target));
     const qs = params.toString();
     return qs ? `/admin/users?${qs}` : '/admin/users';
   };
@@ -48,6 +60,8 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     }`;
 
   const showAll = !adminOnly && !disabled;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
   return (
     <div>
       <h1 className="text-xl font-semibold mb-4">用户管理 (共 {total})</h1>
@@ -70,7 +84,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
         </button>
         {q && (
           <Link
-            href={chipHref({})}
+            href={buildHref(1, {})}
             className="px-3 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep"
           >
             清空
@@ -79,14 +93,14 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
       </form>
 
       <div className="flex gap-2 mb-4 flex-wrap">
-        <Link href={chipHref({})} className={chipClass(showAll)}>
-          全部 ({total})
+        <Link href={buildHref(1, {})} className={chipClass(showAll)}>
+          全部 ({breakdown.total})
         </Link>
-        <Link href={chipHref({ adminOnly: '1' })} className={chipClass(adminOnly)}>
-          管理员 ({totalAdmins})
+        <Link href={buildHref(1, { adminOnly: '1' })} className={chipClass(adminOnly)}>
+          管理员 ({breakdown.admins})
         </Link>
-        <Link href={chipHref({ disabled: '1' })} className={chipClass(disabled)}>
-          禁用 ({totalDisabled})
+        <Link href={buildHref(1, { disabled: '1' })} className={chipClass(disabled)}>
+          禁用 ({breakdown.disabled})
         </Link>
       </div>
 
@@ -134,6 +148,17 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
           </>
         )}
       </ResponsiveTable>
+
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={PAGE_SIZE}
+          buildHref={(target) => buildHref(target)}
+          unit="人"
+        />
+      </div>
     </div>
   );
 }
