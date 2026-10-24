@@ -19,6 +19,7 @@ vi.mock('@/lib/use-difficulty', () => ({
     hskLevel: mockState.hskLevel,
     setDifficulty: vi.fn(),
     setHskLevel: vi.fn(),
+    ready: true,
   }),
 }));
 

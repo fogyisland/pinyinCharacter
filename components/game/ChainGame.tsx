@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { fetchChainChars } from '@/lib/api-chain';
 import { getValidNextChars, pickStarter } from '@/lib/chain-rules';
 import type { CharInfo } from '@/lib/chain-types';
-import { CHAIN_GAME_CONFIG, type Difficulty } from '@/lib/difficulty';
+import { CHAIN_GAME_CONFIG } from '@/lib/difficulty';
 import { useDifficulty } from '@/lib/use-difficulty';
 import { DifficultyPicker } from '@/components/common/DifficultyPicker';
 import { getRevealConfig, type RevealElement } from '@/lib/reveal';
@@ -24,7 +24,9 @@ export function ChainGame() {
   // <FallbackBanner /> tells the user their HSK selection isn't fully
   // supported yet (matches ToneRadicalGame + DragMatchGame pattern).
   const [hskFallback, setHskFallback] = useState(false);
-  const { difficulty, setDifficulty, hskLevel } = useDifficulty();
+  // Bumped by the retry button — the effect below reloads the char pool.
+  const [reloadToken, setReloadToken] = useState(0);
+  const { difficulty, setDifficulty, hskLevel, ready } = useDifficulty();
 
   // 2026-07-04 W3 fold-in: AbortController guards the async fetch so
   // unmounting mid-fetch (or rapid difficulty switching) doesn't call
@@ -32,7 +34,10 @@ export function ChainGame() {
   // module-level memoized promise — the AbortController doesn't cancel
   // the network request itself, but it prevents the `.then()` chain
   // from mutating state after cleanup.
+  // The wait for `ready` avoids a second request: the stored difficulty is
+  // only known after the browser has read localStorage.
   useEffect(() => {
+    if (!ready) return;
     const ctrl = new AbortController();
     void (async () => {
       setPhase('loading');
@@ -54,17 +59,7 @@ export function ChainGame() {
       }
     })();
     return () => ctrl.abort();
-  }, [difficulty, hskLevel]);
-
-  async function startGame(forceDifficulty: Difficulty = difficulty) {
-    // 2026-07-04: DifficultyPicker's onChange used to call startGame(d)
-    // which did its own fetchChainChars. Now that the useEffect above
-    // is the canonical fetch path, the onChange handler just delegates
-    // to setDifficulty — the useEffect re-runs when difficulty changes.
-    // The retry button on the error state still calls startGame() with
-    // no arg; that's a no-op re-trigger of the same path (deps unchanged).
-    setDifficulty(forceDifficulty);
-  }
+  }, [ready, difficulty, hskLevel, reloadToken]);
 
   const usedChars = useMemo(() => new Set(chain), [chain]);
   const validNext = useMemo(
@@ -95,7 +90,7 @@ export function ChainGame() {
         <p className="text-seal">字库加载失败</p>
         <button
           type="button"
-          onClick={() => void startGame()}
+          onClick={() => setReloadToken((token) => token + 1)}
           className="mt-4 rounded-md bg-seal px-4 py-2 text-white"
         >
           重试
@@ -123,8 +118,9 @@ export function ChainGame() {
         <DifficultyPicker
           value={difficulty}
           onChange={(d) => {
+            // The round is reloaded by the effect above — starting it here
+            // as well would send the request twice.
             setDifficulty(d);
-            void startGame(d);
           }}
         />
         <div className="text-xs text-ink-faint">字库难度</div>

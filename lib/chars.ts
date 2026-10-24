@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { pinyin } from 'pinyin-pro';
 import { getPool } from './db';
 import { readContentFromFs } from './content';
@@ -220,7 +221,15 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
   };
 }
 
-export async function getChar(char: string): Promise<Char | null> {
+/**
+ * Look up a single character.
+ *
+ * Wrapped in React's `cache()` so that the several lookups of one request
+ * share a single database roundtrip: the dictionary page reads the char for
+ * its metadata and again for the detail view, and `getCharDetail` reads it
+ * once more. Outside a React request the call simply runs as before.
+ */
+export const getChar = cache(async (char: string): Promise<Char | null> => {
   // Filter to BMP-only at the application boundary: mysql2 binary protocol
   // corrupts 4-byte UTF-8 params (supp-plane chars). Returning null here
   // means the corrupted value never reaches the driver. Callers that need
@@ -237,7 +246,7 @@ export async function getChar(char: string): Promise<Char | null> {
   );
   if (rows.length === 0) return null;
   return hydrateChar(rows[0] as DbRow);
-}
+});
 
 /**
  * True if the input is a non-empty 4-byte UTF-8 character (codepoint > U+FFFF,

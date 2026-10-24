@@ -12,6 +12,7 @@ it('renders HSK 1-6 chips and reflects current selection', async () => {
       hskLevel: 3 as HskLevel,
       setDifficulty: vi.fn(),
       setHskLevel: vi.fn(),
+      ready: true,
     }),
   }));
   const { GameModeTabs } = await import('@/components/game/GameModeTabs');

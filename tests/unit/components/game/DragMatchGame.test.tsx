@@ -18,6 +18,7 @@ vi.mock('@/lib/use-difficulty', () => ({
     hskLevel: mockState.hskLevel,
     setDifficulty: vi.fn(),
     setHskLevel: vi.fn(),
+    ready: true,
   }),
 }));
 
@@ -86,9 +87,8 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
 
   it('threads revealConfig to CharDropZone (HSK 1: pinyin + meaning hints visible)', async () => {
     mockState.hskLevel = 1;
-    // DragMatchGame makes two fetches: fetchChars for the pool and a
-    // /api/chars probe to read hskFallback. Return identical shape for
-    // both.
+    // One request: the char pool and the hskFallback flag come in the same
+    // response envelope.
     mockFetchChars({
       ok: true,
       data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 },
@@ -126,18 +126,17 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
 
   it('renders FallbackBanner when hskFallback=true from server', async () => {
     mockState.hskLevel = 5;
-    // First call (fetchChars via /api/chars) returns the data. Second call
-    // (the hskFallback probe) returns hskFallback=true.
+    // The game reads hskFallback from the same response as the characters —
+    // it used to send a second request just to learn the flag.
     let callCount = 0;
     vi.spyOn(global, 'fetch').mockImplementation(async () => {
       callCount += 1;
-      const hskFallback = callCount >= 2; // first call is fetchChars data, subsequent is probe
       return {
         ok: true,
         json: async () => ({
           ok: true,
           data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 },
-          hskFallback,
+          hskFallback: true,
         }),
       } as Response;
     });
@@ -149,6 +148,7 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
     const status = screen.getByRole('status');
     expect(status.textContent).toContain('HSK 5');
     expect(status.textContent).toContain('HSK 4');
+    expect(callCount).toBe(1);
   });
 
   it('does NOT render FallbackBanner when hskFallback=false', async () => {

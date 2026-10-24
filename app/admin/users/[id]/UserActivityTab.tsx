@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { LogRow } from '@/components/admin/LogRow';
 import { JsonPanel } from '@/components/admin/JsonPanel';
 import { getUserActivityRequest, type UserActivityItem } from '@/lib/api-admin';
@@ -30,6 +30,10 @@ export function UserActivityTab({ userId }: { userId: number }) {
         setItems((prev) => (append ? [...prev, ...newItems] : newItems));
         if (newItems.length < PAGE_SIZE) setExhausted(true);
         setLoaded(true);
+      } catch (error) {
+        console.error('Failed to load the activity log', error);
+        setErr(error instanceof Error ? error.message : '加载失败');
+        setLoaded(true);
       } finally {
         setBusy(false);
       }
@@ -37,10 +41,15 @@ export function UserActivityTab({ userId }: { userId: number }) {
     [userId],
   );
 
-  // Initial load: fetch page 1.
-  if (!loaded && !busy && items.length === 0) {
-    fetchPage(undefined, false);
-  }
+  // Initial load: fetch page 1. This used to run in the render body, which
+  // fired the request again on every re-render until the response had
+  // arrived — the tab sent the same request several times.
+  const requested = useRef(false);
+  useEffect(() => {
+    if (requested.current) return;
+    requested.current = true;
+    void fetchPage(undefined, false);
+  }, [fetchPage]);
 
   function loadMore() {
     if (items.length === 0) return;

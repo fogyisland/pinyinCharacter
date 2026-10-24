@@ -45,7 +45,10 @@ export function ToneRadicalGame() {
   // surface as <FallbackBanner /> so the user knows their HSK selection
   // isn't fully supported yet.
   const [hskFallback, setHskFallback] = useState(false);
-  const { difficulty, setDifficulty, hskLevel } = useDifficulty();
+  const { difficulty, setDifficulty, hskLevel, ready } = useDifficulty();
+  // Every new round cancels the request of the previous one, so a fast
+  // difficulty switch cannot render an outdated round.
+  const abortRef = useRef<AbortController | null>(null);
 
   const revealConfig = useMemo(() => getRevealConfig('tone-radical', hskLevel), [hskLevel]);
 
@@ -62,6 +65,9 @@ export function ToneRadicalGame() {
     setMismatches(0);
     setElapsedMs(0);
     setError(null);
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
     try {
       const cfg = TONE_RADICAL_CONFIG[forceDifficulty];
       // 2026-07-03: pass `source` so easy/medium/hard pick from the
@@ -75,7 +81,7 @@ export function ToneRadicalGame() {
         source: cfg.source,
         hskLevel: String(hskLevel),
       });
-      const res = await fetch(`/api/game/round?${params.toString()}`);
+      const res = await fetch(`/api/game/round?${params.toString()}`, { signal: controller.signal });
       const json = (await res.json()) as {
         ok: boolean;
         data: GameRound;
@@ -92,24 +98,33 @@ export function ToneRadicalGame() {
       startedAt.current = Date.now();
       setPhase('playing');
     } catch (e) {
+      if (controller.signal.aborted) return;
       console.error('loadGame failed', e);
       setError(e instanceof Error ? e.message : '加载失败');
     }
   };
 
+  // Stop an in-flight round request when the component goes away.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   // 2026-07-05 (Task 12 I1): depend on hskLevel + difficulty so picking a
   // different HSK chip in GameModeTabs refetches the round. Previously
   // mount-only — revealConfig would recompute but round.chars stayed stale.
+  // The wait for `ready` avoids a second request: the stored difficulty is
+  // only known after the browser has read localStorage.
   useEffect(() => {
+    if (!ready) return;
     void loadGame();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hskLevel, difficulty]);
+  }, [ready, hskLevel, difficulty]);
 
+  // The clock shows whole seconds, so it ticks once per second. It used to
+  // tick every 100 ms, which re-rendered the whole board ten times a second.
   useEffect(() => {
-    if (phase === 'finished') return;
+    if (phase !== 'playing') return;
     const handle = setInterval(() => {
       setElapsedMs(Date.now() - startedAt.current);
-    }, 100);
+    }, 1000);
     return () => clearInterval(handle);
   }, [phase]);
 
@@ -117,7 +132,10 @@ export function ToneRadicalGame() {
   useEffect(() => {
     if (phase !== 'playing' || !round) return;
     if (Object.keys(matches).length === round.chars.length) {
-      const t = setTimeout(() => setPhase('finished'), 800);
+      const t = setTimeout(() => {
+        setElapsedMs(Date.now() - startedAt.current);
+        setPhase('finished');
+      }, 800);
       return () => clearTimeout(t);
     }
   }, [matches, phase, round]);
@@ -207,8 +225,9 @@ export function ToneRadicalGame() {
         <DifficultyPicker
           value={difficulty}
           onChange={(d) => {
+            // The round is reloaded by the effect above — loading it here
+            // as well would send the request twice.
             setDifficulty(d);
-            void loadGame(d);
           }}
         />
         <div className="text-xs text-ink-faint">本轮:{modeInfo.subject}</div>
@@ -218,7 +237,10 @@ export function ToneRadicalGame() {
         <div>错配: {mismatches}</div>
         <button
           type="button"
-          onClick={() => setPhase('finished')}
+          onClick={() => {
+            setElapsedMs(Date.now() - startedAt.current);
+            setPhase('finished');
+          }}
           className="text-ink-faint hover:underline"
         >
           放弃

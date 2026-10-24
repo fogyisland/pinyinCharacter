@@ -16,7 +16,7 @@ interface Char {
   meaning: string;
 }
 
-type Phase = 'loading' | 'playing' | 'finished';
+type Phase = 'loading' | 'playing' | 'finished' | 'error';
 
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr];
@@ -49,7 +49,10 @@ export function DragMatchGame() {
   // always false per app/api/chars/route.ts) so the client can decide to
   // show <FallbackBanner />.
   const [hskFallback, setHskFallback] = useState(false);
-  const { difficulty, setDifficulty, hskLevel } = useDifficulty();
+  const { difficulty, setDifficulty, hskLevel, ready } = useDifficulty();
+  // Every new round cancels the request of the previous one, so a fast
+  // difficulty switch cannot render an outdated round.
+  const abortRef = useRef<AbortController | null>(null);
 
   const revealConfig = useMemo(() => getRevealConfig('drag-match', hskLevel), [hskLevel]);
 
@@ -63,59 +66,74 @@ export function DragMatchGame() {
   // 2026-07-05 (Task 12 I1): depend on hskLevel + difficulty so picking a
   // different HSK chip in GameModeTabs refetches the char pool. Previously
   // mount-only — revealConfig would recompute but chars stayed stale.
+  // The wait for `ready` avoids a second request: the stored difficulty is
+  // only known after the browser has read localStorage.
   useEffect(() => {
+    if (!ready) return;
     void loadGame();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hskLevel, difficulty]);
+  }, [ready, hskLevel, difficulty]);
 
+  // Stop an in-flight round request when the component goes away.
+  useEffect(() => () => abortRef.current?.abort(), []);
+
+  // The clock shows whole seconds, so it ticks once per second. It used to
+  // tick every 100 ms, which re-rendered the whole board ten times a second.
   useEffect(() => {
     if (phase !== 'playing') return;
     const handle = setInterval(() => {
       setElapsedMs(Date.now() - startedAt.current);
-    }, 100);
+    }, 1000);
     return () => clearInterval(handle);
   }, [phase]);
 
   const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
     setPhase('loading');
     const cfg = DRAG_MATCH_CONFIG[forceDifficulty];
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-    let chars: Char[] = [];
-    // 2026-07-04: T9 — pass hskLevel through fetchChars so /api/chars filters
-    // by the HSK column. The legacy `level` param is left untouched for
-    // backwards compat with the chars-level-1/1-2/all sources.
-    if (cfg.source === 'chars-level-1') {
-      const r = await fetchChars({ level: 1, hskLevel, page: 1 });
-      chars = r.chars.filter((c) => c.meaningZh).map(toChar);
-    } else if (cfg.source === 'chars-level-1-2') {
-      const r = await fetchChars({ hskLevel, page: 1 });
-      chars = r.chars.filter((c) => c.meaningZh && (c.level === 1 || c.level === 2)).map(toChar);
-    } else {
-      const r = await fetchChars({ hskLevel, page: 1 });
-      chars = r.chars.filter((c) => c.meaningZh).map(toChar);
-    }
-
-    const picked = shuffle(chars).slice(0, cfg.count);
-    setChars(picked);
-    setPinyinOrder(shuffle(picked.map((c) => c.pinyin)));
-    setPairs({});
-    setMismatches(0);
-    setElapsedMs(0);
-    startedAt.current = Date.now();
-    // Capture hskFallback from the response envelope. /api/chars currently
-    // returns hskFallback=false; the hook is here so when the server starts
-    // surfacing real fallbacks the banner will reflect them automatically.
     try {
-      const search = new URLSearchParams();
-      search.set('hskLevel', String(hskLevel));
-      search.set('page', '1');
-      const probe = await fetch(`/api/chars?${search.toString()}`);
-      const json = (await probe.json()) as { hskFallback?: boolean };
-      setHskFallback(json.hskFallback ?? false);
-    } catch {
-      setHskFallback(false);
+      let chars: Char[] = [];
+      let fallback = false;
+      // 2026-07-04: T9 — pass hskLevel through fetchChars so /api/chars filters
+      // by the HSK column. The legacy `level` param is left untouched for
+      // backwards compat with the chars-level-1/1-2/all sources.
+      if (cfg.source === 'chars-level-1') {
+        const r = await fetchChars({ level: 1, hskLevel, page: 1, signal: controller.signal });
+        chars = r.chars.filter((c) => c.meaningZh).map(toChar);
+        fallback = r.hskFallback;
+      } else if (cfg.source === 'chars-level-1-2') {
+        const r = await fetchChars({ hskLevel, page: 1, signal: controller.signal });
+        chars = r.chars.filter((c) => c.meaningZh && (c.level === 1 || c.level === 2)).map(toChar);
+        fallback = r.hskFallback;
+      } else {
+        const r = await fetchChars({ hskLevel, page: 1, signal: controller.signal });
+        chars = r.chars.filter((c) => c.meaningZh).map(toChar);
+        fallback = r.hskFallback;
+      }
+
+      if (controller.signal.aborted) return;
+
+      const picked = shuffle(chars).slice(0, cfg.count);
+      setChars(picked);
+      setPinyinOrder(shuffle(picked.map((c) => c.pinyin)));
+      setPairs({});
+      setMismatches(0);
+      setElapsedMs(0);
+      startedAt.current = Date.now();
+      // Capture hskFallback from the response envelope. /api/chars currently
+      // returns hskFallback=false; the flag is read from the same response as
+      // the characters — the game used to send a second request just to
+      // learn the value.
+      setHskFallback(fallback);
+      setPhase('playing');
+    } catch (e) {
+      if (controller.signal.aborted) return;
+      console.error('loadGame failed', e);
+      setPhase('error');
     }
-    setPhase('playing');
   };
 
   const handleDragStart = (e: React.DragEvent, pinyin: string) => {
@@ -131,6 +149,7 @@ export function DragMatchGame() {
     setPairs((prev) => {
       const next = { ...prev, [char]: pinyin };
       if (Object.keys(next).length === chars.length) {
+        setElapsedMs(Date.now() - startedAt.current);
         setPhase('finished');
       }
       return next;
@@ -147,6 +166,22 @@ export function DragMatchGame() {
 
   if (phase === 'loading') {
     return <div className="py-12 text-center text-ink-faint">加载中...</div>;
+  }
+
+  if (phase === 'error') {
+    return (
+      <div className="mx-auto max-w-md rounded-lg border bg-paper p-8 text-center">
+        <h2 className="text-xl font-bold text-seal">出错了</h2>
+        <p className="mt-2 text-ink-soft">加载字库失败,请重试</p>
+        <button
+          type="button"
+          onClick={() => void loadGame()}
+          className="mt-4 rounded-md bg-seal px-4 py-2 text-white hover:bg-seal/80"
+        >
+          重试
+        </button>
+      </div>
+    );
   }
 
   if (phase === 'finished') {
@@ -179,8 +214,9 @@ export function DragMatchGame() {
         <DifficultyPicker
           value={difficulty}
           onChange={(d) => {
+            // The round is reloaded by the effect above — loading it here
+            // as well would send the request twice.
             setDifficulty(d);
-            void loadGame(d);
           }}
         />
       </div>
@@ -189,7 +225,10 @@ export function DragMatchGame() {
         <div className="text-sm text-ink-soft">错配: {mismatches}</div>
         <button
           type="button"
-          onClick={() => setPhase('finished')}
+          onClick={() => {
+            setElapsedMs(Date.now() - startedAt.current);
+            setPhase('finished');
+          }}
           className="text-sm text-ink-faint hover:underline"
         >
           放弃
