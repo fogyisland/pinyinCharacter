@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { parseRange, rangeToDays } from '@/lib/admin-range';
 import { getTopPaths } from '@/lib/admin-pageviews';
-import { BarChartTop } from '@/components/admin/charts';
+import { LazyBarChartTop } from '@/components/admin/charts/LazyBarChartTop';
 import { CopyPathCell } from '@/components/admin/analytics/CopyPathCell';
 
 export const dynamic = 'force-dynamic';
@@ -56,7 +56,7 @@ export default async function AnalyticsPage({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <section className="bg-paper rounded border border-line p-4">
           <h2 className="text-base font-serif text-ink mb-3">Top 20 路径</h2>
-          <BarChartTop data={topPages.map((p) => ({ label: p.path, value: p.views }))} />
+          <LazyBarChartTop data={topPages.map((p) => ({ label: p.path, value: p.views }))} />
         </section>
 
         <section className="bg-paper rounded border border-line p-4">

@@ -25,12 +25,27 @@ export function TextToPinyin() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 字 → 拼音：实时
+  //
+  // The conversion is asynchronous because the pinyin dictionary
+  // (pinyin-pro) is loaded on demand — it is too big to ship in the page's
+  // initial bundle. The `cancelled` flag drops the result of a keystroke
+  // that has already been superseded.
   useEffect(() => {
     if (!text.trim()) {
       setTokens([]);
       return;
     }
-    setTokens(textToPinyin(text));
+    let cancelled = false;
+    void textToPinyin(text)
+      .then((next) => {
+        if (!cancelled) setTokens(next);
+      })
+      .catch((err: unknown) => {
+        console.error('字转拼音失败', err);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [text]);
 
   // 自动入库：1.5s debounce
