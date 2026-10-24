@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { listUserWorksheets, saveWorksheet } from '@/lib/worksheet';
+import { listUserWorksheetListItems, saveWorksheet } from '@/lib/worksheet';
 import { withErrorHandling, badRequest, unauthorized } from '@/lib/api-handler';
 import { saveWorksheetSchema } from '@/lib/validators';
 import { logUserAction } from '@/lib/audit';
@@ -9,7 +9,10 @@ export async function GET(_req: NextRequest) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
     if (!user) return unauthorized();
-    const worksheets = await listUserWorksheets(user.id);
+    // List rows only — the char arrays are fetched per worksheet via
+    // GET /api/worksheets/[id]. Selecting `content` here shipped up to
+    // 200 worksheets' worth of chars for a list view.
+    const worksheets = await listUserWorksheetListItems(user.id);
     return NextResponse.json({ ok: true, data: { worksheets } });
   });
 }

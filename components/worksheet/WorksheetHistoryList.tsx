@@ -2,14 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import type { Worksheet } from '@/lib/worksheet-types';
+import type { WorksheetListItem } from '@/lib/worksheet-types';
 import { paperSizeLabel, fontFamilyLabel, cellStyleLabel } from '@/lib/worksheet-types';
 import { DeleteWorksheetButton } from './DeleteWorksheetButton';
 import { RenameWorksheetButton } from './RenameWorksheetButton';
 import { BatchPrintButton } from './BatchPrintButton';
 
 interface Props {
-  worksheets: Worksheet[];
+  worksheets: WorksheetListItem[];
   hasMulti: boolean;
 }
 
@@ -75,7 +75,7 @@ export function WorksheetHistoryList({ worksheets, hasMulti }: Props) {
                 </Link>
                 <div className="text-sm text-ink-faint">
                   {paperSizeLabel(w.paperSize)} · {fontFamilyLabel(w.fontFamily)} ·{' '}
-                  {w.content.length} 字 · {cellStyleLabel(w.cellStyle)} ·{' '}
+                  {w.charCount} 字 · {cellStyleLabel(w.cellStyle)} ·{' '}
                   {new Date(w.createdAt).toLocaleString()}
                 </div>
               </div>

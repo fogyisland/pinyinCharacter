@@ -8,9 +8,10 @@
  * The manifest is the source of truth for id<->slug mapping and the cheap
  * list endpoint (avoids parsing 855KB JSON files just to compute chunkCount).
  */
-import { existsSync, readFileSync, statSync, writeFileSync, renameSync } from 'node:fs';
+import { existsSync, writeFileSync, renameSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SutraChunk, SutraListItem, SutraListResult } from './sutra-types';
+import { readJsonAutoCached, invalidateJsonCache } from './json-fs';
 
 const SUTRAS_DIR = join(process.cwd(), 'data', 'sutras');
 const MANIFEST_PATH = join(SUTRAS_DIR, 'manifest.json');
@@ -29,27 +30,24 @@ export interface SutraManifest {
   items: SutraManifestEntry[];
 }
 
-function safeReadJson<T>(path: string): T | null {
-  try {
-    return JSON.parse(readFileSync(path, 'utf8')) as T;
-  } catch {
-    return null;
-  }
-}
-
 export function sutrasFsAvailable(): boolean {
   return existsSync(MANIFEST_PATH);
 }
 
+/**
+ * The manifest is read on every request (list + detail pages). It goes
+ * through the shared process-wide JSON cache so repeated reads are a Map
+ * lookup instead of a re-read + re-parse of the file.
+ */
 export function readSutraManifest(): SutraManifest | null {
   if (!existsSync(MANIFEST_PATH)) return null;
-  return safeReadJson<SutraManifest>(MANIFEST_PATH);
+  return readJsonAutoCached(MANIFEST_PATH) as SutraManifest | null;
 }
 
 export function readSutraChunksBySlug(slug: string): SutraChunk[] | null {
   const path = join(SUTRAS_DIR, `${slug}.json`);
   if (!existsSync(path)) return null;
-  return safeReadJson<SutraChunk[]>(path);
+  return readJsonAutoCached(path) as SutraChunk[] | null;
 }
 
 export interface ListSutrasFsOpts {
@@ -127,6 +125,8 @@ export function writeSutrasFs(args: {
     const tmp = `${path}.tmp`;
     writeFileSync(tmp, JSON.stringify(chunks), 'utf8');
     renameSync(tmp, path);
+    // Drop the cached copy so readers see the freshly written file.
+    invalidateJsonCache(path);
   }
   const manifest: SutraManifest = {
     version: 1,
@@ -136,6 +136,7 @@ export function writeSutrasFs(args: {
   const tmp = `${MANIFEST_PATH}.tmp`;
   writeFileSync(tmp, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
   renameSync(tmp, MANIFEST_PATH);
+  invalidateJsonCache(MANIFEST_PATH);
   return manifest;
 }
 

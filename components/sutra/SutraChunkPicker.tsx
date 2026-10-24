@@ -1,9 +1,8 @@
 'use client';
 
-import type { SutraChunk } from '@/lib/sutra-types';
-
 interface Props {
-  chunks: SutraChunk[];
+  /** Chapter id + label only — the picker never needs the chapter text. */
+  chunks: Array<{ id: number; label: string }>;
   activeId: number;
   onChange: (id: number) => void;
 }

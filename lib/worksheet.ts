@@ -1,6 +1,13 @@
 import { getPool } from './db';
 import { writeAudit } from './audit';
-import type { PaperSize, FontFamily, SaveWorksheetArgs, Worksheet } from './worksheet-types';
+import type {
+  PaperSize,
+  FontFamily,
+  CellStyle,
+  SaveWorksheetArgs,
+  Worksheet,
+  WorksheetListItem,
+} from './worksheet-types';
 
 export * from './worksheet-types';
 
@@ -42,6 +49,34 @@ export async function listUserWorksheets(userId: number): Promise<Worksheet[]> {
     [userId],
   );
   return rows.map(mapRow);
+}
+
+/**
+ * Rows for the worksheet history list.
+ *
+ * The list only renders the title, paper size, font, cell style, char count
+ * and creation time — it never reads the chars themselves. Selecting the
+ * `content` column here shipped up to 200 worksheets' worth of char arrays
+ * into the RSC payload for nothing; JSON_LENGTH(content) gives the count
+ * without the payload.
+ */
+export async function listUserWorksheetListItems(userId: number): Promise<WorksheetListItem[]> {
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT id, title, cell_style, paper_size, font_family,
+            JSON_LENGTH(content) AS char_count, created_at
+     FROM worksheets WHERE user_id = ? ORDER BY created_at DESC LIMIT 200`,
+    [userId],
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    cellStyle: r.cell_style as CellStyle,
+    paperSize: r.paper_size as PaperSize,
+    fontFamily: r.font_family as FontFamily,
+    charCount: Number(r.char_count ?? 0),
+    createdAt: r.created_at,
+  }));
 }
 
 export interface WorksheetSummary {

@@ -90,6 +90,76 @@ function hydrateCharMinimal(row: DbRow): Pick<Char, 'char' | 'pinyin' | 'meaning
   };
 }
 
+/**
+ * A row of the 拼音接龙 char pool. `meaningZh` is read from the content
+ * JSON (the chars table only carries structural metadata since the
+ * 2026-06-17 migration).
+ */
+export interface ChainCharPoolRow {
+  char: string;
+  pinyin: string;
+  meaningZh: string | null;
+  radical: string;
+  level: 1 | 2 | 3;
+  hskLevel: number | null;
+}
+
+/**
+ * Fetch the 拼音接龙 char pool with a single SQL query.
+ *
+ * The endpoint used to page through listChars() up to 100 times — two SQL
+ * round-trips per page, so ~200 queries per request — and then filtered the
+ * rows in JS. The filters are pushed into SQL instead and the rows are read
+ * in one shot; only the level / HSK membership is decided by the database.
+ *
+ * The meaning still comes from data/content/<char>.json, which is parsed
+ * once per process and cached afterwards (see lib/content.ts).
+ */
+export async function listChainCharPool(opts: {
+  /** chars.level values to keep. Empty = no level filter. */
+  levels?: Array<1 | 2 | 3>;
+  /** chars.hsk_level to keep. Takes precedence over `levels`. */
+  hskLevel?: number;
+  /** Safety cap on the number of rows. */
+  limit?: number;
+}): Promise<ChainCharPoolRow[]> {
+  const where: string[] = [];
+  const params: unknown[] = [];
+
+  if (opts.hskLevel != null) {
+    where.push('hsk_level = ?');
+    params.push(opts.hskLevel);
+  } else if (opts.levels && opts.levels.length > 0) {
+    where.push(`level IN (${opts.levels.map(() => '?').join(',')})`);
+    params.push(...opts.levels);
+  }
+
+  const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
+  const limit = Math.max(1, Math.min(20_000, opts.limit ?? 8_000));
+
+  const pool = getPool();
+  const [rows] = await pool.query<any[]>(
+    `SELECT \`char\`, level, pinyin, radical, hsk_level
+     FROM chars
+     ${whereSql}
+     ORDER BY pinyin, \`char\`
+     LIMIT ?`,
+    [...params, limit],
+  );
+
+  return (rows as DbRow[]).map((row) => {
+    const content = readContentFromFs(row.char);
+    return {
+      char: row.char,
+      pinyin: resolvePinyin(row.char, row.pinyin),
+      meaningZh: content?.dict?.meaning_zh ?? content?.meaning_zh ?? null,
+      radical: row.radical ?? '',
+      level: row.level,
+      hskLevel: row.hsk_level ?? null,
+    };
+  });
+}
+
 export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResult> {
   const pool = getPool();
   const page = Math.max(1, opts.page ?? 1);

@@ -77,20 +77,46 @@ export async function listSutras(args: ListSutrasArgs = {}): Promise<SutraListRe
   };
 }
 
-export async function getSutra(id: number): Promise<SutraDetail | null> {
+/**
+ * A sutra chunk reduced to what the chapter picker needs (id + label).
+ */
+export interface SutraChunkMeta {
+  id: number;
+  label: string;
+}
+
+export interface SutraMeta {
+  id: number;
+  title: string;
+  slug: string;
+  chunkCount: number;
+  chunks: SutraChunkMeta[];
+}
+
+interface SutraSource {
+  id: number;
+  title: string;
+  slug: string;
+  chunks: SutraChunk[];
+}
+
+/**
+ * Load a sutra's chapters from the filesystem (primary) or the DB (fallback).
+ * Chunk ids are forced to 0-based to match the `?chunk=N` URL convention used
+ * by app/sutra/[id] and the copy-progress API. Persisted 1-based ids
+ * (e.g. xinjing.json's `id: 1` for its only chunk) are ignored — they were a
+ * stale convention that mismatched the rest of the sutra stack and caused
+ * 400s on the first chunk of any single-chunk sutra.
+ */
+async function loadSutraSource(id: number): Promise<SutraSource | null> {
   const fs = getSutraByIdFromFs(id);
   if (fs) {
-    const chunks: SutraChunk[] = fs.chunks.map((c, i) => ({
-      ...c,
-      // 0-based to match the ?chunk=N URL convention used by app/sutra/[id]
-      // and the copy-progress API. Persisted 1-based ids (e.g. xinjing.json's
-      // `id: 1` for its only chunk) are ignored — they were a stale convention
-      // that mismatched the rest of the sutra stack and caused 400s on the
-      // first chunk of any single-chunk sutra.
-      id: i,
-      content: c.content.map((s) => sanitizeMojibake(s)),
-    }));
-    return { id: fs.id, title: fs.title, slug: fs.slug, chunks };
+    return {
+      id: fs.id,
+      title: fs.title,
+      slug: fs.slug,
+      chunks: normalizeChunks(fs.chunks),
+    };
   }
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
@@ -99,26 +125,71 @@ export async function getSutra(id: number): Promise<SutraDetail | null> {
   );
   const row = rows[0] as RawSutraRow | undefined;
   if (!row) return null;
-
   const rawChunks =
     typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
-  // See FS branch above for why we force 0-based ids. Also strip mojibake left
-  // by mysql2 when binding 4-byte UTF-8 chars (see memory: mysql2-supp-plane-bug):
-  // orphan UTF-16 surrogate halves and U+FFFD replacement chars.
-  const chunks: SutraChunk[] = rawChunks.map((c, i) => ({
-    ...c,
-    id: i,
-    content: c.content.map((s) => sanitizeMojibake(s)),
-  }));
   return {
     id: Number(row.id),
     title: row.title,
     slug: row.slug,
-    chunks,
+    chunks: normalizeChunks(rawChunks),
   };
 }
 
+function normalizeChunks(raw: SutraChunk[]): SutraChunk[] {
+  return raw.map((c, i) => ({
+    ...c,
+    id: i,
+    content: c.content.map((s) => sanitizeMojibake(s)),
+  }));
+}
+
+export async function getSutra(id: number): Promise<SutraDetail | null> {
+  const src = await loadSutraSource(id);
+  if (!src) return null;
+  return { id: src.id, title: src.title, slug: src.slug, chunks: src.chunks };
+}
+
+/**
+ * Chapter metadata only — no chapter text. Used by pages that render a
+ * single chapter and must not ship the whole book to the browser.
+ */
+export async function getSutraMeta(id: number): Promise<SutraMeta | null> {
+  const src = await loadSutraSource(id);
+  if (!src) return null;
+  return {
+    id: src.id,
+    title: src.title,
+    slug: src.slug,
+    chunkCount: src.chunks.length,
+    chunks: src.chunks.map((c) => ({ id: c.id, label: c.label })),
+  };
+}
+
+/** A single chapter (with text) — the only chapter a detail page needs. */
+export async function getSutraChunk(id: number, chunkIndex: number): Promise<SutraChunk | null> {
+  const src = await loadSutraSource(id);
+  if (!src) return null;
+  return src.chunks[chunkIndex] ?? null;
+}
+
+/** A single chapter's plain text, joined for TTS synthesis. */
+export async function getSutraChunkText(id: number, chunkIndex: number): Promise<string | null> {
+  const chunk = await getSutraChunk(id, chunkIndex);
+  if (!chunk) return null;
+  return chunk.content.join('\n');
+}
+
+/**
+ * Matches any lone UTF-16 surrogate half or U+FFFD replacement char — the
+ * corruption mysql2 leaves behind when binding 4-byte UTF-8 (see memory:
+ * mysql2-supp-plane-bug). Used as a cheap pre-test so the common case (plain
+ * BMP text) skips the per-code-point rewrite entirely.
+ */
+const MOJIBAKE_RE = /[\uD800-\uDFFF\uFFFD]/;
+
 function sanitizeMojibake(s: string): string {
+  // Fast path: nothing to strip.
+  if (!MOJIBAKE_RE.test(s)) return s;
   // Drop lone UTF-16 surrogate halves (mysql2 corrupts 4-byte UTF-8 to these)
   // and U+FFFD replacement chars that result. Length-1 BMP chars pass through.
   return Array.from(s)

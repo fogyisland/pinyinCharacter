@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import type { ClassicChunk, ClassicDetail } from '@/lib/classics-types';
+import type { ClassicChunk } from '@/lib/classics-types';
 import { useSutraReading } from '@/lib/use-sutra-reading';
 import { ReadingModePicker } from '@/components/common/ReadingModePicker';
 import { TextGridPicker } from '@/components/common/TextGridPicker';
@@ -49,7 +49,12 @@ function GridChar({ ch, mode }: { ch: string; mode: 'tian' | 'mi' }) {
 
 interface Props {
   chunk: ClassicChunk;
-  book: Pick<ClassicDetail, 'slug' | 'title' | 'chunks'>;
+  /**
+   * Book identity + chapter count only. The reader used to receive the whole
+   * book (all chapters with their text), which put the entire book into the
+   * RSC payload of every chapter page.
+   */
+  book: { slug: string; title: string; chunkCount: number };
 }
 
 export function ClassicReader({ chunk, book }: Props) {
@@ -85,8 +90,8 @@ export function ClassicReader({ chunk, book }: Props) {
   const worksheetHref = `/worksheet?source=ancient&book=${book.slug}&chapterIdx=${chunk.id - 1}&prefill=${prefill}`;
 
   const currentIdx = chunk.id - 1;
-  const prevChunk = currentIdx > 0 ? book.chunks[currentIdx - 1] : null;
-  const nextChunk = currentIdx < book.chunks.length - 1 ? book.chunks[currentIdx + 1] : null;
+  const hasPrev = currentIdx > 0;
+  const hasNext = currentIdx < book.chunkCount - 1;
 
   return (
     <div className="space-y-4">
@@ -138,10 +143,10 @@ export function ClassicReader({ chunk, book }: Props) {
       <div className="worksheet-no-print flex items-center justify-between gap-2 pt-4 border-t border-ink/10">
         <button
           type="button"
-          disabled={!prevChunk}
-          onClick={() =>
-            prevChunk && (window.location.href = `/ancient/${book.slug}?chunk=${prevChunk.id - 1}`)
-          }
+          disabled={!hasPrev}
+          onClick={() => {
+            if (hasPrev) window.location.href = `/ancient/${book.slug}?chunk=${currentIdx - 1}`;
+          }}
           className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40 disabled:cursor-not-allowed"
         >
           ← 上一章
@@ -154,10 +159,10 @@ export function ClassicReader({ chunk, book }: Props) {
         </Link>
         <button
           type="button"
-          disabled={!nextChunk}
-          onClick={() =>
-            nextChunk && (window.location.href = `/ancient/${book.slug}?chunk=${nextChunk.id - 1}`)
-          }
+          disabled={!hasNext}
+          onClick={() => {
+            if (hasNext) window.location.href = `/ancient/${book.slug}?chunk=${currentIdx + 1}`;
+          }}
           className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40 disabled:cursor-not-allowed"
         >
           下一章 →

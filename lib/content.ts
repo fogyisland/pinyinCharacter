@@ -5,16 +5,38 @@ import {
   renameSync,
   existsSync,
   mkdirSync,
+  readdirSync,
 } from 'node:fs';
 import { join } from 'node:path';
 import { getPool } from './db';
 import { CharContentSchema, ContentManifestSchema } from '@/scripts/schemas/content';
 import type { CharContent } from '@/scripts/schemas/content';
 import type { GetContentOptions } from './content-types';
-import { readJsonAutoCached, invalidateJsonCache } from './json-fs';
+import { readJsonAuto } from './json-fs';
 
 const CONTENT_DIR = join(process.cwd(), 'data', 'content');
 const MANIFEST_FILE = join(process.cwd(), 'data', 'content-manifest.json');
+
+/**
+ * Parsed-content cache.
+ *
+ * The content JSON was re-read and re-validated (a full Zod pass) on every
+ * call. On hot paths that hydrate dozens of chars (dictionary lists,
+ * /api/chain/chars, related-by-radical) that is hundreds of redundant
+ * validations per request for a result that never changes at runtime.
+ *
+ * We deliberately do NOT use the shared `readJsonAutoCached` here: it would
+ * keep the raw JSON object alive next to the validated copy, doubling the
+ * heap held for the 7.9k content files. Only the validated object is kept.
+ *
+ * Keyed by file path so the DB fallback path is untouched. Invalidated by
+ * writeContent() so an admin edit takes effect immediately.
+ */
+const parsedContentCache = new Map<string, CharContent>();
+
+function invalidateParsedContent(filePath: string): void {
+  parsedContentCache.delete(filePath);
+}
 
 function stripThinking(s: string): string {
   return s
@@ -37,13 +59,16 @@ export async function getContent(
   opts: GetContentOptions = {},
 ): Promise<CharContent | null> {
   // 1. Read from data/content/<char>.json (preferred). The Up/ deploy bundle
-  //    ships .json.gz for these; readJsonAutoCached tries .json then .json.gz
-  //    and memoizes the parsed result in memory.
+  //    ships .json.gz for these; readJsonAuto tries .json then .json.gz.
   if (!opts.dbOnly) {
     const filePath = join(CONTENT_DIR, `${char}.json`);
-    const raw = readJsonAutoCached(filePath);
+    const cached = parsedContentCache.get(filePath);
+    if (cached) return cached;
+    const raw = readJsonAuto(filePath);
     if (raw) {
-      return CharContentSchema.parse(raw);
+      const parsed = CharContentSchema.parse(raw);
+      parsedContentCache.set(filePath, parsed);
+      return parsed;
     }
   }
 
@@ -145,10 +170,14 @@ export async function getContent(
  */
 export function readContentFromFs(char: string): CharContent | null {
   const filePath = join(CONTENT_DIR, `${char}.json`);
-  const raw = readJsonAutoCached(filePath);
+  const cached = parsedContentCache.get(filePath);
+  if (cached) return cached;
+  const raw = readJsonAuto(filePath);
   if (!raw) return null;
   try {
-    return CharContentSchema.parse(raw);
+    const parsed = CharContentSchema.parse(raw);
+    parsedContentCache.set(filePath, parsed);
+    return parsed;
   } catch {
     return null;
   }
@@ -186,7 +215,8 @@ export function writeContent(
   const tmp = `${filePath}.tmp`;
   writeFileSync(tmp, JSON.stringify(validated, null, 2) + '\n', 'utf8');
   renameSync(tmp, filePath);
-  invalidateJsonCache(filePath);
+  invalidateParsedContent(filePath);
+  updateStoryIndex(char, validated);
   return validated;
 }
 
@@ -213,7 +243,49 @@ export interface ContentCoverage {
  * whose char was dropped from DB), so manifest.byField.etymology_story can
  * drift from the per-DB-char coverage we actually want. Iterating
  * DB-side gives a self-consistent numerator + denominator.
+ *
+ * Performance: "which chars have an etymology story" only depends on the
+ * JSON files, so it is indexed once per process (`buildStoryIndex`) instead
+ * of re-reading 8k+ files on every admin render (~960 ms per request before).
+ * The DB-side totals are cheap and are re-read on every call.
  */
+let storyIndex: Set<string> | null = null;
+
+/** Chars whose content JSON carries a non-empty `etymology.story`. */
+function getStoryIndex(): Set<string> {
+  if (storyIndex) return storyIndex;
+  storyIndex = buildStoryIndex();
+  return storyIndex;
+}
+
+function buildStoryIndex(): Set<string> {
+  const index = new Set<string>();
+  let files: string[] = [];
+  try {
+    files = readdirSync(CONTENT_DIR);
+  } catch {
+    return index;
+  }
+  for (const file of files) {
+    // The deploy bundle ships `<char>.json.gz`, dev ships `<char>.json`.
+    const name = file.endsWith('.gz') ? file.slice(0, -3) : file;
+    if (!name.endsWith('.json')) continue;
+    const char = name.slice(0, -5);
+    const raw = readJsonAuto(join(CONTENT_DIR, `${char}.json`)) as {
+      etymology?: { story?: string };
+    } | null;
+    if (raw?.etymology?.story) index.add(char);
+  }
+  return index;
+}
+
+/** Keep the story index in sync after a content write. */
+function updateStoryIndex(char: string, content: CharContent): void {
+  if (!storyIndex) return;
+  if (content.etymology?.story) storyIndex.add(char);
+  else storyIndex.delete(char);
+}
+
 export async function getContentCoverage(): Promise<ContentCoverage> {
   const pool = getPool();
   const [charRows] = await pool.query<any[]>(`SELECT \`char\`, level FROM chars ORDER BY level`);
@@ -232,25 +304,18 @@ export async function getContentCoverage(): Promise<ContentCoverage> {
     }
   }
 
+  const withStoryChars = getStoryIndex();
   let withStory = 0;
   const byLevelMap = new Map<number, number>();
-  for (const row of charRows) {
-    const filePath = join(CONTENT_DIR, `${row.char}.json`);
-    if (!existsSync(filePath)) continue;
-    try {
-      const raw = JSON.parse(readFileSync(filePath, 'utf8'));
-      if (!raw.etymology?.story) continue;
-      withStory++;
-      byLevelMap.set(Number(row.level), (byLevelMap.get(Number(row.level)) ?? 0) + 1);
-    } catch {
-      continue;
-    }
-  }
-
   const byLevelTotals = new Map<number, number>();
   for (const row of charRows) {
-    byLevelTotals.set(Number(row.level), (byLevelTotals.get(Number(row.level)) ?? 0) + 1);
+    const level = Number(row.level);
+    byLevelTotals.set(level, (byLevelTotals.get(level) ?? 0) + 1);
+    if (!withStoryChars.has(row.char)) continue;
+    withStory++;
+    byLevelMap.set(level, (byLevelMap.get(level) ?? 0) + 1);
   }
+
   const byLevel: ContentCoverageByLevel[] = [...byLevelTotals.entries()]
     .sort(([a], [b]) => a - b)
     .map(([level, total]) => ({

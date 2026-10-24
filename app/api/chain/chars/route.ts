@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { listChars as listCharsFromTable } from '@/lib/chars';
+import { listChainCharPool } from '@/lib/chars';
 import { toneFromPinyin } from '@/lib/pinyin-tone';
 
 export const dynamic = 'force-dynamic';
@@ -17,6 +17,16 @@ const QuerySchema = z.object({
   source: z.enum(['chars-level-1', 'chars-level-1-2', 'chars-all']).default('chars-all'),
   hskLevel: z.coerce.number().int().min(1).max(6).optional(),
 });
+
+/**
+ * chars.level membership per source. 'chars-all' = no level filter (hard —
+ * rare chars break chains faster).
+ */
+const SOURCE_LEVELS: Record<'chars-level-1' | 'chars-level-1-2' | 'chars-all', Array<1 | 2 | 3>> = {
+  'chars-level-1': [1],
+  'chars-level-1-2': [1, 2],
+  'chars-all': [],
+};
 
 export async function GET(req: NextRequest) {
   // 2026-07-03: per-difficulty char source for 拼音接龙 (pinyin solitaire).
@@ -39,6 +49,24 @@ export async function GET(req: NextRequest) {
   }
   const { source, hskLevel } = parsed.data;
 
+  // 2026-07-04 W2 fold-in: a transient DB error must not blow up the whole
+  // response. We keep whatever we gathered and flag the failure so the
+  // client can show its fallback banner.
+  // 2026-10-24 (perf): the pool used to be assembled by paging through
+  // listChars() 100 times — ~200 SQL round-trips per request. The filters
+  // are pushed into a single SQL query now (see lib/chars.ts).
+  let poolFailed = false;
+  let rows: Awaited<ReturnType<typeof listChainCharPool>> = [];
+  try {
+    rows = await listChainCharPool({
+      levels: hskLevel != null ? undefined : SOURCE_LEVELS[source],
+      hskLevel,
+    });
+  } catch (err) {
+    poolFailed = true;
+    console.error('[chain/chars] char pool query failed:', err);
+  }
+
   const allChars: Array<{
     char: string;
     pinyin: string;
@@ -46,47 +74,23 @@ export async function GET(req: NextRequest) {
     radical: string;
     tone: 1 | 2 | 3 | 4;
   }> = [];
-  // 2026-07-04 W2 fold-in: wrap each page in try/catch so a transient
-  // DB error on one page doesn't blow up the entire response. Continue
-  // with whatever we've gathered so far.
-  let pagesFetched = 0;
-  let pagesFailed = 0;
-  // listChars pageSize is hardcoded 80; loop until exhausted (cap at 100 pages = 8000 chars)
-  for (let page = 1; page <= 100; page++) {
-    try {
-      const result = await listCharsFromTable({ page });
-      pagesFetched++;
-      for (const c of result.chars) {
-        // HSK filter takes precedence over source filter (both are
-        // "narrow by char membership" — and HSK is the stricter axis).
-        if (hskLevel != null) {
-          if (c.hskLevel !== hskLevel) continue;
-        } else {
-          if (source === 'chars-level-1' && c.level !== 1) continue;
-          if (source === 'chars-level-1-2' && c.level !== 1 && c.level !== 2) continue;
-        }
-        if (!c.pinyin || !TONE_DIACRITIC_RE.test(c.pinyin)) continue;
-        const tone = toneFromPinyin(c.pinyin);
-        if (tone === null) continue;
-        allChars.push({
-          char: c.char,
-          pinyin: c.pinyin,
-          meaning: c.meaningZh ?? '',
-          radical: c.radical || '',
-          tone,
-        });
-      }
-      if (result.chars.length < 80) break; // last page
-    } catch (err) {
-      pagesFailed++;
-      console.error(`[chain/chars] page ${page} failed:`, err);
-      // Continue with whatever we've gathered so far. Don't fail the whole route.
-    }
+  for (const row of rows) {
+    if (!row.pinyin || !TONE_DIACRITIC_RE.test(row.pinyin)) continue;
+    const tone = toneFromPinyin(row.pinyin);
+    if (tone === null) continue;
+    allChars.push({
+      char: row.char,
+      pinyin: row.pinyin,
+      meaning: row.meaningZh ?? '',
+      radical: row.radical,
+      tone,
+    });
   }
+
   // hskFallback: if HSK filter was requested but yielded zero rows
-  // (or pages all failed), the client should know to show the
+  // (or the query failed), the client should know to show the
   // FallbackBanner instead of "no valid starter".
-  const hskFallback = hskLevel != null && (allChars.length === 0 || pagesFailed > 0);
+  const hskFallback = hskLevel != null && (allChars.length === 0 || poolFailed);
   // 2026-07-04: was `public, max-age=3600`. Switched to `no-store`
   // because the prior version of this route returned `[]` for the new
   // `chars-level-1` source (the old route used lib/rare-chars which has

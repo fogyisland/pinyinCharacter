@@ -94,6 +94,22 @@ export interface Worksheet {
   createdAt: Date;
 }
 
+/**
+ * Row of the worksheet history list. Same display fields as `Worksheet`,
+ * but the char count comes from SQL (JSON_LENGTH) instead of shipping the
+ * whole `content` array to the browser.
+ */
+export interface WorksheetListItem {
+  id: number;
+  title: string;
+  cellStyle: CellStyle;
+  paperSize: PaperSize;
+  fontFamily: FontFamily;
+  /** Number of chars in the worksheet. */
+  charCount: number;
+  createdAt: Date;
+}
+
 export interface SaveWorksheetArgs {
   userId: number;
   title: string;

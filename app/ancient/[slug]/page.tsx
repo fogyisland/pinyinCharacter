@@ -7,7 +7,11 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { ClassicChunkPicker } from '@/components/classics/ClassicChunkPicker';
 import { ClassicReader } from '@/components/classics/ClassicReader';
 import { SutraAudioPlayer } from '@/components/sutra/SutraAudioPlayer';
-import { getClassicBySlug } from '@/lib/classics';
+import {
+  getClassicChunkBySlug,
+  getClassicChunkMetaBySlug,
+  getClassicMetaBySlug,
+} from '@/lib/classics';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { buildBook, buildBreadcrumbList } from '@/lib/seo/jsonld';
 
@@ -20,11 +24,13 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
-  const c = await getClassicBySlug(slug);
-  if (!c) return { title: '古籍 · 字·韵' };
-  const desc = `${c.title}${c.author ? ` - ${c.author}` : ''} (${c.era || ''}) 全文带拼音注音`;
+  // Metadata comes from the manifest, so building a page title never reads
+  // the (up to 8 MB) book file.
+  const meta = await getClassicMetaBySlug(slug);
+  if (!meta) return { title: '古籍 · 字·韵' };
+  const desc = `${meta.title}${meta.author ? ` - ${meta.author}` : ''} (${meta.era || ''}) 全文带拼音注音`;
   return await buildMetadata({
-    title: `${c.title} (${c.era || '古代'}) 全文 拼音 | 字·韵`,
+    title: `${meta.title} (${meta.era || '古代'}) 全文 拼音 | 字·韵`,
     description: desc,
     path: `/ancient/${slug}`,
     ogType: 'book',
@@ -34,23 +40,25 @@ export async function generateMetadata({ params }: Props) {
 export default async function ClassicDetailPage({ params, searchParams }: Props) {
   const { slug } = await params;
   const sp = await searchParams;
-  const book = await getClassicBySlug(slug);
-  if (!book) notFound();
+  const meta = await getClassicMetaBySlug(slug);
+  if (!meta) notFound();
+  const chunkMeta = await getClassicChunkMetaBySlug(slug);
+  if (!chunkMeta) notFound();
 
   const requested = Number(sp.chunk ?? '0');
   const activeIdx =
-    Number.isInteger(requested) && requested >= 0 && requested < book.chunks.length ? requested : 0;
-  const activeChunk = book.chunks[activeIdx]!;
+    Number.isInteger(requested) && requested >= 0 && requested < chunkMeta.length ? requested : 0;
+  // Only the chapter on screen is rendered: the whole book used to be
+  // serialized into the RSC payload (8 MB for the largest books).
+  const activeChunk = await getClassicChunkBySlug(slug, activeIdx);
+  if (!activeChunk) notFound();
 
-  // Audio: feed every chapter (chunk) to SutraAudioPlayer. SutraAudioPlayer
-  // tracks its own play position via /api/tts per chunk; the page-level
-  // ?chunk=N URL still controls the visible chapter. They are intentionally
-  // independent — switching chapter does not interrupt audio.
-  const audioChunks = book.chunks.map((c, i) => ({
-    id: i,
-    title: c.label,
-    text: c.content.join('\n'),
-  }));
+  // Audio: the player pulls a chapter's text on demand (see textUrlTemplate),
+  // so the page ships chapter labels only. It tracks its own play position
+  // via /api/tts per chapter; the page-level ?chunk=N URL still controls the
+  // visible chapter. They are intentionally independent — switching chapter
+  // does not interrupt audio.
+  const audioChunks = chunkMeta.map((c, i) => ({ id: i, title: c.label }));
 
   return (
     <>
@@ -59,7 +67,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
 
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
-            buildBook({ title: book.title, author: book.author, era: book.era }),
+            buildBook({ title: meta.title, author: meta.author, era: meta.era }),
           ),
         }}
       />
@@ -71,7 +79,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
             await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '古籍', url: '/ancient' },
-              { name: book.title, url: `/ancient/${book.slug}` },
+              { name: meta.title, url: `/ancient/${meta.slug}` },
             ]),
           ),
         }}
@@ -90,29 +98,40 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
             </Link>
           </div>
           <header className="worksheet-no-print">
-            <h1 className="text-2xl font-bold text-ink font-kai">《{book.title}》</h1>
+            <h1 className="text-2xl font-bold text-ink font-kai">《{meta.title}》</h1>
             <p className="text-sm text-ink-soft mt-1">
-              {[book.author, book.era].filter(Boolean).join(' · ')}
-              {book.chunks.length > 1 && ` · ${activeChunk.label}`}
+              {[meta.author, meta.era].filter(Boolean).join(' · ')}
+              {chunkMeta.length > 1 && ` · ${activeChunk.label}`}
             </p>
           </header>
 
           <div className="flex gap-6">
             <Suspense fallback={null}>
               <ClassicChunkPicker
-                slug={book.slug}
-                chunks={book.chunks.map((c) => ({ id: c.id, label: c.label }))}
+                slug={meta.slug}
+                chunks={chunkMeta}
                 activeId={activeChunk.id}
               />
             </Suspense>
             <div className="flex-1 min-w-0">
-              <ClassicReader chunk={activeChunk} book={book} />
+              <ClassicReader
+                chunk={activeChunk}
+                book={{
+                  slug: meta.slug,
+                  title: meta.title,
+                  chunkCount: chunkMeta.length,
+                }}
+              />
             </div>
           </div>
         </div>
       </PageContainer>
       <Footer />
-      <SutraAudioPlayer chunks={audioChunks} playlistTitle={book.title} />
+      <SutraAudioPlayer
+        chunks={audioChunks}
+        playlistTitle={meta.title}
+        textUrlTemplate={`/api/classics/${meta.slug}/chunk/{index}`}
+      />
     </>
   );
 }

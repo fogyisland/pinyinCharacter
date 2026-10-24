@@ -8,6 +8,25 @@ export interface ClassicChunk {
   pinyin: string[][]; // line-aligned pinyin; punctuation chars → "" entry
 }
 
+/**
+ * A chapter reduced to what the chapter picker needs. Detail pages render a
+ * single chapter, so the picker must not receive the book's text.
+ */
+export interface ClassicChunkMeta {
+  id: number;
+  label: string;
+}
+
+/** Book metadata without any chapter text. */
+export interface ClassicMeta {
+  slug: string;
+  title: string;
+  category: ClassicCategory;
+  author: string | null;
+  era: string | null;
+  chunkCount: number;
+}
+
 export interface ClassicListItem {
   id: number;
   slug: string;

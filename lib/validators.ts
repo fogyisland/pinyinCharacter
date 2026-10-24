@@ -139,6 +139,14 @@ export const sutraIdParamSchema = z.object({
   id: z.coerce.number().int().min(1),
 });
 
+/**
+ * 0-based chapter index, matching the `?chunk=N` URL convention used by
+ * app/sutra/[id] and app/ancient/[slug].
+ */
+export const chunkIndexParamSchema = z.object({
+  index: z.coerce.number().int().min(0).max(5000),
+});
+
 export const classicsListQuerySchema = z.object({
   category: z
     .enum(['four-books', 'five-classics', 'mengxue', 'philosophy', 'history', 'other', 'pianwen'])

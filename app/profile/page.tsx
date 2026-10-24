@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifySession, SESSION_COOKIE_NAME } from '@/lib/auth';
 import { getStats } from '@/lib/history';
-import { listUserWorksheets } from '@/lib/worksheet';
+import { listUserWorksheetListItems } from '@/lib/worksheet';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
@@ -21,7 +21,7 @@ export default async function ProfilePage() {
   if (!session) redirect(`/login?next=${encodeURIComponent('/profile')}`);
 
   const stats = await getStats(session.userId);
-  const worksheets = await listUserWorksheets(session.userId);
+  const worksheets = await listUserWorksheetListItems(session.userId);
   const hasMulti = await hasFeature(session.userId, 'multi_worksheet_print');
 
   const statCards = [

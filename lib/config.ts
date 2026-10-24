@@ -45,12 +45,58 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'era.kaishu.font': (v) => ['ZCOOLXiaoWei', 'KaiTi', 'Iansui', 'MaShanZheng'].includes(v),
 };
 
+/**
+ * Process-wide cache for `app_config`.
+ *
+ * The root layout resolves the site URL on every request
+ * (`lib/seo/config.ts` → `getConfig('site.url')`), so this used to mean one
+ * extra DB round-trip per page render, plus one query per key for code paths
+ * that read several keys (SMTP, TTS, PayPal).
+ *
+ * `app_config` holds ~30 rows, so a single `SELECT key, value` loads
+ * everything and serves every read from memory. Writes invalidate the cache
+ * immediately; a 60s TTL bounds how long a change made by *another* process
+ * (e.g. a second app instance) can stay invisible.
+ */
+const CONFIG_TTL_MS = 60_000;
+
+let configCache: { at: number; values: Map<string, string> } | null = null;
+let inflightLoad: Promise<Map<string, string>> | null = null;
+
+async function loadConfigRows(): Promise<Map<string, string>> {
+  const [rows] = await getPool().query<any[]>(`SELECT \`key\`, value FROM app_config`);
+  const values = new Map<string, string>();
+  for (const r of rows) values.set(r.key, r.value);
+  return values;
+}
+
+async function getConfigMap(): Promise<Map<string, string>> {
+  if (configCache && Date.now() - configCache.at < CONFIG_TTL_MS) {
+    return configCache.values;
+  }
+  // Collapse concurrent misses into a single query.
+  if (!inflightLoad) {
+    const load = loadConfigRows()
+      .then((values) => {
+        configCache = { at: Date.now(), values };
+        return values;
+      })
+      .finally(() => {
+        if (inflightLoad === load) inflightLoad = null;
+      });
+    inflightLoad = load;
+  }
+  return inflightLoad;
+}
+
+/** Drop the cached config (used by writes and by tests). */
+export function clearConfigCache(): void {
+  configCache = null;
+}
+
 export async function getConfig(key: string): Promise<string | null> {
-  const [rows] = await getPool().query<any[]>(
-    `SELECT value FROM app_config WHERE \`key\` = ? LIMIT 1`,
-    [key],
-  );
-  return rows.length ? rows[0].value : null;
+  const values = await getConfigMap();
+  return values.get(key) ?? null;
 }
 
 export async function setConfig(
@@ -69,13 +115,12 @@ export async function setConfig(
      ON DUPLICATE KEY UPDATE value = VALUES(value), updated_by = VALUES(updated_by)`,
     [key, value, effectiveUserId],
   );
+  clearConfigCache();
 }
 
 export async function getAllConfig(): Promise<Record<string, string>> {
-  const [rows] = await getPool().query<any[]>(`SELECT \`key\`, value FROM app_config`);
-  const out: Record<string, string> = {};
-  for (const r of rows) out[r.key] = r.value;
-  return out;
+  const values = await getConfigMap();
+  return Object.fromEntries(values);
 }
 
 export async function setConfigBatch(

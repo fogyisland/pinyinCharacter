@@ -5,7 +5,7 @@ import { getCachedTts, putCachedTts } from '@/lib/tts-cache';
 
 export type SutraAudioLoopMode = 'single' | 'list' | 'none';
 
-export type SutraAudioChunk = { id: number; title: string; text: string };
+export type SutraAudioChunk = { id: number; title: string; text?: string };
 
 interface Props {
   /** Ordered list of chunks (1..N). At least one required. */
@@ -13,6 +13,19 @@ interface Props {
   /** Display title for the playlist (shown above the current chunk). */
   playlistTitle?: string;
   className?: string;
+  /**
+   * URL template used to lazily fetch a chunk's plain text.
+   *
+   * Pages with many chapters (classics books run to hundreds of thousands of
+   * characters) used to inline the full text of every chapter into the RSC
+   * payload, which made the page ship megabytes of text just to render one
+   * chapter. When `text` is omitted the player fetches a chapter's text on
+   * demand from this endpoint instead.
+   *
+   * `{index}` is replaced with the chunk id. The endpoint must answer with
+   * `{ ok: true, data: { text: string } }`.
+   */
+  textUrlTemplate?: string;
 }
 
 /**
@@ -38,10 +51,11 @@ function chunkToBatches(text: string): string[] {
   return batches;
 }
 
-export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
+export function SutraAudioPlayer({ chunks, playlistTitle, className, textUrlTemplate }: Props) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentBlobRef = useRef<string | null>(null);
-  const fetchingRef = useRef(false);
+  /** Monotonic id of the newest audio load; stale loads are discarded. */
+  const requestIdRef = useRef(0);
   const [trackIndex, setTrackIndex] = useState(0);
   const [batchIndex, setBatchIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -49,6 +63,8 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
   const [loopMode, setLoopMode] = useState<SutraAudioLoopMode>('list');
   const [expanded, setExpanded] = useState(false);
   const [errored, setErrored] = useState(false);
+  /** Number of TTS batches in the currently loaded chapter (for the "n/m" label). */
+  const [batchCount, setBatchCount] = useState(1);
 
   const currentChunk = chunks[trackIndex];
 
@@ -57,6 +73,45 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
   useEffect(() => {
     loopModeRef.current = loopMode;
   }, [loopMode]);
+
+  // Chunks / loader are read from refs so the long-lived event handlers
+  // (which are re-registered on a narrow dep list) always see fresh values.
+  const chunksRef = useRef(chunks);
+  useEffect(() => {
+    chunksRef.current = chunks;
+  }, [chunks]);
+  const loadChunkTextRef = useRef(textUrlTemplate);
+  useEffect(() => {
+    loadChunkTextRef.current = textUrlTemplate;
+  }, [textUrlTemplate]);
+  /** Chapter text already fetched, keyed by chunk id. */
+  const textsRef = useRef<Record<number, string>>({});
+  /** Batch count of the chapter currently loaded (read by the ended handler). */
+  const batchCountRef = useRef(1);
+
+  /**
+   * Resolve a chapter's plain text: inline `chunk.text` when the page shipped
+   * it, otherwise fetch it once from `textUrlTemplate` and remember it.
+   */
+  const ensureText = async (chunkIdx: number): Promise<string | null> => {
+    const chunk = chunksRef.current[chunkIdx];
+    if (!chunk) return null;
+    const cached = textsRef.current[chunk.id];
+    if (cached !== undefined) return cached;
+    if (chunk.text !== undefined) {
+      textsRef.current[chunk.id] = chunk.text;
+      return chunk.text;
+    }
+    const template = loadChunkTextRef.current;
+    if (!template) return null;
+    const url = template.replace('{index}', String(chunk.id));
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`failed to load chunk text: ${res.status}`);
+    const payload = (await res.json()) as { data?: { text?: string } };
+    const text = payload.data?.text ?? '';
+    textsRef.current[chunk.id] = text;
+    return text;
+  };
 
   // Volume
   useEffect(() => {
@@ -70,15 +125,26 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
     }
   }, [loopMode, chunks.length]);
 
-  // Synthesize current chunk's current batch and set audio src
+  // Synthesize current chunk's current batch and set audio src.
+  //
+  // A monotonically increasing request id makes the loader safe against
+  // overlapping calls: when the user switches chapter mid-flight, the stale
+  // response is dropped instead of overwriting the new chapter's audio.
   async function loadAndPlay(chunkIdx: number, batchIdx: number) {
-    if (fetchingRef.current) return;
-    fetchingRef.current = true;
+    const requestId = ++requestIdRef.current;
     setErrored(false);
     try {
-      const chunk = chunks[chunkIdx];
+      const chunk = chunksRef.current[chunkIdx];
       if (!chunk) return;
-      const batches = chunkToBatches(chunk.text);
+      const text = await ensureText(chunkIdx);
+      if (requestId !== requestIdRef.current) return;
+      if (text === null) {
+        setErrored(true);
+        return;
+      }
+      const batches = chunkToBatches(text);
+      batchCountRef.current = batches.length;
+      setBatchCount(batches.length);
       const batchText = batches[batchIdx];
       if (!batchText) return;
 
@@ -89,6 +155,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ text: batchText, voice: 'female' }),
         });
+        if (requestId !== requestIdRef.current) return;
         if (!res.ok) {
           setErrored(true);
           return;
@@ -97,6 +164,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
         // Best-effort cache write; failure (quota / private mode) doesn't break playback.
         await putCachedTts('female', batchText, blob);
       }
+      if (requestId !== requestIdRef.current) return;
 
       // Revoke previous blob to free memory
       if (currentBlobRef.current) URL.revokeObjectURL(currentBlobRef.current);
@@ -110,9 +178,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
         }
       }
     } catch {
-      setErrored(true);
-    } finally {
-      fetchingRef.current = false;
+      if (requestId === requestIdRef.current) setErrored(true);
     }
   }
 
@@ -145,7 +211,9 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
         setPlaying(false);
         return;
       }
-      const totalBatches = chunkToBatches(chunk.text).length;
+      // Batch count of the chapter that just finished (known: it was loaded
+      // before playback started).
+      const totalBatches = batchCountRef.current;
       if (batchIndex < totalBatches - 1) {
         setBatchIndex((i) => i + 1);
       } else if (loopModeRef.current === 'list' || trackIndex < chunks.length - 1) {
@@ -238,7 +306,7 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className }: Props) {
   const showPlaylist = chunks.length > 1;
 
   // Compute current batch progress for the single-chunk UI
-  const totalBatches = currentChunk ? chunkToBatches(currentChunk.text).length : 1;
+  const totalBatches = batchCount;
   const batchLabel = totalBatches > 1 ? ` ${batchIndex + 1}/${totalBatches}` : '';
 
   return (

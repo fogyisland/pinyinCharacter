@@ -2,7 +2,7 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
-import { listUserWorksheets } from '@/lib/worksheet';
+import { listUserWorksheetListItems } from '@/lib/worksheet';
 import { hasFeature } from '@/lib/membership';
 import { WorksheetHistoryList } from '@/components/worksheet/WorksheetHistoryList';
 import { Header } from '@/components/Header';
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export default async function WorksheetHistoryPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/?auth=login&next=/worksheet/history');
-  const worksheets = await listUserWorksheets(user.id);
+  const worksheets = await listUserWorksheetListItems(user.id);
   const hasMulti = await hasFeature(user.id, 'multi_worksheet_print');
   return (
     <>

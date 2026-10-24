@@ -28,13 +28,12 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     if (chunkIdx === null) return badRequest('bad_chunk', 'chunk query param required');
 
     const [rows] = await getPool().query<any[]>(
-      `SELECT id, chunks FROM sutras WHERE slug = ? LIMIT 1`,
+      `SELECT id, JSON_LENGTH(chunks) AS chunk_count FROM sutras WHERE slug = ? LIMIT 1`,
       [slug],
     );
     const row = rows[0];
     if (!row) return notFound('sutra_not_found', 'sutra not found');
-    const rawChunks: any[] = typeof row.chunks === 'string' ? JSON.parse(row.chunks) : row.chunks;
-    const chunkCount = Array.isArray(rawChunks) ? rawChunks.length : 0;
+    const chunkCount = Number(row.chunk_count ?? 0);
     const sutraId = Number(row.id);
     if (chunkIdx >= chunkCount) return badRequest('bad_chunk', 'chunk out of range');
 
@@ -56,13 +55,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       return badRequest('bad_chunk', 'chunkIdx invalid');
 
     const [rows] = await getPool().query<any[]>(
-      `SELECT id, chunks FROM sutras WHERE slug = ? LIMIT 1`,
+      `SELECT id, JSON_LENGTH(chunks) AS chunk_count FROM sutras WHERE slug = ? LIMIT 1`,
       [slug],
     );
     const row = rows[0];
     if (!row) return notFound('sutra_not_found', 'sutra not found');
-    const rawChunks: any[] = typeof row.chunks === 'string' ? JSON.parse(row.chunks) : row.chunks;
-    const chunkCount = Array.isArray(rawChunks) ? rawChunks.length : 0;
+    const chunkCount = Number(row.chunk_count ?? 0);
     const sutraId = Number(row.id);
     if (chunkIdx >= chunkCount) return badRequest('bad_chunk', 'chunk out of range');
 

@@ -2,10 +2,12 @@ import { loadClassicFile, loadManifest } from './loader';
 import type {
   ClassicCategory,
   ClassicChunk,
+  ClassicChunkMeta,
   ClassicDetail,
   ClassicFile,
   ClassicListItem,
   ClassicListResult,
+  ClassicMeta,
   ClassicsManifest,
 } from '../classics-types';
 
@@ -72,6 +74,57 @@ export async function getClassicBySlug(slug: string): Promise<ClassicDetail | nu
     era: file.era,
     chunks,
   };
+}
+
+/**
+ * Book metadata straight from the manifest — no book file is read, so this
+ * stays cheap even for the 8 MB books. Used for page metadata and headers.
+ */
+export async function getClassicMetaBySlug(slug: string): Promise<ClassicMeta | null> {
+  const manifest = await loadManifest();
+  const item = manifest.books.find((b) => b.slug === slug);
+  if (!item) return null;
+  return {
+    slug: item.slug,
+    title: item.title,
+    category: item.category,
+    author: item.author,
+    era: item.era,
+    chunkCount: item.chapterCount,
+  };
+}
+
+/**
+ * Chapter labels only. The chapter picker needs id + label; giving it the
+ * full chapters (as the old code did) shipped the whole book to the browser.
+ */
+export async function getClassicChunkMetaBySlug(
+  slug: string,
+): Promise<ClassicChunkMeta[] | null> {
+  const file = await loadClassicFile(slug);
+  if (!file) return null;
+  return file.chunks.map((c, i) => ({ id: c.id ?? i + 1, label: String(c.label ?? '') }));
+}
+
+/** A single chapter (with text) — the only chapter a detail page needs. */
+export async function getClassicChunkBySlug(
+  slug: string,
+  index: number,
+): Promise<ClassicChunk | null> {
+  const file = await loadClassicFile(slug);
+  if (!file) return null;
+  const chunks = parseChunks(file);
+  return chunks[index] ?? null;
+}
+
+/** A single chapter's plain text, joined for TTS synthesis. */
+export async function getClassicChunkTextBySlug(
+  slug: string,
+  index: number,
+): Promise<string | null> {
+  const chunk = await getClassicChunkBySlug(slug, index);
+  if (!chunk) return null;
+  return chunk.content.join('\n');
 }
 
 export async function countByCategory(): Promise<Record<ClassicCategory, number>> {

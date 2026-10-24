@@ -1,6 +1,7 @@
 import { getPool } from './db';
 import { ERAS, type Etymology, type EtymologyAdjacent, type EraGlyph } from './etymology-types';
 import { getContent } from './content';
+import type { CharContent } from '@/scripts/schemas/content';
 import type { CharLevel } from '../components/etymology/era-dates';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -75,9 +76,14 @@ function buildEraGlyphs(
   });
 }
 
-async function readLevel(char: string): Promise<CharLevel> {
+/**
+ * Resolve the char's level. The caller usually already holds the content
+ * object (getEtymology fetches it for the story), so it can be passed in to
+ * avoid a second getContent() round-trip — which on the legacy DB fallback
+ * path costs four extra queries.
+ */
+async function readLevel(char: string, content?: CharContent | null): Promise<CharLevel> {
   // File-first (post 2026-06-17 slim-DB)
-  const content = await getContent(char);
   if (content?.level != null) return toCharLevel(content.level);
   // DB fallback (legacy)
   const [rows] = await getPool().query<any[]>(
@@ -120,7 +126,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
       story,
       generatedBy,
       generatedAt,
-      level: await readLevel(char),
+      level: await readLevel(char, content),
     };
   }
   const r = rows[0];
@@ -136,7 +142,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
     story,
     generatedBy,
     generatedAt,
-    level: await readLevel(char),
+    level: await readLevel(char, content),
   };
 }
 

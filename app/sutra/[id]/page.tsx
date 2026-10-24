@@ -1,9 +1,8 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getSutra } from '@/lib/sutras';
+import { getSutraChunk, getSutraMeta } from '@/lib/sutras';
 import { getCurrentUser } from '@/lib/auth';
-import type { SutraChunk } from '@/lib/sutra-types';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
@@ -26,29 +25,34 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
   const sp = await searchParams;
   const id = Number(idStr);
   if (!Number.isInteger(id) || id <= 0) notFound();
-  const sutra = await getSutra(id);
-  if (!sutra) notFound();
+  const meta = await getSutraMeta(id);
+  if (!meta) notFound();
   const user = await getCurrentUser();
 
   const requestedChunk = Number(sp.chunk ?? '0');
   const activeChunkId =
-    Number.isInteger(requestedChunk) && requestedChunk >= 0 && requestedChunk < sutra.chunks.length
+    Number.isInteger(requestedChunk) && requestedChunk >= 0 && requestedChunk < meta.chunkCount
       ? requestedChunk
       : 0;
-  const activeChunk = sutra.chunks[activeChunkId]!;
+  // Only the chapter on screen is rendered. The other chapters used to be
+  // serialized into the RSC payload (and into the audio playlist) even
+  // though the page never displays them.
+  const activeChunk = await getSutraChunk(id, activeChunkId);
+  if (!activeChunk) notFound();
   const backLink = getSutraBackLink(sp.from);
-  const audioChunks = sutra.chunks.map((c, i) => ({
-    id: i,
-    title: c.label,
-    text: c.content.join('\n'),
-  }));
+
+  // Audio: the player pulls a chapter's text on demand (see textUrlTemplate)
+  // and keeps its own play position via /api/tts. The page-level ?chunk=N
+  // URL still controls the visible chapter — the two are intentionally
+  // independent, switching chapter does not interrupt audio.
+  const audioChunks = meta.chunks.map((c) => ({ id: c.id, title: c.label }));
 
   // JSON-LD: Book + BreadcrumbList. SutraDetail has no translator/era fields
   // (only id/title/slug/chunks), so we pass null for author and omit era.
-  const bookJsonLd = buildBook({ title: sutra.title, author: null, era: null });
+  const bookJsonLd = buildBook({ title: meta.title, author: null, era: null });
   const breadcrumbJsonLd = await buildBreadcrumbList([
     { name: '首页', url: '/' },
-    { name: sutra.title, url: `/sutra/${sutra.id}` },
+    { name: meta.title, url: `/sutra/${meta.id}` },
   ]);
 
   return (
@@ -78,23 +82,23 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
         </div>
         <div className="worksheet-no-print">
           <SutraMeta
-            title={sutra.title}
-            chunkLabel={sutra.chunks.length > 1 ? activeChunk.label : null}
+            title={meta.title}
+            chunkLabel={meta.chunkCount > 1 ? activeChunk.label : null}
           />
         </div>
         <div className="flex gap-6">
           <Suspense fallback={null}>
             <SutraChunkPickerClient
-              sutraId={sutra.id}
-              chunks={sutra.chunks as SutraChunk[]}
+              sutraId={meta.id}
+              chunks={meta.chunks}
               activeId={activeChunkId}
             />
           </Suspense>
           <div className="flex-1">
             <SutraRightColumn
-              sutraId={sutra.id}
-              sutraSlug={sutra.slug}
-              sutraTitle={sutra.title}
+              sutraId={meta.id}
+              sutraSlug={meta.slug}
+              sutraTitle={meta.title}
               chunk={activeChunk}
               userId={user?.id ?? null}
               isLoggedIn={!!user}
@@ -103,7 +107,11 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
         </div>
       </PageContainer>
       <Footer />
-      <SutraAudioPlayer chunks={audioChunks} playlistTitle={sutra.title} />
+      <SutraAudioPlayer
+        chunks={audioChunks}
+        playlistTitle={meta.title}
+        textUrlTemplate={`/api/sutras/${meta.id}/chunk/{index}`}
+      />
     </>
   );
 }
