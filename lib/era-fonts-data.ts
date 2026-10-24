@@ -76,14 +76,14 @@ export const ERA_FONTS: Record<Era, EraFontOption[]> = {
       file: 'wang-hanzong-lishu.woff2',
       desc: '1.6MB, 专用隶书',
     },
-    { id: 'ZCOOLXiaoWei', label: '站酷小薇', file: 'zcool-xiaowei.ttf', desc: '6.2MB, 现代隶书感' },
+    { id: 'ZCOOLXiaoWei', label: '站酷小薇', file: 'zcool-xiaowei.woff2', desc: '2.6MB, 现代隶书感' },
   ],
   kaishu: [
     {
       id: 'ZCOOLXiaoWei',
       label: '站酷小薇 (默认)',
-      file: 'zcool-xiaowei.ttf',
-      desc: '6.2MB, react-pdf 兼容',
+      file: 'zcool-xiaowei.woff2',
+      desc: '2.6MB, 楷书, 可嵌入 PDF',
     },
     { id: 'KaiTi', label: '系统楷体', file: null, desc: 'local(KaiTi) / STKaiti / BiauKai' },
     { id: 'Iansui', label: '汉仪润圆', file: 'Iansui-Regular.woff2', desc: '1.2MB, 圆润楷书' },

@@ -10,23 +10,26 @@
 // run in node and produces a real PDF buffer. We then count pages by
 // scanning the binary for `/Type /Page` entries (excluding `/Pages`).
 //
-// Font.register('/fonts/zcool-xiaowei.ttf') at module-import time would
+// Font.register('/fonts/zcool-xiaowei-pdf.ttf') at module-import time would
 // trigger an ENOENT in node (fontkit tries to read from the FS path as
-// resolved from CWD); we stub Font.register to a no-op so the test only
-// exercises layout/page-split logic, not the font subsetter.
+// resolved from CWD); we register the same font from an FS path instead so
+// the test exercises the real font subsetter, not a stub.
 
 import { describe, it, expect, vi } from 'vitest';
 import { inflateSync } from 'node:zlib';
 
 vi.mock('@react-pdf/renderer', async () => {
   const actual = await vi.importActual<typeof import('@react-pdf/renderer')>('@react-pdf/renderer');
-  // PracticePDF's Font.register uses a web-relative path ('/fonts/zcool-xiaowei.ttf')
-  // that fontkit tries to read from CWD in node — which fails. Re-register
-  // with an absolute FS path before any layout pass runs so the font is
-  // available for the page-header/footer text "字·韵" etc.
+  // PracticePDF's Font.register uses a web-relative path that fontkit tries
+  // to read from CWD in node — which fails. Register the same font from an
+  // FS path first: react-pdf resolves the font family to the FIRST
+  // registered source, so this one wins over the web path.
+  const { PRACTICE_PDF_FONT_FAMILY, PRACTICE_PDF_FONT_FILE } = await import(
+    '@/lib/practice-pdf-font'
+  );
   actual.Font.register({
-    family: 'ZCOOLXiaoWei',
-    src: './public/fonts/zcool-xiaowei.ttf',
+    family: PRACTICE_PDF_FONT_FAMILY,
+    src: `./public/fonts/${PRACTICE_PDF_FONT_FILE}`,
   });
   return {
     ...actual,

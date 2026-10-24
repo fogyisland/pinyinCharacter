@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 // The PDF renderer is reached through the lazily loaded
 // `PracticePdfDownloader`, which calls `pdf()` from @react-pdf/renderer.
 // In happy-dom the real renderer cannot lay out a document (and
-// Font.register would try to read '/fonts/zcool-xiaowei.ttf' from CWD), so
+// Font.register would try to read '/fonts/zcool-xiaowei-pdf.ttf' from CWD), so
 // `pdf()` is stubbed and the call is recorded — that is what lets us assert
 // that the ~1 MB renderer is only pulled in when the visitor asks for a PDF.
 const { pdfMock } = vi.hoisted(() => ({

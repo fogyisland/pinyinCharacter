@@ -42,6 +42,7 @@ EXCLUDE_DIRS = {
 # Use forward slashes — normalized to OS separator inside should_exclude_path.
 EXCLUDE_PATHS = {
     'scripts/fonts/staging',  # Font download staging dir (not needed in prod)
+    'assets/fonts',           # Full brush TTFs — subsetting source only (the browser gets the WOFF2 subsets)
 }
 
 # Exclude files by basename (matched anywhere)

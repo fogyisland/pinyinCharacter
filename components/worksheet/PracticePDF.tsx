@@ -23,15 +23,23 @@ import {
   linedHeightPx,
   linesPerPage,
 } from '@/lib/worksheet-types';
+import {
+  PRACTICE_PDF_BRAND,
+  PRACTICE_PDF_FONT_FAMILY,
+  PRACTICE_PDF_FONT_URL,
+  PRACTICE_PDF_SUBTITLE,
+} from '@/lib/practice-pdf-font';
 
-// Register one CJK TTF for header/footer text. react-pdf subsets the font
-// to only the glyphs we use ("字·韵", "空白字帖", domain), so the PDF stays
-// small even though the source TTF is 6MB. Picked ZCOOL XiaoWei (站酷小薇)
-// because it's a hard-pen 楷书 TTF (the calligraphy-style TTF fonts
-// MaShanZheng/LongCang are WOFF2-only — react-pdf can't read WOFF2).
+// Register the TrueType subset of the practice PDF font. react-pdf embeds a
+// subset of the registered font, and its subsetter only works on TrueType
+// sources — with a WOFF2 font it writes the composite glyphs out of bounds
+// ("RangeError: Offset is outside the bounds of the DataView"). The file
+// holds exactly the characters this PDF draws (brand, subtitle, cell-style
+// labels and the domain), so the download is ~40 KB instead of the 6.3 MB
+// of the original ZCOOL XiaoWei TTF.
 Font.register({
-  family: 'ZCOOLXiaoWei',
-  src: '/fonts/zcool-xiaowei.ttf',
+  family: PRACTICE_PDF_FONT_FAMILY,
+  src: PRACTICE_PDF_FONT_URL,
 });
 
 // Page dimensions in pt (portrait). react-pdf's Page `size` treats unitless
@@ -76,7 +84,7 @@ const PAGE_INNER_WIDTH_PT: Record<PaperSize, number> = {
 const styles = StyleSheet.create({
   page: {
     padding: '1.5cm',
-    fontFamily: 'ZCOOLXiaoWei',
+    fontFamily: PRACTICE_PDF_FONT_FAMILY,
     color: '#3a2a14',
   },
   header: {
@@ -229,9 +237,11 @@ export function PracticePDF({ paperSize, cellStyle, siteHost }: Props) {
                 WebP, and every printable worksheet would otherwise embed the
                 full 267 KB logo. */}
             <Image src="/logo-sm.png" style={styles.brandLogo} />
-            <Text style={styles.brand}>字·韵 · {cellStyleLabel(cellStyle)}</Text>
+            <Text style={styles.brand}>
+              {PRACTICE_PDF_BRAND} · {cellStyleLabel(cellStyle)}
+            </Text>
           </View>
-          <Text style={styles.subtitle}>空白字帖 · 公益网站，多多支持</Text>
+          <Text style={styles.subtitle}>{PRACTICE_PDF_SUBTITLE}</Text>
         </View>
         <View style={isLined ? styles.linedStack : styles.grid}>
           {cells.map((i) => (

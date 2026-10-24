@@ -469,20 +469,23 @@
 /* ============ Brush fonts added 2026-06-24 ============ */
 /* Liu Jian Mao Cao — 柳健毛草, very cursive brush, strong stroke contrast.
    ZCOOL XiaoWei — 站酷小薇, softer regular brush, clean strokes.
-   Zhi Mang Xing — 志莽星, dramatic flowing cursive brush. */
+   Zhi Mang Xing — 志莽星, dramatic flowing cursive brush.
+   All three are subsets of the site charset (npm run fonts:subset-brush):
+   the full TTFs (4.7 / 6.0 / 3.9 MB) are kept in assets/fonts/ as the
+   subsetting source and are no longer served to the browser. */
 @font-face {
   font-family: 'LiuJianMaoCao';
-  src: url('/fonts/liu-jian-mao-cao.ttf') format('truetype');
+  src: url('/fonts/liu-jian-mao-cao.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'ZCOOLXiaoWei';
-  src: url('/fonts/zcool-xiaowei.ttf') format('truetype');
+  src: url('/fonts/zcool-xiaowei.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'ZhiMangXing';
-  src: url('/fonts/zhi-mang-xing.ttf') format('truetype');
+  src: url('/fonts/zhi-mang-xing.woff2') format('woff2');
   font-display: swap;
 }
 
