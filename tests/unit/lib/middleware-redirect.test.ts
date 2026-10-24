@@ -46,6 +46,32 @@ describe('middleware: whitelist', () => {
   });
 });
 
+describe('middleware: static assets bypass the setup gate', () => {
+  // A 307 on the render-blocking stylesheet makes the browser fetch /init's
+  // HTML as CSS and drop the stylesheet, so the page would render with
+  // system fonts. These paths must always pass through.
+  const assetPaths = [
+    '/font/fonts.css',
+    '/font/noto-sans-sc/example.woff2',
+    '/fonts/wang-hanzong-lishu.woff2',
+    '/strokes/一.json',
+    '/logo.png',
+    '/logo.svg',
+    '/manifest.json',
+    '/robots.txt',
+    '/sitemap.xml',
+    '/sitemap/ancient.xml',
+  ];
+
+  for (const path of assetPaths) {
+    it(`${path} is allowed without the setup cookie`, async () => {
+      const res = callMiddleware(path);
+      expect(await status(res)).toBe(200);
+      expect(await redirectedTo(res)).toBeNull();
+    });
+  }
+});
+
 describe('middleware: cookie gate', () => {
   it('redirects /login to /init when cookie missing', async () => {
     const res = callMiddleware('/login');

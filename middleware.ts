@@ -16,6 +16,41 @@ import { NextRequest, NextResponse } from 'next/server';
  * Whitelist: /init, /init/*, /api/init/*, Next.js internals, static assets.
  * Everything else: redirect to /init if cookie not set.
  */
+
+/**
+ * Asset paths that must never be redirected.
+ *
+ * A 307 on /font/fonts.css is worse than it looks: the stylesheet is
+ * render-blocking, so the browser would follow the redirect, fetch /init's
+ * HTML, fail to parse it as CSS and drop the stylesheet — the page would
+ * render with system fonts instead of the site's own. The same redirect
+ * hides /robots.txt and the sitemaps from crawlers, and it costs an extra
+ * round trip for every font file, stroke JSON and icon.
+ */
+const STATIC_ASSET_PREFIXES = [
+  '/_next/',
+  '/font/',
+  '/fonts/',
+  '/strokes/',
+  '/favicon',
+  '/icon',
+  '/apple-icon',
+  '/sitemap',
+] as const;
+
+const STATIC_ASSET_FILES = new Set([
+  '/logo.png',
+  '/logo.svg',
+  '/manifest.json',
+  '/robots.txt',
+]);
+
+/** True for asset paths the setup gate must let through untouched. */
+function isStaticAsset(pathname: string): boolean {
+  if (STATIC_ASSET_FILES.has(pathname)) return true;
+  return STATIC_ASSET_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
@@ -28,12 +63,7 @@ export function middleware(req: NextRequest) {
   }
 
   // Allow Next.js internals and static assets
-  if (
-    pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon') ||
-    pathname.startsWith('/icon') ||
-    pathname.startsWith('/apple-icon')
-  ) {
+  if (isStaticAsset(pathname)) {
     return NextResponse.next();
   }
 
@@ -49,6 +79,10 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // Run middleware on every route except static assets and Next internals
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  // Run middleware on every route except static assets and Next internals.
+  // The asset paths are excluded here as well as in the function above so
+  // the edge runtime is not even invoked for them.
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|font/|fonts/|strokes/|logo\\.png|logo\\.svg|manifest\\.json|robots\\.txt|sitemap).*)',
+  ],
 };
