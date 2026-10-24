@@ -25,11 +25,8 @@ export interface ListUsersResult {
   total: number;
 }
 
-export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersResult> {
-  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
-  const offset = Math.max(opts.offset ?? 0, 0);
-  const pool = getPool();
-
+/** The WHERE clause shared by the user queries. */
+function buildUserFilter(opts: ListUsersOptions): { whereSql: string; params: any[] } {
   const where: string[] = [];
   const params: any[] = [];
   if (opts.q) {
@@ -45,40 +42,127 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
   if (typeof opts.disabled === 'boolean') {
     where.push(opts.disabled ? `u.disabled_at IS NOT NULL` : `u.disabled_at IS NULL`);
   }
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  return { whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
+}
 
-  const [rows] = await pool.query<any[]>(
-    `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at,
-            COALESCE(h.total, 0) AS historyCount,
-            COALESCE(h.fav, 0) AS favoriteCount
-     FROM users u
-     LEFT JOIN (
-       SELECT user_id,
-              COUNT(*) AS total,
-              SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) AS fav
-       FROM history GROUP BY user_id
-     ) h ON h.user_id = u.id
-     ${whereSql}
-     ORDER BY u.created_at DESC
-     LIMIT ? OFFSET ?`,
-    [...params, limit, offset],
+/**
+ * The history / favourite counters for one page of users.
+ *
+ * These used to come from a joined derived table:
+ *
+ *   LEFT JOIN (SELECT user_id, COUNT(*) AS total, ... FROM history
+ *              GROUP BY user_id) h ON h.user_id = u.id
+ *
+ * MySQL materialises a derived table in full, and the page's WHERE clause
+ * cannot be pushed into it — so every call scanned the ENTIRE `history`
+ * table, no matter how few rows the page showed. EXPLAIN confirmed it:
+ * the derived table showed up as `type=ref` over a `history` plan of
+ * `type=index extra=Using index` (a full index scan).
+ *
+ * Restricting the aggregate to the ids of the current page turns that full
+ * scan into one index range scan per row. `idx_user_fav (user_id,
+ * is_favorite, created_at)` covers both counted columns, so the range scan
+ * never even touches the table itself.
+ */
+async function aggregateHistoryCounts(
+  userIds: number[],
+): Promise<Map<number, { total: number; fav: number }>> {
+  const counts = new Map<number, { total: number; fav: number }>();
+  if (userIds.length === 0) return counts;
+  const placeholders = userIds.map(() => '?').join(',');
+  const [rows] = await getPool().query<any[]>(
+    `SELECT user_id,
+            COUNT(*) AS total,
+            SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) AS fav
+     FROM history
+     WHERE user_id IN (${placeholders})
+     GROUP BY user_id`,
+    userIds,
   );
-  const [countRows] = await pool.query<any[]>(
-    `SELECT COUNT(*) AS n FROM users u ${whereSql}`,
-    params,
-  );
+  for (const r of rows) {
+    counts.set(Number(r.user_id), { total: Number(r.total), fav: Number(r.fav) });
+  }
+  return counts;
+}
+
+export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersResult> {
+  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
+  const offset = Math.max(opts.offset ?? 0, 0);
+  const pool = getPool();
+  const { whereSql, params } = buildUserFilter(opts);
+
+  // The page of users and its total are independent — run them together.
+  const [userResult, countResult] = await Promise.all([
+    pool.query<any[]>(
+      `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at
+       FROM users u
+       ${whereSql}
+       ORDER BY u.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset],
+    ),
+    pool.query<any[]>(`SELECT COUNT(*) AS n FROM users u ${whereSql}`, params),
+  ]);
+  const userRows = userResult[0];
+  const countRows = countResult[0];
+
+  const counts = await aggregateHistoryCounts(userRows.map((r) => Number(r.id)));
 
   return {
-    users: rows.map((r) => ({
-      id: Number(r.id),
-      username: r.username,
-      isAdmin: r.is_admin === 1 || r.is_admin === true,
-      createdAt: r.created_at,
-      disabledAt: r.disabled_at,
-      historyCount: Number(r.historyCount),
-      favoriteCount: Number(r.favoriteCount),
-    })) as any,
+    users: userRows.map((r) => {
+      const id = Number(r.id);
+      const counters = counts.get(id);
+      return {
+        id,
+        username: r.username,
+        isAdmin: r.is_admin === 1 || r.is_admin === true,
+        createdAt: r.created_at,
+        disabledAt: r.disabled_at,
+        historyCount: counters?.total ?? 0,
+        favoriteCount: counters?.fav ?? 0,
+      };
+    }),
     total: Number(countRows[0]?.n ?? 0),
+  };
+}
+
+export interface UserCountBreakdown {
+  /** Every user matching the search. */
+  total: number;
+  /** The administrators among them. */
+  admins: number;
+  /** The disabled ones among them. */
+  disabled: number;
+}
+
+/**
+ * The three chip counters on the user page, in a single query.
+ *
+ * The page used to call `listUsers({ limit: 1 })` twice just to read a
+ * number off the result — and each of those calls still ran the full-table
+ * history aggregate for its single row. Conditional aggregation produces
+ * the same three numbers without touching `history` at all.
+ */
+export async function countUserBreakdown(q?: string): Promise<UserCountBreakdown> {
+  const params: any[] = [];
+  let whereSql = '';
+  if (q) {
+    whereSql = 'WHERE (u.username LIKE ? OR u.email LIKE ?)';
+    params.push(`%${q}%`, `%${q}%`);
+  }
+  const [rows] = await getPool().query<any[]>(
+    `SELECT
+       COUNT(*) AS total,
+       COALESCE(SUM(CASE WHEN u.is_admin = 1 THEN 1 ELSE 0 END), 0) AS admins,
+       COALESCE(SUM(CASE WHEN u.disabled_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS disabled
+     FROM users u ${whereSql}`,
+    params,
+  );
+  const r = rows[0] ?? {};
+  return {
+    total: Number(r.total ?? 0),
+    admins: Number(r.admins ?? 0),
+    disabled: Number(r.disabled ?? 0),
   };
 }
 
@@ -91,15 +175,10 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
   const pool = getPool();
   const [rows] = await pool.query<any[]>(
     `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at,
-            COALESCE(h.total, 0) AS historyCount,
-            COALESCE(h.fav, 0) AS favoriteCount
+            (SELECT COUNT(*) FROM history h WHERE h.user_id = u.id) AS historyCount,
+            (SELECT COALESCE(SUM(CASE WHEN h.is_favorite = 1 THEN 1 ELSE 0 END), 0)
+               FROM history h WHERE h.user_id = u.id) AS favoriteCount
      FROM users u
-     LEFT JOIN (
-       SELECT user_id,
-              COUNT(*) AS total,
-              SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) AS fav
-       FROM history GROUP BY user_id
-     ) h ON h.user_id = u.id
      WHERE u.id = ? LIMIT 1`,
     [id],
   );
