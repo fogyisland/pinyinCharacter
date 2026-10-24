@@ -1,8 +1,8 @@
-import type { SutraChunk } from '@/lib/sutra-types';
+import type { SutraChunkText } from '@/lib/sutra-types';
 import type { SutraReading } from '@/lib/sutra-reading';
 
 interface Props {
-  chunk: SutraChunk;
+  chunk: SutraChunkText;
   reading?: SutraReading;
 }
 

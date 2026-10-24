@@ -3,7 +3,7 @@ import type {
   SutraListItem,
   SutraListResult,
   SutraChunk,
-  SutraChunkNoPinyin,
+  SutraChunkText,
   SutraDetail,
 } from './sutra-types';
 import { listSutrasFromFs, getSutraByIdFromFs } from './sutras-fs';
@@ -170,6 +170,19 @@ export async function getSutraChunk(id: number, chunkIndex: number): Promise<Sut
   const src = await loadSutraSource(id);
   if (!src) return null;
   return src.chunks[chunkIndex] ?? null;
+}
+
+/**
+ * Drop the per-character pinyin array from a chapter.
+ *
+ * The pinyin array is 84% of a chapter's JSON (930 KB vs 173 KB of actual
+ * text across all 11 sutras) and nothing on /sutra/[id] renders it — the
+ * per-character pinyin only ever appeared in the server-side print
+ * worksheet. Left in place it was serialized into the RSC payload of every
+ * chapter view, so a reader paid for it on every page load.
+ */
+export function toChunkText(chunk: SutraChunk): SutraChunkText {
+  return { id: chunk.id, label: chunk.label, content: chunk.content };
 }
 
 /** A single chapter's plain text, joined for TTS synthesis. */

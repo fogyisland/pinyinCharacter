@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import type { SutraChunk } from '@/lib/sutra-types';
+import type { SutraChunkText } from '@/lib/sutra-types';
 import { useSutraReading } from '@/lib/use-sutra-reading';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { PrintButton } from '@/components/common/PrintButton';
@@ -13,7 +13,7 @@ interface Props {
   sutraId: number;
   sutraSlug: string;
   sutraTitle: string;
-  chunk: SutraChunk;
+  chunk: SutraChunkText;
   userId: number | null;
   isLoggedIn: boolean;
 }

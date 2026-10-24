@@ -27,6 +27,30 @@ export interface ClassicMeta {
   chunkCount: number;
 }
 
+/**
+ * A book's outline: metadata plus the chapter list, but no chapter text.
+ *
+ * The worksheet generator used to fetch the whole book (up to 8 MB of JSON)
+ * to read a single chapter. The outline is a few KB.
+ */
+export interface ClassicOutline extends ClassicMeta {
+  chunks: ClassicChunkMeta[];
+}
+
+/**
+ * A single chapter as the browser receives it: the text lines and the labels
+ * the UI needs, without the per-character pinyin (which is most of the file).
+ */
+export interface ClassicChapterPayload {
+  /** 1-based chapter id, as stored in the book file. */
+  id: number;
+  label: string;
+  /** Lines of text, punctuation included. */
+  content: string[];
+  /** How many chapters the book has — lets the UI show 上一章 / 下一章. */
+  chunkCount: number;
+}
+
 export interface ClassicListItem {
   id: number;
   slug: string;

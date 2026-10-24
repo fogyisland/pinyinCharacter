@@ -3,9 +3,9 @@
 import { useSutraReading } from '@/lib/use-sutra-reading';
 import { ReadingModePicker } from '@/components/common/ReadingModePicker';
 import { SutraTextView } from '@/components/sutra/SutraTextView';
-import type { SutraChunk } from '@/lib/sutra-types';
+import type { SutraChunkText } from '@/lib/sutra-types';
 
-export function SutraReadingClient({ chunk }: { chunk: SutraChunk }) {
+export function SutraReadingClient({ chunk }: { chunk: SutraChunkText }) {
   const [reading, setReading] = useSutraReading();
   return (
     <>

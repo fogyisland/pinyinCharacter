@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
-import type { SutraChunk } from '@/lib/sutra-types';
+import type { SutraChunkText } from '@/lib/sutra-types';
 
 interface Props {
   id: number;
   title: string;
-  chunk: SutraChunk;
+  chunk: SutraChunkText;
 }
 
 export function SaveAsWorksheetButton({ id, title, chunk }: Props) {

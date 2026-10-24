@@ -23,7 +23,9 @@ interface Props {
    * demand from this endpoint instead.
    *
    * `{index}` is replaced with the chunk id. The endpoint must answer with
-   * `{ ok: true, data: { text: string } }`.
+   * `{ ok: true, data: { text?: string, content?: string[] } }` — the sutra
+   * chunk endpoint sends `text`, the classics chunk endpoint sends the
+   * chapter's lines as `content`.
    */
   textUrlTemplate?: string;
 }
@@ -107,8 +109,11 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className, textUrlTemp
     const url = template.replace('{index}', String(chunk.id));
     const res = await fetch(url);
     if (!res.ok) throw new Error(`failed to load chunk text: ${res.status}`);
-    const payload = (await res.json()) as { data?: { text?: string } };
-    const text = payload.data?.text ?? '';
+    const payload = (await res.json()) as { data?: { text?: string; content?: string[] } };
+    const data = payload.data;
+    // The sutra endpoint answers with a flat `text`, the classics endpoint
+    // with the chapter's lines — join them the same way the server does.
+    const text = data?.text ?? (data?.content ? data.content.join('\n') : '');
     textsRef.current[chunk.id] = text;
     return text;
   };

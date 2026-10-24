@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SutraChunk } from '@/lib/sutra-types';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { SutraChunkText } from '@/lib/sutra-types';
 import type { SutraReading } from '@/lib/sutra-reading';
 import type { CopyProgress } from '@/lib/sutra-copy-progress';
 import { CopySeal } from './CopySeal';
 
 interface Props {
-  chunk: SutraChunk;
+  chunk: SutraChunkText;
   sutraId: number;
   sutraSlug: string;
   userId: number | null;
@@ -26,8 +26,11 @@ const WRITING_MODE: Record<SutraReading, string> = {
 const DEBOUNCE_MS = 500;
 const COLLAPSE_MS = 1200;
 
-function flatChars(chunk: SutraChunk): string[] {
-  return chunk.content.join('').split('');
+function flatChars(chunk: SutraChunkText): string[] {
+  // Array.from splits by code point (not UTF-16 code unit), which is the
+  // same unit the render loop uses — the two must agree, otherwise the
+  // index of a character and its slot in `writtenChars` drift apart.
+  return Array.from(chunk.content.join(''));
 }
 
 function charClass(idx: number, written: boolean, disabled: boolean): string {
@@ -38,8 +41,26 @@ function charClass(idx: number, written: boolean, disabled: boolean): string {
     : `${base} text-[rgba(0,0,0,0.15)] hover:bg-[rgba(222,203,183,0.15)] cursor-pointer`;
 }
 
+/**
+ * The index of each line's first character within the flattened chapter.
+ *
+ * Computed once per chapter instead of once per character: the old helper
+ * re-summed every preceding line for every character, which is quadratic
+ * in the number of lines and cost ~42 ms on the longest chapter.
+ */
+function lineOffsets(content: string[]): number[] {
+  const offsets: number[] = [];
+  let acc = 0;
+  for (const line of content) {
+    offsets.push(acc);
+    acc += Array.from(line).length;
+  }
+  return offsets;
+}
+
 export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onExit }: Props) {
   const chars = flatChars(chunk);
+  const offsets = useMemo(() => lineOffsets(chunk.content), [chunk.content]);
   const total = chars.length;
   const [writtenChars, setWrittenChars] = useState<boolean[]>(() => new Array(total).fill(false));
   const [phase, setPhase] = useState<Phase>('copying');
@@ -221,7 +242,7 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
             className={reading === 'horizontal' ? 'my-1.5' : 'mx-3 inline-block align-top'}
           >
             {[...line].map((ch, ci) => {
-              const safeIdx = lineStartsAt(chunk, li) + ci;
+              const safeIdx = offsets[li]! + ci;
               return (
                 <span
                   key={ci}
@@ -239,10 +260,4 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
       </div>
     </div>
   );
-}
-
-function lineStartsAt(chunk: SutraChunk, lineIndex: number): number {
-  let acc = 0;
-  for (let k = 0; k < lineIndex; k++) acc += chunk.content[k]!.length;
-  return acc;
 }

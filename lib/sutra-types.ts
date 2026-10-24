@@ -13,7 +13,14 @@ export interface SutraChunk {
   pinyin: string[][];
 }
 
-export interface SutraChunkNoPinyin {
+/**
+ * A chapter reduced to what the browser needs: the text and its label.
+ *
+ * The per-character pinyin array is ~84% of a chapter's JSON but nothing on
+ * /sutra/[id] renders it — only the (server-side) print worksheet did. It
+ * must not be serialized into the RSC payload of every chapter view.
+ */
+export interface SutraChunkText {
   id: number;
   label: string;
   content: string[];

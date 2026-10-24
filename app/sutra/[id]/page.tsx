@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { getSutraChunk, getSutraMeta } from '@/lib/sutras';
+import { getSutraChunk, getSutraMeta, toChunkText } from '@/lib/sutras';
 import { getCurrentUser } from '@/lib/auth';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -39,6 +39,9 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
   // though the page never displays them.
   const activeChunk = await getSutraChunk(id, activeChunkId);
   if (!activeChunk) notFound();
+  // The per-character pinyin array is 84% of a chapter's JSON and nothing on
+  // this page renders it — strip it before it reaches the client bundle.
+  const activeChunkText = toChunkText(activeChunk);
   const backLink = getSutraBackLink(sp.from);
 
   // Audio: the player pulls a chapter's text on demand (see textUrlTemplate)
@@ -99,7 +102,7 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
               sutraId={meta.id}
               sutraSlug={meta.slug}
               sutraTitle={meta.title}
-              chunk={activeChunk}
+              chunk={activeChunkText}
               userId={user?.id ?? null}
               isLoggedIn={!!user}
             />

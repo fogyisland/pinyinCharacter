@@ -1,6 +1,7 @@
 import { loadClassicFile, loadManifest } from './loader';
 import type {
   ClassicCategory,
+  ClassicChapterPayload,
   ClassicChunk,
   ClassicChunkMeta,
   ClassicDetail,
@@ -8,6 +9,7 @@ import type {
   ClassicListItem,
   ClassicListResult,
   ClassicMeta,
+  ClassicOutline,
   ClassicsManifest,
 } from '../classics-types';
 
@@ -61,6 +63,14 @@ export async function listClassics(args: ListClassicsArgs = {}): Promise<Classic
   return { items, total: filtered.length, page, pageSize };
 }
 
+/**
+ * The whole book — every chapter's text AND pinyin.
+ *
+ * A classic book runs to up to 8 MB of JSON, so this is a server-side
+ * function only: never send its result to the browser. Use
+ * `getClassicOutlineBySlug` for the chapter list and
+ * `getClassicChapterPayload` for a single chapter.
+ */
 export async function getClassicBySlug(slug: string): Promise<ClassicDetail | null> {
   const file = await loadClassicFile(slug);
   if (!file) return null;
@@ -106,6 +116,20 @@ export async function getClassicChunkMetaBySlug(
   return file.chunks.map((c, i) => ({ id: c.id ?? i + 1, label: String(c.label ?? '') }));
 }
 
+/**
+ * A book's outline — metadata plus the chapter list, without any text.
+ *
+ * A single classic book can be 8 MB of JSON, so the outline is what the
+ * browser gets when it needs to know which chapters exist.
+ */
+export async function getClassicOutlineBySlug(slug: string): Promise<ClassicOutline | null> {
+  const meta = await getClassicMetaBySlug(slug);
+  if (!meta) return null;
+  const chunks = await getClassicChunkMetaBySlug(slug);
+  if (!chunks) return null;
+  return { ...meta, chunkCount: chunks.length, chunks };
+}
+
 /** A single chapter (with text) — the only chapter a detail page needs. */
 export async function getClassicChunkBySlug(
   slug: string,
@@ -117,14 +141,27 @@ export async function getClassicChunkBySlug(
   return chunks[index] ?? null;
 }
 
-/** A single chapter's plain text, joined for TTS synthesis. */
-export async function getClassicChunkTextBySlug(
+/**
+ * A single chapter as the browser receives it: the text lines, the label and
+ * the book's chapter count — but not the per-character pinyin, which is the
+ * larger half of a chapter's JSON and is only used by the (server-rendered)
+ * reading view.
+ */
+export async function getClassicChapterPayload(
   slug: string,
   index: number,
-): Promise<string | null> {
-  const chunk = await getClassicChunkBySlug(slug, index);
+): Promise<ClassicChapterPayload | null> {
+  const file = await loadClassicFile(slug);
+  if (!file) return null;
+  const chunks = parseChunks(file);
+  const chunk = chunks[index];
   if (!chunk) return null;
-  return chunk.content.join('\n');
+  return {
+    id: chunk.id,
+    label: chunk.label,
+    content: chunk.content,
+    chunkCount: chunks.length,
+  };
 }
 
 export async function countByCategory(): Promise<Record<ClassicCategory, number>> {

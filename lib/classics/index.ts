@@ -3,9 +3,10 @@ export {
   listClassics,
   getClassicBySlug,
   getClassicMetaBySlug,
+  getClassicOutlineBySlug,
   getClassicChunkMetaBySlug,
   getClassicChunkBySlug,
-  getClassicChunkTextBySlug,
+  getClassicChapterPayload,
   countByCategory,
 } from './queries';
 export type { ListClassicsArgs } from './queries';

@@ -27,7 +27,7 @@ import { PaperSizePicker } from './PaperSizePicker';
 import { FontFamilyPicker } from './FontFamilyPicker';
 import { WorksheetPreview } from './WorksheetPreview';
 import { AddToWorksheetDialog } from './AddToWorksheetDialog';
-import type { ClassicDetail } from '@/lib/classics-types';
+import type { ClassicChapterPayload } from '@/lib/classics-types';
 import { stripPunct, buildBreakpoints } from '@/lib/punctuation';
 
 type Tab = 'text' | 'library' | 'random' | 'english';
@@ -63,7 +63,9 @@ export function WorksheetGenerator() {
   );
   const [view, setView] = useState<'form' | 'preview'>(previewText ? 'preview' : 'form');
   const [chapterIdx, setChapterIdx] = useState<number>(initialChapterIdx);
-  const [bookSlug, setBookSlug] = useState<string | null>(initialBookSlug);
+  // The book comes from the URL and is never changed by the UI — reading it
+  // straight from the params keeps it in sync when the URL changes.
+  const bookSlug = initialBookSlug;
   const isAncient = !!bookSlug;
 
   // Sync URL params → state when they change after mount (browser nav,
@@ -98,7 +100,8 @@ export function WorksheetGenerator() {
   const [authHint, setAuthHint] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<number | null>(null);
-  const [ancientBook, setAncientBook] = useState<ClassicDetail | null>(null);
+  const [ancientChapter, setAncientChapter] = useState<ClassicChapterPayload | null>(null);
+  const [chapterError, setChapterError] = useState<string | null>(null);
   const [appendDialogOpen, setAppendDialogOpen] = useState(false);
 
   // 登录后清掉提示
@@ -109,40 +112,37 @@ export function WorksheetGenerator() {
     }
   }, [user]);
 
-  // Ancient mode: fetch the book once when the book (or isAncient flag) changes.
-  // Chapter changes are handled by the next effect — they only re-derive content
-  // from the already-loaded book, no network call.
+  // Ancient mode: fetch the chapter that is about to be typeset.
+  //
+  // The generator used to download the whole book (up to 8 MB of JSON) and
+  // pick one chapter out of it. It now asks for that chapter alone — the
+  // response carries the chapter's lines, its label and the book's chapter
+  // count (for the 上一章 / 下一章 buttons).
   useEffect(() => {
     if (!isAncient || !bookSlug) return;
     let cancelled = false;
     (async () => {
-      const res = await fetch(`/api/classics/${bookSlug}`);
-      const data = await res.json();
-      if (cancelled || !data.ok) return;
-      setAncientBook(data.data as ClassicDetail);
-      setTab('text');
+      try {
+        const res = await fetch(`/api/classics/${bookSlug}/chunk/${chapterIdx}`);
+        const data = await res.json();
+        if (cancelled) return;
+        if (!data.ok) {
+          setChapterError(data.error?.message ?? '章节加载失败');
+          return;
+        }
+        const chapter = data.data as ClassicChapterPayload;
+        setChapterError(null);
+        setAncientChapter(chapter);
+        setTab('text');
+        setContent(chapter.content.flatMap((line) => Array.from(stripPunct(line))));
+      } catch (err) {
+        if (!cancelled) setChapterError((err as Error).message);
+      }
     })();
     return () => {
       cancelled = true;
     };
-  }, [isAncient, bookSlug]);
-
-  // Ancient mode: re-derive content + breakpoints when book or chapter changes.
-  // Clamps chapterIdx into [0, chunks.length-1] so an out-of-range param can't
-  // crash the render. No fetch here.
-  useEffect(() => {
-    if (!ancientBook) return;
-    let cancelled = false;
-    const idx = Math.max(0, Math.min(chapterIdx, ancientBook.chunks.length - 1));
-    const chunk = ancientBook.chunks[idx];
-    if (!chunk) return;
-    const chars = chunk.content.flatMap((line) => Array.from(stripPunct(line)));
-    if (cancelled) return;
-    setContent(chars);
-    return () => {
-      cancelled = true;
-    };
-  }, [ancientBook, chapterIdx]);
+  }, [isAncient, bookSlug, chapterIdx]);
 
   // 改字体/工具/格子形式/纸张尺寸/描红 后, 不再自动跳到预览页.
   // 预览仅在用户点 "生成字帖" 按钮 (或 RandomTab 的 "随机生成/重新生成" 按钮) 时进入.
@@ -178,11 +178,9 @@ export function WorksheetGenerator() {
   const isEnglishTab = tab === 'english';
 
   const breakpoints = useMemo(() => {
-    if (!isAncient || !ancientBook) return undefined;
-    const chunk = ancientBook.chunks[chapterIdx];
-    if (!chunk) return undefined;
-    return buildBreakpoints(chunk);
-  }, [isAncient, ancientBook, chapterIdx]);
+    if (!isAncient || !ancientChapter) return undefined;
+    return buildBreakpoints(ancientChapter);
+  }, [isAncient, ancientChapter]);
 
   const openLogin = () => {
     setAuthHint(true);
@@ -375,7 +373,7 @@ export function WorksheetGenerator() {
       </div>
 
       <div className="flex flex-col items-end gap-2">
-        {isAncient && ancientBook && (
+        {isAncient && ancientChapter && (
           <div className="flex gap-2 self-end">
             <button
               type="button"
@@ -387,7 +385,7 @@ export function WorksheetGenerator() {
             </button>
             <button
               type="button"
-              disabled={chapterIdx >= ancientBook.chunks.length - 1}
+              disabled={chapterIdx >= ancientChapter.chunkCount - 1}
               onClick={() => setChapterIdx((i) => i + 1)}
               className="rounded border border-ink/20 px-3 py-1.5 text-sm hover:bg-paper-deep disabled:opacity-40"
             >
@@ -395,6 +393,7 @@ export function WorksheetGenerator() {
             </button>
           </div>
         )}
+        {chapterError && <p className="text-sm text-red-600">{chapterError}</p>}
         {authHint && !user && (
           <p className="text-sm text-ink-soft">
             需要登录才能保存。已为你打开登录窗口 —

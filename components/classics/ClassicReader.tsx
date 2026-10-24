@@ -8,7 +8,7 @@ import { ReadingModePicker } from '@/components/common/ReadingModePicker';
 import { TextGridPicker } from '@/components/common/TextGridPicker';
 import { SUTRA_READING_LABELS, type SutraReading } from '@/lib/sutra-reading';
 import { DEFAULT_TEXT_GRID, TEXT_GRID_STORAGE_KEY, type TextGridMode } from '@/lib/text-grid';
-import { isPunct, stripPunct } from '@/lib/punctuation';
+import { isPunct } from '@/lib/punctuation';
 
 const WRITING_MODE: Record<SutraReading, string> = {
   horizontal: 'horizontal-tb',
@@ -76,18 +76,12 @@ export function ClassicReader({ chunk, book }: Props) {
     }
   };
 
-  const charsAndPinyin: Array<{ ch: string; py: string }> = [];
-  for (let lineIdx = 0; lineIdx < chunk.content.length; lineIdx++) {
-    const line = chunk.content[lineIdx]!;
-    const linePinyin = chunk.pinyin[lineIdx] ?? [];
-    Array.from(line).forEach((ch, i) => {
-      if (isPunct(ch)) return;
-      charsAndPinyin.push({ ch, py: linePinyin[i] ?? '' });
-    });
-  }
-
-  const prefill = encodeURIComponent(charsAndPinyin.map((c) => c.ch).join(''));
-  const worksheetHref = `/worksheet?source=ancient&book=${book.slug}&chapterIdx=${chunk.id - 1}&prefill=${prefill}`;
+  // The worksheet link points at the book + chapter, not at the chapter's
+  // text: the generator fetches the chapter it is about to typeset. The
+  // prefill used to inline every character of the chapter into the query
+  // string — 840 KB of URL for the longest chapter, which nginx rejects
+  // outright (the request line is limited to 8 KB).
+  const worksheetHref = `/worksheet?source=ancient&book=${book.slug}&chapterIdx=${chunk.id - 1}`;
 
   const currentIdx = chunk.id - 1;
   const hasPrev = currentIdx > 0;

@@ -1,7 +1,7 @@
 /**
  * One-shot: enrich every data/sutras/<slug>.json with a `pinyin: string[][]` field
  * generated via pinyin-pro. Required because `data/sutras/*.json` was historically
- * flat (SutraChunkNoPinyin) but the DB schema + runtime readers expect SutraChunk
+ * flat (SutraChunkText) but the DB schema + runtime readers expect SutraChunk
  * with per-char pinyin.
  *
  * Idempotent: re-running detects existing `pinyin` on the first chunk and skips
@@ -16,7 +16,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { withPinyinBatch, type RawChunk } from '../lib/pinyin-gen';
 import { writeSutrasFs, type SutraManifestEntry } from '../lib/sutras-fs';
-import type { SutraChunkNoPinyin, SutraChunk } from '../lib/sutra-types';
+import type { SutraChunkText, SutraChunk } from '../lib/sutra-types';
 
 const SUTRAS_DIR = join(process.cwd(), 'data', 'sutras');
 const MANIFEST_PATH = join(SUTRAS_DIR, 'manifest.json');
@@ -41,7 +41,7 @@ function listSlugNames(): string[] {
 
 function enrichSlug(slug: string): { lines: number; chars: number } | 'skipped' {
   const path = join(SUTRAS_DIR, `${slug}.json`);
-  const raw = JSON.parse(readFileSync(path, 'utf8')) as SutraChunkNoPinyin[];
+  const raw = JSON.parse(readFileSync(path, 'utf8')) as SutraChunkText[];
   if (!Array.isArray(raw) || raw.length === 0) {
     throw new Error(`${slug}.json is empty or not an array`);
   }
@@ -49,7 +49,7 @@ function enrichSlug(slug: string): { lines: number; chars: number } | 'skipped' 
   if (raw[0] && typeof (raw[0] as SutraChunk).pinyin !== 'undefined') {
     return 'skipped';
   }
-  // Cast: SutraChunkNoPinyin fields match RawChunk's interface exactly.
+  // Cast: SutraChunkText fields match RawChunk's interface exactly.
   const rawChunks: RawChunk[] = raw.map((c) => ({ label: c.label, content: c.content }));
   const withPinyin = withPinyinBatch(rawChunks);
   // Re-attach the `id` field from the original chunk (Task 1's lib returns
