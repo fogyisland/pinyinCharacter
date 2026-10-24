@@ -4,6 +4,7 @@ import { getMembershipStats } from '@/lib/membership-stats';
 import { ManualGrantDrawer } from '@/components/admin/memberships/ManualGrantDrawer';
 import { RevokeButton } from '@/components/admin/memberships/RevokeButton';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { Pagination } from '@/components/admin/Pagination';
 import { Crown, Users, TrendingUp, DollarSign } from 'lucide-react';
 import { formatDate, formatDateTime } from '@/lib/format';
 
@@ -130,25 +131,13 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
         )}
       </ResponsiveTable>
 
-      <div className="flex items-center justify-between text-xs text-ink-faint">
-        <span>
-          共 {list.total} 条 · 第 {page} / {totalPages} 页
-        </span>
-        <div className="flex gap-2">
-          <Link
-            href={buildHref({ userId, planKey }, { page: String(Math.max(1, page - 1)) })}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page <= 1 ? 'opacity-50 pointer-events-none' : ''}`}
-          >
-            上一页
-          </Link>
-          <Link
-            href={buildHref({ userId, planKey }, { page: String(Math.min(totalPages, page + 1)) })}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page >= totalPages ? 'opacity-50 pointer-events-none' : ''}`}
-          >
-            下一页
-          </Link>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={list.total}
+        pageSize={PAGE_SIZE}
+        buildHref={(target) => buildHref({ userId, planKey }, { page: String(target) })}
+      />
     </div>
   );
 }

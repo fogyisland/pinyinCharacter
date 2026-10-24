@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { listPaymentOrders, type PaymentOrderStatus } from '@/lib/payment-orders';
+import { Pagination } from '@/components/admin/Pagination';
 import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -163,30 +164,15 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
         </table>
       </div>
 
-      <div className="flex items-center justify-between text-xs text-ink-faint">
-        <span>
-          共 {list.total} 条 · 第 {page} / {totalPages} 页
-        </span>
-        <div className="flex gap-2">
-          <Link
-            href={buildHref({ status: status ?? null, userId, q, page: Math.max(1, page - 1) })}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page <= 1 ? 'opacity-50 pointer-events-none' : ''}`}
-          >
-            上一页
-          </Link>
-          <Link
-            href={buildHref({
-              status: status ?? null,
-              userId,
-              q,
-              page: Math.min(totalPages, page + 1),
-            })}
-            className={`text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep ${page >= totalPages ? 'opacity-50 pointer-events-none' : ''}`}
-          >
-            下一页
-          </Link>
-        </div>
-      </div>
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={list.total}
+        pageSize={PAGE_SIZE}
+        buildHref={(target) =>
+          buildHref({ status: status ?? null, userId, q, page: target })
+        }
+      />
     </div>
   );
 }

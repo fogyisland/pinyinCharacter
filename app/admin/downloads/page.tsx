@@ -4,6 +4,7 @@ import { getDownloadStats, listDownloads } from '@/lib/admin-downloads';
 import { StatCard } from '@/components/admin/StatCard';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
 import { DownloadsFilterBar } from '@/components/admin/DownloadsFilterBar';
+import { Pagination } from '@/components/admin/Pagination';
 import {
   DOWNLOADS_PAGE_SIZE,
   buildDownloadsHref,
@@ -80,10 +81,6 @@ export default async function AdminDownloadsPage({ searchParams }: PageProps) {
     ? Object.entries(stats.bySourceType).sort((a, b) => b[1] - a[1])[0]
     : null;
   const topUser = stats?.topUsers?.[0];
-  const navClass = (disabled: boolean) =>
-    `text-sm px-2 py-1 border border-ink/20 rounded hover:bg-paper-deep inline-flex items-center gap-1 ${
-      disabled ? 'opacity-50 pointer-events-none' : ''
-    }`;
 
   return (
     <div className="space-y-4">
@@ -155,25 +152,13 @@ export default async function AdminDownloadsPage({ searchParams }: PageProps) {
         }}
       </ResponsiveTable>
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-ink-faint">
-          共 {total} 条 · 第 {query.page} / {totalPages} 页
-        </span>
-        <div className="flex gap-2">
-          <Link
-            href={buildDownloadsHref(query, { page: Math.max(1, query.page - 1) })}
-            className={navClass(query.page <= 1)}
-          >
-            上一页
-          </Link>
-          <Link
-            href={buildDownloadsHref(query, { page: Math.min(totalPages, query.page + 1) })}
-            className={navClass(query.page >= totalPages)}
-          >
-            下一页
-          </Link>
-        </div>
-      </div>
+      <Pagination
+        page={query.page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={DOWNLOADS_PAGE_SIZE}
+        buildHref={(target) => buildDownloadsHref(query, { page: target })}
+      />
     </div>
   );
 }
