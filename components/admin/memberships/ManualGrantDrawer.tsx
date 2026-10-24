@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { UserPlus, X, Check, AlertTriangle } from 'lucide-react';
 import { grantAdminMembershipRequest, listAdminPlansRequest } from '@/lib/api-admin';
 import { formatDate } from '@/lib/format';
+import { FormField } from '@/components/admin/FormField';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 interface Plan {
   id: number;
@@ -76,14 +78,14 @@ export function ManualGrantDrawer() {
 
   return (
     <>
-      <button
-        type="button"
+      <AdminButton
+        variant="primary"
+        size="md"
         onClick={() => setOpen(true)}
-        className="text-sm px-3 py-1.5 bg-ink text-paper rounded hover:bg-ink/80 inline-flex items-center gap-1"
+        icon={<UserPlus className="h-4 w-4" />}
       >
-        <UserPlus className="h-4 w-4" />
         手动开通
-      </button>
+      </AdminButton>
       {open && (
         <div className="fixed inset-0 z-30 bg-ink/40" onClick={() => setOpen(false)}>
           <form
@@ -93,58 +95,76 @@ export function ManualGrantDrawer() {
           >
             <div className="flex justify-between items-center mb-5">
               <h2 className="font-kai text-lg text-ink">手动开通会员</h2>
-              <button type="button" onClick={() => setOpen(false)} aria-label="关闭">
-                <X className="h-5 w-5" />
-              </button>
+              <AdminButton
+                variant="ghost"
+                size="sm"
+                onClick={() => setOpen(false)}
+                aria-label="关闭"
+                icon={<X className="h-5 w-5" />}
+              />
             </div>
             {err && (
-              <p className="text-sm text-seal mb-3 inline-flex items-center gap-1">
+              <p className="text-sm text-danger mb-3 inline-flex items-center gap-1">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 {err}
               </p>
             )}
             {msg && (
-              <p className="text-sm text-green-700 mb-3 inline-flex items-center gap-1">
+              <p className="text-sm text-success mb-3 inline-flex items-center gap-1">
                 <Check className="h-3.5 w-3.5" />
                 {msg}
               </p>
             )}
-            <label className="text-xs text-ink-soft">用户 ID</label>
-            <input
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              type="number"
-              min="1"
-              className="w-full mt-1 mb-3 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-            />
-            <label className="text-xs text-ink-soft">套餐</label>
-            <select
-              value={planKey}
-              onChange={(e) => setPlanKey(e.target.value)}
-              className="w-full mt-1 mb-3 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-            >
-              {plans.map((p) => (
-                <option key={p.planKey} value={p.planKey}>
-                  {p.displayName} · {p.currency === 'USD' ? '$' : '¥'}
-                  {p.amount} · {p.durationDays} 天 {p.enabled ? '' : '(未启用)'}
-                </option>
-              ))}
-            </select>
-            <label className="text-xs text-ink-soft">备注 (可选)</label>
-            <input
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              type="text"
-              maxLength={255}
-              className="w-full mt-1 mb-4 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-            />
-            <button
+            <div className="mb-3">
+              <FormField label="用户 ID" htmlFor="grant-user-id">
+                <input
+                  id="grant-user-id"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  type="number"
+                  min="1"
+                  className="adm-input"
+                />
+              </FormField>
+            </div>
+            <div className="mb-3">
+              <FormField label="套餐" htmlFor="grant-plan">
+                <select
+                  id="grant-plan"
+                  value={planKey}
+                  onChange={(e) => setPlanKey(e.target.value)}
+                  className="adm-input"
+                >
+                  {plans.map((p) => (
+                    <option key={p.planKey} value={p.planKey}>
+                      {p.displayName} · {p.currency === 'USD' ? '$' : '¥'}
+                      {p.amount} · {p.durationDays} 天 {p.enabled ? '' : '(未启用)'}
+                    </option>
+                  ))}
+                </select>
+              </FormField>
+            </div>
+            <div className="mb-4">
+              <FormField label="备注 (可选)" htmlFor="grant-note">
+                <input
+                  id="grant-note"
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  type="text"
+                  maxLength={255}
+                  className="adm-input"
+                />
+              </FormField>
+            </div>
+            <AdminButton
               type="submit"
+              variant="primary"
+              size="md"
               disabled={busy}
-              className="w-full text-sm px-3 py-2 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50"
+              className="w-full"
             >
               {busy ? '开通中…' : '确认开通'}
-            </button>
+            </AdminButton>
           </form>
         </div>
       )}

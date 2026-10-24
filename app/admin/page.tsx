@@ -1,5 +1,7 @@
 import { Download, Bot, AlertTriangle, Eye, Users, FileText } from 'lucide-react';
 import { StatCard } from '@/components/admin/StatCard';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Panel } from '@/components/admin/Panel';
 import { getSystemStats } from '@/lib/admin';
 import { getDownloadStats } from '@/lib/admin-downloads';
 import { getAiStats } from '@/lib/admin-ai';
@@ -20,10 +22,23 @@ export default async function AdminIndex() {
   const disabledUsersCount = Number((disabledRows[0] as any[])[0]?.n ?? 0);
   const aiErrorRatePct = `${(ai.errorRate * 100).toFixed(1)}%`;
 
+  const systemFigures = [
+    { label: '用户', value: systemStats.users },
+    { label: '管理员', value: systemStats.admins },
+    { label: '历史记录', value: systemStats.history },
+    { label: '收藏', value: systemStats.favorites },
+    { label: '审计日志', value: systemStats.audit },
+    { label: '已禁用用户', value: disabledUsersCount },
+  ];
+
   return (
-    <div className="space-y-6">
-      <h1 className="font-kai text-2xl text-ink">仪表盘</h1>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+    <div>
+      <PageHeader
+        title="仪表盘"
+        description="站点近况一览。数字取自数据库实时统计,点击卡片可跳转到对应的明细。"
+      />
+
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
         <StatCard
           label="下载 (7d)"
           value={downloads.total}
@@ -51,35 +66,17 @@ export default async function AdminIndex() {
           href="/admin/analytics"
         />
       </div>
-      <section className="rounded-lg border border-paper-warm bg-paper p-4">
-        <h2 className="font-serif text-lg text-ink mb-3">系统统计</h2>
-        <dl className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
-          <div>
-            <dt className="text-ink-soft text-xs">用户</dt>
-            <dd className="text-xl text-ink font-serif">{systemStats.users}</dd>
-          </div>
-          <div>
-            <dt className="text-ink-soft text-xs">管理员</dt>
-            <dd className="text-xl text-ink font-serif">{systemStats.admins}</dd>
-          </div>
-          <div>
-            <dt className="text-ink-soft text-xs">历史记录</dt>
-            <dd className="text-xl text-ink font-serif">{systemStats.history}</dd>
-          </div>
-          <div>
-            <dt className="text-ink-soft text-xs">收藏</dt>
-            <dd className="text-xl text-ink font-serif">{systemStats.favorites}</dd>
-          </div>
-          <div>
-            <dt className="text-ink-soft text-xs">审计日志</dt>
-            <dd className="text-xl text-ink font-serif">{systemStats.audit}</dd>
-          </div>
-          <div>
-            <dt className="text-ink-soft text-xs">已禁用用户</dt>
-            <dd className="text-xl text-ink font-serif">{disabledUsersCount}</dd>
-          </div>
+
+      <Panel title="系统统计" description="全站累计数量">
+        <dl className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-sm">
+          {systemFigures.map((f) => (
+            <div key={f.label}>
+              <dt className="text-ink-soft text-xs">{f.label}</dt>
+              <dd className="text-2xl text-ink font-serif tabular-nums mt-0.5">{f.value}</dd>
+            </div>
+          ))}
         </dl>
-      </section>
+      </Panel>
     </div>
   );
 }

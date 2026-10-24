@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Ban, Check, AlertTriangle } from 'lucide-react';
 import { revokeAdminMembershipRequest } from '@/lib/api-admin';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 export function RevokeButton({ membershipId }: { membershipId: number }) {
   const router = useRouter();
@@ -27,46 +28,49 @@ export function RevokeButton({ membershipId }: { membershipId: number }) {
 
   if (!confirming) {
     return (
-      <button
-        type="button"
+      <AdminButton
+        variant="danger"
+        size="sm"
         onClick={() => setConfirming(true)}
-        className="text-xs px-2 py-1 border border-seal/30 text-seal rounded hover:bg-seal/5 inline-flex items-center gap-1"
+        icon={<Ban className="h-3 w-3" />}
       >
-        <Ban className="h-3 w-3" />
         撤销
-      </button>
+      </AdminButton>
     );
   }
 
   return (
     <div className="flex items-center gap-1">
-      <input
-        value={reason}
-        onChange={(e) => setReason(e.target.value)}
-        placeholder="原因(可选)"
-        className="text-xs border border-paper-warm rounded px-1 py-0.5 w-24"
-      />
-      <button
-        type="button"
+      <div className="w-28">
+        <input
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          placeholder="原因(可选)"
+          aria-label="撤销原因"
+          className="adm-input"
+        />
+      </div>
+      <AdminButton
+        variant="primary"
+        size="sm"
         onClick={onRevoke}
         disabled={busy}
-        className="text-xs px-2 py-1 bg-seal text-paper rounded hover:bg-seal/80 disabled:opacity-50 inline-flex items-center gap-1"
+        icon={<Check className="h-3 w-3" />}
       >
-        <Check className="h-3 w-3" />
         确认
-      </button>
-      <button
-        type="button"
+      </AdminButton>
+      <AdminButton
+        variant="secondary"
+        size="sm"
         onClick={() => {
           setConfirming(false);
           setErr(null);
         }}
-        className="text-xs px-2 py-1 border border-ink/20 rounded text-ink hover:bg-paper-deep"
       >
         取消
-      </button>
+      </AdminButton>
       {err && (
-        <span className="text-xs text-seal inline-flex items-center gap-1">
+        <span className="text-xs text-danger inline-flex items-center gap-1">
           <AlertTriangle className="h-3 w-3" />
           {err}
         </span>

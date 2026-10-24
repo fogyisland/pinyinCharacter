@@ -1,8 +1,15 @@
 import Link from 'next/link';
+import { SearchX, Users } from 'lucide-react';
 import { countUserBreakdown, listUsers } from '@/lib/admin';
 import { UserActions } from './UsersActions';
-import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { DataTable } from '@/components/admin/DataTable';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Toolbar } from '@/components/admin/Toolbar';
+import { FilterChip } from '@/components/admin/FilterChip';
 import { Pagination } from '@/components/admin/Pagination';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { AdminButton, AdminLink } from '@/components/admin/AdminButton';
 import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -54,65 +61,71 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
     return qs ? `/admin/users?${qs}` : '/admin/users';
   };
 
-  const chipClass = (active: boolean) =>
-    `text-xs px-3 py-1.5 rounded border transition-colors ${
-      active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
-    }`;
-
   const showAll = !adminOnly && !disabled;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   return (
     <div>
-      <h1 className="text-xl font-semibold mb-4">用户管理 (共 {total})</h1>
+      <PageHeader
+        title="用户管理"
+        description={`共 ${total} 位注册用户。按用户名或邮箱搜索,或用下面的筛选查看管理员与已禁用的账号。`}
+      />
 
-      <form
-        className="card-paper rounded p-3 mb-3 flex flex-wrap gap-2 items-end text-sm"
-        method="get"
-      >
-        {adminOnly && <input type="hidden" name="adminOnly" value="1" />}
-        {disabled && <input type="hidden" name="disabled" value="1" />}
-        <input
-          type="text"
-          name="q"
-          placeholder="搜索用户名或邮箱"
-          defaultValue={q ?? ''}
-          className="border border-ink/20 rounded px-2 py-1 w-64 bg-paper-soft"
-        />
-        <button type="submit" className="btn-seal text-sm">
-          搜索
-        </button>
-        {q && (
-          <Link
-            href={buildHref(1, {})}
-            className="px-3 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep"
-          >
-            清空
-          </Link>
-        )}
-      </form>
+      <Toolbar className="mb-3">
+        <form className="flex flex-wrap items-end gap-2" method="get">
+          {adminOnly && <input type="hidden" name="adminOnly" value="1" />}
+          {disabled && <input type="hidden" name="disabled" value="1" />}
+          <input
+            type="text"
+            name="q"
+            placeholder="搜索用户名或邮箱"
+            defaultValue={q ?? ''}
+            aria-label="搜索用户名或邮箱"
+            className="adm-input w-64 max-w-full"
+          />
+          <AdminButton type="submit" variant="primary" size="sm">
+            搜索
+          </AdminButton>
+          {q ? (
+            <AdminLink href={buildHref(1, {})} variant="ghost" size="sm">
+              清空
+            </AdminLink>
+          ) : null}
+        </form>
+      </Toolbar>
 
       <div className="flex gap-2 mb-4 flex-wrap">
-        <Link href={buildHref(1, {})} className={chipClass(showAll)}>
+        <FilterChip href={buildHref(1, {})} active={showAll}>
           全部 ({breakdown.total})
-        </Link>
-        <Link href={buildHref(1, { adminOnly: '1' })} className={chipClass(adminOnly)}>
+        </FilterChip>
+        <FilterChip href={buildHref(1, { adminOnly: '1' })} active={adminOnly}>
           管理员 ({breakdown.admins})
-        </Link>
-        <Link href={buildHref(1, { disabled: '1' })} className={chipClass(disabled)}>
+        </FilterChip>
+        <FilterChip href={buildHref(1, { disabled: '1' })} active={disabled}>
           禁用 ({breakdown.disabled})
-        </Link>
+        </FilterChip>
       </div>
 
-      <ResponsiveTable
+      <DataTable
         rows={users}
         rowKey={(u) => u.id}
-        emptyMessage="暂无用户"
+        caption="注册用户列表"
+        empty={
+          q ? (
+            <EmptyState
+              icon={SearchX}
+              title="没有匹配的用户"
+              description={`没有用户名或邮箱包含「${q}」的账号。换个关键词,或清空搜索看全部用户。`}
+            />
+          ) : (
+            <EmptyState icon={Users} title="暂无用户" description="还没有人注册。 " />
+          )
+        }
         columns={[
           { key: 'username', header: '用户名', mobileTitle: true },
-          { key: 'createdAt', header: '注册时间' },
-          { key: 'historyCount', header: '历史' },
-          { key: 'favoriteCount', header: '收藏' },
+          { key: 'createdAt', header: '注册时间', numeric: true },
+          { key: 'historyCount', header: '历史', numeric: true },
+          { key: 'favoriteCount', header: '收藏', numeric: true },
           { key: 'isAdmin', header: '角色' },
           { key: 'status', header: '状态' },
           { key: 'actions', header: '操作', mobileHide: true },
@@ -123,20 +136,18 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             <Link href={`/admin/users/${u.id}`} className="text-seal hover:underline">
               {u.username}
             </Link>
-            <span className="text-ink-soft text-xs">
-              {formatDateTime(u.createdAt)}
-            </span>
+            <span className="text-ink-soft text-xs">{formatDateTime(u.createdAt)}</span>
             <span>{u.historyCount}</span>
             <span>{u.favoriteCount}</span>
             {u.isAdmin ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">管理员</span>
+              <StatusBadge tone="primary">管理员</StatusBadge>
             ) : (
-              <span className="text-xs text-ink-faint">用户</span>
+              <StatusBadge>用户</StatusBadge>
             )}
             {u.disabledAt != null ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">禁用</span>
+              <StatusBadge tone="danger">禁用</StatusBadge>
             ) : (
-              <span className="text-xs text-ink-faint">正常</span>
+              <StatusBadge tone="success">正常</StatusBadge>
             )}
             <UserActions
               userId={u.id}
@@ -147,7 +158,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
             />
           </>
         )}
-      </ResponsiveTable>
+      </DataTable>
 
       <div className="mt-4">
         <Pagination

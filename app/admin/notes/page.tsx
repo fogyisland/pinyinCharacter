@@ -1,7 +1,12 @@
 import type { Metadata } from 'next';
 import { countAllNotesForAdmin, listAllNotesForAdmin } from '@/lib/notes';
 import { NoteDeleteButton } from '@/components/notes/NoteDeleteButton';
+import { DataTable } from '@/components/admin/DataTable';
+import { PageHeader } from '@/components/admin/PageHeader';
 import { Pagination } from '@/components/admin/Pagination';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { MessageSquare } from 'lucide-react';
 import { formatDateTimeShort } from '@/lib/format';
 
 export const metadata: Metadata = { title: '留言笔记 · 管理' };
@@ -32,58 +37,58 @@ export default async function AdminNotesPage({ searchParams }: PageProps) {
     target > 1 ? `/admin/notes?page=${target}` : '/admin/notes';
 
   return (
-    <section>
-      <h1 className="text-xl font-bold mb-3">留言笔记</h1>
-      <p className="text-sm text-gray-600 mb-4">
-        所有用户发布的留言。被删除的留言会留在审计日志,不会向公众展示。
-      </p>
+    <div>
+      <PageHeader
+        title="留言笔记"
+        description="所有用户发布的留言。被删除的留言会留在审计日志,不会向公众展示。"
+      />
 
-      <div className="space-y-3">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left border-b">
-              <th className="py-2">#</th>
-              <th>作者</th>
-              <th>时间</th>
-              <th>内容</th>
-              <th>状态</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.length === 0 && (
-              <tr>
-                <td colSpan={6} className="py-4 text-center text-gray-500">
-                  暂无留言
-                </td>
-              </tr>
+      <DataTable
+        rows={rows}
+        rowKey={(n) => n.id}
+        caption="用户留言列表"
+        empty={
+          <EmptyState
+            icon={MessageSquare}
+            title="还没有留言"
+            description="访客在站点的留言会出现在这里。"
+          />
+        }
+        columns={[
+          { key: 'id', header: '#', numeric: true },
+          { key: 'author', header: '作者', mobileTitle: true },
+          { key: 'createdAt', header: '时间', numeric: true },
+          { key: 'content', header: '内容' },
+          { key: 'status', header: '状态' },
+          { key: 'actions', header: '操作', mobileHide: true },
+        ]}
+      >
+        {(n) => (
+          <>
+            <span className="text-ink-faint tabular-nums">{n.id}</span>
+            <span className="min-w-0">
+              <span className="block text-ink">{n.authorName}</span>
+              {n.authorEmail ? (
+                <span className="block text-xs text-ink-faint truncate">{n.authorEmail}</span>
+              ) : null}
+            </span>
+            <span className="text-xs text-ink-soft whitespace-nowrap">
+              {formatDateTimeShort(n.createdAt)}
+            </span>
+            <span className="block max-w-md whitespace-pre-wrap break-words">{n.content}</span>
+            {n.deletedAt ? (
+              <StatusBadge tone="danger">已删除 {formatDateTimeShort(n.deletedAt)}</StatusBadge>
+            ) : (
+              <StatusBadge tone="success">活跃</StatusBadge>
             )}
-            {rows.map((n) => (
-              <tr key={n.id} className="border-b align-top">
-                <td className="py-2 pr-2">{n.id}</td>
-                <td className="pr-2">
-                  {n.authorName}
-                  {n.authorEmail && <span className="text-gray-500"> &lt;{n.authorEmail}&gt;</span>}
-                </td>
-                <td className="pr-2 whitespace-nowrap">{formatDateTimeShort(n.createdAt)}</td>
-                <td className="pr-2">
-                  <div className="max-w-md whitespace-pre-wrap break-words">{n.content}</div>
-                </td>
-                <td className="pr-2">
-                  {n.deletedAt ? (
-                    <span className="text-red-600">已删除 {formatDateTimeShort(n.deletedAt)}</span>
-                  ) : (
-                    <span className="text-green-700">活跃</span>
-                  )}
-                </td>
-                <td>
-                  {!n.deletedAt && <NoteDeleteButton noteId={n.id} />}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <span className="text-right">
+              {!n.deletedAt ? <NoteDeleteButton noteId={n.id} /> : null}
+            </span>
+          </>
+        )}
+      </DataTable>
 
+      <div className="mt-4">
         <Pagination
           page={page}
           totalPages={totalPages}
@@ -93,6 +98,6 @@ export default async function AdminNotesPage({ searchParams }: PageProps) {
           unit="条"
         />
       </div>
-    </section>
+    </div>
   );
 }

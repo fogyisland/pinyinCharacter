@@ -3,8 +3,15 @@ import { listMemberships } from '@/lib/membership';
 import { getMembershipStats } from '@/lib/membership-stats';
 import { ManualGrantDrawer } from '@/components/admin/memberships/ManualGrantDrawer';
 import { RevokeButton } from '@/components/admin/memberships/RevokeButton';
-import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { DataTable } from '@/components/admin/DataTable';
 import { Pagination } from '@/components/admin/Pagination';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Panel } from '@/components/admin/Panel';
+import { StatCard } from '@/components/admin/StatCard';
+import { FilterChip } from '@/components/admin/FilterChip';
+import { StatusBadge } from '@/components/admin/StatusBadge';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { AdminLink } from '@/components/admin/AdminButton';
 import { Crown, Users, TrendingUp, DollarSign } from 'lucide-react';
 import { formatDate, formatDateTime } from '@/lib/format';
 
@@ -29,149 +36,114 @@ export default async function AdminMembershipsPage({ searchParams }: PageProps) 
   const totalPages = Math.max(1, Math.ceil(list.total / PAGE_SIZE));
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">会员</h1>
-        <div className="flex gap-2">
-          <ManualGrantDrawer />
-          <Link
-            href="/admin/memberships/orders"
-            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
-          >
-            PayPal 订单
-          </Link>
-          <Link
-            href="/admin/memberships/plans"
-            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
-          >
-            套餐设置
-          </Link>
-          <Link
-            href="/admin/memberships/config"
-            className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
-          >
-            支付配置
-          </Link>
-        </div>
-      </div>
+    <div>
+      <PageHeader
+        title="会员"
+        description="已开通的会员记录。开通来源、金额与到期时间都在这里,异常开通可手动撤销。"
+        actions={
+          <>
+            <ManualGrantDrawer />
+            <AdminLink href="/admin/memberships/orders" variant="secondary" size="sm">
+              PayPal 订单
+            </AdminLink>
+            <AdminLink href="/admin/memberships/plans" variant="secondary" size="sm">
+              套餐设置
+            </AdminLink>
+            <AdminLink href="/admin/memberships/config" variant="secondary" size="sm">
+              支付配置
+            </AdminLink>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Stat label="总开通" value={stats.total} icon={Crown} />
-        <Stat label="当前活跃" value={stats.active} icon={Users} />
-        <Stat label="本月新增" value={stats.newThisMonth} icon={TrendingUp} />
-        <Stat
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+        <StatCard label="总开通" value={stats.total} icon={Crown} />
+        <StatCard label="当前活跃" value={stats.active} icon={Users} />
+        <StatCard label="本月新增" value={stats.newThisMonth} icon={TrendingUp} />
+        <StatCard
           label="本月收入 (USD)"
           value={`$${stats.revenueThisMonth.toFixed(2)}`}
           icon={DollarSign}
         />
       </div>
 
-      <div className="card-paper rounded-lg p-3 flex flex-wrap gap-2 items-end text-sm">
+      <div className="flex gap-2 mb-4 flex-wrap">
         <FilterChip active={!userId && !planKey} href={buildHref({ userId, planKey })}>
           全部
         </FilterChip>
         {userId && (
-          <FilterChip
-            active={true}
-            href={buildHref({ userId, planKey }, { userId: null })}
-          >{`用户 #${userId} ×`}</FilterChip>
+          <FilterChip active={true} href={buildHref({ userId, planKey }, { userId: null })}>
+            {`用户 #${userId} ×`}
+          </FilterChip>
         )}
         {planKey && (
-          <FilterChip
-            active={true}
-            href={buildHref({ userId, planKey }, { planKey: null })}
-          >{`套餐 ${planKey} ×`}</FilterChip>
+          <FilterChip active={true} href={buildHref({ userId, planKey }, { planKey: null })}>
+            {`套餐 ${planKey} ×`}
+          </FilterChip>
         )}
       </div>
 
-      <ResponsiveTable
-        rows={list.items}
-        rowKey={(r) => r.id}
-        emptyMessage="暂无会员"
-        columns={[
-          { key: 'user', header: '用户', mobileTitle: true },
-          { key: 'planKey', header: '套餐' },
-          { key: 'source', header: '来源' },
-          { key: 'amount', header: '金额' },
-          { key: 'grantedAt', header: '开通时间', mobileHide: true },
-          { key: 'expiresAt', header: '到期', mobileHide: true },
-          { key: 'status', header: '状态' },
-          { key: 'actions', header: '操作', mobileHide: true },
-        ]}
-      >
-        {(r) => (
-          <>
-            {r.username ? (
-              <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
-                {r.username}
-              </Link>
-            ) : (
-              <span className="text-ink-faint">#{r.userId}</span>
-            )}
-            <span className="text-xs">{r.planKey}</span>
-            <span
-              className={`text-xs px-2 py-0.5 rounded ${r.source === 'paypal' ? 'bg-green-100 text-green-800' : 'bg-paper-deep text-ink-soft'}`}
-            >
-              {r.source}
-            </span>
-            <span className="text-xs">
-              {r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}
-            </span>
-            <span className="text-xs text-ink-soft">
-              {formatDateTime(r.grantedAt)}
-            </span>
-            <span className="text-xs">{formatDate(r.expiresAt)}</span>
-            {r.revokedAt ? (
-              <span className="text-xs px-2 py-0.5 rounded bg-seal/15 text-seal">已撤销</span>
-            ) : (
-              <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-800">活跃</span>
-            )}
-            {!r.revokedAt ? <RevokeButton membershipId={r.id} /> : null}
-          </>
-        )}
-      </ResponsiveTable>
+      <Panel title="会员记录" description="按开通时间倒序排列的最新会员。" flush>
+        <DataTable
+          rows={list.items}
+          rowKey={(r) => r.id}
+          caption="会员开通记录"
+          framed={false}
+          empty={
+            <EmptyState
+              icon={Crown}
+              title="暂无会员"
+              description="还没有人开通会员。可以用右上角的「手动开通」为某个用户加会员。"
+            />
+          }
+          columns={[
+            { key: 'user', header: '用户', mobileTitle: true },
+            { key: 'planKey', header: '套餐' },
+            { key: 'source', header: '来源' },
+            { key: 'amount', header: '金额', numeric: true },
+            { key: 'grantedAt', header: '开通时间', numeric: true, mobileHide: true },
+            { key: 'expiresAt', header: '到期', numeric: true, mobileHide: true },
+            { key: 'status', header: '状态' },
+            { key: 'actions', header: '操作', mobileHide: true },
+          ]}
+        >
+          {(r) => (
+            <>
+              {r.username ? (
+                <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
+                  {r.username}
+                </Link>
+              ) : (
+                <span className="text-ink-faint">#{r.userId}</span>
+              )}
+              <span className="text-xs">{r.planKey}</span>
+              <StatusBadge tone={r.source === 'paypal' ? 'success' : 'neutral'}>{r.source}</StatusBadge>
+              <span className="text-xs">
+                {r.amount != null ? `${r.currency === 'USD' ? '$' : '¥'}${r.amount}` : '—'}
+              </span>
+              <span className="text-xs text-ink-soft">{formatDateTime(r.grantedAt)}</span>
+              <span className="text-xs">{formatDate(r.expiresAt)}</span>
+              {r.revokedAt ? (
+                <StatusBadge tone="danger">已撤销</StatusBadge>
+              ) : (
+                <StatusBadge tone="success">活跃</StatusBadge>
+              )}
+              {!r.revokedAt ? <RevokeButton membershipId={r.id} /> : null}
+            </>
+          )}
+        </DataTable>
+      </Panel>
 
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        total={list.total}
-        pageSize={PAGE_SIZE}
-        buildHref={(target) => buildHref({ userId, planKey }, { page: String(target) })}
-      />
-    </div>
-  );
-}
-
-function Stat({ label, value, icon: Icon }: { label: string; value: string | number; icon: any }) {
-  return (
-    <div className="rounded-lg border border-paper-warm bg-paper p-4 flex items-center gap-3">
-      <Icon className="h-6 w-6 text-seal shrink-0" />
-      <div>
-        <div className="text-xs text-ink-soft">{label}</div>
-        <div className="text-2xl font-serif text-ink">{value}</div>
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={list.total}
+          pageSize={PAGE_SIZE}
+          buildHref={(target) => buildHref({ userId, planKey }, { page: String(target) })}
+        />
       </div>
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  href,
-  children,
-}: {
-  active: boolean;
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`text-xs px-3 py-1.5 rounded border transition-colors ${
-        active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
-      }`}
-    >
-      {children}
-    </Link>
   );
 }
 

@@ -9,6 +9,7 @@ import {
   adminDemoteUser,
 } from '@/lib/api-admin';
 import { ResetPasswordDialog } from '@/components/ResetPasswordDialog';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 export function UserActions({
   userId,
@@ -76,53 +77,39 @@ export function UserActions({
   return (
     <div className="flex flex-wrap gap-1.5 items-center" onClick={(e) => e.stopPropagation()}>
       {isDisabled ? (
-        <button
-          type="button"
+        <AdminButton
+          variant="secondary"
+          size="sm"
           onClick={onEnable}
           disabled={busy}
-          className="text-xs px-2 py-1 border border-green-600/40 rounded text-green-700 hover:bg-green-50 disabled:opacity-50"
+          className="border-success/40 text-success hover:bg-success/10"
         >
           启用
-        </button>
+        </AdminButton>
       ) : (
-        <button
-          type="button"
-          onClick={onDisable}
-          disabled={busy}
-          className="text-xs px-2 py-1 border border-seal/40 rounded text-seal hover:bg-seal/10 disabled:opacity-50"
-        >
+        <AdminButton variant="danger" size="sm" onClick={onDisable} disabled={busy}>
           禁用
-        </button>
+        </AdminButton>
       )}
-      <button
-        type="button"
+      <AdminButton
+        variant="secondary"
+        size="sm"
         onClick={() => setShowReset(true)}
         disabled={busy}
-        className="text-xs px-2 py-1 border border-ink/20 rounded text-ink hover:bg-paper-deep disabled:opacity-50"
       >
         重置密码
-      </button>
+      </AdminButton>
       {isAdmin ? (
-        <button
-          type="button"
-          onClick={onDemote}
-          disabled={busy}
-          className="text-xs px-2 py-1 border border-ink/20 rounded text-ink hover:bg-paper-deep disabled:opacity-50"
-        >
+        <AdminButton variant="secondary" size="sm" onClick={onDemote} disabled={busy}>
           降级
-        </button>
+        </AdminButton>
       ) : (
-        <button
-          type="button"
-          onClick={onPromote}
-          disabled={busy}
-          className="text-xs px-2 py-1 border border-ink/20 rounded text-ink hover:bg-paper-deep disabled:opacity-50"
-        >
+        <AdminButton variant="secondary" size="sm" onClick={onPromote} disabled={busy}>
           提升
-        </button>
+        </AdminButton>
       )}
-      {err && <span className="text-xs text-seal">{err}</span>}
-      {!err && msg && <span className="text-xs text-green-700">{msg}</span>}
+      {err && <span className="text-xs text-danger">{err}</span>}
+      {!err && msg && <span className="text-xs text-success">{msg}</span>}
       <ResetPasswordDialog
         userId={userId}
         username={username}

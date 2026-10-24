@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, RotateCcw, Check, AlertTriangle } from 'lucide-react';
 import { updateAdminPlanRequest, type AdminPlanRow as Plan } from '@/lib/api-admin';
+import { AdminButton } from '@/components/admin/AdminButton';
 
 const ALL_FEATURES = [
   'unlimited_history',
@@ -74,46 +75,63 @@ export function PlanRow({ plan }: { plan: Plan }) {
 
   return (
     <tr className="border-t align-top">
-      <td className="px-3 py-2">
+      <td className="px-3 py-2" data-label="plan_key">
         <div className="text-xs font-mono">{plan.planKey}</div>
         <div className="text-xs text-ink-faint">{plan.currency}</div>
       </td>
-      <td className="px-3 py-2">
+      <td className="px-3 py-2" data-label="显示名">
+        <div className="w-32">
+          <input
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            aria-label={`${plan.planKey} 显示名`}
+            className="adm-input"
+          />
+        </div>
+      </td>
+      <td className="px-3 py-2" data-label="天数">
+        <div className="w-20">
+          <input
+            type="number"
+            min="1"
+            value={durationDays}
+            onChange={(e) => setDurationDays(e.target.value)}
+            aria-label={`${plan.planKey} 天数`}
+            className="adm-input"
+          />
+        </div>
+      </td>
+      <td className="px-3 py-2" data-label="金额">
+        <div className="w-20">
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            aria-label={`${plan.planKey} 金额`}
+            className="adm-input"
+          />
+        </div>
+      </td>
+      <td className="px-3 py-2 text-center" data-label="启用">
         <input
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          className="w-32 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
+          type="checkbox"
+          checked={enabled}
+          onChange={(e) => setEnabled(e.target.checked)}
+          aria-label={`${plan.planKey} 启用`}
         />
       </td>
-      <td className="px-3 py-2">
-        <input
-          type="number"
-          min="1"
-          value={durationDays}
-          onChange={(e) => setDurationDays(e.target.value)}
-          className="w-20 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-        />
+      <td className="px-3 py-2" data-label="排序">
+        <div className="w-16">
+          <input
+            type="number"
+            min="0"
+            value={displayOrder}
+            onChange={(e) => setDisplayOrder(e.target.value)}
+            aria-label={`${plan.planKey} 排序`}
+            className="adm-input"
+          />
+        </div>
       </td>
-      <td className="px-3 py-2">
-        <input
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className="w-20 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-        />
-      </td>
-      <td className="px-3 py-2 text-center">
-        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
-      </td>
-      <td className="px-3 py-2">
-        <input
-          type="number"
-          min="0"
-          value={displayOrder}
-          onChange={(e) => setDisplayOrder(e.target.value)}
-          className="w-16 border border-paper-warm rounded px-2 py-1 text-sm bg-paper"
-        />
-      </td>
-      <td className="px-3 py-2">
+      <td className="px-3 py-2" data-label="权限">
         <div className="flex flex-wrap gap-1">
           {ALL_FEATURES.map((f) => {
             const on = features.includes(f);
@@ -122,7 +140,12 @@ export function PlanRow({ plan }: { plan: Plan }) {
                 key={f}
                 type="button"
                 onClick={() => setFeatures(on ? features.filter((x) => x !== f) : [...features, f])}
-                className={`text-xs px-2 py-0.5 rounded border ${on ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink-soft'}`}
+                aria-pressed={on}
+                className={`text-xs px-2 py-0.5 rounded border transition-colors ${
+                  on
+                    ? 'bg-ink text-paper border-ink'
+                    : 'border-ink/20 text-ink-soft hover:bg-paper-deep'
+                }`}
               >
                 {FEATURE_LABELS[f]}
               </button>
@@ -130,36 +153,36 @@ export function PlanRow({ plan }: { plan: Plan }) {
           })}
         </div>
       </td>
-      <td className="px-3 py-2">
+      <td className="px-3 py-2" data-label="操作">
         {dirty && (
           <div className="flex flex-col gap-1">
-            <button
-              type="button"
+            <AdminButton
+              variant="primary"
+              size="sm"
               onClick={onSave}
               disabled={busy}
-              className="text-xs px-2 py-1 bg-ink text-paper rounded hover:bg-ink/80 disabled:opacity-50 inline-flex items-center gap-1"
+              icon={<Save className="h-3 w-3" />}
             >
-              <Save className="h-3 w-3" />
               保存
-            </button>
-            <button
-              type="button"
+            </AdminButton>
+            <AdminButton
+              variant="secondary"
+              size="sm"
               onClick={onReset}
-              className="text-xs px-2 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep inline-flex items-center gap-1"
+              icon={<RotateCcw className="h-3 w-3" />}
             >
-              <RotateCcw className="h-3 w-3" />
               还原
-            </button>
+            </AdminButton>
           </div>
         )}
         {msg && (
-          <span className="text-xs text-green-700 inline-flex items-center gap-1">
+          <span className="text-xs text-success inline-flex items-center gap-1">
             <Check className="h-3 w-3" />
             {msg}
           </span>
         )}
         {err && (
-          <span className="text-xs text-seal inline-flex items-center gap-1">
+          <span className="text-xs text-danger inline-flex items-center gap-1">
             <AlertTriangle className="h-3 w-3" />
             {err}
           </span>

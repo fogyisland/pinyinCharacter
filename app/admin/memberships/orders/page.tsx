@@ -1,6 +1,15 @@
 import Link from 'next/link';
+import { Receipt } from 'lucide-react';
 import { listPaymentOrders, type PaymentOrderStatus } from '@/lib/payment-orders';
 import { Pagination } from '@/components/admin/Pagination';
+import { DataTable } from '@/components/admin/DataTable';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Panel } from '@/components/admin/Panel';
+import { Toolbar } from '@/components/admin/Toolbar';
+import { FilterChip } from '@/components/admin/FilterChip';
+import { StatusBadge, type BadgeTone } from '@/components/admin/StatusBadge';
+import { EmptyState } from '@/components/admin/EmptyState';
+import { AdminButton, AdminLink } from '@/components/admin/AdminButton';
 import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
@@ -15,12 +24,12 @@ const STATUSES: { key: PaymentOrderStatus; label: string }[] = [
   { key: 'expired', label: '已过期' },
 ];
 
-const STATUS_BADGE: Record<PaymentOrderStatus, string> = {
-  created: 'bg-paper-deep text-ink-soft',
-  approved: 'bg-blue-100 text-blue-800',
-  paid: 'bg-green-100 text-green-800',
-  failed: 'bg-seal/15 text-seal',
-  expired: 'bg-gray-200 text-gray-700',
+const STATUS_TONE: Record<PaymentOrderStatus, BadgeTone> = {
+  created: 'neutral',
+  approved: 'info',
+  paid: 'success',
+  failed: 'danger',
+  expired: 'warning',
 };
 
 interface PageProps {
@@ -39,23 +48,18 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
   const totalPages = Math.max(1, Math.ceil(list.total / PAGE_SIZE));
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold">PayPal 订单</h1>
-          <p className="text-sm text-ink-soft">
-            查看支付订单状态、调试 webhook 失败、追踪卡在 created/approved 状态的订单。
-          </p>
-        </div>
-        <Link
-          href="/admin/memberships"
-          className="text-sm px-3 py-1.5 border border-ink/20 rounded text-ink hover:bg-paper-deep"
-        >
-          ← 返回会员列表
-        </Link>
-      </div>
+    <div>
+      <PageHeader
+        title="PayPal 订单"
+        description="查看支付订单状态、调试 webhook 失败、追踪卡在 created/approved 状态的订单。"
+        actions={
+          <AdminLink href="/admin/memberships" variant="secondary" size="sm">
+            ← 返回会员列表
+          </AdminLink>
+        }
+      />
 
-      <form className="card-paper rounded p-3 flex flex-wrap gap-2 items-end text-sm" method="get">
+      <form className="flex gap-2 mb-4 flex-wrap" method="get">
         <FilterChip active={!status && !userId && !q} href="/admin/memberships/orders">
           全部
         </FilterChip>
@@ -75,126 +79,107 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
         )}
       </form>
 
-      <form className="card-paper rounded p-3 flex flex-wrap gap-2 items-end text-sm" method="get">
-        <input
-          type="number"
-          name="userId"
-          placeholder="用户 ID"
-          defaultValue={userId ?? ''}
-          className="border border-ink/20 rounded px-2 py-1 w-24 bg-paper-soft"
-        />
-        <input
-          type="text"
-          name="q"
-          placeholder="PayPal 订单号"
-          defaultValue={q ?? ''}
-          className="border border-ink/20 rounded px-2 py-1 w-48 bg-paper-soft"
-        />
-        <button type="submit" className="btn-seal text-sm">
-          筛选
-        </button>
-        <Link
-          href="/admin/memberships/orders"
-          className="px-3 py-1 border border-ink/20 rounded text-ink-soft hover:bg-paper-deep"
+      <Toolbar className="mb-3">
+        <form className="flex flex-wrap items-end gap-2" method="get">
+          <div className="w-28">
+            <input
+              type="number"
+              name="userId"
+              placeholder="用户 ID"
+              defaultValue={userId ?? ''}
+              aria-label="用户 ID"
+              className="adm-input"
+            />
+          </div>
+          <div className="w-56">
+            <input
+              type="text"
+              name="q"
+              placeholder="PayPal 订单号"
+              defaultValue={q ?? ''}
+              aria-label="PayPal 订单号"
+              className="adm-input"
+            />
+          </div>
+          <AdminButton type="submit" variant="primary">
+            筛选
+          </AdminButton>
+          <AdminLink href="/admin/memberships/orders" variant="ghost" size="md">
+            清空
+          </AdminLink>
+        </form>
+      </Toolbar>
+
+      <Panel title="订单" description="按创建时间倒序排列的支付订单。" flush>
+        <DataTable
+          rows={list.items}
+          rowKey={(r) => r.id}
+          caption="PayPal 订单列表"
+          framed={false}
+          empty={
+            <EmptyState
+              icon={Receipt}
+              title="暂无订单"
+              description="还没有 PayPal 订单。换一个状态或订单号再试。"
+            />
+          }
+          columns={[
+            { key: 'createdAt', header: '创建时间', numeric: true },
+            { key: 'user', header: '用户', mobileTitle: true },
+            { key: 'plan', header: '套餐' },
+            { key: 'status', header: '状态' },
+            { key: 'amount', header: '金额', numeric: true },
+            { key: 'paypalOrderId', header: 'PayPal 订单号', mobileHide: true },
+            { key: 'paidAt', header: '支付时间', numeric: true, mobileHide: true },
+          ]}
         >
-          清空
-        </Link>
-      </form>
+          {(r) => (
+            <>
+              <span className="text-xs text-ink-soft whitespace-nowrap">
+                {formatDateTime(r.createdAt)}
+              </span>
+              {r.username ? (
+                <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
+                  {r.username}
+                </Link>
+              ) : (
+                <span className="text-ink-faint">#{r.userId}</span>
+              )}
+              <span className="text-xs">
+                <span className="block">{r.planDisplayName || '—'}</span>
+                <span className="block text-ink-faint">{r.planKey}</span>
+              </span>
+              <StatusBadge tone={STATUS_TONE[r.status] ?? 'neutral'}>{r.status}</StatusBadge>
+              <span className="text-xs">
+                {r.currency === 'USD' ? '$' : '¥'}
+                {r.amount}
+              </span>
+              <span
+                className="text-xs font-mono text-ink-soft max-w-xs truncate"
+                title={r.paypalOrderId}
+              >
+                {r.paypalOrderId}
+              </span>
+              <span className="text-xs text-ink-soft">
+                {r.paidAt ? formatDateTime(r.paidAt) : '—'}
+              </span>
+            </>
+          )}
+        </DataTable>
+      </Panel>
 
-      <div className="card-paper rounded-lg overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-paper-deep text-left">
-            <tr>
-              <th className="px-3 py-2">创建时间</th>
-              <th className="px-3 py-2">用户</th>
-              <th className="px-3 py-2">套餐</th>
-              <th className="px-3 py-2">状态</th>
-              <th className="px-3 py-2">金额</th>
-              <th className="px-3 py-2">PayPal 订单号</th>
-              <th className="px-3 py-2">支付时间</th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.items.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="px-3 py-2 text-xs text-ink-soft whitespace-nowrap">
-                  {formatDateTime(r.createdAt)}
-                </td>
-                <td className="px-3 py-2">
-                  {r.username ? (
-                    <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
-                      {r.username}
-                    </Link>
-                  ) : (
-                    <span className="text-ink-faint">#{r.userId}</span>
-                  )}
-                </td>
-                <td className="px-3 py-2 text-xs">
-                  <div>{r.planDisplayName || '—'}</div>
-                  <div className="text-ink-faint">{r.planKey}</div>
-                </td>
-                <td className="px-3 py-2">
-                  <span className={`text-xs px-2 py-0.5 rounded ${STATUS_BADGE[r.status]}`}>
-                    {r.status}
-                  </span>
-                </td>
-                <td className="px-3 py-2 text-xs">
-                  {r.currency === 'USD' ? '$' : '¥'}
-                  {r.amount}
-                </td>
-                <td
-                  className="px-3 py-2 text-xs font-mono text-ink-soft max-w-xs truncate"
-                  title={r.paypalOrderId}
-                >
-                  {r.paypalOrderId}
-                </td>
-                <td className="px-3 py-2 text-xs text-ink-soft">
-                  {r.paidAt ? formatDateTime(r.paidAt) : '—'}
-                </td>
-              </tr>
-            ))}
-            {list.items.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-ink-faint">
-                  暂无订单
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+      <div className="mt-4">
+        <Pagination
+          page={page}
+          totalPages={totalPages}
+          total={list.total}
+          pageSize={PAGE_SIZE}
+          buildHref={(target) =>
+            buildHref({ status: status ?? null, userId, q, page: target })
+          }
+        />
       </div>
-
-      <Pagination
-        page={page}
-        totalPages={totalPages}
-        total={list.total}
-        pageSize={PAGE_SIZE}
-        buildHref={(target) =>
-          buildHref({ status: status ?? null, userId, q, page: target })
-        }
-      />
     </div>
-  );
-}
-
-function FilterChip({
-  active,
-  href,
-  children,
-}: {
-  active: boolean;
-  href: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`text-xs px-3 py-1.5 rounded border transition-colors ${
-        active ? 'bg-ink text-paper border-ink' : 'border-paper-warm text-ink hover:bg-paper-warm'
-      }`}
-    >
-      {children}
-    </Link>
   );
 }
 

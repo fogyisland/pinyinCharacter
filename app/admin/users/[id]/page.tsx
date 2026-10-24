@@ -1,7 +1,9 @@
 import { notFound } from 'next/navigation';
 import { getUserDetail } from '@/lib/admin';
 import { getCurrentUserWithAdmin } from '@/lib/auth';
+import { PageHeader } from '@/components/admin/PageHeader';
 import { UserDetailClient } from './UserDetailClient';
+import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +15,18 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   if (!detail) notFound();
   const me = await getCurrentUserWithAdmin();
   return (
-    <UserDetailClient
-      user={detail.user}
-      recentHistory={detail.recentHistory}
-      isSelf={me?.id === id}
-      disabledAt={detail.user.disabledAt}
-    />
+    <div>
+      <PageHeader
+        eyebrow="用户"
+        title={detail.user.username}
+        description={`注册于 ${formatDateTime(detail.user.createdAt)} · 历史 ${detail.user.historyCount} 条 · 收藏 ${detail.user.favoriteCount} 个`}
+      />
+      <UserDetailClient
+        user={detail.user}
+        recentHistory={detail.recentHistory}
+        isSelf={me?.id === id}
+        disabledAt={detail.user.disabledAt}
+      />
+    </div>
   );
 }

@@ -2,6 +2,7 @@ import { listUnifiedLogs } from '@/lib/admin-logs';
 import { AdminLogsTable } from '@/components/admin/AdminLogsTable';
 import { LogsFilterBar } from '@/components/admin/LogsFilterBar';
 import { Pagination } from '@/components/admin/Pagination';
+import { PageHeader } from '@/components/admin/PageHeader';
 import { LOGS_PAGE_SIZE, buildLogsHref, parseLogsQuery } from '@/lib/admin-logs-url';
 import { dateRangeToIso, parseUserId } from '@/lib/admin-url';
 import type { UnifiedLogEntry } from '@/lib/admin-logs-types';
@@ -41,22 +42,31 @@ export default async function AdminLogsPage({ searchParams }: PageProps) {
   const totalPages = Math.max(1, Math.ceil(total / LOGS_PAGE_SIZE));
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-xl font-semibold">日志</h1>
-
-      <LogsFilterBar key={buildLogsHref(query)} query={query} />
-
-      {error && <p className="text-sm text-seal">日志查询失败：{error}</p>}
-
-      <AdminLogsTable rows={rows} />
-
-      <Pagination
-        page={query.page}
-        totalPages={totalPages}
-        total={total}
-        pageSize={LOGS_PAGE_SIZE}
-        buildHref={(target) => buildLogsHref(query, { page: target })}
+    <div>
+      <PageHeader
+        title="日志"
+        description="审计日志与系统日志合并后的时间线。点击事件名可查看完整元数据。"
       />
+
+      <div className="space-y-4">
+        <LogsFilterBar key={buildLogsHref(query)} query={query} />
+
+        {error ? (
+          <p className="text-sm text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">
+            日志查询失败：{error}
+          </p>
+        ) : null}
+
+        <AdminLogsTable rows={rows} />
+
+        <Pagination
+          page={query.page}
+          totalPages={totalPages}
+          total={total}
+          pageSize={LOGS_PAGE_SIZE}
+          buildHref={(target) => buildLogsHref(query, { page: target })}
+        />
+      </div>
     </div>
   );
 }
