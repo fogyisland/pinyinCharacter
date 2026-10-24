@@ -6,7 +6,8 @@ import { ActivationGuard } from '@/components/ActivationGuard';
 import { PageViewTracker } from '@/components/PageViewTracker';
 import { buildOrganization, buildWebSite } from '@/lib/seo/jsonld';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
-import { getFontCssLinks, ASYNC_STYLESHEET_FLIP } from '@/lib/font-css';
+import { getFontCssLinks } from '@/lib/font-css';
+import { ASYNC_STYLESHEET_FLIP } from '@/lib/font-css-flip';
 
 export const metadata = {
   title: '字·韵 — 汉字与拼音互转',
@@ -26,9 +27,34 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <head>
         {/* Body typeface — render-blocking, every glyph of every page uses it. */}
         <link rel="stylesheet" href={fontCss.sans} />
-        {/* Brand + serif typefaces — fetched without blocking the first paint. */}
-        <link rel="stylesheet" href={fontCss.wenkai} media="print" />
-        <link rel="stylesheet" href={fontCss.serif} media="print" />
+        {/*
+          Brand + serif typefaces — fetched without blocking the first paint.
+
+          `media="print"` keeps them off the critical path: the browser still
+          downloads them, but never waits for them before the first paint. The
+          inline script below promotes them to `media="all"` once they arrive.
+
+          That promotion rewrites the `media` attribute of a React-rendered
+          element BEFORE hydration, so React would find `media="all"` in the
+          DOM while its own tree says `media="print"` and report a hydration
+          mismatch ("A tree hydrated but some attributes of the server rendered
+          HTML didn't match the client properties"). `suppressHydrationWarning`
+          is React's documented escape hatch for exactly this case: the
+          attribute is intentionally controlled by the script, and React only
+          warns about attribute differences — it never patches them back.
+        */}
+        <link
+          rel="stylesheet"
+          href={fontCss.wenkai}
+          media="print"
+          suppressHydrationWarning
+        />
+        <link
+          rel="stylesheet"
+          href={fontCss.serif}
+          media="print"
+          suppressHydrationWarning
+        />
         <script dangerouslySetInnerHTML={{ __html: ASYNC_STYLESHEET_FLIP }} />
         <meta name="theme-color" content="#5A4530" />
         <link rel="manifest" href="/manifest.json" />
