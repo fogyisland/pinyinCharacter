@@ -124,6 +124,56 @@ export async function listCampaigns(limit = 50): Promise<CampaignRow[]> {
 }
 
 /**
+ * The campaigns WITHOUT their bodies — what a list view needs.
+ *
+ * `listCampaigns` selects `*`, which drags `html_body` and `text_body` (the
+ * full mail, often several KB) along for a page that only shows the subject
+ * and the counters. This variant names the columns it needs, so the list page
+ * stops transferring the mail bodies. `listCampaigns` stays as it is for the
+ * API route, whose response shape is unchanged.
+ */
+export interface CampaignSummaryRow {
+  id: number;
+  subject: string;
+  audience: CampaignAudience;
+  status: CampaignStatus;
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  created_at: Date;
+}
+
+export async function listCampaignSummaries(
+  limit = 50,
+  offset = 0,
+): Promise<{ rows: CampaignSummaryRow[]; total: number }> {
+  const pool = getPool();
+  const [rowsResult, countResult] = await Promise.all([
+    pool.query<any[]>(
+      `SELECT id, subject, audience, status, total_recipients, sent_count, failed_count, created_at
+       FROM email_campaigns ORDER BY id DESC LIMIT ? OFFSET ?`,
+      [limit, offset],
+    ),
+    pool.query<any[]>(`SELECT COUNT(*) AS n FROM email_campaigns`),
+  ]);
+  const rows = rowsResult[0] as any[];
+  const countRows = countResult[0] as any[];
+  return {
+    rows: rows.map((r) => ({
+      id: Number(r.id),
+      subject: r.subject,
+      audience: r.audience,
+      status: r.status,
+      total_recipients: Number(r.total_recipients),
+      sent_count: Number(r.sent_count),
+      failed_count: Number(r.failed_count),
+      created_at: r.created_at,
+    })) as CampaignSummaryRow[],
+    total: Number(countRows[0]?.n ?? 0),
+  };
+}
+
+/**
  * Insert pending recipient rows for a campaign and flip status -> 'sending'.
  * Idempotent on (campaign_id, user_id) so re-arming after a crash doesn't
  * duplicate rows. Returns the number of recipients queued.

@@ -1,9 +1,12 @@
 import Link from 'next/link';
-import { listCampaigns } from '@/lib/email-campaigns';
+import { listCampaignSummaries } from '@/lib/email-campaigns';
 import { ResponsiveTable } from '@/components/admin/ResponsiveTable';
+import { Pagination } from '@/components/admin/Pagination';
 import { formatDateTime } from '@/lib/format';
 
 export const dynamic = 'force-dynamic';
+
+const PAGE_SIZE = 50;
 
 const STATUS_LABEL: Record<string, string> = {
   draft: '草稿',
@@ -20,8 +23,21 @@ const STATUS_COLOR: Record<string, string> = {
   cancelled: 'bg-paper-warm text-ink-faint',
 };
 
-export default async function CampaignsPage() {
-  const rows = await listCampaigns();
+interface PageProps {
+  searchParams: Promise<{ page?: string }>;
+}
+
+export default async function CampaignsPage({ searchParams }: PageProps) {
+  const sp = await searchParams;
+  const page = Math.max(Number(sp.page) || 1, 1);
+
+  // The summary query leaves `html_body` / `text_body` behind — the list
+  // only shows the subject and the counters, and a full mail is several KB.
+  const { rows, total } = await listCampaignSummaries(PAGE_SIZE, (page - 1) * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const buildHref = (target: number) =>
+    target > 1 ? `/admin/email/campaigns?page=${target}` : '/admin/email/campaigns';
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -69,6 +85,14 @@ export default async function CampaignsPage() {
           </>
         )}
       </ResponsiveTable>
+
+      <Pagination
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        pageSize={PAGE_SIZE}
+        buildHref={buildHref}
+      />
     </div>
   );
 }
