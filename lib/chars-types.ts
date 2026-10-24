@@ -1,3 +1,20 @@
+/**
+ * A raw row of the `chars` table, before hydration into `Char`.
+ *
+ * Shared by lib/chars.ts (which hydrates rows) and lib/pinyin-index.ts
+ * (which indexes them) so both sides agree on the column names.
+ */
+export interface CharRow {
+  char: string;
+  level: 1 | 2 | 3;
+  pinyin: string;
+  radical: string;
+  stroke_count: number;
+  unicode_codepoint: string;
+  /** 2026-07-04: HSK 1-6 level. NULL until the HSK import covers the char. */
+  hsk_level?: number | null;
+}
+
 export interface Char {
   char: string;
   level: 1 | 2 | 3;
