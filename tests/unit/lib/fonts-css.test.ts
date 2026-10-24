@@ -18,6 +18,7 @@ import {
   parseCss,
   serialize,
   mergeWeights,
+  splitByFamily,
 } from '../../../scripts/fonts/build-fonts-css.mjs';
 
 const ROOT = resolve(__dirname, '..', '..', '..');
@@ -27,6 +28,9 @@ const faces = parseCss(css);
 
 /** Largest size the stylesheet may reach before it is considered a regression. */
 const MAX_CSS_BYTES = 600 * 1024;
+
+/** The per-family stylesheets the root layout loads. */
+const SPLIT_FILES = ['fonts-wenkai.css', 'fonts-sans.css', 'fonts-serif.css'];
 
 describe('public/font/fonts.css', () => {
   it('parses into @font-face rules', () => {
@@ -95,5 +99,70 @@ describe('public/font/fonts.css', () => {
   it('is idempotent — rebuilding the merged file changes nothing', () => {
     const rebuilt = `${mergeWeights(faces).map(serialize).join('\n')}\n`;
     expect(rebuilt).toBe(`${faces.map(serialize).join('\n')}\n`);
+  });
+});
+
+describe('public/font per-family stylesheets', () => {
+  it('writes one stylesheet per family', () => {
+    const splits = splitByFamily(faces);
+    expect([...splits.keys()].sort()).toEqual([...SPLIT_FILES].sort());
+    for (const file of SPLIT_FILES) {
+      expect(existsSync(resolve(ROOT, 'public', 'font', file))).toBe(true);
+    }
+  });
+
+  it('keeps every face of fonts.css in exactly one split file', () => {
+    const splits = splitByFamily(faces);
+    const splitFaces = [...splits.values()].flatMap((body) => parseCss(body));
+    expect(splitFaces.length).toBe(faces.length);
+    const key = (f: { family: string; style: string; unicodeRange: string; src: string }) =>
+      `${f.family}|${f.style}|${f.unicodeRange}|${f.src}`;
+    expect(new Set(splitFaces.map(key)).size).toBe(splitFaces.length);
+    expect(new Set(splitFaces.map(key))).toEqual(new Set(faces.map(key)));
+  });
+
+  it('gives each split file exactly one family', () => {
+    for (const file of SPLIT_FILES) {
+      const body = readFileSync(resolve(ROOT, 'public', 'font', file), 'utf8');
+      const families = new Set(parseCss(body).map((f) => f.family));
+      expect(families.size).toBe(1);
+    }
+  });
+
+  it('keeps the render-blocking part of the payload small', () => {
+    // fonts-sans.css is the only stylesheet on the critical path; the other
+    // two are fetched without blocking the first paint.
+    const sansBytes = statSync(resolve(ROOT, 'public', 'font', 'fonts-sans.css')).size;
+    expect(sansBytes).toBeLessThanOrEqual(140 * 1024);
+  });
+});
+
+describe('public/font/fonts-manifest.json', () => {
+  const manifestPath = resolve(ROOT, 'public', 'font', 'fonts-manifest.json');
+
+  it('exists and points at the generated stylesheets', () => {
+    expect(existsSync(manifestPath)).toBe(true);
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      version: string;
+      files: Record<string, string>;
+    };
+    expect(manifest.version).toMatch(/^[0-9a-f]{12}$/);
+    expect(Object.values(manifest.files).sort()).toEqual(
+      SPLIT_FILES.map((f) => `/font/${f}`).sort(),
+    );
+  });
+
+  it('is what the layout uses to build versioned, cacheable URLs', () => {
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
+      version: string;
+      files: Record<string, string>;
+    };
+    const layout = readFileSync(resolve(ROOT, 'app', 'layout.tsx'), 'utf8');
+    expect(layout).toContain('getFontCssLinks()');
+    // The body typeface stays on the critical path, the other two do not.
+    expect(layout).toMatch(/href=\{fontCss\.sans\}[^>]*\/>/);
+    expect(layout).toMatch(/href=\{fontCss\.wenkai\}[^>]*media="print"/);
+    expect(layout).toMatch(/href=\{fontCss\.serif\}[^>]*media="print"/);
+    expect(manifest.files.sans).toContain('fonts-sans.css');
   });
 });

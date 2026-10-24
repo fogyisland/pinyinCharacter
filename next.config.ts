@@ -34,6 +34,26 @@ const config: NextConfig = {
   images: {
     unoptimized: true,
   },
+  // Long-lived caching for the static assets that are content-addressed or
+  // effectively immutable. Without this, Next serves everything in public/
+  // with `Cache-Control: public, max-age=0`, so the browser revalidates the
+  // 136 KB font stylesheet (and every font subset) on EVERY page load.
+  //
+  //   /font/    — Google Fonts subsets. The file names are content hashes,
+  //               and the generated stylesheets carry a `?v=<hash>` query, so
+  //               `immutable` can never serve a stale file.
+  //   /fonts/   — the hard-pen / brush fonts. Fixed names, replaced when the
+  //               fonts are rebuilt, so they get a long but finite TTL.
+  //   /strokes/ — one JSON per character, never changes for a given char.
+  async headers() {
+    const year = 'public, max-age=31536000, immutable';
+    const month = 'public, max-age=2592000';
+    return [
+      { source: '/font/:path*', headers: [{ key: 'Cache-Control', value: year }] },
+      { source: '/fonts/:path*', headers: [{ key: 'Cache-Control', value: month }] },
+      { source: '/strokes/:path*', headers: [{ key: 'Cache-Control', value: month }] },
+    ];
+  },
   // Dev-only: keep webpack's file watcher out of the large data directories.
   // The app reads data/ at runtime through the filesystem and public/strokes/
   // is served statically, so neither belongs in the module graph — but the

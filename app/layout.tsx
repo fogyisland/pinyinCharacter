@@ -6,6 +6,7 @@ import { ActivationGuard } from '@/components/ActivationGuard';
 import { PageViewTracker } from '@/components/PageViewTracker';
 import { buildOrganization, buildWebSite } from '@/lib/seo/jsonld';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
+import { getFontCssLinks, ASYNC_STYLESHEET_FLIP } from '@/lib/font-css';
 
 export const metadata = {
   title: '字·韵 — 汉字与拼音互转',
@@ -14,6 +15,7 @@ export const metadata = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const baseUrl = await getRuntimeSiteUrl();
+  const fontCss = getFontCssLinks();
   const siteJsonLd = [
     await buildOrganization(),
     // No /search route exists; the dictionary's `?q=` is the real search.
@@ -22,7 +24,12 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="zh-CN">
       <head>
-        <link rel="stylesheet" href="/font/fonts.css" />
+        {/* Body typeface — render-blocking, every glyph of every page uses it. */}
+        <link rel="stylesheet" href={fontCss.sans} />
+        {/* Brand + serif typefaces — fetched without blocking the first paint. */}
+        <link rel="stylesheet" href={fontCss.wenkai} media="print" />
+        <link rel="stylesheet" href={fontCss.serif} media="print" />
+        <script dangerouslySetInnerHTML={{ __html: ASYNC_STYLESHEET_FLIP }} />
         <meta name="theme-color" content="#5A4530" />
         <link rel="manifest" href="/manifest.json" />
         <script

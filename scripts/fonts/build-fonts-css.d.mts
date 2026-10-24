@@ -33,3 +33,11 @@ export declare function serialize(item: FontFaceItem): string;
 
 /** Collapse the weight declarations that share one font file. */
 export declare function mergeWeights(items: FontFaceItem[]): FontFaceItem[];
+
+/**
+ * Group the rules per family and render one stylesheet per family.
+ *
+ * The map is keyed by file name (`fonts-sans.css`, …) and the value is the
+ * complete stylesheet, header comment included.
+ */
+export declare function splitByFamily(items: FontFaceItem[]): Map<string, string>;
