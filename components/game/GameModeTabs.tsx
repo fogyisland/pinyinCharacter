@@ -1,15 +1,29 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useDifficulty } from '@/lib/use-difficulty';
 import type { HskLevel } from '@/lib/difficulty';
-import { DragMatchGame } from './DragMatchGame';
-import { ToneRadicalGame } from './ToneRadicalGame';
-import { ChainGame } from './ChainGame';
 
 type Mode = 'tone-radical' | 'pinyin-char' | 'pinyin-chain';
 
 const HSKS: HskLevel[] = [1, 2, 3, 4, 5, 6];
+
+// The three games are self-contained and each one is only needed when its
+// tab is open. They used to sit in the bundle of /game, so the visitor
+// downloaded all three games before playing the first one.
+const ToneRadicalGame = dynamic(
+  () => import('./ToneRadicalGame').then((mod) => mod.ToneRadicalGame),
+  { ssr: false, loading: () => <div className="py-12 text-center text-ink-faint">加载中...</div> },
+);
+const DragMatchGame = dynamic(() => import('./DragMatchGame').then((mod) => mod.DragMatchGame), {
+  ssr: false,
+  loading: () => <div className="py-12 text-center text-ink-faint">加载中...</div>,
+});
+const ChainGame = dynamic(() => import('./ChainGame').then((mod) => mod.ChainGame), {
+  ssr: false,
+  loading: () => <div className="py-12 text-center text-ink-faint">加载中...</div>,
+});
 
 export function GameModeTabs() {
   const [mode, setMode] = useState<Mode>('tone-radical');
