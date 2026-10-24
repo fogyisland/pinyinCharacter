@@ -7,12 +7,20 @@ interface Props {
   onChange: (v: PoemFont) => void;
 }
 
-const OPTIONS: { value: PoemFont; label: string; cssVar: string }[] = [
-  { value: 'kai', label: '楷书', cssVar: 'var(--font-kai)' },
-  { value: 'xiao-kai', label: '小楷', cssVar: 'var(--font-iansui)' },
-  { value: 'li-shu', label: '隶书', cssVar: 'var(--font-lishu)' },
-  { value: 'zhuan-shu', label: '篆书', cssVar: 'var(--font-xiaozhuan)' },
-  { value: 'mao-bi', label: '毛笔', cssVar: 'var(--font-ma-shan-zheng)' },
+/**
+ * Labels are intentionally NOT rendered in their own typeface.
+ *
+ * Setting `font-family` on each button made the browser download every
+ * candidate font as soon as the picker was visible — ~22 MB of 楷体/隶书/篆书/
+ * 毛笔 faces just to show five buttons. The selected font is applied to the
+ * poem preview next to the picker, which is where the actual preview belongs.
+ */
+const OPTIONS: { value: PoemFont; label: string }[] = [
+  { value: 'kai', label: '楷书' },
+  { value: 'xiao-kai', label: '小楷' },
+  { value: 'li-shu', label: '隶书' },
+  { value: 'zhuan-shu', label: '篆书' },
+  { value: 'mao-bi', label: '毛笔' },
 ];
 
 export function PoemFontPicker({ value, onChange }: Props) {
@@ -30,7 +38,6 @@ export function PoemFontPicker({ value, onChange }: Props) {
               'px-3 py-1 transition-colors border-r border-ink/10 last:border-r-0 ' +
               (active ? 'bg-seal text-paper' : 'text-ink-soft hover:bg-paper-deep')
             }
-            style={{ fontFamily: opt.cssVar }}
           >
             {opt.label}
           </button>

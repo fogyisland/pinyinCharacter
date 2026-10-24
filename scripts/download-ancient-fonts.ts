@@ -2,36 +2,53 @@
  * download-ancient-fonts.ts
  *
  * Plan L — Fonts phase (refreshed 2026-06-18 after the original jsDelivr URLs
- * went stale). Downloads ancient-script fonts to public/fonts/ so the era
- * glyphs in /etymology/<char> render correctly.
+ * went stale). Downloads the ancient-script font SOURCES so they can be
+ * subsetted into the WOFF2 files that public/fonts/ actually ships.
+ *
+ * Where the sources land:
+ *   scripts/fonts/staging/ancient/ — gitignored, ~157 MB of TTF that exists
+ *   only long enough to be subsetted. public/fonts/ must NOT receive these
+ *   files: shipping the full TTFs is exactly the 25-33 MB download per
+ *   etymology page that the subsetting exists to eliminate, and re-running
+ *   this script would otherwise clobber the published subsets.
  *
  * Skips files that already exist.
  * Soft-fails on network errors: logs a warning and exits 0
  * (EraGlyph shows 「暂无」for missing fonts).
  */
 
-import { existsSync, mkdirSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, statSync, copyFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const FONTS_DIR = resolve(process.cwd(), 'public', 'fonts');
+const FONTS_DIR = resolve(process.cwd(), 'scripts', 'fonts', 'staging', 'ancient');
 
 type FontEntry = {
-  /** Local filename under public/fonts/ */
+  /** Local filename under scripts/fonts/staging/ancient/ */
   filename: string;
   /** Ordered list of candidate URLs — first wins, fallbacks for resilience. */
   urls: string[];
   /** Human label for logs */
   label: string;
+  /**
+   * Absolute paths on this machine to try before the network — used for
+   * fonts that have no public CDN (方正甲骨文 lives only in the Windows
+   * font cache).
+   */
+  localPaths?: string[];
 };
 
 const FONTS: FontEntry[] = [
   {
     filename: 'founder-jiaguwen.ttf',
     urls: [
-      // Founder 甲骨文 — copied locally from Windows font cache
-      // C:/Users/<user>/AppData/Local/Microsoft/Windows/Fonts/FZJiaGW.TTF
-      // (no public CDN; if absent, BabelStoneHanBasic covers 甲骨文 too)
+      // Founder 甲骨文 — no public CDN. It is copied from the local Windows
+      // font cache (see localPaths); if absent, BabelStoneHanBasic covers
+      // 甲骨文 too.
+    ],
+    localPaths: [
+      'C:/Windows/Fonts/FZJiaGW.TTF',
+      `${process.env.LOCALAPPDATA ?? ''}/Microsoft/Windows/Fonts/FZJiaGW.TTF`,
     ],
     label: '方正甲骨文 (Founder JiaguWen)',
   },
@@ -122,6 +139,18 @@ async function downloadFont(
   const dest = resolve(FONTS_DIR, entry.filename);
   if (existsSync(dest) && statSync(dest).size > 0) {
     return { status: 'skip' };
+  }
+  for (const localPath of entry.localPaths ?? []) {
+    if (!localPath) continue;
+    if (!existsSync(localPath)) continue;
+    try {
+      copyFileSync(localPath, dest);
+      if (statSync(dest).size > 0) {
+        return { status: 'ok', size: statSync(dest).size };
+      }
+    } catch {
+      // Fall through to the network attempt.
+    }
   }
   for (const url of entry.urls) {
     const ok = await downloadOnce(url, dest);

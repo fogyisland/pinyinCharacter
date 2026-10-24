@@ -31,11 +31,11 @@ type Coverage = Record<EraKey, boolean>;
 type CoverageMap = Record<string, Coverage>;
 
 const FONTS: Array<{ path: string; eras: EraKey[]; role: 'primary' | 'fallback' }> = [
-  { path: 'public/fonts/founder-jiaguwen.ttf', eras: ['jiaguwen'], role: 'primary' },
-  { path: 'public/fonts/quanziku-shuowen.ttf', eras: ['xiaozhuan'], role: 'primary' },
-  { path: 'public/fonts/wang-hanzong-lishu.ttf', eras: ['lishu'], role: 'primary' },
+  { path: 'public/fonts/founder-jiaguwen.woff2', eras: ['jiaguwen'], role: 'primary' },
+  { path: 'public/fonts/quanziku-shuowen.woff2', eras: ['xiaozhuan'], role: 'primary' },
+  { path: 'public/fonts/wang-hanzong-lishu.woff2', eras: ['lishu'], role: 'primary' },
   {
-    path: 'public/fonts/BabelStoneHanBasic.ttf',
+    path: 'public/fonts/BabelStoneHanBasic.woff2',
     eras: ['jiaguwen', 'jinwen', 'xiaozhuan', 'lishu'],
     role: 'fallback',
   },

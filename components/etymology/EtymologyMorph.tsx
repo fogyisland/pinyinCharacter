@@ -123,22 +123,25 @@ export function EtymologyMorph({
         <span className="text-xs text-ink-faint">{coverageHint(eras.length, level)}</span>
       </div>
 
-      {/* Big glyph stage — all eras stacked absolutely */}
+      {/* Big glyph stage — only the current era is mounted.
+          Rendering all eras stacked (the previous behaviour) made the browser
+          download every era font at once — up to 57 MB on this page — even
+          though a single glyph is visible. The glyph remounts on era change,
+          so the new font is fetched only when it is actually shown. */}
       <div className="relative h-48 sm:h-64 bg-gradient-to-b from-paper-warm to-paper rounded mb-4">
-        {eras.map((era, i) => (
-          <span
-            key={era.era}
-            aria-hidden={i !== currentIndex}
-            className={`absolute inset-0 flex items-center justify-center
-                        text-9xl transition-opacity duration-500
-                        motion-reduce:transition-none
-                        ${ERA_FONT_CLASS[era.era]}
-                        ${i === currentIndex ? 'opacity-100' : 'opacity-0'}`}
-            style={{ fontFamily: eraFonts[era.era] }}
-          >
-            {char}
-          </span>
-        ))}
+        <span
+          key={currentEra.era}
+          className={`era-glyph absolute inset-0 flex items-center justify-center
+                      text-9xl ${ERA_FONT_CLASS[currentEra.era]}`}
+          style={{
+            fontFamily: eraFonts[currentEra.era],
+            // The fade-in lives in app/globals.css (.era-glyph); the duration
+            // is driven from here so the two never drift apart.
+            animationDuration: `${FADE_DURATION_MS}ms`,
+          }}
+        >
+          {char}
+        </span>
       </div>
 
       {/* Play/pause + current era label */}

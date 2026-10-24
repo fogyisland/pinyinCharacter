@@ -322,34 +322,42 @@
 }
 
 /* ============ Ancient-script fonts (Plan L, refreshed 2026-06-18) ============ */
-/* Order of cascade: dedicated era font first, BabelStone Han as comprehensive
-   fallback for any glyph the dedicated font lacks. */
+/* All ancient fonts ship as WOFF2 subsets (see scripts/fonts/subset-ancient-fonts.mjs).
+   The originals were 157 MB of TTF; a visitor opening /etymology/<char> had to
+   pull 25-33 MB down just to render one glyph. The subsets keep every glyph the
+   originals had for the characters this site can display (verified by
+   scripts/fonts/verify-ancient-subsets.mjs — zero regressions) and are ~15x smaller.
+
+   Note: a `src:` list is a LOAD-FAILURE fallback, not a per-glyph fallback —
+   the browser downloads the first source that loads and uses it for every
+   glyph. The BabelStone entries below therefore only matter if the primary
+   file is missing, and they are no longer per-glyph fallbacks in any case. */
 @font-face {
   font-family: 'YinQiJiaGuWen';
   src:
-    url('/fonts/founder-jiaguwen.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+    url('/fonts/founder-jiaguwen.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'HanDianJinWen';
   src:
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanExtra.ttf') format('truetype');
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanExtra.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'QuanZiKuShuoWen';
   src:
-    url('/fonts/quanziku-shuowen.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+    url('/fonts/quanziku-shuowen.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'QuanZiKuLiDing';
   src:
-    url('/fonts/wang-hanzong-lishu.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+    url('/fonts/wang-hanzong-lishu.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
@@ -362,30 +370,65 @@
 @font-face {
   font-family: 'Oracular';
   src:
-    url('/fonts/Oracular-Regular.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+    url('/fonts/Oracular-Regular.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'OracularInverted';
   src:
-    url('/fonts/Oracular-Inverted.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+    url('/fonts/Oracular-Inverted.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongWeibei';
   src:
-    url('/fonts/wang-hanzong-weibei.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+    url('/fonts/wang-hanzong-weibei.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
   font-display: swap;
 }
 @font-face {
   font-family: 'WangHanzongXingshu';
   src:
-    url('/fonts/wang-hanzong-xingshu.ttf') format('truetype'),
-    url('/fonts/BabelStoneHanBasic.ttf') format('truetype');
+    url('/fonts/wang-hanzong-xingshu.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
   font-display: swap;
+}
+/* Alias for the 隶书 era. The admin dropdown and the default era config use
+   the id `WangHanzongLishu`, but the @font-face family above is named
+   `QuanZiKuLiDing` — without this alias the 隶书 era silently fell back to a
+   system serif font. */
+@font-face {
+  font-family: 'WangHanzongLishu';
+  src:
+    url('/fonts/wang-hanzong-lishu.woff2') format('woff2'),
+    url('/fonts/BabelStoneHanBasic.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* ============ Era glyph stage ============ */
+/* The etymology stage mounts only the CURRENT era glyph (see
+   components/etymology/EtymologyMorph.tsx). The `key` on that span makes
+   React remount it whenever the era changes, so this fade-in replays on
+   every switch — the visual cue that the glyph actually changed. */
+.era-glyph {
+  animation: era-glyph-fade-in 500ms ease-out both;
+}
+@keyframes era-glyph-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .era-glyph {
+    animation: none;
+  }
 }
 
 /* ============ Hard-pen fonts (Plan G2) ============ */
