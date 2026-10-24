@@ -65,10 +65,11 @@ describe('ResponsiveTable — Fragment children flatten correctly', () => {
     expect(tds.length).toBe(4);
   });
 
-  it('builds the cells of a row only once, even though it renders twice', () => {
-    // The desktop table and the mobile cards both need the cells. The
-    // children function used to run once per layout, which doubled the work
-    // of building every cell of every row.
+  it('builds the cells of a row only once and ships a single copy of the rows', () => {
+    // The component used to render the desktop table AND a parallel list of
+    // mobile cards, so every row existed twice and the children function ran
+    // once per layout. There is now one <table>; the narrow-screen layout is
+    // pure CSS driven by the data-label attribute.
     const children = vi.fn((r: Row) => (
       <>
         <span>{r.a}</span>
@@ -90,8 +91,37 @@ describe('ResponsiveTable — Fragment children flatten correctly', () => {
     );
 
     expect(children).toHaveBeenCalledTimes(rows.length);
-    // Both layouts are still rendered from the same cells.
+    expect(container.querySelectorAll('table').length).toBe(1);
     expect(container.querySelectorAll('table td').length).toBe(4);
-    expect(container.querySelectorAll('.md\\:hidden span').length).toBe(4);
+    // The mobile card copy is gone — no second set of cells in the DOM.
+    expect(container.querySelectorAll('.md\\:hidden').length).toBe(0);
+    // Each cell carries the header text so the CSS layout can label it.
+    const firstRow = container.querySelectorAll('table tbody tr')[0];
+    const labels = Array.from(firstRow?.querySelectorAll('td') ?? []).map((td) =>
+      td.getAttribute('data-label'),
+    );
+    expect(labels).toEqual(['A', 'B']);
+  });
+
+  it('marks the mobile title column and hides the columns flagged mobileHide', () => {
+    const { container } = render(
+      <ResponsiveTable
+        rows={rows}
+        rowKey={(r) => r.id}
+        columns={[
+          { key: 'a', header: 'A', mobileTitle: true },
+          { key: 'b', header: 'B' },
+          { key: 'c', header: 'C', mobileHide: true },
+        ]}
+      >
+        {(r) => [<span key="a">{r.a}</span>, <span key="b">{r.b}</span>, <span key="c">{r.c ? 'yes' : 'no'}</span>]}
+      </ResponsiveTable>,
+    );
+
+    const firstRow = container.querySelectorAll('table tbody tr')[0];
+    const roles = Array.from(firstRow?.querySelectorAll('td') ?? []).map((td) =>
+      td.getAttribute('data-mobile'),
+    );
+    expect(roles).toEqual(['title', 'field', 'hide']);
   });
 });

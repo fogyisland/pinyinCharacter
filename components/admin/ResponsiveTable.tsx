@@ -4,11 +4,11 @@ import { Fragment, isValidElement } from 'react';
 export interface ResponsiveColumn {
   /** Unique key for the column. */
   key: string;
-  /** Desktop table header text. Also used as mobile card row label. */
+  /** Desktop table header text. Also used as the mobile card's field label. */
   header: string;
   /** Mobile: render this column as the card title (larger, bold). */
   mobileTitle?: boolean;
-  /** Mobile: hide this column from the detail list (rare). */
+  /** Mobile: hide this column from the card (rare). */
   mobileHide?: boolean;
   /** Optional CSS class for the desktop <th>. */
   headerClassName?: string;
@@ -32,6 +32,9 @@ function flattenCells(node: ReactNode): ReactNode[] {
   return [node];
 }
 
+/** How a cell behaves once the table collapses into cards on a narrow screen. */
+type MobileRole = 'title' | 'field' | 'hide';
+
 interface Props<T> {
   columns: ResponsiveColumn[];
   rows: T[];
@@ -44,10 +47,24 @@ interface Props<T> {
    */
   children: (row: T) => ReactNode;
   emptyMessage?: string;
-  /** Optional extra classes applied to both desktop & mobile wrappers. */
+  /** Optional extra classes applied to the table wrapper. */
   className?: string;
 }
 
+/**
+ * A data table that stays readable on a phone — with ONE copy of the rows.
+ *
+ * The first version rendered the desktop `<table>` AND a parallel list of
+ * mobile cards, hiding one of them with `hidden md:block` / `md:hidden`. The
+ * hidden copy was still in the DOM, so every row existed twice: the logs
+ * page shipped 50 rows x 7 columns x 2 layouts = 700 cells to the browser,
+ * and React reconciled all of them.
+ *
+ * Now there is a single `<table>`. The narrow-screen layout is pure CSS
+ * (see the `.rt-table` rules in app/globals.css): the head collapses away
+ * and each cell becomes a labelled line, using the `data-label` attribute
+ * for the label the header used to provide.
+ */
 export function ResponsiveTable<T>({
   columns,
   rows,
@@ -70,63 +87,45 @@ export function ResponsiveTable<T>({
   // noticeable on the admin tables that format a date per cell.
   const rowCells = rows.map((row) => flattenCells(children(row)));
   return (
-    <>
-      {/* Desktop table (md+) */}
-      <div className={`hidden md:block card-paper rounded-lg overflow-x-auto ${className}`}>
-        <table className="w-full text-sm">
-          <thead className="bg-paper-deep text-left">
-            <tr>
-              {columns.map((c) => (
-                <th
-                  key={c.key}
-                  className={`px-3 py-2 whitespace-nowrap ${c.headerClassName ?? ''}`}
-                >
-                  {c.header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, rowIndex) => {
-              const cells = rowCells[rowIndex];
-              return (
-                <tr key={rowKey(r)} className="border-t">
-                  {cells.map((cell, i) => (
-                    <td key={i} className={`px-3 py-2 ${columns[i]?.className ?? ''}`}>
+    <div className={`card-paper rounded-lg overflow-x-auto ${className}`}>
+      <table className="rt-table w-full text-sm">
+        <thead className="bg-paper-deep text-left">
+          <tr>
+            {columns.map((c) => (
+              <th
+                key={c.key}
+                className={`px-3 py-2 whitespace-nowrap ${c.headerClassName ?? ''}`}
+              >
+                {c.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, rowIndex) => {
+            const cells = rowCells[rowIndex];
+            return (
+              <tr key={rowKey(r)} className="border-t">
+                {cells.map((cell, i) => {
+                  const column = columns[i];
+                  const role: MobileRole =
+                    i === titleIdx ? 'title' : column?.mobileHide ? 'hide' : 'field';
+                  return (
+                    <td
+                      key={i}
+                      data-label={column?.header ?? ''}
+                      data-mobile={role}
+                      className={`px-3 py-2 ${column?.className ?? ''}`}
+                    >
                       {cell}
                     </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Mobile cards (<md) */}
-      <div className={`md:hidden space-y-2 ${className}`}>
-        {rows.map((r, rowIndex) => {
-          const cells = rowCells[rowIndex];
-          return (
-            <div key={rowKey(r)} className="card-paper rounded-lg p-3">
-              {titleIdx >= 0 && (
-                <div className="font-medium text-ink mb-2 break-words">{cells[titleIdx]}</div>
-              )}
-              <dl className="space-y-1 text-sm">
-                {columns.map((c, i) => {
-                  if (i === titleIdx || c.mobileHide) return null;
-                  return (
-                    <div key={c.key} className="flex justify-between gap-3">
-                      <dt className="text-ink-soft shrink-0">{c.header}</dt>
-                      <dd className="text-right min-w-0 break-words">{cells[i]}</dd>
-                    </div>
                   );
                 })}
-              </dl>
-            </div>
-          );
-        })}
-      </div>
-    </>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
   );
 }

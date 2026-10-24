@@ -132,6 +132,69 @@
   }
 }
 
+/* ============ Admin responsive table ============ */
+/*
+ * One <table> serves both the desktop and the phone layout. Below 768px the
+ * table collapses into one card per row: the head disappears and every cell
+ * becomes a labelled line, the label coming from the cell's `data-label`.
+ *
+ * The alternative — a second, parallel list of cards hidden with `md:hidden` —
+ * keeps every row in the DOM twice, which is what the admin tables used to
+ * ship (50 rows x 7 columns x 2 layouts = 700 cells for the logs page alone).
+ */
+@media (max-width: 767px) {
+  .rt-table,
+  .rt-table tbody,
+  .rt-table tr,
+  .rt-table td {
+    display: block;
+    width: 100%;
+  }
+  .rt-table thead {
+    display: none;
+  }
+  .rt-table tr {
+    border: 1px solid rgba(58, 42, 20, 0.12);
+    border-radius: 6px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    background: var(--color-paper-soft);
+  }
+  .rt-table td {
+    border: none;
+    padding: 3px 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    text-align: right;
+  }
+  .rt-table td::before {
+    content: attr(data-label);
+    color: var(--color-ink-soft);
+    font-size: 12px;
+    flex-shrink: 0;
+    text-align: left;
+  }
+  .rt-table td > * {
+    min-width: 0;
+  }
+  .rt-table td[data-mobile='title'] {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--color-ink);
+    margin-bottom: 4px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(58, 42, 20, 0.08);
+  }
+  .rt-table td[data-mobile='title']::before {
+    display: none;
+  }
+  .rt-table td[data-mobile='hide'] {
+    display: none;
+  }
+}
+
 /* ============ Print (worksheet) ============ */
 /* The @page size is set inline per worksheet (see WorksheetPreview), since CSS
    has no per-element way to drive @page without Paged Media Level 3 support. */
