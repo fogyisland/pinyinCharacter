@@ -1,10 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { AudioTrack } from '@/lib/audio-tracks';
 import type { Playlist, PlaylistWithTracks } from '@/lib/playlists';
 import { useToastStore } from '@/lib/toast-store';
 import { formatDateTime } from '@/lib/format';
+
+/**
+ * A stable empty track list.
+ *
+ * `playlistTracks[id] ?? []` would hand the editor a NEW array on every
+ * render, which would defeat the memo below and re-filter the whole track
+ * list on every keystroke.
+ */
+const NO_TRACKS: PlaylistWithTracks['tracks'] = [];
 
 interface Props {
   initialPlaylists: Playlist[];
@@ -315,7 +324,7 @@ export function PlaylistsPanel({ initialPlaylists, tracks }: Props) {
                 {expandedId === p.id && (
                   <PlaylistTracksEditor
                     availableTracks={availableTracks}
-                    currentTracks={playlistTracks[p.id] ?? []}
+                    currentTracks={playlistTracks[p.id] ?? NO_TRACKS}
                     busy={busyId === p.id}
                     onAdd={(trackId) => onAddTrack(p.id, trackId)}
                     onRemove={(trackId) => onRemoveTrack(p.id, trackId)}
@@ -347,8 +356,14 @@ function PlaylistTracksEditor({
   onMove: (trackId: number, direction: -1 | 1) => void;
 }) {
   const [selectedTrackId, setSelectedTrackId] = useState<number>(0);
-  const inPlaylistIds = new Set(currentTracks.map((t) => t.id));
-  const addable = availableTracks.filter((t) => !inPlaylistIds.has(t.id));
+  // The addable list is derived from both track lists. Without the memo this
+  // rebuilt a Set and re-filtered the whole track list on EVERY render — and
+  // the editor is rendered once per expanded playlist, so N playlists meant N
+  // filters of the same array.
+  const addable = useMemo(() => {
+    const inPlaylistIds = new Set(currentTracks.map((t) => t.id));
+    return availableTracks.filter((t) => !inPlaylistIds.has(t.id));
+  }, [availableTracks, currentTracks]);
 
   return (
     <div className="border-t border-ink/15 p-3 bg-paper-warm/20 space-y-3">

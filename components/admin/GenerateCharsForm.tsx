@@ -331,8 +331,26 @@ interface BatchProgress {
   processed: number;
   nextOffset: number;
   elapsedMs: number;
-  perField: Record<string, FieldResult>;
+  perField: Record<string, FieldProgress>;
 }
+
+/**
+ * The per-field progress of a batch run.
+ *
+ * `errors` holds only the most recent entries — a long batch can produce
+ * thousands of them, and keeping every one in the React state made the
+ * state grow without bound. The true number lives in `errorCount`.
+ */
+interface FieldProgress {
+  generated: number;
+  skipped: number;
+  /** How many errors occurred, including the ones no longer listed. */
+  errorCount: number;
+  errors: { char: string; message: string }[];
+}
+
+/** How many error entries one field keeps in the state. */
+const MAX_FIELD_ERRORS = 200;
 
 const EMPTY_PROGRESS: BatchProgress = {
   totalChars: 0,
@@ -439,16 +457,21 @@ function useBatchRunner() {
 }
 
 function mergePerField(
-  a: Record<string, FieldResult>,
+  a: Record<string, FieldProgress>,
   b: Record<string, FieldResult>,
-): Record<string, FieldResult> {
-  const out: Record<string, FieldResult> = { ...a };
+): Record<string, FieldProgress> {
+  const out: Record<string, FieldProgress> = { ...a };
   for (const k of Object.keys(b)) {
-    const prev = a[k] ?? { generated: 0, skipped: 0, errors: [] };
+    const prev = a[k] ?? { generated: 0, skipped: 0, errorCount: 0, errors: [] };
+    const incoming = b[k].errors;
     out[k] = {
       generated: prev.generated + b[k].generated,
       skipped: prev.skipped + b[k].skipped,
-      errors: [...prev.errors, ...b[k].errors],
+      errorCount: prev.errorCount + incoming.length,
+      // Keep only the most recent errors. The old code appended the whole
+      // list on every batch, which grew the state without bound AND copied
+      // it every time — quadratic work over a long run.
+      errors: prev.errors.concat(incoming).slice(-MAX_FIELD_ERRORS),
     };
   }
   return out;
@@ -646,26 +669,39 @@ function BatchProgressView({
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
         {ALL_BATCH_FIELDS.map((f) => {
-          const r = progress.perField[f.key] ?? { generated: 0, skipped: 0, errors: [] };
+          const r = progress.perField[f.key] ?? {
+            generated: 0,
+            skipped: 0,
+            errorCount: 0,
+            errors: [],
+          };
           return (
             <div key={f.key} className="flex justify-between border-b border-paper-warm py-1">
               <span>{f.label}</span>
               <span className="space-x-2">
                 <span>✓ {r.generated}</span>
                 {r.skipped > 0 && <span className="text-ink-soft">↷ {r.skipped}</span>}
-                {r.errors.length > 0 && <span className="text-seal">✗ {r.errors.length}</span>}
+                {r.errorCount > 0 && <span className="text-seal">✗ {r.errorCount}</span>}
               </span>
             </div>
           );
         })}
       </div>
       {(() => {
-        const allErrors = Object.values(progress.perField).flatMap((r) => r.errors);
-        if (allErrors.length === 0) return null;
-        const show = allErrors.slice(0, 10);
+        const fields = Object.values(progress.perField);
+        const totalErrors = fields.reduce((sum, r) => sum + r.errorCount, 0);
+        if (totalErrors === 0) return null;
+        // The newest error of a field sits at the end of its list, so the
+        // most recent ones come from the tail — walked newest field first.
+        const show = fields
+          .slice()
+          .reverse()
+          .flatMap((r) => r.errors.slice(-10))
+          .slice(0, 10)
+          .reverse();
         return (
           <div className="text-xs text-seal">
-            <div>最近错误(共 {allErrors.length}):</div>
+            <div>最近错误(共 {totalErrors}):</div>
             <ul className="mt-1 ml-4 space-y-0.5">
               {show.map((e, i) => (
                 <li key={i}>
