@@ -111,7 +111,7 @@ export interface AiStats {
 
 export async function getAiStats(days = 7): Promise<AiStats> {
   const pool = getPool();
-  // Run the 5 independent stats queries in parallel — they're read-only against
+  // Run the independent stats queries in parallel — they're read-only against
   // the same window of ai_calls rows, no inter-dependencies. Each Promise.all
   // element is a [rows, fields] tuple from mysql2, so unwrap with [0].
   const results = await Promise.all([
@@ -133,16 +133,15 @@ export async function getAiStats(days = 7): Promise<AiStats> {
       [days],
     ),
     pool.query<any[]>(
-      `SELECT duration_ms FROM ai_calls
-       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND duration_ms IS NOT NULL
-       ORDER BY duration_ms ASC`,
-      [days],
-    ),
-    pool.query<any[]>(
       `SELECT a.user_id, u.username, COUNT(*) AS n FROM ai_calls a
        LEFT JOIN users u ON u.id = a.user_id
        WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND a.user_id IS NOT NULL
        GROUP BY a.user_id, u.username ORDER BY n DESC LIMIT 5`,
+      [days],
+    ),
+    pool.query<any[]>(
+      `SELECT COUNT(*) AS n FROM ai_calls
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND duration_ms IS NOT NULL`,
       [days],
     ),
   ]);
@@ -150,21 +149,39 @@ export async function getAiStats(days = 7): Promise<AiStats> {
   const totalRows = results[0][0] as any[];
   const byDay = results[1][0] as any[];
   const errRate = results[2][0] as any[];
-  const durations = results[3][0] as any[];
-  const topUsers = results[4][0] as any[];
+  const topUsers = results[3][0] as any[];
+  const durationCount = Number((results[4][0] as any[])[0]?.n ?? 0);
 
-  const p = (q: number): number | null => {
-    if (!durations.length) return null;
-    const idx = Math.min(durations.length - 1, Math.floor(q * durations.length));
-    return Number(durations[idx].duration_ms);
+  /**
+   * The q-th percentile of the call durations.
+   *
+   * This used to pull EVERY duration in the window back to Node and pick the
+   * percentile out of the array. MySQL 5.7 has no window functions, so the
+   * percentile is fetched by counted offset instead: the row at the
+   * percentile's index comes back and nothing else does. The value is
+   * identical — same ordering, same index — but the transfer is one row
+   * rather than one row per AI call in the window.
+   */
+  const percentile = async (q: number): Promise<number | null> => {
+    if (durationCount === 0) return null;
+    const idx = Math.min(durationCount - 1, Math.floor(q * durationCount));
+    const [rows] = await pool.query<any[]>(
+      `SELECT duration_ms FROM ai_calls
+       WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND duration_ms IS NOT NULL
+       ORDER BY duration_ms ASC LIMIT 1 OFFSET ?`,
+      [days, idx],
+    );
+    return rows.length ? Number(rows[0].duration_ms) : null;
   };
+  const [p50, p95] = await Promise.all([percentile(0.5), percentile(0.95)]);
+
   const total = Number(errRate[0].total) || 0;
   return {
     total: Number(totalRows[0].n),
     byDay: byDay.map((r: any) => ({ date: r.d, count: Number(r.n) })),
     errorRate: total > 0 ? Number(errRate[0].errs) / total : 0,
-    p50Duration: p(0.5),
-    p95Duration: p(0.95),
+    p50Duration: p50,
+    p95Duration: p95,
     topUsers: topUsers.map((r: any) => ({
       userId: Number(r.user_id),
       username: r.username,
