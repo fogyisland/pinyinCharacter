@@ -806,6 +806,7 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 - Modify: `lib/game-round-types.ts:26-32` (the documented shape)
 - Modify: `components/game/ToneToken.tsx` — carry the token index
 - Modify: `components/game/RadicalToken.tsx` — carry the token index
+- Modify: `components/game/PinyinToken.tsx` — carry the token index
 - Modify: `components/game/ToneRadicalGame.tsx` — track used token indices
 - Test: `tests/unit/lib/game-round.test.ts` (extend)
 - Test: `tests/unit/components/game/ToneRadicalGame.test.tsx` (extend)
@@ -834,10 +835,16 @@ The client resolves a dropped token by its **index**, not by its value:
 
 ```ts
 // components/game/ToneRadicalGame.tsx
-/** The token index → its value, for the round's mode. */
-const tokenValues: string[] = ...;  // toneChoices or radicalChoices
+/**
+ * The token list the learner actually sees, in display order. The index in
+ * the drag payload is an index into THIS array (the component shuffles the
+ * bank client-side), so the value is resolved from the same array.
+ */
+const tokenValues: string[] = ...;  // toneOrder / radicalOrder / pinyinOrder
 const [usedTokenIndices, setUsedTokenIndices] = useState<Set<number>>(new Set());
 ```
+
+**All three token components carry the index**, `PinyinToken` included — the client resolves every drop through `tokenValues[Number(payload)]`, so a token that still sent its value would break that mode outright. The pinyin mode's values are unique, so index tracking changes nothing for it.
 
 - [ ] **Step 1: Write the failing tests**
 
@@ -868,18 +875,18 @@ Update the comment above `toneChoices` to explain why: the old bank was the 4 to
 
 - [ ] **Step 4: Make the tokens carry their index**
 
-In `components/game/ToneToken.tsx` and `components/game/RadicalToken.tsx`:
+In `components/game/ToneToken.tsx`, `components/game/RadicalToken.tsx` and `components/game/PinyinToken.tsx`:
 - add a `tokenIndex: number` prop;
 - the drag payload becomes the **index**, not the value: `e.dataTransfer.setData('text/plain', String(tokenIndex))`.
 
-`PinyinToken` is **not** changed — the pinyin mode picks unique pinyins, so its values are already unambiguous.
+All three carry the index, because the client resolves every drop through `tokenValues[Number(payload)]`. `PinyinToken`'s values are unique, so its behavior is unchanged — but the payload format must match the other two.
 
 - [ ] **Step 5: Track used token indices in `ToneRadicalGame`**
 
 - Replace `matchedValues` with `usedTokenIndices: Set<number>`.
 - The token's `matched` prop becomes `usedTokenIndices.has(index)`.
 - The React `key` of a token becomes the index — with duplicates allowed, the old `key={t}` would produce duplicate React keys.
-- `handleDrop(char, kind, payload)`: `payload` is the token index as a string. Resolve `const tokenValue = tokenValues[Number(payload)]`. If `tokenValue === undefined` → ignore the drop (a stale or malformed payload). Compare `tokenValue` against the char's expected value exactly as today; on a mismatch, `setMismatches(m => m + 1)` and return. On a match, `setMatches(prev => ({ ...prev, [char]: tokenValue }))` — the **value** is stored so the slot still displays the tone number or the radical — and add the index to `usedTokenIndices`.
+- `handleDrop(char, kind, payload)`: `payload` is the token index as a string. Resolve `const tokenValue = tokenValues[Number(payload)]` where **`tokenValues` is the shuffled display array** (`toneOrder` / `radicalOrder` / `pinyinOrder`) — the component shuffles the bank client-side, so the index the learner drags is an index into that array, not into `round.toneChoices`. If `tokenValue === undefined` → ignore the drop (a stale or malformed payload). Compare `tokenValue` against the char's expected value exactly as today; on a mismatch, `setMismatches(m => m + 1)` and return. On a match, `setMatches(prev => ({ ...prev, [char]: tokenValue }))` — the **value** is stored so the slot still displays the tone number or the radical — and add the index to `usedTokenIndices`.
 - The auto-finish effect is unchanged: it fires when `matchCount === round.chars.length`.
 
 - [ ] **Step 6: Run the tests to verify they pass**
@@ -891,7 +898,8 @@ Expected: PASS — including the new "the round can be finished when two chars s
 
 ```bash
 git add lib/game-round.ts lib/game-round-types.ts components/game/ToneToken.tsx \
-  components/game/RadicalToken.tsx components/game/ToneRadicalGame.tsx \
+  components/game/RadicalToken.tsx components/game/PinyinToken.tsx \
+  components/game/ToneRadicalGame.tsx \
   tests/unit/lib/game-round.test.ts tests/unit/components/game/ToneRadicalGame.test.tsx
 git commit -m "fix(game): give every char its own tone token [YYYY-MM-DD HH.MM]" -m "The tone token bank was the four tone values, but a round holds 3 / 4 / 6
 chars. Two chars of the same tone fought over one token, the second could
@@ -900,7 +908,8 @@ auto-finished. With 6 chars and 4 tones the pigeonhole principle makes the
 collision certain, so the 声调 round was unwinnable in hard mode.
 
 The radical mode had the same shape - correctRadicals was a Set, so two
-chars sharing a radical collapsed into one token.
+chars sharing a radical collapsed into one token, and the bank was capped
+at 6, so 6 chars sharing 3 radicals left one char with no token at all.
 
 The bank is now one token per char (duplicates allowed) and the game tracks
 which token index was used rather than which tone value. The response shape
@@ -1418,14 +1427,18 @@ Expected: no **new** errors. The 7 pre-existing `no-explicit-any` warnings are t
 
 - [ ] **Step 8: Build in the isolated worktree**
 
-The 4444 dev server owns the main tree — **never build there**. Build in `D:/Temp/pinyin-build-check`:
+The 4444 dev server owns the main tree — **never build there**. The worktree `D:/Temp/pinyin-build-check` already exists (it is in a **detached HEAD**, so it can be pointed at this branch's tip without touching the main tree's checkout):
 
 ```bash
-# in the isolated worktree, on this branch
-npx next build
+# point the worktree at this branch's tip (detached — the branch itself stays
+# checked out in the main tree, so `git checkout <branch>` would be refused)
+git -C D:/Temp/pinyin-build-check checkout --detach perf/frontend-scan-2026-10-24
+cd D:/Temp/pinyin-build-check && npx next build
 ```
 
-Expected: exit 0. If the worktree does not exist yet, create it with the `superpowers:using-git-worktrees` skill and merge this branch into it first.
+Expected: exit 0. If the worktree is missing entirely, create it with the `superpowers:using-git-worktrees` skill instead.
+
+Run `npm install --legacy-peer-deps` in the worktree first if `node_modules` is missing there.
 
 - [ ] **Step 9: Commit**
 
