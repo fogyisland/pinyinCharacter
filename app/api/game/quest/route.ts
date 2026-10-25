@@ -10,10 +10,11 @@ export const dynamic = 'force-dynamic';
  * Every response of this route carries `no-store` — the errors included.
  *
  * A 404 here is not permanent: `level_not_found` means "level N is beyond the
- * tier's current level count", and the tier's eligible pool grows whenever a
- * char's content is regenerated, so a level that 404s today can be a valid
- * level tomorrow. A browser that cached the 404 would keep serving it after
- * the tier grew.
+ * tier's current level count". The tier is built once per server process, so
+ * the eligible pool grows when the content files are regenerated **and the
+ * server restarts** — a level that 404s today can be a valid level after
+ * that. A browser that cached the 404 would keep serving it after the tier
+ * grew.
  */
 const NO_STORE: ResponseInit = {
   headers: {
@@ -50,5 +51,5 @@ export async function GET(req: NextRequest) {
       return notFound('level_not_found', `level ${level} is beyond HSK ${hsk}`, NO_STORE);
     }
     return NextResponse.json({ ok: true, data: payload }, NO_STORE);
-  });
+  }, NO_STORE);
 }

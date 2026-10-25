@@ -3,8 +3,14 @@ import { NextResponse } from 'next/server';
 /**
  * Wrap an API route handler so that thrown errors become a 500 JSON response.
  * Business errors (4xx) should be returned explicitly by the handler.
+ *
+ * `init` is optional and is applied to the 500 as well - a route whose
+ * responses are all `no-store` needs its errors to be `no-store` too.
  */
-export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T | NextResponse> {
+export async function withErrorHandling<T>(
+  fn: () => Promise<T>,
+  init?: ResponseInit,
+): Promise<T | NextResponse> {
   try {
     return await fn();
   } catch (err) {
@@ -19,7 +25,7 @@ export async function withErrorHandling<T>(fn: () => Promise<T>): Promise<T | Ne
           ...(e.ttsErrorName ? { ttsErrorName: e.ttsErrorName } : {}),
         },
       },
-      { status: 500 },
+      { status: 500, ...(init ?? {}) },
     );
   }
 }

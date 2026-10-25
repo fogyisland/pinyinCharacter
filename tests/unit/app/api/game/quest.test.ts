@@ -209,8 +209,9 @@ describe('GET /api/game/quest', () => {
     const body = await res.json();
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('level_not_found');
-    // A 404 is not permanent: the tier's eligible pool grows whenever a
-    // char's content is regenerated, so a browser must not cache it.
+    // A 404 is not permanent: the tier is built once per server process, so
+    // the eligible pool grows when the content files are regenerated and the
+    // server restarts - a browser must not cache it.
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
@@ -221,6 +222,9 @@ describe('GET /api/game/quest', () => {
     const body = await res.json();
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('server');
+    // The 500 is not cacheable either - every response of this route carries
+    // `no-store`, the errors included.
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 });
 
