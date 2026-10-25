@@ -24,48 +24,87 @@ const radicalMap = JSON.parse(readFileSync('data/radicals.json', 'utf8'));
 const TIERS = [1, 2, 3, 4, 5, 6];
 
 // ---------------------------------------------------------------- tone tables
-// Mirrors lib/pinyin-tone.ts (TONE_MAP: 24 marks, no syllabic nasals).
+// The tone-mark table has exactly ONE source of truth: TONE_MAP in
+// lib/pinyin-tone.ts (24 marks, no syllabic nasals). This script is a plain
+// .mjs run by bare `node`, so it cannot import the TypeScript module — it
+// READS the source file and extracts the table from it. A hand-written copy
+// of the marks is therefore impossible here, and the guard test
+// (tests/unit/scripts/verify-quest-numbers.test.ts) fails if a mark literal
+// reappears in this file.
 //
-// HAND-SYNCED COPY. This script is a plain .mjs run by bare `node`, so it
-// cannot import the TypeScript module lib/pinyin-tone.ts without a loader —
-// the copy has to stay. But lib/pinyin-tone.ts now exports TONE_MAP and the
-// quest builder derives every one of its tables from it, so the two copies
-// can silently drift (e.g. if `ǹ` were ever added to TONE_MAP, the numbers
-// printed here would no longer match the library's).
-//
-// NO AUTOMATIC DRIFT GUARD. The §6.1 fixture test asserts the LIBRARY's
-// payload and never runs this script, so a drift in THIS copy would change
-// the numbers printed here while every test stayed green. The guard is
-// human: compare this script's output against the plan's numbers, and
-// re-sync this copy whenever TONE_MAP changes.
-const PLAIN_OF = {
-  'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
-  'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e',
-  'ī': 'i', 'í': 'i', 'ǐ': 'i', 'ì': 'i',
-  'ō': 'o', 'ó': 'o', 'ǒ': 'o', 'ò': 'o',
-  'ū': 'u', 'ú': 'u', 'ǔ': 'u', 'ù': 'u',
-  'ǖ': 'ü', 'ǘ': 'ü', 'ǚ': 'ü', 'ǜ': 'ü',
-};
-const TONE_OF = {
-  'ā': 1, 'á': 2, 'ǎ': 3, 'à': 4,
-  'ē': 1, 'é': 2, 'ě': 3, 'è': 4,
-  'ī': 1, 'í': 2, 'ǐ': 3, 'ì': 4,
-  'ō': 1, 'ó': 2, 'ǒ': 3, 'ò': 4,
-  'ū': 1, 'ú': 2, 'ǔ': 3, 'ù': 4,
-  'ǖ': 1, 'ǘ': 2, 'ǚ': 3, 'ǜ': 4,
-};
-const TONE_GROUP = ['ā', 'á', 'ǎ', 'à', 'ē', 'é', 'ě', 'è', 'ī', 'í', 'ǐ', 'ì',
-  'ō', 'ó', 'ǒ', 'ò', 'ū', 'ú', 'ǔ', 'ù', 'ǖ', 'ǘ', 'ǚ', 'ǜ'];
+// What is still mirrored by hand is the RULE, not the data: the NFD
+// decomposition with its combining diaeresis (the rule lib/game-quest.ts
+// uses) and the j/q/x/y u-umlaut spelling rule in toneForms. Both rules are
+// written twice on purpose — the library owns the data, this script derives
+// the same numbers from it.
 
-/** The reading with its tone mark replaced by the plain vowel (ü preserved). */
+/** The combining diaeresis (U+0308) and the plain vowel it belongs to (U+00FC). */
+const DIAERESIS = String.fromCharCode(0x308);
+const PLAIN_U_UMLAUT = String.fromCharCode(0xfc);
+
+/**
+ * Extract TONE_MAP out of lib/pinyin-tone.ts.
+ *
+ * The source is `export const TONE_MAP: Record<string, Tone> = {` followed by
+ * one `mark: tone,` per line. Anything that does not yield exactly 24 entries
+ * with the tones 1-4 throws — a loud failure, never a silent fallback.
+ */
+function extractToneMap(source) {
+  const declaration = source.indexOf('TONE_MAP');
+  if (declaration < 0) {
+    throw new Error('lib/pinyin-tone.ts does not declare TONE_MAP');
+  }
+  const blockStart = source.indexOf('{', declaration);
+  const blockEnd = source.indexOf('};', blockStart);
+  if (blockStart < 0 || blockEnd < 0) {
+    throw new Error('the TONE_MAP block of lib/pinyin-tone.ts could not be located');
+  }
+  const entries = [];
+  for (const line of source.slice(blockStart + 1, blockEnd).split('\n')) {
+    const match = /^\s*(['"]?)(.+?)\1\s*:\s*([0-9]+)\s*,?\s*$/.exec(line);
+    if (!match) continue;
+    entries.push([match[2], Number(match[3])]);
+  }
+  if (entries.length !== 24) {
+    throw new Error(`the TONE_MAP block yielded ${entries.length} entries, expected 24`);
+  }
+  for (const [, tone] of entries) {
+    if (tone < 1 || tone > 4) {
+      throw new Error(`a TONE_MAP entry carries the tone ${tone}, expected 1-4`);
+    }
+  }
+  return entries;
+}
+
+/** The plain vowel of a tone mark: the first char of its NFD decomposition. */
+function plainVowelOf(mark) {
+  const decomposed = mark.normalize('NFD');
+  // The diaeresis (U+0308) is what makes the u-umlaut group a vowel of its own.
+  if (decomposed.includes(DIAERESIS)) return PLAIN_U_UMLAUT;
+  return decomposed[0] ?? '';
+}
+
+const TONE_ENTRIES = extractToneMap(readFileSync('lib/pinyin-tone.ts', 'utf8'));
+/** mark → tone. */
+const TONE_OF = new Map(TONE_ENTRIES);
+/** The marks in the key order of the source table. */
+const TONE_GROUP = TONE_ENTRIES.map(([mark]) => mark);
+/** mark → plain vowel. */
+const PLAIN_OF = new Map(TONE_ENTRIES.map(([mark]) => [mark, plainVowelOf(mark)]));
+
+/** The reading with its tone mark replaced by the plain vowel (the umlaut kept). */
 function plainOf(reading) {
   for (let i = 0; i < reading.length; i++) {
-    if (PLAIN_OF[reading[i]]) return reading.slice(0, i) + PLAIN_OF[reading[i]] + reading.slice(i + 1);
+    const plain = PLAIN_OF.get(reading[i]);
+    if (plain !== undefined) return reading.slice(0, i) + plain + reading.slice(i + 1);
   }
   return reading;
 }
 function toneOf(reading) {
-  for (const c of reading) if (TONE_OF[c]) return TONE_OF[c];
+  for (const c of reading) {
+    const tone = TONE_OF.get(c);
+    if (tone !== undefined) return tone;
+  }
   return null;
 }
 const initialOf = (char) => pinyin(char, { pattern: 'initial' });
@@ -75,28 +114,28 @@ const finalOf = (char) => pinyin(char, { pattern: 'final' });
  * The 4 tone forms of the char's syllable, or null when the final has no tone
  * mark.
  *
- * Mirrors lib/game-quest.ts's toneFormsOf, including the j/q/x/y ü-spelling
- * rule (pinyin-pro's `pattern: 'final'` restores the ü, but the standard
- * orthography writes it as u). Keep the two in lockstep — nothing in CI runs
- * this copy, so the drift guard is comparing this script's output with the
- * plan's numbers by hand.
+ * Mirrors lib/game-quest.ts's toneFormsOf, including the j/q/x/y u-umlaut
+ * spelling rule (pinyin-pro's `pattern: 'final'` restores the umlaut, but the
+ * standard orthography writes it as u). The rule is mirrored by hand — the
+ * table it reads is not.
  */
 function toneForms(char) {
   const final = finalOf(char);
   const initial = initialOf(char);
   const spellsU = ['j', 'q', 'x', 'y'].includes(initial);
   for (let i = 0; i < final.length; i++) {
-    const plain = PLAIN_OF[final[i]];
-    if (!plain) continue;
-    let variants = TONE_GROUP.filter((m) => PLAIN_OF[m] === plain);
+    const plain = PLAIN_OF.get(final[i]);
+    if (plain === undefined) continue;
+    let variants = TONE_GROUP.filter((m) => PLAIN_OF.get(m) === plain);
     if (variants.length !== 4) return null;
     const head = final.slice(0, i);
     const tail = final.slice(i + 1);
     if (spellsU) {
-      // A tone-marked ü is spelled with the u group (ūúǔù) here.
-      if (plain === 'ü') variants = TONE_GROUP.filter((m) => PLAIN_OF[m] === 'u');
-      // A plain ü in the head (the carrier of xué / quán) is written u too.
-      const headSpelling = head.replace(/ü/g, 'u');
+      // A tone-marked u-umlaut is spelled with the u group here.
+      if (plain === PLAIN_U_UMLAUT) variants = TONE_GROUP.filter((m) => PLAIN_OF.get(m) === 'u');
+      // A plain u-umlaut in the head (the carrier of a j/q/x/y syllable) is
+      // written u too.
+      const headSpelling = head.split(PLAIN_U_UMLAUT).join('u');
       return variants.map((m) => initial + headSpelling + m + tail);
     }
     return variants.map((m) => initial + head + m + tail);
@@ -282,8 +321,9 @@ function syllableAnatomy(tier) {
     const final = finalOf(f.char);
     let toneless = final;
     for (let i = 0; i < final.length; i++) {
-      if (PLAIN_OF[final[i]]) {
-        toneless = final.slice(0, i) + PLAIN_OF[final[i]] + final.slice(i + 1);
+      const plain = PLAIN_OF.get(final[i]);
+      if (plain !== undefined) {
+        toneless = final.slice(0, i) + plain + final.slice(i + 1);
         break;
       }
     }
