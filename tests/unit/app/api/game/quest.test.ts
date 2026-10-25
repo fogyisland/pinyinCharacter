@@ -184,7 +184,8 @@ describe('GET /api/game/quest', () => {
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('bad_input');
     expect(getQuestTier).not.toHaveBeenCalled();
-    // The errors are not cacheable either — a 404 is not permanent here.
+    // The errors are not cacheable either — a 400 means the query itself was
+    // malformed, and re-issuing it unchanged will keep failing.
     expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
