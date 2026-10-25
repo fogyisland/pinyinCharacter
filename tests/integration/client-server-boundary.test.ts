@@ -1,6 +1,15 @@
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect } from 'vitest';
+import {
+  collectMemberAccesses,
+  collectNonComponentExports,
+  isFunctionValue,
+  looksLikeComponentName,
+  parseImportedNames,
+  parseNamedBindings,
+  parseNamespaceImports,
+} from './client-server-boundary-helpers';
 
 /**
  * Architectural guard: **no server file may import a non-component export from
@@ -39,7 +48,17 @@ import { describe, it, expect } from 'vitest';
  * - server files other than `app/**\/page.tsx`, `app/**\/layout.tsx` and
  *   `app/**\/route.ts` (a `loading.tsx`, or a server component that is not a
  *   page) are not scanned;
- * - a runtime crash is not simulated — the tree assertion is static.
+ * - a runtime crash is not simulated — the tree assertion is static;
+ * - the **classification bias** — a `PascalCase` const in a client module whose
+ *   initializer is not one of the recognised function forms (`export const Foo =
+ *   styled(Foo)`, a class expression) is classified as **data**, so a server
+ *   file importing it would be a false positive. No client module in this repo
+ *   has a `PascalCase` const export and the convention is `SCREAMING_CASE` for
+ *   data, but the bias is stated so the next reader knows it;
+ * - an **intermediate re-export** — a server-side module (not a client module)
+ *   that re-exports a client module's data (`export { speak } from '@/lib/tts'`)
+ *   and is then imported by a page is not seen; the guard only resolves the
+ *   module a server file imports **directly**.
  */
 const REPO_ROOT = findRepoRoot();
 
@@ -52,34 +71,7 @@ const SOURCE_EXTENSIONS = ['.ts', '.tsx'] as const;
 /** The file names that make an `app/**` file a server file. */
 const SERVER_FILE_NAMES = ['page.tsx', 'layout.tsx', 'route.ts'] as const;
 
-/** A named import list, possibly spanning several lines. */
-const NAMED_IMPORT_RE =
-  /import\s+(?:[A-Za-z_$][\w$]*\s*,\s*)?\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g;
-
-/** A named re-export (`export { A } from '…'`) behaves like an import. */
-const NAMED_REEXPORT_RE = /export\s*\{([^}]*)\}\s*from\s*['"]([^'"]+)['"]/g;
-
-/**
- * `export const NAME = …` and `export const NAME: Type = …`.
- *
- * The type annotation has to be part of the match: `export const X: T = …` puts a
- * `:` between the name and the `=`, and a pattern that stops at the name silently
- * skips the whole export — a data export the guard would then never see. The
- * initializer is captured by the pattern rather than sliced out of the line
- * afterwards, so a `=` inside the type annotation cannot shift the slice.
- */
-const CONST_EXPORT_RE = /^export\s+const\s+([A-Za-z_$][\w$]*)\s*(?::\s*[^=]+)?=\s*(.*)$/;
-
-/** `export function NAME(…)` / `export async function NAME(…)` */
-const FUNCTION_EXPORT_RE = /^export\s+(?:async\s+)?function\s+([A-Za-z_$][\w$]*)/;
-
-/** `export let NAME` / `export var NAME` */
-const VARIABLE_EXPORT_RE = /^export\s+(?:let|var)\s+([A-Za-z_$][\w$]*)/;
-
-/** A namespace import: `import * as NAME from '…'`. */
-const NAMESPACE_IMPORT_RE = /import\s+\*\s+as\s+([A-Za-z_$][\w$]*)\s+from\s*['"]([^'"]+)['"]/g;
-
-interface ClientModule {
+export interface ClientModule {
   /** Repo-relative path with POSIX separators — used in the failure message. */
   readonly relativePath: string;
   /** Absolute path — used to resolve relative import specifiers. */
@@ -149,78 +141,6 @@ function firstLineOf(source: string): string {
 function isClientModule(source: string): boolean {
   const directive = firstLineOf(source).trim().replace(/;$/, '').trim();
   return directive === "'use client'" || directive === '"use client"';
-}
-
-/**
- * A `PascalCase` name is a component. Anything else is data or a helper: a
- * `SCREAMING_CASE` constant (`RADICALS`), a camelCase helper (`useSubmit`) and a
- * snake_case helper (`use_app_store`) are all non-components.
- */
-export function looksLikeComponentName(name: string): boolean {
-  if (!/^[A-Z]/.test(name)) return false;
-  return /[a-z]/.test(name);
-}
-
-/**
- * True when the initializer is a function value.
- *
- * `memo(`, `forwardRef(` and their `React.`-prefixed forms count: a `PascalCase`
- * const initialised with `memo(…)` is a component, and calling it data would make
- * the guard report a legal import as a violation. An empty initializer means the
- * value is on the next line — the shape is unknown, so treat it as a function
- * value: that is the safe direction, a `PascalCase` name then stays a component
- * (no false positive) while a lowercase name is still data.
- */
-export function isFunctionValue(initializer: string): boolean {
-  if (initializer === '') return true;
-  return (
-    initializer.startsWith('(') ||
-    initializer.startsWith('async') ||
-    initializer.startsWith('function') ||
-    initializer.startsWith('memo(') ||
-    initializer.startsWith('forwardRef(') ||
-    initializer.startsWith('React.memo(') ||
-    initializer.startsWith('React.forwardRef(')
-  );
-}
-
-/**
- * Collect the export names of a client module that are **not** renderable
- * components. `export const NAME` is data — unless it is initialised with a
- * function value *and* uses a component name, in which case it is a component
- * and therefore a legal client reference.
- */
-export function collectNonComponentExports(source: string): string[] {
-  const names: string[] = [];
-
-  for (const rawLine of source.split(/\r?\n/)) {
-    const line = rawLine.trim();
-
-    const constMatch = CONST_EXPORT_RE.exec(line);
-    if (constMatch) {
-      const name = constMatch[1];
-      const initializer = constMatch[2].trim();
-      if (!(isFunctionValue(initializer) && looksLikeComponentName(name))) {
-        names.push(name);
-      }
-      continue;
-    }
-
-    const functionMatch = FUNCTION_EXPORT_RE.exec(line);
-    if (functionMatch) {
-      const name = functionMatch[1];
-      if (!looksLikeComponentName(name)) names.push(name);
-      continue;
-    }
-
-    const variableMatch = VARIABLE_EXPORT_RE.exec(line);
-    if (variableMatch) {
-      const name = variableMatch[1];
-      if (!looksLikeComponentName(name)) names.push(name);
-    }
-  }
-
-  return names;
 }
 
 /** Every client module under `app/`, `components/` and `lib/`. */
@@ -294,57 +214,8 @@ function findClientModule(
   return found ?? null;
 }
 
-/** The names a `{ … }` clause imports, with inline `type` markers removed. */
-function parseImportedNames(clause: string): string[] {
-  return clause
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.length > 0)
-    .filter((entry) => !entry.startsWith('type '))
-    .map((entry) => entry.replace(/\s+as\s+.*$/, '').trim())
-    .filter((entry) => entry.length > 0);
-}
-
-/** Every named import and named re-export of a source file. */
-function parseNamedBindings(source: string): Array<{ clause: string; specifier: string }> {
-  const bindings: Array<{ clause: string; specifier: string }> = [];
-  for (const pattern of [NAMED_IMPORT_RE, NAMED_REEXPORT_RE]) {
-    pattern.lastIndex = 0;
-    let match = pattern.exec(source);
-    while (match !== null) {
-      bindings.push({ clause: match[1], specifier: match[2] });
-      match = pattern.exec(source);
-    }
-  }
-  return bindings;
-}
-
-/** Every namespace import of a source file. */
-function parseNamespaceImports(source: string): Array<{ alias: string; specifier: string }> {
-  const namespaces: Array<{ alias: string; specifier: string }> = [];
-  NAMESPACE_IMPORT_RE.lastIndex = 0;
-  let match = NAMESPACE_IMPORT_RE.exec(source);
-  while (match !== null) {
-    namespaces.push({ alias: match[1], specifier: match[2] });
-    match = NAMESPACE_IMPORT_RE.exec(source);
-  }
-  return namespaces;
-}
-
-/** The members a namespace alias is used with, e.g. `voices.TTS_VOICES`. */
-function collectMemberAccesses(source: string, alias: string): string[] {
-  const members = new Set<string>();
-  const pattern = new RegExp(`\\b${alias}\\.([A-Za-z_$][\\w$]*)`, 'g');
-  let match = pattern.exec(source);
-  while (match !== null) {
-    members.add(match[1]);
-    match = pattern.exec(source);
-  }
-  return [...members];
-}
-
 /** The violations a server file commits through named imports. */
-function collectNamedImportViolations(
+export function collectNamedImportViolations(
   serverFile: string,
   source: string,
   clientModules: readonly ClientModule[],
@@ -370,7 +241,7 @@ function collectNamedImportViolations(
 }
 
 /** The violations a server file commits through namespace imports. */
-function collectNamespaceViolations(
+export function collectNamespaceViolations(
   serverFile: string,
   source: string,
   clientModules: readonly ClientModule[],
@@ -495,5 +366,89 @@ describe('client/server boundary — detector', () => {
     expect(looksLikeComponentName('FOO')).toBe(false);
     expect(looksLikeComponentName('helper')).toBe(false);
     expect(looksLikeComponentName('use_app_store')).toBe(false);
+  });
+});
+
+/**
+ * The namespace path of the guard.
+ *
+ * The namespace member scan reads the source **text**, so it must not read a
+ * property of an unrelated object, a comment, or a string literal as a member
+ * access of the alias — those are legal code, and a guard that flags legal code
+ * gets deleted.
+ *
+ * The cases run against a synthetic client module: the collectors take the
+ * server file and the client modules as parameters, so no fixture tree is
+ * needed.
+ */
+const NAMESPACE_IMPORT_LINE = "import * as sidebar from '@/components/dictionary/RadicalSidebar';";
+
+/** A client module with one non-component export, `RADICALS`. */
+const RADICALS_MODULE: ClientModule = {
+  relativePath: 'components/dictionary/RadicalSidebar.tsx',
+  absolutePath: path.join(REPO_ROOT, 'components/dictionary/RadicalSidebar.tsx'),
+  nonComponentExports: ['RADICALS'],
+};
+
+/** The synthetic server file the cases are driven against. */
+const PROBE_SERVER_FILE = path.join(REPO_ROOT, 'app/boundary-probe/page.tsx');
+
+type NamespaceCase = readonly [
+  note: string,
+  body: readonly string[],
+  expectedImportedNames: readonly string[],
+];
+
+const NAMESPACE_CASES: readonly NamespaceCase[] = [
+  [
+    'N1 a real member access is a violation',
+    ['const n = sidebar.RADICALS.length;'],
+    ['sidebar.RADICALS'],
+  ],
+  [
+    'N2 a property chain of an unrelated object is not',
+    ['const payload = { sidebar: { RADICALS: 1 } };', 'payload.sidebar.RADICALS;'],
+    [],
+  ],
+  [
+    'N3 a comment that mentions the member is not',
+    ['// sidebar.RADICALS is the radical table'],
+    [],
+  ],
+  ['N4 a string that contains the member is not', ["const label = 'sidebar.RADICALS';"], []],
+  ['N5 a namespace used only for a component is clean', ['String(sidebar.RadicalSidebar)'], []],
+  [
+    'N6 the real access is still caught next to the property chain',
+    [
+      'const n = sidebar.RADICALS.length;',
+      'const payload = { sidebar: { RADICALS: 1 } };',
+      'payload.sidebar.RADICALS;',
+    ],
+    ['sidebar.RADICALS'],
+  ],
+];
+
+describe('client/server boundary — namespace path', () => {
+  it.each(NAMESPACE_CASES)('%s', (_note, body, expectedImportedNames) => {
+    const source = [NAMESPACE_IMPORT_LINE, ...body].join('\n');
+    const violations = collectNamespaceViolations(PROBE_SERVER_FILE, source, [RADICALS_MODULE]);
+
+    expect(violations.map((violation) => violation.importedName)).toEqual(expectedImportedNames);
+    for (const violation of violations) {
+      expect(violation.kind).toBe('namespace-member');
+      expect(violation.clientModule).toBe(RADICALS_MODULE.relativePath);
+      expect(violation.serverFile).toBe('app/boundary-probe/page.tsx');
+    }
+  });
+
+  it('M1 a named import of a client module data export is a violation', () => {
+    const source = "import { RADICALS } from '@/components/dictionary/RadicalSidebar';";
+    const violations = collectNamedImportViolations(PROBE_SERVER_FILE, source, [RADICALS_MODULE]);
+
+    expect(violations).toHaveLength(1);
+    expect(violations[0].kind).toBe('named-import');
+    expect(violations[0].importedName).toBe('RADICALS');
+    expect(violations[0].clientModule).toBe(RADICALS_MODULE.relativePath);
+    expect(violations[0].serverFile).toBe('app/boundary-probe/page.tsx');
   });
 });
