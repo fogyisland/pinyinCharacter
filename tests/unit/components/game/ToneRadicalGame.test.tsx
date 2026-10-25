@@ -1,9 +1,10 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { GameRound } from '@/lib/api-game';
 import type { HskLevel } from '@/lib/difficulty';
 import type { LegacyGameResult } from '@/components/game/LegacyGameResult';
+import { installLocalStorageShim } from './helpers';
 
 // 2026-07-04: vi.hoisted makes the mock-state object available to the
 // hoisted vi.mock factory (vitest hoists vi.mock above imports). Tests
@@ -62,37 +63,6 @@ function firstRequestedUrl(): URL {
     throw new Error(`expected a string URL, got ${String(raw)}`);
   }
   return new URL(raw, 'http://localhost');
-}
-
-/**
- * 2026-07-04: happy-dom localStorage shim — useDifficulty reads from
- * localStorage in a useEffect. One copy for the whole file: the shim was
- * duplicated verbatim in two describe blocks and drifted.
- *
- * The `store` map stays INSIDE this helper on purpose: every call installs a
- * fresh map, so each test starts with an empty localStorage.
- */
-function installLocalStorageShim(): void {
-  const store = new Map<string, string>();
-  Object.defineProperty(window, 'localStorage', {
-    configurable: true,
-    value: {
-      getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => {
-        store.set(k, v);
-      },
-      removeItem: (k: string) => {
-        store.delete(k);
-      },
-      clear: () => {
-        store.clear();
-      },
-      key: (i: number) => Array.from(store.keys())[i] ?? null,
-      get length() {
-        return store.size;
-      },
-    },
-  });
 }
 
 describe('ToneRadicalGame — HSK reveal wiring (Task 8)', () => {
@@ -584,5 +554,56 @@ describe('ToneRadicalGame — completion reporting (Task 7)', () => {
     const result = onComplete.mock.calls[0]?.[0];
     expect(result?.correct).toBe(2);
     expect(result?.wrong).toBe(0);
+  });
+
+  // 2026-10-25 (Task 7, fix round 1): a hint reveal bumps the SAME counter
+  // as a mismatch. The counter used to be a dependency of the auto-finish
+  // effect, so a reveal re-armed the pending 800 ms timer and pushed the
+  // finish out — the round could be postponed by every hint the learner
+  // clicked. The report must still fire 800 ms after the last match, and it
+  // must count the reveal's penalty.
+  //
+  // The clock is frozen, so the assertion is deterministic: the finish is
+  // expected at T+800, the old code reported at T+1200.
+  it('a reveal inside the auto-finish window does not postpone the finish', async () => {
+    vi.useFakeTimers();
+    try {
+      // HSK 6: the on-demand hints are allowed and each one costs a mismatch.
+      mockState.hskLevel = 6;
+      mockFetchOnce({ ok: true, data: sampleRound, hskFallback: false });
+      const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+      const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+      const { container } = render(<ToneRadicalGame mode="tone" onComplete={onComplete} />);
+      // Flush the mocked fetch (a microtask chain) and render the round.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(screen.queryByText(/加载中/)).toBeNull();
+
+      // The last match arms the 800 ms auto-finish timer.
+      playSampleRound(container);
+      expect(screen.getByText(/错配: 0/)).toBeTruthy();
+
+      // Half way through the window a hint is revealed.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(400);
+      });
+      fireEvent.click(screen.getAllByLabelText('显示拼音')[0]!);
+      expect(screen.getByText(/错配: 1/)).toBeTruthy();
+
+      // 400 + 500 ms is past the 800 ms the fixed code needs; the old code
+      // re-armed the timer on the reveal and reported at 1200 ms.
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(500);
+      });
+
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      const result = onComplete.mock.calls[0]?.[0];
+      expect(result?.correct).toBe(2);
+      // The reveal cost one mismatch — the reported score counts it.
+      expect(result?.wrong).toBe(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { HskLevel } from '@/lib/difficulty';
 import type { LegacyGameResult } from '@/components/game/LegacyGameResult';
+import { installLocalStorageShim } from './helpers';
 
 // 2026-07-04: vi.hoisted makes the mock-state object available to the
 // hoisted vi.mock factory (vitest hoists vi.mock above imports). Tests
@@ -57,37 +58,6 @@ function mockFetchChars(json: unknown) {
     ok: true,
     json: async () => json,
   } as Response);
-}
-
-/**
- * 2026-07-04: happy-dom localStorage shim — useDifficulty reads from
- * localStorage in a useEffect. One copy for the whole file: the shim was
- * duplicated verbatim in two describe blocks and drifted.
- *
- * The `store` map stays INSIDE this helper on purpose: every call installs a
- * fresh map, so each test starts with an empty localStorage.
- */
-function installLocalStorageShim(): void {
-  const store = new Map<string, string>();
-  Object.defineProperty(window, 'localStorage', {
-    configurable: true,
-    value: {
-      getItem: (k: string) => store.get(k) ?? null,
-      setItem: (k: string, v: string) => {
-        store.set(k, v);
-      },
-      removeItem: (k: string) => {
-        store.delete(k);
-      },
-      clear: () => {
-        store.clear();
-      },
-      key: (i: number) => Array.from(store.keys())[i] ?? null,
-      get length() {
-        return store.size;
-      },
-    },
-  });
 }
 
 /** The drop zones — the '→' arrow is the marker of a CharDropZone cell. */

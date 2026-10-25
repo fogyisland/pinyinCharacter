@@ -68,6 +68,10 @@ export function ChainGame(props: LegacyGameProps = {}) {
         setHskFallback(result.hskFallback);
         setStarter(s.char);
         setChain([s.char]);
+        // 2026-10-25 (Task 7, fix round 1): a new ROUND starts here — the
+        // fire-once guard belongs to the round, not to the mount, so a chain
+        // started after a difficulty/HSK change reports its own length.
+        reportedRef.current = false;
         setPhase('playing');
       } catch (e) {
         if (ctrl.signal.aborted) return;

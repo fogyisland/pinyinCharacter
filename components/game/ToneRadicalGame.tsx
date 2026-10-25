@@ -80,6 +80,15 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
   useEffect(() => {
     onCompleteRef.current = onComplete;
   }, [onComplete]);
+  // 2026-10-25 (Task 7, fix round 1): the mismatch count the auto-finish
+  // timer reports. It lives in a ref so a mismatch (a hint reveal costs one
+  // too) cannot re-arm the pending timer — the timer is scheduled once and
+  // the report reads the count that is current when it fires. The ref is
+  // kept in sync by the effect below, so it can never drift from the state.
+  const mismatchesRef = useRef(0);
+  useEffect(() => {
+    mismatchesRef.current = mismatches;
+  }, [mismatches]);
 
   const revealConfig = useMemo(() => getRevealConfig('tone-radical', hskLevel), [hskLevel]);
 
@@ -192,20 +201,33 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
     if (phase !== 'playing' || !round) return;
     if (matchCount === round.chars.length) {
       const t = setTimeout(() => {
-        // 2026-10-25 (Task 7): the round is over — report it. The guard is
-        // load-bearing: this timeout is scheduled 800 ms AFTER the last
-        // match, so a learner who clicks 放弃 inside that window still has
-        // a pending timer. An abandoned round must not be reported.
+        // 2026-10-25 (Task 7): the round is over — report it.
+        //
+        // Belt and braces: React's cleanup already cancels the pending timer
+        // when 放弃 flips the phase, so the guard is NOT the mechanism that
+        // saves the day today. It is kept because the contract ("an
+        // abandoned round is never reported") must not depend on the
+        // dependency list and the abandon handler staying as they are — if
+        // the click and this timer land in the same macrotask turn, the
+        // state update may not have committed yet and the callback would
+        // still see a stale `abandoned`.
         if (abandoned || reportedRef.current) return;
         reportedRef.current = true;
         const durationMs = Date.now() - startedAt.current;
         setElapsedMs(durationMs);
         setPhase('finished');
-        onCompleteRef.current?.({ correct: matchCount, wrong: mismatches, durationMs });
+        onCompleteRef.current?.({
+          correct: matchCount,
+          wrong: mismatchesRef.current,
+          durationMs,
+        });
       }, 800);
       return () => clearTimeout(t);
     }
-  }, [matchCount, phase, round, abandoned, mismatches]);
+    // `mismatches` is deliberately NOT a dependency: a mismatch would re-arm
+    // the timer above and postpone the finish. The count is read from the
+    // ref when the timer fires.
+  }, [matchCount, phase, round, abandoned]);
 
   const handleDrop = (char: string, kind: GameRound['mode'], payload: string) => {
     if (!round || kind !== round.mode) return;

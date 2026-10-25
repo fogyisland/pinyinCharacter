@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import type { CharInfo } from '@/lib/chain-types';
 import type { LegacyGameResult } from '@/components/game/LegacyGameResult';
 
@@ -19,6 +19,23 @@ const sampleChars: CharInfo[] = [
   ci('爱', 'ài'),
   ci('一', 'yī'),
 ];
+
+/**
+ * Simulate another browser tab changing the stored HSK level.
+ *
+ * `lib/use-difficulty.ts` registers a `storage` listener on the window at
+ * import time and updates the shared state from it — the same path the HSK
+ * chips in the tab bar take when the player picks another level. The event
+ * carries `key` / `newValue`, so a plain Event with those two properties is
+ * enough (and it works in happy-dom).
+ */
+function setHskLevelInAnotherTab(level: number): void {
+  window.localStorage.setItem('pinyin_hsk_level', String(level));
+  const event = new Event('storage');
+  Object.defineProperty(event, 'key', { value: 'pinyin_hsk_level' });
+  Object.defineProperty(event, 'newValue', { value: String(level) });
+  window.dispatchEvent(event);
+}
 
 describe('ChainGame', () => {
   beforeEach(() => {
@@ -204,8 +221,11 @@ describe('ChainGame', () => {
       const result = onComplete.mock.calls[0]?.[0];
       expect(result?.correct).toBe(1);
       expect(result?.wrong).toBe(0);
-      // The chain game has no clock — the result carries no duration.
+      // The chain game has no clock — the result carries NO duration. The
+      // KEY must be absent: `durationMs: undefined` would satisfy a plain
+      // `toBeUndefined()` check, so the absence is what is asserted here.
       expect(result?.durationMs).toBeUndefined();
+      expect(Object.keys(result!)).not.toContain('durationMs');
     });
 
     it('does not fire onComplete while the chain can still grow', async () => {
@@ -259,6 +279,55 @@ describe('ChainGame', () => {
       });
       expect(onComplete).toHaveBeenCalledTimes(2);
       expect(onComplete.mock.calls[1]?.[0]?.correct).toBe(2);
+    });
+
+    // 2026-10-25 (Task 7, fix round 1): the fire-once guard belongs to the
+    // ROUND, not to the mount. The pool reloads whenever the HSK level or
+    // the difficulty changes (the HSK chips in the tab bar, a cross-tab
+    // storage event, the retry button) — and that reload starts a NEW
+    // chain, which has to report its own length.
+    it('a chain that follows an HSK change reports its own length', async () => {
+      const pool: CharInfo[] = [ci('安', 'ān'), ci('那', 'nà'), ci('呢', 'ne'), ci('饿', 'è')];
+      vi.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => pool,
+      } as Response);
+      const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+      const { ChainGame } = await import('@/components/game/ChainGame');
+      render(<ChainGame onComplete={onComplete} />);
+      await waitFor(() => screen.getByText(/可选字/));
+
+      // Round 1: 安 → 呢 → 饿, which dead-ends.
+      fireEvent.click(screen.getByText('呢'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙长度: 2/)).toBeTruthy();
+      });
+      fireEvent.click(screen.getByText('饿'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙结束/)).toBeTruthy();
+      });
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(onComplete.mock.calls[0]?.[0]?.correct).toBe(3);
+
+      // Another tab changed the HSK level — the pool reloads and a NEW
+      // chain starts. The fire-once guard must not swallow its report.
+      act(() => {
+        setHskLevelInAnotherTab(3);
+      });
+      await waitFor(() => screen.getByText(/可选字/));
+
+      // Round 2: the same chain again.
+      fireEvent.click(screen.getByText('呢'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙长度: 2/)).toBeTruthy();
+      });
+      fireEvent.click(screen.getByText('饿'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙结束/)).toBeTruthy();
+      });
+
+      expect(onComplete).toHaveBeenCalledTimes(2);
+      expect(onComplete.mock.calls[1]?.[0]?.correct).toBe(3);
     });
   });
 });
