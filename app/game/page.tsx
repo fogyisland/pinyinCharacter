@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
-import { GameModeTabs } from '@/components/game/GameModeTabs';
+import { QuestTabs } from '@/components/game/quest/QuestTabs';
 import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: '汉字小游戏',
-    description: '声调匹配、部首匹配、拼音接龙, 在游戏中学习汉字。',
+    description: '一字一关的汉字闯关：读音、声调、部首、词义四关全考，通关的字会收进字卡册。',
     path: '/game',
     ogType: 'website',
   });
@@ -25,9 +25,9 @@ export default function GamePage() {
       </Suspense>
       <PageContainer>
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
-        <SectionTitle subtitle="声调·部首 或 拼音·字 两种玩法">趣味识字</SectionTitle>
+        <SectionTitle subtitle="一字一关 · 读音 声调 部首 词义">趣味识字</SectionTitle>
         <div className="card-paper p-5">
-          <GameModeTabs />
+          <QuestTabs />
         </div>
       </PageContainer>
       <Footer />

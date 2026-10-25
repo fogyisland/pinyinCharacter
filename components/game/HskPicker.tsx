@@ -8,10 +8,10 @@ const HSKS: HskLevel[] = [1, 2, 3, 4, 5, 6];
 /**
  * The HSK tier picker.
  *
- * Extracted from `GameModeTabs` verbatim: the same six chips, the same
- * classes, the same store. The quest mode shares the tier with the legacy
- * games, so the two pickers must not drift apart - `GameModeTabs` keeps
- * rendering its own copy until the quest tab replaces it.
+ * The one tier row of `/game`: six chips that read and write the shared
+ * `useDifficulty` store, so the 闯关 ladder and the 每日一局 rounds always
+ * show the same tier. It replaces the old inline chip row - there is no
+ * second copy of it any more, and the two must never drift apart.
  */
 export function HskPicker() {
   const { hskLevel, setHskLevel } = useDifficulty();
