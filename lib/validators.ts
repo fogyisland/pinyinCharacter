@@ -189,6 +189,14 @@ export const gameRoundQuerySchema = z.object({
   hskLevel: z.coerce.number().int().min(1).max(6).optional(),
 });
 
+export const questQuerySchema = z.object({
+  hsk: z.coerce.number().int().min(1).max(6),
+  // The cap only rejects absurd input; a level beyond the tier's real
+  // level count is a 404 from the route, not a 400. The largest tier has
+  // 163 levels, so 1000 is comfortably above every real value.
+  level: z.coerce.number().int().min(1).max(1000),
+});
+
 export const charsListQuerySchema = z.object({
   q: z
     .string()
