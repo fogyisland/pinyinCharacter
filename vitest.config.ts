@@ -5,6 +5,12 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, '.'),
+      // The `server-only` marker package throws when it is imported outside
+      // a React Server Component. The tests run in plain Node, so the marker
+      // is neutralised here — the same thing the `react-server` export
+      // condition does in the app, and the same thing the MCP server does
+      // with its `--conditions=react-server` flag.
+      'server-only': path.resolve(__dirname, 'node_modules/server-only/empty.js'),
     },
   },
   esbuild: {
