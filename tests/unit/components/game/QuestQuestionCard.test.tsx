@@ -24,7 +24,7 @@ const PINYIN_QUESTION: QuestQuestion = {
   answerIndex: 0,
 };
 
-function renderCard(muted?: boolean): void {
+function renderCard(muted: boolean): void {
   render(
     <QuestQuestionCard
       question={TONE_QUESTION}
@@ -65,8 +65,8 @@ describe('QuestQuestionCard — the audio button', () => {
     expect(screen.queryByRole('button', { name: '🔊 听发音' })).toBeNull();
   });
 
-  it('treats an absent muted flag as unmuted', () => {
-    renderCard();
+  it('treats an explicit false flag as unmuted', () => {
+    renderCard(false);
 
     expect(screen.getByRole('button', { name: '🔊 听发音' })).not.toBeDisabled();
     expect(screen.queryByRole('button', { name: '🔇 已静音' })).toBeNull();
@@ -87,7 +87,7 @@ describe('QuestQuestionCard — the audio button', () => {
         onHint={vi.fn()}
         audio="idle"
         onPlayAudio={vi.fn()}
-        muted
+        muted={false}
       />,
     );
 

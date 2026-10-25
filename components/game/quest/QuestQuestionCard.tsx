@@ -32,10 +32,11 @@ export interface QuestQuestionCardProps {
   onPlayAudio: () => void;
   /**
    * The sound is muted. The ② audio button is then **disabled** and says
-   * 「🔇 已静音」 - a button that does nothing at all is a lie. Defaults to
-   * false.
+   * 「🔇 已静音」 - a button that does nothing at all is a lie.
+   *
+   * The flag is **required**: it pins the chain at compile time.
    */
-  muted?: boolean;
+  muted: boolean;
 }
 
 const PROMPTS: Record<QuestQuestionKind, string> = {
@@ -106,7 +107,7 @@ export function QuestQuestionCard({
   onHint,
   audio,
   onPlayAudio,
-  muted = false,
+  muted,
 }: QuestQuestionCardProps) {
   const removedIndex = hinted ? hintTargetIndex(question) : -1;
   const isTone = question.kind === 'tone';

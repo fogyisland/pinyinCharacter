@@ -32,14 +32,21 @@ vi.mock('@/components/game/quest/QuestRunner', async () => {
       level,
       onPassed,
       onNextLevel,
+      muted,
     }: {
       tier: number;
       level: number;
       onExit: () => void;
       onPassed: (level: number) => void;
       onNextLevel: () => void;
+      muted: boolean;
     }) => (
-      <div data-quest-runner data-runner-tier={tier} data-runner-level={level}>
+      <div
+        data-quest-runner
+        data-runner-tier={tier}
+        data-runner-level={level}
+        data-runner-muted={String(muted)}
+      >
         <button
           type="button"
           onClick={() => {
@@ -99,6 +106,11 @@ function runnerTier(): string | null {
 /** The level the mocked runner was given. */
 function runnerLevel(): string | null {
   return document.querySelector('[data-quest-runner]')?.getAttribute('data-runner-level') ?? null;
+}
+
+/** The mute flag the mocked runner was given - the value that enters the chain. */
+function runnerMuted(): string | null {
+  return document.querySelector('[data-quest-runner]')?.getAttribute('data-runner-muted') ?? null;
 }
 
 describe('QuestTabs — the four panels', () => {
@@ -261,5 +273,34 @@ describe('QuestTabs — the four panels', () => {
       .mocked(global.fetch)
       .mock.calls.filter((call) => String(call[0]).includes('/api/game/quest'));
     expect(questCalls).toHaveLength(0);
+  });
+
+  it('flips the sound toggle and hands the muted flag to the runner', async () => {
+    setUrl('?level=1');
+    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+    render(<QuestTabs />);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-quest-runner]')).not.toBeNull();
+    });
+
+    // The sound is on: the toggle says so and it is pressed.
+    const toggle = screen.getByRole('button', { name: '🔊 声音' });
+    expect(toggle.getAttribute('aria-pressed')).toBe('true');
+    expect(runnerMuted()).toBe('false');
+
+    fireEvent.click(toggle);
+
+    // The toggle flips: the label and the pressed state both follow.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: '🔇 静音' }).getAttribute('aria-pressed')).toBe(
+        'false',
+      );
+    });
+    // The value that enters the chain is the flipped one - the runner is
+    // given the muted flag, not the flag it was mounted with.
+    await waitFor(() => {
+      expect(runnerMuted()).toBe('true');
+    });
   });
 });

@@ -17,6 +17,7 @@ import { speak, stopSpeaking } from '@/lib/tts';
 import { prefetchTts } from '@/lib/tts-cache';
 import { QuestCharCard } from './QuestCharCard';
 import { LEVEL_MISSING, LOAD_FAILED, QuestErrorState } from './QuestErrorState';
+import type { QuestError } from './QuestErrorState';
 import { QuestQuestionCard } from './QuestQuestionCard';
 import { QuestSealRow } from './QuestSealRow';
 import { QuestSummary } from './QuestSummary';
@@ -36,8 +37,13 @@ export interface QuestRunnerProps {
   onPassed: (level: number) => void;
   /** The summary's 「下一关」 button - only the parent knows the next level. */
   onNextLevel: () => void;
-  /** The sound is muted - the ② audio button says 「🔇 已静音」 instead of lying. */
-  muted?: boolean;
+  /**
+   * The sound is muted - the ② audio button says 「🔇 已静音」 instead of lying.
+   *
+   * The flag is **required**: it pins the chain `QuestTabs → QuestPanel →
+   * QuestRunner → QuestQuestionCard` at compile time.
+   */
+  muted: boolean;
 }
 
 type Phase = 'loading' | 'playing' | 'summary';
@@ -117,7 +123,7 @@ async function playCharacterAudio(
 export function QuestRunner(props: QuestRunnerProps) {
   const { tier, level, onExit, onPassed, onNextLevel, muted } = props;
   const [phase, setPhase] = useState<Phase>('loading');
-  const [error, setError] = useState<{ message: string; canRetry: boolean } | null>(null);
+  const [error, setError] = useState<QuestError | null>(null);
   const [levelData, setLevelData] = useState<QuestLevelPayload | null>(null);
   const [round, setRound] = useState<RoundState | null>(null);
   const [charIndex, setCharIndex] = useState(0);

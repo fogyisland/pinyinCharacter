@@ -157,6 +157,7 @@ interface RunnerProps {
   onExit?: () => void;
   onPassed?: (level: number) => void;
   onNextLevel?: () => void;
+  muted?: boolean;
 }
 
 async function renderRunner(
@@ -172,6 +173,7 @@ async function renderRunner(
       onExit={props.onExit ?? vi.fn()}
       onPassed={props.onPassed ?? vi.fn()}
       onNextLevel={props.onNextLevel ?? vi.fn()}
+      muted={props.muted ?? false}
     />,
   );
   await waitFor(() => {
@@ -352,7 +354,7 @@ describe('QuestRunner — the quest flow', () => {
     expect(optionAt(3).dataset.state).toBe('correct');
   });
 
-  it('shows the error state and a retry button when the envelope is not ok', async () => {
+  it('shows the error state and no retry button when the envelope is not ok', async () => {
     vi.spyOn(global, 'fetch').mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -364,7 +366,14 @@ describe('QuestRunner — the quest flow', () => {
 
     const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
     render(
-      <QuestRunner tier={1} level={99} onExit={onExit} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+      <QuestRunner
+        tier={1}
+        level={99}
+        onExit={onExit}
+        onPassed={vi.fn()}
+        onNextLevel={vi.fn()}
+        muted={false}
+      />,
     );
 
     await waitFor(() => {
@@ -392,7 +401,14 @@ describe('QuestRunner — the quest flow', () => {
 
     const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
     render(
-      <QuestRunner tier={1} level={99} onExit={onExit} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+      <QuestRunner
+        tier={1}
+        level={99}
+        onExit={onExit}
+        onPassed={vi.fn()}
+        onNextLevel={vi.fn()}
+        muted={false}
+      />,
     );
 
     await waitFor(() => {
@@ -418,7 +434,14 @@ describe('QuestRunner — the quest flow', () => {
 
     const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
     render(
-      <QuestRunner tier={1} level={99} onExit={onExit} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+      <QuestRunner
+        tier={1}
+        level={99}
+        onExit={onExit}
+        onPassed={vi.fn()}
+        onNextLevel={vi.fn()}
+        muted={false}
+      />,
     );
 
     await waitFor(() => {
@@ -487,6 +510,7 @@ describe('QuestRunner — the quest flow', () => {
           onExit={vi.fn()}
           onPassed={vi.fn()}
           onNextLevel={vi.fn()}
+          muted={false}
         />,
       );
       await act(async () => {
@@ -581,5 +605,22 @@ describe('QuestRunner — the quest flow', () => {
     // The question is still answerable.
     fireEvent.click(optionAt(3));
     expect(optionAt(3).dataset.state).toBe('correct');
+  });
+
+  it('carries the runner mute flag down to the ② audio button', async () => {
+    // The flag is the runner's own prop - the storage read is a separate
+    // thing, and it is still off here.
+    expect(mockState.muted).toBe(false);
+
+    await renderRunner(levelOf([CHAR_AI]), { muted: true });
+
+    fireEvent.click(optionAt(0));
+    fireEvent.click(advanceButton());
+
+    // The card's button is the one the learner sees: it is disabled and it
+    // says so. A runner that dropped the flag would show a live 🔊 here.
+    const button = screen.getByRole('button', { name: '🔇 已静音' });
+    expect(button).toBeDisabled();
+    expect(screen.queryByRole('button', { name: /🔊/ })).toBeNull();
   });
 });
