@@ -4,10 +4,18 @@ import mysql from 'mysql2/promise';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const DB_URL = process.env.DATABASE_URL ?? 'mysql://root@127.0.0.1:3306/piyin_dev';
+// vitest does not load .env, so DATABASE_URL is unset in the test runner.
+// Mirror the repo's other integration tests (etymology-era-font, init-wizard):
+// skip cleanly unless the developer exports DATABASE_URL explicitly.
+// The old hard-coded fallback ('mysql://root@127.0.0.1:3306/piyin_dev') named a
+// database that does not exist and carried no password, so this file failed in
+// beforeAll on every run instead of skipping.
+const integrationSkip = !process.env.DATABASE_URL;
+
 const JSON_PATH = resolve(__dirname, '../../../data/hsk-vocab.json');
 
-describe('import-hsk', () => {
+describe.skipIf(integrationSkip)('import-hsk', () => {
+  const DB_URL = process.env.DATABASE_URL!;
   let conn: mysql.Connection;
 
   beforeAll(async () => {
