@@ -45,14 +45,15 @@ class StubNode {
 class StubOscillator extends StubNode {
   type = 'sine';
   frequency = new StubAudioParam();
-  started = false;
+  startCalls = 0;
+  stopCalls = 0;
 
   start(): void {
-    this.started = true;
+    this.startCalls += 1;
   }
 
   stop(): void {
-    this.started = false;
+    this.stopCalls += 1;
   }
 }
 
@@ -150,6 +151,21 @@ async function loadSoundModule() {
   return import('@/lib/game-sound');
 }
 
+/**
+ * Capture the warnings of the module.
+ *
+ * The library has to log when it degrades, so the warning is a behaviour that
+ * is asserted - and while the spy is installed it keeps the test output
+ * clean.
+ */
+function captureWarnings(): { messages: string[]; restore: () => void } {
+  const messages: string[] = [];
+  const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    messages.push(String(args[0]));
+  });
+  return { messages, restore: () => spy.mockRestore() };
+}
+
 beforeEach(() => {
   installStorageShim();
   StubAudioContext.instances = [];
@@ -200,6 +216,27 @@ describe('game-sound', () => {
 
     expect(StubAudioContext.instances.length).toBe(1);
     expect(StubAudioContext.instances[0].oscillators.length).toBeGreaterThanOrEqual(1);
+    expect(StubAudioContext.instances[0].oscillators[0].startCalls).toBe(1);
+    expect(StubAudioContext.instances[0].oscillators[0].stopCalls).toBe(1);
+  });
+
+  it('ignores a storage handle that cannot be used', async () => {
+    const { isSoundMuted } = await loadSoundModule();
+    const warnings = captureWarnings();
+
+    try {
+      // Node ships a globalThis.localStorage without a callable getItem.
+      Object.defineProperty(globalThis, 'localStorage', {
+        configurable: true,
+        value: { notAStorage: true },
+      });
+
+      expect(isSoundMuted()).toBe(false);
+      // A broken handle is "there is no storage", not a failure to report.
+      expect(warnings.messages).toEqual([]);
+    } finally {
+      warnings.restore();
+    }
   });
 
   it('plays nothing while the sound is muted', async () => {

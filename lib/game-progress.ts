@@ -111,24 +111,63 @@ function toFiniteNumber(value: unknown): number {
  * Rebuild a trusted state out of a parsed payload.
  *
  * The version has already been checked, but the rest of the payload can still
- * be half-written or hand-edited, so every field is coerced. A missing field
- * falls back to the default instead of exploding later in the UI.
+ * be half-written or hand-edited, so every container is rebuilt entry by
+ * entry:
+ *
+ * - `current` — a tier whose pointer is not an object, or whose `level` is
+ *   not a finite number, is dropped; that tier then has no pointer and the
+ *   consumer reads it as "level 1". A level beyond the tier's level count is
+ *   kept as it is - the store does not second-guess it, the board clamps it.
+ * - `collected` and `wrong` — an entry that is not an object is dropped, so a
+ *   `null` can never make the card book read a property off `null`. The
+ *   fields *inside* an entry are **not** coerced: an entry without
+ *   `meaningShort` keeps that field missing and degrades to an empty field
+ *   in the card.
+ * - `passed` — the levels that are not positive numbers are dropped.
+ * - `daily` — an entry that is not an object is dropped and the score of a
+ *   malformed one becomes 0.
  */
 function normalizeProgress(raw: Record<string, unknown>): GameProgress {
-  const base = defaultProgress();
   return {
     version: PROGRESS_VERSION,
-    current: isRecord(raw.current) ? (raw.current as GameProgress['current']) : base.current,
+    current: normalizeCurrent(raw.current),
     passed: normalizePassed(raw.passed),
     streak: toFiniteNumber(raw.streak),
     bestStreak: toFiniteNumber(raw.bestStreak),
-    collected: isRecord(raw.collected)
-      ? (raw.collected as GameProgress['collected'])
-      : base.collected,
-    wrong: isRecord(raw.wrong) ? (raw.wrong as GameProgress['wrong']) : base.wrong,
+    collected: normalizeEntries<CollectedChar>(raw.collected),
+    wrong: normalizeEntries<WrongChar>(raw.wrong),
     daily: normalizeDaily(raw.daily),
     updatedAt: toFiniteNumber(raw.updatedAt),
   };
+}
+
+/** Keep only the tiers whose level pointer is a finite number. */
+function normalizeCurrent(raw: unknown): GameProgress['current'] {
+  if (!isRecord(raw)) return {};
+  const current: GameProgress['current'] = {};
+  for (const [tier, pointer] of Object.entries(raw)) {
+    if (!isRecord(pointer)) continue;
+    const level = pointer.level;
+    if (typeof level !== 'number' || !Number.isFinite(level)) continue;
+    current[tier] = { level };
+  }
+  return current;
+}
+
+/**
+ * Keep only the entries that are objects.
+ *
+ * The fields inside an entry are kept as they are - the store does not
+ * fabricate a missing field, the consumer degrades it to an empty one.
+ */
+function normalizeEntries<T>(raw: unknown): Record<string, T> {
+  if (!isRecord(raw)) return {};
+  const entries: Record<string, T> = {};
+  for (const [key, entry] of Object.entries(raw)) {
+    if (!isRecord(entry)) continue;
+    entries[key] = entry as unknown as T;
+  }
+  return entries;
 }
 
 function normalizePassed(raw: unknown): GameProgress['passed'] {
@@ -298,11 +337,19 @@ export function recordMiss(
   return next;
 }
 
-/** Move the level pointer of a tier forward and remember the passed level. */
+/**
+ * Move the level pointer of a tier forward and remember the passed level.
+ *
+ * The pointer is the unlock frontier - the next level the player may open -
+ * so it only ever advances. Replaying an earlier level must not push the
+ * frontier back and re-lock the levels in between.
+ */
 export function markLevelPassed(progress: GameProgress, hsk: number, level: number): GameProgress {
   const next = cloneProgress(progress);
   const tier = String(hsk);
-  next.current[tier] = { level: level + 1 };
+  const existing = progress.current[tier]?.level;
+  const base = typeof existing === 'number' && Number.isFinite(existing) ? existing : 0;
+  next.current[tier] = { level: Math.max(base, level + 1) };
   const passed = next.passed[tier] ?? [];
   next.passed[tier] = passed.includes(level) ? passed : [...passed, level];
   return next;

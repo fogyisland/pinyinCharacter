@@ -96,6 +96,25 @@ function expectDefaultProgress(progress: GameProgress): void {
   expect(progress.daily).toEqual({});
 }
 
+/**
+ * Capture the warnings of the module.
+ *
+ * The library has to log when it degrades, so the warning is a behaviour that
+ * is asserted - and while the spy is installed it keeps the test output
+ * clean.
+ */
+function captureWarnings(): { messages: string[]; restore: () => void } {
+  const messages: string[] = [];
+  const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+    messages.push(String(args[0]));
+  });
+  return { messages, restore: () => spy.mockRestore() };
+}
+
+/** The fixed local date the daily tests are pinned to. */
+const FIXED_DATE = new Date(2026, 9, 25, 12, 0, 0);
+const FIXED_DATE_KEY = '2026-10-25';
+
 beforeEach(() => {
   writesFail = false;
   installStorageShim();
@@ -103,27 +122,42 @@ beforeEach(() => {
 
 afterEach(() => {
   writesFail = false;
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 });
 
 describe('game-progress', () => {
   it('resets to the default when the stored payload is corrupt', () => {
-    window.localStorage.setItem(PROGRESS_KEY, '{not json');
+    const warnings = captureWarnings();
 
-    const progress = loadProgress();
+    try {
+      window.localStorage.setItem(PROGRESS_KEY, '{not json');
 
-    expectDefaultProgress(progress);
+      const progress = loadProgress();
+
+      expectDefaultProgress(progress);
+      expect(warnings.messages.some((message) => message.includes('[game-progress]'))).toBe(true);
+    } finally {
+      warnings.restore();
+    }
   });
 
   it('resets to the default when the stored payload has an unknown version', () => {
-    window.localStorage.setItem(
-      PROGRESS_KEY,
-      JSON.stringify({ version: 99, current: { '1': { level: 7 } }, streak: 12 }),
-    );
+    const warnings = captureWarnings();
 
-    const progress = loadProgress();
+    try {
+      window.localStorage.setItem(
+        PROGRESS_KEY,
+        JSON.stringify({ version: 99, current: { '1': { level: 7 } }, streak: 12 }),
+      );
 
-    expectDefaultProgress(progress);
+      const progress = loadProgress();
+
+      expectDefaultProgress(progress);
+      expect(warnings.messages.some((message) => message.includes('[game-progress]'))).toBe(true);
+    } finally {
+      warnings.restore();
+    }
   });
 
   it('returns the default on the server, where there is no window', () => {
@@ -194,23 +228,80 @@ describe('game-progress', () => {
     expect(twice.passed['1']).toEqual([3]);
   });
 
-  it('keys the daily map by the local date', () => {
-    const progress = recordDaily(defaultProgress(), 'tone:medium:hsk1', 8);
+  it('never moves the level pointer backwards', () => {
+    const first = markLevelPassed(defaultProgress(), 1, 3);
+    const second = markLevelPassed(first, 1, 1);
 
-    expect(progress.daily[localDateKey()]['tone:medium:hsk1']).toEqual({ done: true, score: 8 });
+    expect(second.current['1'].level).toBe(4);
+    expect(second.passed['1']).toEqual([3, 1]);
+  });
+
+  it('drops a level pointer that is not an object', () => {
+    window.localStorage.setItem(
+      PROGRESS_KEY,
+      JSON.stringify({ version: 1, current: { '1': 'garbage' } }),
+    );
+
+    const progress = loadProgress();
+
+    expect(progress.current['1']).toBeUndefined();
+    expect(progress.current).toEqual({});
+  });
+
+  it('keeps a level pointer that points beyond the tier', () => {
+    window.localStorage.setItem(
+      PROGRESS_KEY,
+      JSON.stringify({ version: 1, current: { '1': { level: 999 } } }),
+    );
+
+    const progress = loadProgress();
+
+    expect(progress.current['1']).toEqual({ level: 999 });
+  });
+
+  it('drops a collected entry that is not an object', () => {
+    window.localStorage.setItem(
+      PROGRESS_KEY,
+      JSON.stringify({ version: 1, collected: { 爱: null } }),
+    );
+
+    const progress = loadProgress();
+
+    expect(progress.collected['爱']).toBeUndefined();
+    expect(progress.collected).toEqual({});
+  });
+
+  it('keys the daily map by the local date', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_DATE);
+
+    try {
+      const progress = recordDaily(defaultProgress(), 'tone:medium:hsk1', 8);
+
+      expect(progress.daily[FIXED_DATE_KEY]['tone:medium:hsk1']).toEqual({ done: true, score: 8 });
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps the three axes of the daily key independent', () => {
-    const tone = dailyKey('tone', 'medium', 1);
-    const harderHsk = dailyKey('tone', 'medium', 2);
-    const harderMode = dailyKey('tone', 'hard', 1);
+    vi.useFakeTimers();
+    vi.setSystemTime(FIXED_DATE);
 
-    expect(new Set([tone, harderHsk, harderMode]).size).toBe(3);
+    try {
+      const tone = dailyKey('tone', 'medium', 1);
+      const harderHsk = dailyKey('tone', 'medium', 2);
+      const harderMode = dailyKey('tone', 'hard', 1);
 
-    const progress = recordDaily(defaultProgress(), tone, 8);
+      expect(new Set([tone, harderHsk, harderMode]).size).toBe(3);
 
-    expect(progress.daily[localDateKey()][harderHsk]).toBeUndefined();
-    expect(progress.daily[localDateKey()][harderMode]).toBeUndefined();
+      const progress = recordDaily(defaultProgress(), tone, 8);
+
+      expect(progress.daily[FIXED_DATE_KEY][harderHsk]).toBeUndefined();
+      expect(progress.daily[FIXED_DATE_KEY][harderMode]).toBeUndefined();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('never writes to localStorage from a mutator', () => {
@@ -223,9 +314,17 @@ describe('game-progress', () => {
   });
 
   it('does not throw when the storage refuses the write', () => {
-    writesFail = true;
+    const warnings = captureWarnings();
 
-    expect(() => saveProgress(defaultProgress())).not.toThrow();
+    try {
+      writesFail = true;
+
+      expect(() => saveProgress(defaultProgress())).not.toThrow();
+      expect(warnings.messages.some((message) => message.includes('[game-progress]'))).toBe(true);
+    } finally {
+      writesFail = false;
+      warnings.restore();
+    }
   });
 
   it('formats the local date as YYYY-MM-DD', () => {

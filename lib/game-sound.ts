@@ -55,18 +55,33 @@ interface AudioGlobalScope {
 let audioContext: AudioContext | null = null;
 
 /**
+ * Is this a storage handle that can actually be used?
+ *
+ * Node ships a `globalThis.localStorage` that is an object **without** a
+ * callable `getItem`, so the mere presence of the property proves nothing -
+ * on the server it would hand out a handle that throws on the first read.
+ * Only a handle with callable methods is accepted.
+ */
+function isUsableStorage(candidate: unknown): candidate is Storage {
+  if (typeof candidate !== 'object' || candidate === null) return false;
+  const handle = candidate as Partial<Storage>;
+  return typeof handle.getItem === 'function' && typeof handle.setItem === 'function';
+}
+
+/**
  * The storage handle, or null when there is none.
  *
  * The game runs in the browser, but the module is also loaded on the server,
- * where there is no storage at all.
+ * where there is no storage at all. The `globalThis` fallback keeps the
+ * module usable in a worker or in a test that installs a global storage.
  */
 function getStorage(): Storage | null {
   try {
-    if (typeof window !== 'undefined' && window.localStorage) {
+    if (typeof window !== 'undefined' && isUsableStorage(window.localStorage)) {
       return window.localStorage;
     }
     const scope = globalThis as { localStorage?: Storage };
-    if (scope.localStorage) return scope.localStorage;
+    if (isUsableStorage(scope.localStorage)) return scope.localStorage;
   } catch (error) {
     console.warn('[game-sound] the localStorage is not accessible', error);
   }
