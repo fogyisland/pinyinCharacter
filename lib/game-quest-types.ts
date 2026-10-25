@@ -54,9 +54,13 @@ export interface QuestTier {
    *
    * Only clauses of **at least 2 characters** enter the pool: a 1-character
    * clause (e.g. 视's 看) cannot be a ④ distractor, because ④'s survival
-   * filter requires `candidate.length >= 2`. The pool and the ④ candidate
-   * list therefore share the same ≥2-character rule and produce identical
-   * candidate lists.
+   * filter requires `candidate.length >= 2`.
+   *
+   * The pool is a **superset** of ④'s candidate list — ④ additionally drops
+   * the clause that contains the char itself and the ones that share a
+   * 2-gram with it. (`scripts/verify-quest-numbers.mjs` does NOT apply the
+   * ≥2-character rule to its own pool, so it prints 150 clauses where this
+   * pool holds 149; the difference is 视's 看.)
    */
   clauses: string[];
 }

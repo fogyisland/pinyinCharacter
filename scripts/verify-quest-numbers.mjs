@@ -33,9 +33,11 @@ const TIERS = [1, 2, 3, 4, 5, 6];
 // can silently drift (e.g. if `ǹ` were ever added to TONE_MAP, the numbers
 // printed here would no longer match the library's).
 //
-// THE DRIFT GUARD IS TASK 2's §6.1 FIXTURE TEST: if the two copies diverge,
-// the printed payload changes and tests/unit/lib/game-quest.test.ts fails.
-// Re-sync this copy whenever TONE_MAP changes.
+// NO AUTOMATIC DRIFT GUARD. The §6.1 fixture test asserts the LIBRARY's
+// payload and never runs this script, so a drift in THIS copy would change
+// the numbers printed here while every test stayed green. The guard is
+// human: compare this script's output against the plan's numbers, and
+// re-sync this copy whenever TONE_MAP changes.
 const PLAIN_OF = {
   'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
   'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e',
@@ -75,8 +77,9 @@ const finalOf = (char) => pinyin(char, { pattern: 'final' });
  *
  * Mirrors lib/game-quest.ts's toneFormsOf, including the j/q/x/y ü-spelling
  * rule (pinyin-pro's `pattern: 'final'` restores the ü, but the standard
- * orthography writes it as u). Keep the two in lockstep — the drift guard is
- * the §6.1 fixture test.
+ * orthography writes it as u). Keep the two in lockstep — nothing in CI runs
+ * this copy, so the drift guard is comparing this script's output with the
+ * plan's numbers by hand.
  */
 function toneForms(char) {
   const final = finalOf(char);
