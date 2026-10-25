@@ -78,7 +78,10 @@ function readContentSafely(char: string): CharContent | null {
     // readContentFromFs swallows a schema failure, but a malformed JSON file
     // throws out of JSON.parse. Either way the char simply has no meaning
     // and no story, which makes it ineligible — the tier survives.
-    console.error('[game-quest] content read failed for', char, err);
+    console.error(
+      `[game-quest] content read failed for ${char} — the char loses its meaning and story, so it is dropped from the ladder (it becomes ineligible and the tier's skipped and levelCount shift)`,
+      err,
+    );
     return null;
   }
 }

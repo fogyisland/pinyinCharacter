@@ -184,6 +184,8 @@ describe('GET /api/game/quest', () => {
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('bad_input');
     expect(getQuestTier).not.toHaveBeenCalled();
+    // The errors are not cacheable either — a 404 is not permanent here.
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
   it('rejects a level below 1 with 400', async () => {
@@ -206,6 +208,9 @@ describe('GET /api/game/quest', () => {
     const body = await res.json();
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('level_not_found');
+    // A 404 is not permanent: the tier's eligible pool grows whenever a
+    // char's content is regenerated, so a browser must not cache it.
+    expect(res.headers.get('cache-control')).toBe('no-store');
   });
 
   it('answers 500 when the data layer fails', async () => {
