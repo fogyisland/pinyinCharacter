@@ -1,10 +1,6 @@
 import { getConfig } from '@/lib/config';
-import {
-  TtsConfigForm,
-  TTS_FEMALE_VOICES,
-  TTS_FORMATS,
-  TTS_MALE_VOICES,
-} from '@/components/admin/TtsConfigForm';
+import { TtsConfigForm } from '@/components/admin/TtsConfigForm';
+import { TTS_FEMALE_VOICES, TTS_FORMATS, TTS_MALE_VOICES } from '@/lib/tts-voice-options';
 import { PageHeader } from '@/components/admin/PageHeader';
 
 export const dynamic = 'force-dynamic';

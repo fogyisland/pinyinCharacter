@@ -6,25 +6,7 @@ import { updateTtsConfigRequest } from '@/lib/api-admin';
 import { Panel } from '@/components/admin/Panel';
 import { FormField } from '@/components/admin/FormField';
 import { AdminButton } from '@/components/admin/AdminButton';
-
-export const TTS_MALE_VOICES = [
-  { value: 'zh-CN-YunjianNeural', label: '云健 (男 · 沉稳)' },
-  { value: 'zh-CN-YunxiNeural', label: '云希 (男 · 活力)' },
-  { value: 'zh-CN-YunyangNeural', label: '云扬 (男 · 新闻)' },
-] as const;
-
-export const TTS_FEMALE_VOICES = [
-  { value: 'zh-CN-XiaoxiaoNeural', label: '晓晓 (女 · 温柔)' },
-  { value: 'zh-CN-XiaoyiNeural', label: '晓伊 (女 · 知性)' },
-  { value: 'zh-CN-XiaomengNeural', label: '晓梦 (女 · 童声)' },
-] as const;
-
-export const TTS_FORMATS = [
-  { value: 'audio-24khz-48kbitrate-mono-mp3', label: '24kHz · 48kbps (默认)' },
-  { value: 'audio-24khz-96kbitrate-mono-mp3', label: '24kHz · 96kbps (高质)' },
-  { value: 'audio-16khz-32kbitrate-mono-mp3', label: '16kHz · 32kbps (小)' },
-  { value: 'audio-16khz-128kbitrate-mono-mp3', label: '16kHz · 128kbps (高码率)' },
-] as const;
+import { TTS_FEMALE_VOICES, TTS_FORMATS, TTS_MALE_VOICES } from '@/lib/tts-voice-options';
 
 /**
  * The /admin/tts settings form.
