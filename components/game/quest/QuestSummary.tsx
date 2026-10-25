@@ -19,7 +19,12 @@ export interface QuestSummaryProps {
   missed: string[];
   passed: boolean;
   onNext: () => void;
-  onRemediate: () => void;
+  /**
+   * The remediation round (§5.6). It is **optional**: a second failure ends
+   * the attempt, and the runner then hands over no callback at all - the
+   * 「重挑错字」 button disappears.
+   */
+  onRemediate?: () => void;
   onExit: () => void;
 }
 
@@ -70,17 +75,21 @@ export function QuestSummary({
               </li>
             ))}
           </ul>
-          <button
-            type="button"
-            onClick={onRemediate}
-            className="rounded border border-seal bg-seal px-5 py-2 text-paper-soft hover:opacity-90"
-          >
-            重挑错字
-          </button>
+          {onRemediate ? (
+            <button
+              type="button"
+              onClick={onRemediate}
+              className="rounded border border-seal bg-seal px-5 py-2 text-paper-soft hover:opacity-90"
+            >
+              重挑错字
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={onExit}
-            className="ml-3 rounded border border-ink/20 bg-paper px-5 py-2 text-ink-soft hover:bg-paper-deep"
+            className={`rounded border border-ink/20 bg-paper px-5 py-2 text-ink-soft hover:bg-paper-deep ${
+              onRemediate ? 'ml-3' : ''
+            }`}
           >
             返回关卡地图
           </button>

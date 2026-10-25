@@ -590,6 +590,37 @@ textarea.adm-input {
   }
 }
 
+/* ============ Quest feedback ============ */
+/* A wrong answer shakes the char card (spec §7.2). The card is the learner's
+   anchor while the options are read, so the miss has to be felt there and
+   not only in the option's colour. */
+.quest-shake {
+  animation: quest-shake 420ms ease-in-out;
+}
+@keyframes quest-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quest-shake {
+    animation: none;
+  }
+}
+
 /* ============ Hard-pen fonts (Plan G2) ============ */
 @font-face {
   font-family: 'LXGW WenKai GB';

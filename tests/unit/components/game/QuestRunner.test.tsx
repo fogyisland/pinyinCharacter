@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { installLocalStorageShim } from './helpers';
 import type { QuestCharPayload, QuestLevelPayload } from '@/lib/game-quest-types';
 
@@ -15,6 +15,7 @@ import type { QuestCharPayload, QuestLevelPayload } from '@/lib/game-quest-types
  */
 const mockState = vi.hoisted(() => ({
   speak: vi.fn(async (): Promise<void> => {}),
+  muted: false,
 }));
 
 vi.mock('@/lib/tts', () => ({
@@ -27,7 +28,7 @@ vi.mock('@/lib/game-sound', () => ({
   playThud: vi.fn(),
   playFanfare: vi.fn(),
   playStamp: vi.fn(),
-  isSoundMuted: () => false,
+  isSoundMuted: () => mockState.muted,
 }));
 
 vi.mock('@/lib/tts-cache', () => ({
@@ -151,13 +152,32 @@ function answerCorrectly(char: QuestCharPayload, questionIndex: number): void {
   fireEvent.click(advanceButton());
 }
 
-async function renderRunner(payload: QuestLevelPayload): Promise<void> {
+/** The props the runner takes - every render has to wire all five. */
+interface RunnerProps {
+  onExit?: () => void;
+  onPassed?: (level: number) => void;
+  onNextLevel?: () => void;
+}
+
+async function renderRunner(
+  payload: QuestLevelPayload,
+  props: RunnerProps = {},
+): Promise<HTMLElement> {
   mockLevelOk(payload);
   const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
-  render(<QuestRunner tier={1} level={1} onExit={vi.fn()} onPassed={vi.fn()} />);
+  const { container } = render(
+    <QuestRunner
+      tier={1}
+      level={1}
+      onExit={props.onExit ?? vi.fn()}
+      onPassed={props.onPassed ?? vi.fn()}
+      onNextLevel={props.onNextLevel ?? vi.fn()}
+    />,
+  );
   await waitFor(() => {
     expect(promptOf('pinyin')).not.toBeNull();
   });
+  return container;
 }
 
 describe('QuestRunner — the quest flow', () => {
@@ -169,6 +189,7 @@ describe('QuestRunner — the quest flow', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     mockState.speak.mockReset();
     mockState.speak.mockImplementation(async (): Promise<void> => {});
+    mockState.muted = false;
   });
 
   it('opens the level and asks the ① question first', async () => {
@@ -217,8 +238,9 @@ describe('QuestRunner — the quest flow', () => {
     const after = optionIndexes();
     expect(after).toHaveLength(before.length - 1);
     const removed = before.find((index) => !after.includes(index));
-    // The ② answer sits at index 3 - the hint may never remove it.
-    expect(removed).not.toBe(3);
+    // The ② answer sits at the fixture's own index - the hint may never
+    // remove it.
+    expect(removed).not.toBe(CHAR_AI.questions[1].answerIndex);
     // The hint breaks the combo.
     expect(comboValue()).toBe('0');
   });
@@ -333,7 +355,9 @@ describe('QuestRunner — the quest flow', () => {
     } as Response);
 
     const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
-    render(<QuestRunner tier={1} level={99} onExit={vi.fn()} onPassed={vi.fn()} />);
+    render(
+      <QuestRunner tier={1} level={99} onExit={vi.fn()} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('这一关暂时打不开')).toBeTruthy();
@@ -352,11 +376,135 @@ describe('QuestRunner — the quest flow', () => {
     } as Response);
 
     const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
-    render(<QuestRunner tier={1} level={99} onExit={vi.fn()} onPassed={vi.fn()} />);
+    render(
+      <QuestRunner tier={1} level={99} onExit={vi.fn()} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+    );
 
     await waitFor(() => {
       expect(screen.getByText('这一关暂时打不开')).toBeTruthy();
     });
     expect(screen.getByRole('button', { name: '重试' })).toBeTruthy();
+  });
+
+  it('ends the attempt after a second failure', async () => {
+    await renderRunner(levelOf([CHAR_AI]));
+
+    // Miss ①, then answer the other three correctly.
+    fireEvent.click(optionAt(1));
+    fireEvent.click(advanceButton());
+    answerCorrectly(CHAR_AI, 1);
+    answerCorrectly(CHAR_AI, 2);
+    answerCorrectly(CHAR_AI, 3);
+
+    // The first failure offers the remediation.
+    fireEvent.click(screen.getByRole('button', { name: '重挑错字' }));
+
+    // The remediation re-asks ① - fail it again and the attempt is over.
+    fireEvent.click(optionAt(1));
+    fireEvent.click(advanceButton());
+
+    expect(screen.queryByRole('button', { name: '重挑错字' })).toBeNull();
+    expect(screen.getByRole('button', { name: '返回关卡地图' })).toBeTruthy();
+  });
+
+  it('opens the next level from the summary', async () => {
+    const onNextLevel = vi.fn();
+    const onExit = vi.fn();
+    await renderRunner(levelOf([CHAR_AI]), { onNextLevel, onExit });
+
+    answerCorrectly(CHAR_AI, 0);
+    answerCorrectly(CHAR_AI, 1);
+    answerCorrectly(CHAR_AI, 2);
+    answerCorrectly(CHAR_AI, 3);
+
+    fireEvent.click(screen.getByRole('button', { name: '下一关' }));
+
+    expect(onNextLevel).toHaveBeenCalledTimes(1);
+    // 「下一关」 is not 「返回关卡地图」.
+    expect(onExit).not.toHaveBeenCalled();
+  });
+
+  it('gives the audio up after 3 seconds and keeps the question answerable', async () => {
+    mockState.speak.mockImplementation((): Promise<void> => new Promise(() => {}));
+    vi.useFakeTimers();
+    try {
+      mockLevelOk(levelOf([CHAR_AI]));
+      const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
+      render(
+        <QuestRunner
+          tier={1}
+          level={1}
+          onExit={vi.fn()}
+          onPassed={vi.fn()}
+          onNextLevel={vi.fn()}
+        />,
+      );
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(0);
+      });
+      expect(promptOf('pinyin')).not.toBeNull();
+
+      // ② plays the character - the request never settles.
+      fireEvent.click(optionAt(0));
+      fireEvent.click(advanceButton());
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(3000);
+      });
+
+      expect(screen.getByRole('button', { name: '🔊 暂时不可用' })).toBeTruthy();
+
+      // The question is still answerable.
+      fireEvent.click(optionAt(3));
+      expect(optionAt(3).dataset.state).toBe('correct');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('shakes the char card and marks the wrong option with a cross', async () => {
+    const container = await renderRunner(levelOf([CHAR_AI]));
+
+    fireEvent.click(optionAt(1));
+
+    const card = container.querySelector('[data-wrong="true"]');
+    expect(card).not.toBeNull();
+    expect(card?.className).toContain('quest-shake');
+    expect(optionAt(1).textContent).toContain('✕');
+  });
+
+  it('renders one seal per char of the level', async () => {
+    const container = await renderRunner(levelOf(FIXTURE_CHARS));
+
+    expect(container.querySelectorAll('[data-seal-row]')).toHaveLength(3);
+    // Nothing is 认会 yet.
+    expect(container.querySelectorAll('[data-mastered="true"]')).toHaveLength(0);
+  });
+
+  it('confirms the note with 记一笔 and keeps the jump to the book', async () => {
+    await renderRunner(levelOf([CHAR_AI]));
+
+    fireEvent.click(optionAt(1));
+    expect(screen.queryByText('已记入生字本')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: '记一笔' }));
+    expect(screen.getByText('已记入生字本')).toBeTruthy();
+
+    // The jump to the 生字本 is a separate link - the button only confirms.
+    const link = document.querySelector('a[data-action="note"]');
+    expect(link?.getAttribute('href')).toBe('/game?tab=wrong');
+  });
+
+  it('does not play the character when the sound is muted', async () => {
+    mockState.muted = true;
+    await renderRunner(levelOf([CHAR_AI]));
+
+    fireEvent.click(optionAt(0));
+    fireEvent.click(advanceButton());
+
+    expect(mockState.speak).not.toHaveBeenCalled();
+    // The question is still answerable.
+    fireEvent.click(optionAt(3));
+    expect(optionAt(3).dataset.state).toBe('correct');
   });
 });

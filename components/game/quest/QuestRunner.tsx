@@ -9,12 +9,15 @@ import {
   recordMiss,
   saveProgress,
 } from '@/lib/game-progress';
-import type { CharSnapshot, CollectedSnapshot } from '@/lib/game-progress';
+import type { CollectedSnapshot } from '@/lib/game-progress';
+import { charSnapshot, revealedFacets } from '@/lib/game-quest-reveal';
+import type { QuestRevealRound } from '@/lib/game-quest-reveal';
 import { isSoundMuted, playChime, playFanfare, playStamp, playThud } from '@/lib/game-sound';
 import { speak, stopSpeaking } from '@/lib/tts';
 import { prefetchTts } from '@/lib/tts-cache';
 import { QuestCharCard } from './QuestCharCard';
 import { QuestQuestionCard } from './QuestQuestionCard';
+import { QuestSealRow } from './QuestSealRow';
 import { QuestSummary } from './QuestSummary';
 
 /**
@@ -30,10 +33,11 @@ export interface QuestRunnerProps {
   level: number;
   onExit: () => void;
   onPassed: (level: number) => void;
+  /** The summary's 「下一关」 button - only the parent knows the next level. */
+  onNextLevel: () => void;
 }
 
 type Phase = 'loading' | 'playing' | 'summary';
-type RoundKind = 'main' | 'remediation';
 type AudioState = 'idle' | 'loading' | 'playing' | 'unavailable';
 
 interface Attempt {
@@ -43,19 +47,8 @@ interface Attempt {
   hinted: boolean;
 }
 
-interface RoundState {
-  kind: RoundKind;
+interface RoundState extends QuestRevealRound {
   chars: QuestCharPayload[];
-  /** For each char: the original question indices this round asks, in order. */
-  questionIndices: number[][];
-  /** For each char: how many of its round questions are already answered. */
-  answeredCounts: number[];
-}
-
-interface Facets {
-  pinyin: boolean;
-  radical: boolean;
-  meaning: boolean;
 }
 
 interface QuestResponse {
@@ -66,80 +59,59 @@ interface QuestResponse {
 
 const EMPTY_ATTEMPT: Attempt = { selected: null, answered: false, correct: false, hinted: false };
 
-/** The fields a char contributes to both books - the collection book adds the story flag. */
-function charSnapshot(char: QuestCharPayload): CharSnapshot {
-  return {
-    pinyin: char.pinyin,
-    plainPinyin: char.plainPinyin,
-    tone: char.tone,
-    toneName: char.toneName,
-    radical: char.radical,
-    meaningShort: char.meaningShort,
-  };
+/** The audio is a progressive enhancement - it is given up after 3 s (spec §5.2). */
+const AUDIO_TIMEOUT_MS = 3000;
+
+/** The holder of the audio timeout id - the effect cleanup clears it. */
+interface AudioTimerRef {
+  current: ReturnType<typeof setTimeout> | null;
 }
 
-/** ① and ② both test the pinyin - ②'s options are the four tone forms of that syllable. */
-function testsPinyin(questionIndex: number): boolean {
-  return questionIndex === 0 || questionIndex === 1;
-}
-
-function testsRadical(questionIndex: number): boolean {
-  return questionIndex === 2;
-}
-
-function testsMeaning(questionIndex: number): boolean {
-  return questionIndex === 3;
-}
-
-/**
- * The reveal rule (§7.2) - a facet is hidden while a pending question in the
- * current round tests it.
- */
-function revealedFacets(charIndex: number, questionIndex: number, round: RoundState): Facets {
-  const indices = round.questionIndices[charIndex] ?? [];
-  // Everything before the current question is answered; the current one
-  // counts as pending until the learner has answered it.
-  const answeredCount = Math.max(round.answeredCounts[charIndex] ?? 0, questionIndex);
-  const pending = indices.slice(answeredCount);
-  let pinyin = !pending.some(testsPinyin);
-  const radical = !pending.some(testsRadical);
-  const meaning = !pending.some(testsMeaning);
-  if (round.kind === 'remediation' && indices.some(testsPinyin)) {
-    // A remediation round re-hides the facet it re-tests.
-    pinyin = false;
-  }
-  return { pinyin, radical, meaning };
+/** Clear the pending audio timeout - a dangling timer would outlive the question. */
+function clearAudioTimer(timerRef: AudioTimerRef): void {
+  if (timerRef.current === null) return;
+  clearTimeout(timerRef.current);
+  timerRef.current = null;
 }
 
 /**
  * Play the character.
  *
  * The mute switch silences the character audio too (§9), so the call is
- * skipped when the player muted the sound. A rejected playback leaves the
- * question fully answerable - the 🔊 button simply reports that the audio is
- * not available.
+ * skipped when the player muted the sound. The audio never blocks the
+ * question (spec §5.2): if the request fails **or has not produced audio
+ * within ~3 s**, the 🔊 button reports 「🔊 暂时不可用」 and the question stays
+ * fully answerable.
  */
 async function playCharacterAudio(
   text: string,
   setAudio: (state: AudioState) => void,
+  timerRef: AudioTimerRef,
 ): Promise<void> {
   if (isSoundMuted()) return;
   setAudio('loading');
-  let timer = 0;
+  clearAudioTimer(timerRef);
+  let playingTimer: ReturnType<typeof setTimeout> | null = null;
   try {
     const pending = speak(text, { voice: 'male' });
-    timer = window.setTimeout(() => setAudio('playing'), 400);
-    await pending;
+    playingTimer = setTimeout(() => setAudio('playing'), 400);
+    const timeout = new Promise<never>((_, reject) => {
+      timerRef.current = setTimeout(() => {
+        reject(new Error('the character audio did not arrive in time'));
+      }, AUDIO_TIMEOUT_MS);
+    });
+    await Promise.race([pending, timeout]);
     setAudio('idle');
   } catch (failure) {
     console.warn('[quest] the character audio is not available', failure);
     setAudio('unavailable');
   } finally {
-    if (timer) window.clearTimeout(timer);
+    if (playingTimer !== null) clearTimeout(playingTimer);
+    clearAudioTimer(timerRef);
   }
 }
 
-export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps) {
+export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: QuestRunnerProps) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [error, setError] = useState<string | null>(null);
   const [levelData, setLevelData] = useState<QuestLevelPayload | null>(null);
@@ -155,12 +127,15 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
   /** The chars whose four questions are all correct - they enter the 字卡册. */
   const [masteredChars, setMasteredChars] = useState<Record<string, boolean>>({});
   const [notedChar, setNotedChar] = useState<string | null>(null);
+  /** The remediation is offered once - a second failure ends the attempt (§5.6). */
+  const [remediationUsed, setRemediationUsed] = useState(false);
   const [retryToken, setRetryToken] = useState(0);
 
   /** The per-char correctness of the four questions - `null` means unanswered. */
   const answersRef = useRef<Record<string, (boolean | null)[]>>({});
   const collectedRef = useRef<Set<string>>(new Set());
   const passedRef = useRef(false);
+  const audioTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -194,6 +169,8 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
         setHintedChars({});
         setMasteredChars({});
         setNotedChar(null);
+        // A new level is a new attempt.
+        setRemediationUsed(false);
         setPhase('playing');
         for (const char of payload.chars) {
           void prefetchTts('male', char.char).catch((failure) => {
@@ -232,9 +209,11 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
     // The character is played once when the ② question appears. The first
     // one of a fresh visit is blocked by the browser, which is why the 🔊
     // button is the primary path.
-    void playCharacterAudio(audioChar, setAudio);
+    void playCharacterAudio(audioChar, setAudio, audioTimerRef);
     return () => {
       stopSpeaking();
+      // A question that is left behind must not keep a timer alive.
+      clearAudioTimer(audioTimerRef);
     };
   }, [phase, audioChar, audioKind]);
 
@@ -256,7 +235,8 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
   }
 
   function applyAnswer(char: QuestCharPayload, questionPosition: number, isCorrect: boolean): void {
-    const previous = answersRef.current[char.char] ?? [null, null, null, null];
+    const previous =
+      answersRef.current[char.char] ?? Array.from({ length: char.questions.length }, () => null);
     const next = [...previous];
     next[questionPosition] = isCorrect;
     answersRef.current = { ...answersRef.current, [char.char]: next };
@@ -270,7 +250,7 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
           }
         : previousRound,
     );
-    // A char is 认会 when all four of its questions are correct.
+    // A char is 认会 when all of its questions are correct.
     if (next.length === char.questions.length && next.every((value) => value === true)) {
       collect(char);
     }
@@ -310,7 +290,7 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
   function handlePlayAudio(): void {
     const { char } = current;
     if (!char) return;
-    void playCharacterAudio(char.char, setAudio);
+    void playCharacterAudio(char.char, setAudio, audioTimerRef);
   }
 
   function finishRound(): void {
@@ -344,9 +324,11 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
   /**
    * The remediation round (§5.6): it re-asks only the missed questions of the
    * missed chars, entirely from the payload that is already in memory - there
-   * is no second API call.
+   * is no second API call. It is offered once: a second failure ends the
+   * attempt.
    */
   function handleRemediate(): void {
+    if (remediationUsed) return;
     if (!levelData) return;
     const chars = levelData.chars.filter((char) => !isMastered(char));
     if (chars.length === 0) return;
@@ -358,6 +340,7 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
       });
       return indices;
     });
+    setRemediationUsed(true);
     setRound({
       kind: 'remediation',
       chars,
@@ -373,10 +356,11 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
     setPhase('playing');
   }
 
-  if (error) {
+  /** The error state - the same block for a failed load and for a broken round. */
+  function errorState(message: string) {
     return (
       <div className="py-12 text-center">
-        <p className="text-ink-soft">{error}</p>
+        <p className="text-ink-soft">{message}</p>
         <button
           type="button"
           onClick={() => setRetryToken((token) => token + 1)}
@@ -386,6 +370,10 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
         </button>
       </div>
     );
+  }
+
+  if (error) {
+    return errorState(error);
   }
 
   if (phase === 'loading') {
@@ -400,15 +388,15 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
         chars={levelData.chars}
         missed={missed}
         passed={missed.length === 0}
-        onNext={onExit}
-        onRemediate={handleRemediate}
+        onNext={onNextLevel}
+        onRemediate={remediationUsed ? undefined : handleRemediate}
         onExit={onExit}
       />
     );
   }
 
   if (!round || !current.char || !current.question || current.questionPosition === null) {
-    return <p className="py-12 text-center text-ink-faint">这一关暂时打不开</p>;
+    return errorState('这一关暂时打不开');
   }
 
   const facets = revealedFacets(charIndex, questionIndex, round);
@@ -433,14 +421,7 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
         </button>
       </div>
 
-      <div className="mb-3 flex gap-1" aria-label="本关进度">
-        {round.chars.map((char) => (
-          <span
-            key={char.char}
-            className={`h-2 w-2 rounded-full ${isMastered(char) ? 'bg-seal' : 'bg-ink/15'}`}
-          />
-        ))}
-      </div>
+      <QuestSealRow chars={round.chars} mastered={masteredChars} />
 
       <QuestCharCard
         char={activeChar}
@@ -449,6 +430,7 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
         showMeaning={facets.meaning}
         stamped={stampedChars[current.char.char] === true}
         hinted={hintedChars[current.char.char] === true}
+        wrong={attempt.answered && !attempt.correct}
       />
 
       <div className="mt-4">
@@ -480,17 +462,23 @@ export function QuestRunner({ tier, level, onExit, onPassed }: QuestRunnerProps)
           </button>
           {attempt.correct ? null : (
             <>
-              <a
-                href="/game?tab=wrong"
-                data-action="note"
+              <button
+                type="button"
                 onClick={() => setNotedChar(activeChar.char)}
                 className="rounded border border-ink/20 bg-paper px-4 py-2 text-sm text-ink-soft hover:bg-paper-deep"
               >
                 记一笔
-              </a>
+              </button>
               {notedChar === activeChar.char ? (
                 <span className="text-xs text-ink-faint">已记入生字本</span>
               ) : null}
+              <a
+                href="/game?tab=wrong"
+                data-action="note"
+                className="text-xs text-seal hover:underline"
+              >
+                生字本
+              </a>
             </>
           )}
         </div>

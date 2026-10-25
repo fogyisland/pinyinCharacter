@@ -8,7 +8,8 @@
  *
  * - `idle` — open, the learner may still pick it;
  * - `correct` — the learner picked it and it was right;
- * - `wrong` — the learner picked it and it was wrong;
+ * - `wrong` — the learner picked it and it was wrong - it carries a ✕ mark, so
+ *   the miss is not carried by the colour alone (spec §7.2);
  * - `revealed` — the answer, shown after a miss;
  * - `disabled` — the question is locked and this option is not the answer.
  */
@@ -41,6 +42,7 @@ export function QuestOptionButton({ label, state, onClick }: QuestOptionButtonPr
       className={`w-full rounded border px-4 py-3 text-left transition-colors ${STATE_CLASS[state]}`}
     >
       {label}
+      {state === 'wrong' ? <span className="ml-2">✕</span> : null}
     </button>
   );
 }

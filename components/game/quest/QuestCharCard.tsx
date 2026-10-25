@@ -23,6 +23,11 @@ export interface QuestCharCardProps {
    * 「用过提示」 mark on the card, and the flag is the runner's to know.
    */
   hinted?: boolean;
+  /**
+   * The last answer was wrong. The spec (§7.2) asks for a feedback the
+   * learner cannot miss: the card shakes and tints 淡红.
+   */
+  wrong?: boolean;
 }
 
 export function QuestCharCard({
@@ -32,9 +37,17 @@ export function QuestCharCard({
   showMeaning,
   stamped,
   hinted = false,
+  wrong = false,
 }: QuestCharCardProps) {
   return (
-    <div className="card-paper rounded-lg p-6 text-center">
+    <div
+      data-wrong={wrong ? 'true' : undefined}
+      className={`card-paper rounded-lg p-6 text-center ${
+        // The `!` matters: `.card-paper` sets the background and the border
+        // in the same utilities layer, and it comes later in the sheet.
+        wrong ? 'quest-shake border-danger! bg-danger/10!' : ''
+      }`}
+    >
       <div className="relative mx-auto flex h-32 w-32 items-center justify-center">
         <span className="font-kai text-7xl leading-none">{char.char}</span>
         <QuestSealStamp visible={stamped} />

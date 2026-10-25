@@ -102,7 +102,7 @@ export function QuestQuestionCard({
         <div data-prompt={question.kind} className="text-lg text-ink">
           {isTone ? (
             <p>
-              <span className="text-3xl font-semibold">{plainPinyin}</span> 读第几声？
+              <span className="text-3xl font-semibold">{plainPinyin}</span> {PROMPTS.tone}
             </p>
           ) : (
             <p>{PROMPTS[question.kind]}</p>
