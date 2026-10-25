@@ -30,6 +30,12 @@ export interface QuestQuestionCardProps {
   /** The ② audio state - 'idle' for the other three kinds. */
   audio: 'idle' | 'loading' | 'playing' | 'unavailable';
   onPlayAudio: () => void;
+  /**
+   * The sound is muted. The ② audio button is then **disabled** and says
+   * 「🔇 已静音」 - a button that does nothing at all is a lie. Defaults to
+   * false.
+   */
+  muted?: boolean;
 }
 
 const PROMPTS: Record<QuestQuestionKind, string> = {
@@ -45,6 +51,14 @@ const AUDIO_LABELS: Record<QuestQuestionCardProps['audio'], string> = {
   playing: '🔊 播放中',
   unavailable: '🔊 暂时不可用',
 };
+
+/**
+ * The label of the audio button while the sound is muted.
+ *
+ * It is a separate state, not a fifth audio state: the four `AUDIO_LABELS`
+ * entries describe the *request*, the mute describes the *switch*.
+ */
+const MUTED_LABEL = '🔇 已静音';
 
 type OptionState = 'idle' | 'correct' | 'wrong' | 'revealed' | 'disabled';
 
@@ -92,6 +106,7 @@ export function QuestQuestionCard({
   onHint,
   audio,
   onPlayAudio,
+  muted = false,
 }: QuestQuestionCardProps) {
   const removedIndex = hinted ? hintTargetIndex(question) : -1;
   const isTone = question.kind === 'tone';
@@ -112,9 +127,10 @@ export function QuestQuestionCard({
           <button
             type="button"
             onClick={onPlayAudio}
-            className="shrink-0 rounded border border-ink/20 bg-paper px-3 py-2 text-sm text-ink-soft hover:bg-paper-deep"
+            disabled={muted}
+            className="shrink-0 rounded border border-ink/20 bg-paper px-3 py-2 text-sm text-ink-soft hover:bg-paper-deep disabled:opacity-50"
           >
-            {AUDIO_LABELS[audio]}
+            {muted ? MUTED_LABEL : AUDIO_LABELS[audio]}
           </button>
         ) : null}
       </div>

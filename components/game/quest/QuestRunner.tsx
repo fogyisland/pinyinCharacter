@@ -16,6 +16,7 @@ import { isSoundMuted, playChime, playFanfare, playStamp, playThud } from '@/lib
 import { speak, stopSpeaking } from '@/lib/tts';
 import { prefetchTts } from '@/lib/tts-cache';
 import { QuestCharCard } from './QuestCharCard';
+import { LEVEL_MISSING, LOAD_FAILED, QuestErrorState } from './QuestErrorState';
 import { QuestQuestionCard } from './QuestQuestionCard';
 import { QuestSealRow } from './QuestSealRow';
 import { QuestSummary } from './QuestSummary';
@@ -35,6 +36,8 @@ export interface QuestRunnerProps {
   onPassed: (level: number) => void;
   /** The summary's 「下一关」 button - only the parent knows the next level. */
   onNextLevel: () => void;
+  /** The sound is muted - the ② audio button says 「🔇 已静音」 instead of lying. */
+  muted?: boolean;
 }
 
 type Phase = 'loading' | 'playing' | 'summary';
@@ -111,9 +114,10 @@ async function playCharacterAudio(
   }
 }
 
-export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: QuestRunnerProps) {
+export function QuestRunner(props: QuestRunnerProps) {
+  const { tier, level, onExit, onPassed, onNextLevel, muted } = props;
   const [phase, setPhase] = useState<Phase>('loading');
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<{ message: string; canRetry: boolean } | null>(null);
   const [levelData, setLevelData] = useState<QuestLevelPayload | null>(null);
   const [round, setRound] = useState<RoundState | null>(null);
   const [charIndex, setCharIndex] = useState(0);
@@ -146,6 +150,12 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
         const res = await fetch(`/api/game/quest?hsk=${tier}&level=${level}`);
         const body = (await res.json()) as QuestResponse;
         if (!res.ok || !body.ok || !body.data) {
+          // The tier is built once per process - a missing level cannot come back.
+          if (body.error?.code === 'level_not_found') {
+            if (cancelled) return;
+            setError(LEVEL_MISSING);
+            return;
+          }
           throw new Error(body.error?.code ?? `http_${res.status}`);
         }
         if (cancelled) return;
@@ -180,7 +190,7 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
       } catch (failure) {
         if (cancelled) return;
         console.warn('[quest] the level could not be loaded', failure);
-        setError('这一关暂时打不开');
+        setError(LOAD_FAILED);
       }
     })();
     return () => {
@@ -356,24 +366,11 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
     setPhase('playing');
   }
 
-  /** The error state - the same block for a failed load and for a broken round. */
-  function errorState(message: string) {
-    return (
-      <div className="py-12 text-center">
-        <p className="text-ink-soft">{message}</p>
-        <button
-          type="button"
-          onClick={() => setRetryToken((token) => token + 1)}
-          className="mt-3 rounded border border-seal bg-seal px-4 py-2 text-paper-soft hover:opacity-90"
-        >
-          重试
-        </button>
-      </div>
-    );
-  }
+  /** The 「重试」 handler - it re-runs the load effect. */
+  const handleRetry = (): void => setRetryToken((token) => token + 1);
 
   if (error) {
-    return errorState(error);
+    return <QuestErrorState {...error} onRetry={handleRetry} onExit={onExit} />;
   }
 
   if (phase === 'loading') {
@@ -402,7 +399,7 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
     !current.question ||
     current.questionPosition === null
   ) {
-    return errorState('这一关暂时打不开');
+    return <QuestErrorState {...LOAD_FAILED} onRetry={handleRetry} onExit={onExit} />;
   }
 
   const facets = revealedFacets(charIndex, questionIndex, round);
@@ -453,6 +450,7 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
           onHint={handleHint}
           audio={audio}
           onPlayAudio={handlePlayAudio}
+          muted={muted}
         />
       </div>
 

@@ -353,16 +353,23 @@ describe('QuestRunner — the quest flow', () => {
         error: { code: 'level_not_found', message: '这一关不存在' },
       }),
     } as Response);
+    const onExit = vi.fn();
 
     const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
     render(
-      <QuestRunner tier={1} level={99} onExit={vi.fn()} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+      <QuestRunner tier={1} level={99} onExit={onExit} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('这一关暂时打不开')).toBeTruthy();
+      expect(screen.getByText('这一关不存在 —— 它可能已经随着字库更新而移走了')).toBeTruthy();
     });
-    expect(screen.getByRole('button', { name: '重试' })).toBeTruthy();
+    // A missing level is permanent for the running process - there is
+    // nothing to retry, but there is always a way back.
+    expect(screen.queryByRole('button', { name: '重试' })).toBeNull();
+    expect(screen.getByRole('button', { name: '返回关卡地图' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '返回关卡地图' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
   });
 
   it('shows the error state when the HTTP status is not ok', async () => {
@@ -374,16 +381,52 @@ describe('QuestRunner — the quest flow', () => {
         error: { code: 'level_not_found', message: '这一关不存在' },
       }),
     } as Response);
+    const onExit = vi.fn();
 
     const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
     render(
-      <QuestRunner tier={1} level={99} onExit={vi.fn()} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+      <QuestRunner tier={1} level={99} onExit={onExit} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('这一关不存在 —— 它可能已经随着字库更新而移走了')).toBeTruthy();
+    });
+    expect(screen.queryByRole('button', { name: '重试' })).toBeNull();
+    expect(screen.getByRole('button', { name: '返回关卡地图' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: '返回关卡地图' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers a retry for a transient failure and re-issues the request', async () => {
+    const fetchMock = vi.spyOn(global, 'fetch').mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({
+        ok: false,
+        error: { code: 'server', message: 'server error' },
+      }),
+    } as Response);
+    const onExit = vi.fn();
+
+    const { QuestRunner } = await import('@/components/game/quest/QuestRunner');
+    render(
+      <QuestRunner tier={1} level={99} onExit={onExit} onPassed={vi.fn()} onNextLevel={vi.fn()} />,
     );
 
     await waitFor(() => {
       expect(screen.getByText('这一关暂时打不开')).toBeTruthy();
     });
+    // A transient failure can be retried - and the way back is there too.
     expect(screen.getByRole('button', { name: '重试' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: '返回关卡地图' })).toBeTruthy();
+
+    const callsBefore = fetchMock.mock.calls.length;
+    fireEvent.click(screen.getByRole('button', { name: '重试' }));
+
+    await waitFor(() => {
+      expect(fetchMock.mock.calls.length).toBeGreaterThan(callsBefore);
+    });
   });
 
   it('ends the attempt after a second failure', async () => {

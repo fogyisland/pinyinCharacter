@@ -379,6 +379,8 @@ interface QuestPanelProps {
   currentLevel: number;
   passedLevels: number[];
   panel: QuestPanelState;
+  /** The mute flag of the page - the runner's ② audio button reads it. */
+  muted: boolean;
 }
 
 /**
@@ -388,7 +390,7 @@ interface QuestPanelProps {
  * board: a board with a guessed level count would offer tiles that do not
  * exist.
  */
-function QuestPanel({ tier, currentLevel, passedLevels, panel }: QuestPanelProps) {
+function QuestPanel({ tier, currentLevel, passedLevels, panel, muted }: QuestPanelProps) {
   if (panel.openLevel !== null) {
     return (
       <QuestRunner
@@ -397,6 +399,7 @@ function QuestPanel({ tier, currentLevel, passedLevels, panel }: QuestPanelProps
         onExit={panel.closeRunner}
         onPassed={panel.handlePassed}
         onNextLevel={panel.openNextLevel}
+        muted={muted}
       />
     );
   }
@@ -456,6 +459,7 @@ export function QuestTabs() {
                 currentLevel={currentLevel}
                 passedLevels={passedLevels}
                 panel={panel}
+                muted={tabs.muted}
               />
             ) : tabs.tab === 'daily' ? (
               <DailyChallenge tier={tabs.tier} difficulty={tabs.difficulty} />
