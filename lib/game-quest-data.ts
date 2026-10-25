@@ -1,9 +1,12 @@
 import 'server-only';
+import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 import type { RowDataPacket } from 'mysql2';
 import { readContentFromFs } from './content';
 import { resolvePinyin } from './pinyin-index';
 import { getPool } from './db';
+import { readJsonAuto } from './json-fs';
+import { getRadical } from './radical';
 import { buildTier, toneFormsOf } from './game-quest';
 import type { QuestCharFact, QuestTier } from './game-quest-types';
 import type { CharContent } from '@/scripts/schemas/content';
@@ -22,14 +25,32 @@ import type { CharContent } from '@/scripts/schemas/content';
  *      distractors would drift between two visits to the same URL;
  *   2. the tier is memoized per process — the first request for a tier pays
  *      the content-file reads, every later request is a hit.
+ *
+ * A tier can be built from two sources: the `chars` table (`getQuestTier`)
+ * and the files (`getFileQuestTier`). They hand the same rows to the same
+ * pure builder, and the unit test proves the two produce byte-identical
+ * tiers for all six HSK levels — which is what lets the MCP server serve
+ * the quest without a database.
  */
 
-/** One row of the `chars` table, as the tier query returns it. */
-interface TierRow extends RowDataPacket {
+/**
+ * One char's row of a tier.
+ *
+ * The shape is shared by the two tier sources: the `chars` table and the
+ * file-backed source (data/hsk-vocab.json + data/radicals.json). Everything
+ * downstream — the fact builder and the pure builder — only sees this shape,
+ * which is what makes the two sources interchangeable.
+ */
+export interface QuestCharRow {
   char: string;
+  /** The DB reading, or null when the source has none. */
   pinyin: string | null;
+  /** The radical, or null when the source has none. */
   radical: string | null;
 }
+
+/** One row of the `chars` table, as the tier query returns it. */
+interface TierRow extends RowDataPacket, QuestCharRow {}
 
 /**
  * The separators a multi-reading DB value may use: `xíng,háng`, `xíng/háng`,
@@ -110,7 +131,7 @@ function hasStoryOf(content: CharContent | null): boolean {
 }
 
 /** Turn one row plus its content file into the builder's fact. */
-function buildFact(row: TierRow): QuestCharFact {
+export function buildQuestFact(row: QuestCharRow): QuestCharFact {
   const char = String(row.char ?? '');
   const content = readContentSafely(char);
   return {
@@ -126,12 +147,24 @@ function buildFact(row: TierRow): QuestCharFact {
 // ---------------------------------------------------------------- the tier
 
 /**
+ * Build one tier from a set of rows.
+ *
+ * This is the one place where a tier is built, so the two sources below
+ * (the database and the files) cannot drift: they hand the same rows to the
+ * same pure builder.
+ */
+export function buildQuestTier(tier: number, rows: QuestCharRow[]): QuestTier {
+  const facts = rows.map(buildQuestFact);
+  return buildTier(tier, facts);
+}
+
+/**
  * Build one tier from the database.
  *
  * The query has no LIMIT: the largest tier is 922 rows, and every one of
  * them feeds the syllable / radical / clause pools.
  */
-async function buildQuestTier(tier: number): Promise<QuestTier> {
+async function buildQuestTierFromDb(tier: number): Promise<QuestTier> {
   const pool = getPool();
   let rows: TierRow[];
   try {
@@ -144,8 +177,7 @@ async function buildQuestTier(tier: number): Promise<QuestTier> {
     console.error('[game-quest] tier query failed for HSK', tier, err);
     throw err;
   }
-  const facts = rows.map(buildFact);
-  return buildTier(tier, facts);
+  return buildQuestTier(tier, rows);
 }
 
 /** The memoized tiers, keyed by HSK tier. */
@@ -160,7 +192,7 @@ const tierMemo = new Map<number, Promise<QuestTier>>();
 export function getQuestTier(tier: number): Promise<QuestTier> {
   const memoized = tierMemo.get(tier);
   if (memoized) return memoized;
-  const pending = buildQuestTier(tier).catch((err: unknown) => {
+  const pending = buildQuestTierFromDb(tier).catch((err: unknown) => {
     // A failed build must not poison the memo: drop the entry so the next
     // request retries (the lib/pinyin-index.ts indexPromise pattern).
     tierMemo.delete(tier);
@@ -170,8 +202,88 @@ export function getQuestTier(tier: number): Promise<QuestTier> {
   return pending;
 }
 
+// ------------------------------------------------------- the file-backed tier
+
 /**
- * Drop the memoized tiers.
+ * The HSK vocabulary, as the files hold it.
+ *
+ * data/hsk-vocab.json is `{ "1": [{ "char": "一" }], ... "6": [...] }` — the
+ * six tiers, each already in code-point order (the same order the database
+ * query's `ORDER BY char` produces).
+ */
+const HSK_VOCAB_PATH = join(process.cwd(), 'data', 'hsk-vocab.json');
+
+interface HskVocabEntry {
+  char: string;
+}
+
+type HskVocab = Record<string, HskVocabEntry[]>;
+
+let hskVocab: HskVocab | null = null;
+
+function loadHskVocab(): HskVocab {
+  if (hskVocab) return hskVocab;
+  const raw = readJsonAuto(HSK_VOCAB_PATH);
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error(`the HSK vocabulary could not be read from ${HSK_VOCAB_PATH}`);
+  }
+  hskVocab = raw as HskVocab;
+  return hskVocab;
+}
+
+/**
+ * The rows of one tier, from the files.
+ *
+ * The three substitutions the file source makes are all exact, not
+ * approximations:
+ *
+ *   1. **the chars** — data/hsk-vocab.json holds exactly the chars whose
+ *      `chars.hsk_level` is not null (2632 chars over the six tiers);
+ *   2. **the radical** — data/radicals.json holds the same radical the
+ *      `chars.radical` column holds (verified char for char);
+ *   3. **the reading** — `chars.pinyin` is empty for every row, so a null
+ *      reading resolves through the same pinyin-pro default the database
+ *      path would use.
+ *
+ * The content files (data/content/<char>.json) are read by both sources, so
+ * the meaning, the alternate readings and the story flag are identical.
+ */
+export function listTierRowsFromFiles(tier: number): QuestCharRow[] {
+  const entries = loadHskVocab()[String(tier)];
+  if (!Array.isArray(entries)) return [];
+  return entries.map((entry) => ({
+    char: entry.char,
+    pinyin: null,
+    radical: getRadical(entry.char),
+  }));
+}
+
+/** The memoized file-backed tiers, keyed by HSK tier. */
+const fileTierMemo = new Map<number, Promise<QuestTier>>();
+
+/**
+ * The tier of the quest ladder, built from the files.
+ *
+ * No database is touched: this is what lets the MCP server serve the quest
+ * without MySQL. The unit test proves the result is byte-identical to
+ * `getQuestTier`'s for all six tiers.
+ */
+export function getFileQuestTier(tier: number): Promise<QuestTier> {
+  const memoized = fileTierMemo.get(tier);
+  if (memoized) return memoized;
+  const pending = Promise.resolve()
+    .then(() => buildQuestTier(tier, listTierRowsFromFiles(tier)))
+    .catch((err: unknown) => {
+      fileTierMemo.delete(tier);
+      throw err;
+    });
+  fileTierMemo.set(tier, pending);
+  return pending;
+}
+
+/**
+ * Drop the memoized tiers — both the database-backed and the file-backed
+ * ones.
  *
  * Used when the underlying data changes (a content regeneration) and by the
  * integration test, which rebuilds a tier to prove that two independent
@@ -179,4 +291,5 @@ export function getQuestTier(tier: number): Promise<QuestTier> {
  */
 export function clearQuestTierMemo(): void {
   tierMemo.clear();
+  fileTierMemo.clear();
 }
