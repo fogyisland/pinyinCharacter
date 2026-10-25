@@ -15,7 +15,7 @@ export interface RoundChar {
 }
 
 export interface GameRound {
-  /** Which focus this round tests. Random per buildRound call. */
+  /** Which focus this round tests. Random unless the caller overrides it. */
   mode: RoundMode;
   chars: RoundChar[];
   /**
@@ -24,10 +24,14 @@ export interface GameRound {
    * for 'radical' it's the radical char.
    */
   charToAnswer: Record<string, { tone: Tone; radical: string; pinyin: string }>;
-  /** Token bank for tone mode (always 1-4). */
+  /**
+   * The tone token bank — ONE TOKEN PER CHAR, duplicates allowed.
+   * `toneChoices[i]` is the tone of `chars[i]`. Two chars of the same tone
+   * get two identical tokens, so neither can starve the other.
+   */
   toneChoices: Tone[];
-  /** Token bank for radical mode. */
+  /** The radical token bank — ONE TOKEN PER CHAR, duplicates allowed. */
   radicalChoices: string[];
-  /** Token bank for pinyin mode (one per char, shuffled). */
+  /** Unchanged: one pinyin per char (the pinyin mode picks unique pinyins). */
   pinyinChoices: string[];
 }

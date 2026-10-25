@@ -259,3 +259,76 @@ describe('buildRound mode override (Task 5)', () => {
     }
   });
 });
+
+// 2026-10-25 (Task 6): the token bank must hold ONE TOKEN PER CHAR.
+//
+// The old bank was the four tone *values* (1-4), so two chars of the same
+// tone fought over a single token: the second could never be matched,
+// `matchCount` never reached `chars.length` and the round never
+// auto-finished. With 6 chars and 4 tones the pigeonhole principle makes the
+// collision certain, so the 声调 round was unwinnable in hard mode. The
+// radical mode had the same shape — the bank was a Set of the correct
+// radicals, so two chars sharing a radical collapsed into one token.
+describe('buildRound token bank — one token per char (Task 6)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(listChars).mockResolvedValue({
+      chars: FIXTURE_CHARS,
+      total: FIXTURE_CHARS.length,
+      page: 1,
+      pageSize: 80,
+    });
+  });
+
+  /** The round, or a thrown error — a null round is a failed build. */
+  async function buildToneRound(seed: number, count: number) {
+    const result = await buildRound(count, seed, 'chars-all', null, 'tone');
+    if (!result) throw new Error('expected buildRound to return a round');
+    return result.round;
+  }
+
+  it('gives the tone bank one token per char, in char order', async () => {
+    const round = await buildToneRound(7, 6);
+    expect(round.toneChoices).toHaveLength(round.chars.length);
+    round.chars.forEach((c, index) => {
+      expect(round.toneChoices[index]).toBe(round.charToAnswer[c.char]?.tone);
+    });
+  });
+
+  it('gives two chars of the same tone each their own token', async () => {
+    // The fixture only carries three tones (1, 3 and 4), so a 6-char round
+    // always holds at least two chars of the same tone — the collision the
+    // old 4-value bank could not survive.
+    for (const seed of [0, 1, 2, 3, 4, 5]) {
+      const round = await buildToneRound(seed, 6);
+      expect(round.toneChoices).toHaveLength(6);
+
+      // Count the chars per tone and the tokens per tone: the two
+      // multisets must be identical, so a same-tone pair owns two
+      // identical tokens instead of fighting over one.
+      const charTones = new Map<number, number>();
+      for (const c of round.chars) {
+        const tone = round.charToAnswer[c.char]?.tone ?? 0;
+        charTones.set(tone, (charTones.get(tone) ?? 0) + 1);
+      }
+      const tokenTones = new Map<number, number>();
+      for (const tone of round.toneChoices) {
+        tokenTones.set(tone, (tokenTones.get(tone) ?? 0) + 1);
+      }
+      expect([...tokenTones.entries()].sort()).toEqual([...charTones.entries()].sort());
+      expect(Math.max(...charTones.values())).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it('gives the radical bank one token per char, in char order', async () => {
+    const result = await buildRound(6, 11, 'chars-all', null, 'radical');
+    if (!result) throw new Error('expected buildRound to return a round');
+    const round = result.round;
+    expect(round.radicalChoices).toHaveLength(round.chars.length);
+    round.chars.forEach((c, index) => {
+      expect(round.radicalChoices[index]).toBe(c.radical);
+    });
+    // Two chars sharing a radical must own two identical radical tokens.
+    expect([...round.radicalChoices].sort()).toEqual(round.chars.map((c) => c.radical).sort());
+  });
+});

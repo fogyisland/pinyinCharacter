@@ -1,5 +1,5 @@
 import { listChars as listCharsFromTable } from './chars';
-import { ALL_TONES, toneFromPinyin, type Tone } from './pinyin-tone';
+import { toneFromPinyin, type Tone } from './pinyin-tone';
 import { seededShuffle } from './shuffle';
 import type { GameRound, RoundMode } from './game-round-types';
 import type { CharSource, HskLevel } from './difficulty';
@@ -151,38 +151,31 @@ export async function buildRound(
   if (picked.length < count) return null;
 
   const charToAnswer: GameRound['charToAnswer'] = {};
-  const correctTones = new Set<Tone>();
-  const correctRadicals = new Set<string>();
   for (const c of picked) {
-    const rad = c.radical;
-    const tone = toneFromPinyin(c.pinyin)!;
-    charToAnswer[c.char] = { tone, radical: rad, pinyin: c.pinyin };
-    correctTones.add(tone);
-    correctRadicals.add(rad);
+    charToAnswer[c.char] = {
+      tone: toneFromPinyin(c.pinyin)!,
+      radical: c.radical,
+      pinyin: c.pinyin,
+    };
   }
 
-  // Distractors: pick from remaining shuffled chars
-  const distractors = shuffled.slice(count, count + 16);
-  const extraTones = new Set<Tone>();
-  const extraRadicals = new Set<string>();
-  for (const c of distractors) {
-    const t = toneFromPinyin(c.pinyin);
-    if (t !== null) extraTones.add(t);
-    if (c.radical) extraRadicals.add(c.radical);
-  }
+  // 2026-10-25 (Task 6): the tone token bank is ONE TOKEN PER CHAR.
+  //
+  // The old bank was the four tone *values* (1-4), so two chars of the same
+  // tone fought over a single token: the second could never be matched,
+  // `matchCount` never reached `chars.length` and the round never
+  // auto-finished. With 6 chars and 4 tones the pigeonhole principle makes
+  // the collision certain, so the 声调 round was unwinnable in hard mode.
+  //
+  // `toneChoices[i]` is the tone of `chars[i]` — the bank is exactly the
+  // answer set, one token per char, duplicates allowed.
+  const toneChoices: Tone[] = picked.map((c) => toneFromPinyin(c.pinyin)!);
 
-  // tone choices: always 1-4 (4 fixed choices — no neutral in the game).
-  const toneChoices: Tone[] = [...ALL_TONES];
-
-  // radical choices: dedup correct + extras, cap at 6 (4 correct + ~2 distractors)
-  const radicalChoices: string[] = [];
-  for (const r of correctRadicals) radicalChoices.push(r);
-  for (const r of extraRadicals) {
-    if (radicalChoices.length >= 6) break;
-    if (!radicalChoices.includes(r)) radicalChoices.push(r);
-  }
-  // shuffle radical choices so correct ones aren't always first
-  const finalRadicals = seededShuffle(radicalChoices, actualSeed + 1);
+  // The radical mode had the same shape: the old bank was a Set of the
+  // correct radicals (dedup) plus extra radicals, capped at 6. Two chars
+  // sharing a radical collapsed into one token, so one of them owned no
+  // token at all. One token per char fixes that the same way.
+  const radicalChoices: string[] = picked.map((c) => c.radical);
 
   // pinyin choices: one per char, shuffled. No distractors — the user
   // just needs to find each pinyin's matching char.
@@ -202,7 +195,7 @@ export async function buildRound(
       })),
       charToAnswer,
       toneChoices,
-      radicalChoices: finalRadicals,
+      radicalChoices,
       pinyinChoices,
     },
     hskFallback,

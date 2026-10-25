@@ -43,6 +43,10 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
   const [error, setError] = useState<string | null>(null);
   // char → matched payload (tone number / radical / pinyin string)
   const [matches, setMatches] = useState<Record<string, string>>({});
+  // 2026-10-25 (Task 6): the token INDEXES that were already spent. The bank
+  // holds one token per char, so two chars of the same tone own two
+  // identical tokens — the index is the only thing that tells them apart.
+  const [usedTokenIndices, setUsedTokenIndices] = useState<Set<number>>(new Set());
   const [mismatches, setMismatches] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
   const startedAt = useRef(0);
@@ -61,6 +65,19 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
 
   const revealConfig = useMemo(() => getRevealConfig('tone-radical', hskLevel), [hskLevel]);
 
+  // 2026-10-25 (Task 6): the token list the learner actually sees, in
+  // display order. The index in the drag payload is an index into THIS array
+  // (the component shuffles the bank client-side), so the value is resolved
+  // from the same array. The tone bank holds numbers, so it is stringified
+  // here — the comparison target is `String(answer.tone)`.
+  const roundMode = round?.mode ?? null;
+  const tokenValues = useMemo<string[]>(() => {
+    if (roundMode === 'tone') return toneOrder.map((t) => String(t));
+    if (roundMode === 'radical') return radicalOrder;
+    if (roundMode === 'pinyin') return pinyinOrder;
+    return [];
+  }, [roundMode, toneOrder, radicalOrder, pinyinOrder]);
+
   const handleDemand = useCallback(
     (_el: RevealElement) => {
       setMismatches((m) => m + revealConfig.onDemandPenalty);
@@ -71,6 +88,7 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
   const loadGame = async (forceDifficulty: Difficulty = difficulty) => {
     setPhase('loading');
     setMatches({});
+    setUsedTokenIndices(new Set());
     setMismatches(0);
     setElapsedMs(0);
     setError(null);
@@ -147,9 +165,6 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
 
   // Auto-finish when all chars matched
   const matchCount = useMemo(() => Object.keys(matches).length, [matches]);
-  // Which token values are already spoken for — memoized because the set
-  // was rebuilt on every render and read once per token row.
-  const matchedValues = useMemo(() => new Set(Object.values(matches)), [matches]);
   useEffect(() => {
     if (phase !== 'playing' || !round) return;
     if (matchCount === round.chars.length) {
@@ -165,17 +180,32 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
     if (!round || kind !== round.mode) return;
     const answer = round.charToAnswer[char];
     if (!answer) return;
+    // 2026-10-25 (Task 6): the payload is the token's INDEX into the bank the
+    // learner sees, not the value. A stale or malformed payload is ignored
+    // instead of counting as a mismatch. `Number('')` is 0, so the empty
+    // payload is rejected before the parse — otherwise a blank drop would
+    // silently mean "the first token".
+    if (payload.trim() === '') return;
+    const tokenIndex = Number(payload);
+    if (!Number.isInteger(tokenIndex)) return;
+    const tokenValue = tokenValues[tokenIndex];
+    if (tokenValue === undefined) return;
+    // A token is spent once — dropping it again cannot match a second char.
+    if (usedTokenIndices.has(tokenIndex)) return;
     const expected =
       round.mode === 'tone'
         ? String(answer.tone)
         : round.mode === 'radical'
           ? answer.radical
           : answer.pinyin;
-    if (payload !== expected) {
+    if (tokenValue !== expected) {
       setMismatches((m) => m + 1);
       return;
     }
-    setMatches((prev) => ({ ...prev, [char]: payload }));
+    // The VALUE is stored, so the slot still shows the tone number or the
+    // radical; the INDEX only tracks which token was spent.
+    setMatches((prev) => ({ ...prev, [char]: tokenValue }));
+    setUsedTokenIndices((prev) => new Set(prev).add(tokenIndex));
   };
 
   const accuracy = useMemo(() => {
@@ -288,26 +318,34 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
 
       <div className="flex flex-wrap items-center justify-center gap-3">
         {mode === 'tone' &&
-          toneOrder.map((t) => (
+          toneOrder.map((t, index) => (
             <ToneToken
-              key={t}
+              key={`tone-${index}`}
               tone={t}
-              matched={matchedValues.has(String(t))}
+              tokenIndex={index}
+              matched={usedTokenIndices.has(index)}
               onDragStart={() => {}}
             />
           ))}
         {mode === 'radical' &&
-          radicalOrder.map((r) => (
+          radicalOrder.map((r, index) => (
             <RadicalToken
-              key={r}
+              key={`radical-${index}`}
               radical={r}
-              matched={matchedValues.has(r)}
+              tokenIndex={index}
+              matched={usedTokenIndices.has(index)}
               onDragStart={() => {}}
             />
           ))}
         {mode === 'pinyin' &&
-          pinyinOrder.map((p) => (
-            <PinyinToken key={p} pinyin={p} matched={matchedValues.has(p)} onDragStart={() => {}} />
+          pinyinOrder.map((p, index) => (
+            <PinyinToken
+              key={`pinyin-${index}`}
+              pinyin={p}
+              tokenIndex={index}
+              matched={usedTokenIndices.has(index)}
+              onDragStart={() => {}}
+            />
           ))}
       </div>
     </div>

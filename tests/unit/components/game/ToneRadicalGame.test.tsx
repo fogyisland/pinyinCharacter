@@ -217,3 +217,146 @@ describe('ToneRadicalGame — localStorage shim isolation (Task 5 fix 1)', () =>
     expect(window.localStorage.getItem('probe-key')).toBeNull();
   });
 });
+
+// 2026-10-25 (Task 6): the token bank holds ONE TOKEN PER CHAR, so two
+// chars of the same tone own two identical tokens. The client therefore has
+// to track the token INDEX that was used — tracking the token VALUE
+// disabled both copies at once, and the round could never be finished.
+const sixCharToneRound: GameRound = {
+  mode: 'tone',
+  chars: [
+    { char: '安', pinyin: 'ān', meaning: 'peace', radical: '宀' },
+    { char: '妈', pinyin: 'mā', meaning: 'mother', radical: '女' },
+    { char: '那', pinyin: 'nà', meaning: 'that', radical: '阝' },
+    { char: '大', pinyin: 'dà', meaning: 'big', radical: '大' },
+    { char: '好', pinyin: 'hǎo', meaning: 'good', radical: '女' },
+    { char: '火', pinyin: 'huǒ', meaning: 'fire', radical: '火' },
+  ],
+  charToAnswer: {
+    安: { tone: 1, radical: '宀', pinyin: 'ān' },
+    妈: { tone: 1, radical: '女', pinyin: 'mā' },
+    那: { tone: 4, radical: '阝', pinyin: 'nà' },
+    大: { tone: 4, radical: '大', pinyin: 'dà' },
+    好: { tone: 3, radical: '女', pinyin: 'hǎo' },
+    火: { tone: 3, radical: '火', pinyin: 'huǒ' },
+  },
+  // One token per char — the shape the server sends now. The tone-1 pair
+  // (安 / 妈) owns two identical tokens.
+  toneChoices: [1, 1, 4, 4, 3, 3],
+  radicalChoices: ['宀', '女', '阝', '大', '女', '火'],
+  pinyinChoices: ['ān', 'mā', 'nà', 'dà', 'hǎo', 'huǒ'],
+};
+
+/** The draggable tone tiles, in DOM order — the bank index order. */
+function toneTiles(container: HTMLElement): HTMLElement[] {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>('[role="button"][aria-label^="声调 "]'),
+  );
+}
+
+/** The drop slots, in DOM order — the round's char order. */
+function toneSlots(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>('[data-slot="tone"]'));
+}
+
+/**
+ * Simulate a real drag from a token tile onto a drop slot.
+ *
+ * The browser refuses to start a drag on a `draggable="false"` element, so
+ * the helper honours that: a disabled tile cannot be dragged and the slot
+ * stays empty. That rule is what makes the "the round can be finished" case
+ * fail against the old value-keyed bookkeeping — without it the test would
+ * happily drop the same tile twice and the round would look finishable.
+ */
+function dragTileOntoSlot(tile: HTMLElement, slot: HTMLElement): void {
+  if (tile.getAttribute('draggable') !== 'true') return;
+  const payload = new Map<string, string>();
+  const dataTransfer = {
+    setData: (format: string, data: string) => {
+      payload.set(format, data);
+    },
+    getData: (format: string) => payload.get(format) ?? '',
+  };
+  const dragStart = new Event('dragstart', { bubbles: true, cancelable: true });
+  Object.defineProperty(dragStart, 'dataTransfer', { value: dataTransfer });
+  fireEvent(tile, dragStart);
+  const drop = new Event('drop', { bubbles: true, cancelable: true });
+  Object.defineProperty(drop, 'dataTransfer', { value: dataTransfer });
+  fireEvent(slot, drop);
+}
+
+describe('ToneRadicalGame — one token per char (Task 6)', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.resetModules();
+    installLocalStorageShim();
+  });
+
+  it('finishes the round when two chars share a tone', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sixCharToneRound, hskFallback: false });
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    const { container } = render(<ToneRadicalGame mode="tone" />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    const tiles = toneTiles(container);
+    const slots = toneSlots(container);
+    expect(tiles).toHaveLength(6);
+    expect(slots).toHaveLength(6);
+
+    // Drop every char's matching tile onto its own slot. The two tone-1
+    // tiles are identical, so the learner has to be able to use both.
+    const usedTiles = new Set<number>();
+    sixCharToneRound.chars.forEach((c, charIndex) => {
+      const tone = sixCharToneRound.charToAnswer[c.char]?.tone;
+      const tileIndex = tiles.findIndex(
+        (tile, index) =>
+          !usedTiles.has(index) && tile.getAttribute('aria-label') === `声调 ${tone}`,
+      );
+      expect(tileIndex).toBeGreaterThanOrEqual(0);
+      usedTiles.add(tileIndex);
+      const tile = tiles[tileIndex];
+      const slot = slots[charIndex];
+      if (!tile || !slot) throw new Error('expected a token tile and a drop slot');
+      dragTileOntoSlot(tile, slot);
+    });
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('完成!')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  it('disables only the token that was used, not its identical twin', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sixCharToneRound, hskFallback: false });
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    const { container } = render(<ToneRadicalGame mode="tone" />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    const tiles = toneTiles(container);
+    const slots = toneSlots(container);
+    const toneOneTiles = tiles.filter((tile) => tile.getAttribute('aria-label') === '声调 1');
+    expect(toneOneTiles).toHaveLength(2);
+    const charIndex = sixCharToneRound.chars.findIndex(
+      (c) => sixCharToneRound.charToAnswer[c.char]?.tone === 1,
+    );
+    expect(charIndex).toBeGreaterThanOrEqual(0);
+    const slot = slots[charIndex];
+    if (!slot) throw new Error('expected a drop slot');
+
+    dragTileOntoSlot(toneOneTiles[0]!, slot);
+
+    // The tile that was used is spent...
+    expect(toneOneTiles[0]!.getAttribute('draggable')).toBe('false');
+    // ...but its identical twin is still available.
+    expect(toneOneTiles[1]!.getAttribute('draggable')).toBe('true');
+  });
+});
