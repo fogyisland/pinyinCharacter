@@ -28,7 +28,16 @@ const MODE_LABEL: Record<GameRound['mode'], { heading: string; subject: string }
   pinyin: { heading: '把拼音拖到对应的字上', subject: '拼音' },
 };
 
-export function ToneRadicalGame() {
+/**
+ * 2026-10-25 (Task 5): the `mode` prop pins the round to a single focus.
+ * When it is absent the request carries no `mode` parameter at all, so the
+ * server keeps its legacy per-seed random mode.
+ */
+export interface ToneRadicalGameProps {
+  mode?: 'tone' | 'radical';
+}
+
+export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
   const [phase, setPhase] = useState<Phase>('loading');
   const [round, setRound] = useState<GameRound | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +90,13 @@ export function ToneRadicalGame() {
         source: cfg.source,
         hskLevel: String(hskLevel),
       });
-      const res = await fetch(`/api/game/round?${params.toString()}`, { signal: controller.signal });
+      // 2026-10-25 (Task 5): only send `mode` when the caller pinned one.
+      // An absent parameter keeps the server's legacy random mode — an
+      // empty string would fail the route's zod enum.
+      if (props.mode) params.set('mode', props.mode);
+      const res = await fetch(`/api/game/round?${params.toString()}`, {
+        signal: controller.signal,
+      });
       const json = (await res.json()) as {
         ok: boolean;
         data: GameRound;
@@ -112,11 +127,13 @@ export function ToneRadicalGame() {
   // mount-only — revealConfig would recompute but round.chars stayed stale.
   // The wait for `ready` avoids a second request: the stored difficulty is
   // only known after the browser has read localStorage.
+  // 2026-10-25 (Task 5): the pinned `mode` is a dependency too — a round
+  // built for another mode has to be refetched.
   useEffect(() => {
     if (!ready) return;
     void loadGame();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, hskLevel, difficulty]);
+  }, [ready, hskLevel, difficulty, props.mode]);
 
   // The clock shows whole seconds, so it ticks once per second. It used to
   // tick every 100 ms, which re-rendered the whole board ten times a second.

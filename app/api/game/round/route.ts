@@ -31,7 +31,17 @@ export async function GET(req: NextRequest) {
       return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     }
     const { count, seed, source, mode: modeOverride, hskLevel } = parsed.data;
-    const result = await buildRound(count, seed, source, (hskLevel ?? null) as HskLevel | null);
+    // 2026-10-25 (Task 5): forward the requested mode to buildRound so the
+    // round itself matches the mode the caller asked for. `modeOverride` is
+    // undefined when the parameter is absent — the legacy per-seed random
+    // mode then applies.
+    const result = await buildRound(
+      count,
+      seed,
+      source,
+      (hskLevel ?? null) as HskLevel | null,
+      modeOverride,
+    );
     if (!result) {
       return serviceUnavailable('no_chars', 'not enough rare chars with radicals to build a round');
     }

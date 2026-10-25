@@ -45,6 +45,16 @@ function mockFetchOnce(json: unknown) {
   } as Response);
 }
 
+/** The query string the component actually sent to /api/game/round. */
+function firstRequestedUrl(): URL {
+  const call = vi.mocked(global.fetch).mock.calls[0];
+  const raw = call?.[0];
+  if (typeof raw !== 'string') {
+    throw new Error(`expected a string URL, got ${String(raw)}`);
+  }
+  return new URL(raw, 'http://localhost');
+}
+
 describe('ToneRadicalGame — HSK reveal wiring (Task 8)', () => {
   beforeEach(() => {
     cleanup();
@@ -127,5 +137,72 @@ describe('ToneRadicalGame — HSK reveal wiring (Task 8)', () => {
       expect(screen.queryByText(/加载中/)).toBeNull();
     });
     expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+// 2026-10-25 (Task 5): the component gained an optional `mode` prop. When it
+// is set the request carries `mode=<value>`; when it is absent the parameter
+// must be MISSING (not an empty string) so the server keeps its legacy
+// per-seed random behavior.
+describe('ToneRadicalGame — mode prop (Task 5)', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.resetModules();
+    const store = new Map<string, string>();
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: (k: string) => store.get(k) ?? null,
+        setItem: (k: string, v: string) => {
+          store.set(k, v);
+        },
+        removeItem: (k: string) => {
+          store.delete(k);
+        },
+        clear: () => {
+          store.clear();
+        },
+        key: (i: number) => Array.from(store.keys())[i] ?? null,
+        get length() {
+          return store.size;
+        },
+      },
+    });
+  });
+
+  it('sends mode=tone in the query string when the prop is set', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sampleRound, hskFallback: false });
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    render(<ToneRadicalGame mode="tone" />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+    expect(firstRequestedUrl().searchParams.get('mode')).toBe('tone');
+  });
+
+  it('sends mode=radical in the query string when the prop is set', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sampleRound, hskFallback: false });
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    render(<ToneRadicalGame mode="radical" />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+    expect(firstRequestedUrl().searchParams.get('mode')).toBe('radical');
+  });
+
+  it('sends NO mode parameter when the prop is absent (legacy behavior)', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sampleRound, hskFallback: false });
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    render(<ToneRadicalGame />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+    const url = firstRequestedUrl();
+    expect(url.searchParams.has('mode')).toBe(false);
+    expect(url.search).not.toContain('mode=');
   });
 });

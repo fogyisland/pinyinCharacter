@@ -69,6 +69,7 @@ export async function buildRound(
   seed?: number,
   source: CharSource = 'chars-all',
   hskLevel?: HskLevel | null,
+  modeOverride?: RoundMode,
 ): Promise<BuildRoundResult | null> {
   // The game needs chars with at least one of: tone-marked pinyin, known
   // radical, and unique pinyin (for pinyin mode). Pull a page of any chars
@@ -142,7 +143,10 @@ export async function buildRound(
 
   // For pinyin mode we need unique pinyin so the user can unambiguously
   // match pinyin tokens to chars. Pick greedily from the shuffled pool.
-  const mode = pickMode(actualSeed);
+  // 2026-10-25 (Task 5): `modeOverride` wins over the per-seed random pick.
+  // When it is absent the legacy behavior is untouched — the mode stays a
+  // pure function of the seed.
+  const mode = modeOverride ?? pickMode(actualSeed);
   const picked = mode === 'pinyin' ? pickUniquePinyin(shuffled, count) : shuffled.slice(0, count);
   if (picked.length < count) return null;
 
