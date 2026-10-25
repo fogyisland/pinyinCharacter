@@ -8,9 +8,10 @@ import { NextRequest } from 'next/server';
 vi.mock('server-only', () => ({}));
 
 import { getQuestTier, clearQuestTierMemo } from '@/lib/game-quest-data';
-import { buildLevel, plainSyllable, toneFormsOf } from '@/lib/game-quest';
+import { buildLevel, buildTier, plainSyllable, toneFormsOf } from '@/lib/game-quest';
 import { closePool } from '@/lib/db';
-import type { QuestLevelPayload, QuestTier } from '@/lib/game-quest-types';
+import type { QuestCharFact, QuestLevelPayload, QuestTier } from '@/lib/game-quest-types';
+import tier1Fixture from '../../unit/lib/fixtures/quest-tier1.json';
 
 // vitest does not load .env, so DATABASE_URL is unset in the test runner.
 // Mirror the repo's other integration tests (etymology-era-font, import-hsk):
@@ -98,6 +99,19 @@ describe.skipIf(integrationSkip)('the real quest ladder', () => {
 
     expect(JSON.stringify(second.levels)).toBe(firstLevels);
     expect(JSON.stringify(buildLevel(second, 1))).toBe(firstPayload);
+  }, 180_000);
+
+  it('the database tier 1 matches the unit fixture byte-for-byte', async () => {
+    // The unit fixture (tests/unit/lib/fixtures/quest-tier1.json) was built
+    // from the same content files, in the same order. If the database's
+    // ORDER BY char disagreed with that order, the ④ meaning distractors
+    // would drift from the spec's §6.1 payload — this is the cross-check
+    // between Task 2's fixture and Task 3's data layer.
+    const fromFixture = buildTier(tier1Fixture.tier, tier1Fixture.facts as QuestCharFact[]);
+    const fromDatabase = await getQuestTier(1);
+    expect(JSON.stringify(buildLevel(fromDatabase, 1))).toBe(
+      JSON.stringify(buildLevel(fromFixture, 1)),
+    );
   }, 180_000);
 
   it('the route serves a real level', async () => {
