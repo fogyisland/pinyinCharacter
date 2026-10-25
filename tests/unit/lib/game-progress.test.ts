@@ -10,6 +10,7 @@ import {
   markLevelPassed,
   recordDaily,
   recordMiss,
+  removeWrong,
   saveProgress,
   type CharSnapshot,
   type CollectedSnapshot,
@@ -331,5 +332,53 @@ describe('game-progress', () => {
     expect(localDateKey(new Date(2026, 0, 5))).toBe('2026-01-05');
     expect(localDateKey(new Date(2026, 11, 31))).toBe('2026-12-31');
     expect(localDateKey()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('removes a char from the wrong book', () => {
+    const progress = recordMiss(defaultProgress(), '爱', plainSnapshot, 1, 1);
+
+    const next = removeWrong(progress, '爱');
+
+    expect(next.wrong['爱']).toBeUndefined();
+    expect(next.wrong).toEqual({});
+  });
+
+  it('leaves the input state untouched when a wrong entry is removed', () => {
+    const progress = recordMiss(defaultProgress(), '爱', plainSnapshot, 1, 1);
+
+    removeWrong(progress, '爱');
+
+    expect(progress.wrong['爱']).toBeDefined();
+    expect(progress.wrong['爱'].count).toBe(1);
+  });
+
+  it('keeps a collected char in the collection book when the wrong entry is removed', () => {
+    const collected = collectChar(defaultProgress(), '爱', collectedSnapshot, 1, 1);
+    const both = recordMiss(collected, '爱', plainSnapshot, 1, 1);
+
+    const next = removeWrong(both, '爱');
+
+    expect(next.wrong['爱']).toBeUndefined();
+    expect(next.collected['爱']).toBeDefined();
+    expect(next.collected['爱'].hasStory).toBe(true);
+  });
+
+  it('does not change the streak when a wrong entry is removed', () => {
+    const collected = collectChar(defaultProgress(), '爱', collectedSnapshot, 1, 1);
+    const missed = recordMiss(collected, '爱', plainSnapshot, 1, 1);
+
+    const next = removeWrong(missed, '爱');
+
+    expect(next.streak).toBe(missed.streak);
+    expect(next.bestStreak).toBe(missed.bestStreak);
+  });
+
+  it('returns an equal state when the char is not in the wrong book', () => {
+    const progress = recordMiss(defaultProgress(), '爱', plainSnapshot, 1, 1);
+
+    expect(() => removeWrong(progress, '好')).not.toThrow();
+
+    const result = removeWrong(progress, '好');
+    expect(result).toEqual(progress);
   });
 });

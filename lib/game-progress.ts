@@ -338,6 +338,19 @@ export function recordMiss(
 }
 
 /**
+ * Remove one char from the wrong book. The collection book is untouched.
+ *
+ * The two books are independent: a char can be in both of them, and mastering
+ * a char is never undone by a later miss. Removing a record is bookkeeping, so
+ * the streak stays as it is.
+ */
+export function removeWrong(progress: GameProgress, char: string): GameProgress {
+  const next = cloneProgress(progress);
+  delete next.wrong[char];
+  return next;
+}
+
+/**
  * Move the level pointer of a tier forward and remember the passed level.
  *
  * The pointer is the unlock frontier - the next level the player may open -
