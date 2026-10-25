@@ -25,6 +25,7 @@
 - Middleware gates every route except `/init*` behind the `setup_completed=1` cookie — smoke-test with `curl -b "setup_completed=1"`. The quest route is 307-gated without it; that is the site's normal behaviour, not a quest bug.
 - `app/**/page.tsx` changes require a successful `next build`, run in the **isolated worktree** `D:/Temp/pinyin-build-check` — never in the main tree while the 4444 dev server is alive.
 - The tone-mark table has exactly **one** source of truth: `TONE_MAP` in `lib/pinyin-tone.ts` (24 marks, no `ǹ`/`ň`/`ḿ`). The quest derives its plain forms and tone groups from it; it never hard-codes a second copy.
+- The `export function` lines in the tasks' **Interfaces** blocks are **contracts, not code** — the bodies are the implementer's. A component's return type is **not** annotated: the repo never annotates one (see `components/game/GameModeTabs.tsx`), and under `@types/react` 19 the global `JSX` namespace no longer exists, so a bare `JSX.Element` would not compile.
 
 ## Review Focus
 
@@ -720,7 +721,7 @@ export async function buildRound(
 export interface ToneRadicalGameProps {
   mode?: 'tone' | 'radical';
 }
-export function ToneRadicalGame(props: ToneRadicalGameProps): JSX.Element;
+export function ToneRadicalGame(props: ToneRadicalGameProps) { /* the component body */ }
 ```
 
 - [ ] **Step 1: Write the failing tests**
@@ -1043,7 +1044,7 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 
 ```ts
 // components/game/HskPicker.tsx
-export function HskPicker(): JSX.Element;   // reads/writes useDifficulty().hskLevel
+export function HskPicker() { /* the component body */ }   // reads/writes useDifficulty().hskLevel
 
 // components/game/quest/QuestBoard.tsx
 export interface QuestBoardProps {
@@ -1340,14 +1341,14 @@ Co-Authored-By: Claude Code <noreply@anthropic.com>"
 ```ts
 // components/game/quest/QuestTabs.tsx
 export type QuestTab = 'quest' | 'daily' | 'collection' | 'wrong';
-export function QuestTabs(): JSX.Element;
+export function QuestTabs() { /* the component body */ }
 
 // components/game/daily/DailyChallenge.tsx
 export interface DailyChallengeProps {
   tier: number;
   difficulty: Difficulty;
 }
-export function DailyChallenge(props: DailyChallengeProps): JSX.Element;
+export function DailyChallenge(props: DailyChallengeProps) { /* the component body */ }
 ```
 
 - [ ] **Step 1: Create `DailyChallenge.tsx`**
