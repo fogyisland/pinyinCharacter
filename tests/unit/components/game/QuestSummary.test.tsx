@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { QuestSummary } from '@/components/game/quest/QuestSummary';
 import type { QuestCharPayload } from '@/lib/game-quest-types';
@@ -27,6 +27,13 @@ const CHAR_AI: QuestCharPayload = {
 
 describe('QuestSummary — the end of a level', () => {
   beforeEach(() => {
+    cleanup();
+  });
+
+  // The summary's seal schedules a 20 ms timer; the tree must be unmounted
+  // before the environment is torn down, or the timer fires against a
+  // deleted `window`.
+  afterEach(() => {
     cleanup();
   });
 

@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { installLocalStorageShim } from './helpers';
 import type { QuestCharPayload, QuestLevelPayload } from '@/lib/game-quest-types';
@@ -190,6 +190,13 @@ describe('QuestRunner — the quest flow', () => {
     mockState.speak.mockReset();
     mockState.speak.mockImplementation(async (): Promise<void> => {});
     mockState.muted = false;
+  });
+
+  // The tree must be unmounted before the environment is torn down: the
+  // char card's seal schedules a 20 ms timer, and a timer that outlives the
+  // environment fires against a deleted `window`.
+  afterEach(() => {
+    cleanup();
   });
 
   it('opens the level and asks the ① question first', async () => {
