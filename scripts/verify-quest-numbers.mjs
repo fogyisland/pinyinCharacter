@@ -1,16 +1,14 @@
 /**
  * verify-quest-numbers — re-derives every measured number in the /game quest
  * design spec (docs/superpowers/specs/2026-10-24-game-quest-redesign-design.md).
- *
  * Run it from the repo root:  node scripts/verify-quest-numbers.mjs
  *
  * Data sources (no DB required):
- *   data/hsk-vocab.json    — the HSK tier membership (same source as chars.hsk_level)
+ *   data/hsk-vocab.json     — the HSK tier membership (same source as chars.hsk_level)
  *   data/content/<char>.json — dict.meaning_zh, dict.pinyin_alt
- *   data/radicals.json     — the char → radical map (a proxy for chars.radical; the
- *                            six tier radical pools it produces are identical to the
- *                            DB's, which is the cross-check that makes the proxy safe)
- *   pinyin-pro              — the readings
+ *   data/radicals.json      — the char → radical map (a proxy for chars.radical; the
+ *                             six tier radical pools it produces are identical to the DB's)
+ *   pinyin-pro               — the readings
  *
  * Every rule implemented here is the spec's rule. If a number here disagrees with
  * the spec, the spec is wrong (or the data changed) — fix the spec, not the script.
@@ -24,30 +22,26 @@ const radicalMap = JSON.parse(readFileSync('data/radicals.json', 'utf8'));
 const TIERS = [1, 2, 3, 4, 5, 6];
 
 // ---------------------------------------------------------------- tone tables
-// The tone-mark table has exactly ONE source of truth: TONE_MAP in
-// lib/pinyin-tone.ts (24 marks, no syllabic nasals). This script is a plain
-// .mjs run by bare `node`, so it cannot import the TypeScript module — it
-// READS the source file and extracts the table from it. A hand-written copy
-// of the marks is therefore impossible here, and the guard test
-// (tests/unit/scripts/verify-quest-numbers.test.ts) fails if a mark literal
-// reappears in this file.
+// The tone-mark table has exactly ONE source of truth: TONE_MAP in lib/pinyin-tone.ts
+// (24 marks, no syllabic nasals). This script is a plain .mjs run by bare `node`,
+// so it cannot import the TypeScript module — it READS the source and extracts
+// the table from it. A hand-written copy of the marks is therefore impossible
+// here, and the guard test (tests/unit/scripts/verify-quest-numbers.test.ts)
+// fails if a mark literal reappears in this file.
 //
-// What is still mirrored by hand is the RULE, not the data: the NFD
-// decomposition with its combining diaeresis (the rule lib/game-quest.ts
-// uses) and the j/q/x/y u-umlaut spelling rule in toneForms. Both rules are
-// written twice on purpose — the library owns the data, this script derives
-// the same numbers from it.
+// What is still mirrored by hand is the RULE, not the data: the NFD decomposition
+// with its combining diaeresis (the rule lib/game-quest.ts uses) and the j/q/x/y
+// u-umlaut spelling rule in toneForms. The library owns the data; this script
+// derives the same numbers from it.
 
 /** The combining diaeresis (U+0308) and the plain vowel it belongs to (U+00FC). */
 const DIAERESIS = String.fromCharCode(0x308);
 const PLAIN_U_UMLAUT = String.fromCharCode(0xfc);
 
 /**
- * Extract TONE_MAP out of lib/pinyin-tone.ts.
- *
- * The source is `export const TONE_MAP: Record<string, Tone> = {` followed by
- * one `mark: tone,` per line. Anything that does not yield exactly 24 entries
- * with the tones 1-4 throws — a loud failure, never a silent fallback.
+ * Extract TONE_MAP out of lib/pinyin-tone.ts: `export const TONE_MAP: ... = {`
+ * followed by one `mark: tone,` per line. Anything that does not yield exactly
+ * 24 entries with the tones 1-4 throws — a loud failure, never a silent fallback.
  */
 function extractToneMap(source) {
   const declaration = source.indexOf('TONE_MAP');
@@ -85,11 +79,9 @@ function plainVowelOf(mark) {
 }
 
 const TONE_ENTRIES = extractToneMap(readFileSync('lib/pinyin-tone.ts', 'utf8'));
-/** mark → tone. */
+/** mark → tone; the marks in the source key order; mark → plain vowel. */
 const TONE_OF = new Map(TONE_ENTRIES);
-/** The marks in the key order of the source table. */
 const TONE_GROUP = TONE_ENTRIES.map(([mark]) => mark);
-/** mark → plain vowel. */
 const PLAIN_OF = new Map(TONE_ENTRIES.map(([mark]) => [mark, plainVowelOf(mark)]));
 
 /** The reading with its tone mark replaced by the plain vowel (the umlaut kept). */
@@ -112,9 +104,7 @@ const finalOf = (char) => pinyin(char, { pattern: 'final' });
 
 /**
  * The 4 tone forms of the char's syllable, or null when the final has no tone
- * mark.
- *
- * Mirrors lib/game-quest.ts's toneFormsOf, including the j/q/x/y u-umlaut
+ * mark. Mirrors lib/game-quest.ts's toneFormsOf, including the j/q/x/y u-umlaut
  * spelling rule (pinyin-pro's `pattern: 'final'` restores the umlaut, but the
  * standard orthography writes it as u). The rule is mirrored by hand — the
  * table it reads is not.
@@ -133,8 +123,7 @@ function toneForms(char) {
     if (spellsU) {
       // A tone-marked u-umlaut is spelled with the u group here.
       if (plain === PLAIN_U_UMLAUT) variants = TONE_GROUP.filter((m) => PLAIN_OF.get(m) === 'u');
-      // A plain u-umlaut in the head (the carrier of a j/q/x/y syllable) is
-      // written u too.
+      // A plain u-umlaut in the head (the j/q/x/y carrier) is written u too.
       const headSpelling = head.split(PLAIN_U_UMLAUT).join('u');
       return variants.map((m) => initial + headSpelling + m + tail);
     }
@@ -285,10 +274,9 @@ const tiers = TIERS.map(buildTier);
 
 // --------------------------------------------------------- the tier-1 fixture
 /**
- * Write the tier-1 facts to tests/unit/lib/fixtures/quest-tier1.json so the
- * unit test can build a real tier without a database. Every tier-1 char is
- * written (not only the eligible ones) because the clause pool and the
- * syllable / radical vocabularies are built from the whole tier.
+ * Write the tier-1 facts to tests/unit/lib/fixtures/quest-tier1.json so the unit
+ * test can build a real tier without a database. Every tier-1 char is written
+ * (not only the eligible ones) because the pools are built from the whole tier.
  */
 function emitTier1Fixture() {
   const tier = 1;
@@ -331,10 +319,8 @@ function syllableAnatomy(tier) {
   }
   return anatomy;
 }
-/**
- * ①'s ranking score. A 零声母 syllable never scores "same initial" —
- * not even against another 零声母 syllable (spec §1.1 G).
- */
+/** ①'s ranking score. A 零声母 syllable never scores "same initial" — not even
+ *  against another 零声母 syllable (spec §1.1 G). */
 function rankPinyin(candidate, correct, anatomy) {
   const cand = anatomy.get(candidate);
   const corr = anatomy.get(correct);
