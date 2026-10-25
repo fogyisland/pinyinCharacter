@@ -146,6 +146,30 @@ describe('the questions', () => {
     for (const alt of ['bu', 'fo', 'pi']) expect(distractors).not.toContain(alt);
   });
 
+  it('读音 distractors never equal a pinyin_alt plain form, for every char', () => {
+    // The generalised rule: survivesPinyinFilters (lib/game-quest.ts) rejects
+    // any candidate whose plain form equals the plain form of one of the
+    // char's own alternates. Every eligible char must obey it — not just 不.
+    const factOf = new Map(facts.map((f) => [f.char, f]));
+    let checked = 0;
+    for (const payload of payloads) {
+      for (const c of payload.chars) {
+        const fact = factOf.get(c.char);
+        expect(fact).toBeDefined();
+        const altPlainForms = (fact?.pinyinAlt ?? []).map((alt) => plainSyllable(alt));
+        const q = c.questions.find((x) => x.kind === 'pinyin');
+        expect(q).toBeDefined();
+        const distractors = (q?.options ?? []).filter((_, i) => i !== q?.answerIndex);
+        for (const alt of altPlainForms) {
+          expect(distractors).not.toContain(alt);
+        }
+        checked++;
+      }
+    }
+    // The whole eligible pool of tier 1 — 152 chars — was checked.
+    expect(checked).toBe(152);
+  });
+
   it('the 零声母 rule keeps "er" out of 爱\'s distractors', () => {
     const ai = charOf('爱');
     const q = ai.questions.find((x) => x.kind === 'pinyin');
@@ -174,6 +198,38 @@ describe('the questions', () => {
     expect(toneFormsOf('归')).toEqual(['guī', 'guí', 'guǐ', 'guì']);
     expect(toneFormsOf('爱')).toEqual(['āi', 'ái', 'ǎi', 'ài']);
     expect(toneFormsOf('长')).toEqual(['chāng', 'cháng', 'chǎng', 'chàng']);
+  });
+
+  it('a j/q/x/y syllable spells its ü as u', () => {
+    // pinyin-pro's `pattern: 'final'` restores the ü (学 → final üè), but
+    // the standard orthography writes it as u (xué). Without the correction
+    // the four forms would be xüē xüé xüě xuè — and the char's own reading
+    // would not be among them.
+    expect(toneFormsOf('去')).toEqual(['qū', 'qú', 'qǔ', 'qù']);
+    expect(toneFormsOf('学')).toEqual(['xuē', 'xué', 'xuě', 'xuè']);
+    expect(toneFormsOf('觉')).toEqual(['juē', 'jué', 'juě', 'juè']);
+    expect(toneFormsOf('雪')).toEqual(['xuē', 'xué', 'xuě', 'xuè']);
+    expect(toneFormsOf('军')).toEqual(['jūn', 'jún', 'jǔn', 'jùn']);
+    expect(toneFormsOf('需')).toEqual(['xū', 'xú', 'xǔ', 'xù']);
+    expect(toneFormsOf('全')).toEqual(['quān', 'quán', 'quǎn', 'quàn']);
+    // A ü after l / n keeps its umlaut.
+    expect(toneFormsOf('女')).toEqual(['nǖ', 'nǘ', 'nǚ', 'nǜ']);
+    expect(toneFormsOf('月')).toEqual(['yuē', 'yué', 'yuě', 'yuè']);
+  });
+
+  it('every fixture char\'s reading is among its four tone forms', () => {
+    // The property that makes the whole ü class of bug impossible to
+    // reintroduce silently: whenever toneFormsOf returns forms, the char's
+    // own reading must be one of them — otherwise the ② question has no
+    // correct answer.
+    let checked = 0;
+    for (const fact of facts) {
+      const forms = toneFormsOf(fact.char);
+      if (!forms) continue;
+      expect(forms).toContain(fact.reading);
+      checked++;
+    }
+    expect(checked).toBeGreaterThan(0);
   });
 
   it('a 轻声 char has no tone forms', () => {
@@ -269,5 +325,25 @@ describe('buildLevel', () => {
   it('returns null for an out-of-range level', () => {
     expect(buildLevel(tier, 0)).toBeNull();
     expect(buildLevel(tier, 32)).toBeNull();
+  });
+});
+
+describe('the tone answer guard', () => {
+  it('throws when a char\'s reading is not one of its four tone forms', () => {
+    // 不's pinyin-pro forms are bū / bú / bǔ / bù. A fact whose reading is a
+    // tone-marked syllable outside that family (here xíng, the shape a future
+    // chars.pinyin backfill could produce) must fail loud — never ship a
+    // question whose answerIndex is -1.
+    const mismatched = facts.map((f) =>
+      f.char === '不' ? { ...f, reading: 'xíng' } : { ...f },
+    );
+    const badTier = buildTier(tier1.tier, mismatched);
+    const levelIndex = badTier.levels.findIndex((level) =>
+      level.some((f) => f.char === '不'),
+    );
+    expect(levelIndex).toBeGreaterThanOrEqual(0);
+    expect(() => buildLevel(badTier, levelIndex + 1)).toThrow(
+      /no tone option matches the reading of 不: "xíng" is not one of \[bū, bú, bǔ, bù\]/,
+    );
   });
 });

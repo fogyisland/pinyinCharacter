@@ -25,6 +25,17 @@ const TIERS = [1, 2, 3, 4, 5, 6];
 
 // ---------------------------------------------------------------- tone tables
 // Mirrors lib/pinyin-tone.ts (TONE_MAP: 24 marks, no syllabic nasals).
+//
+// HAND-SYNCED COPY. This script is a plain .mjs run by bare `node`, so it
+// cannot import the TypeScript module lib/pinyin-tone.ts without a loader —
+// the copy has to stay. But lib/pinyin-tone.ts now exports TONE_MAP and the
+// quest builder derives every one of its tables from it, so the two copies
+// can silently drift (e.g. if `ǹ` were ever added to TONE_MAP, the numbers
+// printed here would no longer match the library's).
+//
+// THE DRIFT GUARD IS TASK 2's §6.1 FIXTURE TEST: if the two copies diverge,
+// the printed payload changes and tests/unit/lib/game-quest.test.ts fails.
+// Re-sync this copy whenever TONE_MAP changes.
 const PLAIN_OF = {
   'ā': 'a', 'á': 'a', 'ǎ': 'a', 'à': 'a',
   'ē': 'e', 'é': 'e', 'ě': 'e', 'è': 'e',
@@ -58,16 +69,34 @@ function toneOf(reading) {
 const initialOf = (char) => pinyin(char, { pattern: 'initial' });
 const finalOf = (char) => pinyin(char, { pattern: 'final' });
 
-/** The 4 tone forms of the char's syllable, or null when the final has no tone mark. */
+/**
+ * The 4 tone forms of the char's syllable, or null when the final has no tone
+ * mark.
+ *
+ * Mirrors lib/game-quest.ts's toneFormsOf, including the j/q/x/y ü-spelling
+ * rule (pinyin-pro's `pattern: 'final'` restores the ü, but the standard
+ * orthography writes it as u). Keep the two in lockstep — the drift guard is
+ * the §6.1 fixture test.
+ */
 function toneForms(char) {
   const final = finalOf(char);
+  const initial = initialOf(char);
+  const spellsU = ['j', 'q', 'x', 'y'].includes(initial);
   for (let i = 0; i < final.length; i++) {
     const plain = PLAIN_OF[final[i]];
     if (!plain) continue;
-    const variants = TONE_GROUP.filter((m) => PLAIN_OF[m] === plain).map(
-      (m) => final.slice(0, i) + m + final.slice(i + 1),
-    );
-    return variants.length === 4 ? variants : null;
+    let variants = TONE_GROUP.filter((m) => PLAIN_OF[m] === plain);
+    if (variants.length !== 4) return null;
+    const head = final.slice(0, i);
+    const tail = final.slice(i + 1);
+    if (spellsU) {
+      // A tone-marked ü is spelled with the u group (ūúǔù) here.
+      if (plain === 'ü') variants = TONE_GROUP.filter((m) => PLAIN_OF[m] === 'u');
+      // A plain ü in the head (the carrier of xué / quán) is written u too.
+      const headSpelling = head.replace(/ü/g, 'u');
+      return variants.map((m) => initial + headSpelling + m + tail);
+    }
+    return variants.map((m) => initial + head + m + tail);
   }
   return null;
 }
@@ -108,7 +137,7 @@ function factsOf(char) {
     // The raw facts the quest builder consumes (tone marks kept).
     meaningZh: meaning,
     pinyinAlt: Array.isArray(content?.dict?.pinyin_alt)
-      ? content.dict.pinyin_alt.map((a) => String(a))
+      ? content.dict.pinyin_alt.map((a) => String(a).trim())
       : [],
     hasStory: Boolean(content?.etymology?.story || content?.hanzi_story || content?.rare?.story),
   };

@@ -49,7 +49,15 @@ export interface QuestTier {
   syllables: QuestSyllable[];
   /** The tier's radical vocabulary, sorted by code point. */
   radicals: string[];
-  /** The tier's meaning-clause pool, in the tier's row order. */
+  /**
+   * The tier's meaning-clause pool, in the tier's row order.
+   *
+   * Only clauses of **at least 2 characters** enter the pool: a 1-character
+   * clause (e.g. 视's 看) cannot be a ④ distractor, because ④'s survival
+   * filter requires `candidate.length >= 2`. The pool and the ④ candidate
+   * list therefore share the same ≥2-character rule and produce identical
+   * candidate lists.
+   */
   clauses: string[];
 }
 

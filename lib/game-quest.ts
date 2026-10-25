@@ -75,19 +75,43 @@ function tonelessFinal(char: string): string {
   return final;
 }
 
+/** The initials after which ü is written u (the standard orthography). */
+const JQX_INITIALS = new Set(['j', 'q', 'x', 'y']);
+
 /**
  * The 4 tone forms of the char's syllable, or null when its final carries no
  * tone mark (轻声 and 嗯, whose ǹ is deliberately not a tone mark).
+ *
+ * `pinyin-pro`'s `pattern: 'final'` restores the ü of a j/q/x/y syllable
+ * (学 → final `üè`), but the standard orthography writes it as u (xué).
+ * Without that correction the four forms come out as `xüē xüé xüě xüè` and
+ * the char's own reading is not among them — the ② question would have no
+ * correct answer.
  */
 export function toneFormsOf(char: string): string[] | null {
   const final = pinyin(char, { pattern: 'final' });
+  const initial = pinyin(char, { pattern: 'initial' });
+  const spellsU = JQX_INITIALS.has(initial);
   for (let i = 0; i < final.length; i++) {
     const mark = final[i]!;
     if (!Object.hasOwn(TONE_MAP, mark)) continue;
-    const group = TONE_GROUP_OF.get(PLAIN_OF.get(mark) ?? '');
+    const plain = PLAIN_OF.get(mark) ?? '';
+    let group = TONE_GROUP_OF.get(plain);
     if (!group || group.length !== 4) return null;
-    const initial = pinyin(char, { pattern: 'initial' });
-    return group.map((m) => initial + final.slice(0, i) + m + final.slice(i + 1));
+    const head = final.slice(0, i);
+    const tail = final.slice(i + 1);
+    if (spellsU) {
+      // A tone-marked ü (ǖǘǚǜ) is spelled with the u group (ūúǔù) here.
+      if (plain === 'ü') {
+        const uGroup = TONE_GROUP_OF.get('u');
+        if (!uGroup || uGroup.length !== 4) return null;
+        group = uGroup;
+      }
+      // A plain ü in the head (the carrier of xué / quán) is written u too.
+      const headSpelling = head.split(PLAIN_U_UMLAUT).join('u');
+      return group.map((m) => initial + headSpelling + m + tail);
+    }
+    return group.map((m) => initial + head + m + tail);
   }
   return null;
 }
@@ -326,7 +350,21 @@ function toneQuestion(tier: QuestTier, fact: QuestCharFact, level: number): Ques
   const forms = toneFormsOf(fact.char);
   if (!forms) throw new Error(`no tone forms for ${fact.char}`);
   const options = seededShuffle(forms, questSeed(tier.tier, level, fact.char, 'tone'));
-  return { kind: 'tone', options, answerIndex: options.indexOf(fact.reading) };
+  const answerIndex = options.indexOf(fact.reading);
+  // The options come from toneFormsOf(fact.char) — pinyin-pro's *default*
+  // reading for the char — while the answer comes from fact.reading, which
+  // the data layer resolved. The two agree today (chars.pinyin is empty, so
+  // the resolved reading IS pinyin-pro's default), but a future backfill of
+  // chars.pinyin (a multi-reading list such as xíng,háng, or a single
+  // alternate reading) would make them disagree. indexOf would then answer
+  // -1 and we would ship a question with no correct option and no error.
+  // Fail loud instead.
+  if (answerIndex < 0) {
+    throw new Error(
+      `no tone option matches the reading of ${fact.char}: "${fact.reading}" is not one of [${forms.join(', ')}]`,
+    );
+  }
+  return { kind: 'tone', options, answerIndex };
 }
 
 /** ③ 部首 — the 3 nearest radicals of the tier vocabulary. */
