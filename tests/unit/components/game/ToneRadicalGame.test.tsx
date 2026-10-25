@@ -56,9 +56,9 @@ function firstRequestedUrl(): URL {
 }
 
 /**
- * happy-dom localStorage shim — useDifficulty reads from localStorage in a
- * useEffect. One copy for the whole file: the shim was duplicated verbatim in
- * two describe blocks and drifted.
+ * 2026-07-04: happy-dom localStorage shim — useDifficulty reads from
+ * localStorage in a useEffect. One copy for the whole file: the shim was
+ * duplicated verbatim in two describe blocks and drifted.
  *
  * The `store` map stays INSIDE this helper on purpose: every call installs a
  * fresh map, so each test starts with an empty localStorage.
@@ -200,20 +200,20 @@ describe('ToneRadicalGame — mode prop (Task 5)', () => {
 
 // 2026-10-25 (Task 5 fix round 1): proves the localStorage shim is still
 // per-test isolated. `installLocalStorageShim()` creates a fresh `store` map
-// on every call, so the value the first test writes is gone in the next one.
-// These cases render nothing, so they only need the shim — no RTL cleanup
-// and no mock reset.
+// on every call, so a value written before a reinstall is gone afterwards.
+// The case is self-contained: it writes the value AND reinstalls the shim
+// itself, so it does not depend on any other test having run first.
+// It renders nothing, so it only needs the shim — no RTL cleanup and no mock
+// reset.
 describe('ToneRadicalGame — localStorage shim isolation (Task 5 fix 1)', () => {
   beforeEach(() => {
     installLocalStorageShim();
   });
 
-  it('writes a value into the shimmed localStorage', () => {
+  it('installs a fresh localStorage on every call', () => {
     window.localStorage.setItem('probe-key', 'probe-value');
     expect(window.localStorage.getItem('probe-key')).toBe('probe-value');
-  });
-
-  it('starts from an empty localStorage in the next test', () => {
+    installLocalStorageShim();
     expect(window.localStorage.getItem('probe-key')).toBeNull();
   });
 });
