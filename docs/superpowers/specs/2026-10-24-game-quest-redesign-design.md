@@ -44,7 +44,7 @@ These were decided by the user via structured questions. **They are binding.**
 
 | # | Call | Why |
 |---|---|---|
-| A | **① 读音 asks for the *toneless syllable* (`ai`), ② 声调 asks for the *tone-marked form* (`ài` / `ái` / `ǎi` / `à`).** | The two questions must have **disjoint answer spaces**, otherwise one of them is free. If ① offered the four tone forms of the same syllable, ② would be literally the same question (the answer key of ① determines ②). With ① = syllable and ② = tone, the pair determines the full reading `ài` and neither question leaks the other. The learner still practises reading a tone mark, because ②'s options are the marked forms. |
+| A | **① 读音 asks for the *toneless syllable* (`ai`), ② 声调 asks for the *tone-marked form* (`ài` / `ái` / `ǎi` / `à`) — and ② plays the character aloud.** | The two questions must have **disjoint answer spaces**, otherwise one of them is free. If ① offered the four tone forms of the same syllable, ② would be literally the same question (the answer key of ① determines ②). With ① = syllable and ② = tone, the pair determines the full reading `ài` and neither question leaks the other. The learner still practises reading a tone mark, because ②'s options are the marked forms. The user chose (2026-10-25) that ① stays silent — a 认读 question — and ② is answered by ear, so the pair trains one skill each: 形→音 and 音→调. |
 | B | **轻声 chars and 嗯 are excluded from the quest pool** (13 chars). | 轻声 has no tone mark, so ② has no correct option; 嗯's tone mark (`ǹ`) is a syllabic nasal with no displayable variants. Excluding 13 chars is far cheaper than inventing a 轻声 question type. |
 | C | **A char whose meaning text contains the char itself is excluded** from the ④ question (337 chars across the tiers). | Otherwise the correct option literally shows the char inside the definition and the question is a free point. |
 | D | **The level ladder is built by a "syllable sweep"**, not a plain 5-char slice (§5.1.2). | A plain slice puts same-syllable chars (八 bā / 爸 bà) in the same level, which makes ① ask the *identical question twice* — measured at 875 such pairs across 449 levels. The sweep cuts that to 14 and yields a proper textbook curriculum (one char per syllable, alphabetically). |
@@ -58,7 +58,7 @@ These were decided by the user via structured questions. **They are binding.**
 ### Goals
 
 - G1. A learner can start at 「第 1 关」 and progress through a **deterministic ladder** of **449 levels** (HSK 1-6) with a clear, always-visible objective.
-- G2. Each char is tested on **4 fixed facets** (读音 / 声调 / 部首 / 词义), all four required.
+- G2. Each char is tested on **4 fixed facets** (读音 / 声调 / 部首 / 词义), all four required. ① 读音 is answered **silently** (认读: glyph → syllable) and ② 声调 is answered **by ear** (听辨: the character's audio plays, the learner identifies its tone). One skill per question, and the two answer spaces stay disjoint.
 - G3. Every answer gives **immediate, teaching-grade feedback** (correct answer revealed on a miss, with a 朱红印章 + sound on a hit).
 - G4. A mastered char is **captured** into a 字卡册 with one-tap exits to 字典 / 字源 / 故事 / 字帖.
 - G5. A missed char lands in a **生字本** with a one-tap path to a printable worksheet.
@@ -68,7 +68,7 @@ These were decided by the user via structured questions. **They are binding.**
 ### Non-goals (explicitly out)
 
 - No server-side progress table, no account sync, no leaderboard, no social layer.
-- No new npm dependency. No new audio asset files. No image assets.
+- No new npm dependency. No new audio asset files. No image assets. (The character audio is **synthesised at runtime** through the site's existing Edge TTS path — `lib/tts.ts` `speak()` + `lib/tts-cache.ts`'s Cache API — exactly like the dictionary page's 「读字」 button. Nothing is added to the repo and no new server route is needed.)
 - No drag-and-drop anywhere in the new quest UI (tap-only; the legacy games keep their DnD).
 - No change to the `/api/game/round` **response shape** (see §4.2 for the one semantic fix).
 - No work on `SutraCopyView` / `ClassicReader` render storms (deferred by the user to a later round).
@@ -215,6 +215,7 @@ Every char is asked **all four**. Each is a 4-option multiple choice. The client
 #### ① 读音 (pinyin) — 「这个字读哪个音节？」
 
 - **Correct**: the char's **toneless** syllable, e.g. `ai` (for 爱). The toned reading is *not* shown here — that is question ②.
+- **No audio on ①.** ① is a 认读 question: the learner looks at the glyph and recalls its sound. A 🔊 button here would play the very syllable being asked for and hand over the answer, so ① carries no audio at all — not even an on-demand one.
 - **Distractors**: 3 other toneless syllables from the tier's syllable pool.
 - **Ranking score** for a candidate syllable `c` against the correct `x`:
   `+3` if same initial (声母), `+2` if same final (韵母, toneless). Ties are broken by the syllable's alphabetical order, then the whole set is permuted by the seed (§5.4).
@@ -226,6 +227,9 @@ Every char is asked **all four**. Each is a 4-option multiple choice. The client
 #### ② 声调 (tone) — 「这个音节读第几声？」
 
 - **Prompt**: the **toneless** syllable, rendered large — e.g. 「`ai` 读第几声？」. The learner sees the sound and must place the tone.
+- **The character is played aloud (听辨声调).** The question auto-plays the character's audio once when it appears, and a 🔊 button replays it. The learner identifies the tone by ear — this is the 听说 half of the pair, and it is what makes the four options meaningful (they are four *audible* alternatives, not four spellings).
+- **The audio plays the character, not the pinyin string.** `speak('爱')` always carries the canonical tone, because the TTS engine resolves a real character. `speak('ài')` depends on the engine parsing a bare pinyin string, and if it flattened the tone mark every option would sound identical — the question would be unanswerable. So the quest speaks the character, with the same voice as the dictionary page's 「读字」 button.
+- **Audio is a progressive enhancement, never a blocker.** The Edge TTS upstream is flaky (it returns 403 often enough to have its own fix, `fix(tts): 修复 Edge TTS 上游 403 被吞成 HTTP 500`). If the request fails or has not produced audio within ~3 s, the question stays fully answerable without it: the 🔊 button shows 「🔊 暂时不可用」 and the learner answers from the char card and memory. The audio must never gate the answer, and the audio state is per question, not per level.
 - **Options**: the 4 tone forms of that syllable — `ài` `ái` `ǎi` `ài` (built from the final, §5.3).
 - **Correct**: the form equal to the char's canonical reading.
 - **轻声 chars are not in the pool** (§1.1 B), so there is no 轻声 variant set. This removes the 11-char special case the first draft of this spec carried — the real count of 轻声 chars in the HSK tiers is **12** (么们吗呢的吧着啊呀嘛瘩裳), not 11.
@@ -394,6 +398,7 @@ Response `200` — this is the **real output** for `?hsk=1&level=1` (trimmed to 
   - **部首** is tested by ③ → revealed after ③.
   - **词义** is tested by ④ → revealed after ④.
   - **A remediation round re-hides a facet it re-tests.** The reveal state is per round: when 「重挑错字」 re-asks ①, the pinyin is hidden again for that whole round, while the radical and the meaning stay visible (nothing in this round tests them). Without this, a re-asked ① would be answered off the card.
+- **The ② question carries the audio** (§5.2 ②, §9.1): a 🔊 button beside the prompt that plays the character, auto-playing once when the question appears. The button is the primary path — the browser blocks autoplay until the first user gesture, so the first ② of a fresh visit always needs a click. ① never carries audio.
 - **Feedback**:
   - correct → the option turns 墨绿 (`--color-success`), a 朱红印章 animation stamps over the char card, a 磬-like chime plays, 连击 +1;
   - wrong → the card shakes and tints 淡红 (`--color-danger`), the correct option is revealed and marked, the wrong option is marked with a cross, a 「记一笔」 button appears (adds to 生字本 — it is added automatically as well, so the button is a **confirm + jump to 生字本** action), the combo resets to 0.
@@ -496,6 +501,8 @@ tests/unit/components/game/GameModeTabs.test.tsx
 lib/pinyin-index.ts    ← `resolvePinyin` (the reading) and the per-process memoized index
 lib/pinyin-tone.ts     ← `toneFromPinyin` (the tone number); only `TONE_MAP` is additionally exported
 lib/shuffle.ts         ← after the PRNG repair in §5.4
+lib/tts.ts             ← `speak(char, { voice })` / `stopSpeaking()` for the ② audio
+lib/tts-cache.ts       ← `prefetchTts(voice, char)` warms the Cache API when the level loads
 ```
 
 `lib/game-quest.ts` must stay free of DB/fs imports so it can be unit-tested with plain fixtures. The DB query and the `data/content/*.json` reads live in the route (or a thin `lib/game-quest-data.ts`), and the pure module receives them as injected data.
@@ -549,8 +556,19 @@ Rules:
 | 盖章 `playStamp()` | a short filtered noise burst (a 木戳 knock) |
 
 - The `AudioContext` is created lazily and `resume()`d on the first user gesture (browsers block audio otherwise).
-- A mute toggle lives in `localStorage` (`pinyin-character:game-sound`) and is exposed in the quest header.
+- A mute toggle lives in `localStorage` (`pinyin-character:game-sound`) and is exposed in the quest header. **The mute toggle also silences the character audio** (§9.1) — one switch for all sound, not two.
 - All calls are wrapped so an unsupported/blocked AudioContext can never throw into the render path.
+
+### 9.1 The character audio (② 声调)
+
+**This is not synthesised by `lib/game-sound.ts`** — it reuses the site's existing Edge TTS path:
+
+- `speak(char, { voice: 'male' })` from `lib/tts.ts` — the same function the dictionary page's 「读字」 button uses, so the learner hears the same voice everywhere. The character is spoken, not the pinyin string (§5.2 ②).
+- `lib/tts-cache.ts` caches the MP3 in the browser's Cache API, so a char is fetched once per browser.
+- **Prefetch on level load**: when the level payload arrives, the quest calls `prefetchTts('male', char)` for the level's 5 chars, so ② starts playing immediately instead of waiting on the network. The prefetch is fire-and-forget — a failure is swallowed and the question still loads.
+- **Autoplay**: browsers block audio until a user gesture. The quest's first answer click is the gesture that unlocks the `AudioContext` / the audio playback, so ②'s audio cannot autoplay on the very first question of a fresh visit. The UI must therefore show the 🔊 button prominently rather than relying on autoplay — the button is the primary path, the autoplay is a bonus.
+- **Failure is a degraded mode, not an error**: the TTS upstream returns 403 often enough to have its own fix. A rejected `speak()` (or a load that has not produced audio within ~3 s) must leave the question fully answerable — the 🔊 button flips to 「🔊 暂时不可用」 and the learner answers ② by recall. No error toast, no blocked question, no lost progress.
+- `stopSpeaking()` is called when the quest leaves a question or unmounts, so the audio never overlaps the next question.
 
 ---
 
@@ -596,7 +614,9 @@ Rules:
 - clicking a wrong option reveals the correct answer and breaks the combo;
 - clicking the right option locks the question and shows the seal;
 - the hint removes exactly one wrong option (the last in the seeded permutation);
-- a level with 5 mastered chars shows 「下一关」; a short level (3 chars) also completes.
+- a level with 5 mastered chars shows 「下一关」; a short level (3 chars) also completes;
+- **the reveal rule**: the char card does not show the pinyin while ① or ② is pending, shows it after ② is answered, and a remediation round that re-asks ① hides the pinyin again;
+- **the audio contract**: ① renders no 🔊 control; ② renders one; when `speak` rejects (mocked), ② is still answerable and the button shows 「🔊 暂时不可用」 — no error toast, no blocked question.
 
 ### Extended / existing
 
@@ -615,6 +635,9 @@ Rules:
    - `/game` loads; the 4 tabs render;
    - a level runs 5 chars × 4 questions; a wrong answer reveals the answer; a correct answer stamps and chimes;
    - **the correct option is in a different position on different questions** (the §0 #8 fix, visible in one level);
+   - **the pinyin stays off the char card until ② is answered** (§7.2's reveal rule) — the ② answer must not be readable off the card;
+   - **② plays the character audio** and the 🔊 button replays it; ① has no audio control;
+   - **with the network blocked, ② is still answerable** and the 🔊 button shows 「🔊 暂时不可用」 (the Edge TTS upstream 403s often enough that this path must be exercised, not assumed);
    - the level summary appears; the progress survives a reload; switching HSK tiers keeps each tier's own position;
    - 每日一局 → 声调 shows a tone round (not a pinyin round) and 部首 shows a radical round; a finished game marks its card 「已完成」 with a score;
    - the 字卡册 and 生字本 tabs render their entries; the 练字帖 deep link opens the worksheet with the char;
@@ -634,6 +657,9 @@ Rules:
 | Two chars in a level share a 部首 | Not a problem — the distractors are drawn from the tier's radical vocabulary, and every stored radical is already canonical (§5.2 ③). |
 | The option order is always the same | Fixed in §5.4 by the PRNG repair; regression-tested in `tests/unit/lib/shuffle.test.ts`. |
 | The ① and ② questions leak into each other | Prevented by construction: ①'s options are toneless syllables, ②'s are the tone forms of one syllable (§1.1 A). |
+| The ② audio fails (Edge TTS 403, or the upstream is slow) → the question becomes unanswerable or blocks the flow | Audio is a **progressive enhancement**: the question stays answerable by recall, the 🔊 button degrades to 「🔊 暂时不可用」, there is no error toast and no blocked question (§9.1). The prefetch is fire-and-forget. |
+| The TTS flattens the tone mark of a bare pinyin string → all four ② options sound identical | The quest speaks the **character**, not the pinyin string (§5.2 ②). A real character always carries its canonical tone; a bare pinyin string does not. |
+| The learner remembers the character's sound from ② and then re-fails ① in the remediation round | Accepted, and deliberate: the character's sound is public information (the dictionary page plays it on demand too), and the quest is a learning loop rather than an exam. The reveal rule still hides the pinyin *card* during a re-asked ① (§7.2). |
 | The 生字本 grows past the 500-char worksheet cap | The UI states 「本次生成前 500 字」 and keeps per-char links for the rest (§7.5). |
 | The legacy games cannot report a score | All three gain an optional `onComplete` prop (§7.3); the prop is optional so the old usage keeps compiling. |
 | `radicals.json` (0.84 MB) leaking into the client bundle | Not used by the quest at all (§5.2 ③). The client receives strings only. |
