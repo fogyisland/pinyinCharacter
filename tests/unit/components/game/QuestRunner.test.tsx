@@ -470,6 +470,7 @@ describe('QuestRunner — the quest flow', () => {
     const card = container.querySelector('[data-wrong="true"]');
     expect(card).not.toBeNull();
     expect(card?.className).toContain('quest-shake');
+    expect(card?.className).toContain('quest-card-wrong');
     expect(optionAt(1).textContent).toContain('✕');
   });
 

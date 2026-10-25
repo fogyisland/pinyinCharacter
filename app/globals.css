@@ -597,6 +597,13 @@ textarea.adm-input {
 .quest-shake {
   animation: quest-shake 420ms ease-in-out;
 }
+/* The wrong-answer tint (spec §7.2). `.card-paper` sets the background and
+   the border inside the utilities layer, so a Tailwind utility on the same
+   element would lose the cascade - the tint is a hand-written rule. */
+.quest-card-wrong {
+  background-color: color-mix(in oklab, var(--color-danger) 10%, transparent);
+  border-color: var(--color-danger);
+}
 @keyframes quest-shake {
   0%,
   100% {

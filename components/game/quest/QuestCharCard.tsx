@@ -43,9 +43,9 @@ export function QuestCharCard({
     <div
       data-wrong={wrong ? 'true' : undefined}
       className={`card-paper rounded-lg p-6 text-center ${
-        // The `!` matters: `.card-paper` sets the background and the border
-        // in the same utilities layer, and it comes later in the sheet.
-        wrong ? 'quest-shake border-danger! bg-danger/10!' : ''
+        // The tint is a hand-written class: `.card-paper` sets the background in
+        // the utilities layer and would swallow a Tailwind utility here.
+        wrong ? 'quest-shake quest-card-wrong' : ''
       }`}
     >
       <div className="relative mx-auto flex h-32 w-32 items-center justify-center">
