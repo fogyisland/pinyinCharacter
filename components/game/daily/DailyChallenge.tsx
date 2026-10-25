@@ -48,12 +48,16 @@ const MODE_RADICAL = 'radical';
 const MODE_PINYIN_CHAR = 'pinyin-char';
 const MODE_PINYIN_CHAIN = 'pinyin-chain';
 
-/** Which game a card opens. */
-type DailyGame = 'tone' | 'radical' | 'pinyin-char' | 'pinyin-chain';
+/** Which game a card opens - derived from the constants, so there is one list. */
+type DailyGame =
+  | typeof MODE_TONE
+  | typeof MODE_RADICAL
+  | typeof MODE_PINYIN_CHAR
+  | typeof MODE_PINYIN_CHAIN;
 
 interface DailyCardSpec {
   /** The mode part of the daily key. */
-  mode: string;
+  mode: DailyGame;
   /** The Chinese title of the card. */
   title: string;
   /** One line that says what the round is about. */
@@ -61,7 +65,7 @@ interface DailyCardSpec {
   /** The game the card opens. */
   game: DailyGame;
   /** The `mode` prop of the tone/radical game - the other games have none. */
-  toneMode?: 'tone' | 'radical';
+  toneMode?: typeof MODE_TONE | typeof MODE_RADICAL;
 }
 
 const CARDS: DailyCardSpec[] = [
@@ -93,15 +97,48 @@ const CARDS: DailyCardSpec[] = [
   },
 ];
 
-export interface DailyChallengeProps {
-  tier: number;
-  difficulty: Difficulty;
+/** One recorded slot of the day. */
+interface DailySlot {
+  done: boolean;
+  score: number;
 }
 
-export function DailyChallenge({ tier, difficulty }: DailyChallengeProps) {
-  const [progress, setProgress] = useState<GameProgress>(defaultProgress);
+/**
+ * Record a finished round.
+ *
+ * The first result wins - `recordDaily` overwrites the slot, so a finished
+ * slot is never written again. The progress is re-read from the storage
+ * first: the parent holds a snapshot that may already be stale.
+ */
+function recordRound(key: string, result: LegacyGameResult): GameProgress {
+  const fresh = loadProgress();
+  const today = localDateKey();
+  if (fresh.daily[today]?.[key]?.done === true) return fresh;
+  const next = recordDaily(fresh, key, result.correct);
+  saveProgress(next);
+  return next;
+}
+
+/** The state of the four daily slots. */
+interface DailySlotsState {
   /** The mode of the open card - only one card is open at a time. */
-  const [openMode, setOpenMode] = useState<string | null>(null);
+  openMode: DailyGame | null;
+  /** Today's slots, keyed by the daily key. */
+  slots: Record<string, DailySlot>;
+  openCard: (card: DailyCardSpec) => void;
+  closeCard: () => void;
+  handleComplete: (result: LegacyGameResult) => void;
+}
+
+/**
+ * The state of the four daily slots.
+ *
+ * Which card is open, the daily key captured when the card was opened, the
+ * recorded state of every slot of today and the completion handler.
+ */
+function useDailySlots(tier: number, difficulty: Difficulty): DailySlotsState {
+  const [progress, setProgress] = useState<GameProgress>(defaultProgress);
+  const [openMode, setOpenMode] = useState<DailyGame | null>(null);
   /** The daily key of the open round - captured when the card is opened. */
   const [openKey, setOpenKey] = useState<string | null>(null);
 
@@ -125,87 +162,106 @@ export function DailyChallenge({ tier, difficulty }: DailyChallengeProps) {
     setOpenKey(null);
   }
 
-  /**
-   * Record the finished round.
-   *
-   * The first result wins - `recordDaily` overwrites the slot, so a finished
-   * slot is never written again. The progress is re-read from the storage
-   * first: the parent holds a snapshot that may already be stale.
-   */
   function handleComplete(result: LegacyGameResult): void {
-    const key = openKey;
-    if (key === null) return;
-    const fresh = loadProgress();
-    const today = localDateKey();
-    if (fresh.daily[today]?.[key]?.done === true) {
-      setProgress(fresh);
-    } else {
-      const next = recordDaily(fresh, key, result.correct);
-      saveProgress(next);
-      setProgress(next);
-    }
+    if (openKey === null) return;
+    setProgress(recordRound(openKey, result));
     // The round is over - the card falls back to its state, which now shows
     // the score and the 「再玩一次」 button.
     closeCard();
   }
 
-  const renderGame = (card: DailyCardSpec) => {
-    if (card.game === 'pinyin-char') {
-      return <DragMatchGame onComplete={handleComplete} />;
-    }
-    if (card.game === 'pinyin-chain') {
-      return <ChainGame onComplete={handleComplete} />;
-    }
-    return <ToneRadicalGame mode={card.toneMode} onComplete={handleComplete} />;
-  };
+  return { openMode, slots, openCard, closeCard, handleComplete };
+}
+
+/** The game a card opens. */
+function renderGame(
+  card: DailyCardSpec,
+  onComplete: (result: LegacyGameResult) => void,
+) {
+  if (card.game === 'pinyin-char') {
+    return <DragMatchGame onComplete={onComplete} />;
+  }
+  if (card.game === 'pinyin-chain') {
+    return <ChainGame onComplete={onComplete} />;
+  }
+  return <ToneRadicalGame mode={card.toneMode} onComplete={onComplete} />;
+}
+
+interface DailyCardProps {
+  card: DailyCardSpec;
+  /** The slot of today - undefined when the round was never played. */
+  slot: DailySlot | undefined;
+  /** Whether this card is the open one. */
+  isOpen: boolean;
+  onOpen: () => void;
+  onClose: () => void;
+  onComplete: (result: LegacyGameResult) => void;
+}
+
+/**
+ * One daily card - its state, and the game it opens.
+ *
+ * A card that was already played shows its score and the 「再玩一次」 button;
+ * an open card shows the 「结束」 button and the game below it.
+ */
+function DailyCard({ card, slot, isOpen, onOpen, onClose, onComplete }: DailyCardProps) {
+  const done = slot?.done === true;
+  return (
+    <div data-daily-card={card.mode} className="rounded border border-ink/15 bg-paper px-4 py-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-ink">{card.title}</p>
+          <p className="text-xs text-ink-faint">{card.hint}</p>
+        </div>
+        <span data-daily-status={card.mode} className="shrink-0 text-xs text-ink-soft">
+          {done ? `已完成 · ${slot?.score ?? 0} 分` : '未玩'}
+        </span>
+      </div>
+      <div className="mt-3">
+        {isOpen ? (
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded border border-ink/30 bg-paper-deep px-3 py-1.5 text-sm text-ink hover:bg-paper"
+          >
+            结束
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onOpen}
+            className="rounded border border-seal bg-seal px-3 py-1.5 text-sm text-paper-soft hover:opacity-90"
+          >
+            {done ? '再玩一次' : '开始'}
+          </button>
+        )}
+      </div>
+      {isOpen ? <div className="mt-3">{renderGame(card, onComplete)}</div> : null}
+    </div>
+  );
+}
+
+export interface DailyChallengeProps {
+  tier: number;
+  difficulty: Difficulty;
+}
+
+export function DailyChallenge({ tier, difficulty }: DailyChallengeProps) {
+  const { openMode, slots, openCard, closeCard, handleComplete } = useDailySlots(tier, difficulty);
 
   return (
     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-      {CARDS.map((card) => {
-        const slot = slots[dailyKey(card.mode, difficulty, tier)];
-        const done = slot?.done === true;
-        const isOpen = openMode === card.mode;
-        return (
-          <div
-            key={card.mode}
-            data-daily-card={card.mode}
-            className="rounded border border-ink/15 bg-paper px-4 py-3"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-sm text-ink">{card.title}</p>
-                <p className="text-xs text-ink-faint">{card.hint}</p>
-              </div>
-              <span
-                data-daily-status={card.mode}
-                className="shrink-0 text-xs text-ink-soft"
-              >
-                {done ? `已完成 · ${slot?.score ?? 0} 分` : '未玩'}
-              </span>
-            </div>
-            <div className="mt-3">
-              {isOpen ? (
-                <button
-                  type="button"
-                  onClick={closeCard}
-                  className="rounded border border-ink/30 bg-paper-deep px-3 py-1.5 text-sm text-ink hover:bg-paper"
-                >
-                  结束
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => openCard(card)}
-                  className="rounded border border-seal bg-seal px-3 py-1.5 text-sm text-paper-soft hover:opacity-90"
-                >
-                  {done ? '再玩一次' : '开始'}
-                </button>
-              )}
-            </div>
-            {isOpen ? <div className="mt-3">{renderGame(card)}</div> : null}
-          </div>
-        );
-      })}
+      {CARDS.map((card) => (
+        <DailyCard
+          key={card.mode}
+          card={card}
+          slot={slots[dailyKey(card.mode, difficulty, tier)]}
+          isOpen={openMode === card.mode}
+          onOpen={() => openCard(card)}
+          onClose={closeCard}
+          onComplete={handleComplete}
+        />
+      ))}
     </div>
   );
 }

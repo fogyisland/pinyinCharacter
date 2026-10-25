@@ -18,6 +18,45 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
 
+/**
+ * The runner is mocked: the two new cases drive the runner's pass branch and
+ * its 「下一关」 button, and the real runner would need a whole board of
+ * characters to reach them. The mock writes the pass to the progress store
+ * the way the real runner does - that is what moves the tier's pointer.
+ */
+vi.mock('@/components/game/quest/QuestRunner', async () => {
+  const { loadProgress, markLevelPassed, saveProgress } = await import('@/lib/game-progress');
+  return {
+    QuestRunner: ({
+      tier,
+      level,
+      onPassed,
+      onNextLevel,
+    }: {
+      tier: number;
+      level: number;
+      onExit: () => void;
+      onPassed: (level: number) => void;
+      onNextLevel: () => void;
+    }) => (
+      <div data-quest-runner data-runner-tier={tier} data-runner-level={level}>
+        <button
+          type="button"
+          onClick={() => {
+            saveProgress(markLevelPassed(loadProgress(), tier, level));
+            onPassed(level);
+          }}
+        >
+          通关本局
+        </button>
+        <button type="button" onClick={onNextLevel}>
+          下一关
+        </button>
+      </div>
+    ),
+  };
+});
+
 /** The query string of the page under test. */
 function setUrl(search: string): void {
   window.history.replaceState({}, '', `/game${search}`);
@@ -50,6 +89,16 @@ function mockLevelCount(count = 31): void {
       data: { hsk: 1, level: 1, levelCount: count, tierSize: 150, skipped: 3, chars: [] },
     }),
   } as Response);
+}
+
+/** The tier the mocked runner was given. */
+function runnerTier(): string | null {
+  return document.querySelector('[data-quest-runner]')?.getAttribute('data-runner-tier') ?? null;
+}
+
+/** The level the mocked runner was given. */
+function runnerLevel(): string | null {
+  return document.querySelector('[data-quest-runner]')?.getAttribute('data-runner-level') ?? null;
 }
 
 describe('QuestTabs — the four panels', () => {
@@ -154,5 +203,46 @@ describe('QuestTabs — the four panels', () => {
     });
     expect(screen.getByRole('button', { name: '重试' })).toBeTruthy();
     expect(document.querySelector('[data-level="1"]')).toBeNull();
+  });
+
+  it('opens the level of the URL in the tier of the URL', async () => {
+    setUrl('?hsk=2&level=5');
+    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+    render(<QuestTabs />);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-quest-runner]')).not.toBeNull();
+    });
+    expect(runnerTier()).toBe('2');
+    expect(runnerLevel()).toBe('5');
+  });
+
+  it('clamps 「下一关」 to the last level of the tier', async () => {
+    setUrl('');
+    seedProgress({ '1': { level: 31 } });
+    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+    render(<QuestTabs />);
+
+    // The tier's board - HSK 1 has 31 levels.
+    await waitFor(() => {
+      expect(document.querySelector('[data-level="31"]')).not.toBeNull();
+    });
+    fireEvent.click(document.querySelector('[data-level="31"]') as HTMLElement);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-quest-runner]')).not.toBeNull();
+    });
+    expect(runnerLevel()).toBe('31');
+
+    // The level is 通关 - the tier's pointer moves to 32, which does not exist.
+    fireEvent.click(screen.getByRole('button', { name: '通关本局' }));
+    fireEvent.click(screen.getByRole('button', { name: '下一关' }));
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-quest-runner]')).not.toBeNull();
+    });
+    // The clamp keeps the next level inside the tier - without it the runner
+    // would open level 32, which the API does not have.
+    expect(runnerLevel()).toBe('31');
   });
 });
