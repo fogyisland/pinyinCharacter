@@ -370,16 +370,10 @@ describe('client/server boundary — detector', () => {
 });
 
 /**
- * The namespace path of the guard.
- *
- * The namespace member scan reads the source **text**, so it must not read a
- * property of an unrelated object, a comment, or a string literal as a member
- * access of the alias — those are legal code, and a guard that flags legal code
- * gets deleted.
- *
- * The cases run against a synthetic client module: the collectors take the
- * server file and the client modules as parameters, so no fixture tree is
- * needed.
+ * The namespace path of the guard. The member scan reads the source **text**, so
+ * a property of an unrelated object, a comment, or a string literal must not be
+ * read as a member access of the alias — a guard that flags legal code gets
+ * deleted. The cases use a synthetic client module, so no fixture tree is needed.
  */
 const NAMESPACE_IMPORT_LINE = "import * as sidebar from '@/components/dictionary/RadicalSidebar';";
 
@@ -388,6 +382,13 @@ const RADICALS_MODULE: ClientModule = {
   relativePath: 'components/dictionary/RadicalSidebar.tsx',
   absolutePath: path.join(REPO_ROOT, 'components/dictionary/RadicalSidebar.tsx'),
   nonComponentExports: ['RADICALS'],
+};
+
+/** A second client module with one non-component export, `GLOSSES`. */
+const GLOSSES_MODULE: ClientModule = {
+  relativePath: 'components/dictionary/GlossaryPanel.tsx',
+  absolutePath: path.join(REPO_ROOT, 'components/dictionary/GlossaryPanel.tsx'),
+  nonComponentExports: ['GLOSSES'],
 };
 
 /** The synthetic server file the cases are driven against. */
@@ -450,5 +451,47 @@ describe('client/server boundary — namespace path', () => {
     expect(violations[0].importedName).toBe('RADICALS');
     expect(violations[0].clientModule).toBe(RADICALS_MODULE.relativePath);
     expect(violations[0].serverFile).toBe('app/boundary-probe/page.tsx');
+  });
+
+  it('N7 a commented-out namespace import is not an import', () => {
+    const source = [
+      "// import * as sidebar from '@/components/dictionary/RadicalSidebar';",
+      'const n = sidebar.RADICALS.length;',
+    ].join('\n');
+    const violations = collectNamespaceViolations(PROBE_SERVER_FILE, source, [RADICALS_MODULE]);
+    expect(violations).toEqual([]);
+  });
+});
+
+/** The import decoys — a comment, a string literal and a block comment. */
+const M2_SOURCE = "// import { RADICALS } from '@/components/dictionary/RadicalSidebar';";
+const M3_SOURCE =
+  'const snippet = "import { RADICALS } from \'@/components/dictionary/RadicalSidebar\';";';
+const M5_SOURCE = "/*\nimport { RADICALS } from '@/components/dictionary/RadicalSidebar';\n*/";
+
+/**
+ * The import path of the guard. An import inside a comment or a string literal is
+ * not an import. M4 pins the multi-line flag: without it only the first import of
+ * a file would be found.
+ */
+describe('client/server boundary — import path', () => {
+  it.each([
+    ['M2 a commented-out import is not an import', M2_SOURCE],
+    ['M3 an import inside a string literal is not an import', M3_SOURCE],
+    ['M5 an import inside a block comment is not an import', M5_SOURCE],
+  ])('%s', (_note, source) => {
+    const violations = collectNamedImportViolations(PROBE_SERVER_FILE, source, [RADICALS_MODULE]);
+    expect(violations).toEqual([]);
+  });
+
+  it('M4 two real imports on separate lines are both found', () => {
+    const source = [
+      "import { RADICALS } from '@/components/dictionary/RadicalSidebar';",
+      "import { GLOSSES } from '@/components/dictionary/GlossaryPanel';",
+    ].join('\n');
+    const modules = [RADICALS_MODULE, GLOSSES_MODULE];
+    const violations = collectNamedImportViolations(PROBE_SERVER_FILE, source, modules);
+    expect(violations).toHaveLength(2);
+    expect(violations.map((violation) => violation.importedName)).toEqual(['RADICALS', 'GLOSSES']);
   });
 });
