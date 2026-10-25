@@ -8,7 +8,9 @@ import { QuestSealStamp } from './QuestSealStamp';
  *
  * A passed level gets the big seal and the 「下一关」 button; a level with
  * missed chars lists them and offers the remediation round
- * (「重挑错字」). Both branches carry the 生字本 shortcut, because the misses
+ * (「重挑错字」). Both branches carry the 「返回关卡地图」 button - at the end
+ * of a tier the 「下一关」 re-opens the level just passed, so the passed
+ * branch needs a way back too - and the 生字本 shortcut, because the misses
  * of a failed level are exactly what the wrong book is for.
  */
 export interface QuestSummaryProps {
@@ -60,6 +62,13 @@ export function QuestSummary({
             className="rounded border border-seal bg-seal px-5 py-2 text-paper-soft hover:opacity-90"
           >
             下一关
+          </button>
+          <button
+            type="button"
+            onClick={onExit}
+            className="ml-3 rounded border border-ink/20 bg-paper px-5 py-2 text-ink-soft hover:bg-paper-deep"
+          >
+            返回关卡地图
           </button>
         </>
       ) : (
