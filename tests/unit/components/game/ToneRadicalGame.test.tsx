@@ -55,33 +55,43 @@ function firstRequestedUrl(): URL {
   return new URL(raw, 'http://localhost');
 }
 
+/**
+ * happy-dom localStorage shim — useDifficulty reads from localStorage in a
+ * useEffect. One copy for the whole file: the shim was duplicated verbatim in
+ * two describe blocks and drifted.
+ *
+ * The `store` map stays INSIDE this helper on purpose: every call installs a
+ * fresh map, so each test starts with an empty localStorage.
+ */
+function installLocalStorageShim(): void {
+  const store = new Map<string, string>();
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, v);
+      },
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+      clear: () => {
+        store.clear();
+      },
+      key: (i: number) => Array.from(store.keys())[i] ?? null,
+      get length() {
+        return store.size;
+      },
+    },
+  });
+}
+
 describe('ToneRadicalGame — HSK reveal wiring (Task 8)', () => {
   beforeEach(() => {
     cleanup();
     vi.restoreAllMocks();
     vi.resetModules();
-    // 2026-07-04: happy-dom localStorage shim — useDifficulty reads from
-    // localStorage in a useEffect.
-    const store = new Map<string, string>();
-    Object.defineProperty(window, 'localStorage', {
-      configurable: true,
-      value: {
-        getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => {
-          store.set(k, v);
-        },
-        removeItem: (k: string) => {
-          store.delete(k);
-        },
-        clear: () => {
-          store.clear();
-        },
-        key: (i: number) => Array.from(store.keys())[i] ?? null,
-        get length() {
-          return store.size;
-        },
-      },
-    });
+    installLocalStorageShim();
   });
 
   it('threads revealConfig to ToneRadicalChar (HSK 1: all hints visible)', async () => {
@@ -149,26 +159,7 @@ describe('ToneRadicalGame — mode prop (Task 5)', () => {
     cleanup();
     vi.restoreAllMocks();
     vi.resetModules();
-    const store = new Map<string, string>();
-    Object.defineProperty(window, 'localStorage', {
-      configurable: true,
-      value: {
-        getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => {
-          store.set(k, v);
-        },
-        removeItem: (k: string) => {
-          store.delete(k);
-        },
-        clear: () => {
-          store.clear();
-        },
-        key: (i: number) => Array.from(store.keys())[i] ?? null,
-        get length() {
-          return store.size;
-        },
-      },
-    });
+    installLocalStorageShim();
   });
 
   it('sends mode=tone in the query string when the prop is set', async () => {
@@ -204,5 +195,25 @@ describe('ToneRadicalGame — mode prop (Task 5)', () => {
     const url = firstRequestedUrl();
     expect(url.searchParams.has('mode')).toBe(false);
     expect(url.search).not.toContain('mode=');
+  });
+});
+
+// 2026-10-25 (Task 5 fix round 1): proves the localStorage shim is still
+// per-test isolated. `installLocalStorageShim()` creates a fresh `store` map
+// on every call, so the value the first test writes is gone in the next one.
+// These cases render nothing, so they only need the shim — no RTL cleanup
+// and no mock reset.
+describe('ToneRadicalGame — localStorage shim isolation (Task 5 fix 1)', () => {
+  beforeEach(() => {
+    installLocalStorageShim();
+  });
+
+  it('writes a value into the shimmed localStorage', () => {
+    window.localStorage.setItem('probe-key', 'probe-value');
+    expect(window.localStorage.getItem('probe-key')).toBe('probe-value');
+  });
+
+  it('starts from an empty localStorage in the next test', () => {
+    expect(window.localStorage.getItem('probe-key')).toBeNull();
   });
 });

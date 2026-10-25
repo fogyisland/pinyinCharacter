@@ -51,6 +51,31 @@ function makeReq(query: string): NextRequest {
   return new NextRequest(`http://localhost/api/game/round${query}`);
 }
 
+/** The 200 body of GET /api/game/round (lib/api-handler.ts). */
+interface RoundOkBody {
+  ok: true;
+  data: GameRound;
+  revealConfig: unknown;
+  hskFallback: boolean;
+  hskLevel: number | null;
+}
+
+/** The 4xx body of GET /api/game/round (lib/api-handler.ts:27-30). */
+interface RoundErrorBody {
+  ok: false;
+  error: { code: string; message: string };
+}
+
+/** The 200 body, typed. `Response.json()` returns `any`; the cast pins it. */
+async function readOkBody(res: Response): Promise<RoundOkBody> {
+  return (await res.json()) as RoundOkBody;
+}
+
+/** The 4xx body, typed. */
+async function readErrorBody(res: Response): Promise<RoundErrorBody> {
+  return (await res.json()) as RoundErrorBody;
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   // The fixture echoes the requested mode so the route's payload can be
@@ -75,7 +100,7 @@ describe('GET /api/game/round — mode forwarding (Task 5)', () => {
   it('echoes the requested mode in the response payload', async () => {
     const res = await GET(makeReq('?mode=tone&count=4'));
     expect(res.status).toBe(200);
-    const body = await res.json();
+    const body = await readOkBody(res);
     expect(body.ok).toBe(true);
     expect(body.data.mode).toBe('tone');
   });
@@ -85,7 +110,7 @@ describe('GET /api/game/round — mode forwarding (Task 5)', () => {
     expect(res.status).toBe(200);
     const args = vi.mocked(buildRound).mock.calls[0];
     expect(args?.[4]).toBe('radical');
-    const body = await res.json();
+    const body = await readOkBody(res);
     expect(body.data.mode).toBe('radical');
   });
 
@@ -94,7 +119,7 @@ describe('GET /api/game/round — mode forwarding (Task 5)', () => {
     expect(res.status).toBe(200);
     const args = vi.mocked(buildRound).mock.calls[0];
     expect(args?.[4]).toBe('pinyin');
-    const body = await res.json();
+    const body = await readOkBody(res);
     expect(body.data.mode).toBe('pinyin');
   });
 
@@ -111,7 +136,7 @@ describe('GET /api/game/round — mode forwarding (Task 5)', () => {
 
   it('keeps the response shape unchanged', async () => {
     const res = await GET(makeReq('?mode=tone&count=4'));
-    const body = await res.json();
+    const body = await readOkBody(res);
     expect(Object.keys(body).sort()).toEqual(
       ['data', 'hskFallback', 'hskLevel', 'ok', 'revealConfig'].sort(),
     );
@@ -123,7 +148,7 @@ describe('GET /api/game/round — mode forwarding (Task 5)', () => {
   it('still rejects an unknown mode with 400 bad_input', async () => {
     const res = await GET(makeReq('?mode=bogus'));
     expect(res.status).toBe(400);
-    const body = await res.json();
+    const body = await readErrorBody(res);
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('bad_input');
     expect(buildRound).not.toHaveBeenCalled();
