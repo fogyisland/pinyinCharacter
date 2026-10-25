@@ -1,0 +1,1870 @@
+{
+  "tier": 1,
+  "tierSize": 178,
+  "facts": [
+    {
+      "char": "一",
+      "reading": "yī",
+      "radical": "一",
+      "meaningZh": "最小的自然数，表示单个数量",
+      "pinyinAlt": [
+        "yī",
+        "yí"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "七",
+      "reading": "qī",
+      "radical": "一",
+      "meaningZh": "数目字,六加一所得,表示六与一之和",
+      "pinyinAlt": [
+        "qī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "三",
+      "reading": "sān",
+      "radical": "一",
+      "meaningZh": "数目字，二加一后所得，表示三这个数量",
+      "pinyinAlt": [
+        "sān"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "上",
+      "reading": "shàng",
+      "radical": "一",
+      "meaningZh": "表示位置在高处或向高处移动，与下相对",
+      "pinyinAlt": [
+        "shàng",
+        "shǎng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "下",
+      "reading": "xià",
+      "radical": "一",
+      "meaningZh": "位置或等级在低处的，与上相对",
+      "pinyinAlt": [
+        "xià"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "不",
+      "reading": "bù",
+      "radical": "一",
+      "meaningZh": "表示否定，用于拒绝、禁止或对动作性状的否定",
+      "pinyinAlt": [
+        "bù",
+        "bú",
+        "fǒu",
+        "fōu",
+        "pī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "东",
+      "reading": "dōng",
+      "radical": "一",
+      "meaningZh": "太阳升起的方向，与西相对",
+      "pinyinAlt": [
+        "dōng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "个",
+      "reading": "gè",
+      "radical": "丨",
+      "meaningZh": "量词，用于没有专用量词的事物，也指单个的人或物",
+      "pinyinAlt": [
+        "gè"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "中",
+      "reading": "zhōng",
+      "radical": "丨",
+      "meaningZh": "表示内部、范围内或居中的位置，也指代中国",
+      "pinyinAlt": [
+        "zhōng",
+        "zhòng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "么",
+      "reading": "me",
+      "radical": "丿",
+      "meaningZh": "同么常作词的后缀表示小或语气",
+      "pinyinAlt": [
+        "me",
+        "yāo",
+        "má"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "九",
+      "reading": "jiǔ",
+      "radical": "乙",
+      "meaningZh": "数目字,八加一的和,介于八与十之间",
+      "pinyinAlt": [
+        "jiǔ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "习",
+      "reading": "xí",
+      "radical": "乙",
+      "meaningZh": "反复练习以求熟练；也指长期养成的行为或习惯",
+      "pinyinAlt": [
+        "xí"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "书",
+      "reading": "shū",
+      "radical": "乙",
+      "meaningZh": "写字用的工具或文字记录本身，如一本本子或一封信",
+      "pinyinAlt": [
+        "shū"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "买",
+      "reading": "mǎi",
+      "radical": "乙",
+      "meaningZh": "用钱换取物品，与卖相对",
+      "pinyinAlt": [
+        "mǎi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "了",
+      "reading": "liǎo",
+      "radical": "亅",
+      "meaningZh": "完毕结束也表示了解明白",
+      "pinyinAlt": [
+        "liǎo",
+        "le"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "二",
+      "reading": "èr",
+      "radical": "二",
+      "meaningZh": "数词，表示两个或第二的次序",
+      "pinyinAlt": [
+        "èr"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "五",
+      "reading": "wǔ",
+      "radical": "二",
+      "meaningZh": "数目字,四加一所得,介于四与六之间",
+      "pinyinAlt": [
+        "wǔ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "些",
+      "reading": "xiē",
+      "radical": "二",
+      "meaningZh": "表示少量或不确定的数目，相当于一些",
+      "pinyinAlt": [
+        "xiē",
+        "sā",
+        "suò"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "京",
+      "reading": "jīng",
+      "radical": "亠",
+      "meaningZh": "国家的首都，也指北京市",
+      "pinyinAlt": [
+        "jīng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "亮",
+      "reading": "liàng",
+      "radical": "亠",
+      "meaningZh": "光线强 明 明白 显露 声音响 清脆",
+      "pinyinAlt": [
+        "liàng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "人",
+      "reading": "rén",
+      "radical": "人",
+      "meaningZh": "能制造并使用工具进行劳动的高等动物",
+      "pinyinAlt": [
+        "rén"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "什",
+      "reading": "shén",
+      "radical": "人",
+      "meaningZh": "表示疑问,相当于\"什么\"",
+      "pinyinAlt": [
+        "shén",
+        "shí"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "今",
+      "reading": "jīn",
+      "radical": "人",
+      "meaningZh": "现在的此时，也指当前所在的时代",
+      "pinyinAlt": [
+        "jīn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "他",
+      "reading": "tā",
+      "radical": "人",
+      "meaningZh": "代称男性或他人的代词，相当于“他”。",
+      "pinyinAlt": [
+        "tā"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "们",
+      "reading": "men",
+      "radical": "人",
+      "meaningZh": "表示复数，指代一类人或与前面词语构成复数称谓",
+      "pinyinAlt": [
+        "men"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "会",
+      "reading": "huì",
+      "radical": "人",
+      "meaningZh": "聚合集合，亦指有能力的人组成的团体",
+      "pinyinAlt": [
+        "huì",
+        "kuài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "住",
+      "reading": "zhù",
+      "radical": "人",
+      "meaningZh": "居住长期或临时在某地",
+      "pinyinAlt": [
+        "zhù"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "作",
+      "reading": "zuò",
+      "radical": "人",
+      "meaningZh": "从事某种活动或工作，亦指作品的创作",
+      "pinyinAlt": [
+        "zuò",
+        "zuō",
+        "zuo"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "你",
+      "reading": "nǐ",
+      "radical": "人",
+      "meaningZh": "代词，对称代词，指称听话的对方，表示第二人称",
+      "pinyinAlt": [
+        "nǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "候",
+      "reading": "hòu",
+      "radical": "人",
+      "meaningZh": "等待，如等候；也指时令或时节",
+      "pinyinAlt": [
+        "hòu",
+        "hóu"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "做",
+      "reading": "zuò",
+      "radical": "人",
+      "meaningZh": "进行某种工作或活动，如做事、做饭",
+      "pinyinAlt": [
+        "zuò"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "儿",
+      "reading": "ér",
+      "radical": "儿",
+      "meaningZh": "儿子；小孩子，常用作后缀表示小或亲昵",
+      "pinyinAlt": [
+        "ér"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "先",
+      "reading": "xiān",
+      "radical": "儿",
+      "meaningZh": "时间或次序在前的人或事物",
+      "pinyinAlt": [
+        "xiān"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "八",
+      "reading": "bā",
+      "radical": "八",
+      "meaningZh": "数目七加一的整数值",
+      "pinyinAlt": [
+        "bā"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "六",
+      "reading": "liù",
+      "radical": "八",
+      "meaningZh": "数目字五加一，表示六这个数量",
+      "pinyinAlt": [
+        "liù"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "关",
+      "reading": "guān",
+      "radical": "八",
+      "meaningZh": "闭合使开不了；也指关口或牵连涉及",
+      "pinyinAlt": [
+        "guān",
+        "wān"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "兴",
+      "reading": "xīng",
+      "radical": "八",
+      "meaningZh": "兴起举办;流行时尚;高涨旺盛",
+      "pinyinAlt": [
+        "xīng",
+        "xìng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "再",
+      "reading": "zài",
+      "radical": "冂",
+      "meaningZh": "表示又一次或重复，例如再去、再见",
+      "pinyinAlt": [
+        "zài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "写",
+      "reading": "xiě",
+      "radical": "冖",
+      "meaningZh": "用笔在纸上留下文字",
+      "pinyinAlt": [
+        "xiě",
+        "xiè"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "冷",
+      "reading": "lěng",
+      "radical": "冫",
+      "meaningZh": "温度低，与热相对",
+      "pinyinAlt": [
+        "lěng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "几",
+      "reading": "jǐ",
+      "radical": "几",
+      "meaningZh": "询问数量不多的数目，意思是几个，如几本书、几个人",
+      "pinyinAlt": [
+        "jǐ",
+        "jī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "出",
+      "reading": "chū",
+      "radical": "凵",
+      "meaningZh": "从里面到外面，与进相对",
+      "pinyinAlt": [
+        "chū"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "分",
+      "reading": "fēn",
+      "radical": "刀",
+      "meaningZh": "把整体变成若干部分或从整体中取出部分",
+      "pinyinAlt": [
+        "fēn",
+        "fèn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "前",
+      "reading": "qián",
+      "radical": "刀",
+      "meaningZh": "前面的位置或时间，与后相反",
+      "pinyinAlt": [
+        "qián"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "北",
+      "reading": "běi",
+      "radical": "匕",
+      "meaningZh": "方向之一，与南相对，清晨面向太阳时左手的一侧",
+      "pinyinAlt": [
+        "běi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "医",
+      "reading": "yī",
+      "radical": "匸",
+      "meaningZh": "治病救人的职业或活动，泛指医学、医疗",
+      "pinyinAlt": [
+        "yī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "十",
+      "reading": "shí",
+      "radical": "十",
+      "meaningZh": "数目字,表示九加一的和",
+      "pinyinAlt": [
+        "shí"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "午",
+      "reading": "wǔ",
+      "radical": "十",
+      "meaningZh": "中午十二点，也指白天十二点前后这段时间",
+      "pinyinAlt": [
+        "wǔ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "去",
+      "reading": "qù",
+      "radical": "厶",
+      "meaningZh": "离开所在地方到别处",
+      "pinyinAlt": [
+        "qù",
+        "qǔ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "友",
+      "reading": "yǒu",
+      "radical": "又",
+      "meaningZh": "朋友，彼此亲近没有敌意的人",
+      "pinyinAlt": [
+        "yǒu"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "叫",
+      "reading": "jiào",
+      "radical": "口",
+      "meaningZh": "呼喊人或动物发声，也指呼喚、命令",
+      "pinyinAlt": [
+        "jiào"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "吃",
+      "reading": "chī",
+      "radical": "口",
+      "meaningZh": "把食物等放进嘴里咀嚼并吞咽",
+      "pinyinAlt": [
+        "chī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "同",
+      "reading": "tóng",
+      "radical": "口",
+      "meaningZh": "表示一样、相同，或指与某事一起做",
+      "pinyinAlt": [
+        "tóng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "名",
+      "reading": "míng",
+      "radical": "口",
+      "meaningZh": "人或事物的称谓，也指声誉、名义",
+      "pinyinAlt": [
+        "míng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "后",
+      "reading": "hòu",
+      "radical": "口",
+      "meaningZh": "时间或位置在后面的",
+      "pinyinAlt": [
+        "hòu",
+        "hòu"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "吗",
+      "reading": "ma",
+      "radical": "口",
+      "meaningZh": "疑问语气助词，用于句末表示询问",
+      "pinyinAlt": [
+        "ma",
+        "má"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "听",
+      "reading": "tīng",
+      "radical": "口",
+      "meaningZh": "用耳朵接收声音",
+      "pinyinAlt": [
+        "tīng",
+        "yǐn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "呢",
+      "reading": "ne",
+      "radical": "口",
+      "meaningZh": "表示疑问语气，相当于“吗”",
+      "pinyinAlt": [
+        "ne",
+        "ní"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "和",
+      "reading": "hé",
+      "radical": "口",
+      "meaningZh": "温和融洽，亦指连带、跟、与等义",
+      "pinyinAlt": [
+        "hé",
+        "hè",
+        "huó",
+        "huò",
+        "hú"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "哪",
+      "reading": "nǎ",
+      "radical": "口",
+      "meaningZh": "表示疑问，用于询问人或事物中的特定对象",
+      "pinyinAlt": [
+        "nǎ",
+        "něi",
+        "nà",
+        "na"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "商",
+      "reading": "shāng",
+      "radical": "口",
+      "meaningZh": "商业买卖活动或从事买卖的人",
+      "pinyinAlt": [
+        "shāng",
+        "shǎng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "喂",
+      "reading": "wèi",
+      "radical": "口",
+      "meaningZh": "招呼声，用于引起注意或应答电话",
+      "pinyinAlt": [
+        "wèi",
+        "wái"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "喜",
+      "reading": "xǐ",
+      "radical": "口",
+      "meaningZh": "快乐高兴",
+      "pinyinAlt": [
+        "xǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "喝",
+      "reading": "hē",
+      "radical": "口",
+      "meaningZh": "把液体或流质食物咽下去",
+      "pinyinAlt": [
+        "hē",
+        "hè",
+        "yè"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "四",
+      "reading": "sì",
+      "radical": "囗",
+      "meaningZh": "数字三加一的和表示序数第三之后的整数",
+      "pinyinAlt": [
+        "sì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "回",
+      "reading": "huí",
+      "radical": "囗",
+      "meaningZh": "返回 环绕一圈或多次 也指答覆 另指回族",
+      "pinyinAlt": [
+        "huí"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "国",
+      "reading": "guó",
+      "radical": "囗",
+      "meaningZh": "由领土、人民、政府等构成的政治实体，如中国、美国",
+      "pinyinAlt": [
+        "guó"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "在",
+      "reading": "zài",
+      "radical": "土",
+      "meaningZh": "表示人或事物的位置、存在于某处",
+      "pinyinAlt": [
+        "zài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "坐",
+      "reading": "zuò",
+      "radical": "土",
+      "meaningZh": "把臀部放在椅子等物体上以支撑身体",
+      "pinyinAlt": [
+        "zuò"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "块",
+      "reading": "kuài",
+      "radical": "土",
+      "meaningZh": "成块的东西或量词，用于表示块状物或一定的量",
+      "pinyinAlt": [
+        "kuài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "多",
+      "reading": "duō",
+      "radical": "夕",
+      "meaningZh": "数量大，与少相对",
+      "pinyinAlt": [
+        "duō"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "大",
+      "reading": "dà",
+      "radical": "大",
+      "meaningZh": "规模或程度超过一般或超过比较对象，与小相对",
+      "pinyinAlt": [
+        "dà",
+        "dài",
+        "tài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "天",
+      "reading": "tiān",
+      "radical": "大",
+      "meaningZh": "天空，地球上方广阔的空间",
+      "pinyinAlt": [
+        "tiān"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "太",
+      "reading": "tài",
+      "radical": "大",
+      "meaningZh": "表示程度极高或身份最尊者 如太大 太太",
+      "pinyinAlt": [
+        "tài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "女",
+      "reading": "nǚ",
+      "radical": "女",
+      "meaningZh": "女性,与男相对的女子通称",
+      "pinyinAlt": [
+        "nǚ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "她",
+      "reading": "tā",
+      "radical": "女",
+      "meaningZh": "代称女性或雌性动物的人称代词",
+      "pinyinAlt": [
+        "tā",
+        "jiě"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "好",
+      "reading": "hǎo",
+      "radical": "女",
+      "meaningZh": "优点多的，使人满意的；友爱和睦；表示同意或结束",
+      "pinyinAlt": [
+        "hǎo",
+        "hào"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "妈",
+      "reading": "mā",
+      "radical": "女",
+      "meaningZh": "母亲，对妈妈的口语称呼",
+      "pinyinAlt": [
+        "mā",
+        "mǎ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "姐",
+      "reading": "jiě",
+      "radical": "女",
+      "meaningZh": "姐姐，同父母或同辈中年龄比自己大的女子",
+      "pinyinAlt": [
+        "jiě"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "子",
+      "reading": "zǐ",
+      "radical": "子",
+      "meaningZh": "古代对男子的尊称，也用作对人的敬称",
+      "pinyinAlt": [
+        "zǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "字",
+      "reading": "zì",
+      "radical": "子",
+      "meaningZh": "文字的单个形体，也指文字本身或人的别名",
+      "pinyinAlt": [
+        "zì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "学",
+      "reading": "xué",
+      "radical": "子",
+      "meaningZh": "学习知识技能或进行教育活动也指学问和学校",
+      "pinyinAlt": [
+        "xué"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "客",
+      "reading": "kè",
+      "radical": "宀",
+      "meaningZh": "被邀请或主动前来探访的人，也指寄居他乡的人",
+      "pinyinAlt": [
+        "kè"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "家",
+      "reading": "jiā",
+      "radical": "宀",
+      "meaningZh": "家庭住所，也指具有共同血缘或生活关系的群体",
+      "pinyinAlt": [
+        "jiā"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "对",
+      "reading": "duì",
+      "radical": "寸",
+      "meaningZh": "回答或动作针对的对象，也指正确的一对",
+      "pinyinAlt": [
+        "duì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "小",
+      "reading": "xiǎo",
+      "radical": "小",
+      "meaningZh": "体积、面积、数量等比一般少的或低于比较对象的",
+      "pinyinAlt": [
+        "xiǎo"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "少",
+      "reading": "shǎo",
+      "radical": "小",
+      "meaningZh": "数量不多，与多相对",
+      "pinyinAlt": [
+        "shǎo",
+        "shào"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "岁",
+      "reading": "suì",
+      "radical": "山",
+      "meaningZh": "年的单位，表示地球绕太阳一周的时间",
+      "pinyinAlt": [
+        "suì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "工",
+      "reading": "gōng",
+      "radical": "工",
+      "meaningZh": "工人，做事的人；也指工程、工作或精细。",
+      "pinyinAlt": [
+        "gōng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "师",
+      "reading": "shī",
+      "radical": "巾",
+      "meaningZh": "教导他人或传授知识技能的人，如教师、师傅；也指军队的编制单位或某一领域的专家。",
+      "pinyinAlt": [
+        "shī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "年",
+      "reading": "nián",
+      "radical": "干",
+      "meaningZh": "地球绕太阳一周的时间，一岁；也表示岁数或每年的",
+      "pinyinAlt": [
+        "nián"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "店",
+      "reading": "diàn",
+      "radical": "广",
+      "meaningZh": "出售商品或提供服务的场所，如商店、书店、旅店",
+      "pinyinAlt": [
+        "diàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "开",
+      "reading": "kāi",
+      "radical": "廾",
+      "meaningZh": "使关闭的东西不再关闭",
+      "pinyinAlt": [
+        "kāi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "影",
+      "reading": "yǐng",
+      "radical": "彡",
+      "meaningZh": "物体挡住光线后在地面或墙面形成的暗像，也指电影或照片",
+      "pinyinAlt": [
+        "yǐng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "很",
+      "reading": "hěn",
+      "radical": "彳",
+      "meaningZh": "表示程度高，常用在形容词或心理动词前加强语气",
+      "pinyinAlt": [
+        "hěn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "怎",
+      "reading": "zěn",
+      "radical": "心",
+      "meaningZh": "表示疑问，相当于如何、怎么样",
+      "pinyinAlt": [
+        "zěn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "想",
+      "reading": "xiǎng",
+      "radical": "心",
+      "meaningZh": "思索推测；怀念，挂念；打算，希望",
+      "pinyinAlt": [
+        "xiǎng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "我",
+      "reading": "wǒ",
+      "radical": "戈",
+      "meaningZh": "代称说话人自身的第一人称代词",
+      "pinyinAlt": [
+        "wǒ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "打",
+      "reading": "dǎ",
+      "radical": "手",
+      "meaningZh": "用手或器具击拍物体，也指做某种动作或活动",
+      "pinyinAlt": [
+        "dǎ",
+        "dá"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "日",
+      "reading": "rì",
+      "radical": "日",
+      "meaningZh": "太阳，白昼，也指一天或日期",
+      "pinyinAlt": [
+        "rì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "时",
+      "reading": "shí",
+      "radical": "日",
+      "meaningZh": "时间；某个特定的时候或季节；现在的；常常",
+      "pinyinAlt": [
+        "shí"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "明",
+      "reading": "míng",
+      "radical": "日",
+      "meaningZh": "光亮，与暗相对；也指明白清楚",
+      "pinyinAlt": [
+        "míng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "星",
+      "reading": "xīng",
+      "radical": "日",
+      "meaningZh": "天体之一,由炽热气体组成,自身能发光发热,如太阳、北斗星等",
+      "pinyinAlt": [
+        "xīng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "昨",
+      "reading": "zuó",
+      "radical": "日",
+      "meaningZh": "表示今天之前的一天，即过去的一天",
+      "pinyinAlt": [
+        "zuó"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "是",
+      "reading": "shì",
+      "radical": "日",
+      "meaningZh": "表示判断或肯定，表示某事物符合事实或正确",
+      "pinyinAlt": [
+        "shì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "月",
+      "reading": "yuè",
+      "radical": "月",
+      "meaningZh": "月亮的月，也指计时单位月份，形状像月亮的圆缺",
+      "pinyinAlt": [
+        "yuè"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "有",
+      "reading": "yǒu",
+      "radical": "月",
+      "meaningZh": "表示领有、存在或具有某事物",
+      "pinyinAlt": [
+        "yǒu",
+        "yòu"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "朋",
+      "reading": "péng",
+      "radical": "月",
+      "meaningZh": "朋 古代货币单位五贝为一朋 后泛指朋友 志同道合的同伴",
+      "pinyinAlt": [
+        "péng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "服",
+      "reading": "fú",
+      "radical": "月",
+      "meaningZh": "衣裳也兼表穿戴之义引申为顺从承当之义",
+      "pinyinAlt": [
+        "fú",
+        "fù"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "期",
+      "reading": "qī",
+      "radical": "月",
+      "meaningZh": "规定的时日或一段时间",
+      "pinyinAlt": [
+        "qī",
+        "jī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "本",
+      "reading": "běn",
+      "radical": "木",
+      "meaningZh": "草木的根茎，引申为事物根源或自己所属的",
+      "pinyinAlt": [
+        "běn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "机",
+      "reading": "jī",
+      "radical": "木",
+      "meaningZh": "机器的通称，也指能自动工作的装置",
+      "pinyinAlt": [
+        "jī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "来",
+      "reading": "lái",
+      "radical": "木",
+      "meaningZh": "由别处到此地或由过去到现在与去相对",
+      "pinyinAlt": [
+        "lái"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "杯",
+      "reading": "bēi",
+      "radical": "木",
+      "meaningZh": "盛水或其他液体的器具，多为圆柱形或带柄",
+      "pinyinAlt": [
+        "bēi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "果",
+      "reading": "guǒ",
+      "radical": "木",
+      "meaningZh": "果实，植物成熟的子实，亦指事情的结果",
+      "pinyinAlt": [
+        "guǒ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "校",
+      "reading": "xiào",
+      "radical": "木",
+      "meaningZh": "学校或进行教学的机构，也指军中负责事务的官员",
+      "pinyinAlt": [
+        "xiào",
+        "jiào",
+        "jiǎo"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "样",
+      "reading": "yàng",
+      "radical": "木",
+      "meaningZh": "形状；模样；事物的种类或形式",
+      "pinyinAlt": [
+        "yàng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "桌",
+      "reading": "zhuō",
+      "radical": "木",
+      "meaningZh": "家具,通常有平面和腿,用来吃饭、工作或摆放物品",
+      "pinyinAlt": [
+        "zhuō"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "椅",
+      "reading": "yǐ",
+      "radical": "木",
+      "meaningZh": "有靠背的坐具,通常带四条腿",
+      "pinyinAlt": [
+        "yǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "欢",
+      "reading": "huān",
+      "radical": "欠",
+      "meaningZh": "喜悦快乐",
+      "pinyinAlt": [
+        "huān"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "气",
+      "reading": "qì",
+      "radical": "气",
+      "meaningZh": "气体或呼吸，引申为生命活力、情绪和自然现象",
+      "pinyinAlt": [
+        "qì",
+        "qī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "水",
+      "reading": "shuǐ",
+      "radical": "水",
+      "meaningZh": "无色无味的透明液体，是人和生物生存所必需的饮料。",
+      "pinyinAlt": [
+        "shuǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "汉",
+      "reading": "hàn",
+      "radical": "水",
+      "meaningZh": "汉水,长江最大支流,源于陕西,流经湖北汇入长江",
+      "pinyinAlt": [
+        "hàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "没",
+      "reading": "méi",
+      "radical": "水",
+      "meaningZh": "不拥有，不存在或不到，多用于否定",
+      "pinyinAlt": [
+        "méi",
+        "mò"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "漂",
+      "reading": "piāo",
+      "radical": "水",
+      "meaningZh": "漂 在水面上随水流或风移动",
+      "pinyinAlt": [
+        "piāo",
+        "piǎo",
+        "piào"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "火",
+      "reading": "huǒ",
+      "radical": "火",
+      "meaningZh": "物体燃烧时发出的光和焰，也指发热发光的现象",
+      "pinyinAlt": [
+        "huǒ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "点",
+      "reading": "diǎn",
+      "radical": "火",
+      "meaningZh": "小的液体或痕迹，如水点、斑点。",
+      "pinyinAlt": [
+        "diǎn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "热",
+      "reading": "rè",
+      "radical": "火",
+      "meaningZh": "温度高，与冷相对",
+      "pinyinAlt": [
+        "rè"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "爱",
+      "reading": "ài",
+      "radical": "爪",
+      "meaningZh": "对人和事物有深厚真挚的感情",
+      "pinyinAlt": [
+        "ài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "爸",
+      "reading": "bà",
+      "radical": "父",
+      "meaningZh": "对有子女的男子称呼，特指自己的父亲",
+      "pinyinAlt": [
+        "bà"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "狗",
+      "reading": "gǒu",
+      "radical": "犬",
+      "meaningZh": "家畜哺乳动物，嗅觉灵敏，常被人类饲养用于看家或作宠物",
+      "pinyinAlt": [
+        "gǒu"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "猫",
+      "reading": "māo",
+      "radical": "犬",
+      "meaningZh": "家养小型哺乳动物,性温顺,善捕鼠,广受人喜爱。",
+      "pinyinAlt": [
+        "māo"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "现",
+      "reading": "xiàn",
+      "radical": "玉",
+      "meaningZh": "现在此刻显露露出",
+      "pinyinAlt": [
+        "xiàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "生",
+      "reading": "shēng",
+      "radical": "生",
+      "meaningZh": "人和动物由胚胎发育而成的活体，也泛指有生命的物体",
+      "pinyinAlt": [
+        "shēng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "电",
+      "reading": "diàn",
+      "radical": "田",
+      "meaningZh": "电能，一种重要的自然能源，可通过多种方式产生和利用，常用于照明、动力等方面。",
+      "pinyinAlt": [
+        "diàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "的",
+      "reading": "de",
+      "radical": "白",
+      "meaningZh": "表示所属或修饰关系，常用在定语和中心语之间",
+      "pinyinAlt": [
+        "de",
+        "dí",
+        "dì",
+        "dē"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "看",
+      "reading": "kàn",
+      "radical": "目",
+      "meaningZh": "用眼睛注视人或事物",
+      "pinyinAlt": [
+        "kàn",
+        "kān"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "睡",
+      "reading": "shuì",
+      "radical": "目",
+      "meaningZh": "闭眼休息大脑进入休眠状态",
+      "pinyinAlt": [
+        "shuì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "租",
+      "reading": "zū",
+      "radical": "禾",
+      "meaningZh": "租用他人之物并付给报酬",
+      "pinyinAlt": [
+        "zū"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "站",
+      "reading": "zhàn",
+      "radical": "立",
+      "meaningZh": "人直立不动或停留、停留处",
+      "pinyinAlt": [
+        "zhàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "米",
+      "reading": "mǐ",
+      "radical": "米",
+      "meaningZh": "稻谷去壳后的籽实可食可酿酒亦可制粉",
+      "pinyinAlt": [
+        "mǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "系",
+      "reading": "xì",
+      "radical": "糸",
+      "meaningZh": "表示关联、联系，或指系统、体系。",
+      "pinyinAlt": [
+        "xì",
+        "jì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "老",
+      "reading": "lǎo",
+      "radical": "老",
+      "meaningZh": "年纪大、历时久的，也指老人",
+      "pinyinAlt": [
+        "lǎo"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "能",
+      "reading": "néng",
+      "radical": "肉",
+      "meaningZh": "有本领、有能力，能够做到某事",
+      "pinyinAlt": [
+        "néng",
+        "nài",
+        "tái",
+        "tāi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "脑",
+      "reading": "nǎo",
+      "radical": "肉",
+      "meaningZh": "人和动物颅腔内的主要神经器官，负责思维、记忆和身体活动控制",
+      "pinyinAlt": [
+        "nǎo"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "苹",
+      "reading": "píng",
+      "radical": "艸",
+      "meaningZh": "落叶小乔木，叶有锯齿，花白色，果实也叫苹果，圆而甜",
+      "pinyinAlt": [
+        "píng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "茶",
+      "reading": "chá",
+      "radical": "艸",
+      "meaningZh": "常绿灌木，叶子可泡制饮料，也指用这种叶子冲泡的饮品",
+      "pinyinAlt": [
+        "chá"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "菜",
+      "reading": "cài",
+      "radical": "艸",
+      "meaningZh": "蔬菜的总称 也指菜肴",
+      "pinyinAlt": [
+        "cài"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "衣",
+      "reading": "yī",
+      "radical": "衣",
+      "meaningZh": "衣服 穿在身上遮蔽身体保暖的服饰",
+      "pinyinAlt": [
+        "yī",
+        "yì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "西",
+      "reading": "xī",
+      "radical": "襾",
+      "meaningZh": "太阳落下的方向，与东相对",
+      "pinyinAlt": [
+        "xī"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "见",
+      "reading": "jiàn",
+      "radical": "見",
+      "meaningZh": "看到；遇到；会面",
+      "pinyinAlt": [
+        "jiàn",
+        "xiàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "视",
+      "reading": "shì",
+      "radical": "示",
+      "meaningZh": "看 观察 用目光审视事物",
+      "pinyinAlt": [
+        "shì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "觉",
+      "reading": "jué",
+      "radical": "見",
+      "meaningZh": "人脑对事物的感知和认识",
+      "pinyinAlt": [
+        "jué",
+        "jiào"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "认",
+      "reading": "rèn",
+      "radical": "言",
+      "meaningZh": "识别后确认或同意对方的身份、关系或事实",
+      "pinyinAlt": [
+        "rèn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "识",
+      "reading": "shí",
+      "radical": "言",
+      "meaningZh": "认识辨别事物的能力或过程",
+      "pinyinAlt": [
+        "shí",
+        "zhì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "话",
+      "reading": "huà",
+      "radical": "言",
+      "meaningZh": "说出来或写出来的语言，也指说出来的内容",
+      "pinyinAlt": [
+        "huà"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "语",
+      "reading": "yǔ",
+      "radical": "言",
+      "meaningZh": "人们说的话，也指语言文字",
+      "pinyinAlt": [
+        "yǔ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "说",
+      "reading": "shuō",
+      "radical": "言",
+      "meaningZh": "用语言表达思想感情，也指一种学说或主张",
+      "pinyinAlt": [
+        "shuō",
+        "yuè",
+        "shuì"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "请",
+      "reading": "qǐng",
+      "radical": "言",
+      "meaningZh": "请求对方做某事或给予某物，表示礼貌",
+      "pinyinAlt": [
+        "qǐng",
+        "qíng",
+        "qìng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "读",
+      "reading": "dú",
+      "radical": "言",
+      "meaningZh": "看着文字念出声音或理解其含义",
+      "pinyinAlt": [
+        "dú",
+        "dòu"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "谁",
+      "reading": "shuí",
+      "radical": "言",
+      "meaningZh": "代词，用于询问某人或某些人身份",
+      "pinyinAlt": [
+        "shuí",
+        "shéi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "谢",
+      "reading": "xiè",
+      "radical": "言",
+      "meaningZh": "对人表示感谢或表达谢意",
+      "pinyinAlt": [
+        "xiè",
+        "xué"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "起",
+      "reading": "qǐ",
+      "radical": "走",
+      "meaningZh": "由躺卧或较低位置向上升、站立或离开原处",
+      "pinyinAlt": [
+        "qǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "车",
+      "reading": "chē",
+      "radical": "車",
+      "meaningZh": "陆地上有轮子的交通运输工具",
+      "pinyinAlt": [
+        "chē",
+        "jū"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "这",
+      "reading": "zhè",
+      "radical": "辵",
+      "meaningZh": "指代当前或较近的人或事物",
+      "pinyinAlt": [
+        "zhè",
+        "zhèi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "那",
+      "reading": "nà",
+      "radical": "邑",
+      "meaningZh": "指示代词，指较远的人或事物，与这相对",
+      "pinyinAlt": [
+        "nà",
+        "nǎ",
+        "nā",
+        "něi",
+        "nuó"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "都",
+      "reading": "dōu",
+      "radical": "邑",
+      "meaningZh": "表示全都，涵盖范围内的全部对象",
+      "pinyinAlt": [
+        "dōu",
+        "dū"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "里",
+      "reading": "lǐ",
+      "radical": "里",
+      "meaningZh": "长度单位,一里等于五百米;也指里面、内部",
+      "pinyinAlt": [
+        "lǐ"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "钟",
+      "reading": "zhōng",
+      "radical": "金",
+      "meaningZh": "古代盛酒的器具,也指金属制成的响器或计时器,现常用作姓氏。",
+      "pinyinAlt": [
+        "zhōng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "钱",
+      "reading": "qián",
+      "radical": "金",
+      "meaningZh": "硬币或纸币，泛指钱财",
+      "pinyinAlt": [
+        "qián"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "院",
+      "reading": "yuàn",
+      "radical": "阜",
+      "meaningZh": "房屋建筑或单位，如四合院、法院",
+      "pinyinAlt": [
+        "yuàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "雨",
+      "reading": "yǔ",
+      "radical": "雨",
+      "meaningZh": "从云层降到地面的水滴，也指像雨一样的事物",
+      "pinyinAlt": [
+        "yǔ",
+        "yù"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "零",
+      "reading": "líng",
+      "radical": "雨",
+      "meaningZh": "数的空位 介于负数与正数之间 表示没有数量",
+      "pinyinAlt": [
+        "líng"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "面",
+      "reading": "miàn",
+      "radical": "面",
+      "meaningZh": "脸部的通称，也指物体的表面或方向",
+      "pinyinAlt": [
+        "miàn",
+        "miǎn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "飞",
+      "reading": "fēi",
+      "radical": "飛",
+      "meaningZh": "鸟或物体在空中快速移动，也指迅速或突然的动作",
+      "pinyinAlt": [
+        "fēi",
+        "fèi"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "饭",
+      "reading": "fàn",
+      "radical": "食",
+      "meaningZh": "煮熟的谷类食物，多指米饭；也泛指每日所吃的食物",
+      "pinyinAlt": [
+        "fàn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "馆",
+      "reading": "guǎn",
+      "radical": "食",
+      "meaningZh": "供人居住、聚会、陈列或开展活动的房屋建筑",
+      "pinyinAlt": [
+        "guǎn"
+      ],
+      "hasStory": true
+    },
+    {
+      "char": "高",
+      "reading": "gāo",
+      "radical": "高",
+      "meaningZh": "从下往上距离大或离地面远",
+      "pinyinAlt": [
+        "gāo",
+        "gào"
+      ],
+      "hasStory": true
+    }
+  ]
+}

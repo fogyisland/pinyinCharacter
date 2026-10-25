@@ -6,7 +6,9 @@
  */
 export type Tone = 1 | 2 | 3 | 4;
 
-const TONE_MAP: Record<string, Tone> = {
+// The quest builder derives its plain forms and tone groups from this table,
+// so the 24 tone marks have exactly one source of truth.
+export const TONE_MAP: Record<string, Tone> = {
   ā: 1,
   á: 2,
   ǎ: 3,

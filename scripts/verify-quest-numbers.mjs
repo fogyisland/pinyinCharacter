@@ -15,7 +15,7 @@
  * Every rule implemented here is the spec's rule. If a number here disagrees with
  * the spec, the spec is wrong (or the data changed) — fix the spec, not the script.
  */
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 
@@ -105,6 +105,12 @@ function factsOf(char) {
     freeClause: all.find((s) => !s.includes(char)) ?? null,
     alts: (content?.dict?.pinyin_alt ?? []).map((a) => plainOf(String(a).trim())),
     forms: toneForms(char),
+    // The raw facts the quest builder consumes (tone marks kept).
+    meaningZh: meaning,
+    pinyinAlt: Array.isArray(content?.dict?.pinyin_alt)
+      ? content.dict.pinyin_alt.map((a) => String(a))
+      : [],
+    hasStory: Boolean(content?.etymology?.story || content?.hanzi_story || content?.rare?.story),
   };
 }
 
@@ -205,6 +211,35 @@ function buildTier(tier) {
 }
 
 const tiers = TIERS.map(buildTier);
+
+// --------------------------------------------------------- the tier-1 fixture
+/**
+ * Write the tier-1 facts to tests/unit/lib/fixtures/quest-tier1.json so the
+ * unit test can build a real tier without a database. Every tier-1 char is
+ * written (not only the eligible ones) because the clause pool and the
+ * syllable / radical vocabularies are built from the whole tier.
+ */
+function emitTier1Fixture() {
+  const tier = 1;
+  const facts = tierFacts.get(tier).facts;
+  const payload = {
+    tier,
+    tierSize: facts.length,
+    facts: facts.map((f) => ({
+      char: f.char,
+      reading: f.reading,
+      radical: f.radical,
+      meaningZh: f.meaningZh,
+      pinyinAlt: f.pinyinAlt,
+      hasStory: f.hasStory,
+    })),
+  };
+  const dir = join('tests', 'unit', 'lib', 'fixtures');
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, 'quest-tier1.json');
+  writeFileSync(file, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
+  return { file, count: payload.facts.length };
+}
 
 // ------------------------------------------------------------- ① the ranking
 /** The initial / toneless final of every plain syllable in the tier. */
@@ -398,4 +433,9 @@ for (const tier of TIERS) {
   for (const c of chars) contentOf(c);
   const ms = Number(process.hrtime.bigint() - started) / 1e6;
   console.log(`tier ${tier}: ${chars.length} files, ${ms.toFixed(1)} ms`);
+}
+
+if (process.argv.includes('--emit-tier1-fixture')) {
+  const emitted = emitTier1Fixture();
+  console.log(`wrote ${emitted.file} (${emitted.count} facts)`);
 }
