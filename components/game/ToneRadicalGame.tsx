@@ -224,10 +224,15 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
       }, 800);
       return () => clearTimeout(t);
     }
+  }, [
     // `mismatches` is deliberately NOT a dependency: a mismatch would re-arm
     // the timer above and postpone the finish. The count is read from the
     // ref when the timer fires.
-  }, [matchCount, phase, round, abandoned]);
+    matchCount,
+    phase,
+    round,
+    abandoned,
+  ]);
 
   const handleDrop = (char: string, kind: GameRound['mode'], payload: string) => {
     if (!round || kind !== round.mode) return;

@@ -1,8 +1,13 @@
 /**
  * 2026-07-04: happy-dom localStorage shim — useDifficulty reads from
- * localStorage in a useEffect. One copy for the whole game test tree: the
- * shim was duplicated verbatim in two describe blocks and drifted, and the
- * copy was then duplicated across test files as well.
+ * localStorage in a useEffect. One copy for the whole
+ * `tests/unit/components/game/` tree: the shim was duplicated verbatim in two
+ * describe blocks and drifted, and the copy was then duplicated across test
+ * files as well.
+ *
+ * The `tests/unit/lib/` copies are separate and were left alone: that
+ * directory mirrors `lib/`, and `tests/unit/lib/game-progress.test.ts` patches
+ * `globalThis` as well as `window`, so it cannot use this helper as-is.
  *
  * The `store` map stays INSIDE this helper on purpose: every call installs a
  * fresh map, so each test starts with an empty localStorage.
