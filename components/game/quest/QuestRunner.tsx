@@ -395,7 +395,13 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
     );
   }
 
-  if (!round || !current.char || !current.question || current.questionPosition === null) {
+  if (
+    !round ||
+    !levelData ||
+    !current.char ||
+    !current.question ||
+    current.questionPosition === null
+  ) {
     return errorState('这一关暂时打不开');
   }
 
@@ -413,7 +419,7 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
     <div>
       <div className="mb-3 flex items-center justify-between text-sm text-ink-soft">
         <span>
-          第 {level} 关 · 本关 {round.chars.length} 字
+          第 {level} 关 · 本关 {levelData.chars.length} 字
         </span>
         <span data-combo={combo}>连击 {combo}</span>
         <button type="button" onClick={onExit} className="text-ink-faint hover:text-ink">
@@ -421,7 +427,7 @@ export function QuestRunner({ tier, level, onExit, onPassed, onNextLevel }: Ques
         </button>
       </div>
 
-      <QuestSealRow chars={round.chars} mastered={masteredChars} />
+      <QuestSealRow chars={levelData.chars} mastered={masteredChars} />
 
       <QuestCharCard
         char={activeChar}

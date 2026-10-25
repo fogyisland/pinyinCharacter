@@ -482,6 +482,30 @@ describe('QuestRunner — the quest flow', () => {
     expect(container.querySelectorAll('[data-mastered="true"]')).toHaveLength(0);
   });
 
+  it('keeps describing the level during a remediation round', async () => {
+    const container = await renderRunner(levelOf(FIXTURE_CHARS));
+
+    // Miss ① of the first char, answer everything else correctly.
+    fireEvent.click(optionAt(1));
+    fireEvent.click(advanceButton());
+    answerCorrectly(CHAR_AI, 1);
+    answerCorrectly(CHAR_AI, 2);
+    answerCorrectly(CHAR_AI, 3);
+    for (const char of [CHAR_HAO, CHAR_TIAN]) {
+      answerCorrectly(char, 0);
+      answerCorrectly(char, 1);
+      answerCorrectly(char, 2);
+      answerCorrectly(char, 3);
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: '重挑错字' }));
+
+    // The round holds the missed char alone - the level did not change, so
+    // the header and the seal row still describe the level.
+    expect(container.textContent).toContain('本关 3 字');
+    expect(container.querySelectorAll('[data-seal-row]')).toHaveLength(3);
+  });
+
   it('confirms the note with 记一笔 and keeps the jump to the book', async () => {
     await renderRunner(levelOf([CHAR_AI]));
 

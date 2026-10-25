@@ -43,15 +43,15 @@ export function charSnapshot(char: QuestCharPayload): CharSnapshot {
 }
 
 /** ① and ② both test the pinyin - ②'s options are the four tone forms of that syllable. */
-export function testsPinyin(questionIndex: number): boolean {
+function testsPinyin(questionIndex: number): boolean {
   return questionIndex === 0 || questionIndex === 1;
 }
 
-export function testsRadical(questionIndex: number): boolean {
+function testsRadical(questionIndex: number): boolean {
   return questionIndex === 2;
 }
 
-export function testsMeaning(questionIndex: number): boolean {
+function testsMeaning(questionIndex: number): boolean {
   return questionIndex === 3;
 }
 
