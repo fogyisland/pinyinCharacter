@@ -296,8 +296,9 @@ Algorithm (pure, unit-tested):
 4. `base` = `final` with that one character replaced by its plain form (`TONE_MAP` gives the tone number; the plain form comes from a `PLAIN_OF` map derived from the same table).
 5. The 4 variants = `base` with that same index replaced by the vowel's tone group: `ā á ǎ à` / `ē é ě è` / `ī í ǐ ì` / `ō ó ǒ ò` / `ū ú ǔ ù` / `ǖ ǘ ǚ ǜ`.
 6. The full syllable = `initial + variant`, where `initial = pinyin(char, { pattern: 'initial' })` (may be empty for 零声母 syllables such as 爱/啊).
+7. **After j / q / x / y, ü is written `u`.** `pinyin-pro`'s `final` pattern *restores* the ü of such a syllable (`学` → final `üè`, `军` → `ǖn`, `去` → `ǜ`), but the standard orthography — and pinyin-pro's own full-syllable output — write it as `u` (`xué`, `jūn`, `qù`). So when the initial is j/q/x/y, a **tone-marked** ü takes the **u** group (`ū ú ǔ ù`, not `ǖ ǘ ǚ ǜ`) and a **plain** ü in the head (the carrier of `xué` / `quán`) is spelled `u`. Without this step the four forms of 学 come out as `xüē xüé xüě xüè` and the char's own reading is not among them — §5.2 ②'s 「Correct: the form equal to the char's canonical reading」 would be violated. *Measured 2026-10-25*: 85 of the 2632 tier rows are affected (去/学/觉/雪/军/全/需/ …), and the rule changes **no** measured number — the eligible pool, the level counts and the pool sizes are identical with and without it.
 
-Unit-test vectors (all verified against `pinyin-pro` v3.25.0): 春 `chūn` → `chūn chún chǔn chùn`; 妈 `mā` → `mā má mǎ mà`; 绿 `lǜ` → `lǖ lǘ lǚ lǜ`; 略 `lüè` → `lüē lüé lüě lüè`; 归 `guī` → `guī guí guǐ guì`; 爱 `ài` → `āi ái ǎi ài`; 长 `cháng` → `chāng cháng chǎng chàng`.
+Unit-test vectors (all verified against `pinyin-pro` v3.25.0): 春 `chūn` → `chūn chún chǔn chùn`; 妈 `mā` → `mā má mǎ mà`; 绿 `lǜ` → `lǖ lǘ lǚ lǜ`; 略 `lüè` → `lüē lüé lüě lüè`; 归 `guī` → `guī guí guǐ guì`; 爱 `ài` → `āi ái ǎi ài`; 长 `cháng` → `chāng cháng chǎng chàng`; 去 `qù` → `qū qú qǔ qù`; 学 `xué` → `xuē xué xuě xuè`; 军 `jūn` → `jūn jún jǔn jùn`; 全 `quán` → `quān quán quǎn quàn`.
 
 ### 5.4 Determinism
 
