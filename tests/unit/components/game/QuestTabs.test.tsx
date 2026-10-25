@@ -245,4 +245,21 @@ describe('QuestTabs — the four panels', () => {
     // would open level 32, which the API does not have.
     expect(runnerLevel()).toBe('31');
   });
+
+  it('does not request the level map outside the 闯关 panel', async () => {
+    setUrl('?tab=collection');
+    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+    render(<QuestTabs />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/还没有认会的字/)).toBeTruthy();
+    });
+
+    // The assertion is on the URL of the call, not on the spy as a whole -
+    // another request would not make this case fail.
+    const questCalls = vi
+      .mocked(global.fetch)
+      .mock.calls.filter((call) => String(call[0]).includes('/api/game/quest'));
+    expect(questCalls).toHaveLength(0);
+  });
 });
