@@ -9,6 +9,7 @@ import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 import { FallbackBanner } from './FallbackBanner';
 import { DraggablePinyin } from './DraggablePinyin';
 import { CharDropZone } from './CharDropZone';
+import type { LegacyGameProps } from '@/components/game/LegacyGameResult';
 
 interface Char {
   char: string;
@@ -37,7 +38,8 @@ function toChar(c: { char: string; pinyin: string; meaningZh: string | null }): 
   return { char: c.char, pinyin: c.pinyin, meaning: c.meaningZh ?? '' };
 }
 
-export function DragMatchGame() {
+export function DragMatchGame(props: LegacyGameProps = {}) {
+  const { onComplete } = props;
   const [phase, setPhase] = useState<Phase>('loading');
   const [chars, setChars] = useState<Char[]>([]);
   const [pinyinOrder, setPinyinOrder] = useState<string[]>([]);
@@ -53,6 +55,22 @@ export function DragMatchGame() {
   // Every new round cancels the request of the previous one, so a fast
   // difficulty switch cannot render an outdated round.
   const abortRef = useRef<AbortController | null>(null);
+
+  // 2026-10-25 (Task 7): the round's result is reported through the
+  // optional `onComplete` prop. `abandoned` marks a round the learner gave
+  // up on — an abandoned round is NOT a completed round, so it must never
+  // be reported.
+  const [abandoned, setAbandoned] = useState(false);
+  // `onComplete` fires exactly once per finished ROUND. The ref is reset
+  // whenever a new round starts, so the second round of a session reports
+  // its own result too.
+  const reportedRef = useRef(false);
+  // The callback lives in a ref so a parent re-render (a new inline arrow
+  // on every render) cannot restart the completion effect below.
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   const revealConfig = useMemo(() => getRevealConfig('drag-match', hskLevel), [hskLevel]);
 
@@ -120,6 +138,11 @@ export function DragMatchGame() {
       setChars(picked);
       setPinyinOrder(shuffle(picked.map((c) => c.pinyin)));
       setPairs({});
+      // 2026-10-25 (Task 7): a new ROUND starts here — the abandon flag and
+      // the fire-once guard belong to the round, not to the mount. Without
+      // these resets the second round of a session could never report.
+      setAbandoned(false);
+      reportedRef.current = false;
       setMismatches(0);
       setElapsedMs(0);
       startedAt.current = Date.now();
@@ -149,6 +172,22 @@ export function DragMatchGame() {
 
   const matchedCount = useMemo(() => Object.keys(pairs).length, [pairs]);
 
+  // 2026-10-25 (Task 7): the round is complete when every char holds its
+  // pinyin. The detection lives in an effect, NOT in the `setPairs` updater:
+  // React may invoke an updater more than once (StrictMode), and two state
+  // setters used to run inside it. The effect reports the round once and
+  // never reports an abandoned one.
+  useEffect(() => {
+    if (phase !== 'playing' || chars.length === 0) return;
+    if (matchedCount !== chars.length) return;
+    if (abandoned || reportedRef.current) return;
+    reportedRef.current = true;
+    const durationMs = Date.now() - startedAt.current;
+    setElapsedMs(durationMs);
+    setPhase('finished');
+    onCompleteRef.current?.({ correct: matchedCount, wrong: mismatches, durationMs });
+  }, [matchedCount, chars.length, phase, abandoned, mismatches]);
+
   const handleDragStart = (e: React.DragEvent, pinyin: string) => {
     e.dataTransfer.setData('text/plain', pinyin);
   };
@@ -159,14 +198,9 @@ export function DragMatchGame() {
       setMismatches((m) => m + 1);
       return;
     }
-    setPairs((prev) => {
-      const next = { ...prev, [char]: pinyin };
-      if (Object.keys(next).length === chars.length) {
-        setElapsedMs(Date.now() - startedAt.current);
-        setPhase('finished');
-      }
-      return next;
-    });
+    // 2026-10-25 (Task 7): the completion detection moved out of this
+    // updater into the effect above — a state updater must stay pure.
+    setPairs((prev) => ({ ...prev, [char]: pinyin }));
   };
 
   const accuracy = useMemo(() => {
@@ -237,6 +271,10 @@ export function DragMatchGame() {
         <button
           type="button"
           onClick={() => {
+            // 2026-10-25 (Task 7): giving up ENDS the round but does not
+            // COMPLETE it — `abandoned` keeps the completion effect from
+            // reporting a score for a round the learner walked away from.
+            setAbandoned(true);
             setElapsedMs(Date.now() - startedAt.current);
             setPhase('finished');
           }}

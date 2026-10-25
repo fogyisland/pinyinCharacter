@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { HskLevel } from '@/lib/difficulty';
+import type { LegacyGameResult } from '@/components/game/LegacyGameResult';
 
 // 2026-07-04: vi.hoisted makes the mock-state object available to the
 // hoisted vi.mock factory (vitest hoists vi.mock above imports). Tests
@@ -58,31 +59,88 @@ function mockFetchChars(json: unknown) {
   } as Response);
 }
 
+/**
+ * 2026-07-04: happy-dom localStorage shim — useDifficulty reads from
+ * localStorage in a useEffect. One copy for the whole file: the shim was
+ * duplicated verbatim in two describe blocks and drifted.
+ *
+ * The `store` map stays INSIDE this helper on purpose: every call installs a
+ * fresh map, so each test starts with an empty localStorage.
+ */
+function installLocalStorageShim(): void {
+  const store = new Map<string, string>();
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (k: string) => store.get(k) ?? null,
+      setItem: (k: string, v: string) => {
+        store.set(k, v);
+      },
+      removeItem: (k: string) => {
+        store.delete(k);
+      },
+      clear: () => {
+        store.clear();
+      },
+      key: (i: number) => Array.from(store.keys())[i] ?? null,
+      get length() {
+        return store.size;
+      },
+    },
+  });
+}
+
+/** The drop zones — the '→' arrow is the marker of a CharDropZone cell. */
+function dropZones(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>('span'))
+    .filter((el) => el.textContent === '→')
+    .map((el) => el.parentElement)
+    .filter((el): el is HTMLElement => el !== null);
+}
+
+/** The drop zone that belongs to the given char. */
+function zoneForChar(container: HTMLElement, char: string): HTMLElement {
+  const zone = dropZones(container).find(
+    (z) => z.querySelector('span.text-3xl')?.textContent === char,
+  );
+  if (!zone) throw new Error(`no drop zone for ${char}`);
+  return zone;
+}
+
+/** The draggable pinyin tile that carries the given pinyin. */
+function tileForPinyin(container: HTMLElement, pinyin: string): HTMLElement {
+  const tile = Array.from(container.querySelectorAll<HTMLElement>('div[draggable="true"]')).find(
+    (t) => t.textContent === pinyin,
+  );
+  if (!tile) throw new Error(`no draggable pinyin tile for ${pinyin}`);
+  return tile;
+}
+
+/** Simulate a drag from the pinyin tile onto the char's drop zone. */
+function dragPinyinOntoChar(container: HTMLElement, char: string, pinyin: string): void {
+  const tile = tileForPinyin(container, pinyin);
+  const zone = zoneForChar(container, char);
+  const payload = new Map<string, string>();
+  const dataTransfer = {
+    setData: (format: string, data: string) => {
+      payload.set(format, data);
+    },
+    getData: (format: string) => payload.get(format) ?? '',
+  };
+  const dragStart = new Event('dragstart', { bubbles: true, cancelable: true });
+  Object.defineProperty(dragStart, 'dataTransfer', { value: dataTransfer });
+  fireEvent(tile, dragStart);
+  const drop = new Event('drop', { bubbles: true, cancelable: true });
+  Object.defineProperty(drop, 'dataTransfer', { value: dataTransfer });
+  fireEvent(zone, drop);
+}
+
 describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
   beforeEach(() => {
     cleanup();
     vi.restoreAllMocks();
     vi.resetModules();
-    const store = new Map<string, string>();
-    Object.defineProperty(window, 'localStorage', {
-      configurable: true,
-      value: {
-        getItem: (k: string) => store.get(k) ?? null,
-        setItem: (k: string, v: string) => {
-          store.set(k, v);
-        },
-        removeItem: (k: string) => {
-          store.delete(k);
-        },
-        clear: () => {
-          store.clear();
-        },
-        key: (i: number) => Array.from(store.keys())[i] ?? null,
-        get length() {
-          return store.size;
-        },
-      },
-    });
+    installLocalStorageShim();
   });
 
   it('threads revealConfig to CharDropZone (HSK 1: pinyin + meaning hints visible)', async () => {
@@ -164,5 +222,98 @@ describe('DragMatchGame — HSK reveal wiring (Task 9)', () => {
       expect(screen.queryByText(/加载中/)).toBeNull();
     });
     expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+// 2026-10-25 (Task 7): the game reports a finished round through the
+// optional `onComplete` prop. Giving up is NOT completing — a learner who
+// abandons a round must not be recorded as having finished it, and a new
+// round must still be able to report its own result.
+describe('DragMatchGame — completion reporting (Task 7)', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.resetModules();
+    installLocalStorageShim();
+  });
+
+  /** The two-char pool every case of this block plays. */
+  function mockPool() {
+    mockState.hskLevel = 1;
+    mockFetchChars({
+      ok: true,
+      data: { chars: sampleChars, total: sampleChars.length, page: 1, pageSize: 10 },
+      hskFallback: false,
+    });
+  }
+
+  it('fires onComplete once with the score when every pair is matched', async () => {
+    mockPool();
+    const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+    const { DragMatchGame } = await import('@/components/game/DragMatchGame');
+    const { container } = render(<DragMatchGame onComplete={onComplete} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    dragPinyinOntoChar(container, '安', 'ān');
+    dragPinyinOntoChar(container, '那', 'nà');
+
+    await waitFor(() => {
+      expect(screen.getByText('完成!')).toBeTruthy();
+    });
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    const result = onComplete.mock.calls[0]?.[0];
+    expect(result?.correct).toBe(2);
+    expect(result?.wrong).toBe(0);
+    // The duration is a stat, not the score — but it is there.
+    expect(typeof result?.durationMs).toBe('number');
+  });
+
+  it('does not fire onComplete when the round is abandoned', async () => {
+    mockPool();
+    const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+    const { DragMatchGame } = await import('@/components/game/DragMatchGame');
+    render(<DragMatchGame onComplete={onComplete} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    fireEvent.click(screen.getByText('放弃'));
+    expect(screen.getByText('完成!')).toBeTruthy();
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('a new round after an abandoned one still reports', async () => {
+    mockPool();
+    const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+    const { DragMatchGame } = await import('@/components/game/DragMatchGame');
+    const { container } = render(<DragMatchGame onComplete={onComplete} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    // Round 1: give up before matching anything.
+    fireEvent.click(screen.getByText('放弃'));
+    expect(screen.getByText('完成!')).toBeTruthy();
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Round 2: the abandon flag is per ROUND, so this round reports.
+    fireEvent.click(screen.getByText('再来一局'));
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+    dragPinyinOntoChar(container, '安', 'ān');
+    dragPinyinOntoChar(container, '那', 'nà');
+    await waitFor(() => {
+      expect(screen.getByText('完成!')).toBeTruthy();
+    });
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    const result = onComplete.mock.calls[0]?.[0];
+    expect(result?.correct).toBe(2);
+    expect(result?.wrong).toBe(0);
   });
 });

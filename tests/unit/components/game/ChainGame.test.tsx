@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import type { CharInfo } from '@/lib/chain-types';
+import type { LegacyGameResult } from '@/components/game/LegacyGameResult';
 
 const ci = (char: string, pinyin: string): CharInfo => ({
   char,
@@ -177,5 +178,87 @@ describe('ChainGame', () => {
     // No "startGame failed" error, no React warning about unmounted.
     expect(consoleErrorSpy).not.toHaveBeenCalled();
     consoleErrorSpy.mockRestore();
+  });
+
+  // 2026-10-25 (Task 7): the chain game reports a finished chain through
+  // the optional `onComplete` prop. ChainGame has NO 放弃 button — it has
+  // 换一条, which pops the last char and keeps the round alive — so there
+  // is no abandon case here. The chain game has no timer either, so the
+  // result carries no duration.
+  describe('completion reporting (Task 7)', () => {
+    it('fires onComplete once with the chain length when the chain dead-ends', async () => {
+      // 包 has no valid next char — the chain is over after the starter.
+      const deadChars: CharInfo[] = [ci('包', 'bāo')];
+      vi.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => deadChars,
+      } as Response);
+      const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+      const { ChainGame } = await import('@/components/game/ChainGame');
+      render(<ChainGame onComplete={onComplete} />);
+      await waitFor(() => {
+        expect(screen.getByText(/接龙结束/)).toBeTruthy();
+      });
+
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      const result = onComplete.mock.calls[0]?.[0];
+      expect(result?.correct).toBe(1);
+      expect(result?.wrong).toBe(0);
+      // The chain game has no clock — the result carries no duration.
+      expect(result?.durationMs).toBeUndefined();
+    });
+
+    it('does not fire onComplete while the chain can still grow', async () => {
+      vi.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => sampleChars,
+      } as Response);
+      const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+      const { ChainGame } = await import('@/components/game/ChainGame');
+      render(<ChainGame onComplete={onComplete} />);
+      await waitFor(() => screen.getByText(/可选字/));
+      fireEvent.click(screen.getByText('那'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙长度: 2/)).toBeTruthy();
+      });
+      expect(onComplete).not.toHaveBeenCalled();
+    });
+
+    it('a restarted chain reports its own length', async () => {
+      // 安 → 呢 → 饿 is three long and dead-ends on 饿; after a restart the
+      // chain grows to 安 → 那, which dead-ends at two. The two rounds
+      // report different lengths, so a stale report cannot pass.
+      const pool: CharInfo[] = [ci('安', 'ān'), ci('那', 'nà'), ci('呢', 'ne'), ci('饿', 'è')];
+      vi.spyOn(global, 'fetch').mockResolvedValue({
+        ok: true,
+        json: async () => pool,
+      } as Response);
+      const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+      const { ChainGame } = await import('@/components/game/ChainGame');
+      render(<ChainGame onComplete={onComplete} />);
+      await waitFor(() => screen.getByText(/可选字/));
+
+      // Round 1: 安 → 呢 → 饿.
+      fireEvent.click(screen.getByText('呢'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙长度: 2/)).toBeTruthy();
+      });
+      fireEvent.click(screen.getByText('饿'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙结束/)).toBeTruthy();
+      });
+      expect(onComplete).toHaveBeenCalledTimes(1);
+      expect(onComplete.mock.calls[0]?.[0]?.correct).toBe(3);
+
+      // Round 2: the restart guard is per ROUND, so this chain reports too.
+      fireEvent.click(screen.getByText('再来一局'));
+      await waitFor(() => screen.getByText(/可选字/));
+      fireEvent.click(screen.getByText('那'));
+      await waitFor(() => {
+        expect(screen.getByText(/接龙结束/)).toBeTruthy();
+      });
+      expect(onComplete).toHaveBeenCalledTimes(2);
+      expect(onComplete.mock.calls[1]?.[0]?.correct).toBe(2);
+    });
   });
 });

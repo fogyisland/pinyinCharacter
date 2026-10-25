@@ -13,6 +13,7 @@ import { FallbackBanner } from './FallbackBanner';
 import { useDifficulty } from '@/lib/use-difficulty';
 import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 import type { Tone } from '@/lib/pinyin-tone';
+import type { LegacyGameProps } from '@/components/game/LegacyGameResult';
 
 type Phase = 'loading' | 'playing' | 'finished';
 
@@ -37,7 +38,8 @@ export interface ToneRadicalGameProps {
   mode?: 'tone' | 'radical';
 }
 
-export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
+export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = {}) {
+  const { onComplete } = props;
   const [phase, setPhase] = useState<Phase>('loading');
   const [round, setRound] = useState<GameRound | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -62,6 +64,22 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
   // Every new round cancels the request of the previous one, so a fast
   // difficulty switch cannot render an outdated round.
   const abortRef = useRef<AbortController | null>(null);
+
+  // 2026-10-25 (Task 7): the round's result is reported through the
+  // optional `onComplete` prop. `abandoned` marks a round the learner gave
+  // up on — an abandoned round is NOT a completed round, so it must never
+  // be reported.
+  const [abandoned, setAbandoned] = useState(false);
+  // `onComplete` fires exactly once per finished ROUND. The ref is reset
+  // whenever a new round starts, so the second round of a session reports
+  // its own result too.
+  const reportedRef = useRef(false);
+  // The callback lives in a ref so a parent re-render (a new inline arrow
+  // on every render) cannot restart the auto-finish timer below.
+  const onCompleteRef = useRef(onComplete);
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+  }, [onComplete]);
 
   const revealConfig = useMemo(() => getRevealConfig('tone-radical', hskLevel), [hskLevel]);
 
@@ -89,6 +107,11 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
     setPhase('loading');
     setMatches({});
     setUsedTokenIndices(new Set());
+    // 2026-10-25 (Task 7): a new ROUND starts here — the abandon flag and
+    // the fire-once guard belong to the round, not to the mount. Without
+    // these resets the second round of a session could never report.
+    setAbandoned(false);
+    reportedRef.current = false;
     setMismatches(0);
     setElapsedMs(0);
     setError(null);
@@ -169,12 +192,20 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
     if (phase !== 'playing' || !round) return;
     if (matchCount === round.chars.length) {
       const t = setTimeout(() => {
-        setElapsedMs(Date.now() - startedAt.current);
+        // 2026-10-25 (Task 7): the round is over — report it. The guard is
+        // load-bearing: this timeout is scheduled 800 ms AFTER the last
+        // match, so a learner who clicks 放弃 inside that window still has
+        // a pending timer. An abandoned round must not be reported.
+        if (abandoned || reportedRef.current) return;
+        reportedRef.current = true;
+        const durationMs = Date.now() - startedAt.current;
+        setElapsedMs(durationMs);
         setPhase('finished');
+        onCompleteRef.current?.({ correct: matchCount, wrong: mismatches, durationMs });
       }, 800);
       return () => clearTimeout(t);
     }
-  }, [matchCount, phase, round]);
+  }, [matchCount, phase, round, abandoned, mismatches]);
 
   const handleDrop = (char: string, kind: GameRound['mode'], payload: string) => {
     if (!round || kind !== round.mode) return;
@@ -299,6 +330,10 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
         <button
           type="button"
           onClick={() => {
+            // 2026-10-25 (Task 7): giving up ENDS the round but does not
+            // COMPLETE it — `abandoned` keeps the auto-finish timer from
+            // reporting a score for a round the learner walked away from.
+            setAbandoned(true);
             setElapsedMs(Date.now() - startedAt.current);
             setPhase('finished');
           }}

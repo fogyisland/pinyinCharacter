@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { cleanup, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import type { GameRound } from '@/lib/api-game';
 import type { HskLevel } from '@/lib/difficulty';
+import type { LegacyGameResult } from '@/components/game/LegacyGameResult';
 
 // 2026-07-04: vi.hoisted makes the mock-state object available to the
 // hoisted vi.mock factory (vitest hoists vi.mock above imports). Tests
@@ -40,6 +41,14 @@ const sampleRound: GameRound = {
 
 function mockFetchOnce(json: unknown) {
   vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+    ok: true,
+    json: async () => json,
+  } as Response);
+}
+
+/** Every fetch resolves with the same envelope — a second round included. */
+function mockFetchAlways(json: unknown) {
+  vi.spyOn(global, 'fetch').mockResolvedValue({
     ok: true,
     json: async () => json,
   } as Response);
@@ -448,5 +457,132 @@ describe('ToneRadicalGame — one token per char (Task 6)', () => {
     const bankToken = container.querySelector<HTMLElement>('[aria-label="声调 1"]');
     expect(bankToken).not.toBeNull();
     expect(bankToken!.className).toContain('cursor-grab');
+  });
+});
+
+// 2026-10-25 (Task 7): the game reports a finished round through the
+// optional `onComplete` prop. Giving up is NOT completing — a learner who
+// abandons a round must not be recorded as having finished it, and a new
+// round must still be able to report its own result.
+describe('ToneRadicalGame — completion reporting (Task 7)', () => {
+  beforeEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    vi.resetModules();
+    installLocalStorageShim();
+  });
+
+  /** Drop every char's matching tone token onto its own slot. */
+  function playSampleRound(container: HTMLElement): void {
+    const tiles = toneTiles(container);
+    const slots = toneSlots(container);
+    sampleRound.chars.forEach((c, index) => {
+      const tone = sampleRound.charToAnswer[c.char]?.tone;
+      const slot = slots[index];
+      if (!slot) throw new Error(`expected a drop slot for ${c.char}`);
+      dragTileByLabel(tiles, `声调 ${tone}`, slot);
+    });
+  }
+
+  it('fires onComplete once with the score when the round is finished', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sampleRound, hskFallback: false });
+    const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    const { container } = render(<ToneRadicalGame mode="tone" onComplete={onComplete} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    playSampleRound(container);
+
+    await waitFor(
+      () => {
+        expect(screen.getByText('完成!')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    const result = onComplete.mock.calls[0]?.[0];
+    expect(result?.correct).toBe(2);
+    expect(result?.wrong).toBe(0);
+    // The duration is a stat, not the score — but it is there.
+    expect(typeof result?.durationMs).toBe('number');
+  });
+
+  it('does not fire onComplete when the round is abandoned', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sampleRound, hskFallback: false });
+    const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    render(<ToneRadicalGame mode="tone" onComplete={onComplete} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    fireEvent.click(screen.getByText('放弃'));
+    expect(screen.getByText('完成!')).toBeTruthy();
+    // Give the (never scheduled) auto-finish timer every chance to fire.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  // 2026-10-25 (Task 7): the auto-finish effect waits 800 ms after the last
+  // match before it reports. A learner who gives up inside that window still
+  // has a pending timeout — it must not report a round that was abandoned.
+  it('does not fire onComplete when the round is abandoned inside the auto-finish window', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sampleRound, hskFallback: false });
+    const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    const { container } = render(<ToneRadicalGame mode="tone" onComplete={onComplete} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    // Match everything — the auto-finish timer is now pending — and give up
+    // before it fires.
+    playSampleRound(container);
+    fireEvent.click(screen.getByText('放弃'));
+    expect(screen.getByText('完成!')).toBeTruthy();
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('a new round after an abandoned one still reports', async () => {
+    mockState.hskLevel = 1;
+    // Both rounds get a round — the second one after 「再来一局」.
+    mockFetchAlways({ ok: true, data: sampleRound, hskFallback: false });
+    const onComplete = vi.fn<(result: LegacyGameResult) => void>();
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    const { container } = render(<ToneRadicalGame mode="tone" onComplete={onComplete} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    // Round 1: give up before matching anything.
+    fireEvent.click(screen.getByText('放弃'));
+    expect(screen.getByText('完成!')).toBeTruthy();
+    expect(onComplete).not.toHaveBeenCalled();
+
+    // Round 2: the abandon flag is per ROUND, so this round reports.
+    fireEvent.click(screen.getByText('再来一局'));
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+    playSampleRound(container);
+    await waitFor(
+      () => {
+        expect(screen.getByText('完成!')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    const result = onComplete.mock.calls[0]?.[0];
+    expect(result?.correct).toBe(2);
+    expect(result?.wrong).toBe(0);
   });
 });
