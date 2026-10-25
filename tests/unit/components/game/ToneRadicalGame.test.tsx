@@ -285,6 +285,22 @@ function dragTileOntoSlot(tile: HTMLElement, slot: HTMLElement): void {
   fireEvent(slot, drop);
 }
 
+/**
+ * Drag the first still-draggable tile with the given aria-label onto the
+ * slot.
+ *
+ * When every tile with that label is already spent there is nothing to drag —
+ * the round then cannot be completed, and the 「完成!」 assertion at the end
+ * of the case catches it.
+ */
+function dragTileByLabel(tiles: HTMLElement[], label: string, slot: HTMLElement): void {
+  const tile = tiles.find(
+    (t) => t.getAttribute('aria-label') === label && t.getAttribute('draggable') === 'true',
+  );
+  if (!tile) return;
+  dragTileOntoSlot(tile, slot);
+}
+
 describe('ToneRadicalGame — one token per char (Task 6)', () => {
   beforeEach(() => {
     cleanup();
@@ -358,5 +374,79 @@ describe('ToneRadicalGame — one token per char (Task 6)', () => {
     expect(toneOneTiles[0]!.getAttribute('draggable')).toBe('false');
     // ...but its identical twin is still available.
     expect(toneOneTiles[1]!.getAttribute('draggable')).toBe('true');
+  });
+
+  // 2026-10-25 (Task 6, fix round 1): DropSlot fires onDrop on EVERY drop
+  // and `matched` only changes the slot's styling, so a correct token
+  // dropped onto an ALREADY FILLED slot used to run the match path: the
+  // value was rewritten (matchCount unchanged) while the token was spent.
+  // The round then had one token too few and could never be finished — the
+  // same unwinnable-round failure this task exists to eliminate.
+  it('does not spend a token dropped on an already filled slot', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sixCharToneRound, hskFallback: false });
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    const { container } = render(<ToneRadicalGame mode="tone" />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    const tiles = toneTiles(container);
+    const slots = toneSlots(container);
+    const slotFor = (char: string): HTMLElement => {
+      const index = sixCharToneRound.chars.findIndex((c) => c.char === char);
+      const slot = slots[index];
+      if (!slot) throw new Error(`expected a drop slot for ${char}`);
+      return slot;
+    };
+    const toneOneTiles = tiles.filter((tile) => tile.getAttribute('aria-label') === '声调 1');
+    expect(toneOneTiles).toHaveLength(2);
+
+    // The first tone-1 token matches 安.
+    dragTileOntoSlot(toneOneTiles[0]!, slotFor('安'));
+    // The stray drop: the OTHER tone-1 token onto 安's slot again. It is a
+    // different index, so the tile is still bright and draggable — the drop
+    // is legal, and it must be inert.
+    dragTileOntoSlot(toneOneTiles[1]!, slotFor('安'));
+
+    // Finish the round: every remaining char takes a token of its own. 妈
+    // needs the second tone-1 token, so the stray drop must not have spent
+    // it.
+    dragTileByLabel(tiles, '声调 1', slotFor('妈'));
+    dragTileByLabel(tiles, '声调 4', slotFor('那'));
+    dragTileByLabel(tiles, '声调 4', slotFor('大'));
+    dragTileByLabel(tiles, '声调 3', slotFor('好'));
+    dragTileByLabel(tiles, '声调 3', slotFor('火'));
+
+    // The round reaches the finished phase — the end-to-end proof that no
+    // token was wasted. Without the guard the round hangs in `playing`.
+    await waitFor(
+      () => {
+        expect(screen.getByText('完成!')).toBeTruthy();
+      },
+      { timeout: 3000 },
+    );
+  });
+
+  // 2026-10-25 (Task 6, fix round 1): the hint tiles a char renders for
+  // itself (ToneRadicalChar, ChainScroll) carry no `tokenIndex`, so they
+  // are static chips — they must not show a grab cursor.
+  it('shows no grab cursor on a static chip, but keeps it on a bank token', async () => {
+    mockState.hskLevel = 1;
+    mockFetchOnce({ ok: true, data: sixCharToneRound, hskFallback: false });
+    const { ToneRadicalGame } = await import('@/components/game/ToneRadicalGame');
+    const { container } = render(<ToneRadicalGame mode="tone" />);
+    await waitFor(() => {
+      expect(screen.queryByText(/加载中/)).toBeNull();
+    });
+
+    // 安's own pinyin tile — a static chip, no tokenIndex.
+    const staticChip = container.querySelector<HTMLElement>('[aria-label="拼音 ān"]');
+    expect(staticChip).not.toBeNull();
+    expect(staticChip!.className).not.toContain('cursor-grab');
+    // The bank's tone tokens stay draggable, so they keep the grab cursor.
+    const bankToken = container.querySelector<HTMLElement>('[aria-label="声调 1"]');
+    expect(bankToken).not.toBeNull();
+    expect(bankToken!.className).toContain('cursor-grab');
   });
 });

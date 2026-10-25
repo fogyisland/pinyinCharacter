@@ -28,7 +28,7 @@ export function RadicalToken({ radical, matched, onDragStart, tokenIndex }: Prop
     <div
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
-      className={`flex h-12 min-w-12 cursor-grab select-none items-center justify-center rounded border-2 border-seal bg-paper px-3 text-2xl font-kai text-ink shadow-sm active:cursor-grabbing ${
+      className={`flex h-12 min-w-12 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''} select-none items-center justify-center rounded border-2 border-seal bg-paper px-3 text-2xl font-kai text-ink shadow-sm ${
         matched ? 'pointer-events-none opacity-30' : 'hover:bg-seal/10'
       }`}
       aria-label={`部首 ${radical}`}

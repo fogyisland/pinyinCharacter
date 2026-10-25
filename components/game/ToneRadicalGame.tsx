@@ -180,6 +180,19 @@ export function ToneRadicalGame(props: ToneRadicalGameProps = {}) {
     if (!round || kind !== round.mode) return;
     const answer = round.charToAnswer[char];
     if (!answer) return;
+    // 2026-10-25 (Task 6, fix round 1): a slot that already holds its value
+    // is closed. DropSlot fires onDrop for EVERY drop and `matched` only
+    // changes the slot's styling, so without this guard a correct token
+    // dropped onto a filled slot would run the match path: `setMatches`
+    // would overwrite the same value (matchCount unchanged) while
+    // `setUsedTokenIndices` would SPEND the token. The token would then be
+    // gone without having matched a char, and the round would become
+    // unwinnable — the very failure this task exists to eliminate. The drop
+    // is inert: no token is spent and no mismatch is counted.
+    //
+    // `matches[char]` is typed `string` (noUncheckedIndexedAccess is off),
+    // so `!== undefined` would not compile — `Object.hasOwn` is the check.
+    if (Object.hasOwn(matches, char)) return;
     // 2026-10-25 (Task 6): the payload is the token's INDEX into the bank the
     // learner sees, not the value. A stale or malformed payload is ignored
     // instead of counting as a mismatch. `Number('')` is 0, so the empty

@@ -29,7 +29,7 @@ export function ToneToken({ tone, matched, onDragStart, tokenIndex }: Props) {
     <div
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
-      className={`flex h-12 w-12 cursor-grab select-none items-center justify-center rounded-full border-2 border-seal bg-paper text-2xl font-kai text-seal shadow-sm active:cursor-grabbing ${
+      className={`flex h-12 w-12 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''} select-none items-center justify-center rounded-full border-2 border-seal bg-paper text-2xl font-kai text-seal shadow-sm ${
         matched ? 'pointer-events-none opacity-30' : 'hover:bg-seal/10'
       }`}
       aria-label={`声调 ${tone}`}

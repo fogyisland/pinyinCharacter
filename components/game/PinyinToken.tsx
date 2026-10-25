@@ -29,7 +29,7 @@ export function PinyinToken({ pinyin, matched, onDragStart, tokenIndex }: Props)
     <div
       draggable={isDraggable}
       onDragStart={isDraggable ? handleDragStart : undefined}
-      className={`flex h-12 cursor-grab select-none items-center justify-center rounded border-2 border-seal bg-paper px-3 text-lg font-mono text-ink shadow-sm active:cursor-grabbing ${
+      className={`flex h-12 ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''} select-none items-center justify-center rounded border-2 border-seal bg-paper px-3 text-lg font-mono text-ink shadow-sm ${
         matched ? 'pointer-events-none opacity-30' : 'hover:bg-seal/10'
       }`}
       aria-label={`拼音 ${pinyin}`}
