@@ -51,7 +51,7 @@ export const WORKSHEET_SCHEMES: readonly WorksheetScheme[] = [
     note: 'for the strokes that need every diagonal — a full 米-character guide',
   },
   {
-    id: 'pen-lattice-a4',
+    id: 'pen-lattice-a3',
     name: 'Pen · Cross · A3',
     nameZh: '钢笔·米字格·A3',
     cellStyle: 'pen-cross',

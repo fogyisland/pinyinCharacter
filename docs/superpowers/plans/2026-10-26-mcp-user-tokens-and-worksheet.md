@@ -1059,7 +1059,7 @@ Expected: FAIL（模块不存在）
 |---|---|---|---|---|---|
 | `pen-grid-a4` | Pen · Grid · A4 | 钢笔·田字格·A4 | `pen-square` | `A4` | `wenkai-gb` |
 | `pen-cross-a4` | Pen · Cross · A4 | 钢笔·米字格·A4 | `pen-cross` | `A4` | `wenkai-gb` |
-| `pen-lattice-a4` | Pen · Cross · A3 | 钢笔·米字格·A3 | `pen-cross` | `A3` | `wenkai-gb` |
+| `pen-lattice-a3` | Pen · Cross · A3 | 钢笔·米字格·A3 | `pen-cross` | `A3` | `wenkai-gb` |
 | `pen-grid-b5` | Pen · Grid · B5 | 钢笔·田字格·B5 | `pen-square` | `B5` | `wenkai-gb` |
 | `pen-lined-a4` | Pen · Lined · A4 | 钢笔·横线·A4 | `pen-lined` | `A4` | `wenkai-gb` |
 | `pen-english-a4` | Pen · Four-line · A4 | 钢笔·四线格·A4 | `pen-english` | `A4` | `wenkai-gb` |

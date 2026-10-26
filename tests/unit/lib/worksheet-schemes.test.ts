@@ -23,6 +23,14 @@ const SITE_PAPER_SIZES = new Set<string>(PAPER_SIZES.map((paper) => paper.value)
 const SITE_FONTS = new Set<string>(FONT_FAMILIES.map((font) => font.value));
 
 /**
+ * The paper sizes a scheme id may end with.
+ *
+ * Only these three suffixes name a paper; `brush-large-12`, `brush-medium-24`
+ * and `brush-small-28` end with a cell count instead, so they are excluded.
+ */
+const PAPER_SUFFIXES = ['a3', 'a4', 'b5'] as const;
+
+/**
  * Does the site's own worksheet validator accept this cell style?
  *
  * `validateWorksheetInput` is the gate every saved worksheet passes, so it
@@ -69,5 +77,16 @@ describe('the worksheet scheme catalogue', () => {
   it('finds a scheme by id', () => {
     expect(findScheme('pen-grid-a4')?.cellStyle).toBe('pen-square');
     expect(findScheme('nope')).toBeUndefined();
+  });
+
+  it('never lets a scheme id contradict the paper size it names', () => {
+    const paperTagged = WORKSHEET_SCHEMES.filter((scheme) =>
+      PAPER_SUFFIXES.some((suffix) => scheme.id.endsWith(`-${suffix}`)),
+    );
+    expect(paperTagged).toHaveLength(13);
+    for (const scheme of paperTagged) {
+      const suffix = scheme.id.slice(scheme.id.lastIndexOf('-') + 1).toUpperCase();
+      expect(suffix, `${scheme.id} names a paper it does not use`).toBe(scheme.paperSize);
+    }
   });
 });
