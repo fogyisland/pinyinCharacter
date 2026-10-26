@@ -51,8 +51,9 @@ session belongs to the user who opened it: another user's bearer gets **403**.
 
 ## The tools
 
-Eighteen tools, all read-only, all served from the files — no database is
-touched.
+Eighteen tools, all read-only. Seventeen of them answer from the files the
+pages read; `synthesize_speech` calls the same TTS upstream the site's own
+play button uses. No database is touched.
 
 | Tool | What it answers |
 | --- | --- |
@@ -115,9 +116,17 @@ The envelope is carried both as a text block and as the result's
 `bad_input`, `not_found`, `unauthorized`, `data_unavailable`,
 `upstream_error` and `internal_error`.
 
+Those six are what a tool reports. The endpoint itself answers with
+`unauthorized` (no or unknown bearer), `not_found` (an unknown session),
+`bad_input` (a body that is not valid JSON), `forbidden` (the session
+belongs to another user), `service_unavailable` (the token store or the MCP
+server is not reachable) and `payload_too_large` (the request body is over
+4 MiB) — so a client sees nine codes in all.
+
 ## Where the data comes from
 
-Every tool reads a file; none of them opens a database connection.
+Every tool reads a file — except `synthesize_speech`, which calls the TTS
+upstream. None of them opens a database connection.
 
 | The data | The file |
 | --- | --- |
