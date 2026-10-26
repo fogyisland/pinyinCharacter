@@ -99,7 +99,12 @@ describe('the session store', () => {
   it('stores and removes a session', () => {
     const session = fakeSession(1);
     setSession('sess-1', session);
-    expect(getSession('sess-1')).toBe(session);
+    // The store stamps the record itself — the caller hands over the
+    // session, the store keeps its own copy of it.
+    const stored = getSession('sess-1');
+    expect(stored?.userId).toBe(1);
+    expect(stored?.server).toBe(session.server);
+    expect(stored?.transport).toBe(session.transport);
     deleteSession('sess-1');
     expect(getSession('sess-1')).toBeUndefined();
   });
