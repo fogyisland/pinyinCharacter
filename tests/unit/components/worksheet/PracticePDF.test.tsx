@@ -18,6 +18,18 @@
 import { describe, it, expect, vi } from 'vitest';
 import { inflateSync } from 'node:zlib';
 
+// Rendering a worksheet to PDF is slow, and the suite runs this file in
+// parallel with tests/integration/lint.test.ts — which spends ~33 s of pure
+// CPU in eslint. On a loaded machine that contention pushed the first A3
+// render from 457 ms to 5116 ms, past vitest's 5 s default timeout, so the
+// test failed intermittently with a timeout that had nothing to do with the
+// assertion it was making. The renders are correct; only the wall clock was
+// tight. Give this file a budget that survives a busy machine.
+//
+// vi.setConfig is scoped to this test file (vitest runs each file in its own
+// worker), and resetConfig puts the default back for anything that follows.
+vi.setConfig({ testTimeout: 30_000 });
+
 vi.mock('@react-pdf/renderer', async () => {
   const actual = await vi.importActual<typeof import('@react-pdf/renderer')>('@react-pdf/renderer');
   // PracticePDF's Font.register uses a web-relative path that fontkit tries
