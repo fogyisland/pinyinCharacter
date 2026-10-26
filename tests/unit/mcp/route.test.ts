@@ -3,6 +3,7 @@ import {
   connectTestClient,
   createRouteClient,
   OTHER_TOKEN,
+  setConnectFailure,
   TEST_TOKEN,
   THROWING_TOKEN,
 } from './route-harness';
@@ -91,11 +92,48 @@ function oversizedStream(megabytes: number): ReadableStream<Uint8Array> {
   });
 }
 
+/** What a body source did while it was being read. */
+interface SourceState {
+  /** How many chunks the source handed out. */
+  produced: number;
+  /** Whether the reader cancelled the source. */
+  cancelled: boolean;
+}
+
+/**
+ * A body that is fed on demand and that reports what happened to it.
+ *
+ * The source hands out one megabyte per pull and can hand out up to
+ * `maxChunks` of them, so a reader that stops early leaves the rest of the
+ * body untouched. That is what tells the two body gates apart: a gate that
+ * buffers the whole body reads all of it, a gate that counts while it
+ * reads gives up and cancels the source.
+ */
+function countedStream(maxChunks: number): { stream: ReadableStream<Uint8Array>; state: SourceState } {
+  const state: SourceState = { produced: 0, cancelled: false };
+  const chunk = new Uint8Array(1024 * 1024);
+  const stream = new ReadableStream<Uint8Array>({
+    pull(controller) {
+      if (state.produced >= maxChunks) {
+        controller.close();
+        return;
+      }
+      state.produced += 1;
+      controller.enqueue(chunk);
+    },
+    cancel() {
+      state.cancelled = true;
+    },
+  });
+  return { stream, state };
+}
+
 beforeEach(() => {
   getSessionStore().clear();
 });
 
 afterEach(() => {
+  setConnectFailure(false);
   for (const [id, session] of [...getSessionStore().entries()]) {
     closeAndForget(id, session);
   }
@@ -259,6 +297,22 @@ describe('the MCP endpoint: the body gate', () => {
     expect(body.ok).toBe(false);
     expect(body.error.code).toBe('payload_too_large');
   });
+
+  it('abandons the read instead of buffering the whole body', async () => {
+    // The gate has to bound the memory, not just the status code. A gate
+    // that reads the whole body first answers 413 as well — but it held
+    // every byte in memory to do so, and it read the body to its end.
+    // The gate that counts while it reads gives up at the limit and
+    // cancels the source, so the body is never materialised in full.
+    const { stream, state } = countedStream(12);
+    const response = await client.postRaw(stream, { Authorization: `Bearer ${TEST_TOKEN}` });
+    expect(response.status).toBe(413);
+    const body = (await response.json()) as { ok: boolean; error: { code: string } };
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('payload_too_large');
+    expect(state.cancelled).toBe(true);
+    expect(state.produced).toBeLessThan(12);
+  });
 });
 
 describe('the MCP endpoint: CORS', () => {
@@ -344,6 +398,19 @@ describe('the MCP endpoint: the session lifetime', () => {
       'mcp-session-id': first,
     });
     expect(response.status).toBe(404);
+  });
+});
+
+describe('the MCP endpoint: a server that cannot be opened', () => {
+  it('answers 503 when the server refuses the transport', async () => {
+    setConnectFailure(true);
+    const response = await client.post(INITIALIZE_BODY, { Authorization: `Bearer ${TEST_TOKEN}` });
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as { ok: boolean; error: { code: string } };
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('service_unavailable');
+    // The session was never opened, so nothing is left behind.
+    expect(getSessionStore().size).toBe(0);
   });
 });
 

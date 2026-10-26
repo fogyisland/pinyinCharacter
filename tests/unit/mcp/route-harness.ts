@@ -27,11 +27,14 @@ import { vi } from 'vitest';
 
 // vi.hoisted runs before the mock factories, so the token table exists by
 // the time the mocked module is created.
-const { tokens } = vi.hoisted(() => ({
+const { tokens, serverFactory } = vi.hoisted(() => ({
   tokens: {
     test: 'test-token',
     other: 'other-token',
     throws: 'throws-token',
+  },
+  serverFactory: {
+    failConnect: false,
   },
 }));
 
@@ -44,6 +47,24 @@ vi.mock('@/lib/mcp-token', () => ({
   },
 }));
 
+// The server factory is mocked so that the route's "the server refused to
+// connect" branch can be reached — a branch that only fires when the
+// transport and the server cannot be paired. With the switch off the real
+// factory runs, so the end-to-end test still talks to a real MCP server.
+vi.mock('@/mcp/server-factory', async (importOriginal) => {
+  const actual = (await importOriginal()) as typeof import('@/mcp/server-factory');
+  return {
+    createMcpServer: () => {
+      if (!serverFactory.failConnect) return actual.createMcpServer();
+      return {
+        connect: async () => {
+          throw new Error('the transport refused the server');
+        },
+      };
+    },
+  };
+});
+
 import { DELETE, GET, OPTIONS, POST } from '@/app/mcp/route';
 
 /** The token every test presents. */
@@ -54,6 +75,16 @@ export const OTHER_TOKEN = tokens.other;
 
 /** A token whose lookup fails the way a broken database would. */
 export const THROWING_TOKEN = tokens.throws;
+
+/**
+ * Make the next server refuse the transport.
+ *
+ * The switch is read by the mock factory every time a server is created,
+ * so it has to be put back by the test that turned it on.
+ */
+export function setConnectFailure(shouldFail: boolean): void {
+  serverFactory.failConnect = shouldFail;
+}
 
 /** The url the route is mounted on. */
 const ROUTE_URL = 'http://localhost:4444/mcp';
