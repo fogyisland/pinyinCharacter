@@ -24,7 +24,7 @@ import { getConfig } from '@/lib/config';
 
 export const SITE_NAME = '字·韵';
 export const SITE_LOCALE = 'zh_CN';
-const FALLBACK = 'http://localhost:3000';
+export const FALLBACK = 'http://localhost:3000';
 
 function isProd(env: NodeJS.ProcessEnv): boolean {
   return env.NODE_ENV === 'production';
