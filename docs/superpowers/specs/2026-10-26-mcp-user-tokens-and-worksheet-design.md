@@ -397,10 +397,12 @@ The third row is the point of the contract: a second `DELETE` is a no-op that re
 A small helper, `lib/mcp-endpoint.ts`, resolves it:
 
 ```ts
-export async function resolveMcpEndpoint(req: Request): Promise<string>;
+export async function resolveMcpEndpoint(req?: { url: string }): Promise<string>;
 ```
 
-It returns `${getRuntimeSiteUrl()}/mcp` when the site URL is configured, and the **request's own origin** (`${req.nextUrl.origin}/mcp`) when `getRuntimeSiteUrl()` fell back to the localhost placeholder. So dev hands out `http://localhost:4444/mcp` and production hands out the admin-configured `https://ziyun.pudafo.com/mcp`.
+It returns `${getRuntimeSiteUrl()}/mcp` when the site URL is configured, and the **request's own origin** (`${new URL(req.url).origin}/mcp`) when `getRuntimeSiteUrl()` fell back to the localhost placeholder. So dev hands out `http://localhost:4444/mcp` and production hands out the admin-configured `https://ziyun.pudafo.com/mcp`.
+
+The parameter is typed as the **structural minimum** `{ url: string }` rather than `Request` or `NextRequest`: a plain Web `Request` has no `nextUrl` (only `NextRequest` has), the SDK's Web-standard transport hands the route a plain `Request`, and the test harness builds one by hand. Both `Request` and `NextRequest` satisfy `{ url: string }`, so the same helper serves the API route, the server component and the tests.
 
 **Failure modes** (all in the site's envelope, via `lib/api-handler.ts`):
 
