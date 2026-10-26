@@ -57,38 +57,52 @@ export interface ResolvedToken {
   isAdmin: boolean;
 }
 
+/**
+ * A freshly issued token, as the caller needs it.
+ *
+ * `replaced` tells the caller whether this was a first issue or a rotation;
+ * the API route uses it to pick the audit event and never puts it in the
+ * response body.
+ */
+export interface IssuedToken {
+  raw: string;
+  createdAt: string;
+  replaced: boolean;
+}
+
 /** How often `last_used_at` may be rewritten (one hour). */
 const LAST_USED_THROTTLE_MS = 3_600_000;
+
+/**
+ * A Unix timestamp in seconds, the way MySQL's UNIX_TIMESTAMP() returns it.
+ */
+type EpochSeconds = number | null;
 
 interface McpTokenRow extends RowDataPacket {
   user_id: number;
   token_hash: string;
-  created_at: Date;
-  last_used_at: Date | null;
-  revoked_at: Date | null;
+  created_epoch: number | null;
+  last_used_epoch: number | null;
+  revoked_epoch: number | null;
 }
 
 interface ResolvedTokenRow extends RowDataPacket {
   user_id: number;
   username: string;
   is_admin: number;
-  last_used_at: Date | null;
+  last_used_epoch: number | null;
 }
 
 /**
- * mysql2 hands DATETIME / TIMESTAMP back as a JS Date, but the driver can be
- * configured to hand back strings — normalise both into a Date so the
- * comparisons below never compare a string with a number.
+ * The outward-facing shape of a timestamp: an ISO string, or nothing.
+ *
+ * The epoch comes from UNIX_TIMESTAMP() on the database side, so it is read
+ * and written in the database's own session time zone. Letting mysql2 parse
+ * the DATETIME instead would silently re-interpret it in the Node process's
+ * time zone, which is not guaranteed to be the same one.
  */
-function toDate(value: Date | string | null): Date | null {
-  if (value === null) return null;
-  return value instanceof Date ? value : new Date(value);
-}
-
-/** The outward-facing shape of a timestamp: an ISO string, or nothing. */
-function iso(value: Date | string | null): string | null {
-  const date = toDate(value);
-  return date ? date.toISOString() : null;
+function isoFromEpoch(epoch: EpochSeconds): string | null {
+  return epoch === null ? null : new Date(epoch * 1000).toISOString();
 }
 
 /**
@@ -100,16 +114,19 @@ function iso(value: Date | string | null): string | null {
  */
 export async function getTokenStatus(userId: number): Promise<McpTokenStatus> {
   const [rows] = await getPool().query<McpTokenRow[]>(
-    'SELECT created_at, last_used_at, revoked_at FROM mcp_tokens WHERE user_id = ? LIMIT 1',
+    `SELECT UNIX_TIMESTAMP(created_at) AS created_epoch,
+            UNIX_TIMESTAMP(last_used_at) AS last_used_epoch,
+            UNIX_TIMESTAMP(revoked_at) AS revoked_epoch
+     FROM mcp_tokens WHERE user_id = ? LIMIT 1`,
     [userId],
   );
   const row = rows[0];
   if (!row) return { state: 'none', createdAt: null, lastUsedAt: null, revokedAt: null };
   return {
-    state: row.revoked_at ? 'revoked' : 'active',
-    createdAt: iso(row.created_at),
-    lastUsedAt: iso(row.last_used_at),
-    revokedAt: iso(row.revoked_at),
+    state: row.revoked_epoch ? 'revoked' : 'active',
+    createdAt: isoFromEpoch(row.created_epoch),
+    lastUsedAt: isoFromEpoch(row.last_used_epoch),
+    revokedAt: isoFromEpoch(row.revoked_epoch),
   };
 }
 
@@ -119,16 +136,8 @@ export async function getTokenStatus(userId: number): Promise<McpTokenStatus> {
  * The table has one row per user, so the upsert replaces the old digest in
  * place: the previous token stops resolving the moment this returns, and
  * the previous `last_used_at` / `revoked_at` are cleared with it.
- *
- * `replaced` tells the caller whether this was a first issue or a rotation.
- * The API route uses it to pick the audit event; it is never part of the
- * response body.
  */
-export async function issueToken(userId: number): Promise<{
-  raw: string;
-  createdAt: string;
-  replaced: boolean;
-}> {
+export async function issueToken(userId: number): Promise<IssuedToken> {
   const pool = getPool();
   const [existing] = await pool.query<McpTokenRow[]>(
     'SELECT id FROM mcp_tokens WHERE user_id = ? LIMIT 1',
@@ -149,10 +158,10 @@ export async function issueToken(userId: number): Promise<{
   );
 
   const [rows] = await pool.query<McpTokenRow[]>(
-    'SELECT created_at FROM mcp_tokens WHERE user_id = ? LIMIT 1',
+    'SELECT UNIX_TIMESTAMP(created_at) AS created_epoch FROM mcp_tokens WHERE user_id = ? LIMIT 1',
     [userId],
   );
-  const createdAt = iso(rows[0]?.created_at ?? null) ?? new Date().toISOString();
+  const createdAt = isoFromEpoch(rows[0]?.created_epoch ?? null) ?? new Date().toISOString();
   return { raw, createdAt, replaced };
 }
 
@@ -171,10 +180,10 @@ export async function revokeToken(userId: number): Promise<{ revokedAt: string |
     [userId],
   );
   const [rows] = await pool.query<McpTokenRow[]>(
-    'SELECT revoked_at FROM mcp_tokens WHERE user_id = ? LIMIT 1',
+    'SELECT UNIX_TIMESTAMP(revoked_at) AS revoked_epoch FROM mcp_tokens WHERE user_id = ? LIMIT 1',
     [userId],
   );
-  return { revokedAt: iso(rows[0]?.revoked_at ?? null) };
+  return { revokedAt: isoFromEpoch(rows[0]?.revoked_epoch ?? null) };
 }
 
 /**
@@ -187,7 +196,8 @@ export async function revokeToken(userId: number): Promise<{ revokedAt: string |
 export async function resolveToken(raw: string): Promise<ResolvedToken | null> {
   const pool = getPool();
   const [rows] = await pool.query<ResolvedTokenRow[]>(
-    `SELECT t.user_id, u.username, u.is_admin, t.last_used_at
+    `SELECT t.user_id, u.username, u.is_admin,
+            UNIX_TIMESTAMP(t.last_used_at) AS last_used_epoch
      FROM mcp_tokens t
      JOIN users u ON u.id = t.user_id
      WHERE t.token_hash = ? AND t.revoked_at IS NULL AND u.disabled_at IS NULL
@@ -197,7 +207,7 @@ export async function resolveToken(raw: string): Promise<ResolvedToken | null> {
   const row = rows[0];
   if (!row) return null;
 
-  await touchLastUsed(Number(row.user_id), row.last_used_at);
+  await touchLastUsed(Number(row.user_id), row.last_used_epoch);
 
   return {
     userId: Number(row.user_id),
@@ -212,9 +222,15 @@ export async function resolveToken(raw: string): Promise<ResolvedToken | null> {
  * Every MCP call would otherwise write a row, which turns a hot endpoint
  * into a write-heavy one for a value nobody reads more often than hourly.
  */
-async function touchLastUsed(userId: number, lastUsedAt: Date | null): Promise<void> {
-  const previous = toDate(lastUsedAt);
-  const isDue = previous === null || previous.getTime() < Date.now() - LAST_USED_THROTTLE_MS;
+async function touchLastUsed(userId: number, lastUsedEpoch: EpochSeconds): Promise<void> {
+  const isDue =
+    lastUsedEpoch === null || lastUsedEpoch * 1000 < Date.now() - LAST_USED_THROTTLE_MS;
   if (!isDue) return;
-  await getPool().query('UPDATE mcp_tokens SET last_used_at = NOW() WHERE user_id = ?', [userId]);
+  try {
+    await getPool().query('UPDATE mcp_tokens SET last_used_at = NOW() WHERE user_id = ?', [userId]);
+  } catch (err) {
+    // Bookkeeping only: the throttle is not a security control, so a failed
+    // stamp must not fail an otherwise valid resolution.
+    console.error('[mcp-token] could not stamp the last use of a token', err);
+  }
 }

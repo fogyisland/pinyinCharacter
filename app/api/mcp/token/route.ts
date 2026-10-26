@@ -3,7 +3,13 @@ import { withErrorHandling, unauthorized, forbidden, serviceUnavailable } from '
 import { requireUser, type User } from '@/lib/auth';
 import { logUserAction } from '@/lib/audit';
 import { resolveMcpEndpoint } from '@/lib/mcp-endpoint';
-import { getTokenStatus, issueToken, revokeToken, type McpTokenStatus } from '@/lib/mcp-token';
+import {
+  getTokenStatus,
+  issueToken,
+  revokeToken,
+  type IssuedToken,
+  type McpTokenStatus,
+} from '@/lib/mcp-token';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -87,7 +93,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(
       { ok: true, data: { status, endpoint, config: buildConfig(endpoint, null) } },
-      { headers: { 'Cache-Control': 'no-store' } },
+      NO_STORE,
     );
   }, NO_STORE);
 }
@@ -106,7 +112,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const { id: userId, username } = auth.user;
     const endpoint = await resolveMcpEndpoint(req);
 
-    let issued: { raw: string; createdAt: string; replaced: boolean };
+    let issued: IssuedToken;
     try {
       issued = await issueToken(userId);
     } catch (err) {
@@ -136,7 +142,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           config: buildConfig(endpoint, issued.raw),
         },
       },
-      { headers: { 'Cache-Control': 'no-store' } },
+      NO_STORE,
     );
   }, NO_STORE);
 }
@@ -171,7 +177,7 @@ export async function DELETE(req: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json(
       { ok: true, data: { revokedAt: revoked.revokedAt } },
-      { headers: { 'Cache-Control': 'no-store' } },
+      NO_STORE,
     );
   }, NO_STORE);
 }

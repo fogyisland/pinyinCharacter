@@ -6,6 +6,7 @@ import { loadEnvFromFile } from '@/lib/setup';
 import { getPool, closePool } from '@/lib/db';
 import {
   getTokenStatus,
+  hashMcpToken,
   issueToken,
   revokeToken,
   resolveToken,
@@ -33,10 +34,13 @@ const integrationSkip = !process.env.DATABASE_URL;
 
 /** A throwaway, non-admin account so the suite never touches a real user. */
 const TEST_USERNAME = 'mcp_token_test_user';
+/** A second throwaway account, so the owner of a token can be checked. */
+const OTHER_TEST_USERNAME = 'mcp_token_test_user_2';
 /** The column only needs to be non-empty; the suite never logs in with it. */
 const TEST_PASSWORD_HASH = 'not-a-real-hash';
 
 let testUserId = 0;
+let otherTestUserId = 0;
 
 describe.skipIf(integrationSkip)('the MCP token store', () => {
   beforeAll(async () => {
@@ -48,12 +52,21 @@ describe.skipIf(integrationSkip)('the MCP token store', () => {
       [TEST_USERNAME, TEST_PASSWORD_HASH],
     );
     testUserId = Number((inserted as { insertId: number }).insertId);
+
+    await pool.query('DELETE FROM users WHERE username = ?', [OTHER_TEST_USERNAME]);
+    const [otherInserted] = await pool.query(
+      'INSERT INTO users (username, password_hash) VALUES (?, ?)',
+      [OTHER_TEST_USERNAME, TEST_PASSWORD_HASH],
+    );
+    otherTestUserId = Number((otherInserted as { insertId: number }).insertId);
   }, 60_000);
 
   afterAll(async () => {
     const pool = getPool();
     await pool.query('DELETE FROM mcp_tokens WHERE user_id = ?', [testUserId]);
     await pool.query('DELETE FROM users WHERE id = ?', [testUserId]);
+    await pool.query('DELETE FROM mcp_tokens WHERE user_id = ?', [otherTestUserId]);
+    await pool.query('DELETE FROM users WHERE id = ?', [otherTestUserId]);
     await closePool();
   }, 60_000);
 
@@ -61,6 +74,7 @@ describe.skipIf(integrationSkip)('the MCP token store', () => {
     // Every case starts from "no token", so the ordering of the cases
     // cannot change their outcome.
     await getPool().query('DELETE FROM mcp_tokens WHERE user_id = ?', [testUserId]);
+    await getPool().query('DELETE FROM mcp_tokens WHERE user_id = ?', [otherTestUserId]);
     await getPool().query('UPDATE users SET disabled_at = NULL WHERE id = ?', [testUserId]);
   }, 60_000);
 
@@ -86,6 +100,7 @@ describe.skipIf(integrationSkip)('the MCP token store', () => {
       expect(rows).toHaveLength(1);
       expect(rows[0]!.token_hash).not.toBe(issued.raw);
       expect(rows[0]!.token_hash).toMatch(/^[0-9a-f]{64}$/);
+      expect(rows[0]!.token_hash).toBe(hashMcpToken(issued.raw));
     });
   });
 
@@ -110,10 +125,23 @@ describe.skipIf(integrationSkip)('the MCP token store', () => {
       expect(resolved).toBeNull();
     });
 
-    it('does not resolve a token of another user', async () => {
+    it('does not resolve a corrupted token', async () => {
       const issued = await issueToken(testUserId);
       const resolved = await resolveToken(`${issued.raw}x`);
       expect(resolved).toBeNull();
+    });
+
+    it('resolves each token to its own owner', async () => {
+      const mine = await issueToken(testUserId);
+      const theirs = await issueToken(otherTestUserId);
+
+      const mineResolved = await resolveToken(mine.raw);
+      const theirsResolved = await resolveToken(theirs.raw);
+
+      expect(mineResolved!.userId).toBe(testUserId);
+      expect(mineResolved!.username).toBe(TEST_USERNAME);
+      expect(theirsResolved!.userId).toBe(otherTestUserId);
+      expect(theirsResolved!.username).toBe(OTHER_TEST_USERNAME);
     });
 
     it('records the first use of a token', async () => {
@@ -224,6 +252,58 @@ describe.skipIf(integrationSkip)('the MCP token store', () => {
       expect(second.replaced).toBe(true);
       expect((await getTokenStatus(testUserId)).state).toBe('active');
     });
+
+    it('refreshes the creation timestamp when it rotates', async () => {
+      const first = await issueToken(testUserId);
+      // Backdate the row so a refreshed timestamp is unmistakable and the
+      // test needs no sleep.
+      await getPool().query(
+        "UPDATE mcp_tokens SET created_at = '2020-01-01 00:00:00' WHERE user_id = ?",
+        [testUserId],
+      );
+      const second = await issueToken(testUserId);
+      expect(second.raw).not.toBe(first.raw);
+      expect(new Date(second.createdAt).getTime()).toBeGreaterThan(
+        new Date('2020-01-01T00:00:00Z').getTime(),
+      );
+    });
+  });
+
+  describe('the use-timestamp throttle', () => {
+    async function readLastUsedEpoch(userId: number): Promise<number | null> {
+      const [rows] = await getPool().query<Array<RowDataPacket & { epoch: number | null }>>(
+        'SELECT UNIX_TIMESTAMP(last_used_at) AS epoch FROM mcp_tokens WHERE user_id = ?',
+        [userId],
+      );
+      return rows[0]?.epoch ?? null;
+    }
+
+    it('writes the use timestamp once within the hour', async () => {
+      const issued = await issueToken(testUserId);
+      await resolveToken(issued.raw);
+      const first = await readLastUsedEpoch(testUserId);
+      expect(first).not.toBeNull();
+
+      // A second resolve inside the hour must not move the timestamp.
+      await resolveToken(issued.raw);
+      expect(await readLastUsedEpoch(testUserId)).toBe(first);
+    });
+
+    it('writes the use timestamp again once the hour has passed', async () => {
+      const issued = await issueToken(testUserId);
+      await resolveToken(issued.raw);
+      await getPool().query(
+        'UPDATE mcp_tokens SET last_used_at = NOW() - INTERVAL 2 HOUR WHERE user_id = ?',
+        [testUserId],
+      );
+      const before = await readLastUsedEpoch(testUserId);
+      expect(before).not.toBeNull();
+
+      await resolveToken(issued.raw);
+      const after = await readLastUsedEpoch(testUserId);
+      expect(after).not.toBe(before);
+      expect(after!).toBeGreaterThan(before!);
+    });
   });
 
   describe('the token status', () => {
@@ -264,6 +344,17 @@ describe.skipIf(integrationSkip)('the MCP token store', () => {
     it('reads "none" for a user id that does not exist', async () => {
       const status = await getTokenStatus(999999999);
       expect(status.state).toBe('none');
+    });
+
+    it('reports the timestamps at the true instant, not shifted by a time zone', async () => {
+      const issued = await issueToken(testUserId);
+      const status = await getTokenStatus(testUserId);
+      const drift = Math.abs(Date.now() - new Date(status.createdAt!).getTime());
+      expect(drift).toBeLessThan(60_000);
+      expect(new Date(issued.createdAt).getTime()).toBeCloseTo(
+        new Date(status.createdAt!).getTime(),
+        -1,
+      );
     });
   });
 });
