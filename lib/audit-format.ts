@@ -408,11 +408,11 @@ export function formatLogMessage(
       return `更新通知邮箱 (${num(m.count) || '?'} 个收件人)`;
 
     case 'mcp_token_created':
-      return `签发 MCP Token「${str(m.username)}」`;
+      return `签发 MCP Token「${str(m.username) || '?'}」`;
     case 'mcp_token_regenerated':
-      return `重新生成 MCP Token「${str(m.username)}」`;
+      return `重新生成 MCP Token「${str(m.username) || '?'}」`;
     case 'mcp_token_revoked':
-      return `吊销 MCP Token「${str(m.username)}」`;
+      return `吊销 MCP Token「${str(m.username) || '?'}」`;
 
     default: {
       const keys = Object.keys(m);

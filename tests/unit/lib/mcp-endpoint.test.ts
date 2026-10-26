@@ -52,4 +52,15 @@ describe('resolveMcpEndpoint', () => {
       'https://ziyun.pudafo.com/mcp',
     );
   });
+
+  it('falls back to the dev port when the request url is relative', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', '');
+    vi.stubEnv('PORT', '4444');
+    expect(await resolveMcpEndpoint({ url: '/mcp' })).toBe('http://localhost:4444/mcp');
+  });
+
+  it('still prefers the configured site url when the request url is relative', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://ziyun.pudafo.com');
+    expect(await resolveMcpEndpoint({ url: '/mcp' })).toBe('https://ziyun.pudafo.com/mcp');
+  });
 });

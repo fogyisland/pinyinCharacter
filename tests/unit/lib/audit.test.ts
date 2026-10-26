@@ -39,4 +39,10 @@ describe('the audit event catalogue', () => {
     );
     expect(formatLogMessage('mcp_token_revoked', { username: 'xiaoming' })).toContain('xiaoming');
   });
+
+  it('never renders an empty name for the MCP token events', () => {
+    expect(formatLogMessage('mcp_token_created', {})).toContain('「?」');
+    expect(formatLogMessage('mcp_token_regenerated', {})).toContain('「?」');
+    expect(formatLogMessage('mcp_token_revoked', {})).toContain('「?」');
+  });
 });
