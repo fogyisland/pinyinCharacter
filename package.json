@@ -34,9 +34,7 @@
     "logo:build": "tsx scripts/build-logo-assets.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "mcp:dev": "tsx watch --conditions=react-server mcp/main.ts",
-    "mcp:start": "tsx --conditions=react-server mcp/main.ts"
+    "test:ui": "vitest --ui"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

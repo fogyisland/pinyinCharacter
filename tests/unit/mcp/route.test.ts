@@ -424,4 +424,47 @@ describe('the MCP endpoint: over the wire', () => {
       await close();
     }
   });
+
+  it('serves the tool registry', async () => {
+    const { client: sdkClient, close } = await connectTestClient();
+    try {
+      const listed = await sdkClient.listTools();
+      const names = listed.tools.map((tool) => tool.name).sort();
+      expect(names).toEqual([
+        'build_quest_level',
+        'generate_worksheet_layout',
+        'get_char',
+        'get_classic_chapter',
+        'get_classic_outline',
+        'get_poem',
+        'get_radical',
+        'get_stroke_count',
+        'get_sutra_chunk',
+        'get_tone_forms',
+        'list_classics',
+        'list_poems',
+        'list_sutras',
+        'pinyin_to_hanzi',
+        'pinyin_to_sentence',
+        'reveal_facets',
+        'synthesize_speech',
+        'text_to_pinyin',
+      ]);
+    } finally {
+      await close();
+    }
+  });
+
+  it('gives every tool a description and an input schema', async () => {
+    const { client: sdkClient, close } = await connectTestClient();
+    try {
+      const listed = await sdkClient.listTools();
+      for (const tool of listed.tools) {
+        expect(tool.description, `${tool.name} has no description`).toBeTruthy();
+        expect(tool.inputSchema.type, `${tool.name} has no object schema`).toBe('object');
+      }
+    } finally {
+      await close();
+    }
+  });
 });

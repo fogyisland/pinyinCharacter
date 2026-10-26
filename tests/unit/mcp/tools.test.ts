@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { connectTestClient, toolData } from './harness';
+import { connectTestClient, toolData } from './route-harness';
 
 /**
  * The MCP tools' payloads.

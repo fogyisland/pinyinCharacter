@@ -1,92 +1,51 @@
-# The MCP server
+# The MCP endpoint
 
-A standalone [Model Context Protocol](https://modelcontextprotocol.io) server
-that exposes the site's character library, its games and its classical
-collections as MCP tools.
+The site **is** the MCP server. The endpoint is a route handler of the app
+(`app/mcp/route.ts`), mounted on `/mcp` — there is no standalone process, no
+second port and nothing extra to start or to deploy. The tools read the same
+files the pages read, and the clients reach them on the same origin (and the
+same domain) as the site itself.
 
-It runs as its own Node process — **not** as a Next.js route. The SDK's
-Streamable HTTP transport consumes Node's `IncomingMessage` and
-`ServerResponse` directly, so a separate process is the shortest path between
-the SDK and the wire, and it leaves the site itself untouched: no new route, no
-middleware change, no build.
+| | |
+| --- | --- |
+| Production | `https://ziyun.pudafo.com/mcp` |
+| Development | `http://localhost:4444/mcp` |
+| Transport | Streamable HTTP (`POST` / `GET` / `DELETE` / `OPTIONS`) |
+| Runtime | Node (`export const runtime = 'nodejs'`) |
 
-## Running it
+## Authentication
 
-```bash
-# development (watch mode)
-MCP_AUTH_TOKEN=your-secret npm run mcp:dev
+Every request must carry a **per-user bearer token**:
 
-# production
-MCP_AUTH_TOKEN=your-secret npm run mcp:start
+```
+Authorization: Bearer mcp_…
 ```
 
-The server then answers on `http://127.0.0.1:4455/mcp`.
+The token is issued on the user's own profile page (`/profile`), where it can
+also be rotated and revoked. The site stores only the SHA-256 digest of the
+token, so a stolen database does not hand out usable credentials.
 
-> **The `--conditions=react-server` flag is not optional.**
-> Several libraries the tools read (`lib/content.ts`, `lib/radical.ts`,
-> `lib/game-quest-data.ts`) carry the `server-only` marker, whose whole
-> purpose is to throw when it is imported outside a React Server Component.
-> The `react-server` export condition resolves that marker to its empty
-> module. The `mcp:dev` and `mcp:start` scripts already pass the flag; if you
-> start the server by hand, pass it too.
+A request must also carry `Accept: application/json, text/event-stream` — the
+transport answers **406** without it. The SDK's own client sets it for you; a
+hand-written `curl` has to.
 
-## Configuration
-
-| Variable | Default | Meaning |
-| --- | --- | --- |
-| `MCP_HOST` | `127.0.0.1` | the interface to bind to |
-| `MCP_PORT` | `4455` | the port to listen on |
-| `MCP_ENDPOINT` | `/mcp` | the path of the MCP endpoint |
-| `MCP_AUTH_TOKEN` | — | the Bearer token every request must carry |
-| `MCP_ALLOW_ANONYMOUS` | `false` | `true` runs the server without a token |
-| `MCP_CORS_ORIGIN` | `*` | the allowed CORS origin |
-| `MCP_SERVER_NAME` | `pinyin-character` | the name reported to the clients |
-| `MCP_SERVER_VERSION` | `1.0.0` | the version reported to the clients |
-
-Two rules are enforced at startup, and the server refuses to start rather than
-run in a broken state:
-
-1. **a token is required** unless `MCP_ALLOW_ANONYMOUS=true` is set
-   explicitly;
-2. **an anonymous server may only bind the loopback interface** — an
-   unauthenticated MCP server on a routable address would publish the whole
-   collection to anyone who can reach the port.
+Once a session is open, its id travels in the `mcp-session-id` response
+header, and every later request of that session has to send it back. A
+session belongs to the user who opened it: another user's bearer gets **403**.
 
 ## Connecting a client
-
-The endpoint speaks the Streamable HTTP transport. A client needs the URL and
-the token:
 
 ```json
 {
   "mcpServers": {
     "pinyin-character": {
       "type": "http",
-      "url": "http://127.0.0.1:4455/mcp",
+      "url": "https://ziyun.pudafo.com/mcp",
       "headers": {
-        "Authorization": "Bearer your-secret"
+        "Authorization": "Bearer mcp_your_token"
       }
     }
   }
-}
-```
-
-A request must carry the header `Accept: application/json, text/event-stream`
-— the transport answers **406** without it. The SDK's own client sets it for
-you; a hand-written `curl` has to.
-
-## The health check
-
-`GET /health` answers without a token, and says what the server is and how
-many sessions are open:
-
-```json
-{
-  "ok": true,
-  "server": { "name": "pinyin-character", "version": "1.0.0" },
-  "endpoint": "/mcp",
-  "auth": "bearer",
-  "sessions": 0
 }
 ```
 
@@ -95,49 +54,46 @@ many sessions are open:
 Eighteen tools, all read-only, all served from the files — no database is
 touched.
 
-### The character
-
 | Tool | What it answers |
 | --- | --- |
 | `get_char` | the reading, the meaning, the alternate readings, the variants and the story of one character |
 | `get_radical` | the radical (部首) of one character |
 | `get_stroke_count` | how many strokes one character is written with |
 | `get_tone_forms` | the four tone-marked spellings of a character's syllable |
-
-### The reading
-
-| Tool | What it answers |
-| --- | --- |
 | `pinyin_to_hanzi` | the characters of a pinyin syllable, most frequent first |
 | `pinyin_to_sentence` | the Chinese sentence a pinyin string spells out |
 | `text_to_pinyin` | the pinyin of every character of a piece of text |
-
-### The game
-
-| Tool | What it answers |
-| --- | --- |
-| `build_quest_level` | one level of the character quest (闯关) with its four questions per character |
+| `build_quest_level` | one level of the character quest (闯关) with the four questions asked about each of its characters |
 | `reveal_facets` | which parts of the character card may be shown at a given moment |
+| `generate_worksheet_layout` | the cells of a practice worksheet (字帖): the characters, the cell style and the paper size |
+| `list_poems` | the poems of the collection, with their title, author and dynasty |
+| `get_poem` | one poem: its title, author, dynasty, the text line by line with the pinyin, the appreciation and the source |
+| `list_sutras` | the scriptures of the collection, with their title, their slug and how many chunks they hold |
+| `get_sutra_chunk` | one chapter of a scripture: its text line by line with the pinyin; without a chapter number, the chapter list instead |
+| `list_classics` | the classical books of the collection, with their title, author, era and category |
+| `get_classic_outline` | the chapter list of one classical book — the label of every chapter, without the text |
+| `get_classic_chapter` | one chapter of a classical book: its label and its text line by line, with the pinyin |
+| `synthesize_speech` | the spoken reading of a piece of text, as an MP3 audio block together with the metadata of the synthesis |
 
-### The practice sheet
+The registry lives in `mcp/tools/` — one file per subject, each registering
+its own tools through `registerTool`. `tests/unit/mcp/route.test.ts` pins the
+list above, so a tool cannot be added or renamed without the guard failing.
 
-| Tool | What it answers |
-| --- | --- |
-| `generate_worksheet_layout` | the cells of a practice worksheet (字帖) |
+## Configuration
 
-### The classical collections
+Three environment variables are optional; none of them is needed for the
+endpoint to work.
 
-| Tool | What it answers |
-| --- | --- |
-| `list_poems` / `get_poem` | the classical poems, and one of them |
-| `list_sutras` / `get_sutra_chunk` | the Buddhist scriptures, their chapters and one chapter |
-| `list_classics` / `get_classic_outline` / `get_classic_chapter` | the classical books, their chapter lists and one chapter |
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `MCP_SERVER_NAME` | `pinyin-character` | the name reported to the clients |
+| `MCP_SERVER_VERSION` | `1.0.0` | the version reported to the clients |
+| `MCP_CORS_ORIGIN` | `*` | the allowed CORS origin |
 
-### The voice
-
-| Tool | What it answers |
-| --- | --- |
-| `synthesize_speech` | the spoken form of a text, as an MCP audio content block |
+`MCP_CORS_ORIGIN` is the one to think about: the endpoint is public, and
+`*` lets a page on any origin call it. The bearer token is still required,
+but a browser-based client served from another origin is a case worth
+restricting.
 
 ## The answer format
 
@@ -180,29 +136,42 @@ hand the same rows to the same pure builder, and
 `tests/integration/api/quest-file-vs-db.test.ts` proves the two tiers are
 byte-identical for all six HSK tiers against the live database.
 
-## Exposing it beyond the machine
+> The tools reach modules that carry the `server-only` marker
+> (`lib/content.ts`, `lib/radical.ts`, `lib/game-quest-data.ts`). Inside the
+> Next.js server bundle the `react-server` export condition resolves that
+> marker to its no-op module, so the route needs no special handling — the
+> flag the retired standalone process required is gone.
 
-The server binds the loopback interface by default, which is the safe
-default. If it is exposed publicly:
+## Debugging it locally
 
-- keep `MCP_AUTH_TOKEN` set — an anonymous server is refused on a routable
-  address, but the rule only protects the *configuration*, not a proxy in
-  front of it;
-- terminate TLS in front of it; the server speaks plain HTTP;
-- restrict `MCP_CORS_ORIGIN` to the origin that serves the client instead of
-  leaving it at `*`;
-- remember that every tool is a read-only view of the collection — there is no
-  write tool, but the whole library is there.
+```bash
+npm run dev            # the site on http://localhost:4444
+```
+
+Then point an MCP client at `http://localhost:4444/mcp`. Outside production
+the endpoint also accepts the development bearer `dev-anonymous`, which needs
+no account — handy when only the protocol is being debugged:
+
+```bash
+curl -s http://localhost:4444/mcp \
+  -H 'Authorization: Bearer dev-anonymous' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"probe","version":"1.0.0"}}}'
+```
+
+Against a real account, take a token from `/profile` instead.
 
 ## The tests
 
 ```bash
-npx vitest run tests/unit/mcp        # the transport, the tools, the config, the auth
+npx vitest run tests/unit/mcp        # the endpoint, the tools, the sessions
 npx vitest run tests/integration/api/quest-file-vs-db.test.ts   # the file tier against the database
 ```
 
-The unit tests drive the real HTTP endpoint with the SDK's own client, so they
-exercise the real transport, the real session handling and the real
-authorization. The integration test needs `DATABASE_URL` — it reads the
-project's `.env` when the environment does not carry it, and skips cleanly
-when neither does.
+`tests/unit/mcp/route-harness.ts` drives the endpoint two ways: directly with
+a Web `Request` (the assertions are about the route's own answers — 401,
+403, 404, 400, 413, CORS) and behind a loopback HTTP server with the SDK's
+own client (the assertions are about the wire). The integration test needs
+`DATABASE_URL` — it reads the project's `.env` when the environment does not
+carry it, and skips cleanly when neither does.

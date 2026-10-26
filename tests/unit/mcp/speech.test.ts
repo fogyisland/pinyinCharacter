@@ -10,7 +10,7 @@ vi.mock('@/lib/tts-edge', async (importOriginal) => {
 });
 
 import { synthesize, TtsUpstreamError } from '@/lib/tts-edge';
-import { connectTestClient } from './harness';
+import { connectTestClient } from './route-harness';
 
 /**
  * The speech tool.
