@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
 import { badRequest, forbidden, notFound, serviceUnavailable, unauthorized } from '@/lib/api-handler';
-import { resolveToken } from '@/lib/mcp-token';
+import { resolveToken, type ResolvedToken } from '@/lib/mcp-token';
 import { createMcpServer } from '@/mcp/server-factory';
 import {
   closeAndForget,
@@ -84,6 +84,20 @@ function corsOrigin(): string {
 }
 
 /**
+ * Every answer of this endpoint is `no-store`.
+ *
+ * The body either carries a session or describes one, and a cached copy of
+ * a 401 would keep a signed-out client from ever seeing the fresh answer.
+ * The transport sets `no-cache, no-transform` on the answers it writes
+ * itself — `no-transform` matters for the SSE stream, so it is kept and
+ * `no-store` is added next to it.
+ */
+function withNoStore(headers: Headers): void {
+  const current = headers.get('Cache-Control');
+  headers.set('Cache-Control', current ? `${current}, no-store` : 'no-store');
+}
+
+/**
  * Put the CORS headers on a response.
  *
  * The response is rebuilt instead of mutated: some Response implementations
@@ -97,6 +111,7 @@ function corsOrigin(): string {
  */
 function withCors(response: Response): Response {
   const headers = new Headers(response.headers);
+  withNoStore(headers);
   headers.set('Access-Control-Allow-Origin', corsOrigin());
   headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   headers.set(
@@ -140,7 +155,7 @@ async function authenticate(request: Request): Promise<AuthOutcome> {
     };
   }
 
-  let resolved;
+  let resolved: ResolvedToken | null;
   try {
     resolved = await resolveToken(raw);
   } catch (err) {
@@ -166,13 +181,50 @@ function payloadTooLarge(): NextResponse {
 }
 
 /**
+ * Read the body, refusing to hold more than the limit in memory.
+ *
+ * The chunks are counted as they arrive and the read is abandoned the
+ * moment the total passes the limit, so a client that lies about (or
+ * omits) its content length cannot make the process hold a payload it is
+ * about to reject. The declared length is checked separately, before the
+ * body is touched at all.
+ *
+ * Returns null when the body is over the limit.
+ */
+async function readBodyText(request: Request, limit: number): Promise<string | null> {
+  const body = request.body;
+  if (!body) return '';
+  const reader = body.getReader();
+  const decoder = new TextDecoder();
+  let total = 0;
+  let text = '';
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      total += value.byteLength;
+      if (total > limit) {
+        await reader.cancel().catch((err: unknown) => {
+          console.error('[mcp] could not cancel the request body', err);
+        });
+        return null;
+      }
+      text += decoder.decode(value, { stream: true });
+    }
+    return text + decoder.decode();
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+/**
  * The parsed body of a POST, or the answer to send back.
  *
  * The transport's own limit does not apply once the body is handed over
  * parsed, so the size is checked here. The declared length is checked
  * first — a body that announces itself as too large is refused before it
- * is read — and the bytes are counted afterwards for the requests that lie
- * about (or omit) their length.
+ * is read — and the bytes are counted while they arrive for the requests
+ * that lie about (or omit) their length.
  */
 async function readJsonBody(request: Request): Promise<BodyOutcome> {
   const declared = Number(request.headers.get('content-length') ?? '0');
@@ -180,21 +232,21 @@ async function readJsonBody(request: Request): Promise<BodyOutcome> {
     return { ok: false, response: payloadTooLarge() };
   }
 
-  let text: string;
+  let text: string | null;
   try {
-    text = await request.text();
+    text = await readBodyText(request, MAX_BODY_BYTES);
   } catch (err) {
     console.error('[mcp] could not read the request body', err);
     return { ok: false, response: badRequest('bad_input', 'the request body could not be read') };
   }
-
-  if (new TextEncoder().encode(text).length > MAX_BODY_BYTES) {
+  if (text === null) {
     return { ok: false, response: payloadTooLarge() };
   }
 
   try {
     return { ok: true, body: JSON.parse(text) as unknown };
-  } catch {
+  } catch (err) {
+    console.error('[mcp] the request body is not valid JSON', err);
     return { ok: false, response: badRequest('bad_input', 'the request body is not valid JSON') };
   }
 }
@@ -249,7 +301,15 @@ async function openSession(request: Request, body: unknown, user: Caller): Promi
       deleteSession(sessionId);
     },
   });
-  await server.connect(transport);
+  try {
+    await server.connect(transport);
+  } catch (err) {
+    console.error('[mcp] could not connect the server to the transport', err);
+    await transport.close().catch((closeErr: unknown) => {
+      console.error('[mcp] could not close the transport after a failed connect', closeErr);
+    });
+    return serviceUnavailable('service_unavailable', 'the MCP server could not open a session');
+  }
   return transport.handleRequest(request, { parsedBody: body });
 }
 
@@ -264,18 +324,23 @@ export async function POST(request: Request): Promise<Response> {
   if (!auth.ok) return withCors(auth.response);
   sweep();
 
-  const parsed = await readJsonBody(request);
-  if (!parsed.ok) return withCors(parsed.response);
-
+  // The session is looked up before the body is read: a request that names
+  // a session that is gone is a 404, and a 404 makes the client start over
+  // with a fresh initialize — a 400 would not. A dead session's request
+  // does not get its body read at all.
   const sessionId = request.headers.get(SESSION_HEADER);
   if (sessionId) {
     const found = findSession(sessionId, auth.user);
     if (!found.ok) return withCors(found.response);
     touchSession(sessionId);
+    const parsed = await readJsonBody(request);
+    if (!parsed.ok) return withCors(parsed.response);
     const response = await found.session.transport.handleRequest(request, { parsedBody: parsed.body });
     return withCors(response);
   }
 
+  const parsed = await readJsonBody(request);
+  if (!parsed.ok) return withCors(parsed.response);
   if (!isInitializeBody(parsed.body)) {
     return withCors(
       badRequest(

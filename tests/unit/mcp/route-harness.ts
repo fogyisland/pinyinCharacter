@@ -31,6 +31,7 @@ const { tokens } = vi.hoisted(() => ({
   tokens: {
     test: 'test-token',
     other: 'other-token',
+    throws: 'throws-token',
   },
 }));
 
@@ -38,6 +39,7 @@ vi.mock('@/lib/mcp-token', () => ({
   resolveToken: async (raw: string) => {
     if (raw === tokens.test) return { userId: 1, username: 'tester', isAdmin: false };
     if (raw === tokens.other) return { userId: 2, username: 'other', isAdmin: false };
+    if (raw === tokens.throws) throw new Error('the token store is down');
     return null;
   },
 }));
@@ -50,12 +52,17 @@ export const TEST_TOKEN = tokens.test;
 /** A token of another user — for the cross-user assertions. */
 export const OTHER_TOKEN = tokens.other;
 
+/** A token whose lookup fails the way a broken database would. */
+export const THROWING_TOKEN = tokens.throws;
+
 /** The url the route is mounted on. */
 const ROUTE_URL = 'http://localhost:4444/mcp';
 
 /** The route, driven without a port. */
 export interface RouteClient {
   post(body: unknown, headers?: Record<string, string>): Promise<Response>;
+  /** Post a body the harness does not serialize — a stream, for instance. */
+  postRaw(body: BodyInit | null, headers?: Record<string, string>): Promise<Response>;
   get(headers?: Record<string, string>): Promise<Response>;
   del(headers?: Record<string, string>): Promise<Response>;
   options(): Promise<Response>;
@@ -82,6 +89,30 @@ function buildRequest(method: string, body?: unknown, headers?: Record<string, s
 }
 
 /**
+ * Build a request whose body the harness does not serialize.
+ *
+ * A stream body needs `duplex: 'half'`, and a stream body carries no
+ * content length — which is exactly the shape the body gate has to survive.
+ */
+function buildRawRequest(
+  method: string,
+  body: BodyInit | null,
+  headers?: Record<string, string>,
+): Request {
+  const init: StreamRequestInit = {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/event-stream',
+      ...headers,
+    },
+    body,
+  };
+  if (body instanceof ReadableStream) init.duplex = 'half';
+  return new Request(ROUTE_URL, init);
+}
+
+/**
  * The route, driven without a port.
  *
  * The responses are the route's own — a Web `Response` whose body is a
@@ -90,6 +121,7 @@ function buildRequest(method: string, body?: unknown, headers?: Record<string, s
 export function createRouteClient(): RouteClient {
   return {
     post: (body, headers) => POST(buildRequest('POST', body, headers)),
+    postRaw: (body, headers) => POST(buildRawRequest('POST', body, headers)),
     get: (headers) => GET(buildRequest('GET', undefined, headers)),
     del: (headers) => DELETE(buildRequest('DELETE', undefined, headers)),
     options: () => OPTIONS(),

@@ -1,5 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { connectTestClient, createRouteClient, OTHER_TOKEN, TEST_TOKEN } from './route-harness';
+import {
+  connectTestClient,
+  createRouteClient,
+  OTHER_TOKEN,
+  TEST_TOKEN,
+  THROWING_TOKEN,
+} from './route-harness';
 import {
   closeAndForget,
   getSessionStore,
@@ -67,6 +73,24 @@ function sessionIds(): string[] {
   return [...getSessionStore().keys()];
 }
 
+/**
+ * A body of `megabytes` that arrives in one-megabyte chunks.
+ *
+ * A stream carries no content length, which is the shape the body gate has
+ * to survive: the bytes have to be counted while they arrive.
+ */
+function oversizedStream(megabytes: number): ReadableStream<Uint8Array> {
+  const chunk = new Uint8Array(1024 * 1024);
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (let index = 0; index < megabytes; index += 1) {
+        controller.enqueue(chunk);
+      }
+      controller.close();
+    },
+  });
+}
+
 beforeEach(() => {
   getSessionStore().clear();
 });
@@ -112,6 +136,16 @@ describe('the MCP endpoint: the token gate', () => {
       vi.unstubAllEnvs();
     }
   });
+
+  it('answers 503 when the token store cannot be reached', async () => {
+    const response = await client.post(INITIALIZE_BODY, {
+      Authorization: `Bearer ${THROWING_TOKEN}`,
+    });
+    expect(response.status).toBe(503);
+    const body = (await response.json()) as { ok: boolean; error: { code: string } };
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('service_unavailable');
+  });
 });
 
 describe('the MCP endpoint: the session gate', () => {
@@ -137,13 +171,25 @@ describe('the MCP endpoint: the session gate', () => {
     expect(response.status).toBe(404);
   });
 
+  it('answers 404 for an unknown session even when the body is malformed', async () => {
+    // The session is looked up before the body is read, so a dead session
+    // is a 404 — the answer that makes the client start over — and not a
+    // 400, which would make it give up.
+    const response = await client.postRaw('{not json at all', {
+      Authorization: `Bearer ${TEST_TOKEN}`,
+      'mcp-session-id': 'no-such-session',
+    });
+    expect(response.status).toBe(404);
+  });
+
   it('answers a request that belongs to a known session', async () => {
     const sessionId = await openSession();
     const response = await client.post(TOOLS_LIST_BODY, {
       Authorization: `Bearer ${TEST_TOKEN}`,
       'mcp-session-id': sessionId,
     });
-    expect(response.status).not.toBe(400);
+    expect(response.status).toBeGreaterThanOrEqual(200);
+    expect(response.status).toBeLessThan(300);
     await discard(response);
   });
 
@@ -190,6 +236,29 @@ describe('the MCP endpoint: the body gate', () => {
     expect([400, 413]).toContain(response.status);
     expect(response.status).not.toBe(500);
   });
+
+  it('refuses a streamed body that is over 4 MiB and announces no length', async () => {
+    // A stream carries no content length, so the bytes have to be counted
+    // while they arrive — the declared length cannot be the only guard.
+    const response = await client.postRaw(oversizedStream(5), {
+      Authorization: `Bearer ${TEST_TOKEN}`,
+    });
+    expect(response.status).toBe(413);
+    const body = (await response.json()) as { ok: boolean; error: { code: string } };
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('payload_too_large');
+  });
+
+  it('refuses a body that is bigger than its content length claims', async () => {
+    const response = await client.postRaw(oversizedStream(5), {
+      Authorization: `Bearer ${TEST_TOKEN}`,
+      'content-length': '1024',
+    });
+    expect(response.status).toBe(413);
+    const body = (await response.json()) as { ok: boolean; error: { code: string } };
+    expect(body.ok).toBe(false);
+    expect(body.error.code).toBe('payload_too_large');
+  });
 });
 
 describe('the MCP endpoint: CORS', () => {
@@ -204,6 +273,25 @@ describe('the MCP endpoint: CORS', () => {
     const response = await client.post(INITIALIZE_BODY, { Authorization: `Bearer ${TEST_TOKEN}` });
     expect(response.headers.get('access-control-expose-headers')).toContain('mcp-session-id');
     expect(response.headers.get('mcp-session-id')).toBeTruthy();
+    await discard(response);
+  });
+});
+
+describe('the MCP endpoint: the cache headers', () => {
+  it('answers a refusal with no-store', async () => {
+    const response = await client.post(INITIALIZE_BODY);
+    expect(response.status).toBe(401);
+    expect(response.headers.get('cache-control')).toContain('no-store');
+  });
+
+  it('keeps the transport cache headers and adds no-store on a session answer', async () => {
+    const response = await client.post(INITIALIZE_BODY, { Authorization: `Bearer ${TEST_TOKEN}` });
+    expect(response.status).toBe(200);
+    const cacheControl = response.headers.get('cache-control') ?? '';
+    expect(cacheControl).toContain('no-store');
+    // `no-transform` is the transport's own: it tells the proxy not to
+    // touch the event stream.
+    expect(cacheControl).toContain('no-transform');
     await discard(response);
   });
 });
