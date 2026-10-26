@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
  * cookie is the sole gate. The /init page itself does a server-side check
  * via `/api/init/status` for the locked UI.
  *
- * Whitelist: /init, /init/*, /api/init/*, Next.js internals, static assets.
+ * Whitelist: /init, /init/*, /api/init/*, /mcp, Next.js internals, static assets.
  * Everything else: redirect to /init if cookie not set.
  */
 
@@ -61,6 +61,12 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
   if (pathname.startsWith('/api/init/')) {
+    return NextResponse.next();
+  }
+
+  // MCP clients do not carry browser cookies — they present a bearer token
+  // instead — so /mcp has to pass the cookie gate.
+  if (pathname === '/mcp') {
     return NextResponse.next();
   }
 

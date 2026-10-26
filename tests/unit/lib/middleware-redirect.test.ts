@@ -46,6 +46,16 @@ describe('middleware: whitelist', () => {
   });
 });
 
+describe('middleware: the MCP endpoint bypasses the setup gate', () => {
+  // MCP clients do not carry browser cookies — they present a bearer token
+  // instead — so the cookie gate must not send them to the wizard.
+  it('/mcp is allowed even without cookie', async () => {
+    const res = callMiddleware('/mcp');
+    expect(await status(res)).toBe(200);
+    expect(await redirectedTo(res)).toBeNull();
+  });
+});
+
 describe('middleware: static assets bypass the setup gate', () => {
   // A 307 on the render-blocking stylesheet makes the browser fetch /init's
   // HTML as CSS and drop the stylesheet, so the page would render with

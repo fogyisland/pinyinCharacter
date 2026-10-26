@@ -5,7 +5,10 @@ const config: NextConfig = {
   // Keep `ws` (and its native `bufferutil` binding) out of the bundler —
   // webpack otherwise stubs `bufferutil.mask` and tts-edge's ws.send() throws
   // "bufferUtil.mask is not a function" on first frame.
-  serverExternalPackages: ['ws', 'bufferutil'],
+  // `fontkit` reads the font files from public/fonts/ at runtime; as an
+  // external package it stays in node_modules and is required from there
+  // instead of being bundled.
+  serverExternalPackages: ['ws', 'bufferutil', 'fontkit'],
   // @react-pdf/renderer ships ESM-only ("type":"module") and imports
   // Node-only modules in its main entry. transpilePackages lets webpack
   // handle the ESM imports; combined with `dynamic({ ssr: false })` for
