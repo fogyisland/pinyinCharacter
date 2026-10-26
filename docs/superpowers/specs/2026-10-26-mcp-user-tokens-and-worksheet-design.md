@@ -20,7 +20,7 @@ These were settled with the user before this document was written. They are not 
 
 | # | Decision | Chosen | Rejected |
 |---|---|---|---|
-| D1 | Transport | **HTTP, mounted on the site at `/mcp`** | a second process on a second port |
+| D1 | Transport | **HTTP, mounted on the site at `/mcp`** — one process, one port, one runbook entry | a second process on a second port |
 | D2 | Token backing | **the database** (`mcp_tokens` table) | a stateless HMAC/JWT with a blacklist |
 | D3 | Tokens per user | **exactly one** | several named tokens (multi-device) |
 | D4 | Approval | **self-service**, no admin approval | an admin approval queue |
@@ -91,7 +91,9 @@ D6 was chosen over `sharp` deliberately: `sharp` is a **devDependency** in this 
 
 **What survives from the standalone server:** all of `mcp/tools/*`, `mcp/errors.ts`, `mcp/tool-result.ts`. The tool bodies, their schemas, their annotations and their envelopes are **not touched** except for the worksheet tool, which gains two tools.
 
-**What is retired:** `mcp/main.ts`, `mcp/server.ts`, `mcp/session.ts`, `mcp/body.ts`, `mcp/config.ts`, `mcp/auth.ts` (the env-token half) — plus the `mcp:dev` / `mcp:start` npm scripts. The standalone process and the site process would otherwise be two implementations of the same protocol, and the standalone one would have no way to authenticate per-user tokens without a second DB connection pool. **This retirement is a direct consequence of D1** and is called out in the handover list.
+**What is retired:** `mcp/main.ts`, `mcp/server.ts`, `mcp/session.ts`, `mcp/body.ts`, `mcp/config.ts`, `mcp/auth.ts` (the env-token half) — plus the `mcp:dev` / `mcp:start` npm scripts. The standalone process and the site process would otherwise be two implementations of the same protocol, and the standalone one would have no way to authenticate per-user tokens without a second DB connection pool.
+
+> **The user's instruction, 2026-10-26 (verbatim): 「直接挂到本身站点，不需要额外开启进程，太多了」.** There is **no second process, no second port and no second runbook entry**. The MCP endpoint is a route in the site, and that is the only way it runs — in development, in production, and in the tests. The standalone server that existed as of commit `28f7b1ee7` is **removed**, not deprecated and not kept as an alternative entry point.
 
 **Why the SDK's Web-standard transport is the enabling fact:** the SDK 1.32.2 ships `WebStandardStreamableHTTPServerTransport` (`dist/esm/server/webStandardStreamableHttp.js`), whose `handleRequest(req: Request, options?): Promise<Response>` speaks the Web platform's `Request`/`Response` — exactly what a Next.js route handler has. The older `StreamableHTTPServerTransport` only accepts Node's `IncomingMessage`/`ServerResponse`, which is what forced the standalone process in the first place.
 
@@ -326,20 +328,24 @@ All three verbs require a logged-in user (`requireUser()` from `lib/auth.ts`) an
 
 The repo rule is that **every mutating endpoint writes an audit row, and the metadata carries a title** (`user-action-audit-preference`). Three new events in `lib/audit-format.ts`:
 
-| Event | Fired by | Metadata |
-|---|---|---|
-| `mcp_token_created` | `POST` when the user had no token | `{ title: 'MCP token issued', username }` |
-| `mcp_token_regenerated` | `POST` when the user already had a token | `{ title: 'MCP token regenerated', username }` |
-| `mcp_token_revoked` | `DELETE` | `{ title: 'MCP token revoked', username }` |
+| Event | Fired by | `EVENT_LABEL` | `formatLogMessage` |
+|---|---|---|---|
+| `mcp_token_created` | `POST` when the user had no token | 「签发 MCP Token」 | `签发 MCP Token「${username}」` |
+| `mcp_token_regenerated` | `POST` when the user already had one | 「重新生成 MCP Token」 | `重新生成 MCP Token「${username}」` |
+| `mcp_token_revoked` | `DELETE` | 「吊销 MCP Token」 | `吊销 MCP Token「${username}」` |
 
-`lib/audit-format.ts` carries **three coupled structures** that must be updated in lockstep:
+The audit log's own copy is Chinese — every existing `EVENT_LABEL` entry is (`注册`, `保存字帖`, `撤销会员`, …) — so these three follow suit.
 
-1. the `AuditEvent` union,
-2. the `AUDIT_EVENTS` tuple (a test asserts that the tuple covers the union exactly),
-3. the `EVENT_LABEL` record,
-4. the `formatLogMessage` per-event branch.
+The metadata for all three is `{ title: \`${username} 的 MCP Token\`, username }`. The **title is the username of the account the token belongs to**, so an admin reading the log sees *which* account the token was for, not just a user id — that is what the "metadata 要带标题" rule is for.
 
-The title is the **username** of the account the token belongs to, so an admin reading the log sees *which* account the token was for, not just a user id. `logUserAction(req, userId, event, metadata)` is the helper to use (`lib/audit.ts`).
+`lib/audit-format.ts` carries **four coupled structures** that must be updated in lockstep:
+
+1. the `AuditEvent` union (line 9),
+2. the `AUDIT_EVENTS` tuple (line 85 — a test asserts that the tuple covers the union exactly),
+3. the `EVENT_LABEL` record (line 163),
+4. the `formatLogMessage` per-event branch (line 239).
+
+`logUserAction(req: NextRequest, userId, event, metadata)` is the helper to use (`lib/audit.ts`); it reads the ip from `x-forwarded-for` and the user agent from the header.
 
 ---
 
@@ -353,20 +359,34 @@ The admin's user screen (`app/admin/users/`) is **not** changed in v1: D4 chose 
 
 ### §5.2 The card
 
-**File:** `components/mcp/McpTokenCard.tsx` (new) — a client component.
+**Files:** `components/mcp/McpTokenCard.tsx` (new, **async server component**) and `components/mcp/McpTokenActions.tsx` (new, **client component**).
 
-It shows, in one card:
+The card is split the way `components/membership/MembershipStatusCard.tsx` splits: the server component reads the state on the server (no client fetch, no loading spinner on first paint) and hands it to a small client component that owns the three buttons and the one-time token display.
 
-- **The state**: no token / active / revoked, with the issue date and the last-used date.
-- **The endpoint**: the public `/mcp` URL, with a copy button.
-- **The client configuration**: the ready-made JSON block (§5.3), with a copy button. Shown only when a token is active.
-- **The raw token**, in a monospace block, **only in the response to the click that issued it**, with a warning that it is shown once and a copy button. It is never re-fetchable.
-- **The buttons**:
-  - `申请 MCP Token` (issue) when there is no token,
-  - `重新生成` (rotate) when there is one — rotating **invalidates the old token immediately** and the card says so,
-  - `吊销` (revoke) when there is one.
+```tsx
+// components/mcp/McpTokenCard.tsx  (server)
+export async function McpTokenCard({ userId }: { userId: number }) {
+  const status = await getTokenStatus(userId);
+  const endpoint = `${await getRuntimeSiteUrl()}/mcp`;
+  return (
+    <div className="card-paper p-5">
+      …
+      <McpTokenActions initialStatus={status} endpoint={endpoint} />
+    </div>
+  );
+}
+```
 
-The card's copy is in English (repo rule: UI copy in English, replies in Chinese).
+The client component (`McpTokenActions.tsx`) does the three calls and owns the local state:
+
+- **no token** → the button 「申请 MCP Token」
+- **active** → the buttons 「重新生成」 and 「吊销」, plus the client-configuration block (§5.3) with a copy button
+- **revoked** → the button 「申请 MCP Token」 (issuing again replaces the revoked row)
+- **the raw token**, in a monospace block, shown **only in the response to the click that issued it**, with a warning that it is shown once and a copy button. It is never re-fetchable — after the user navigates away it is gone for good.
+
+Rotating **invalidates the old token immediately**, and the card says so.
+
+**The copy is in Chinese**, matching the site. The user-facing pages are Chinese — `app/profile/page.tsx` says 「个人主页」「总字数」「已存字帖」, and `MembershipStatusCard` says 「会员状态」「开通会员」. A card with English labels on that page would look like a patch on top of the site. (The repo rule that code, commit messages and *developer* surfaces stay in English does not apply to a card that sits between 「显示拼音」 and 「我的字帖」.)
 
 ### §5.3 The client configuration
 
@@ -814,7 +834,8 @@ Before any commit: `npx tsc --noEmit` clean, `npx vitest run` green, `npx eslint
 ```
 app/mcp/route.ts                       the MCP endpoint (POST/GET/DELETE/OPTIONS)
 app/api/mcp/token/route.ts             GET / POST / DELETE — the token API
-components/mcp/McpTokenCard.tsx         the profile-page card
+components/mcp/McpTokenCard.tsx         the profile-page card (server component)
+components/mcp/McpTokenActions.tsx      the card's buttons and the one-time token display (client)
 mcp/server-factory.ts                  build a configured McpServer
 mcp/tools/worksheet-render.ts           the MCP → rasteriser bridge
 lib/mcp-token.ts                       the token store (issue / revoke / resolve)
