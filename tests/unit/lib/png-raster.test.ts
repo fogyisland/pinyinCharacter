@@ -4,10 +4,12 @@ import {
   fillPolygon,
   fillRect,
   getPixel,
+  strokeLine,
+  strokeOutline,
   type Point,
   type Polygon,
 } from '@/lib/png/raster';
-import { parseColor } from '@/lib/png/geometry';
+import { flattenBezierCurve, flattenQuadCurve, parseColor } from '@/lib/png/geometry';
 
 describe('parseColor', () => {
   it('parses a short hex colour', () => {
@@ -17,6 +19,13 @@ describe('parseColor', () => {
 
   it('parses an eight-digit hex colour with alpha', () => {
     expect(parseColor('#3a2a1433')).toEqual({ r: 0x3a, g: 0x2a, b: 0x14, a: 0x33 });
+  });
+
+  it('rejects a four-digit hex colour', () => {
+    expect(() => parseColor('#1d4e')).toThrow(/3, 6 or 8/);
+    expect(() => parseColor('#1d4e5')).toThrow(/3, 6 or 8/);
+    // Three digits are still the short form, so they are still legal.
+    expect(parseColor('#1d4')).toEqual({ r: 0x11, g: 0xdd, b: 0x44, a: 255 });
   });
 });
 
@@ -34,6 +43,74 @@ describe('fillRect', () => {
     const edge = getPixel(canvas, 2, 4);
     expect(edge.r).toBeGreaterThan(0);
     expect(edge.r).toBeLessThan(255);
+  });
+
+  it('refuses a negative rectangle size', () => {
+    const canvas = createCanvas(10, 10, { r: 255, g: 255, b: 255, a: 255 });
+    expect(() => fillRect(canvas, 2, 2, -4, 4, { r: 0, g: 0, b: 0, a: 255 })).toThrow(/negative/);
+  });
+});
+
+describe('strokeLine', () => {
+  it('strokes a line one pixel wide', () => {
+    const canvas = createCanvas(10, 10, { r: 255, g: 255, b: 255, a: 255 });
+    strokeLine(canvas, 2, 5, 8, 5, 1, { r: 0, g: 0, b: 0, a: 255 });
+    // A 1 px line on the integer coordinate y=5 covers half of the row above
+    // and half of the row below.
+    expect(getPixel(canvas, 5, 4).r).toBe(128);
+    expect(getPixel(canvas, 5, 5).r).toBe(128);
+    expect(getPixel(canvas, 5, 6).r).toBe(255);
+  });
+});
+
+describe('strokeOutline', () => {
+  it('outlines a rectangle with the same value on the edge and at the corner', () => {
+    const canvas = createCanvas(20, 20, { r: 255, g: 255, b: 255, a: 255 });
+    strokeOutline(
+      canvas,
+      [
+        [
+          { x: 4, y: 4 },
+          { x: 14, y: 4 },
+          { x: 14, y: 14 },
+          { x: 4, y: 14 },
+        ],
+      ],
+      1,
+      { r: 0, g: 0, b: 0, a: 255 },
+    );
+    // An edge pixel is half covered by the line: 128.
+    // A corner pixel is half covered by the horizontal edge and half by the
+    // vertical one, so 75% of it is covered: 64.
+    expect(getPixel(canvas, 8, 4).r).toBe(128);
+    expect(getPixel(canvas, 4, 4).r).toBe(64);
+  });
+
+  it('rejects a flat list of points instead of drawing nothing', () => {
+    const canvas = createCanvas(20, 20, { r: 255, g: 255, b: 255, a: 255 });
+    const flat = [{ x: 4, y: 4 }, { x: 14, y: 4 }] as unknown as Polygon[];
+    expect(() => strokeOutline(canvas, flat, 1, { r: 0, g: 0, b: 0, a: 255 })).toThrow(/polygon/);
+  });
+});
+
+describe('curve flattening', () => {
+  it('flattens a quadratic curve into segments', () => {
+    const points = flattenQuadCurve({ x: 0, y: 0 }, { x: 5, y: 10 }, { x: 10, y: 0 }, 8);
+    expect(points).toHaveLength(8); // 8 segments = 8 points (no start point, with the end point)
+    expect(points[7]).toEqual({ x: 10, y: 0 }); // the end point is included
+    expect(points[0]).not.toEqual({ x: 0, y: 0 }); // the start is not (the caller already has it)
+  });
+
+  it('flattens a bezier curve into segments', () => {
+    const points = flattenBezierCurve(
+      { x: 0, y: 0 },
+      { x: 0, y: 10 },
+      { x: 10, y: 10 },
+      { x: 10, y: 0 },
+      8,
+    );
+    expect(points).toHaveLength(8);
+    expect(points[7]).toEqual({ x: 10, y: 0 });
   });
 });
 

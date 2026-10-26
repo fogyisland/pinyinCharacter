@@ -63,6 +63,10 @@ export function createCanvas(width: number, height: number, fill: Color = WHITE)
  * any other shape. There is deliberately no fast path for whole-pixel
  * rectangles: two fill rules in one rasteriser is how edges start to
  * disagree with each other.
+ *
+ * A zero size draws nothing; a negative size is a caller bug and throws,
+ * because a silently swallowed negative width hides a flipped coordinate
+ * system.
  */
 export function fillRect(
   canvas: Canvas,
@@ -72,7 +76,10 @@ export function fillRect(
   height: number,
   color: Color,
 ): void {
-  if (!(width > 0) || !(height > 0)) return;
+  if (width < 0 || height < 0) {
+    throw new Error(`fillRect: the size must not be negative, got ${width} by ${height}.`);
+  }
+  if (width === 0 || height === 0) return;
   fillPolygon(
     canvas,
     [
@@ -174,9 +181,19 @@ export function strokeLine(
  *
  * Each edge is extended by half the stroke width at both ends, so the
  * corners of a frame overlap instead of leaving a notch.
+ *
+ * @param polygons A list of rings. A single ring has to be wrapped in an
+ * array — passing a flat list of points would otherwise draw nothing at all,
+ * so it is rejected instead of silently ignored.
  */
 export function strokeOutline(canvas: Canvas, polygons: Polygon[], width: number, color: Color): void {
   for (const polygon of polygons) {
+    if (!Array.isArray(polygon)) {
+      throw new Error(
+        'strokeOutline: every entry must be a polygon (an array of points). ' +
+          'A single ring has to be wrapped: strokeOutline(canvas, [ring], width, colour).',
+      );
+    }
     for (let i = 0; i < polygon.length; i += 1) {
       const from = polygon[i];
       const to = polygon[(i + 1) % polygon.length];

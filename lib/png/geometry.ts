@@ -77,7 +77,7 @@ interface ParsedChannels {
 }
 
 function parseHexDigits(digits: string, hex: string): ParsedChannels {
-  if (digits.length === 3 || digits.length === 4) {
+  if (digits.length === 3) {
     // The short form repeats each digit: `#5` means `#55`.
     const expanded = digits.split('').map((digit) => digit + digit).join('');
     return parseHexDigits(expanded, hex);
@@ -90,7 +90,7 @@ function parseHexDigits(digits: string, hex: string): ParsedChannels {
       a: digits.length === 8 ? parseInt(digits.slice(6, 8), 16) : 255,
     };
   }
-  throw new Error(`Invalid colour "${hex}": expected 3, 4, 6 or 8 hex digits, got ${digits.length}.`);
+  throw new Error(`Invalid colour "${hex}": expected 3, 6 or 8 hex digits, got ${digits.length}.`);
 }
 
 function assertAlpha(alpha: number, hex: string): number {

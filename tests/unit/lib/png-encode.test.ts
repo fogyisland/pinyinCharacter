@@ -18,8 +18,8 @@ describe('encodePng', () => {
     const canvas = createCanvas(4, 3, { r: 255, g: 255, b: 255, a: 255 });
     fillRect(canvas, 1, 1, 2, 1, { r: 0, g: 0, b: 0, a: 255 });
     const { data } = await sharp(Buffer.from(encodePng(canvas))).raw().toBuffer({ resolveWithObject: true });
-    expect(data[0]).toBe(255);      // 左上角：白
-    expect(data[(1 * 4 + 1) * 4]).toBe(0);  // (1,1)：黑
+    expect(data[0]).toBe(255);      // The top-left corner is white.
+    expect(data[(1 * 4 + 1) * 4]).toBe(0);  // The black rectangle starts at (1, 1).
   });
 
   it('starts with the PNG signature', () => {
