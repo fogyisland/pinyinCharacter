@@ -7,10 +7,18 @@
 **Why now:** The user asked for three things in one breath (2026-10-26):
 
 1. 「我们还需要为每个注册用户启用 MCP token 申请功能」 — per-user tokens, not one global env-var key.
-2. 「mcp 直接挂网站 不需要额外的端口」 — no second process, no second port, no nginx change.
+2. 「mcp 直接挂网站 不需要额外的端口」 — no second process, no second port, and (as §2.2 records) one small nginx block rather than a new upstream.
 3. 「另外提供字帖设计的 mcp 提供标准的字帖方案，并且支持生成后以 png 方式发送给 ai」 — a worksheet-design toolset that returns a PNG image block the model can actually look at.
 
 Requests 1 and 2 together dissolve the one structural conflict the current design has: *"the MCP server is zero-MySQL by construction, but per-user tokens need a database."* Mounting the server as a Next.js route handler puts `getPool()` in-process, so **only the auth layer touches MySQL — the 18 tools stay exactly as file-only as they are today.** The purity property is preserved where it matters (the data path) and dropped where it was only a constraint of the standalone process.
+
+**Builder check (2026-10-26).** A fresh reviewer read this document against the repository. Its findings were checked against the code, not taken on trust, and folded in. Three of them changed the design materially:
+
+- **The `middleware.ts` setup gate would have made the endpoint unreachable** (§2.1). No MCP client sends a cookie, so every request would have been 307'd to `/init`. This was invisible from the transport side and is now the first thing the document says.
+- **The row counts and the four-line geometry were specified from a dead code path** (§7.4, §7.5). `WorksheetCell.tsx`'s four-line branch is not what the site renders; the live geometry is the CSS DOM in `app/globals.css` and the print geometry in `PracticePDF.tsx`. Both sections now describe the live one.
+- **The SDK rejects a bad argument at the schema layer and returns it as a normal `isError` result** — the client does not reject (§8). The new tool therefore declares a loose schema and validates in its body, which is also the repo's own stated convention in `mcp/tools/shared.ts`.
+
+The reviewer's remaining findings were either already settled by the conversation or were mine to settle; all of them are now written into the document. **No question is outstanding for the human partner** — see §13.
 
 ---
 
@@ -97,6 +105,52 @@ D6 was chosen over `sharp` deliberately: `sharp` is a **devDependency** in this 
 
 **Why the SDK's Web-standard transport is the enabling fact:** the SDK 1.32.2 ships `WebStandardStreamableHTTPServerTransport` (`dist/esm/server/webStandardStreamableHttp.js`), whose `handleRequest(req: Request, options?): Promise<Response>` speaks the Web platform's `Request`/`Response` — exactly what a Next.js route handler has. The older `StreamableHTTPServerTransport` only accepts Node's `IncomingMessage`/`ServerResponse`, which is what forced the standalone process in the first place.
 
+### §2.1 The middleware gate — the endpoint is unreachable without this
+
+**This is the one thing that would have made the whole feature dead on arrival, and it is not visible from the transport side.**
+
+`middleware.ts` is a cookie-only setup gate. Every path that is not on its whitelist is **307-redirected to `/init`** unless the request carries the `setup_completed=1` cookie. The whitelist today is `/init`, `/init/*`, `/api/init/*` and the static assets; the `matcher` excludes the static assets from the edge runtime but matches everything else.
+
+**An MCP client sends no cookie.** Claude Desktop, `mcp-remote` and the IDE clients send only `Authorization: Bearer …`. So every request to `/mcp` would be answered with a 307 to `/init`; the client follows the redirect, receives the wizard's HTML instead of a JSON-RPC response, and the session never opens. The endpoint would exist, be correct, and be unreachable.
+
+**The fix is one line in `middleware.ts`:** `/mcp` is let through untouched, exactly like `/init` and `/api/init/*`:
+
+```ts
+// The MCP endpoint is called by MCP clients, which send no cookies — the
+// setup gate would 307 them to /init and the session would never open.
+if (pathname === '/mcp' || pathname.startsWith('/mcp/')) {
+  return NextResponse.next();
+}
+```
+
+`/api/mcp/token` needs no exemption: it is called from the browser with the session cookie, and the setup gate is orthogonal to the login.
+
+**This is a code change to a file the spec's file map did not mention.** It is listed in §11 now, and it is the reason the deployment table in §10 says "one file outside the MCP feature changes".
+
+### §2.2 The nginx proxy and the GET stream
+
+`deploy/nginx.ziyun.pudafo.com.conf` proxies `location /` to `127.0.0.1:4444` with nginx's **default `proxy_buffering on`** and `proxy_read_timeout 120s`. The Streamable HTTP transport's `GET` is an SSE stream, and with buffering on nginx withholds the frames until the buffer fills.
+
+**The `GET` stream is optional in this protocol.** The SDK's own `StreamableHTTPClientTransport` does **not** open the `GET` stream on `connect()` — it opens it only for resumption and for the OAuth flow — and this server never sends server-initiated notifications, so a client that never opens the `GET` stream loses nothing. A browser-based client that does open it would get a buffered stream.
+
+**A dedicated `location /mcp` block fixes it anyway, and it costs six lines.** The block disables buffering and raises the read timeout for the MCP path only, and leaves every other path exactly as it is:
+
+```nginx
+location /mcp {
+    proxy_pass http://ziyun_app;
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_buffering off;              # SSE: do not withhold the frames
+    proxy_cache off;
+    proxy_read_timeout 3600s;         # a long-lived stream, not 120s
+}
+```
+
+So §10's "no nginx change" is **false** for `GET /mcp` and the config file is in §11's modified list. The property that matters — one process, one port, no new upstream — is unchanged.
+
 ---
 
 ## §3 Part A — the `/mcp` endpoint
@@ -115,6 +169,8 @@ export const dynamic = 'force-dynamic';
 `dynamic = 'force-dynamic'` is mandatory: a route that answers per-request credentials must never be cached. (The repo rule `feedback-cache-control-route-iterations` — new dev routes carry `no-store`.)
 
 The route exports four handlers: `POST`, `GET`, `DELETE`, `OPTIONS`.
+
+**The route is behind the setup gate.** `middleware.ts` redirects every non-whitelisted path to `/init`, and an MCP client sends no cookie — §2.1 explains why `/mcp` must be added to the middleware's whitelist, and that one line is a prerequisite for the endpoint existing at all.
 
 ### §3.2 CORS
 
@@ -153,6 +209,10 @@ After the three gates, the request is handed to the transport:
 | `GET` | The notification stream of an open session. No session id → **400**; unknown session id → **404**. |
 | `DELETE` | End the session: close the transport, close the server, drop it from the map. No session id → **400**; unknown session id → **404**. |
 
+**A POST only opens a session if it really is an `initialize`.** The route reads the body (capped at **4 MiB**, the same cap the retired `mcp/body.ts` used) and asks the SDK's own `isInitializeRequest(body)` — exported from `@modelcontextprotocol/sdk/types.js` — before it builds anything. A POST with no session id whose body is *not* an initialize is answered **400** and creates nothing.
+
+This matters because the alternative leaks: a transport mints its session id *while* it handles the initialize, so a route that built the server first and registered it afterwards would have to register every POST — including the ones that turn out to be `tools/list` with no session, which the transport answers with a 400. Every one of those would leave an `McpServer` and a transport alive in the map, unreachable and never closed. The old `mcp/session.ts` avoided this the same way, and the ported route keeps that discipline.
+
 **The 400-vs-404 distinction is deliberate and must not be collapsed.** 400 means *the request is malformed* (no session id at all); 404 means *the session id is well-formed but unknown* (never opened, already closed, or the server restarted). The standalone server already draws this line and the SDK's own transport draws the same one; the route must agree with both.
 
 **The route checks the session id against its own map *before* handing the request to the transport.** The map is the only place the `McpServer` instance lives, so the route has to look the session up anyway — and by looking it up first, **the 400 and 404 bodies are the site's `{ok:false,error:{code}}` envelope**, not the transport's JSON-RPC error bodies. A client that knows the site's API reads the MCP endpoint's errors with the same vocabulary. The transport's own error paths (a malformed JSON-RPC message, an unsupported `mcp-protocol-version`) still produce JSON-RPC errors — those are protocol-level, and the route does not intercept them.
@@ -163,7 +223,9 @@ Stateful mode: `sessionIdGenerator: () => randomUUID()`.
 
 A session owns an `McpServer` and a `WebStandardStreamableHTTPServerTransport`, plus the `userId` resolved when the session was opened.
 
-**The map lives on `globalThis`, not in a module-level `const`.** Next.js dev re-evaluates route modules on every edit; a module-level `Map` would drop every open session on each hot reload and the clients would see a cascade of 404s. The repo has the same bug and the same fix once already — the `/init` wizard's dev token had to move from a module-level `Map` to `globalThis` (see `init-wizard-dev-token-bug`). The pattern:
+**The map lives on `globalThis`, not in a module-level `const`.** Next.js dev re-evaluates route modules on every edit; a module-level `Map` would drop every open session on each hot reload and the clients would see a cascade of 404s. The repo has the same bug and the same fix once already — the `/init` wizard's dev token had to move from a module-level `Map` to `globalThis` (see `init-wizard-dev-token-bug`).
+
+**File:** `mcp/session-store.ts` (new). It owns the map, the `McpSession` type and the store accessor; the route file owns the HTTP verbs. The pattern:
 
 ```ts
 const SESSION_STORE_KEY = Symbol.for('pinyin-character.mcp.sessions');
@@ -246,6 +308,7 @@ Notes:
 - `uniq_mcp_tokens_user` **is** D3: one row per user, so issuing a token again is an `UPDATE`, not an `INSERT`. It also makes the "rotate" path a single statement.
 - `token_hash CHAR(64)` is the sha256 hex — the same shape and the same hashing as `password_resets.token_hash` and `email_verifications.token_hash`. The raw token never touches the database.
 - `ON DELETE CASCADE` — deleting a user deletes their token.
+- **`users.disabled_at` is a prerequisite, not part of this migration.** The column is created by the idempotent `ALTER` inside `scripts/init-db.ts` and by no file in `scripts/migrations/` — but `lib/auth.ts` already selects it, so every live database has it. The `resolveToken` query in §4.3 reads it too, and it inherits the same prerequisite. The migration notes this in a comment; it does not add the column (a fresh database gets it from `init-db.ts`, and an upgraded one already has it).
 
 `scripts/init-db.ts` gains the same `CREATE TABLE` statement, so a fresh install has the table without running migrations. (Repo rule `feedback-reseed-after-migrations`: after the migration runs, verify the row count and reseed if a table came out empty.)
 
@@ -272,9 +335,15 @@ export interface McpTokenStatus {
   revokedAt: string | null;
 }
 
+export interface ResolvedToken {
+  userId: number;
+  username: string;
+  isAdmin: boolean;
+}
+
 export async function getTokenStatus(userId: number): Promise<McpTokenStatus>;
 export async function issueToken(userId: number): Promise<{ raw: string; createdAt: string }>;
-export async function revokeToken(userId: number): Promise<{ revokedAt: string }>;
+export async function revokeToken(userId: number): Promise<{ revokedAt: string | null }>;
 export async function resolveToken(raw: string): Promise<ResolvedToken | null>;
 ```
 
@@ -293,6 +362,8 @@ WHERE t.token_hash = ? AND t.revoked_at IS NULL
 
 The throttle is *not* a security control — it is a write-amplification control. A token that is used every second still updates `last_used_at` at most 3600 times a day.
 
+**Issuing (and rotating) resets `last_used_at` to NULL.** A rotated token is a new secret that has never been used; carrying the old timestamp forward would tell the user a brand-new token was used a minute ago.
+
 ### §4.4 The API
 
 **File:** `app/api/mcp/token/route.ts` (new)
@@ -303,7 +374,7 @@ All three verbs require a logged-in user (`requireUser()` from `lib/auth.ts`) an
 |---|---|---|
 | `GET` | The current state of the user's token. **Never returns the raw token.** | `{ok:true,data:{status, endpoint, config}}` |
 | `POST` | Issue a token, or **rotate** it if one already exists. Returns the raw token **once**. | `{ok:true,data:{token, createdAt, endpoint, config}}` |
-| `DELETE` | Revoke the token. Idempotent: revoking an already-revoked (or never-issued) token is a 200 with `revokedAt: null`. | `{ok:true,data:{revokedAt}}` |
+| `DELETE` | Revoke the token. Idempotent. | `{ok:true,data:{revokedAt}}` |
 
 `status` is:
 
@@ -311,7 +382,25 @@ All three verbs require a logged-in user (`requireUser()` from `lib/auth.ts`) an
 { state: 'none' | 'active' | 'revoked', createdAt: string | null, lastUsedAt: string | null, revokedAt: string | null }
 ```
 
-`endpoint` is `${await getRuntimeSiteUrl()}/mcp` — `lib/seo/config.ts:44` resolves the public base URL at runtime, including the admin-configured `NEXT_PUBLIC_SITE_URL`. It is an **async** function, so the route awaits it.
+**The revoke contract, exactly.** `DELETE` answers 200 in every case, and `revokedAt` says what happened:
+
+| State before the call | `revokedAt` in the answer |
+|---|---|
+| no token was ever issued | `null` — there was nothing to revoke |
+| an active token | the timestamp of **this** call |
+| an already-revoked token | the **original** revocation timestamp, unchanged |
+
+The third row is the point of the contract: a second `DELETE` is a no-op that reports *when* the token was actually revoked, not `null` and not a new timestamp. A `DELETE` never 404s and never errors.
+
+**`endpoint` — where the URL comes from.** `getRuntimeSiteUrl()` (`lib/seo/config.ts:44`) resolves the public base URL at runtime, including the admin-configured `NEXT_PUBLIC_SITE_URL`. It is an **async** function, so the route awaits it. It falls back to `http://localhost:3000` when nothing is configured — but the dev server runs on **4444**, so that fallback would hand the user a URL that does not work.
+
+A small helper, `lib/mcp-endpoint.ts`, resolves it:
+
+```ts
+export async function resolveMcpEndpoint(req: Request): Promise<string>;
+```
+
+It returns `${getRuntimeSiteUrl()}/mcp` when the site URL is configured, and the **request's own origin** (`${req.nextUrl.origin}/mcp`) when `getRuntimeSiteUrl()` fell back to the localhost placeholder. So dev hands out `http://localhost:4444/mcp` and production hands out the admin-configured `https://ziyun.pudafo.com/mcp`.
 
 **Failure modes** (all in the site's envelope, via `lib/api-handler.ts`):
 
@@ -319,10 +408,11 @@ All three verbs require a logged-in user (`requireUser()` from `lib/auth.ts`) an
 |---|---|---|
 | Not logged in | 401 | `unauthorized` |
 | Account disabled | 403 | `forbidden` |
-| Malformed body | 400 | `validation` |
 | DB unavailable | 503 | `service_unavailable` |
 
-`POST` has no body parameters, so it needs no schema. It accepts an empty body and ignores any content.
+There is **no 400**. `POST` has no body parameters, so it has no schema and no body to validate; it accepts an empty body and ignores any content. A 400 that can never happen is a failure mode nobody tests.
+
+Every answer carries `Cache-Control: no-store` — the route's `Cache-Control` must be on the 503 as well as on the 200s. `lib/api-handler.ts`'s `serviceUnavailable(code, message)` takes no `ResponseInit` today, so the helper gains an optional third parameter (`init?: ResponseInit`) that is spread into the response — a one-line, backwards-compatible change.
 
 ### §4.5 The audit log
 
@@ -367,7 +457,7 @@ The card is split the way `components/membership/MembershipStatusCard.tsx` split
 // components/mcp/McpTokenCard.tsx  (server)
 export async function McpTokenCard({ userId }: { userId: number }) {
   const status = await getTokenStatus(userId);
-  const endpoint = `${await getRuntimeSiteUrl()}/mcp`;
+  const endpoint = await resolveMcpEndpoint();
   return (
     <div className="card-paper p-5">
       …
@@ -376,6 +466,8 @@ export async function McpTokenCard({ userId }: { userId: number }) {
   );
 }
 ```
+
+`resolveMcpEndpoint()` (§4.4) is the **no-request** form of the helper: the card is a server component rendered inside a page, so it has no `Request` of its own; it falls back to `getRuntimeSiteUrl()` and, in dev, to the dev server's port. The API route uses the request-aware form, which is why the helper takes an optional `req`.
 
 The client component (`McpTokenActions.tsx`) does the three calls and owns the local state:
 
@@ -406,7 +498,7 @@ The API returns this block, ready to paste into an MCP client:
 }
 ```
 
-`type: "http"` is the Streamable HTTP transport. The `url` is built from `getRuntimeSiteUrl()`, so a staging or a self-hosted deployment produces its own URL.
+`type: "http"` is the Streamable HTTP transport. The `url` is built by `resolveMcpEndpoint()` (§4.4), so a staging or a self-hosted deployment produces its own URL — and a dev server on 4444 produces `http://localhost:4444/mcp` rather than the `localhost:3000` placeholder.
 
 ---
 
@@ -511,10 +603,14 @@ No change to its schema or its behaviour. It keeps returning the padded cell lis
 **Resolution rules** (in order):
 
 1. If `scheme` is given, it must exist → otherwise `not_found` with the id in `details`.
-2. `cellStyle` / `paperSize` / `fontFamily` start from the scheme (or, with no scheme, from the site defaults: `brush-square` / `A4` / `ma-shan-zheng` — the same defaults `defaultToolFor()` / `defaultFontFor()` imply).
+2. `cellStyle` / `paperSize` / `fontFamily` start from the scheme. **With no scheme**, the defaults are the site's own brush defaults — `brush-square` / `ma-shan-zheng` — and the paper size follows the cell style's tool, exactly as the existing tool does (`mcp/tools/worksheet.ts:77`): a brush style → `brush-12`, a pen style → `A4`. The site has no single default paper size; the paper size is a consequence of the tool, and the site has always derived it that way.
 3. An explicit argument **overrides** the scheme.
 4. `content` is validated by the site's own `validateWorksheetInput()` — the same validator the worksheet route uses, so a layout the site would reject never reaches a caller. A validation failure → `bad_input`.
 5. `page` must be an integer ≥ 1 and ≤ the page count → otherwise `bad_input`.
+
+**The JSON schema is deliberately loose; the body does the validating.** The SDK checks the tool's zod schema *before* the body runs. A mismatch comes back as a normal result with `isError: true` whose text is `Input validation error: Invalid arguments for tool <name>: …` — a bare string, **not** the site's `{ok:false,error:{code}}` envelope. So a schema with `content: z.string().min(1).max(500)` would answer an over-long content with an opaque protocol error instead of the friendly `bad_input` envelope the site uses everywhere.
+
+The new tool therefore declares `content: z.string()` (and `title: z.string().optional()`) and does the real validation in the body with the shared helpers in `mcp/tools/shared.ts` — `requireText(value, argument, maxLength)`. This is the repo's own stated convention ("the char arguments are validated here rather than in the JSON schema on purpose"). The **existing** `generate_worksheet_layout` tool keeps its schema unchanged; only the new tool is written this way.
 
 **Output.** The result carries **both** a text block (the JSON envelope) and an **image block**, so the model can look at the sheet:
 
@@ -625,9 +721,9 @@ export async function loadFont(file: string): Promise<LoadedFont>;
 | `kai` | — | the site's `KaiTi` is `local()` only — see the fallback below |
 | `hei` | — | the site's Noto Sans SC is a Google subset — see the fallback below |
 
-**Font fallback chain:** the requested font → `LXGWWenKaiGB-Regular.woff2` → `BabelStoneHanBasic.woff2`. If none of the three has the glyph, the cell is drawn as an **empty box** (a tofu rectangle) and the character is listed in `missingGlyphs[]` in the tool's payload. A silently blank cell is the one outcome the anti-goals forbid.
+**Font fallback chain:** the requested font → `LXGWWenKaiGB-Regular.woff2` → `BabelStoneHanBasic.woff2`. The fallback is **per character**: each character is looked up in the requested font first, then in the two fallbacks, so a sheet may mix fonts. If none of the three has the glyph, the cell is drawn as an **empty box** (a tofu rectangle) and the character is listed in `missingGlyphs[]` in the tool's payload. A silently blank cell is the one outcome the anti-goals forbid.
 
-`public/fonts/*.woff2` are **subsets of the site's charset** (they were produced by `npm run fonts:subset-brush` / `subset-hard-pen-fonts`), so a character outside the site's charset may be missing — that is exactly what `missingGlyphs` is for.
+`public/fonts/*.woff2` are **subsets of the site's charset** (they were produced by `npm run fonts:subset-brush` / `subset-hard-pen-fonts`). They are BMP-only and they do **not** cover all of U+9FFF — `LXGWWenKaiGB-Regular.woff2` carries 7 264 glyphs, `ma-shan-zheng.woff2` 6 981, `BabelStoneHanBasic.woff2` 8 778, and none has a glyph above U+20000. So `missingGlyphs` fires for legitimate requests more often than a first reading suggests, and that is exactly what it is for. The site's own `SINGLE_CJK` validator is BMP-only too (`lib/worksheet-types.ts:283`), so the two agree on what "a character" is.
 
 **Fonts are cached** in a module-level map (keyed by file name) so a second render does not re-parse a 3 MB woff2. The biggest file in use is 3.2 MB (`ma-shan-zheng.woff2`); parsing it costs a few hundred milliseconds, once.
 
@@ -660,6 +756,10 @@ The **`-scale` on `d` is the y-flip** — the glyph lands *above* `baselineY` on
 
 For a **multi-character** run (the four-line row, the title) the pen advances by `run.positions[i].xAdvance * scale` per glyph, plus `xOffset` / `yOffset` from the same position record. `Path` also offers `translate`, `scale`, `rotate` and `toSVG()`, but the single `transform` above is all the renderer needs.
 
+**`font.layout()` rather than per-glyph paths.** A per-glyph lookup (`font.glyphForCodePoint(cp).path`) would give outlines without shaping, which is fine for one Han character per cell and wrong for the title and for a four-line row of up to 88 Latin letters — those need real advance widths and the font's own kerning. `font.layout(text)` returns the shaped run with both the glyphs and the positions, so one code path serves every case.
+
+**One trap to avoid.** `glyph.getScaledPath(x, y, fontSize)` exists on fontkit's `Glyph` and looks like the convenient way to do this — it is not: for these TrueType outlines it returns **all-zero coordinates** (`bbox {0,0,0,0}`, every command `[0,0,…]`), so a renderer built on it draws nothing at all. The outline comes from `glyph.path` (or `run.glyphs[i].path`) and the transform above.
+
 **Curve flattening.** fontkit emits `lineTo`, `quadraticCurveTo` and `bezierCurveTo`. Each curve is flattened into **8 line segments** — at a 70–140 px cell, 8 segments per curve is well under a pixel of error.
 
 ### §7.4 The page compositor
@@ -677,6 +777,7 @@ For a **multi-character** run (the four-line row, the title) the pen advances by
   fontFamily: FontFamily;
   page: number;          // 1-based
   scale: number;         // 1 or 2
+  siteHost: string;      // the footer line
 }
 ```
 
@@ -689,25 +790,40 @@ For a **multi-character** run (the four-line row, the title) the pen advances by
 | `B5` | 665 | 945 | 176 × 250 mm |
 | `brush-12` / `brush-24` / `brush-28` | 794 | 1123 | A4 canvas |
 
+**The counts come from the site, not from the geometry.** The rasteriser reproduces the site's own printable worksheet — `components/worksheet/PracticePDF.tsx` — and that file's row counts are the site's contract:
+
+| Presentation | Rows per page | Source |
+|---|---|---|
+| grid (square / cross / trace) | `cellsPerPage(paperSize)` | `lib/worksheet-page-count.ts` (A3 168, A4 88, B5 48, brush-12 12, brush-24 24, brush-28 28) |
+| lined (`pen-lined`) | `linesPerPage(paperSize)` | `lib/worksheet-types.ts` (A3 36, A4 24, B5 14) |
+| four-line (`pen-english`) | `fourLineRowsPerPage(paperSize)` | `lib/worksheet-types.ts` (A3 21, A4 16, B5 12) |
+
+The grid's row count is `cellsPerPage / PAPER_SIZES[paperSize].cols` (A3 14, A4 11, B5 8, brush-12 3, brush-24 4, brush-28 4).
+
+**Why the site's counts and not "as many rows as fit".** Fitting the rows to the pixel height would pack the sheet to the bottom margin and produce a *different* page from the one the site prints — a different `totalPages`, a different last page, and a sheet that does not look like the site's own (an explicit anti-goal). The site's counts are tuned against the real print geometry, including the header/footer band, and they are the numbers the site already uses to decide how many cells fit on a page. The PNG therefore uses them verbatim. The leftover space at the bottom of the sheet is the site's own, and the PNG shows it too.
+
 **The layout** (all in CSS px):
 
-- **Margin**: 56 px on every side (1.5 cm at 96 DPI, the same margin the site's PDF uses).
-- **Title band**: the title is drawn at the top-left of the content area, 20 px em, in `#555`. The band is 48 px tall; the grid starts below it.
-- **Gap**: 8 px between cells — the same gap as `components/worksheet/PracticePDF.tsx`.
+- **Margin**: 56 px on every side (1.5 cm at 96 DPI — the same padding the site's PDF uses: `padding: '1.5cm'`).
+- **Header band**: the title at the top-left (20 px em, `#3a2a14`), the cell-style label and the font name at the top-right (12 px, `#5a4530`). The band is 40 px tall, with a 1 px `#3a2a1433` rule under it and 14 px of space below it — the site's PDF header metrics (`styles.header`).
+- **Footer**: the site host, centred, 9 px, `#999`, above a 1 px `#3a2a141a` rule — the site's PDF footer (`styles.footer`).
+- **Gap**: 8 px between grid cells — the same gap as `PracticePDF.tsx` (`styles.grid.gap`).
 - **Columns**: `PAPER_SIZES[paperSize].cols` (A3 12, A4 8, B5 6, brush-12 4, brush-24 6, brush-28 7).
-- **Cell size**:
-  - grid presentations (square / cross): `PRACTICE_GRID_CELL_SIZE[paperSize]` (A3 70, A4 70, B5 80, brush-12 140, brush-24 100, brush-28 85).
-  - lined (`pen-lined`): width `PRACTICE_LAYOUT[paperSize].cellSize`, height `linedHeightPx(paperSize)` (A3 38, A4 38, B5 44).
-  - four-line (`pen-english`): width `PRACTICE_GRID_CELL_SIZE[paperSize]`, height `round(width × 38 / 100)` — the 100:38 ratio of the site's four-line SVG viewBox.
-- **Rows**: as many as fit between the grid top and the bottom margin.
+- **Cell size** (grid presentations): `PRACTICE_GRID_CELL_SIZE[paperSize]` (A3 70, A4 70, B5 80, brush-12 140, brush-24 100, brush-28 85) — the size the site's PDF uses.
+- **Row geometry** (lined and four-line): the row is **the full content width** — `contentWidth = pageWidth - 2 × 56` — and its height is `linedHeightPx(paperSize)` (A3 38, A4 38, B5 44). The site's own lined and four-line rows are full-width strips (`PracticePDF.tsx` draws them at `PAGE_INNER_WIDTH_PT`; `globals.css` gives `.lined-paper-row` and `.four-line-paper-row` `width: 100%`), so a row one cell wide would be a stub, not the site's sheet.
+- **Four-line row gap**: 16 px between rows (the site's `.four-line-paper-row { margin-bottom: 16px }`).
 
-**The grid is filled from the padded cell list.** `generateLayout()` already pads the content to whole pages, so page *n* takes `cells.slice((n-1) × cellsPerPage, n × cellsPerPage)` — except for the four-line presentation, where `generateLayout` returns **rows** (one cell per row, each cell's `char` holding the whole row's text) and `englishCharsPerRow` / `fourLineRowsPerPage` govern the split. The renderer follows the same two paths the site follows.
+**The grid is filled from the padded cell list.** `generateLayout()` already pads the content to whole pages, so page *n* takes the slice for that page — `cells.slice((n-1) × cellsPerPage, n × cellsPerPage)` for the grid, the same for lined with `linesPerPage`, and for the four-line presentation `generateLayout` returns **rows** (one cell per row, each cell's `char` holding the whole row's text) and `englishCharsPerRow` / `fourLineRowsPerPage` govern the split. The renderer follows the same two paths the site follows.
 
 > **One small change to `lib/worksheet-types.ts`:** `englishCharsPerRow` is currently a **private** function (`lib/worksheet-types.ts:312`); the renderer needs it, so it becomes `export function englishCharsPerRow`. `fourLineRowsPerPage` is already exported.
 
 ### §7.5 The cell drawing
 
-The cell drawing reproduces `components/worksheet/WorksheetCell.tsx` exactly, in the site's 100-unit viewBox, scaled to the cell's pixel size (`unit = cellSize / 100`):
+There are **two** kinds of cell, and they do not come from the same source.
+
+#### The grid cells (square / cross / trace)
+
+The grid cells reproduce `components/worksheet/WorksheetCell.tsx` exactly, in the site's 100-unit viewBox, scaled to the cell's pixel size (`unit = cellSize / 100`):
 
 | Element | Geometry (viewBox units) | Colour | Width |
 |---|---|---|---|
@@ -716,19 +832,46 @@ The cell drawing reproduces `components/worksheet/WorksheetCell.tsx` exactly, in
 | Horizontal guide | `(2, 50) → (98, 50)` | `#bbb` | 0.5 |
 | Diagonals (cross only) | `(2,2)→(98,98)` and `(98,2)→(2,98)` | `#bbb` | 0.5 |
 | Baseline guide (cross only) | `(2, 90) → (98, 98)` | `#bbb` | 0.5 |
-| Character | centred, `fontSize` = `size` (trace) or `round(size × 0.6)` (normal) | `#ddd` (trace) / `#bbb` (normal) | — |
+| Character | centred at (50, 50), `fontSize` = `size` (trace) or `round(size × 0.6)` (normal) | `#ddd` (trace) / `#bbb` (normal) | — |
 | Trace contour | the character's outline, stroked | `#c0392b` | 1.5 |
-| Lined rule (pen-lined) | a horizontal line at the bottom of the cell | `#555` | 1 |
-| Four-line rules (pen-english) | `y = 8` solid, `y = 14` dashed, `y = 29` dashed, `y = 35` solid — in a 100×38 box | `#999` (solid) / `#bbb` (dashed) | 1 / 0.6 |
-| Four-line text | centred at `y = 21`, `fontSize` 16, fill `#ddd`, stroke `#c0392b` | — | 0.8 |
 
-The **character size** deserves a note. The site's SVG has a `viewBox="0 0 100 100"` mapped onto a `size`-px square, so a `fontSize` of *n* **viewBox units** is *n × size / 100* **pixels**. The site's `guideFontSize` is `size` for trace and `round(size × 0.6)` for normal — i.e. **80 % of the cell** for a trace character and **60 %** for a normal one. The rasteriser uses the pixel values directly (0.8 × cellSize and 0.6 × cellSize), which is what the browser ends up drawing.
+The **character size** deserves a note. The site's SVG has a `viewBox="0 0 100 100"` mapped onto a `size`-px square, so a `fontSize` of *n* **viewBox units** is *n × size / 100* **pixels**. The site's `guideFontSize` is `size` for trace and `round(size × 0.6)` for normal — i.e. **100 % of the cell** for a trace character and **60 %** for a normal one. The rasteriser uses the pixel values directly (1.0 × cellSize and 0.6 × cellSize), which is what the browser ends up drawing.
 
-**Dashed lines** (the four-line rules) are drawn as a run of short segments: 4 px on, 3 px off, in the cell's pixel units — the site's `strokeDasharray="4,3"`, which is in viewBox units.
+#### The lined and four-line rows (full-width strips)
 
-### §7.6 The title
+**These do not come from `WorksheetCell.tsx`.** The four-line branch of `WorksheetCell` (rules at 8 / 14 / 29 / 35 of a 100×38 viewBox, `#999` / `#bbb` dashed, text centred at 16 px) is **dead code for the shipped flow** — `WorksheetPreview.tsx` and `PracticeTemplate.tsx` render the CSS DOM (`.four-line-paper` / `.four-line-paper-row`) instead, and `PracticePDF.tsx` says so in a comment:
 
-The title is drawn with the same font pipeline as the characters: the title string is shaped as one text run and rendered at 20 px em, left-aligned at the left margin, with its baseline 28 px below the top of the content area. A title longer than the content width is **not** wrapped — it is truncated with an ellipsis. (A wrapped title needs a line-breaking algorithm; a worksheet title is a label, not a paragraph.)
+> *"Previous version used 8/38, 14/38, 29/38, 35/38 fractions which produced unequal gaps (4.5 / 11.25 / 4.5 pt) — the 'middle is the biggest' complaint."*
+
+The PNG copies the **live** geometry — the CSS in `app/globals.css` and the PDF in `components/worksheet/PracticePDF.tsx`:
+
+| Element | Geometry | Colour | Width |
+|---|---|---|---|
+| Lined rule (`pen-lined`) | one horizontal rule at `y = rowHeight - 0.5`, across the full content width | `#555` | 1 |
+| Four-line rule 1 | `y = 0` | `#1d4ed8` | 2 |
+| Four-line rule 2 | `y = 12` | `#d94c4c` | 2 |
+| Four-line rule 3 (the baseline) | `y = 24` | `#c0392b` | 3 |
+| Four-line rule 4 | `y = 36` | `#1d4ed8` | 2 |
+| Four-line text | left-aligned at `x = 8`, **baseline on rule 3 (`y = 24`)**, 28 px em | `#ddd`, 1 px `#c0392b` outline | 1 |
+
+The four-line row is 38 px tall (A3/A4) or 44 px (B5) — `linedHeightPx(paperSize)` — and the rules sit at `gap = rowHeight × 12 / 38` intervals, exactly as `PracticePDF.tsx` computes them (`const gap = size * (12 / 38)`) and exactly as `globals.css` spaces them (`--grid-gap: 12px`). The rule widths are the CSS pixel values (2 / 2 / 3 / 2 px); the PDF's point widths (1.2 / 1 / 2.2 / 1.2 pt) are the same lines at print scale.
+
+The four-line text is 28 px — the CSS's `font-size: 28px` — in the sheet's font, left-aligned 8 px from the row's left edge, with the letters sitting on the thick red rule. The stroke around the letters is the CSS `-webkit-text-stroke: 1px #c0392b`, drawn as a 1 px outline of the glyph in `#c0392b` under a `#ddd` fill.
+
+### §7.6 The header and the footer
+
+The sheet's **header band** carries three things, left to right, on one line:
+
+- the **title**, left-aligned at the content's left edge, 20 px em, `#3a2a14`;
+- the **cell style label** (`cellStyleLabel(cellStyle)` — the site's own Chinese label) and the **font name** (`fontFamilyLabel(fontFamily)`), right-aligned at the content's right edge, 12 px, `#5a4530`.
+
+The **footer** carries the site host, centred, 9 px, `#999` — the same line the site's PDF prints.
+
+Both are drawn with the same font pipeline as the characters (`font.layout()` on the whole string, one run), so the title is shaped properly rather than glyph-by-glyph.
+
+**The title's font is the sheet's font** (`fontFamily`) — the same `LoadedFont` the characters use. There is no separate title font.
+
+**The title is truncated, not wrapped.** A worksheet title is a label, not a paragraph, and wrapping it would need a line-breaking algorithm. If the shaped title is wider than the content width, it is cut and an ellipsis (`…`, the site's convention) is appended. The truncation width is the content width minus the width of the ellipsis.
 
 ---
 
@@ -763,23 +906,30 @@ The MCP error vocabulary is `mcp/errors.ts`; the site's is `lib/api-handler.ts`.
 | `POST /mcp` with a revoked token | **401** |
 | `POST /mcp` with a token whose user is disabled | **401** |
 | `POST /mcp` with a valid token | **200**, the initialize result, and a `mcp-session-id` response header |
-| `POST /mcp` with a valid session id and no `mcp-session-id` | the transport's own **400** |
+| `POST /mcp` with no session id whose body is not an `initialize` | **400**, and **no session is created** |
 | `POST /mcp` with an unknown session id | **404**, `not_found` |
 | `GET /mcp` with no session id | **400** |
 | `DELETE /mcp` with a valid session id | the session ends; a later request with that id is **404** |
 | `OPTIONS /mcp` | **204** and the CORS headers, including `Access-Control-Expose-Headers: mcp-session-id` |
 | a session opened with user A, then used with user B's token | **403** |
 
-The route is tested by driving the exported handlers with a `Request` object — no port is bound. In the App Router the handler's parameter is a `NextRequest`, which **extends** `Request`, so the same object satisfies both the SDK's Web-standard transport and `logUserAction(req: NextRequest, …)` from `lib/audit.ts`.
+**The route is tested through a Node↔Web adapter, not by calling the handler directly.** The SDK's `StreamableHTTPClientTransport` needs a URL, so driving the real client against the real route needs *something* that speaks HTTP. `tests/unit/mcp/route-harness.ts` is that something: a `node:http` server that converts Node's `IncomingMessage` into a Web `Request`, calls the route's exported handler, and writes the returned Web `Response` back to the socket. The client then talks to it exactly as it would talk to production.
+
+The harness binds an **ephemeral loopback port in the test process only**. That is not a deployment port: the production deployment still has one process on one port (§10).
+
+The four verbs' error paths (401 / 400 / 404 / 403 / 204) are driven by calling the exported handlers with a `Request` object directly — no port, no server. In the App Router the handler's parameter is a `NextRequest`, which **extends** `Request`, so the same object satisfies both the SDK's Web-standard transport and `logUserAction(req: NextRequest, …)` from `lib/audit.ts`.
+
+**The harness replaces the old one.** The retired `tests/unit/mcp/harness.ts` imported `@/mcp/config` and `@/mcp/server`, both of which are deleted; it is replaced by `route-harness.ts`, and the three test files that used it (`server.test.ts`, `tools.test.ts`, `speech.test.ts`) are carried over to it. `server.test.ts` becomes `route.test.ts` and loses the standalone-only cases (the `/health` endpoint, the anonymous mode, the 404 on an unknown path) — none of them exists any more.
 
 ### §9.2 The token store and the API
 
 | Test | Asserts |
 |---|---|
 | issue | a row exists, the raw token is 47 chars and starts with `mcp_`, the stored hash is the sha256 of the raw token and is **not** the raw token |
-| issue twice | one row, a **different** raw token, `created_at` refreshed |
+| issue twice | one row, a **different** raw token, `created_at` refreshed, `last_used_at` back to NULL |
 | revoke | `revoked_at` is set; the raw token no longer resolves |
-| revoke an already-revoked token | a 200, `revokedAt` unchanged (idempotent) |
+| revoke an already-revoked token | a 200, `revokedAt` is the **original** timestamp, unchanged |
+| revoke when there was never a token | a 200, `revokedAt` is `null` |
 | resolve a valid token | `{userId, username}` |
 | resolve a revoked token / a disabled user's token | `null` |
 | `last_used_at` throttling | two resolves within the hour → **one** write; a resolve after the hour → a second write |
@@ -788,6 +938,7 @@ The route is tested by driving the exported handlers with a `Request` object —
 | `POST /api/mcp/token` | 200; the response contains the raw token exactly once |
 | `DELETE /api/mcp/token` | 200; the audit log has a `mcp_token_revoked` row with a title |
 | the audit log | one row per mutating call, with the event and the title in the metadata |
+| every answer | carries `Cache-Control: no-store` — including the 503 |
 
 ### §9.3 The rasteriser
 
@@ -799,7 +950,10 @@ The route is tested by driving the exported handlers with a `Request` object —
 | **the glyph is not mirrored** | render 「永」 into a cell; the ink's bounding box is in the **upper** part of the cell (a y-flip bug would put it in the lower part) |
 | the glyph fallback | a character no font has → a tofu box is drawn and the character appears in `missingGlyphs` |
 | the page compositor | an A4 page is 794×1123 (and 1588×2246 at scale 2) |
-| the cell geometry | the border, the guides and the diagonals land at the expected pixels — compared against the site's own viewBox numbers |
+| the grid geometry | the border, the guides and the diagonals land at the expected pixels — compared against `WorksheetCell.tsx`'s own viewBox numbers |
+| the four-line geometry | the four rules land at y = 0 / 12 / 24 / 36 of a 38 px row, in `#1d4ed8` / `#d94c4c` / `#c0392b` / `#1d4ed8` |
+| the lined geometry | one `#555` rule at the bottom of a 38 px full-width row |
+| the row counts | an A4 grid page has 11 rows of 8 cells; an A4 lined page has 24 rows; an A4 four-line page has 16 rows |
 | the trace contour | a trace cell's character has red (`#c0392b`) pixels on its edge and gray (`#ddd`) pixels inside |
 | the round trip | `render_worksheet_png` returns a base64 payload that `sharp` decodes to a PNG of the expected size |
 
@@ -815,13 +969,16 @@ Before any commit: `npx tsc --noEmit` clean, `npx vitest run` green, `npx eslint
 
 | Question | Answer |
 |---|---|
-| nginx | **No change.** `deploy/nginx.ziyun.pudafo.com.conf` has `location /` proxying everything to `127.0.0.1:4444`; `/mcp` is covered by it. The `client_max_body_size 500m` and the WebSocket `Upgrade` passthrough are untouched. |
+| nginx | **One new block, `location /mcp`** (see §2.2). It exists so the SSE `GET` stream is not withheld by nginx's default `proxy_buffering on`, and so the MCP path gets a long read timeout instead of the site's 120 s. It points at the **same** upstream (`ziyun_app` → `127.0.0.1:4444`); no new upstream, no new port. `location /` is untouched, so every other path keeps its current behaviour. The `client_max_body_size 500m` and the WebSocket `Upgrade` passthrough are untouched. |
 | New port | **None.** This is the point of D1. |
 | Process management | Unchanged: `HOST=127.0.0.1 nohup npm start &`. The standalone `mcp:start` process is no longer part of the runbook. |
 | New environment variables | None required. `MCP_SERVER_NAME`, `MCP_SERVER_VERSION` and `MCP_CORS_ORIGIN` are optional with defaults. `MCP_AUTH_TOKEN` and `MCP_ALLOW_ANONYMOUS` are **removed** from the runbook. |
 | New dependency | `fontkit` moves from devDependencies to dependencies. It is **pure JS** — no native binary, no install step, no `node-gyp`. `npm install --legacy-peer-deps` on the server, as usual. |
 | Deploy bundle | `public/fonts/*.woff2` already ship (the deploy script excludes only `assets/fonts`, the subsetting source). The renderer reads them from `public/` at runtime. |
 | Database | one new table; the migration is idempotent and runs like the others. |
+| Files outside the MCP feature that change | **Three, and each is a one-liner or a copy of an existing block:** `middleware.ts` (§2.1 — the whitelist line), `next.config.ts` (`serverExternalPackages` gains `'fontkit'`), `deploy/nginx.ziyun.pudafo.com.conf` (§2.2 — the new `location /mcp` block). |
+| `next.config.ts` | `serverExternalPackages: ['ws', 'bufferutil']` gains `'fontkit'`. The renderer must `require` the real `fontkit` at runtime, not a webpack-bundled copy: fontkit reads font files through `fs`, and a bundled copy loses the `fs` binding. |
+| Docs | `DEPLOY.md` and `deploy/README.md` have **zero** MCP references today, so nothing has to be un-stated. The runbook gains exactly one line: the MCP endpoint lives at `/mcp` on the same host. `mcp/README.md` is rewritten for the mounted endpoint (§11). |
 
 **One operational caveat, stated plainly:** the MCP endpoint is now inside the site's Node process. A heavy PNG render competes with the site's request handling for the same event loop. A4 at scale 1 renders in well under a second; scale 2 is heavier. If this becomes a problem the fix is a worker, not a different design — but v1 does not need it.
 
@@ -837,8 +994,10 @@ app/api/mcp/token/route.ts             GET / POST / DELETE — the token API
 components/mcp/McpTokenCard.tsx         the profile-page card (server component)
 components/mcp/McpTokenActions.tsx      the card's buttons and the one-time token display (client)
 mcp/server-factory.ts                  build a configured McpServer
+mcp/session-store.ts                   the globalThis-backed session map (§3.4)
 mcp/tools/worksheet-render.ts           the MCP → rasteriser bridge
 lib/mcp-token.ts                       the token store (issue / revoke / resolve)
+lib/mcp-endpoint.ts                    the endpoint URL helper (§4.4)
 lib/worksheet-schemes.ts                the named scheme catalogue
 lib/png/geometry.ts                    points, polygons, flattening
 lib/png/raster.ts                      the canvas and the AA polygon filler
@@ -846,18 +1005,27 @@ lib/png/encode.ts                      PNG bytes from an RGBA bitmap
 lib/png/glyph.ts                       font loading and glyph outlines
 lib/png/worksheet-page.ts               the page compositor
 scripts/migrations/2026-10-26-mcp-tokens.sql
+tests/unit/mcp/route-harness.ts        the Node↔Web adapter (§9.1)
+tests/unit/mcp/route.test.ts           the endpoint's tests (was server.test.ts)
 ```
 
 **Modified**
 
 ```
 lib/audit-format.ts                    3 new events (union + AUDIT_EVENTS + EVENT_LABEL + formatLogMessage)
-lib/worksheet-types.ts                  export englishCharsPerRow (it is private today)
+lib/api-handler.ts                     serviceUnavailable() gains an optional ResponseInit
+lib/worksheet-types.ts                 export englishCharsPerRow (it is private today)
 app/profile/page.tsx                   mount the card
-mcp/tools/worksheet.ts                  + list_worksheet_schemes, + render_worksheet_png
+mcp/tools/worksheet.ts                 + list_worksheet_schemes, + render_worksheet_png
+mcp/tools/index.ts                     register the two new worksheet tools
+middleware.ts                          let /mcp through the setup gate (§2.1)
+next.config.ts                         serverExternalPackages += 'fontkit'
+deploy/nginx.ziyun.pudafo.com.conf    + location /mcp (§2.2)
 package.json                           fontkit → dependencies; drop mcp:dev / mcp:start
 scripts/init-db.ts                     + the mcp_tokens table
 mcp/README.md                          rewritten for the mounted endpoint
+tests/unit/mcp/tools.test.ts           carried over to route-harness.ts
+tests/unit/mcp/speech.test.ts          carried over to route-harness.ts
 ```
 
 **Deleted**
@@ -867,17 +1035,41 @@ mcp/main.ts  mcp/server.ts  mcp/session.ts  mcp/body.ts  mcp/config.ts  mcp/auth
 tests/unit/mcp/auth.test.ts  tests/unit/mcp/config.test.ts  tests/unit/mcp/harness.ts
 ```
 
-`tests/unit/mcp/errors.test.ts` stays.
+`tests/unit/mcp/errors.test.ts` stays. `tests/unit/mcp/server.test.ts` becomes `route.test.ts` (§9.1).
+
+**The three files that change outside the feature are one-liners or a copy of an existing block** — `middleware.ts` (§2.1), `next.config.ts` (one array element) and the nginx config (§2.2, six lines copied from `location /`).
 
 ---
 
 ## §12 What is left to the builder
 
+These are the parts the document deliberately does **not** decide. Each is a small, local choice — a reasonable builder settles it without asking the human partner, and the plan will state the default for each so the implementer has one thing to write rather than three.
+
 1. **The exact shape of `lib/png/raster.ts`'s coverage accumulator.** The spec fixes the algorithm (4 sub-scanlines, exact horizontal overlap) and the outcome; the implementation is the builder's.
 2. **The curve-flattening tolerance.** 8 segments per curve is specified; the builder may raise it if the visual result is visibly faceted, and should say so if they change it.
-3. **The dev-anonymous exception** (§3.5) — keep it or drop it. Dropping it is a one-line change.
-4. **The `title` truncation ellipsis** — `…` versus `...`; the site's convention is the former.
-5. **The order of the `image` block versus the `text` block** — the spec says text first, image second.
+3. **The dev-anonymous exception** (§3.5) — the plan keeps it; dropping it is a one-line change and nothing else depends on it.
+4. **The `title` truncation ellipsis** — `…` (U+2026) is the site's convention, so the plan uses it.
+5. **The order of the `image` block versus the `text` block** — the spec says text first, image second, and the plan follows.
+
+**Decided, so the builder does not have to:**
+
+| Question | Decision | Where |
+|---|---|---|
+| Which fontkit API | `font.layout(text)` → `run.glyphs[i].path` + `run.positions[i]`; **not** `font.getPath()` (it does not exist) and **not** `glyph.getScaledPath()` (it returns all-zero coordinates for these outlines) | §7.3 |
+| The y-flip | `path.transform(scale, 0, 0, -scale, penX, baselineY)` — SVG matrix convention, font units are y-**up** | §7.3 |
+| The glyph size | `scale = sizePx / unitsPerEm` | §7.3 |
+| The font fallback | requested → `LXGWWenKaiGB-Regular.woff2` → `BabelStoneHanBasic.woff2`, **per character** | §7.3 |
+| The page size in pixels | A3 1123×1587, A4 794×1123, B5 665×945, brush-* 794×1123 | §7.4 |
+| The margins | 56 px on every side | §7.4 |
+| The row counts | the site's own `cellsPerPage` / `linesPerPage` / `fourLineRowsPerPage` | §7.4 |
+| The four-line rules | y = 0 / 12 / 24 / 36 of a 38 px row; `#1d4ed8` / `#d94c4c` / `#c0392b` / `#1d4ed8` | §7.5 |
+| The four-line text | left at x = 8, **baseline on rule 3**, 28 px em, `#ddd` with a 1 px `#c0392b` outline | §7.5 |
+| The revoke contract | never issued → `null`; active → this call's timestamp; already revoked → the **original** timestamp | §4.4 |
+| The default paper size | follows the cell style's tool: brush → `brush-12`, pen → `A4` | §6.2 |
+| The schema strictness | loose zod schema + validation in the body (the SDK's schema rejection is a soft failure) | §6.2, §8 |
+| The endpoint URL | `getRuntimeSiteUrl()` when configured, else the request's own origin | §4.4 |
+| The session store | `globalThis` + `Symbol.for`, because dev re-evaluates route modules | §3.4 |
+| The 400 vs 404 | no session id at all → 400; well-formed but unknown → 404 | §3.3 |
 
 ---
 
