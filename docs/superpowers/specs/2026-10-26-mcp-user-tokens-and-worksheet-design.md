@@ -153,6 +153,8 @@ After the three gates, the request is handed to the transport:
 
 **The 400-vs-404 distinction is deliberate and must not be collapsed.** 400 means *the request is malformed* (no session id at all); 404 means *the session id is well-formed but unknown* (never opened, already closed, or the server restarted). The standalone server already draws this line and the SDK's own transport draws the same one; the route must agree with both.
 
+**The route checks the session id against its own map *before* handing the request to the transport.** The map is the only place the `McpServer` instance lives, so the route has to look the session up anyway — and by looking it up first, **the 400 and 404 bodies are the site's `{ok:false,error:{code}}` envelope**, not the transport's JSON-RPC error bodies. A client that knows the site's API reads the MCP endpoint's errors with the same vocabulary. The transport's own error paths (a malformed JSON-RPC message, an unsupported `mcp-protocol-version`) still produce JSON-RPC errors — those are protocol-level, and the route does not intercept them.
+
 ### §3.4 The session map
 
 Stateful mode: `sessionIdGenerator: () => randomUUID()`.
@@ -578,11 +580,13 @@ CRC32 for the chunks is a 256-entry table, computed once.
 export interface LoadedFont {
   family: string;
   hasGlyph(char: string): boolean;
-  outline(char: string, sizePx: number): Polygon[];   // absolute px coordinates
+  outline(text: string, sizePx: number, penX: number, baselineY: number): Polygon[];
 }
 
 export async function loadFont(file: string): Promise<LoadedFont>;
 ```
+
+`outline` shapes the run with `font.layout(text)`, transforms each glyph's path into pixels (see the coordinate rules below) and returns the flattened polygons.
 
 **The font file map** — `FontFamily` → the woff2 the site serves:
 
@@ -607,7 +611,34 @@ export async function loadFont(file: string): Promise<LoadedFont>;
 
 **Fonts are cached** in a module-level map (keyed by file name) so a second render does not re-parse a 3 MB woff2. The biggest file in use is 3.2 MB (`ma-shan-zheng.woff2`); parsing it costs a few hundred milliseconds, once.
 
-**Coordinates.** fontkit's `font.getPath(text, x, y, size)` returns a path in a **baseline-relative** system: the baseline is at `y` and the glyphs extend to **negative** y above it. The renderer flips y around the baseline before rasterising. This is the single most error-prone detail in the whole renderer and it gets its own test (§10.3).
+**Coordinates — measured, not assumed.** fontkit has **no `font.getPath()`**; the glyph outline is reached through the layout:
+
+```js
+const run = font.layout(text);                 // Layout: { glyphs, positions, … }
+const glyph = run.glyphs[0];
+const path = glyph.path;                       // a fontkit Path
+```
+
+`glyph.path` is in **font units with the origin on the baseline, y pointing up**. Measured on `public/fonts/LXGWWenKaiGB-Regular.woff2` (`unitsPerEm` 1000):
+
+| Glyph | x range (font units) | y range (font units) |
+|---|---|---|
+| 一 | 59 … 944 | **319 … 430** (a thin bar *above* the baseline) |
+| 永 | 28 … 974 | −96 … 800 |
+| 人 | 25 … 970 | −72 … 778 |
+
+The 一 measurement is the decisive one: its ink sits at y ≈ 319–430, i.e. **above** the baseline, which is what a y-up font coordinate system gives.
+
+The renderer maps font units to pixels with fontkit's `Path.transform(a, b, c, d, e, f)` (the SVG matrix convention: `x' = a·x + c·y + e`, `y' = b·x + d·y + f`):
+
+```js
+const scale = sizePx / font.unitsPerEm;
+const path = glyph.path.transform(scale, 0, 0, -scale, penX, baselineY);
+```
+
+The **`-scale` on `d` is the y-flip** — the glyph lands *above* `baselineY` on the canvas. Verified: 一 at `sizePx = 70` with `baselineY = 100` produces a bbox of `x 14.1 … 76.1`, `y 69.9 … 77.7` — the ink above the baseline, in the expected place.
+
+For a **multi-character** run (the four-line row, the title) the pen advances by `run.positions[i].xAdvance * scale` per glyph, plus `xOffset` / `yOffset` from the same position record. `Path` also offers `translate`, `scale`, `rotate` and `toSVG()`, but the single `transform` above is all the renderer needs.
 
 **Curve flattening.** fontkit emits `lineTo`, `quadraticCurveTo` and `bezierCurveTo`. Each curve is flattened into **8 line segments** — at a 70–140 px cell, 8 segments per curve is well under a pixel of error.
 
