@@ -58,6 +58,20 @@ const DDL = [
      UNIQUE KEY uk_email (email)
    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+  `CREATE TABLE IF NOT EXISTS mcp_tokens (
+     id BIGINT NOT NULL AUTO_INCREMENT,
+     user_id BIGINT NOT NULL,
+     token_hash CHAR(64) NOT NULL,
+     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     last_used_at DATETIME NULL,
+     revoked_at DATETIME NULL,
+     PRIMARY KEY (id),
+     UNIQUE KEY uniq_mcp_tokens_user (user_id),
+     UNIQUE KEY uniq_mcp_tokens_hash (token_hash),
+     CONSTRAINT fk_mcp_tokens_user FOREIGN KEY (user_id)
+       REFERENCES users(id) ON DELETE CASCADE
+   ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci`,
+
   `CREATE TABLE IF NOT EXISTS history (
      id BIGINT NOT NULL AUTO_INCREMENT,
      user_id BIGINT NOT NULL,
