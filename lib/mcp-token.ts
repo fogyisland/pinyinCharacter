@@ -78,12 +78,30 @@ const LAST_USED_THROTTLE_MS = 3_600_000;
  */
 type EpochSeconds = number | null;
 
-interface McpTokenRow extends RowDataPacket {
-  user_id: number;
-  token_hash: string;
+/**
+ * One row interface per query shape.
+ *
+ * The four SELECTs below return four different column sets, and a single
+ * shared interface would claim columns a query does not select — the
+ * `SELECT id` case declared `token_hash` and three epoch columns it never
+ * reads, so the type said something the SQL did not.
+ */
+interface McpTokenStatusRow extends RowDataPacket {
   created_epoch: number | null;
   last_used_epoch: number | null;
   revoked_epoch: number | null;
+}
+
+interface McpTokenCreatedRow extends RowDataPacket {
+  created_epoch: number | null;
+}
+
+interface McpTokenRevokedRow extends RowDataPacket {
+  revoked_epoch: number | null;
+}
+
+interface McpTokenIdRow extends RowDataPacket {
+  id: number;
 }
 
 interface ResolvedTokenRow extends RowDataPacket {
@@ -113,7 +131,7 @@ function isoFromEpoch(epoch: EpochSeconds): string | null {
  * the audit trail of "this user had a token" survives.
  */
 export async function getTokenStatus(userId: number): Promise<McpTokenStatus> {
-  const [rows] = await getPool().query<McpTokenRow[]>(
+  const [rows] = await getPool().query<McpTokenStatusRow[]>(
     `SELECT UNIX_TIMESTAMP(created_at) AS created_epoch,
             UNIX_TIMESTAMP(last_used_at) AS last_used_epoch,
             UNIX_TIMESTAMP(revoked_at) AS revoked_epoch
@@ -139,7 +157,7 @@ export async function getTokenStatus(userId: number): Promise<McpTokenStatus> {
  */
 export async function issueToken(userId: number): Promise<IssuedToken> {
   const pool = getPool();
-  const [existing] = await pool.query<McpTokenRow[]>(
+  const [existing] = await pool.query<McpTokenIdRow[]>(
     'SELECT id FROM mcp_tokens WHERE user_id = ? LIMIT 1',
     [userId],
   );
@@ -157,7 +175,7 @@ export async function issueToken(userId: number): Promise<IssuedToken> {
     [userId, hashMcpToken(raw)],
   );
 
-  const [rows] = await pool.query<McpTokenRow[]>(
+  const [rows] = await pool.query<McpTokenCreatedRow[]>(
     'SELECT UNIX_TIMESTAMP(created_at) AS created_epoch FROM mcp_tokens WHERE user_id = ? LIMIT 1',
     [userId],
   );
@@ -179,7 +197,7 @@ export async function revokeToken(userId: number): Promise<{ revokedAt: string |
     'UPDATE mcp_tokens SET revoked_at = NOW() WHERE user_id = ? AND revoked_at IS NULL',
     [userId],
   );
-  const [rows] = await pool.query<McpTokenRow[]>(
+  const [rows] = await pool.query<McpTokenRevokedRow[]>(
     'SELECT UNIX_TIMESTAMP(revoked_at) AS revoked_epoch FROM mcp_tokens WHERE user_id = ? LIMIT 1',
     [userId],
   );

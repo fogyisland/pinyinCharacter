@@ -281,12 +281,23 @@ describe.skipIf(integrationSkip)('the MCP token store', () => {
     it('writes the use timestamp once within the hour', async () => {
       const issued = await issueToken(testUserId);
       await resolveToken(issued.raw);
-      const first = await readLastUsedEpoch(testUserId);
-      expect(first).not.toBeNull();
+      // A first use always stamps the row.
+      expect(await readLastUsedEpoch(testUserId)).not.toBeNull();
 
-      // A second resolve inside the hour must not move the timestamp.
+      // Backdate the stamp by half an hour. A second resolve inside the
+      // hour must not move it: if the throttle always wrote, the stamp
+      // would jump forward by 1800 seconds. Comparing against a
+      // half-hour-old value keeps this deterministic — comparing against
+      // a stamp written in the same second would not.
+      await getPool().query(
+        'UPDATE mcp_tokens SET last_used_at = NOW() - INTERVAL 30 MINUTE WHERE user_id = ?',
+        [testUserId],
+      );
+      const before = await readLastUsedEpoch(testUserId);
+      expect(before).not.toBeNull();
+
       await resolveToken(issued.raw);
-      expect(await readLastUsedEpoch(testUserId)).toBe(first);
+      expect(await readLastUsedEpoch(testUserId)).toBe(before);
     });
 
     it('writes the use timestamp again once the hour has passed', async () => {
