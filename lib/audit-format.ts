@@ -75,7 +75,10 @@ export type AuditEvent =
   | 'notes_deleted'
   | 'notes_email_sent'
   | 'notes_email_failed'
-  | 'notes_admin_emails_updated';
+  | 'notes_admin_emails_updated'
+  | 'mcp_token_created'
+  | 'mcp_token_regenerated'
+  | 'mcp_token_revoked';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -152,6 +155,9 @@ export const AUDIT_EVENTS = [
   'notes_email_sent',
   'notes_email_failed',
   'notes_admin_emails_updated',
+  'mcp_token_created',
+  'mcp_token_regenerated',
+  'mcp_token_revoked',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -230,6 +236,9 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   notes_email_sent: '通知邮件发送',
   notes_email_failed: '通知邮件失败',
   notes_admin_emails_updated: '更新通知邮箱',
+  mcp_token_created: '签发 MCP Token',
+  mcp_token_regenerated: '重新生成 MCP Token',
+  mcp_token_revoked: '吊销 MCP Token',
 };
 
 /**
@@ -397,6 +406,13 @@ export function formatLogMessage(
       return `留言通知邮件失败 (id=${num(m.noteId) || '?'}, error=${str(m.error) || '?'})`;
     case 'notes_admin_emails_updated':
       return `更新通知邮箱 (${num(m.count) || '?'} 个收件人)`;
+
+    case 'mcp_token_created':
+      return `签发 MCP Token「${str(m.username)}」`;
+    case 'mcp_token_regenerated':
+      return `重新生成 MCP Token「${str(m.username)}」`;
+    case 'mcp_token_revoked':
+      return `吊销 MCP Token「${str(m.username)}」`;
 
     default: {
       const keys = Object.keys(m);
