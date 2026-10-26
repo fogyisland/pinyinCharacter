@@ -58,8 +58,11 @@ export function unauthorized(code = 'unauthorized', message = 'unauthorized', in
   );
 }
 
-export function serviceUnavailable(code: string, message: string) {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 503 });
+export function serviceUnavailable(code: string, message: string, init?: ResponseInit) {
+  return NextResponse.json(
+    { ok: false, error: { code, message } },
+    { status: 503, ...(init ?? {}) },
+  );
 }
 
 export function conflict(code: string, message: string) {
