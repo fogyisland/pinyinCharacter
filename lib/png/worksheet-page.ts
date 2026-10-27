@@ -89,6 +89,8 @@ const MARGIN = 56;
 const HEADER_HEIGHT = 40;
 const HEADER_RULE_HEIGHT = 1;
 const HEADER_GAP = 14;
+/** The smallest gap between the title and the right-aligned label of the band. */
+const HEADER_LABEL_GAP = 12;
 /** The gap between two grid cells. */
 const GRID_GAP = 8;
 /** The gap between two four-line rows. */
@@ -250,8 +252,17 @@ function drawHeader(
   scale: number,
 ): void {
   const bandCentre = MARGIN + HEADER_HEIGHT / 2;
-  const title = truncateTitle(fontSet, request.title, TITLE_SIZE, layout.contentWidth);
   const label = `${cellStyleLabel(request.cellStyle)} · ${fontFamilyLabel(request.fontFamily)}`;
+  const labelWidth = measure(fontSet, label, LABEL_SIZE);
+  // The label is right-aligned on the same edge the title would run to, so
+  // the title has to stop short of it — a long title is otherwise printed on
+  // top of the label and the two become unreadable.
+  const title = truncateTitle(
+    fontSet,
+    request.title,
+    TITLE_SIZE,
+    layout.contentWidth - labelWidth - HEADER_LABEL_GAP,
+  );
   const titleBaseline = bandCentre + baselineOffset(fontSet, title, TITLE_SIZE);
   const labelBaseline = bandCentre + baselineOffset(fontSet, label, LABEL_SIZE);
   drawText(canvas, fontSet, title, TITLE_SIZE, layout.contentX, titleBaseline, COLOR_TITLE, scale);
@@ -260,7 +271,7 @@ function drawHeader(
     fontSet,
     label,
     LABEL_SIZE,
-    layout.contentX + layout.contentWidth - measure(fontSet, label, LABEL_SIZE),
+    layout.contentX + layout.contentWidth - labelWidth,
     labelBaseline,
     COLOR_LABEL,
     scale,
@@ -405,7 +416,7 @@ function drawGridCells(
     const col = index % layout.cols;
     const x = layout.contentX + col * (layout.cellSize + layout.rowGap);
     const y = layout.contentY + row * (layout.rowHeight + layout.rowGap);
-    drawCellFrame(canvas, x, y, layout.cellSize, unit, isCross, scale);
+    drawCellFrame(canvas, x, y, unit, isCross, scale);
     const char = cells[index].char;
     if (!char) continue;
     drawCellCharacter(canvas, fontSet, char, x, y, layout.cellSize, fontSize, isTrace, scale);
@@ -415,16 +426,13 @@ function drawGridCells(
 /**
  * The frame of a grid cell, in the 100-unit viewBox of `WorksheetCell.tsx`.
  *
- * The border is a stroked rectangle, so it is drawn as four stroked edges
- * rather than as a filled frame: a single ring that walks the outer rectangle
- * and then the inner one is joined by two bridges, and under the even-odd
- * rule those bridges cut the left edge into slivers.
+ * The border is stroked edge by edge — see `strokeRect` for why a filled
+ * frame would break the left side of the cell.
  */
 function drawCellFrame(
   canvas: Canvas,
   x: number,
   y: number,
-  cellSize: number,
   unit: number,
   isCross: boolean,
   scale: number,
@@ -453,6 +461,26 @@ function drawCellFrame(
     COLOR_GUIDE,
   );
   if (!isCross) return;
+  strokeCrossDiagonals(canvas, x, y, unit, scale);
+}
+
+/**
+ * The three diagonals of a cross cell (米字格).
+ *
+ * They are the 米 of the 米字格: the two crossing diagonals and the short
+ * one along the bottom edge. The geometry is the one of `WorksheetCell.tsx`.
+ */
+function strokeCrossDiagonals(
+  canvas: Canvas,
+  x: number,
+  y: number,
+  unit: number,
+  scale: number,
+): void {
+  const left = x + 2 * unit;
+  const top = y + 2 * unit;
+  const right = x + 98 * unit;
+  const bottom = y + 98 * unit;
   strokeLine(
     canvas,
     left * scale,

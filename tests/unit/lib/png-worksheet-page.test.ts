@@ -29,11 +29,19 @@ const INTERIOR_Y = 130;
 const VERTICAL_GUIDE_X = 91;
 const HORIZONTAL_GUIDE_Y = 146;
 
-/** The colours the cell is drawn with. */
-const FRAME_COLOUR = { r: 0x55, g: 0x55, b: 0x55 };
-const GUIDE_COLOUR = { r: 0xbb, g: 0xbb, b: 0xbb };
+/** The colours the trace character is drawn with. */
 const TRACE_FILL_COLOUR = { r: 0xdd, g: 0xdd, b: 0xdd };
 const TRACE_STROKE_COLOUR = { r: 0xc0, g: 0x39, b: 0x2b };
+
+/**
+ * The header band, in CSS px.
+ *
+ * The band starts at the margin (56) and is 40 px tall, but the rule under it
+ * is a 1 px line on the row 96 and its square ends bleed one pixel up into
+ * the row 95 — so the band of the text stops at 94.
+ */
+const HEADER_BAND_TOP = 56;
+const HEADER_BAND_BOTTOM = 94;
 
 /** Builds a request with the site's defaults; every field can be overridden. */
 function request(overrides: Partial<WorksheetPageRequest> = {}): WorksheetPageRequest {
@@ -80,6 +88,43 @@ function countPixelsNear(
     }
   }
   return count;
+}
+
+/** Whether a pixel carries any ink at all. */
+function hasInk(canvas: Canvas, x: number, y: number): boolean {
+  const pixel = getPixel(canvas, x, y);
+  return pixel.r < 255 || pixel.g < 255 || pixel.b < 255;
+}
+
+/**
+ * The left edge of the label in the header band.
+ *
+ * The label is right-aligned on the right edge of the content, so the first
+ * inked column right of the middle of the page is where it starts — the
+ * title is on the other side of the middle and cannot be mistaken for it.
+ */
+function findLabelLeft(canvas: Canvas): number {
+  for (let x = Math.floor(canvas.width / 2); x < canvas.width; x += 1) {
+    for (let y = HEADER_BAND_TOP; y <= HEADER_BAND_BOTTOM; y += 1) {
+      if (hasInk(canvas, x, y)) return x;
+    }
+  }
+  throw new Error('The header band holds no label to the right of the middle of the page.');
+}
+
+/** The number of pixels that differ between two canvases inside the header band. */
+function bandDifferences(a: Canvas, b: Canvas, fromX: number): number {
+  let differences = 0;
+  for (let y = HEADER_BAND_TOP; y <= HEADER_BAND_BOTTOM; y += 1) {
+    for (let x = fromX; x < a.width; x += 1) {
+      const left = getPixel(a, x, y);
+      const right = getPixel(b, x, y);
+      if (left.r !== right.r || left.g !== right.g || left.b !== right.b || left.a !== right.a) {
+        differences += 1;
+      }
+    }
+  }
+  return differences;
 }
 
 describe('renderWorksheetPage', () => {
@@ -197,11 +242,27 @@ describe('the grid cell', () => {
     // the character is filled with #ddd and outlined with a 1.5 px #c0392b
     // contour.
     const box = { left: 58, top: 113, right: 122, bottom: 178 };
+    // The two counts are the point: a page that drew the contour but no fill
+    // would fail the second one, and the other way round the first.
     expect(countPixelsNear(canvas, box, TRACE_STROKE_COLOUR, 8)).toBeGreaterThan(0);
     expect(countPixelsNear(canvas, box, TRACE_FILL_COLOUR, 8)).toBeGreaterThan(0);
-    // The two colours are different enough to be told apart: a page that only
-    // drew one of them would fail one of the two counts above.
-    expect(TRACE_FILL_COLOUR.r).toBeGreaterThan(TRACE_STROKE_COLOUR.r);
-    expect(FRAME_COLOUR.r).toBeLessThan(GUIDE_COLOUR.r);
+  });
+});
+
+describe('the header band', () => {
+  it('keeps a long title clear of the label on the right', async () => {
+    // Two pages that differ in nothing but the title: the short one holds the
+    // label alone on the right, the long one holds a title long enough to
+    // reach it.
+    const short = await renderWorksheetPage(request({ title: '测试' }));
+    const long = await renderWorksheetPage(request({ title: '天地玄黄'.repeat(10) }));
+    const labelLeft = findLabelLeft(short);
+    // The label sits right of the middle of the page, so the boundary found
+    // here is the label and not the title.
+    expect(labelLeft).toBeGreaterThan(short.width / 2);
+    // The long title is drawn — the two bands are not the same page.
+    expect(bandDifferences(short, long, 0)).toBeGreaterThan(0);
+    // ...but not one pixel of it reaches the label.
+    expect(bandDifferences(short, long, labelLeft)).toBe(0);
   });
 });
