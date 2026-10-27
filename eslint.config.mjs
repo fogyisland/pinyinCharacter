@@ -80,6 +80,12 @@ export default [
       'public/**',
       'data/**',
       'docs/**',
+      // Git-ignored scratch directories. ESLint's flat config does not read
+      // .gitignore, so a scratch file dropped here would be linted — and
+      // `parserOptions.project` fails on it, because TypeScript's include
+      // globs skip dot-directories, so the file belongs to no project.
+      '.superpowers/**',
+      '.tmp/**',
     ],
   },
 ];
