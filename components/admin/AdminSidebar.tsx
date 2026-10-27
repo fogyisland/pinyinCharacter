@@ -2,57 +2,105 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Menu, X } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import {
+  AudioLines,
+  BarChart3,
+  Bell,
+  BookOpen,
+  CalendarClock,
+  ClipboardCheck,
+  Crown,
+  Download,
+  KeyRound,
+  LayoutDashboard,
+  Mail,
+  MessageSquare,
+  Route,
+  ScrollText,
+  Send,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Type,
+  Users,
+  Volume2,
+} from 'lucide-react';
 
-interface NavItem {
+export interface NavItem {
   href: string;
   label: string;
+  /** Match the path exactly — used by the pages that have sub-pages. */
   exact?: boolean;
+  /** Only shown outside production. */
   devOnly?: boolean;
+  /** The icon shown before the label. */
+  icon: LucideIcon;
 }
 
-interface NavGroup {
+export interface NavGroup {
   label: string;
   items: NavItem[];
 }
 
-const GROUPS: NavGroup[] = [
+/**
+ * The admin's navigation.
+ *
+ * The groups are the sections an operator thinks in: what is the site
+ * doing (概览), what keeps it running (运维), who uses it (用户), what it
+ * holds (内容), how the site itself is set up (站点) and how it talks to
+ * the outside world (通讯). Every entry carries an icon, because a
+ * twenty-item list of identical text is slow to scan — and the icon is
+ * what tells two same-length labels apart at a glance.
+ */
+export const ADMIN_NAV_GROUPS: NavGroup[] = [
+  {
+    label: '概览',
+    items: [{ href: '/admin', label: '仪表盘', exact: true, icon: LayoutDashboard }],
+  },
   {
     label: '运维',
     items: [
-      { href: '/admin', label: '仪表盘', exact: true },
-      { href: '/admin/init', label: '初始化检查' },
-      { href: '/admin/settings/setup', label: '初始化路由' },
-      { href: '/admin/scheduler', label: '定期更新', exact: true },
-      { href: '/admin/logs', label: '日志' },
-      { href: '/admin/downloads', label: '下载' },
-      { href: '/admin/ai', label: 'AI' },
-      { href: '/admin/tts', label: '语音设置' },
-      { href: '/admin/analytics', label: '访问分析' },
+      { href: '/admin/init', label: '初始化检查', icon: ClipboardCheck },
+      { href: '/admin/settings/setup', label: '初始化路由', icon: Route },
+      { href: '/admin/scheduler', label: '定期更新', exact: true, icon: CalendarClock },
+      { href: '/admin/logs', label: '日志', icon: ScrollText },
+      { href: '/admin/audit', label: '审计日志', icon: ShieldCheck },
+      { href: '/admin/analytics', label: '访问分析', icon: BarChart3 },
     ],
   },
   {
     label: '用户',
     items: [
-      { href: '/admin/users', label: '用户' },
-      { href: '/admin/memberships', label: '会员' },
+      { href: '/admin/users', label: '用户', icon: Users },
+      { href: '/admin/memberships', label: '会员', icon: Crown },
+      { href: '/admin/mcp', label: 'MCP 管理', icon: KeyRound },
     ],
   },
   {
     label: '内容',
     items: [
-      { href: '/admin/chars', label: '字典 / 字源' },
-      { href: '/admin/settings/fonts', label: '字源字体' },
-      { href: '/admin/settings/site-url', label: '站点设置' },
-      { href: '/admin/settings/audio', label: '佛经音频' },
+      { href: '/admin/chars', label: '字典 / 字源', icon: BookOpen },
+      { href: '/admin/settings/fonts', label: '字源字体', icon: Type },
+      { href: '/admin/settings/audio', label: '佛经音频', icon: AudioLines },
+    ],
+  },
+  {
+    label: '站点',
+    items: [
+      { href: '/admin/settings/site-url', label: '站点设置', icon: Settings },
+      { href: '/admin/downloads', label: '下载', icon: Download },
+      { href: '/admin/tts', label: '语音设置', icon: Volume2 },
+      { href: '/admin/ai', label: 'AI', icon: Sparkles },
     ],
   },
   {
     label: '通讯',
     items: [
-      { href: '/admin/email', label: '邮件' },
-      { href: '/admin/email/campaigns', label: '营销邮件' },
-      { href: '/admin/notes', label: '留言笔记' },
-      { href: '/admin/settings/notes', label: '留言通知邮箱' },
+      { href: '/admin/email', label: '邮件', exact: true, icon: Mail },
+      { href: '/admin/email/campaigns', label: '营销邮件', icon: Send },
+      { href: '/admin/notes', label: '留言笔记', icon: MessageSquare },
+      { href: '/admin/settings/notes', label: '留言通知邮箱', icon: Bell },
     ],
   },
 ];
@@ -70,16 +118,19 @@ function NavLinks({
     <>
       {items.map((item) => {
         const isActive = item.exact ? currentPath === item.href : currentPath.startsWith(item.href);
+        const Icon = item.icon;
         return (
           <Link
             key={item.href}
             href={item.href}
             onClick={onNavigate}
+            aria-current={isActive ? 'page' : undefined}
             className={
-              'px-3 py-1.5 rounded-md text-sm ' +
+              'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm whitespace-nowrap ' +
               (isActive ? 'bg-ink text-paper' : 'hover:bg-paper-deep/50 text-ink')
             }
           >
+            <Icon className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
             {item.label}
           </Link>
         );
@@ -109,7 +160,7 @@ function Section({
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
   const isProd = process.env.NODE_ENV === 'production';
-  const groups = GROUPS.map((g) => ({
+  const groups = ADMIN_NAV_GROUPS.map((g) => ({
     ...g,
     items: g.items.filter((item) => !item.devOnly || !isProd),
   })).filter((g) => g.items.length > 0);
@@ -130,7 +181,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
       </div>
 
       {/* 桌面端侧栏(md 及以上) */}
-      <nav className="hidden md:flex flex-col w-40 border-r border-ink/10 min-h-[calc(100vh-4rem)] p-2">
+      <nav className="hidden md:flex flex-col w-48 shrink-0 border-r border-ink/10 min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-y-auto p-2">
         {groups.map((group) => (
           <Section key={group.label} group={group} currentPath={currentPath} />
         ))}

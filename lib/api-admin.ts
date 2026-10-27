@@ -202,3 +202,9 @@ export async function testPayPalConnectionRequest(): Promise<
 > {
   return call('/api/admin/paypal/test-connection', { method: 'POST' });
 }
+
+export async function revokeAdminMcpTokenRequest(
+  userId: number,
+): Promise<ApiResult<{ userId: number; username: string; revokedAt: string | null }>> {
+  return call(`/api/admin/mcp/tokens/${userId}/revoke`, { method: 'POST' });
+}
