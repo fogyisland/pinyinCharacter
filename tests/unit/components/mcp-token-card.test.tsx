@@ -12,7 +12,7 @@ vi.mock('@/lib/mcp-token', () => ({ getTokenStatus: vi.fn() }));
 vi.mock('@/lib/mcp-endpoint', () => ({ resolveMcpEndpoint: vi.fn() }));
 
 import { McpTokenActions } from '@/components/mcp/McpTokenActions';
-import { loadMcpTokenCardData } from '@/components/mcp/McpTokenCard';
+import { McpTokenCard, loadMcpTokenCardData } from '@/components/mcp/McpTokenCard';
 import { getTokenStatus } from '@/lib/mcp-token';
 import { resolveMcpEndpoint } from '@/lib/mcp-endpoint';
 import type { McpTokenStatus } from '@/lib/mcp-token';
@@ -20,12 +20,14 @@ import type { McpTokenStatus } from '@/lib/mcp-token';
 /**
  * The MCP token card on /profile.
  *
- * The card is tested through `McpTokenActions` (the client island) and not
- * through `McpTokenCard` (the server component): the latter awaits
- * `getTokenStatus(userId)`, which needs a database. The client island takes
- * the status as a prop, so it can be rendered — and driven through a mocked
- * fetch — in a unit test. The server-side data loading is covered on its
- * own, through `loadMcpTokenCardData`.
+ * The card is covered on three levels:
+ *
+ * - `loadMcpTokenCardData` — the server-side reads, with the two mocked
+ *   modules standing in for the database.
+ * - `McpTokenActions` — the client island, driven through a mocked fetch.
+ * - `McpTokenCard` — the server component's two render branches. React 19
+ *   refuses an async component handed straight to `render()`, but awaiting
+ *   the component function first yields a plain element that renders fine.
  */
 
 const ENDPOINT = 'https://ziyun.example.com/mcp';
@@ -363,5 +365,48 @@ describe('loadMcpTokenCardData', () => {
     } finally {
       consoleError.mockRestore();
     }
+  });
+});
+
+describe('McpTokenCard', () => {
+  /**
+   * React 19 refuses an async component handed straight to `render()`, but
+   * awaiting the component function first yields a plain element that the
+   * test renderer takes without complaint.
+   */
+  it('renders the degraded state when the token data cannot be loaded', async () => {
+    // The deploy runbook restarts the app before it runs the migrations, so
+    // the `mcp_tokens` table can be missing for a while.
+    getTokenStatusMock.mockRejectedValue(
+      new Error("ER_NO_SUCH_TABLE: Table 'pinyin.mcp_tokens' doesn't exist"),
+    );
+    resolveMcpEndpointMock.mockResolvedValue(ENDPOINT);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const element = await McpTokenCard({ userId: 7 });
+      render(element);
+
+      expect(screen.getByText('Token 服务暂时不可用，请稍后再试。')).toBeInTheDocument();
+      // The two branches are mutually exclusive: the title is rendered once.
+      expect(screen.getAllByRole('heading', { name: 'MCP Token' })).toHaveLength(1);
+      // The client island is not rendered at all in the degraded state.
+      expect(screen.queryByRole('button', { name: '重新生成' })).toBeNull();
+      expect(screen.queryByRole('button', { name: '申请 MCP Token' })).toBeNull();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('renders the client island when the token data is available', async () => {
+    getTokenStatusMock.mockResolvedValue(ACTIVE);
+    resolveMcpEndpointMock.mockResolvedValue(ENDPOINT);
+
+    const element = await McpTokenCard({ userId: 7 });
+    render(element);
+
+    expect(screen.getByRole('button', { name: '重新生成' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: '吊销' })).toBeInTheDocument();
+    expect(screen.queryByText('Token 服务暂时不可用，请稍后再试。')).toBeNull();
+    expect(screen.getAllByRole('heading', { name: 'MCP Token' })).toHaveLength(1);
   });
 });
