@@ -2,7 +2,19 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup, waitFor, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
+
+// The two server-side reads of the card are mocked out: a factory mock
+// replaces the module entirely, so `node:crypto` and `mysql2` never load
+// into the test process. `McpTokenActions` does not import them at
+// runtime — it only takes the status as a prop — so the client-island
+// cases below are unaffected.
+vi.mock('@/lib/mcp-token', () => ({ getTokenStatus: vi.fn() }));
+vi.mock('@/lib/mcp-endpoint', () => ({ resolveMcpEndpoint: vi.fn() }));
+
 import { McpTokenActions } from '@/components/mcp/McpTokenActions';
+import { loadMcpTokenCardData } from '@/components/mcp/McpTokenCard';
+import { getTokenStatus } from '@/lib/mcp-token';
+import { resolveMcpEndpoint } from '@/lib/mcp-endpoint';
 import type { McpTokenStatus } from '@/lib/mcp-token';
 
 /**
@@ -12,11 +24,14 @@ import type { McpTokenStatus } from '@/lib/mcp-token';
  * through `McpTokenCard` (the server component): the latter awaits
  * `getTokenStatus(userId)`, which needs a database. The client island takes
  * the status as a prop, so it can be rendered — and driven through a mocked
- * fetch — in a unit test.
+ * fetch — in a unit test. The server-side data loading is covered on its
+ * own, through `loadMcpTokenCardData`.
  */
 
 const ENDPOINT = 'https://ziyun.example.com/mcp';
 const RAW_TOKEN = 'mcp_RAWTOKEN0123456789abcdefghijklmnop';
+const RAW_TOKEN_A = 'mcp_RAWTOKEN_AAAA_0123456789abcdefghij';
+const RAW_TOKEN_B = 'mcp_RAWTOKEN_BBBB_0123456789abcdefghij';
 
 /** The literal the client config template carries when no raw token exists. */
 const TOKEN_PLACEHOLDER = 'Bearer mcp_<the raw token>';
@@ -49,23 +64,29 @@ const REVOKED: McpTokenStatus = {
  * in the route) — the component must not copy that block into the card, or
  * the "shown only once" promise breaks on the spot.
  */
-const POST_BODY = {
-  ok: true,
-  data: {
-    token: RAW_TOKEN,
-    createdAt: '2026-10-27T10:00:00.000Z',
-    endpoint: ENDPOINT,
-    config: {
-      mcpServers: {
-        'ziyun-chinese': {
-          type: 'http',
-          url: ENDPOINT,
-          headers: { Authorization: `Bearer ${RAW_TOKEN}` },
+function postBody(token: string) {
+  return {
+    ok: true,
+    data: {
+      token,
+      createdAt: '2026-10-27T10:00:00.000Z',
+      endpoint: ENDPOINT,
+      config: {
+        mcpServers: {
+          'ziyun-chinese': {
+            type: 'http',
+            url: ENDPOINT,
+            headers: { Authorization: `Bearer ${token}` },
+          },
         },
       },
     },
-  },
-};
+  };
+}
+
+const POST_BODY = postBody(RAW_TOKEN);
+const POST_BODY_A = postBody(RAW_TOKEN_A);
+const POST_BODY_B = postBody(RAW_TOKEN_B);
 
 const DELETE_BODY = {
   ok: true,
@@ -108,8 +129,15 @@ function callOf(
   return { url, method: options.method ?? 'GET' };
 }
 
+const getTokenStatusMock = vi.mocked(getTokenStatus);
+const resolveMcpEndpointMock = vi.mocked(resolveMcpEndpoint);
+
 beforeEach(() => {
   cleanup();
+  // The server-side mocks carry their implementation from one test to the
+  // next unless they are reset; each test sets the one it needs.
+  getTokenStatusMock.mockReset();
+  resolveMcpEndpointMock.mockReset();
 });
 
 afterEach(() => {
@@ -183,6 +211,43 @@ describe('McpTokenActions', () => {
     expect(screen.queryByTestId('mcp-token')).toBeNull();
   });
 
+  it('rotates the token and replaces the old raw token', async () => {
+    const fetchMock = stubFetch([{ body: POST_BODY_A }, { body: POST_BODY_B }]);
+    render(<McpTokenActions initialStatus={ACTIVE} endpoint={ENDPOINT} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '重新生成' }));
+    await waitFor(() => expect(screen.getByText(RAW_TOKEN_A)).toBeInTheDocument());
+    expect(callOf(fetchMock, 0)).toEqual({ url: '/api/mcp/token', method: 'POST' });
+
+    fireEvent.click(screen.getByRole('button', { name: '重新生成' }));
+    await waitFor(() => expect(screen.getByText(RAW_TOKEN_B)).toBeInTheDocument());
+    expect(callOf(fetchMock, 1)).toEqual({ url: '/api/mcp/token', method: 'POST' });
+    // The previous raw token is gone: a rotation hands out one new token.
+    expect(screen.queryByText(RAW_TOKEN_A)).toBeNull();
+  });
+
+  it('issues, revokes and issues again', async () => {
+    const fetchMock = stubFetch([
+      { body: POST_BODY_A },
+      { body: DELETE_BODY },
+      { body: POST_BODY_B },
+    ]);
+    render(<McpTokenActions initialStatus={NONE} endpoint={ENDPOINT} />);
+
+    fireEvent.click(screen.getByRole('button', { name: '申请 MCP Token' }));
+    await waitFor(() => expect(screen.getByText(RAW_TOKEN_A)).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole('button', { name: '吊销' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: '申请 MCP Token' })).toBeInTheDocument());
+    expect(callOf(fetchMock, 1)).toEqual({ url: '/api/mcp/token', method: 'DELETE' });
+    expect(screen.queryByText(RAW_TOKEN_A)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: '申请 MCP Token' }));
+    await waitFor(() => expect(screen.getByText(RAW_TOKEN_B)).toBeInTheDocument());
+    expect(callOf(fetchMock, 2)).toEqual({ url: '/api/mcp/token', method: 'POST' });
+    expect(screen.queryByText(RAW_TOKEN_A)).toBeNull();
+  });
+
   it('copies the raw token to the clipboard', async () => {
     const writeText = vi.fn(async () => {});
     const original = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
@@ -254,6 +319,46 @@ describe('McpTokenActions', () => {
 
       fireEvent.click(screen.getByRole('button', { name: '申请 MCP Token' }));
       await waitFor(() => expect(screen.getByText('网络错误，请稍后再试')).toBeInTheDocument());
+      expect(consoleError).toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+});
+
+describe('loadMcpTokenCardData', () => {
+  it('returns the status and the endpoint when both reads succeed', async () => {
+    getTokenStatusMock.mockResolvedValue(ACTIVE);
+    resolveMcpEndpointMock.mockResolvedValue(ENDPOINT);
+
+    await expect(loadMcpTokenCardData(7)).resolves.toEqual({
+      status: ACTIVE,
+      endpoint: ENDPOINT,
+    });
+  });
+
+  it('answers null and logs when the token table is missing', async () => {
+    // The deploy runbook restarts the app before it runs the migrations, so
+    // the `mcp_tokens` table can be missing for a while.
+    getTokenStatusMock.mockRejectedValue(
+      new Error("ER_NO_SUCH_TABLE: Table 'pinyin.mcp_tokens' doesn't exist"),
+    );
+    resolveMcpEndpointMock.mockResolvedValue(ENDPOINT);
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(loadMcpTokenCardData(7)).resolves.toBeNull();
+      expect(consoleError).toHaveBeenCalled();
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
+  it('answers null and logs when the endpoint cannot be resolved', async () => {
+    getTokenStatusMock.mockResolvedValue(ACTIVE);
+    resolveMcpEndpointMock.mockRejectedValue(new Error('the site url is unreadable'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      await expect(loadMcpTokenCardData(7)).resolves.toBeNull();
       expect(consoleError).toHaveBeenCalled();
     } finally {
       consoleError.mockRestore();
