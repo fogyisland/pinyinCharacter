@@ -1,7 +1,11 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { ADMIN_NAV_GROUPS, type NavItem } from '@/components/admin/AdminSidebar';
+import {
+  ADMIN_NAV_GROUPS,
+  isNavItemActive,
+  type NavItem,
+} from '@/components/admin/AdminSidebar';
 
 /**
  * The admin navigation.
@@ -50,11 +54,15 @@ function items(): NavItem[] {
   return ADMIN_NAV_GROUPS.flatMap((group) => group.items);
 }
 
-/** The items that light up on a path. */
+/**
+ * The items that light up on a path.
+ *
+ * The rule itself is the component's — `isNavItemActive` — so this test
+ * asserts against the code that runs, not against a copy of it. A copy
+ * would keep passing after the component changed its mind.
+ */
 function activeOn(path: string): NavItem[] {
-  return items().filter((item) =>
-    item.exact ? path === item.href : path.startsWith(item.href),
-  );
+  return items().filter((item) => isNavItemActive(item, path));
 }
 
 describe('the admin navigation', () => {
@@ -106,5 +114,15 @@ describe('the admin navigation', () => {
   it('keeps the dashboard from lighting up every other page', () => {
     const dashboard = items().find((i) => i.href === '/admin');
     expect(dashboard?.exact).toBe(true);
+  });
+
+  it('lights an entry up only on a path segment boundary', () => {
+    const mcp = items().find((i) => i.href === '/admin/mcp');
+    expect(mcp).toBeTruthy();
+    expect(isNavItemActive(mcp!, '/admin/mcp')).toBe(true);
+    expect(isNavItemActive(mcp!, '/admin/mcp/anything')).toBe(true);
+    // A sibling whose name merely starts with the same letters is a
+    // different page — it must not light the MCP entry up.
+    expect(isNavItemActive(mcp!, '/admin/mcp-something')).toBe(false);
   });
 });
