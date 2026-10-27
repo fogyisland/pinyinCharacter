@@ -1,20 +1,28 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
+  cellStyleLabel,
   generateLayout,
   getTool,
   paperSizeLabel,
   validateWorksheetInput,
+  type CellStyle,
+  type FontFamily,
+  type PaperSize,
 } from '@/lib/worksheet-types';
+import { WORKSHEET_SCHEMES } from '@/lib/worksheet-schemes';
 import { McpError } from '../errors';
 import { runTool } from '../tool-result';
 import { requireText } from './shared';
+import { renderWorksheet } from './worksheet-render';
 
 /**
  * The worksheet tools — the layout of a practice sheet.
  *
  * The layout is computed by lib/worksheet-types.ts, the same code the site's
  * own worksheet route uses, so a caller gets the cells the site would draw.
+ * The last two tools go one step further: the catalogue of the ready-made
+ * schemes, and the sheet itself as a PNG image.
  */
 
 /** The annotations every read-only tool carries. */
@@ -26,7 +34,7 @@ const READ_ONLY = {
 } as const;
 
 /** The cell styles a worksheet may use. */
-const CELL_STYLE = z.enum([
+export const CELL_STYLE = z.enum([
   'brush-square',
   'brush-cross',
   'pen-square',
@@ -38,7 +46,60 @@ const CELL_STYLE = z.enum([
 ]);
 
 /** The paper sizes a worksheet may use. */
-const PAPER_SIZE = z.enum(['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']);
+export const PAPER_SIZE = z.enum(['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']);
+
+/** The fonts a worksheet may be written in. */
+const FONT_FAMILY = z.enum([
+  'song',
+  'kai',
+  'hei',
+  'wenkai-gb',
+  'yozai',
+  'iansui',
+  'zen-kaku-thin',
+  'ma-shan-zheng',
+  'long-cang',
+  'liu-jian-mao-cao',
+  'zcool-xiaowei',
+  'zhi-mang-xing',
+]);
+
+/** A scheme as the catalogue tool answers it. */
+interface ListedScheme {
+  id: string;
+  name: string;
+  nameZh: string;
+  cellStyle: CellStyle;
+  cellStyleLabel: string;
+  paperSize: PaperSize;
+  paperSizeLabel: string;
+  fontFamily: FontFamily;
+  note: string;
+}
+
+/**
+ * The catalogue of the schemes, narrowed to one tool when the caller asks
+ * for one.
+ *
+ * The labels are added here because a caller picks a scheme by its id and
+ * then has to describe it to a human — the labels are what the site's own
+ * pickers show.
+ */
+function listedSchemes(tool: 'brush' | 'pen' | undefined): ListedScheme[] {
+  return WORKSHEET_SCHEMES.filter((scheme) => !tool || getTool(scheme.cellStyle) === tool).map(
+    (scheme) => ({
+      id: scheme.id,
+      name: scheme.name,
+      nameZh: scheme.nameZh,
+      cellStyle: scheme.cellStyle,
+      cellStyleLabel: cellStyleLabel(scheme.cellStyle),
+      paperSize: scheme.paperSize,
+      paperSizeLabel: paperSizeLabel(scheme.paperSize),
+      fontFamily: scheme.fontFamily,
+      note: scheme.note,
+    }),
+  );
+}
 
 export function registerWorksheetTools(server: McpServer): void {
   server.registerTool(
@@ -100,5 +161,63 @@ export function registerWorksheetTools(server: McpServer): void {
           },
         };
       }),
+  );
+
+  server.registerTool(
+    'list_worksheet_schemes',
+    {
+      title: 'List the worksheet schemes',
+      description:
+        'The catalogue of the ready-made worksheet schemes (字帖方案): sixteen named ' +
+        'formats, each with a cell style, a paper size and a font. The tool argument ' +
+        'narrows the catalogue to the brush schemes (毛笔) or the hard-pen ones (钢笔).',
+      inputSchema: {
+        tool: z
+          .enum(['brush', 'pen'])
+          .optional()
+          .describe('the tool to narrow the catalogue to (default: both)'),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) =>
+      runTool(async () => {
+        const schemes = listedSchemes(args.tool);
+        return { data: { total: schemes.length, schemes } };
+      }),
+  );
+
+  server.registerTool(
+    'render_worksheet_png',
+    {
+      title: 'Render a practice worksheet as a PNG',
+      description:
+        'Render a practice worksheet (字帖) as a PNG image — the sheet the site prints, ' +
+        'drawn by the rasteriser the printable worksheet uses: the same paper sizes, ' +
+        'the same margins, the same header and footer. The image comes back as an ' +
+        'image content block, so it can be looked at, together with the metadata of ' +
+        'the page. Legal values — cellStyle: brush-square, brush-cross, pen-square, ' +
+        'pen-cross, brush-trace-square, brush-trace-cross, pen-lined, pen-english; ' +
+        'paperSize: A3, A4, B5, brush-12, brush-24, brush-28; fontFamily: song, kai, ' +
+        'hei, wenkai-gb, yozai, zen-kaku-thin, iansui, ma-shan-zheng, long-cang, ' +
+        'liu-jian-mao-cao, zcool-xiaowei, zhi-mang-xing; page: the page to draw, ' +
+        '1 and up; scale: 1 for the natural size, 2 for twice the resolution.',
+      inputSchema: {
+        content: z.string().describe('the characters to practise, e.g. "天地玄黄"'),
+        scheme: z
+          .string()
+          .optional()
+          .describe('the id of a scheme from list_worksheet_schemes — it gives the cell style, the paper size and the font at once'),
+        cellStyle: CELL_STYLE.optional().describe('the style of the practice cell'),
+        paperSize: PAPER_SIZE.optional().describe(
+          'the paper size (default A4 for the pen styles, brush-12 for the brush styles)',
+        ),
+        fontFamily: FONT_FAMILY.optional().describe('the font the characters are written in'),
+        title: z.string().optional().describe('the title printed in the header band'),
+        page: z.number().optional().describe('the page to draw, 1 and up (default 1)'),
+        scale: z.number().optional().describe('1 for the natural size, 2 for twice the resolution'),
+      },
+      annotations: READ_ONLY,
+    },
+    async (args) => runTool(async () => renderWorksheet(args)),
   );
 }

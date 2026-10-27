@@ -51,7 +51,7 @@ session belongs to the user who opened it: another user's bearer gets **403**.
 
 ## The tools
 
-Eighteen tools, all read-only. Seventeen of them answer from the files the
+Twenty tools, all read-only. Nineteen of them answer from the files the
 pages read; `synthesize_speech` calls the same TTS upstream the site's own
 play button uses. No database is touched.
 
@@ -67,6 +67,8 @@ play button uses. No database is touched.
 | `build_quest_level` | one level of the character quest (闯关) with the four questions asked about each of its characters |
 | `reveal_facets` | which parts of the character card may be shown at a given moment |
 | `generate_worksheet_layout` | the cells of a practice worksheet (字帖): the characters, the cell style and the paper size |
+| `list_worksheet_schemes` | the catalogue of the ready-made worksheet schemes (字帖方案): the cell style, the paper size and the font of each one |
+| `render_worksheet_png` | a practice worksheet rendered as a PNG image: the sheet itself, as an image block the model can look at, plus the page metadata |
 | `list_poems` | the poems of the collection, with their title, author and dynasty |
 | `get_poem` | one poem: its title, author, dynasty, the text line by line with the pinyin, the appreciation and the source |
 | `list_sutras` | the scriptures of the collection, with their title, their slug and how many chunks they hold |
