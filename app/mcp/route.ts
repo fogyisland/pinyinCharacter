@@ -319,9 +319,17 @@ function unknownSession(sessionId: string): NextResponse {
  */
 async function openSession(request: Request, body: unknown, user: Caller): Promise<Response> {
   const server = createMcpServer();
+
+  // The transport mints the session id while it handles the initialize
+  // request, so the id is only known once the callback has fired. A
+  // throw after that point leaves a registered session and an open
+  // transport behind — the catch below needs the id to close it.
+  let openedSessionId: string | null = null;
+
   const transport = new WebStandardStreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
     onsessioninitialized: (sessionId: string) => {
+      openedSessionId = sessionId;
       setSession(sessionId, { server, transport, userId: user.userId });
     },
     onsessionclosed: (sessionId: string) => {
@@ -337,7 +345,27 @@ async function openSession(request: Request, body: unknown, user: Caller): Promi
     });
     return serviceUnavailable('service_unavailable', 'the MCP server could not open a session');
   }
-  return transport.handleRequest(request, { parsedBody: body });
+  try {
+    return await transport.handleRequest(request, { parsedBody: body });
+  } catch (err) {
+    console.error('[mcp] the session could not answer the initialize request', err);
+    // The session is registered by now if the transport got far enough to
+    // mint an id. Close it now instead of leaving it to the idle sweep.
+    if (openedSessionId) {
+      const session = getSession(openedSessionId);
+      if (session) closeAndForget(openedSessionId, session);
+    }
+    return NextResponse.json(
+      {
+        ok: false,
+        error: {
+          code: 'internal_error',
+          message: 'the session could not answer the request — it has been closed',
+        },
+      },
+      { status: 500 },
+    );
+  }
 }
 
 /**
