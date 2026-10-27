@@ -30,6 +30,12 @@ vi.mock('@/lib/db', async (importOriginal) => {
 
 import { connectTestClient, toolData } from './route-harness';
 import { getTool, type CellStyle } from '@/lib/worksheet-types';
+import {
+  acquireRenderPermit,
+  MAX_CONCURRENT_RENDERS,
+  releaseRenderPermit,
+  rendersInFlight,
+} from '@/mcp/tools/render-guard';
 
 /**
  * The two worksheet tools of the catalogue and the renderer.
@@ -270,8 +276,88 @@ describe('the worksheet PNG renderer', () => {
   });
 });
 
-describe('how a render request is resolved', () => {
-  it('lets an explicit cell style win over the scheme and keeps the paper of the scheme', async () => {
+describe('the bounds of the renderer', () => {
+  it('refuses a page whose canvas would be over the pixel budget', async () => {
+    const { client, close } = await connectTestClient();
+    try {
+      // A3 at scale 2 is 2246x3174 = 7.13 Mpx — a 27 MiB RGBA buffer, and
+      // ten of those in parallel would take the site down.
+      const result = await client.callTool({
+        name: 'render_worksheet_png',
+        arguments: { content: '天地玄黄', cellStyle: 'pen-square', paperSize: 'A3', scale: 2 },
+      });
+
+      const payload = envelope(result);
+      expect(payload.ok).toBe(false);
+      expect(payload.error?.code).toBe('bad_input');
+      // The message has to name the limit and what was asked for, so a caller
+      // can lower the request instead of guessing.
+      expect(payload.error?.message).toContain('4000000');
+      expect(payload.error?.details?.maxPixels).toBe(4_000_000);
+      expect(payload.error?.details?.paperSize).toBe('A3');
+      expect(payload.error?.details?.scale).toBe(2);
+      // The envelope is the answer — and nothing was rendered.
+      expect(imageBlock(result)).toBeUndefined();
+    } finally {
+      await close();
+    }
+  });
+
+  it('still renders the biggest page that fits the budget', async () => {
+    // A4 at scale 2 is 1588x2246 = 3.57 Mpx. It is a legitimate use, so it
+    // has to keep working — a bound that rejects it is a regression.
+    const { client, close } = await connectTestClient();
+    try {
+      const result = await client.callTool({
+        name: 'render_worksheet_png',
+        arguments: { content: '天地玄黄', cellStyle: 'pen-square', paperSize: 'A4', scale: 2 },
+      });
+
+      expect(imageBlock(result), 'no image block in the result').toBeTruthy();
+      const payload = envelope(result);
+      expect(payload.ok).toBe(true);
+      expect(payload.data?.width).toBe(1588);
+      expect(payload.data?.height).toBe(2246);
+    } finally {
+      await close();
+    }
+  });
+
+  it('rejects a render while the renderer is full, and lets the next one through', async () => {
+    const { client, close } = await connectTestClient();
+    // The cap is filled before the call, so the test does not depend on how
+    // fast two renders happen to finish.
+    const taken: boolean[] = [];
+    for (let i = 0; i < MAX_CONCURRENT_RENDERS; i += 1) {
+      taken.push(acquireRenderPermit());
+    }
+    try {
+      expect(taken.every(Boolean), 'the guard did not hand out its permits').toBe(true);
+      expect(rendersInFlight()).toBe(MAX_CONCURRENT_RENDERS);
+
+      const result = await client.callTool({
+        name: 'render_worksheet_png',
+        arguments: { content: '天地玄黄', scheme: 'pen-grid-a4' },
+      });
+
+      const payload = envelope(result);
+      expect(payload.ok).toBe(false);
+      expect(payload.error?.code).toBe('bad_input');
+      expect(payload.error?.message).toContain('busy');
+      expect(imageBlock(result)).toBeUndefined();
+    } finally {
+      for (let i = 0; i < MAX_CONCURRENT_RENDERS; i += 1) {
+        releaseRenderPermit();
+      }
+      await close();
+    }
+
+    // The permits are given back, so the renderer is usable again.
+    expect(rendersInFlight()).toBe(0);
+  });
+});
+
+describe('how a render request is resolved', () => {  it('lets an explicit cell style win over the scheme and keeps the paper of the scheme', async () => {
     const { client, close } = await connectTestClient();
     try {
       const data = toolData(

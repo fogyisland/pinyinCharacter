@@ -1,7 +1,7 @@
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { encodePng } from '@/lib/png/encode';
 import { findMissingGlyphs } from '@/lib/png/glyph';
-import { pageCount, renderWorksheetPage } from '@/lib/png/worksheet-page';
+import { pageCount, pagePixelCount, renderWorksheetPage } from '@/lib/png/worksheet-page';
 import { findScheme } from '@/lib/worksheet-schemes';
 import {
   BRUSH_PAPER_SIZES,
@@ -14,6 +14,11 @@ import {
   type PaperSize,
 } from '@/lib/worksheet-types';
 import { McpError, notFound } from '../errors';
+import {
+  acquireRenderPermit,
+  MAX_CONCURRENT_RENDERS,
+  releaseRenderPermit,
+} from './render-guard';
 import { requirePage, requireText } from './shared';
 
 /**
@@ -27,6 +32,16 @@ import { requirePage, requireText } from './shared';
  * NODE ONLY. The renderer reads the site's woff2 fonts from `public/fonts`
  * through `node:fs`, so it may only ever run on the server.
  */
+
+/**
+ * The largest canvas the renderer allocates, in device pixels.
+ *
+ * The canvas is the memory: an A3 page at scale 2 is 2246x3174 = 7.13 Mpx,
+ * which is 27 MiB of RGBA buffer plus the encoder's copy of it. A4 at scale 2
+ * is 1588x2246 = 3.57 Mpx and stays inside the budget — that is a
+ * documented, legitimate use — so the limit sits between the two.
+ */
+const MAX_RENDER_PIXELS = 4_000_000;
 
 /** The cell style a request without a scheme falls back to. */
 const DEFAULT_CELL_STYLE: CellStyle = 'brush-square';
@@ -91,36 +106,50 @@ export async function renderWorksheet(request: RenderRequest): Promise<RenderOut
   const totalPages = pageCount(format.cellStyle, format.paperSize, characters.length);
   const page = resolvePage(request.page, totalPages);
   const scale = resolveScale(request.scale);
+  assertRenderSize(format.paperSize, scale);
   const cells = generateLayout(characters, format.cellStyle, format.paperSize);
-  const canvas = await renderWorksheetPage({
-    title,
-    cells,
-    cellStyle: format.cellStyle,
-    paperSize: format.paperSize,
-    fontFamily: format.fontFamily,
-    page,
-    scale,
-    siteHost: siteHost(),
-  });
-  const png = encodePng(canvas);
-  const base64 = Buffer.from(png).toString('base64');
-  return {
-    data: {
+  // The permit is taken before the canvas is allocated and given back in the
+  // `finally` below, so an exception cannot leak it.
+  if (!acquireRenderPermit()) {
+    throw new McpError(
+      'bad_input',
+      'the renderer is busy — try again in a moment',
+      { limit: MAX_CONCURRENT_RENDERS },
+    );
+  }
+  try {
+    const canvas = await renderWorksheetPage({
       title,
-      ...(format.scheme ? { scheme: format.scheme } : {}),
+      cells,
       cellStyle: format.cellStyle,
       paperSize: format.paperSize,
       fontFamily: format.fontFamily,
       page,
-      totalPages,
-      width: canvas.width,
-      height: canvas.height,
-      bytes: png.byteLength,
-      base64Length: base64.length,
-      missingGlyphs: findMissingGlyphs(content, format.fontFamily),
-    },
-    extraContent: [{ type: 'image', data: base64, mimeType: 'image/png' }],
-  };
+      scale,
+      siteHost: siteHost(),
+    });
+    const png = await encodePng(canvas);
+    const base64 = Buffer.from(png).toString('base64');
+    return {
+      data: {
+        title,
+        ...(format.scheme ? { scheme: format.scheme } : {}),
+        cellStyle: format.cellStyle,
+        paperSize: format.paperSize,
+        fontFamily: format.fontFamily,
+        page,
+        totalPages,
+        width: canvas.width,
+        height: canvas.height,
+        bytes: png.byteLength,
+        base64Length: base64.length,
+        missingGlyphs: findMissingGlyphs(content, format.fontFamily),
+      },
+      extraContent: [{ type: 'image', data: base64, mimeType: 'image/png' }],
+    };
+  } finally {
+    releaseRenderPermit();
+  }
 }
 
 /**
@@ -216,6 +245,22 @@ function resolveScale(requested: number | undefined): number {
     throw new McpError('bad_input', `scale must be 1 or 2 — got ${scale}`, { scale });
   }
   return scale;
+}
+
+/**
+ * Refuses a page whose canvas would be bigger than the budget.
+ *
+ * The check runs before the canvas is allocated, so a request that is too
+ * big costs nothing but the arithmetic.
+ */
+function assertRenderSize(paperSize: PaperSize, scale: number): void {
+  const pixels = pagePixelCount(paperSize, scale);
+  if (pixels <= MAX_RENDER_PIXELS) return;
+  throw new McpError(
+    'bad_input',
+    `the page would be ${pixels} device pixels, which is over the renderer's budget of ${MAX_RENDER_PIXELS} — use a smaller paper or scale 1`,
+    { pixels, maxPixels: MAX_RENDER_PIXELS, paperSize, scale },
+  );
 }
 
 /**

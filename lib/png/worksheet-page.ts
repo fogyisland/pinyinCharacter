@@ -112,6 +112,18 @@ const GRID_GAP = 8;
 const FOUR_LINE_ROW_GAP = 16;
 
 /**
+ * The number of device pixels a page of that paper takes at that scale.
+ *
+ * The canvas is allocated at `round(pageWidth * scale) x round(pageHeight *
+ * scale)` device pixels, so this is the size of the buffer a render is about
+ * to allocate. The MCP renderer budgets against it.
+ */
+export function pagePixelCount(paperSize: PaperSize, scale: number): number {
+  const [pageWidth, pageHeight] = PAGE_SIZES[paperSize];
+  return Math.round(pageWidth * scale) * Math.round(pageHeight * scale);
+}
+
+/**
  * How many cells fit on one page.
  *
  * The grid fills a page with `cellsPerPage` cells, the lined paper with

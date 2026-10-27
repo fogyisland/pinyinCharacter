@@ -12,7 +12,7 @@
  * kilobytes.
  */
 
-import { deflateSync } from 'node:zlib';
+import { deflate, type ZlibOptions } from 'node:zlib';
 import type { Canvas } from './raster';
 
 /** The eight bytes every PNG file starts with. */
@@ -35,9 +35,13 @@ const CRC_TABLE = buildCrcTable();
 /**
  * Encodes a canvas as a PNG file.
  *
+ * The compression runs on libuv's thread pool (see `deflateAsync`), so a big
+ * sheet does not block the event loop: the whole site would stall for the
+ * length of the compression otherwise.
+ *
  * @throws If the canvas buffer does not match its declared size.
  */
-export function encodePng(canvas: Canvas): Uint8Array {
+export async function encodePng(canvas: Canvas): Promise<Uint8Array> {
   const stride = canvas.width * 4;
   if (canvas.data.length !== stride * canvas.height) {
     throw new Error(
@@ -45,12 +49,32 @@ export function encodePng(canvas: Canvas): Uint8Array {
     );
   }
   const imageData = encodeImageData(canvas, stride);
+  const compressed = await deflateAsync(imageData, { level: 9 });
   return concat([
     PNG_SIGNATURE,
     buildHeader(canvas.width, canvas.height),
-    buildChunk('IDAT', deflateSync(imageData, { level: 9 })),
+    buildChunk('IDAT', compressed),
     buildChunk('IEND', new Uint8Array(0)),
   ]);
+}
+
+/**
+ * Compress with zlib's asynchronous API.
+ *
+ * The bytes are the ones `deflateSync` writes — the same zlib, the same
+ * options — but the work happens on the thread pool instead of on the main
+ * thread.
+ */
+function deflateAsync(data: Uint8Array, options: ZlibOptions): Promise<Uint8Array> {
+  return new Promise((resolve, reject) => {
+    deflate(data, options, (error, result) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve(result);
+    });
+  });
 }
 
 /**
