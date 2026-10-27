@@ -11,7 +11,9 @@ export interface AdminUserRow {
 
 async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(path, { ...init, credentials: 'same-origin' });
-  if (res.status === 204) return { ok: true, data: null as any };
+  // A 204 carries no body, so there is no data to read — the cast says
+  // so without opening an `any` escape hatch for the rest of the file.
+  if (res.status === 204) return { ok: true, data: null as unknown as T };
   const j = await res.json();
   return j as ApiResult<T>;
 }
