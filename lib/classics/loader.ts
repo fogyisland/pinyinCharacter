@@ -24,7 +24,24 @@ export function invalidateClassicFileCache(slug?: string): void {
     classicCache.delete(slug);
     classicCacheBytes -= entry.bytes;
   }
-  invalidateJsonCache(path.join(DATA_DIR, `${slug}.json`));
+  invalidateJsonCache(classicsPath(slug));
+}
+
+/**
+ * The path of a classic book's file, guaranteed to sit inside DATA_DIR.
+ *
+ * `path.join` normalises `..` segments, so a slug like `../../package` would
+ * otherwise escape the classics directory and read an arbitrary `.json` file.
+ * The MCP endpoint is public, so the containment is enforced here rather than
+ * only at the caller's schema.
+ */
+function classicsPath(slug: string, suffix = '.json'): string {
+  const root = path.resolve(DATA_DIR);
+  const resolved = path.resolve(root, `${slug}${suffix}`);
+  if (resolved !== root && !resolved.startsWith(root + path.sep)) {
+    throw new Error(`The slug "${slug}" points outside the classics directory.`);
+  }
+  return resolved;
 }
 
 /**
@@ -50,13 +67,18 @@ const classicCache = new Map<string, ClassicCacheEntry>();
 let classicCacheBytes = 0;
 
 function classicFileBytes(slug: string): number {
+  // The containment check happens before the try/catch below: a slug that
+  // points outside the classics directory must fail loudly, not fall through
+  // to the size estimate of the fallback.
+  const jsonPath = classicsPath(slug);
+  const gzPath = classicsPath(slug, '.json.gz');
   try {
-    return statSync(path.join(DATA_DIR, `${slug}.json`)).size;
+    return statSync(jsonPath).size;
   } catch {
     // .gz-only deployments (Up/ bundle): the compressed size is a good enough
     // proxy for the heap cost of the parsed object.
     try {
-      return statSync(path.join(DATA_DIR, `${slug}.json.gz`)).size;
+      return statSync(gzPath).size;
     } catch {
       return 1024 * 1024;
     }
@@ -100,7 +122,7 @@ export async function loadClassicFile(slug: string): Promise<ClassicFile | null>
     classicCache.set(slug, hit);
     return hit.file;
   }
-  const filePath = path.join(DATA_DIR, `${slug}.json`);
+  const filePath = classicsPath(slug);
   const value = readJsonAuto(filePath);
   if (!value) return null;
   const file = value as ClassicFile;

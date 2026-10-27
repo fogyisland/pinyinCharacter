@@ -75,3 +75,22 @@ export function requirePage(value: number): number {
   }
   return value;
 }
+
+/**
+ * The slug of a classical book, or a `bad_input` error.
+ *
+ * A slug becomes a file path — `data/classics/<slug>.json` — so it may only
+ * hold lowercase letters, digits and dashes: the same rule the site's own API
+ * route uses (`classicSlugParamSchema` in lib/validators.ts). The value that
+ * is echoed back is cut short, so a long string cannot inflate the answer.
+ */
+export function requireClassicSlug(value: string, argument = 'slug'): string {
+  if (!/^[a-z0-9-]+$/.test(value)) {
+    throw new McpError(
+      'bad_input',
+      `${argument} must be lowercase letters, digits and dashes — got ${JSON.stringify(value.slice(0, 64))}`,
+      { argument, value: value.slice(0, 64) },
+    );
+  }
+  return value;
+}

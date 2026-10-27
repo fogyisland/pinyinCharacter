@@ -3,7 +3,7 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { loadClassicFile, loadManifest } from '@/lib/classics/loader';
 import { McpError, notFound } from '../errors';
 import { runTool } from '../tool-result';
-import { requirePage } from './shared';
+import { requireClassicSlug, requirePage } from './shared';
 
 /**
  * The classic tools — the classical Chinese books.
@@ -35,6 +35,23 @@ const CATEGORY = z.enum([
   'other',
   'pianwen',
 ]);
+
+/**
+ * The slug of a classical book.
+ *
+ * The site's own API route validates the slug with the very same rule —
+ * `classicSlugParamSchema` in lib/validators.ts: lowercase letters, digits
+ * and dashes — so the MCP tool follows the site instead of inventing a rule
+ * of its own. A slug becomes a file path (`data/classics/<slug>.json`), so
+ * anything else, a `..` segment above all, would read a file outside the
+ * classics directory. The loader refuses such a slug as well; this is the
+ * first line of defence.
+ */
+const CLASSIC_SLUG = z
+  .string()
+  .min(1)
+  .max(120)
+  .regex(/^[a-z0-9-]+$/, 'the slug must be lowercase letters, digits and dashes');
 
 export function registerClassicTools(server: McpServer): void {
   server.registerTool(
@@ -103,18 +120,15 @@ export function registerClassicTools(server: McpServer): void {
         'text. The text of a whole book can be 8 MB, so the outline is the cheap way ' +
         'to see what is in it.',
       inputSchema: {
-        slug: z
-          .string()
-          .min(1)
-          .max(120)
-          .describe("the book's slug — list_classics reports them"),
+        slug: CLASSIC_SLUG.describe("the book's slug — list_classics reports them"),
       },
       annotations: READ_ONLY,
     },
     async (args) =>
       runTool(async () => {
-        const book = await loadClassicFile(args.slug);
-        if (!book) throw notFound('classic book', args.slug);
+        const slug = requireClassicSlug(args.slug);
+        const book = await loadClassicFile(slug);
+        if (!book) throw notFound('classic book', slug);
         return {
           data: {
             slug: book.slug,
@@ -142,25 +156,22 @@ export function registerClassicTools(server: McpServer): void {
         'One chapter of a classical book: its label and its text line by line. The ' +
         'pinyin of every line is included as well.',
       inputSchema: {
-        slug: z
-          .string()
-          .min(1)
-          .max(120)
-          .describe("the book's slug — list_classics reports them"),
+        slug: CLASSIC_SLUG.describe("the book's slug — list_classics reports them"),
         chapter: z.number().int().min(1).describe('the chapter number, 1-based'),
       },
       annotations: READ_ONLY,
     },
     async (args) =>
       runTool(async () => {
-        const book = await loadClassicFile(args.slug);
-        if (!book) throw notFound('classic book', args.slug);
+        const slug = requireClassicSlug(args.slug);
+        const book = await loadClassicFile(slug);
+        if (!book) throw notFound('classic book', slug);
         const chapter = book.chunks[args.chapter - 1];
         if (!chapter) {
           throw new McpError(
             'not_found',
             `chapter ${args.chapter} is beyond ${book.title} — it has ${book.chunks.length} chapters`,
-            { slug: args.slug, chapter: args.chapter, chapterCount: book.chunks.length },
+            { slug, chapter: args.chapter, chapterCount: book.chunks.length },
           );
         }
         return {
