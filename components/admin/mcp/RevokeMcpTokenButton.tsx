@@ -31,12 +31,12 @@ export function RevokeMcpTokenButton({ userId, username }: { userId: number; use
       }
       setConfirming(false);
       router.refresh();
-    } catch (err) {
+    } catch (error) {
       // The request never reached the server, or its answer was not a
       // readable envelope. Either way the operator has to be told — a
       // silent failure would leave the button stuck and the revocation
       // in an unknown state.
-      console.error('[admin] the mcp token revocation request failed', err);
+      console.error('[admin] the mcp token revocation request failed', error);
       setErr('吊销请求失败，请重试');
     } finally {
       setBusy(false);

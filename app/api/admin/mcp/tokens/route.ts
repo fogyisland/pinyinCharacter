@@ -33,14 +33,17 @@ export async function GET(req: NextRequest) {
     // The page size and the offset reach MySQL's LIMIT, which takes whole
     // numbers — a fractional one is a syntax error there and would come
     // back as a 500. Anything that is not a whole number falls back to
-    // the default rather than failing the request.
+    // the default rather than failing the request; the data layer keeps
+    // the same rule, so both layers answer the same way.
     const limitRaw = Number(sp.get('limit'));
     const offsetRaw = Number(sp.get('offset'));
     const limit = Number.isInteger(limitRaw) && limitRaw > 0 ? limitRaw : undefined;
     const offset = Number.isInteger(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
 
     const [stats, list] = await Promise.all([
-      getAdminMcpTokenStats(),
+      // The counters describe the same set the list shows — the search
+      // term included.
+      getAdminMcpTokenStats(q),
       listAdminMcpTokens({ state, q, limit, offset }),
     ]);
 

@@ -62,7 +62,10 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
   let tableError = false;
   try {
     const [loadedStats, list] = await Promise.all([
-      getAdminMcpTokenStats(),
+      // The counters describe the same set the list shows — the search
+      // term included. A chip that counted the whole table while the
+      // list below it showed the search would answer another question.
+      getAdminMcpTokenStats(q),
       listAdminMcpTokens({
         state,
         q,
@@ -188,7 +191,7 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
                 </Link>
                 {r.state === 'revoked' ? (
                   <StatusBadge tone="danger">已吊销</StatusBadge>
-                ) : r.disabled ? (
+                ) : r.state === 'disabled' ? (
                   <StatusBadge tone="warning">账号停用</StatusBadge>
                 ) : (
                   <StatusBadge tone="success">生效中</StatusBadge>
@@ -196,7 +199,10 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
                 <span className="text-xs text-ink-soft">{formatDateTime(r.createdAt)}</span>
                 <span className="text-xs text-ink-soft">{formatDateTime(r.lastUsedAt)}</span>
                 <span className="text-xs text-ink-soft">{formatDateTime(r.revokedAt)}</span>
-                {r.state === 'active' ? (
+                {r.state !== 'revoked' ? (
+                  // A token of a disabled account is still a live token —
+                  // the operator may want it gone before the account comes
+                  // back.
                   <RevokeMcpTokenButton userId={r.userId} username={r.username} />
                 ) : (
                   <span className="text-xs text-ink-faint">—</span>

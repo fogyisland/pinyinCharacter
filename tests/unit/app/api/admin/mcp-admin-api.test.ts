@@ -153,6 +153,14 @@ describe('GET /api/admin/mcp/tokens', () => {
     expect(listMock).toHaveBeenCalledWith(expect.objectContaining({ q: 'test' }));
   });
 
+  it('counts the tokens the search selects', async () => {
+    // The counters and the list describe the same set — otherwise a chip
+    // would count the whole table while the list below it showed the
+    // search.
+    await GET(listRequest('?q=alice'));
+    expect(statsMock).toHaveBeenCalledWith('alice');
+  });
+
   it('falls back to the default page size for a fractional limit', async () => {
     // MySQL's LIMIT takes whole numbers — a fractional one would be a
     // syntax error there and would come back as a 500.

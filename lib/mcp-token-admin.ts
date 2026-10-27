@@ -12,8 +12,14 @@ import type { RowDataPacket } from 'mysql2';
  * the list of token holders is at most as long as the user table.
  */
 
-/** Whether a token is still usable. */
-export type AdminMcpTokenState = 'active' | 'revoked';
+/**
+ * The bucket a token is in.
+ *
+ * The three buckets are the ones the counters and the filters use: a token
+ * is revoked, or it belongs to a disabled account, or it is usable — and
+ * the last is exactly the set `resolveToken()` accepts.
+ */
+export type AdminMcpTokenState = 'active' | 'disabled' | 'revoked';
 
 /**
  * Which tokens a list should contain.
@@ -30,6 +36,7 @@ export interface AdminMcpTokenRow {
   isAdmin: boolean;
   /** The account is disabled, so its token cannot be used even if active. */
   disabled: boolean;
+  /** The bucket the token is in — the same three the counters use. */
   state: AdminMcpTokenState;
   /** ISO string — the moment the token was issued. */
   createdAt: string;
@@ -41,7 +48,7 @@ export interface AdminMcpTokenRow {
 
 /** The counters above the admin list. */
 export interface AdminMcpTokenStats {
-  /** Every registered user, token or not. */
+  /** Every registered user, token or not — matching the search, if there is one. */
   totalUsers: number;
   /** Every user who has ever held a token, revoked or not. */
   holders: number;
@@ -134,6 +141,25 @@ function escapeLike(value: string): string {
 }
 
 /**
+ * The WHERE clause that matches a username fragment, and its parameter.
+ *
+ * The fragment is a literal: `%` and `_` are wildcards in a LIKE, so a
+ * search for `%` would otherwise match every holder. The alias is a
+ * parameter because the counters query and the list query join the tables
+ * under different names.
+ */
+function usernameFilter(
+  q: string | undefined,
+  alias: string,
+): { whereSql: string; params: unknown[] } {
+  if (!q) return { whereSql: '', params: [] };
+  return {
+    whereSql: `${alias}.username LIKE ? ESCAPE '${LIKE_ESCAPE}'`,
+    params: [`%${escapeLike(q)}%`],
+  };
+}
+
+/**
  * The WHERE clause of the list query, and the parameters it binds.
  *
  * The count query runs the same clause, so the total and the page can
@@ -154,9 +180,10 @@ function buildFilter(opts: ListAdminMcpTokensOptions): { whereSql: string; param
   } else if (opts.state === 'revoked') {
     where.push('t.revoked_at IS NOT NULL');
   }
-  if (opts.q) {
-    where.push(`u.username LIKE ? ESCAPE '${LIKE_ESCAPE}'`);
-    params.push(`%${escapeLike(opts.q)}%`);
+  const name = usernameFilter(opts.q, 'u');
+  if (name.whereSql) {
+    where.push(name.whereSql);
+    params.push(...name.params);
   }
   return { whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
 }
@@ -164,17 +191,23 @@ function buildFilter(opts: ListAdminMcpTokensOptions): { whereSql: string; param
 /**
  * A whole number inside a range.
  *
- * MySQL's `LIMIT` takes an integer — a fractional one is a syntax error,
- * and it would surface as a 500 rather than as a clamped page. The value
- * is truncated first, so a caller that passes 1.5 gets one row, not an
- * error.
+ * MySQL's `LIMIT` takes an integer — a fractional one is a syntax error
+ * there, and it would surface as a 500 rather than as a clamped page. A
+ * value that is not a whole number is therefore not a page size at all:
+ * it falls back to the default, exactly as the API route does. Below the
+ * minimum it falls back too; above the maximum it is capped, because a
+ * page that is too large is a bad request but not a broken one.
  */
-function clampInteger(value: number | undefined, min: number, max: number, fallback: number): number {
-  if (value === undefined || !Number.isFinite(value)) return fallback;
-  const truncated = Math.trunc(value);
-  if (truncated < min) return min;
-  if (truncated > max) return max;
-  return truncated;
+function wholeNumber(
+  value: number | undefined,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  if (value === undefined || !Number.isInteger(value)) return fallback;
+  if (value < min) return fallback;
+  if (value > max) return max;
+  return value;
 }
 
 /**
@@ -187,8 +220,8 @@ function clampInteger(value: number | undefined, min: number, max: number, fallb
 export async function listAdminMcpTokens(
   opts: ListAdminMcpTokensOptions = {},
 ): Promise<ListAdminMcpTokensResult> {
-  const limit = clampInteger(opts.limit, 1, 200, 50);
-  const offset = clampInteger(opts.offset, 0, Number.MAX_SAFE_INTEGER, 0);
+  const limit = wholeNumber(opts.limit, 1, 200, 50);
+  const offset = wholeNumber(opts.offset, 0, Number.MAX_SAFE_INTEGER, 0);
   const pool = getPool();
   const { whereSql, params } = buildFilter(opts);
 
@@ -221,12 +254,16 @@ export async function listAdminMcpTokens(
 
   const items: AdminMcpTokenRow[] = rows.map((r) => {
     const revokedAt = isoFromEpoch(r.revoked_epoch);
+    const disabled = r.disabled_epoch !== null;
     return {
       userId: Number(r.user_id),
       username: r.username,
       isAdmin: Boolean(r.is_admin),
-      disabled: r.disabled_epoch !== null,
-      state: revokedAt ? 'revoked' : 'active',
+      disabled,
+      // The same three buckets the counters and the filters use, so a
+      // consumer of this list and a consumer of the counters are talking
+      // about the same sets.
+      state: revokedAt ? 'revoked' : disabled ? 'disabled' : 'active',
       createdAt: isoFromEpoch(r.created_epoch) ?? new Date().toISOString(),
       lastUsedAt: isoFromEpoch(r.last_used_epoch),
       revokedAt,
@@ -250,24 +287,37 @@ export async function listAdminMcpTokens(
  *
  * A revoked token of a disabled account is counted as revoked: the token
  * is gone, and that is the fact the operator needs.
+ *
+ * Every counter describes the same set — the one the search term selects.
+ * A chip that counted the whole table while the list below it showed the
+ * search would answer a question the operator did not ask, and the
+ * sibling user page (`countUserBreakdown(q)`) counts the same way.
  */
-export async function getAdminMcpTokenStats(): Promise<AdminMcpTokenStats> {
+export async function getAdminMcpTokenStats(q?: string): Promise<AdminMcpTokenStats> {
+  const tokens = usernameFilter(q, 'u');
+  const users = usernameFilter(q, 'u0');
+  const tokenWhere = tokens.whereSql ? `WHERE ${tokens.whereSql}` : '';
+  const userWhere = users.whereSql ? `WHERE ${users.whereSql}` : '';
+  // The placeholders are bound in the order they appear in the statement:
+  // the registered users come first, then the token rows.
+  const params = [...users.params, ...tokens.params];
+
   const [rows] = await getPool().query<AdminMcpTokenStatsRow[]>(
     `SELECT
-       (SELECT COUNT(*) FROM users) AS total_users,
-       (SELECT COUNT(*) FROM mcp_tokens) AS holders,
-       (SELECT COUNT(*) FROM mcp_tokens t
-         WHERE t.revoked_at IS NULL
-           AND EXISTS (SELECT 1 FROM users u
-                        WHERE u.id = t.user_id AND u.disabled_at IS NULL)) AS active,
-       (SELECT COUNT(*) FROM mcp_tokens t
-         WHERE t.revoked_at IS NULL
-           AND EXISTS (SELECT 1 FROM users u
-                        WHERE u.id = t.user_id AND u.disabled_at IS NOT NULL)) AS disabled,
-       (SELECT COUNT(*) FROM mcp_tokens WHERE revoked_at IS NOT NULL) AS revoked,
-       (SELECT COUNT(*) FROM mcp_tokens
-        WHERE last_used_at IS NOT NULL AND last_used_at >= NOW() - INTERVAL 30 DAY
-       ) AS used_recently`,
+       (SELECT COUNT(*) FROM users u0 ${userWhere}) AS total_users,
+       COUNT(t.user_id) AS holders,
+       COALESCE(SUM(CASE WHEN t.revoked_at IS NULL AND u.disabled_at IS NULL
+                         THEN 1 ELSE 0 END), 0) AS active,
+       COALESCE(SUM(CASE WHEN t.revoked_at IS NULL AND u.disabled_at IS NOT NULL
+                         THEN 1 ELSE 0 END), 0) AS disabled,
+       COALESCE(SUM(CASE WHEN t.revoked_at IS NOT NULL THEN 1 ELSE 0 END), 0) AS revoked,
+       COALESCE(SUM(CASE WHEN t.last_used_at IS NOT NULL
+                          AND t.last_used_at >= NOW() - INTERVAL 30 DAY
+                         THEN 1 ELSE 0 END), 0) AS used_recently
+     FROM mcp_tokens t
+     JOIN users u ON u.id = t.user_id
+     ${tokenWhere}`,
+    params,
   );
   const r = rows[0];
   return {

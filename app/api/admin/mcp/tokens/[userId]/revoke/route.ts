@@ -28,6 +28,12 @@ export async function POST(
     // Only a plain decimal number is a user id. `Number()` would also
     // accept `0x10`, `1e3` and ` 7 ` — all of which name a different
     // user than the digits suggest.
+    //
+    // The length is capped at ten digits, so the id can never be longer
+    // than a BIGINT column but still far wider than any real user table
+    // (nine billion nine hundred and ninety-nine million ids). The cap
+    // is here to keep the pattern from accepting an absurdly long path
+    // segment, not because the database needs it.
     const userId = /^\d{1,10}$/.test(userIdRaw) ? Number(userIdRaw) : Number.NaN;
     if (!Number.isInteger(userId) || userId <= 0) {
       return badRequest('bad_id', 'invalid user id');
