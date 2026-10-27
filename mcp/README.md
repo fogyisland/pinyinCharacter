@@ -137,6 +137,8 @@ upstream. None of them opens a database connection.
 | the stroke counts | `public/strokes/<char>.json` |
 | the readings | `data/pinyin-hanzi.json`, `data/bigrams.json` |
 | the HSK ladder | `data/hsk-vocab.json` (2632 characters over six tiers) |
+| the worksheet schemes | `lib/worksheet-schemes.ts` |
+| the worksheet fonts and the PNG rasteriser | `public/fonts/*.woff2`, `lib/png/*` |
 | the poems | `data/poems-manifest.json`, `data/poems/<id>.json` |
 | the scriptures | `data/sutras/manifest.json`, `data/sutras/<slug>.json` |
 | the classical books | `data/classics-manifest.json`, `data/classics/<slug>.json` |

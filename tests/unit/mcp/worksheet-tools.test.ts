@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import sharp from 'sharp';
 
 // The renderer must never read the site's url from the database: the tools
 // stay file-only, and only the auth path talks to MySQL (spec §"Non-goals").
@@ -10,6 +11,19 @@ vi.mock('@/lib/seo/config', async (importOriginal) => {
     ...actual,
     getRuntimeSiteUrl: async () => {
       throw new Error('the worksheet renderer must not read the site url from the database');
+    },
+  };
+});
+
+// The tools must never open a database connection: only the auth path talks
+// to MySQL (spec §"Non-goals"). Mocking the pool itself makes a regression
+// loud no matter which door the code reaches for it through.
+vi.mock('@/lib/db', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/db')>();
+  return {
+    ...actual,
+    getPool: () => {
+      throw new Error('the mcp tools must not open a database connection');
     },
   };
 });
@@ -114,6 +128,18 @@ describe('the worksheet PNG renderer', () => {
       expect(payload.data?.base64Length as number).toBeGreaterThan(0);
       expect(payload.data?.bytes as number).toBeGreaterThan(0);
       expect(payload.data?.scheme).toBe('pen-grid-a4');
+
+      // The payload has to be a real PNG, and the sizes the tool reports have
+      // to be the sizes of that PNG — the metadata is the only thing a caller
+      // can check the image against.
+      const base64 = image?.data ?? '';
+      const png = Buffer.from(base64, 'base64');
+      const meta = await sharp(png).metadata();
+      expect(meta.format).toBe('png');
+      expect(meta.width).toBe(payload.data?.width as number);
+      expect(meta.height).toBe(payload.data?.height as number);
+      expect(base64.length).toBe(payload.data?.base64Length as number);
+      expect(png.byteLength).toBe(payload.data?.bytes as number);
     } finally {
       await close();
     }
@@ -238,6 +264,63 @@ describe('the worksheet PNG renderer', () => {
       expect(payload.error?.code).toBe('bad_input');
       // The sheet would carry a header and a footer and nothing else.
       expect(imageBlock(result)).toBeUndefined();
+    } finally {
+      await close();
+    }
+  });
+});
+
+describe('how a render request is resolved', () => {
+  it('lets an explicit cell style win over the scheme and keeps the paper of the scheme', async () => {
+    const { client, close } = await connectTestClient();
+    try {
+      const data = toolData(
+        await client.callTool({
+          name: 'render_worksheet_png',
+          arguments: { content: '天地玄黄', scheme: 'brush-large-12', cellStyle: 'pen-square' },
+        }),
+      );
+      // The cell style is the caller's, the paper and the font are the
+      // scheme's — only the part the caller named is overridden.
+      expect(data.cellStyle).toBe('pen-square');
+      expect(data.paperSize).toBe('brush-12');
+      expect(data.fontFamily).toBe('ma-shan-zheng');
+    } finally {
+      await close();
+    }
+  });
+
+  it('falls back to the site defaults when the request names neither a scheme nor a cell style', async () => {
+    const { client, close } = await connectTestClient();
+    try {
+      const data = toolData(
+        await client.callTool({
+          name: 'render_worksheet_png',
+          arguments: { content: '天地玄黄' },
+        }),
+      );
+      // The brush sheet on the big brush paper, in the brush font.
+      expect(data.cellStyle).toBe('brush-square');
+      expect(data.paperSize).toBe('brush-12');
+      expect(data.fontFamily).toBe('ma-shan-zheng');
+    } finally {
+      await close();
+    }
+  });
+
+  it('prints the paper of the cell style when no scheme names one', async () => {
+    const { client, close } = await connectTestClient();
+    try {
+      const data = toolData(
+        await client.callTool({
+          name: 'render_worksheet_png',
+          arguments: { content: '天地玄黄', cellStyle: 'pen-square' },
+        }),
+      );
+      // The hard-pen styles are printed on A4; the paper follows the tool of
+      // the cell style.
+      expect(data.cellStyle).toBe('pen-square');
+      expect(data.paperSize).toBe('A4');
     } finally {
       await close();
     }

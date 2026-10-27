@@ -34,7 +34,7 @@ const READ_ONLY = {
 } as const;
 
 /** The cell styles a worksheet may use. */
-export const CELL_STYLE = z.enum([
+const CELL_STYLE = z.enum([
   'brush-square',
   'brush-cross',
   'pen-square',
@@ -46,7 +46,7 @@ export const CELL_STYLE = z.enum([
 ]);
 
 /** The paper sizes a worksheet may use. */
-export const PAPER_SIZE = z.enum(['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']);
+const PAPER_SIZE = z.enum(['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28']);
 
 /** The fonts a worksheet may be written in. */
 const FONT_FAMILY = z.enum([
@@ -101,7 +101,21 @@ function listedSchemes(tool: 'brush' | 'pen' | undefined): ListedScheme[] {
   );
 }
 
+/**
+ * Registers the three worksheet tools.
+ *
+ * The registry is split per tool so that the wording of one tool cannot be
+ * lost in the middle of another one; the order of the registrations is the
+ * order the tools are listed in the README.
+ */
 export function registerWorksheetTools(server: McpServer): void {
+  registerLayoutTool(server);
+  registerSchemeCatalogueTool(server);
+  registerRenderTool(server);
+}
+
+/** Registers the layout tool — the cells of a practice sheet. */
+function registerLayoutTool(server: McpServer): void {
   server.registerTool(
     'generate_worksheet_layout',
     {
@@ -162,7 +176,10 @@ export function registerWorksheetTools(server: McpServer): void {
         };
       }),
   );
+}
 
+/** Registers the catalogue tool — the ready-made schemes and their labels. */
+function registerSchemeCatalogueTool(server: McpServer): void {
   server.registerTool(
     'list_worksheet_schemes',
     {
@@ -185,7 +202,10 @@ export function registerWorksheetTools(server: McpServer): void {
         return { data: { total: schemes.length, schemes } };
       }),
   );
+}
 
+/** Registers the renderer — the sheet itself, as a PNG image. */
+function registerRenderTool(server: McpServer): void {
   server.registerTool(
     'render_worksheet_png',
     {
