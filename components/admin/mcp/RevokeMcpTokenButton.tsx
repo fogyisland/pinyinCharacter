@@ -23,14 +23,24 @@ export function RevokeMcpTokenButton({ userId, username }: { userId: number; use
   const onRevoke = useCallback(async () => {
     setBusy(true);
     setErr(null);
-    const r = await revokeAdminMcpTokenRequest(userId);
-    setBusy(false);
-    if (!r.ok) {
-      setErr(r.error.message);
-      return;
+    try {
+      const r = await revokeAdminMcpTokenRequest(userId);
+      if (!r.ok) {
+        setErr(r.error.message);
+        return;
+      }
+      setConfirming(false);
+      router.refresh();
+    } catch (err) {
+      // The request never reached the server, or its answer was not a
+      // readable envelope. Either way the operator has to be told — a
+      // silent failure would leave the button stuck and the revocation
+      // in an unknown state.
+      console.error('[admin] the mcp token revocation request failed', err);
+      setErr('吊销请求失败，请重试');
+    } finally {
+      setBusy(false);
     }
-    setConfirming(false);
-    router.refresh();
   }, [userId, router]);
 
   if (!confirming) {

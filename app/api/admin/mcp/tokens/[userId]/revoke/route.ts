@@ -25,7 +25,10 @@ export async function POST(
     if (!auth.ok) return auth.response;
 
     const { userId: userIdRaw } = await params;
-    const userId = Number(userIdRaw);
+    // Only a plain decimal number is a user id. `Number()` would also
+    // accept `0x10`, `1e3` and ` 7 ` — all of which name a different
+    // user than the digits suggest.
+    const userId = /^\d{1,10}$/.test(userIdRaw) ? Number(userIdRaw) : Number.NaN;
     if (!Number.isInteger(userId) || userId <= 0) {
       return badRequest('bad_id', 'invalid user id');
     }
@@ -37,21 +40,30 @@ export async function POST(
 
     const revoked = await revokeToken(userId);
 
-    // Outside the try/catch of the route on purpose: the token is already
-    // revoked at this point, so a failed audit row must not tell the
-    // operator that the revocation did not happen.
-    await writeAudit({
-      userId: auth.user.id,
-      event: 'admin_mcp_token_revoked',
-      metadata: {
-        title: `${owner.username} 的 MCP Token`,
-        targetUserId: userId,
-        username: owner.username,
-        revokedAt: revoked.revokedAt,
-      },
-      ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
-      userAgent: req.headers.get('user-agent') ?? null,
-    });
+    // The token is already revoked at this point, so a failed audit row
+    // must not tell the operator that the revocation did not happen. The
+    // failure is written to the log instead, and the request still
+    // succeeds — the effect of the revocation is the fact, and the audit
+    // row is a record of it.
+    try {
+      await writeAudit({
+        userId: auth.user.id,
+        event: 'admin_mcp_token_revoked',
+        metadata: {
+          title: `${owner.username} 的 MCP Token`,
+          targetUserId: userId,
+          username: owner.username,
+          revokedAt: revoked.revokedAt,
+        },
+        ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null,
+        userAgent: req.headers.get('user-agent') ?? null,
+      });
+    } catch (auditErr) {
+      console.error(
+        '[admin] the mcp token was revoked but its audit row could not be written',
+        auditErr,
+      );
+    }
 
     return NextResponse.json({
       ok: true,

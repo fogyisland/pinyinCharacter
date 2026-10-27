@@ -105,6 +105,24 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/**
+ * Whether a nav entry is the one the operator is looking at.
+ *
+ * The prefix match is bound to a path segment: `/admin/mcp` lights up for
+ * `/admin/mcp` and for `/admin/mcp/anything`, but not for
+ * `/admin/mcp-something` — a plain `startsWith` would light up the wrong
+ * entry there. An entry marked `exact` only lights up for itself, which is
+ * what a page with sub-pages needs (`/admin/email` against
+ * `/admin/email/campaigns`).
+ *
+ * The rule lives here, in one place, so the test can assert against it
+ * instead of against a copy of it.
+ */
+export function isNavItemActive(item: NavItem, currentPath: string): boolean {
+  if (item.exact) return currentPath === item.href;
+  return currentPath === item.href || currentPath.startsWith(`${item.href}/`);
+}
+
 function NavLinks({
   items,
   currentPath,
@@ -117,7 +135,7 @@ function NavLinks({
   return (
     <>
       {items.map((item) => {
-        const isActive = item.exact ? currentPath === item.href : currentPath.startsWith(item.href);
+        const isActive = isNavItemActive(item, currentPath);
         const Icon = item.icon;
         return (
           <Link

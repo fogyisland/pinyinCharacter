@@ -26,12 +26,18 @@ export async function GET(req: NextRequest) {
     const sp = req.nextUrl.searchParams;
     const stateRaw = sp.get('state');
     const state: AdminMcpTokenFilter =
-      stateRaw === 'active' || stateRaw === 'revoked' ? stateRaw : 'all';
+      stateRaw === 'active' || stateRaw === 'disabled' || stateRaw === 'revoked'
+        ? stateRaw
+        : 'all';
     const q = sp.get('q')?.trim() || undefined;
+    // The page size and the offset reach MySQL's LIMIT, which takes whole
+    // numbers — a fractional one is a syntax error there and would come
+    // back as a 500. Anything that is not a whole number falls back to
+    // the default rather than failing the request.
     const limitRaw = Number(sp.get('limit'));
     const offsetRaw = Number(sp.get('offset'));
-    const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? limitRaw : undefined;
-    const offset = Number.isFinite(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
+    const limit = Number.isInteger(limitRaw) && limitRaw > 0 ? limitRaw : undefined;
+    const offset = Number.isInteger(offsetRaw) && offsetRaw > 0 ? offsetRaw : 0;
 
     const [stats, list] = await Promise.all([
       getAdminMcpTokenStats(),

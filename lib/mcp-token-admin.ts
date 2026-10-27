@@ -15,8 +15,13 @@ import type { RowDataPacket } from 'mysql2';
 /** Whether a token is still usable. */
 export type AdminMcpTokenState = 'active' | 'revoked';
 
-/** Which tokens a list should contain. */
-export type AdminMcpTokenFilter = 'all' | 'active' | 'revoked';
+/**
+ * Which tokens a list should contain.
+ *
+ * The three buckets partition the holders: a token is revoked, or it is
+ * held by a disabled account, or it is usable. `all` is the whole table.
+ */
+export type AdminMcpTokenFilter = 'all' | 'active' | 'disabled' | 'revoked';
 
 /** One token holder, as the admin page shows it. */
 export interface AdminMcpTokenRow {
@@ -40,8 +45,10 @@ export interface AdminMcpTokenStats {
   totalUsers: number;
   /** Every user who has ever held a token, revoked or not. */
   holders: number;
-  /** Tokens that are neither revoked nor held by a disabled account. */
+  /** Tokens that are not revoked and not held by a disabled account. */
   active: number;
+  /** Tokens that are not revoked but are held by a disabled account. */
+  disabled: number;
   /** Tokens that have been revoked. */
   revoked: number;
   /** Tokens that authenticated a request in the last 30 days. */
@@ -80,6 +87,7 @@ interface AdminMcpTokenStatsRow extends RowDataPacket {
   total_users: number;
   holders: number;
   active: number;
+  disabled: number;
   revoked: number;
   used_recently: number;
 }
@@ -100,24 +108,73 @@ function isoFromEpoch(epoch: EpochSeconds): string | null {
 }
 
 /**
+ * The character that escapes the wildcards of a LIKE pattern.
+ *
+ * A backslash would be ambiguous — it is MySQL's own default escape
+ * character, and it has to survive two layers of string parsing — so the
+ * pattern uses `!` instead, and every LIKE carries `ESCAPE '!'`.
+ */
+const LIKE_ESCAPE = '!';
+
+/**
+ * Escape the wildcards of a LIKE pattern.
+ *
+ * Without this, a search for `%` matches every holder and a search for
+ * `_` matches every name — the search would silently answer a different
+ * question than the one that was asked.
+ */
+function escapeLike(value: string): string {
+  return value
+    .split(LIKE_ESCAPE)
+    .join(LIKE_ESCAPE + LIKE_ESCAPE)
+    .split('%')
+    .join(LIKE_ESCAPE + '%')
+    .split('_')
+    .join(LIKE_ESCAPE + '_');
+}
+
+/**
  * The WHERE clause of the list query, and the parameters it binds.
  *
  * The count query runs the same clause, so the total and the page can
  * never disagree.
+ *
+ * The three filters are the three buckets of the counters: a token is
+ * revoked, or it belongs to a disabled account, or it is usable. The
+ * usable bucket is exactly the set of tokens `resolveToken()` accepts —
+ * it joins on `u.disabled_at IS NULL`.
  */
 function buildFilter(opts: ListAdminMcpTokensOptions): { whereSql: string; params: unknown[] } {
   const where: string[] = [];
   const params: unknown[] = [];
   if (opts.state === 'active') {
-    where.push('t.revoked_at IS NULL');
+    where.push('t.revoked_at IS NULL AND u.disabled_at IS NULL');
+  } else if (opts.state === 'disabled') {
+    where.push('t.revoked_at IS NULL AND u.disabled_at IS NOT NULL');
   } else if (opts.state === 'revoked') {
     where.push('t.revoked_at IS NOT NULL');
   }
   if (opts.q) {
-    where.push('u.username LIKE ?');
-    params.push(`%${opts.q}%`);
+    where.push(`u.username LIKE ? ESCAPE '${LIKE_ESCAPE}'`);
+    params.push(`%${escapeLike(opts.q)}%`);
   }
   return { whereSql: where.length ? `WHERE ${where.join(' AND ')}` : '', params };
+}
+
+/**
+ * A whole number inside a range.
+ *
+ * MySQL's `LIMIT` takes an integer — a fractional one is a syntax error,
+ * and it would surface as a 500 rather than as a clamped page. The value
+ * is truncated first, so a caller that passes 1.5 gets one row, not an
+ * error.
+ */
+function clampInteger(value: number | undefined, min: number, max: number, fallback: number): number {
+  if (value === undefined || !Number.isFinite(value)) return fallback;
+  const truncated = Math.trunc(value);
+  if (truncated < min) return min;
+  if (truncated > max) return max;
+  return truncated;
 }
 
 /**
@@ -130,8 +187,8 @@ function buildFilter(opts: ListAdminMcpTokensOptions): { whereSql: string; param
 export async function listAdminMcpTokens(
   opts: ListAdminMcpTokensOptions = {},
 ): Promise<ListAdminMcpTokensResult> {
-  const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
-  const offset = Math.max(opts.offset ?? 0, 0);
+  const limit = clampInteger(opts.limit, 1, 200, 50);
+  const offset = clampInteger(opts.offset, 0, Number.MAX_SAFE_INTEGER, 0);
   const pool = getPool();
   const { whereSql, params } = buildFilter(opts);
 
@@ -182,17 +239,31 @@ export async function listAdminMcpTokens(
 /**
  * The counters above the admin list.
  *
- * `active` counts the tokens that are not revoked. A token held by a
- * disabled account cannot authenticate anything — `resolveToken()` joins
- * on `u.disabled_at IS NULL` — but it is still an un-revoked row, and the
- * operator needs to see it in order to revoke it.
+ * The three token buckets partition the holders, so they add up:
+ *
+ *   - `revoked`  — the token has been revoked, whoever revoked it;
+ *   - `disabled` — the token is not revoked, but its account is disabled,
+ *     so it cannot authenticate anything (`resolveToken()` joins on
+ *     `u.disabled_at IS NULL`);
+ *   - `active`   — the token is not revoked and its account is alive, so
+ *     it is the only bucket that can actually be used.
+ *
+ * A revoked token of a disabled account is counted as revoked: the token
+ * is gone, and that is the fact the operator needs.
  */
 export async function getAdminMcpTokenStats(): Promise<AdminMcpTokenStats> {
   const [rows] = await getPool().query<AdminMcpTokenStatsRow[]>(
     `SELECT
        (SELECT COUNT(*) FROM users) AS total_users,
        (SELECT COUNT(*) FROM mcp_tokens) AS holders,
-       (SELECT COUNT(*) FROM mcp_tokens WHERE revoked_at IS NULL) AS active,
+       (SELECT COUNT(*) FROM mcp_tokens t
+         WHERE t.revoked_at IS NULL
+           AND EXISTS (SELECT 1 FROM users u
+                        WHERE u.id = t.user_id AND u.disabled_at IS NULL)) AS active,
+       (SELECT COUNT(*) FROM mcp_tokens t
+         WHERE t.revoked_at IS NULL
+           AND EXISTS (SELECT 1 FROM users u
+                        WHERE u.id = t.user_id AND u.disabled_at IS NOT NULL)) AS disabled,
        (SELECT COUNT(*) FROM mcp_tokens WHERE revoked_at IS NOT NULL) AS revoked,
        (SELECT COUNT(*) FROM mcp_tokens
         WHERE last_used_at IS NOT NULL AND last_used_at >= NOW() - INTERVAL 30 DAY
@@ -203,6 +274,7 @@ export async function getAdminMcpTokenStats(): Promise<AdminMcpTokenStats> {
     totalUsers: Number(r?.total_users ?? 0),
     holders: Number(r?.holders ?? 0),
     active: Number(r?.active ?? 0),
+    disabled: Number(r?.disabled ?? 0),
     revoked: Number(r?.revoked ?? 0),
     usedRecently: Number(r?.used_recently ?? 0),
   };

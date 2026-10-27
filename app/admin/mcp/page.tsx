@@ -18,7 +18,7 @@ import { StatusBadge } from '@/components/admin/StatusBadge';
 import { EmptyState } from '@/components/admin/EmptyState';
 import { Toolbar } from '@/components/admin/Toolbar';
 import { AdminButton, AdminLink } from '@/components/admin/AdminButton';
-import { Users, KeyRound, Ban, Activity, Plug, SearchX } from 'lucide-react';
+import { Users, KeyRound, Ban, Activity, Plug, SearchX, UserX } from 'lucide-react';
 import { formatDateTime } from '@/lib/format';
 import { resolveMcpEndpoint } from '@/lib/mcp-endpoint';
 import { MCP_CAPABILITIES } from '@/mcp/capabilities';
@@ -32,6 +32,7 @@ const EMPTY_STATS: AdminMcpTokenStats = {
   totalUsers: 0,
   holders: 0,
   active: 0,
+  disabled: 0,
   revoked: 0,
   usedRecently: 0,
 };
@@ -43,9 +44,14 @@ interface PageProps {
 export default async function AdminMcpPage({ searchParams }: PageProps) {
   const sp = await searchParams;
   const state: AdminMcpTokenFilter =
-    sp.state === 'active' || sp.state === 'revoked' ? sp.state : 'all';
+    sp.state === 'active' || sp.state === 'disabled' || sp.state === 'revoked'
+      ? sp.state
+      : 'all';
   const q = sp.q?.trim() || undefined;
-  const page = Math.max(Number(sp.page) || 1, 1);
+  // The page number is a whole number — a fractional one would make the
+  // offset fractional too, and MySQL's LIMIT takes whole numbers.
+  const pageRaw = Number(sp.page);
+  const page = Number.isInteger(pageRaw) && pageRaw > 0 ? pageRaw : 1;
 
   // The `mcp_tokens` table arrives with a migration. A database that has
   // not been migrated yet must not take the whole admin down — the page
@@ -87,10 +93,11 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
         }
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <StatCard label="注册用户" value={stats.totalUsers} icon={Users} />
         <StatCard label="持有 Token" value={stats.holders} icon={KeyRound} />
         <StatCard label="生效中" value={stats.active} icon={Plug} />
+        <StatCard label="账号停用" value={stats.disabled} icon={UserX} />
         <StatCard label="已吊销" value={stats.revoked} icon={Ban} />
       </div>
 
@@ -122,6 +129,9 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
         </FilterChip>
         <FilterChip active={state === 'active'} href={buildHref({ state: 'active', q })}>
           生效中 ({stats.active})
+        </FilterChip>
+        <FilterChip active={state === 'disabled'} href={buildHref({ state: 'disabled', q })}>
+          账号停用 ({stats.disabled})
         </FilterChip>
         <FilterChip active={state === 'revoked'} href={buildHref({ state: 'revoked', q })}>
           已吊销 ({stats.revoked})
@@ -176,12 +186,12 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
                 <Link href={`/admin/users/${r.userId}`} className="text-seal hover:underline">
                   {r.username}
                 </Link>
-                {r.disabled ? (
-                  <StatusBadge tone="warning">账号停用</StatusBadge>
-                ) : r.state === 'active' ? (
-                  <StatusBadge tone="success">生效中</StatusBadge>
-                ) : (
+                {r.state === 'revoked' ? (
                   <StatusBadge tone="danger">已吊销</StatusBadge>
+                ) : r.disabled ? (
+                  <StatusBadge tone="warning">账号停用</StatusBadge>
+                ) : (
+                  <StatusBadge tone="success">生效中</StatusBadge>
                 )}
                 <span className="text-xs text-ink-soft">{formatDateTime(r.createdAt)}</span>
                 <span className="text-xs text-ink-soft">{formatDateTime(r.lastUsedAt)}</span>
