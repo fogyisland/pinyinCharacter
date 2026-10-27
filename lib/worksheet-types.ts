@@ -309,7 +309,7 @@ export function fourLineRowsPerPage(p: PaperSize): number {
   return FOUR_LINE_ROWS_PER_PAGE[p] ?? 14;
 }
 
-function englishCharsPerRow(paperSize: PaperSize): number {
+export function englishCharsPerRow(paperSize: PaperSize): number {
   switch (paperSize) {
     case 'A3':
       return 168;
