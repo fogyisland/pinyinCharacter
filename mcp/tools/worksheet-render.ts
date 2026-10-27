@@ -2,7 +2,6 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { encodePng } from '@/lib/png/encode';
 import { findMissingGlyphs } from '@/lib/png/glyph';
 import { pageCount, renderWorksheetPage } from '@/lib/png/worksheet-page';
-import { getRuntimeSiteUrl } from '@/lib/seo/config';
 import { findScheme } from '@/lib/worksheet-schemes';
 import {
   BRUSH_PAPER_SIZES,
@@ -38,8 +37,8 @@ const DEFAULT_FONT_FAMILY: FontFamily = 'ma-shan-zheng';
 /** The title a request without one falls back to. */
 const DEFAULT_TITLE = 'Untitled';
 
-/** The host the page footer prints when the site url cannot be read. */
-const FALLBACK_HOST = 'ziyun.pudafo.com';
+/** The name the footer carries when the site url is not configured. */
+const SITE_NAME = '字·韵';
 
 /** A request for one page of a worksheet. */
 export interface RenderRequest {
@@ -101,7 +100,7 @@ export async function renderWorksheet(request: RenderRequest): Promise<RenderOut
     fontFamily: format.fontFamily,
     page,
     scale,
-    siteHost: await siteHost(),
+    siteHost: siteHost(),
   });
   const png = encodePng(canvas);
   const base64 = Buffer.from(png).toString('base64');
@@ -222,16 +221,27 @@ function resolveScale(requested: number | undefined): number {
 /**
  * The host the page footer prints.
  *
- * It is the host of the site's own url — the one the admin backend sets — so
- * a printed sheet carries the same address the pages carry. The async getter
- * never throws: without a configured domain it answers the local fallback.
+ * The site's own printable worksheet reads it from the environment, and so
+ * does this: the PNG has to be the sheet the site prints, and the site does
+ * not go to the database for its own pages either — the tools stay
+ * file-only, and only the auth path talks to MySQL.
  */
-async function siteHost(): Promise<string> {
-  const siteUrl = await getRuntimeSiteUrl();
+function siteHost(): string {
+  return hostOf(process.env.NEXT_PUBLIC_SITE_URL ?? '') || SITE_NAME;
+}
+
+/**
+ * The host part of a url, or the string itself when it is not a url.
+ *
+ * The site's own printable worksheet uses the same helper; the difference is
+ * that a url this cannot read is logged here instead of passing by unnoticed.
+ */
+function hostOf(raw: string): string {
+  if (!raw) return '';
   try {
-    return new URL(siteUrl).host;
+    return new URL(raw).host;
   } catch (error) {
-    console.error('[mcp] the site url could not be read as a url', { siteUrl, error });
-    return FALLBACK_HOST;
+    console.error('[mcp] the site url could not be read as a url', { siteUrl: raw, error });
+    return raw;
   }
 }

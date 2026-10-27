@@ -1,4 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+
+// The renderer must never read the site's url from the database: the tools
+// stay file-only, and only the auth path talks to MySQL (spec §"Non-goals").
+// The site's own printable worksheet reads the host from the environment —
+// this mock makes a regression loud instead of silent.
+vi.mock('@/lib/seo/config', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/seo/config')>();
+  return {
+    ...actual,
+    getRuntimeSiteUrl: async () => {
+      throw new Error('the worksheet renderer must not read the site url from the database');
+    },
+  };
+});
+
 import { connectTestClient, toolData } from './route-harness';
 import { getTool, type CellStyle } from '@/lib/worksheet-types';
 
