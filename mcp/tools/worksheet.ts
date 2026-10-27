@@ -114,36 +114,39 @@ export function registerWorksheetTools(server: McpServer): void {
   registerRenderTool(server);
 }
 
+/** The descriptor of the layout tool — its wording and its input schema. */
+const LAYOUT_TOOL = {
+  title: 'Lay out a practice worksheet',
+  description:
+    'The cells of a practice worksheet (字帖): the characters, the cell style ' +
+    '(square, cross, four-line, lined, trace) and the paper size. The layout is ' +
+    'padded to whole pages, so the last page is full of blank practice cells ' +
+    'rather than a half-empty sheet.',
+  inputSchema: {
+    title: z
+      .string()
+      .min(1)
+      .max(80)
+      .optional()
+      .describe('the title of the worksheet (default "Untitled")'),
+    content: z
+      .string()
+      .min(1)
+      .max(500)
+      .describe('the characters to practise, e.g. "天地玄黄"'),
+    cellStyle: CELL_STYLE.describe('the style of the practice cell'),
+    paperSize: PAPER_SIZE.optional().describe(
+      'the paper size (default A4 for the pen styles, brush-12 for the brush styles)',
+    ),
+  },
+  annotations: READ_ONLY,
+};
+
 /** Registers the layout tool — the cells of a practice sheet. */
 function registerLayoutTool(server: McpServer): void {
   server.registerTool(
     'generate_worksheet_layout',
-    {
-      title: 'Lay out a practice worksheet',
-      description:
-        'The cells of a practice worksheet (字帖): the characters, the cell style ' +
-        '(square, cross, four-line, lined, trace) and the paper size. The layout is ' +
-        'padded to whole pages, so the last page is full of blank practice cells ' +
-        'rather than a half-empty sheet.',
-      inputSchema: {
-        title: z
-          .string()
-          .min(1)
-          .max(80)
-          .optional()
-          .describe('the title of the worksheet (default "Untitled")'),
-        content: z
-          .string()
-          .min(1)
-          .max(500)
-          .describe('the characters to practise, e.g. "天地玄黄"'),
-        cellStyle: CELL_STYLE.describe('the style of the practice cell'),
-        paperSize: PAPER_SIZE.optional().describe(
-          'the paper size (default A4 for the pen styles, brush-12 for the brush styles)',
-        ),
-      },
-      annotations: READ_ONLY,
-    },
+    LAYOUT_TOOL,
     async (args) =>
       runTool(async () => {
         const title = requireText(args.title ?? 'Untitled', 'title', 80);
