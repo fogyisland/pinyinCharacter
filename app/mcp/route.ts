@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import { isInitializeRequest } from '@modelcontextprotocol/sdk/types.js';
-import { badRequest, forbidden, notFound, serviceUnavailable, unauthorized } from '@/lib/api-handler';
+import { badRequest, forbidden, serviceUnavailable, unauthorized } from '@/lib/api-handler';
 import { resolveToken, type ResolvedToken } from '@/lib/mcp-token';
 import { createMcpServer } from '@/mcp/server-factory';
 import {
@@ -42,6 +42,14 @@ export const dynamic = 'force-dynamic';
 
 /** The header the session id travels in. */
 const SESSION_HEADER = 'mcp-session-id';
+
+/**
+ * How much of a session id the 404 body repeats.
+ *
+ * The id is the caller's own header, so repeating it is no leak — but the
+ * header can be ~16 KB long, and an answer body does not need to be.
+ */
+const SESSION_ID_ECHO_LIMIT = 64;
 
 /** The largest request body the endpoint accepts. */
 const MAX_BODY_BYTES = 4 * 1024 * 1024;
@@ -272,15 +280,34 @@ function isInitializeBody(body: unknown): boolean {
 function findSession(sessionId: string, user: Caller): SessionOutcome {
   const session = getSession(sessionId);
   if (!session) {
-    return {
-      ok: false,
-      response: notFound('not_found', `the session ${sessionId} is unknown — it was never opened, or it has ended`),
-    };
+    return { ok: false, response: unknownSession(sessionId) };
   }
   if (session.userId !== user.userId) {
     return { ok: false, response: forbidden('forbidden', 'the session belongs to another user') };
   }
   return { ok: true, session };
+}
+
+/**
+ * The 404 for a session that is not there.
+ *
+ * The session id is the caller's own header, so repeating it is no leak —
+ * but it is an unbounded string (Node accepts a header of ~16 KB), and it
+ * does not belong in a message. The message is a fixed sentence; the id
+ * goes into a field of its own, shortened.
+ */
+function unknownSession(sessionId: string): NextResponse {
+  return NextResponse.json(
+    {
+      ok: false,
+      error: {
+        code: 'not_found',
+        message: 'the session is unknown — it was never opened, or it has ended',
+        details: { sessionId: sessionId.slice(0, SESSION_ID_ECHO_LIMIT) },
+      },
+    },
+    { status: 404 },
+  );
 }
 
 /**
@@ -313,6 +340,42 @@ async function openSession(request: Request, body: unknown, user: Caller): Promi
   return transport.handleRequest(request, { parsedBody: body });
 }
 
+/**
+ * The answer of a request inside an open session.
+ *
+ * The transport can throw after the session was opened — a body it cannot
+ * parse, a stream that breaks. The session is registered by then, so a
+ * throw would leave it behind: the caller gets a 500 and the transport stays
+ * open until the idle sweep takes it, hours later. The session is closed and
+ * forgotten right away instead.
+ */
+async function answerInSession(
+  sessionId: string,
+  session: McpSession,
+  request: Request,
+  body?: unknown,
+): Promise<Response> {
+  try {
+    return await session.transport.handleRequest(
+      request,
+      body === undefined ? undefined : { parsedBody: body },
+    );
+  } catch (err) {
+    console.error('[mcp] the session could not answer the request', err);
+    closeAndForget(sessionId, session);
+    return NextResponse.json(
+      {
+        ok: false,
+        error: {
+          code: 'internal_error',
+          message: 'the session could not answer the request — it has been closed',
+        },
+      },
+      { status: 500 },
+    );
+  }
+}
+
 /** Drop the sessions that are idle or that push the store past its cap. */
 function sweep(): void {
   sweepSessions({ maxIdleMs: SESSION_IDLE_TTL_MS, maxSessions: MAX_SESSIONS });
@@ -335,7 +398,7 @@ export async function POST(request: Request): Promise<Response> {
     touchSession(sessionId);
     const parsed = await readJsonBody(request);
     if (!parsed.ok) return withCors(parsed.response);
-    const response = await found.session.transport.handleRequest(request, { parsedBody: parsed.body });
+    const response = await answerInSession(sessionId, found.session, request, parsed.body);
     return withCors(response);
   }
 
@@ -367,7 +430,7 @@ export async function GET(request: Request): Promise<Response> {
   const found = findSession(sessionId, auth.user);
   if (!found.ok) return withCors(found.response);
   touchSession(sessionId);
-  return withCors(await found.session.transport.handleRequest(request));
+  return withCors(await answerInSession(sessionId, found.session, request));
 }
 
 /** DELETE — end a session. */

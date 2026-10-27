@@ -11,7 +11,7 @@ import { registerAllTools } from './tools';
  */
 
 /** The name the server reports when the environment does not set one. */
-const DEFAULT_SERVER_NAME = 'pinyin-character';
+const DEFAULT_SERVER_NAME = 'ziyun-chinese';
 
 /** The version the server reports when the environment does not set one. */
 const DEFAULT_SERVER_VERSION = '1.0.0';

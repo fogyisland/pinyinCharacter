@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import {
   connectTestClient,
   createRouteClient,
@@ -253,6 +254,48 @@ describe('the MCP endpoint: the session gate', () => {
       'mcp-session-id': sessionId,
     });
     expect(response.status).toBe(200);
+    expect(getSessionStore().size).toBe(0);
+  });
+
+  it('keeps an unknown session id out of the message and short in the details', async () => {
+    // The session id is the caller's own header, so repeating it is no leak —
+    // but the header can be kilobytes long, and an answer body must not grow
+    // with it.
+    const longId = 'x'.repeat(4096);
+    const response = await client.post(TOOLS_LIST_BODY, {
+      Authorization: `Bearer ${TEST_TOKEN}`,
+      'mcp-session-id': longId,
+    });
+    expect(response.status).toBe(404);
+    const body = (await response.json()) as {
+      error: { message: string; details?: { sessionId?: string } };
+    };
+    expect(body.error.message).not.toContain(longId);
+    expect(body.error.message.length).toBeLessThan(120);
+    // The id is still there for a client that wants to match it — shortened.
+    expect(body.error.details?.sessionId).toHaveLength(64);
+  });
+
+  it('closes and forgets a session whose transport throws', async () => {
+    const sessionId = await openSession();
+    expect(getSessionStore().size).toBe(1);
+
+    // The transport breaks after the session was opened. The session is
+    // registered by then, so a throw that leaves it behind would keep the
+    // transport open until the idle sweep, hours later.
+    const spy = vi
+      .spyOn(WebStandardStreamableHTTPServerTransport.prototype, 'handleRequest')
+      .mockRejectedValue(new Error('the transport broke'));
+    try {
+      const response = await client.post(TOOLS_LIST_BODY, {
+        Authorization: `Bearer ${TEST_TOKEN}`,
+        'mcp-session-id': sessionId,
+      });
+      expect(response.status).toBe(500);
+    } finally {
+      spy.mockRestore();
+    }
+
     expect(getSessionStore().size).toBe(0);
   });
 });

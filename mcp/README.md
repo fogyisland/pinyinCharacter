@@ -38,7 +38,7 @@ session belongs to the user who opened it: another user's bearer gets **403**.
 ```json
 {
   "mcpServers": {
-    "pinyin-character": {
+    "ziyun-chinese": {
       "type": "http",
       "url": "https://ziyun.pudafo.com/mcp",
       "headers": {
@@ -89,7 +89,7 @@ endpoint to work.
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `MCP_SERVER_NAME` | `pinyin-character` | the name reported to the clients |
+| `MCP_SERVER_NAME` | `ziyun-chinese` | the name reported to the clients |
 | `MCP_SERVER_VERSION` | `1.0.0` | the version reported to the clients |
 | `MCP_CORS_ORIGIN` | `*` | the allowed CORS origin |
 

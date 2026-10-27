@@ -12,7 +12,17 @@ function readOrigin(url: string | undefined): string | undefined {
   if (!url) return undefined;
   try {
     return new URL(url).origin;
-  } catch {
+  } catch (err) {
+    // A relative url ('/mcp') is the ordinary case: the request simply has
+    // no origin, and the caller falls back. It is still logged, because a
+    // silent failure hides a url that is malformed in a way nobody meant.
+    // Only the path is logged — a query string carries whatever the caller
+    // put in it, and a url is not the place for a credential.
+    const path = url.split('?')[0]?.slice(0, 200) ?? '';
+    console.error('[mcp] the request url could not be parsed as a url', {
+      path,
+      reason: err instanceof Error ? err.message : String(err),
+    });
     return undefined;
   }
 }

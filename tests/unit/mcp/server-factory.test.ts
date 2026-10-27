@@ -63,7 +63,7 @@ describe('createMcpServer', () => {
     try {
       await client.connect(clientTransport);
       expect(client.getServerVersion()).toEqual({
-        name: 'pinyin-character',
+        name: 'ziyun-chinese',
         version: '1.0.0',
       });
     } finally {
