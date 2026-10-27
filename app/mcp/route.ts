@@ -353,7 +353,16 @@ async function openSession(request: Request, body: unknown, user: Caller): Promi
     // mint an id. Close it now instead of leaving it to the idle sweep.
     if (openedSessionId) {
       const session = getSession(openedSessionId);
-      if (session) closeAndForget(openedSessionId, session);
+      if (session) {
+        closeAndForget(openedSessionId, session);
+      } else {
+        await closeFailedSession(transport, server);
+      }
+    } else {
+      // No id was minted, so there is no session for the idle sweep to
+      // find. The transport and the server are still open — close them
+      // here, or they stay open for as long as the process lives.
+      await closeFailedSession(transport, server);
     }
     return NextResponse.json(
       {
@@ -365,6 +374,25 @@ async function openSession(request: Request, body: unknown, user: Caller): Promi
       },
       { status: 500 },
     );
+  }
+}
+
+/**
+ * Close a transport and a server that never became a session.
+ *
+ * The idle sweep only knows the sessions in the store, so a server that
+ * failed before its id was minted has to be shut down by the caller that
+ * opened it.
+ */
+async function closeFailedSession(
+  transport: WebStandardStreamableHTTPServerTransport,
+  server: ReturnType<typeof createMcpServer>,
+): Promise<void> {
+  const closed = await Promise.allSettled([transport.close(), server.close()]);
+  for (const result of closed) {
+    if (result.status === 'rejected') {
+      console.error('[mcp] could not close a session that failed to open', result.reason);
+    }
   }
 }
 

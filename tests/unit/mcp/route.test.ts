@@ -298,6 +298,31 @@ describe('the MCP endpoint: the session gate', () => {
 
     expect(getSessionStore().size).toBe(0);
   });
+
+  it('leaves no session behind when the initialize request itself fails', async () => {
+    // The session is created *inside* the initialize request, so a throw
+    // there can leave a registered session and an open transport behind.
+    // The idle sweep would take them hours later, so the route closes
+    // them itself.
+    const spy = vi
+      .spyOn(WebStandardStreamableHTTPServerTransport.prototype, 'handleRequest')
+      .mockRejectedValue(new Error('the transport broke while opening'));
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const response = await client.post(INITIALIZE_BODY, {
+        Authorization: `Bearer ${TEST_TOKEN}`,
+      });
+      expect(response.status).toBe(500);
+      const body = (await response.json()) as { ok: boolean; error: { code: string } };
+      expect(body.ok).toBe(false);
+      expect(body.error.code).toBe('internal_error');
+    } finally {
+      spy.mockRestore();
+      consoleError.mockRestore();
+    }
+
+    expect(getSessionStore().size).toBe(0);
+  });
 });
 
 describe('the MCP endpoint: the body gate', () => {
