@@ -6,7 +6,7 @@ import {
   type AdminMcpTokenRow,
   type AdminMcpTokenStats,
 } from '@/lib/mcp-token-admin';
-import { McpCapabilityList } from '@/components/admin/mcp/McpCapabilityList';
+import { McpCapabilityTree } from '@/components/admin/mcp/McpCapabilityTree';
 import { McpHero } from '@/components/admin/mcp/McpHero';
 import { RevokeMcpTokenButton } from '@/components/admin/mcp/RevokeMcpTokenButton';
 import { DataTable } from '@/components/admin/DataTable';
@@ -110,7 +110,7 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
           title={`MCP 提供的能力 (${MCP_CAPABILITIES.length})`}
           description="全部只读:除语音合成外,每个工具都从站点自己的文件里取数。"
         >
-          <McpCapabilityList />
+          <McpCapabilityTree />
         </Panel>
       </div>
 
