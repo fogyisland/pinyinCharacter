@@ -3,6 +3,7 @@ import { withErrorHandling, unauthorized, forbidden, serviceUnavailable } from '
 import { requireUser, type User } from '@/lib/auth';
 import { logUserAction } from '@/lib/audit';
 import { resolveMcpEndpoint } from '@/lib/mcp-endpoint';
+import { buildMcpClientConfig } from '@/lib/mcp-client-config';
 import {
   getTokenStatus,
   issueToken,
@@ -20,36 +21,6 @@ export const runtime = 'nodejs';
  * signed-out browser from ever seeing the fresh answer.
  */
 const NO_STORE = { headers: { 'Cache-Control': 'no-store' } };
-
-/**
- * The placeholder the spec puts into the config template when no raw token
- * is available. It is a literal, not a real token — the raw token is only
- * ever handed out in the POST response.
- */
-const TOKEN_PLACEHOLDER = 'mcp_<the raw token>';
-
-interface McpServerConfig {
-  mcpServers: {
-    'ziyun-chinese': {
-      type: 'http';
-      url: string;
-      headers: { Authorization: string };
-    };
-  };
-}
-
-/** The client configuration an AI client needs to talk to this site. */
-function buildConfig(endpoint: string, rawToken: string | null): McpServerConfig {
-  return {
-    mcpServers: {
-      'ziyun-chinese': {
-        type: 'http',
-        url: endpoint,
-        headers: { Authorization: `Bearer ${rawToken ?? TOKEN_PLACEHOLDER}` },
-      },
-    },
-  };
-}
 
 type AuthOutcome = { user: User } | { response: NextResponse };
 
@@ -92,7 +63,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json(
-      { ok: true, data: { status, endpoint, config: buildConfig(endpoint, null) } },
+      { ok: true, data: { status, endpoint, config: buildMcpClientConfig(endpoint, null) } },
       NO_STORE,
     );
   }, NO_STORE);
@@ -139,7 +110,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
           token: issued.raw,
           createdAt: issued.createdAt,
           endpoint,
-          config: buildConfig(endpoint, issued.raw),
+          config: buildMcpClientConfig(endpoint, issued.raw),
         },
       },
       NO_STORE,

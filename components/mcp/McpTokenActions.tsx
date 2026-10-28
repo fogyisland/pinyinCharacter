@@ -5,18 +5,10 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 // `node:crypto` and `mysql2` (which lib/mcp-token.ts pulls in) into the
 // client bundle.
 import type { McpTokenStatus } from '@/lib/mcp-token';
+import { formatMcpClientConfig } from '@/lib/mcp-client-config';
 
 /** The HTTP endpoint that issues, rotates and revokes the token. */
 const TOKEN_ENDPOINT = '/api/mcp/token';
-
-/**
- * The literal the client config template carries when no raw token exists.
- *
- * The raw token is shown exactly once, in its own block. The config block
- * always shows this placeholder, so the user pastes the token they just
- * received into it themselves.
- */
-const TOKEN_PLACEHOLDER = 'mcp_<the raw token>';
 
 interface McpTokenActionsProps {
   initialStatus: McpTokenStatus;
@@ -36,39 +28,8 @@ interface TokenApiEnvelope {
   };
 }
 
-/** The client configuration an AI client needs to reach this site. */
-interface McpServerConfig {
-  mcpServers: {
-    'ziyun-chinese': {
-      type: 'http';
-      url: string;
-      headers: { Authorization: string };
-    };
-  };
-}
-
 /** What the card copies: the raw token, or the client config. */
 type CopyTarget = 'token' | 'config';
-
-/**
- * The client configuration.
- *
- * It is built here, from the endpoint, and never taken from the API
- * answer: the POST answer of /api/mcp/token carries the *real* token in
- * its `config` field, and pasting that into the card would break the
- * "shown only once" promise on the spot.
- */
-function buildConfig(endpoint: string): McpServerConfig {
-  return {
-    mcpServers: {
-      'ziyun-chinese': {
-        type: 'http',
-        url: endpoint,
-        headers: { Authorization: `Bearer ${TOKEN_PLACEHOLDER}` },
-      },
-    },
-  };
-}
 
 /**
  * The JSON body of an API answer, or an empty envelope when the body is
@@ -165,7 +126,11 @@ export function McpTokenActions({ initialStatus, endpoint }: McpTokenActionsProp
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
 
-  const configText = useMemo(() => JSON.stringify(buildConfig(endpoint), null, 2), [endpoint]);
+  // The configuration is built here, from the endpoint, and never taken
+  // from the API answer: the POST answer of /api/mcp/token carries the
+  // *real* token in its `config` field, and pasting that into the card
+  // would break the "shown only once" promise on the spot.
+  const configText = useMemo(() => formatMcpClientConfig(endpoint, null), [endpoint]);
 
   const issue = useCallback(async () => {
     if (inFlight.current) return;
