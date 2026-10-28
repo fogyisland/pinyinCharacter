@@ -1,23 +1,33 @@
-import { Download, Bot, AlertTriangle, Eye, Users, FileText } from 'lucide-react';
+import { Download, Bot, AlertTriangle, Eye, Users, FileText, KeyRound, Activity } from 'lucide-react';
 import { StatCard } from '@/components/admin/StatCard';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { Panel } from '@/components/admin/Panel';
 import { getSystemStats } from '@/lib/admin';
 import { getDownloadStats } from '@/lib/admin-downloads';
 import { getAiStats } from '@/lib/admin-ai';
+import { getAdminMcpTokenStats } from '@/lib/mcp-token-admin';
 import { getPool } from '@/lib/db';
 import { getPageViewStats } from '@/lib/admin-pageviews';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminIndex() {
+  // The MCP counters are read with their own guard: the `mcp_tokens`
+  // table arrives with a migration, and the dashboard must not go down
+  // because of it.
+  const mcpStatsPromise = getAdminMcpTokenStats().catch((err: unknown) => {
+    console.error('[admin] the mcp token counters could not be read', err);
+    return null;
+  });
+
   // Server component: call helpers directly (faster + simpler than /api/admin/stats fetch).
-  const [systemStats, downloads, ai, disabledRows, pageViews] = await Promise.all([
+  const [systemStats, downloads, ai, disabledRows, pageViews, mcpStats] = await Promise.all([
     getSystemStats(),
     getDownloadStats(7),
     getAiStats(7),
     getPool().query<any[]>(`SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`),
     getPageViewStats(7),
+    mcpStatsPromise,
   ]);
   const disabledUsersCount = Number((disabledRows[0] as any[])[0]?.n ?? 0);
   const aiErrorRatePct = `${(ai.errorRate * 100).toFixed(1)}%`;
@@ -38,7 +48,7 @@ export default async function AdminIndex() {
         description="站点近况一览。数字取自数据库实时统计,点击卡片可跳转到对应的明细。"
       />
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <StatCard
           label="下载 (7d)"
           value={downloads.total}
@@ -64,6 +74,18 @@ export default async function AdminIndex() {
           value={pageViews.topPaths[0]?.path ?? '—'}
           icon={FileText}
           href="/admin/analytics"
+        />
+        <StatCard
+          label="MCP Token 持有者"
+          value={mcpStats?.holders ?? '—'}
+          icon={KeyRound}
+          href="/admin/mcp"
+        />
+        <StatCard
+          label="MCP 近 30 天使用"
+          value={mcpStats?.usedRecently ?? '—'}
+          icon={Activity}
+          href="/admin/mcp"
         />
       </div>
 

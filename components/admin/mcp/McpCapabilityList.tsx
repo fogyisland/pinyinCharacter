@@ -11,16 +11,43 @@ import {
  * 典籍 / 语音 — so an operator can see at a glance what the endpoint can
  * answer, and where the gaps are.
  *
+ * The page shows the subjects first, with their counts, and keeps the
+ * twenty entries themselves behind a disclosure. When the catalogue was
+ * the last thing on the page it was a wall of text nobody scrolled to;
+ * now it sits above the token table, where the subject line is what the
+ * reader actually needs, and the details are one click away.
+ *
  * Every entry carries the tool's name (what an AI client calls it), its
  * registered title and one Chinese line saying what it answers.
  */
 export function McpCapabilityList() {
   const groups = groupCapabilitiesByCategory(MCP_CAPABILITIES);
+  const total = MCP_CAPABILITIES.length;
+
   return (
-    <div className="flex flex-col gap-4">
-      {groups.map((group) => (
-        <CapabilityGroup key={group.key} label={group.label} items={group.items} />
-      ))}
+    <div>
+      <div className="flex flex-wrap gap-1.5" data-testid="mcp-capability-chips">
+        {groups.map((group) => (
+          <span
+            key={group.key}
+            className="inline-flex items-center gap-1 rounded border border-ink/15 bg-paper-soft px-2 py-0.5 text-xs text-ink-soft"
+          >
+            {group.label}
+            <span className="tabular-nums text-ink-faint">{group.items.length}</span>
+          </span>
+        ))}
+      </div>
+
+      <details className="mt-3">
+        <summary className="cursor-pointer select-none text-xs text-seal hover:underline">
+          展开全部 {total} 个工具的名字与用途
+        </summary>
+        <div className="mt-3 flex flex-col gap-4">
+          {groups.map((group) => (
+            <CapabilityGroup key={group.key} label={group.label} items={group.items} />
+          ))}
+        </div>
+      </details>
     </div>
   );
 }

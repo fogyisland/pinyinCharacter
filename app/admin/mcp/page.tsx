@@ -7,6 +7,7 @@ import {
   type AdminMcpTokenStats,
 } from '@/lib/mcp-token-admin';
 import { McpCapabilityList } from '@/components/admin/mcp/McpCapabilityList';
+import { McpHero } from '@/components/admin/mcp/McpHero';
 import { RevokeMcpTokenButton } from '@/components/admin/mcp/RevokeMcpTokenButton';
 import { DataTable } from '@/components/admin/DataTable';
 import { Pagination } from '@/components/admin/Pagination';
@@ -88,13 +89,30 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
     <div>
       <PageHeader
         title="MCP 管理"
-        description="站点自带 MCP 服务(/mcp)。用户可在自己的页面上申请 Token;这里看谁持有 Token、是否仍在使用,并可以随时吊销。"
+        description="站点自带 MCP 服务,挂在本站点的 /mcp 上,不需要另开进程。用户可在自己的页面上申请 Token;这里看谁持有 Token、是否仍在使用,并可以随时吊销。"
         actions={
           <AdminLink href="/admin/users" variant="secondary" size="sm">
             用户列表
           </AdminLink>
         }
       />
+
+      {/* The head of the page: the endpoint is the first thing on it, so
+          an operator knows from the first screen that this site is an MCP
+          server — and not just another list of users. */}
+      <McpHero endpoint={endpoint} />
+
+      {/* What the service can do, above the table it serves. The
+          capability list used to be the last thing on the page, which is
+          where nobody reads it. */}
+      <div className="mb-5">
+        <Panel
+          title={`MCP 提供的能力 (${MCP_CAPABILITIES.length})`}
+          description="全部只读:除语音合成外,每个工具都从站点自己的文件里取数。"
+        >
+          <McpCapabilityList />
+        </Panel>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         <StatCard label="注册用户" value={stats.totalUsers} icon={Users} />
@@ -222,20 +240,6 @@ export default async function AdminMcpPage({ searchParams }: PageProps) {
           unit="个"
           buildHref={(target) => buildHref({ state, q }, { page: String(target) })}
         />
-      </div>
-
-      <div className="mt-6">
-        <Panel
-          title="MCP 提供的能力"
-          description={
-            <>
-              端点 <code className="text-seal">{endpoint}</code>
-              ，共 {MCP_CAPABILITIES.length} 个工具,全部只读:除语音合成外的工具都从站点自己的文件里取数。
-            </>
-          }
-        >
-          <McpCapabilityList />
-        </Panel>
       </div>
     </div>
   );
