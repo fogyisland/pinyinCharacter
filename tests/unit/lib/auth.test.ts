@@ -30,8 +30,8 @@ vi.mock('next/headers', () => ({
 
 vi.mock('jsonwebtoken', () => ({
   default: {
-    verify: () => ({ userId: 7, username: 'tester' }),
-    sign: () => 'header.payload.signature',
+    verify: vi.fn(() => ({ userId: 7, username: 'tester' })),
+    sign: vi.fn(() => 'header.payload.signature'),
   },
 }));
 
@@ -44,7 +44,8 @@ vi.mock('@/lib/db', () => ({
   }),
 }));
 
-import { getCurrentUser, getCurrentUserWithAdmin, requireAdmin } from '@/lib/auth';
+import jwt from 'jsonwebtoken';
+import { getCurrentUser, getCurrentUserWithAdmin, requireAdmin, signSession } from '@/lib/auth';
 
 beforeEach(() => {
   // getSecret() reads the env at call time and throws below 32 chars.
@@ -93,6 +94,26 @@ describe('getCurrentUserWithAdmin', () => {
     userRows = [{ is_admin: 0, disabled_at: null }];
     const user = await getCurrentUserWithAdmin();
     expect(user?.isAdmin).toBe(false);
+  });
+});
+
+describe('the session token', () => {
+  it('carries the user id and the name and nothing else', async () => {
+    // Admin rights are deliberately NOT in the token: they are read from
+    // the users table on every request, so demoting an administrator takes
+    // effect at once instead of at token expiry.
+    //
+    // The corollary is the trap this suite once fell into: a route that
+    // asks the token payload for `isAdmin` gets `undefined` and refuses
+    // everybody, administrator included. The token's payload is pinned here
+    // so that a route reading rights off it fails this test rather than
+    // the browser.
+    await signSession({ id: 7, username: 'tester' });
+    expect(vi.mocked(jwt.sign)).toHaveBeenCalledWith(
+      { userId: 7, username: 'tester' },
+      expect.any(String),
+      expect.objectContaining({ algorithm: 'HS256' }),
+    );
   });
 });
 
