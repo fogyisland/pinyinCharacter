@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { listAiCalls } from '@/lib/admin-ai';
+import type { AiCallStatus } from '@/lib/ai-calls';
 
 export async function GET(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
 
     const result = await listAiCalls({
       feature: sp.get('feature') ?? undefined,
-      status: (sp.get('status') ?? undefined) as any,
+      status: (sp.get('status') ?? undefined) as AiCallStatus | undefined,
       userId: sp.get('userId') ? parseInt(sp.get('userId')!, 10) : undefined,
       from: sp.get('from') ?? undefined,
       to: sp.get('to') ?? undefined,

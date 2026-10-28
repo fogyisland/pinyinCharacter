@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import type { SutraChunkText } from '@/lib/sutra-types';
 import type { SutraReading } from '@/lib/sutra-reading';
 import type { CopyProgress } from '@/lib/sutra-copy-progress';
@@ -17,7 +18,7 @@ interface Props {
 
 type Phase = 'copying' | 'collapsing' | 'sealed';
 
-const WRITING_MODE: Record<SutraReading, string> = {
+const WRITING_MODE: Record<SutraReading, CSSProperties['writingMode']> = {
   horizontal: 'horizontal-tb',
   'vertical-rtl': 'vertical-rl',
   'vertical-ltr': 'vertical-lr',
@@ -234,7 +235,7 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
       <div
         data-testid="copy-body"
         className="copy-body font-serif text-lg sm:text-xl leading-loose text-ink"
-        style={{ writingMode: WRITING_MODE[reading] as any }}
+        style={{ writingMode: WRITING_MODE[reading] }}
       >
         {chunk.content.map((line, li) => (
           <p

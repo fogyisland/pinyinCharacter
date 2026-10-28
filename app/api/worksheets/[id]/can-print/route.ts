@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, notFound } from '@/lib/api-handler';
 import { requireUser } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 import { hasFeature } from '@/lib/membership';
 import { exceedsFreeLimit } from '@/lib/worksheet-page-count';
+import type { PaperSize } from '@/lib/worksheet-types';
+
+interface WorksheetPrintRow extends RowDataPacket {
+  content: string[];
+  paper_size: PaperSize;
+}
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
@@ -14,7 +21,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!Number.isInteger(wid) || wid <= 0) {
       return NextResponse.json({ ok: true, data: { canPrint: true } });
     }
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<WorksheetPrintRow[]>(
       `SELECT content, paper_size FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`,
       [wid, auth.user.id],
     );

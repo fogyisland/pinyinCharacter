@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from '@/lib/db';
 import { findValidResetRow } from '@/lib/password-reset';
 
 const TOKEN_MIN = 32;
+
+interface UsernameRow extends RowDataPacket {
+  username: string;
+}
 
 export async function GET(req: NextRequest) {
   const raw = req.nextUrl.searchParams.get('token') ?? '';
@@ -22,7 +27,7 @@ export async function GET(req: NextRequest) {
   }
 
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
+  const [rows] = await pool.query<UsernameRow[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
     row.user_id,
   ]);
   if (rows.length === 0) {

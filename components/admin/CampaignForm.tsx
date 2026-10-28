@@ -5,12 +5,15 @@ import { useState } from 'react';
 import { FormField } from '@/components/admin/FormField';
 import { AdminButton } from '@/components/admin/AdminButton';
 
+/** The audience values the campaign picker offers. */
+type CampaignAudience = 'all' | 'members' | 'admins';
+
 export function CampaignForm() {
   const router = useRouter();
   const [subject, setSubject] = useState('');
   const [htmlBody, setHtmlBody] = useState('');
   const [textBody, setTextBody] = useState('');
-  const [audience, setAudience] = useState<'all' | 'members' | 'admins'>('all');
+  const [audience, setAudience] = useState<CampaignAudience>('all');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -67,7 +70,7 @@ export function CampaignForm() {
         <select
           id="campaign-audience"
           value={audience}
-          onChange={(e) => setAudience(e.target.value as any)}
+          onChange={(e) => setAudience(e.target.value as CampaignAudience)}
           className="adm-input"
         >
           <option value="all">所有订阅用户</option>

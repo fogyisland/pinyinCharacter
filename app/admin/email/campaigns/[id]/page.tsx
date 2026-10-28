@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import type { RowDataPacket } from 'mysql2';
 import { getCampaign } from '@/lib/email-campaigns';
 import { getPool } from '@/lib/db';
 import { CampaignActions } from '@/components/admin/CampaignActions';
@@ -11,6 +12,11 @@ export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;
+}
+
+interface RecipientCountRow extends RowDataPacket {
+  status: string;
+  n: number;
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -38,7 +44,7 @@ export default async function CampaignDetailPage({ params }: Props) {
 
   // Pull recipient stats for status display.
   const pool = getPool();
-  const [recipients] = await pool.query<any[]>(
+  const [recipients] = await pool.query<RecipientCountRow[]>(
     `SELECT status, COUNT(*) AS n FROM email_campaign_recipients WHERE campaign_id = ? GROUP BY status`,
     [id],
   );

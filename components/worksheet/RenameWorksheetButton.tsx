@@ -10,6 +10,12 @@ interface Props {
   currentTitle: string;
 }
 
+/** Errors thrown by the worksheet API carry an optional machine-readable `code`. */
+interface ApiError {
+  code?: string;
+  message?: string;
+}
+
 export function RenameWorksheetButton({ id, currentTitle }: Props) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -39,11 +45,12 @@ export function RenameWorksheetButton({ id, currentTitle }: Props) {
             await renameWorksheetApi(id, trimmed);
             setEditing(false);
             router.refresh();
-          } catch (e: any) {
-            if (e?.code === 'duplicate_title') {
+          } catch (e: unknown) {
+            const apiError = (e ?? {}) as ApiError;
+            if (apiError.code === 'duplicate_title') {
               setErr('已存在同名字帖');
             } else {
-              setErr(e?.message ?? '重命名失败');
+              setErr(apiError.message ?? '重命名失败');
             }
           } finally {
             setBusy(false);

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getPool } from '@/lib/db';
@@ -8,6 +9,15 @@ import { processOneField, emptyPerField, type FieldName } from '@/lib/admin-char
 import { logUserAction } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';
+
+interface CountRow extends RowDataPacket {
+  n: number;
+}
+
+interface CharRow extends RowDataPacket {
+  char: string;
+  pinyin: string;
+}
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -31,7 +41,7 @@ export async function POST(req: NextRequest) {
     const pool = getPool();
     const model = (await getConfig('ai.model')) ?? 'gpt-4o-mini';
 
-    const [countRows] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM chars WHERE level = ?`, [
+    const [countRows] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS n FROM chars WHERE level = ?`, [
       level,
     ]);
     const totalChars = Number(countRows[0].n);
@@ -53,7 +63,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const [chars] = await pool.query<any[]>(
+    const [chars] = await pool.query<CharRow[]>(
       `SELECT \`char\`, pinyin FROM chars WHERE level = ? ORDER BY \`char\` LIMIT ? OFFSET ?`,
       [level, limit, offset],
     );
@@ -96,7 +106,7 @@ export async function POST(req: NextRequest) {
     await logUserAction(req, auth.user.id, 'admin_chars_generated', {
       level,
       fields: requested,
-      chars: chars.map((c: { char: string }) => c.char),
+      chars: chars.map((c) => c.char),
       offset,
       limit,
       generated: generatedTotal,

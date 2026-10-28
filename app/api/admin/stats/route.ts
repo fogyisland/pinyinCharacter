@@ -1,9 +1,14 @@
 import { NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { requireAdmin } from '@/lib/auth';
 import { getSystemStats } from '@/lib/admin';
 import { getDownloadStats } from '@/lib/admin-downloads';
 import { getAiStats } from '@/lib/admin-ai';
 import { getPool } from '@/lib/db';
+
+interface CountRow extends RowDataPacket {
+  n: number;
+}
 
 export async function GET() {
   const auth = await requireAdmin();
@@ -14,9 +19,9 @@ export async function GET() {
     getSystemStats(),
     getDownloadStats(7),
     getAiStats(7),
-    getPool().query<any[]>(`SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`),
+    getPool().query<CountRow[]>(`SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`),
   ]);
-  const disabledUsersCount = Number((disabledRows[0] as any[])[0]?.n ?? 0);
+  const disabledUsersCount = Number(disabledRows[0][0]?.n ?? 0);
 
   return NextResponse.json({
     ok: true,

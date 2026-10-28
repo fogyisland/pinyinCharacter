@@ -26,6 +26,12 @@ interface Props {
 
 type Mode = 'existing' | 'new';
 
+/** Errors thrown by the worksheet API carry an optional machine-readable `code`. */
+interface ApiError {
+  code?: string;
+  message?: string;
+}
+
 export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -55,13 +61,14 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
           setMode('new');
         }
       })
-      .catch((e: any) => {
-        if (e?.code === 'unauthorized') {
+      .catch((e: unknown) => {
+        const apiError = (e ?? {}) as ApiError;
+        if (apiError.code === 'unauthorized') {
           router.push(`/login?next=${encodeURIComponent(pathname)}`);
           onClose();
           return;
         }
-        setErr(e?.message ?? '加载字帖列表失败');
+        setErr(apiError.message ?? '加载字帖列表失败');
       })
       .finally(() => setLoading(false));
   }, [open, router, pathname, onClose]);
@@ -102,16 +109,17 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
       setSuccess(msg);
       onAdded?.(result);
       setTimeout(onClose, 900);
-    } catch (e: any) {
-      if (e?.code === 'unauthorized') {
+    } catch (e: unknown) {
+      const apiError = (e ?? {}) as ApiError;
+      if (apiError.code === 'unauthorized') {
         router.push(`/login?next=${encodeURIComponent(pathname)}`);
         onClose();
         return;
       }
-      if (e?.code === 'duplicate_title') {
+      if (apiError.code === 'duplicate_title') {
         setErr('已存在同名字帖，请换一个名字');
       } else {
-        setErr(e?.message ?? '添加失败');
+        setErr(apiError.message ?? '添加失败');
       }
     } finally {
       setBusy(false);

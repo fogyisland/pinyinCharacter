@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, badRequest, notFound, forbidden } from '@/lib/api-handler';
 import { requireUser } from '@/lib/auth';
 import { getPool } from '@/lib/db';
@@ -6,6 +7,14 @@ import { hasFeature } from '@/lib/membership';
 import { exceedsFreeLimit } from '@/lib/worksheet-page-count';
 import { logDownload } from '@/lib/downloads';
 import { logUserAction } from '@/lib/audit';
+import type { PaperSize } from '@/lib/worksheet-types';
+
+interface WorksheetRow extends RowDataPacket {
+  id: number;
+  title: string;
+  content: string[];
+  paper_size: PaperSize;
+}
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
@@ -14,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params;
     const wid = parseInt(id, 10);
     if (!Number.isInteger(wid) || wid <= 0) return badRequest('bad_id', 'invalid id');
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<WorksheetRow[]>(
       `SELECT id, title, content, paper_size FROM worksheets WHERE id = ? AND user_id = ? LIMIT 1`,
       [wid, auth.user.id],
     );

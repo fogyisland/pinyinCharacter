@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { listMemberships, grantMembership, getPlanByKey, type PlanKey } from '@/lib/membership';
 import { writeAudit } from '@/lib/audit';
 import { getPool } from '@/lib/db';
+
+interface UserIdRow extends RowDataPacket {
+  id: number;
+}
 
 export async function GET(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -36,7 +41,7 @@ export async function POST(req: NextRequest) {
     const plan = await getPlanByKey(parsed.data.planKey as PlanKey);
     if (!plan) return notFound('plan_not_found', `plan ${parsed.data.planKey} not found`);
     // Ensure target user exists
-    const [u] = await getPool().query<any[]>(`SELECT id FROM users WHERE id = ? LIMIT 1`, [
+    const [u] = await getPool().query<UserIdRow[]>(`SELECT id FROM users WHERE id = ? LIMIT 1`, [
       parsed.data.userId,
     ]);
     if (u.length === 0) return notFound('user_not_found', `user ${parsed.data.userId} not found`);

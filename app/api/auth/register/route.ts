@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from '@/lib/db';
 import { hashPassword, signSession, setSessionCookie } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
@@ -7,6 +8,17 @@ import { sendEmail } from '@/lib/email';
 import { welcomeEmail, emailVerificationEmail } from '@/lib/email-templates';
 import { issueVerificationToken } from '@/lib/email-verification';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
+
+interface CountRow extends RowDataPacket {
+  n: number;
+}
+
+/** The subset of a mysql2 driver error the duplicate-entry branch inspects. */
+interface MysqlDriverError {
+  code?: string;
+  message?: string;
+  sqlMessage?: string;
+}
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -30,20 +42,21 @@ export async function POST(req: NextRequest) {
   const { username, email, password } = parsed.data;
 
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(`SELECT COUNT(*) AS n FROM users`);
+  const [rows] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS n FROM users`);
   const isFirst = Number(rows[0]?.n ?? 0) === 0;
 
   const hash = await hashPassword(password);
   let userId: number;
   try {
-    const [res] = await pool.query<any>(
+    const [res] = await pool.query<ResultSetHeader>(
       `INSERT INTO users (username, email, password_hash, is_admin) VALUES (?, ?, ?, ?)`,
       [username, email, hash, isFirst ? 1 : 0],
     );
     userId = Number(res.insertId);
-  } catch (e: any) {
-    if (e?.code === 'ER_DUP_ENTRY') {
-      if (e?.message?.includes('uk_email') || e?.sqlMessage?.includes('uk_email')) {
+  } catch (e: unknown) {
+    const err = (e ?? {}) as MysqlDriverError;
+    if (err.code === 'ER_DUP_ENTRY') {
+      if (err.message?.includes('uk_email') || err.sqlMessage?.includes('uk_email')) {
         return NextResponse.json(
           { ok: false, error: { code: 'email_taken', message: '邮箱已被注册' } },
           { status: 409 },

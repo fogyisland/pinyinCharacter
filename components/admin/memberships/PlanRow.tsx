@@ -21,6 +21,17 @@ const FEATURE_LABELS: Record<string, string> = {
   multi_worksheet_print: '批量 / 多页打印',
 };
 
+/**
+ * The feature keys `updateAdminPlanRequest` accepts. The picker above also
+ * offers `multi_worksheet_print`, which the request type does not list —
+ * the API accepts it at runtime, the client-side type just does not.
+ */
+type UpdatableFeature =
+  | 'unlimited_history'
+  | 'download_pdf'
+  | 'ai_calls'
+  | 'priority_tts';
+
 export function PlanRow({ plan }: { plan: Plan }) {
   const router = useRouter();
   const [displayName, setDisplayName] = useState(plan.displayName);
@@ -51,7 +62,7 @@ export function PlanRow({ plan }: { plan: Plan }) {
       durationDays: Number(durationDays),
       enabled,
       displayOrder: Number(displayOrder),
-      features: features as any,
+      features: features as UpdatableFeature[],
     });
     setBusy(false);
     if (!r.ok) {

@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling } from '@/lib/api-handler';
 import { getPayPalConfig, verifyWebhookSignature, capturePayPalOrder } from '@/lib/paypal';
 import { getPaymentOrder, updatePaymentOrderStatus } from '@/lib/payment-orders';
-import { grantMembership } from '@/lib/membership';
+import { grantMembership, type PlanKey } from '@/lib/membership';
 import { writeAudit } from '@/lib/audit';
 import { getPool } from '@/lib/db';
+
+interface PayPalResource {
+  id?: string;
+  supplementary_data?: {
+    related_ids?: {
+      order_id?: string;
+    };
+  };
+}
+
+interface PayPalWebhookEvent {
+  event_type?: string;
+  resource?: PayPalResource;
+}
+
+interface PlanKeyRow extends RowDataPacket {
+  plan_key: string;
+}
 
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -25,26 +44,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: false, error: 'invalid_signature' }, { status: 401 });
     }
 
-    let event: any;
+    let event: unknown;
     try {
       event = JSON.parse(rawBody);
     } catch {
       return NextResponse.json({ ok: true });
     }
+    // The payload is PayPal-shaped but untrusted: it is cast, not validated.
+    // A non-object body still reaches the same property accesses as before.
+    const payload = event as PayPalWebhookEvent;
     await writeAudit({
       userId: null,
       event: 'paypal_webhook_received',
-      metadata: { event_type: event.event_type, paypal_order_id: event.resource?.id },
+      metadata: { event_type: payload.event_type, paypal_order_id: payload.resource?.id },
     });
 
     const orderId: string | undefined =
-      event.resource?.id ?? event.resource?.supplementary_data?.related_ids?.order_id;
+      payload.resource?.id ?? payload.resource?.supplementary_data?.related_ids?.order_id;
     if (!orderId) return NextResponse.json({ ok: true });
 
     const order = await getPaymentOrder(orderId);
     if (!order) return NextResponse.json({ ok: true });
 
-    switch (event.event_type) {
+    switch (payload.event_type) {
       case 'CHECKOUT.ORDER.APPROVED': {
         if (order.status === 'created') {
           await updatePaymentOrderStatus(orderId, 'approved');
@@ -63,7 +85,7 @@ export async function POST(req: NextRequest) {
       case 'PAYMENT.CAPTURE.COMPLETED': {
         if (order.status === 'paid') return NextResponse.json({ ok: true });
         await updatePaymentOrderStatus(orderId, 'paid', new Date());
-        const [planRows] = await getPool().query<any[]>(
+        const [planRows] = await getPool().query<PlanKeyRow[]>(
           `SELECT plan_key FROM membership_plans WHERE id = ?`,
           [order.planId],
         );
@@ -72,7 +94,7 @@ export async function POST(req: NextRequest) {
         try {
           await grantMembership({
             targetUserId: order.userId,
-            planKey: planKey as any,
+            planKey: planKey as PlanKey,
             grantedBy: null,
             source: 'paypal',
             sourcePaymentOrderId: order.id,

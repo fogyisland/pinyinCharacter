@@ -20,6 +20,27 @@ interface HanziWriterLike {
   pauseAnimation: () => unknown;
 }
 
+/** The subset of the `hanzi-writer` options this card passes. */
+interface HanziWriterOptions {
+  width: number;
+  height: number;
+  padding: number;
+  showOutline: boolean;
+  strokeAnimationSpeed: number;
+  delayBetweenStrokes: number;
+  strokeColor: string;
+  radicalColor: string;
+  outlineColor: string;
+  charDataLoader: (char: string, onLoad: (data: unknown) => void) => void;
+  onLoadCharDataError: () => void;
+  onCompleteStroke: (stroke: { strokeNum: number; strokeCount: number }) => void;
+}
+
+/** The static `create` factory the module exposes. */
+interface HanziWriterFactory {
+  create(target: HTMLElement, char: string, options: HanziWriterOptions): HanziWriterLike;
+}
+
 export function StrokeOrderCard({ char, className }: Props) {
   const [isReady, setIsReady] = useState(false);
   const [currentStroke, setCurrentStroke] = useState(0);
@@ -53,8 +74,8 @@ export function StrokeOrderCard({ char, className }: Props) {
         const strokeCount = Array.isArray(strokeData?.strokes) ? strokeData.strokes.length : 0;
 
         const HanziWriterMod = await import('hanzi-writer');
-        const HanziWriter: any =
-          (HanziWriterMod as { default?: { create?: unknown } }).default ?? HanziWriterMod;
+        const HanziWriter = ((HanziWriterMod as { default?: unknown }).default ??
+          HanziWriterMod) as unknown as HanziWriterFactory;
         if (cancelled || !containerRef.current) return;
 
         writer = HanziWriter.create(containerRef.current, char, {
@@ -76,7 +97,7 @@ export function StrokeOrderCard({ char, className }: Props) {
           onCompleteStroke: ({ strokeNum }: { strokeNum: number; strokeCount: number }) => {
             if (!cancelled) setCurrentStroke(strokeNum);
           },
-        } as any) as unknown as HanziWriterLike;
+        });
 
         if (cancelled) {
           writer.pauseAnimation();

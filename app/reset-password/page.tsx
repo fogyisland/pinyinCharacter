@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { RowDataPacket } from 'mysql2';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
@@ -8,6 +9,10 @@ import { ResetForm } from './ResetForm';
 import type { ReactNode } from 'react';
 
 export const dynamic = 'force-dynamic';
+
+interface UsernameRow extends RowDataPacket {
+  username: string;
+}
 
 export default async function ResetPasswordPage({
   searchParams,
@@ -36,11 +41,11 @@ export default async function ResetPasswordPage({
   }
 
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
+  const [rows] = await pool.query<UsernameRow[]>(`SELECT username FROM users WHERE id = ? LIMIT 1`, [
     row.user_id,
   ]);
   if (rows.length === 0) return <Shell>{expired}</Shell>;
-  const username = rows[0].username as string;
+  const username = rows[0].username;
 
   return (
     <Shell>

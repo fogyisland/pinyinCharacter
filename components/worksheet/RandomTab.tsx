@@ -27,6 +27,9 @@ const DIFFICULTY_LABELS = {
   hard: '困难 (level 1+2+3 全字库)',
 } as const;
 
+/** The difficulty levels the picker offers. */
+type Difficulty = keyof typeof DIFFICULTY_LABELS;
+
 export function RandomTab({
   title,
   onTitleChange,
@@ -37,7 +40,7 @@ export function RandomTab({
   // 字数 is fully derived from the selected paper size — no manual input,
   // no 100-char cap (A3 = 168, A4 = 88, B5 = 48, brush-12/24/28 = 12/24/28).
   const count = cellsPerPage(paperSize);
-  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -96,7 +99,7 @@ export function RandomTab({
           <label className="text-sm font-medium text-ink-soft">难度</label>
           <select
             value={difficulty}
-            onChange={(e) => setDifficulty(e.target.value as any)}
+            onChange={(e) => setDifficulty(e.target.value as Difficulty)}
             className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
           >
             {(['easy', 'medium', 'hard'] as const).map((d) => (

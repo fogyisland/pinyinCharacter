@@ -1,9 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
+
+interface SendHistoryRow extends RowDataPacket {
+  id: number;
+  to_addr: string;
+  subject: string;
+  template: string | null;
+  status: string;
+  error: string | null;
+  sent_at: Date | string;
+}
 
 export async function GET(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -11,7 +22,7 @@ export async function GET(req: NextRequest) {
     if (!auth.ok) return auth.response;
     const limitRaw = req.nextUrl.searchParams.get('limit');
     const limit = limitRaw ? Math.max(1, Math.min(parseInt(limitRaw, 10) || 50, 200)) : 50;
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<SendHistoryRow[]>(
       `SELECT id, to_addr, subject, template, status, error, sent_at
        FROM email_send_history
        ORDER BY sent_at DESC, id DESC

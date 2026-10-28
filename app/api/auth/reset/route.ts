@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from '@/lib/db';
 import { hashPassword, signSession, setSessionCookie, validatePassword } from '@/lib/auth';
 import { findValidResetRow, markResetUsed } from '@/lib/password-reset';
@@ -7,6 +8,11 @@ import { writeAudit } from '@/lib/audit';
 interface Body {
   token?: string;
   newPassword?: string;
+}
+
+interface ResetUserRow extends RowDataPacket {
+  id: number;
+  username: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -44,16 +50,17 @@ export async function POST(req: NextRequest) {
   }
 
   const pool = getPool();
-  const [urows] = await pool.query<any[]>(`SELECT id, username FROM users WHERE id = ? LIMIT 1`, [
-    row.user_id,
-  ]);
+  const [urows] = await pool.query<ResetUserRow[]>(
+    `SELECT id, username FROM users WHERE id = ? LIMIT 1`,
+    [row.user_id],
+  );
   if (urows.length === 0) {
     return NextResponse.json(
       { ok: false, error: { code: 'invalid_token', message: '链接已失效,请重新申请' } },
       { status: 400 },
     );
   }
-  const user = { id: Number(urows[0].id), username: urows[0].username as string };
+  const user = { id: Number(urows[0].id), username: urows[0].username };
 
   const newHash = await hashPassword(newPassword);
   await pool.query(`UPDATE users SET password_hash = ? WHERE id = ?`, [newHash, user.id]);

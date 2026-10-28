@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
 import { requireUser } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 import { logDownload } from '@/lib/downloads';
 import { logUserAction } from '@/lib/audit';
+
+/** `SELECT 1` — the column name MySQL gives the literal is `1`. */
+interface ExistsRow extends RowDataPacket {
+  '1': number;
+}
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ char: string }> }) {
   return withErrorHandling(async () => {
@@ -13,7 +19,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cha
     const char = decodeURIComponent(raw ?? '');
     if (!char) return badRequest('bad_char', 'invalid char');
     // Verify the char exists in the catalog (don't log fake prints for typos)
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<ExistsRow[]>(
       `SELECT 1 FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
       [char],
     );

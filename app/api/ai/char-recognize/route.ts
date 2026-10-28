@@ -18,10 +18,24 @@ function isCjkBmpChar(ch: string): boolean {
   );
 }
 
+/**
+ * Read the `image` field out of an untrusted request body.
+ *
+ * The previous code typed the body as `any` and did
+ * `typeof body?.image === 'string' ? body.image : ''`. This helper keeps that
+ * exact behaviour while accepting an `unknown` body: a missing, null or
+ * non-string `image` still yields the empty string.
+ */
+function readImageField(value: unknown): string {
+  if (typeof value !== 'object' || value === null) return '';
+  const candidate = (value as { image?: unknown }).image;
+  return typeof candidate === 'string' ? candidate : '';
+}
+
 export async function POST(req: NextRequest) {
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim().slice(0, 45) ?? null;
 
-  let body: any;
+  let body: unknown;
   try {
     body = await req.json();
   } catch {
@@ -31,7 +45,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const image = typeof body?.image === 'string' ? body.image : '';
+  const image = readImageField(body);
   if (!image || !VALID_PREFIXES.some((p) => image.startsWith(p))) {
     return NextResponse.json(
       { ok: false, error: 'invalid_image', message: '图片格式或大小不支持' },

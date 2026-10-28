@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, badRequest, unauthorized, forbidden } from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
 import { hasFeature } from '@/lib/membership';
@@ -8,6 +9,10 @@ import { getPool } from '@/lib/db';
 import { logAiCall, checkAiRateLimit } from '@/lib/ai-calls';
 
 const Schema = z.object({ char: z.string().length(1) });
+
+interface PinyinRow extends RowDataPacket {
+  pinyin: string | null;
+}
 
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -24,7 +29,7 @@ export async function POST(req: NextRequest) {
         { status: 429 },
       );
     }
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<PinyinRow[]>(
       `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`,
       [parsed.data.char],
     );

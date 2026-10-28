@@ -47,7 +47,12 @@ export default function AdminPayPalConfigPage() {
       setBusy(true);
       setMsg(null);
       setErr(null);
-      const body: any = {};
+      const body: {
+        mode?: 'sandbox' | 'live';
+        clientId?: string;
+        clientSecret?: string;
+        webhookId?: string;
+      } = {};
       if (cfg) body.mode = cfg.mode;
       if (clientId) body.clientId = clientId;
       if (clientSecret) body.clientSecret = clientSecret;

@@ -37,12 +37,14 @@ export function DictionaryCharGridClient({ chars }: { chars: Char[] }) {
         'success',
         result.added ? `已添加到「${result.title}」` : `「${c}」已在「${result.title}」中`,
       );
-    } catch (e: any) {
-      if (e?.code === 'unauthorized') {
+    } catch (e: unknown) {
+      // `appendCharToWorksheetApi` throws an Error, sometimes with a `code`.
+      const err = (e ?? {}) as { code?: string; message?: string };
+      if (err.code === 'unauthorized') {
         router.push(`/login?next=${encodeURIComponent(pathname)}`);
         return;
       }
-      pushToast('error', e?.message ?? '添加失败');
+      pushToast('error', err.message ?? '添加失败');
     }
   };
 

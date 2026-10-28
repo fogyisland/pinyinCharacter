@@ -1,4 +1,5 @@
 import { Download, Bot, AlertTriangle, Eye, Users, FileText, KeyRound, Activity } from 'lucide-react';
+import type { RowDataPacket } from 'mysql2';
 import { StatCard } from '@/components/admin/StatCard';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { Panel } from '@/components/admin/Panel';
@@ -10,6 +11,10 @@ import { getPool } from '@/lib/db';
 import { getPageViewStats } from '@/lib/admin-pageviews';
 
 export const dynamic = 'force-dynamic';
+
+interface CountRow extends RowDataPacket {
+  n: number;
+}
 
 export default async function AdminIndex() {
   // The MCP counters are read with their own guard: the `mcp_tokens`
@@ -25,11 +30,11 @@ export default async function AdminIndex() {
     getSystemStats(),
     getDownloadStats(7),
     getAiStats(7),
-    getPool().query<any[]>(`SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`),
+    getPool().query<CountRow[]>(`SELECT COUNT(*) AS n FROM users WHERE disabled_at IS NOT NULL`),
     getPageViewStats(7),
     mcpStatsPromise,
   ]);
-  const disabledUsersCount = Number((disabledRows[0] as any[])[0]?.n ?? 0);
+  const disabledUsersCount = Number(disabledRows[0][0]?.n ?? 0);
   const aiErrorRatePct = `${(ai.errorRate * 100).toFixed(1)}%`;
 
   const systemFigures = [

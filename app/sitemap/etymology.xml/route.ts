@@ -1,5 +1,10 @@
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from '@/lib/db';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
+
+interface CharRow extends RowDataPacket {
+  char: string;
+}
 
 function generateSitemapXml(
   urls: Array<{ loc: string; changefreq?: string; priority?: number }>,
@@ -19,7 +24,7 @@ function generateSitemapXml(
 export async function GET() {
   const pool = getPool();
   const baseUrl = await getRuntimeSiteUrl();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<CharRow[]>(
     `SELECT c.\`char\` FROM chars c
        INNER JOIN char_etymology e ON c.\`char\` = e.\`char\`
        WHERE c.\`char\` REGEXP '^[一-鿿]$'

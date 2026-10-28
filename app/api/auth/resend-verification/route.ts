@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, type User } from '@/lib/auth';
 import { issueVerificationToken, findVerificationStatus } from '@/lib/email-verification';
 import { sendEmail } from '@/lib/email';
 import { emailVerificationEmail } from '@/lib/email-templates';
@@ -25,7 +25,7 @@ export async function POST(_req: NextRequest) {
     );
   }
   // Need email — fall back to user.username if email column missing for old rows.
-  const email = (user as any).email as string | undefined;
+  const email = (user as User & { email?: string }).email;
   if (!email) {
     return NextResponse.json(
       { ok: false, error: { code: 'no_email', message: '账号没有邮箱,无法重发' } },

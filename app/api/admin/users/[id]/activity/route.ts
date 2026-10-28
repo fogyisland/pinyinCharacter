@@ -1,10 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
 interface Ctx {
   params: Promise<{ id: string }>;
+}
+
+interface AuditRow extends RowDataPacket {
+  id: number;
+  event: string;
+  metadata: Record<string, unknown> | null;
+  ip: string | null;
+  created_at: Date | string;
+}
+
+interface DownloadRow extends RowDataPacket {
+  id: number;
+  source_type: string;
+  source_id: string | null;
+  status: string;
+  format: string;
+  duration_ms: number | null;
+  created_at: Date | string;
+}
+
+interface AiCallRow extends RowDataPacket {
+  id: number;
+  feature: string;
+  model: string;
+  status: string;
+  duration_ms: number | null;
+  error: string | null;
+  metadata: Record<string, unknown> | string | null;
+  created_at: Date | string;
 }
 
 interface UnifiedLogEntry {
@@ -43,37 +76,37 @@ export async function GET(req: NextRequest, ctx: Ctx) {
     const after = url.searchParams.get('after');
 
     const pool = getPool();
-    const auditArgs: any[] = [userId];
+    const auditArgs: SqlParam[] = [userId];
     let auditWhere = '';
     if (after) {
       auditWhere = 'AND created_at > ?';
       auditArgs.push(after);
     }
-    const [audit] = await pool.query<any[]>(
+    const [audit] = await pool.query<AuditRow[]>(
       `SELECT id, event, metadata, ip, created_at FROM audit_log
        WHERE user_id = ? ${auditWhere} ORDER BY created_at DESC LIMIT 100`,
       auditArgs,
     );
 
-    const dlArgs: any[] = [userId];
+    const dlArgs: SqlParam[] = [userId];
     let dlWhere = '';
     if (after) {
       dlWhere = 'AND created_at > ?';
       dlArgs.push(after);
     }
-    const [downloads] = await pool.query<any[]>(
+    const [downloads] = await pool.query<DownloadRow[]>(
       `SELECT id, source_type, source_id, status, format, duration_ms, created_at
        FROM downloads WHERE user_id = ? ${dlWhere} ORDER BY created_at DESC LIMIT 100`,
       dlArgs,
     );
 
-    const aiArgs: any[] = [userId];
+    const aiArgs: SqlParam[] = [userId];
     let aiWhere = '';
     if (after) {
       aiWhere = 'AND created_at > ?';
       aiArgs.push(after);
     }
-    const [aiCalls] = await pool.query<any[]>(
+    const [aiCalls] = await pool.query<AiCallRow[]>(
       `SELECT id, feature, model, status, duration_ms, error, metadata, created_at
        FROM ai_calls WHERE user_id = ? ${aiWhere} ORDER BY created_at DESC LIMIT 100`,
       aiArgs,

@@ -3,21 +3,14 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, X, Check, AlertTriangle } from 'lucide-react';
-import { grantAdminMembershipRequest, listAdminPlansRequest } from '@/lib/api-admin';
+import {
+  grantAdminMembershipRequest,
+  listAdminPlansRequest,
+  type AdminPlanRow,
+} from '@/lib/api-admin';
 import { formatDate } from '@/lib/format';
 import { FormField } from '@/components/admin/FormField';
 import { AdminButton } from '@/components/admin/AdminButton';
-
-interface Plan {
-  id: number;
-  planKey: string;
-  displayName: string;
-  durationDays: number;
-  amount: string;
-  currency: string;
-  enabled: boolean;
-  features: string[];
-}
 
 export function ManualGrantDrawer() {
   const router = useRouter();
@@ -25,7 +18,7 @@ export function ManualGrantDrawer() {
   const [userId, setUserId] = useState('');
   const [planKey, setPlanKey] = useState('');
   const [note, setNote] = useState('');
-  const [plans, setPlans] = useState<Plan[]>([]);
+  const [plans, setPlans] = useState<AdminPlanRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -34,8 +27,8 @@ export function ManualGrantDrawer() {
     if (!open) return;
     listAdminPlansRequest().then((r) => {
       if (r.ok) {
-        setPlans(r.data.items as any);
-        const first = (r.data.items as Plan[]).find((p) => p.enabled) ?? r.data.items[0];
+        setPlans(r.data.items);
+        const first = r.data.items.find((p) => p.enabled) ?? r.data.items[0];
         if (first) setPlanKey(first.planKey);
       }
     });

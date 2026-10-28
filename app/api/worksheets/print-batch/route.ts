@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { withErrorHandling, badRequest, forbidden, notFound } from '@/lib/api-handler';
 import { requireUser } from '@/lib/auth';
 import { getPool } from '@/lib/db';
@@ -7,6 +8,16 @@ import { logDownload } from '@/lib/downloads';
 import { logUserAction } from '@/lib/audit';
 import { printBatchSchema } from '@/lib/validators';
 import { exceedsFreeLimit } from '@/lib/worksheet-page-count';
+import type { FontFamily, PaperSize } from '@/lib/worksheet-types';
+
+interface WorksheetBatchRow extends RowDataPacket {
+  id: number;
+  title: string;
+  content: string[];
+  paper_size: PaperSize;
+  cell_style: string;
+  font_family: FontFamily;
+}
 
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -18,7 +29,7 @@ export async function POST(req: NextRequest) {
     const { worksheetIds } = parsed.data;
 
     const placeholders = worksheetIds.map(() => '?').join(',');
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<WorksheetBatchRow[]>(
       `SELECT id, title, content, paper_size, cell_style, font_family
        FROM worksheets WHERE user_id = ? AND id IN (${placeholders})`,
       [auth.user.id, ...worksheetIds],
@@ -50,13 +61,13 @@ export async function POST(req: NextRequest) {
     }
     await logUserAction(req, auth.user.id, 'worksheet_batch_printed', {
       count: rows.length,
-      ids: rows.map((r: any) => r.id),
+      ids: rows.map((r) => r.id),
     });
 
     return NextResponse.json({
       ok: true,
       data: {
-        worksheets: rows.map((r: any) => ({
+        worksheets: rows.map((r) => ({
           id: r.id,
           title: r.title,
           content: r.content,

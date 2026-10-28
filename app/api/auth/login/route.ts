@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from '@/lib/db';
 import { verifyPassword, signSession, setSessionCookie } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
@@ -6,6 +7,14 @@ import { writeAudit } from '@/lib/audit';
 interface Body {
   username?: string;
   password?: string;
+}
+
+interface UserAuthRow extends RowDataPacket {
+  id: number;
+  username: string;
+  password_hash: string;
+  is_admin: number | boolean;
+  disabled_at: Date | null;
 }
 
 export async function POST(req: NextRequest) {
@@ -29,7 +38,7 @@ export async function POST(req: NextRequest) {
   }
 
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<UserAuthRow[]>(
     `SELECT id, username, password_hash, is_admin, disabled_at FROM users WHERE username = ? LIMIT 1`,
     [username],
   );

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCurrentUserWithAdmin } from '@/lib/auth';
+import { getCurrentUserWithAdmin, type User } from '@/lib/auth';
 import { getCampaign } from '@/lib/email-campaigns';
 import { campaignEmail } from '@/lib/email-templates';
 import { sendEmail } from '@/lib/email';
@@ -26,7 +26,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ ok: false, error: { code: 'not_found' } }, { status: 404 });
   }
   // Resolve the admin's email — fall back to user.username if email missing.
-  const adminEmail = (user as any).email as string | undefined;
+  const adminEmail = (user as User & { email?: string }).email;
   if (!adminEmail) {
     return NextResponse.json(
       { ok: false, error: { code: 'no_email', message: '当前管理员账号没有邮箱' } },

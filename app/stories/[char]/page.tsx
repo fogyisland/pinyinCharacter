@@ -4,6 +4,7 @@ import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { getHanziStory } from '@/lib/story';
+import type { RareCharClient } from '@/lib/api-rare-chars';
 import { StoryClient } from '../StoryClient';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export default async function StoryForCharPage({ params }: Props) {
   // StoryClient expects RareCharClient shape (char/pinyin/meaning/story + bookkeeping).
   // HanziStory is slimmer — adapt the three content fields and provide safe defaults
   // for the bookkeeping fields StoryClient doesn't read (needsReview/generatedBy/At/createdAt).
-  const adapted = {
+  const adapted: RareCharClient = {
     char: data.char,
     story: data.story,
     pinyin: data.pinyin ?? '',
@@ -42,7 +43,7 @@ export default async function StoryForCharPage({ params }: Props) {
           字 · 韵 · 一日一读
         </div>
         <SectionTitle subtitle="字源演变故事">读故事</SectionTitle>
-        <StoryClient initialChar={adapted as any} />
+        <StoryClient initialChar={adapted} />
       </PageContainer>
       <Footer />
     </>
