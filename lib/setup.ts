@@ -170,6 +170,52 @@ export function reloadProcessEnvFromFile(): void {
 }
 
 /**
+ * Tri-state setup state.
+ *
+ * `isSetupComplete()` collapses "not initialized" and "could not find out"
+ * into a single `false`. That is fine for the /init wizard (which wants to
+ * *offer* setup whenever it cannot confirm setup), but it is wrong for a
+ * gate that has to decide whether to *redirect the user away* from the
+ * site: a transient DB blip would then look like "setup never ran" and
+ * would bounce every visitor into the wizard.
+ *
+ * - `complete`   — app_config says `setup.completed = 'true'`
+ * - `incomplete` — we positively know setup has not finished: no
+ *                  DATABASE_URL at all, or the flag row is missing / not
+ *                  `'true'`
+ * - `unknown`    — the DB could not be reached; callers must not lock
+ *                  anyone out on this
+ */
+export type SetupState = 'complete' | 'incomplete' | 'unknown';
+
+/**
+ * Read the authoritative setup state.
+ *
+ * Note that this is NOT what the middleware uses: the edge runtime cannot
+ * import mysql2, so the middleware can only look at the `setup_completed`
+ * cookie. The cookie is a *hint* — it can go stale (a redeploy against a
+ * fresh database leaves the browser holding a cookie that says "setup is
+ * done" while the new database has no tables at all). `getSetupState()` is
+ * the server-side truth that the root-layout guard uses to catch exactly
+ * that case.
+ */
+export async function getSetupState(): Promise<SetupState> {
+  // No DATABASE_URL means the install was never configured — that is a
+  // positive "not initialized", not an unknown. The wizard's first step is
+  // precisely the form that fills this in.
+  if (!process.env.DATABASE_URL) return 'incomplete';
+  try {
+    const { getPool } = await import('./db');
+    const [rows] = await getPool().query<SetupFlagRow[]>(
+      `SELECT value FROM app_config WHERE \`key\` = 'setup.completed' LIMIT 1`,
+    );
+    return rows.length > 0 && rows[0].value === 'true' ? 'complete' : 'incomplete';
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
  * Check whether the system has been initialized. We use the app_config flag
  * `setup.completed` set at the end of /init step 3. This is the source of
  * truth — middleware redirects to /init when false.
@@ -178,16 +224,7 @@ export function reloadProcessEnvFromFile(): void {
  * the user out of /init). Caller should not treat a false negative as fatal.
  */
 export async function isSetupComplete(): Promise<boolean> {
-  if (!process.env.DATABASE_URL) return false;
-  try {
-    const { getPool } = await import('./db');
-    const [rows] = await getPool().query<SetupFlagRow[]>(
-      `SELECT value FROM app_config WHERE \`key\` = 'setup.completed' LIMIT 1`,
-    );
-    return rows.length > 0 && rows[0].value === 'true';
-  } catch {
-    return false;
-  }
+  return (await getSetupState()) === 'complete';
 }
 
 /**

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { AuthSync } from './_auth-sync';
 import { ToastViewport } from '@/components/common/Toast';
 import { ActivationGuard } from '@/components/ActivationGuard';
+import { SetupGuard } from '@/components/SetupGuard';
 import { PageViewTracker } from '@/components/PageViewTracker';
 import { buildOrganization, buildWebSite } from '@/lib/seo/jsonld';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
@@ -65,7 +66,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body className="font-sans antialiased min-h-screen">
         <AuthSync />
-        <ActivationGuard>{children}</ActivationGuard>
+        <SetupGuard>
+          <ActivationGuard>{children}</ActivationGuard>
+        </SetupGuard>
         <PageViewTracker />
         <ToastViewport />
       </body>

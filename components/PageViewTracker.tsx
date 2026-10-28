@@ -3,7 +3,9 @@
 import { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 
-const EXCLUDE_PREFIXES = ['/admin', '/api', '/_next'];
+// /init is the setup wizard — it is not site usage, and tracking it would
+// mean a page view on an install whose database may not even exist yet.
+const EXCLUDE_PREFIXES = ['/admin', '/api', '/_next', '/init'];
 
 export function PageViewTracker() {
   const pathname = usePathname();

@@ -84,6 +84,29 @@ describe('middleware: static assets bypass the setup gate', () => {
   }
 });
 
+describe('middleware: passes the requested path down to the app', () => {
+  // The edge runtime cannot query MySQL, so the root layout's SetupGuard
+  // needs the path to know whether it is guarding /init (which must never
+  // be redirected, or the wizard would loop). The middleware stamps it
+  // onto the request headers — on EVERY pass-through, /init included.
+  it('stamps x-pathname when the request passes through', async () => {
+    // Cookie present → the gate lets it through (otherwise it would redirect).
+    const res = callMiddleware('/login', { cookie: '1' });
+    expect(res.headers.get('x-middleware-override-headers')).toContain('x-pathname');
+    expect(res.headers.get('x-middleware-request-x-pathname')).toBe('/login');
+  });
+
+  it('stamps x-pathname on /init as well', async () => {
+    const res = callMiddleware('/init');
+    expect(res.headers.get('x-middleware-request-x-pathname')).toBe('/init');
+  });
+
+  it('stamps x-pathname on /init sub-pages', async () => {
+    const res = callMiddleware('/init/db');
+    expect(res.headers.get('x-middleware-request-x-pathname')).toBe('/init/db');
+  });
+});
+
 describe('middleware: cookie gate', () => {
   it('redirects /login to /init when cookie missing', async () => {
     const res = callMiddleware('/login');

@@ -56,28 +56,42 @@ function isStaticAsset(pathname: string): boolean {
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
+  // Pass the requested path down to the app.
+  //
+  // The edge runtime cannot import mysql2, so the setup gate below can only
+  // look at the `setup_completed` cookie — a browser-held *hint* that can
+  // go stale (redeploy against a fresh database: the cookie still says
+  // "done" while the new database has no tables). The root layout's
+  // SetupGuard re-checks the real state server-side, and it needs to know
+  // which path it is guarding so it can let /init render. `headers()` in a
+  // server component exposes no pathname, so the middleware hands it over
+  // here — on EVERY pass-through response, /init included.
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set('x-pathname', pathname);
+  const passThrough = () => NextResponse.next({ request: { headers: requestHeaders } });
+
   // Always allow /init (the wizard + its 3 screens) and its API routes
   if (pathname === '/init' || pathname.startsWith('/init/')) {
-    return NextResponse.next();
+    return passThrough();
   }
   if (pathname.startsWith('/api/init/')) {
-    return NextResponse.next();
+    return passThrough();
   }
 
   // MCP clients do not carry browser cookies — they present a bearer token
   // instead — so /mcp has to pass the cookie gate.
   if (pathname === '/mcp' || pathname.startsWith('/mcp/')) {
-    return NextResponse.next();
+    return passThrough();
   }
 
   // Allow Next.js internals and static assets
   if (isStaticAsset(pathname)) {
-    return NextResponse.next();
+    return passThrough();
   }
 
   // Cookie gate: trust `setup_completed=1` to mean setup is done.
   if (req.cookies.get('setup_completed')?.value === '1') {
-    return NextResponse.next();
+    return passThrough();
   }
 
   // Otherwise, force the wizard.

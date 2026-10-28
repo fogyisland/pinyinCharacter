@@ -21,9 +21,14 @@ import { isLocked } from '@/lib/activation';
  * a transient blip is worse than letting one request through.
  */
 export async function ActivationGuard({ children }: { children: ReactNode }) {
-  // Read pathname from request headers (Next.js exposes this in server components)
+  // Read pathname from request headers (Next.js exposes this in server components).
+  // `x-pathname` is stamped by the middleware on every request and is the path
+  // that was actually requested; `x-invoke-path` is Next's internal segment
+  // hint (absent on a full page load) and `next-url` only rides along on RSC
+  // requests. Prefer the authoritative one, so the /activate skip below works
+  // on a direct load too.
   const h = await headers();
-  const pathname = h.get('x-invoke-path') ?? h.get('x-pathname') ?? h.get('next-url') ?? '';
+  const pathname = h.get('x-pathname') ?? h.get('x-invoke-path') ?? h.get('next-url') ?? '';
   // /activate and /api/activation/* are always allowed
   if (pathname === '/activate' || pathname.startsWith('/api/activation/')) {
     return <>{children}</>;
