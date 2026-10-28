@@ -2334,7 +2334,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
 
 - [ ] **Step 2: Run integration test**
 
-Run: `DATABASE_URL='mysql://root:Admin909217@127.0.0.1:3306/pinyin_dev' npx vitest run tests/integration/init-wizard.test.ts`
+Run: `DATABASE_URL='mysql://root:<password>@127.0.0.1:3306/pinyin_dev' npx vitest run tests/integration/init-wizard.test.ts`
 Expected: PASS, 1 test green (or skip with "DATABASE_URL not set" if no env).
 
 - [ ] **Step 3: Commit**

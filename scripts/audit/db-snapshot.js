@@ -1,15 +1,11 @@
 // DB snapshot for code review — captures current state vs what scripts produce
+//
+// The MySQL password comes from AUDIT_DB_PASSWORD — see ./db-config.js.
 const mysql = require('mysql2/promise');
-
-const CONFIG = {
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'Admin909217',
-  database: 'piyin_deploy_test',
-  charset: 'utf8mb4',
-};
+const { requireAuditDbPassword } = require('./db-config');
 
 async function main() {
+  const CONFIG = requireAuditDbPassword();
   const conn = await mysql.createConnection(CONFIG);
 
   const out = {};

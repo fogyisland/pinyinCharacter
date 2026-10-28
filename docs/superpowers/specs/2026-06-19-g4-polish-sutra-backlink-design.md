@@ -146,7 +146,7 @@ This fills the brush-mode gap in the existing `pageCountFor` coverage (only A3/A
 
 **New:** `scripts/pull-prod-to-dev.ts` (already written, untracked)
 
-- Reads prod URL from `process.env.DATABASE_URL_REMOTE` (fallback: `mysql://piyin:Admin909217@139.5.108.245:3306/piyin`).
+- Reads prod URL from `process.env.DATABASE_URL_REMOTE` (fallback: `mysql://piyin:<password>@139.5.108.245:3306/piyin`).
 - Reads local URL from `process.env.DATABASE_URL` (required, no fallback).
 - Opens two `mysql2` connections (prod + local), uses `utf8mb4` on local.
 - For each of `chars` and `rare_chars`:

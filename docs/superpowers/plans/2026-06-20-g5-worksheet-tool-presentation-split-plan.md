@@ -76,8 +76,8 @@ Expected: exit 0 (the ENUM is a string column from the app's perspective; wideni
 Run:
 
 ```bash
-mysql -uroot -pAdmin909217 piyin_dev < scripts/migrations/2026-06-20-worksheet-tool-presentation-split.sql
-mysql -uroot -pAdmin909217 piyin_dev -e "SELECT cell_style, COUNT(*) FROM worksheets GROUP BY cell_style"
+mysql -uroot -p piyin_dev < scripts/migrations/2026-06-20-worksheet-tool-presentation-split.sql
+mysql -uroot -p piyin_dev -e "SELECT cell_style, COUNT(*) FROM worksheets GROUP BY cell_style"
 ```
 
 Expected: 0 rows with old values; new rows in `'pen-square'` etc. (Existing user worksheets may be 0; that's fine — backfill is the contract.)

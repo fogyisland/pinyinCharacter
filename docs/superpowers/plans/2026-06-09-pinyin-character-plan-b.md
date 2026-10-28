@@ -2561,7 +2561,7 @@ git commit -m "feat(ui): PinyinFullSentence auto-save on convert"
 
 | 变量                | 必填 | 说明                                                                                             |
 | ------------------- | ---- | ------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`      | ✓    | MySQL 连接串，例 `mysql://root:pw@localhost:3306/pinyin`                                         |
+| `DATABASE_URL`      | ✓    | MySQL 连接串，例 `mysql://root:<password>@localhost:3306/pinyin`                                         |
 | `JWT_SECRET`        | ✓    | 32+ 字节随机串，例 `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
 | `DATABASE_URL_TEST` |      | 集成测试用，缺省时 skip                                                                          |
 | `COOKIE_SECURE`     |      | 生产环境设为 `true` 让 cookie 带 Secure 标志                                                     |

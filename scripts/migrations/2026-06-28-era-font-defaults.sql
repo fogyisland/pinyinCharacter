@@ -2,7 +2,7 @@
 -- Idempotent: re-runs find rows already present, ON DUPLICATE KEY UPDATE is a no-op
 -- when value already matches.
 -- Apply on existing piyin_dev / piyin DB:
---   "E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev < this_file
+--   "E:/mysql/bin/mysql.exe" -uroot -p piyin_dev < this_file
 --   (same for piyin when prod exists)
 
 INSERT INTO app_config (`key`, value, updated_by) VALUES

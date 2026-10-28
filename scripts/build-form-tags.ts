@@ -16,7 +16,7 @@
  * normalized 189 form-tagged rows, this backfills the remaining 435 NULL.
  *
  * Run:
- *   DATABASE_URL=mysql://root:Admin909217@127.0.0.1:3306/piyin_dev \
+ *   DATABASE_URL=mysql://root:<password>@127.0.0.1:3306/piyin_dev \
  *     pnpm tsx scripts/build-form-tags.ts
  *   DATABASE_URL=mysql://... pnpm tsx scripts/build-form-tags.ts --dry-run
  */

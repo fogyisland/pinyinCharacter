@@ -1,15 +1,13 @@
+// Seed-vs-DB gap report.
+//
+// The MySQL password comes from AUDIT_DB_PASSWORD — see ./db-config.js.
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
+const { requireAuditDbPassword } = require('./db-config');
 
 async function main() {
-  const conn = await mysql.createConnection({
-    host: '127.0.0.1',
-    user: 'root',
-    password: 'Admin909217',
-    database: 'piyin_deploy_test',
-    charset: 'utf8mb4',
-  });
+  const conn = await mysql.createConnection(requireAuditDbPassword());
 
   const out = { checks: [], gaps: [] };
   function step(name) {

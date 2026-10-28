@@ -346,7 +346,7 @@ Run:
 
 ```bash
 pnpm tsc --noEmit
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/migrate-poems-to-files.ts
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/migrate-poems-to-files.ts
 ```
 
 Expected: tsc clean; live run prints `written=0 skipped=1161` on second run (idempotent). First run should print `written=1161 skipped=0`.
@@ -933,7 +933,7 @@ Expected: tsc clean, all tests pass, build succeeds. (This task touches `app/api
 Run:
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm dev &
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm dev &
 sleep 5
 curl -s "http://localhost:4444/api/poetry?dynasty=tang&page=1&pageSize=3" | head -c 500
 echo
@@ -1128,7 +1128,7 @@ Run:
 ```bash
 pnpm tsc --noEmit
 pnpm build
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm dev &
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm dev &
 sleep 6
 curl -s "http://localhost:4444/sitemap.xml" | head -c 800
 echo
@@ -1466,8 +1466,8 @@ if (require.main === module) {
 Run:
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/drop-poems-table.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SHOW TABLES LIKE 'poems';"
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/drop-poems-table.ts
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SHOW TABLES LIKE 'poems';"
 ```
 
 Expected: prints "poems table dropped"; second command returns empty (table gone).
@@ -1475,7 +1475,7 @@ Expected: prints "poems table dropped"; second command returns empty (table gone
 Then start dev and re-curl the API:
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm dev &
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm dev &
 sleep 5
 curl -s "http://localhost:4444/api/poetry?dynasty=tang&page=1&pageSize=2" | head -c 400
 echo
@@ -1508,7 +1508,7 @@ git -c user.email=claude@anthropic.com -c user.name=claude commit -m "feat(poetr
 Run:
 
 ```bash
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SHOW TABLES LIKE 'poems';"
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SHOW TABLES LIKE 'poems';"
 ls data/poems/ | grep -E '^[0-9]+\.json$' | wc -l
 pnpm tsx scripts/check-poems-manifest.ts
 ```

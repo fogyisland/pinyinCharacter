@@ -63,7 +63,7 @@ UI 把这 9 张卡一字排开 (`app/init/page.tsx:421-475`),用户嫌"混在一
 浏览器控制台:
 
 - `POST https://ziyun.pudafo.com/api/init/init-db 500` — 端点已被 `a00c6106` 删除,但旧 client bundle 缓存仍在调
-- `<input type="password" value="Admin909217">` — step 1 的 dbConfig.password 提交后还留在 state,NAV 回到 step 1 时回显
+- `<input type="password" value="<password>">` — step 1 的 dbConfig.password 提交后还留在 state,NAV 回到 step 1 时回显
 - `[DOM] Input elements should have autocomplete attributes` — Browser 报警,所有 `<input>` 都没 `autoComplete`
 
 ### 期望行为
@@ -173,7 +173,7 @@ return NextResponse.json(
 
 | Bug                                             | 修法                                                                                                                                                                                                                      |
 | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `<input value="Admin909217">`                   | step 1 提交成功后立刻 `setDbConfig({...DEFAULT_DB, ...cfg, password: ''})`; screen 1 重渲染不携带 password                                                                                                                |
+| `<input value="<password>">`                   | step 1 提交成功后立刻 `setDbConfig({...DEFAULT_DB, ...cfg, password: ''})`; screen 1 重渲染不携带 password                                                                                                                |
 | `[DOM] Input elements should have autocomplete` | DB host/user: `autoComplete="off"`<br>DB password: `autoComplete="current-password"`<br>Admin username: `autoComplete="username"`<br>Admin password: `autoComplete="new-password"`<br>Admin email: `autoComplete="email"` |
 | Admin password 在 step 2 → 3 后泄漏             | step 3 调完 `/api/init/mark-complete` 后,`sessionStorage.removeItem('piyin.init.admin.creds')` + `setPassword('')`                                                                                                        |
 

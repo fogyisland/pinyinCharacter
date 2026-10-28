@@ -69,7 +69,7 @@ The following 10 of V1's 14 tasks are already on `main` between commits `9f7763c
 - Read `lib/classics-types.ts` for the `VolumeJson` shape.
 - Read `lib/guwendao-scraper.ts` for the `fetchChapterList(bookId)` and `scrapeChapterContent(bookId, chapterId)` signatures. (Both already exist.)
 - Read the latest commit message for `scripts/build-classics-guwendao.ts` to see the post-`8b204b61` pattern (it writes JSON + manifest + 6-col INSERT, not 7-col).
-- Run `"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SHOW COLUMNS FROM classics;"` and confirm no `chunks` column + the ENUM values for `category`.
+- Run `"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SHOW COLUMNS FROM classics;"` and confirm no `chunks` column + the ENUM values for `category`.
 
 - [ ] **Step 1: Widen `classics.category` ENUM (idempotent) + write failing test**
 
@@ -324,7 +324,7 @@ Expected: PASS (1 test).
 
 ```bash
 pnpm tsx --env-file=.env.local scripts/build-pianwen.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SELECT slug, title, category, author, era FROM classics WHERE category='pianwen';"
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SELECT slug, title, category, author, era FROM classics WHERE category='pianwen';"
 ```
 
 Expected: 1 row inserted with `slug=xunmeng-pianju`, `category=pianwen`, `author=萧良有/司祢`, `era=明/清`. ~30 chapters, ~10-20 KB JSON. Manifest now has 195 books (was 194).

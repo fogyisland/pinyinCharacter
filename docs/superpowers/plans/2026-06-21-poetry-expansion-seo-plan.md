@@ -196,8 +196,8 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run on piyin_dev**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/migrate-poems-schema.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "DESCRIBE poems;"
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/migrate-poems-schema.ts
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "DESCRIBE poems;"
 ```
 
 Expected first run: `ran: dynasty, category, idx_category, form, idx_form`
@@ -206,7 +206,7 @@ Expected DESCRIBE: `dynasty varchar(16)`, new `category varchar(32)`, `form varc
 - [ ] **Step 6: Re-run to verify idempotency**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/migrate-poems-schema.ts
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/migrate-poems-schema.ts
 ```
 
 Expected: `ran: ; skipped: dynasty, category, idx_category, form, idx_form`
@@ -324,8 +324,8 @@ Expected: PASS
 - [ ] **Step 5: Run on piyin_dev**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/normalize-existing-form.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SELECT form, COUNT(*) AS n FROM poems GROUP BY form ORDER BY n DESC;"
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/normalize-existing-form.ts
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SELECT form, COUNT(*) AS n FROM poems GROUP BY form ORDER BY n DESC;"
 ```
 
 Expected: `total updated: 189` (from existing 189 五言律诗/etc rows). New distribution: 五律/七律/五言古风/七言古风 instead of 五言律诗/七言律诗/五言古诗/七言古诗.
@@ -333,7 +333,7 @@ Expected: `total updated: 189` (from existing 189 五言律诗/etc rows). New di
 - [ ] **Step 6: Re-run to verify idempotent (no-op on second run)**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/normalize-existing-form.ts
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/normalize-existing-form.ts
 ```
 
 Expected: `total updated: 0`
@@ -802,7 +802,7 @@ Expected: PASS
 - [ ] **Step 5: Run --dry-run on piyin_dev**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-form-tags.ts --dry-run
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-form-tags.ts --dry-run
 ```
 
 Expected: prints distribution of inferred forms (五绝/七绝/五律/七律/古风/乐府/词牌名 counts)
@@ -810,8 +810,8 @@ Expected: prints distribution of inferred forms (五绝/七绝/五律/七律/古
 - [ ] **Step 6: Run actual backfill on piyin_dev**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-form-tags.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SELECT form, COUNT(*) AS n FROM poems GROUP BY form ORDER BY n DESC LIMIT 20;"
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-form-tags.ts
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SELECT form, COUNT(*) AS n FROM poems GROUP BY form ORDER BY n DESC LIMIT 20;"
 ```
 
 Expected: completes in 5-15 min. Distribution: formSet ≈ scanned - formNull. Most poems get form=五绝/七绝/五律/七律/古风/乐府/词牌名/套数/小令.
@@ -990,8 +990,8 @@ Expected: PASS
 In `scripts/build-classics-guwendao.ts`, replace inline scraping with imports from `lib/guwendao-scraper.ts`. Keep the public API of the script identical (book list, volume splits, manifest writing). Re-run on piyin_dev to verify same output:
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-classics-guwendao.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SELECT COUNT(*) AS n FROM classics;"
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-classics-guwendao.ts
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SELECT COUNT(*) AS n FROM classics;"
 ```
 
 Expected: still 195 classics (190 from yesterday + 5 chinese-poetry leftovers). No data change.
@@ -1277,8 +1277,8 @@ Expected: PASS
 - [ ] **Step 5: Run on piyin_dev**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-poems-extra.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SELECT category, COUNT(*) AS n FROM poems GROUP BY category ORDER BY n DESC;"
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-poems-extra.ts
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SELECT category, COUNT(*) AS n FROM poems GROUP BY category ORDER BY n DESC;"
 ```
 
 Expected: inserted ~600 (5 collections × ~120 avg). Categories: 汉乐府 ~200, 古诗十九首 ~19, 骈文 ~47, 魏 ~20, qing ~350.
@@ -1286,7 +1286,7 @@ Expected: inserted ~600 (5 collections × ~120 avg). Categories: 汉乐府 ~200,
 - [ ] **Step 6: Re-run to verify idempotent (no-op)**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-poems-extra.ts
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-poems-extra.ts
 ```
 
 Expected: `inserted=0 skipped=<previous total>`
@@ -1432,8 +1432,8 @@ Expected: PASS
 - [ ] **Step 5: Run on piyin_dev**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-pianwen.ts
-"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -pAdmin909217 --default-character-set=utf8mb4 piyin_dev -e "SELECT slug, title, category, JSON_LENGTH(chunks) AS chapters FROM classics WHERE category='pianwen';"
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" pnpm tsx scripts/build-pianwen.ts
+"/e/mysql/bin/mysql.exe" -h127.0.0.1 -uroot -p --default-character-set=utf8mb4 piyin_dev -e "SELECT slug, title, category, JSON_LENGTH(chunks) AS chapters FROM classics WHERE category='pianwen';"
 ```
 
 Expected: 1 row inserted, 30 chapters, ~10KB JSON.
@@ -2957,12 +2957,12 @@ Expected: GH Actions / auto-deploy triggers; verify the changes reach origin (st
 - [ ] **Step 5: Run all 4 prod migration steps (after dev smoke passes)**
 
 ```bash
-DATABASE_URL="mysql://piyin:Admin909217@139.5.108.245:3306/piyin" pnpm tsx scripts/migrate-poems-schema.ts
+DATABASE_URL="mysql://piyin:<password>@139.5.108.245:3306/piyin" pnpm tsx scripts/migrate-poems-schema.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/normalize-existing-form.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/build-form-tags.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/build-poems-extra.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/build-pianwen.ts
-"/e/mysql/bin/mysql.exe" -h139.5.108.245 -upiyin -pAdmin909217 --default-character-set=utf8mb4 piyin -e "SELECT category, COUNT(*) AS n FROM poems GROUP BY category; SELECT COUNT(*) AS pianwen FROM classics WHERE category='pianwen';"
+"/e/mysql/bin/mysql.exe" -h139.5.108.245 -upiyin -p --default-character-set=utf8mb4 piyin -e "SELECT category, COUNT(*) AS n FROM poems GROUP BY category; SELECT COUNT(*) AS pianwen FROM classics WHERE category='pianwen';"
 ```
 
 Expected: categories include 汉乐府/古诗十九首/魏/qing/骈文 with correct counts; 训蒙骈句 in classics.

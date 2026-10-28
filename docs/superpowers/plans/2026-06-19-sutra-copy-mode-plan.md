@@ -136,7 +136,7 @@ Expected output: `[migrate-sutra-copy-progress] table created`
 - [ ] **Step 4: Verify in MySQL**
 
 ```bash
-E:\mysql\bin\mysql.exe -uroot -pAdmin909217 piyin -e "SHOW CREATE TABLE sutra_copy_progress\G"
+E:\mysql\bin\mysql.exe -uroot -p piyin -e "SHOW CREATE TABLE sutra_copy_progress\G"
 ```
 
 Expected: 11-line CREATE TABLE output, ending with `PRIMARY KEY (user_id, sutra_id, chunk_idx)`.

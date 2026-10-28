@@ -24,7 +24,7 @@ UPDATE chars SET hsk_level = NULL;  -- clear all
 ```
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_deploy_test" npx tsx scripts/import-hsk.ts
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_deploy_test" npx tsx scripts/import-hsk.ts
 ```
 
 The import script does `INSERT … ON DUPLICATE KEY UPDATE hsk_level = VALUES(hsk_level)` so re-running with new vocab will overwrite existing `hsk_level` values. The clearing step is needed for chars that drop out of the new list (e.g., the original hand-crafted HSK 1.0 list had 285 chars; the official list has 178 — the 107 extras must be cleared).

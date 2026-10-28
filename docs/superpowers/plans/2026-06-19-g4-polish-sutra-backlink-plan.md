@@ -451,7 +451,7 @@ If the file is missing, create it with this content (use `cat` heredoc or `Write
 import mysql from 'mysql2/promise';
 
 const PROD_URL =
-  process.env.DATABASE_URL_REMOTE ?? 'mysql://piyin:Admin909217@139.5.108.245:3306/piyin';
+  process.env.DATABASE_URL_REMOTE ?? 'mysql://piyin:<password>@139.5.108.245:3306/piyin';
 const LOCAL_URL = process.env.DATABASE_URL;
 if (!LOCAL_URL) throw new Error('DATABASE_URL (local) is required');
 

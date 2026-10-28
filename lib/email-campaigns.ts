@@ -72,10 +72,20 @@ interface RecipientTallyRow extends RowDataPacket {
 
 function unsubscribeSecret(): string {
   // HMAC secret for unsubscribe tokens. JWT_SECRET doubles as a stable,
-  // server-only secret. If absent (dev / unset), fall back to a literal so
-  // the function never throws — tokens issued in that mode are valid only
-  // within the same process anyway.
-  return process.env.JWT_SECRET || 'dev-only-marketing-secret';
+  // server-only secret.
+  //
+  // In production the secret is mandatory: a hard-coded fallback would let
+  // anyone forge an unsubscribe token for an arbitrary user id. In dev we
+  // keep a literal so a fresh clone works without extra setup — dev tokens
+  // are only valid within the process that issued them.
+  const secret = process.env.JWT_SECRET;
+  if (secret) return secret;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error(
+      'JWT_SECRET is required in production: it signs the unsubscribe tokens',
+    );
+  }
+  return 'dev-only-marketing-secret';
 }
 
 /**

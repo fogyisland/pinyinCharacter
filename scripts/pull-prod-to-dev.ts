@@ -5,14 +5,19 @@
  *
  *   pnpm tsx scripts/pull-prod-to-dev.ts
  *
- * Reads prod URL from .env (DATABASE_URL_REMOTE or hard-coded fallback);
+ * Reads prod URL from .env (DATABASE_URL_REMOTE); there is no fallback --
+ * a production credential must never live in this file.
  * writes to whatever DATABASE_URL points to (piyin_dev in .env.local).
  */
 import mysql from 'mysql2/promise';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 
-const PROD_URL =
-  process.env.DATABASE_URL_REMOTE ?? 'mysql://piyin:Admin909217@139.5.108.245:3306/piyin';
+const PROD_URL = process.env.DATABASE_URL_REMOTE;
+if (!PROD_URL) {
+  throw new Error(
+    'DATABASE_URL_REMOTE is required: put the production connection string in .env.local (never commit it)'
+  );
+}
 const LOCAL_URL = process.env.DATABASE_URL;
 if (!LOCAL_URL) throw new Error('DATABASE_URL (local) is required');
 

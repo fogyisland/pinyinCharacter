@@ -260,7 +260,7 @@ Run: `pnpm tsx scripts/migrate.ts migrations/2026-06-20-classics.sql`
 Expected: log line "Applied migrations/2026-06-20-classics.sql" or equivalent (matches existing migrate.ts output style). Verify with:
 
 ```bash
-mysql -uroot -pAdmin909217 piyin_dev -e "DESCRIBE classics;"
+mysql -uroot -p piyin_dev -e "DESCRIBE classics;"
 ```
 
 Expected: 10 rows including `id`, `slug`, `title`, `category` (ENUM with 6 values), `chunks` (JSON), `chunk_count` (GENERATED).
@@ -1079,7 +1079,7 @@ Expected: Fetch fails with DNS / network error in sandbox. Script logs `[build-c
 Verify nothing was inserted:
 
 ```bash
-mysql -uroot -pAdmin909217 piyin_dev -e "SELECT COUNT(*) FROM classics;"
+mysql -uroot -p piyin_dev -e "SELECT COUNT(*) FROM classics;"
 ```
 
 Expected: `0`.

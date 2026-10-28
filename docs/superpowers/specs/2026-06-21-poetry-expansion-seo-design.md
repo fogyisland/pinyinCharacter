@@ -494,7 +494,7 @@ export function buildWebSite(site: SiteConfig) {
 **Step 1: Schema migration on piyin_dev**
 
 ```bash
-DATABASE_URL="mysql://root:Admin909217@127.0.0.1:3306/piyin_dev" \
+DATABASE_URL="mysql://root:<password>@127.0.0.1:3306/piyin_dev" \
   pnpm tsx scripts/migrate-add-form-column.ts
 ```
 
@@ -527,7 +527,7 @@ DATABASE_URL="...piyin_dev" pnpm tsx scripts/build-pianwen.ts
 **Step 6: 同步到 prod**
 
 ```bash
-DATABASE_URL="mysql://piyin:Admin909217@139.5.108.245:3306/piyin" pnpm tsx scripts/migrate-add-form-column.ts
+DATABASE_URL="mysql://piyin:<password>@139.5.108.245:3306/piyin" pnpm tsx scripts/migrate-add-form-column.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/build-form-tags.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/build-poems-extra.ts
 DATABASE_URL="...piyin" pnpm tsx scripts/build-pianwen.ts

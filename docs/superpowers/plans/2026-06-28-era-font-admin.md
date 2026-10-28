@@ -427,7 +427,7 @@ Create `scripts/migrations/2026-06-28-era-font-defaults.sql`:
 -- Idempotent: re-runs find rows already present, ON DUPLICATE KEY UPDATE is a no-op
 -- when value already matches.
 -- Apply on existing piyin_dev / piyin DB:
---   "E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev < this_file
+--   "E:/mysql/bin/mysql.exe" -uroot -p piyin_dev < this_file
 --   (same for piyin when prod exists)
 
 INSERT INTO app_config (`key`, value, updated_by) VALUES
@@ -458,7 +458,7 @@ Open `scripts/init-db.ts`. Find the existing DDL array (starts at line 15 with `
 Run:
 
 ```bash
-"E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev < "E:/ToolDevelop/PinYinCharacter/scripts/migrations/2026-06-28-era-font-defaults.sql"
+"E:/mysql/bin/mysql.exe" -uroot -p piyin_dev < "E:/ToolDevelop/PinYinCharacter/scripts/migrations/2026-06-28-era-font-defaults.sql"
 ```
 
 Expected: silent success.
@@ -466,7 +466,7 @@ Expected: silent success.
 Verify:
 
 ```bash
-"E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev -e "SELECT \`key\`, value FROM app_config WHERE \`key\` LIKE 'era.%';"
+"E:/mysql/bin/mysql.exe" -uroot -p piyin_dev -e "SELECT \`key\`, value FROM app_config WHERE \`key\` LIKE 'era.%';"
 ```
 
 Expected: 5 rows, one per era, with the values from the migration.
@@ -1193,7 +1193,7 @@ Expected: at least one of the output lines is `font-family: Oracular` (matches T
 Then change the config and re-fetch:
 
 ```bash
-"E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev -e "UPDATE app_config SET value='OracularInverted' WHERE \`key\`='era.jiaguwen.font';"
+"E:/mysql/bin/mysql.exe" -uroot -p piyin_dev -e "UPDATE app_config SET value='OracularInverted' WHERE \`key\`='era.jiaguwen.font';"
 curl -s http://localhost:4444/etymology/永 | grep -o "font-family:[^\"]*" | head -5
 ```
 
@@ -1202,7 +1202,7 @@ Expected: at least one line now shows `font-family: OracularInverted`.
 Restore after smoke:
 
 ```bash
-"E:/mysql/bin/mysql.exe" -uroot -pAdmin909217 piyin_dev -e "UPDATE app_config SET value='Oracular' WHERE \`key\`='era.jiaguwen.font';"
+"E:/mysql/bin/mysql.exe" -uroot -p piyin_dev -e "UPDATE app_config SET value='Oracular' WHERE \`key\`='era.jiaguwen.font';"
 # Kill dev server
 powershell -Command "Get-NetTCPConnection -LocalPort 4444 -State Listen | Select-Object OwningProcess | ForEach-Object { Stop-Process -Id \$_.OwningProcess -Force }"
 ```

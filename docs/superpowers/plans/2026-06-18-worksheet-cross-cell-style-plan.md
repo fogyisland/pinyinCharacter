@@ -382,7 +382,7 @@ Find line 130 (`cell_style ENUM('brush','square') NOT NULL,`) and replace with:
 Run:
 
 ```bash
-DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev < scripts/migrations/2026-06-18-cell-style-cross.sql
+DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -p piyin_dev < scripts/migrations/2026-06-18-cell-style-cross.sql
 ```
 
 Expected: no output. (MySQL prints nothing on success. If you see "ERROR", stop and investigate.)
@@ -390,7 +390,7 @@ Expected: no output. (MySQL prints nothing on success. If you see "ERROR", stop 
 Verify with:
 
 ```bash
-DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev -e "SHOW COLUMNS FROM worksheets LIKE 'cell_style';"
+DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -p piyin_dev -e "SHOW COLUMNS FROM worksheets LIKE 'cell_style';"
 ```
 
 Expected output shows `Type = enum('brush','square','pen','cross')`.
@@ -400,7 +400,7 @@ Expected output shows `Type = enum('brush','square','pen','cross')`.
 If the dev host can reach prod MySQL (`139.5.108.245:3306`), apply the same ALTER:
 
 ```bash
-mysql -h 139.5.108.245 -u piyin -pAdmin909217 piyin < scripts/migrations/2026-06-18-cell-style-cross.sql
+mysql -h 139.5.108.245 -u piyin -p piyin < scripts/migrations/2026-06-18-cell-style-cross.sql
 ```
 
 (If prod is unreachable from this host, document this in the commit message and the spec's "What to verify next" — a human with prod access will run the ALTER manually.)

@@ -237,7 +237,7 @@ multi_worksheet_print: '批量 / 多页打印',
 Run:
 
 ```bash
-DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev < scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql
+DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -p piyin_dev < scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql
 ```
 
 Expected: no output on success.
@@ -245,7 +245,7 @@ Expected: no output on success.
 Verify with:
 
 ```bash
-DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -pAdmin909217 piyin_dev -e "SELECT plan_id, feature_key FROM membership_plan_features WHERE feature_key='multi_worksheet_print';"
+DATABASE_URL=$(grep ^DATABASE_URL= .env | cut -d= -f2-) mysql -h 127.0.0.1 -u root -p piyin_dev -e "SELECT plan_id, feature_key FROM membership_plan_features WHERE feature_key='multi_worksheet_print';"
 ```
 
 Expected: at least 1 row per plan (4 rows total if there are 4 plans).
@@ -255,7 +255,7 @@ Expected: at least 1 row per plan (4 rows total if there are 4 plans).
 Same command, pointing at prod:
 
 ```bash
-mysql -h 139.5.108.245 -u piyin -pAdmin909217 piyin < scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql
+mysql -h 139.5.108.245 -u piyin -p piyin < scripts/migrations/2026-06-18-multi-worksheet-print-feature.sql
 ```
 
 (If unreachable, document in the report — a human with prod access will run it manually.)
