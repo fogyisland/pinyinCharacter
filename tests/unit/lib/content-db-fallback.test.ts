@@ -1,10 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-interface QueryLogEntry {
-  sql: string;
-  params: unknown[];
-}
-
 /**
  * `getPool()` is mocked per test so that every test gets its own pool object:
  * `getLegacyContentSchema` caches the probed schema per pool (a WeakMap),
