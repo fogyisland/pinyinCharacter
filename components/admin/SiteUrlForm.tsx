@@ -9,8 +9,15 @@ import { AdminButton } from '@/components/admin/AdminButton';
 
 export interface SiteUrlFormInitial {
   url: string;
-  source: 'app_config' | 'env';
+  source: 'app_config' | 'env' | 'unset';
 }
+
+/** Human-readable label for where the current value comes from. */
+const SOURCE_LABEL: Record<SiteUrlFormInitial['source'], string> = {
+  app_config: '数据库',
+  env: '环境变量',
+  unset: '未设置',
+};
 
 function isValidUrl(v: string): boolean {
   return /^https?:\/\//.test(v) && v.length <= 256;
@@ -82,13 +89,20 @@ export function SiteUrlForm({ initial }: { initial: SiteUrlFormInitial }) {
             </p>
           )}
 
+          {initial.source === 'unset' && (
+            <p className="text-sm text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">
+              尚未设置站点 URL。当前 sitemap、robots、canonical、JSON-LD 都会退回到
+              http://localhost:3000, 外部爬虫会看到错误的域名。
+            </p>
+          )}
+
           <FormField
             label="站点 URL"
             htmlFor="site-url"
             hint={
               <>
                 当前来源:{' '}
-                <code>{initial.source === 'app_config' ? '数据库' : '环境变量'}</code>。
+                <code>{SOURCE_LABEL[initial.source]}</code>。
               </>
             }
           >

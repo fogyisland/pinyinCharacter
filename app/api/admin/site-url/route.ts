@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
-import { getConfig, setConfig } from '@/lib/config';
+import { setConfig } from '@/lib/config';
 import { writeAudit } from '@/lib/audit';
-import { getSiteUrl } from '@/lib/seo/config';
+import { resolveSiteUrl } from '@/lib/seo/config';
 
 const SiteUrlSchema = z.object({
   url: z.string().min(1).max(256),
@@ -14,17 +14,10 @@ export async function GET(_req: NextRequest) {
   return withErrorHandling(async () => {
     const auth = await requireAdmin();
     if (!auth.ok) return auth.response;
-    const override = await getConfig('site.url');
-    if (override && override.length > 0) {
-      return NextResponse.json({
-        ok: true,
-        data: { url: override, source: 'app_config' as const },
-      });
-    }
-    return NextResponse.json({
-      ok: true,
-      data: { url: getSiteUrl(), source: 'env' as const },
-    });
+    // `resolveSiteUrl` never throws: this endpoint reports what the site
+    // URL is *currently*, and "nothing configured" is a valid answer.
+    const { url, source } = await resolveSiteUrl();
+    return NextResponse.json({ ok: true, data: { url, source } });
   });
 }
 

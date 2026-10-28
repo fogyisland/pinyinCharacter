@@ -74,3 +74,51 @@ export function buildCanonicalUrl(path: string, env: NodeJS.ProcessEnv = process
   const leading = path.startsWith('/') ? path : `/${path}`;
   return `${getSiteUrl(env)}${leading}`;
 }
+
+/** Where the effective site URL came from. */
+export type SiteUrlSource = 'app_config' | 'env' | 'unset';
+
+export interface ResolvedSiteUrl {
+  /** The effective site URL, or an empty string when nothing is configured. */
+  url: string;
+  /** Which source supplied the value. */
+  source: SiteUrlSource;
+}
+
+/**
+ * Resolve the effective site URL for the admin UI — without ever throwing.
+ *
+ * `getSiteUrl()` throws in production when `NEXT_PUBLIC_SITE_URL` is
+ * missing. That fail-fast behaviour is right for the SEO paths that *must*
+ * emit an absolute URL, but it is exactly wrong for the admin screen whose
+ * whole job is to set that URL: the screen would 500 precisely when the
+ * value it is meant to collect is missing, and the admin could never fill
+ * it in. The GET `/api/admin/site-url` route had the same shape.
+ *
+ * Nothing in this repository writes `NEXT_PUBLIC_SITE_URL` (the admin PATCH
+ * only writes `app_config.site.url`), so a production install that has
+ * never been configured always lands in that state — the page that sets the
+ * URL was unreachable.
+ *
+ * This resolver reads the same two sources as `getRuntimeSiteUrl()`, in the
+ * same order (app_config first, env second), but reports `unset` instead of
+ * silently falling back to `http://localhost:3000`: the admin needs to know
+ * that canonical/sitemap URLs are currently emitting the placeholder.
+ */
+export async function resolveSiteUrl(): Promise<ResolvedSiteUrl> {
+  let override: string | null = null;
+  try {
+    override = await getConfig('site.url');
+  } catch {
+    // A database blip must not take the admin screen down with it.
+    override = null;
+  }
+  if (override && override.length > 0) {
+    return { url: override.replace(/\/+$/, ''), source: 'app_config' };
+  }
+  const env = process.env.NEXT_PUBLIC_SITE_URL;
+  if (env && env.length > 0) {
+    return { url: env.replace(/\/+$/, ''), source: 'env' };
+  }
+  return { url: '', source: 'unset' };
+}

@@ -1,5 +1,4 @@
-import { getConfig } from '@/lib/config';
-import { getSiteUrl } from '@/lib/seo/config';
+import { resolveSiteUrl } from '@/lib/seo/config';
 import { requireAdmin } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { SiteUrlForm } from '@/components/admin/SiteUrlForm';
@@ -13,9 +12,9 @@ export default async function AdminSiteUrlPage() {
     if (auth.reason === 'unauthenticated') redirect('/?auth=login');
     redirect('/?error=forbidden');
   }
-  const override = await getConfig('site.url');
-  const url = override && override.length > 0 ? override : getSiteUrl();
-  const source: 'app_config' | 'env' = override && override.length > 0 ? 'app_config' : 'env';
+  // Never throws: this screen is where the URL gets configured, so it must
+  // render even when nothing is configured yet.
+  const { url, source } = await resolveSiteUrl();
   return (
     <div>
       <PageHeader
