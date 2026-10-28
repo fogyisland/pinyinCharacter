@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest';
+// @vitest-environment happy-dom
+import { describe, it, expect, afterEach } from 'vitest';
 import { existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { render, screen, cleanup, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom/vitest';
 import {
   ADMIN_NAV_GROUPS,
+  AdminSidebar,
   isNavItemActive,
   type NavItem,
 } from '@/components/admin/AdminSidebar';
@@ -20,7 +24,15 @@ import {
  *
  * The second assertion is checked against the pages on disk, not against
  * a hand-written list, so a new page that nobody linked to fails here.
+ *
+ * The sidebar is also a folded tree: the groups are its headings, they
+ * fold, and the group of the page being looked at is always open. That
+ * behaviour is pinned below.
  */
+
+afterEach(() => {
+  cleanup();
+});
 
 const ADMIN_DIR = join(process.cwd(), 'app', 'admin');
 
@@ -130,5 +142,70 @@ describe('the admin navigation', () => {
     // A sibling whose name merely starts with the same letters is a
     // different page — it must not light the MCP entry up.
     expect(isNavItemActive(mcp!, '/admin/mcp-something')).toBe(false);
+  });
+});
+
+describe('the folded sidebar', () => {
+  it('shows every group as a heading', () => {
+    render(<AdminSidebar currentPath="/admin" />);
+    for (const group of ADMIN_NAV_GROUPS) {
+      expect(screen.getByTestId(`admin-nav-group-${group.label}`)).toBeInTheDocument();
+    }
+  });
+
+  it('starts folded, so only the current page is on the screen', () => {
+    render(<AdminSidebar currentPath="/admin" />);
+    // The dashboard is in 概览 — that group is open, and it holds one entry.
+    expect(screen.getByTestId('admin-nav-item-/admin')).toBeInTheDocument();
+    // Every other group is folded away.
+    expect(screen.queryByTestId('admin-nav-item-/admin/mcp')).toBeNull();
+    expect(screen.queryByTestId('admin-nav-item-/admin/users')).toBeNull();
+    expect(screen.queryByTestId('admin-nav-item-/admin/logs')).toBeNull();
+  });
+
+  it('opens the group of the page being looked at', () => {
+    render(<AdminSidebar currentPath="/admin/mcp" />);
+    expect(screen.getByTestId('admin-nav-item-/admin/mcp')).toBeInTheDocument();
+    // The AI settings share that group.
+    expect(screen.getByTestId('admin-nav-item-/admin/ai')).toBeInTheDocument();
+    // The dashboard's group is folded again.
+    expect(screen.queryByTestId('admin-nav-item-/admin')).toBeNull();
+  });
+
+  it('folds and unfolds a group by its heading', () => {
+    render(<AdminSidebar currentPath="/admin" />);
+    const heading = screen.getByTestId('admin-nav-group-运维');
+
+    expect(heading).toHaveAttribute('aria-expanded', 'false');
+    fireEvent.click(heading);
+    expect(heading).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByTestId('admin-nav-item-/admin/logs')).toBeInTheDocument();
+
+    fireEvent.click(heading);
+    expect(heading).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByTestId('admin-nav-item-/admin/logs')).toBeNull();
+  });
+
+  it('opens and folds every group at once', () => {
+    render(<AdminSidebar currentPath="/admin" />);
+
+    fireEvent.click(screen.getByRole('button', { name: '展开全部' }));
+    for (const group of ADMIN_NAV_GROUPS) {
+      for (const item of group.items) {
+        expect(screen.getByTestId(`admin-nav-item-${item.href}`)).toBeInTheDocument();
+      }
+    }
+
+    fireEvent.click(screen.getByRole('button', { name: '折叠全部' }));
+    expect(screen.queryByTestId('admin-nav-item-/admin')).toBeNull();
+    expect(screen.queryByTestId('admin-nav-item-/admin/logs')).toBeNull();
+  });
+
+  it('follows the operator to another page', () => {
+    const { rerender } = render(<AdminSidebar currentPath="/admin" />);
+    expect(screen.queryByTestId('admin-nav-item-/admin/users')).toBeNull();
+
+    rerender(<AdminSidebar currentPath="/admin/users" />);
+    expect(screen.getByTestId('admin-nav-item-/admin/users')).toBeInTheDocument();
   });
 });

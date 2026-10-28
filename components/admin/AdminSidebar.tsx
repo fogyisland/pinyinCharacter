@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
-import { useState } from 'react';
-import { Menu, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight, Menu, X } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AudioLines,
@@ -154,12 +154,13 @@ function NavLinks({
             href={item.href}
             onClick={onNavigate}
             aria-current={isActive ? 'page' : undefined}
+            data-testid={`admin-nav-item-${item.href}`}
             className={
-              'flex items-center gap-2 px-3 py-1.5 rounded-md text-sm whitespace-nowrap ' +
+              'flex items-center gap-2 px-3 py-2 rounded-md text-[15px] whitespace-nowrap ' +
               (isActive ? 'bg-ink text-paper' : 'hover:bg-paper-deep/50 text-ink')
             }
           >
-            <Icon className="h-4 w-4 shrink-0 opacity-80" aria-hidden="true" />
+            <Icon className="h-[18px] w-[18px] shrink-0 opacity-80" aria-hidden="true" />
             {item.label}
           </Link>
         );
@@ -168,32 +169,161 @@ function NavLinks({
   );
 }
 
+/**
+ * One group of the navigation, folded by its title.
+ *
+ * The groups are the headings of the sidebar, and a heading that cannot
+ * be folded is a heading that always costs the same space. Twenty-one
+ * entries over seven groups is a column that has to be scrolled; folded,
+ * it is seven lines, and the operator opens the one group they need.
+ *
+ * The group holding the page the operator is looking at is the one that
+ * is open — see `AdminSidebar`.
+ */
 function Section({
   group,
+  index,
   currentPath,
+  isOpen,
+  onToggle,
   onNavigate,
+  idPrefix,
 }: {
   group: NavGroup;
+  index: number;
   currentPath: string;
+  isOpen: boolean;
+  onToggle: () => void;
   onNavigate?: () => void;
+  idPrefix: string;
 }) {
+  const panelId = `${idPrefix}-group-${index}`;
   return (
     <div className="flex flex-col gap-0.5 mb-1">
-      <div className="px-3 pt-3 pb-1 text-[10px] font-medium text-ink-soft/50 select-none">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={onToggle}
+        data-testid={`admin-nav-group-${group.label}`}
+        className="flex items-center gap-1.5 px-3 pt-3.5 pb-1.5 text-[13px] font-medium text-ink-soft/70 select-none hover:text-ink-soft"
+      >
+        {isOpen ? (
+          <ChevronDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        ) : (
+          <ChevronRight className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        )}
         {group.label}
-      </div>
-      <NavLinks items={group.items} currentPath={currentPath} onNavigate={onNavigate} />
+      </button>
+      {isOpen ? (
+        <div id={panelId} className="flex flex-col gap-0.5">
+          <NavLinks items={group.items} currentPath={currentPath} onNavigate={onNavigate} />
+        </div>
+      ) : null}
     </div>
   );
 }
 
 export function AdminSidebar({ currentPath }: { currentPath: string }) {
   const isProd = process.env.NODE_ENV === 'production';
-  const groups = ADMIN_NAV_GROUPS.map((g) => ({
-    ...g,
-    items: g.items.filter((item) => !item.devOnly || !isProd),
-  })).filter((g) => g.items.length > 0);
+  const groups = useMemo(
+    () =>
+      ADMIN_NAV_GROUPS.map((g) => ({
+        ...g,
+        items: g.items.filter((item) => !item.devOnly || !isProd),
+      })).filter((g) => g.items.length > 0),
+    [isProd],
+  );
+
+  /**
+   * The group that holds the page being looked at.
+   *
+   * The operator must never have to hunt for where they are: the group
+   * of the current page is open, whatever the operator has folded.
+   */
+  const activeGroupLabel = useMemo(() => {
+    for (const group of groups) {
+      if (group.items.some((item) => isNavItemActive(item, currentPath))) return group.label;
+    }
+    return null;
+  }, [groups, currentPath]);
+
+  // The groups that are open. The list starts with the current page's
+  // group and nothing else: the sidebar is folded, like the catalogue
+  // on the MCP page.
+  const [openGroups, setOpenGroups] = useState<ReadonlySet<string>>(
+    () => new Set(activeGroupLabel ? [activeGroupLabel] : []),
+  );
+
+  // Moving to another page opens the group of that page. The state is
+  // adjusted during the render rather than in an effect, so the new
+  // group is already open in the same frame — an effect would show the
+  // folded sidebar for one frame first.
+  const [lastActiveLabel, setLastActiveLabel] = useState(activeGroupLabel);
+  if (lastActiveLabel !== activeGroupLabel) {
+    setLastActiveLabel(activeGroupLabel);
+    if (activeGroupLabel) {
+      setOpenGroups((previous) =>
+        previous.has(activeGroupLabel) ? previous : new Set([...previous, activeGroupLabel]),
+      );
+    }
+  }
+
+  const toggleGroup = (label: string) => {
+    setOpenGroups((previous) => {
+      const next = new Set(previous);
+      if (next.has(label)) {
+        next.delete(label);
+      } else {
+        next.add(label);
+      }
+      return next;
+    });
+  };
+
+  const openAll = () => setOpenGroups(new Set(groups.map((group) => group.label)));
+  const closeAll = () => setOpenGroups(new Set<string>());
+
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const sections = (idPrefix: string, onNavigate?: () => void) => (
+    <>
+      <div className="flex items-center justify-end gap-1.5 px-3 pt-3 pb-1 text-xs">
+        <button
+          type="button"
+          onClick={openAll}
+          className="text-seal/80 hover:underline"
+          disabled={openGroups.size >= groups.length}
+        >
+          展开全部
+        </button>
+        <span className="text-ink-faint/60" aria-hidden="true">
+          /
+        </span>
+        <button
+          type="button"
+          onClick={closeAll}
+          className="text-seal/80 hover:underline"
+          disabled={openGroups.size === 0}
+        >
+          折叠全部
+        </button>
+      </div>
+      {groups.map((group, index) => (
+        <Section
+          key={group.label}
+          group={group}
+          index={index}
+          currentPath={currentPath}
+          isOpen={openGroups.has(group.label)}
+          onToggle={() => toggleGroup(group.label)}
+          onNavigate={onNavigate}
+          idPrefix={idPrefix}
+        />
+      ))}
+    </>
+  );
+
   return (
     <>
       {/* 移动端汉堡按钮(放在 nav 之外,父容器 flex 会把它推右) */}
@@ -210,10 +340,8 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
       </div>
 
       {/* 桌面端侧栏(md 及以上) */}
-      <nav className="hidden md:flex flex-col w-48 shrink-0 border-r border-ink/10 min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-y-auto p-2">
-        {groups.map((group) => (
-          <Section key={group.label} group={group} currentPath={currentPath} />
-        ))}
+      <nav className="hidden md:flex flex-col w-56 shrink-0 border-r border-ink/10 min-h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] overflow-y-auto p-2">
+        {sections('desktop')}
       </nav>
 
       {/* 移动端全屏抽屉(md 以下) */}
@@ -237,14 +365,7 @@ export function AdminSidebar({ currentPath }: { currentPath: string }) {
               </button>
             </div>
             <nav className="flex flex-col">
-              {groups.map((group) => (
-                <Section
-                  key={group.label}
-                  group={group}
-                  currentPath={currentPath}
-                  onNavigate={() => setMobileOpen(false)}
-                />
-              ))}
+              {sections('mobile', () => setMobileOpen(false))}
             </nav>
           </div>
         </div>
