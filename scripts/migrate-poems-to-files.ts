@@ -1,10 +1,25 @@
 import path from 'node:path';
 import fs from 'fs/promises';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from '../lib/db';
 import type { PoemManifestItem, PoemsManifest } from '../lib/poetry-types';
 
 const DATA_DIR = path.join(process.cwd(), 'data', 'poems');
 const MANIFEST_PATH = path.join(process.cwd(), 'data', 'poems-manifest.json');
+
+/** One row of the `poems` table. */
+interface PoemRow extends RowDataPacket {
+  id: number;
+  dynasty: string;
+  category: string | null;
+  title: string;
+  author: string;
+  form: string | null;
+  content: unknown;
+  pinyin: unknown;
+  appreciation: string | null;
+  source: string | null;
+}
 
 function parseJson<T>(s: unknown, fallback: T): T {
   if (Array.isArray(s)) return s as T;
@@ -25,11 +40,11 @@ export async function migratePoemsToFiles(): Promise<{
   manifestWritten: boolean;
 }> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<PoemRow[]>(
     `SELECT id, dynasty, category, title, author, form, content, pinyin, appreciation, source
      FROM poems ORDER BY id ASC`,
   );
-  const arr = rows as any[];
+  const arr = rows;
 
   await fs.mkdir(DATA_DIR, { recursive: true });
 

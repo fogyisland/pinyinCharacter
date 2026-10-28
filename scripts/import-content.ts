@@ -6,6 +6,7 @@
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import type { ResultSetHeader } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import { CharContentSchema } from './schemas/content';
 
@@ -46,12 +47,12 @@ export async function importContent(): Promise<ImportResult> {
       // meaning_zh: 不覆盖已有值 (legacy top-level + full-shape dict.meaning_zh)
       const meaningZh = parsed.meaning_zh ?? parsed.dict?.meaning_zh;
       if (meaningZh !== undefined) {
-        const [r] = await pool.query<any>(
+        const [r] = await pool.query<ResultSetHeader>(
           `UPDATE chars SET meaning_zh = ?
            WHERE \`char\` = ? AND (meaning_zh IS NULL OR meaning_zh = '')`,
           [meaningZh, char],
         );
-        if ((r as any).affectedRows > 0) result.imported.meaning_zh.push(char);
+        if (r.affectedRows > 0) result.imported.meaning_zh.push(char);
       }
 
       // post-2026-06-17 slim-DB: story data lives in data/content/<char>.json,

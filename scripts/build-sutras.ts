@@ -19,6 +19,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import { writeSutrasFs, readSutraManifest } from '../lib/sutras-fs';
 import type { SutraManifestEntry } from '../lib/sutras-fs';
@@ -26,6 +27,19 @@ import type { SutraChunk } from '../lib/sutra-types';
 
 const SUTRAS_DIR = join(process.cwd(), 'data', 'sutras');
 const SOURCE_TAG = 'prebuilt-json:data/sutras';
+
+/**
+ * One row of the sutras table as the manifest refresh reads it back.
+ *
+ * `chunks` is a JSON column: the driver hands it back as the parsed array on
+ * most server versions and as the raw string on others, hence the union.
+ */
+interface SutraIdRow extends RowDataPacket {
+  id: number;
+  slug: string;
+  title: string;
+  chunks: string | SutraChunk[];
+}
 
 function readSutraFile(slug: string): SutraChunk[] {
   const path = join(SUTRAS_DIR, `${slug}.json`);
@@ -77,17 +91,12 @@ export async function buildSutras(): Promise<number> {
   // back id+title from DB). Skip rewrite if nothing changed — keeps mtime
   // stable on idempotent re-runs (Task 2 review note I3).
   if (upserted > 0) {
-    const [idRows] = await pool.query<any[]>(
+    const [idRows] = await pool.query<SutraIdRow[]>(
       `SELECT id, slug, title, chunks FROM sutras WHERE slug IN (${manifest.items.map(() => '?').join(',')})`,
       manifest.items.map((s) => s.slug),
     );
     const items: SutraManifestEntry[] = [];
-    for (const row of idRows as Array<{
-      id: number;
-      slug: string;
-      title: string;
-      chunks: string | SutraChunk[];
-    }>) {
+    for (const row of idRows) {
       const raw =
         typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
       const chunkCount = raw.length;

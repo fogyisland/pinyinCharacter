@@ -14,12 +14,24 @@
  */
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import type { PoemsManifest, PoemDetail } from '../lib/poetry-types';
 
 const MANIFEST_PATH = join(process.cwd(), 'data', 'poems-manifest.json');
 const POEMS_DIR = join(process.cwd(), 'data', 'poems');
 const DEFAULT_SOURCE_TAG = 'prebuilt-json:data/poems';
+
+/** One row of the dynasty histogram. */
+interface DynastyCountRow extends RowDataPacket {
+  dynasty: string;
+  n: number;
+}
+
+/** The single-row result of `SELECT COUNT(*)`. */
+interface TotalCountRow extends RowDataPacket {
+  total: number;
+}
 
 export async function buildPoems(): Promise<number> {
   const pool = getPool();
@@ -76,13 +88,13 @@ export async function buildPoems(): Promise<number> {
 }
 
 export async function printPoemStats(pool: ReturnType<typeof getPool>): Promise<void> {
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<DynastyCountRow[]>(
     `SELECT dynasty, COUNT(*) AS n FROM poems GROUP BY dynasty ORDER BY dynasty`,
   );
   console.log('[build-poems] dynasty distribution:');
   console.table(rows);
-  const [countRows] = await pool.query<any[]>(`SELECT COUNT(*) AS total FROM poems`);
-  console.log(`[build-poems] total poems: ${(countRows as any[])[0].total}`);
+  const [countRows] = await pool.query<TotalCountRow[]>(`SELECT COUNT(*) AS total FROM poems`);
+  console.log(`[build-poems] total poems: ${countRows[0].total}`);
 }
 
 if (require.main === module) {

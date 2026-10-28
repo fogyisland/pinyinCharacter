@@ -21,6 +21,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 
 const MANIFEST_PATH = join(process.cwd(), 'data', 'classics-manifest.json');
@@ -30,14 +31,24 @@ interface Manifest {
   books: Array<{ slug: string }>;
 }
 
+/** One column row from information_schema.COLUMNS. */
+interface ColumnNameRow extends RowDataPacket {
+  COLUMN_NAME: string;
+}
+
+/** One row of the `classics` table. */
+interface ClassicSlugRow extends RowDataPacket {
+  slug: string;
+}
+
 async function getColumnInfo(): Promise<{ chunks: boolean; chunkCount: boolean }> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<ColumnNameRow[]>(
     `SELECT COLUMN_NAME FROM information_schema.COLUMNS
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classics'
        AND COLUMN_NAME IN ('chunks', 'chunk_count')`,
   );
-  const cols = new Set((rows as any[]).map((r) => r.COLUMN_NAME as string));
+  const cols = new Set(rows.map((r) => r.COLUMN_NAME));
   return { chunks: cols.has('chunks'), chunkCount: cols.has('chunk_count') };
 }
 
@@ -47,8 +58,8 @@ async function verifyAlignment(): Promise<{
   aligned: boolean;
 }> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(`SELECT slug FROM classics`);
-  const dbSlugs = new Set((rows as any[]).map((r) => r.slug as string));
+  const [rows] = await pool.query<ClassicSlugRow[]>(`SELECT slug FROM classics`);
+  const dbSlugs = new Set(rows.map((r) => r.slug));
   const manifest: Manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
   const manifestSlugs = new Set(manifest.books.map((b) => b.slug));
   const inDbNotManifest = [...dbSlugs].filter((s) => !manifestSlugs.has(s));

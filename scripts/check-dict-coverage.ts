@@ -1,8 +1,24 @@
 import mysql from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
+
+/** One row of the per-level coverage histogram. */
+interface LevelCoverageRow extends RowDataPacket {
+  level: number;
+  total: number | string;
+  have_zh: number | string;
+  have_en: number | string;
+}
+
+/** One char that is still missing a Chinese meaning. */
+interface MissingMeaningRow extends RowDataPacket {
+  char: string;
+  pinyin: string | null;
+  level: number;
+}
 
 async function main() {
   const conn = await mysql.createConnection(process.env.DATABASE_URL!);
-  const [stats]: any = await conn.query(`
+  const [stats] = await conn.query<LevelCoverageRow[]>(`
     SELECT
       level,
       COUNT(*) AS total,
@@ -16,7 +32,7 @@ async function main() {
   console.log(JSON.stringify(stats, null, 2));
 
   // first 10 missing meaning_zh at level 1 (most common)
-  const [missing]: any = await conn.query(`
+  const [missing] = await conn.query<MissingMeaningRow[]>(`
     SELECT char, pinyin, level FROM chars
     WHERE meaning_zh IS NULL OR meaning_zh = ''
     ORDER BY level ASC, char ASC

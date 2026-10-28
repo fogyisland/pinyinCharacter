@@ -8,11 +8,26 @@
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import type { Pool } from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import { CharContentSchema } from './schemas/content';
 
 const CONTENT_DIR = join(process.cwd(), 'data', 'content');
 const ROUND_SIZE = 30;
+
+/** Values this script binds to a SQL placeholder. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
+/** One char row selected from the `chars` table. */
+interface CharRow extends RowDataPacket {
+  char: string;
+}
+
+/** A single count, as `SELECT COUNT(*) AS n` returns it. */
+interface CountRow extends RowDataPacket {
+  n: number | string;
+}
 
 export interface CharToFill {
   char: string;
@@ -47,7 +62,7 @@ function scanContentDir(): Map<string, ExistingFile> {
 }
 
 async function listCharsMissing(
-  pool: any,
+  pool: Pool,
   field: 'meaning_zh' | 'etymology_story' | 'hanzi_story',
   limit: number,
   existing: Map<string, ExistingFile>,
@@ -57,7 +72,7 @@ async function listCharsMissing(
   for (const level of levels) {
     if (chars.length >= limit) break;
     let sql: string;
-    let params: any[];
+    let params: SqlParam[];
     if (field === 'meaning_zh') {
       sql = `SELECT \`char\` FROM chars
              WHERE level = ? AND (meaning_zh IS NULL OR meaning_zh = '')
@@ -67,7 +82,7 @@ async function listCharsMissing(
       sql = `SELECT \`char\` FROM chars WHERE level = ? ORDER BY \`char\` LIMIT ?`;
       params = [level, limit - chars.length];
     }
-    const [rows] = await pool.query(sql, params);
+    const [rows] = await pool.query<CharRow[]>(sql, params);
     for (const r of rows) {
       const c: string = r.char;
       if (chars.includes(c)) continue;
@@ -85,7 +100,7 @@ export async function selectNextChars(roundSize: number = ROUND_SIZE): Promise<C
   const result: CharToFill[] = [];
   const seen = new Set<string>();
 
-  const [[{ n: meaningInDb }]] = await pool.query<any[]>(
+  const [[{ n: meaningInDb }]] = await pool.query<CountRow[]>(
     `SELECT COUNT(*) AS n FROM chars WHERE meaning_zh IS NOT NULL AND meaning_zh != ''`,
   );
   const meaningInFiles = [...existing.values()].filter((v) => v.meaning_zh).length;

@@ -32,6 +32,7 @@
 import { readFileSync, writeFileSync, renameSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import { getConfig, setConfig } from '../lib/config';
 import {
@@ -97,18 +98,18 @@ interface SyncOptions {
 // Slim DB schema (post 2026-06-17 migration): content columns live in JSON
 // only. The interfaces here reflect what the SELECT returns from DB; rich
 // content is loaded from existing JSON via loadExistingJson().
-interface CharRow {
+interface CharRow extends RowDataPacket {
   char: string;
   level: number;
   pinyin: string;
 }
 
-interface RareRow {
+interface RareRow extends RowDataPacket {
   char: string;
   pinyin: string;
 }
 
-interface EtymRow {
+interface EtymRow extends RowDataPacket {
   char: string;
 }
 
@@ -120,7 +121,7 @@ interface EtymRow {
  * as the canonical marker.
  */
 async function dbHasRichContentColumns(pool: ReturnType<typeof getPool>): Promise<boolean> {
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RowDataPacket[]>(
     `SELECT 1 FROM information_schema.columns
      WHERE table_schema = DATABASE()
        AND table_name = 'chars'
@@ -203,6 +204,22 @@ interface GenerateOneResult {
   generated: FieldName[];
   skipped: FieldName[];
   errors: Array<{ field: FieldName; error: string }>;
+  /**
+   * The values this run produced, keyed by field name.
+   *
+   * Each field keeps its own value type — the string fields hold a string,
+   * the list fields hold a string[] — so the assembler can read them without
+   * casting.
+   */
+  values: {
+    meaning_zh?: string;
+    meaning_en?: string;
+    pinyin_alt?: string[];
+    variants?: string[];
+    etymology_story?: string;
+    rare_meaning?: string;
+    rare_story?: string;
+  };
 }
 
 async function generateForChar(
@@ -212,7 +229,13 @@ async function generateForChar(
   fields: FieldName[],
   existing: Partial<CharContent> | null,
 ): Promise<GenerateOneResult> {
-  const result: GenerateOneResult = { char: charRow.char, generated: [], skipped: [], errors: [] };
+  const result: GenerateOneResult = {
+    char: charRow.char,
+    generated: [],
+    skipped: [],
+    errors: [],
+    values: {},
+  };
 
   // Run all requested field gens in parallel.
   const tasks = fields.map(async (field) => {
@@ -221,7 +244,11 @@ async function generateForChar(
       return;
     }
     try {
-      let value: string | string[] | null = null;
+      // `produced` mirrors the old "value is present and non-empty" gate: a
+      // string field counts as produced when it is not the empty string, a
+      // list field counts as produced whenever the generator returned one
+      // (an empty array was accepted before too).
+      let produced = false;
       const pinyinStr = getPinyinFor(charRow.char, charRow.pinyin);
       // meaningZh is no longer in DB (post 2026-06-17 migration) — pull it
       // from the existing JSON instead so prompt-builders still get a
@@ -229,66 +256,96 @@ async function generateForChar(
       // variants / etymology_story.
       const meaningZh = existing?.dict?.meaning_zh ?? existing?.meaning_zh;
       switch (field) {
-        case 'meaning_zh':
-          value = await generateMeaningZh({ char: charRow.char, pinyin: pinyinStr });
+        case 'meaning_zh': {
+          const value = await generateMeaningZh({ char: charRow.char, pinyin: pinyinStr });
+          if (value !== '') {
+            result.values.meaning_zh = value;
+            produced = true;
+          }
           break;
-        case 'meaning_en':
-          value = await generateMeaningEn({
+        }
+        case 'meaning_en': {
+          const value = await generateMeaningEn({
             char: charRow.char,
             pinyin: pinyinStr,
             meaningZh,
           });
+          if (value !== '') {
+            result.values.meaning_en = value;
+            produced = true;
+          }
           break;
-        case 'pinyin_alt':
-          value = await generatePinyinAlt({ char: charRow.char, pinyin: pinyinStr });
+        }
+        case 'pinyin_alt': {
+          const value = await generatePinyinAlt({ char: charRow.char, pinyin: pinyinStr });
+          result.values.pinyin_alt = value;
+          produced = true;
           break;
-        case 'variants':
-          value = await generateVariants({
+        }
+        case 'variants': {
+          const value = await generateVariants({
             char: charRow.char,
             pinyin: pinyinStr,
             meaningZh,
           });
+          result.values.variants = value;
+          produced = true;
           break;
-        case 'etymology_story':
+        }
+        case 'etymology_story': {
           // Only L1/L2 chars typically have etymology. Skip if char is in rare_chars only.
           if (rareRow && !pinyinStr) {
             result.skipped.push(field);
             return;
           }
-          value = await generateEtymologyStory({
+          const value = await generateEtymologyStory({
             char: charRow.char,
             pinyin: pinyinStr,
             meaningZh: meaningZh ?? null,
           });
+          if (value !== '') {
+            result.values.etymology_story = value;
+            produced = true;
+          }
           break;
-        case 'rare_meaning':
+        }
+        case 'rare_meaning': {
           if (!rareRow) {
             result.skipped.push(field);
             return;
           }
-          value = (
+          const value = (
             await generateRareCharContent(
               { char: charRow.char, pinyin: rareRow.pinyin },
               { fields: ['meaning'] },
             )
           ).meaning;
+          if (value !== '') {
+            result.values.rare_meaning = value;
+            produced = true;
+          }
           break;
-        case 'rare_story':
+        }
+        case 'rare_story': {
           if (!rareRow) {
             result.skipped.push(field);
             return;
           }
-          value = (
+          const value = (
             await generateRareCharContent(
               { char: charRow.char, pinyin: rareRow.pinyin },
               { fields: ['story'] },
             )
           ).story;
+          if (value !== '') {
+            result.values.rare_story = value;
+            produced = true;
+          }
           break;
+        }
       }
-      if (value !== null && value !== undefined && value !== '') {
+      if (produced) {
         // Attach to result for the caller to assemble + write.
-        (result as any)[field] = value;
         result.generated.push(field);
       } else {
         result.skipped.push(field);
@@ -316,10 +373,10 @@ function assembleContent(
 
   // dict block — merge existing + newly generated.
   const dict: NonNullable<CharContent['dict']> = {
-    meaning_zh: (generated as any).meaning_zh ?? existing?.dict?.meaning_zh ?? existing?.meaning_zh,
-    meaning_en: (generated as any).meaning_en ?? existing?.dict?.meaning_en,
-    pinyin_alt: (generated as any).pinyin_alt ?? existing?.dict?.pinyin_alt,
-    variants: (generated as any).variants ?? existing?.dict?.variants,
+    meaning_zh: generated.values.meaning_zh ?? existing?.dict?.meaning_zh ?? existing?.meaning_zh,
+    meaning_en: generated.values.meaning_en ?? existing?.dict?.meaning_en,
+    pinyin_alt: generated.values.pinyin_alt ?? existing?.dict?.pinyin_alt,
+    variants: generated.values.variants ?? existing?.dict?.variants,
   };
   const dictClean: NonNullable<CharContent['dict']> = {};
   if (dict.meaning_zh) dictClean.meaning_zh = dict.meaning_zh;
@@ -329,7 +386,7 @@ function assembleContent(
   if (Object.keys(dictClean).length > 0) content.dict = dictClean;
 
   // etymology block
-  const ety = (generated as any).etymology_story;
+  const ety = generated.values.etymology_story;
   if (ety) {
     content.etymology = { story: ety, generated_by: generatedBy, generated_at: now };
   } else if (existing?.etymology?.story) {
@@ -341,8 +398,8 @@ function assembleContent(
   // rare block — merge existing fields with newly generated ones so a
   // partial run (e.g. rare_story only) doesn't drop a previously-written
   // rare_meaning.
-  const rareMeaning = (generated as any).rare_meaning ?? existing?.rare?.meaning;
-  const rareStory = (generated as any).rare_story ?? existing?.rare?.story;
+  const rareMeaning = generated.values.rare_meaning ?? existing?.rare?.meaning;
+  const rareStory = generated.values.rare_story ?? existing?.rare?.story;
   if (rareMeaning || rareStory) {
     content.rare = {
       meaning: rareMeaning,
@@ -473,7 +530,7 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
   // carry LLM-generated content columns. content-sync now reads the JSON
   // file for the existing values, so the DB SELECT only needs the slim
   // schema columns (char, level, pinyin).
-  const [chars] = await pool.query<any[]>(
+  const [chars] = await pool.query<CharRow[]>(
     `SELECT \`char\`, level, pinyin FROM chars c
      ${charFilter} ${levelFilter}
      ORDER BY \`char\``,
@@ -487,11 +544,11 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
 
   const charList = charRows.map((r) => r.char);
   const placeholders = charList.map(() => '?').join(',');
-  const [rareRows] = await pool.query<any[]>(
+  const [rareRows] = await pool.query<RareRow[]>(
     `SELECT \`char\`, pinyin FROM rare_chars WHERE \`char\` IN (${placeholders})`,
     charList,
   );
-  const [etymRows] = await pool.query<any[]>(
+  const [etymRows] = await pool.query<EtymRow[]>(
     `SELECT \`char\` FROM char_etymology WHERE \`char\` IN (${placeholders})`,
     charList,
   );

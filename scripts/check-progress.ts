@@ -1,7 +1,16 @@
 import mysql from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
+
+/** The single summary row; `SUM()` over an INT column comes back as DECIMAL. */
+interface RareProgressRow extends RowDataPacket {
+  total: number | string;
+  done: number | string;
+  pending: number | string;
+}
+
 async function main() {
   const conn = await mysql.createConnection(process.env.DATABASE_URL!);
-  const [rows] = await conn.query<any[]>(
+  const [rows] = await conn.query<RareProgressRow[]>(
     `SELECT
        COUNT(*) as total,
        SUM(CASE WHEN meaning IS NOT NULL AND meaning != '' THEN 1 ELSE 0 END) as done,

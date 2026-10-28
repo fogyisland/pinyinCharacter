@@ -18,6 +18,7 @@
 import { createHash } from 'node:crypto';
 import { writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import {
   inferFormFromParagraphs,
@@ -37,6 +38,26 @@ interface CollectionConfig {
   fetch: () => Promise<PoemPage[]>;
 }
 
+/**
+ * One poem as the chinese-poetry upstream stores it.
+ *
+ * The upstream repo is not a typed API: some collections call the line array
+ * `paragraphs`, others `para`, and the author field is sometimes absent.
+ * Every entry carries a title — the poems table needs it and the upstream
+ * always writes one.
+ */
+interface ChinesePoetryPoem {
+  title: string;
+  author?: string;
+  paragraphs?: string[];
+  para?: string[];
+}
+
+/** The `id` column of an existing poem, used for the duplicate check. */
+interface ExistingPoemRow extends RowDataPacket {
+  id: number;
+}
+
 const CP_BASE = 'https://raw.githubusercontent.com/chinese-poetry/chinese-poetry/master';
 
 async function fetchChinesePoetry(
@@ -47,7 +68,7 @@ async function fetchChinesePoetry(
     headers: { 'User-Agent': 'pinyin-character-build/1.0' },
   });
   if (!res.ok) throw new Error(`fetch ${path} -> ${res.status}`);
-  const raw: any[] = JSON.parse(await res.text());
+  const raw = JSON.parse(await res.text()) as ChinesePoetryPoem[];
   return raw.map((p) => ({
     title: p.title,
     author: p.author || '佚名',
@@ -152,7 +173,7 @@ export async function buildPoemsExtra({
 
     for (const p of poems) {
       const _hash = contentHash(p.paragraphs);
-      const [existing] = await pool.query<any[]>(
+      const [existing] = await pool.query<ExistingPoemRow[]>(
         `SELECT id FROM poems WHERE dynasty = ? AND title = ? AND author = ? LIMIT 1`,
         [col.dynasty, p.title, p.author],
       );

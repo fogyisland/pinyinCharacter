@@ -20,6 +20,7 @@
  *     pnpm tsx scripts/build-form-tags.ts
  *   DATABASE_URL=mysql://... pnpm tsx scripts/build-form-tags.ts --dry-run
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import {
   inferFormFromParagraphs,
@@ -38,6 +39,25 @@ export interface BackfillResult {
   formSet: number;
   formNull: number;
   dryRun: boolean;
+}
+
+/**
+ * One row of the poems table as this script sees it.
+ *
+ * The SELECT below fetches `id`, `category`, `dynasty`, `content` and `form`.
+ * `type`, `rhythmic` and `paragraphs` are not selected, so at runtime they are
+ * always `undefined` — they are declared optional here so the source-tag guard
+ * in the loop keeps compiling (and keeps its "rows have neither" semantics).
+ */
+interface PoemFormRow extends RowDataPacket {
+  id: number;
+  category: string | null;
+  dynasty: string;
+  content: unknown;
+  form: string | null;
+  type?: string;
+  rhythmic?: string;
+  paragraphs?: unknown;
 }
 
 function parseJsonArray(s: unknown): string[] {
@@ -65,13 +85,13 @@ export async function backfillForm(args: BackfillArgs = {}): Promise<BackfillRes
   let formNull = 0;
 
   while (true) {
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<PoemFormRow[]>(
       `SELECT id, category, dynasty, content, form FROM poems ${whereClause} ORDER BY id LIMIT ? OFFSET ?`,
       [batchSize, offset],
     );
     if (!Array.isArray(rows) || rows.length === 0) break;
 
-    for (const row of rows as any[]) {
+    for (const row of rows) {
       scanned++;
       const paragraphs = parseJsonArray(row.content ?? row.paragraphs);
       const struct = inferFormFromParagraphs(paragraphs);
@@ -81,7 +101,11 @@ export async function backfillForm(args: BackfillArgs = {}): Promise<BackfillRes
       // inference change become intentional (audit §4.3).
       const hasSourceTag = typeof row.type === 'string' || typeof row.rhythmic === 'string';
       const source = hasSourceTag
-        ? resolveFormFromSource(row.type, row.rhythmic, row.category || row.dynasty)
+        ? resolveFormFromSource(
+            typeof row.type === 'string' ? row.type : null,
+            typeof row.rhythmic === 'string' ? row.rhythmic : null,
+            row.category || row.dynasty,
+          )
         : { primary: null, source: 'source-tag' as const, confidence: 0 };
       const merged = mergeForm(struct, source);
       if (merged.primary === null) {

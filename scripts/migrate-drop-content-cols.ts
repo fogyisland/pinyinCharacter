@@ -23,7 +23,14 @@
  *      [--dry-run]   show the SQL without executing
  *      [--skip-export-check]  skip the export-content verification (DANGEROUS)
  */
+import type { Pool } from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
+
+/** A single count, as `SELECT COUNT(*) AS n` returns it. */
+interface CountRow extends RowDataPacket {
+  n: number | string;
+}
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -59,22 +66,22 @@ async function verifyExport() {
   console.log(`[migrate] ✓ export dry-run wrote ${stats.written} files (would update manifest)`);
 }
 
-async function checkColumnExists(pool: any, table: string, column: string): Promise<boolean> {
-  const [rows] = await pool.query(
+async function checkColumnExists(pool: Pool, table: string, column: string): Promise<boolean> {
+  const [rows] = await pool.query<CountRow[]>(
     `SELECT COUNT(*) AS n FROM information_schema.columns
      WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?`,
     [table, column],
   );
-  return Number((rows as any[])[0]?.n ?? 0) > 0;
+  return Number(rows[0]?.n ?? 0) > 0;
 }
 
-async function checkTableExists(pool: any, table: string): Promise<boolean> {
-  const [rows] = await pool.query(
+async function checkTableExists(pool: Pool, table: string): Promise<boolean> {
+  const [rows] = await pool.query<CountRow[]>(
     `SELECT COUNT(*) AS n FROM information_schema.tables
      WHERE table_schema = DATABASE() AND table_name = ?`,
     [table],
   );
-  return Number((rows as any[])[0]?.n ?? 0) > 0;
+  return Number(rows[0]?.n ?? 0) > 0;
 }
 
 const DROPS: Array<{ table: string; column: string }> = [

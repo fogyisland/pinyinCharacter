@@ -30,6 +30,7 @@ import {
 } from 'node:fs';
 import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import { CharContentSchema, ContentManifestSchema } from './schemas/content';
 
@@ -80,6 +81,43 @@ interface CharContentFull {
   hanzi_story?: string;
   generated_by?: string;
   generated_at?: string;
+}
+
+/** One char row with the content columns the export reads. */
+interface CharExportRow extends RowDataPacket {
+  char: string;
+  level: number;
+  pinyin: string;
+  meaning_zh: string | null;
+  meaning_en: string | null;
+  pinyin_alt: string | null;
+  variants: string | null;
+}
+
+/** One etymology row: the story plus its provenance. */
+interface EtymologyExportRow extends RowDataPacket {
+  char: string;
+  story: string | null;
+  generated_by: string | null;
+  generated_at: Date | string | null;
+}
+
+/** One hanzi-story row: the story plus its provenance. */
+interface StoryExportRow extends RowDataPacket {
+  char: string;
+  story: string | null;
+  generated_by: string | null;
+  generated_at: Date | string | null;
+}
+
+/** One rare-char row with the content columns the export reads. */
+interface RareExportRow extends RowDataPacket {
+  char: string;
+  pinyin: string;
+  meaning: string | null;
+  story: string | null;
+  generated_by: string | null;
+  generated_at: Date | string | null;
 }
 
 function parseArgs(): ExportOptions {
@@ -192,35 +230,37 @@ export async function exportContent(opts: ExportOptions = {}): Promise<ExportSta
   const levelFilter = opts.level ? (opts.char ? 'AND c.level = ?' : 'WHERE c.level = ?') : '';
   const levelParams: unknown[] = opts.level ? [opts.level] : [];
 
-  const [charsRows] = await pool.query<any[]>(
+  const [charsRows] = await pool.query<CharExportRow[]>(
     `SELECT \`char\`, level, pinyin, meaning_zh, meaning_en, pinyin_alt, variants
      FROM chars c
      ${charFilter} ${levelFilter}
      ORDER BY \`char\``,
     [...charParams, ...levelParams],
   );
-  const [etymRows] = await pool.query<any[]>(
+  const [etymRows] = await pool.query<EtymologyExportRow[]>(
     `SELECT \`char\`, story, generated_by, generated_at
      FROM char_etymology
      ${opts.char ? 'WHERE `char` = ?' : ''}`,
     opts.char ? [opts.char] : [],
   );
-  const [storyRows] = await pool.query<any[]>(
+  const [storyRows] = await pool.query<StoryExportRow[]>(
     `SELECT \`char\`, story, generated_by, generated_at
      FROM char_story
      ${opts.char ? 'WHERE `char` = ?' : ''}`,
     opts.char ? [opts.char] : [],
   );
-  const [rareRows] = await pool.query<any[]>(
+  const [rareRows] = await pool.query<RareExportRow[]>(
     `SELECT \`char\`, pinyin, meaning, story, generated_by, generated_at
      FROM rare_chars
      ${opts.char ? 'WHERE `char` = ?' : ''}`,
     opts.char ? [opts.char] : [],
   );
 
-  const etymByChar = new Map(etymRows.map((r) => [r.char, r]));
-  const storyByChar = new Map(storyRows.map((r) => [r.char, r]));
-  const rareByChar = new Map(rareRows.map((r) => [r.char, r]));
+  const etymByChar = new Map<string, EtymologyExportRow>(
+    etymRows.map((r) => [r.char, r]),
+  );
+  const storyByChar = new Map<string, StoryExportRow>(storyRows.map((r) => [r.char, r]));
+  const rareByChar = new Map<string, RareExportRow>(rareRows.map((r) => [r.char, r]));
   const existingFiles = opts.missing || opts.outdated ? listExistingJsonFiles() : new Set<string>();
 
   // For aggregation manifest counts we need to scan all JSON files too, so
@@ -268,14 +308,16 @@ export async function exportContent(opts: ExportOptions = {}): Promise<ExportSta
     if (row.meaning_en) dict.meaning_en = stripThinking(row.meaning_en);
     if (row.pinyin_alt) {
       try {
-        dict.pinyin_alt = JSON.parse(row.pinyin_alt);
+        const parsed: unknown = JSON.parse(row.pinyin_alt);
+        dict.pinyin_alt = parsed as string[];
       } catch {
         /* skip malformed */
       }
     }
     if (row.variants) {
       try {
-        dict.variants = JSON.parse(row.variants);
+        const parsed: unknown = JSON.parse(row.variants);
+        dict.variants = parsed as string[];
       } catch {
         /* skip malformed */
       }

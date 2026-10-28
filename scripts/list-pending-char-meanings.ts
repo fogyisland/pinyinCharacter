@@ -1,12 +1,20 @@
 // Usage: node --env-file=.env scripts/list-pending-char-meanings.ts [offset] [limit]
 // Prints the next batch of chars (level 1+2) with empty meaning_zh as JSON
 import mysql from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
+
+/** One char that is still missing its Chinese meaning. */
+interface PendingCharRow extends RowDataPacket {
+  char: string;
+  pinyin: string;
+  level: number;
+}
 
 async function main() {
   const offset = Number(process.argv[2] ?? 0);
   const limit = Math.min(Number(process.argv[3] ?? 30), 100);
   const conn = await mysql.createConnection(process.env.DATABASE_URL!);
-  const [rows] = await conn.query<any[]>(
+  const [rows] = await conn.query<PendingCharRow[]>(
     `SELECT \`char\`, pinyin, level FROM chars
      WHERE (meaning_zh IS NULL OR meaning_zh = '')
      AND level IN (1, 2)

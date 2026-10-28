@@ -14,6 +14,7 @@
  */
 import { writeFileSync, readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 
 const DATA_DIR = join(process.cwd(), 'data', 'classics');
@@ -65,6 +66,22 @@ interface Manifest {
   books: ManifestEntry[];
 }
 
+/** One row of the `classics` table, including its JSON chunk column. */
+interface ClassicRow extends RowDataPacket {
+  slug: string;
+  title: string;
+  category: string;
+  author: string | null;
+  era: string | null;
+  source: string;
+  chunks: unknown;
+}
+
+/** One row of the `classics` table (slug only). */
+interface ClassicSlugRow extends RowDataPacket {
+  slug: string;
+}
+
 function parseJsonArray<T>(s: unknown, fallback: T): T {
   if (Array.isArray(s)) return s as T;
   if (typeof s === 'string') {
@@ -95,11 +112,11 @@ async function exportDbOnlyBooks(): Promise<{ written: string[]; skipped: string
     } catch {
       /* not on disk — export below */
     }
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<ClassicRow[]>(
       `SELECT slug, title, category, author, era, chunks, source FROM classics WHERE slug = ?`,
       [slug],
     );
-    const r = (rows as any[])[0];
+    const r = rows[0];
     if (!r) {
       console.warn(`[export] ${slug}: not in DB, skipping`);
       continue;
@@ -138,10 +155,11 @@ async function insertManifestOnlyBooks(): Promise<{ inserted: string[]; skipped:
       console.warn(`[insert] ${slug}: not in manifest, skipping`);
       continue;
     }
-    const [exists] = await pool.query<any[]>(`SELECT 1 FROM classics WHERE slug = ? LIMIT 1`, [
-      slug,
-    ]);
-    if ((exists as any[]).length > 0) {
+    const [exists] = await pool.query<RowDataPacket[]>(
+      `SELECT 1 FROM classics WHERE slug = ? LIMIT 1`,
+      [slug],
+    );
+    if (exists.length > 0) {
       skipped.push(slug);
       continue;
     }
@@ -202,8 +220,8 @@ async function verify(): Promise<{
   aligned: boolean;
 }> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(`SELECT slug FROM classics`);
-  const dbSlugs = new Set((rows as any[]).map((r) => r.slug as string));
+  const [rows] = await pool.query<ClassicSlugRow[]>(`SELECT slug FROM classics`);
+  const dbSlugs = new Set(rows.map((r) => r.slug));
   const manifest: Manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
   const manifestSlugs = new Set(manifest.books.map((b) => b.slug));
   const inDbNotManifest = [...dbSlugs].filter((s) => !manifestSlugs.has(s)).sort();

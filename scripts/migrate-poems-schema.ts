@@ -10,7 +10,20 @@
  * After verifying on dev+prod, delete this script (per migrate-membership.ts pattern).
  */
 import type { Pool } from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
+
+/** One column row from INFORMATION_SCHEMA.COLUMNS. */
+interface ColumnRow extends RowDataPacket {
+  COLUMN_NAME: string;
+  COLUMN_TYPE: string;
+}
+
+/** One index row from INFORMATION_SCHEMA.STATISTICS. */
+interface IndexRow extends RowDataPacket {
+  INDEX_NAME: string;
+  COLUMN_NAME: string;
+}
 
 const TARGET_DDL = {
   dynasty: 'ALTER TABLE poems MODIFY COLUMN dynasty VARCHAR(16) NOT NULL',
@@ -21,7 +34,7 @@ const TARGET_DDL = {
 } as const;
 
 async function columnExists(pool: Pool, column: string): Promise<boolean> {
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<ColumnRow[]>(
     `SELECT COLUMN_NAME, COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = ?`,
     [column],
   );
@@ -29,7 +42,7 @@ async function columnExists(pool: Pool, column: string): Promise<boolean> {
 }
 
 async function indexExists(pool: Pool, index: string): Promise<boolean> {
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<IndexRow[]>(
     `SELECT INDEX_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND INDEX_NAME = ?`,
     [index],
   );
@@ -42,7 +55,7 @@ export async function migratePoemsSchema(): Promise<{ ran: string[]; skipped: st
   const skipped: string[] = [];
 
   // 1. dynasty ENUM -> VARCHAR(16) — check by column type containing 'enum'
-  const [dynastyRows] = await pool.query<any[]>(
+  const [dynastyRows] = await pool.query<ColumnRow[]>(
     `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'dynasty'`,
   );
   if (
@@ -73,7 +86,7 @@ export async function migratePoemsSchema(): Promise<{ ran: string[]; skipped: st
   }
 
   // 4. form column widening
-  const [formRows] = await pool.query<any[]>(
+  const [formRows] = await pool.query<ColumnRow[]>(
     `SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'poems' AND COLUMN_NAME = 'form'`,
   );
   if (Array.isArray(formRows) && formRows[0] && formRows[0].COLUMN_TYPE?.includes('varchar(32)')) {

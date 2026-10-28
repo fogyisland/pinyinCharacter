@@ -9,6 +9,7 @@
  * Run: DATABASE_URL=mysql://... pnpm tsx scripts/normalize-existing-form.ts
  * After verifying on dev+prod, delete this script.
  */
+import type { ResultSetHeader } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 
 export const NORMALIZE_MAP: Record<string, string> = {
@@ -22,8 +23,11 @@ export async function normalizeExistingForm(): Promise<{ updated: number }> {
   const pool = getPool();
   let updated = 0;
   for (const [from, to] of Object.entries(NORMALIZE_MAP)) {
-    const [result] = await pool.query<any>(`UPDATE poems SET form = ? WHERE form = ?`, [to, from]);
-    const n = (result as any)?.affectedRows ?? 0;
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE poems SET form = ? WHERE form = ?`,
+      [to, from],
+    );
+    const n = result?.affectedRows ?? 0;
     updated += n;
     console.log(`[normalize] ${from} -> ${to}: ${n} rows updated`);
   }

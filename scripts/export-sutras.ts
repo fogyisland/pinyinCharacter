@@ -14,6 +14,7 @@
  *
  * Run: pnpm tsx scripts/export-sutras.ts [--dry-run|--verify]
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import { writeSutrasFs, sutrasFsAvailable, type SutraManifestEntry } from '../lib/sutras-fs';
 import type { SutraChunk } from '../lib/sutra-types';
@@ -21,6 +22,14 @@ import type { SutraChunk } from '../lib/sutra-types';
 interface ExportOpts {
   dryRun?: boolean;
   verify?: boolean;
+}
+
+/** One row of the `sutras` table. */
+interface SutraRow extends RowDataPacket {
+  id: number;
+  title: string;
+  slug: string;
+  chunks: string | SutraChunk[];
 }
 
 function parseArgs(): ExportOpts {
@@ -40,19 +49,14 @@ async function main() {
     console.log('[export-sutras] data/sutras/ already exists, will overwrite');
 
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<SutraRow[]>(
     `SELECT id, title, slug, chunks FROM sutras ORDER BY id ASC`,
   );
   console.log(`[export-sutras] found ${rows.length} rows in sutras table`);
 
   const manifestItems: SutraManifestEntry[] = [];
   const chunksBySlug: Record<string, SutraChunk[]> = {};
-  for (const row of rows as Array<{
-    id: number;
-    title: string;
-    slug: string;
-    chunks: string | SutraChunk[];
-  }>) {
+  for (const row of rows) {
     const raw =
       typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;
     const chunkCount = raw.length;

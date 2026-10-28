@@ -7,6 +7,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 
 async function main() {
@@ -23,7 +24,7 @@ async function main() {
     await pool.query(stmt);
   }
   // Confirm by selecting the table.
-  const [rows] = await pool.query<any[]>(`SHOW TABLES LIKE 'sutra_copy_progress'`);
+  const [rows] = await pool.query<RowDataPacket[]>(`SHOW TABLES LIKE 'sutra_copy_progress'`);
   if (rows.length === 0) throw new Error('table not created');
   console.error('[migrate-sutra-copy-progress] table created');
   await closePool();

@@ -11,7 +11,20 @@
  * Run: pnpm tsx --env-file=.env scripts/backfill-pinyin.ts
  */
 import { pinyin } from 'pinyin-pro';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
+
+/**
+ * One row of the poems table as this script sees it.
+ *
+ * `content` is a JSON column: the driver hands it back either as a parsed
+ * array or as the raw string, depending on the server version, so it stays
+ * `unknown` and `parseContent` narrows it.
+ */
+interface PoemPinyinRow extends RowDataPacket {
+  id: number;
+  content: unknown;
+}
 
 function linePinyin(line: string): string[] {
   return Array.from(line).map((ch) => {
@@ -43,7 +56,7 @@ function parseContent(s: unknown): string[] {
 
 export async function backfillPinyin(): Promise<{ updated: number; skipped: number }> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<PoemPinyinRow[]>(
     `SELECT id, content FROM poems
      WHERE JSON_LENGTH(content) > 0
        AND (pinyin IS NULL
@@ -53,7 +66,7 @@ export async function backfillPinyin(): Promise<{ updated: number; skipped: numb
   );
   let updated = 0;
   let skipped = 0;
-  for (const r of rows as any[]) {
+  for (const r of rows) {
     const lines = parseContent(r.content);
     if (lines.length === 0) {
       skipped++;

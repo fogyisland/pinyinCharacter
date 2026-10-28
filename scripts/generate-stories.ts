@@ -7,8 +7,15 @@
  *
  * Re-runnable: skips rows that already have a non-empty meaning.
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import { batchGenerateStories } from '../lib/ai-rare-chars';
+
+/** One rare char that still needs a story. */
+interface RareCharRow extends RowDataPacket {
+  char: string;
+  pinyin: string;
+}
 
 function parseArgs(): { provider: string; model: string } {
   const args = process.argv.slice(2);
@@ -29,12 +36,12 @@ async function main() {
   const { provider, model } = parseArgs();
   const pool = getPool();
 
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RareCharRow[]>(
     `SELECT \`char\`, pinyin FROM rare_chars WHERE meaning = '' ORDER BY \`char\` ASC`,
   );
   console.log(`[generate-stories] ${rows.length} chars need stories`);
 
-  const inputs = rows.map((r) => ({ char: r.char as string, pinyin: r.pinyin as string }));
+  const inputs = rows.map((r) => ({ char: r.char, pinyin: r.pinyin }));
 
   const updated = await batchGenerateStories(inputs, {
     provider,

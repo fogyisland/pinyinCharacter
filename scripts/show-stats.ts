@@ -2,11 +2,27 @@
  * One-shot script: print rare_chars stats.
  * Usage: pnpm tsx --env-file=.env scripts/show-stats.ts
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
+
+/** The single totals row; `SUM()` over an INT column comes back as DECIMAL. */
+interface RareStatsRow extends RowDataPacket {
+  total: number | string;
+  pinyin_filled: number | string;
+  meaning_filled: number | string;
+  story_filled: number | string;
+  needs_review: number | string;
+}
+
+/** One generation source and how many rows it produced. */
+interface SourceCountRow extends RowDataPacket {
+  generated_by: string;
+  n: number | string;
+}
 
 async function main() {
   const pool = getPool();
-  const [[totals]] = await pool.query<any[]>(
+  const [[totals]] = await pool.query<RareStatsRow[]>(
     `SELECT
        COUNT(*) AS total,
        SUM(CASE WHEN pinyin <> '' THEN 1 ELSE 0 END) AS pinyin_filled,
@@ -15,7 +31,7 @@ async function main() {
        SUM(CASE WHEN needs_review = 1 THEN 1 ELSE 0 END) AS needs_review
      FROM rare_chars`,
   );
-  const [bySource] = await pool.query<any[]>(
+  const [bySource] = await pool.query<SourceCountRow[]>(
     `SELECT generated_by, COUNT(*) AS n
      FROM rare_chars
      WHERE generated_by IS NOT NULL

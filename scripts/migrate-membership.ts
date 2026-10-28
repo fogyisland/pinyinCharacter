@@ -5,6 +5,7 @@
  * Run: pnpm tsx --env-file=.env scripts/migrate-membership.ts
  * After verifying, delete this file (like migrate-pinyin-from-rare-chars.ts).
  */
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 
 const DDL = [
@@ -115,6 +116,12 @@ const SEED_PLANS = [
 
 const ALL_FEATURES = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'];
 
+/** One seeded plan row: its id and key. */
+interface PlanRow extends RowDataPacket {
+  id: number;
+  plan_key: string;
+}
+
 export async function migrateMembership(): Promise<{
   created: number;
   seeded: number;
@@ -125,7 +132,7 @@ export async function migrateMembership(): Promise<{
 
   let seeded = 0;
   for (const p of SEED_PLANS) {
-    const [res] = await pool.query<any>(
+    const [res] = await pool.query<ResultSetHeader>(
       `INSERT IGNORE INTO membership_plans
          (plan_key, display_name, duration_days, amount, currency, enabled, display_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -139,19 +146,19 @@ export async function migrateMembership(): Promise<{
         p.display_order,
       ],
     );
-    seeded += (res as any).affectedRows > 0 ? 1 : 0;
+    seeded += res.affectedRows > 0 ? 1 : 0;
   }
 
   // For each plan, look up its id and INSERT IGNORE all 4 feature rows
-  const [planRows] = await pool.query<any[]>(`SELECT id, plan_key FROM membership_plans`);
+  const [planRows] = await pool.query<PlanRow[]>(`SELECT id, plan_key FROM membership_plans`);
   let featureRows = 0;
-  for (const r of planRows as any[]) {
+  for (const r of planRows) {
     for (const f of ALL_FEATURES) {
-      const [res] = await pool.query<any>(
+      const [res] = await pool.query<ResultSetHeader>(
         `INSERT IGNORE INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`,
         [r.id, f],
       );
-      featureRows += (res as any).affectedRows > 0 ? 1 : 0;
+      featureRows += res.affectedRows > 0 ? 1 : 0;
     }
   }
 

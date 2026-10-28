@@ -21,6 +21,7 @@
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import * as fontkit from 'fontkit';
+import type { Font } from 'fontkit';
 
 const ROOT = resolve(process.cwd());
 const CONTENT_DIR = resolve(ROOT, 'data', 'content');
@@ -59,7 +60,7 @@ async function main() {
 
   // Load fonts once.
   console.log('[coverage] loading fonts...');
-  const fontCache: Record<string, any> = {};
+  const fontCache: Partial<Record<string, Font>> = {};
   for (const f of FONTS) {
     const abs = resolve(ROOT, f.path);
     if (!existsSync(abs)) {

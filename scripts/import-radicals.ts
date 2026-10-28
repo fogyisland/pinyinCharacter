@@ -10,19 +10,26 @@
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 
 const RADICALS_FILE = join(process.cwd(), 'data', 'radicals.json');
 
+/** One char with the radical currently stored in the DB. */
+interface RadicalRow extends RowDataPacket {
+  char: string;
+  radical: string;
+}
+
 async function main() {
   const radicals: Record<string, string> = JSON.parse(readFileSync(RADICALS_FILE, 'utf8'));
   const pool = getPool();
-  const [rows] = await pool.query<any[]>('SELECT `char`, radical FROM chars');
+  const [rows] = await pool.query<RadicalRow[]>('SELECT `char`, radical FROM chars');
   let updated = 0;
   let unchanged = 0;
   let skipped = 0;
   const corrections: Array<{ char: string; from: string; to: string }> = [];
-  for (const row of rows as any[]) {
+  for (const row of rows) {
     const newRad = radicals[row.char];
     if (!newRad) {
       skipped++;

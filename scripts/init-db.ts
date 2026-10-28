@@ -8,12 +8,33 @@
  * lib/content.ts::getContent(). Read paths prefer JSON, fall back to legacy
  * content columns during the migration window.
  */
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 import charsData from '../data/general-standard-chinese-characters.json';
 import radicalsData from '../data/radicals.json';
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { readJsonAuto } from '../lib/json-fs';
+
+/** One column row from information_schema.columns. */
+interface ColumnNameRow extends RowDataPacket {
+  COLUMN_NAME: string;
+}
+
+/** A single count, as `SELECT COUNT(*) AS count` returns it. */
+interface CountRow extends RowDataPacket {
+  count: number | string;
+}
+
+/** One char row selected from the `chars` table. */
+interface CharRow extends RowDataPacket {
+  char: string;
+}
+
+/** One user id row selected from the `users` table. */
+interface UserIdRow extends RowDataPacket {
+  id: number;
+}
 
 const DDL = [
   `CREATE TABLE IF NOT EXISTS chars (
@@ -458,7 +479,7 @@ export async function initTables(): Promise<InitTablesStats> {
   for (const sql of DDL) {
     await pool.query(sql);
   }
-  const [cols] = await pool.query<any[]>(
+  const [cols] = await pool.query<ColumnNameRow[]>(
     `SELECT COLUMN_NAME FROM information_schema.columns
      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'disabled_at'`,
   );
@@ -466,7 +487,7 @@ export async function initTables(): Promise<InitTablesStats> {
     await pool.query(`ALTER TABLE users ADD COLUMN disabled_at DATETIME NULL AFTER is_admin`);
     altersRun++;
   }
-  const [emailCols] = await pool.query<any[]>(
+  const [emailCols] = await pool.query<ColumnNameRow[]>(
     `SELECT COLUMN_NAME FROM information_schema.columns
      WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'email'`,
   );
@@ -475,7 +496,7 @@ export async function initTables(): Promise<InitTablesStats> {
     await pool.query(`ALTER TABLE users ADD UNIQUE KEY uk_email (email)`);
     altersRun += 2;
   }
-  const [[{ count }]] = await pool.query<any[]>(
+  const [[{ count }]] = await pool.query<CountRow[]>(
     `SELECT COUNT(*) AS count FROM information_schema.tables WHERE table_schema = DATABASE()`,
   );
   return { statementsRun: DDL.length + altersRun, tablesNow: Number(count) };
@@ -493,7 +514,7 @@ export interface InitAppConfigStats {
 
 export async function initAppConfig(): Promise<InitAppConfigStats> {
   const pool = getPool();
-  const [[{ count: beforeCount }]] = await pool.query<any[]>(
+  const [[{ count: beforeCount }]] = await pool.query<CountRow[]>(
     `SELECT COUNT(*) AS count FROM app_config`,
   );
   let inserted = 0;
@@ -522,7 +543,7 @@ export async function initAppConfig(): Promise<InitAppConfigStats> {
   for (const sql of APPCONFIG_DEFAULTS) {
     await pool.query(sql);
   }
-  const [[{ count: afterCount }]] = await pool.query<any[]>(
+  const [[{ count: afterCount }]] = await pool.query<CountRow[]>(
     `SELECT COUNT(*) AS count FROM app_config`,
   );
   return { inserted, totalRows: Number(afterCount) };
@@ -535,7 +556,7 @@ export async function initAppConfig(): Promise<InitAppConfigStats> {
 export async function initPoems(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM poems`);
+    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM poems`);
     if (Number(count) > 0) {
       console.log(`[initPoems] poems table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
@@ -559,7 +580,7 @@ export async function initPoems(): Promise<AutoPopulateResult> {
 export async function initClassics(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM classics`);
+    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM classics`);
     if (Number(count) > 0) {
       console.log(`[initClassics] classics table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
@@ -580,7 +601,7 @@ export async function initClassics(): Promise<AutoPopulateResult> {
 export async function initSutras(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM sutras`);
+    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM sutras`);
     if (Number(count) > 0) {
       console.log(`[initSutras] sutras table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
@@ -604,7 +625,7 @@ export async function initSutras(): Promise<AutoPopulateResult> {
 export async function initChars(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM chars`);
+    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM chars`);
     if (Number(count) > 0) {
       console.log(`[initChars] chars table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
@@ -671,7 +692,7 @@ interface ContentShape {
 export async function initRareChars(): Promise<InitRareCharsStats> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<any[]>(`SELECT COUNT(*) AS count FROM rare_chars`);
+    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM rare_chars`);
     if (Number(count) > 0) {
       console.log(`[initRareChars] rare_chars table has ${count} rows, skip auto-populate`);
       return { scanned: 0, inserted: 0, skipped: true };
@@ -741,10 +762,10 @@ const CHAR_ETYMOLOGY_ERA_FONT = {
 export async function initCharEtymology(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<CharRow[]>(
       `SELECT c.char FROM chars c LEFT JOIN char_etymology e ON c.char = e.char WHERE e.char IS NULL`,
     );
-    const missing: string[] = (rows as any[]).map((r) => r.char);
+    const missing: string[] = rows.map((r) => r.char);
     if (missing.length === 0) {
       console.log('[initCharEtymology] no chars missing etymology row, skip');
       return { inserted: 0, skipped: true };
@@ -804,19 +825,20 @@ export interface CreateAdminStats {
 export async function createAdminUser(input: CreateAdminInput): Promise<CreateAdminStats> {
   const pool = getPool();
   // Refuse if username already exists (idempotent re-runs).
-  const [existing] = await pool.query<any[]>(`SELECT id FROM users WHERE username = ? LIMIT 1`, [
-    input.username,
-  ]);
+  const [existing] = await pool.query<UserIdRow[]>(
+    `SELECT id FROM users WHERE username = ? LIMIT 1`,
+    [input.username],
+  );
   if (existing.length > 0) {
     throw new Error(`username_taken: A user with username '${input.username}' already exists.`);
   }
   const bcrypt = await import('bcryptjs');
   const hash = await bcrypt.hash(input.password, 10);
-  const [r] = await pool.query<any>(
+  const [r] = await pool.query<ResultSetHeader>(
     `INSERT INTO users (username, email, password_hash, is_admin) VALUES (?, ?, ?, 1)`,
     [input.username, input.email ?? null, hash],
   );
-  return { userId: Number((r as any).insertId), username: input.username };
+  return { userId: Number(r.insertId), username: input.username };
 }
 
 /**
@@ -841,11 +863,11 @@ export async function initActivate(): Promise<InitActivateStats> {
     totalMem: os.totalmem(),
     nodeVersion: process.version,
   });
-  const [r] = await pool.query(
+  const [r] = await pool.query<ResultSetHeader>(
     `INSERT IGNORE INTO activate (id, short_name, installation_data) VALUES (1, ?, ?)`,
     [hostname, installationData],
   );
-  const seeded = (r as any).affectedRows > 0;
+  const seeded = r.affectedRows > 0;
   console.log(`[initActivate] singleton ready (short_name=${hostname}, seeded=${seeded})`);
   return { seeded, shortName: hostname };
 }

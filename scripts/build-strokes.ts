@@ -32,11 +32,17 @@ import pLimit from 'p-limit';
 import { readFile, writeFile, mkdir, readdir } from 'fs/promises';
 import { fileURLToPath } from 'url';
 import { existsSync } from 'fs';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
 
 const CHARS_FILE = 'data/general-standard-chinese-characters.json';
 const OUTPUT_DIR = 'public/strokes';
 const MANIFEST_FILE = 'data/strokes-manifest.json';
+
+/** One row of the chars table, as the `--from-db` char list needs it. */
+interface CharRow extends RowDataPacket {
+  char: string;
+}
 
 const SOURCES = [
   'https://cdn.jsdelivr.net/npm/hanzi-writer-data@latest/',
@@ -94,7 +100,7 @@ async function loadCharList(options: BuildStrokesOptions): Promise<string[]> {
     const pool = getPool();
     const levelFilter = options.level ? 'WHERE level = ?' : '';
     const params: unknown[] = options.level ? [options.level] : [];
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<CharRow[]>(
       `SELECT \`char\` FROM chars ${levelFilter} ORDER BY \`char\``,
       params,
     );
