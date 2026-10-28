@@ -13,6 +13,7 @@ import { getPool } from './db';
 import { CharContentSchema, ContentManifestSchema } from '@/scripts/schemas/content';
 import type { CharContent } from '@/scripts/schemas/content';
 import type { GetContentOptions } from './content-types';
+import { getLegacyContentSchema, toSelectList } from './legacy-content-schema';
 import { readJsonAuto } from './json-fs';
 
 const CONTENT_DIR = join(process.cwd(), 'data', 'content');
@@ -116,39 +117,47 @@ export async function getContent(
     }
   }
 
-  // 2. Legacy fallback: aggregate from DB tables. Schema can be "slim"
-  //    (6 cols in chars, no separate char_story) or "rich" (16+ cols +
-  //    char_story table). Read the slim shape first, opportunistically
-  //    upgrade to rich cols when present so neither schema breaks us.
+  // 2. Legacy fallback: aggregate from DB tables, for a rich install that has
+  //    not been migrated to the slim schema yet. Schema can be "slim" (6 cols
+  //    in chars, no separate char_story) or "rich" (16+ cols + char_story
+  //    table). `getLegacyContentSchema` reports which legacy columns this
+  //    database actually has, so no query below can name a column that is not
+  //    there — a slim install simply yields fewer fields.
   const pool = getPool();
-  const charRows = await pool
-    .query<LegacyCharRow[]>(
-      `SELECT level, pinyin, meaning_zh, meaning_en, pinyin_alt, variants
+  const schema = await getLegacyContentSchema(pool);
+
+  const charColumns = ['level', 'pinyin', ...schema.chars];
+  const [charRows] = await pool.query<LegacyCharRow[]>(
+    `SELECT ${toSelectList(charColumns)}
      FROM chars WHERE \`char\` = ? LIMIT 1`,
-      [char],
-    )
-    .then(([rows]) => rows)
-    .catch(() => {
-      // Slim schema — meaning_zh etc. don't exist; fall back to bare cols.
-      return pool
-        .query<LegacyCharRow[]>(`SELECT level, pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [char])
-        .then(([rows]) => rows);
-    });
+    [char],
+  );
   if (charRows.length === 0) return null;
 
-  const etymRows = await pool
-    .query<LegacyEtymologyRow[]>(
-      `SELECT story, generated_by, generated_at FROM char_etymology WHERE \`char\` = ? LIMIT 1`,
-      [char],
-    )
-    .then(([rows]) => rows)
-    .catch(() => [] as LegacyEtymologyRow[]);
-  const storyRows = await pool
-    .query<LegacyStoryRow[]>(`SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`, [char])
-    .then(([rows]) => rows)
-    .catch(() => [] as LegacyStoryRow[]);
+  const etymRows: LegacyEtymologyRow[] =
+    schema.etymology.length > 0
+      ? (
+          await pool.query<LegacyEtymologyRow[]>(
+            `SELECT ${toSelectList(schema.etymology)}
+             FROM char_etymology WHERE \`char\` = ? LIMIT 1`,
+            [char],
+          )
+        )[0]
+      : [];
+
+  const storyRows: LegacyStoryRow[] = schema.hasCharStoryTable
+    ? (
+        await pool.query<LegacyStoryRow[]>(
+          `SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`,
+          [char],
+        )
+      )[0]
+    : [];
+
+  const rareColumns = ['pinyin', ...schema.rare];
   const [rareRows] = await pool.query<LegacyRareCharRow[]>(
-    `SELECT pinyin, meaning, story, generated_by, generated_at FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
+    `SELECT ${toSelectList(rareColumns)}
+     FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
     [char],
   );
 

@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { readContentFromFs } from './content';
+import { getLegacyContentSchema, toSelectList } from './legacy-content-schema';
 
 export interface RareChar {
   char: string;
@@ -60,14 +61,15 @@ interface DbContentRow {
 
 /**
  * The legacy `rare_chars` content columns. They are gone from the slim
- * schema, so the query may fail — the surrounding try/catch handles that.
+ * schema, so the members are optional — the query only ever names the ones
+ * the connected database actually has.
  */
 interface RareContentRow extends RowDataPacket {
-  meaning: string | null;
-  story: string | null;
-  generated_by: string | null;
-  generated_at: Date | null;
-  created_at: Date | null;
+  meaning?: string | null;
+  story?: string | null;
+  generated_by?: string | null;
+  generated_at?: Date | null;
+  created_at?: Date | null;
 }
 
 /** The structural columns of a `rare_chars` row. */
@@ -96,11 +98,21 @@ interface RandomStoryRow extends RowDataPacket {
   level: number;
 }
 
+/** A content row with nothing in it — the "this char has no content" answer. */
+function emptyContent(): DbContentRow {
+  return {
+    meaning: null,
+    story: null,
+    generated_by: null,
+    generated_at: null,
+    created_at: null,
+  };
+}
+
 /**
  * Read content (meaning/story/generated_*) for a single rare char.
- * Prefers data/content/<char>.json; falls back to legacy DB columns
- * during the migration window. Wrapped in try/catch so it survives
- * post-migration DBs that no longer have the columns.
+ * Prefers data/content/<char>.json; falls back to the legacy DB columns for
+ * a rich install that has not been migrated to the slim schema yet.
  */
 async function readRareContent(char: string): Promise<DbContentRow> {
   // 1. JSON first — universal etymology_story (covers all 7910 chars, primary
@@ -127,27 +139,27 @@ async function readRareContent(char: string): Promise<DbContentRow> {
       created_at: null,
     };
   }
-  // 2. DB fallback (legacy cols may have been dropped)
-  try {
-    const pool = getPool();
-    const [rows] = await pool.query<RareContentRow[]>(
-      `SELECT meaning, story, generated_by, generated_at, created_at
-       FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
-      [char],
-    );
-    if (rows.length === 0) {
-      return {
-        meaning: null,
-        story: null,
-        generated_by: null,
-        generated_at: null,
-        created_at: null,
-      };
-    }
-    return rows[0];
-  } catch {
-    return { meaning: null, story: null, generated_by: null, generated_at: null, created_at: null };
-  }
+  // 2. DB fallback. The slim schema has no content columns on `rare_chars`
+  //    (scripts/migrate-drop-content-cols.ts dropped them), so there is
+  //    nothing to read there — and no query worth firing.
+  const pool = getPool();
+  const schema = await getLegacyContentSchema(pool);
+  if (schema.rare.length === 0) return emptyContent();
+
+  const [rows] = await pool.query<RareContentRow[]>(
+    `SELECT ${toSelectList(schema.rare)}
+     FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
+    [char],
+  );
+  const row = rows[0];
+  if (!row) return emptyContent();
+  return {
+    meaning: row.meaning ?? null,
+    story: row.story ?? null,
+    generated_by: row.generated_by ?? null,
+    generated_at: row.generated_at ?? null,
+    created_at: row.created_at ?? null,
+  };
 }
 
 function hydrate(char: string, pinyin: string, needsReview: boolean, db: DbContentRow): RareChar {
