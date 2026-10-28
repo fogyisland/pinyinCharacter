@@ -8,8 +8,6 @@ import type {
 } from './sutra-types';
 import { listSutrasFromFs, getSutraByIdFromFs } from './sutras-fs';
 
-const PIN_MARKER_RE = /第[一二三四五六七八九十百千零〇]+品|分第[一二三四五六七八九十百千零〇]+/;
-
 const PAGE_SIZE = 12;
 
 export interface ListSutrasArgs {

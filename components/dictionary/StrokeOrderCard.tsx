@@ -21,7 +21,6 @@ interface HanziWriterLike {
 }
 
 export function StrokeOrderCard({ char, className }: Props) {
-  const [isLoading, setIsLoading] = useState(true);
   const [isReady, setIsReady] = useState(false);
   const [currentStroke, setCurrentStroke] = useState(0);
   const [totalStrokes, setTotalStrokes] = useState(0);
@@ -35,7 +34,6 @@ export function StrokeOrderCard({ char, className }: Props) {
     let cancelled = false;
     let writer: HanziWriterLike | null = null;
 
-    setIsLoading(true);
     setError(null);
     setIsReady(false);
     setCurrentStroke(0);
@@ -49,7 +47,6 @@ export function StrokeOrderCard({ char, className }: Props) {
         if (cancelled) return;
         if (!r.ok) {
           setError('unsupported');
-          setIsLoading(false);
           return;
         }
         const strokeData = await r.json();
@@ -74,7 +71,6 @@ export function StrokeOrderCard({ char, className }: Props) {
           onLoadCharDataError: () => {
             if (!cancelled) {
               setError('load_failed');
-              setIsLoading(false);
             }
           },
           onCompleteStroke: ({ strokeNum }: { strokeNum: number; strokeCount: number }) => {
@@ -89,13 +85,11 @@ export function StrokeOrderCard({ char, className }: Props) {
         writerRef.current = writer;
         setTotalStrokes(strokeCount);
         setIsReady(true);
-        setIsLoading(false);
         if (loopEnabled) void writer.loopCharacterAnimation();
         else void writer.animateCharacter();
       } catch (e) {
         if (!cancelled) {
           setError(`init_failed: ${e instanceof Error ? e.message : String(e)}`);
-          setIsLoading(false);
         }
       }
     })();

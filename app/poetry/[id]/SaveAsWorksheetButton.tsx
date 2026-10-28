@@ -11,7 +11,7 @@ interface Props {
   content: string[];
 }
 
-export function SaveAsWorksheetButton({ id, title, author, content }: Props) {
+export function SaveAsWorksheetButton({ id: _id, title, author, content }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const user = useAppStore((s) => s.user);

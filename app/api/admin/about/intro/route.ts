@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  * Manually regenerate the AI intro. Cached in app_config so all visitors
  * share the same version until the next regenerate.
  */
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   return withErrorHandling(async () => {
     const auth = await requireAdmin();
     if (!auth.ok) return auth.response;

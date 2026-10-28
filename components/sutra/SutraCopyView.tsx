@@ -134,7 +134,7 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [writtenChars, sutraId, chunk.id, userId, phase]);
+  }, [writtenChars, sutraId, sutraSlug, chunk.id, userId, phase]);
 
   const handleCharClick = useCallback(
     (idx: number) => {
@@ -161,7 +161,7 @@ export function SutraCopyView({ chunk, sutraId, sutraSlug, userId, reading, onEx
         body: JSON.stringify({ chunkIdx: chunk.id, reset: true }),
       });
     }
-  }, [sutraId, chunk.id, userId, total]);
+  }, [sutraSlug, chunk.id, userId, total]);
 
   const disabled = userId === null;
   const pct = total > 0 ? Math.round((writtenCount / total) * 100) : 0;

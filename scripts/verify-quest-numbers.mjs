@@ -442,7 +442,6 @@ console.log('\n=== the §6.1 payload: HSK 1, level 1 ===');
 {
   const t1 = tiers[0];
   console.log(`level 1 chars: ${t1.swept.slice(0, 5).map((f) => `${f.char} ${f.reading}`).join(', ')}`);
-  const anatomy = syllableAnatomy(1);
   const vocabulary = [...new Set(tierFacts.get(1).facts.map((f) => f.radical).filter(Boolean))]
     .sort((a, b) => a.codePointAt(0) - b.codePointAt(0));
   const clausePool = [...new Set(tierFacts.get(1).facts.map((f) => f.freeClause).filter(Boolean))];

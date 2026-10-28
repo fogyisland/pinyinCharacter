@@ -53,7 +53,7 @@ import { createElement } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { PracticePDF } from '@/components/worksheet/PracticePDF';
 import type { PaperSize } from '@/lib/worksheet-types';
-import { PRACTICE_LAYOUT, PRACTICE_GRID_CELL_SIZE, cellsPerPage } from '@/lib/worksheet-types';
+import { PRACTICE_GRID_CELL_SIZE, cellsPerPage } from '@/lib/worksheet-types';
 import type { CellStyle } from '@/lib/worksheet-types';
 
 const ALL_PAPER_SIZES: PaperSize[] = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'];

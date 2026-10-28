@@ -2,7 +2,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { Char } from '@/lib/chars-types';
 import { PinyinAnchor } from './PinyinAnchor';
-import { RadicalSidebar, RADICALS } from './RadicalSidebar';
+import { RadicalSidebar } from './RadicalSidebar';
 import { DictionaryCharGrid } from './DictionaryCharGrid';
 
 const LEVELS: Array<{ value: undefined | 1 | 2 | 3; label: string }> = [

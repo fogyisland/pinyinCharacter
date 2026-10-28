@@ -9,11 +9,7 @@
  *   4. UPSERT SQL helper constants (SOURCE_TAG) match what build-sutras.ts uses
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { readSutraManifest, readSutraChunksBySlug } from '@/lib/sutras-fs';
-
-const DATA_DIR = join(process.cwd(), 'data', 'sutras');
 
 describe('build-sutras JSON-reader pipeline', () => {
   it('manifest has 11 entries (one per sutra)', () => {

@@ -4,7 +4,7 @@ import { requireAdmin } from '@/lib/auth';
 import { getPool } from '@/lib/db';
 import { getConfig } from '@/lib/config';
 import { adminGenerateCharsSchema } from '@/lib/validators';
-import { processOneField, emptyPerField, ALL_FIELDS, type FieldName } from '@/lib/admin-char-gen';
+import { processOneField, emptyPerField, type FieldName } from '@/lib/admin-char-gen';
 import { logUserAction } from '@/lib/audit';
 
 export const dynamic = 'force-dynamic';

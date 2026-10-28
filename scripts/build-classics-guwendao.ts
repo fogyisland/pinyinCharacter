@@ -19,7 +19,7 @@ import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 import * as OpenCC from 'opencc-js';
 import { getPool, closePool } from '../lib/db';
-import { fetchChapterList, scrapeChapterContent } from '../lib/guwendao-scraper';
+import { scrapeChapterContent } from '../lib/guwendao-scraper';
 
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 
@@ -1307,7 +1307,7 @@ export async function buildClassicsGuwendao(): Promise<{ volumes: number; manife
         chapterRange: { from: vol.fromIdx, to: vol.toIdx },
         chunks,
       };
-      const { path: jsonPath, bytes } = writeVolumeJson(volJson);
+      const { path: jsonPath } = writeVolumeJson(volJson);
       console.log(`[guwendao] ${vol.slug}: ${chunks.length} chapters, ${kb}KB JSON → ${jsonPath}`);
 
       await pool.query(

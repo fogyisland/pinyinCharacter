@@ -3,7 +3,6 @@ import type {
   ListUnifiedLogsOptions,
   ListUnifiedLogsResult,
   UnifiedLogEntry,
-  UnifiedLogSource,
 } from './admin-logs-types';
 
 // The types live in their own file so a client component can import them

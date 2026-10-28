@@ -52,7 +52,7 @@ describe('generateLayout — four-line row packing (English trace)', () => {
   });
 
   it('splits 89 letters across 2 A4 rows; the rest of the page is blank practice', () => {
-    const letters = Array.from({ length: 89 }, (_, i) => 'A');
+    const letters = Array.from({ length: 89 }, () => 'A');
     const cells = generateLayout(letters, 'pen-english', 'A4');
     expect(cells).toHaveLength(16);
     expect(cells[0].char).toHaveLength(88);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sourceForHsk, type HskLevel } from '@/lib/difficulty';
+import { sourceForHsk } from '@/lib/difficulty';
 
 describe('sourceForHsk', () => {
   it('HSK 1 maps to chars-level-1 (smallest pool)', () => {

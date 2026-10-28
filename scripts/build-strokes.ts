@@ -48,7 +48,6 @@ const CONCURRENCY = 8;
 
 export interface BuildStrokesOptions {
   fetchImpl?: typeof fetch;
-  readFile?: typeof readFile;
   writeFile?: typeof writeFile;
   mkdir?: typeof mkdir;
   readdir?: typeof readdir;
@@ -107,7 +106,6 @@ async function loadCharList(options: BuildStrokesOptions): Promise<string[]> {
 
 export async function buildStrokes(options: BuildStrokesOptions = {}): Promise<BuildStrokesResult> {
   const fetchImpl = options.fetchImpl ?? fetch;
-  const readFileImpl = options.readFile ?? readFile;
   const writeFileImpl = options.writeFile ?? writeFile;
   const mkdirImpl = options.mkdir ?? mkdir;
   const readdirImpl = options.readdir ?? readdir;

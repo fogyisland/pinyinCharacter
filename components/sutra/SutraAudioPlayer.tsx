@@ -245,10 +245,12 @@ export function SutraAudioPlayer({ chunks, playlistTitle, className, textUrlTemp
   // after the element is detached from the DOM — so we have to pause, clear src,
   // and call load() to force the element back to its initial state.
   useEffect(() => {
+    // Capture the element now — by the time the cleanup runs, `audioRef.current`
+    // may point at a different node, and we must clean up the one we attached to.
+    const audio = audioRef.current;
     return () => {
       if (currentBlobRef.current) URL.revokeObjectURL(currentBlobRef.current);
       currentBlobRef.current = null;
-      const audio = audioRef.current;
       if (audio) {
         audio.pause();
         audio.currentTime = 0;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { fetchCandidates, type Candidate } from '@/lib/api';
 import { useAppStore } from '@/lib/store';
 import { createHistoryRequest } from '@/lib/api-history';
@@ -57,20 +57,7 @@ export function PinyinInputMethod() {
     setCandidates([]);
   };
 
-  // Auto-save on 6s idle (or when committed becomes non-empty after a pause)
-  useEffect(() => {
-    if (!user) return;
-    if (idleRef.current) clearTimeout(idleRef.current);
-    if (!committed) return;
-    idleRef.current = setTimeout(() => {
-      if (committed.length >= 2) void saveHistory(committed);
-    }, 6000);
-    return () => {
-      if (idleRef.current) clearTimeout(idleRef.current);
-    };
-  }, [committed, user]);
-
-  async function saveHistory(input: string) {
+  const saveHistory = useCallback(async (input: string) => {
     if (!user) return;
     const last = lastSavedRef.current;
     if (last && last.input === input && Date.now() - last.ts < 60_000) return;
@@ -86,7 +73,20 @@ export function PinyinInputMethod() {
     } catch (e) {
       console.error('history save failed', e);
     }
-  }
+  }, [user]);
+
+  // Auto-save on 6s idle (or when committed becomes non-empty after a pause)
+  useEffect(() => {
+    if (!user) return;
+    if (idleRef.current) clearTimeout(idleRef.current);
+    if (!committed) return;
+    idleRef.current = setTimeout(() => {
+      if (committed.length >= 2) void saveHistory(committed);
+    }, 6000);
+    return () => {
+      if (idleRef.current) clearTimeout(idleRef.current);
+    };
+  }, [committed, user, saveHistory]);
 
   return (
     <div className="space-y-3">

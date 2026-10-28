@@ -45,7 +45,10 @@ export default [
       '@next/next/no-html-link-for-pages': 'off',
       // Brief-specified rules
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
       '@typescript-eslint/no-explicit-any': 'warn',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
@@ -67,6 +70,28 @@ export default [
             'Use .query() instead of .execute() for mysql2 — text protocol preserves supp-plane chars (U+10000+).',
         },
       ],
+    },
+  },
+  {
+    // CLI scripts are their own interface: what they print IS their product.
+    // The allow-list above (warn/error/info/debug) is written for app code,
+    // where a stray console.log bypasses the logger and leaks into request
+    // logs. A one-shot CLI script has no logger and no request — `console.log`
+    // is the correct call, and swapping 190+ sites to console.info would be
+    // churn without a behavioural gain (both go to stdout in Node).
+    files: ['scripts/**/*.{ts,mjs}'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    // Config files (.mjs) are not covered by the `**/*.{ts,tsx}` block above,
+    // so they still inherit `import/no-anonymous-default-export` from
+    // next/core-web-vitals. An anonymous default export is the idiomatic
+    // shape for a flat config — PostCSS and ESLint both expect it.
+    files: ['**/*.mjs'],
+    rules: {
+      'import/no-anonymous-default-export': 'off',
     },
   },
   {

@@ -211,7 +211,6 @@ async function generateForChar(
   etymRow: EtymRow | null,
   fields: FieldName[],
   existing: Partial<CharContent> | null,
-  opts: SyncOptions,
 ): Promise<GenerateOneResult> {
   const result: GenerateOneResult = { char: charRow.char, generated: [], skipped: [], errors: [] };
 
@@ -498,7 +497,6 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
   );
   const rareByChar = new Map<string, RareRow>(rareRows.map((r) => [r.char, r]));
   const etymByChar = new Map<string, EtymRow>(etymRows.map((r) => [r.char, r]));
-  const existingFiles = opts.missing || opts.outdated ? listExistingJsonFiles() : new Set<string>();
 
   // Process with limited concurrency.
   const queue = [...charRows];
@@ -538,7 +536,7 @@ export async function contentSync(opts: SyncOptions = {}): Promise<SyncStats> {
         }
       }
 
-      const result = await generateForChar(charRow, rareRow, etymRow, fields, existing, opts);
+      const result = await generateForChar(charRow, rareRow, etymRow, fields, existing);
 
       // Only assemble + write if anything was generated.
       if (result.generated.length === 0) {

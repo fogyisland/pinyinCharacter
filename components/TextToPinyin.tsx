@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera } from 'lucide-react';
 import { PinyinOutput } from './PinyinOutput';
 import { ReadAloudButton } from './ReadAloudButton';
@@ -48,31 +48,7 @@ export function TextToPinyin() {
     };
   }, [text]);
 
-  // 自动入库：1.5s debounce
-  useEffect(() => {
-    if (!user) return;
-    if (!text.trim()) return;
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      void saveHistory(text);
-    }, 1500);
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [text, user]);
-
-  // unmount 时 flush
-  useEffect(
-    () => () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      if (user && text.trim()) void saveHistory(text);
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    },
-    [],
-  );
-
-  async function saveHistory(input: string) {
+  const saveHistory = useCallback(async (input: string) => {
     if (!user) return;
     const last = lastSavedRef.current;
     if (last && last.input === input && Date.now() - last.ts < 60_000) return;
@@ -88,7 +64,39 @@ export function TextToPinyin() {
     } catch (e) {
       console.error('history save failed', e);
     }
-  }
+  }, [user]);
+
+  // The unmount flush must see the LATEST text/user/saveHistory, but its own
+  // effect must NOT depend on them: adding `text` to the deps would make React
+  // run the cleanup on every keystroke, flushing the history immediately
+  // instead of after the 1.5s debounce. Keep the latest values in a ref.
+  const latestRef = useRef({ text, user, saveHistory });
+  useEffect(() => {
+    latestRef.current = { text, user, saveHistory };
+  }, [text, user, saveHistory]);
+
+  // 自动入库：1.5s debounce
+  useEffect(() => {
+    if (!user) return;
+    if (!text.trim()) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      void saveHistory(text);
+    }, 1500);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [text, user, saveHistory]);
+
+  // unmount 时 flush
+  useEffect(
+    () => () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      const latest = latestRef.current;
+      if (latest.user && latest.text.trim()) void latest.saveHistory(latest.text);
+    },
+    [],
+  );
 
   const showToast = (msg: string, type: 'error' | 'info' = 'info') => {
     setToast({ msg, type });

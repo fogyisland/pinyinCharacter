@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let configStore: Record<string, string> = {};
 let lastFetchBody: any = null;
-let lastFetchUrl: string | null = null;
+let _lastFetchUrl: string | null = null;
 let mockReply: string | null = null;
 
 vi.mock('@/lib/config', () => ({
@@ -10,7 +10,7 @@ vi.mock('@/lib/config', () => ({
 }));
 
 const fetchMock = vi.fn(async (url: string, init: any) => {
-  lastFetchUrl = url;
+  _lastFetchUrl = url;
   lastFetchBody = JSON.parse(init.body);
   return {
     ok: true,
@@ -24,12 +24,12 @@ const fetchMock = vi.fn(async (url: string, init: any) => {
 });
 vi.stubGlobal('fetch', fetchMock);
 
-import { llmChat, type LLMMessage, type ContentPart } from '@/lib/llm';
+import { llmChat, type ContentPart } from '@/lib/llm';
 
 beforeEach(() => {
   configStore = {};
   lastFetchBody = null;
-  lastFetchUrl = null;
+  _lastFetchUrl = null;
   mockReply = null;
   fetchMock.mockClear();
 });

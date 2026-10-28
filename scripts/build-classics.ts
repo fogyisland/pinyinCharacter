@@ -402,7 +402,6 @@ export async function buildClassicsRefresh(): Promise<number> {
       console.warn(`[build-classics] skip ${file.slug}: no chapters after parsing`);
       continue;
     }
-    const jsonStr = JSON.stringify(chunks);
     const volJson: VolumeJson = {
       slug: file.slug,
       title: file.title,

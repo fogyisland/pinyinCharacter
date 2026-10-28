@@ -37,7 +37,6 @@ vi.mock('@/lib/ai-calls', () => ({
     /* no-op */
   }),
   withAiLogging: vi.fn(async (args: any, fn: () => Promise<any>) => {
-    const start = Date.now();
     try {
       return await fn();
     } finally {

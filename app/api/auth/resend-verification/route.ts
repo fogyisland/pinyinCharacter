@@ -8,7 +8,7 @@ import { writeAudit } from '@/lib/audit';
 
 export const runtime = 'nodejs';
 
-export async function POST(req: NextRequest) {
+export async function POST(_req: NextRequest) {
   const user = await getCurrentUser();
   if (!user) {
     return NextResponse.json(

@@ -21,7 +21,7 @@ vi.mock('@/lib/db', () => ({
   }),
 }));
 
-import { getRecentActivity, ActivityItem } from '@/lib/admin-activity';
+import { getRecentActivity } from '@/lib/admin-activity';
 
 beforeEach(() => {
   queryResults = {};

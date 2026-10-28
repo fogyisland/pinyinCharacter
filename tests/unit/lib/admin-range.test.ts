@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-  Range,
   DEFAULT_RANGE,
   ALL_RANGES,
   parseRange,

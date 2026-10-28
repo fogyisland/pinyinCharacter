@@ -11,7 +11,7 @@ interface Props {
   chunk: SutraChunkText;
 }
 
-export function SaveAsWorksheetButton({ id, title, chunk }: Props) {
+export function SaveAsWorksheetButton({ id: _id, title, chunk }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const user = useAppStore((s) => s.user);

@@ -730,11 +730,6 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
  * ERA_FONT defaults mirror lib/etymology.ts:19-25 — kept local so this
  * module doesn't pull client-side code. Idempotent (INSERT IGNORE).
  */
-function isBmpChar(c: string): boolean {
-  const cp = c.codePointAt(0);
-  return cp != null && cp <= 0xffff;
-}
-
 const CHAR_ETYMOLOGY_ERA_FONT = {
   jiaguwen: 'YinQiJiaGuWen',
   jinwen: 'HanDianJinWen',
