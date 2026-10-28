@@ -185,34 +185,27 @@ if gzipped_count:
 
 
 # ---------------------------------------------------------------------------
-# Generate Up/.env — minimal safe defaults + wizard guidance.
+# NO .env IN THE BUNDLE.
 #
-# PinYinCharacter's flow is cleaner than the reference MINIMAXVoiceProject:
-#   - No IS_INITIALIZED flag. middleware.ts reads the `setup_completed` cookie
-#     and redirects to /init when missing. The /init orchestrator detects
-#     fresh DB (no DATABASE_URL) and routes to /init/db → /init/admin →
-#     /init/execute. After /init/execute mark-complete, the cookie is set
-#     and the app is locked.
-#   - DATABASE_URL gets written by /init Step 1 (lib/setup.ts writeEnvVars).
-#   - JWT_SECRET must be set on prod; local dev auto-generates.
-#   - Everything else (AI keys, SMTP, etc.) goes through /admin/settings UI.
+# The deploy bundle must not carry an environment file. Two reasons, and
+# both of them are about publishing:
+#
+#   1. A `.env` is machine-local state. The one on the build machine points
+#      at that machine's database and holds that machine's secrets —
+#      shipping it publishes credentials and points the customer at the
+#      wrong server.
+#   2. The target server creates its own. `DEPLOY.md` step 4 is
+#      `cp .env.example .env`, and the /init wizard writes DATABASE_URL and
+#      JWT_SECRET into the server's `.env` during setup. A file baked into
+#      the bundle would be overwritten (or, worse, silently win).
+#
+# `NODE_ENV=production` does not need a file either: `next start` sets it
+# itself (`node_modules/next/dist/bin/next` and `server/lib/router-server.js`
+# both default it to `production`).
+#
+# `.env.example` IS shipped — it is a template of placeholders, and the
+# operator copies it to `.env` on the server.
 # ---------------------------------------------------------------------------
-def write_up_env():
-    env_path = os.path.join(DST, '.env')
-    content = '''# Up/ bundle .env — customer self-deploy
-#
-# 运行时配置全部走 /init 向导 / /admin/settings 系统配置:
-#   - DATABASE_URL → /init 第一屏填(自动写回 .env)
-#   - JWT_SECRET   → 产线必填,本地自动生成
-#   - 其他配置    → /admin/settings 系统配置(admin 登录后可见)
-#
-# 安全默认值:下面 1 行不要改。/init 走完后会自动设置 setup.completed 标志,
-# 由 middleware.ts 用 setup_completed cookie 锁定 /init 路径,无需 env flag。
-
-NODE_ENV="production"
-'''
-    with open(env_path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write(content)
 
 
 # ---------------------------------------------------------------------------
@@ -222,7 +215,7 @@ def write_up_readme():
     readme_path = os.path.join(DST, 'README.md')
     content = '''# 字韵 — 部署包
 
-> 客户自部署版本(Up/)。首次启动走 `/init` 向导,无需手动编辑 `.env`。
+> 客户自部署版本(Up/)。**部署包里没有 `.env`** —— 运行时配置全部走 `/init` 向导 / `/admin/settings`,不需要手改任何配置文件。
 
 ## 快速开始(4 步)
 
@@ -243,7 +236,7 @@ npm start -- -p 4444
 启动后访问 `http://your-domain:4444/`,根路由检测到 `setup_completed` cookie 缺失会**自动 307 跳到 `/init` 向导**。
 
 **`/init` 三屏走完即可上线**:
-1. `/init/db` — 填 MySQL 连接(host / port / user / password / db),自动写入 `DATABASE_URL`
+1. `/init/db` — 填 MySQL 连接(host / port / user / password / db),自动写入 `DATABASE_URL`(并生成 `JWT_SECRET`)到服务器上的 `.env`
 2. `/init/admin` — 创建第一个管理员账号(username + password + email)
 3. `/init/execute` — 一键执行 9 阶段初始化(建表 + 导入数据 + 创建账号 + 激活 + 迁移 + mark-complete)
 
@@ -252,13 +245,12 @@ npm start -- -p 4444
 - 根路由改跳 `/login`(已就绪)
 - `/init` 路径被 middleware 锁定,显示「已完成」卡片
 
-> 整个部署流程**不需要手动编辑 `.env`** — 全部运行时配置在 `/init` 向导 / `/admin/settings` 系统配置里完成。`Up/.env` 只有 1 行安全默认值,不要手改。
+> **部署包里没有 `.env`**,这是有意的:打包机的 `.env` 指向打包机自己的库、装着打包机自己的密钥,发出去等于发布凭据。服务器上的 `.env` 由 `/init` 第一屏生成(或自己 `cp .env.example .env` 后再改)。
 
 ## 关键文件
 
 | 文件 | 作用 |
 |------|------|
-| `.env` | **不要手填** — 只含 `NODE_ENV="production"`,运行时配置走 `/init` 向导写回 |
 | `.env.example` | 模板 + 全部变量说明(仅供运维参考,**不是**部署必填) |
 | `DEPLOY.md` | 完整部署指南(Nginx 反代 + systemd + MySQL 初始化 + 字体生成 + 数据导入) |
 | `README.md` | 项目使用说明(部署完成后给最终用户看) |
@@ -274,7 +266,7 @@ npm start -- -p 4444
   - 创建 25 张表 + 写入 `app_config` 默认值
   - 导入古诗 / 佛经 / 字典
   - 创建第一个 admin 账号(填表时设置)
-  - 写入 `DATABASE_URL` 到 `.env`
+  - 在服务器上写入 `.env`(`DATABASE_URL` + `JWT_SECRET`)
   - 写入 `setup.completed=true` 到 `app_config`
   - 设置 `setup_completed=1` cookie(浏览器锁定 `/init`)
 
@@ -295,7 +287,7 @@ npm start -- -p 4444
 cd <main-repo>
 python3 scripts/copy-to-up.py    # 或 py / python,看环境
 ```
-会清空 `Up/` 并重新生成(含新的 `.env` 极简模板和 README)。
+会清空 `Up/` 并重新生成(含 README)。**包里不会有 `.env`**。
 '''
     with open(readme_path, 'w', encoding='utf-8', newline='\n') as f:
         f.write(content)
@@ -326,8 +318,7 @@ def normalize_permissions(directory):
                 pass
 
 
-write_up_env()
 write_up_readme()
 normalize_permissions(DST)
-print(f'Generated Up/.env + Up/README.md + normalized permissions')
+print('Generated Up/README.md + normalized permissions (no .env in the bundle)')
 
