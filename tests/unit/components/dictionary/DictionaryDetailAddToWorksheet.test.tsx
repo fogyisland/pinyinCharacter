@@ -18,10 +18,13 @@ vi.mock('@/lib/api-worksheet', () => ({
 }));
 
 vi.mock('@/lib/toast-store', () => ({
-  useToastStore: (sel: any) => sel({ push: mockPushToast }),
+  useToastStore: (
+    sel: (state: { push: (kind: ToastKind, text: string) => void }) => unknown,
+  ) => sel({ push: mockPushToast }),
 }));
 
 import { DictionaryDetailAddToWorksheet } from '@/components/dictionary/DictionaryDetailAddToWorksheet';
+import type { ToastKind } from '@/lib/toast-store';
 
 beforeEach(() => {
   cleanup();

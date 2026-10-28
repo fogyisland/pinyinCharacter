@@ -11,7 +11,7 @@ vi.mock('@/lib/init-credentials', () => ({
 
 const createAdminUserMock = vi.fn();
 vi.mock('@/scripts/init-db', () => ({
-  createAdminUser: (...args: any[]) => createAdminUserMock(...args),
+  createAdminUser: (...args: unknown[]) => createAdminUserMock(...args),
 }));
 
 import { POST } from '@/app/api/init/create-admin/route';

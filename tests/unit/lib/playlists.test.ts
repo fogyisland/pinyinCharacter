@@ -4,21 +4,21 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-type QueryResult = any[];
+type QueryResult = unknown[];
 
 let queryResults: Record<string, QueryResult> = {};
-let queryLog: Array<{ sql: string; params: any[] }> = [];
+let queryLog: Array<{ sql: string; params: unknown[] }> = [];
 
 function makeConn() {
   return {
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       queryLog.push({ sql, params });
       for (const key of Object.keys(queryResults)) {
         if (sql.includes(key)) return queryResults[key]!;
       }
       return [[], []];
     }),
-    execute: vi.fn(async (sql: string, params: any[] = []) => {
+    execute: vi.fn(async (sql: string, params: unknown[] = []) => {
       queryLog.push({ sql, params });
       for (const key of Object.keys(queryResults)) {
         if (sql.includes(key)) return queryResults[key]!;
@@ -34,14 +34,14 @@ function makeConn() {
 
 vi.mock('@/lib/db', () => ({
   getPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       queryLog.push({ sql, params });
       for (const key of Object.keys(queryResults)) {
         if (sql.includes(key)) return queryResults[key]!;
       }
       return [[], []];
     }),
-    execute: vi.fn(async (sql: string, params: any[] = []) => {
+    execute: vi.fn(async (sql: string, params: unknown[] = []) => {
       queryLog.push({ sql, params });
       for (const key of Object.keys(queryResults)) {
         if (sql.includes(key)) return queryResults[key]!;

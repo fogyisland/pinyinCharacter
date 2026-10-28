@@ -3,13 +3,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { DetailPrefetchButton } from '@/components/dictionary/DetailPrefetchButton';
+import type { ToastKind } from '@/lib/toast-store';
 
 vi.mock('@/lib/tts-cache', () => ({
   prefetchTts: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('@/lib/toast-store', () => ({
-  useToastStore: (sel: any) => sel({ push: vi.fn() }),
+  useToastStore: (
+    sel: (state: { push: (kind: ToastKind, text: string) => void }) => unknown,
+  ) => sel({ push: vi.fn() }),
 }));
 
 beforeEach(() => {

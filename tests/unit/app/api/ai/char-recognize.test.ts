@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import type { WithAiLoggingArgs } from '@/lib/ai-calls';
 
 const cookieStore = new Map<string, string>();
 let currentUser: { id: number; isAdmin: boolean } | null = null;
@@ -36,7 +37,7 @@ vi.mock('@/lib/ai-calls', () => ({
   logAiCall: vi.fn(async () => {
     /* no-op */
   }),
-  withAiLogging: vi.fn(async (args: any, fn: () => Promise<any>) => {
+  withAiLogging: vi.fn(async (args: WithAiLoggingArgs, fn: () => Promise<unknown>) => {
     try {
       return await fn();
     } finally {
@@ -75,7 +76,7 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-function makeReq(body: any, ip = '1.2.3.4'): NextRequest {
+function makeReq(body: unknown, ip = '1.2.3.4'): NextRequest {
   return new NextRequest('http://localhost/api/ai/char-recognize', {
     method: 'POST',
     headers: { 'content-type': 'application/json', 'x-forwarded-for': ip },

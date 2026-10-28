@@ -1,12 +1,17 @@
 // @vitest-environment happy-dom
 import { cleanup, render, fireEvent } from '@testing-library/react';
 import { beforeEach, it, expect, vi } from 'vitest';
+import type { RevealConfig } from '@/lib/reveal';
 
 beforeEach(() => cleanup());
 
 it('shows pinyin + meaning at HSK 1 (no radical in drag-match)', async () => {
   const { CharDropZone } = await import('@/components/game/CharDropZone');
-  const cfg = { cellHints: ['pinyin', 'meaning'], allowOnDemandHints: false, onDemandPenalty: 1 };
+  const cfg: RevealConfig = {
+    cellHints: ['pinyin', 'meaning'],
+    allowOnDemandHints: false,
+    onDemandPenalty: 1,
+  };
   const { container } = render(
     <CharDropZone
       charId="你"
@@ -15,7 +20,7 @@ it('shows pinyin + meaning at HSK 1 (no radical in drag-match)', async () => {
       meaning="you"
       matchedPinyin={null}
       onDrop={vi.fn()}
-      revealConfig={cfg as any}
+      revealConfig={cfg}
       onDemandReveal={vi.fn()}
     />,
   );
@@ -26,7 +31,7 @@ it('shows pinyin + meaning at HSK 1 (no radical in drag-match)', async () => {
 
 it('hides everything at HSK 6; click-to-reveal only when allowOnDemandHints', async () => {
   const { CharDropZone } = await import('@/components/game/CharDropZone');
-  const cfg = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 1 };
+  const cfg: RevealConfig = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 1 };
   const onDemand = vi.fn();
   const { container, getByLabelText } = render(
     <CharDropZone
@@ -36,7 +41,7 @@ it('hides everything at HSK 6; click-to-reveal only when allowOnDemandHints', as
       meaning="you"
       matchedPinyin={null}
       onDrop={vi.fn()}
-      revealConfig={cfg as any}
+      revealConfig={cfg}
       onDemandReveal={onDemand}
     />,
   );
@@ -52,7 +57,7 @@ it('hides everything at HSK 6; click-to-reveal only when allowOnDemandHints', as
 it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', async () => {
   const { CharDropZone } = await import('@/components/game/CharDropZone');
   // HSK 1: hints visible, DropSlot must STILL be present.
-  const cfg = {
+  const cfg: RevealConfig = {
     cellHints: ['pinyin', 'meaning'],
     allowOnDemandHints: false,
     onDemandPenalty: 1,
@@ -66,13 +71,13 @@ it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', a
       meaning="you"
       matchedPinyin={null}
       onDrop={onDrop}
-      revealConfig={cfg as any}
+      revealConfig={cfg}
       onDemandReveal={vi.fn()}
     />,
   );
   expect(container.textContent).toContain('拖动拼音到这里');
   // HSK 6: no hints, DropSlot still present (placeholder text remains).
-  const cfg6 = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 1 };
+  const cfg6: RevealConfig = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 1 };
   const { container: c6 } = render(
     <CharDropZone
       charId="好"
@@ -81,7 +86,7 @@ it('always renders DropSlot (drag-drop mechanic) regardless of reveal config', a
       meaning="good"
       matchedPinyin={null}
       onDrop={onDrop}
-      revealConfig={cfg6 as any}
+      revealConfig={cfg6}
       onDemandReveal={vi.fn()}
     />,
   );

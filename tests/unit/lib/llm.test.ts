@@ -1,7 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+type ImageUrlPart = Extract<ContentPart, { type: 'image_url' }>;
+type TextPart = Extract<ContentPart, { type: 'text' }>;
+
+/** Shape of the JSON body llmChat() POSTs to the chat-completions endpoint. */
+interface LlmRequestBody {
+  messages: Array<{ role: string; content: string | ContentPart[] }>;
+}
+
 let configStore: Record<string, string> = {};
-let lastFetchBody: any = null;
+let lastFetchBody: LlmRequestBody | null = null;
 let _lastFetchUrl: string | null = null;
 let mockReply: string | null = null;
 
@@ -9,9 +17,9 @@ vi.mock('@/lib/config', () => ({
   getConfig: vi.fn(async (key: string) => configStore[key] ?? null),
 }));
 
-const fetchMock = vi.fn(async (url: string, init: any) => {
+const fetchMock = vi.fn(async (url: string, init: RequestInit) => {
   _lastFetchUrl = url;
-  lastFetchBody = JSON.parse(init.body);
+  lastFetchBody = JSON.parse(init.body as string) as LlmRequestBody;
   return {
     ok: true,
     status: 200,
@@ -42,7 +50,7 @@ describe('LLM multimodal content', () => {
       model: 'm',
       messages: [{ role: 'user', content: 'hello' }],
     });
-    expect(lastFetchBody.messages[0].content).toBe('hello');
+    expect(lastFetchBody!.messages[0].content).toBe('hello');
   });
 
   it('image_url content: serializes as OpenAI multipart format', async () => {
@@ -55,9 +63,11 @@ describe('LLM multimodal content', () => {
       model: 'm',
       messages: [{ role: 'user', content }],
     });
-    expect(lastFetchBody.messages[0].content).toEqual(content);
-    expect(lastFetchBody.messages[0].content[0].type).toBe('image_url');
-    expect(lastFetchBody.messages[0].content[0].image_url.url).toBe('data:image/jpeg;base64,XYZ');
+    expect(lastFetchBody!.messages[0].content).toEqual(content);
+    expect((lastFetchBody!.messages[0].content as ImageUrlPart[])[0].type).toBe('image_url');
+    expect((lastFetchBody!.messages[0].content as ImageUrlPart[])[0].image_url.url).toBe(
+      'data:image/jpeg;base64,XYZ',
+    );
   });
 
   it('mixed text + image content: preserves order', async () => {
@@ -71,8 +81,11 @@ describe('LLM multimodal content', () => {
       model: 'm',
       messages: [{ role: 'user', content }],
     });
-    expect(lastFetchBody.messages[0].content[0]).toEqual({ type: 'text', text: '识别此图' });
-    expect(lastFetchBody.messages[0].content[1]).toEqual({
+    expect((lastFetchBody!.messages[0].content as TextPart[])[0]).toEqual({
+      type: 'text',
+      text: '识别此图',
+    });
+    expect((lastFetchBody!.messages[0].content as ContentPart[])[1]).toEqual({
       type: 'image_url',
       image_url: { url: 'data:image/png;base64,ABC' },
     });
@@ -88,7 +101,7 @@ describe('LLM multimodal content', () => {
       model: 'm',
       messages: [{ role: 'user', content }],
     });
-    expect(lastFetchBody.messages[0].content[0].image_url.detail).toBe('low');
+    expect((lastFetchBody!.messages[0].content as ImageUrlPart[])[0].image_url.detail).toBe('low');
   });
 
   it('mock_mode short-circuit: returns vision mock char for array content', async () => {

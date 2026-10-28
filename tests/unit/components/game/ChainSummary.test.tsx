@@ -3,10 +3,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ChainSummary } from '@/components/game/ChainSummary';
 import type { CharInfo } from '@/lib/chain-types';
+import type { ToastKind } from '@/lib/toast-store';
 
 const mockPushToast = vi.fn();
 vi.mock('@/lib/toast-store', () => ({
-  useToastStore: (sel: any) => sel({ push: mockPushToast }),
+  useToastStore: (
+    sel: (state: { push: (kind: ToastKind, text: string) => void }) => unknown,
+  ) => sel({ push: mockPushToast }),
 }));
 
 const ci = (char: string, pinyin: string): CharInfo => ({

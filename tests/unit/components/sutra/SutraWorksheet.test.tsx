@@ -21,8 +21,10 @@ const shim = vi.hoisted(() => {
       return Object.keys(memStore).length;
     },
   };
-  (globalThis as any).localStorage = obj;
-  if (typeof window !== 'undefined') (window as any).localStorage = obj;
+  (globalThis as unknown as { localStorage: Storage }).localStorage = obj as Storage;
+  if (typeof window !== 'undefined') {
+    (window as unknown as { localStorage: Storage }).localStorage = obj as Storage;
+  }
   return obj;
 });
 void shim;

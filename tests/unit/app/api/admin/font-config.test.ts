@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 vi.mock('@/lib/auth', () => ({
   requireAdmin: vi.fn(),
@@ -29,7 +29,7 @@ beforeEach(() => {
   mockedRequireAdmin.mockResolvedValue({
     ok: true,
     user: { id: 1, username: 'admin', isAdmin: true },
-  } as any);
+  });
   mockedSetConfigBatch.mockResolvedValue(undefined);
   mockedWriteAudit.mockResolvedValue(undefined);
 });
@@ -52,8 +52,10 @@ describe('GET /api/admin/font-config', () => {
     mockedRequireAdmin.mockResolvedValue({
       ok: false,
       reason: 'forbidden',
-      response: new Response(JSON.stringify({ error: 'admin required' }), { status: 403 }),
-    } as any);
+      response: new Response(JSON.stringify({ error: 'admin required' }), {
+        status: 403,
+      }) as NextResponse,
+    });
     const res = await GET();
     expect(res.status).toBe(403);
   });
@@ -105,8 +107,10 @@ describe('PUT /api/admin/font-config', () => {
     mockedRequireAdmin.mockResolvedValue({
       ok: false,
       reason: 'forbidden',
-      response: new Response(JSON.stringify({ error: 'admin required' }), { status: 403 }),
-    } as any);
+      response: new Response(JSON.stringify({ error: 'admin required' }), {
+        status: 403,
+      }) as NextResponse,
+    });
     const req = new NextRequest('http://localhost/api/admin/font-config', {
       method: 'PUT',
       body: JSON.stringify({}),

@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { Pool } from 'mysql2/promise';
 
 // Mock pool before importing the module under test
 vi.mock('@/lib/db', () => ({
@@ -15,7 +16,7 @@ describe('mysql2 protocol migration (supp-plane safety)', () => {
   const mockPool = { query: mockQuery, execute: mockExecute };
 
   beforeEach(() => {
-    vi.mocked(getPool).mockReturnValue(mockPool as any);
+    vi.mocked(getPool).mockReturnValue(mockPool as unknown as Pool);
     mockQuery.mockReset();
     mockExecute.mockReset();
   });

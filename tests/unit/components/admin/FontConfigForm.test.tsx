@@ -14,10 +14,10 @@ const initial = DEFAULT_ERA_FONTS;
 describe('FontConfigForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch).mockResolvedValue({
       ok: true,
       json: async () => ({ ok: true, updated: ['era.jiaguwen.font'] }),
-    });
+    } as unknown as Response);
   });
 
   afterEach(() => {
@@ -61,10 +61,10 @@ describe('FontConfigForm', () => {
   });
 
   it('shows an error message when PUT returns non-ok', async () => {
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch).mockResolvedValue({
       ok: false,
       json: async () => ({ error: 'invalid font id for kaishu' }),
-    });
+    } as unknown as Response);
     render(<FontConfigForm initial={initial} />);
     fireEvent.click(screen.getByRole('button', { name: /保存/ }));
     expect(await screen.findByText(/invalid font id/)).toBeInTheDocument();

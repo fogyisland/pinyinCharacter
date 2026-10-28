@@ -9,11 +9,11 @@ function callMiddleware(pathname: string, opts?: { cookie?: string }) {
   return middleware(req);
 }
 
-async function status(res: Response | any): Promise<number> {
+async function status(res: Response): Promise<number> {
   return res.status;
 }
 
-async function redirectedTo(res: any): Promise<string | null> {
+async function redirectedTo(res: Response): Promise<string | null> {
   // NextResponse.redirect sets the Location header
   return res.headers.get('location') ?? res.headers.get('Location') ?? null;
 }

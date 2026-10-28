@@ -1,6 +1,11 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '@/lib/db';
 import { writeEnvVars, reloadProcessEnvFromFile } from '@/lib/setup';
+
+interface AppConfigValueRow extends RowDataPacket {
+  value: string;
+}
 
 // Skip cleanly when no DATABASE_URL — mirrors other integration tests.
 const integrationSkip = !process.env.DATABASE_URL;
@@ -135,7 +140,7 @@ describe.skipIf(integrationSkip)('Integration: /init wizard 3-stage flow', () =>
     expect(setCookie).toMatch(/setup_completed=1/);
 
     // Verify the app_config flag
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<AppConfigValueRow[]>(
       `SELECT value FROM app_config WHERE \`key\` = 'setup.completed' LIMIT 1`,
     );
     expect(rows.length).toBe(1);

@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-let queryResults: Record<string, any[]> = {};
-let queryLog: Array<{ sql: string; params: any[] }> = [];
+let queryResults: Record<string, unknown[]> = {};
+let queryLog: Array<{ sql: string; params: unknown[] }> = [];
 
 vi.mock('@/lib/db', () => ({
   getPool: () => ({
-    query: vi.fn(async (sql: string, params: any[] = []) => {
+    query: vi.fn(async (sql: string, params: unknown[] = []) => {
       queryLog.push({ sql, params });
       for (const key of Object.keys(queryResults)) {
         if (sql.includes(key)) return queryResults[key];

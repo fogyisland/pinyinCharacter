@@ -1,7 +1,12 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '@/lib/db';
 import { setConfig } from '@/lib/config';
 import { DEFAULT_ERA_FONTS, getActiveEraFonts } from '@/lib/era-fonts';
+
+interface AppConfigValueRow extends RowDataPacket {
+  value: string;
+}
 
 // 2026-07-04: vitest doesn't load .env, so DATABASE_URL is unset in
 // the test process. Skip cleanly when absent rather than failing the
@@ -17,7 +22,7 @@ describe.skipIf(integrationSkip)(
 
     beforeAll(async () => {
       // Capture existing value so we can restore after the test
-      const [rows] = await getPool().query<any[]>(
+      const [rows] = await getPool().query<AppConfigValueRow[]>(
         `SELECT value FROM app_config WHERE \`key\` = ? LIMIT 1`,
         [testKey],
       );

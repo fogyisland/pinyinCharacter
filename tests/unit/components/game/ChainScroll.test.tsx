@@ -1,18 +1,19 @@
 // @vitest-environment happy-dom
 import { cleanup, render, fireEvent } from '@testing-library/react';
 import { beforeEach, it, expect, vi } from 'vitest';
+import type { RevealConfig } from '@/lib/reveal';
 
 beforeEach(() => cleanup());
 
 it('renders only the char cell at HSK 6 with click-to-reveal buttons', async () => {
   const { ChainScroll } = await import('@/components/game/ChainScroll');
-  const cfg = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 0 };
+  const cfg: RevealConfig = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 0 };
   const onDemand = vi.fn();
   const { container, getByLabelText } = render(
     <ChainScroll
       chain={['你']}
-      charsList={[{ char: '你', pinyin: 'nǐ', meaning: 'you' } as any]}
-      revealConfig={cfg as any}
+      charsList={[{ char: '你', pinyin: 'nǐ', meaning: 'you', radical: '', tone: 1 }]}
+      revealConfig={cfg}
       onDemandReveal={onDemand}
     />,
   );
@@ -24,12 +25,16 @@ it('renders only the char cell at HSK 6 with click-to-reveal buttons', async () 
 
 it('renders pinyin automatically at HSK 3 (cellHints includes pinyin)', async () => {
   const { ChainScroll } = await import('@/components/game/ChainScroll');
-  const cfg = { cellHints: ['pinyin'], allowOnDemandHints: false, onDemandPenalty: 0 };
+  const cfg: RevealConfig = {
+    cellHints: ['pinyin'],
+    allowOnDemandHints: false,
+    onDemandPenalty: 0,
+  };
   const { container, queryByLabelText } = render(
     <ChainScroll
       chain={['你']}
-      charsList={[{ char: '你', pinyin: 'nǐ' } as any]}
-      revealConfig={cfg as any}
+      charsList={[{ char: '你', pinyin: 'nǐ', meaning: '', radical: '', tone: 1 }]}
+      revealConfig={cfg}
       onDemandReveal={vi.fn()}
     />,
   );
@@ -44,7 +49,7 @@ it('chain game never reveals radical even when level config has it (HSK 1)', asy
   // getRevealConfig filters it out — but to be safe, if a caller passes
   // a cfg that DOES include radical, ChainScroll should still NOT render
   // it (chain game has no radical column).
-  const cfg = {
+  const cfg: RevealConfig = {
     cellHints: ['pinyin', 'meaning', 'radical'],
     allowOnDemandHints: false,
     onDemandPenalty: 0,
@@ -52,8 +57,8 @@ it('chain game never reveals radical even when level config has it (HSK 1)', asy
   const { container } = render(
     <ChainScroll
       chain={['你']}
-      charsList={[{ char: '你', pinyin: 'nǐ', radical: '亻' } as any]}
-      revealConfig={cfg as any}
+      charsList={[{ char: '你', pinyin: 'nǐ', meaning: '', radical: '亻', tone: 1 }]}
+      revealConfig={cfg}
       onDemandReveal={vi.fn()}
     />,
   );
@@ -62,16 +67,20 @@ it('chain game never reveals radical even when level config has it (HSK 1)', asy
 
 it('renders multiple chars horizontally with correct opacity for last', async () => {
   const { ChainScroll } = await import('@/components/game/ChainScroll');
-  const cfg = { cellHints: ['pinyin', 'meaning'], allowOnDemandHints: false, onDemandPenalty: 0 };
+  const cfg: RevealConfig = {
+    cellHints: ['pinyin', 'meaning'],
+    allowOnDemandHints: false,
+    onDemandPenalty: 0,
+  };
   const { container } = render(
     <ChainScroll
       chain={['安', '那', '呢']}
       charsList={[
-        { char: '安', pinyin: 'ān', meaning: 'peace' } as any,
-        { char: '那', pinyin: 'nà', meaning: 'that' } as any,
-        { char: '呢', pinyin: 'ne', meaning: 'question' } as any,
+        { char: '安', pinyin: 'ān', meaning: 'peace', radical: '', tone: 1 },
+        { char: '那', pinyin: 'nà', meaning: 'that', radical: '', tone: 1 },
+        { char: '呢', pinyin: 'ne', meaning: 'question', radical: '', tone: 1 },
       ]}
-      revealConfig={cfg as any}
+      revealConfig={cfg}
       onDemandReveal={vi.fn()}
     />,
   );
@@ -86,13 +95,13 @@ it('renders multiple chars horizontally with correct opacity for last', async ()
 
 it('chain has no on-demand penalty — onDemandReveal is called but no score bump expected', async () => {
   const { ChainScroll } = await import('@/components/game/ChainScroll');
-  const cfg = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 0 };
+  const cfg: RevealConfig = { cellHints: [], allowOnDemandHints: true, onDemandPenalty: 0 };
   const onDemand = vi.fn();
   const { getByLabelText } = render(
     <ChainScroll
       chain={['你']}
-      charsList={[{ char: '你', pinyin: 'nǐ', meaning: 'you' } as any]}
-      revealConfig={cfg as any}
+      charsList={[{ char: '你', pinyin: 'nǐ', meaning: 'you', radical: '', tone: 1 }]}
+      revealConfig={cfg}
       onDemandReveal={onDemand}
     />,
   );
