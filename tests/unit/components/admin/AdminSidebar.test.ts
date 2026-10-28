@@ -97,12 +97,18 @@ describe('the admin navigation', () => {
     }
   });
 
-  it('has an MCP entry, next to the other user pages', () => {
+  it('gives the MCP service a group of its own, next to the AI settings', () => {
+    // The MCP endpoint is not one user's page — it is the site's own
+    // machine-readable surface. It belongs with the AI settings, not
+    // under the user pages, or it reads as a branch of user management.
     const group = ADMIN_NAV_GROUPS.find((g) => g.items.some((i) => i.href === '/admin/mcp'));
     expect(group, 'the MCP entry has no group').toBeTruthy();
-    expect(group?.label).toBe('用户');
+    expect(group?.label).toBe('AI 与 MCP');
     const mcp = group?.items.find((i) => i.href === '/admin/mcp');
     expect(mcp?.label).toBe('MCP 管理');
+    // The AI settings share that group: one is the site's AI provider,
+    // the other is the site's AI door.
+    expect(group?.items.some((i) => i.href === '/admin/ai')).toBe(true);
   });
 
   it('keeps the email entry from lighting up the campaigns page', () => {

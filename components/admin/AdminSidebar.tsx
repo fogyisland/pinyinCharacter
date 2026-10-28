@@ -47,16 +47,29 @@ export interface NavGroup {
  * The admin's navigation.
  *
  * The groups are the sections an operator thinks in: what is the site
- * doing (概览), what keeps it running (运维), who uses it (用户), what it
- * holds (内容), how the site itself is set up (站点) and how it talks to
- * the outside world (通讯). Every entry carries an icon, because a
+ * doing (概览), what the site offers the outside world through AI (AI 与
+ * MCP), what keeps it running (运维), who uses it (用户), what it holds
+ * (内容), how the site itself is set up (站点) and how it talks to the
+ * outside world (通讯). Every entry carries an icon, because a
  * twenty-item list of identical text is slow to scan — and the icon is
  * what tells two same-length labels apart at a glance.
+ *
+ * The MCP service has a group of its own, next to the AI settings. It is
+ * not one user's page: it is the site's own machine-readable surface,
+ * and the operator's job there is not "manage a user" but "manage the
+ * service and the tokens that reach it".
  */
 export const ADMIN_NAV_GROUPS: NavGroup[] = [
   {
     label: '概览',
     items: [{ href: '/admin', label: '仪表盘', exact: true, icon: LayoutDashboard }],
+  },
+  {
+    label: 'AI 与 MCP',
+    items: [
+      { href: '/admin/ai', label: 'AI', icon: Sparkles },
+      { href: '/admin/mcp', label: 'MCP 管理', icon: KeyRound },
+    ],
   },
   {
     label: '运维',
@@ -74,7 +87,6 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     items: [
       { href: '/admin/users', label: '用户', icon: Users },
       { href: '/admin/memberships', label: '会员', icon: Crown },
-      { href: '/admin/mcp', label: 'MCP 管理', icon: KeyRound },
     ],
   },
   {
@@ -91,7 +103,6 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: '/admin/settings/site-url', label: '站点设置', icon: Settings },
       { href: '/admin/downloads', label: '下载', icon: Download },
       { href: '/admin/tts', label: '语音设置', icon: Volume2 },
-      { href: '/admin/ai', label: 'AI', icon: Sparkles },
     ],
   },
   {
