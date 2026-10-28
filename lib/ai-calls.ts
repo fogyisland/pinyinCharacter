@@ -1,7 +1,12 @@
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { getConfig } from './config';
 
 export type AiCallStatus = 'ok' | 'error' | 'rate-limited';
+
+interface AiCallCountRow extends RowDataPacket {
+  n: number;
+}
 
 export interface LogAiCallArgs {
   userId: number | null;
@@ -46,7 +51,7 @@ export async function checkAiRateLimit(userId: number): Promise<boolean> {
   const limit = limitStr ? parseInt(limitStr, 10) : 5;
   if (limit <= 0) return true; // 0 = unlimited
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<AiCallCountRow[]>(
     `SELECT COUNT(*) AS n FROM ai_calls
      WHERE user_id = ? AND created_at >= CURDATE() AND status IN ('ok','error')`,
     [userId],
@@ -107,7 +112,7 @@ export async function checkAnonRateLimit(
   const limit = limitStr ? parseInt(limitStr, 10) : 5;
   if (limit <= 0) return { exceeded: false, count: 0 };
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<AiCallCountRow[]>(
     `SELECT COUNT(*) AS n FROM ai_calls
      WHERE user_id IS NULL AND ip = ? AND created_at >= CURDATE()
        AND status IN ('ok','error')`,

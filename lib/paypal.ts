@@ -9,6 +9,7 @@
  * polling — it MUST NOT call capture. The webhook is the sole capture
  * trigger.
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 
 export type PayPalMode = 'sandbox' | 'live';
@@ -17,6 +18,12 @@ export interface PayPalConfig {
   clientId: string;
   clientSecret: string;
   webhookId: string;
+}
+
+/** One `app_config` row: a setting key and its stored value. */
+interface AppConfigRow extends RowDataPacket {
+  key: string;
+  value: string;
 }
 
 interface TokenEntry {
@@ -30,12 +37,12 @@ const BASE = (mode: PayPalMode) =>
   mode === 'sandbox' ? 'https://api-m.sandbox.paypal.com' : 'https://api-m.paypal.com';
 
 export async function getPayPalConfig(): Promise<PayPalConfig | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<AppConfigRow[]>(
     `SELECT \`key\`, value FROM app_config WHERE \`key\` IN
        ('paypal.mode','paypal.client_id','paypal.client_secret','paypal.webhook_id')`,
   );
   const map: Record<string, string> = {};
-  for (const r of rows as any[]) map[r.key] = r.value;
+  for (const r of rows) map[r.key] = r.value;
   const mode = map['paypal.mode'];
   const clientId = map['paypal.client_id'];
   const clientSecret = map['paypal.client_secret'];

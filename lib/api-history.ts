@@ -20,7 +20,7 @@ export interface Stats {
 
 async function call<T>(path: string, init: RequestInit): Promise<ApiResult<T>> {
   const res = await fetch(path, { ...init, credentials: 'same-origin' });
-  if (res.status === 204) return { ok: true, data: null as any };
+  if (res.status === 204) return { ok: true, data: null as unknown as T };
   const j = await res.json();
   return j as ApiResult<T>;
 }

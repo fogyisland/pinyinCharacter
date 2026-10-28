@@ -6,6 +6,7 @@
  * state on a schedule. For now, the table is read by middleware to enforce
  * the lock and written by /api/activation/unlock to clear it.
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 
 export interface ActivationStatus {
@@ -23,6 +24,19 @@ export interface ActivationStatus {
 
 const ACTIVATION_ROW_ID = 1;
 
+interface ActivationRow extends RowDataPacket {
+  short_name: string;
+  is_activated: number;
+  activated_at: Date | null;
+  is_expired: number;
+  expire_date: Date | null;
+  lock: number;
+  last_heartbeat_at: Date | null;
+  last_cloud_sync_at: Date | null;
+  cloud_endpoint: string | null;
+  installation_data: unknown;
+}
+
 /**
  * Read the singleton activation row. Returns null if the table is missing
  * (pre-init) or if DB is unreachable — callers must treat null as
@@ -32,7 +46,7 @@ export async function getActivationStatus(): Promise<ActivationStatus | null> {
   if (!process.env.DATABASE_URL) return null;
   try {
     const pool = getPool();
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<ActivationRow[]>(
       `SELECT short_name, is_activated, activated_at, is_expired, expire_date,
               \`lock\`, last_heartbeat_at, last_cloud_sync_at, cloud_endpoint,
               installation_data

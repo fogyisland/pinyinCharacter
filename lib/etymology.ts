@@ -1,4 +1,5 @@
 import { getPool } from './db';
+import type { RowDataPacket } from 'mysql2';
 import { ERAS, type Etymology, type EtymologyAdjacent, type EraGlyph } from './etymology-types';
 import { getContent } from './content';
 import type { CharContent } from '@/scripts/schemas/content';
@@ -48,6 +49,31 @@ interface DbEtymologyRow {
   era_kaishu_has?: number | null;
 }
 
+/** A row of `char_etymology` as mysql2 returns it. */
+interface EtymologyRow extends RowDataPacket {
+  char: string;
+  era_jiaguwen_font: string;
+  era_jinwen_font: string;
+  era_xiaozhuan_font: string;
+  era_lishu_font: string;
+  era_kaishu_font: string;
+  era_jiaguwen_has: number;
+  era_jinwen_has: number;
+  era_xiaozhuan_has: number;
+  era_lishu_has: number;
+  era_kaishu_has: number;
+}
+
+/** The `chars` level column the legacy fallback reads. */
+interface CharLevelRow extends RowDataPacket {
+  level: number;
+}
+
+/** A row selecting nothing but the character code point. */
+interface CharOnlyRow extends RowDataPacket {
+  char: string;
+}
+
 /**
  * Build the per-era glyph list shown by EtymologyMorph. The `hasGlyph` flag
  * is sourced from data/era-coverage.json when available (post-2026-06-18
@@ -86,7 +112,7 @@ async function readLevel(char: string, content?: CharContent | null): Promise<Ch
   // File-first (post 2026-06-17 slim-DB)
   if (content?.level != null) return toCharLevel(content.level);
   // DB fallback (legacy)
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<CharLevelRow[]>(
     `SELECT level FROM chars WHERE \`char\` = ? LIMIT 1`,
     [char],
   );
@@ -97,7 +123,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
   const pool = getPool();
   // post-2026-06-17 slim-DB: story data lives in data/content/<char>.json;
   // char_etymology table only carries era_*_font + era_*_has glyph metadata.
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<EtymologyRow[]>(
     `SELECT \`char\`,
             era_jiaguwen_font, era_jiaguwen_has,
             era_jinwen_font, era_jinwen_has,
@@ -149,7 +175,7 @@ export async function getEtymology(char: string): Promise<Etymology | null> {
 export async function getAdjacentChars(char: string): Promise<EtymologyAdjacent> {
   const pool = getPool();
   // prev: char with smaller unicode_codepoint, closest
-  const [prevRows] = await pool.query<any[]>(
+  const [prevRows] = await pool.query<CharOnlyRow[]>(
     `SELECT c.\`char\`
      FROM chars c
      WHERE c.unicode_codepoint < (SELECT unicode_codepoint FROM chars WHERE \`char\` = ?)
@@ -157,7 +183,7 @@ export async function getAdjacentChars(char: string): Promise<EtymologyAdjacent>
      LIMIT 1`,
     [char],
   );
-  const [nextRows] = await pool.query<any[]>(
+  const [nextRows] = await pool.query<CharOnlyRow[]>(
     `SELECT c.\`char\`
      FROM chars c
      WHERE c.unicode_codepoint > (SELECT unicode_codepoint FROM chars WHERE \`char\` = ?)

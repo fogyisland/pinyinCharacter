@@ -13,7 +13,23 @@
  * Mitigated by the fact that all callers are browser-initiated user clicks, not
  * bulk jobs. If observed in production, add UNIQUE(user_id, title) via migration.
  */
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+/** The columns `appendById` reads. */
+interface WorksheetAppendRow extends RowDataPacket {
+  id: number;
+  user_id: number;
+  title: string;
+  content: string[] | string;
+}
+
+/** The columns `appendByTitle` reads. */
+interface WorksheetByTitleRow extends RowDataPacket {
+  id: number;
+  title: string;
+  content: string[] | string;
+}
 
 const DEFAULT_WORKSHEET_TITLE = '默认字帖';
 const DEFAULT_CELL_STYLE = 'brush-square';
@@ -79,7 +95,7 @@ async function appendById(
   chars: string[],
 ): Promise<AppendResult> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<WorksheetAppendRow[]>(
     `SELECT id, user_id, title, content FROM worksheets WHERE id = ? LIMIT 1`,
     [worksheetId],
   );
@@ -95,7 +111,7 @@ async function appendByTitle(
   chars: string[],
 ): Promise<AppendResult> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<WorksheetByTitleRow[]>(
     `SELECT id, title, content FROM worksheets WHERE user_id = ? AND title = ? LIMIT 1`,
     [userId, title],
   );
@@ -103,7 +119,7 @@ async function appendByTitle(
     return applyAppend(rows[0].id, rows[0].title, rows[0].content, chars, false);
   }
   // Brand new worksheet: store all chars at once via JSON_ARRAY of N elements.
-  const [ins] = await pool.query<any>(
+  const [ins] = await pool.query<ResultSetHeader>(
     `INSERT INTO worksheets (user_id, title, content, cell_style, paper_size, font_family)
      VALUES (?, ?, CAST(? AS JSON), ?, ?, ?)`,
     [
@@ -135,7 +151,9 @@ async function applyAppend(
 ): Promise<AppendResult> {
   const pool = getPool();
   const content: string[] =
-    typeof contentRaw === 'string' ? JSON.parse(contentRaw) : (contentRaw as string[]);
+    typeof contentRaw === 'string'
+      ? (JSON.parse(contentRaw) as string[])
+      : (contentRaw as string[]);
   const existing = new Set(content);
   const toAdd = chars.filter((c) => !existing.has(c));
   if (toAdd.length === 0) {
@@ -150,17 +168,17 @@ async function applyAppend(
     };
   }
   if (toAdd.length === 1) {
-    await pool.query<any>(
+    await pool.query<ResultSetHeader>(
       `UPDATE worksheets SET content = JSON_ARRAY_APPEND(content, '$', ?) WHERE id = ?`,
       [toAdd[0], worksheetId],
     );
   } else {
     // Bulk path: rebuild content as existing + toAdd, write as JSON.
     const merged = [...content, ...toAdd];
-    await pool.query<any>(`UPDATE worksheets SET content = CAST(? AS JSON) WHERE id = ?`, [
-      JSON.stringify(merged),
-      worksheetId,
-    ]);
+    await pool.query<ResultSetHeader>(
+      `UPDATE worksheets SET content = CAST(? AS JSON) WHERE id = ?`,
+      [JSON.stringify(merged), worksheetId],
+    );
   }
   return {
     worksheetId,

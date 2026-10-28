@@ -3,6 +3,7 @@ import { cache } from 'react';
 import jwt, { type JwtPayload } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 
 export interface User {
@@ -16,6 +17,15 @@ export interface SessionPayload extends JwtPayload {
 
 const COOKIE_NAME = 'auth_token';
 const SESSION_DAYS = 7;
+
+interface SessionFlagsRow extends RowDataPacket {
+  is_admin: number;
+  disabled_at: Date | null;
+}
+
+interface DisabledAtRow extends RowDataPacket {
+  disabled_at: Date | null;
+}
 
 function getSecret(): string {
   const s = process.env.JWT_SECRET;
@@ -72,7 +82,7 @@ const resolveSessionUser = cache(async (): Promise<SessionUser | null> => {
   if (!token) return null;
   const session = await verifySession(token);
   if (!session) return null;
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<SessionFlagsRow[]>(
     `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
     [session.userId],
   );
@@ -224,7 +234,7 @@ export async function requireUser(): Promise<RequireUserResult> {
     };
   }
   // Check disabled_at explicitly so the reason is 'account_disabled' (403), not 401
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<DisabledAtRow[]>(
     `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
     [session.userId],
   );

@@ -1,4 +1,5 @@
 import { getPool } from './db';
+import type { RowDataPacket } from 'mysql2';
 import type {
   SutraListItem,
   SutraListResult,
@@ -25,12 +26,18 @@ function buildSearchWhere(q: string): { where: string; params: string[] } {
   };
 }
 
-interface RawSutraRow {
+/** A `sutras` row as mysql2 returns it (`chunks` is a JSON column). */
+interface RawSutraRow extends RowDataPacket {
   id: number;
   title: string;
   slug: string;
   chunks: string | SutraChunk[];
   source: string | null;
+}
+
+/** A `COUNT(*)` row of the sutras table. */
+interface SutraTotalRow extends RowDataPacket {
+  total: number;
 }
 
 function mapListRow(r: RawSutraRow): SutraListItem {
@@ -61,14 +68,14 @@ export async function listSutras(args: ListSutrasArgs = {}): Promise<SutraListRe
                ${where}
                ORDER BY id ASC
                LIMIT ? OFFSET ?`;
-  const [rows] = await pool.query<any[]>(sql, [...params, pageSize, offset]);
-  const [[{ total }]] = await pool.query<any[]>(
+  const [rows] = await pool.query<RawSutraRow[]>(sql, [...params, pageSize, offset]);
+  const [[{ total }]] = await pool.query<SutraTotalRow[]>(
     `SELECT COUNT(*) AS total FROM sutras ${where}`,
     params,
   );
 
   return {
-    items: (rows as RawSutraRow[]).map(mapListRow),
+    items: rows.map(mapListRow),
     total: Number(total),
     page,
     pageSize,
@@ -117,11 +124,11 @@ async function loadSutraSource(id: number): Promise<SutraSource | null> {
     };
   }
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RawSutraRow[]>(
     `SELECT id, title, slug, chunks FROM sutras WHERE id = ? LIMIT 1`,
     [id],
   );
-  const row = rows[0] as RawSutraRow | undefined;
+  const row = rows[0];
   if (!row) return null;
   const rawChunks =
     typeof row.chunks === 'string' ? (JSON.parse(row.chunks) as SutraChunk[]) : row.chunks;

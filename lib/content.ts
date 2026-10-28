@@ -8,6 +8,7 @@ import {
   readdirSync,
 } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { CharContentSchema, ContentManifestSchema } from '@/scripts/schemas/content';
 import type { CharContent } from '@/scripts/schemas/content';
@@ -33,6 +34,49 @@ const MANIFEST_FILE = join(process.cwd(), 'data', 'content-manifest.json');
  * writeContent() so an admin edit takes effect immediately.
  */
 const parsedContentCache = new Map<string, CharContent>();
+
+/**
+ * A row of the legacy `chars` table, read by the DB fallback below.
+ *
+ * The rich schema carried the dict columns as JSON-encoded strings; the
+ * slim schema only has `level` + `pinyin`. Columns that the running schema
+ * does not have come back as `undefined`, hence the optional members.
+ */
+interface LegacyCharRow extends RowDataPacket {
+  level?: number | null;
+  pinyin?: string | null;
+  meaning_zh?: string | null;
+  meaning_en?: string | null;
+  pinyin_alt?: string | null;
+  variants?: string | null;
+}
+
+/** A row of the legacy `char_etymology` table. */
+interface LegacyEtymologyRow extends RowDataPacket {
+  story?: string | null;
+  generated_by?: string | null;
+  generated_at?: string | Date | null;
+}
+
+/** A row of the legacy `char_story` table. */
+interface LegacyStoryRow extends RowDataPacket {
+  story?: string | null;
+}
+
+/** A row of the legacy `rare_chars` table. */
+interface LegacyRareCharRow extends RowDataPacket {
+  pinyin?: string | null;
+  meaning?: string | null;
+  story?: string | null;
+  generated_by?: string | null;
+  generated_at?: string | Date | null;
+}
+
+/** A row of `chars` as the coverage stat reads it. */
+interface CharLevelRow extends RowDataPacket {
+  char: string;
+  level: number;
+}
 
 function invalidateParsedContent(filePath: string): void {
   parsedContentCache.delete(filePath);
@@ -77,30 +121,33 @@ export async function getContent(
   //    char_story table). Read the slim shape first, opportunistically
   //    upgrade to rich cols when present so neither schema breaks us.
   const pool = getPool();
-  const [charRows] = await pool
-    .query<any[]>(
+  const charRows = await pool
+    .query<LegacyCharRow[]>(
       `SELECT level, pinyin, meaning_zh, meaning_en, pinyin_alt, variants
      FROM chars WHERE \`char\` = ? LIMIT 1`,
       [char],
     )
+    .then(([rows]) => rows)
     .catch(() => {
       // Slim schema — meaning_zh etc. don't exist; fall back to bare cols.
       return pool
-        .query<any[]>(`SELECT level, pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [char])
-        .then(([rows]) => [rows] as any);
+        .query<LegacyCharRow[]>(`SELECT level, pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [char])
+        .then(([rows]) => rows);
     });
   if (charRows.length === 0) return null;
 
-  const [etymRows] = await pool
-    .query<any[]>(
+  const etymRows = await pool
+    .query<LegacyEtymologyRow[]>(
       `SELECT story, generated_by, generated_at FROM char_etymology WHERE \`char\` = ? LIMIT 1`,
       [char],
     )
-    .catch(() => [[] as any[]]);
-  const [storyRows] = await pool
-    .query<any[]>(`SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`, [char])
-    .catch(() => [[] as any[]]);
-  const [rareRows] = await pool.query<any[]>(
+    .then(([rows]) => rows)
+    .catch(() => [] as LegacyEtymologyRow[]);
+  const storyRows = await pool
+    .query<LegacyStoryRow[]>(`SELECT story FROM char_story WHERE \`char\` = ? LIMIT 1`, [char])
+    .then(([rows]) => rows)
+    .catch(() => [] as LegacyStoryRow[]);
+  const [rareRows] = await pool.query<LegacyRareCharRow[]>(
     `SELECT pinyin, meaning, story, generated_by, generated_at FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
     [char],
   );
@@ -288,7 +335,9 @@ function updateStoryIndex(char: string, content: CharContent): void {
 
 export async function getContentCoverage(): Promise<ContentCoverage> {
   const pool = getPool();
-  const [charRows] = await pool.query<any[]>(`SELECT \`char\`, level FROM chars ORDER BY level`);
+  const [charRows] = await pool.query<CharLevelRow[]>(
+    `SELECT \`char\`, level FROM chars ORDER BY level`,
+  );
   const totalChars = charRows.length;
 
   // Manifest is only used as a hint for the global "已生成字源" stat when

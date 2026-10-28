@@ -1,4 +1,8 @@
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
 
 export type PaymentOrderStatus = 'created' | 'approved' | 'paid' | 'failed' | 'expired';
 
@@ -16,7 +20,7 @@ export interface PaymentOrder {
   paidAt: string | null;
 }
 
-interface DbRow {
+interface DbRow extends RowDataPacket {
   id: number;
   user_id: number;
   plan_id: number;
@@ -25,9 +29,36 @@ interface DbRow {
   amount: string;
   currency: 'CNY' | 'USD';
   approval_url: string | null;
-  created_at: Date;
-  updated_at: Date;
-  paid_at: Date | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+  paid_at: Date | string | null;
+}
+
+/** The admin list view: a payment order joined with its buyer and plan. */
+interface PaymentOrderListRow extends RowDataPacket {
+  id: number;
+  user_id: number;
+  plan_id: number;
+  paypal_order_id: string;
+  status: PaymentOrderStatus;
+  amount: string;
+  currency: 'CNY' | 'USD';
+  approval_url: string | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+  paid_at: Date | string | null;
+  username: string | null;
+  plan_key: string | null;
+  plan_display_name: string | null;
+}
+
+interface CountRow extends RowDataPacket {
+  n: number;
+}
+
+/** Normalise a DATETIME/TIMESTAMP column to an ISO string. */
+function toIsoString(value: Date | string): string {
+  return (value instanceof Date ? value : new Date(value)).toISOString();
 }
 
 function mapRow(r: DbRow): PaymentOrder {
@@ -40,9 +71,9 @@ function mapRow(r: DbRow): PaymentOrder {
     amount: String(r.amount),
     currency: r.currency,
     approvalUrl: r.approval_url,
-    createdAt: new Date(r.created_at).toISOString(),
-    updatedAt: new Date(r.updated_at).toISOString(),
-    paidAt: r.paid_at ? new Date(r.paid_at).toISOString() : null,
+    createdAt: toIsoString(r.created_at),
+    updatedAt: toIsoString(r.updated_at),
+    paidAt: r.paid_at ? toIsoString(r.paid_at) : null,
   };
 }
 
@@ -54,32 +85,32 @@ export async function createPaymentOrder(args: {
   currency: 'CNY' | 'USD';
   approvalUrl: string | null;
 }): Promise<number> {
-  const [res] = await getPool().query<any>(
+  const [res] = await getPool().query<ResultSetHeader>(
     `INSERT INTO payment_orders (user_id, plan_id, paypal_order_id, status, amount, currency, approval_url)
      VALUES (?, ?, ?, 'created', ?, ?, ?)`,
     [args.userId, args.planId, args.paypalOrderId, args.amount, args.currency, args.approvalUrl],
   );
-  return Number((res as any).insertId);
+  return Number(res.insertId);
 }
 
 export async function getPaymentOrder(paypalOrderId: string): Promise<PaymentOrder | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<DbRow[]>(
     `SELECT id, user_id, plan_id, paypal_order_id, status, amount, currency, approval_url, created_at, updated_at, paid_at
      FROM payment_orders WHERE paypal_order_id = ? LIMIT 1`,
     [paypalOrderId],
   );
   if (rows.length === 0) return null;
-  return mapRow(rows[0] as DbRow);
+  return mapRow(rows[0]);
 }
 
 export async function getPaymentOrderById(id: number): Promise<PaymentOrder | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<DbRow[]>(
     `SELECT id, user_id, plan_id, paypal_order_id, status, amount, currency, approval_url, created_at, updated_at, paid_at
      FROM payment_orders WHERE id = ? LIMIT 1`,
     [id],
   );
   if (rows.length === 0) return null;
-  return mapRow(rows[0] as DbRow);
+  return mapRow(rows[0]);
 }
 
 export async function updatePaymentOrderStatus(
@@ -128,7 +159,7 @@ export async function listPaymentOrders(
   const offset = (page - 1) * pageSize;
 
   const where: string[] = [];
-  const params: any[] = [];
+  const params: SqlParam[] = [];
   if (opts.status) {
     where.push('po.status = ?');
     params.push(opts.status);
@@ -143,7 +174,7 @@ export async function listPaymentOrders(
   }
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PaymentOrderListRow[]>(
     `SELECT po.id, po.user_id, po.plan_id, po.paypal_order_id, po.status,
             po.amount, po.currency, po.approval_url,
             po.created_at, po.updated_at, po.paid_at,
@@ -157,12 +188,12 @@ export async function listPaymentOrders(
     [...params, pageSize, offset],
   );
 
-  const [countRows] = await getPool().query<any[]>(
+  const [countRows] = await getPool().query<CountRow[]>(
     `SELECT COUNT(*) AS n FROM payment_orders po ${whereSql}`,
     params,
   );
 
-  const items: PaymentOrderWithUser[] = (rows as any[]).map((r) => ({
+  const items: PaymentOrderWithUser[] = rows.map((r) => ({
     id: Number(r.id),
     userId: Number(r.user_id),
     planId: Number(r.plan_id),
@@ -171,9 +202,9 @@ export async function listPaymentOrders(
     amount: String(r.amount),
     currency: r.currency,
     approvalUrl: r.approval_url,
-    createdAt: new Date(r.created_at).toISOString(),
-    updatedAt: new Date(r.updated_at).toISOString(),
-    paidAt: r.paid_at ? new Date(r.paid_at).toISOString() : null,
+    createdAt: toIsoString(r.created_at),
+    updatedAt: toIsoString(r.updated_at),
+    paidAt: r.paid_at ? toIsoString(r.paid_at) : null,
     username: r.username ?? null,
     planKey: r.plan_key ?? '',
     planDisplayName: r.plan_display_name ?? '',
@@ -181,7 +212,7 @@ export async function listPaymentOrders(
 
   return {
     items,
-    total: Number((countRows[0] as any).n) || 0,
+    total: Number(countRows[0].n) || 0,
     page,
     pageSize,
   };

@@ -1,4 +1,5 @@
 import { createHash } from 'crypto';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { readContentFromFs } from './content';
 
@@ -58,6 +59,44 @@ interface DbContentRow {
 }
 
 /**
+ * The legacy `rare_chars` content columns. They are gone from the slim
+ * schema, so the query may fail — the surrounding try/catch handles that.
+ */
+interface RareContentRow extends RowDataPacket {
+  meaning: string | null;
+  story: string | null;
+  generated_by: string | null;
+  generated_at: Date | null;
+  created_at: Date | null;
+}
+
+/** The structural columns of a `rare_chars` row. */
+interface RareCharRow extends RowDataPacket {
+  char: string;
+  pinyin: string;
+  needs_review: number | boolean;
+}
+
+/** The `char` + `pinyin` columns of a `rare_chars` row. */
+interface RareCharPinyinRow extends RowDataPacket {
+  char: string;
+  pinyin: string;
+}
+
+/** A `COUNT(*)` row. */
+interface RareTotalRow extends RowDataPacket {
+  total: number;
+}
+
+/** The row the random-story picker selects. */
+interface RandomStoryRow extends RowDataPacket {
+  char: string;
+  c_pinyin: string | null;
+  r_pinyin: string | null;
+  level: number;
+}
+
+/**
  * Read content (meaning/story/generated_*) for a single rare char.
  * Prefers data/content/<char>.json; falls back to legacy DB columns
  * during the migration window. Wrapped in try/catch so it survives
@@ -91,7 +130,7 @@ async function readRareContent(char: string): Promise<DbContentRow> {
   // 2. DB fallback (legacy cols may have been dropped)
   try {
     const pool = getPool();
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<RareContentRow[]>(
       `SELECT meaning, story, generated_by, generated_at, created_at
        FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
       [char],
@@ -142,25 +181,23 @@ export async function listChars(
   const finalWhere = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
   // Structural cols only — content (meaning/story) hydrated from JSON.
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RareCharRow[]>(
     `SELECT \`char\`, pinyin, needs_review FROM rare_chars ${finalWhere}
      ORDER BY \`char\` ASC LIMIT ? OFFSET ?`,
     [...params, pageSize, offset],
   );
 
-  const [[{ total }]] = await pool.query<any[]>(
+  const [[{ total }]] = await pool.query<RareTotalRow[]>(
     `SELECT COUNT(*) AS total FROM rare_chars ${finalWhere}`,
     params,
   );
 
   // Hydrate content for each row in parallel.
   const hydrated = await Promise.all(
-    (rows as Array<{ char: string; pinyin: string; needs_review: number | boolean }>).map(
-      async (r) => {
-        const db = await readRareContent(r.char);
-        return hydrate(r.char, r.pinyin, Boolean(r.needs_review), db);
-      },
-    ),
+    rows.map(async (r) => {
+      const db = await readRareContent(r.char);
+      return hydrate(r.char, r.pinyin, Boolean(r.needs_review), db);
+    }),
   );
 
   return {
@@ -177,7 +214,7 @@ export async function getChar(c: string): Promise<RareChar | null> {
   // means the corrupted value never reaches the driver.
   if (!c || (c.codePointAt(0) ?? 0) > 0xffff) return null;
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RareCharRow[]>(
     `SELECT \`char\`, pinyin, needs_review FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
     [c],
   );
@@ -195,11 +232,11 @@ export async function getDailyChar(dateStr: string): Promise<{
   date: string;
 } | null> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RareCharPinyinRow[]>(
     `SELECT \`char\`, pinyin FROM rare_chars ORDER BY \`char\` ASC LIMIT 5000`,
   );
   if (rows.length === 0) return null;
-  const chars = rows.map((r) => r.char as string);
+  const chars = rows.map((r) => r.char);
   const picked = pickDailyChar(chars, dateStr);
   const found = rows.find((r) => r.char === picked);
   if (!found) return null;
@@ -219,7 +256,7 @@ export async function getRandomStoryChar(): Promise<RareChar | null> {
   // rare_chars.story. L3 chars often have empty pinyin in chars table — left
   // join rare_chars to fall back.
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RandomStoryRow[]>(
     `SELECT c.\`char\`, c.pinyin AS c_pinyin, r.pinyin AS r_pinyin, c.level
      FROM chars c
      LEFT JOIN rare_chars r ON c.\`char\` COLLATE utf8mb4_unicode_ci = r.\`char\` COLLATE utf8mb4_unicode_ci

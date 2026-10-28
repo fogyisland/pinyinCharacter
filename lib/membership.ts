@@ -1,3 +1,4 @@
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { cache } from 'react';
 
@@ -7,6 +8,25 @@ export type PlanKey = (typeof PLAN_KEYS)[number];
 export type MembershipCurrency = 'CNY' | 'USD';
 export type MembershipFeature =
   'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts' | 'multi_worksheet_print';
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
+/**
+ * Normalise a DATETIME column to a `Date`. mysql2 hands back a `Date` for
+ * DATETIME/TIMESTAMP columns; the string branch keeps the helper total for
+ * pools configured with `dateStrings`.
+ */
+function toDate(value: Date | string): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+/**
+ * Normalise a DATETIME column to an ISO string.
+ */
+function toIsoString(value: Date | string): string {
+  return toDate(value).toISOString();
+}
 
 export interface MembershipPlanRow {
   id: number;
@@ -20,7 +40,7 @@ export interface MembershipPlanRow {
   features: MembershipFeature[];
 }
 
-interface PlanDbRow {
+interface PlanDbRow extends RowDataPacket {
   id: number;
   plan_key: string;
   display_name: string;
@@ -31,12 +51,58 @@ interface PlanDbRow {
   display_order: number;
 }
 
+interface PlanFeatureRow extends RowDataPacket {
+  feature_key: string;
+}
+
+interface PlanIdRow extends RowDataPacket {
+  id: number;
+}
+
+interface ActiveMembershipRow extends RowDataPacket {
+  id: number;
+  expires_at: Date | string;
+}
+
+interface MembershipListRow extends RowDataPacket {
+  id: number;
+  user_id: number;
+  username: string | null;
+  plan_key: string;
+  source: string;
+  amount: string | null;
+  currency: string | null;
+  granted_at: Date | string;
+  expires_at: Date | string;
+  revoked_at: Date | string | null;
+  note: string | null;
+  granted_by: number | null;
+}
+
+interface MembershipTotalRow extends RowDataPacket {
+  total: number;
+}
+
+interface RevokedAtRow extends RowDataPacket {
+  id: number;
+  revoked_at: Date | string | null;
+}
+
+interface ActiveMembershipPlanRow extends RowDataPacket {
+  plan_key: string;
+  expires_at: Date | string;
+}
+
+interface HasFeatureRow extends RowDataPacket {
+  '1': number;
+}
+
 async function loadFeatures(planId: number): Promise<MembershipFeature[]> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlanFeatureRow[]>(
     `SELECT feature_key FROM membership_plan_features WHERE plan_id = ?`,
     [planId],
   );
-  return (rows as any[]).map((r) => r.feature_key as MembershipFeature);
+  return rows.map((r) => r.feature_key as MembershipFeature);
 }
 
 function mapPlanRow(r: PlanDbRow, features: MembershipFeature[]): MembershipPlanRow {
@@ -57,33 +123,31 @@ export async function listPlans(
   opts: { enabledOnly?: boolean } = {},
 ): Promise<MembershipPlanRow[]> {
   const where = opts.enabledOnly ? 'WHERE enabled = 1' : '';
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlanDbRow[]>(
     `SELECT id, plan_key, display_name, duration_days, amount, currency, enabled, display_order
      FROM membership_plans ${where} ORDER BY display_order ASC`,
   );
-  return Promise.all(
-    (rows as PlanDbRow[]).map(async (r) => mapPlanRow(r, await loadFeatures(r.id))),
-  );
+  return Promise.all(rows.map(async (r) => mapPlanRow(r, await loadFeatures(r.id))));
 }
 
 export async function getPlanByKey(key: PlanKey): Promise<MembershipPlanRow | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlanDbRow[]>(
     `SELECT id, plan_key, display_name, duration_days, amount, currency, enabled, display_order
      FROM membership_plans WHERE plan_key = ? LIMIT 1`,
     [key],
   );
-  const arr = rows as PlanDbRow[];
+  const arr = rows;
   if (arr.length === 0) return null;
   return mapPlanRow(arr[0], await loadFeatures(arr[0].id));
 }
 
 export async function getPlanById(id: number): Promise<MembershipPlanRow | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlanDbRow[]>(
     `SELECT id, plan_key, display_name, duration_days, amount, currency, enabled, display_order
      FROM membership_plans WHERE id = ? LIMIT 1`,
     [id],
   );
-  const arr = rows as PlanDbRow[];
+  const arr = rows;
   if (arr.length === 0) return null;
   return mapPlanRow(arr[0], await loadFeatures(arr[0].id));
 }
@@ -138,7 +202,7 @@ export async function seedDefaultPlans(): Promise<number> {
   const pool = getPool();
   let inserted = 0;
   for (const p of SEED_PLANS) {
-    const [res] = await pool.query<any>(
+    const [res] = await pool.query<ResultSetHeader>(
       `INSERT IGNORE INTO membership_plans
          (plan_key, display_name, duration_days, amount, currency, enabled, display_order)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -152,10 +216,10 @@ export async function seedDefaultPlans(): Promise<number> {
         p.display_order,
       ],
     );
-    if ((res as any).affectedRows > 0) inserted++;
+    if (res.affectedRows > 0) inserted++;
   }
-  const [planRows] = await pool.query<any[]>(`SELECT id FROM membership_plans`);
-  for (const r of planRows as any[]) {
+  const [planRows] = await pool.query<PlanIdRow[]>(`SELECT id FROM membership_plans`);
+  for (const r of planRows) {
     for (const f of ALL_FEATURES) {
       await pool.query(
         `INSERT IGNORE INTO membership_plan_features (plan_id, feature_key) VALUES (?, ?)`,
@@ -187,16 +251,16 @@ export async function grantMembership(args: GrantMembershipArgs): Promise<Grante
   const pool = getPool();
 
   // Renewal: extend from current active expires_at, else from NOW()
-  const [activeRows] = await pool.query<any[]>(
+  const [activeRows] = await pool.query<ActiveMembershipRow[]>(
     `SELECT id, expires_at FROM memberships
      WHERE user_id = ? AND revoked_at IS NULL AND expires_at > NOW()
      ORDER BY expires_at DESC LIMIT 1`,
     [args.targetUserId],
   );
-  const baseDate = activeRows.length > 0 ? new Date(activeRows[0].expires_at) : new Date();
+  const baseDate = activeRows.length > 0 ? toDate(activeRows[0].expires_at) : new Date();
   const expiresAt = new Date(baseDate.getTime() + plan.durationDays * 86400_000);
 
-  const [res] = await pool.query<any>(
+  const [res] = await pool.query<ResultSetHeader>(
     `INSERT INTO memberships
        (user_id, plan_key, source, amount, currency, source_payment_order_id, granted_by, note, expires_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -212,7 +276,7 @@ export async function grantMembership(args: GrantMembershipArgs): Promise<Grante
       expiresAt,
     ],
   );
-  return { id: Number((res as any).insertId), expiresAt };
+  return { id: Number(res.insertId), expiresAt };
 }
 
 export interface MembershipRow {
@@ -246,7 +310,7 @@ export async function listMemberships(opts: ListMembershipsOpts): Promise<ListMe
   const pageSize = Math.min(Math.max(opts.pageSize ?? 50, 1), 200);
   const offset = (page - 1) * pageSize;
   const where: string[] = [];
-  const params: any[] = [];
+  const params: SqlParam[] = [];
   if (opts.userId !== undefined) {
     where.push('m.user_id = ?');
     params.push(opts.userId);
@@ -258,7 +322,7 @@ export async function listMemberships(opts: ListMembershipsOpts): Promise<ListMe
   const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<MembershipListRow[]>(
     `SELECT m.id, m.user_id, u.username, m.plan_key, m.source, m.amount, m.currency,
             m.granted_at, m.expires_at, m.revoked_at, m.note, m.granted_by
      FROM memberships m LEFT JOIN users u ON u.id = m.user_id
@@ -267,13 +331,13 @@ export async function listMemberships(opts: ListMembershipsOpts): Promise<ListMe
      LIMIT ? OFFSET ?`,
     [...params, pageSize, offset],
   );
-  const [[{ total }]] = await pool.query<any[]>(
+  const [[{ total }]] = await pool.query<MembershipTotalRow[]>(
     `SELECT COUNT(*) AS total FROM memberships m ${whereSql}`,
     params,
   );
 
   return {
-    items: (rows as any[]).map((r) => ({
+    items: rows.map((r) => ({
       id: Number(r.id),
       userId: Number(r.user_id),
       username: r.username,
@@ -281,9 +345,9 @@ export async function listMemberships(opts: ListMembershipsOpts): Promise<ListMe
       source: r.source as GrantSource,
       amount: r.amount != null ? String(r.amount) : null,
       currency: r.currency,
-      grantedAt: new Date(r.granted_at).toISOString(),
-      expiresAt: new Date(r.expires_at).toISOString(),
-      revokedAt: r.revoked_at ? new Date(r.revoked_at).toISOString() : null,
+      grantedAt: toIsoString(r.granted_at),
+      expiresAt: toIsoString(r.expires_at),
+      revokedAt: r.revoked_at ? toIsoString(r.revoked_at) : null,
       note: r.note,
       grantedBy: r.granted_by != null ? Number(r.granted_by) : null,
     })),
@@ -299,7 +363,7 @@ export async function revokeMembership(
   reason?: string,
 ): Promise<MembershipRow> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RevokedAtRow[]>(
     `SELECT id, revoked_at FROM memberships WHERE id = ? LIMIT 1`,
     [id],
   );
@@ -319,7 +383,7 @@ export async function revokeMembership(
 export type ActiveMembership =
   { active: true; planKey: PlanKey; expiresAt: string; expiresInDays: number } | { active: false };
 export const getMyActiveMembership = cache(async (userId: number): Promise<ActiveMembership> => {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<ActiveMembershipPlanRow[]>(
     `SELECT plan_key, expires_at FROM memberships
      WHERE user_id = ? AND revoked_at IS NULL AND expires_at > NOW()
      ORDER BY expires_at DESC LIMIT 1`,
@@ -327,7 +391,7 @@ export const getMyActiveMembership = cache(async (userId: number): Promise<Activ
   );
   if (rows.length === 0) return { active: false };
   const r = rows[0];
-  const expiresAt = new Date(r.expires_at);
+  const expiresAt = toDate(r.expires_at);
   const expiresInDays = Math.max(0, Math.ceil((expiresAt.getTime() - Date.now()) / 86400_000));
   return {
     active: true,
@@ -338,7 +402,7 @@ export const getMyActiveMembership = cache(async (userId: number): Promise<Activ
 });
 
 export const getMyFeatures = cache(async (userId: number): Promise<Set<MembershipFeature>> => {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlanFeatureRow[]>(
     `SELECT DISTINCT f.feature_key
      FROM memberships m
      JOIN membership_plans p ON p.plan_key = m.plan_key
@@ -350,7 +414,7 @@ export const getMyFeatures = cache(async (userId: number): Promise<Set<Membershi
 });
 
 export async function hasFeature(userId: number, feature: MembershipFeature): Promise<boolean> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<HasFeatureRow[]>(
     `SELECT 1 FROM memberships m
      JOIN membership_plans p ON p.plan_key = m.plan_key
      JOIN membership_plan_features f ON f.plan_id = p.id
@@ -373,7 +437,7 @@ export interface PlanPatch {
 export async function updatePlan(id: number, patch: PlanPatch): Promise<MembershipPlanRow> {
   const pool = getPool();
   const sets: string[] = [];
-  const params: any[] = [];
+  const params: SqlParam[] = [];
   if (patch.displayName !== undefined) {
     sets.push('display_name = ?');
     params.push(patch.displayName);

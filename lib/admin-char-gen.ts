@@ -1,4 +1,5 @@
 import type { Pool } from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
 import {
   generateMeaningZh,
   generateMeaningEn,
@@ -56,10 +57,26 @@ interface DictCtx {
   meaningZh: string | null;
 }
 
+/** The `chars` row `loadDictCtx` reads the reading from. */
+interface CharPinyinRow extends RowDataPacket {
+  pinyin: string;
+}
+
+/** The legacy `chars.meaning_zh` column (may be absent on a slim schema). */
+interface CharMeaningZhRow extends RowDataPacket {
+  meaning_zh: string | null;
+}
+
+/** The `rare_chars` row `generateRareField` reads the reading from. */
+interface RareCharPinyinRow extends RowDataPacket {
+  pinyin: string;
+}
+
 async function loadDictCtx(pool: Pool, char: string): Promise<DictCtx | null> {
-  const [rows] = await pool.query<any[]>(`SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`, [
-    char,
-  ]);
+  const [rows] = await pool.query<CharPinyinRow[]>(
+    `SELECT pinyin FROM chars WHERE \`char\` = ? LIMIT 1`,
+    [char],
+  );
   if (rows.length === 0) return null;
   // meaningZh may live in either the chars row (legacy DB) or the JSON file.
   // Prefer JSON since it's the source of truth post-migration.
@@ -74,7 +91,7 @@ async function loadDictCtx(pool: Pool, char: string): Promise<DictCtx | null> {
 
 async function loadDbMeaningZh(pool: Pool, char: string): Promise<string | null> {
   try {
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<CharMeaningZhRow[]>(
       `SELECT meaning_zh FROM chars WHERE \`char\` = ? LIMIT 1`,
       [char],
     );
@@ -267,7 +284,7 @@ async function generateRareField(
   char: string,
   column: 'meaning' | 'story',
 ): Promise<Outcome> {
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RareCharPinyinRow[]>(
     `SELECT pinyin FROM rare_chars WHERE \`char\` = ? LIMIT 1`,
     [char],
   );

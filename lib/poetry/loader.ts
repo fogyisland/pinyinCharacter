@@ -31,8 +31,12 @@ export async function loadPoem(id: number): Promise<PoemDetail | null> {
     const raw = await fs.readFile(filePath, 'utf8');
     const p = JSON.parse(raw) as PoemDetail;
     return p;
-  } catch (err: any) {
-    if (err?.code === 'ENOENT') return null;
-    throw new Error(`loadPoem(${id}): parse error in ${filePath}: ${err.message}`);
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException | null)?.code;
+    if (code === 'ENOENT') return null;
+    // The old code read `err.message` unguarded, so a non-Error throw produced
+    // "undefined" in the message. Keep that exact observable result.
+    const message = err instanceof Error ? err.message : undefined;
+    throw new Error(`loadPoem(${id}): parse error in ${filePath}: ${message}`);
   }
 }

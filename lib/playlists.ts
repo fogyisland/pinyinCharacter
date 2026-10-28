@@ -11,7 +11,42 @@
  *   2. Positions are dense 1..N per playlist. Reorder/add/remove re-sequences.
  *   3. A track appears at most once per playlist (uq_playlist_track).
  */
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
+interface PlaylistRow extends RowDataPacket {
+  id: number;
+  title: string;
+  is_default: number;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface PlaylistIdRow extends RowDataPacket {
+  id: number;
+}
+
+interface PlaylistTrackRow extends RowDataPacket {
+  id: number;
+  position: number;
+  title: string;
+  filename: string;
+}
+
+interface TrackIdRow extends RowDataPacket {
+  track_id: number;
+}
+
+interface MaxPositionRow extends RowDataPacket {
+  max_pos: number;
+}
+
+interface PositionRow extends RowDataPacket {
+  position: number;
+}
 
 export interface PlaylistTrackRef {
   id: number;
@@ -38,7 +73,7 @@ const MAX_PLAYLISTS = 500;
 
 /** Lists all playlists (no tracks joined). Used by admin overview. */
 export async function listPlaylists(): Promise<Playlist[]> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlaylistRow[]>(
     `SELECT id, title, is_default, created_at, updated_at
      FROM playlists ORDER BY is_default DESC, id ASC LIMIT ?`,
     [MAX_PLAYLISTS],
@@ -48,13 +83,13 @@ export async function listPlaylists(): Promise<Playlist[]> {
 
 /** Returns a playlist with its tracks in position order. */
 export async function getPlaylist(id: number): Promise<PlaylistWithTracks | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlaylistRow[]>(
     `SELECT id, title, is_default, created_at, updated_at
      FROM playlists WHERE id = ? LIMIT 1`,
     [id],
   );
   if (!rows.length) return null;
-  const [trackRows] = await getPool().query<any[]>(
+  const [trackRows] = await getPool().query<PlaylistTrackRow[]>(
     `SELECT pt.track_id AS id, pt.position, at.title, at.filename
      FROM playlist_tracks pt
      JOIN audio_tracks at ON at.id = pt.track_id
@@ -76,7 +111,7 @@ export async function getPlaylist(id: number): Promise<PlaylistWithTracks | null
 /** Returns the default playlist with its tracks (position-ordered).
  *  Returns null if no playlist exists or no default is set. */
 export async function getActivePlaylist(): Promise<PlaylistWithTracks | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<PlaylistIdRow[]>(
     `SELECT id FROM playlists
      WHERE is_default = 1
      ORDER BY id ASC LIMIT 1`,
@@ -98,7 +133,7 @@ export async function createPlaylist(input: CreatePlaylistInput): Promise<number
     if (input.isDefault) {
       await conn.query(`UPDATE playlists SET is_default = 0`);
     }
-    const [res] = await conn.query<any>(
+    const [res] = await conn.query<ResultSetHeader>(
       `INSERT INTO playlists (title, is_default) VALUES (?, ?)`,
       [input.title, input.isDefault ? 1 : 0],
     );
@@ -127,7 +162,7 @@ export async function updatePlaylist(id: number, input: UpdatePlaylistInput): Pr
       await conn.query(`UPDATE playlists SET is_default = 0 WHERE id <> ?`, [id]);
     }
     const sets: string[] = [];
-    const params: any[] = [];
+    const params: SqlParam[] = [];
     if (input.title !== undefined) {
       sets.push('title = ?');
       params.push(input.title);
@@ -162,14 +197,14 @@ export async function addTrackToPlaylist(playlistId: number, trackId: number): P
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const [existing] = await conn.query<any[]>(
+    const [existing] = await conn.query<TrackIdRow[]>(
       `SELECT track_id FROM playlist_tracks WHERE playlist_id = ?`,
       [playlistId],
     );
-    if (existing.some((r: any) => Number(r.track_id) === trackId)) {
+    if (existing.some((r) => Number(r.track_id) === trackId)) {
       throw new Error(`track ${trackId} already in playlist ${playlistId}`);
     }
-    const [maxRow] = await conn.query<any[]>(
+    const [maxRow] = await conn.query<MaxPositionRow[]>(
       `SELECT COALESCE(MAX(position), 0) AS max_pos FROM playlist_tracks WHERE playlist_id = ?`,
       [playlistId],
     );
@@ -193,7 +228,7 @@ export async function removeTrackFromPlaylist(playlistId: number, trackId: numbe
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const [rows] = await conn.query<any[]>(
+    const [rows] = await conn.query<PositionRow[]>(
       `SELECT position FROM playlist_tracks
        WHERE playlist_id = ? AND track_id = ? LIMIT 1`,
       [playlistId, trackId],
@@ -229,11 +264,11 @@ export async function reorderPlaylistTracks(playlistId: number, trackIds: number
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
-    const [rows] = await conn.query<any[]>(
+    const [rows] = await conn.query<TrackIdRow[]>(
       `SELECT track_id FROM playlist_tracks WHERE playlist_id = ?`,
       [playlistId],
     );
-    const existing = new Set(rows.map((r: any) => Number(r.track_id)));
+    const existing = new Set(rows.map((r) => Number(r.track_id)));
     const incoming = new Set(trackIds);
     if (existing.size !== incoming.size) {
       throw new Error(`trackIds must cover all ${existing.size} playlist tracks`);
@@ -260,7 +295,7 @@ export async function reorderPlaylistTracks(playlistId: number, trackIds: number
   }
 }
 
-function rowToPlaylist(r: any): Playlist {
+function rowToPlaylist(r: PlaylistRow): Playlist {
   return {
     id: Number(r.id),
     title: r.title,

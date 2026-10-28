@@ -1,3 +1,4 @@
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 
 export type HistoryKind = 'text2pinyin' | 'pinyin2text';
@@ -11,6 +12,27 @@ export interface HistoryRow {
   is_favorite: 0 | 1;
   char_count: number;
   created_at: Date;
+}
+
+/** One `history` table row, as mysql2 returns it. */
+export interface HistoryDbRow extends RowDataPacket {
+  id: number;
+  user_id: number;
+  kind: HistoryKind;
+  input: string;
+  output: string | null;
+  is_favorite: 0 | 1;
+  char_count: number;
+  created_at: Date;
+}
+
+interface HistoryStatsRow extends RowDataPacket {
+  total: number;
+  favorites: number;
+}
+
+interface HistoryIdRow extends RowDataPacket {
+  id: number;
 }
 
 export interface CreateHistoryInput {
@@ -30,7 +52,7 @@ export interface ListHistoryOptions {
 
 export async function createHistory(input: CreateHistoryInput): Promise<number> {
   const pool = getPool();
-  const [res] = await pool.query<any>(
+  const [res] = await pool.query<ResultSetHeader>(
     `INSERT INTO history (user_id, kind, input, output, char_count)
      VALUES (?, ?, ?, ?, ?)`,
     [input.userId, input.kind, input.input, input.output ?? null, input.charCount],
@@ -43,11 +65,11 @@ export async function listHistory(opts: ListHistoryOptions): Promise<HistoryRow[
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const offset = Math.max(opts.offset ?? 0, 0);
   const where = opts.favoriteOnly ? 'WHERE user_id = ? AND is_favorite = 1' : 'WHERE user_id = ?';
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<HistoryDbRow[]>(
     `SELECT * FROM history ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [opts.userId, limit, offset],
   );
-  return rows as HistoryRow[];
+  return rows;
 }
 
 export async function setFavorite(
@@ -56,7 +78,7 @@ export async function setFavorite(
   isFavorite: boolean,
 ): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.query<any>(
+  const [res] = await pool.query<ResultSetHeader>(
     `UPDATE history SET is_favorite = ? WHERE id = ? AND user_id = ?`,
     [isFavorite ? 1 : 0, historyId, userId],
   );
@@ -65,10 +87,10 @@ export async function setFavorite(
 
 export async function deleteHistory(userId: number, historyId: number): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.query<any>(`DELETE FROM history WHERE id = ? AND user_id = ?`, [
-    historyId,
-    userId,
-  ]);
+  const [res] = await pool.query<ResultSetHeader>(
+    `DELETE FROM history WHERE id = ? AND user_id = ?`,
+    [historyId, userId],
+  );
   return res.affectedRows > 0;
 }
 
@@ -79,7 +101,7 @@ export interface Stats {
 
 export async function getStats(userId: number): Promise<Stats> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<HistoryStatsRow[]>(
     `SELECT
        COALESCE(SUM(char_count), 0) AS total,
        COALESCE(SUM(CASE WHEN is_favorite = 1 THEN char_count ELSE 0 END), 0) AS favorites
@@ -100,7 +122,7 @@ export async function findRecentDuplicate(
   withinSeconds = 60,
 ): Promise<number | null> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<HistoryIdRow[]>(
     `SELECT id FROM history
      WHERE user_id = ? AND kind = ? AND input = ?
        AND created_at > (NOW() - INTERVAL ? SECOND)

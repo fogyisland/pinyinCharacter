@@ -23,6 +23,12 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import mysql from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
+
+/** One `app_config` row: the stored setup-flag value. */
+interface SetupFlagRow extends RowDataPacket {
+  value: string;
+}
 
 const ENV_PATH = join(process.cwd(), '.env');
 
@@ -175,7 +181,7 @@ export async function isSetupComplete(): Promise<boolean> {
   if (!process.env.DATABASE_URL) return false;
   try {
     const { getPool } = await import('./db');
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<SetupFlagRow[]>(
       `SELECT value FROM app_config WHERE \`key\` = 'setup.completed' LIMIT 1`,
     );
     return rows.length > 0 && rows[0].value === 'true';
@@ -193,7 +199,7 @@ export async function isSetupRouteEnabled(): Promise<boolean> {
   if (!process.env.DATABASE_URL) return true; // Pre-setup: route is always available
   try {
     const { getPool } = await import('./db');
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<SetupFlagRow[]>(
       `SELECT value FROM app_config WHERE \`key\` = 'setup.route_enabled' LIMIT 1`,
     );
     return rows.length === 0 || rows[0].value === 'true';
@@ -213,7 +219,7 @@ export async function isInitWizardAdminDone(): Promise<boolean> {
   if (!process.env.DATABASE_URL) return false;
   try {
     const { getPool } = await import('./db');
-    const [rows] = await getPool().query<any[]>(
+    const [rows] = await getPool().query<SetupFlagRow[]>(
       `SELECT value FROM app_config WHERE \`key\` = 'setup.wizard.admin_done' LIMIT 1`,
     );
     return rows.length > 0 && rows[0].value === 'true';

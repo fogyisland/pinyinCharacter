@@ -1,4 +1,10 @@
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+interface AppConfigRow extends RowDataPacket {
+  key: string;
+  value: string;
+}
 
 const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'ai.base_url': (v) => v.length === 0 || (/^https?:\/\//.test(v) && v.length <= 256),
@@ -64,7 +70,7 @@ let configCache: { at: number; values: Map<string, string> } | null = null;
 let inflightLoad: Promise<Map<string, string>> | null = null;
 
 async function loadConfigRows(): Promise<Map<string, string>> {
-  const [rows] = await getPool().query<any[]>(`SELECT \`key\`, value FROM app_config`);
+  const [rows] = await getPool().query<AppConfigRow[]>(`SELECT \`key\`, value FROM app_config`);
   const values = new Map<string, string>();
   for (const r of rows) values.set(r.key, r.value);
   return values;

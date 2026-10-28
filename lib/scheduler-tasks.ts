@@ -11,6 +11,7 @@
  *   - statsRefresh:      runs getSystemStats to validate DB connectivity
  */
 import { contentSync } from '../scripts/content-sync';
+import type { RowDataPacket } from 'mysql2';
 import { getDailyChar } from './rare-chars';
 import { getSystemStats } from './admin';
 import { getPool } from './db';
@@ -19,6 +20,28 @@ import { campaignEmail } from './email-templates';
 import { issueUnsubscribeToken, markRecipient, finalizeCampaignIfDone } from './email-campaigns';
 
 export type TaskName = 'content-refresh' | 'daily-char' | 'stats-refresh' | 'email-campaign-send';
+
+/** An active campaign row the sender picks up. */
+interface ActiveCampaignRow extends RowDataPacket {
+  id: number;
+  subject: string;
+}
+
+/** A pending recipient joined with its user and campaign. */
+interface PendingRecipientRow extends RowDataPacket {
+  id: number;
+  user_id: number;
+  email: string;
+  /** `users.username` is NOT NULL and the join is an inner join. */
+  username: string;
+  html_body: string;
+  text_body: string;
+}
+
+/** The opt-out flag of the recipient's user row. */
+interface MarketingOptOutRow extends RowDataPacket {
+  marketing_opted_out: number | null;
+}
 
 export interface TaskResult {
   name: TaskName;
@@ -98,7 +121,7 @@ export async function runEmailCampaignSend(): Promise<TaskResult> {
   const t0 = Date.now();
   const pool = getPool();
   // Active campaigns (one row each, status='sending').
-  const [campaigns] = await pool.query<any[]>(
+  const [campaigns] = await pool.query<ActiveCampaignRow[]>(
     `SELECT id, subject FROM email_campaigns WHERE status = 'sending' ORDER BY id LIMIT 5`,
   );
   if (campaigns.length === 0) {
@@ -107,8 +130,8 @@ export async function runEmailCampaignSend(): Promise<TaskResult> {
   let totalSent = 0,
     totalFailed = 0,
     totalSkipped = 0;
-  for (const c of campaigns as Array<{ id: number; subject: string }>) {
-    const [pending] = await pool.query<any[]>(
+  for (const c of campaigns) {
+    const [pending] = await pool.query<PendingRecipientRow[]>(
       `SELECT r.id, r.user_id, r.email, u.username, c.html_body, c.text_body
        FROM email_campaign_recipients r
        JOIN users u ON u.id = r.user_id
@@ -127,7 +150,7 @@ export async function runEmailCampaignSend(): Promise<TaskResult> {
         slice.map(async (row) => {
           try {
             // Honor opt-out at send time — race with /unsubscribe.
-            const [u] = await pool.query<any[]>(
+            const [u] = await pool.query<MarketingOptOutRow[]>(
               `SELECT marketing_opted_out FROM users WHERE id = ? LIMIT 1`,
               [row.user_id],
             );

@@ -1,7 +1,67 @@
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
-import { HistoryRow } from './history';
+import { HistoryRow, type HistoryDbRow } from './history';
 import { randomBytes } from 'node:crypto';
 import type { AuditEvent } from './audit';
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
+interface AdminUserListRow extends RowDataPacket {
+  id: number;
+  username: string;
+  is_admin: number | boolean;
+  created_at: Date;
+  disabled_at: Date | null;
+}
+
+interface HistoryCountRow extends RowDataPacket {
+  user_id: number;
+  total: number;
+  fav: number;
+}
+
+interface UserCountRow extends RowDataPacket {
+  n: number;
+}
+
+interface UserBreakdownRow extends RowDataPacket {
+  total: number;
+  admins: number;
+  disabled: number;
+}
+
+interface AdminUserDetailRow extends RowDataPacket {
+  id: number;
+  username: string;
+  is_admin: number | boolean;
+  created_at: Date;
+  disabled_at: Date | null;
+  historyCount: number;
+  favoriteCount: number;
+}
+
+interface AuditLogDbRow extends RowDataPacket {
+  id: number;
+  user_id: number | null;
+  event: string;
+  metadata: Record<string, unknown> | null;
+  ip: string | null;
+  user_agent: string | null;
+  created_at: Date;
+}
+
+interface SystemStatsRow extends RowDataPacket {
+  users: number;
+  admins: number;
+  history: number;
+  favorites: number;
+  audit: number;
+}
+
+interface DisabledAtRow extends RowDataPacket {
+  disabled_at: Date | null;
+}
 
 export interface AdminUserRow {
   id: number;
@@ -26,9 +86,9 @@ export interface ListUsersResult {
 }
 
 /** The WHERE clause shared by the user queries. */
-function buildUserFilter(opts: ListUsersOptions): { whereSql: string; params: any[] } {
+function buildUserFilter(opts: ListUsersOptions): { whereSql: string; params: SqlParam[] } {
   const where: string[] = [];
-  const params: any[] = [];
+  const params: SqlParam[] = [];
   if (opts.q) {
     // Match username OR email. Email is nullable; u.email LIKE ? returns
     // null which is falsy in WHERE so non-email users still match username.
@@ -70,7 +130,7 @@ async function aggregateHistoryCounts(
   const counts = new Map<number, { total: number; fav: number }>();
   if (userIds.length === 0) return counts;
   const placeholders = userIds.map(() => '?').join(',');
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<HistoryCountRow[]>(
     `SELECT user_id,
             COUNT(*) AS total,
             SUM(CASE WHEN is_favorite = 1 THEN 1 ELSE 0 END) AS fav
@@ -93,7 +153,7 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
 
   // The page of users and its total are independent — run them together.
   const [userResult, countResult] = await Promise.all([
-    pool.query<any[]>(
+    pool.query<AdminUserListRow[]>(
       `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at
        FROM users u
        ${whereSql}
@@ -101,7 +161,7 @@ export async function listUsers(opts: ListUsersOptions = {}): Promise<ListUsersR
        LIMIT ? OFFSET ?`,
       [...params, limit, offset],
     ),
-    pool.query<any[]>(`SELECT COUNT(*) AS n FROM users u ${whereSql}`, params),
+    pool.query<UserCountRow[]>(`SELECT COUNT(*) AS n FROM users u ${whereSql}`, params),
   ]);
   const userRows = userResult[0];
   const countRows = countResult[0];
@@ -144,13 +204,13 @@ export interface UserCountBreakdown {
  * the same three numbers without touching `history` at all.
  */
 export async function countUserBreakdown(q?: string): Promise<UserCountBreakdown> {
-  const params: any[] = [];
+  const params: SqlParam[] = [];
   let whereSql = '';
   if (q) {
     whereSql = 'WHERE (u.username LIKE ? OR u.email LIKE ?)';
     params.push(`%${q}%`, `%${q}%`);
   }
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<UserBreakdownRow[]>(
     `SELECT
        COUNT(*) AS total,
        COALESCE(SUM(CASE WHEN u.is_admin = 1 THEN 1 ELSE 0 END), 0) AS admins,
@@ -158,11 +218,11 @@ export async function countUserBreakdown(q?: string): Promise<UserCountBreakdown
      FROM users u ${whereSql}`,
     params,
   );
-  const r = rows[0] ?? {};
+  const r = rows[0];
   return {
-    total: Number(r.total ?? 0),
-    admins: Number(r.admins ?? 0),
-    disabled: Number(r.disabled ?? 0),
+    total: Number(r?.total ?? 0),
+    admins: Number(r?.admins ?? 0),
+    disabled: Number(r?.disabled ?? 0),
   };
 }
 
@@ -173,7 +233,7 @@ export interface UserDetail {
 
 export async function getUserDetail(id: number): Promise<UserDetail | null> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<AdminUserDetailRow[]>(
     `SELECT u.id, u.username, u.is_admin, u.created_at, u.disabled_at,
             (SELECT COUNT(*) FROM history h WHERE h.user_id = u.id) AS historyCount,
             (SELECT COALESCE(SUM(CASE WHEN h.is_favorite = 1 THEN 1 ELSE 0 END), 0)
@@ -193,18 +253,18 @@ export async function getUserDetail(id: number): Promise<UserDetail | null> {
     historyCount: Number(r.historyCount),
     favoriteCount: Number(r.favoriteCount),
   };
-  const [hist] = await pool.query<any[]>(
+  const [hist] = await pool.query<HistoryDbRow[]>(
     `SELECT * FROM history WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`,
     [id],
   );
-  return { user, recentHistory: hist as HistoryRow[] };
+  return { user, recentHistory: hist };
 }
 
 export interface AuditLogRow {
   id: number;
   user_id: number | null;
   event: string;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   ip: string | null;
   user_agent: string | null;
   created_at: Date;
@@ -227,7 +287,7 @@ export async function getAuditLog(opts: AuditLogOptions = {}): Promise<AuditLogR
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const offset = Math.max(opts.offset ?? 0, 0);
   const wheres: string[] = [];
-  const params: any[] = [];
+  const params: SqlParam[] = [];
   if (opts.userId !== undefined) {
     wheres.push('user_id = ?');
     params.push(opts.userId);
@@ -246,16 +306,16 @@ export async function getAuditLog(opts: AuditLogOptions = {}): Promise<AuditLogR
   }
   const where = wheres.length ? `WHERE ${wheres.join(' AND ')}` : '';
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<AuditLogDbRow[]>(
     `SELECT id, user_id, event, metadata, ip, user_agent, created_at
      FROM audit_log ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [...params, limit, offset],
   );
-  const [countRows] = await pool.query<any[]>(
+  const [countRows] = await pool.query<UserCountRow[]>(
     `SELECT COUNT(*) AS n FROM audit_log ${where}`,
     params,
   );
-  return { rows: rows as AuditLogRow[], total: Number(countRows[0]?.n ?? 0) };
+  return { rows, total: Number(countRows[0]?.n ?? 0) };
 }
 
 export interface SystemStats {
@@ -268,7 +328,7 @@ export interface SystemStats {
 
 export async function getSystemStats(): Promise<SystemStats> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<SystemStatsRow[]>(
     `SELECT
        (SELECT COUNT(*) FROM users) AS users,
        (SELECT COUNT(*) FROM users WHERE is_admin = 1) AS admins,
@@ -276,19 +336,19 @@ export async function getSystemStats(): Promise<SystemStats> {
        (SELECT COUNT(*) FROM history WHERE is_favorite = 1) AS favorites,
        (SELECT COUNT(*) FROM audit_log) AS audit`,
   );
-  const r = rows[0] ?? {};
+  const r = rows[0];
   return {
-    users: Number(r.users ?? 0),
-    admins: Number(r.admins ?? 0),
-    history: Number(r.history ?? 0),
-    favorites: Number(r.favorites ?? 0),
-    audit: Number(r.audit ?? 0),
+    users: Number(r?.users ?? 0),
+    admins: Number(r?.admins ?? 0),
+    history: Number(r?.history ?? 0),
+    favorites: Number(r?.favorites ?? 0),
+    audit: Number(r?.audit ?? 0),
   };
 }
 
 export async function countOtherAdmins(excludeUserId: number): Promise<number> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<UserCountRow[]>(
     `SELECT COUNT(*) AS n FROM users WHERE is_admin = 1 AND id != ?`,
     [excludeUserId],
   );
@@ -297,25 +357,25 @@ export async function countOtherAdmins(excludeUserId: number): Promise<number> {
 
 export async function deleteUserCascade(id: number): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.query<any>(`DELETE FROM users WHERE id = ?`, [id]);
+  const [res] = await pool.query<ResultSetHeader>(`DELETE FROM users WHERE id = ?`, [id]);
   return res.affectedRows > 0;
 }
 
 export async function setUserAdmin(id: number, isAdmin: boolean): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.query<any>(`UPDATE users SET is_admin = ? WHERE id = ?`, [
-    isAdmin ? 1 : 0,
-    id,
-  ]);
+  const [res] = await pool.query<ResultSetHeader>(
+    `UPDATE users SET is_admin = ? WHERE id = ?`,
+    [isAdmin ? 1 : 0, id],
+  );
   return res.affectedRows > 0;
 }
 
 export async function setUserPasswordHash(id: number, hash: string): Promise<boolean> {
   const pool = getPool();
-  const [res] = await pool.query<any>(`UPDATE users SET password_hash = ? WHERE id = ?`, [
-    hash,
-    id,
-  ]);
+  const [res] = await pool.query<ResultSetHeader>(
+    `UPDATE users SET password_hash = ? WHERE id = ?`,
+    [hash, id],
+  );
   return res.affectedRows > 0;
 }
 
@@ -339,7 +399,7 @@ export async function enableUser(id: number, _byAdminId: number): Promise<void> 
 }
 
 export async function isUserDisabled(userId: number): Promise<boolean> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<DisabledAtRow[]>(
     `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
     [userId],
   );

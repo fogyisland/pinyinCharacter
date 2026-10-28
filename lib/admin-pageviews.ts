@@ -1,4 +1,24 @@
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from '@/lib/db';
+
+interface PageViewPvRow extends RowDataPacket {
+  today_pv: number;
+}
+
+interface PageViewUvRow extends RowDataPacket {
+  today_uv: number;
+}
+
+interface PageViewPathRow extends RowDataPacket {
+  path: string;
+  count: number;
+}
+
+interface TopPathRow extends RowDataPacket {
+  path: string;
+  views: number;
+  unique_visitors: number;
+}
 
 export interface PageViewStats {
   todayPv: number;
@@ -20,27 +40,27 @@ export async function getPageViewStats(days: number = 7): Promise<PageViewStats>
   // The three aggregates read the same table and do not depend on each
   // other — one round trip instead of three.
   const [pvResult, uvResult, pathsResult] = await Promise.all([
-    pool.query<any[]>(
+    pool.query<PageViewPvRow[]>(
       `SELECT COUNT(*) AS today_pv FROM page_views WHERE created_at >= CURDATE()`,
     ),
-    pool.query<any[]>(
+    pool.query<PageViewUvRow[]>(
       `SELECT COUNT(DISTINCT COALESCE(user_id, ip)) AS today_uv
          FROM page_views WHERE created_at >= CURDATE()`,
     ),
-    pool.query<any[]>(
+    pool.query<PageViewPathRow[]>(
       `SELECT path, COUNT(*) AS count FROM page_views
          WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
          GROUP BY path ORDER BY count DESC LIMIT 5`,
       [days],
     ),
   ]);
-  const [[{ today_pv }]] = pvResult as [any[], any];
-  const [[{ today_uv }]] = uvResult as [any[], any];
-  const rows = pathsResult[0] as any[];
+  const [[{ today_pv }]] = pvResult;
+  const [[{ today_uv }]] = uvResult;
+  const rows = pathsResult[0];
   return {
     todayPv: Number(today_pv),
     todayUv: Number(today_uv),
-    topPaths: rows.map((r: any) => ({ path: r.path, count: Number(r.count) })),
+    topPaths: rows.map((r) => ({ path: r.path, count: Number(r.count) })),
   };
 }
 
@@ -60,7 +80,7 @@ export interface TopPage {
  */
 export async function getTopPaths(days: number, limit: number): Promise<TopPage[]> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<TopPathRow[]>(
     `SELECT
        path,
        COUNT(*) AS views,
@@ -72,7 +92,7 @@ export async function getTopPaths(days: number, limit: number): Promise<TopPage[
      LIMIT ?`,
     [days, limit],
   );
-  return (rows as any[]).map((r) => ({
+  return rows.map((r) => ({
     path: r.path,
     views: Number(r.views),
     unique: Number(r.unique_visitors),

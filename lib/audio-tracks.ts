@@ -10,7 +10,26 @@
  * that flip the default clear the previous default in the same
  * transaction so the invariant is preserved.
  */
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
+interface AudioTrackRow extends RowDataPacket {
+  id: number;
+  title: string;
+  filename: string;
+  size_bytes: number;
+  is_default: number;
+  uploaded_by: number | null;
+  created_at: Date | string;
+  updated_at: Date | string;
+}
+
+interface AudioTrackNameRow extends RowDataPacket {
+  filename: string;
+}
 
 export interface AudioTrack {
   id: number;
@@ -35,7 +54,7 @@ export interface ActiveAudioTrack {
 const MAX_TRACKS = 500;
 
 export async function listTracks(): Promise<AudioTrack[]> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<AudioTrackRow[]>(
     `SELECT id, title, filename, size_bytes, is_default, uploaded_by, created_at, updated_at
      FROM audio_tracks ORDER BY is_default DESC, id ASC LIMIT ${MAX_TRACKS}`,
   );
@@ -43,7 +62,7 @@ export async function listTracks(): Promise<AudioTrack[]> {
 }
 
 export async function getTrack(id: number): Promise<AudioTrack | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<AudioTrackRow[]>(
     `SELECT id, title, filename, size_bytes, is_default, uploaded_by, created_at, updated_at
      FROM audio_tracks WHERE id = ? LIMIT 1`,
     [id],
@@ -56,7 +75,7 @@ export async function getTrack(id: number): Promise<AudioTrack | null> {
  *  the player alive if data drifts). Returns null only if the table is
  *  empty. */
 export async function getActiveTrack(): Promise<ActiveAudioTrack | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<AudioTrackRow[]>(
     `SELECT id, title, filename FROM audio_tracks
      ORDER BY is_default DESC, id ASC LIMIT 1`,
   );
@@ -84,7 +103,7 @@ export async function createTrack(input: CreateTrackInput): Promise<number> {
     if (input.isDefault) {
       await conn.query(`UPDATE audio_tracks SET is_default = 0`);
     }
-    const [res] = await conn.query<any>(
+    const [res] = await conn.query<ResultSetHeader>(
       `INSERT INTO audio_tracks (title, filename, size_bytes, is_default, uploaded_by)
        VALUES (?, ?, ?, ?, ?)`,
       [input.title, input.filename, input.sizeBytes, input.isDefault ? 1 : 0, input.uploadedBy],
@@ -116,7 +135,7 @@ export async function updateTrack(id: number, input: UpdateTrackInput): Promise<
       await conn.query(`UPDATE audio_tracks SET is_default = 0 WHERE id <> ?`, [id]);
     }
     const sets: string[] = [];
-    const params: any[] = [];
+    const params: SqlParam[] = [];
     if (input.title !== undefined) {
       sets.push('title = ?');
       params.push(input.title);
@@ -141,7 +160,7 @@ export async function updateTrack(id: number, input: UpdateTrackInput): Promise<
 /** Hard-deletes a row. The caller is responsible for removing the
  *  matching file from `public/audio/`. */
 export async function deleteTrack(id: number): Promise<{ filename: string } | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<AudioTrackNameRow[]>(
     `SELECT filename FROM audio_tracks WHERE id = ? LIMIT 1`,
     [id],
   );
@@ -150,7 +169,7 @@ export async function deleteTrack(id: number): Promise<{ filename: string } | nu
   return { filename: rows[0].filename };
 }
 
-function rowToTrack(r: any): AudioTrack {
+function rowToTrack(r: AudioTrackRow): AudioTrack {
   return {
     id: Number(r.id),
     title: r.title,

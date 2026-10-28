@@ -16,6 +16,7 @@
  * adding new ai features: update AI_FEATURE_ZH below.
  */
 
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { formatLogMessage } from './audit-format';
 
@@ -28,21 +29,21 @@ export interface ActivityItem {
   href?: string;
 }
 
-interface AuditRow {
+interface AuditRow extends RowDataPacket {
   id: number;
   event: string;
   metadata: Record<string, unknown> | null;
   created_at: Date;
 }
 
-interface DownloadRow {
+interface DownloadRow extends RowDataPacket {
   id: number;
   source_type: string;
   source_id: string | null;
   created_at: Date;
 }
 
-interface AiRow {
+interface AiRow extends RowDataPacket {
   id: number;
   feature: string;
   status: 'ok' | 'error' | 'rate-limited';
@@ -100,27 +101,27 @@ export async function getRecentActivity(limit: number = 10): Promise<ActivityIte
   const perSourceLimit = Math.max(10, limit * 2);
 
   const [audits, downloads, ais] = await Promise.all([
-    pool.query<any[]>(
+    pool.query<AuditRow[]>(
       `SELECT id, event, metadata, created_at
        FROM audit_log
        ORDER BY created_at DESC
        LIMIT ?`,
       [perSourceLimit],
-    ) as Promise<[AuditRow[], any]>,
-    pool.query<any[]>(
+    ),
+    pool.query<DownloadRow[]>(
       `SELECT id, source_type, source_id, created_at
        FROM downloads
        ORDER BY created_at DESC
        LIMIT ?`,
       [perSourceLimit],
-    ) as Promise<[DownloadRow[], any]>,
-    pool.query<any[]>(
+    ),
+    pool.query<AiRow[]>(
       `SELECT id, feature, status, created_at
        FROM ai_calls
        ORDER BY created_at DESC
        LIMIT ?`,
       [perSourceLimit],
-    ) as Promise<[AiRow[], any]>,
+    ),
   ]);
 
   const merged = [...audits[0], ...downloads[0], ...ais[0]]

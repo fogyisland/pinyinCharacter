@@ -1,4 +1,5 @@
 import 'server-only';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 
 export interface CopyProgress {
@@ -8,11 +9,21 @@ export interface CopyProgress {
   completedAt: Date | null;
 }
 
-interface DbRow {
+/**
+ * A `sutra_copy_progress` row as mysql2 returns it. `written_chars` is a JSON
+ * column, so mysql2 hands back the parsed array; the string branch keeps the
+ * helper total for pools that return raw JSON text.
+ */
+interface SutraCopyProgressRow extends RowDataPacket {
   written_chars: string | boolean[];
   started_at: Date;
   updated_at: Date;
   completed_at: Date | null;
+}
+
+/** The columns `markComplete` selects. */
+interface SutraCopyCharsRow extends RowDataPacket {
+  written_chars: string | boolean[];
 }
 
 function parseWrittenChars(raw: string | boolean[]): boolean[] {
@@ -30,7 +41,7 @@ export async function getProgress(
   sutraId: number,
   chunkIdx: number,
 ): Promise<CopyProgress | null> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<SutraCopyProgressRow[]>(
     `SELECT written_chars, started_at, updated_at, completed_at
        FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ?
@@ -38,7 +49,7 @@ export async function getProgress(
     [userId, sutraId, chunkIdx],
   );
   if (rows.length === 0) return null;
-  const r = rows[0] as DbRow;
+  const r = rows[0];
   return {
     writtenChars: parseWrittenChars(r.written_chars),
     startedAt: r.started_at,
@@ -71,7 +82,7 @@ export async function markComplete(
   sutraId: number,
   chunkIdx: number,
 ): Promise<void> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<SutraCopyCharsRow[]>(
     `SELECT written_chars FROM sutra_copy_progress
        WHERE user_id = ? AND sutra_id = ? AND chunk_idx = ? LIMIT 1`,
     [userId, sutraId, chunkIdx],

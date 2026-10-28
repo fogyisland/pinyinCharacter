@@ -11,6 +11,7 @@
  */
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { getConfig } from './config';
 import { getRuntimeSiteUrl } from './seo/config';
@@ -103,6 +104,23 @@ async function safeQuery(sql: string, params: unknown[] = []): Promise<unknown> 
   }
 }
 
+/** The `SELECT 1` connectivity probe row. */
+interface PingRow extends RowDataPacket {
+  ok: number;
+}
+
+/** A `COUNT(*)` row. */
+interface CountRow extends RowDataPacket {
+  n: number;
+}
+
+/** The admin user row the checklist reads. */
+interface AdminUserRow extends RowDataPacket {
+  id: number;
+  username: string;
+  created_at: Date | string;
+}
+
 export async function runInitChecks(): Promise<InitReport> {
   const nodeEnv = process.env.NODE_ENV ?? 'development';
   const prod = isProd({ NODE_ENV: nodeEnv } as NodeJS.ProcessEnv);
@@ -110,18 +128,18 @@ export async function runInitChecks(): Promise<InitReport> {
   const jwtSecret = process.env.JWT_SECRET ?? '';
 
   // --- Gather raw context (best-effort; each block isolated) ---
-  const pingRows = (await safeQuery('SELECT 1 AS ok')) as any[] | null;
+  const pingRows = (await safeQuery('SELECT 1 AS ok')) as PingRow[] | null;
   const dbOk = pingRows !== null;
 
   const tableRows = (await safeQuery(
     `SELECT COUNT(*) AS n FROM information_schema.TABLES
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE'`,
-  )) as any[] | null;
+  )) as CountRow[] | null;
   const tableCount = tableRows && tableRows[0] ? Number(tableRows[0].n) : 0;
 
   const adminRows = (await safeQuery(
     `SELECT id, username, created_at FROM users WHERE is_admin = 1 ORDER BY id LIMIT 1`,
-  )) as any[] | null;
+  )) as AdminUserRow[] | null;
   const firstAdmin =
     adminRows && adminRows[0]
       ? {
@@ -134,7 +152,7 @@ export async function runInitChecks(): Promise<InitReport> {
         }
       : null;
   const adminCountRows = (await safeQuery(`SELECT COUNT(*) AS n FROM users WHERE is_admin = 1`)) as
-    any[] | null;
+    CountRow[] | null;
   const adminCount = adminCountRows && adminCountRows[0] ? Number(adminCountRows[0].n) : 0;
 
   // app_config snapshot

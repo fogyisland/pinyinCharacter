@@ -1,4 +1,5 @@
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 
 export type CampaignAudience = 'all' | 'members' | 'admins';
@@ -20,6 +21,53 @@ export interface CampaignRow {
   created_by: number;
   created_at: Date;
   updated_at: Date;
+}
+
+/** A row of `email_campaigns` as mysql2 returns it. */
+interface CampaignDbRow extends RowDataPacket {
+  id: number;
+  subject: string;
+  html_body: string;
+  text_body: string;
+  audience: CampaignAudience;
+  status: CampaignStatus;
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  started_at: Date | null;
+  finished_at: Date | null;
+  created_by: number;
+  created_at: Date;
+  updated_at: Date;
+}
+
+/** A row of `users` with the fields the audience resolver needs. */
+interface AudienceUserDbRow extends RowDataPacket {
+  id: number;
+  email: string;
+}
+
+/** The columns `listCampaignSummaries` selects. */
+interface CampaignSummaryDbRow extends RowDataPacket {
+  id: number;
+  subject: string;
+  audience: CampaignAudience;
+  status: CampaignStatus;
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  created_at: Date;
+}
+
+interface CountRow extends RowDataPacket {
+  n: number;
+}
+
+/** SUM() over an expression returns a DECIMAL, which mysql2 hands back as a string. */
+interface RecipientTallyRow extends RowDataPacket {
+  sent_count: string | number | null;
+  failed_count: string | number | null;
+  pending_count: string | number | null;
 }
 
 function unsubscribeSecret(): string {
@@ -87,7 +135,9 @@ export async function resolveAudience(audience: CampaignAudience): Promise<Audie
       GROUP BY user_id
     )`;
   }
-  const [rows] = await pool.query<any[]>(`SELECT id, email FROM users WHERE ${where} ORDER BY id`);
+  const [rows] = await pool.query<AudienceUserDbRow[]>(
+    `SELECT id, email FROM users WHERE ${where} ORDER BY id`,
+  );
   return rows.map((r) => ({ id: Number(r.id), email: String(r.email) }));
 }
 
@@ -99,7 +149,7 @@ export async function createCampaign(args: {
   createdBy: number;
 }): Promise<number> {
   const pool = getPool();
-  const [res] = await pool.query<any>(
+  const [res] = await pool.query<ResultSetHeader>(
     `INSERT INTO email_campaigns (subject, html_body, text_body, audience, status, created_by)
      VALUES (?, ?, ?, ?, 'draft', ?)`,
     [args.subject, args.htmlBody, args.textBody, args.audience, args.createdBy],
@@ -109,17 +159,19 @@ export async function createCampaign(args: {
 
 export async function getCampaign(id: number): Promise<CampaignRow | null> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(`SELECT * FROM email_campaigns WHERE id = ? LIMIT 1`, [
-    id,
-  ]);
+  const [rows] = await pool.query<CampaignDbRow[]>(
+    `SELECT * FROM email_campaigns WHERE id = ? LIMIT 1`,
+    [id],
+  );
   return rows.length > 0 ? (rows[0] as CampaignRow) : null;
 }
 
 export async function listCampaigns(limit = 50): Promise<CampaignRow[]> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(`SELECT * FROM email_campaigns ORDER BY id DESC LIMIT ?`, [
-    limit,
-  ]);
+  const [rows] = await pool.query<CampaignDbRow[]>(
+    `SELECT * FROM email_campaigns ORDER BY id DESC LIMIT ?`,
+    [limit],
+  );
   return rows as CampaignRow[];
 }
 
@@ -149,15 +201,15 @@ export async function listCampaignSummaries(
 ): Promise<{ rows: CampaignSummaryRow[]; total: number }> {
   const pool = getPool();
   const [rowsResult, countResult] = await Promise.all([
-    pool.query<any[]>(
+    pool.query<CampaignSummaryDbRow[]>(
       `SELECT id, subject, audience, status, total_recipients, sent_count, failed_count, created_at
        FROM email_campaigns ORDER BY id DESC LIMIT ? OFFSET ?`,
       [limit, offset],
     ),
-    pool.query<any[]>(`SELECT COUNT(*) AS n FROM email_campaigns`),
+    pool.query<CountRow[]>(`SELECT COUNT(*) AS n FROM email_campaigns`),
   ]);
-  const rows = rowsResult[0] as any[];
-  const countRows = countResult[0] as any[];
+  const rows = rowsResult[0];
+  const countRows = countResult[0];
   return {
     rows: rows.map((r) => ({
       id: Number(r.id),
@@ -168,7 +220,7 @@ export async function listCampaignSummaries(
       sent_count: Number(r.sent_count),
       failed_count: Number(r.failed_count),
       created_at: r.created_at,
-    })) as CampaignSummaryRow[],
+    })),
     total: Number(countRows[0]?.n ?? 0),
   };
 }
@@ -221,7 +273,7 @@ export async function markRecipient(
  */
 export async function finalizeCampaignIfDone(campaignId: number): Promise<CampaignStatus> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<RecipientTallyRow[]>(
     `SELECT
        SUM(status = 'sent')    AS sent_count,
        SUM(status = 'failed')  AS failed_count,
@@ -229,7 +281,7 @@ export async function finalizeCampaignIfDone(campaignId: number): Promise<Campai
      FROM email_campaign_recipients WHERE campaign_id = ?`,
     [campaignId],
   );
-  const r = rows[0] as { sent_count: number; failed_count: number; pending_count: number };
+  const r = rows[0];
   const sent = Number(r.sent_count ?? 0);
   const failed = Number(r.failed_count ?? 0);
   const pending = Number(r.pending_count ?? 0);

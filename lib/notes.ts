@@ -1,4 +1,23 @@
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+interface NoteDbRow extends RowDataPacket {
+  id: number;
+  author_user_id: number | null;
+  author_name: string;
+  author_email: string | null;
+  content: string;
+  created_at: Date;
+  deleted_at: Date | null;
+}
+
+interface NoteCountRow extends RowDataPacket {
+  n: number;
+}
+
+interface NoteRateLimitRow extends RowDataPacket {
+  post_count: number;
+}
 
 export interface NoteRow {
   id: number;
@@ -29,12 +48,12 @@ export async function listAllNotesForAdmin(opts: ListNotesOpts = {}): Promise<No
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 200);
   const offset = Math.max(opts.offset ?? 0, 0);
   const where = opts.includeDeleted ? '' : 'WHERE deleted_at IS NULL';
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<NoteDbRow[]>(
     `SELECT id, author_user_id, author_name, author_email, content, created_at, deleted_at
      FROM notes ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
     [limit, offset],
   );
-  return (rows as any[]).map((r) => ({
+  return rows.map((r) => ({
     id: Number(r.id),
     authorUserId: r.author_user_id,
     authorName: r.author_name,
@@ -48,7 +67,7 @@ export async function listAllNotesForAdmin(opts: ListNotesOpts = {}): Promise<No
 /** How many notes the admin list holds, for its pagination. */
 export async function countAllNotesForAdmin(opts: { includeDeleted?: boolean } = {}): Promise<number> {
   const where = opts.includeDeleted ? '' : 'WHERE deleted_at IS NULL';
-  const [rows] = await getPool().query<any[]>(`SELECT COUNT(*) AS n FROM notes ${where}`);
+  const [rows] = await getPool().query<NoteCountRow[]>(`SELECT COUNT(*) AS n FROM notes ${where}`);
   return Number(rows[0]?.n ?? 0);
 }
 
@@ -67,18 +86,18 @@ export async function insertNote(args: InsertNoteArgs): Promise<NoteRow> {
   const email = args.authorEmail ? args.authorEmail.trim().slice(0, 254) : null;
   const ip = args.ip ? args.ip.slice(0, 45) : null;
   const ua = args.userAgent ? args.userAgent.slice(0, 255) : null;
-  const [res] = await getPool().query<any>(
+  const [res] = await getPool().query<ResultSetHeader>(
     `INSERT INTO notes (author_user_id, author_name, author_email, content, ip, user_agent)
      VALUES (?, ?, ?, ?, ?, ?)`,
     [args.authorUserId, name, email, content, ip, ua],
   );
   const id = Number(res.insertId);
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<NoteDbRow[]>(
     `SELECT id, author_user_id, author_name, author_email, content, created_at, deleted_at
      FROM notes WHERE id = ?`,
     [id],
   );
-  const r = (rows as any[])[0];
+  const r = rows[0];
   return {
     id: Number(r.id),
     authorUserId: r.author_user_id,
@@ -91,7 +110,7 @@ export async function insertNote(args: InsertNoteArgs): Promise<NoteRow> {
 }
 
 export async function softDeleteNote(id: number, byUserId: number): Promise<boolean> {
-  const [res] = await getPool().query<any>(
+  const [res] = await getPool().query<ResultSetHeader>(
     `UPDATE notes SET deleted_at = NOW(), deleted_by = ?
      WHERE id = ? AND deleted_at IS NULL`,
     [byUserId, id],
@@ -153,12 +172,12 @@ export async function checkRateLimit(args: RateLimitArgs): Promise<RateLimitVerd
 
   const pool = getPool();
   for (const c of checks) {
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<NoteRateLimitRow[]>(
       `SELECT post_count FROM notes_rate_limits
        WHERE scope = ? AND key_value = ? AND window_kind = ? AND window_start = ? LIMIT 1`,
       [c.scope, c.value, c.windowKind, c.windowStart],
     );
-    const count = Number((rows as any[])[0]?.post_count ?? 0);
+    const count = Number(rows[0]?.post_count ?? 0);
     if (count >= c.limit) {
       const nextWindow =
         c.windowKind === 'minute'

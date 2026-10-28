@@ -1,4 +1,5 @@
 import { cache } from 'react';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { readContentFromFs } from './content';
 import { getPinyinIndex, resolvePinyin } from './pinyin-index';
@@ -7,6 +8,9 @@ import type { Char, CharListResult, CharRow, CharWithRelated } from './chars-typ
 
 const PAGE_SIZE = 80;
 const RELATED_LIMIT = 8;
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
 
 export interface ListCharsOpts {
   q?: string;
@@ -25,7 +29,20 @@ export interface ListCharsOpts {
 }
 
 /** A raw `chars` row. Shared with lib/pinyin-index.ts. */
-interface DbRow extends CharRow {}
+interface DbRow extends RowDataPacket, CharRow {}
+
+/** The columns the 拼音接龙 pool query selects. */
+interface ChainPoolRow extends RowDataPacket {
+  char: string;
+  level: 1 | 2 | 3;
+  pinyin: string;
+  radical: string;
+  hsk_level: number | null;
+}
+
+interface CharCountRow extends RowDataPacket {
+  n: number;
+}
 
 /**
  * Resolve pinyin for a char, preferring the DB value (populated by the
@@ -42,7 +59,7 @@ interface DbRow extends CharRow {}
  * migration the chars table only carries structural metadata; meaning /
  * pinyin_alt / variants are read from data/content/<char>.json.
  */
-function hydrateChar(row: DbRow): Char {
+function hydrateChar(row: CharRow): Char {
   const content = readContentFromFs(row.char);
   const resolvedPinyin = resolvePinyin(row.char, row.pinyin);
   return {
@@ -68,7 +85,7 @@ function hydrateChar(row: DbRow): Char {
  * Like hydrateChar but only returns the fields the game needs. Used by
  * getRandomChars which returns a smaller shape.
  */
-function hydrateCharMinimal(row: DbRow): Pick<Char, 'char' | 'pinyin' | 'meaningZh'> {
+function hydrateCharMinimal(row: CharRow): Pick<Char, 'char' | 'pinyin' | 'meaningZh'> {
   const content = readContentFromFs(row.char);
   return {
     char: row.char,
@@ -129,7 +146,7 @@ export async function listChainCharPool(opts: {
   // since the 2026-06-17 migration, so it only added a useless sort key.
   // The client shuffles the pool anyway, so a stable order by codepoint is
   // all that is needed.
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<ChainPoolRow[]>(
     `SELECT \`char\`, level, pinyin, radical, hsk_level
      FROM chars
      ${whereSql}
@@ -138,7 +155,7 @@ export async function listChainCharPool(opts: {
     [...params, limit],
   );
 
-  return (rows as DbRow[]).map((row) => {
+  return rows.map((row) => {
     const content = readContentFromFs(row.char);
     return {
       char: row.char,
@@ -164,7 +181,7 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
   const pool = getPool();
 
   const where: string[] = [];
-  const params: any[] = [];
+  const params: SqlParam[] = [];
 
   // After the 2026-06-17 migration `pinyin` is empty for most chars in DB,
   // so the old `pinyin LIKE` search no longer returns anything useful.
@@ -191,7 +208,7 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
 
   const whereSql = where.length > 0 ? `WHERE ${where.join(' AND ')}` : '';
 
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<DbRow[]>(
     `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      ${whereSql}
@@ -200,13 +217,13 @@ export async function listChars(opts: ListCharsOpts = {}): Promise<CharListResul
     [...params, PAGE_SIZE, offset],
   );
 
-  const [countRows] = await pool.query<any[]>(
+  const [countRows] = await pool.query<CharCountRow[]>(
     `SELECT COUNT(*) AS n FROM chars ${whereSql}`,
     params,
   );
 
   return {
-    chars: (rows as DbRow[]).map(hydrateChar),
+    chars: rows.map(hydrateChar),
     total: countRows[0].n,
     page,
     pageSize: PAGE_SIZE,
@@ -269,7 +286,7 @@ export const getChar = cache(async (char: string): Promise<Char | null> => {
   // check `isSuppPlaneChar(char)` first.
   if (!char || (char.codePointAt(0) ?? 0) > 0xffff) return null;
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<DbRow[]>(
     `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      WHERE \`char\` = ?
@@ -277,7 +294,7 @@ export const getChar = cache(async (char: string): Promise<Char | null> => {
     [char],
   );
   if (rows.length === 0) return null;
-  return hydrateChar(rows[0] as DbRow);
+  return hydrateChar(rows[0]);
 });
 
 /**
@@ -298,7 +315,7 @@ export async function getCharDetail(char: string): Promise<CharWithRelated | nul
   const pool = getPool();
 
   // Related-by-radical uses DB radical, which is populated by chars import.
-  const [radicalRows] = await pool.query<any[]>(
+  const [radicalRows] = await pool.query<DbRow[]>(
     `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      WHERE radical = ? AND \`char\` != ?
@@ -316,14 +333,14 @@ export async function getCharDetail(char: string): Promise<CharWithRelated | nul
   const pinyinRows = samePinyin
     .slice(0, RELATED_LIMIT)
     .map((c) => index.rows.get(c))
-    .filter((row): row is DbRow => row !== undefined);
+    .filter((row): row is CharRow => row !== undefined);
 
   return {
     ...base,
     // The DB column is 0 for every row; the stroke data knows the real count
     // for the 87% of chars that have it.
     strokeCount: getStrokeCount(char) ?? base.strokeCount,
-    relatedByRadical: (radicalRows as DbRow[]).map(hydrateChar),
+    relatedByRadical: radicalRows.map(hydrateChar),
     relatedByPinyin: pinyinRows.map(hydrateChar),
   };
 }
@@ -344,7 +361,7 @@ export async function getRandomChars(opts: {
   // Note: `LENGTH(char) = 3` filters to BMP-only chars (3 bytes in UTF-8).
   // The previous `REGEXP '^[一-鿿]$'` filter failed because MySQL's REGEXP
   // `$` anchor doesn't align with multi-byte char boundaries.
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<DbRow[]>(
     `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars
      WHERE level IN (${placeholders})
@@ -353,5 +370,5 @@ export async function getRandomChars(opts: {
      LIMIT ?`,
     [...levels, opts.count],
   );
-  return (rows as DbRow[]).map(hydrateCharMinimal);
+  return rows.map(hydrateCharMinimal);
 }

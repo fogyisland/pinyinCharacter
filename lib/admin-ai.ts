@@ -1,5 +1,48 @@
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import type { AiCallStatus } from './ai-calls';
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
+interface AiCallListRow extends RowDataPacket {
+  id: number;
+  user_id: number | null;
+  username: string | null;
+  feature: string;
+  model: string;
+  status: AiCallStatus;
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
+  duration_ms: number | null;
+  error: string | null;
+  metadata: Record<string, unknown> | string | null;
+  created_at: Date | string;
+}
+
+interface AiCallCountRow extends RowDataPacket {
+  n: number;
+}
+
+interface AiCallByDayRow extends RowDataPacket {
+  d: Date | string;
+  n: number;
+}
+
+interface AiCallErrorRateRow extends RowDataPacket {
+  errs: number | null;
+  total: number;
+}
+
+interface AiCallTopUserRow extends RowDataPacket {
+  user_id: number;
+  username: string | null;
+  n: number;
+}
+
+interface AiCallDurationRow extends RowDataPacket {
+  duration_ms: number;
+}
 
 export interface AiCallRow {
   id: number;
@@ -45,7 +88,7 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
   const pageSize = Math.min(Math.max(opts.pageSize ?? 50, 1), 200);
   const offset = (page - 1) * pageSize;
   const where: string[] = [];
-  const params: any[] = [];
+  const params: SqlParam[] = [];
   if (opts.feature) {
     where.push('a.feature = ?');
     params.push(opts.feature);
@@ -68,14 +111,14 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
   }
   const sql = where.length ? `WHERE ${where.join(' AND ')}` : '';
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<AiCallListRow[]>(
     `SELECT a.id, a.user_id, u.username, a.feature, a.model, a.status,
             a.prompt_tokens, a.completion_tokens, a.duration_ms, a.error, a.metadata, a.created_at
      FROM ai_calls a LEFT JOIN users u ON u.id = a.user_id
      ${sql} ORDER BY a.created_at DESC LIMIT ? OFFSET ?`,
     [...params, pageSize, offset],
   );
-  const [countRows] = await pool.query<any[]>(
+  const [countRows] = await pool.query<AiCallCountRow[]>(
     `SELECT COUNT(*) AS n FROM ai_calls a ${sql}`,
     params,
   );
@@ -102,11 +145,11 @@ export async function listAiCalls(opts: ListAiCallsOptions = {}): Promise<ListAi
 
 export interface AiStats {
   total: number;
-  byDay: { date: string; count: number }[];
+  byDay: { date: Date | string; count: number }[];
   errorRate: number; // 0..1
   p50Duration: number | null; // ms
   p95Duration: number | null; // ms
-  topUsers: { userId: number; username: string; count: number }[];
+  topUsers: { userId: number; username: string | null; count: number }[];
 }
 
 export async function getAiStats(days = 7): Promise<AiStats> {
@@ -115,42 +158,42 @@ export async function getAiStats(days = 7): Promise<AiStats> {
   // the same window of ai_calls rows, no inter-dependencies. Each Promise.all
   // element is a [rows, fields] tuple from mysql2, so unwrap with [0].
   const results = await Promise.all([
-    pool.query<any[]>(
+    pool.query<AiCallCountRow[]>(
       `SELECT COUNT(*) AS n FROM ai_calls WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`,
       [days],
     ),
-    pool.query<any[]>(
+    pool.query<AiCallByDayRow[]>(
       `SELECT DATE(created_at) AS d, COUNT(*) AS n FROM ai_calls
        WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
        GROUP BY DATE(created_at) ORDER BY d ASC`,
       [days],
     ),
-    pool.query<any[]>(
+    pool.query<AiCallErrorRateRow[]>(
       `SELECT
          SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) AS errs,
          COUNT(*) AS total
        FROM ai_calls WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)`,
       [days],
     ),
-    pool.query<any[]>(
+    pool.query<AiCallTopUserRow[]>(
       `SELECT a.user_id, u.username, COUNT(*) AS n FROM ai_calls a
        LEFT JOIN users u ON u.id = a.user_id
        WHERE a.created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND a.user_id IS NOT NULL
        GROUP BY a.user_id, u.username ORDER BY n DESC LIMIT 5`,
       [days],
     ),
-    pool.query<any[]>(
+    pool.query<AiCallCountRow[]>(
       `SELECT COUNT(*) AS n FROM ai_calls
        WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND duration_ms IS NOT NULL`,
       [days],
     ),
   ]);
 
-  const totalRows = results[0][0] as any[];
-  const byDay = results[1][0] as any[];
-  const errRate = results[2][0] as any[];
-  const topUsers = results[3][0] as any[];
-  const durationCount = Number((results[4][0] as any[])[0]?.n ?? 0);
+  const totalRows = results[0][0];
+  const byDay = results[1][0];
+  const errRate = results[2][0];
+  const topUsers = results[3][0];
+  const durationCount = Number(results[4][0][0]?.n ?? 0);
 
   /**
    * The q-th percentile of the call durations.
@@ -165,7 +208,7 @@ export async function getAiStats(days = 7): Promise<AiStats> {
   const percentile = async (q: number): Promise<number | null> => {
     if (durationCount === 0) return null;
     const idx = Math.min(durationCount - 1, Math.floor(q * durationCount));
-    const [rows] = await pool.query<any[]>(
+    const [rows] = await pool.query<AiCallDurationRow[]>(
       `SELECT duration_ms FROM ai_calls
        WHERE created_at >= DATE_SUB(NOW(), INTERVAL ? DAY) AND duration_ms IS NOT NULL
        ORDER BY duration_ms ASC LIMIT 1 OFFSET ?`,
@@ -178,11 +221,11 @@ export async function getAiStats(days = 7): Promise<AiStats> {
   const total = Number(errRate[0].total) || 0;
   return {
     total: Number(totalRows[0].n),
-    byDay: byDay.map((r: any) => ({ date: r.d, count: Number(r.n) })),
+    byDay: byDay.map((r) => ({ date: r.d, count: Number(r.n) })),
     errorRate: total > 0 ? Number(errRate[0].errs) / total : 0,
     p50Duration: p50,
     p95Duration: p95,
-    topUsers: topUsers.map((r: any) => ({
+    topUsers: topUsers.map((r) => ({
       userId: Number(r.user_id),
       username: r.username,
       count: Number(r.n),

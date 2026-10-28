@@ -4,7 +4,32 @@
  * the scheduler is opt-in and not part of the user-facing KEY_VALIDATORS
  * set in lib/config.ts (which would reject these keys on dashboard save).
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+/** One `app_config` row: a setting key and its stored value. */
+interface AppConfigRow extends RowDataPacket {
+  key: string;
+  value: string;
+}
+
+/** The grouped run rows of the scheduler history query. */
+interface SchedulerRunRow extends RowDataPacket {
+  run_id: string;
+  started_at: Date | string;
+}
+
+/** One task row of the scheduler history query. */
+interface SchedulerTaskRow extends RowDataPacket {
+  id: number;
+  run_id: string;
+  task_name: SchedulerHistoryTaskName;
+  started_at: Date | string;
+  finished_at: Date | string | null;
+  ok: number | boolean;
+  summary: string | null;
+  error: string | null;
+}
 
 export const SCHEDULER_KEYS = {
   enabled: 'scheduler.enabled',
@@ -49,7 +74,7 @@ const DEFAULTS: Record<string, string> = {
 };
 
 export async function readSchedulerConfig(): Promise<SchedulerConfig> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<AppConfigRow[]>(
     `SELECT \`key\`, value FROM app_config WHERE \`key\` LIKE 'scheduler.%'`,
   );
   const out: Record<string, string> = { ...DEFAULTS };
@@ -178,7 +203,7 @@ export async function recordTaskRun(args: RecordTaskRunArgs): Promise<void> {
 export async function getSchedulerRunHistory(limit: number = 20): Promise<SchedulerRunGroup[]> {
   const pool = getPool();
   const safeLimit = Math.max(1, Math.min(limit, 200));
-  const [runRows] = await pool.query<any[]>(
+  const [runRows] = await pool.query<SchedulerRunRow[]>(
     `SELECT run_id, MAX(started_at) AS started_at
      FROM scheduler_run_history
      GROUP BY run_id
@@ -187,9 +212,9 @@ export async function getSchedulerRunHistory(limit: number = 20): Promise<Schedu
     [safeLimit],
   );
   if (runRows.length === 0) return [];
-  const runIds = runRows.map((r: any) => r.run_id);
+  const runIds = runRows.map((r) => r.run_id);
   const placeholders = runIds.map(() => '?').join(',');
-  const [taskRows] = await pool.query<any[]>(
+  const [taskRows] = await pool.query<SchedulerTaskRow[]>(
     `SELECT id, run_id, task_name, started_at, finished_at, ok, summary, error
      FROM scheduler_run_history
      WHERE run_id IN (${placeholders})
@@ -217,7 +242,7 @@ export async function getSchedulerRunHistory(limit: number = 20): Promise<Schedu
     list.push(row);
     byRun.set(r.run_id, list);
   }
-  return runRows.map((rr: any) => ({
+  return runRows.map((rr) => ({
     runId: rr.run_id,
     startedAt: rr.started_at instanceof Date ? rr.started_at.toISOString() : String(rr.started_at),
     tasks: byRun.get(rr.run_id) ?? [],

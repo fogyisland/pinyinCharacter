@@ -8,7 +8,13 @@
  * Read by /about (server component) and /api/about/intro (public).
  * Written only by /api/admin/about/intro (admin-only regenerate endpoint).
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+
+interface AppConfigRow extends RowDataPacket {
+  key: string;
+  value: string;
+}
 
 const KEY_INTRO = 'about.intro_text';
 const KEY_GENERATED_AT = 'about.intro_generated_at';
@@ -20,7 +26,7 @@ export interface CachedAboutIntro {
 }
 
 export async function readAboutIntro(): Promise<CachedAboutIntro> {
-  const [rows] = await getPool().query<any[]>(
+  const [rows] = await getPool().query<AppConfigRow[]>(
     `SELECT \`key\`, value FROM app_config WHERE \`key\` IN (?, ?)`,
     [KEY_INTRO, KEY_GENERATED_AT],
   );

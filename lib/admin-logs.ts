@@ -1,4 +1,7 @@
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+import type { AiCallStatus } from './ai-calls';
+import type { DownloadFormat, DownloadSourceType, DownloadStatus } from './downloads';
 import type {
   ListUnifiedLogsOptions,
   ListUnifiedLogsResult,
@@ -13,6 +16,48 @@ export type {
   UnifiedLogEntry,
   UnifiedLogSource,
 } from './admin-logs-types';
+
+/** The value shapes mysql2 accepts as a bound SQL parameter. */
+type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
+
+interface UnifiedCountRow extends RowDataPacket {
+  n: number;
+}
+
+interface UnifiedAuditRow extends RowDataPacket {
+  id: number;
+  event: string;
+  user_id: number | null;
+  username: string | null;
+  ip: string | null;
+  metadata: Record<string, unknown> | string | null;
+  created_at: Date | string;
+}
+
+interface UnifiedDownloadRow extends RowDataPacket {
+  id: number;
+  user_id: number;
+  username: string | null;
+  source_type: DownloadSourceType;
+  source_id: string | null;
+  status: DownloadStatus;
+  format: DownloadFormat;
+  duration_ms: number | null;
+  created_at: Date | string;
+}
+
+interface UnifiedAiRow extends RowDataPacket {
+  id: number;
+  user_id: number | null;
+  username: string | null;
+  feature: string;
+  model: string;
+  status: AiCallStatus;
+  duration_ms: number | null;
+  error: string | null;
+  metadata: Record<string, unknown> | string | null;
+  created_at: Date | string;
+}
 
 /**
  * Unified logs across 3 sources (audit_log, downloads, ai_calls).
@@ -41,7 +86,7 @@ export async function listUnifiedLogs(
 
   // --- Audit ---
   const auditWhere: string[] = [];
-  const auditParams: any[] = [];
+  const auditParams: SqlParam[] = [];
   if (includeAudit) {
     if (opts.type) {
       auditWhere.push(`a.event = ?`);
@@ -71,7 +116,7 @@ export async function listUnifiedLogs(
   // is set, downloads are matched only if type === 'download_logged' (the only
   // event value downloads can ever produce). Any other type yields zero rows.
   const dlWhere: string[] = [];
-  const dlParams: any[] = [];
+  const dlParams: SqlParam[] = [];
   if (includeDownloads) {
     if (opts.type && opts.type !== 'download_logged') {
       dlWhere.push('1 = 0');
@@ -93,7 +138,7 @@ export async function listUnifiedLogs(
 
   // --- AI calls ---
   const aiWhere: string[] = [];
-  const aiParams: any[] = [];
+  const aiParams: SqlParam[] = [];
   if (includeAi) {
     if (opts.type) {
       aiWhere.push(`a.feature = ?`);
@@ -115,57 +160,64 @@ export async function listUnifiedLogs(
   const aiSql = includeAi && aiWhere.length ? `WHERE ${aiWhere.join(' AND ')}` : '';
 
   // Run paginated selects + accurate counts in parallel where possible.
-  const queries: Promise<any>[] = [];
-
-  if (includeAudit) {
-    queries.push(
-      pool.query<any[]>(
+  // Every promise is created eagerly, so all six are in flight before the
+  // first await — same parallelism as collecting them in one array.
+  const auditRowsPromise = includeAudit
+    ? pool.query<UnifiedAuditRow[]>(
         `SELECT a.id, a.event, a.user_id, u.username, a.ip, a.metadata, a.created_at
          FROM audit_log a LEFT JOIN users u ON u.id = a.user_id
          ${auditSql} ORDER BY a.created_at DESC, a.id DESC LIMIT ? OFFSET ?`,
         [...auditParams, pageSize, offset],
-      ),
-      pool.query<any[]>(`SELECT COUNT(*) AS n FROM audit_log a ${auditSql}`, auditParams),
-    );
-  }
-  if (includeDownloads) {
-    queries.push(
-      pool.query<any[]>(
+      )
+    : null;
+  const auditCountPromise = includeAudit
+    ? pool.query<UnifiedCountRow[]>(`SELECT COUNT(*) AS n FROM audit_log a ${auditSql}`, auditParams)
+    : null;
+  const dlRowsPromise = includeDownloads
+    ? pool.query<UnifiedDownloadRow[]>(
         `SELECT d.id, d.user_id, u.username, d.source_type, d.source_id, d.status, d.format, d.duration_ms, d.created_at
          FROM downloads d LEFT JOIN users u ON u.id = d.user_id
          ${dlSql} ORDER BY d.created_at DESC, d.id DESC LIMIT ? OFFSET ?`,
         [...dlParams, pageSize, offset],
-      ),
-      pool.query<any[]>(`SELECT COUNT(*) AS n FROM downloads d ${dlSql}`, dlParams),
-    );
-  }
-  if (includeAi) {
-    queries.push(
-      pool.query<any[]>(
+      )
+    : null;
+  const dlCountPromise = includeDownloads
+    ? pool.query<UnifiedCountRow[]>(`SELECT COUNT(*) AS n FROM downloads d ${dlSql}`, dlParams)
+    : null;
+  const aiRowsPromise = includeAi
+    ? pool.query<UnifiedAiRow[]>(
         `SELECT a.id, a.user_id, u.username, a.feature, a.model, a.status, a.duration_ms, a.error, a.metadata, a.created_at
          FROM ai_calls a LEFT JOIN users u ON u.id = a.user_id
          ${aiSql} ORDER BY a.created_at DESC, a.id DESC LIMIT ? OFFSET ?`,
         [...aiParams, pageSize, offset],
-      ),
-      pool.query<any[]>(`SELECT COUNT(*) AS n FROM ai_calls a ${aiSql}`, aiParams),
-    );
-  }
+      )
+    : null;
+  const aiCountPromise = includeAi
+    ? pool.query<UnifiedCountRow[]>(`SELECT COUNT(*) AS n FROM ai_calls a ${aiSql}`, aiParams)
+    : null;
 
-  const results = await Promise.all(queries);
+  const [auditRowsResult, auditCountResult, dlRowsResult, dlCountResult, aiRowsResult, aiCountResult] =
+    await Promise.all([
+      auditRowsPromise,
+      auditCountPromise,
+      dlRowsPromise,
+      dlCountPromise,
+      aiRowsPromise,
+      aiCountPromise,
+    ]);
 
   // Walk the results in source order, taking rows then counts alternately.
-  let cursor = 0;
-  const auditRows = includeAudit ? results[cursor++][0] : [];
-  const auditCount = includeAudit ? Number(results[cursor++][0][0].n) : 0;
-  const dlRows = includeDownloads ? results[cursor++][0] : [];
-  const dlCount = includeDownloads ? Number(results[cursor++][0][0].n) : 0;
-  const aiRows = includeAi ? results[cursor++][0] : [];
-  const aiCount = includeAi ? Number(results[cursor++][0][0].n) : 0;
+  const auditRows = auditRowsResult ? auditRowsResult[0] : [];
+  const auditCount = auditCountResult ? Number(auditCountResult[0][0].n) : 0;
+  const dlRows = dlRowsResult ? dlRowsResult[0] : [];
+  const dlCount = dlCountResult ? Number(dlCountResult[0][0].n) : 0;
+  const aiRows = aiRowsResult ? aiRowsResult[0] : [];
+  const aiCount = aiCountResult ? Number(aiCountResult[0][0].n) : 0;
 
   const total = auditCount + dlCount + aiCount;
 
   const items: UnifiedLogEntry[] = [
-    ...auditRows.map((r: any) => ({
+    ...auditRows.map((r) => ({
       id: `audit:${r.id}`,
       source: 'audit' as const,
       event: r.event,
@@ -175,7 +227,7 @@ export async function listUnifiedLogs(
       createdAt: toIso(r.created_at),
       metadata: typeof r.metadata === 'string' ? safeParse(r.metadata) : (r.metadata ?? {}),
     })),
-    ...dlRows.map((r: any) => ({
+    ...dlRows.map((r) => ({
       id: `download:${r.id}`,
       source: 'download' as const,
       event: 'download_logged',
@@ -191,7 +243,7 @@ export async function listUnifiedLogs(
         durationMs: r.duration_ms,
       },
     })),
-    ...aiRows.map((r: any) => ({
+    ...aiRows.map((r) => ({
       id: `ai_call:${r.id}`,
       source: 'ai_call' as const,
       event: r.feature,
@@ -220,7 +272,7 @@ export async function listUnifiedLogs(
   return { items: items.slice(0, pageSize), total, page, pageSize };
 }
 
-function toIso(d: any): string {
+function toIso(d: Date | string): string {
   if (d instanceof Date) return d.toISOString();
   if (typeof d === 'string') return d;
   return String(d);

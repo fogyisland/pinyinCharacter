@@ -1,7 +1,19 @@
 import { pinyin } from 'pinyin-pro';
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { toneFromPinyin } from './pinyin-tone';
 import type { CharRow } from './chars-types';
+
+/** One raw row of the `chars` table, as mysql2 returns it. */
+interface CharDbRow extends RowDataPacket {
+  char: string;
+  level: 1 | 2 | 3;
+  pinyin: string;
+  radical: string;
+  stroke_count: number;
+  unicode_codepoint: string;
+  hsk_level: number | null;
+}
 
 /**
  * Pinyin index over every row of the `chars` table.
@@ -147,7 +159,7 @@ export function getPinyinIndex(): Promise<PinyinIndex> {
 
 async function buildIndex(): Promise<PinyinIndex> {
   const pool = getPool();
-  const [rows] = await pool.query<any[]>(
+  const [rows] = await pool.query<CharDbRow[]>(
     `SELECT \`char\`, level, pinyin, radical, stroke_count, unicode_codepoint, hsk_level
      FROM chars`,
   );
@@ -155,7 +167,7 @@ async function buildIndex(): Promise<PinyinIndex> {
   const rowMap = new Map<string, CharRow>();
   const entries: PinyinIndexEntry[] = [];
   for (const raw of rows) {
-    const row = raw as CharRow;
+    const row: CharRow = raw;
     const char = String(row.char ?? '');
     if (!char) continue;
     const reading = resolvePinyin(char, row.pinyin);
