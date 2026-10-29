@@ -1917,6 +1917,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 - Modify: `next.config.ts`（**只改 `:41-49` 上面那段注释**，第 35–37 行说「`/font/` 的文件名是内容哈希」已经不成立；`headers()` 的三行逻辑**一个字都不许改**，见 Step 2b）
 - Modify: `tests/unit/lib/fonts-css.test.ts`（整体重写）
 - Modify: `tests/unit/lib/middleware-redirect.test.ts`（第 65 行的示例路径）
+- Add: `.gitattributes`（**新建**，只有几行：把三份字体样式表的行尾钉成 LF、把子集声明为 binary）
 - Delete: `public/font/noto-sans-sc/`、`public/font/noto-serif-sc/`、`public/font/lxgw-wenkai-tc/`、`public/font/fonts.css`
 - Delete: `scripts/fonts/build-fonts-css.mjs`、`scripts/fonts/build-fonts-css.d.mts`
 - Add: `public/font/web/**`、`public/font/fonts-sans.css`、`public/font/fonts-serif.css`、`public/font/fonts-wenkai.css`、`public/font/fonts-manifest.json`
@@ -1981,6 +1982,29 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 
 ⚠️ **`headers()` 的三行逻辑一个字都不许改**（`/font/:path*` → `year`、`/fonts/:path*` → `month`、`/strokes/:path*` → `month`）。这一步是**纯注释**。改完跑 `npx tsc --noEmit` 确认没碰坏类型。
 
+- [ ] **Step 2c: 新建 `.gitattributes`（把字体目录的行尾钉住）**
+
+仓库的 `core.autocrlf = true`（控制器实测）。构建脚本写出来的三份样式表是 **LF**，manifest 的 `version` 就是对这份 **LF 字节**算的哈希；但**新克隆一份仓库**（`git checkout-index` 实测）会把 `public/font/fonts-*.css` 检出成 **CRLF** ⇒ 「同一个文件在不同机器上是不同的字节」。
+
+新建仓库根目录的 `.gitattributes`（**本任务只加这一个文件，内容就这几行**）：
+
+```gitattributes
+# The font stylesheets are hashed into public/font/fonts-manifest.json, and
+# that hash is the cache-buster for the stylesheet URLs. The hash has to be
+# the same on every platform, so their line endings are pinned to LF: with
+# core.autocrlf=true a Windows checkout would otherwise rewrite them to
+# CRLF and the manifest would no longer match the file it names.
+public/font/fonts-sans.css text eol=lf
+public/font/fonts-serif.css text eol=lf
+public/font/fonts-wenkai.css text eol=lf
+
+# The subsets are binary. Git already detects them as binary (the WOFF2
+# signature has a NUL byte at offset 4), but say so rather than rely on it.
+public/font/web/** binary
+```
+
+⚠️ **只写这几行**，不要顺手给整个仓库加规则（例如 `* text=auto`）——那会改变所有文件的行为，超出本任务范围。Step 3 的第 9 条用例另外还会把 CRLF 归一化成 LF 再算哈希，两道保险。
+
 - [ ] **Step 3: 重写 `tests/unit/lib/fonts-css.test.ts`**
 
 新文件的用例（保留 `describe` 命名风格）：
@@ -1994,6 +2018,7 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（700 KB = 700 × 1024 = **716 800 B**）。**Task 3 修复轮（F31-a 过滤 + R18 令牌）的实测值 —— 用这一组，不要用估算**：sans 原始 **620 320 B**（≈ 606 KB）/ **2 459** 条 face；serif 原始 **722 614 B**（≈ 705 KB）/ **2 841** 条 face；wenkai 原始 **666 617 B**（≈ 651 KB）/ **2 636** 条 face；三份合计原始 **2 009 551 B**。⚠️ wenkai 是**静态族，一个块两份文件**（400 + 700 各一份），所以它的原始字节是单份的两倍——计划里早先写的「wenkai 297 KB」是**单份**数字，别拿它当整族数字用；上面 666 617 B 是**整族**。字体字节合计 **28 127 360 B**（28.1 MB）。旧口径留档：未过滤构建是 sans 661 307 / serif 784 049 / wenkai 627 103 B，合计 2 072 459 B、**8 683** 个文件、28 774 592 B 字体字节。
 8. 三份样式表合起来 gzip 后 ≤ `LIMITS.cssBytes` = **175 × 1024 = 179 200 字节**（F25-d 定的是 175 **KB** = 175 × 1024，不是 175 000 字节——算余量别算错）——用 `node:zlib` 的 `gzipSync` 算。**Task 3 修复轮（F31-a 过滤 + R18 令牌）的实测值 —— 用这一组**：合计 **157 282 B**（sans **55 437** / serif **63 915** / wenkai **37 930**），余量 **21 918 B**。另两份的 gzip 预算按同样口径换算：`LIMITS.sansCssBytes` = **65 × 1024 = 66 560 字节**，实测 sans **55 437 B**，余量 **11 123 B**。旧口径留档：未过滤构建 174 948 B 合计（sans 62 839 / serif 73 754 / wenkai 38 355），余量 4 252 B；加上 R18 令牌后 175 167 B，余量 **4 033 B**——过滤掉 746 个空壳 Ext 块之后，余量从 4 KB 级回到 **22 KB 级**。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
 9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
+   ⚠️ **算哈希之前先把 CRLF 归一化成 LF**（`content.replace(/\r\n/g, '\n')`）：这个仓库的 `core.autocrlf = true`，构建脚本写出来的是 **LF**，而**新克隆一份仓库**会把这些样式表检出成 **CRLF**（控制器用 `git checkout-index` 实测过）⇒ 直接对原始字节算哈希的话，这一条在**新克隆的 Windows 机器上会假红**。归一化之后，断言的语义是「样式表的**内容**变了令牌就要变」——CRLF/LF 对 CSS 无意义。
 10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
 11. `app/globals.css` 包含 `'Noto Sans SC'`、`'Noto Serif SC'`、`'LXGW WenKai TC'` 这 3 个族名，并且**不含** `'Noto Sans SC 1'` / `'Noto Sans SC Ext'` / `'LXGW WenKai TC Ext'` 这类旧的分档族名（防止有人把链改回去）。
 12. 旧的 Google 子集目录**不存在**：`public/font/noto-sans-sc`、`public/font/noto-serif-sc`、`public/font/lxgw-wenkai-tc`、`public/font/fonts.css` 都不在磁盘上。
