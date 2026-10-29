@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { INSTANCER_TARGETS, instancerArgs } from '../../../scripts/fonts/instance-webfont-axis.mjs';
 import {
   SOURCES,
@@ -68,5 +70,49 @@ describe('instance-webfont-axis', () => {
       'NotoSansSC-wght.ttf',
       'NotoSerifSC-wght.ttf',
     ]);
+  });
+
+  it('keeps the declaration file and the runtime module in sync', async () => {
+    // The .d.mts is hand written. Without this guard the module can drift
+    // away from it: tsc stays green (it believes the declaration) while
+    // the runtime module no longer exports the name at all.
+    const declaration = readFileSync(
+      fileURLToPath(new URL('../../../scripts/fonts/instance-webfont-axis.d.mts', import.meta.url)),
+      'utf8',
+    );
+
+    const declaredFunctions = [...declaration.matchAll(/export declare (?:async )?function (\w+)/g)].map(
+      (match) => match[1],
+    );
+    const declaredConstants = [...declaration.matchAll(/export declare const (\w+): ([^;]+);/g)].map(
+      (match) => ({ name: match[1], type: match[2].trim() }),
+    );
+    expect(declaredFunctions.length).toBeGreaterThan(0);
+    expect(declaredConstants.length).toBeGreaterThan(0);
+
+    const runtime = (await import(
+      '../../../scripts/fonts/instance-webfont-axis.mjs'
+    )) as unknown as Record<string, unknown>;
+
+    for (const name of declaredFunctions) {
+      expect(runtime, `the .mjs no longer exports ${name}`).toHaveProperty(name);
+      expect(typeof runtime[name], `${name} should be a function`).toBe('function');
+    }
+
+    for (const { name, type } of declaredConstants) {
+      expect(runtime, `the .mjs no longer exports ${name}`).toHaveProperty(name);
+      const value = runtime[name];
+      if (type === 'string') {
+        expect(typeof value, `${name} should be a string`).toBe('string');
+      } else if (type === 'number') {
+        expect(typeof value, `${name} should be a number`).toBe('number');
+      } else if (type === 'boolean') {
+        expect(typeof value, `${name} should be a boolean`).toBe('boolean');
+      } else if (type.endsWith('[]')) {
+        expect(Array.isArray(value), `${name} should be an array`).toBe(true);
+      } else {
+        expect(value, `${name} should be an object`).toBeTypeOf('object');
+      }
+    }
   });
 });

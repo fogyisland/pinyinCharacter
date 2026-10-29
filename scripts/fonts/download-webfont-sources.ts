@@ -26,11 +26,32 @@
  * when its size matches the remote size, and the bytes are streamed to
  * disk so the peak memory stays flat.
  *
+ * THE SIZE CONTRACT
+ * -----------------
+ * The size the bytes on disk are checked against is the Content-Length
+ * of the very response that carried them — NOT of a separate HEAD
+ * probe. A HEAD probe only ever decides whether an already present
+ * local file may be skipped; it never decides whether bytes that were
+ * just downloaded are acceptable.
+ *
+ * That distinction is not academic. Two completely different situations
+ * look identical when you only look at a HEAD probe:
+ *   - the server answered but sent no Content-Length (size unknown), and
+ *   - the server never answered at all (DNS / TLS / timeout / reset).
+ * The second one is the dangerous one: it happens exactly when the
+ * network is flaky, which is exactly when a truncated leftover from an
+ * earlier interrupted run is most likely to be sitting on disk. Treating
+ * it as "the server sent no Content-Length" would skip that leftover
+ * and let an unverified font flow into the subsetter. So an unreachable
+ * server is never allowed to authorise a skip, and the bytes of a
+ * download are only accepted against the declaration of the response
+ * that actually carried them.
+ *
  * Run: npm run fonts:download-web
  */
 
 import { createWriteStream, mkdirSync, renameSync, rmSync, statSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -150,27 +171,29 @@ function delay(ms: number): Promise<void> {
 }
 
 /**
- * The size of the file behind `url`, as the server reports it.
+ * What a server told us about a file.
  *
- * Returns null when the server sends no usable Content-Length — the only
- * case in which a file on disk may be accepted without a size comparison.
- */
-export async function remoteSize(url: string): Promise<number | null> {
-  const probe = await probeRemoteSize(url);
-  return probe.size;
-}
-
-/**
- * The outcome of a HEAD probe.
- *
- * `reachable` tells "the request failed" apart from "the server sent no
- * Content-Length". Only the second one means the size is unknown.
+ * `reachable` means "the server answered at all" — any HTTP status
+ * counts, a 404 or a 405 included. Only a request that never completed
+ * (DNS, TLS, timeout, reset) leaves it false.
  */
 interface SizeProbe {
-  /** The advertised size, or null when the server sent none. */
+  /** The size the server declared, or null when it declared none. */
   size: number | null;
-  /** False when the request itself failed (DNS, TLS, timeout, reset). */
+  /** True when the server answered at all. */
   reachable: boolean;
+  /** True when the answer was a 2xx. */
+  ok: boolean;
+  /** The HTTP status of the answer, or null when there was no answer. */
+  status: number | null;
+}
+
+/** Parse a Content-Length header into a usable size. */
+function parseContentLength(raw: string | null): number | null {
+  if (raw === null) return null;
+  const size = Number(raw);
+  if (!Number.isFinite(size) || size < 0) return null;
+  return size;
 }
 
 /** One HEAD request. */
@@ -184,14 +207,23 @@ async function headOnce(url: string): Promise<SizeProbe> {
       signal: controller.signal,
       headers: HEADERS,
     });
-    if (!res.ok) return { size: null, reachable: false };
-    const raw = res.headers.get('content-length');
-    if (raw === null) return { size: null, reachable: true };
-    const size = Number(raw);
-    if (!Number.isFinite(size) || size < 0) return { size: null, reachable: true };
-    return { size, reachable: true };
+    // ANY HTTP answer means the server is there. A 404 or a 405 is not an
+    // unreachable server, it is a reachable server that says no. Only a
+    // request that never completed counts as unreachable.
+    if (!res.ok) {
+      return { size: null, reachable: true, ok: false, status: res.status };
+    }
+    return {
+      size: parseContentLength(res.headers.get('content-length')),
+      reachable: true,
+      ok: true,
+      status: res.status,
+    };
   } catch {
-    return { size: null, reachable: false };
+    // The request itself failed: DNS, TLS, timeout, reset. Nothing at all
+    // was learned about the server — in particular we did NOT learn that
+    // it serves the file without a Content-Length.
+    return { size: null, reachable: false, ok: false, status: null };
   } finally {
     clearTimeout(timer);
   }
@@ -213,7 +245,19 @@ async function probeRemoteSize(url: string): Promise<SizeProbe> {
       await delay(RETRY_DELAY_MS);
     }
   }
-  return { size: null, reachable: false };
+  return { size: null, reachable: false, ok: false, status: null };
+}
+
+/**
+ * The size of the file behind `url`, as the server reports it.
+ *
+ * Returns null when the server declared no size — or when it could not
+ * be reached at all. The two cases are told apart by the probe, not by
+ * this function's return value.
+ */
+export async function remoteSize(url: string): Promise<number | null> {
+  const probe = await probeRemoteSize(url);
+  return probe.size;
 }
 
 /** The outcome of one download attempt. */
@@ -221,7 +265,11 @@ interface AttemptResult {
   ok: boolean;
   /** How many bytes landed in the `.part` file. */
   bytes: number;
-  /** Why the attempt failed — the HTTP status or the exception message. */
+  /**
+   * The Content-Length of the very response that carried the bytes.
+   * null when the server declared no size.
+   */
+  expected: number | null;
   reason: string | null;
 }
 
@@ -229,7 +277,9 @@ interface AttemptResult {
  * Stream one URL into `dest + '.part'`.
  *
  * The bytes are counted on the way through, so the caller can compare
- * them with the size the server advertised.
+ * them with the size the response declared. The declaration is read
+ * from THIS response, never from a separate probe: it is the only
+ * declaration that is guaranteed to describe these bytes.
  */
 async function fetchToPart(url: string, dest: string, timeoutMs: number): Promise<AttemptResult> {
   const part = `${dest}.part`;
@@ -242,11 +292,14 @@ async function fetchToPart(url: string, dest: string, timeoutMs: number): Promis
       headers: HEADERS,
     });
     if (!res.ok) {
-      return { ok: false, bytes: 0, reason: `HTTP ${res.status} ${res.statusText}`.trim() };
+      return { ok: false, bytes: 0, expected: null, reason: `HTTP ${res.status} ${res.statusText}`.trim() };
     }
     if (!res.body) {
-      return { ok: false, bytes: 0, reason: 'the response carried no body' };
+      return { ok: false, bytes: 0, expected: null, reason: 'the response carried no body' };
     }
+
+    // The size contract comes from the response that carries the bytes.
+    const expected = parseContentLength(res.headers.get('content-length'));
 
     let written = 0;
     const counter = new Transform({
@@ -263,12 +316,16 @@ async function fetchToPart(url: string, dest: string, timeoutMs: number): Promis
     await pipeline(Readable.fromWeb(body), counter, createWriteStream(part));
 
     if (written === 0) {
-      return { ok: false, bytes: 0, reason: 'the response body was empty' };
+      rmSync(part, { force: true });
+      return { ok: false, bytes: 0, expected, reason: 'the response body was empty' };
     }
-    return { ok: true, bytes: written, reason: null };
+    return { ok: true, bytes: written, expected, reason: null };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { ok: false, bytes: 0, reason: message };
+    // A half written body is not a download. Remove it so the next
+    // attempt starts from nothing.
+    rmSync(part, { force: true });
+    return { ok: false, bytes: 0, expected: null, reason: message };
   } finally {
     clearTimeout(timer);
   }
@@ -277,69 +334,196 @@ async function fetchToPart(url: string, dest: string, timeoutMs: number): Promis
 /**
  * Promote `dest + '.part'` to `dest`, but only when it is complete.
  *
- * `expected` is the size the server advertised. When it is known and the
- * file on disk says something else, the download is truncated: the
- * `.part` is thrown away and the attempt counts as a failure. When the
- * file matches, it is renamed — so the real file name only ever appears
- * on a complete file.
+ * `expected` is the size the response that carried the bytes declared.
+ * When it is known and the file on disk says something else, the
+ * download is truncated: the `.part` is thrown away and the attempt
+ * counts as a failure. When the size is unknown the bytes are accepted
+ * — but the caller is told so, because "the server did not declare a
+ * size" and "the server said a size that does not match" are two very
+ * different stories.
  */
-function promote(part: string, dest: string, expected: number | null): { ok: boolean; reason: string | null } {
+function promote(
+  part: string,
+  dest: string,
+  expected: number | null,
+): { ok: boolean; verified: boolean; reason: string | null } {
   const actual = fileSize(part);
   if (actual === 0) {
     rmSync(part, { force: true });
-    return { ok: false, reason: 'nothing was written' };
+    return { ok: false, verified: false, reason: 'nothing was written' };
   }
   if (expected !== null && actual !== expected) {
     rmSync(part, { force: true });
     return {
       ok: false,
+      verified: false,
       reason: `size mismatch: ${actual} bytes on disk, the server announced ${expected}`,
     };
   }
   renameSync(part, dest);
-  return { ok: true, reason: null };
+  return { ok: true, verified: expected !== null, reason: null };
+}
+
+/** The outcome of downloading one url. */
+interface DownloadOutcome {
+  ok: boolean;
+  /** How many bytes are on disk under the destination. */
+  bytes: number;
+  /** The size the server declared on the response that carried the bytes. */
+  expected: number | null;
+  /** True when the byte count was checked against the declared size. */
+  verified: boolean;
+  reason: string | null;
+}
+
+/**
+ * Download one url into `dest`, retrying it.
+ *
+ * This is the ONE place where bytes are allowed to land on disk. It
+ * takes no size from a probe: the declaration of the response that
+ * carries the bytes is the only contract it trusts.
+ */
+async function downloadUrl(url: string, dest: string, timeoutMs: number): Promise<DownloadOutcome> {
+  let lastReason = 'no attempt was made';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_URL; attempt++) {
+    const attemptResult = await fetchToPart(url, dest, timeoutMs);
+    if (attemptResult.ok) {
+      const promoted = promote(`${dest}.part`, dest, attemptResult.expected);
+      if (promoted.ok) {
+        if (!promoted.verified) {
+          console.warn(
+            `[download] WARN ${basename(dest)}: the server answered without a Content-Length, so the ` +
+              `${attemptResult.bytes} bytes could not be checked`,
+          );
+        }
+        return {
+          ok: true,
+          bytes: attemptResult.bytes,
+          expected: attemptResult.expected,
+          verified: promoted.verified,
+          reason: null,
+        };
+      }
+      lastReason = promoted.reason ?? 'unknown error';
+    } else {
+      lastReason = attemptResult.reason ?? 'unknown error';
+    }
+    if (attempt < MAX_ATTEMPTS_PER_URL) {
+      await delay(RETRY_DELAY_MS);
+    }
+  }
+  return { ok: false, bytes: 0, expected: null, verified: false, reason: lastReason };
+}
+
+/**
+ * What to do with a local file that is already on disk.
+ *
+ * `verified`   — the server declared a size and the file matches it.
+ * `unverified` — the server answered with a success status but declared
+ *                no size, so the file cannot be checked. It may still be
+ *                accepted, but only with a warning that says exactly
+ *                that.
+ * `download`   — the local file must not be accepted. `why` says why.
+ */
+type SkipDecision =
+  | { kind: 'verified'; localSize: number; expected: number }
+  | { kind: 'unverified'; localSize: number }
+  | { kind: 'download'; localSize: number; why: string };
+
+/**
+ * Decide what to do with the local file, given what the server said.
+ *
+ * The invariant this function protects: a local file is only accepted
+ * as a finished download when the server's own declaration matches it.
+ * "The server declared no size" and "the server could not be reached"
+ * both forbid the acceptance of a local file that cannot be checked —
+ * but they are reported differently, because the operator has to fix
+ * different things.
+ */
+function decideSkip(dest: string, probe: SizeProbe): SkipDecision {
+  const localSize = fileSize(dest);
+  if (localSize === 0) {
+    return { kind: 'download', localSize, why: 'the file is not there yet' };
+  }
+  if (probe.ok && probe.size !== null) {
+    if (localSize === probe.size) {
+      return { kind: 'verified', localSize, expected: probe.size };
+    }
+    return {
+      kind: 'download',
+      localSize,
+      why: `the local ${localSize} bytes != the remote ${probe.size} bytes (truncated leftover)`,
+    };
+  }
+  if (probe.ok) {
+    // The server answered with a success status but declared no size.
+    return { kind: 'unverified', localSize };
+  }
+  if (probe.reachable) {
+    return {
+      kind: 'download',
+      localSize,
+      why: `the server answered HTTP ${probe.status ?? '?'}, which declares no size`,
+    };
+  }
+  return {
+    kind: 'download',
+    localSize,
+    why: 'every candidate url is unreachable — the server never answered',
+  };
 }
 
 /**
  * Download `url` into `dest`.
  *
  * Returns true when the bytes are on disk under `dest` and their size
- * has been checked against the Content-Length of the response. A failed
- * attempt removes the `.part` file, so the next attempt starts clean and
- * a truncated file can never be mistaken for a finished one.
+ * has been checked against the Content-Length of the response that
+ * carried them. A failed attempt removes the `.part` file, so the next
+ * attempt starts clean and a truncated file can never be mistaken for a
+ * finished one.
  */
 export async function downloadOnce(
   url: string,
   dest: string,
   timeoutMs: number = DOWNLOAD_TIMEOUT_MS,
 ): Promise<boolean> {
+  // The probe only decides whether the local file may be skipped. An
+  // unreachable server never authorises a skip.
   const probe = await probeRemoteSize(url);
-  const attempt = await fetchToPart(url, dest, timeoutMs);
-  if (!attempt.ok) {
-    rmSync(`${dest}.part`, { force: true });
-    return false;
+  const decision = decideSkip(dest, probe);
+  if (decision.kind === 'verified') return true;
+  if (decision.kind === 'unverified') {
+    console.warn(
+      `[download] WARN ${basename(dest)}: the server answered but sent no Content-Length, so the ` +
+        `local ${decision.localSize} bytes cannot be verified — skipping`,
+    );
+    return true;
   }
-  const promoted = promote(`${dest}.part`, dest, probe.size);
-  return promoted.ok;
+
+  const outcome = await downloadUrl(url, dest, timeoutMs);
+  return outcome.ok;
 }
 
 /**
  * Fetch one font source into the staging directory.
  *
  * The rules:
- *   - the local file matches the remote Content-Length => SKIP;
+ *   - the local file matches the size the server declared => SKIP;
  *   - the local file exists but is a different size => it is a truncated
  *     leftover, so it is downloaded again (REDO);
- *   - the server sends no Content-Length and a local file exists => SKIP,
- *     with a warning, because the size cannot be checked;
- *   - otherwise every URL is tried up to MAX_ATTEMPTS_PER_URL times.
+ *   - the server answered but declared no size and a local file exists
+ *     => SKIP, with a warning that says exactly that;
+ *   - no server answered at all => the local file is NOT accepted; the
+ *     download is attempted anyway (a GET may succeed where a HEAD was
+ *     reset), and a failure says the server was unreachable.
  */
 export async function downloadFont(
   entry: FontEntry,
+  targetDir: string = STAGING_DIR,
 ): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number; expected?: number; reason?: string }> {
-  const dest = resolve(STAGING_DIR, entry.filename);
+  const dest = resolve(targetDir, entry.filename);
 
-  // Probe every candidate URL for its advertised size. The probes are
+  // Probe every candidate URL for its declared size. The probes are
   // sequential on purpose: parallel connections to raw.githubusercontent.com
   // are reset often enough to matter.
   const probes = new Map<string, SizeProbe>();
@@ -347,55 +531,71 @@ export async function downloadFont(
     probes.set(url, await probeRemoteSize(url));
   }
 
-  const primary = entry.urls.find((url) => probes.get(url)?.size !== null && probes.get(url)?.size !== undefined);
-  const expected = primary ? (probes.get(primary)?.size ?? null) : null;
+  // The aggregate of what the candidates told us: the declared size of
+  // the first url that answered 2xx with a Content-Length, plus whether
+  // anything answered at all.
+  let expected: number | null = null;
+  let anyAnswered = false;
+  let anyOk = false;
+  let answeredStatus: number | null = null;
+  for (const url of entry.urls) {
+    const probe = probes.get(url);
+    if (!probe) continue;
+    if (probe.reachable) anyAnswered = true;
+    if (probe.ok) {
+      anyOk = true;
+      if (expected === null && probe.size !== null) expected = probe.size;
+    } else if (probe.reachable && answeredStatus === null) {
+      answeredStatus = probe.status;
+    }
+  }
 
-  const localSize = fileSize(dest);
-  if (localSize > 0) {
-    if (expected === null) {
-      console.warn(
-        `[download] WARN ${entry.filename}: the server sent no Content-Length, so the local ` +
-          `${localSize} bytes cannot be verified — skipping`,
-      );
-      return { status: 'skip', size: localSize };
-    }
-    if (localSize === expected) {
-      return { status: 'skip', size: localSize, expected };
-    }
-    console.log(
-      `[download] REDO ${entry.filename}: local ${localSize} bytes != remote ${expected} bytes ` +
-        `(truncated leftover) — downloading again`,
+  const aggregate: SizeProbe = {
+    size: expected,
+    reachable: anyAnswered,
+    ok: anyOk,
+    status: answeredStatus,
+  };
+
+  const decision = decideSkip(dest, aggregate);
+  if (decision.kind === 'verified') {
+    return { status: 'skip', size: decision.localSize, expected: decision.expected };
+  }
+  if (decision.kind === 'unverified') {
+    console.warn(
+      `[download] WARN ${entry.filename}: the server answered but sent no Content-Length, so the ` +
+        `local ${decision.localSize} bytes cannot be verified — skipping`,
     );
+    return { status: 'skip', size: decision.localSize };
+  }
+  if (decision.localSize > 0) {
+    console.log(`[download] REDO ${entry.filename}: ${decision.why} — downloading again`);
   }
 
   let reason = 'no attempt was made';
   for (const url of entry.urls) {
-    const urlExpected = probes.get(url)?.size ?? null;
-    for (let attempt = 1; attempt <= MAX_ATTEMPTS_PER_URL; attempt++) {
-      const result = await fetchToPart(url, dest, DOWNLOAD_TIMEOUT_MS);
-      if (result.ok) {
-        const promoted = promote(`${dest}.part`, dest, urlExpected);
-        if (promoted.ok) {
-          return { status: 'ok', size: result.bytes, expected: urlExpected ?? undefined };
-        }
-        reason = promoted.reason ?? 'unknown error';
-      } else {
-        rmSync(`${dest}.part`, { force: true });
-        reason = result.reason ?? 'unknown error';
-      }
-      if (attempt < MAX_ATTEMPTS_PER_URL) {
-        await delay(RETRY_DELAY_MS);
-      }
+    const outcome = await downloadUrl(url, dest, DOWNLOAD_TIMEOUT_MS);
+    if (outcome.ok) {
+      return { status: 'ok', size: outcome.bytes, expected: outcome.expected ?? undefined };
     }
+    reason = outcome.reason ?? 'unknown error';
   }
-  return { status: 'fail', expected: expected ?? undefined, reason };
+
+  const unreachable = !anyAnswered;
+  return {
+    status: 'fail',
+    expected: expected ?? undefined,
+    reason: unreachable ? `unreachable: ${reason}` : reason,
+  };
 }
 
-/** The remedy printed when a file could not be fetched. */
-const REMEDY = `[download] 1 file(s) failed — retry with:
+/** The remedy printed when files could not be fetched. */
+function remedy(failed: number): string {
+  return `[download] ${failed} file(s) failed — retry with:
     npm run fonts:download-web
 If a download keeps stalling, fetch it by hand (the URLs are printed above)
 and drop it into scripts/fonts/staging/web/ with the exact file name.`;
+}
 
 async function main() {
   mkdirSync(STAGING_DIR, { recursive: true });
@@ -422,8 +622,12 @@ async function main() {
 
   console.log('');
   if (failed > 0) {
-    console.error(REMEDY);
-    process.exit(1);
+    console.error(remedy(failed));
+    // Set the code and return instead of calling process.exit(): on
+    // Windows a process.exit() right after a write to a pipe can drop the
+    // text that is still sitting in the buffer.
+    process.exitCode = 1;
+    return;
   }
   console.log('[download] done — every source is present and its size matches the remote file');
 }
@@ -435,6 +639,6 @@ const isMain =
 if (isMain) {
   main().catch((error) => {
     console.error('[download] unexpected error:', error);
-    process.exit(1);
+    process.exitCode = 1;
   });
 }

@@ -64,5 +64,23 @@ export declare function readWeightAxis(buffer: Buffer): WeightAxis | null;
 /** Is fontTools installed? */
 export declare function probeFontTools(): boolean;
 
+/**
+ * The outcome of the fontTools probe.
+ *
+ * `moduleMissing` separates "the package is not installed" from "the
+ * package ran and failed" — the two need different remedies.
+ */
+export interface FontToolsProbe {
+  /** Did the probe succeed? */
+  ok: boolean;
+  /** Did the interpreter fail because fontTools is not installed? */
+  moduleMissing: boolean;
+  /** A one line summary of what happened. */
+  detail: string;
+}
+
+/** Run the fontTools probe and describe its outcome. */
+export declare function describeFontTools(): FontToolsProbe;
+
 /** Clip one variable font and verify the result. */
 export declare function instanceOne(target: InstancerTarget): Promise<InstanceResult>;

@@ -115,6 +115,34 @@ function fileSize(path) {
 }
 
 /**
+ * The outcome of the fontTools probe.
+ *
+ * `moduleMissing` separates the two ways the probe can fail. Telling an
+ * operator to install a package that is already installed sends them
+ * down the wrong path, so the "the module is not there" and "the module
+ * ran and failed" cases have to be told apart.
+ */
+export function describeFontTools() {
+  try {
+    execFileSync(PYTHON_BIN, ['-I', '-m', 'fontTools.varLib.instancer', '--help'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    return { ok: true, moduleMissing: false, detail: 'fontTools.varLib.instancer answered --help' };
+  } catch (error) {
+    const stderr = typeof error?.stderr === 'string' ? error.stderr : '';
+    const message = error instanceof Error ? error.message : String(error);
+    const output = `${stderr}\n${message}`;
+    const moduleMissing = /No module named|ModuleNotFoundError/i.test(output);
+    const detail = (stderr.trim() || message.trim() || 'the probe failed without a message')
+      .split(/\r?\n/)
+      .slice(0, 4)
+      .join(' | ');
+    return { ok: false, moduleMissing, detail };
+  }
+}
+
+/**
  * Is fontTools installed?
  *
  * The probe runs the module entry point with `--help` instead of looking
@@ -123,15 +151,7 @@ function fileSize(path) {
  * module is always importable where the package is installed.
  */
 export function probeFontTools() {
-  try {
-    execFileSync(PYTHON_BIN, ['-I', '-m', 'fontTools.varLib.instancer', '--help'], {
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return describeFontTools().ok;
 }
 
 /** The remedy printed when fontTools cannot be found. */
@@ -242,10 +262,25 @@ async function main() {
   console.log(`[instance] staging dir: ${STAGING_DIR}`);
   console.log(`[instance] python: ${PYTHON_BIN}`);
 
-  if (!probeFontTools()) {
-    console.error(FONTTOOLS_REMEDY);
-    process.exit(1);
+  const fontTools = describeFontTools();
+  if (!fontTools.ok) {
+    if (fontTools.moduleMissing) {
+      console.error(FONTTOOLS_REMEDY);
+    } else {
+      // The package IS there, it just did not answer. Saying "install
+      // fonttools" here would send the operator after a package they
+      // already have.
+      console.error(`[instance] fonttools is installed but the probe failed — ${fontTools.detail}`);
+      console.error('    run the probe by hand to see the full error:');
+      console.error(`    ${PYTHON_BIN} -I -m fontTools.varLib.instancer --help`);
+    }
+    // Set the code and return instead of calling process.exit(): on
+    // Windows a process.exit() right after a write to a pipe can drop the
+    // text that is still sitting in the buffer.
+    process.exitCode = 1;
+    return;
   }
+  console.log(`[instance] fonttools: ok (${fontTools.detail})`);
 
   let failed = 0;
   for (const target of INSTANCER_TARGETS) {
@@ -261,7 +296,8 @@ async function main() {
   if (failed > 0) {
     console.error(`[instance] ${failed} file(s) failed — fix the source fonts and retry with:`);
     console.error('    npm run fonts:download-web && npm run fonts:instance-web');
-    process.exit(1);
+    process.exitCode = 1;
+    return;
   }
   console.log('[instance] done — every variable font is pinned to wght 400..700 default 400');
 }
@@ -273,6 +309,6 @@ const isMain =
 if (isMain) {
   main().catch((error) => {
     console.error('[instance] unexpected error:', error);
-    process.exit(1);
+    process.exitCode = 1;
   });
 }
