@@ -1,0 +1,1445 @@
+# 站点性能优化 Wave 2 实现计划
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** 把生产环境的字体载荷从 3.7–5.0 MB/页降到 100–350 KB/页，首屏冷加载从 ~21 s 降到 ~2.5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
+
+**Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字频率分档**自建子集：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **Tier1（前 200 字）/ Tier2（200–800）/ Ext（其余，按 256 码位一块）**，每档是一个**独立的 font-family 名**，靠 CSS fallback 链（而不是 `@font-face` 覆盖顺序）选档，每条 `@font-face` 带**精确 `unicode-range`**，因此浏览器只会下载页面真正命中的那一两个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`，再用仓库已有的 `subset-font` 切分（实测 225 B/字，比 Google 自己的 305–407 B/字还省 26–44 %）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
+
+**Tech Stack:** Node 22 · npm · `subset-font@2.4.0`（已有）· `fontkit@2.0.4`（已有）· Python `fonttools 4.61.1`（构建期，已装）· nginx（Ubuntu/Debian 包）· vitest
+
+**Spec:** `docs/superpowers/specs/2026-10-29-site-optimization-wave2-design.md`（绑定权威；本计划是它的论证）
+
+---
+
+## Global Constraints
+
+以下每一条都适用于**所有**任务：
+
+- **G1 语言**：给用户的说明用中文；代码标识符、commit message、UI 文案用英文。
+- **G2 commit 格式**：subject 结尾带 `[YYYY-MM-DD HH.MM]`（例：`feat(fonts): ... [2026-10-29 14.30]`），正文末尾加 `Co-Authored-By: Claude Code <noreply@anthropic.com>`。
+- **G3 包管理**：项目用 **npm**（不是 pnpm）。装包用 `npm install --legacy-peer-deps`。**不引入任何新的运行时依赖**——字体切分工具一律是构建期脚本。
+- **G4 git add**：只允许**显式路径** `git add <path>...`；禁止 `-A`、`.`、以及不带路径的 `-u`。
+- **G5 不得提交**：`Up/`（gitignored 快照）、任何 `.env`、`data/sutras/manifest.json`（**并发会话正在改它**，永远不要 stage 它）。
+- **G6 不 push**：除非用户明确授权，否则不 `git push`。本轮全部成果留在本地分支。
+- **G7 分支**：实现前先切到 `perf/webfont-wave2-2026-10-29`（从 `main` 切出），不要在 `main` 上直接改。
+- **G8 build**：`npm run build` 只在 `D:/Temp/pinyin-build-check` 里跑，且先 `rm -rf .next`；**端口 4444 被占用时绝不 build**。
+- **G9 字体观感不变**：三款字体、字形、字重**全部保持**。`font-display: swap` 必须保留。禁止换字体、禁止改变字形。
+- **G10 零缺字**：站内能渲染的汉字，一个都不能因为字体改造而落到豆腐块。校验脚本必须断言这一点。
+- **G11 spec 是权威**：spec 与本计划冲突时以 spec 为准；spec 自身内部矛盾（见下方「裁决记录」）按下方裁决执行，并把裁决写进 ledger。
+- **G12 错误处理**：禁止空 `catch`、禁止 `TODO`、禁止省略号。所有脚本失败必须**非零退出**并给出可执行的补救提示。
+
+### 裁决记录（spec 内部矛盾，按 G11 裁决）
+
+| # | 矛盾 | 裁决 | 理由 |
+|---|---|---|---|
+| R1 | spec §4 标题把「服务器 TCP 调优」叫 W2-3、「CDN」叫 W2-4；spec §5 任务表把「预压缩脚本」叫 W2-3、「服务器调优」叫 W2-4 | 以 **spec §5 任务表**为准（它是明确的交付物分解）：Task 6=W2-2 nginx、Task 7=W2-3 预压缩、Task 8=W2-4 服务器调优、Task 9=W2-5 性能基线 | §5 是「任务分解」章节，粒度更细且逐条给了交付物 |
+| R2 | spec §4.1.4 说 kai 的字符集是「7 + 2 + 3 ≈ 2 000 字」 | **kai 字符集 = 源码字面量 + 故事正文 + 古籍/经文标题**，不含字典释义/诗词全文/古籍全文 | 实测：7+2+3 的真实并集是 ~17 000 字（不是 2 000），会让 kai 的 Ext 块变成 64 块 ×2 字重 ≈ 4 MB。kai 是装饰性字体，罕见字交给系统楷体（`Kaiti SC`/`KaiTi`/`STKaiti`）兜底，观感一致且不产生豆腐块 |
+| R3 | spec §3.6 说「楷体可以只发布 Regular 一个字面」 | **kai 同时发布 400 与 700** | 全站有 3 处 `font-kai font-bold`（`app/ancient/page.tsx:50`、`app/ancient/[slug]/page.tsx:101`、`app/stories/StoryClient.tsx:117`），最后一处是 `text-9xl` 的故事大字——合成加粗在 9xl 上非常难看。Bold 只在真正渲染粗体楷体时才下载 |
+| R4 | spec §4.1.2 给出 fallback 链但没说 `unicode-range` 怎么用 | **每一条 `@font-face`（含 Tier1/Tier2）都带精确 `unicode-range`** | 浏览器对同一 family 的多个 face 会**逐个下载探测**直到找到含该字的字体。Ext 有几十个 face，没有 `unicode-range` 会把整族全下下来。Tier1/Tier2 带上 `unicode-range` 后，一页只命中它需要的档，跨档零浪费 |
+| R5 | spec §3.5 说 sans 需要 16 772 字、serif 20 616 字 | **sans 字符集 = 全部语料 + 源码；serif 字符集 = sans 的全部 + 经文 + 古籍**（即 serif ⊇ sans） | 正文（sans）渲染一切内容，serif 只渲染字典/故事/经文/古籍正文。宁可多包含，不可漏字；多出来的成本由 Ext 分块摊薄 |
+| R6 | spec §4.2.1 说「有 brotli 就启用」 | **主配置里 brotli 保持注释**，另出一个 `deploy/nginx-brotli.conf` 片段文件，服务器上 `nginx -V \| grep -o brotli` 有输出才 `include` | nginx 没有条件编译。在没装 brotli 模块的机器上直接解注释会让 `nginx -t` 失败、线上 nginx 起不来。片段文件让「探测→启用」成为一个可执行的两步动作 |
+
+---
+
+## Review Focus
+
+spec 是愿景文档：它说了系统**必须**做到什么，但没穷举每一种输入。下面 5 条是 spec 隐含、却没有被任何任务的测试覆盖、且最可能咬到真实用户的地方。每条后面标注了把它钉死的测试归属。
+
+1. **字符集漏了一个站内会渲染的字** → 该字走完整条 fallback 链落到系统字体，整页出现两种字体混排；没装 CJK 字体的机器上直接是豆腐块。
+   → 归属 Task 1（`webfont-charset.test.ts`：集合并集断言）+ Task 4（`verify-webfont-subsets.mjs`：逐档 cmap 覆盖断言）。
+
+2. **登录态页面被 nginx 微缓存喂给了匿名用户** → 把 A 用户的账号页返回给了 B 用户。这是本轮唯一的高危安全项。
+   → 归属 Task 6（`nginx-config.test.ts`：断言 `proxy_cache_bypass $cookie_auth_token;`、`proxy_cache_valid 200 10s;`、`proxy_ignore_headers Cache-Control Set-Cookie;` 三行同时存在，且 TTL ≤ 10 s）。
+
+3. **浏览器还拿着旧的 `/font/fonts-*.css`**（nginx 对 `/font/` 发 `immutable` + 1 年）→ 站点继续按旧的 432 条 `@font-face` 下载 3.8 MB 字体，优化完全没生效，而且没有任何报错。
+   → 归属 Task 5（`fonts-css.test.ts`：断言 manifest 的 `version` 是 12 位 hex、且与三份样式表内容的哈希一致；`lib/font-css.ts` 的 `?v=` 必须带上它）。
+
+4. **同一 family 内两条 `@font-face` 的 `unicode-range` 重叠** → 浏览器挑中错误的文件，字形缺失或渲染成豆腐块，而且只在特定页面复现。
+   → 归属 Task 4（断言每族三档两两不相交、并集等于该族字符集）。
+
+5. **Tier1 的 200 字已经盖不住首页** → 首页要额外下载 Tier2，白白多拉 135 KB，性能目标（`/` ≤ 250 KB）失守。
+   → 归属 Task 4（按 spec §3.2 的页面表逐页算下载字节并断言预算）。
+
+---
+
+## 依赖图
+
+```
+Task 1 (charset)  ──►  Task 3 (subset)  ──►  Task 4 (verify)  ──►  Task 5 (接入应用)
+        ▲                  ▲
+        │                  │
+Task 2 (下载+裁轴)  ───────┘
+
+Task 6 (nginx)   独立
+Task 7 (预压缩)   独立（Task 2 之后跑效果最好）
+Task 8 (服务器调优) 独立
+Task 9 (性能基线) 独立（Task 5 之后测才有意义）
+```
+
+---
+
+### Task 1: 字体字符集构建器（W2-1a）
+
+**Files:**
+- Create: `scripts/fonts/webfont-charset.mjs`
+- Create: `scripts/fonts/webfont-charset.d.mts`
+- Test: `tests/unit/scripts/webfont-charset.test.ts`
+
+**Interfaces:**
+- Consumes: 无（纯计算 + 读仓库语料）
+- Produces:
+  ```js
+  // scripts/fonts/webfont-charset.mjs
+  export const CJK_RANGES;                    // Array<[number, number]>
+  export function isCjkChar(ch: string): boolean
+  export function scoreCharacters(sources: CharSource[]): ScoredCharset
+  export function planTiers(scored: ScoredCharset, options?: TierOptions): TierPlan
+  export function unicodeRange(chars: string[]): string
+  export function loadFamilyCharsets(options?: CharsetOptions): Record<FamilyName, TierPlan>
+  ```
+  ```ts
+  // scripts/fonts/webfont-charset.d.mts
+  export type FamilyName = 'sans' | 'serif' | 'wenkai';
+  export interface CharSource { id: string; weight: number; chars: Iterable<string>; }
+  export interface ScoredCharset { ordered: string[]; score: Map<string, number>; }
+  export interface ExtBlock { index: number; chars: string[]; }
+  export interface TierPlan { tier1: string[]; tier2: string[]; extBlocks: ExtBlock[]; }
+  export interface TierOptions { tier1Size?: number; tier2Size?: number; extBlockSize?: number; }
+  export interface CharsetOptions extends TierOptions { root?: string; }
+  ```
+  默认值：`tier1Size = 200`、`tier2Size = 600`、`extBlockSize = 256`。
+
+- [ ] **Step 1: 写失败测试**
+
+创建 `tests/unit/scripts/webfont-charset.test.ts`：
+
+```ts
+import { describe, it, expect } from 'vitest';
+import {
+  isCjkChar,
+  scoreCharacters,
+  planTiers,
+  unicodeRange,
+  loadFamilyCharsets,
+} from '../../../scripts/fonts/webfont-charset.mjs';
+
+describe('isCjkChar', () => {
+  it('accepts CJK ideographs and CJK punctuation', () => {
+    expect(isCjkChar('一')).toBe(true);   // U+4E00
+    expect(isCjkChar('、')).toBe(true);   // U+3001
+    expect(isCjkChar('！')).toBe(true);   // U+FF01
+    expect(isCjkChar('永')).toBe(true);   // U+6C38
+  });
+
+  it('rejects latin, digits, punctuation and accented letters', () => {
+    for (const ch of ['a', '1', ' ', '·', 'é', '—', '“']) {
+      expect(isCjkChar(ch)).toBe(false);
+    }
+  });
+});
+
+describe('scoreCharacters', () => {
+  it('adds the weighted occurrences of every source', () => {
+    const scored = scoreCharacters([
+      { id: 'corpus', weight: 1, chars: ['永', '永', '永'] },
+      { id: 'src', weight: 1000, chars: ['永'] },
+    ]);
+    expect(scored.score.get('永')).toBe(1003);
+  });
+
+  it('orders by descending score, then by ascending code point', () => {
+    const scored = scoreCharacters([
+      { id: 'corpus', weight: 1, chars: ['永', '一'] },
+      { id: 'src', weight: 1000, chars: ['丁'] },
+    ]);
+    expect(scored.ordered[0]).toBe('丁');
+    expect(scored.ordered.slice(1).sort()).toEqual(['一', '永']);
+  });
+
+  it('keeps only CJK characters', () => {
+    const scored = scoreCharacters([{ id: 'x', weight: 1, chars: ['a', '永'] }]);
+    expect(scored.ordered).toEqual(['永']);
+  });
+});
+
+describe('planTiers', () => {
+  const chars = ['一', '丁', '丂', '七', '万', '丈']; // U+4E00..U+4E08
+  const scored = scoreCharacters([
+    { id: 'x', weight: 1, chars: chars.slice().reverse() },
+  ]);
+
+  it('splits into tier1, tier2 and ext blocks', () => {
+    const plan = planTiers(scored, { tier1Size: 2, tier2Size: 2, extBlockSize: 2 });
+    expect(plan.tier1).toHaveLength(2);
+    expect(plan.tier2).toHaveLength(2);
+    expect(plan.extBlocks).toHaveLength(2);
+    expect(plan.extBlocks[0].chars).toHaveLength(2);
+  });
+
+  it('puts every character in exactly one tier', () => {
+    const plan = planTiers(scored, { tier1Size: 2, tier2Size: 2, extBlockSize: 2 });
+    const all = [...plan.tier1, ...plan.tier2, ...plan.extBlocks.flatMap((b) => b.chars)];
+    expect(new Set(all).size).toBe(all.length);
+    expect([...all].sort()).toEqual([...chars].sort());
+  });
+
+  it('defaults to 200 / 600 / 256', () => {
+    const big = scoreCharacters([
+      { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
+    ]);
+    const plan = planTiers(big);
+    expect(plan.tier1).toHaveLength(200);
+    expect(plan.tier2).toHaveLength(600);
+    expect(plan.extBlocks.length).toBeGreaterThan(0);
+    expect(plan.extBlocks.every((b) => b.chars.length <= 256)).toBe(true);
+  });
+
+  it('makes one ext block when the remainder fits in one', () => {
+    const plan = planTiers(scored, { tier1Size: 4, tier2Size: 0, extBlockSize: 256 });
+    expect(plan.extBlocks).toHaveLength(1);
+  });
+});
+
+describe('unicodeRange', () => {
+  it('merges consecutive code points into one range', () => {
+    expect(unicodeRange(['一', '丁'])).toBe('U+4E00-4E01');
+  });
+
+  it('keeps a gap as two ranges', () => {
+    expect(unicodeRange(['一', '七'])).toBe('U+4E00, U+4E03');
+  });
+
+  it('emits a bare code point for a single character', () => {
+    expect(unicodeRange(['一'])).toBe('U+4E00');
+  });
+
+  it('returns an empty string for no characters', () => {
+    expect(unicodeRange([])).toBe('');
+  });
+});
+
+describe('loadFamilyCharsets', () => {
+  it(
+    'builds nested charsets: wenkai ⊂ sans ⊂ serif',
+    () => {
+      const plans = loadFamilyCharsets();
+      const size = (p: { tier1: string[]; tier2: string[]; extBlocks: { chars: string[] }[] }) =>
+        p.tier1.length + p.tier2.length + p.extBlocks.flatMap((b) => b.chars).length;
+      expect(size(plans.wenkai)).toBeGreaterThan(0);
+      expect(size(plans.wenkai)).toBeLessThan(size(plans.sans));
+      expect(size(plans.sans)).toBeLessThanOrEqual(size(plans.serif));
+    },
+    180_000,
+  );
+
+  it('covers the UI literals and the corpus characters', () => {
+    const plans = loadFamilyCharsets();
+    const sans = new Set(
+      [...plans.sans.tier1, ...plans.sans.tier2, ...plans.sans.extBlocks.flatMap((b) => b.chars)],
+    );
+    for (const ch of ['字', '韵', '一', '永', '故', '唐']) {
+      expect(sans.has(ch)).toBe(true);
+    }
+  }, 180_000);
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/scripts/webfont-charset.test.ts`
+Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-charset.mjs"`。
+
+- [ ] **Step 3: 实现 `scripts/fonts/webfont-charset.mjs`**
+
+要求：
+
+1. `CJK_RANGES` 覆盖：U+2E80–U+2EFF（康熙部首）、U+3000–U+303F（中日韩符号和标点）、U+3400–U+4DBF（扩展 A）、U+4E00–U+9FFF（基本区）、U+F900–U+FAFF（兼容汉字）、U+FE30–U+FE4F（兼容形式）、U+FF00–U+FFEF（半角及全角）、U+20000–U+2FA1F 与 U+30000–U+3134F（扩展 B 及以后）。`isCjkChar` 用这些区间的并集判定，单个 code point 判断，不能用 `codePointAt(0) > 0x2000` 这种粗略规则（会把日文假名、希腊字母等也算进来）。
+
+2. `scoreCharacters(sources)`：对每个 source 的每个字符，若 `isCjkChar` 则 `score += source.weight`。返回 `ordered`（先按分数降序，同分按 code point 升序）与 `score`（Map）。
+
+3. `planTiers(scored, options)`：
+   - `tier1 = ordered.slice(0, tier1Size)`
+   - `tier2 = ordered.slice(tier1Size, tier1Size + tier2Size)`
+   - 剩余字符按 code point 升序排列后，每 `extBlockSize` 个切一块，`ExtBlock.index` 从 1 开始。
+
+4. `unicodeRange(chars)`：把 chars 的 code point 升序排序，合并连续区间，输出 `U+XXXX` 或 `U+XXXX-YYYY`（大写 hex，不足 4 位补 0），多项用 `, ` 连接。
+
+5. `loadFamilyCharsets(options)` 读磁盘构建三族字符集，**读源按下面这张表**（`options.root` 默认仓库根）：
+
+   | 族 | 语料来源 | 权重 |
+   |---|---|---|
+   | `wenkai` | 源码字面量（`app/` `components/` `lib/` 的 `.ts`/`.tsx`/`.mjs`/`.js`）× 1000、`data/stories/*.json` 全部字符串、`data/classics/*.json` 的 `title` 字段、`data/sutras/*.json` 的 `title` 字段 | 见左 |
+   | `sans` | `wenkai` 的全部 + `data/content/*.json` 全部字符串 + `data/poems/*.json` 全部字符串 + `data/rare-chars/*.json` 全部字符串 + `scripts/fonts/gb2312-7000.txt` + `data/general-standard-chinese-characters.json` | 语料 × 1，源码 × 1000 |
+   | `serif` | `sans` 的全部 + `data/sutras/*.json` 全部字符串 + `data/classics/*.json` 全部字符串 | 同上 |
+
+   - `gb2312-7000.txt` 每行一个字，按行读；`data/general-standard-chinese-characters.json` 是一个 JSON 数组/对象，**遍历它的全部字符串值**取字（先 `JSON.stringify` 再逐字符也可以，只要不漏）。
+   - 源码字面量扫描：递归遍历 `app/`、`components/`、`lib/`，跳过 `node_modules`，只读 `.ts`/`.tsx`/`.mjs`/`.js`，逐字符取 CJK。
+   - 语料目录不存在时**跳过并打印一行说明**，不要抛错（`data/rare-chars` 可能不存在）。
+   - 单个语料文件 JSON 解析失败时跳过该文件并计数，不要让整个构建炸掉；最后打印一行 `skipped N malformed file(s)`。
+   - 函数末尾 `console.log` 每族的字符总数与三档大小，格式：
+     `charset sans: 16772 chars (tier1 200 / tier2 600 / ext 63 blocks)`。
+
+6. `scripts/fonts/webfont-charset.d.mts` 按上面的 Interfaces 段逐字写声明（参考已有的 `scripts/fonts/build-fonts-css.d.mts` 风格）。
+
+- [ ] **Step 4: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/scripts/webfont-charset.test.ts`
+Expected: PASS，全部 12 个用例绿。
+
+- [ ] **Step 5: 提交**
+
+```bash
+git add scripts/fonts/webfont-charset.mjs scripts/fonts/webfont-charset.d.mts tests/unit/scripts/webfont-charset.test.ts
+git commit -m "feat(fonts): add the webfont charset and tier planner [2026-10-29 HH.MM]"
+```
+
+---
+
+### Task 2: 源字体下载 + 可变轴裁剪（W2-1b）
+
+**Files:**
+- Create: `scripts/fonts/download-webfont-sources.ts`
+- Create: `scripts/fonts/instance-webfont-axis.mjs`
+- Test: `tests/unit/scripts/instance-webfont-axis.test.ts`
+- Modify: `package.json`（加两个 script）
+
+**Interfaces:**
+- Consumes: 无
+- Produces:
+  ```ts
+  // scripts/fonts/download-webfont-sources.ts
+  export interface FontEntry { filename: string; urls: string[]; label: string; }
+  export const SOURCES: FontEntry[];
+  export const STAGING_DIR: string;                     // <repo>/scripts/fonts/staging/web
+  export async function downloadOnce(url: string, dest: string, timeoutMs?: number): Promise<boolean>;
+  export async function downloadFont(entry: FontEntry): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number }>;
+  ```
+  ```js
+  // scripts/fonts/instance-webfont-axis.mjs
+  export const INSTANCER_TARGETS: Array<{ src: string; out: string }>;
+  export function instancerArgs(src: string, out: string): string[];
+  export async function instanceOne(target): Promise<{ status: 'ok' | 'skip' | 'fail'; out?: string }>;
+  ```
+  下载器落到 `scripts/fonts/staging/web/`（已 gitignored）的文件名固定为：
+  `NotoSansSC-wght.ttf`、`NotoSerifSC-wght.ttf`、`LXGWWenKaiTC-Regular.ttf`、`LXGWWenKaiTC-Bold.ttf`，
+  另外三份许可证：`NotoSansSC-OFL.txt`、`NotoSerifSC-OFL.txt`、`LXGWWenKaiTC-OFL.txt`。
+
+- [ ] **Step 1: 写失败测试**
+
+创建 `tests/unit/scripts/instance-webfont-axis.test.ts`：
+
+```ts
+import { describe, it, expect } from 'vitest';
+import { INSTANCER_TARGETS, instancerArgs } from '../../../scripts/fonts/instance-webfont-axis.mjs';
+import { SOURCES } from '../../../scripts/fonts/download-webfont-sources.ts';
+
+describe('download-webfont-sources', () => {
+  it('downloads the four source fonts plus their licences', () => {
+    expect(SOURCES.map((s) => s.filename).sort()).toEqual(
+      [
+        'LXGWWenKaiTC-Bold.ttf',
+        'LXGWWenKaiTC-OFL.txt',
+        'LXGWWenKaiTC-Regular.ttf',
+        'NotoSansSC-OFL.txt',
+        'NotoSansSC-wght.ttf',
+        'NotoSerifSC-OFL.txt',
+        'NotoSerifSC-wght.ttf',
+      ].sort(),
+    );
+  });
+
+  it('points every source at an https github raw url', () => {
+    for (const source of SOURCES) {
+      expect(source.urls.length).toBeGreaterThan(0);
+      for (const url of source.urls) {
+        expect(url.startsWith('https://raw.githubusercontent.com/')).toBe(true);
+      }
+    }
+  });
+});
+
+describe('instance-webfont-axis', () => {
+  it('pins the wght axis to the four weights the site uses', () => {
+    expect(instancerArgs('src.ttf', 'out.ttf')).toEqual([
+      'varLib.instancer',
+      'src.ttf',
+      'wght=400:700',
+      '--output',
+      'out.ttf',
+      '--no-overlap-flag',
+    ]);
+  });
+
+  it('instances only the two variable fonts', () => {
+    expect(INSTANCER_TARGETS.map((t) => t.src).sort()).toEqual([
+      'NotoSansSC-wght.ttf',
+      'NotoSerifSC-wght.ttf',
+    ]);
+  });
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/scripts/instance-webfont-axis.test.ts`
+Expected: FAIL —— 找不到 `scripts/fonts/instance-webfont-axis.mjs`。
+
+- [ ] **Step 3: 实现下载器 `scripts/fonts/download-webfont-sources.ts`**
+
+照抄 `scripts/fonts/download-hard-pen-fonts.ts` 的骨架（AbortController + 超时 + UA header + 跳过已存在且非空的文件 + 逐条打印 OK/SKIP/FAIL + `process.exit(0)`）。
+
+`SOURCES` 的具体取值（已实测四个 URL 全部返回 206，即可达）：
+
+```ts
+export const SOURCES: FontEntry[] = [
+  {
+    filename: 'NotoSansSC-wght.ttf',
+    label: 'Noto Sans SC variable (wght 100..900)',
+    urls: ['https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/NotoSansSC%5Bwght%5D.ttf'],
+  },
+  {
+    filename: 'NotoSerifSC-wght.ttf',
+    label: 'Noto Serif SC variable (wght 200..900)',
+    urls: ['https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf'],
+  },
+  {
+    filename: 'LXGWWenKaiTC-Regular.ttf',
+    label: 'LXGW WenKai TC Regular',
+    urls: ['https://raw.githubusercontent.com/google/fonts/main/ofl/lxgwwenkaitc/LXGWWenKaiTC-Regular.ttf'],
+  },
+  {
+    filename: 'LXGWWenKaiTC-Bold.ttf',
+    label: 'LXGW WenKai TC Bold',
+    urls: ['https://raw.githubusercontent.com/google/fonts/main/ofl/lxgwwenkaitc/LXGWWenKaiTC-Bold.ttf'],
+  },
+  {
+    filename: 'NotoSansSC-OFL.txt',
+    label: 'Noto Sans SC licence',
+    urls: ['https://raw.githubusercontent.com/google/fonts/main/ofl/notosanssc/OFL.txt'],
+  },
+  {
+    filename: 'NotoSerifSC-OFL.txt',
+    label: 'Noto Serif SC licence',
+    urls: ['https://raw.githubusercontent.com/google/fonts/main/ofl/notoserifsc/OFL.txt'],
+  },
+  {
+    filename: 'LXGWWenKaiTC-OFL.txt',
+    label: 'LXGW WenKai TC licence',
+    urls: ['https://raw.githubusercontent.com/google/fonts/main/ofl/lxgwwenkaitc/OFL.txt'],
+  },
+];
+```
+
+- [ ] **Step 4: 实现裁轴器 `scripts/fonts/instance-webfont-axis.mjs`**
+
+```js
+export const INSTANCER_TARGETS = [
+  { src: 'NotoSansSC-wght.ttf', out: 'NotoSansSC-wght-400-700.ttf' },
+  { src: 'NotoSerifSC-wght.ttf', out: 'NotoSerifSC-wght-400-700.ttf' },
+];
+
+export function instancerArgs(src, out) {
+  return ['varLib.instancer', src, 'wght=400:700', '--output', out, '--no-overlap-flag'];
+}
+```
+
+用 `execFileSync('fonttools', instancerArgs(src, out), { encoding: 'utf8' })` 执行，工作目录设为 staging 目录。
+
+**`fonttools` 缺失时**必须打印可执行的补救提示并以非零码退出：
+
+```
+[instance] fonttools not found — install it with:
+    python -m pip install --upgrade fonttools brotli
+```
+
+- [ ] **Step 5: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/scripts/instance-webfont-axis.test.ts`
+Expected: PASS，2 个 describe / 5 个用例全绿。
+
+- [ ] **Step 6: 加 npm scripts 并实跑一次**
+
+在 `package.json` 的 `"scripts"` 里加（放在现有 `fonts:*` 之后）：
+
+```json
+"fonts:download-web": "tsx scripts/fonts/download-webfont-sources.ts",
+"fonts:instance-web": "node scripts/fonts/instance-webfont-axis.mjs",
+```
+
+Run: `npm run fonts:download-web && npm run fonts:instance-web`
+Expected:
+- 4 个字体 + 3 个许可证打印 `OK` 或 `SKIP`（已存在则 SKIP）；
+- 裁轴打印 `NotoSansSC-wght-400-700.ttf` 与 `NotoSerifSC-wght-400-700.ttf` 的成功行；
+- `ls -la scripts/fonts/staging/web/` 里 4 个 ttf 都非空。
+
+> `scripts/fonts/staging/` 是 gitignored，**不要** `git add` 它。
+
+- [ ] **Step 7: 提交**
+
+```bash
+git add scripts/fonts/download-webfont-sources.ts scripts/fonts/instance-webfont-axis.mjs tests/unit/scripts/instance-webfont-axis.test.ts package.json
+git commit -m "feat(fonts): add the webfont source downloader and axis instancer [2026-10-29 HH.MM]"
+```
+
+---
+
+### Task 3: 字体子集切分器（W2-1c）
+
+**Files:**
+- Create: `scripts/fonts/build-webfont-subsets.mjs`
+- Test: `tests/unit/scripts/webfont-subsets.test.ts`
+- Modify: `package.json`
+
+**Interfaces:**
+- Consumes: Task 1 的 `loadFamilyCharsets()` / `TierPlan` / `unicodeRange()`；Task 2 落在 `scripts/fonts/staging/web/` 的源字体
+- Produces:
+  ```js
+  export const FAMILIES;                 // 见下表
+  export const OUT_ROOT;                 // <repo>/public/font/web
+  export function tierFileNames(family, tier): string[];
+  export function renderFace(spec): string;
+  export function renderStylesheet(family, plan): string;
+  export function manifestVersion(cssByFile): string;
+  export function buildAll(): Promise<BuildReport>;
+  ```
+
+  | key | label（Tier1/2/Ext 的 font-family 名） | css | 目录 | 源字体 | 字重 |
+  |---|---|---|---|---|---|
+  | `sans` | `Noto Sans SC` → `Noto Sans SC 1` / `Noto Sans SC 2` / `Noto Sans SC Ext` | `fonts-sans.css` | `sans` | `NotoSansSC-wght-400-700.ttf` | 变量，单文件 `font-weight: 400 700` |
+  | `serif` | `Noto Serif SC` → `Noto Serif SC 1` / `Noto Serif SC 2` / `Noto Serif SC Ext` | `fonts-serif.css` | `serif` | `NotoSerifSC-wght-400-700.ttf` | 变量，单文件 `font-weight: 400 700` |
+  | `wenkai` | `LXGW WenKai TC` → `LXGW WenKai TC 1` / `LXGW WenKai TC 2` / `LXGW WenKai TC Ext` | `fonts-wenkai.css` | `wenkai` | `LXGWWenKaiTC-Regular.ttf` + `LXGWWenKaiTC-Bold.ttf` | 静态，`400` 与 `700` 两个文件 |
+
+- [ ] **Step 1: 写失败测试**
+
+创建 `tests/unit/scripts/webfont-subsets.test.ts`：
+
+```ts
+import { describe, it, expect } from 'vitest';
+import {
+  FAMILIES,
+  renderStylesheet,
+  tierFileNames,
+  manifestVersion,
+} from '../../../scripts/fonts/build-webfont-subsets.mjs';
+import { loadFamilyCharsets } from '../../../scripts/fonts/webfont-charset.mjs';
+
+const plan = {
+  tier1: ['一', '丁'],
+  tier2: ['七'],
+  extBlocks: [{ index: 1, chars: ['万', '丈'] }],
+};
+
+describe('tierFileNames', () => {
+  it('uses one file per tier for the variable families', () => {
+    const sans = FAMILIES.find((f) => f.key === 'sans')!;
+    expect(tierFileNames(sans, { kind: 'tier1' })).toEqual(['t1.woff2']);
+    expect(tierFileNames(sans, { kind: 'tier2' })).toEqual(['t2.woff2']);
+    expect(tierFileNames(sans, { kind: 'ext', index: 3 })).toEqual(['ext-003.woff2']);
+  });
+
+  it('uses one file per weight for the static kai family', () => {
+    const kai = FAMILIES.find((f) => f.key === 'wenkai')!;
+    expect(tierFileNames(kai, { kind: 'tier1' })).toEqual(['t1-400.woff2', 't1-700.woff2']);
+    expect(tierFileNames(kai, { kind: 'ext', index: 3 })).toEqual([
+      'ext-003-400.woff2',
+      'ext-003-700.woff2',
+    ]);
+  });
+});
+
+describe('renderStylesheet', () => {
+  it('declares one face per tier for a variable family', () => {
+    const sans = FAMILIES.find((f) => f.key === 'sans')!;
+    const css = renderStylesheet(sans, plan);
+    expect(css.match(/@font-face/g)).toHaveLength(3);
+    expect(css).toContain("font-family: 'Noto Sans SC 1'");
+    expect(css).toContain("font-family: 'Noto Sans SC 2'");
+    expect(css).toContain("font-family: 'Noto Sans SC Ext'");
+    expect(css).toContain('font-weight: 400 700');
+  });
+
+  it('declares one face per weight for the static kai family', () => {
+    const kai = FAMILIES.find((f) => f.key === 'wenkai')!;
+    const css = renderStylesheet(kai, plan);
+    expect(css.match(/@font-face/g)).toHaveLength(6);
+    expect(css).toContain('font-weight: 400');
+    expect(css).toContain('font-weight: 700');
+  });
+
+  it('gives every face a unicode-range and font-display swap', () => {
+    const sans = FAMILIES.find((f) => f.key === 'sans')!;
+    const css = renderStylesheet(sans, plan);
+    const faces = css.split('@font-face').slice(1);
+    expect(faces).toHaveLength(3);
+    for (const face of faces) {
+      expect(face).toContain('font-display: swap');
+      expect(face).toMatch(/unicode-range: U\+/);
+    }
+  });
+
+  it('points every face at /font/web/<family>/<file>', () => {
+    const sans = FAMILIES.find((f) => f.key === 'sans')!;
+    const css = renderStylesheet(sans, plan);
+    expect(css).toContain('src: url(/font/web/sans/t1.woff2) format(\'woff2\')');
+    expect(css).toContain('src: url(/font/web/sans/ext-001.woff2) format(\'woff2\')');
+  });
+});
+
+describe('manifestVersion', () => {
+  it('is twelve lowercase hex characters', () => {
+    expect(manifestVersion({ 'fonts-sans.css': 'a' })).toMatch(/^[0-9a-f]{12}$/);
+  });
+
+  it('changes when the stylesheet changes and is stable otherwise', () => {
+    const a = manifestVersion({ 'fonts-sans.css': 'a' });
+    const b = manifestVersion({ 'fonts-sans.css': 'b' });
+    expect(a).not.toBe(b);
+    expect(manifestVersion({ 'fonts-sans.css': 'a' })).toBe(a);
+  });
+});
+
+describe('the planned charsets fit the design budget', () => {
+  it('produces a tier structure for every family', () => {
+    const plans = loadFamilyCharsets();
+    for (const family of FAMILIES) {
+      const p = plans[family.key];
+      expect(p.tier1.length).toBeGreaterThan(0);
+      expect(p.extBlocks.length).toBeGreaterThan(0);
+    }
+  }, 180_000);
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/scripts/webfont-subsets.test.ts`
+Expected: FAIL —— 找不到 `scripts/fonts/build-webfont-subsets.mjs`。
+
+- [ ] **Step 3: 实现 `scripts/fonts/build-webfont-subsets.mjs`**
+
+1. `FAMILIES` 常量按上表写死，含 `key`、`label`、`css`、`dir`、`sources`（变量族一个文件、静态族两个文件）、`weights`（变量族 `['400 700']`，静态族 `['400','700']`）、`variable`（boolean）。
+
+2. `tierFileNames(family, tier)`：
+   - 变量族：`tier1 → ['t1.woff2']`、`tier2 → ['t2.woff2']`、`ext → ['ext-003.woff2']`（index 补 3 位零）。
+   - 静态族：文件名加 `-<weight>` 后缀，权重顺序 400、700。
+
+3. `renderFace(spec)` 输出一个 `@font-face` 块，字段顺序固定：
+   ```
+   @font-face {
+     font-family: '<familyName>';
+     font-style: normal;
+     font-weight: <weight>;
+     font-display: swap;
+     src: url(/font/web/<dir>/<file>) format('woff2');
+     unicode-range: <ranges>;
+   }
+   ```
+   `familyName` 由 `tier.kind` 决定：`tier1 → '<label> 1'`、`tier2 → '<label> 2'`、`ext → '<label> Ext'`。
+
+4. `renderStylesheet(family, plan)`：按 Tier1 → Tier2 → Ext 顺序拼所有 face，前面加一段注释头：
+   ```
+   /* fonts-sans.css — body typeface — --font-han-sans
+    * Generated by scripts/fonts/build-webfont-subsets.mjs. Do not edit by hand. */
+   ```
+
+5. `buildAll()`：
+   - 读 `loadFamilyCharsets()` 得到三族的三档字符。
+   - 读源字体（从 `scripts/fonts/staging/web/`）；**源文件缺失必须报错退出**并提示 `npm run fonts:download-web && npm run fonts:instance-web`。
+   - 用 `subsetFont(buffer, chars, { targetFormat: 'woff2' })` 逐档切分，写到 `public/font/web/<dir>/<file>`（目录先 `mkdir -p`）。
+   - 变量族用同一个源文件切每一档；静态族 400/700 各切一次。
+   - 写 `public/font/fonts-<family>.css`。
+   - 写 `public/font/fonts-manifest.json`：
+     ```json
+     { "version": "<12 hex>", "files": { "wenkai": "/font/fonts-wenkai.css", "sans": "/font/fonts-sans.css", "serif": "/font/fonts-serif.css" } }
+     ```
+     `version` = `manifestVersion(cssByFile)`，其中 `cssByFile` 是三份样式表内容的 map（键用文件名）。**必须保持 `files` 的三个键名不变**——`lib/font-css.ts` 依赖它。
+   - 把三份 OFL 许可证复制到 `public/font/web/OFL-<family>.txt`。
+   - 打印每族每档的字符数与产物字节数，最后一行打印总量。
+   - **不删除**旧的 Google 子集目录（删除是 Task 5 的事，避免一步做两件事）。
+
+6. `manifestVersion(cssByFile)`：把 map 的内容按键排序后依次喂进 `createHash('sha256')`，取 hex 前 12 位。
+
+- [ ] **Step 4: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/scripts/webfont-subsets.test.ts`
+Expected: PASS。
+
+- [ ] **Step 5: 加 npm script 并实跑一次构建**
+
+在 `package.json` 加：
+```json
+"fonts:subset-web": "node scripts/fonts/build-webfont-subsets.mjs",
+```
+
+Run: `npm run fonts:subset-web`
+Expected: 打印三族共 **约 165 个** woff2 产物（sans 2 + Ext 块数、serif 2 + Ext 块数、wenkai 4 + Ext 块数 ×2），
+`sans/t1.woff2` ≤ 100 KB，`sans/t2.woff2` ≤ 260 KB，`public/font/fonts-manifest.json` 的 `version` 是 12 位 hex。
+
+> 这一步会跑几分钟（切 165 次）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
+
+- [ ] **Step 6: 提交**
+
+```bash
+git add scripts/fonts/build-webfont-subsets.mjs tests/unit/scripts/webfont-subsets.test.ts package.json
+git commit -m "feat(fonts): add the frequency-tiered webfont subsetter [2026-10-29 HH.MM]"
+```
+
+> 产物 `public/font/web/**` 与三份样式表由 **Task 5** 一起提交（那时才做替换与删除，避免中间态破坏线上构建）。
+
+---
+
+### Task 4: 子集校验器（W2-1d）
+
+**Files:**
+- Create: `scripts/fonts/verify-webfont-subsets.mjs`
+- Test: `tests/unit/scripts/verify-webfont-subsets.test.ts`
+- Modify: `package.json`
+
+**Interfaces:**
+- Consumes: Task 1 的 `loadFamilyCharsets()`；Task 3 产出的 `public/font/web/**`、`public/font/fonts-*.css`、`public/font/fonts-manifest.json`
+- Produces:
+  ```js
+  export const LIMITS = {
+    tier1Bytes: 100 * 1024,
+    tier2Bytes: 260 * 1024,
+    extBlockBytes: 60 * 1024,
+    cssBytes: 60 * 1024,
+    maxFacesPerCss: 200,
+  };
+  export async function verifyFamily(family): Promise<{ ok: boolean; errors: string[]; stats: FamilyStats }>;
+  export async function verifyAll(): Promise<{ ok: boolean; errors: string[]; stats: FamilyStats[] }>;
+  ```
+  CLI：`node scripts/fonts/verify-webfont-subsets.mjs` → 全部通过 `exit 0`，任一失败 `exit 1`。
+
+- [ ] **Step 1: 写失败测试**
+
+创建 `tests/unit/scripts/verify-webfont-subsets.test.ts`：
+
+```ts
+import { describe, it, expect } from 'vitest';
+import { verifyAll, LIMITS } from '../../../scripts/fonts/verify-webfont-subsets.mjs';
+
+describe('verify-webfont-subsets', () => {
+  it(
+    'passes on the committed font artifacts',
+    async () => {
+      const result = await verifyAll();
+      if (!result.ok) {
+        console.error(result.errors.join('\n'));
+      }
+      expect(result.errors).toEqual([]);
+      expect(result.ok).toBe(true);
+    },
+    300_000,
+  );
+
+  it('publishes the size limits from the design', () => {
+    expect(LIMITS.tier1Bytes).toBe(100 * 1024);
+    expect(LIMITS.tier2Bytes).toBe(260 * 1024);
+    expect(LIMITS.extBlockBytes).toBe(60 * 1024);
+    expect(LIMITS.cssBytes).toBe(60 * 1024);
+  });
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
+Expected: FAIL —— 找不到模块。
+
+- [ ] **Step 3: 实现 `scripts/fonts/verify-webfont-subsets.mjs`**
+
+校验项（**每一项失败都要收集进 `errors`，最后统一退出 1**，不要遇到第一个错就抛）：
+
+1. **覆盖完整**：对每一族，用 Task 1 的字符集与样式表里的 `unicode-range` 求并集，断言并集 == 该族字符集（不多不少）。
+2. **档位不相交**：同一族的三档 `unicode-range` 两两不相交。
+3. **cmap 正确**：用 `fontkit.create(buffer)` + `font.hasGlyphForCodePoint(cp)` 打开每个产物，断言该档声明的每个字符都能渲染；并断言产物**不包含**该档之外的字符。
+4. **文件大小**：Tier1 ≤ `LIMITS.tier1Bytes`，Tier2 ≤ `LIMITS.tier2Bytes`，每个 Ext 块 ≤ `LIMITS.extBlockBytes`。
+5. **样式表**：每份 `fonts-<family>.css` ≤ `LIMITS.cssBytes`，`@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`。
+6. **每条 face 的 `font-display` 必须是 `swap`**，`src` 指向的文件必须存在。
+7. **manifest**：`version` 是 12 位 hex，且等于三份样式表内容按文件名排序后的 sha256 前 12 位；`files` 的键恰为 `{sans, serif, wenkai}`。
+8. **页面预算**（对应 Review Focus 第 5 条）：按 spec §3.2 的页面表，对 `/`、`/dictionary`、`/poetry`、`/stories` 四个页面，用各族的 Tier1/Tier2/Ext 规则算出「浏览器会下载哪些文件」，累加字节，断言 `/` ≤ 250 KB、`/dictionary` ≤ 350 KB、`/poetry` ≤ 250 KB、`/stories` ≤ 400 KB。
+   计算规则：一个字符落在哪一档，就下载那一档的文件；落在 Ext 的还要下载它所在的那一块 Ext 文件。同一档只算一次。
+
+CLI 输出格式：
+
+```
+[verify] sans   : 16772 chars, 66 files, 1841 KB   OK
+[verify] serif  : 20616 chars, 81 files, 2963 KB   OK
+[verify] wenkai :  2480 chars, 18 files,  742 KB   OK
+[verify] page budgets: / 163 KB, /dictionary 283 KB, /poetry 103 KB, /stories 380 KB  OK
+[verify] 0 error(s)
+```
+
+字体文件用 `fontkit` 打开；`fontkit.create` 对 woff2 的支持在本仓库已被 `scripts/fonts/verify-brush-subsets.mjs` 验证过。
+
+- [ ] **Step 4: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
+Expected: PASS。若页面预算超标，按 spec §8 的裁决上调 Tier1 字数（200 → 300/400）后重跑 Task 3 的构建，再回来跑本测试；**不要**去改预算数字。
+
+- [ ] **Step 5: 加 npm script**
+
+```json
+"fonts:verify-webfont": "node scripts/fonts/verify-webfont-subsets.mjs",
+```
+
+Run: `npm run fonts:verify-webfont`
+Expected: `0 error(s)`，退出码 0。
+
+- [ ] **Step 6: 提交**
+
+```bash
+git add scripts/fonts/verify-webfont-subsets.mjs tests/unit/scripts/verify-webfont-subsets.test.ts package.json
+git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
+```
+
+---
+
+### Task 5: 接入应用（W2-1e）
+
+**Files:**
+- Modify: `app/globals.css`（`:root` 块，第 465–470 行）
+- Modify: `lib/font-css.ts`（只改注释，不改行为）
+- Modify: `tests/unit/lib/fonts-css.test.ts`（整体重写）
+- Modify: `tests/unit/lib/middleware-redirect.test.ts`（第 65 行的示例路径）
+- Delete: `public/font/noto-sans-sc/`、`public/font/noto-serif-sc/`、`public/font/lxgw-wenkai-tc/`、`public/font/fonts.css`
+- Delete: `scripts/fonts/build-fonts-css.mjs`、`scripts/fonts/build-fonts-css.d.mts`
+- Add: `public/font/web/**`、`public/font/fonts-sans.css`、`public/font/fonts-serif.css`、`public/font/fonts-wenkai.css`、`public/font/fonts-manifest.json`
+
+**Interfaces:**
+- Consumes: Task 3 的产物（`public/font/web/**` + 三份样式表 + manifest）、Task 1 的 tier 家族名
+- Produces:
+  - `app/globals.css` 里三个 CSS 变量改为分档 fallback 链：
+    ```css
+    --font-han-sans:
+      'Noto Sans SC 1', 'Noto Sans SC 2', 'Noto Sans SC Ext',
+      system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-han-serif:
+      'Noto Serif SC 1', 'Noto Serif SC 2', 'Noto Serif SC Ext',
+      Georgia, 'Songti SC', 'SimSun', serif;
+    --font-wenkai:
+      'LXGW WenKai TC 1', 'LXGW WenKai TC 2', 'LXGW WenKai TC Ext',
+      'Kaiti SC', 'KaiTi', 'STKaiti', serif;
+    ```
+  - `lib/font-css.ts` 的**导出签名与行为完全不变**（`FontCssLinks` + `getFontCssLinks()`）；manifest 的 `files` 键名不变，因此 `app/layout.tsx` **不需要改**。
+  - `app/globals.css` 第 29–31 行的 `--font-sans` / `--font-serif` / `--font-kai` **不动**。
+
+- [ ] **Step 1: 改 `app/globals.css` 的三个变量**
+
+把 `:root` 里第 466–469 行的三行替换成上面那三段（每段一个变量，值按上面的换行写）。**只改这三个变量**，不要顺手改 `@theme` 里的 `--font-sans/--font-serif/--font-kai`，也不要动 `--font-kai` 之外的其他排版变量。
+
+- [ ] **Step 2: 改 `lib/font-css.ts` 的注释**
+
+文件头注释里「public/font/fonts.css used to be linked ...」那段过时了。改成描述新模型：三份分族样式表（sans 阻塞首屏，另两份 `media="print"` 异步）、每份内部按 Tier1/Tier2/Ext 分档、每档一个 font-family 名、每条 face 带精确 `unicode-range`。**函数体一字不改**。
+
+- [ ] **Step 3: 重写 `tests/unit/lib/fonts-css.test.ts`**
+
+新文件的用例（保留 `describe` 命名风格）：
+
+1. `public/font/fonts-<family>.css` 三份都存在。
+2. 每份样式表里的 `@font-face` 条数 = `2 + extBlock 数`（wenkai 是 `2×(2 + extBlock 数)`，因为 400/700 各一份）。
+3. 每条 face 的 `font-family` 只能是这 9 个名字之一：
+   `Noto Sans SC 1`、`Noto Sans SC 2`、`Noto Sans SC Ext`、`Noto Serif SC 1`、`Noto Serif SC 2`、`Noto Serif SC Ext`、`LXGW WenKai TC 1`、`LXGW WenKai TC 2`、`LXGW WenKai TC Ext`。
+4. 每条 face 的 `src` 文件在 `public/` 下真实存在。
+5. 每条 face 的 `font-display` 都是 `swap`。
+6. 每条 face 都有非空的 `unicode-range`。
+7. `fonts-sans.css`（唯一阻塞首屏的那份）≤ 140 KB。
+8. 三份样式表合起来 gzip 后 ≤ 25 KB —— 用 `node:zlib` 的 `gzipSync` 算。
+9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
+10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
+11. `app/globals.css` 包含 `'Noto Sans SC 1'`、`'Noto Sans SC 2'`、`'Noto Sans SC Ext'`、`'Noto Serif SC 1'`…`'LXGW WenKai TC Ext'` 这 9 个族名（防止有人把链改回单族）。
+12. 旧的 Google 子集目录**不存在**：`public/font/noto-sans-sc`、`public/font/noto-serif-sc`、`public/font/lxgw-wenkai-tc`、`public/font/fonts.css` 都不在磁盘上。
+
+- [ ] **Step 4: 改 `tests/unit/lib/middleware-redirect.test.ts`**
+
+第 65 行的示例路径 `'/font/noto-sans-sc/example.woff2'` 换成 `'/font/web/sans/t1.woff2'`（该目录已不存在，留着会误导）。第 64 行的 `'/font/fonts.css'` 也换成 `'/font/fonts-sans.css'`。**只改这两行**，不改测试逻辑。
+
+- [ ] **Step 5: 删除旧产物并暂存新产物**
+
+```bash
+git rm -r public/font/noto-sans-sc public/font/noto-serif-sc public/font/lxgw-wenkai-tc
+git rm public/font/fonts.css scripts/fonts/build-fonts-css.mjs scripts/fonts/build-fonts-css.d.mts
+git add public/font/web public/font/fonts-sans.css public/font/fonts-serif.css public/font/fonts-wenkai.css public/font/fonts-manifest.json
+```
+
+> `git add` 只用显式路径（G4）。`data/sutras/manifest.json` **不要**出现在任何 `git add` 里（G5）。
+
+- [ ] **Step 6: 跑全量测试**
+
+Run: `npm test`
+Expected: 全绿。若有旧的测试还在断言 `fonts.css` 存在或断言 Google 子集目录存在，把它们改到新模型上（**只改与字体产物相关的断言**）。
+
+- [ ] **Step 7: 检查改动面**
+
+```bash
+git status --short
+```
+
+Expected: 只出现本任务列出的路径。**特别确认 `data/sutras/manifest.json` 仍是未暂存的修改状态**（G5）。
+
+- [ ] **Step 8: 提交**
+
+```bash
+git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH.MM]"
+```
+
+> 提交信息里不要写「done」之类的结论；用祈使句描述改动。
+
+---
+
+### Task 6: nginx —— brotli 与 HTML 微缓存（W2-2）
+
+**Files:**
+- Modify: `deploy/nginx.ziyun.pudafo.com.conf`
+- Create: `deploy/nginx-brotli.conf`
+- Create: `deploy/OPTIMIZATION.md`
+- Test: `tests/unit/deploy/nginx-config.test.ts`
+
+**Interfaces:**
+- Consumes: 无
+- Produces: 一份可直接 `cp` 到 `/etc/nginx/conf.d/` 的 nginx 配置，以及一份部署/回滚手册。
+
+**安全约束（Review Focus 第 2 条，全部必须满足，缺一条本任务不做）**：
+1. `proxy_cache_bypass $cookie_auth_token;` —— `auth_token` 是 `lib/auth.ts` 里的会话 cookie 名。
+2. `proxy_cache_valid 200 10s;` —— TTL 只有 10 秒。
+3. `proxy_ignore_headers Cache-Control Set-Cookie;` —— Next 的 `no-store` 必须被忽略才能缓存。
+4. 上线后用 `curl -I` 验证 `X-Ziyun-Cache` 出现 `MISS` → `HIT`，且带 `auth_token` 的请求恒为 `BYPASS`。
+
+- [ ] **Step 1: 写失败测试**
+
+创建 `tests/unit/deploy/nginx-config.test.ts`：
+
+```ts
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const ROOT = resolve(__dirname, '..', '..', '..');
+const conf = readFileSync(resolve(ROOT, 'deploy', 'nginx.ziyun.pudafo.com.conf'), 'utf8');
+const brotli = readFileSync(resolve(ROOT, 'deploy', 'nginx-brotli.conf'), 'utf8');
+
+describe('the nginx config caches HTML but never for a logged-in user', () => {
+  it('declares the cache zone', () => {
+    expect(conf).toMatch(/proxy_cache_path\s+\S+\s+levels=1:2\s+keys_zone=ziyun_html:10m/);
+  });
+
+  it('bypasses the cache for the session cookie', () => {
+    expect(conf).toContain('proxy_cache_bypass $cookie_auth_token;');
+  });
+
+  it('never caches for longer than ten seconds', () => {
+    expect(conf).toContain('proxy_cache_valid 200 10s;');
+  });
+
+  it("ignores Next's private no-store header", () => {
+    expect(conf).toContain('proxy_ignore_headers Cache-Control Set-Cookie;');
+  });
+
+  it('reports the cache status', () => {
+    expect(conf).toContain('add_header X-Ziyun-Cache $upstream_cache_status always;');
+  });
+
+  it('only caches GET and HEAD', () => {
+    expect(conf).toContain('proxy_cache_methods GET HEAD;');
+  });
+
+  it('turns the cache off for the MCP stream endpoint', () => {
+    const mcpBlock = conf.slice(conf.indexOf('location /mcp'), conf.indexOf('location / {'));
+    expect(mcpBlock).toContain('proxy_cache off;');
+  });
+});
+
+describe('the brotli snippet is opt-in', () => {
+  it('turns brotli on with a static precompressed lookup', () => {
+    expect(brotli).toContain('brotli on;');
+    expect(brotli).toContain('brotli_comp_level 6;');
+    expect(brotli).toContain('brotli_static on;');
+  });
+
+  it('is not included by the main config', () => {
+    expect(conf).not.toContain('include /etc/nginx/conf.d/nginx-brotli.conf;');
+  });
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/deploy/nginx-config.test.ts`
+Expected: FAIL —— `deploy/nginx-brotli.conf` 不存在。
+
+- [ ] **Step 3: 改 `deploy/nginx.ziyun.pudafo.com.conf`**
+
+在 `limit_req_zone` 定义之后、`upstream ziyun_app` 之前插入缓存区定义：
+
+```nginx
+# ---------------------- HTML 微缓存 ----------------------
+# Next 对每个 HTML 都发 private,no-store,不忽略它就永远缓存不了。
+# 只缓存匿名访问;带 auth_token 的登录态请求既不读也不写缓存。
+# TTL 10 秒 —— 目的是省掉往返与传输,不是做内容分发。
+proxy_cache_path /var/cache/nginx/ziyun
+    levels=1:2
+    keys_zone=ziyun_html:10m
+    max_size=64m
+    inactive=10m
+    use_temp_path=off;
+```
+
+在 `location / {` 块内（`proxy_pass` 之后）插入：
+
+```nginx
+        # HTML 微缓存(仅匿名)
+        proxy_cache ziyun_html;
+        proxy_cache_key "$scheme$request_method$host$request_uri";
+        proxy_cache_valid 200 10s;
+        proxy_cache_methods GET HEAD;
+        proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
+        proxy_cache_bypass $cookie_auth_token;
+        proxy_cache_lock on;
+        proxy_ignore_headers Cache-Control Set-Cookie;
+        add_header X-Ziyun-Cache $upstream_cache_status always;
+```
+
+并把文件里注释掉的 brotli 三行换成一行指向片段文件的说明：
+
+```nginx
+# brotli 需要 nginx-module-brotli;探测到再 include:
+#   nginx -V 2>&1 | grep -o brotli
+#   cp deploy/nginx-brotli.conf /etc/nginx/conf.d/ && sudo nginx -t && sudo systemctl reload nginx
+```
+
+- [ ] **Step 4: 创建 `deploy/nginx-brotli.conf`**
+
+```nginx
+# brotli —— 仅在服务器编译了 nginx-module-brotli 时 include
+#
+# 启用步骤:
+#   1. nginx -V 2>&1 | grep -o brotli        # 必须有输出
+#   2. cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf
+#   3. sudo nginx -t && sudo systemctl reload nginx
+#   4. curl -I -H 'Accept-Encoding: br' https://ziyun.pudafo.com/ | grep -i content-encoding
+#
+# 没有 brotli 模块就不要放这个文件 —— nginx 会因未知指令启动失败。
+brotli on;
+brotli_comp_level 6;
+brotli_static on;
+brotli_types
+    text/plain
+    text/css
+    text/xml
+    application/json
+    application/javascript
+    application/xml
+    image/svg+xml;
+```
+
+- [ ] **Step 5: 创建 `deploy/OPTIMIZATION.md`**
+
+内容必须包含：
+
+- **部署顺序**：先 `nginx -t`，再 `systemctl reload nginx`；给出完整的 `cp`/`ln -s`/`nginx -t`/`reload` 命令串。
+- **回滚**：`cp deploy/nginx.ziyun.pudafo.com.conf.bak /etc/nginx/sites-available/ziyun.pudafo.com.conf && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
+- **上线后验证**（三条命令 + 期望输出）：
+  ```bash
+  curl -I https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第一次 MISS
+  curl -I https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第二次 HIT
+  curl -I -H 'Cookie: auth_token=dummy' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS
+  ```
+- **风险提示**：若将来新增任何「按未登录 cookie 区分」的响应，必须同步扩展 `proxy_cache_bypass` 列表。
+- **线上配置对账待办**（来自 spec §4.2.3）：线上响应带 `Alt-Svc: quic=":443"; h3=":443"`，而仓库配置只有 `listen 443 ssl http2` —— 上线前必须在服务器上核对 `nginx -V` 与 `/etc/nginx/conf.d/` 的实际配置，决定是给仓库补 QUIC 还是把线上改回与仓库一致；同时确认 brotli 模块是否存在。
+
+- [ ] **Step 6: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/deploy/nginx-config.test.ts`
+Expected: PASS。
+
+- [ ] **Step 7: 提交**
+
+```bash
+git add deploy/nginx.ziyun.pudafo.com.conf deploy/nginx-brotli.conf deploy/OPTIMIZATION.md tests/unit/deploy/nginx-config.test.ts
+git commit -m "feat(deploy): add nginx brotli snippet and anonymous HTML microcache [2026-10-29 HH.MM]"
+```
+
+---
+
+### Task 7: 预压缩脚本（W2-3）
+
+**Files:**
+- Create: `scripts/precompress-assets.mjs`
+- Test: `tests/unit/scripts/precompress-assets.test.ts`
+- Modify: `package.json`
+
+**Interfaces:**
+- Consumes: 无
+- Produces:
+  ```js
+  export const COMPRESSIBLE_EXTENSIONS;                       // Set<string>
+  export const SKIPPED_EXTENSIONS;                           // Set<string>（已是压缩格式）
+  export function isCompressible(filePath): boolean;
+  export async function precompressFile(filePath, options?): Promise<{ file: string; bytesIn: number; bytesOut: number; status: 'written' | 'skipped' | 'failed' }>;
+  export async function precompressTree(dir, options?): Promise<{ written: number; skipped: number; failed: number; savedBytes: number }>;
+  ```
+
+- [ ] **Step 1: 写失败测试**
+
+创建 `tests/unit/scripts/precompress-assets.test.ts`：
+
+```ts
+import { describe, it, expect, afterEach } from 'vitest';
+import { mkdtemp, readFile, writeFile, stat, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  isCompressible,
+  precompressFile,
+  precompressTree,
+} from '../../../scripts/precompress-assets.mjs';
+
+const dirs: string[] = [];
+afterEach(async () => {
+  for (const dir of dirs.splice(0)) await rm(dir, { recursive: true, force: true });
+});
+
+describe('isCompressible', () => {
+  it('accepts text payloads', () => {
+    for (const file of ['a.js', 'a.css', 'a.json', 'a.svg', 'a.html', 'a.txt']) {
+      expect(isCompressible(file)).toBe(true);
+    }
+  });
+
+  it('rejects already-compressed payloads', () => {
+    for (const file of ['a.woff2', 'a.png', 'a.jpg', 'a.webp', 'a.mp3', 'a.gz', 'a.br']) {
+      expect(isCompressible(file)).toBe(false);
+    }
+  });
+});
+
+describe('precompressFile', () => {
+  it('writes a .br next to the source and shrinks it', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'app.js');
+    await writeFile(file, 'console.log("x");'.repeat(500));
+    const result = await precompressFile(file);
+    expect(result.status).toBe('written');
+    expect(result.bytesOut).toBeLessThan(result.bytesIn);
+    const br = await readFile(`${file}.br`);
+    expect(br.length).toBe(result.bytesOut);
+  });
+
+  it('skips a file whose .br is newer than the source', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'app.js');
+    await writeFile(file, 'console.log("x");'.repeat(500));
+    await precompressFile(file);
+    const second = await precompressFile(file);
+    expect(second.status).toBe('skipped');
+  });
+
+  it('refuses to touch an already-compressed file', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'font.woff2');
+    await writeFile(file, 'not really a font');
+    const result = await precompressFile(file);
+    expect(result.status).toBe('skipped');
+    await expect(stat(`${file}.br`)).rejects.toThrow();
+  });
+});
+
+describe('precompressTree', () => {
+  it('walks a directory tree and reports the totals', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    await writeFile(join(dir, 'a.css'), 'body{color:red}'.repeat(200));
+    await writeFile(join(dir, 'b.woff2'), 'binary');
+    const result = await precompressTree(dir);
+    expect(result.written).toBe(1);
+    expect(result.skipped).toBe(1);
+    expect(result.failed).toBe(0);
+    expect(result.savedBytes).toBeGreaterThan(0);
+  });
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/scripts/precompress-assets.test.ts`
+Expected: FAIL —— 找不到模块。
+
+- [ ] **Step 3: 实现 `scripts/precompress-assets.mjs`**
+
+- 用 `node:zlib` 的 `brotliCompress`（`params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 6 }`）与 `gzip`（`level 9`）各生成一份 `.br` 与 `.gz`。
+- `isCompressible`：扩展名在 `COMPRESSIBLE_EXTENSIONS` 里且**不在** `SKIPPED_EXTENSIONS` 里。`COMPRESSIBLE_EXTENSIONS` = `.js .mjs .css .json .svg .html .txt .xml .map`；`SKIPPED_EXTENSIONS` = `.woff .woff2 .png .jpg .jpeg .gif .webp .avif .ico .mp3 .mp4 .zip .gz .br .ttf .otf .pdf`。
+- `precompressFile(filePath, { force = false })`：
+  - 不可压缩 → `{ status: 'skipped' }`；
+  - `.br` 已存在且 mtime ≥ 源文件 mtime 且 `force` 为 false → `{ status: 'skipped' }`；
+  - 否则写 `.br`（以及 `.gz`），返回 `{ status: 'written', bytesIn, bytesOut }`；写失败 → `{ status: 'failed' }`（**记录错误，不吞掉**）。
+- `precompressTree(dir, options)`：递归遍历，累加 `written/skipped/failed/savedBytes`（savedBytes = 源文件字节 − `.br` 字节之和）。
+- CLI 默认扫描 `.next/static` 与 `public/font`（后者只有 CSS/JSON 有意义，`.woff2` 会被跳过），也接受命令行目录参数。**脚本本身不删任何文件**，只新增 `.br` / `.gz`。
+
+- [ ] **Step 4: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/scripts/precompress-assets.test.ts`
+Expected: PASS。
+
+- [ ] **Step 5: 加 npm script 并实跑**
+
+```json
+"assets:precompress": "node scripts/precompress-assets.mjs",
+```
+
+Run: `npm run assets:precompress`
+Expected: 打印每个目录的 `written/skipped/failed` 与节省字节数。
+
+> `.next/` 与生成的 `.br`/`.gz` 都是构建产物，**不入库**。确认 `.gitignore` 已覆盖 `*.br` / `*.gz`；没覆盖就补两行（属于本任务）。
+
+- [ ] **Step 6: 提交**
+
+```bash
+git add scripts/precompress-assets.mjs tests/unit/scripts/precompress-assets.test.ts package.json .gitignore
+git commit -m "feat(deploy): add the brotli and gzip asset precompressor [2026-10-29 HH.MM]"
+```
+
+---
+
+### Task 8: 服务器调优清单（W2-4）
+
+**Files:**
+- Create: `deploy/tuning/ipv4-bbr.conf`
+- Create: `deploy/tuning/README.md`
+
+**Interfaces:**
+- Consumes: 无
+- Produces: 一份 sysctl 配置文件 + 一份「怎么查、怎么上、怎么确认、怎么退」的操作手册。
+
+- [ ] **Step 1: 创建 `deploy/tuning/ipv4-bbr.conf`**
+
+```
+# TCP 调优 —— 跨境链路 (中国联通 → 新加坡) 的吞吐
+#
+# 实测基线: RTT 250 ms,单连接持续吞吐 177 KB/s。
+# BBR 把拥塞控制从「缓冲区填满才丢包」换成「按带宽时延积发包」,
+# 在这种高时延链路上通常能翻数倍。
+#
+# 应用:  sudo cp deploy/tuning/ipv4-bbr.conf /etc/sysctl.d/99-ziyun-bbr.conf
+#        sudo sysctl --system
+# 回滚:  sudo rm /etc/sysctl.d/99-ziyun-bbr.conf && sudo sysctl --system
+#
+# 注意: BBR 只对**新建**的连接生效,已在跑的连接仍用旧算法。
+# 验证:  ss -tin | grep -i bbr
+
+net.core.default_qdisc = fq
+net.ipv4.tcp_congestion_control = bbr
+net.ipv4.tcp_max_syn_backlog = 4096
+net.ipv4.tcp_rmem = 4096 87380 16777216
+net.ipv4.tcp_wmem = 4096 65536 16777216
+net.core.rmem_max = 16777216
+net.core.wmem_max = 16777216
+```
+
+- [ ] **Step 2: 创建 `deploy/tuning/README.md`**
+
+必须包含：
+
+- **改前先看现状**：
+  ```bash
+  sysctl net.ipv4.tcp_congestion_control
+  sysctl net.core.default_qdisc
+  ```
+- **应用**：
+  ```bash
+  sudo cp deploy/tuning/ipv4-bbr.conf /etc/sysctl.d/99-ziyun-bbr.conf
+  sudo sysctl --system
+  ```
+- **确认生效**：
+  ```bash
+  sysctl net.ipv4.tcp_congestion_control     # 期望 bbr
+  ss -tin | grep -i bbr                       # 新连接应显示 bbr
+  ```
+  `bbr` 不在 `tcp_congestion_control` 的可选值里时，先 `sudo modprobe tcp_bbr && sudo sysctl -w net.ipv4.tcp_congestion_control=bbr`；仍不可用说明内核太老（需 ≥ 4.9），此时**只应用 qdisc 与缓冲区那几行**。
+- **回滚**：删文件 → `sudo sysctl --system`。
+- **风险**：调大 `rmem_max/wmem_max` 会增加单连接内存占用；机器内存紧张时把 `16777216` 调成 `4194304`。
+- **它解决的是什么**：这条链路 250 ms 的 RTT 下,Linux 默认拥塞控制的有效窗口约 44 KB,正好对应实测的 177 KB/s。这是**带宽**问题,和字体瘦身(载荷问题)是两条独立的线。
+
+- [ ] **Step 3: 提交**
+
+```bash
+git add deploy/tuning/ipv4-bbr.conf deploy/tuning/README.md
+git commit -m "docs(deploy): add the BBR and TCP buffer tuning checklist [2026-10-29 HH.MM]"
+```
+
+> 本任务**不改服务器**，只提供文件与说明。是否执行由用户决定。
+
+---
+
+### Task 9: 性能基线进仓库（W2-5）
+
+**Files:**
+- Create: `scripts/perf/class-attribution.mjs`
+- Create: `scripts/perf/paired-ttfb.mjs`
+- Create: `scripts/perf/font-load.mjs`
+- Create: `scripts/perf/full-load.mjs`
+- Test: `tests/unit/scripts/perf-class-attribution.test.ts`
+- Modify: `package.json`
+
+**Interfaces:**
+- Consumes: 无（三个测量脚本走网络）
+- Produces:
+  ```js
+  // scripts/perf/class-attribution.mjs
+  export function splitHtmlChunks(html: string): Array<{ tag: string; attrs: string; text: string }>;
+  export function attributeForClass(chunks, className: string): string[];
+  export function classOfChunk(attrs: string, classNames: string[]): string;
+  ```
+
+  **下标必须正确**：`re.split(r"<(\w+)([^>]*)>", html)` 的结果是
+  `[text0, tag0, attrs0, text1, tag1, attrs1, text2, …]`，
+  所以第 i 个标签的**属性在 `3i+2`**、**正文在 `3i+3`**。
+  第一版诊断脚本按 2 步长取值，把标签名当成了属性，导致「多数文本块归入 sans」的假象，把首页字体载荷低估成 2.83 MB（实为 3.81 MB）。**本模块的单元测试必须锁死这个下标。**
+
+- [ ] **Step 1: 写失败测试**
+
+创建 `tests/unit/scripts/perf-class-attribution.test.ts`：
+
+```ts
+import { describe, it, expect } from 'vitest';
+import {
+  splitHtmlChunks,
+  attributeForClass,
+  classOfChunk,
+} from '../../../scripts/perf/class-attribution.mjs';
+
+describe('splitHtmlChunks', () => {
+  it('splits a tag into its name, its attributes and its text', () => {
+    const chunks = splitHtmlChunks('<p class="font-kai">字</p>');
+    expect(chunks).toHaveLength(1);
+    expect(chunks[0].tag).toBe('p');
+    expect(chunks[0].attrs).toBe('class="font-kai"');
+    expect(chunks[0].text).toBe('字');
+  });
+
+  it('keeps the tag name out of the attributes', () => {
+    const chunks = splitHtmlChunks('<div id="a"><span>x</span></div>');
+    expect(chunks[0].attrs).not.toContain('div');
+    expect(chunks[0].attrs).toBe('id="a"');
+  });
+
+  it('yields one chunk per tag', () => {
+    const html = '<h1>一</h1><p class="font-serif">二</p><span>三</span>';
+    expect(splitHtmlChunks(html)).toHaveLength(3);
+  });
+});
+
+describe('attributeForClass', () => {
+  it('returns the text of the chunks carrying the class', () => {
+    const chunks = splitHtmlChunks(
+      '<h1 class="font-kai">字</h1><p class="font-sans">韵</p>',
+    );
+    expect(attributeForClass(chunks, 'font-kai')).toEqual(['字']);
+    expect(attributeForClass(chunks, 'font-sans')).toEqual(['韵']);
+  });
+
+  it('does not confuse the tag name with the attributes', () => {
+    // A <font-kai> tag name must never be read as the class attribute.
+    const chunks = splitHtmlChunks('<font-kai>字</font-kai>');
+    expect(attributeForClass(chunks, 'font-kai')).toEqual([]);
+  });
+});
+
+describe('classOfChunk', () => {
+  it('prefers the first matching class in the given order', () => {
+    const order = ['font-kai', 'font-serif', 'font-sans'];
+    expect(classOfChunk('class="font-serif font-sans"', order)).toBe('font-serif');
+    expect(classOfChunk('class="font-sans"', order)).toBe('font-sans');
+    expect(classOfChunk('class="other"', order)).toBe('font-sans');
+  });
+});
+```
+
+- [ ] **Step 2: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/scripts/perf-class-attribution.test.ts`
+Expected: FAIL —— 找不到模块。
+
+- [ ] **Step 3: 实现 `scripts/perf/class-attribution.mjs`**
+
+```js
+export function splitHtmlChunks(html) {
+  const parts = html.split(/<(\w+)([^>]*)>/);
+  // parts = [text0, tag0, attrs0, text1, tag1, attrs1, text2, ...]
+  const chunks = [];
+  for (let i = 1; i + 2 < parts.length; i += 3) {
+    chunks.push({ tag: parts[i], attrs: parts[i + 1], text: parts[i + 2] });
+  }
+  return chunks;
+}
+```
+
+`attributeForClass(chunks, className)`：返回所有 `attrs` 里出现 `class="..."` 且其中含该 class 名的 chunk 的 `text`。
+`classOfChunk(attrs, classNames)`：按 `classNames` 的顺序返回第一个命中的；都没命中时返回 `classNames[classNames.length - 1]`（默认 sans）。
+
+**必须再剥掉 `<script>` / `<style>` 的内容**（脚本里的中文不是页面文字）。
+
+- [ ] **Step 4: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/scripts/perf-class-attribution.test.ts`
+Expected: PASS。
+
+- [ ] **Step 5: 实现 `scripts/perf/paired-ttfb.mjs`**
+
+- 用 `node:https` 的 `Agent({ keepAlive: true })` 走**同一条 keep-alive 连接**。
+- 每个页面采样 N（默认 15）次：先取静态基线 `GET /manifest.json` 的 TTFB，再取 `GET <page>` 的 TTFB，记录差值。
+- 输出每个页面的**中位数**差值与 min/max；页面上限硬编码为 `+24 ms`（spec §2.2），超了退出码 1。
+- 基址来自 `--base` 参数，默认 `https://ziyun.pudafo.com`。
+
+- [ ] **Step 6: 实现 `scripts/perf/font-load.mjs`**
+
+- 取页面 HTML → `splitHtmlChunks` → `classOfChunk` → 每族收集字符集。
+- 用 Task 1 的 `loadFamilyCharsets()` 与 `public/font/fonts-manifest.json` 里的 tier 划分，算出「每族要下载哪些文件」，累加文件字节。
+- 打印表格：`page | sans KB | serif KB | kai KB | total KB`，并对照预算 `/ ≤ 250 KB`、`/dictionary ≤ 350 KB`、`/poetry ≤ 250 KB`、`/stories ≤ 400 KB`；超标退出码 1。
+
+- [ ] **Step 7: 实现 `scripts/perf/full-load.mjs`**
+
+- **冷连接**取页面 HTML，解析出所有 stylesheet / script / font `url()`，逐个下载（同样走 keep-alive）。
+- 打印：HTML 字节、JS+CSS 字节、字体字节、总字节、总耗时（秒）、并与 spec §2.2 的「首页冷加载 ≤ 2.5 s」对照。
+
+- [ ] **Step 8: 加 npm script**
+
+```json
+"perf:ttfb": "node scripts/perf/paired-ttfb.mjs",
+"perf:fonts": "node scripts/perf/font-load.mjs",
+"perf:load": "node scripts/perf/full-load.mjs",
+```
+
+- [ ] **Step 9: 提交**
+
+```bash
+git add scripts/perf/class-attribution.mjs scripts/perf/paired-ttfb.mjs scripts/perf/font-load.mjs scripts/perf/full-load.mjs tests/unit/scripts/perf-class-attribution.test.ts package.json
+git commit -m "feat(perf): add the paired ttfb and font payload probes [2026-10-29 HH.MM]"
+```
+
+---
+
+## 收尾（全部任务完成后）
+
+- [ ] 跑一次完整验证：
+  ```bash
+  npm test
+  npm run fonts:verify-webfont
+  ```
+  两者都必须绿。
+- [ ] 在 `D:/Temp/pinyin-build-check` 里（先 `rm -rf .next`，且确认 4444 端口未被占用）跑一次 `npm run build`，确认字体改造没有破坏构建（G8）。
+- [ ] 跑一次 `npm run perf:fonts -- --base http://127.0.0.1:4444`，用本地 dev server 验证四个页面的字体载荷落在预算内。
+- [ ] 把本轮结果写进 `docs/superpowers/specs/2026-10-29-site-optimization-wave2-design.md` 的「验收」小节，或另起一份实施记录。
+- [ ] **不 push**（G6）。把分支名、提交数、待用户执行的动作（服务器 nginx 部署、BBR、CDN 决策、浏览器 smoke）汇总给用户。
+
+## 仍需用户执行 / 决策的事项（本计划不代劳）
+
+1. **服务器 nginx 部署与回滚**——`deploy/OPTIMIZATION.md` 里有完整命令串，但服务器上的操作由用户执行（需要 sudo）。
+2. **BBR 是否应用**——`deploy/tuning/` 只提供文件与说明。
+3. **CDN 接入**——需要用户的 Cloudflare 账号；代码侧只预留了 nginx 注释。
+4. **线上 nginx 配置对账**——线上带 `Alt-Svc: quic` 而仓库配置没有，需要在服务器上核对后决定往哪边对齐。
+5. **浏览器 smoke**——字体改造后需要人工过一遍 `/`、`/dictionary`、`/poetry`、`/stories`、`/ancient`、`/stories`（故事大字）、`/not-found`（160px 的「无」）、`/error`（120px 的「误」），确认没有豆腐块、没有明显字体闪烁、粗体楷体正常。
