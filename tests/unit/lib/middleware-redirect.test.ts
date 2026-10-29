@@ -61,8 +61,8 @@ describe('middleware: static assets bypass the setup gate', () => {
   // HTML as CSS and drop the stylesheet, so the page would render with
   // system fonts. These paths must always pass through.
   const assetPaths = [
-    '/font/fonts.css',
-    '/font/noto-sans-sc/example.woff2',
+    '/font/fonts-sans.css',
+    '/font/web/sans/hot.woff2',
     '/fonts/wang-hanzong-lishu.woff2',
     '/strokes/一.json',
     '/logo.png',

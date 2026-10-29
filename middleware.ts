@@ -20,7 +20,7 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * Asset paths that must never be redirected.
  *
- * A 307 on /font/fonts.css is worse than it looks: the stylesheet is
+ * A 307 on /font/fonts-sans.css is worse than it looks: the stylesheet is
  * render-blocking, so the browser would follow the redirect, fetch /init's
  * HTML, fail to parse it as CSS and drop the stylesheet — the page would
  * render with system fonts instead of the site's own. The same redirect

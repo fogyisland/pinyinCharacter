@@ -1,0 +1,12 @@
+# The font stylesheets are hashed into public/font/fonts-manifest.json, and
+# that hash is the cache-buster for the stylesheet URLs. The hash has to be
+# the same on every platform, so their line endings are pinned to LF: with
+# core.autocrlf=true a Windows checkout would otherwise rewrite them to
+# CRLF and the manifest would no longer match the file it names.
+public/font/fonts-sans.css text eol=lf
+public/font/fonts-serif.css text eol=lf
+public/font/fonts-wenkai.css text eol=lf
+
+# The subsets are binary. Git already detects them as binary (the WOFF2
+# signature has a NUL byte at offset 4), but say so rather than rely on it.
+public/font/web/** binary

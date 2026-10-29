@@ -1,162 +1,311 @@
 /**
- * Regression tests for public/font/fonts.css.
+ * Regression tests for the per-family webfont stylesheets.
  *
- * public/font/fonts.css is loaded synchronously in app/layout.tsx, so it
- * blocks the first paint of every page. It used to be a verbatim copy of
- * Google Fonts' css2 output: 937 @font-face blocks (1.03 MB) describing only
- * 432 font files, because Noto Sans SC and Noto Serif SC are VARIABLE fonts
- * that had one weight declaration per subset.
+ * public/font/fonts-{sans,serif,wenkai}.css are the generated stylesheets of
+ * the frequency-tiered webfont model. `fonts-sans.css` is the only one on the
+ * critical path — the body typeface draws every character of every page — and
+ * the other two are fetched with media="print" and promoted once they arrive.
  *
- * scripts/fonts/build-fonts-css.mjs collapses those into one face per subset
- * with a weight range. These tests pin the result down so a careless edit of
- * the generated file cannot silently drop a font or grow the stylesheet back.
+ * A stylesheet declares one @font-face per subset file. Every face of a
+ * family carries the SAME font-family name and a precise unicode-range; the
+ * ranges of a family are mutually disjoint, so the browser downloads exactly
+ * one file per character and falls back to the system font for a character
+ * that is in no range.
+ *
+ * These tests pin the model down — the shape of the stylesheets, the files
+ * they reference, the size budgets, the manifest version and the version
+ * tokens. They are the guard against a careless edit that drops a glyph,
+ * grows the render-blocking payload or breaks the cache.
+ *
+ * The numbers below are MEASUREMENTS, not estimates: they were taken from the
+ * shipped build (Task 3, filter round F31-a plus the R18 tokens). A rebuild
+ * that changes them has to change the constants here on purpose — the
+ * budgets are not to be relaxed to make a build pass.
  */
 import { describe, it, expect } from 'vitest';
-import { readFileSync, existsSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
-import {
-  parseCss,
-  serialize,
-  mergeWeights,
-  splitByFamily,
-} from '../../../scripts/fonts/build-fonts-css.mjs';
+import { gzipSync } from 'node:zlib';
 
 const ROOT = resolve(__dirname, '..', '..', '..');
-const CSS_PATH = resolve(ROOT, 'public', 'font', 'fonts.css');
-const css = readFileSync(CSS_PATH, 'utf8');
-const faces = parseCss(css);
+const FONT_DIR = resolve(ROOT, 'public', 'font');
 
-/** Largest size the stylesheet may reach before it is considered a regression. */
-const MAX_CSS_BYTES = 600 * 1024;
+/**
+ * The budgets of the design.
+ *
+ * They mirror scripts/fonts/verify-webfont-subsets.mjs (LIMITS) so the test
+ * and the verifier can never drift apart. A KB is 1024 bytes here.
+ */
+const LIMITS = {
+  /** The three stylesheets together, gzipped. */
+  cssBytes: 175 * 1024,
+  /** The render-blocking stylesheet, gzipped. */
+  sansCssBytes: 65 * 1024,
+  /** The render-blocking stylesheet, raw. */
+  sansRawBytes: 700 * 1024,
+};
 
-/** The per-family stylesheets the root layout loads. */
-const SPLIT_FILES = ['fonts-wenkai.css', 'fonts-sans.css', 'fonts-serif.css'];
+/** The three families of the site, and everything pinned about them. */
+interface Family {
+  /** The key of the family in the manifest and on disk. */
+  key: string;
+  /** The font-family name every face of the family declares. */
+  label: string;
+  /** The stylesheet of the family. */
+  file: string;
+  /** The directory the subset files of the family live in, under /public/font. */
+  subsetDir: string;
+  /** The faces of the stylesheet: the hot zone plus the Ext blocks. */
+  faces: number;
+  /** The raw size of the stylesheet, in bytes. */
+  rawBytes: number;
+  /** The gzipped size of the stylesheet, in bytes. */
+  gzipBytes: number;
+}
 
-describe('public/font/fonts.css', () => {
-  it('parses into @font-face rules', () => {
-    expect(faces.length).toBeGreaterThan(0);
-    expect(faces.length).toBe((css.match(/@font-face/g) ?? []).length);
+const FAMILIES: Family[] = [
+  {
+    key: 'sans',
+    label: 'Noto Sans SC',
+    file: 'fonts-sans.css',
+    subsetDir: 'web/sans',
+    faces: 2459,
+    rawBytes: 620320,
+    gzipBytes: 55437,
+  },
+  {
+    key: 'serif',
+    label: 'Noto Serif SC',
+    file: 'fonts-serif.css',
+    subsetDir: 'web/serif',
+    faces: 2841,
+    rawBytes: 722614,
+    gzipBytes: 63915,
+  },
+  {
+    key: 'wenkai',
+    label: 'LXGW WenKai TC',
+    file: 'fonts-wenkai.css',
+    subsetDir: 'web/wenkai',
+    faces: 2636,
+    rawBytes: 666617,
+    gzipBytes: 37930,
+  },
+];
+
+/** The shape of one @font-face rule. */
+interface Face {
+  fontFamily: string;
+  fontStyle: string;
+  fontWeight: string;
+  fontDisplay: string;
+  /** The URL of the subset file, query string included. */
+  url: string;
+  /** The path of the subset file, without the query string. */
+  path: string;
+  /** The version token of the URL, without the leading `v=`. */
+  token: string;
+  unicodeRange: string;
+}
+
+/** The manifest the layout reads the stylesheet URLs from. */
+interface FontManifest {
+  version: string;
+  files: Record<string, string>;
+}
+
+/**
+ * Read a stylesheet with its line endings normalized to LF.
+ *
+ * The repository sets core.autocrlf=true, so a fresh checkout on Windows
+ * rewrites the stylesheets to CRLF. The manifest hash and the size budgets
+ * are properties of the CONTENT, not of the checkout, so the line endings
+ * are normalized before anything is measured — the same way
+ * scripts/fonts/verify-webfont-subsets.mjs does it.
+ */
+function readStylesheet(file: string): string {
+  return readFileSync(resolve(FONT_DIR, file), 'utf8').replace(/\r\n/g, '\n');
+}
+
+/** The manifest of the font stylesheets. */
+function readManifest(): FontManifest {
+  const raw = readFileSync(resolve(FONT_DIR, 'fonts-manifest.json'), 'utf8');
+  return JSON.parse(raw) as FontManifest;
+}
+
+/** Read a declaration out of a CSS block: `font-weight: 400 700;`. */
+function cssField(body: string, name: string): string {
+  const match = new RegExp(`${name}:\\s*([^;]+);`).exec(body);
+  return match ? match[1].trim() : '';
+}
+
+/** Drop the quotes of a CSS string value. */
+function unquote(value: string): string {
+  return value.replace(/^['"]/, '').replace(/['"]$/, '');
+}
+
+/** Parse the @font-face rules of a stylesheet. */
+function parseFaces(css: string): Face[] {
+  const faces: Face[] = [];
+  const block = /@font-face\s*\{([^}]*)\}/g;
+  let match = block.exec(css);
+  while (match !== null) {
+    const body = match[1];
+    const src = /src:\s*url\(([^)]*)\)/.exec(body);
+    const url = src ? src[1].trim() : '';
+    const queryAt = url.indexOf('?');
+    const query = queryAt === -1 ? '' : url.slice(queryAt + 1);
+    const token = /^v=([0-9a-f]{12})$/.exec(query);
+    faces.push({
+      fontFamily: unquote(cssField(body, 'font-family')),
+      fontStyle: unquote(cssField(body, 'font-style')),
+      fontWeight: cssField(body, 'font-weight'),
+      fontDisplay: cssField(body, 'font-display'),
+      url,
+      path: queryAt === -1 ? url : url.slice(0, queryAt),
+      token: token ? token[1] : '',
+      unicodeRange: cssField(body, 'unicode-range'),
+    });
+    match = block.exec(css);
+  }
+  return faces;
+}
+
+/** The parsed stylesheet of a family, read once per run. */
+const stylesheetCache = new Map<string, { css: string; faces: Face[] }>();
+
+function stylesheet(family: Family): { css: string; faces: Face[] } {
+  const cached = stylesheetCache.get(family.file);
+  if (cached) return cached;
+  const css = readStylesheet(family.file);
+  const parsed = { css, faces: parseFaces(css) };
+  stylesheetCache.set(family.file, parsed);
+  return parsed;
+}
+
+/** The subset files of a family, as they sit on disk. */
+function subsetFiles(family: Family): string[] {
+  return readdirSync(resolve(FONT_DIR, family.subsetDir)).filter((name) =>
+    name.endsWith('.woff2'),
+  );
+}
+
+describe('public/font per-family stylesheets', () => {
+  it('ships one stylesheet per family', () => {
+    for (const family of FAMILIES) {
+      expect(existsSync(resolve(FONT_DIR, family.file))).toBe(true);
+    }
   });
 
-  it('keeps the stylesheet small enough to not block the first paint', () => {
-    expect(statSync(CSS_PATH).size).toBeLessThanOrEqual(MAX_CSS_BYTES);
+  it('declares one face per subset file', () => {
+    for (const family of FAMILIES) {
+      const { faces } = stylesheet(family);
+      // The hot zone plus the Ext blocks. The static family (wenkai) cuts
+      // every block into two files, so it declares two faces per block.
+      expect(faces.length).toBe(family.faces);
+      // No two faces point at the same file.
+      expect(new Set(faces.map((face) => face.path)).size).toBe(faces.length);
+      // And every file that ships is declared by a face — no orphan subset.
+      expect(subsetFiles(family).length).toBe(family.faces);
+    }
   });
 
-  it('declares exactly one face per font file', () => {
-    const keys = new Set(faces.map((f) => `${f.family}|${f.style}|${f.unicodeRange}|${f.src}`));
-    expect(keys.size).toBe(faces.length);
+  it('names only the three families of the site', () => {
+    const allowed = new Set(FAMILIES.map((family) => family.label));
+    const offenders = new Set<string>();
+    for (const family of FAMILIES) {
+      for (const face of stylesheet(family).faces) {
+        if (!allowed.has(face.fontFamily)) offenders.add(face.fontFamily);
+      }
+    }
+    expect([...offenders]).toEqual([]);
   });
 
   it('references only font files that exist on disk', () => {
-    const missing = faces
-      .map((f) => f.src)
-      .filter((src) => !existsSync(resolve(ROOT, 'public', src.replace(/^\//, ''))));
+    const missing: string[] = [];
+    for (const family of FAMILIES) {
+      for (const face of stylesheet(family).faces) {
+        const file = resolve(ROOT, 'public', face.path.replace(/^\//, ''));
+        if (!existsSync(file)) missing.push(face.path);
+      }
+    }
     expect(missing).toEqual([]);
   });
 
-  it('declares a valid weight for every face', () => {
-    for (const face of faces) {
-      const weights = face.weight.split(/\s+/);
-      expect(weights.length).toBeGreaterThanOrEqual(1);
-      for (const weight of weights) {
-        const value = Number.parseInt(weight, 10);
-        expect(Number.isFinite(value)).toBe(true);
-        expect(value).toBeGreaterThanOrEqual(1);
-        expect(value).toBeLessThanOrEqual(1000);
-      }
-      if (weights.length === 2) {
-        expect(Number.parseInt(weights[0], 10)).toBeLessThanOrEqual(
-          Number.parseInt(weights[1], 10),
-        );
+  it('keeps every face non-blocking', () => {
+    const offenders: string[] = [];
+    for (const family of FAMILIES) {
+      for (const face of stylesheet(family).faces) {
+        if (face.fontDisplay !== 'swap') offenders.push(face.url);
       }
     }
+    expect(offenders).toEqual([]);
   });
 
-  it('covers the three families the site loads', () => {
-    const families = new Set(faces.map((f) => f.family));
-    expect(families).toEqual(
-      new Set(['LXGW WenKai TC', 'Noto Sans SC', 'Noto Serif SC']),
+  it('gives every face a non-empty unicode-range', () => {
+    const offenders: string[] = [];
+    for (const family of FAMILIES) {
+      for (const face of stylesheet(family).faces) {
+        if (face.unicodeRange.length === 0) offenders.push(face.url);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('keeps the render-blocking stylesheet small', () => {
+    for (const family of FAMILIES) {
+      const rawBytes = Buffer.byteLength(stylesheet(family).css, 'utf8');
+      expect(rawBytes).toBe(family.rawBytes);
+    }
+    // fonts-sans.css is the only stylesheet on the critical path; the other
+    // two are fetched without blocking the first paint.
+    const sans = FAMILIES.find((family) => family.key === 'sans');
+    if (!sans) throw new Error('the sans family is missing from FAMILIES');
+    expect(Buffer.byteLength(stylesheet(sans).css, 'utf8')).toBeLessThanOrEqual(
+      LIMITS.sansRawBytes,
     );
   });
 
-  it('merges the variable Noto faces into weight ranges', () => {
-    const sans = faces.filter((f) => f.family === 'Noto Sans SC');
-    const serif = faces.filter((f) => f.family === 'Noto Serif SC');
-    // Every face of a variable family shares one file per subset, so each
-    // subset must be described by exactly one (ranged) face.
-    expect(new Set(sans.map((f) => f.src)).size).toBe(sans.length);
-    expect(new Set(serif.map((f) => f.src)).size).toBe(serif.length);
-    expect(sans[0].weight).toMatch(/^\d+ \d+$/);
-    expect(serif[0].weight).toMatch(/^\d+ \d+$/);
-  });
-
-  it('keeps the static LXGW WenKai TC faces separate', () => {
-    const lxgw = faces.filter((f) => f.family === 'LXGW WenKai TC');
-    const weights = new Set(lxgw.map((f) => f.weight));
-    expect(weights).toEqual(new Set(['400', '700']));
-  });
-
-  it('is idempotent — rebuilding the merged file changes nothing', () => {
-    const rebuilt = `${mergeWeights(faces).map(serialize).join('\n')}\n`;
-    expect(rebuilt).toBe(`${faces.map(serialize).join('\n')}\n`);
-  });
-});
-
-describe('public/font per-family stylesheets', () => {
-  it('writes one stylesheet per family', () => {
-    const splits = splitByFamily(faces);
-    expect([...splits.keys()].sort()).toEqual([...SPLIT_FILES].sort());
-    for (const file of SPLIT_FILES) {
-      expect(existsSync(resolve(ROOT, 'public', 'font', file))).toBe(true);
+  it('keeps the gzipped payload within budget', () => {
+    // The measurement is pinned: gzipSync at the zlib default level, no
+    // options object — the same as scripts/fonts/verify-webfont-subsets.mjs.
+    let total = 0;
+    const perFamily = new Map<string, number>();
+    for (const family of FAMILIES) {
+      const bytes = gzipSync(Buffer.from(stylesheet(family).css, 'utf8')).length;
+      perFamily.set(family.key, bytes);
+      total += bytes;
+      expect(bytes).toBe(family.gzipBytes);
     }
-  });
-
-  it('keeps every face of fonts.css in exactly one split file', () => {
-    const splits = splitByFamily(faces);
-    const splitFaces = [...splits.values()].flatMap((body) => parseCss(body));
-    expect(splitFaces.length).toBe(faces.length);
-    const key = (f: { family: string; style: string; unicodeRange: string; src: string }) =>
-      `${f.family}|${f.style}|${f.unicodeRange}|${f.src}`;
-    expect(new Set(splitFaces.map(key)).size).toBe(splitFaces.length);
-    expect(new Set(splitFaces.map(key))).toEqual(new Set(faces.map(key)));
-  });
-
-  it('gives each split file exactly one family', () => {
-    for (const file of SPLIT_FILES) {
-      const body = readFileSync(resolve(ROOT, 'public', 'font', file), 'utf8');
-      const families = new Set(parseCss(body).map((f) => f.family));
-      expect(families.size).toBe(1);
-    }
-  });
-
-  it('keeps the render-blocking part of the payload small', () => {
-    // fonts-sans.css is the only stylesheet on the critical path; the other
-    // two are fetched without blocking the first paint.
-    const sansBytes = statSync(resolve(ROOT, 'public', 'font', 'fonts-sans.css')).size;
-    expect(sansBytes).toBeLessThanOrEqual(140 * 1024);
+    expect(perFamily.get('sans')).toBe(55437);
+    expect(total).toBe(157282);
+    expect(total).toBeLessThanOrEqual(LIMITS.cssBytes);
+    expect(perFamily.get('sans')).toBeLessThanOrEqual(LIMITS.sansCssBytes);
   });
 });
 
 describe('public/font/fonts-manifest.json', () => {
-  const manifestPath = resolve(ROOT, 'public', 'font', 'fonts-manifest.json');
-
-  it('exists and points at the generated stylesheets', () => {
-    expect(existsSync(manifestPath)).toBe(true);
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      version: string;
-      files: Record<string, string>;
-    };
+  it('hashes the stylesheets into the manifest version', () => {
+    const manifest = readManifest();
     expect(manifest.version).toMatch(/^[0-9a-f]{12}$/);
     expect(Object.values(manifest.files).sort()).toEqual(
-      SPLIT_FILES.map((f) => `/font/${f}`).sort(),
+      FAMILIES.map((family) => `/font/${family.file}`).sort(),
     );
+
+    // The version is the sha256 of the three stylesheet CONTENTS, taken in
+    // file name order, cut to twelve characters. It is implemented here
+    // instead of imported: the build script is not the only truth, and the
+    // assertion has to keep working when the script moves on.
+    const hash = createHash('sha256');
+    for (const file of FAMILIES.map((family) => family.file).sort()) {
+      hash.update(readStylesheet(file));
+    }
+    expect(hash.digest('hex').slice(0, 12)).toBe(manifest.version);
   });
 
   it('is what the layout uses to build versioned, cacheable URLs', () => {
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      version: string;
-      files: Record<string, string>;
-    };
+    const manifest = readManifest();
     const layout = readFileSync(resolve(ROOT, 'app', 'layout.tsx'), 'utf8');
     expect(layout).toContain('getFontCssLinks()');
     // The body typeface stays on the critical path, the other two do not.
@@ -164,5 +313,72 @@ describe('public/font/fonts-manifest.json', () => {
     expect(layout).toMatch(/href=\{fontCss\.wenkai\}[^>]*media="print"/);
     expect(layout).toMatch(/href=\{fontCss\.serif\}[^>]*media="print"/);
     expect(manifest.files.sans).toContain('fonts-sans.css');
+  });
+});
+
+describe('the webfont model in the app', () => {
+  it('names the three families in globals.css and no tiered ones', () => {
+    const css = readFileSync(resolve(ROOT, 'app', 'globals.css'), 'utf8');
+    for (const family of FAMILIES) {
+      expect(css).toContain(`'${family.label}'`);
+    }
+    // The old model gave every Google subset its own family name
+    // ('Noto Sans SC 1', 'Noto Sans SC Ext', ...). The new model has one
+    // family name per family and lets the unicode-range pick the file, so
+    // the tiered names must not come back.
+    for (const legacy of [
+      "'Noto Sans SC 1'",
+      "'Noto Sans SC Ext'",
+      "'Noto Serif SC Ext'",
+      "'LXGW WenKai TC Ext'",
+    ]) {
+      expect(css).not.toContain(legacy);
+    }
+
+    // And each variable names exactly ONE webfont family — the rest of the
+    // stack is system fonts (R15: no chain of webfont fallbacks).
+    const labels = FAMILIES.map((family) => family.label);
+    const variables: Array<[string, string]> = [
+      ['--font-han-sans', 'Noto Sans SC'],
+      ['--font-han-serif', 'Noto Serif SC'],
+      ['--font-wenkai', 'LXGW WenKai TC'],
+    ];
+    for (const [variable, label] of variables) {
+      const declaration = new RegExp(`${variable}:([^;]+);`).exec(css)?.[1] ?? '';
+      const quoted = declaration.match(/'[^']+'/g) ?? [];
+      const webfonts = quoted
+        .map((name) => name.slice(1, -1))
+        .filter((name) => labels.includes(name));
+      expect(webfonts).toEqual([label]);
+    }
+  });
+
+  it('has removed the old Google subsets', () => {
+    for (const legacy of ['noto-sans-sc', 'noto-serif-sc', 'lxgw-wenkai-tc']) {
+      expect(existsSync(resolve(FONT_DIR, legacy))).toBe(false);
+    }
+    expect(existsSync(resolve(FONT_DIR, 'fonts.css'))).toBe(false);
+  });
+
+  it('gives every subset URL its own version token', () => {
+    const familyTokens = new Set<string>();
+    for (const family of FAMILIES) {
+      const tokens = new Set<string>();
+      const withoutToken: string[] = [];
+      for (const face of stylesheet(family).faces) {
+        if (!/^[0-9a-f]{12}$/.test(face.token)) withoutToken.push(face.url);
+        tokens.add(face.token);
+      }
+      expect(withoutToken).toEqual([]);
+      // The token is per FAMILY: the family changes, the token changes.
+      expect(tokens.size).toBe(1);
+      familyTokens.add([...tokens][0]);
+    }
+    // The three families do not share a token.
+    expect(familyTokens.size).toBe(FAMILIES.length);
+    // And the family token is not the stylesheet version: the manifest
+    // version versions the STYLESHEETS, the family token versions the
+    // SUBSETS. Two layers, one URL each.
+    expect(familyTokens.has(readManifest().version)).toBe(false);
   });
 });

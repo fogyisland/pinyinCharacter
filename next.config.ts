@@ -30,11 +30,17 @@ const config: NextConfig = {
   // Long-lived caching for the static assets that are content-addressed or
   // effectively immutable. Without this, Next serves everything in public/
   // with `Cache-Control: public, max-age=0`, so the browser revalidates the
-  // 136 KB font stylesheet (and every font subset) on EVERY page load.
+  // 54 KB render-blocking font stylesheet (and every font subset) on EVERY
+  // page load.
   //
-  //   /font/    — Google Fonts subsets. The file names are content hashes,
-  //               and the generated stylesheets carry a `?v=<hash>` query, so
-  //               `immutable` can never serve a stale file.
+  //   /font/    — two kinds of thing. The stylesheets (fonts-{sans,serif,
+  //               wenkai}.css) are versioned with the manifest hash, which
+  //               lib/font-css.ts appends as `?v=<manifest version>`. The
+  //               woff2 subsets are stable names (hot.woff2, ext-001.woff2,
+  //               ...) and carry a per-family token, `?v=<family token>`,
+  //               written into the stylesheet when they are built. Both
+  //               change the URL whenever the bytes change, so `immutable`
+  //               can never serve a stale file.
   //   /fonts/   — the hard-pen / brush fonts. Fixed names, replaced when the
   //               fonts are rebuilt, so they get a long but finite TTL.
   //   /strokes/ — one JSON per character, never changes for a given char.
