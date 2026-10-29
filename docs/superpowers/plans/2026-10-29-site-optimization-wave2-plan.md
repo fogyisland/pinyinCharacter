@@ -2088,8 +2088,13 @@ Expected: 只出现本任务列出的路径。**特别确认 `data/sutras/manife
 - [ ] **Step 8: 提交**
 
 ```bash
+git add .gitattributes lib/font-css.ts next.config.ts middleware.ts \
+        tests/unit/lib/fonts-css.test.ts tests/unit/lib/middleware-redirect.test.ts
 git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH.MM]"
 ```
+
+> ⚠️ **这一步的 `git add` 不能省**（控制器 2026-10-30 02.40 补）：Step 5 的 `git add` 只暂存了**字体产物**，而 Step 2/3/4 改的六个文件（`.gitattributes`、`lib/font-css.ts`、`next.config.ts`、`middleware.ts`、两个测试文件）是**改动**不是**新增**，不会自动进索引 ⇒ 少了这一行，提交里就**只有字体文件**，而「把旧的模型整个换掉」这件事（注释、断言、换掉旧路径）**一件都没进仓库**。
+> `git rm` 已经把删除登记进索引了，不需要再 `git add` 那几个被删的文件。同样，`data/sutras/manifest.json` **不许**出现在这一行里（G5）。
 
 > 提交信息里不要写「done」之类的结论；用祈使句描述改动。
 
