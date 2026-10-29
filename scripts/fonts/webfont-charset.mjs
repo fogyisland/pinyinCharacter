@@ -9,11 +9,27 @@
  *   characters pulls 34 of them — 3.7 MB to 5.0 MB of font for one page.
  *
  *   The replacement is our own tiered subsetting:
- *     hot — the 300 characters the interface itself uses, in one file
+ *     hot — the characters the MEASURED pages paint, in one file
  *     Ext — everything else, cut into blocks of 6 CHARACTERS
  *   A page downloads the hot file plus the one or two Ext blocks that hold
  *   the characters it needs, and the browser fetches an Ext block only when
  *   a character of that block is actually painted.
+ *
+ *   WHICH characters the hot file holds is free: its size is fixed, so
+ *   the corpus frequency cannot improve on the measured answer. The hot
+ *   tier is therefore SEEDED with the union of the characters the four
+ *   measured pages paint in each family — read from
+ *   data/font-page-profiles.json, the only evidence of what the pages
+ *   really draw — ordered by how many pages painted them, and the
+ *   remaining slots are filled by the corpus frequency order. The seed is
+ *   never truncated: a painted character that fell out of the hot tier
+ *   would have no glyph in it, and the page would show a tofu box.
+ *
+ *   All THREE families carry a 300 character hot tier, the brand face
+ *   included. It used to have none, on the theory that every character it
+ *   holds is rare enough to make 300 slots a waste; the measurement says
+ *   the opposite — the poetry page paints its titles in the brand face and
+ *   needed 120 font files without a hot tier.
  *
  *   The Ext tier keeps the FREQUENCY ORDER and slices it into blocks of a
  *   fixed character count. The cost of a subset file is not the glyphs
@@ -40,9 +56,9 @@
  * re-derives the same plan to prove no glyph was lost.
  *
  * The three families are NESTED on purpose — wenkai ⊂ sans ⊂ serif:
- *   wenkai  the brand typeface: the UI literals, the corpus titles, the
- *           rare characters, the dictionary radicals and the 8 105
- *           standard characters of
+ *   wenkai  the brand typeface: the UI literals WITHOUT their comments,
+ *           the corpus titles, the poem titles, the rare characters, the
+ *           dictionary radicals and the 8 105 standard characters of
  *           data/general-standard-chinese-characters.json
  *   sans    the body typeface: everything wenkai covers plus the corpora
  *   serif   the accent typeface: everything sans covers plus the classics
@@ -92,16 +108,25 @@ const DEFAULT_EXT_BLOCK_CHARS = 6;
 /**
  * The tier plan of every family, before the caller overrides it.
  *
- * sans and serif carry a hot tier of the 300 characters the interface
- * uses most; wenkai has NO hot tier, because every character it holds is
- * rare enough that a file of the 300 most used ones would be wasted weight.
+ * All three families carry a hot tier of 300 characters, the brand face
+ * included. The hot file is SEEDED with the characters the measured pages
+ * paint in that family (see `loadFamilyCharsets`) and the rest of the
+ * slots are filled by corpus frequency. The brand face used to have no
+ * hot tier at all, on the theory that every character it holds is rare
+ * enough to make 300 slots a waste; the measurement says the opposite —
+ * the poetry page paints its titles in the brand face and needed 120 font
+ * files without a hot tier.
+ *
  * All three cut the Ext tier into blocks of six characters.
  */
 const FAMILY_DEFAULTS = {
   sans: { tier1Size: 300, extBlockChars: 6 },
   serif: { tier1Size: 300, extBlockChars: 6 },
-  wenkai: { tier1Size: 0, extBlockChars: 6 },
+  wenkai: { tier1Size: 300, extBlockChars: 6 },
 };
+
+/** The families the site ships, in the order they are reported. */
+const FAMILIES = ['wenkai', 'sans', 'serif'];
 
 /** A character coming from the source code counts a thousand times more. */
 const SOURCE_CODE_WEIGHT = 1000;
@@ -203,8 +228,12 @@ export function scoreCharacters(sources) {
 /**
  * Split a scored charset into the hot tier and the Ext blocks.
  *
- * The hot tier keeps the score order — the most used characters first —
- * and holds `tier1Size` characters (none at all for wenkai).
+ * The hot tier is SEEDED: `options.hotChars` comes first, in its own
+ * order, and the remaining slots are filled by the score order. The
+ * seeded characters are never truncated — `tier1Size` is a FLOOR, not a
+ * cap. A seeded character is one the measured pages paint, and a painted
+ * character that fell out of the hot tier would have no glyph in it: the
+ * page would show a tofu box.
  *
  * The Ext tier is the rest, in the SAME score order, cut into blocks of
  * `extBlockChars` characters. The order is the whole point: a page draws
@@ -219,6 +248,7 @@ export function scoreCharacters(sources) {
 export function planTiers(scored, options = {}) {
   const tier1Size = options.tier1Size ?? DEFAULT_TIER1_SIZE;
   const extBlockChars = options.extBlockChars ?? DEFAULT_EXT_BLOCK_CHARS;
+  const seed = options.hotChars ?? [];
 
   if (!Number.isInteger(extBlockChars) || extBlockChars <= 0) {
     throw new TypeError(
@@ -230,8 +260,30 @@ export function planTiers(scored, options = {}) {
   }
 
   const ordered = scored.ordered;
-  const hot = ordered.slice(0, tier1Size);
-  const tail = ordered.slice(tier1Size);
+
+  // The seed goes in first, in its own order, and is never truncated. A
+  // seeded character the corpus does not hold still enters the hot tier:
+  // it is painted by a page, so it needs a glyph.
+  const hot = [];
+  const hotSet = new Set();
+  for (const ch of seed) {
+    if (hotSet.has(ch)) continue;
+    hotSet.add(ch);
+    hot.push(ch);
+  }
+
+  // The tier size is a floor: the seed decides how small it may get.
+  const hotSize = Math.max(tier1Size, hot.length);
+  for (const ch of ordered) {
+    if (hot.length >= hotSize) break;
+    if (hotSet.has(ch)) continue;
+    hotSet.add(ch);
+    hot.push(ch);
+  }
+
+  // The tail keeps the score order and drops the characters the hot tier
+  // already holds — a character may not be in both tiers.
+  const tail = ordered.filter((ch) => !hotSet.has(ch));
 
   const extBlocks = [];
   for (let start = 0; start < tail.length; start += extBlockChars) {
@@ -288,6 +340,95 @@ export function unicodeRange(chars) {
     index += 1;
   }
   return parts.join(', ');
+}
+
+/**
+ * Strip the comments of a source file.
+ *
+ * The source scan counts the characters the interface paints, and a
+ * comment is never painted: the Chinese characters that existed ONLY in
+ * comments held the thousandfold source weight and pushed real characters
+ * out of the hot tier (69 of them were comment-only).
+ *
+ * The stripper is LEXICAL, not a regular expression: it knows the three
+ * forms of a source file — a `//` line comment, a `/* … *\/` block comment
+ * and a string literal — and a `//` inside a string (`'https://example.com'`)
+ * is not a comment. A `\` inside a string escapes the next character, so
+ * an escaped quote does not end the literal.
+ *
+ * A template literal is treated like the other two string forms: it is
+ * copied verbatim up to its closing backtick, so its `${…}` interpolation
+ * is not re-lexed and a comment inside one is kept. The repository holds
+ * no such case, and re-lexing an interpolation would need a real parser.
+ */
+export function stripSourceComments(text) {
+  if (typeof text !== 'string') return '';
+
+  let out = '';
+  let index = 0;
+  // The state of the scanner: 'code' outside of a literal, 'line' inside
+  // a `//` comment, 'block' inside a `/* … */` comment and 'string'
+  // inside a string literal.
+  let state = 'code';
+  let quote = '';
+
+  while (index < text.length) {
+    const ch = text[index];
+    const next = text[index + 1];
+
+    if (state === 'code') {
+      if (ch === '/' && next === '/') {
+        state = 'line';
+        index += 2;
+        continue;
+      }
+      if (ch === '/' && next === '*') {
+        state = 'block';
+        index += 2;
+        continue;
+      }
+      if (ch === '"' || ch === "'" || ch === '`') {
+        state = 'string';
+        quote = ch;
+        out += ch;
+        index += 1;
+        continue;
+      }
+      out += ch;
+      index += 1;
+      continue;
+    }
+
+    if (state === 'line') {
+      // The newline itself is kept, so the lines of the file stay lines.
+      if (ch === '\n') {
+        state = 'code';
+        out += ch;
+      }
+      index += 1;
+      continue;
+    }
+
+    if (state === 'block') {
+      if (ch === '*' && next === '/') {
+        state = 'code';
+        index += 2;
+        continue;
+      }
+      index += 1;
+      continue;
+    }
+
+    out += ch;
+    if (ch === '\\') {
+      out += text[index + 1] ?? '';
+      index += 2;
+      continue;
+    }
+    if (ch === quote) state = 'code';
+    index += 1;
+  }
+  return out;
 }
 
 /**
@@ -501,7 +642,10 @@ function scanTextFile(path, state) {
  * Scan the source code for the characters the interface renders.
  *
  * These characters are weighted a thousand times higher than the corpus,
- * so the UI always lands in the hot tier.
+ * so the UI always lands in the hot tier — but only the ones that are
+ * really painted: the comments are stripped first, because a character
+ * that exists only in a comment is never drawn and would still hold a
+ * thousandfold weight.
  */
 function scanSourceCode(root, state) {
   const counts = new Map();
@@ -533,7 +677,7 @@ function scanSourceDirectory(dir, counts, state) {
     }
     if (!SOURCE_EXTENSIONS.has(extname(entry.name))) continue;
     try {
-      countChars(counts, readFileSync(full, 'utf8'));
+      countChars(counts, stripSourceComments(readFileSync(full, 'utf8')));
     } catch (err) {
       state.skipped += 1;
       console.warn(`[charset] skipping unreadable source file ${full}: ${err.message}`);
@@ -579,6 +723,9 @@ const planCache = new Map();
  *
  * The per family overrides are part of the key: a caller that asks for a
  * different hot tier size must not be handed the plan of the default one.
+ * The path of the page profile fixture is part of it too, because the
+ * fixture seeds the hot tier: a caller that points at another fixture
+ * must not be handed the plan of the default one.
  * The overrides are serialized in a fixed order, so the same overrides
  * always land on the same entry.
  *
@@ -586,7 +733,7 @@ const planCache = new Map();
  * "no override" — so it is left out of the key. That way `{}` and
  * `{ tier1Size: undefined }` share one cache entry.
  */
-function cacheKey(root, families) {
+function cacheKey(root, families, pageProfiles) {
   const overrides = Object.entries(families ?? {})
     .filter(([, options]) => options !== undefined && options !== null)
     .map(([family, options]) => {
@@ -600,7 +747,79 @@ function cacheKey(root, families) {
     .sort((a, b) => (a.family < b.family ? -1 : a.family > b.family ? 1 : 0))
     .map(({ family, entries }) => `${family}{${entries.join(',')}}`)
     .join(';');
-  return `${root}::${overrides}`;
+  const profiles = pageProfiles === undefined || pageProfiles === null ? '' : pageProfiles;
+  return `${root}::${profiles}::${overrides}`;
+}
+
+/**
+ * The characters the measured pages paint in one family.
+ *
+ * The fixture is the only evidence of what the pages really draw, so the
+ * seed of a family is the UNION of the characters of ALL pages, ordered by
+ * the number of pages that painted them (descending) and by ascending code
+ * point for the ties.
+ */
+function unionOfPages(pages, family) {
+  const pageCount = new Map();
+  for (const page of Object.values(pages)) {
+    const painted = page?.[family];
+    if (typeof painted !== 'string') continue;
+    for (const ch of new Set(painted)) {
+      pageCount.set(ch, (pageCount.get(ch) ?? 0) + 1);
+    }
+  }
+  return [...pageCount.keys()].sort((a, b) => {
+    const delta = (pageCount.get(b) ?? 0) - (pageCount.get(a) ?? 0);
+    if (delta !== 0) return delta;
+    return a.codePointAt(0) - b.codePointAt(0);
+  });
+}
+
+/**
+ * The hot tier seed of every family, read from the page profile fixture.
+ *
+ * `data/font-page-profiles.json` was captured from the production HTML: it
+ * holds, per page and per family, the characters that page painted. It is
+ * a file of the repository, so a fixture that cannot be read means the
+ * repository is broken — and a silent fallback to the corpus frequency
+ * order would put the hot tier back to the hit rate this module exists to
+ * fix. So this throws instead of guessing.
+ */
+function loadPageProfileSeeds(path) {
+  let raw;
+  try {
+    raw = readFileSync(path, 'utf8');
+  } catch (err) {
+    throw new Error(
+      `[charset] cannot read the page profile fixture ${path}: ${err.message} — ` +
+        'the hot tier is seeded from it; restore the file or pass ' +
+        'options.pageProfiles',
+    );
+  }
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (err) {
+    throw new Error(
+      `[charset] the page profile fixture ${path} is not valid JSON: ${err.message} — ` +
+        'regenerate it with the collector of the attribution task',
+    );
+  }
+
+  const pages = parsed?.pages;
+  if (!pages || typeof pages !== 'object' || Array.isArray(pages)) {
+    throw new Error(
+      `[charset] the page profile fixture ${path} has no "pages" object — ` +
+        'regenerate it with the collector of the attribution task',
+    );
+  }
+
+  const seeds = {};
+  for (const family of FAMILIES) {
+    seeds[family] = unionOfPages(pages, family);
+  }
+  return seeds;
 }
 
 /**
@@ -609,23 +828,39 @@ function cacheKey(root, families) {
  * The families are nested — wenkai ⊂ sans ⊂ serif — because each family
  * adds corpora to the ones before it, so a character that shows up late
  * is still covered by the families that need it.
+ *
+ * The hot tier of every family is seeded with the characters the measured
+ * pages paint in it; the rest of the hot tier is filled by the corpus
+ * frequency order.
  */
 export function loadFamilyCharsets(options = {}) {
   const root = options.root ?? ROOT;
-  const key = cacheKey(root, options.families);
+  const pageProfiles =
+    options.pageProfiles ?? join(root, 'data', 'font-page-profiles.json');
+  const key = cacheKey(root, options.families, pageProfiles);
   const cached = planCache.get(key);
   if (cached) return cached;
 
   const scores = loadScores(root);
+  const seeds = loadPageProfileSeeds(pageProfiles);
 
   // --- the plan of every family -----------------------------------------
   const plans = {
-    wenkai: planTiers(toScored(scores.wenkai), familyOptions('wenkai', options.families)),
-    sans: planTiers(toScored(scores.sans), familyOptions('sans', options.families)),
-    serif: planTiers(toScored(scores.serif), familyOptions('serif', options.families)),
+    wenkai: planTiers(
+      toScored(scores.wenkai),
+      familyOptions('wenkai', options.families, seeds.wenkai),
+    ),
+    sans: planTiers(
+      toScored(scores.sans),
+      familyOptions('sans', options.families, seeds.sans),
+    ),
+    serif: planTiers(
+      toScored(scores.serif),
+      familyOptions('serif', options.families, seeds.serif),
+    ),
   };
 
-  for (const family of ['wenkai', 'sans', 'serif']) {
+  for (const family of FAMILIES) {
     const plan = plans[family];
     const total =
       plan.hot.length +
@@ -654,9 +889,9 @@ function loadScores(root) {
   const state = { skipped: 0 };
 
   // --- wenkai: the brand face ------------------------------------------
-  // The UI literals, the corpus titles, the rare characters, the dictionary
-  // radicals and the standard character set — everything the site paints in
-  // the brand face.
+  // The UI literals WITHOUT their comments, the corpus titles, the poem
+  // titles, the rare characters, the dictionary radicals and the standard
+  // character set — everything the site paints in the brand face.
   const wenkaiScore = new Map();
   foldSource(wenkaiScore, scanSourceCode(root, state), SOURCE_CODE_WEIGHT);
 
@@ -704,15 +939,27 @@ function loadScores(root) {
   );
   foldSource(wenkaiScore, standard, CORPUS_WEIGHT);
 
+  // The poem titles are painted in the brand face: components/poetry/
+  // PoemCard.tsx:32 renders 《{poem.title}》 in font-kai. Seven of the
+  // title characters exist in NO other corpus source, so without them the
+  // poetry page falls back to the system font (a mixed face, and a tofu
+  // box where the system font has no glyph either).
+  //
+  // The pass over data/poems therefore has to happen BEFORE the body face
+  // copies the score of the brand face: one pass over the directory yields
+  // both the counts and the titles — the titles go into the brand face, the
+  // counts into the body face. Only the TOP level title of a poem file is
+  // taken; the poem itself is body text and belongs to sans.
+  const poems = scanJsonDirectory(join(root, 'data', 'poems'), state, {
+    strings: true,
+    titles: true,
+    rares: false,
+  });
+  foldSource(wenkaiScore, poems?.titles, CORPUS_WEIGHT);
+
   // --- sans: the body face ---------------------------------------------
   const sansScore = new Map(wenkaiScore);
   foldSource(sansScore, content?.counts, CORPUS_WEIGHT);
-
-  const poems = scanJsonDirectory(join(root, 'data', 'poems'), state, {
-    strings: true,
-    titles: false,
-    rares: false,
-  });
   foldSource(sansScore, poems?.counts, CORPUS_WEIGHT);
 
   const gb2312 = scanTextFile(join(root, 'scripts', 'fonts', 'gb2312-7000.txt'), state);
@@ -738,15 +985,22 @@ function loadScores(root) {
  *
  * Every option is taken BY KEY, never by spreading the override object
  * over the defaults. A spread lets an explicit `undefined` win the spread
- * and wipe the default out: `{ tier1Size: undefined }` would give wenkai a
- * 300 character hot tier it must not have (R14).
+ * and ERASE the default it should have fallen back to: `{ tier1Size:
+ * undefined }` would leave the size of the hot tier uncomputable, and
+ * `{ hotChars: undefined }` would wipe the page profile seed away — the
+ * hot tier would fall back to the corpus frequency order, which is
+ * exactly what this module exists to avoid.
+ *
+ * The seed of the hot tier is the union of the characters the measured
+ * pages paint in the family, unless the caller names its own.
  */
-function familyOptions(family, overrides) {
+function familyOptions(family, overrides, seed) {
   const defaults = FAMILY_DEFAULTS[family];
   const override = overrides?.[family] ?? {};
   return {
     tier1Size: override.tier1Size ?? defaults.tier1Size,
     extBlockChars: override.extBlockChars ?? defaults.extBlockChars,
+    hotChars: override.hotChars ?? seed,
   };
 }
 

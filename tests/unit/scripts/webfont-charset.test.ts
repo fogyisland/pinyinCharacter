@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   isCjkChar,
+  stripSourceComments,
   scoreCharacters,
   planTiers,
   unicodeRange,
@@ -21,6 +23,31 @@ describe('isCjkChar', () => {
     for (const ch of ['a', '1', ' ', '·', 'é', '—', '“']) {
       expect(isCjkChar(ch)).toBe(false);
     }
+  });
+});
+
+describe('stripSourceComments', () => {
+  it('drops a line comment but keeps the string next to it', () => {
+    expect(stripSourceComments('const a = "字"; // 注释里的字\n')).toContain('字');
+    expect(stripSourceComments('const a = "字"; // 注释里的字\n')).not.toContain('注');
+  });
+
+  it('drops a block comment but keeps the code around it', () => {
+    expect(stripSourceComments('/* 块注释 */const b = 1;')).toBe('const b = 1;');
+  });
+
+  it('keeps a comment marker inside a string', () => {
+    expect(stripSourceComments('const url = "https://example.com";')).toContain('https://example.com');
+  });
+
+  it('keeps an escaped quote inside a string', () => {
+    expect(stripSourceComments('const a = "字\\" // 字"; // 注\n')).toContain('// 字');
+    expect(stripSourceComments('const a = "字\\" // 字"; // 注\n')).not.toContain('注');
+  });
+
+  it('keeps a template literal and its backticks', () => {
+    expect(stripSourceComments('const a = `字 // 字`; // 注\n')).toContain('`字 // 字`');
+    expect(stripSourceComments('const a = `字 // 字`; // 注\n')).not.toContain('注');
   });
 });
 
@@ -124,6 +151,29 @@ describe('planTiers', () => {
   it('rejects a non positive block size', () => {
     expect(() => planTiers(scored, { extBlockChars: 0 })).toThrow();
   });
+
+  it('never truncates the seeded characters, even when they exceed the tier size', () => {
+    // A painted character that falls out of the hot tier is a tofu box
+    // (G10), so the tier grows instead of dropping names.
+    const seeded = ['永', '和', '谐'];
+    const plan = planTiers(scored, { tier1Size: 2, hotChars: seeded });
+    expect(plan.hot.slice(0, 3)).toEqual(seeded);
+    expect(plan.hot).toHaveLength(3);
+  });
+
+  it('keeps the seeded characters first and fills the rest by frequency', () => {
+    const plan = planTiers(scored, { tier1Size: 3, hotChars: ['丁'] });
+    expect(plan.hot[0]).toBe('丁');
+    expect(plan.hot).toHaveLength(3);
+    expect(new Set(plan.hot).size).toBe(3);
+  });
+
+  it('places a seeded character that the corpus does not contain in the hot tier', () => {
+    // The page profile may name a character the corpus missed (F27-j-e
+    // found seven of them in the poem titles). It still has to get a glyph.
+    const plan = planTiers(scored, { tier1Size: 1, hotChars: ['鵩'] });
+    expect(plan.hot[0]).toBe('鵩');
+  });
 });
 
 describe('unicodeRange', () => {
@@ -165,7 +215,45 @@ describe('loadFamilyCharsets', () => {
     const plans = loadFamilyCharsets();
     expect(plans.sans.hot).toHaveLength(300);
     expect(plans.serif.hot).toHaveLength(300);
-    expect(plans.wenkai.hot).toHaveLength(0);
+    // R14 said "no hot tier for the brand face"; F27-j-d reversed that —
+    // without a brand face hot tier /poetry opens 120 files.
+    expect(plans.wenkai.hot).toHaveLength(300);
+  }, 180_000);
+
+  it('seeds the hot tier with the characters the measured pages paint', () => {
+    // F27-j-c: the hot tier holds a FIXED number of characters, so WHICH
+    // characters it holds is free. The page profile fixture is the only
+    // evidence of what the pages actually paint.
+    const plans = loadFamilyCharsets();
+    const fixture = JSON.parse(
+      readFileSync(
+        resolve(fileURLToPath(new URL('../../../data/font-page-profiles.json', import.meta.url))),
+        'utf8',
+      ),
+    ) as { pages: Record<string, Record<string, string>> };
+    for (const family of ['sans', 'serif', 'wenkai'] as const) {
+      const painted = new Set<string>();
+      for (const page of Object.values(fixture.pages)) {
+        for (const ch of page[family] ?? '') painted.add(ch);
+      }
+      expect(painted.size).toBeGreaterThan(0);
+      const hot = new Set(plans[family].hot);
+      const missing = [...painted].filter((ch) => !hot.has(ch));
+      expect(missing).toEqual([]);
+    }
+  }, 180_000);
+
+  it('covers every poem title character in wenkai, because the poem card paints them in the brand face', () => {
+    // F27-j-e: components/poetry/PoemCard.tsx renders 《诗题》 in
+    // font-kai. Seven of the title characters existed in NO other corpus
+    // source, so they were falling back to the system font today.
+    const plans = loadFamilyCharsets();
+    const wenkai = new Set(
+      [...plans.wenkai.hot, ...plans.wenkai.extBlocks.flatMap((b) => b.chars)],
+    );
+    for (const ch of ['鵩', '飚', '巂', '岧', '鴈', '劒', '濬']) {
+      expect(wenkai.has(ch)).toBe(true);
+    }
   }, 180_000);
 
   it('covers the UI literals and the corpus characters', () => {
@@ -230,14 +318,36 @@ describe('loadFamilyCharsets', () => {
   it('honours a per family override even after the default plans were cached', () => {
     loadFamilyCharsets();
     const plans = loadFamilyCharsets({ families: { sans: { tier1Size: 10 } } });
-    expect(plans.sans.hot).toHaveLength(10);
+    // `tier1Size` is a FLOOR: the seeded union of the measured pages is
+    // longer than 10, so the hot tier holds the union and stops there. The
+    // default's 300 characters are gone — a cache that ignored the
+    // override would hand back the 300 character default plan.
+    expect(plans.sans.hot.length).toBeLessThan(300);
+    expect(plans.sans.hot.length).toBeGreaterThanOrEqual(10);
   }, 180_000);
 
-  it('falls back to the family default when an override is explicitly undefined', () => {
+  it('treats an explicitly undefined override as no override', () => {
     // A spread of the override object over the defaults lets an explicit
-    // `undefined` win the spread and wipe the default out: wenkai would
-    // get a 300 character hot tier it must not have (R14).
+    // `undefined` win the spread and wipe the default out. The observable
+    // invariant is the one that matters: such a call has to produce exactly
+    // the default plan, hot tier and Ext blocks alike.
+    const defaults = loadFamilyCharsets();
     const plans = loadFamilyCharsets({ families: { wenkai: { tier1Size: undefined } } });
-    expect(plans.wenkai.hot).toHaveLength(0);
+    expect(plans.wenkai.hot).toEqual(defaults.wenkai.hot);
+    expect(plans.wenkai.extBlocks).toHaveLength(defaults.wenkai.extBlocks.length);
+  }, 180_000);
+
+  it('lets a caller override the page profile seed of one family', () => {
+    const plans = loadFamilyCharsets({ families: { sans: { hotChars: ['鵩'] } } });
+    expect(plans.sans.hot[0]).toBe('鵩');
+    expect(plans.sans.hot).toHaveLength(300);
+  }, 180_000);
+
+  it('fails loudly when the page profile fixture cannot be read', () => {
+    // A silent fallback to the corpus frequency order would put the hot
+    // tier back to the hit rate this module exists to fix.
+    expect(() =>
+      loadFamilyCharsets({ pageProfiles: 'no/such/font-page-profiles.json' }),
+    ).toThrow(/font-page-profiles|page profile/i);
   }, 180_000);
 });

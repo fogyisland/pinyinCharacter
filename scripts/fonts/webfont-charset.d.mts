@@ -50,7 +50,13 @@ export interface ExtBlock {
 
 /** The tier plan of one family. */
 export interface TierPlan {
-  /** The most used characters — the hot tier. */
+  /**
+   * The hot tier: the seeded characters first, then the most used ones.
+   *
+   * The seed is the union of the characters the measured pages paint in
+   * the family; it is never truncated, so the tier can be longer than
+   * `tier1Size`.
+   */
   hot: string[];
   /** The rest, cut into blocks of a fixed character count. */
   extBlocks: ExtBlock[];
@@ -65,7 +71,10 @@ export interface TierPlan {
  * |---|---|---|
  * | `sans` | 300 | 6 |
  * | `serif` | 300 | 6 |
- * | `wenkai` | 0 | 6 |
+ * | `wenkai` | 300 | 6 |
+ *
+ * `tier1Size` is a FLOOR, not a cap: the seeded characters are all kept,
+ * so the hot tier grows when the seed is longer.
  *
  * An override whose value is `undefined` or `null` means "no override" and
  * falls back to the family default.
@@ -75,12 +84,25 @@ export interface TierOptions {
   tier1Size?: number;
   /** How many characters one Ext block holds. */
   extBlockChars?: number;
+  /**
+   * The characters the hot tier is seeded with.
+   *
+   * They go in first, in this order, and they are never truncated. The
+   * default is the union of the characters the measured pages paint in the
+   * family (see `loadFamilyCharsets`).
+   */
+  hotChars?: string[];
 }
 
 /** The options of the charset builder. */
 export interface CharsetOptions {
   /** The repository root the corpora are read from. Defaults to the repo. */
   root?: string;
+  /**
+   * The path of the page profile fixture that seeds the hot tier.
+   * Defaults to `<root>/data/font-page-profiles.json`.
+   */
+  pageProfiles?: string;
   /** The tier options of a single family, overriding the defaults. */
   families?: Partial<Record<FamilyName, TierOptions>>;
 }
@@ -90,6 +112,9 @@ export declare const CJK_RANGES: Array<[number, number]>;
 
 /** True when the string is exactly one Chinese character. */
 export declare function isCjkChar(ch: string): boolean;
+
+/** Strip the comments of a source file, keeping the string literals. */
+export declare function stripSourceComments(text: string): string;
 
 /** Score every character of every source. */
 export declare function scoreCharacters(sources: CharSource[]): ScoredCharset;
