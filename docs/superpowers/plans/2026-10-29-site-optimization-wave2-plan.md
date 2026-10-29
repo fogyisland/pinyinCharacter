@@ -671,18 +671,30 @@ git commit -m "feat(fonts): add the webfont charset and tier planner [2026-10-29
   export interface FontEntry { filename: string; urls: string[]; label: string; }
   export const SOURCES: FontEntry[];
   export const STAGING_DIR: string;                     // <repo>/scripts/fonts/staging/web
+  export const DOWNLOAD_TIMEOUT_MS: number;             // 600_000
+  export const MAX_ATTEMPTS_PER_URL: number;            // 3
+  export async function remoteSize(url: string): Promise<number | null>;
   export async function downloadOnce(url: string, dest: string, timeoutMs?: number): Promise<boolean>;
-  export async function downloadFont(entry: FontEntry): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number }>;
+  export async function downloadFont(entry: FontEntry): Promise<{ status: 'ok' | 'skip' | 'fail'; size?: number; expected?: number }>;
   ```
   ```js
   // scripts/fonts/instance-webfont-axis.mjs
   export const INSTANCER_TARGETS: Array<{ src: string; out: string }>;
+  export const PYTHON_BIN: string;                      // process.env.PYTHON ?? 'python'
   export function instancerArgs(src: string, out: string): string[];
-  export async function instanceOne(target): Promise<{ status: 'ok' | 'skip' | 'fail'; out?: string }>;
+  export function readWeightAxis(buffer: Buffer): { min: number; default: number; max: number } | null;
+  export async function instanceOne(target): Promise<{ status: 'ok' | 'skip' | 'fail'; out?: string; axis?: { min: number; default: number; max: number } }>;
   ```
   下载器落到 `scripts/fonts/staging/web/`（已 gitignored）的文件名固定为：
   `NotoSansSC-wght.ttf`、`NotoSerifSC-wght.ttf`、`LXGWWenKaiTC-Regular.ttf`、`LXGWWenKaiTC-Bold.ttf`，
   另外三份许可证：`NotoSansSC-OFL.txt`、`NotoSerifSC-OFL.txt`、`LXGWWenKaiTC-OFL.txt`。
+
+  **为什么接口长这样（F27 后的加固）**：`scripts/fonts/download-hard-pen-fonts.ts` 的骨架有四个坑，本任务照抄它的外形但**不能照抄它的行为**——
+  (a) 它的 `downloadFont` **只判断「本地文件存在且非空」就 SKIP**，不核对大小，于是曾经留下一个 420 KB 的 `.part` 当成下载好的文件，后面所有步骤都基于一个坏文件继续；
+  (b) 它的超时是 60 s，对 13–25 MB 的字体远远不够（本机实测 25 MB 需要几百秒）；
+  (c) 它的 `main()` 无论成败都 `process.exit(0)`，**违反 G12**（失败必须非零退出）；
+  (d) 它把整个响应读进内存（`res.arrayBuffer()`），25 MB 的字体 × 7 个文件会让峰值内存不可控。
+  所以本任务要求：**按远端 `Content-Length` 核对大小**、**超时 ≥ 600 000 ms**、**逐 URL 重试**、**失败非零退出**、**流式落盘**。
 
 - [ ] **Step 1: 写失败测试**
 
@@ -691,7 +703,11 @@ git commit -m "feat(fonts): add the webfont charset and tier planner [2026-10-29
 ```ts
 import { describe, it, expect } from 'vitest';
 import { INSTANCER_TARGETS, instancerArgs } from '../../../scripts/fonts/instance-webfont-axis.mjs';
-import { SOURCES } from '../../../scripts/fonts/download-webfont-sources.ts';
+import {
+  SOURCES,
+  DOWNLOAD_TIMEOUT_MS,
+  MAX_ATTEMPTS_PER_URL,
+} from '../../../scripts/fonts/download-webfont-sources.ts';
 
 describe('download-webfont-sources', () => {
   it('downloads the four source fonts plus their licences', () => {
@@ -716,18 +732,35 @@ describe('download-webfont-sources', () => {
       }
     }
   });
+
+  it('waits long enough for a 25 MB font and retries every url', () => {
+    // The 60 s default of the hard-pen downloader is far too short here:
+    // the serif source is 25 125 512 bytes.
+    expect(DOWNLOAD_TIMEOUT_MS).toBeGreaterThanOrEqual(600_000);
+    expect(MAX_ATTEMPTS_PER_URL).toBeGreaterThanOrEqual(2);
+  });
 });
 
 describe('instance-webfont-axis', () => {
   it('pins the wght axis to the four weights the site uses', () => {
     expect(instancerArgs('src.ttf', 'out.ttf')).toEqual([
-      'varLib.instancer',
+      '-I',
+      '-m',
+      'fontTools.varLib.instancer',
       'src.ttf',
       'wght=400:700',
       '--output',
       'out.ttf',
       '--no-overlap-flag',
     ]);
+  });
+
+  it('runs the interpreter in isolated mode', () => {
+    // -I keeps the interpreter from putting the script directory and the
+    // working directory on sys.path, so a stray json.py cannot shadow the
+    // standard library.
+    expect(instancerArgs('src.ttf', 'out.ttf')[0]).toBe('-I');
+    expect(instancerArgs('src.ttf', 'out.ttf')[1]).toBe('-m');
   });
 
   it('instances only the two variable fonts', () => {
@@ -746,7 +779,29 @@ Expected: FAIL —— 找不到 `scripts/fonts/instance-webfont-axis.mjs`。
 
 - [ ] **Step 3: 实现下载器 `scripts/fonts/download-webfont-sources.ts`**
 
-照抄 `scripts/fonts/download-hard-pen-fonts.ts` 的骨架（AbortController + 超时 + UA header + 跳过已存在且非空的文件 + 逐条打印 OK/SKIP/FAIL + `process.exit(0)`）。
+参考 `scripts/fonts/download-hard-pen-fonts.ts` 的**外形**（UA header + 逐条打印 + 落到 staging 目录），但**行为按下面这份清单**（理由见 Interfaces 段末尾的 (a)–(d)）：
+
+1. **UA header**：`User-Agent: pinyin-character-webfont-fetch/1.0`。
+2. **超时**：`DOWNLOAD_TIMEOUT_MS = 600_000`（10 分钟）。源文件最大 25 125 512 B（serif），60 s 不够。
+3. **流式落盘**：`fetch` 拿到 `response.body` 后逐块 `write` 到 `dest + '.part'`，**不要**用 `res.arrayBuffer()`（25 MB × 4 会把峰值内存顶到 100 MB+）。写完 `close()` 后再 `rename` 成正式文件名——**正式文件名存在的时刻，文件一定是完整的**。
+4. **按远端 `Content-Length` 核对大小**：
+   - 下载前先发一次 **HEAD** 请求读 `content-length`（本机实测 `raw.githubusercontent.com` 的 HEAD 返回 200 且带正确的 `Content-Length`，例如 sans 17 772 300）。
+   - 拿到 `expected` 后落盘；写完比对**实际字节数**与 `expected`。
+   - **不一致 ⇒ 删掉 `.part`，算这次失败，换下一个 attempt / URL 重下。**
+5. **绝不因为「本地已有非空文件」就 SKIP**（这是硬要求）：
+   - 本地文件存在 **且** `expected !== null` **且** 本地大小 === `expected` ⇒ `SKIP`（真的完整）。
+   - 本地文件存在 **但** 大小 ≠ `expected` ⇒ **当作截断，重下**（打印一行 `REDO`，说明本地多大、应为多少）。
+   - `expected === null`（服务器没给 `content-length`）且本地非空 ⇒ `SKIP` 并打印一行**警告**说明大小无法核对。
+6. **重试**：每个 URL 最多 `MAX_ATTEMPTS_PER_URL = 3` 次；一个 entry 的所有 URL 都试完仍失败 ⇒ 该 entry 判 `FAIL`。每次 attempt 之间固定等 2 s。
+7. **打印**：每个 entry 一行，格式 `OK  <size> bytes <filename>` / `SKIP <size> bytes <filename>` / `FAIL <filename>`，并附一行失败原因（HTTP 状态码或异常消息）。
+8. **退出码（G12）**：只要有任何一个 entry 是 `FAIL`，打印补救提示并 `process.exit(1)`；全部成功才 `process.exit(0)`。
+   补救提示固定文案：
+   ```
+   [download] 1 file(s) failed — retry with:
+       npm run fonts:download-web
+   If a download keeps stalling, fetch it by hand (the URLs are printed above)
+   and drop it into scripts/fonts/staging/web/ with the exact file name.
+   ```
 
 `SOURCES` 的具体取值（已实测四个 URL 全部返回 206，即可达）：
 
@@ -798,12 +853,40 @@ export const INSTANCER_TARGETS = [
   { src: 'NotoSerifSC-wght.ttf', out: 'NotoSerifSC-wght-400-700.ttf' },
 ];
 
+export const PYTHON_BIN = process.env.PYTHON ?? 'python';
+
 export function instancerArgs(src, out) {
-  return ['varLib.instancer', src, 'wght=400:700', '--output', out, '--no-overlap-flag'];
+  return [
+    '-I',
+    '-m',
+    'fontTools.varLib.instancer',
+    src,
+    'wght=400:700',
+    '--output',
+    out,
+    '--no-overlap-flag',
+  ];
 }
 ```
 
-用 `execFileSync('fonttools', instancerArgs(src, out), { encoding: 'utf8' })` 执行，工作目录设为 staging 目录。
+用 `execFileSync(PYTHON_BIN, instancerArgs(src, out), { encoding: 'utf8', cwd: STAGING_DIR })` 执行，工作目录设为 staging 目录。
+
+**为什么不用裸 `fonttools` 控制台脚本**：`-I`（isolated mode）让解释器**不把脚本所在目录与当前工作目录放进 `sys.path`**，这样旁边放一个 `json.py` 之类的文件就遮蔽不掉标准库（本次会话的安全约束：下载到的文件是不可信数据，读它们的 Python 一律用 `-I`）。`-m fontTools.varLib.instancer` 走的是模块入口，等价于控制台脚本但不依赖 `Scripts/` 目录是否在 `PATH` 上。控制台脚本等价写法保留在注释里：`fonttools varLib.instancer <src> wght=400:700 --output <out> --no-overlap-flag`。
+
+**裁轴后必须核对 `fvar`（G9 的证据）**：用仓库已有的 `fontkit` 读产物的轴：
+
+```js
+export function readWeightAxis(buffer) {
+  const font = fontkit.create(buffer);
+  const axis = font.variationAxes?.wght;
+  if (!axis) return null;
+  return { min: axis.min, default: axis.default, max: axis.max };
+}
+```
+
+`instanceOne()` 在写完产物后调它，**并断言 `min === 400 && default === 400 && max === 700`**；不满足就判 `FAIL` 并把实测值打印出来。
+理由（G9 的字重审计结论）：站内三族只用到 400/500/600/700，裁到 400–700 安全；但**裁轴后默认实例必须是 400**——Noto Sans SC 的默认实例原本是 100、Noto Serif SC 是 200，裁轴把它们变成 400，正是我们要的（不指定字重时按 400 渲染，与今天的 CSS 一致）。
+**裁轴前也要打印一遍原始轴的 min/default/max**，让「裁轴改变了默认实例」这件事在报告里看得见。
 
 **`fonttools` 缺失时**必须打印可执行的补救提示并以非零码退出：
 
@@ -811,6 +894,8 @@ export function instancerArgs(src, out) {
 [instance] fonttools not found — install it with:
     python -m pip install --upgrade fonttools brotli
 ```
+
+（探测方式：跑一次 `python -I -m fontTools.varLib.instancer --help`；探测不到就打印上面这段并 `process.exit(1)`。**不要**用 `fonttools` 在 `PATH` 上与否来判断，因为 `Scripts/` 常常不在 `PATH` 上。）
 
 - [ ] **Step 5: 跑测试确认通过**
 
@@ -828,11 +913,22 @@ Expected: PASS，2 个 describe / 5 个用例全绿。
 
 Run: `npm run fonts:download-web && npm run fonts:instance-web`
 Expected:
-- 4 个字体 + 3 个许可证打印 `OK` 或 `SKIP`（已存在则 SKIP）；
-- 裁轴打印 `NotoSansSC-wght-400-700.ttf` 与 `NotoSerifSC-wght-400-700.ttf` 的成功行；
-- `ls -la scripts/fonts/staging/web/` 里 4 个 ttf 都非空。
+- 4 个字体 + 3 个许可证各打印一行 `OK` 或 `SKIP`；**SKIP 只允许出现在大小核对通过的情况下**；
+- 裁轴打印 `NotoSansSC-wght-400-700.ttf` 与 `NotoSerifSC-wght-400-700.ttf` 的成功行，**并且每一行都带裁轴后的轴信息 `wght 400..700 default 400`**；
+- `ls -la scripts/fonts/staging/web/` 里 4 个 ttf 都非空，且大小与下表一致（本地实测值）：
+
+  | 文件 | 字节数 |
+  |---|---|
+  | `NotoSansSC-wght.ttf` | 17 772 300 |
+  | `NotoSerifSC-wght.ttf` | 25 125 512 |
+  | `LXGWWenKaiTC-Regular.ttf` | 13 110 528 |
+  | `LXGWWenKaiTC-Bold.ttf` | 12 881 104 |
+  | `NotoSansSC-wght-400-700.ttf`（裁轴后） | 17 645 708 |
+  | `NotoSerifSC-wght-400-700.ttf`（裁轴后） | 25 116 124 |
 
 > `scripts/fonts/staging/` 是 gitignored，**不要** `git add` 它。
+>
+> 裁轴这一步会打印 fontTools 的修复告警（`Attempting to fix OTLOffsetOverflowError ('GPOS', ...)`）——这是 fontTools 在裁剪可变字体时的正常修复流程，**不是错误**，不要因此判失败；以产物存在且轴核对通过为准。
 
 - [ ] **Step 7: 提交**
 
