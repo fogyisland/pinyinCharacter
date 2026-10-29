@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 把生产环境的字体载荷从 3.7–5.0 MB/页降到 431 KB/页（最差页 /stories；F25 的重定预算：首页 431 / 字典 387 / 诗词 287 / 故事 441 KB），首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
+**Goal:** 把生产环境的字体载荷从**实测的 2.0–3.7 MB/页**（今天的真实基线，F27 重新测得；计划原先写的 3.7–5.0 MB 是模型值）降到 **443–485 KB/页**（F27 的重定预算：首页 443 / 字典 430 / 诗词 323 / 故事 485 KB），首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
 
-**Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（按用字频率取前 N 字）+ 若干 Ext 文件（其余字按**频率序**每 6 个字符切一块，F25）**。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（这一步把衬线的每字成本从 499 B 降到 280 B），再用仓库已有的 `subset-font` 切分（真实成本 ≈ 1 000 B/文件 + 255–280 B/字，见 F25 的成本模型）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
+**Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（按用字频率取前 N 字）+ 若干 Ext 文件（其余字按**频率序**每 6 个字符切一块，F25）**。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（实测省 10–11 % 的子集字节，不是 F25 写的 44 %），再用仓库已有的 `subset-font` 切分。**真实成本不是线性模型**：子集字节由每个字形的轮廓复杂度决定，分布重尾——同一个 6 字块实测从 852 B 到 6 600 B（F27 的实测分布，见「第三轮实测修正的字节数（F27）」一节）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
 
 **Tech Stack:** Node 22 · npm · `subset-font@2.4.0`（已有）· `fontkit@2.0.4`（已有）· Python `fonttools 4.61.1`（构建期，已装）· nginx（Ubuntu/Debian 包）· vitest
 
@@ -90,12 +90,14 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 
 **真实成本模型**（实测：`fonttools varLib.instancer` + 仓库已有的 `subset-font`，每族用 4/8/16/32/64 字四档样本做最小二乘拟合）
 
+> ⚠️ **这张成本模型表已被 F27 推翻，下面的 fixed / perChar 数字不要再引用。** 它假设「字节 = fixed + perChar × 字数」线性成立；F27 用真实子集证明**字节由字形的轮廓复杂度决定、分布重尾**：同一个 6 字块实测从 852 B 到 6 600 B（差 7.7 倍），罕见尾部的字比热区的常用字贵 2–3 倍。线性拟合出的 perChar 只是一个平均数，用它外推页面字节必然错。
+
 每个子集文件 ≈ `fixed + perChar × 字数`：
 
 | 族 | fixed | perChar | 权重份数 | 说明 |
 |---|---|---|---|---|
 | `sans` | ≈1 000 B | 276 B | 1 | 源字体已实例化到 `wght 400–700`，单文件覆盖两个字重 |
-| `serif` | ≈1 000 B | **280 B** | 1 | 实例化之后；**未实例化是 499 B/字**——裁轴省 44 % |
+| `serif` | ≈1 000 B | **280 B** | 1 | 实例化之后；**未实例化是 499 B/字**——裁轴省 44 % ⚠️ **实测只省 10–11 %**（F27-b） |
 | `wenkai` | ≈900 B | 255 B | **2** | 静态 Regular / Bold 各一份 |
 
 - `fixed` **不可压缩**：`dropTables` / `nameIDs` / `noLayoutClosure` / `notdefGlyph:false` / `desubroutinize` 全部试过，输出**逐字节相同**。它不是表头开销，是第一个字形本身。
@@ -106,7 +108,7 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 
 **机制对决**（同一成本模型、同一批页面；机制 A = 计划的码位窗口，机制 B = 频率序按字符个数切块）
 
-> 表里的 CSS 一列是**模型值**（`2.8 B/字 + 5 B/face`），用来在机制之间横向比较；采用的那一行另外**真实生成**了三份样式表再 gzip 量：**168 KB**（sans 61 / serif 71 / wenkai 37，原始 2 008 KB），与模型值差 1 KB。
+> ⚠️ **下表的字节列已被 F27 用真实子集重测过（见「第三轮实测修正的字节数（F27）」一节），以 F27 的表为准。** 本表保留下来只为记录「为什么机制 B 赢」这个结论——结论不变（频率序赢），但**幅度从模型的 32 % 变成实测的 36 %**。
 
 | 机制 | 最差页字体 | CSS(gzip) | 文件数 | 请求/页 |
 |---|---|---|---|---|
@@ -125,14 +127,16 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 
 | # | 裁决 |
 |---|---|
-| **F25-a** | **Ext 块改为「频率序、每块 6 个字符」**，不再是码位窗口。R8 的机制部分与 R10 一起作废；R12（精确并集、不用 min–max 区间）**继续有效且更重要**——频率序的块在码位上是散的，min–max 区间会直接制造豆腐块（G10）。 |
-| **F25-b** | **热区保留**：sans/serif 热区 300 字，wenkai 无热区（R14 不变）。理由变了：无热区时请求数 148–176/页，超 R9 的 130 上限；有热区时 109/页。 |
-| **F25-c** | **重定 R9 的页面预算**（字体字节，不含 CSS）：`/` ≤ 460 KB、`/dictionary` ≤ 420 KB、`/poetry` ≤ 320 KB、`/stories` ≤ 480 KB。实测 **431 / 387 / 287 / 441 KB**。请求数 ≤ 110/页（预算仍是 130）。 |
-| **F25-d** | **重定 R17 的 CSS 预算**：三份合计 ≤ **175 KB**(gzip)，实测 168 KB（sans 61 / serif 71 / wenkai 37）。**无衬线那份单独设限 ≤ 65 KB**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞。 |
+| **F25-a** | **Ext 块改为「频率序、每块 6 个字符」**，不再是码位窗口。R8 的机制部分与 R10 一起作废；R12（精确并集、不用 min–max 区间）**继续有效且更重要**——频率序的块在码位上是散的，min–max 区间会直接制造豆腐块（G10）。✅ **F27-a 复核：机制成立**，用真实字节重测后频率序仍胜 36 %。 |
+| **F25-b** | **热区保留**：sans/serif 热区 300 字，wenkai 无热区（R14 不变）。理由变了：无热区时请求数 148–176/页，超 R9 的 130 上限；有热区时 109/页。✅ **F27-h 复核：成立**，实测无热区是 125–177 请求/页。 |
+| **F25-c** | **重定 R9 的页面预算**（字体字节，不含 CSS）：`/` ≤ 460 KB、`/dictionary` ≤ 420 KB、`/poetry` ≤ 320 KB、`/stories` ≤ 480 KB。实测 **431 / 387 / 287 / 441 KB**。请求数 ≤ 110/页（预算仍是 130）。 ⚠️ **数字已被 F27-c 取代**（真实实测 443 / 430 / 323 / 485 KB，预算上调为 500 / 480 / 360 / 540 KB）。 |
+| **F25-d** | **重定 R17 的 CSS 预算**：三份合计 ≤ **175 KB**(gzip)，实测 168 KB（sans 61 / serif 71 / wenkai 37）。**无衬线那份单独设限 ≤ 65 KB**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞。 ✅ **F27-d 复核：预算不变**，实测 sans 60 / serif 71 / wenkai 37 = 168 KB。 |
 | **F25-e** | **`subset-font` 的文本参数必须是字符串**：`subsetFont(buffer, chars.join(''), { targetFormat: 'woff2' })`。传数组会抛 `The subset text must be given as a string`。 |
-| **F25-f** | **产物规模**：8 779 个 woff2 文件（sans 2 779 / serif 3 266 / wenkai 2 734），约 22 MB。旧的 Google 子集目录与 `fonts.css` 由 Task 5 删除。 |
+| **F25-f** | **产物规模**：8 779 个 woff2 文件（sans 2 779 / serif 3 266 / wenkai 2 734），约 22 MB。旧的 Google 子集目录与 `fonts.css` 由 Task 5 删除。 ⚠️ **体积数字已被 F27-f 取代**：实测 27.5 MB，不是 22 MB。 |
 
 **F25 的实测前沿**（`scripts/fonts/staging/probe-mechanism-race.mjs`、`probe-css-real.mjs`、`probe-final-objective.mjs`、`probe-page-totals.mjs`；字节为四个测量页里的最差值）：
+
+> ⚠️ **整张表已被 F27 取代**（那批脚本用的是 F25 的线性成本模型，模型值与真实字节差 3–13 %）。真实数字见下面 F27 的表。
 
 | 配置 | `/` | `/dictionary` | `/poetry` | `/stories` | CSS | 文件 | 请求 |
 |---|---|---|---|---|---|---|---|
@@ -141,7 +145,135 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 | 频率序 8 字/块 + 热区 300/300/0 | 495 KB | 439 KB | 302 KB | 477 KB | 156 KB | 6 585 | ≤113 |
 | 码位窗口 16 + 热区 300/300/0 | 618 KB | 333 KB | 442 KB | 645 KB | 166 KB | 8 597 | ≤118 |
 
-取 6 字/块的理由：它与计划原本的文件预算（8 597）几乎一样，页面字节却比机制 A 省 32 %；再往下（4 字/块）只省 11 % 的字节，却要多 4 387 个文件、多 21 KB 的 CSS（其中 11 KB 在渲染阻塞的那份里）。再往上（8 字/块）要多付 12 % 的页面字节。
+取 6 字/块的理由：它与计划原本的文件预算（8 597）几乎一样，页面字节却比机制 A 省 32 %；再往下（4 字/块）只省 11 % 的字节，却要多 4 387 个文件、多 21 KB 的 CSS（其中 11 KB 在渲染阻塞的那份里）。再往上（8 字/块）要多付 12 % 的页面字节。 ⚠️ **F27-g 复核：结论不变**（真实字节下 4 字/块仍更小但更贵，见下）。
+
+---
+
+### 第三轮实测修正的字节数（F27，2026-10-29）
+
+F25 的**机制**是对的，但它的**成本模型是错的**。Task 3 要生成 8 779 个字体文件，在这之前必须用真实字节把预算钉死——否则整个 Task 4 的 verify 会照着一组不存在的数字去判定。
+
+F27 做了三件事：
+
+1. **推翻 F25 的成本模型**——字节不是 `fixed + perChar × 字数`。
+2. **用真实字节重测机制对决**——验证 F25-a 的结论站不站得住。
+3. **重定所有预算**——页面字节、CSS 字节、单文件字节、产物规模。
+
+脚本（都在 `scripts/fonts/staging/`，gitignored）：
+
+| 脚本 | 干什么 |
+|---|---|
+| `probe-baseline.mjs` | 解析现网三份样式表，按 `unicode-range` 匹配页面 fixture ⇒ **今天真实的首屏基线** |
+| `probe-page-bytes.mjs` | 只切页面真正命中的块 ⇒ 真实每页字节与请求数 |
+| `probe-width-race.mjs` | 块宽 4/6/8/12/16 的真实竞赛（字节 + CSS + 请求数） |
+| `probe-hot-race.mjs` | 热区大小 × 块宽的真实矩阵 |
+| `probe-full-build.mjs` | **把全部 8 779 个块都切出来** ⇒ 权威的单文件字节分布 |
+| `probe-mechanism-real.mjs` | 机制 A vs B 的真实字节对决 |
+
+#### F27 的第一条结论：F25 的成本模型不成立
+
+F25 假设「子集字节 = fixed(≈1 000 B) + perChar(255–280 B) × 字数」。F27 把**全部 8 779 个块**真实切出来后发现：
+
+```
+sans    ext min 852B  p50 3160B  p90 3936B  p99 4544B  max 5368B
+serif   ext min 872B  p50 4072B  p90 4992B  p99 5880B  max 6600B
+wenkai  ext min 1264B p50 2828B  p90 3556B  p99 4132B  max 4600B
+```
+
+**同一个 6 字块，852 B 到 6 600 B，差 7.7 倍。** 字节由**每个字形的轮廓复杂度**决定，分布重尾：罕见尾部的字比热区的常用字贵 2–3 倍。线性拟合出的 perChar 只是一个平均数，用它外推页面字节必然错——这就是 F25 那张表的每个数字都对不上的原因。
+
+**推论 1：F25 的「裁轴省 44 %」也是错的。** 真实只省 **10–11 %**：
+
+| 族 | 未裁轴 B/字 | 裁轴后 B/字 | 实测省 |
+|---|---|---|---|
+| serif | 266 | 238 | 10.5 % |
+| sans | 206 | 185 | 10.2 % |
+
+原因在 `gvar` 表：`NotoSansSC-wght.ttf` → `NotoSansSC-wght-400-700.ttf`，`gvar` 只从 7 081 744 B 缩到 6 985 240 B（**−1.4 %**），整文件 17 772 300 → 17 645 708 B。变字重的插值数据几乎没被裁掉。
+
+**推论 2：F25-e 之外再补一条**——裁轴**仍然要做**（它把字重范围钉死在 400–700，符合 G9 的重量审计；也让源文件小一点），但**不许把它的节省计入字节预算**。
+
+#### F27 的第二条结论：机制对决，真实字节仍然频率序赢
+
+同一批字符、同一批页面，真实子集字节：
+
+| 机制 | 文件数 | CSS(gzip) | 最差页 | `/` | `/dictionary` | `/poetry` | `/stories` |
+|---|---|---|---|---|---|---|---|
+| A 码位窗口 16（R8 的取值） | 8 597 | 117 KB | **757 KB** | 610 KB | 328 KB | 466 KB | 757 KB |
+| A 码位窗口 8 | 14 552 | 145 KB | 535 KB | 445 KB | 282 KB | 323 KB | 535 KB |
+| A 码位窗口 32 | 5 055 | 100 KB | 1 201 KB | 896 KB | 401 KB | 704 KB | 1 201 KB |
+| **B 频率序 6 字/块（F25-a，采用）** | 8 779 | 168 KB | **485 KB** | 443 KB | 430 KB | 323 KB | 485 KB |
+| B 频率序 4 字/块 | 13 166 | 189 KB | 428 KB | 396 KB | 369 KB | 275 KB | 428 KB |
+| B 频率序 8 字/块 | 6 585 | 158 KB | 536 KB | 490 KB | 485 KB | 360 KB | 536 KB |
+
+**同文件数下（8 6xx ↔ 8 8xx）频率序比码位窗口省 36 %**（485 KB vs 757 KB），F25 用模型估的是 32 %。**F25-a 的机制成立，不需要改 Task 1 的实现。**
+
+注意机制 A 的 CSS 反而更小（117 KB vs 168 KB）——码位连续的块 `unicode-range` 的 hex 便宜。但省下的 51 KB CSS 抵不上多出的 272 KB 字体字节，而且 A 的请求数与 B 相当（120 vs 111）。
+
+#### F27 的第三条结论：今天的真实基线与改造后的真实收益
+
+**今天的基线**（`probe-baseline.mjs` 解析现网三份样式表 + 页面 fixture）：
+
+| 页面 | 字体字节 | 文件数 | CSS(gzip) | 合计 |
+|---|---|---|---|---|
+| `/` | 3 560 KB | 57 | 132 KB | **3 693 KB** |
+| `/dictionary` | 2 815 KB | 42 | 132 KB | **2 947 KB** |
+| `/poetry` | 1 877 KB | 34 | 132 KB | **2 010 KB** |
+| `/stories` | 2 884 KB | 46 | 132 KB | **3 017 KB** |
+
+**改造后**（字体 + CSS）：
+
+| 页面 | 改造前 | 改造后（字体 + CSS） | 倍数 |
+|---|---|---|---|
+| `/` | 3 693 KB | 443 + 168 = **611 KB** | **6.0×** |
+| `/dictionary` | 2 947 KB | 430 + 168 = **598 KB** | **4.9×** |
+| `/poetry` | 2 010 KB | 323 + 168 = **491 KB** | **4.1×** |
+| `/stories` | 3 017 KB | 485 + 168 = **653 KB** | **4.6×** |
+
+F25 写的「3.7–5.0 MB → 431–441 KB，6.8×」是模型值。真实是 **2.0–3.7 MB → 491–653 KB，4.1–6.0×**——依然是一个数量级的改善，但别在报告里写 6.8×。
+
+#### F27 的第四条结论：块宽与热区的取舍
+
+**块宽**（热区 300/300/0，真实字节）：
+
+| 块宽 | 文件数 | CSS(gzip) | sans CSS | 最差页 | 结论 |
+|---|---|---|---|---|---|
+| 4 字 | 13 166 | 189 KB | **66 KB** | 428 KB | 字节最小，但文件 +50 %，且 sans 那份 **超了 65 KB 的渲染阻塞上限**（F27-d） |
+| **6 字（采用）** | 8 779 | 168 KB | 60 KB | 485 KB | 文件数与计划预算一致，CSS 三份都在限内 |
+| 8 字 | 6 585 | 158 KB | 55 KB | 536 KB | 省 23 个文件，多付 51 KB 页面字节 |
+| 12 字 | 4 392 | 145 KB | — | 633 KB | |
+| 16 字 | 3 295 | 139 KB | — | 716 KB | |
+
+**热区**（块宽 6，真实字节）：
+
+| 热区（sans/serif/wenkai） | 文件数 | CSS | 最差页 | 请求/页 |
+|---|---|---|---|---|
+| **300/300/0（采用）** | 8 779 | 168 KB | 485 KB | **≤111** |
+| 无热区 | 8 877 | 169 KB | 535 KB | **125–177** ❌ 超 130 上限 |
+| 100/100/0 | 8 846 | 169 KB | 520 KB | 140–153 ❌ |
+| 300/300/300 | 8 681 | 168 KB | 606 KB | ≤111 |
+
+#### F27 裁决
+
+| # | 裁决 |
+|---|---|
+| **F27-a** | **F25 的机制全部成立**：频率序 6 字/块、热区 300/300/0、精确并集 `unicode-range`、一个 family 名。真实字节把「省 32 %」修正为 **省 36 %**。Task 1 已提交的实现不动。 |
+| **F27-b** | **F25 的成本模型作废**（`fixed + perChar × 字数` 不成立，分布重尾 852 B–6 600 B）。**「裁轴省 44 %」作废**，实测 10–11 %（`gvar` 只缩了 1.4 %）。裁轴照做（G9 的重量审计通过：站内只用到 400/500/600/700），但**不计入字节预算**。 |
+| **F27-c** | **重定页面预算**（字体字节，不含 CSS）：`/` ≤ **500 KB**、`/dictionary` ≤ **480 KB**、`/poetry` ≤ **360 KB**、`/stories` ≤ **540 KB**。实测 443 / 430 / 323 / 485 KB（F25 的 431/387/287/441 低估了 3–13 %）。请求数 ≤ 130/页不变（实测最多 111）。 |
+| **F27-d** | **CSS 预算不变**：三份合计 ≤ **175 KB**(gzip)，实测 168 KB（sans 60 / serif 71 / wenkai 37）；sans 单独 ≤ **65 KB**（实测 60 KB）。⚠️ 4 字/块时 sans 会到 **66 KB**，破限。 |
+| **F27-e** | **重定单文件上限**：热区文件 ≤ **96 KB**（实测 sans 72 KB / serif 89 KB）；Ext 块 ≤ **7 KB**（实测 p99 5 880 B、max **6 600 B**）。⚠️ F25 的 4 KB 上限会**在 8 779 个块里的 1 779 个（20 %）上失败**。 |
+| **F27-f** | **产物规模**：8 779 个 woff2 文件，**27.5 MB**（F25 说 22 MB）。对比旧的 432 个文件 / 20.2 MB ⇒ **净 +7.3 MB、+8 347 个文件**。旧的 Google 子集目录与 `fonts.css` 由 Task 5 删除。 |
+| **F27-g** | **块宽保持 6 字/块**。4 字/块能再省 12 % 的页面字节（最差 428 vs 485 KB），但要 +4 387 个文件（+50 %）、+21 KB CSS（其中 +6 KB 在渲染阻塞的那份里，破 F27-d），构建时间多约 8 分钟。收益不值这个代价。 |
+| **F27-h** | **热区保持 300/300/0**。无热区 ⇒ 125–177 请求/页（破 130 上限）且字节更差（最差 535 KB）；热区 100 ⇒ 520 KB + 140–153 请求；给楷体也加 300 字热区 ⇒ 最差 606 KB。 |
+
+#### F27 的可复核性
+
+- **字体覆盖**：四个源字体（sans 30 890 字形 / serif 30 928 / wenkai Regular 22 401 / wenkai Bold）都覆盖全部 8 105 个标准字，**0 缺失** ⇒ 子集化不会造成豆腐块（G10）。
+- **字重审计**：站内三款字体只用 400/500/600/700（Tailwind `font-normal` 2 处、`font-medium` 68、`font-semibold` 32、`font-bold` 18；无内联 `fontWeight`；`app/globals.css:217` 的 `font-weight:600` 是打印规则，`:650` 的 `font-weight:100` 属于 Zen Kaku Gothic New）⇒ 裁到 `wght=400:700` 安全（G9）。
+- **楷体来源**：CSS 用的是 `LXGW WenKai TC`（`app/globals.css:469`），与 `scripts/fonts/build-fonts-css.mjs:53` 一致 ⇒ 用 TC 不用 GB。
+- **裁轴工具**：`python -I -m fontTools.varLib.instancer <src> wght=400:700 --output <out> --no-overlap-flag`（fontTools 4.61.1 + brotli 1.2.0）。serif 25 125 512 → 25 116 124 B，sans 17 772 300 → 17 645 708 B。
+- **子集耗时**：约 31–35 ms/块（`subset-font` 内部用 `p-limit(1)` 串行化），8 779 个文件约 **5 分钟**。
+- **不新增运行时依赖**（G3）：`subset-font` 仓库里已有；fontTools 只是构建期工具。
 
 ---
 
@@ -905,17 +1037,25 @@ Expected: PASS。
 Run: `npm run fonts:subset-web`
 Expected（按 2026-10-29 的语料实测，数字允许 ±5 % 浮动，但**必须打印出来**核对）：
 
-| 族 | 字符数 | Ext 块数 | woff2 文件数 | 备注 |
-|---|---|---|---|---|
-| `wenkai` | 8 197 | 1 367 | **2 734** | 无热区；每块 400 + 700 两份（R16） |
-| `sans` | 16 968 | 2 778 | **2 779** | 热区 300 + 2 778 个 Ext 块 |
-| `serif` | 19 888 | 3 265 | **3 266** | 热区 300 + 3 265 个 Ext 块 |
-| 合计 | — | 7 410 | **8 779** | 三份 CSS gzip 合计 ≈ **168 KB**（sans 61 / serif 71 / wenkai 37） |
+| 族 | 字符数 | Ext 块数 | woff2 文件数 | 产物字节 | 备注 |
+|---|---|---|---|---|---|
+| `wenkai` | 8 197 | 1 367 | **2 734** | 7 688 KB | 无热区；每块 400 + 700 两份（R16） |
+| `sans` | 16 968 | 2 778 | **2 779** | 8 255 KB | 热区 300 + 2 778 个 Ext 块 |
+| `serif` | 19 888 | 3 265 | **3 266** | 12 230 KB | 热区 300 + 3 265 个 Ext 块 |
+| 合计 | — | 7 410 | **8 779** | **28 173 KB ≈ 27.5 MB** | 三份 CSS gzip 合计 ≈ **168 KB**（sans 60 / serif 71 / wenkai 37） |
 
-单文件大小：`sans/hot.woff2` ≈ 84 KB（≈ 1 000 B 固定开销 + 300 字 × 276 B），每个 `ext-*.woff2` ≈ **2.7 KB**（≈ 1 000 B 固定开销 + 6 字 × 280 B）——这是 F25 实测的成本模型，**不是** 229 B/字 的旧模型。
+单文件大小（F27 全量实测的真实分布，**不是** F25 的线性模型——F25 的 `fixed + perChar` 已被推翻，分布重尾）：
+
+| 族 | 热区文件 | Ext 最小 | Ext p50 | Ext p90 | Ext p99 | Ext 最大 |
+|---|---|---|---|---|---|---|
+| `sans` | 72 KB | 852 B | 3 160 B | 3 936 B | 4 544 B | 5 368 B |
+| `serif` | 89 KB | 872 B | 4 072 B | 4 992 B | 5 880 B | **6 600 B** |
+| `wenkai`（每份） | — | 1 264 B | 2 828 B | 3 556 B | 4 132 B | 4 600 B |
+
+⇒ Task 4 的单文件上限按 **热区 ≤ 96 KB、Ext 块 ≤ 7 KB** 判定（F27-e）。注意 **1 779 个块（20 %）超过 4 KB**——F25 的 4 KB 上限会误判 20 % 的块。
 `public/font/fonts-manifest.json` 的 `version` 是 12 位 hex。
 
-> 这一步会跑十几分钟（切 8 779 次；实测 `subset-font` 94 ms/16 字、210 ms/64 字）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
+> 这一步会跑约 5 分钟（切 8 779 次；实测 `subset-font` 约 31–35 ms/6 字块）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
 
 - [ ] **Step 6: 提交**
 
@@ -942,17 +1082,17 @@ git commit -m "feat(fonts): add the hot-tier and frequency-ordered webfont subse
 - Produces:
   ```js
   export const LIMITS = {
-    hotBytes: 90 * 1024,
-    extBlockBytes: 4 * 1024,
-    cssBytes: 175 * 1024,       // 三份样式表 gzip 后合计（F25-d）
-    sansCssBytes: 65 * 1024,    // 无衬线那份单独设限：它渲染阻塞（F25-d）
+    hotBytes: 96 * 1024,
+    extBlockBytes: 7 * 1024,
+    cssBytes: 175 * 1024,       // 三份样式表 gzip 后合计（F25-d / F27-d）
+    sansCssBytes: 65 * 1024,    // 无衬线那份单独设限：它渲染阻塞（F25-d / F27-d）
     maxFacesPerCss: 3400,
     maxFontFilesPerPage: 130,
     pageFontBytes: {
-      '/': 460 * 1024,
-      '/dictionary': 420 * 1024,
-      '/poetry': 320 * 1024,
-      '/stories': 480 * 1024,
+      '/': 500 * 1024,
+      '/dictionary': 480 * 1024,
+      '/poetry': 360 * 1024,
+      '/stories': 540 * 1024,
     },
   };
   export async function verifyFamily(family): Promise<{ ok: boolean; errors: string[]; stats: FamilyStats }>;
@@ -960,7 +1100,7 @@ git commit -m "feat(fonts): add the hot-tier and frequency-ordered webfont subse
   ```
   CLI：`node scripts/fonts/verify-webfont-subsets.mjs` → 全部通过 `exit 0`，任一失败 `exit 1`。
 
-  **限额来自 R9 与 F25-c/d 的重定预算**，不是 spec §3.2/§3.3 的旧数字——旧数字建立在「229.4 B/字、无每文件固定开销」这个错的成本模型上（见「第二轮实测推翻的机制（F25）」一节）。
+  **限额来自 R9、F25-c/d 与 F27-c/d/e 的重定预算**，不是 spec §3.2/§3.3 的旧数字——旧数字建立在「229.4 B/字、无每文件固定开销」这个错的成本模型上（F25 的模型本身也已被 F27 推翻，见「第三轮实测修正的字节数（F27）」一节）。本组数字是 **F27 全量实测**的：热区 sans 72 KB / serif 89 KB；Ext 块 p99 5 880 B、max 6 600 B；每页 443 / 430 / 323 / 485 KB；CSS 168 KB；每页最多 111 个文件。
 
 - [ ] **Step 1: 写失败测试**
 
@@ -985,12 +1125,12 @@ describe('verify-webfont-subsets', () => {
   );
 
   it('publishes the size limits from the design', () => {
-    expect(LIMITS.hotBytes).toBe(90 * 1024);
-    expect(LIMITS.extBlockBytes).toBe(4 * 1024);
+    expect(LIMITS.hotBytes).toBe(96 * 1024);
+    expect(LIMITS.extBlockBytes).toBe(7 * 1024);
     expect(LIMITS.cssBytes).toBe(175 * 1024);
     expect(LIMITS.sansCssBytes).toBe(65 * 1024);
     expect(LIMITS.maxFontFilesPerPage).toBe(130);
-    expect(LIMITS.pageFontBytes['/dictionary']).toBe(420 * 1024);
+    expect(LIMITS.pageFontBytes['/dictionary']).toBe(480 * 1024);
   });
 });
 ```
@@ -1007,7 +1147,7 @@ Expected: FAIL —— 找不到模块。
 1. **覆盖完整**：对每一族，用 Task 1 的字符集与样式表里的 `unicode-range` 求并集，断言并集 == 该族字符集（不多不少）。
 2. **块不相交**：同一族的**所有**块（热区 + 每个 Ext 块）的 `unicode-range` 两两不相交。
 3. **cmap 正确**：用 `fontkit.create(buffer)` + `font.hasGlyphForCodePoint(cp)` 打开每个产物，断言该块声明的每个字符都能渲染；并断言产物**不包含**该块之外的字符。
-4. **文件大小**：热区文件 ≤ `LIMITS.hotBytes`（≈ 1 000 B 固定开销 + 300 字 × 280 B ≈ 85 KB），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（≈ 1 000 B 固定开销 + 6 字 × 280 B ≈ **2.7 KB**，限额 4 KB 留余量）。
+4. **文件大小**：热区文件 ≤ `LIMITS.hotBytes`（**96 KB**；F27 实测 sans 72 KB / serif 89 KB），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（**7 KB**；F27 实测 p99 5 880 B、max 6 600 B）。⚠️ **不要**用 F25 的 4 KB 上限——F27 实测有 **1 779 个块（20 %）超过 4 KB**，用 4 KB 会把正确的产物判成失败。
 5. **样式表**：三份 `fonts-<family>.css` **gzip 后合计** ≤ `LIMITS.cssBytes`（175 KB，F25-d），单份的 `@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`（3 400）。**无衬线那一份单独 ≤ `LIMITS.sansCssBytes`（65 KB）**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞首屏。
 6. **每条 face 的 `font-display` 必须是 `swap`**，`src` 指向的文件必须存在。
 7. **manifest**：`version` 是 12 位 hex，且等于三份样式表内容按文件名排序后的 sha256 前 12 位；`files` 的键恰为 `{sans, serif, wenkai}`。
@@ -1018,15 +1158,15 @@ Expected: FAIL —— 找不到模块。
 CLI 输出格式：
 
 ```
-[verify] sans   : 16968 chars, 2779 files, ~7287 KB   OK
-[verify] serif  : 19888 chars, 3266 files, ~8628 KB   OK
-[verify] wenkai :  8197 chars, 1367 blocks, 2734 files, ~6488 KB   OK
-[verify] css    : ~168 KB gzip (sans ~61 / serif ~71 / wenkai ~37)   OK
-[verify] pages  : / 431 KB / 110 files   /dictionary 387 KB / 88 files   /poetry 287 KB / 81 files   /stories 441 KB / 109 files   OK
+[verify] sans   : 16968 chars, 2779 files, ~8255 KB   OK
+[verify] serif  : 19888 chars, 3266 files, ~12230 KB   OK
+[verify] wenkai :  8197 chars, 1367 blocks, 2734 files, ~7688 KB   OK
+[verify] css    : ~168 KB gzip (sans ~60 / serif ~71 / wenkai ~37)   OK
+[verify] pages  : / 443 KB / 111 files   /dictionary 430 KB / 87 files   /poetry 323 KB / 91 files   /stories 485 KB / 106 files   OK
 [verify] 0 error(s)
 ```
 
-> 字符数、文件数、每页字节与请求数是 **2026-10-29 实测值**（`scripts/fonts/staging/probe-mechanism-race.mjs` 的 `B frequency width 6 + hot 300` 一行）；产物字节与 CSS gzip 字节带 `≈`，是按 F25 成本模型（`1 000 B + 字数 × 280 B`）估的，实跑后以真实数字为准。
+> 字符数、文件数、每页字节与请求数是 **2026-10-29 F27 全量实测值**（`scripts/fonts/staging/probe-full-build.mjs` 与 `probe-mechanism-real.mjs` 的 `B frequency 6 chars/block` 一行）——**不是** F25 的模型值。产物字节与 CSS gzip 字节带 `≈`，实跑后以真实数字为准。
 
 字体文件用 `fontkit` 打开；`fontkit.create` 对 woff2 的支持在本仓库已被 `scripts/fonts/verify-brush-subsets.mjs` 验证过。
 
@@ -1035,7 +1175,7 @@ CLI 输出格式：
 - [ ] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
-Expected: PASS。若页面预算超标，按 F25 的实测前沿调**热区字数**（300 → 150 会更省字节、450 会更省请求数）或**块宽**（6 → 8 字会让 CSS 变小、请求数变少但页面字节变多），改完重跑 Task 3 的构建再回来跑本测试；**不要**去改 `LIMITS` 的预算数字（R9 与 F25-c/d 已把预算重定过两次）。
+Expected: PASS。若页面预算超标，按 F27 的实测矩阵调**热区字数**（300 → 150 会更省字节、450 会更省请求数）或**块宽**（6 → 8 字会让 CSS 变小、请求数变少但页面字节变多），改完重跑 Task 3 的构建再回来跑本测试；**不要**去改 `LIMITS` 的预算数字（R9、F25-c/d、F27-c/d/e 已经把预算重定过三次，且 F27 的每个数字都是实测的）。
 
 - [ ] **Step 5: 加 npm script**
 
