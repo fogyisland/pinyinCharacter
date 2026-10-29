@@ -983,16 +983,21 @@ Expected: FAIL —— 找不到 `scripts/fonts/instance-webfont-axis.mjs`。
    - 下载前先发一次 **HEAD** 请求读 `content-length`（本机实测 `raw.githubusercontent.com` 的 HEAD 返回 200 且带正确的 `Content-Length`，例如 sans 17 772 300）。
    - 拿到 `expected` 后落盘；写完比对**实际字节数**与 `expected`。
    - **不一致 ⇒ 删掉 `.part`，算这次失败，换下一个 attempt / URL 重下。**
+   - ⚠️ **大小契约必须来自「真正承载字节的那个响应」**（F28-d，2026-10-29 任务评审后修订）：`fetchToPart` 要捕获 **GET 响应自己的 `content-length`** 并带回，`promote()` 拿**它**比对。HEAD 探测**降级为只服务 SKIP 决策**（本地已有且与远端声明一致 ⇒ 不发 GET）。原因见规则 5 第三条——HEAD 探不通时「服务器没给 Content-Length」和「服务器根本没应答」是两回事，混为一谈就会把唯一的大小防线关掉。
+   - HEAD 探测的 `reachable` 标志必须在决策点被采信：**任何 HTTP 响应**（哪怕 404 / 405 / 500）都表示「服务器有应答」；只有请求本身失败（DNS / TLS / 超时 / reset）才是「不可达」。
 5. **绝不因为「本地已有非空文件」就 SKIP**（这是硬要求）：
    - 本地文件存在 **且** `expected !== null` **且** 本地大小 === `expected` ⇒ `SKIP`（真的完整）。
    - 本地文件存在 **但** 大小 ≠ `expected` ⇒ **当作截断，重下**（打印一行 `REDO`，说明本地多大、应为多少）。
-   - `expected === null`（服务器没给 `content-length`）且本地非空 ⇒ `SKIP` 并打印一行**警告**说明大小无法核对。
+   - **服务器应答了但没给 `content-length`**（`reachable === true` 且 `size === null`）且本地非空 ⇒ `SKIP` 并打印一行**警告**说明大小无法核对。
+   - ⚠️ **服务器根本没应答**（所有 URL 的探测都 `reachable === false`）⇒ **不得 SKIP**，也**不得**打印「服务器没给 Content-Length」——那不是事实，服务器从来没被访问到。此时按「服务器不可达」处理：继续走下载尝试（GET 可能通，HEAD 失败常常只是连接 reset），下载也全败 ⇒ 该 entry 判 `FAIL`，原因写明「不可达」。
+   - **不变式**：本地非空文件只有在「远端声明的大小 === 本地大小」时才允许被 SKIP。
 6. **重试**：每个 URL 最多 `MAX_ATTEMPTS_PER_URL = 3` 次；一个 entry 的所有 URL 都试完仍失败 ⇒ 该 entry 判 `FAIL`。每次 attempt 之间固定等 2 s。
 7. **打印**：每个 entry 一行，格式 `OK  <size> bytes <filename>` / `SKIP <size> bytes <filename>` / `FAIL <filename>`，并附一行失败原因（HTTP 状态码或异常消息）。
-8. **退出码（G12）**：只要有任何一个 entry 是 `FAIL`，打印补救提示并 `process.exit(1)`；全部成功才 `process.exit(0)`。
-   补救提示固定文案：
+8. **退出码（G12）**：只要有任何一个 entry 是 `FAIL`，打印补救提示并**非零退出**。
+   ⚠️ **不要用 `process.exit(1)`**（F28-d）：Node 在 Windows 上对管道写入 stderr/stdout 是异步的，紧跟其后的 `process.exit()` 可能把补救文案截断一半。用 `process.exitCode = 1` 后 `return`（成功路径同样直接走到函数末尾，让进程自然退出 0）。
+   补救提示固定文案（失败计数用**真实数量**，不要写死 1）：
    ```
-   [download] 1 file(s) failed — retry with:
+   [download] <N> file(s) failed — retry with:
        npm run fonts:download-web
    If a download keeps stalling, fetch it by hand (the URLs are printed above)
    and drop it into scripts/fonts/staging/web/ with the exact file name.
@@ -1090,7 +1095,7 @@ export function readWeightAxis(buffer) {
     python -m pip install --upgrade fonttools brotli
 ```
 
-（探测方式：跑一次 `python -I -m fontTools.varLib.instancer --help`；探测不到就打印上面这段并 `process.exit(1)`。**不要**用 `fonttools` 在 `PATH` 上与否来判断，因为 `Scripts/` 常常不在 `PATH` 上。）
+（探测方式：跑一次 `python -I -m fontTools.varLib.instancer --help`；探测不到就打印上面这段并**非零退出**（用 `process.exitCode = 1` 后 return，不要用 `process.exit(1)`——理由同规则 8）。**不要**用 `fonttools` 在 `PATH` 上与否来判断，因为 `Scripts/` 常常不在 `PATH` 上。⚠️ 探测失败要**区分「模块不存在」与「模块跑了但失败」**：前者给安装命令，后者把真实错误摘要带进文案，别让运维去装一个已经装好的包。探测成功时也打一行 `[instance] fonttools: ok`。）
 
 - [ ] **Step 5: 跑测试确认通过**
 
