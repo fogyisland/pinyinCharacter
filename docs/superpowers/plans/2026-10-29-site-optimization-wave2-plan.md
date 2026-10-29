@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 把生产环境的字体载荷从**实测的 2.0–3.7 MB/页**（今天的真实基线，F27 重新测得；计划原先写的 3.7–5.0 MB 是模型值）降到 **443–485 KB/页**（F27 的重定预算：首页 443 / 字典 430 / 诗词 323 / 故事 485 KB），首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
+**Goal:** 把生产环境的字体载荷从**实测的 2.9–4.2 MB/页**（今天的真实基线，F27-j 用修正后的页面取字 fixture 重测；更早的 3.7–5.0 MB 是模型值、2.0–3.7 MB 是归因错误时的值）降到 **221–308 KB/页**（F27-j 的重定预算：首页 308 / 字典 308 / 诗词 221 / 故事 308 KB，**9.3–18.9 倍**），每页字体请求数从 43–75 个降到 **3–4 个**，首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
 
-**Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（按用字频率取前 N 字）+ 若干 Ext 文件（其余字按**频率序**每 6 个字符切一块，F25）**。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（实测省 10–11 % 的子集字节，不是 F25 写的 44 %），再用仓库已有的 `subset-font` 切分。**真实成本不是线性模型**：子集字节由每个字形的轮廓复杂度决定，分布重尾——同一个 6 字块实测从 852 B 到 6 600 B（F27 的实测分布，见「第三轮实测修正的字节数（F27）」一节）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
+**Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（300 字）+ 若干 Ext 文件（其余字按**频率序**每 6 个字符切一块，F25）**。**热区里装什么字是免费的**（热区大小固定），所以热区先装「四个测量页面真正画出来的字」（页面画像并集，F27-j-c），再用语料频率头补齐；楷体同样有热区（F27-j-d）。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（实测省 10–11 % 的子集字节，不是 F25 写的 44 %），再用仓库已有的 `subset-font` 切分。**真实成本不是线性模型**：子集字节由每个字形的轮廓复杂度决定，分布重尾——同一个 6 字块实测从 852 B 到 6 600 B（F27 的实测分布，见「第三轮实测修正的字节数（F27）」一节）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
 
 **Tech Stack:** Node 22 · npm · `subset-font`（`package.json` 声明 `^2.4.0`，已安装 **2.5.0**，devDependency）· `fontkit`（`^2.0.4`，已安装 2.0.4，运行时依赖）· Python `fonttools 4.61.1` + `brotli 1.2.0`（构建期，已装）· nginx（Ubuntu/Debian 包）· vitest
 
@@ -277,6 +277,95 @@ F25 写的「3.7–5.0 MB → 431–441 KB，6.8×」是模型值。真实是 **
 
 ---
 
+### 第四轮实测推翻的归因与热区（F27-j，2026-10-29）
+
+F27 把**字节**钉死了，但它给出的页面预算、请求数上限、实测前沿，建立在一个**错误的页面取字 fixture** 上：`data/font-page-profiles.json` 的归因规则把**楷体字算成了正文字**。F27-j 修好归因规则、重测基线、**重定热区机制**。
+
+#### F27-j 的第一条结论：已提交的 fixture 是错的
+
+fixture 由一段正则切 HTML 产生：它把标签的**直属文本**取成 `([^<]*)`。Next.js 的 SSR 会在相邻文本节点之间插注释分隔符：
+
+```html
+<h3 class="font-kai text-lg">《<!-- -->在岳咏蝉<!-- -->》</h3>
+```
+
+于是这一行只取到 `《`，`在岳咏蝉` 一个字都没取到。fixture 随后用「sans = 全部 − kai − serif」补齐差集 ⇒ **每一个楷体字都被算进了 sans，楷体集合被清空**。
+
+实测差（已提交的 fixture → 修正后）：
+
+| 页面 | sans | serif | 楷体 |
+|---|---|---|---|
+| `/` | 107 → **112** | 12 → **32** | 38 → **52** |
+| `/dictionary` | 53 → **65** | 80 → **80** | 7 → **7** |
+| `/poetry` | 145 → **89** | 0 → **0** | 6 → **75** |
+| `/stories` | 65 → **90** | 171 → **171** | 8 → **8** |
+
+诗词页的楷体从 6 个变成 75 个——**正是 `components/poetry/PoemCard.tsx:32` 用 `font-kai` 渲染的诗题**。旧 fixture 把它们全算给了 sans。
+
+第二个缺陷更隐蔽：**`font-family` 是继承属性**，但旧规则只看「直属父元素的 class」。`<h3 class="font-kai"><span>字</span></h3>` 里的字其实用楷体渲染，旧规则会算成 sans。归因必须**沿元素栈向下走**。
+
+#### F27-j 的第二条结论：语料频率预测不了页面画什么
+
+把源码字面量的权重从 1000 降到 1 / 10 / 100，让「语料频率」而不是「源码字面量」主导热区，实测四个页面仍然是 **520–670 KB / 80–142 个文件**（设计 E1 那一行）——比 F27 承诺的 443–485 KB / ≤111 个文件**更差**。
+
+原因有两条：
+
+1. 源码扫描贡献 **1 103** 个不重复的汉字（剥掉注释后 1 034 个，**69 个只存在于注释里**，从不渲染）。300 字的热区会被它们占满，真正的常用字进不去。
+2. 品牌字体的语料里**一个楷体渲染的诗题都没有**——`data/poems` 不在楷体的来源表里。诗词页那 75 个楷体字因此散落在几百个 Ext 块里。
+
+#### F27-j 的第三条结论：热区装什么字是免费的
+
+热区的大小是**固定的**（`tier1Size`），所以热区里放哪些字**不花钱**——它的大小不取决于放什么。于是可以把「四个页面真正画出来的字」放进热区：并集 **sans 184 / serif 257 / 楷体 122**，都 < 300，装得下。
+
+**设计矩阵**（真实子集字节；`E0` = 已提交的机制，`E2` = 采用）：
+
+| 设计 | 热区 | 文件数 | CSS(gzip) | `/` | `/dictionary` | `/poetry` | `/stories` |
+|---|---|---|---|---|---|---|---|
+| `E0` 频率序 300/300/0（F27 的机制，含注释、楷体无热区） | 频率 | 8 779 | 157 KB | 496 KB/130f | 432/88 | 522/174 | 491/108 |
+| `E1` 频率序 300/300/300（去注释 + 诗题进楷体语料） | 频率 | 8 683 | 157 KB | 520/78 | 560/81 | 532/120 | 599/95 |
+| **`E2` 并集优先 300/300/300（采用）** | 并集 + 频率 | 8 683 | 158 KB | **308/4** | **308/4** | **221/3** | **308/4** |
+| `E3` 并集优先，热区 = 并集大小（184/257/122） | 并集 | 8 768 | 157 KB | 187/4 | 187/4 | 111/3 | 187/4 |
+| `E4` 并集优先 600/600/300 | 并集 + 频率 | 8 583 | 156 KB | 470/4 | 470/4 | 294/3 | 470/4 |
+
+（这张矩阵由 `scripts/fonts/staging/probe-final-design.mjs` 一次跑出；`E2` 那一行的 158 KB 另由**全量构建** `probe-full-new-design.mjs` 复核过（8 683 个文件全部切出来）。两者差 1 KB 是 CSS 文本细节的舍入差，不影响任何预算判定。）
+
+`E0`（已提交的机制）有一个**新的回归**：诗词页要开 **174** 个字体文件，而今天的现网只要 75 个。F27 的预算「≤130 个/页」本来会把它判成失败——它确实该失败，只是 F27 归因错了，没看出这个回归。
+
+`E3` 比 `E2` 每页少 121 KB，但它把热区**缩到只剩四个测量页画过的字**：四个页面之外的页面（/game、/sutra、/ancient…）吃不到任何热区好处，全部落到 Ext 块。`E2` 的热区在并集之外还留了 116（sans）/ 43（serif）/ 178（楷体）个**语料频率头**，那是对未测量页面的安全网。**选 `E2`**：它在四个测量页面上比 `E1` 少 40–56 % 的字节和 4–29 倍的文件数，同时对未测量页面**不劣于 `E1`**。
+
+#### F27-j 的第四条结论：今天的真实基线（用修正后的 fixture 重测）
+
+| 页面 | 字体字节 | 文件数 | CSS(gzip) | 合计 | 新机制 | 倍数 |
+|---|---|---|---|---|---|---|
+| `/` | 4 131 KB | 64 | 132 KB | 4 263 KB | 308 KB / 4f | **13.4×** |
+| `/dictionary` | 2 878 KB | 43 | 132 KB | 3 010 KB | 308 KB / 4f | **9.3×** |
+| `/poetry` | 4 182 KB | 75 | 132 KB | 4 314 KB | 221 KB / 3f | **18.9×** |
+| `/stories` | 2 947 KB | 47 | 132 KB | 3 079 KB | 308 KB / 4f | **9.6×** |
+
+（CSS 从 132 KB 涨到 158 KB：Ext 块从 432 条变成 8 683 条 face。CSS 是一次性可缓存成本，字体是每次访问成本——这笔交换划算，但**要在最终报告里点名**。）
+
+#### F27-j 裁决
+
+| # | 裁决 |
+|---|---|
+| **F27-j-a** | **归因规则改成栈式继承**：`font-family` 会继承，所以元素的有效字族 = 它自己的 `font-kai`/`font-serif`/`font-sans` class，没有就沿用父元素的有效字族，`body` 默认 sans。旧的「扁平分块 + 就近父类」规则**作废**。归因只有**一份实现**（Task 4 的 `scripts/perf/class-attribution.mjs`），采集器与 Task 9 的载荷核算共用它。 |
+| **F27-j-b** | **`data/font-page-profiles.json` 用新规则重新生成并提交**（上表四个页面）。采集器与 fixture 必须能对得上：Task 4 的采集器重跑一遍，产物必须与仓库里这份**逐字节相同**，否则归因规则又漂了。 |
+| **F27-j-c** | **热区改成「页面画像并集优先」**：每族的热区 = 「四个页面在该族渲染的字的并集（按被几个页面渲染降序）」+ 「语料频率序兜底」，截到 `tier1Size`。**取代** F25-a / R14 的「纯频率序热区」。热区大小固定 ⇒ 装什么字不花钱。 |
+| **F27-j-d** | **楷体必须有热区**（`tier1Size` 0 → **300**，取代 R14）。否则诗词页要开 120 个楷体文件。楷体的并集只有 122 字，热区里另外 178 个位置留给语料频率头。 |
+| **F27-j-e** | **`data/poems/*.json` 的 `title` 进楷体语料**（`PoemCard.tsx:32` 用 `font-kai` 渲染诗题）。1 237 个不重复的字，其中 **7 个（鵩 飚 巂 岧 鴈 劒 濬）在别的任何来源里都没有**。⚠️ 这 7 个字**现在不在楷体字符集里** → 诗题里出现它们就是豆腐块（G10）。**这是一个已存在的缺陷，本轮修掉。** |
+| **F27-j-f** | **源码扫描跳过注释**（`app/` `components/` `lib/` 里的 `.ts`/`.tsx`/`.mjs`/`.js`）。1 103 → 1 034 个字，其中 69 个只存在于注释里。注释里的字从不渲染，不该占热区的位置。 |
+| **F27-j-g** | **重定页面预算与请求数上限**（实测值 + 约 7 % 余量）：字体字节 `/` ≤ **330 KB**、`/dictionary` ≤ **330 KB**、`/poetry` ≤ **240 KB**、`/stories` ≤ **330 KB**（实测 308 / 308 / 221 / 308）；**每页字体文件数 ≤ 12**（实测最多 4）。CSS 合计 ≤ **175 KB**(gzip)（实测 157 KB）。**取代 F27-c / F27-d 的 500 / 480 / 360 / 540 KB 与 130 个文件。** |
+| **F27-j-h** | **块宽仍为 6 字/块，热区 300/300/300**。文件数 8 683、CSS **158 KB**(gzip)、产物 27.45 MB（见 Task 3 的期望表）。 |
+| **F27-j-i** | **已知未覆盖面**：四个测量页面之外的页面（`/game` 接龙选字面板、`/sutra`、`/ancient`、`/worksheet`…）只吃得到**语料频率头**那部分热区，其余落到 Ext 块。**现网已初始化并锁定**（2026-10-29 起 `/game` 等路由返回「系统已初始化完成」页），无法采集它们的真实字符集 ⇒ 采集器必须支持 `--base` 重新采集，**并把「未测量页面的请求数」列为浏览器 smoke 的必查项**。 |
+
+#### F27-j 的可复核性
+
+- 探针（都在 `scripts/fonts/staging/`，gitignored）：`make-page-profiles.mjs`（栈式归因 + 重新生成 fixture）、`probe-legacy-baseline2.mjs`（用修正后的 fixture 重测现网基线）、`probe-final-design.mjs`（E0–E4 设计矩阵）、`probe-full-new-design.mjs`（**把 8 683 个文件全切出来** ⇒ 权威的单文件字节分布）。
+- 归因规则的正确性有**独立证据**：`/` 的楷体字从 38 涨到 52、诗词页从 6 涨到 75，且涨上去的字正是 `font-kai` 元素里的字（`《在岳咏蝉》`、`《诗三百首》`）。
+- 字体覆盖：四个源字体都覆盖全部 8 105 个标准字，**0 缺失** ⇒ 子集化不会造成豆腐块（G10）。诗题的 7 个独有字（鵩 飚 巂 岧 鴈 劒 濬）在 `LXGWWenKaiTC` 与 `NotoSansSC` 里都有字形。
+
+---
+
 ## Review Focus
 
 spec 是愿景文档：它说了系统**必须**做到什么，但没穷举每一种输入。下面 5 条是 spec 隐含、却没有被任何任务的测试覆盖、且最可能咬到真实用户的地方。每条后面标注了把它钉死的测试归属。
@@ -300,7 +389,10 @@ spec 是愿景文档：它说了系统**必须**做到什么，但没穷举每�
    → 归属 Task 4（断言每族所有块两两不相交、并集等于该族字符集）。
 
 5. **静态子集把字节换成了请求数** → 热区盖不住的字会落到几十个 Ext 文件上，一页可能发出上百个字体请求；在 237–291 ms 的 RTT 下，请求数（不是字节数）可能先变成瓶颈，而这类问题不会出现在任何字节预算里。
-   → 归属 Task 4（按实测页面表逐页算「命中的文件数」并断言 ≤ 130 个/页）。
+   → 归属 Task 4（按实测页面表逐页算「命中的文件数」并断言 ≤ **12** 个/页，F27-j-g；实测 3–4 个）。
+
+6. **归因规则漂移** → fixture 说「这个字是楷体」、预算核算说「这个字是正文字」，两边说的不是一回事，测出来的载荷就是假的，而**没有任何一个字节预算会发现它**。这正是本轮实测踩到的坑：已提交的 fixture 把 `/poetry` 上 **69 个**该用楷体渲染的字全算给了 sans（该页楷体 6 → 75，正文 145 → 89），F27 的三个数字因此全部偏了。
+   → 归属 Task 4（`scripts/perf/class-attribution.mjs` 只有**一份**实现；采集器与 Task 9 的载荷核算都调它；采集器重跑一遍的产物必须与仓库里已提交的 `data/font-page-profiles.json` **逐字节相同**）。
 
 ---
 
@@ -346,16 +438,20 @@ Task 9 (性能基线) 独立（Task 5 之后测才有意义）
   export interface ScoredCharset { ordered: string[]; score: Map<string, number>; }
   export interface ExtBlock { index: number; chars: string[]; }
   export interface TierPlan { hot: string[]; extBlocks: ExtBlock[]; }
-  export interface TierOptions { tier1Size?: number; extBlockChars?: number; }
-  export interface CharsetOptions { root?: string; families?: Partial<Record<FamilyName, TierOptions>>; }
+  export interface TierOptions { tier1Size?: number; extBlockChars?: number; hotChars?: string[]; }
+  export interface CharsetOptions { root?: string; pageProfiles?: string; families?: Partial<Record<FamilyName, TierOptions>>; }
   ```
-  默认值（见 R14 / F25-a）：
+  默认值（见 R14 / F25-a / **F27-j-d**）：
 
   | 族 | `tier1Size`（热区字数） | `extBlockChars`（每块字符个数） |
   |---|---|---|
   | `sans` | 300 | 6 |
   | `serif` | 300 | 6 |
-  | `wenkai` | 0 | 6 |
+  | `wenkai` | **300** | 6 |
+
+  **`tier1Size` 是热区的**下限**，不是上限**（F27-j-c）：`options.hotChars` 里点名的字**必须**全部进热区，一个都不能被截断——被截断就意味着那些字没有字形 ⇒ 豆腐块（G10）。所以热区的实际大小 = `max(tier1Size, hotChars.length)`。正常情况下（并集 184 / 257 / 122）热区就是 300。
+
+  **`hotChars` 是「页面画像并集」**（F27-j-c）：`loadFamilyCharsets()` 读 `data/font-page-profiles.json`，对每一族取「四个页面在该族渲染的字」的并集，按**被几个页面渲染**降序、同频按码位升序排列，作为该族热区的**前排**；热区剩下的位置用语料频率序补齐。`planTiers()` 本身保持纯函数——它只负责把 `hotChars` 放到最前面。
 
   `ExtBlock.index` 从 1 开始，连续。**Ext 块不是码位连续的区间**：它是频率序上的连续切片，块里的字在码位上是散的。块的 `unicode-range` 必须由 `unicodeRange(block.chars)` 生成（R12 的精确并集），**不要**用 min–max 区间——那会让浏览器给一个块画不出的字挑中这个 face，直接出豆腐块（G10）。
 
@@ -374,6 +470,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   isCjkChar,
+  stripSourceComments,
   scoreCharacters,
   planTiers,
   unicodeRange,
@@ -392,6 +489,21 @@ describe('isCjkChar', () => {
     for (const ch of ['a', '1', ' ', '·', 'é', '—', '“']) {
       expect(isCjkChar(ch)).toBe(false);
     }
+  });
+});
+
+describe('stripSourceComments', () => {
+  it('drops a line comment but keeps the string next to it', () => {
+    expect(stripSourceComments('const a = "字"; // 注释里的字\n')).toContain('字');
+    expect(stripSourceComments('const a = "字"; // 注释里的字\n')).not.toContain('注');
+  });
+
+  it('drops a block comment but keeps the code around it', () => {
+    expect(stripSourceComments('/* 块注释 */const b = 1;')).toBe('const b = 1;');
+  });
+
+  it('keeps a comment marker inside a string', () => {
+    expect(stripSourceComments('const url = "https://example.com";')).toContain('https://example.com');
   });
 });
 
@@ -490,6 +602,29 @@ describe('planTiers', () => {
   it('rejects a non positive block size', () => {
     expect(() => planTiers(scored, { extBlockChars: 0 })).toThrow();
   });
+
+  it('never truncates the seeded characters, even when they exceed the tier size', () => {
+    // A painted character that falls out of the hot tier is a tofu box
+    // (G10), so the tier grows instead of dropping names.
+    const seeded = ['永', '和', '谐'];
+    const plan = planTiers(scored, { tier1Size: 2, hotChars: seeded });
+    expect(plan.hot.slice(0, 3)).toEqual(seeded);
+    expect(plan.hot).toHaveLength(3);
+  });
+
+  it('keeps the seeded characters first and fills the rest by frequency', () => {
+    const plan = planTiers(scored, { tier1Size: 3, hotChars: ['丁'] });
+    expect(plan.hot[0]).toBe('丁');
+    expect(plan.hot).toHaveLength(3);
+    expect(new Set(plan.hot).size).toBe(3);
+  });
+
+  it('places a seeded character that the corpus does not contain in the hot tier', () => {
+    // The page profile may name a character the corpus missed (F27-j-e
+    // found seven of them in the poem titles). It still has to get a glyph.
+    const plan = planTiers(scored, { tier1Size: 1, hotChars: ['鵩'] });
+    expect(plan.hot[0]).toBe('鵩');
+  });
 });
 
 describe('unicodeRange', () => {
@@ -528,7 +663,45 @@ describe('loadFamilyCharsets', () => {
     const plans = loadFamilyCharsets();
     expect(plans.sans.hot).toHaveLength(300);
     expect(plans.serif.hot).toHaveLength(300);
-    expect(plans.wenkai.hot).toHaveLength(0);
+    // R14 said "no hot tier for the brand face"; F27-j-d reversed that —
+    // without a brand face hot tier /poetry opens 120 files.
+    expect(plans.wenkai.hot).toHaveLength(300);
+  }, 180_000);
+
+  it('seeds the hot tier with the characters the measured pages paint', () => {
+    // F27-j-c: the hot tier holds a FIXED number of characters, so WHICH
+    // characters it holds is free. The page profile fixture is the only
+    // evidence of what the pages actually paint.
+    const plans = loadFamilyCharsets();
+    const fixture = JSON.parse(
+      readFileSync(
+        resolve(fileURLToPath(new URL('../../../data/font-page-profiles.json', import.meta.url))),
+        'utf8',
+      ),
+    ) as { pages: Record<string, Record<string, string>> };
+    for (const family of ['sans', 'serif', 'wenkai'] as const) {
+      const painted = new Set<string>();
+      for (const page of Object.values(fixture.pages)) {
+        for (const ch of page[family] ?? '') painted.add(ch);
+      }
+      expect(painted.size).toBeGreaterThan(0);
+      const hot = new Set(plans[family].hot);
+      const missing = [...painted].filter((ch) => !hot.has(ch));
+      expect(missing).toEqual([]);
+    }
+  }, 180_000);
+
+  it('covers every poem title character in wenkai, because the poem card paints them in the brand face', () => {
+    // F27-j-e: components/poetry/PoemCard.tsx renders 《诗题》 in
+    // font-kai. Seven of the title characters existed in NO other corpus
+    // source, so they were falling back to the system font today.
+    const plans = loadFamilyCharsets();
+    const wenkai = new Set(
+      [...plans.wenkai.hot, ...plans.wenkai.extBlocks.flatMap((b) => b.chars)],
+    );
+    for (const ch of ['鵩', '飚', '巂', '岧', '鴈', '劒', '濬']) {
+      expect(wenkai.has(ch)).toBe(true);
+    }
   }, 180_000);
 
   it('covers the UI literals and the corpus characters', () => {
@@ -569,15 +742,23 @@ describe('loadFamilyCharsets', () => {
   it('honours a per family override even after the default plans were cached', () => {
     loadFamilyCharsets();
     const plans = loadFamilyCharsets({ families: { sans: { tier1Size: 10 } } });
-    expect(plans.sans.hot).toHaveLength(10);
+    // `tier1Size` is a FLOOR: the seeded union of the measured pages is
+    // longer than 10, so the hot tier holds the union and stops there. The
+    // default's 300 characters are gone — a cache that ignored the
+    // override would hand back the 300 character default plan.
+    expect(plans.sans.hot.length).toBeLessThan(300);
+    expect(plans.sans.hot.length).toBeGreaterThanOrEqual(10);
   }, 180_000);
 
-  it('falls back to the family default when an override is explicitly undefined', () => {
+  it('treats an explicitly undefined override as no override', () => {
     // A spread of the override object over the defaults lets an explicit
-    // `undefined` win the spread and wipe the default out: wenkai would
-    // get a 300 character hot tier it must not have (R14).
+    // `undefined` win the spread and wipe the default out. The observable
+    // invariant is the one that matters: such a call has to produce exactly
+    // the default plan, hot tier and Ext blocks alike.
+    const defaults = loadFamilyCharsets();
     const plans = loadFamilyCharsets({ families: { wenkai: { tier1Size: undefined } } });
-    expect(plans.wenkai.hot).toHaveLength(0);
+    expect(plans.wenkai.hot).toEqual(defaults.wenkai.hot);
+    expect(plans.wenkai.extBlocks).toHaveLength(defaults.wenkai.extBlocks.length);
   }, 180_000);
 });
 ```
@@ -596,8 +777,10 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
 2. `scoreCharacters(sources)`：对每个 source 的每个字符，若 `isCjkChar` 则 `score += source.weight`。返回 `ordered`（先按分数降序，同分按 code point 升序）与 `score`（Map）。
 
 3. `planTiers(scored, options)`：
-   - `hot = ordered.slice(0, tier1Size)`（`tier1Size = 0` 时热区为空数组）。
-   - **剩余字符保持频率序，按 `extBlockChars` 个一组切块**（F25-a）：`tail = ordered.slice(tier1Size)`，然后 `for (let i = 0; i < tail.length; i += extBlockChars) blocks.push(tail.slice(i, i + extBlockChars))`。**不要**按码位重新排序——频率序正是这一版机制的全部意义：页面命中的字因此聚在少数几块里，每块都用得满。
+   - **种子先行**（F27-j-c）：`options.hotChars` 是页面画像并集的点名序列，**排在热区最前面**，一个都不能少；**语料里没有的种子字也照样进热区**（它必须有字形，G10）。种子按原顺序去重。
+   - **热区大小 = `max(tier1Size, 种子长度)`**：`tier1Size` 是**下限**不是上限。种子比 `tier1Size` 长时**不许截断**——截掉的那个字要么落到别的块（页面多下一个文件），要么整个语料里都没有（豆腐块）。
+   - 种子占位之后，热区剩下的位置按频率序（`scored.ordered`）补齐；`tier1Size = 0` 且没有种子时热区为空数组。
+   - **剩余字符保持频率序，按 `extBlockChars` 个一组切块**（F25-a）：`tail = ordered.filter((ch) => !hotSet.has(ch))`（**热区里的字要从尾巴里剔掉**，否则同一个字会同时出现在热区和 Ext 块里），然后 `for (let i = 0; i < tail.length; i += extBlockChars) blocks.push(tail.slice(i, i + extBlockChars))`。**不要**按码位重新排序——频率序正是这一版机制的全部意义：页面命中的字因此聚在少数几块里，每块都用得满。
    - `extBlockChars` 是**字符个数**，不是码位宽度。最后一块可以是**不满**的（尾巴），这是正常的。
    - `ExtBlock.chars` = 块内的字符（保持频率序）；`ExtBlock.index` 从 1 开始连续编号。
    - **不允许出现空块**：切片长度永远 > 0。
@@ -611,25 +794,34 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
 
    | 族 | 语料来源 | 权重 |
    |---|---|---|
-   | `wenkai` | 源码字面量（`app/` `components/` `lib/` 的 `.ts`/`.tsx`/`.mjs`/`.js`）× 1000、`data/classics/*.json` 的 `title` 字段、`data/sutras/*.json` 的 `title` 字段、`data/content/*.json` 中**带 `rare` 字段的那些文件的 `char` 字段**、**`data/radicals.json` 的 214 个部首值**、**`data/general-standard-chinese-characters.json` 的 8 105 个库字符**（见 R16） | 见左 |
+   | `wenkai` | 源码字面量（`app/` `components/` `lib/` 的 `.ts`/`.tsx`/`.mjs`/`.js`，**去掉注释**，见下）× 1000、`data/classics/*.json` 的 `title` 字段、`data/sutras/*.json` 的 `title` 字段、**`data/poems/*.json` 的 `title` 字段**（F27-j-e）、`data/content/*.json` 中**带 `rare` 字段的那些文件的 `char` 字段**、**`data/radicals.json` 的 214 个部首值**、**`data/general-standard-chinese-characters.json` 的 8 105 个库字符**（见 R16） | 见左 |
    | `sans` | `wenkai` 的全部 + `data/content/*.json` 全部字符串 + `data/poems/*.json` 全部字符串 + `scripts/fonts/gb2312-7000.txt` + `data/general-standard-chinese-characters.json` | 语料 × 1，源码 × 1000 |
    | `serif` | `sans` 的全部 + `data/sutras/*.json` 全部字符串 + `data/classics/*.json` 全部字符串 | 同上 |
 
    - **`data/stories/` 不存在**：故事正文在 `data/content/<char>.json` 的 `rare.story` 里，正文由 sans/serif 渲染。楷体只在故事详情页渲染那个**生僻字本身**（`app/stories/StoryClient.tsx:117` 的 `font-kai font-bold text-9xl`），所以楷体字符集收 `rare` 文件的 `char`，**不收故事正文**——收了会把密集区的窗口填满，每个页面都替它们买单（实测首页楷体 35 KB vs 收正文时的 51 KB）。
+   - **`data/poems/*.json` 的 `title` 字段进 `wenkai`**（F27-j-e）：`components/poetry/PoemCard.tsx:32` 把诗题渲染成 `《{poem.title}》` 并套 `font-kai`。1 165 个诗文件、1 237 个不同的诗题字，其中**恰好 7 个（鵩 飚 巂 岧 鴈 劒 濬）在别的任何语料来源里一个字都没有**——今天它们落到系统字体，站点上是混排（一个已经存在的 G10 缺陷）。诗题**只取顶层 `title` 字段**（复用现成的 `collectEntryTitles`），不要把整首诗收进来：正文是正文，诗题才是品牌 face 要画的东西。
+     ⚠️ **扫描顺序**：`data/poems` 必须在 `sans` 复制 `wenkai` 分数**之前**扫一次——`scanJsonDirectory(dir, state, { strings: true, titles: true, rares: false })` 一次读出 `counts` 与 `titles`，把 `titles` 折进 `wenkaiScore`，再把 `counts` 折进 `sansScore`。
    - `gb2312-7000.txt` 每行一个字，按行读；`data/general-standard-chinese-characters.json` 是一个 JSON 数组/对象，**遍历它的全部字符串值**取字（先 `JSON.stringify` 再逐字符也可以，只要不漏）。
    - **`data/radicals.json` 只取 values，不取 keys。** 它是 `Record<char, radical>`，70 234 个 key 是查表用的、页面从不渲染（`scripts/import-chars-data.ts:23` 用它填 `chars.radical` 列），214 个 value 才是页面上的部首字。整份扫描会把字符集从 1.7 万撑到 7 万，机制直接崩。收 values 的理由：`components/game/RadicalToken.tsx:31` 用 `font-kai` 渲染部首，所以部首必须在**楷体**子集里；而 `components/dictionary/RadicalSidebar.tsx` 那份 213 项的 `RADICALS` 字面量把 `戶` 写成简体的 `户`、且根本没有 `韭`——照抄源码字面量会漏掉这两个，游戏里渲染成豆腐块。
    - **`data/unihan/` 两个文件不进语料**：`CJKRadicals.txt` 是 `number; hex; hex` 的码位映射（246 行、0 个汉字），`Unihan_RadicalStrokeCounts.txt` 是 `U+XXXX\tkRSUnicode\t1.4` 行，两者都只被一次性生成脚本 `scripts/build-radicals.ts` 消费，运行时页面不读它们。逐字符扫描对它们是 0 收益。
    - **`data/general-standard-chinese-characters.json` 同时进 sans 和 wenkai（见 R16）**：这 8 105 个字就是 `chars` 表的种子（`scripts/import-chars-data.ts`），也是游戏渲染的全部库字符。进 sans 是因为字典/详情页用 sans 渲染它们；进 **wenkai** 是因为 `components/game/ChainScroll.tsx:63`、`components/game/ChainPickerModal.tsx:24`、`components/game/quest/WrongBook.tsx:118`、`components/game/quest/QuestCharCard.tsx:52` 都用 `font-kai` 渲染库字符（选字面板一次铺满整池）。不进 wenkai 的话这些字会掉到系统字体（`Kaiti SC`/`STKaiti`/`serif`），游戏页出现混排。`data/hsk-vocab.json` 的 2 632 个 HSK 字**已被这 8 105 个字完全覆盖**（实测差集为 0），不必单独收。
-   - 源码字面量扫描：递归遍历 `app/`、`components/`、`lib/`，跳过 `node_modules`，只读 `.ts`/`.tsx`/`.mjs`/`.js`，逐字符取 CJK。
+   - 源码字面量扫描：递归遍历 `app/`、`components/`、`lib/`，跳过 `node_modules`，只读 `.ts`/`.tsx`/`.mjs`/`.js`，**先 `stripSourceComments(text)` 去掉注释**，再逐字符取 CJK。
+   - **源码扫描必须跳过注释**（F27-j-f）：今天的扫描把整个文件逐字符读进去，注释里的汉字因此拿到了 ×1000 的源码权重。实测有 **69 个字只存在于注释里**（区减泄露吞永远防举拉映射笼让堡桌侧栏屏屉边朱淡观滚既缘颜浅压轻篇乾教育强零嗯训李若亦乎赖微软终焉舍伪集六特殊齐叉判纪偏纳浮乘丢倍戳告诉光像）——它们把 300 字的热区挤掉了真正会被画到的字，热区的命中率因此下降。
+     `stripSourceComments` 是一个**词法级**的剥离器，必须识别三种形态：`//` 行注释、`/* … */` 块注释、以及**字符串字面量**（`"`、`'`、`` ` ``）里的内容。字符串里的 `//`（例如 `'https://example.com'`）不是注释；字符串里的 `\` 转义要正确跳过；模板字符串按同一条规则处理。
    - 语料目录不存在时**跳过并打印一行说明**，不要抛错。
    - 单个语料文件 JSON 解析失败时跳过该文件并计数，不要让整个构建炸掉；最后打印一行 `skipped N malformed file(s)`。
    - 每族的 `tier1Size` / `extBlockChars` 取上面那张默认表；`options.families` 可以按族覆盖。
+   - **热区的种子来自页面画像**（F27-j-c，取代 F25-a / R14 的「纯频率序热区」）：`loadFamilyCharsets()` 读 `data/font-page-profiles.json`（路径用 `options.pageProfiles` 覆盖，默认 `<root>/data/font-page-profiles.json`），对每一族取**所有页面**在该族渲染的字的并集，按「被几个页面渲染」降序、同频按码位升序排列，作为该族 `planTiers` 的 `hotChars`。
+     - 这份 fixture 是「页面真正画了什么字」的**唯一证据**——它是从生产环境抓下来的 HTML。
+     - 热区**装什么字是免费的**：热区的大小由 `tier1Size` 定死，换成并集里的字不花一分钱，却把命中率从「语料频率猜的」变成「页面实测的」。
+     - `options.families[family].hotChars` 可以按族覆盖种子（给别的调用方一个口子）。
+     - fixture 读不到时**报错退出**（它是一份入库文件，读不到就是仓库坏了，静默退回频率序会悄悄回到今天的命中率）。
    - **覆盖项里值为 `undefined`（或 `null`）的键视为「没有覆盖」**：必须逐键取值（`override.tier1Size ?? defaults.tier1Size`），**不能**把覆盖对象整个展开到默认值上（`{ ...defaults, ...override }`）——展开会让显式的 `undefined` 赢，楷体因此拿到一个 300 字的热区（R14 禁止）。缓存键也一样忽略值为 `undefined` 的键，让 `{}` 和 `{ tier1Size: undefined }` 共用同一个缓存条目。
-   - **缓存键必须包含 `options.families`**：扫描代价高，同一进程内缓存一次即可，但只按 `root` 缓存会让第二次带 `families` 覆盖的调用拿到第一次的结果（静默忽略调用方的覆盖）。
+   - **缓存键必须包含 `options.families` 与 `options.pageProfiles`**：扫描代价高，同一进程内缓存一次即可，但只按 `root` 缓存会让第二次带 `families` 覆盖的调用拿到第一次的结果（静默忽略调用方的覆盖），也会让换了 fixture 路径的调用拿到旧 fixture 的结果。
    - 函数末尾 `console.log` 每族的字符总数与分档大小，格式：
      `charset sans: 16968 chars (hot 300 / ext 2778 blocks)`。
-     按 R16 的语料、每块 6 字，三行分别是：
-     `charset wenkai: 8197 chars (hot 0 / ext 1367 blocks)`、
+     按 F27-j 的语料（源码去注释 + 诗题进楷体）、每块 6 字，三行分别是：
+     `charset wenkai: 8204 chars (hot 300 / ext 1318 blocks)`、
      `charset sans: 16968 chars (hot 300 / ext 2778 blocks)`、
      `charset serif: 19888 chars (hot 300 / ext 3265 blocks)`。
 
@@ -640,6 +832,9 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
    - 头部里「扫描读取约 235 MB」的体积数字要改成实测值（约 270 MB）；宁可写「约 270 MB」也不要写一个偏小的数字。
    - 头部描述 Ext 机制时改成「**频率序、每块 6 个字符**」，不要再说「16 码位窗口」——那是已被 F25-a 作废的旧机制。
    - 「二次折入会改变热区组成」这个说法**没有实测依据**，删掉它；只写可验证的事实：「这 8 105 个字在楷体里折入一次；正文字族直接复制楷体的分数，所以不会重复计数。」
+   - **头部必须写清热区的真实规则**（F27-j-c）：不是「界面最常用的 300 个字」，而是「**实测页面画像的并集优先**」——读 `data/font-page-profiles.json`，四个页面画过的字排在最前，剩余名额按语料频率补齐。
+   - **头部必须写清楷体现在有热区**（300 字）：F27-j-d 用实测推翻了 R14 的「楷体无热区」。R14 的理由（「楷体字都稀有，一份 300 字的文件就是浪费」）是错的：/poetry 的诗题全在楷体里，没有热区时那一页要开 120 个文件。
+   - **头部必须提到两处新语料**（F27-j-e / F27-j-f）：诗题的 `title` 字段进楷体；源码扫描跳过注释。
 
 - [ ] **Step 4: 跑测试确认通过**
 
@@ -965,7 +1160,7 @@ git commit -m "feat(fonts): add the webfont source downloader and axis instancer
   |---|---|---|---|---|---|---|
   | `sans` | `Noto Sans SC` | `fonts-sans.css` | `sans` | `NotoSansSC-wght-400-700.ttf` | 变量，单文件 `font-weight: 400 700` | 300 字 |
   | `serif` | `Noto Serif SC` | `fonts-serif.css` | `serif` | `NotoSerifSC-wght-400-700.ttf` | 变量，单文件 `font-weight: 400 700` | 300 字 |
-  | `wenkai` | `LXGW WenKai TC` | `fonts-wenkai.css` | `wenkai` | `LXGWWenKaiTC-Regular.ttf` + `LXGWWenKaiTC-Bold.ttf` | 静态，`400` 与 `700` 各一份 | **无热区**（R14） |
+  | `wenkai` | `LXGW WenKai TC` | `fonts-wenkai.css` | `wenkai` | `LXGWWenKaiTC-Regular.ttf` + `LXGWWenKaiTC-Bold.ttf` | 静态，`400` 与 `700` 各一份 | 300 字（F27-j-d 推翻了 R14 的「无热区」） |
 
   文件命名：`hot.woff2` / `ext-001.woff2` / `ext-002.woff2` …（静态族再加 `-<weight>` 后缀：`ext-001-400.woff2`、`ext-001-700.woff2`）。
 
@@ -1061,7 +1256,7 @@ describe('the planned charsets fit the design budget', () => {
     for (const family of FAMILIES) {
       const p = plans[family.key];
       expect(p.extBlocks.length).toBeGreaterThan(0);
-      expect(p.hot.length).toBe(family.key === 'wenkai' ? 0 : 300);
+      expect(p.hot.length).toBe(300);
     }
   }, 180_000);
 });
@@ -1074,7 +1269,7 @@ Expected: FAIL —— 找不到 `scripts/fonts/build-webfont-subsets.mjs`。
 
 - [ ] **Step 3: 实现 `scripts/fonts/build-webfont-subsets.mjs`**
 
-1. `FAMILIES` 常量按上表写死，含 `key`、`label`（= font-family 名）、`css`、`dir`、`sources`（变量族一个文件、静态族两个文件）、`weights`（变量族 `['400 700']`，静态族 `['400','700']`）、`variable`（boolean）、`hotSize`（sans/serif = 300，wenkai = 0）。
+1. `FAMILIES` 常量按上表写死，含 `key`、`label`（= font-family 名）、`css`、`dir`、`sources`（变量族一个文件、静态族两个文件）、`weights`（变量族 `['400 700']`，静态族 `['400','700']`）、`variable`（boolean）、`hotSize`（**三族都是 300**——F27-j-d 给楷体也留了热区）。
 
 2. `blockFileNames(family, block)`：
    - `block` = `{ kind: 'hot' }` → 基名 `hot`；`{ kind: 'ext', index }` → 基名 `ext-` + index 补 3 位零（`ext-003`、`ext-123`）。
@@ -1135,23 +1330,23 @@ Expected（按 2026-10-29 的语料实测，数字允许 ±5 % 浮动，但**必
 
 | 族 | 字符数 | Ext 块数 | woff2 文件数 | 产物字节 | 备注 |
 |---|---|---|---|---|---|
-| `wenkai` | 8 197 | 1 367 | **2 734** | 7 688 KB | 无热区；每块 400 + 700 两份（R16） |
-| `sans` | 16 968 | 2 778 | **2 779** | 8 255 KB | 热区 300 + 2 778 个 Ext 块 |
-| `serif` | 19 888 | 3 265 | **3 266** | 12 230 KB | 热区 300 + 3 265 个 Ext 块 |
-| 合计 | — | 7 410 | **8 779** | **28 173 KB ≈ 27.5 MB** | 三份 CSS gzip 合计 ≈ **168 KB**（sans 60 / serif 71 / wenkai 37） |
+| `wenkai` | 8 204 | 1 318 | **2 638** | 7 624 KB | 热区 300 + 1 318 个 Ext 块；每块 400 + 700 两份 |
+| `sans` | 16 968 | 2 778 | **2 779** | 8 254 KB | 热区 300 + 2 778 个 Ext 块（变量族一个文件承载 400–700） |
+| `serif` | 19 888 | 3 265 | **3 266** | 12 228 KB | 热区 300 + 3 265 个 Ext 块（变量族一个文件承载 400–700） |
+| 合计 | — | 7 361 | **8 683** | **28 106 KB ≈ 27.45 MB** | 三份 CSS gzip 合计 ≈ **158 KB**（sans 60 / serif 71 / wenkai 27） |
 
-单文件大小（F27 全量实测的真实分布，**不是** F25 的线性模型——F25 的 `fixed + perChar` 已被推翻，分布重尾）：
+单文件大小（**F27-j 全量实测的真实分布**，不是 F25 的线性模型——F25 的 `fixed + perChar` 已被推翻，分布重尾）：
 
 | 族 | 热区文件 | Ext 最小 | Ext p50 | Ext p90 | Ext p99 | Ext 最大 |
 |---|---|---|---|---|---|---|
-| `sans` | 72 KB | 852 B | 3 160 B | 3 936 B | 4 544 B | 5 368 B |
-| `serif` | 89 KB | 872 B | 4 072 B | 4 992 B | 5 880 B | **6 600 B** |
-| `wenkai`（每份） | — | 1 264 B | 2 828 B | 3 556 B | 4 132 B | 4 600 B |
+| `sans` | 72 KB | 852 B | 3 168 B | 3 924 B | 4 544 B | 5 368 B |
+| `serif` | 89 KB | 872 B | 4 076 B | 4 992 B | 5 872 B | **6 600 B** |
+| `wenkai`（400 + 700 **两份合计**） | 77 KB/份 | 3 124 B | 5 732 B | 7 164 B | 8 208 B | 9 096 B |
 
-⇒ Task 4 的单文件上限按 **热区 ≤ 96 KB、Ext 块 ≤ 7 KB** 判定（F27-e）。注意 **1 779 个块（20 %）超过 4 KB**——F25 的 4 KB 上限会误判 20 % 的块。
+⇒ Task 4 的单文件上限按 **热区 ≤ 96 KB、Ext 块 ≤ 7 KB** 判定（F27-e）。注意 **有相当比例的块超过 4 KB**（F27-j 实测 serif 的 Ext 块 p50 就是 4 076 B、楷体的 p50 是 5 732 B）——F25 的 4 KB 上限会把大量正确的块误判为超限。
 `public/font/fonts-manifest.json` 的 `version` 是 12 位 hex。
 
-> 这一步会跑约 5 分钟（切 8 779 次；实测 `subset-font` 约 31–35 ms/6 字块）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
+> 这一步会跑约 5 分钟（切 8 683 次；实测 `subset-font` 约 31–35 ms/6 字块）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
 
 - [ ] **Step 6: 提交**
 
@@ -1169,8 +1364,10 @@ git commit -m "feat(fonts): add the hot-tier and frequency-ordered webfont subse
 **Files:**
 - Create: `scripts/fonts/verify-webfont-subsets.mjs`
 - Create: `scripts/fonts/capture-page-font-profiles.mjs`（页面取字 fixture 的再生成器）
+- Create: `scripts/perf/class-attribution.mjs`（HTML → 字族归因；**Task 4 的采集器与 Task 9 的 font-load 共用同一个模块**）
 - Consume: `data/font-page-profiles.json`（页面取字 fixture，已随本计划提交）
 - Test: `tests/unit/scripts/verify-webfont-subsets.test.ts`
+- Test: `tests/unit/scripts/perf-class-attribution.test.ts`
 - Modify: `package.json`
 
 **Interfaces:**
@@ -1183,20 +1380,30 @@ git commit -m "feat(fonts): add the hot-tier and frequency-ordered webfont subse
     cssBytes: 175 * 1024,       // 三份样式表 gzip 后合计（F25-d / F27-d）
     sansCssBytes: 65 * 1024,    // 无衬线那份单独设限：它渲染阻塞（F25-d / F27-d）
     maxFacesPerCss: 3400,
-    maxFontFilesPerPage: 130,
+    maxFontFilesPerPage: 12,    // F27-j-g：实测最多 4 个
     pageFontBytes: {
-      '/': 500 * 1024,
-      '/dictionary': 480 * 1024,
-      '/poetry': 360 * 1024,
-      '/stories': 540 * 1024,
+      '/': 330 * 1024,
+      '/dictionary': 330 * 1024,
+      '/poetry': 240 * 1024,
+      '/stories': 330 * 1024,
     },
   };
   export async function verifyFamily(family): Promise<{ ok: boolean; errors: string[]; stats: FamilyStats }>;
   export async function verifyAll(): Promise<{ ok: boolean; errors: string[]; stats: FamilyStats[] }>;
   ```
+  以及 `scripts/perf/class-attribution.mjs` 的导出（**Task 4 与 Task 9 共用**，避免两处各写一份归因规则）：
+  ```js
+  export function classTokens(attrs: string): string[];
+  export function stripScriptsAndStyles(html: string): string;
+  export function stripComments(html: string): string;
+  export function collectFamilyCharsets(html: string): { sans: Set<string>; serif: Set<string>; wenkai: Set<string> };
+  ```
   CLI：`node scripts/fonts/verify-webfont-subsets.mjs` → 全部通过 `exit 0`，任一失败 `exit 1`。
 
-  **限额来自 R9、F25-c/d 与 F27-c/d/e 的重定预算**，不是 spec §3.2/§3.3 的旧数字——旧数字建立在「229.4 B/字、无每文件固定开销」这个错的成本模型上（F25 的模型本身也已被 F27 推翻，见「第三轮实测修正的字节数（F27）」一节）。本组数字是 **F27 全量实测**的：热区 sans 72 KB / serif 89 KB；Ext 块 p99 5 880 B、max 6 600 B；每页 443 / 430 / 323 / 485 KB；CSS 168 KB；每页最多 111 个文件。
+  **限额来自 R9、F25-c/d 与 F27-c/d/e 的重定预算**，不是 spec §3.2/§3.3 的旧数字——旧数字建立在「229.4 B/字、无每文件固定开销」这个错的成本模型上（F25 的模型本身也已被 F27 推翻，见「第三轮实测修正的字节数（F27）」一节）。
+
+  **本组数字是 F27-j 全量实测的**（`scripts/fonts/staging/probe-full-new-design.mjs` 全量构建 8 683 个文件）：热区 sans 72 KB / serif 89 KB / wenkai 77 KB；Ext 块单文件 p99 4 544 B、max 6 600 B；**每页 221–308 KB、最多 4 个文件**；三份 CSS gzip 合计 **158 KB**（sans 60 / serif 71 / wenkai 27）。
+  `maxFontFilesPerPage` 与 `pageFontBytes` 在 F27-j-g 被重定：旧值 130 个文件 / 500–540 KB 是「热区按语料频率」那套设计的产物；新设计的热区装的是**页面实测画过的字**，于是每页只要 3–4 个文件、221–308 KB。限额留了约 7 % 的余量（330 / 330 / 240 / 330 KB），文件数上限 12 是实测值 4 的三倍。
 
 - [ ] **Step 1: 写失败测试**
 
@@ -1225,8 +1432,8 @@ describe('verify-webfont-subsets', () => {
     expect(LIMITS.extBlockBytes).toBe(7 * 1024);
     expect(LIMITS.cssBytes).toBe(175 * 1024);
     expect(LIMITS.sansCssBytes).toBe(65 * 1024);
-    expect(LIMITS.maxFontFilesPerPage).toBe(130);
-    expect(LIMITS.pageFontBytes['/dictionary']).toBe(480 * 1024);
+    expect(LIMITS.maxFontFilesPerPage).toBe(12);
+    expect(LIMITS.pageFontBytes['/dictionary']).toBe(330 * 1024);
   });
 });
 ```
@@ -1236,9 +1443,9 @@ describe('verify-webfont-subsets', () => {
 Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
 Expected: FAIL —— 找不到模块。
 
-> **Step 4 的前提**：Task 3 的 `npm run fonts:subset-web` 已经跑过，`public/font/web/**`（8 779 个文件）与三份样式表**在磁盘上**。测试读的是工作树，不是 git —— 所以 Task 4 跑测试时产物是未提交状态，这是**预期的**：产物由 **Task 5** 一起提交（见 Task 3 Step 6 的说明）。若磁盘上没有产物，先跑 `npm run fonts:subset-web`（约 5 分钟），**不要**在本任务里 `git add` 它们。
+> **Step 4 的前提**：Task 3 的 `npm run fonts:subset-web` 已经跑过，`public/font/web/**`（8 683 个文件）与三份样式表**在磁盘上**。测试读的是工作树，不是 git —— 所以 Task 4 跑测试时产物是未提交状态，这是**预期的**：产物由 **Task 5** 一起提交（见 Task 3 Step 6 的说明）。若磁盘上没有产物，先跑 `npm run fonts:subset-web`（约 5 分钟），**不要**在本任务里 `git add` 它们。
 >
-> 打开全部 8 779 个 woff2（`fontkit.create`）实测约 **48 秒**（现有 Google 子集每文件 5.4 ms，本次的 3 KB 小块更快），测试超时给到 300 秒足够。
+> 打开全部 8 683 个 woff2（`fontkit.create`）实测约 **45 秒**（现有 Google 子集每文件 5.4 ms，本次的 3 KB 小块更快），测试超时给到 300 秒足够。
 
 - [ ] **Step 3: 实现 `scripts/fonts/verify-webfont-subsets.mjs`**
 
@@ -1247,26 +1454,26 @@ Expected: FAIL —— 找不到模块。
 1. **覆盖完整**：对每一族，用 Task 1 的字符集与样式表里的 `unicode-range` 求并集，断言并集 == 该族字符集（不多不少）。
 2. **块不相交**：同一族的**所有**块（热区 + 每个 Ext 块）的 `unicode-range` 两两不相交。
 3. **cmap 正确**：用 `fontkit.create(buffer)` + `font.hasGlyphForCodePoint(cp)` 打开每个产物，断言该块声明的每个字符都能渲染；并断言产物**不包含**该块之外的字符。
-4. **文件大小**：热区文件 ≤ `LIMITS.hotBytes`（**96 KB**；F27 实测 sans 72 KB / serif 89 KB），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（**7 KB**；F27 实测 p99 5 880 B、max 6 600 B）。⚠️ **不要**用 F25 的 4 KB 上限——F27 实测有 **1 779 个块（20 %）超过 4 KB**，用 4 KB 会把正确的产物判成失败。
+4. **文件大小**：热区文件 ≤ `LIMITS.hotBytes`（**96 KB**；F27-j 实测 sans 72 KB / serif 89 KB / wenkai 77 KB/份），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（**7 KB**；F27-j 实测 sans max 5 368 B、serif max 6 600 B、wenkai 的 400+700 两份合计最大 9 096 B ⇒ 单份约 4.5 KB）。⚠️ **不要**用 F25 的 4 KB 上限——F27 实测有五分之一的块超过 4 KB，用 4 KB 会把正确的产物判成失败。
 5. **样式表**：三份 `fonts-<family>.css` **gzip 后合计** ≤ `LIMITS.cssBytes`（175 KB，F25-d），单份的 `@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`（3 400）。**无衬线那一份单独 ≤ `LIMITS.sansCssBytes`（65 KB）**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞首屏。
 6. **每条 face 的 `font-display` 必须是 `swap`**，`src` 指向的文件必须存在。
 7. **manifest**：`version` 是 12 位 hex，且等于三份样式表内容按文件名排序后的 sha256 前 12 位；`files` 的键恰为 `{sans, serif, wenkai}`。
 8. **页面预算**（对应 Review Focus 第 5 条）：读 `data/font-page-profiles.json`，对 `/`、`/dictionary`、`/poetry`、`/stories` 四个页面，用各族的热区/Ext 规则算出「浏览器会下载哪些文件」，累加**字节**与**文件数**，断言字节 ≤ `LIMITS.pageFontBytes[path]` 且文件数 ≤ `LIMITS.maxFontFilesPerPage`。
    计算规则：一个字符落在热区就下载热区文件；落在 Ext 就下载它所在的那一个 Ext 块文件（静态族该块是 2 个文件）。同一块只算一次。
-   **fixture 怎么来的**：`data/font-page-profiles.json` 记录了 2026-10-29 从 `https://ziyun.pudafo.com` 抓到的四个页面服务端 HTML 里、**按 `font-kai` / `font-serif` class 归属**的 CJK 字符集（未命中这两个 class 的归 sans）。`scripts/fonts/capture-page-font-profiles.mjs` 是它的再生成器：默认从 `--base`（默认 `https://ziyun.pudafo.com`）抓四个页面；也接受 `--html-dir <dir>` 从本地 HTML 目录读（文件名 `<page>.html`，`page` ∈ `home`/`dictionary`/`poetry`/`stories`）。**校验器本身不联网**，只用仓库里的 fixture。
+   **fixture 怎么来的**：`data/font-page-profiles.json` 记录了 2026-10-29 从 `https://ziyun.pudafo.com` 抓到的四个页面服务端 HTML 里、**按栈式归属**得到的 CJK 字符集——元素自己的 `font-kai` / `font-serif` / `font-sans` class 决定它渲染成哪款字，没有就继承父元素，再没有就是 `body` 的 sans。`scripts/fonts/capture-page-font-profiles.mjs` 是它的再生成器：默认从 `--base`（默认 `https://ziyun.pudafo.com`）抓四个页面；也接受 `--html-dir <dir>` 从本地 HTML 目录读（文件名 `<page>.html`，`page` ∈ `home`/`dictionary`/`poetry`/`stories`）。**校验器本身不联网**，只用仓库里的 fixture。
 
 CLI 输出格式：
 
 ```
-[verify] sans   : 16968 chars, 2779 files, ~8255 KB   OK
-[verify] serif  : 19888 chars, 3266 files, ~12230 KB   OK
-[verify] wenkai :  8197 chars, 1367 blocks, 2734 files, ~7688 KB   OK
-[verify] css    : ~168 KB gzip (sans ~60 / serif ~71 / wenkai ~37)   OK
-[verify] pages  : / 443 KB / 111 files   /dictionary 430 KB / 87 files   /poetry 323 KB / 91 files   /stories 485 KB / 106 files   OK
+[verify] sans   : 16968 chars, 2779 files, ~8.3 MB   OK
+[verify] serif  : 19888 chars, 3266 files, ~12.0 MB   OK
+[verify] wenkai :  8204 chars, 2638 files, ~7.5 MB   OK
+[verify] css    : ~158 KB gzip (sans ~60 / serif ~71 / wenkai ~27)   OK
+[verify] pages  : / 308 KB / 4 files   /dictionary 308 KB / 4 files   /poetry 221 KB / 3 files   /stories 308 KB / 4 files   OK
 [verify] 0 error(s)
 ```
 
-> 字符数、文件数、每页字节与请求数是 **2026-10-29 F27 全量实测值**（`scripts/fonts/staging/probe-full-build.mjs` 与 `probe-mechanism-real.mjs` 的 `B frequency 6 chars/block` 一行）——**不是** F25 的模型值。产物字节与 CSS gzip 字节带 `≈`，实跑后以真实数字为准。
+> 字符数、文件数、每页字节与请求数是 **2026-10-29 F27-j 全量实测值**（`scripts/fonts/staging/probe-full-new-design.mjs` 与 `probe-final-design.mjs` 的 `E2 UNION seeded, caps 300/300/300` 一行）——**不是** F25 的模型值，也不是 F27 的旧值（旧的按语料频率排热区，每页要 87–111 个文件）。产物字节与 CSS gzip 字节带 `≈`，实跑后以真实数字为准。
 
 字体文件用 `fontkit` 打开；`fontkit.create` 对 woff2 的支持在本仓库已被 `scripts/fonts/verify-brush-subsets.mjs` 验证过。
 
@@ -1275,9 +1482,271 @@ CLI 输出格式：
 - [ ] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
-Expected: PASS。若页面预算超标，按 F27 的实测矩阵调**热区字数**（300 → 150 会更省字节、450 会更省请求数）或**块宽**（6 → 8 字会让 CSS 变小、请求数变少但页面字节变多），改完重跑 Task 3 的构建再回来跑本测试；**不要**去改 `LIMITS` 的预算数字（R9、F25-c/d、F27-c/d/e 已经把预算重定过三次，且 F27 的每个数字都是实测的）。
+Expected: PASS。若页面预算超标，按 F27-j 的实测矩阵调**热区字数**（300 → 150 会更省字节、450 会更省请求数）或**块宽**（6 → 8 字会让 CSS 变小、请求数变少但页面字节变多），改完重跑 Task 3 的构建再回来跑本测试；**不要**去改 `LIMITS` 的预算数字（R9、F25-c/d、F27-c/d/e、F27-j-g 已经把预算重定过四次，且每个数字都是实测的）。
 
-- [ ] **Step 5: 加 npm script**
+- [ ] **Step 5: 写 `scripts/perf/class-attribution.mjs` 的失败测试**
+
+创建 `tests/unit/scripts/perf-class-attribution.test.ts`：
+
+```ts
+import { describe, it, expect } from 'vitest';
+import {
+  classTokens,
+  stripComments,
+  collectFamilyCharsets,
+} from '../../../scripts/perf/class-attribution.mjs';
+
+describe('classTokens', () => {
+  it('reads the class names out of an attribute string', () => {
+    expect(classTokens('class="font-kai text-lg"')).toEqual(['font-kai', 'text-lg']);
+  });
+
+  it('returns an empty list when there is no class attribute', () => {
+    expect(classTokens('id="a"')).toEqual([]);
+  });
+});
+
+describe('stripComments', () => {
+  it('drops an HTML comment', () => {
+    expect(stripComments('<p>字<!-- 注释 -->词</p>')).toBe('<p>字词</p>');
+  });
+});
+
+describe('collectFamilyCharsets', () => {
+  it('puts kai and serif text in their own family and the rest in sans', () => {
+    const html =
+      '<p class="font-kai">楷</p><p class="font-serif">宋</p><p>黑</p>';
+    const sets = collectFamilyCharsets(html);
+    expect([...sets.wenkai]).toEqual(['楷']);
+    expect([...sets.serif]).toEqual(['宋']);
+    expect([...sets.sans]).toEqual(['黑']);
+  });
+
+  it('inherits the face of the parent when the element has no font class', () => {
+    // `font-family` inherits. A span inside a font-kai heading is still
+    // painted in the brand face. The old flat rule ("the class of the
+    // immediate parent") put it in sans and emptied the kai set — that is
+    // what produced the wrong fixture F27-j found.
+    const sets = collectFamilyCharsets('<div class="font-kai"><span>楷</span></div>');
+    expect([...sets.wenkai]).toEqual(['楷']);
+    expect([...sets.sans]).toEqual([]);
+  });
+
+  it('inherits through several levels', () => {
+    const sets = collectFamilyCharsets('<section class="font-serif"><p><em>宋</em></p></section>');
+    expect([...sets.serif]).toEqual(['宋']);
+    expect([...sets.sans]).toEqual([]);
+  });
+
+  it('ignores the Chinese inside script and style blocks', () => {
+    const html =
+      '<style>.x::after{content:"字"}</style><script>const a="文";</script><p>汉</p>';
+    const sets = collectFamilyCharsets(html);
+    expect([...sets.sans]).toEqual(['汉']);
+  });
+
+  it('ignores the Chinese inside comments', () => {
+    const sets = collectFamilyCharsets('<p>汉</p><!-- 注释字 -->');
+    expect([...sets.sans]).toEqual(['汉']);
+  });
+
+  it('does not push a void element onto the stack', () => {
+    // A void element has no closing tag; pushing it would swallow the
+    // rest of the document into its face.
+    const sets = collectFamilyCharsets('<p class="font-kai">楷<br>续</p><p>黑</p>');
+    expect([...sets.wenkai].sort()).toEqual(['楷', '续']);
+    expect([...sets.sans]).toEqual(['黑']);
+  });
+
+  it('reads the text of a heading that Next.js splits with comment markers', () => {
+    // Next.js SSR emits `<!-- -->` between adjacent text nodes:
+    // <h3 class="font-kai text-lg">《<!-- -->在岳咏蝉<!-- -->》</h3>
+    const sets = collectFamilyCharsets('<h3 class="font-kai">《<!-- -->在岳咏蝉<!-- -->》</h3>');
+    expect([...sets.wenkai].sort()).toEqual(['在', '岳', '咏', '蝉'].concat(['》', '《']).sort());
+  });
+
+  it('reads the head of the document as nothing to paint', () => {
+    const sets = collectFamilyCharsets('<head><title>标题</title></head><body><p>汉</p></body>');
+    expect([...sets.sans]).toEqual(['汉']);
+  });
+});
+```
+
+- [ ] **Step 6: 跑测试确认失败**
+
+Run: `npx vitest run tests/unit/scripts/perf-class-attribution.test.ts`
+Expected: FAIL —— 找不到模块。
+
+- [ ] **Step 7: 实现 `scripts/perf/class-attribution.mjs`**
+
+```js
+/**
+ * scripts/perf/class-attribution.mjs — HTML → 字族归因。
+ *
+ * 页面上的同一个汉字可能用三款字渲染：正文字族（sans）、衬线字族（serif）、
+ * 楷体（kai）。这个模块按**栈**遍历服务端 HTML，把每个文本节点归到它真正
+ * 渲染时用的那一款字。
+ *
+ * 归属规则是**栈式**的，因为 `font-family` 会继承：一个元素渲染成哪款字，
+ * 取决于它自己的 `font-*` class；自己没有，就继承父元素的那款；再往上没有，
+ * 就是 `body` 的默认（sans，`app/globals.css:66`）。
+ *
+ * ⚠️ 第一版用的是「文本块的直属父元素的 class」，**这条规则是错的**
+ * （F27-j-a）：Next.js SSR 会在相邻文本节点之间插 `<!-- -->`，
+ * `<h3 class="font-kai">《<!-- -->在岳咏蝉<!-- -->》</h3>` 的直属父元素
+ * class 抓对了，但正则 `([^<]*)` 抓到的文本只有 `《`——于是楷体集合被掏空，
+ * 剩下的字全被算成 sans。已提交的 fixture 就是这样错的。
+ *
+ * 为什么要单独成模块：`data/font-page-profiles.json`（页面取字 fixture，Task 4 的
+ * 采集器产出）与 `scripts/perf/font-load.mjs`（每页字体载荷测量，Task 9 产出）
+ * 必须用**同一条**归因规则。两处各写一份，规则迟早漂移，于是 fixture 说的字符集
+ * 和预算算的字符集不是一回事，测出来的载荷就是假的。
+ */
+
+import { isCjkChar } from '../fonts/webfont-charset.mjs';
+
+/** class 名 → 字族。 */
+const FAMILY_BY_CLASS = {
+  'font-kai': 'wenkai',
+  'font-serif': 'serif',
+  'font-sans': 'sans',
+};
+
+/** 没有任何字族 class 时的默认字族：`body` 用的是 sans。 */
+const DEFAULT_FAMILY = 'sans';
+
+/** 空元素：没有闭合标签，不能进栈。 */
+const VOID_ELEMENTS = new Set([
+  'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input',
+  'link', 'meta', 'param', 'source', 'track', 'wbr',
+]);
+
+/** 从 `class="..."` 里取 class 名列表。 */
+export function classTokens(attrs) {
+  const match = /class="([^"]*)"/.exec(attrs);
+  if (!match) return [];
+  return match[1].split(/\s+/).filter(Boolean);
+}
+
+/** 去掉 <script> / <style> 的内容——里面的中文不是页面文字。 */
+export function stripScriptsAndStyles(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/g, ' ')
+    .replace(/<style[\s\S]*?<\/style>/g, ' ');
+}
+
+/** 去掉 HTML 注释——注释里的中文不是页面文字。 */
+export function stripComments(html) {
+  return html.replace(/<!--[\s\S]*?-->/g, '');
+}
+
+/**
+ * 一个元素渲染成哪款字：自己的 `font-*` class，否则继承父元素的那款。
+ */
+export function familyOfAttrs(attrs, parentFamily) {
+  const tokens = classTokens(attrs);
+  for (const className of Object.keys(FAMILY_BY_CLASS)) {
+    if (tokens.includes(className)) return FAMILY_BY_CLASS[className];
+  }
+  return parentFamily;
+}
+
+/**
+ * 把一段 HTML 的汉字归到三个字族。
+ *
+ * @returns {{ sans: Set<string>, serif: Set<string>, wenkai: Set<string> }}
+ */
+export function collectFamilyCharsets(html) {
+  const source = stripComments(stripScriptsAndStyles(html));
+  const sets = { sans: new Set(), serif: new Set(), wenkai: new Set() };
+  const stack = [{ tag: '#root', family: DEFAULT_FAMILY }];
+  let inHead = false;
+  let i = 0;
+  const n = source.length;
+
+  const addText = (text) => {
+    if (inHead) return;
+    const family = stack[stack.length - 1].family;
+    for (const ch of text) {
+      if (isCjkChar(ch)) sets[family].add(ch);
+    }
+  };
+
+  while (i < n) {
+    const lt = source.indexOf('<', i);
+    if (lt === -1) { addText(source.slice(i)); break; }
+    if (lt > i) addText(source.slice(i, lt));
+
+    // 注释：整段跳过（`stripComments` 已经删了，这里是兜底）。
+    if (source.startsWith('<!--', lt)) {
+      const end = source.indexOf('-->', lt + 4);
+      i = end === -1 ? n : end + 3;
+      continue;
+    }
+    // 声明（`<!DOCTYPE html>` 之类）：整段跳过。
+    if (source.startsWith('<!', lt)) {
+      const end = source.indexOf('>', lt);
+      i = end === -1 ? n : end + 1;
+      continue;
+    }
+
+    const closing = source[lt + 1] === '/';
+    const nameStart = lt + (closing ? 2 : 1);
+    const nameMatch = /^[a-zA-Z][a-zA-Z0-9:-]*/.exec(source.slice(nameStart));
+    if (!nameMatch) { i = lt + 1; continue; }
+    const tag = nameMatch[0].toLowerCase();
+    const end = source.indexOf('>', lt);
+    if (end === -1) { addText(source.slice(lt)); break; }
+    const attrs = source.slice(nameStart + tag.length, end).trim();
+
+    if (closing) {
+      if (tag === 'head') inHead = false;
+      // 弹到最近的一个同名开标签为止。
+      for (let s = stack.length - 1; s >= 1; s -= 1) {
+        if (stack[s].tag === tag) { stack.length = s; break; }
+      }
+    } else {
+      const selfClosing = source[end - 1] === '/';
+      if (tag === 'head') inHead = true;
+      const family = familyOfAttrs(attrs, stack[stack.length - 1].family);
+      if (!selfClosing && !VOID_ELEMENTS.has(tag)) stack.push({ tag, family });
+    }
+    i = end + 1;
+  }
+  return sets;
+}
+```
+
+> `isCjkChar` 来自 Task 1 的 `scripts/fonts/webfont-charset.mjs`——**一个 CJK 判定只有一处**。该模块被 import 时不会触发语料扫描（它的主块有 `invokedDirectly` 守卫）。
+>
+> **这份实现必须与 `scripts/fonts/staging/make-page-profiles.mjs`（本轮的采集脚本）逐行等价**：那份脚本重新生成的 fixture 必须与仓库里已提交的 `data/font-page-profiles.json` **逐字节相同**。Task 4 的采集器跑一次就能验证这一点（见 Step 9）。
+>
+> ✅ **已提前验证**：本轮把上面这份实现原样抄成 `scripts/fonts/staging/verify-plan-attribution.mjs`（只把 CJK 判定换成 import 来的 `isCjkChar`、把抓取换成读本地 HTML）跑了一遍，结果是 **IDENTICAL**——逐字节复现已提交的 `data/font-page-profiles.json`（`/` 112/32/52、`/dictionary` 65/80/7、`/poetry` 89/0/75、`/stories` 90/171/8）。⇒ 下面这段实现可以直接照抄，Task 4 的逐字节门禁会通过。
+
+- [ ] **Step 8: 跑测试确认通过**
+
+Run: `npx vitest run tests/unit/scripts/perf-class-attribution.test.ts`
+Expected: PASS。
+
+- [ ] **Step 9: 实现 `scripts/fonts/capture-page-font-profiles.mjs`（复用上一步的模块）**
+
+- 默认从 `--base`（默认 `https://ziyun.pudafo.com`）抓 `/`、`/dictionary`、`/poetry`、`/stories` 四个页面的服务端 HTML；也接受 `--html-dir <dir>` 从本地 HTML 目录读（文件名 `<page>.html`，`page` ∈ `home`/`dictionary`/`poetry`/`stories`）。
+- **归因一律调用 `scripts/perf/class-attribution.mjs` 的 `collectFamilyCharsets()`**，不要在这里另写一份正则。
+- 输出 `data/font-page-profiles.json`，结构与已提交的 fixture 一致：
+  ```json
+  { "capturedAt": "<YYYY-MM-DD>", "source": "<base>", "pages": { "/": { "sans": "…", "serif": "…", "wenkai": "…" } } }
+  ```
+  三个字族的字符集按码位升序拼接成字符串。
+- **必须能复现已提交的 fixture**：本轮的采集脚本 `scripts/fonts/staging/make-page-profiles.mjs` 用的就是上面这套规则，从 `D:/temp/pg-{home,dictionary,poetry,stories}.html` 重新生成的结果与仓库里的 `data/font-page-profiles.json` **逐字节相同**。采集器写好之后，用同一批本地 HTML 跑一次：
+  ```bash
+  node scripts/fonts/capture-page-font-profiles.mjs --html-dir D:/temp --out D:/temp/font-page-profiles.check.json
+  diff D:/temp/font-page-profiles.check.json data/font-page-profiles.json
+  ```
+  Expected：**没有差异**。有差异就说明归因规则走样了——这正是 F27-j 找到旧 fixture 错在哪的办法（见 F27-j-b），所以这一步是本任务的**验收条件**，不是可选检查。
+- 采集到新数据时**不要**直接覆盖仓库里已提交的 fixture —— 先打印新旧差异，由协调方决定是否更新（G4：本任务只提供再生成器）。
+- ⚠️ **覆盖范围有限**（F27-j-i）：生产站点 2026-10-29 起已完成初始化，未登录的请求会返回「系统已初始化完成」页面，所以**线上现在抓不到真实内容**。已提交的 fixture 来自初始化之前的四次抓取，只覆盖 `/`、`/dictionary`、`/poetry`、`/stories` 四个页面；其余页面的字体命中靠热区里的语料频率兜底。**这是已知的覆盖缺口**，不是可以忽略的细节：浏览器走查要额外记下未测量页面的字体请求数（见 Task 9 的走查清单）。
+
+- [ ] **Step 10: 加 npm script**
 
 ```json
 "fonts:verify-webfont": "node scripts/fonts/verify-webfont-subsets.mjs",
@@ -1287,10 +1756,10 @@ Expected: PASS。若页面预算超标，按 F27 的实测矩阵调**热区字�
 Run: `npm run fonts:verify-webfont`
 Expected: `0 error(s)`，退出码 0。
 
-- [ ] **Step 6: 提交**
+- [ ] **Step 11: 提交**
 
 ```bash
-git add scripts/fonts/verify-webfont-subsets.mjs scripts/fonts/capture-page-font-profiles.mjs tests/unit/scripts/verify-webfont-subsets.test.ts package.json
+git add scripts/fonts/verify-webfont-subsets.mjs scripts/fonts/capture-page-font-profiles.mjs scripts/perf/class-attribution.mjs tests/unit/scripts/verify-webfont-subsets.test.ts tests/unit/scripts/perf-class-attribution.test.ts package.json
 git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 ```
 
@@ -1347,20 +1816,20 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 
 - [ ] **Step 2: 改 `lib/font-css.ts` 的注释**
 
-文件头注释里「public/font/fonts.css used to be linked ...」那段过时了。改成描述新模型：三份分族样式表（sans 阻塞首屏，另两份 `media="print"` 异步）、每份内部按「热区 + 频率序 6 字 Ext 块」分块、**一族一个 font-family 名**、每条 face 带**精确且互不相交**的 `unicode-range`。**函数体一字不改**。
+文件头注释里「public/font/fonts.css used to be linked ...」那段过时了。改成描述新模型：三份分族样式表（sans 阻塞首屏，另两份 `media="print"` 异步）、每份内部按「热区（页面画像并集优先）+ 频率序 6 字 Ext 块」分块、**一族一个 font-family 名**、每条 face 带**精确且互不相交**的 `unicode-range`。**函数体一字不改**。
 
 - [ ] **Step 3: 重写 `tests/unit/lib/fonts-css.test.ts`**
 
 新文件的用例（保留 `describe` 命名风格）：
 
 1. `public/font/fonts-<family>.css` 三份都存在。
-2. 每份样式表里的 `@font-face` 条数 = 该族的块数（wenkai 是块数 × 2，因为 400/700 各一条 face）。
+2. 每份样式表里的 `@font-face` 条数 = 该族的「热区 + Ext 块」总数（wenkai 是 × 2，因为 400/700 各一条 face）。
 3. 每条 face 的 `font-family` 只能是这 **3** 个名字之一：`Noto Sans SC`、`Noto Serif SC`、`LXGW WenKai TC`。
 4. 每条 face 的 `src` 文件在 `public/` 下真实存在。
 5. 每条 face 的 `font-display` 都是 `swap`。
 6. 每条 face 都有非空的 `unicode-range`。
-7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（实测 **647 KB**，2 779 条 face；余量只有 8 %，因为它随块数线性增长——块数一旦变化这个阈值要重算）。另两份实测：serif 原始 767 KB / gzip 71 KB，wenkai 原始 630 KB / gzip 37 KB，三份合计原始 2 043 KB / gzip 168 KB。
-8. 三份样式表合起来 gzip 后 ≤ 175 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；实测 168 KB = sans 61 / serif 71 / wenkai 37。spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
+7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（实测 **625 KB**，2 779 条 face；余量约 12 %，因为它随块数线性增长——块数一旦变化这个阈值要重算）。另两份实测：serif 原始 741 KB / gzip 71 KB，wenkai 原始 297 KB / gzip 27 KB，三份合计原始 1 663 KB / gzip 158 KB。
+8. 三份样式表合起来 gzip 后 ≤ 175 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；实测 158 KB = sans 60 / serif 71 / wenkai 27。spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
 9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
 10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
 11. `app/globals.css` 包含 `'Noto Sans SC'`、`'Noto Serif SC'`、`'LXGW WenKai TC'` 这 3 个族名，并且**不含** `'Noto Sans SC 1'` / `'Noto Sans SC Ext'` / `'LXGW WenKai TC Ext'` 这类旧的分档族名（防止有人把链改回去）。
@@ -1846,135 +2315,48 @@ git commit -m "docs(deploy): add the BBR and TCP buffer tuning checklist [2026-1
 ### Task 9: 性能基线进仓库（W2-5）
 
 **Files:**
-- Create: `scripts/perf/class-attribution.mjs`
 - Create: `scripts/perf/paired-ttfb.mjs`
 - Create: `scripts/perf/font-load.mjs`
 - Create: `scripts/perf/full-load.mjs`
-- Test: `tests/unit/scripts/perf-class-attribution.test.ts`
 - Modify: `package.json`
 
 **Interfaces:**
-- Consumes: 无（三个测量脚本走网络）
-- Produces:
-  ```js
-  // scripts/perf/class-attribution.mjs
-  export function splitHtmlChunks(html: string): Array<{ tag: string; attrs: string; text: string }>;
-  export function attributeForClass(chunks, className: string): string[];
-  export function classOfChunk(attrs: string, classNames: string[]): string;
-  ```
+- Consumes: Task 4 的 `scripts/perf/class-attribution.mjs`（`collectFamilyCharsets()`）；Task 1 的 `loadFamilyCharsets()`；Task 3 产出的 `public/font/fonts-manifest.json` 与 `public/font/web/**`
+- Produces: 三个测量脚本（都走网络）+ 对应的 npm script
 
-  **下标必须正确**：`re.split(r"<(\w+)([^>]*)>", html)` 的结果是
-  `[text0, tag0, attrs0, text1, tag1, attrs1, text2, …]`，
-  所以第 i 个标签的**属性在 `3i+2`**、**正文在 `3i+3`**。
-  第一版诊断脚本按 2 步长取值，把标签名当成了属性，导致「多数文本块归入 sans」的假象，把首页字体载荷低估成 2.83 MB（实为 3.81 MB）。**本模块的单元测试必须锁死这个下标。**
+  **归因规则只有一份**：HTML → 字族的映射一律调用 Task 4 的 `scripts/perf/class-attribution.mjs`，**不要**在这个任务里再写一份正则——`data/font-page-profiles.json`（fixture）和本任务的 `font-load.mjs`（预算核算）必须用同一条规则，否则测出来的载荷是假的。
 
-- [ ] **Step 1: 写失败测试**
+  **归因规则是栈式的**（F27-j-b）：元素自己的 `font-kai` / `font-serif` / `font-sans` class 决定它渲染成哪款字，没有就继承父元素，再没有就是 `body` 的 sans。**不要**用「文本块的直属父元素的 class」那条旧规则——它把 Next.js SSR 用 `<!-- -->` 拆开的文本截断了（`《<!-- -->在岳咏蝉<!-- -->》` 只抓到 `《`），楷体集合被掏空，剩下的字全被算成 sans。Task 4 的单元测试已经锁死这条规则。
 
-创建 `tests/unit/scripts/perf-class-attribution.test.ts`：
+- [ ] **Step 1: 复核 Task 4 的归因模块（**本任务不新建它**）**
 
-```ts
-import { describe, it, expect } from 'vitest';
-import {
-  splitHtmlChunks,
-  attributeForClass,
-  classOfChunk,
-} from '../../../scripts/perf/class-attribution.mjs';
+`scripts/perf/class-attribution.mjs` 与它的单元测试 `tests/unit/scripts/perf-class-attribution.test.ts` **在 Task 4 里已经写完**（Task 4 的 fixture 采集器要用它）。本任务只**复用**：
 
-describe('splitHtmlChunks', () => {
-  it('splits a tag into its name, its attributes and its text', () => {
-    const chunks = splitHtmlChunks('<p class="font-kai">字</p>');
-    expect(chunks).toHaveLength(1);
-    expect(chunks[0].tag).toBe('p');
-    expect(chunks[0].attrs).toBe('class="font-kai"');
-    expect(chunks[0].text).toBe('字');
-  });
-
-  it('keeps the tag name out of the attributes', () => {
-    const chunks = splitHtmlChunks('<div id="a"><span>x</span></div>');
-    expect(chunks[0].attrs).not.toContain('div');
-    expect(chunks[0].attrs).toBe('id="a"');
-  });
-
-  it('yields one chunk per tag', () => {
-    const html = '<h1>一</h1><p class="font-serif">二</p><span>三</span>';
-    expect(splitHtmlChunks(html)).toHaveLength(3);
-  });
-});
-
-describe('attributeForClass', () => {
-  it('returns the text of the chunks carrying the class', () => {
-    const chunks = splitHtmlChunks(
-      '<h1 class="font-kai">字</h1><p class="font-sans">韵</p>',
-    );
-    expect(attributeForClass(chunks, 'font-kai')).toEqual(['字']);
-    expect(attributeForClass(chunks, 'font-sans')).toEqual(['韵']);
-  });
-
-  it('does not confuse the tag name with the attributes', () => {
-    // A <font-kai> tag name must never be read as the class attribute.
-    const chunks = splitHtmlChunks('<font-kai>字</font-kai>');
-    expect(attributeForClass(chunks, 'font-kai')).toEqual([]);
-  });
-});
-
-describe('classOfChunk', () => {
-  it('prefers the first matching class in the given order', () => {
-    const order = ['font-kai', 'font-serif', 'font-sans'];
-    expect(classOfChunk('class="font-serif font-sans"', order)).toBe('font-serif');
-    expect(classOfChunk('class="font-sans"', order)).toBe('font-sans');
-    expect(classOfChunk('class="other"', order)).toBe('font-sans');
-  });
-});
+```bash
+npx vitest run tests/unit/scripts/perf-class-attribution.test.ts
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+Expected: PASS。若不通过，先修 Task 4 留下的那个模块，**不要**在这里另写一份。
 
-Run: `npx vitest run tests/unit/scripts/perf-class-attribution.test.ts`
-Expected: FAIL —— 找不到模块。
-
-- [ ] **Step 3: 实现 `scripts/perf/class-attribution.mjs`**
-
-```js
-export function splitHtmlChunks(html) {
-  const parts = html.split(/<(\w+)([^>]*)>/);
-  // parts = [text0, tag0, attrs0, text1, tag1, attrs1, text2, ...]
-  const chunks = [];
-  for (let i = 1; i + 2 < parts.length; i += 3) {
-    chunks.push({ tag: parts[i], attrs: parts[i + 1], text: parts[i + 2] });
-  }
-  return chunks;
-}
-```
-
-`attributeForClass(chunks, className)`：返回所有 `attrs` 里出现 `class="..."` 且其中含该 class 名的 chunk 的 `text`。
-`classOfChunk(attrs, classNames)`：按 `classNames` 的顺序返回第一个命中的；都没命中时返回 `classNames[classNames.length - 1]`（默认 sans）。
-
-**必须再剥掉 `<script>` / `<style>` 的内容**（脚本里的中文不是页面文字）。
-
-- [ ] **Step 4: 跑测试确认通过**
-
-Run: `npx vitest run tests/unit/scripts/perf-class-attribution.test.ts`
-Expected: PASS。
-
-- [ ] **Step 5: 实现 `scripts/perf/paired-ttfb.mjs`**
+- [ ] **Step 2: 实现 `scripts/perf/paired-ttfb.mjs`**
 
 - 用 `node:https` 的 `Agent({ keepAlive: true })` 走**同一条 keep-alive 连接**。
 - 每个页面采样 N（默认 15）次：先取静态基线 `GET /manifest.json` 的 TTFB，再取 `GET <page>` 的 TTFB，记录差值。
 - 输出每个页面的**中位数**差值与 min/max；页面上限硬编码为 `+24 ms`（spec §2.2），超了退出码 1。
 - 基址来自 `--base` 参数，默认 `https://ziyun.pudafo.com`。
 
-- [ ] **Step 6: 实现 `scripts/perf/font-load.mjs`**
+- [ ] **Step 3: 实现 `scripts/perf/font-load.mjs`**
 
-- 取页面 HTML → `splitHtmlChunks` → `classOfChunk` → 每族收集字符集（归属规则与 `data/font-page-profiles.json` 一致：`font-kai` → kai，`font-serif` → serif，其余 → sans）。
+- 取页面 HTML → **Task 4 的 `collectFamilyCharsets(html)`** → 每族字符集（归属规则与 `data/font-page-profiles.json` 天然一致，因为两者调用的是同一个模块：栈式继承，`font-kai` → wenkai、`font-serif` → serif、`font-sans` → sans，都没有就是 sans）。
 - 用 Task 1 的 `loadFamilyCharsets()`（热区 + 频率序 6 字 Ext 块）与 `public/font/fonts-manifest.json`，算出「每族要下载哪些文件」，累加文件**字节**与**文件数**。
-- 打印表格：`page | sans KB | serif KB | kai KB | total KB | font files`，并对照预算 `/ ≤ 500 KB`、`/dictionary ≤ 480 KB`、`/poetry ≤ 360 KB`、`/stories ≤ 540 KB`、文件数 ≤ 130（F27-c；实测 443 / 430 / 323 / 485 KB，最多 111 个文件）；超标退出码 1。
+- 打印表格：`page | sans KB | serif KB | kai KB | total KB | font files`，并对照预算 `/ ≤ 330 KB`、`/dictionary ≤ 330 KB`、`/poetry ≤ 240 KB`、`/stories ≤ 330 KB`、文件数 ≤ **12**（F27-j-g；实测 308 / 308 / 221 / 308 KB，最多 **4** 个文件）；超标退出码 1。
 
-- [ ] **Step 7: 实现 `scripts/perf/full-load.mjs`**
+- [ ] **Step 4: 实现 `scripts/perf/full-load.mjs`**
 
 - **冷连接**取页面 HTML，解析出所有 stylesheet / script / font `url()`，逐个下载（同样走 keep-alive）。
 - 打印：HTML 字节、JS+CSS 字节、字体字节、总字节、总耗时（秒）、并与 R9 的「首页冷加载 ≤ 5 s」对照（spec §2.2 原写的 2.5 s 是在旧字体模型下估的，见「字体机制裁决」）。
 
-- [ ] **Step 8: 加 npm script**
+- [ ] **Step 5: 加 npm script**
 
 ```json
 "perf:ttfb": "node scripts/perf/paired-ttfb.mjs",
@@ -1982,10 +2364,10 @@ Expected: PASS。
 "perf:load": "node scripts/perf/full-load.mjs",
 ```
 
-- [ ] **Step 9: 提交**
+- [ ] **Step 6: 提交**
 
 ```bash
-git add scripts/perf/class-attribution.mjs scripts/perf/paired-ttfb.mjs scripts/perf/font-load.mjs scripts/perf/full-load.mjs tests/unit/scripts/perf-class-attribution.test.ts package.json
+git add scripts/perf/paired-ttfb.mjs scripts/perf/font-load.mjs scripts/perf/full-load.mjs package.json
 git commit -m "feat(perf): add the paired ttfb and font payload probes [2026-10-29 HH.MM]"
 ```
 
@@ -2010,7 +2392,7 @@ git commit -m "feat(perf): add the paired ttfb and font payload probes [2026-10-
 2. **BBR 是否应用**——`deploy/tuning/` 只提供文件与说明。
 3. **CDN 接入**——需要用户的 Cloudflare 账号；代码侧只预留了 nginx 注释。
 4. **线上 nginx 配置对账**——线上带 `Alt-Svc: quic` 而仓库配置没有，需要在服务器上核对后决定往哪边对齐。
-5. **浏览器 smoke**——字体改造后需要人工过一遍 `/`、`/dictionary`、`/poetry`、`/stories`、`/ancient`、`/stories`（故事大字）、`/not-found`（160px 的「无」）、`/error`（120px 的「误」），确认没有豆腐块、没有明显字体闪烁、粗体楷体正常。
+5. **浏览器 smoke**——字体改造后需要人工过一遍 `/`、`/dictionary`、`/poetry`、`/stories`、`/ancient`、`/stories`（故事大字）、`/not-found`（160px 的「无」）、`/error`（120px 的「误」），确认没有豆腐块、没有明显字体闪烁、粗体楷体正常。⚠️ **另需记录「未测量页面」的字体请求数**（F27-j-i）：`/game`、`/sutra`、`/ancient`、`/worksheet` 等页面的字符集**没有被 fixture 覆盖**（现网已初始化并锁定，抓不到它们的真实内容），它们只吃得到热区里的语料频率头，其余落到 Ext 块 ⇒ 这些页面的字体请求数可能明显高于四个测量页面的 3–4 个。**在 DevTools 的 Network 面板按 `font/woff2` 过滤，逐页记下请求数与字节数**；若某个未测量页面的请求数 > 12（`LIMITS.maxFontFilesPerPage`）或字节数 > 330 KB，记录下来——那说明热区的语料兜底不够，需要回到 F27-j-c 重新评估热区种子。
 
 ---
 
