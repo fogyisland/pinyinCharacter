@@ -1917,6 +1917,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 - Modify: `next.config.ts`（**只改 `:41-49` 上面那段注释**，第 35–37 行说「`/font/` 的文件名是内容哈希」已经不成立；`headers()` 的三行逻辑**一个字都不许改**，见 Step 2b）
 - Modify: `tests/unit/lib/fonts-css.test.ts`（整体重写）
 - Modify: `tests/unit/lib/middleware-redirect.test.ts`（第 65 行的示例路径）
+- Modify: `middleware.ts`（**只改第 23 行注释里的示例路径**，逻辑一个字都不许改，见 Step 2d）
 - Add: `.gitattributes`（**新建**，只有几行：把三份字体样式表的行尾钉成 LF、把子集声明为 binary）
 - Delete: `public/font/noto-sans-sc/`、`public/font/noto-serif-sc/`、`public/font/lxgw-wenkai-tc/`、`public/font/fonts.css`
 - Delete: `scripts/fonts/build-fonts-css.mjs`、`scripts/fonts/build-fonts-css.d.mts`
@@ -2004,6 +2005,18 @@ public/font/web/** binary
 ```
 
 ⚠️ **只写这几行**，不要顺手给整个仓库加规则（例如 `* text=auto`）——那会改变所有文件的行为，超出本任务范围。Step 3 的第 9 条用例另外还会把 CRLF 归一化成 LF 再算哈希，两道保险。
+
+- [ ] **Step 2d: 改 `middleware.ts` 第 23 行的注释示例（**只改注释**）**
+
+`middleware.ts:20-29` 那段注释解释「静态资源为什么不能被 307 到 `/init`」，举的例子是 `/font/fonts.css`：
+
+```
+ * A 307 on /font/fonts.css is worse than it looks: the stylesheet is
+```
+
+本任务会把 `public/font/fonts.css` **删掉**，现在唯一阻塞首屏的样式表是 `/font/fonts-sans.css`。⇒ 把那一行的路径换成 `'/font/fonts-sans.css'`，其余句子一字不动。
+
+⚠️ **只改注释**：`STATIC_ASSET_PREFIXES` / `STATIC_ASSET_FILES` 两个数组、`matcher` 的配置、`isStaticAsset()` 的判断逻辑**一个字都不许改**（`/font/` 是**前缀**匹配，`/font/fonts-sans.css` 与 `/font/web/**` 自动在放行之列——控制器已实测确认）。
 
 - [ ] **Step 3: 重写 `tests/unit/lib/fonts-css.test.ts`**
 
