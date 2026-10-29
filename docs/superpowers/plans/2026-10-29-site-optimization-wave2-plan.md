@@ -387,8 +387,11 @@ fixture 由一段正则切 HTML 产生：它把标签的**直属文本**取成 `
 | **F31-a** | **字体是权威，字符集必须按源字体的真实覆盖过滤**。Task 1 的 `CJK_RANGES` 覆盖 Plane 3/4（`0x20000–0x2FA1F` / `0x30000–0x3134F`），但三款源字体**没有**这些区的字形 ⇒ 计划里有 4 476 个字画不出来，652 个 Ext 块**一个字都画不出**（空壳文件：sans 282 / serif 370），CSS 却声明它们 ⇒ **Task 4 的 cmap 门禁永远过不了**。修法：在**切分之前**用 fontkit 读源字体的 `characterSet` 过滤计划，尾部**重新切块**；一个族的覆盖取该族**各个源文件的交集**（楷体 400 与 700 共用一条 `unicode-range`，取并集会让 700 那条 face 声称只有 400 画得出的字 ⇒ 粗体豆腐块）。**过滤不改变任何渲染**：新字体缺的那些 BMP 字在旧的 432 个 Google 子集里同样没有（G10 不受影响）。 |
 | **F31-b** | **Task 4 的 cmap 门禁改写**：①（硬）一个块声明的每个字都必须在**它自己那个文件**里有字形；②（硬）同一族各块的 `unicode-range` 两两不相交；③（信息）文件里超出本块范围的码位**不算失败**，但要排除 `U+FFFF`（每个文件都有 `.notdef` 映射）；④「并集 == Task 1 的字符集」改成「并集 ⊆ 字符集」（过滤后不可能再相等）。 |
 | **F31-c** | **接受评审的 Minor #1 / #2 / #4 / #5**（TOTAL 累加器把 Ext 块数塞进叫 `blocks` 的字段、源字体缺失不预检、`renderFace` 不挡空字符集、`buildAll` 不可测）；**驳回 Minor #3**（`manifestVersion` 没有把文件名也喂进哈希）——R18 的版本令牌已经让「任一 woff2 变了 ⇒ CSS 内容变 ⇒ URL 变」，字节相同的两份样式表不可能出现，把文件名喂进哈希是多余的。 |
+| **F31-p** | **Task 6 的范围从四个文件扩到六个文件**：`deploy/README.md` 的「部署流程」第 4 步、`DEPLOY.md:135`、以及 `deploy/nginx.ziyun.pudafo.com.conf` 自己的头部第 3–5 行，**三处都在教人「把仓库这份整份装到线上」**——那正是 F30-a 的失败模式本身，而且它们是**部署的人真的会照着做**的三份入口。照做 ⇒ 那些 `alias` 块在生产上生效 ⇒ `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/` 全 404 ⇒ 本波次的 7 936 个字体文件全消失，**而页面上看不出任何错误**（字悄悄回落到系统字体）。⇒ 三处都改成「先对账、只合并需要的指令」，并指向 `deploy/OPTIMIZATION.md`；测试用**行首锚定**的正则抓命令形态、再用**实测出来的原句**做精确断言（避免把散文里的警告误判成指令）。 |
+| **F31-q** | **brotli 片段的「拷了但没 include」与「回滚会让 nginx 挂掉」两个静默失败要堵上**：① 把文件拷进 `conf.d/` **不等于它生效**——只有线上 `nginx.conf` 的 `http` 块里有 `include /etc/nginx/conf.d/*.conf;`（Ubuntu 默认有）才自动生效，否则必须手工在 server 块里加 `include`；漏掉 ⇒ 指令一条没生效且**看不出任何异常**。⇒ 片段头部的启用步骤拆成五步，第 3 步单列「确认它真的被 include 了」，自检 `sudo nginx -T \| grep -n 'nginx-brotli'`。② 撤销 brotli 时，**若是手工加的 `include`，只删文件会留下悬空 include ⇒ `nginx -t` 直接失败**（比不回滚更糟）⇒ 手册的回滚必须分「自动生效」与「手工 include」两种情况，各给可复制的命令。 |
 
 > 完整推导、实测数据与「为什么不能用另外两种修法」见账本 `.superpowers/sdd/2026-10-29-site-optimization-wave2-plan/progress.md`。
+> ⚠️ **F31-d ~ F31-o（Task 3/4 的修复轮裁决、R18 令牌的两种哈希算法、覆盖检查的已知限制等）只记在账本里**，本表只收了会改变**机制**或**任务范围**的那几条。
 
 ---
 
@@ -2096,6 +2099,8 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 
 **Files:**
 - Modify: `deploy/nginx.ziyun.pudafo.com.conf`
+- Modify: `deploy/README.md`（**只改「部署流程」第 4 步那一段**，见 F31-p）
+- Modify: `DEPLOY.md`（**只改第 135 行那一段**，见 F31-p）
 - Create: `deploy/nginx-brotli.conf`
 - Create: `deploy/OPTIMIZATION.md`
 - Test: `tests/unit/deploy/nginx-config.test.ts`
