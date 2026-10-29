@@ -2695,6 +2695,8 @@ git commit -m "docs(deploy): add the BBR and TCP buffer tuning checklist [2026-1
 ### Task 9: 性能基线进仓库（W2-5）
 
 **Files:**
+- Create: `scripts/perf/fetch-page.mjs`（三个探针共用的「取页面 + 自检」模块，见 Step 0）
+- Create: `scripts/perf/fetch-page.d.mts`（仓库规矩：`.mjs` 一旦被 `.ts` 引用就必须有同名 `.d.mts`）
 - Create: `scripts/perf/paired-ttfb.mjs`
 - Create: `scripts/perf/font-load.mjs`
 - Create: `scripts/perf/full-load.mjs`
@@ -2702,11 +2704,39 @@ git commit -m "docs(deploy): add the BBR and TCP buffer tuning checklist [2026-1
 
 **Interfaces:**
 - Consumes: Task 4 的 `scripts/perf/class-attribution.mjs`（`collectFamilyCharsets()`）；Task 3 产出的**已发布的**三份样式表 `public/font/fonts-sans.css` / `fonts-serif.css` / `fonts-wenkai.css` 与 `public/font/web/**`（**页面→文件的映射与字节数一律从这两处实测**，见 Step 3 —— Ruling F31-s，2026-10-30）
-- Produces: 三个测量脚本（都走网络）+ 对应的 npm script
+- Produces: 四个测量脚本（都走网络）+ 对应的 npm script
 
   **归因规则只有一份**：HTML → 字族的映射一律调用 Task 4 的 `scripts/perf/class-attribution.mjs`，**不要**在这个任务里再写一份正则——`data/font-page-profiles.json`（fixture）和本任务的 `font-load.mjs`（预算核算）必须用同一条规则，否则测出来的载荷是假的。
 
   **归因规则是栈式的**（F27-j-b）：元素自己的 `font-kai` / `font-serif` / `font-sans` class 决定它渲染成哪款字，没有就继承父元素，再没有就是 `body` 的 sans。**不要**用「文本块的直属父元素的 class」那条旧规则——它把 Next.js SSR 用 `<!-- -->` 拆开的文本截断了（`《<!-- -->在岳咏蝉<!-- -->》` 只抓到 `《`），楷体集合被掏空，剩下的字全被算成 sans。Task 4 的单元测试已经锁死这条规则。
+
+- [ ] **Step 0: 三个探针都必须在请求里带上初始化 cookie，并且先自检响应（Ruling F31-w）**
+
+  **这条是三个探针的共同前置，不是建议。** 站点的初始化闸门是**只看 cookie** 的（`middleware.ts:92-100`）：没有 `setup_completed=1` 的请求**一律 307 跳 `/init`**，而那个 307 的响应体**只有 5 个字节**（字面量 `/init`）。
+
+  控制器 2026-10-30 02.45 在线上实测：
+
+  | 页面 | 带 `Cookie: setup_completed=1` | 不带 |
+  |---|---|---|
+  | `/` | 200，**45 889 B** | 307，**5 B** |
+  | `/dictionary` | 200，**72 844 B** | 307，**5 B** |
+  | `/poetry` | 200，**53 734 B** | 307，**5 B** |
+  | `/stories` | 200，**23 383 B** | 307，**5 B** |
+
+  ⇒ 不带 cookie 时会发生什么：**`font-load.mjs` 解析出的字符集只有 4 个字符 ⇒ 字体载荷算出来约 0 KB ⇒ 预算检查「通过」；`full-load.mjs` 的冷加载门禁量的是一次 5 字节的跳转 ⇒ 也「通过」；`paired-ttfb.mjs` 量的是中间件的重定向路径，不是页面渲染 ⇒ +24 ms 的门禁什么也没量。** 三个探针都会**报绿，而实际什么都没测**——这是最坏的一种错法（G12：失败必须非零退出且文案说真话）。
+
+  **因此，`scripts/perf/fetch-page.mjs` 必须提供这样一件事，三个探针都用它**：
+
+  1. **默认带上 `Cookie: setup_completed=1`**（可用 `--cookie <值>` 覆盖；`--cookie ''` 用来故意复现上面那个坑做自检）。
+  2. **量之前先自检响应**：状态码必须 **200**、`Content-Type` 必须以 `text/html` 开头、响应体 **大于 10 000 字节**。任何一条不满足 ⇒ **立刻抛错**，错误信息要写明**到底是哪一条不满足、实际响应是什么**（例如 `the server answered 307 with a 5 B body — the setup cookie is missing`）。三个探针捕获它 ⇒ **以非零退出码结束**，**绝不允许把这种响应当成「0 载荷」继续算**。
+  3. `fetch-page.mjs` 导出的函数签名固定为：
+     ```ts
+     export async function fetchPage(url: string, options?: { cookie?: string }):
+       Promise<{ body: string; bytes: number; contentType: string; status: number }>;
+     ```
+     `paired-ttfb.mjs` 要的是 **TTFB**（不是 body），它可以用同一个函数，但要**另外**拿到首字节时刻 —— 那就用 `node:https` 自己发请求、但**把「自检」那几条照样执行**。**自检的判定逻辑不许在三个脚本里各写一遍**（会漂）。
+  4. `fetch-page.d.mts` 照上面那个签名写（仓库规矩：`.mjs` 被 `.ts` 引用时必须有同名 `.d.mts`；`tsconfig.json` 的 `allowJs` 是 `false`）。
+  5. ⚠️ **自检只作用于「被测页面」**。`paired-ttfb.mjs` 的静态基线 `GET /manifest.json` 是 442 B 的 `application/json`（控制器实测：带不带 cookie 都是 200），**不要拿「text/html + >10 KB」去卡它**，否则基线自己先失败。
 
 - [ ] **Step 1: 复核 Task 4 的归因模块（**本任务不新建它**）**
 
@@ -2722,12 +2752,14 @@ Expected: PASS。若不通过，先修 Task 4 留下的那个模块，**不要**
 
 - 用 `node:https` 的 `Agent({ keepAlive: true })` 走**同一条 keep-alive 连接**。
 - 每个页面采样 N（默认 15）次：先取静态基线 `GET /manifest.json` 的 TTFB，再取 `GET <page>` 的 TTFB，记录差值。
+- ⚠️ **请求要带 `Cookie: setup_completed=1`，并且每次采样都要按 Step 0 的几条自检响应**。基线 `/manifest.json`（442 B，`application/json`）**只查状态码 200**，不要套「text/html + >10 KB」；被测页面**要**套。任何一次采样自检不通过 ⇒ **立刻退出码 1 并把实际响应写进错误信息** —— **绝不能把一次 5 字节的 307 当成一个「TTFB 很小的样本」算进中位数**。
 - 输出每个页面的**中位数**差值与 min/max；页面上限硬编码为 `+24 ms`（spec §2.2），超了退出码 1。
 - 基址来自 `--base` 参数，默认 `https://ziyun.pudafo.com`。
 
 - [ ] **Step 3: 实现 `scripts/perf/font-load.mjs`**
 
 - 取页面 HTML → **Task 4 的 `collectFamilyCharsets(html)`** → 每族字符集（归属规则与 `data/font-page-profiles.json` 天然一致，因为两者调用的是同一个模块：栈式继承，`font-kai` → wenkai、`font-serif` → serif、`font-sans` → sans，都没有就是 sans）。
+- ⚠️ 页面 HTML **必须经 `fetch-page.mjs` 取**（Step 0）：默认带 `Cookie: setup_completed=1`，**在解析之前**自检。自检不通过 ⇒ **退出码 1，且一个载荷数字都不许打印**（否则会出现「字体 0 KB，预算通过」这种假绿）。
 - **「每族要下载哪些文件」必须从「已发布的三份样式表」推导**，照抄校验器 `checkPageBudget` 的那条路（`scripts/fonts/verify-webfont-subsets.mjs:697-765`）：
   1. 读 `public/font/fonts-sans.css` / `fonts-serif.css` / `fonts-wenkai.css` 三份**已发布**的样式表，把每条 `@font-face` 的 `unicode-range` 展开成「码位 → `src` 里的文件名」的映射（一个块的两条 face 指向两个文件时，两个文件名都算）；
   2. 页面的每族字符集按码位查表 ⇒ 得到**去重后**的文件集合；
@@ -2739,6 +2771,7 @@ Expected: PASS。若不通过，先修 Task 4 留下的那个模块，**不要**
 - [ ] **Step 4: 实现 `scripts/perf/full-load.mjs`**
 
 - **冷连接**取页面 HTML，解析出所有 stylesheet / script / font `url()`，逐个下载（同样走 keep-alive）。
+- ⚠️ 页面 HTML **同样走 `fetch-page.mjs`**（Step 0），自检不通过 ⇒ 退出码 1。**不要拿一个 5 字节的 307 去跑「冷加载 ≤ 5 s」的门禁** —— 那样这道门禁永远通过，等于没有门禁。
 - 打印：HTML 字节、JS+CSS 字节、字体字节、总字节、总耗时（秒）、并与 R9 的「首页冷加载 ≤ 5 s」对照（spec §2.2 原写的 2.5 s 是在旧字体模型下估的，见「字体机制裁决」）。
 
 - [ ] **Step 5: 加 npm script**
@@ -2752,7 +2785,9 @@ Expected: PASS。若不通过，先修 Task 4 留下的那个模块，**不要**
 - [ ] **Step 6: 提交**
 
 ```bash
-git add scripts/perf/paired-ttfb.mjs scripts/perf/font-load.mjs scripts/perf/full-load.mjs package.json
+git add scripts/perf/fetch-page.mjs scripts/perf/fetch-page.d.mts \
+        scripts/perf/paired-ttfb.mjs scripts/perf/font-load.mjs scripts/perf/full-load.mjs \
+        package.json
 git commit -m "feat(perf): add the paired ttfb and font payload probes [2026-10-29 HH.MM]"
 ```
 
