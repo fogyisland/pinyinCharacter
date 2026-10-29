@@ -2231,6 +2231,16 @@ describe('the nginx config caches HTML but never for a logged-in user', () => {
     expect(conf).toContain('proxy_cache_valid 200 10s;');
   });
 
+  it('keeps the response encodings apart in the cache key (F31-u)', () => {
+    // The upstream compresses per Accept-Encoding and answers with
+    // `Vary: Accept-Encoding`, but nginx's proxy_cache ignores `Vary`.
+    // Without the encoding in the key, the first visitor's variant would be
+    // served to every later visitor, including ones that accept no encoding.
+    expect(conf).toContain(
+      'proxy_cache_key "$scheme$request_method$host$request_uri$http_accept_encoding;',
+    );
+  });
+
   it("ignores Next's private no-store header but keeps Set-Cookie protection", () => {
     expect(conf).toContain('proxy_ignore_headers Cache-Control;');
     expect(conf).not.toContain('proxy_ignore_headers Cache-Control Set-Cookie;');
@@ -2334,7 +2344,12 @@ proxy_cache_path /var/cache/nginx/ziyun
 ```nginx
         # HTML 微缓存(仅匿名、仅文档请求)
         proxy_cache ziyun_html;
-        proxy_cache_key "$scheme$request_method$host$request_uri";
+        # 缓存键必须带上 $http_accept_encoding:上游按请求头协商压缩,同一个 URL
+        # 会回**两种不同的字节**(带 Accept-Encoding: gzip → gzip 体;不带 → 原始体),
+        # 并且回 `Vary: Accept-Encoding`;而 nginx 的 proxy_cache **不认 Vary**。
+        # 不把编码变体放进键 ⇒ 第一个访客的变体被缓存下来发给所有后来的访客
+        # (包括不接受任何编码的 curl / 监控脚本)。实测见「已实测的线上事实」。
+        proxy_cache_key "$scheme$request_method$host$request_uri$http_accept_encoding";
         proxy_cache_valid 200 10s;
         proxy_cache_methods GET HEAD;
         proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
@@ -2419,21 +2434,34 @@ brotli_types
 - **配置漂移的说明（F30-b）**：写清「仓库配置与线上不一致」这件事，并把两条去漂移的路径列出来（把线上改成与仓库一致 / 把仓库改成与线上一致），注明**这是运维的活，本波次不动那些 `alias` 块**。
 - **回滚**：`sudo cp "$LIVE_CONF.bak-<时间戳>" "$LIVE_CONF" && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
   ⚠️ **不要写死线上配置的路径**（Ruling F31-j）：`/etc/nginx/sites-available/ziyun.pudafo.com.conf` 只是**仓库这份文件头部注释里写的**放置位置，而**线上跑的那份在哪个路径从未实测过**；仓库这份与线上那份已经不是同一份了（见 F30-a）。回滚命令里的路径必须来自第 1 步对账时读出来的 `"$LIVE_CONF"`。
-- **上线后验证**（五条命令 + 期望输出）：
+- **上线后验证**（六条命令 + 期望输出）：
+  > ⚠️ **每一条都必须带 `Cookie: setup_completed=1`**（F31-v）。站点的初始化闸门（`middleware.ts:92-100`）是**只看 cookie** 的：没有 `setup_completed=1` 的请求**一律 307 跳 `/init`**。307 不在 `proxy_cache_valid 200 10s` 里 ⇒ **永远不会被缓存** ⇒ `X-Ziyun-Cache` 永远是 `MISS`，第二次也**不会**变成 `HIT`。
+  > 控制器 2026-10-30 02.40 在线上实测：`curl -I https://ziyun.pudafo.com/` ⇒ `307 location: /init`；带上 `Cookie: setup_completed=1` ⇒ `200 text/html`。**不带这个 cookie 跑冒烟 ⇒ 必然看到 MISS/MISS ⇒ 会误判成「缓存没生效」，进而乱改配置。**
+
   ```bash
-  curl -I https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第一次 MISS
-  curl -I https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第二次 HIT
-  curl -I -H 'Cookie: auth_token=dummy' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS
-  curl -I -H 'RSC: 1' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS（飞行请求不碰缓存）
-  curl -I https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      # 无该头（API 不缓存）
+  C='Cookie: setup_completed=1'
+  curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第一次 MISS
+  curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第二次 HIT
+  curl -I -H "$C" -H 'Cookie: auth_token=dummy' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS
+  curl -I -H "$C" -H 'RSC: 1' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS（飞行请求不碰缓存）
+  curl -I -H "$C" https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      # 无该头（API 不缓存）
+  # 编码隔离(F31-u):先用 gzip 预热缓存,再发一个**不带** Accept-Encoding 的请求,
+  # 它的响应里**不能**出现 Content-Encoding: gzip
+  curl -sI -H "$C" -H 'Accept-Encoding: gzip' https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'   # HIT + content-encoding: gzip
+  curl -sI -H "$C" https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'                              # HIT + **没有** content-encoding
   ```
   再手工确认一次「客户端导航没被缓存污染」：浏览器打开首页 → 点进任意内链 → DevTools Network 里该导航请求的响应 `Content-Type` 必须是 `text/x-component`，且页面白屏/卡死都没有。
-- **风险提示（微缓存的三条硬约束）**：
+- **风险提示（微缓存的五条硬约束）**：
   1. **新增任何「按用户区分」的 cookie 或请求头时，必须同时扩展 `proxy_cache_bypass` 与 `proxy_no_cache`** —— 只改前者会让登录态响应被写进缓存（`proxy_cache_bypass` 只管读不管写）。
   2. **不要给 `location /` 之外的路径加缓存**，尤其不要把 `location /api/` 的 `proxy_cache off;` 删掉 —— 68 个 GET API 路由里混着「每次给新内容」的（`/api/chars/random`、`/api/game/round`、`/api/stats`）和用户态数据（`/api/history`、`/api/notes`、`/api/membership/me`）。
   3. **`$http_rsc` 不能从两条指令里去掉** —— 同一个 URL 带 `RSC: 1` 返回的是 Next 的 flight 数据（`text/x-component`），不带则返回整页 HTML（`text/html`），二者只有这一个请求头不同。缓存键是 `$request_uri`，不隔离就等于把 HTML 喂给客户端路由 → 白屏。
+  4. **缓存键里的 `$http_accept_encoding` 不能去掉**（F31-u）—— 上游按请求头协商压缩：同一个 URL，带 `Accept-Encoding: gzip` 回 **gzip 体**、不带回**原始体**，两者的响应头都写着 `Vary: Accept-Encoding`；而 **nginx 的 `proxy_cache` 不认 `Vary`**。不把编码变体放进键 ⇒ **第一个访客的变体会被缓存下来发给所有后来的访客**（包括不发 `Accept-Encoding` 的 curl / 监控脚本，它们会收到 gzip 字节却以为自己要的是原始体）。
+  5. **冒烟必须带 `Cookie: setup_completed=1`**（F31-v）—— 初始化闸门（`middleware.ts:92-100`）只看 cookie，没有它就 **307 跳 `/init`**，而 307 不在 `proxy_cache_valid 200 10s` 里 ⇒ 永远不会被缓存 ⇒ `X-Ziyun-Cache` 永远是 `MISS`。**这不是「缓存没生效」，是请求压根没走到被缓存的那条路径上。**
 - **线上配置对账待办**（来自 spec §4.2.3）：线上响应带 `Alt-Svc: quic=":443"; h3=":443"`，而仓库配置只有 `listen 443 ssl http2` —— 上线前必须在服务器上核对 `nginx -V` 与 `/etc/nginx/conf.d/` 的实际配置，决定是给仓库补 QUIC 还是把线上改回与仓库一致；同时确认 brotli 模块是否存在。
 - **已实测的线上事实**（2026-10-29，改配置前请复核）：`RSC: 1` 是区分 flight 数据与 HTML 的唯一手段（`?_rsc=` 查询参数**不**产生 flight 数据，实测返回 200 `text/html`）；`Next-Router-Prefetch: 1` 单独发会得到 **500**（上游 Next 的行为，不是本项目引入的）；无 `RSC` 头的普通文档请求响应头是 `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` + `Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding`。
+- **已实测的线上事实（控制器 2026-10-30 02.40 补测，F31-u / F31-v 的依据）**：
+  - **编码变体**：同一个 URL 会回**两种不同的字节**。带 `Accept-Encoding: gzip, deflate, br` 或 `gzip` ⇒ `200` + `Content-Encoding: gzip`；带 `identity` 或**不带** `Accept-Encoding` ⇒ `200` + **没有** `Content-Encoding`。两种情况的响应头**都**带 `Vary: ... Accept-Encoding` ⇒ 缓存必须自己按编码隔离（nginx 不认 `Vary`）。
+  - **初始化闸门**：不带 `Cookie: setup_completed=1` ⇒ `307 location: /init`（`/`、`/dictionary`、`/poetry`、`/api/stats`、`/api/chars/random` 全部如此）；带上 ⇒ `200 text/html`。⇒ 冒烟必须带这个 cookie，否则永远看不到 `HIT`。
 
 - [ ] **Step 6: 跑测试确认通过**
 
