@@ -22,9 +22,13 @@
  *   5. stylesheets   the gzip total, the face count, the blocking sheet
  *   6. faces         every face says font-display: swap and points at a
  *                     file that exists
- *   7. manifest      the version is the hash of the three stylesheets
+ *   7. manifest      the version is the hash of the three stylesheets and
+ *                     every family points at ITS OWN stylesheet
  *   8. pages         what a page downloads stays inside the page budget
  *   9. tokens        every URL carries the hash of the bytes it serves (R18)
+ *  10. identity      every face declares the family of the stylesheet and a
+ *                     normal font-style
+ *  11. weights       a static face points at the file of its OWN weight
  *
  * Every failure is COLLECTED: the run reports all of them and exits 1, so
  * one broken build is one trip through the log, not nine.
@@ -112,10 +116,36 @@ function cssField(body, name) {
   return match ? match[1].trim() : '';
 }
 
+/** Take the quotes off a CSS value: `'Noto Sans SC'` → `Noto Sans SC`. */
+function unquote(value) {
+  const trimmed = value.trim();
+  if (trimmed.length >= 2) {
+    const first = trimmed[0];
+    if ((first === "'" || first === '"') && trimmed.endsWith(first)) {
+      return trimmed.slice(1, -1);
+    }
+  }
+  return trimmed;
+}
+
+/**
+ * The URL of a face: the directory, the file and the version token.
+ *
+ * @returns {{ dir: string, file: string, token: string } | null}
+ */
+export function parseFaceUrl(src) {
+  const url = /^\/font\/web\/([^/]+)\/([^/?]+)(?:\?v=([^?]*))?$/.exec(src);
+  if (!url) return null;
+  return { dir: url[1], file: url[2], token: url[3] ?? '' };
+}
+
 /**
  * One @font-face rule of a stylesheet.
+ *
+ * @returns {Array<{ fontFamily: string, weight: string, fontStyle: string,
+ *                  display: string, src: string, range: string }>}
  */
-function parseFaces(css) {
+export function parseFaces(css) {
   const faces = [];
   const blockPattern = /@font-face\s*\{([\s\S]*?)\}/g;
   let match = blockPattern.exec(css);
@@ -123,7 +153,9 @@ function parseFaces(css) {
     const body = match[1];
     const src = /src:\s*url\(([^)]*)\)/.exec(body);
     faces.push({
+      fontFamily: unquote(cssField(body, 'font-family')),
       weight: cssField(body, 'font-weight'),
+      fontStyle: unquote(cssField(body, 'font-style')),
       display: cssField(body, 'font-display'),
       src: src ? src[1].trim() : '',
       range: cssField(body, 'unicode-range'),
@@ -131,6 +163,97 @@ function parseFaces(css) {
     match = blockPattern.exec(css);
   }
   return faces;
+}
+
+/**
+ * Check the identity of a face: the family it declares and its style.
+ *
+ * A stylesheet that declares `'Noto Sans SC 2'` (or `font-style: italic`)
+ * still passes every other check — the file is there, the glyphs are there —
+ * but the page is painted in a DIFFERENT typeface. That is a silent G9
+ * violation, so it is checked here.
+ *
+ * @param {{ key: string, label: string }} family the family of the stylesheet
+ * @param {{ fontFamily: string, fontStyle: string, src: string }} face
+ * @returns {string[]} the messages of the failures, empty when the face is right
+ */
+export function checkFaceFamily(family, face) {
+  const errors = [];
+  if (face.fontFamily !== family.label) {
+    errors.push(
+      `[${family.key}] the face ${face.src} declares font-family ` +
+        `${JSON.stringify(face.fontFamily)}, the stylesheet is the family ` +
+        `${JSON.stringify(family.label)}`,
+    );
+  }
+  if (face.fontStyle !== 'normal') {
+    errors.push(
+      `[${family.key}] the face ${face.src} declares font-style ` +
+        `${JSON.stringify(face.fontStyle)}, it must be normal`,
+    );
+  }
+  return errors;
+}
+
+/**
+ * Check that a static face points at the file of its OWN weight.
+ *
+ * The static family cuts every block into two files — `ext-001-400.woff2`
+ * and `ext-001-700.woff2` — and the two faces of the block share one
+ * unicode-range. If the 700 face pointed at the 400 file, the tofu gate
+ * would still be green (that file really holds those glyphs) and the page
+ * would be painted in the WRONG weight: a silent G9 violation.
+ *
+ * A VARIABLE family is not checked: it has one file per block and one face
+ * that declares `font-weight: 400 700`, so there is no file of a weight.
+ *
+ * @param {{ key: string, variable: boolean }} family the family of the stylesheet
+ * @param {{ weight: string, src: string }} face
+ * @returns {string[]} the messages of the failures, empty when the face is right
+ */
+export function checkFaceWeight(family, face) {
+  if (family.variable) return [];
+  const url = parseFaceUrl(face.src);
+  if (!url) return [];
+  const expected = `-${face.weight}.woff2`;
+  if (!url.file.endsWith(expected)) {
+    return [
+      `[${family.key}] the ${face.weight} face points at ${url.file}, it must ` +
+        `point at the file of its own weight (${expected})`,
+    ];
+  }
+  return [];
+}
+
+/**
+ * Check that the manifest points every family at ITS OWN stylesheet.
+ *
+ * `lib/font-css.ts` builds the URL of the stylesheet of a family out of
+ * `manifest.files.<family>`. A manifest that points `serif` at
+ * `fonts-sans.css` would drop the serif stylesheet from the page — and
+ * every other check would still be green.
+ *
+ * @param {{ files?: Record<string, string> }} manifest the parsed manifest
+ * @param {Array<{ key: string, css: string }>} families the families of the site
+ * @returns {string[]} the messages of the failures, empty when the manifest is right
+ */
+export function checkManifestFiles(manifest, families) {
+  const errors = [];
+  const files = manifest?.files ?? {};
+  for (const family of families) {
+    const value = files[family.key];
+    if (typeof value !== 'string' || value === '') {
+      errors.push(`the manifest lists no stylesheet for ${family.key}`);
+      continue;
+    }
+    if (!value.endsWith(family.css)) {
+      errors.push(
+        `the manifest points ${family.key} at ${value}, it must point at the ` +
+          `stylesheet of the family (${family.css})`,
+      );
+    }
+  }
+  return errors;
 }
 
 /**
@@ -269,6 +392,8 @@ async function inspectFamily(family, plan) {
   const oversized = [];
   const missingGlyphs = [];
   const extraCodepoints = [];
+  const badLabels = [];
+  const badWeights = [];
   let files = 0;
   let bytes = 0;
 
@@ -279,13 +404,22 @@ async function inspectFamily(family, plan) {
   const hasher = createHash('sha256');
 
   for (const face of faces) {
-    const url = /^\/font\/web\/([^/]+)\/([^/?]+)(?:\?v=([^?]*))?$/.exec(face.src);
+    // --- check 10: the face must declare the family and the style ---------
+    for (const message of checkFaceFamily(family, face)) {
+      badLabels.push(message);
+    }
+    // --- check 11: a static face must point at the file of its weight -----
+    for (const message of checkFaceWeight(family, face)) {
+      badWeights.push(message);
+    }
+
+    const url = parseFaceUrl(face.src);
     if (!url) {
       badUrls.push(face.src);
       continue;
     }
-    const fileName = url[2];
-    const token = url[3] ?? '';
+    const fileName = url.file;
+    const token = url.token;
     if (!VERSION_PATTERN.test(token)) missingTokens.push(fileName);
 
     let points;
@@ -386,12 +520,11 @@ async function inspectFamily(family, plan) {
 
   const version = hasher.digest('hex').slice(0, 12);
   for (const face of faces) {
-    const url = /^\/font\/web\/([^/]+)\/([^/?]+)(?:\?v=([^?]*))?$/.exec(face.src);
+    const url = parseFaceUrl(face.src);
     if (!url) continue;
-    const token = url[3] ?? '';
-    if (!VERSION_PATTERN.test(token)) continue;
-    if (token !== version) {
-      wrongTokens.push(`${url[2]} carries ${token}, the content hashes to ${version}`);
+    if (!VERSION_PATTERN.test(url.token)) continue;
+    if (url.token !== version) {
+      wrongTokens.push(`${url.file} carries ${url.token}, the content hashes to ${version}`);
     }
   }
 
@@ -463,6 +596,18 @@ async function inspectFamily(family, plan) {
         `the file that declares them — tofu boxes: ${summarize(missingGlyphs)}`,
     );
   }
+  if (badLabels.length > 0) {
+    errors.push(
+      `[${family.key}] ${badLabels.length} face(s) do not declare the family of the ` +
+        `stylesheet and a normal font-style: ${summarize(badLabels)}`,
+    );
+  }
+  if (badWeights.length > 0) {
+    errors.push(
+      `[${family.key}] ${badWeights.length} face(s) do not point at the file of their ` +
+        `own weight: ${summarize(badWeights)}`,
+    );
+  }
 
   return {
     errors,
@@ -532,6 +677,10 @@ async function checkManifest(cssByFile) {
         expectedKeys.join(', '),
     );
   }
+
+  // --- check 7: every family must point at its OWN stylesheet ------------
+  errors.push(...checkManifestFiles(manifest, FAMILIES));
+
   return errors;
 }
 

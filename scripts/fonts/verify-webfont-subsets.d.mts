@@ -124,6 +124,92 @@ export interface WebfontVerificationReport {
 export declare const LIMITS: FontLimits;
 
 /**
+ * One `@font-face` rule of a stylesheet.
+ */
+export interface FaceDeclaration {
+  /** The font-family the face declares, without the quotes. */
+  fontFamily: string;
+  /** The font-weight the face declares, e.g. '400 700' or '700'. */
+  weight: string;
+  /** The font-style the face declares, e.g. 'normal'. */
+  fontStyle: string;
+  /** The font-display the face declares, e.g. 'swap'. */
+  display: string;
+  /** The url of the src, e.g. '/font/web/sans/hot.woff2?v=f31ca9b32566'. */
+  src: string;
+  /** The unicode-range the face declares. */
+  range: string;
+}
+
+/**
+ * The URL of a face: the directory of the family, the file and the version
+ * token.
+ *
+ * It is null when the src is not a URL of `/font/web/…`.
+ */
+export interface FaceUrl {
+  /** The directory of the family, e.g. 'sans'. */
+  dir: string;
+  /** The file of the face, e.g. 'hot.woff2'. */
+  file: string;
+  /** The version token of the URL, twelve lowercase hex characters. */
+  token: string;
+}
+
+/** The shape of public/font/fonts-manifest.json. */
+export interface FontManifest {
+  /** The content hash of the three stylesheets. */
+  version?: string;
+  /** The stylesheet of every family, by family key. */
+  files?: Record<string, string>;
+}
+
+/**
+ * Read the `@font-face` rules of a stylesheet.
+ */
+export declare function parseFaces(css: string): FaceDeclaration[];
+
+/**
+ * Read the URL of a face.
+ */
+export declare function parseFaceUrl(src: string): FaceUrl | null;
+
+/**
+ * Check the identity of a face: the family it declares and its style.
+ *
+ * A stylesheet that declares another family — or a slanted face — still
+ * passes every other check, but the page is painted in a different
+ * typeface. That is a silent G9 violation.
+ */
+export declare function checkFaceFamily(
+  family: { key: FamilyName; label: string },
+  face: FaceDeclaration,
+): string[];
+
+/**
+ * Check that a static face points at the file of its OWN weight.
+ *
+ * A variable family is not checked: it has one file per block and one face
+ * that declares `font-weight: 400 700`.
+ */
+export declare function checkFaceWeight(
+  family: { key: FamilyName; variable: boolean },
+  face: FaceDeclaration,
+): string[];
+
+/**
+ * Check that the manifest points every family at ITS OWN stylesheet.
+ *
+ * `lib/font-css.ts` builds the URL of the stylesheet of a family out of
+ * `manifest.files.<family>`, so a manifest that points `serif` at
+ * `fonts-sans.css` drops the serif stylesheet from the page.
+ */
+export declare function checkManifestFiles(
+  manifest: FontManifest,
+  families: Array<{ key: FamilyName; css: string }>,
+): string[];
+
+/**
  * Check one family: its stylesheet, its files and its blocks.
  *
  * The charset plan of Task 1 is loaded from disk, so the check compares the

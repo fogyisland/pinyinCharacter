@@ -18,6 +18,10 @@
  * committed fixture first. Whether the fixture is updated is a decision
  * for the coordinator (G4), not for a script.
  *
+ * ⚠️ The fixture it compares against is the committed one, unless
+ * `--fixture` points somewhere else — that is what makes the "there is no
+ * fixture to inherit the metadata from" path reachable in a test.
+ *
  * ⚠️ The production site answers anonymous requests with the
  * "initialised" page since 2026-10-29, so a LIVE capture only sees what an
  * anonymous visitor sees. The committed fixture comes from four captures
@@ -68,6 +72,7 @@ function parseArgs(argv) {
     out: null,
     capturedAt: null,
     source: null,
+    fixture: FIXTURE_PATH,
     force: false,
   };
   for (let index = 0; index < argv.length; index += 1) {
@@ -88,13 +93,16 @@ function parseArgs(argv) {
       case '--source':
         options.source = argv[++index];
         break;
+      case '--fixture':
+        options.fixture = argv[++index];
+        break;
       case '--force':
         options.force = true;
         break;
       default:
         throw new Error(
           `unknown argument ${JSON.stringify(argument)} — the options are ` +
-            '--base, --html-dir, --out, --captured-at, --source and --force',
+            '--base, --html-dir, --out, --captured-at, --source, --fixture and --force',
         );
     }
   }
@@ -104,6 +112,7 @@ function parseArgs(argv) {
     out: '--out',
     capturedAt: '--captured-at',
     source: '--source',
+    fixture: '--fixture',
   };
   for (const [name, flag] of Object.entries(flags)) {
     if (options[name] === undefined) {
@@ -175,10 +184,14 @@ async function readPages(options) {
  * A fixture that cannot be read is not fatal — the capture still runs — but
  * the reason is kept and reported, because "the difference is empty" and
  * "there was nothing to compare with" must not look the same.
+ *
+ * The path is the committed fixture by default; `--fixture` points it
+ * somewhere else, which is what makes the "there is no fixture to inherit
+ * the metadata from" path reachable in a test.
  */
-async function readFixture() {
+async function readFixture(path) {
   try {
-    const raw = await readFile(FIXTURE_PATH, 'utf8');
+    const raw = await readFile(path, 'utf8');
     return { raw, parsed: JSON.parse(raw), error: null };
   } catch (error) {
     return { raw: null, parsed: null, error };
@@ -226,11 +239,37 @@ function reportDifference(fixture, pages) {
 }
 
 /**
+ * The source the capture declares.
+ *
+ * It must be TRUE (G12): the JSON says where the characters came from, and
+ * that claim travels into the fixture and from there into the measurement
+ * of Task 9. A capture that claims the production site while it read local
+ * files is a lie that hides itself.
+ *
+ *   1. `--source` says it — that is what the caller claims.
+ *   2. A replay of a local capture inherits the source of the committed
+ *      fixture: the replay reproduces that capture, byte for byte.
+ *   3. A live capture reads the site of `--base`: that is where the
+ *      characters really come from.
+ *   4. A local capture with no fixture to inherit from says the honest
+ *      thing — the characters come from the local directory. It must NOT
+ *      claim the production site: it never went there.
+ */
+function resolveSource(options, fixture) {
+  if (options.source) return options.source;
+  if (!options.htmlDir) return options.base;
+  if (fixture && typeof fixture.source === 'string' && fixture.source !== '') {
+    return fixture.source;
+  }
+  return `local:${options.htmlDir}`;
+}
+
+/**
  * The CLI.
  */
 async function main() {
   const options = parseArgs(process.argv.slice(2));
-  const fixture = await readFixture();
+  const fixture = await readFixture(options.fixture);
 
   console.log(
     options.htmlDir
@@ -263,9 +302,7 @@ async function main() {
   const capturedAt =
     options.capturedAt ??
     (options.htmlDir && fixture.parsed ? fixture.parsed.capturedAt : today());
-  const source =
-    options.source ??
-    (options.htmlDir && fixture.parsed ? fixture.parsed.source : options.base);
+  const source = resolveSource(options, fixture.parsed);
 
   if (options.htmlDir && fixture.parsed && !options.capturedAt && !options.source) {
     console.log(
