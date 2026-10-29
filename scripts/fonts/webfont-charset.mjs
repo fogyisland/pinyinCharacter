@@ -10,16 +10,27 @@
  *
  *   The replacement is our own tiered subsetting:
  *     hot — the 300 characters the interface itself uses, in one file
- *     Ext — everything else, cut into blocks of 16 CODE POINTS
+ *     Ext — everything else, cut into blocks of 6 CHARACTERS
  *   A page downloads the hot file plus the one or two Ext blocks that hold
  *   the characters it needs, and the browser fetches an Ext block only when
  *   a character of that block is actually painted.
  *
- *   The Ext tier is cut by code point window rather than by character count
- *   because a window is a contiguous run of the code point space: a block
- *   holds the characters of one window, and its `unicode-range` is the exact
- *   union of the code points it carries. A min–max span would claim the
- *   code points the block does NOT have, and the browser would pick that
+ *   The Ext tier keeps the FREQUENCY ORDER and slices it into blocks of a
+ *   fixed character count. The cost of a subset file is not the glyphs
+ *   alone: every file carries a fixed overhead of about 1 000 bytes that
+ *   cannot be squeezed out, so a narrow block is more expensive per
+ *   character than a wide one, and a page that hits a block downloads the
+ *   WHOLE file. Cutting by frequency order therefore wins twice over: the
+ *   characters a page uses cluster into a few blocks, and every block it
+ *   pulls is used to the brim. Cutting by code point window instead scatters
+ *   the characters of a page over dozens of windows and pays the fixed
+ *   overhead dozens of times — measured at 645 KB against 441 KB for the
+ *   same page.
+ *
+ *   A block is NOT a contiguous run of the code point space: its characters
+ *   are scattered over the code points. Its `unicode-range` is therefore the
+ *   EXACT union of the code points it carries. A min–max span would claim
+ *   the code points the block does NOT have, and the browser would pick that
  *   face for a character it cannot draw — tofu instead of a fallback.
  *
  * This module is the INPUT of that pipeline: it decides which characters
@@ -30,7 +41,9 @@
  *
  * The three families are NESTED on purpose — wenkai ⊂ sans ⊂ serif:
  *   wenkai  the brand typeface: the UI literals, the corpus titles, the
- *           rare characters and the dictionary radicals
+ *           rare characters, the dictionary radicals and the 8 105
+ *           standard characters of
+ *           data/general-standard-chinese-characters.json
  *   sans    the body typeface: everything wenkai covers plus the corpora
  *   serif   the accent typeface: everything sans covers plus the classics
  * and the sutras
@@ -38,8 +51,8 @@
  * tiers stay comparable between them.
  *
  * Only the repository's own corpora are read here — no font is opened and
- * nothing is written. This is BUILD TIME ONLY: the scan reads ~235 MB and
- * takes seconds, it must never run inside a request. Usage:
+ * nothing is written. This is BUILD TIME ONLY: the scan reads about 270 MB
+ * and takes seconds, it must never run inside a request. Usage:
  *   node scripts/fonts/webfont-charset.mjs   print the three charset sizes
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -73,20 +86,21 @@ export const CJK_RANGES = [
 /** The default number of characters in the hot tier. */
 const DEFAULT_TIER1_SIZE = 300;
 
-/** The default width of an Ext block, in code points. */
-const DEFAULT_EXT_BLOCK_SIZE = 16;
+/** The default number of characters in one Ext block. */
+const DEFAULT_EXT_BLOCK_CHARS = 6;
 
 /**
  * The tier plan of every family, before the caller overrides it.
  *
  * sans and serif carry a hot tier of the 300 characters the interface
  * uses most; wenkai has NO hot tier, because every character it holds is
- * rare enough that a file of the 16 most used ones would be wasted weight.
+ * rare enough that a file of the 300 most used ones would be wasted weight.
+ * All three cut the Ext tier into blocks of six characters.
  */
 const FAMILY_DEFAULTS = {
-  sans: { tier1Size: 300, extBlockSize: 16 },
-  serif: { tier1Size: 300, extBlockSize: 16 },
-  wenkai: { tier1Size: 0, extBlockSize: 16 },
+  sans: { tier1Size: 300, extBlockChars: 6 },
+  serif: { tier1Size: 300, extBlockChars: 6 },
+  wenkai: { tier1Size: 0, extBlockChars: 6 },
 };
 
 /** A character coming from the source code counts a thousand times more. */
@@ -192,19 +206,23 @@ export function scoreCharacters(sources) {
  * The hot tier keeps the score order — the most used characters first —
  * and holds `tier1Size` characters (none at all for wenkai).
  *
- * The Ext tier is the rest, sorted by code point and cut into code point
- * WINDOWS: the window of a character is `floor(codePoint / extBlockSize)`,
- * so a block holds every character of one window and its code point span
- * never overlaps another block's. A window that holds no character produces
- * no block — there is no glyph in it to subset.
+ * The Ext tier is the rest, in the SAME score order, cut into blocks of
+ * `extBlockChars` characters. The order is the whole point: a page draws
+ * the characters it needs from the top of the frequency order, so they
+ * land in a few blocks and each block it downloads is used to the brim.
+ *
+ * The last block may be short — that is the tail of the list, not a bug.
+ * The characters of a block are scattered over the code point space, so a
+ * block has no code point span; its `unicode-range` is the exact union of
+ * the characters it carries (see `unicodeRange`).
  */
 export function planTiers(scored, options = {}) {
   const tier1Size = options.tier1Size ?? DEFAULT_TIER1_SIZE;
-  const extBlockSize = options.extBlockSize ?? DEFAULT_EXT_BLOCK_SIZE;
+  const extBlockChars = options.extBlockChars ?? DEFAULT_EXT_BLOCK_CHARS;
 
-  if (!Number.isInteger(extBlockSize) || extBlockSize <= 0) {
+  if (!Number.isInteger(extBlockChars) || extBlockChars <= 0) {
     throw new TypeError(
-      `extBlockSize must be a positive integer number of code points, got ${extBlockSize}`,
+      `extBlockChars must be a positive integer number of characters, got ${extBlockChars}`,
     );
   }
   if (!Number.isInteger(tier1Size) || tier1Size < 0) {
@@ -213,26 +231,17 @@ export function planTiers(scored, options = {}) {
 
   const ordered = scored.ordered;
   const hot = ordered.slice(0, tier1Size);
-  const hotSet = new Set(hot);
-  const tail = ordered
-    .filter((ch) => !hotSet.has(ch))
-    .sort((a, b) => a.codePointAt(0) - b.codePointAt(0));
+  const tail = ordered.slice(tier1Size);
 
-  const windows = new Map();
-  for (const ch of tail) {
-    const codePoint = ch.codePointAt(0);
-    const window = Math.floor(codePoint / extBlockSize);
-    let block = windows.get(window);
-    if (block === undefined) {
-      block = { index: windows.size + 1, chars: [], lo: codePoint, hi: codePoint };
-      windows.set(window, block);
-    }
-    block.chars.push(ch);
-    if (codePoint < block.lo) block.lo = codePoint;
-    if (codePoint > block.hi) block.hi = codePoint;
+  const extBlocks = [];
+  for (let start = 0; start < tail.length; start += extBlockChars) {
+    extBlocks.push({
+      index: extBlocks.length + 1,
+      chars: tail.slice(start, start + extBlockChars),
+    });
   }
 
-  return { hot, extBlocks: [...windows.values()] };
+  return { hot, extBlocks };
 }
 
 /**
@@ -572,18 +581,24 @@ const planCache = new Map();
  * different hot tier size must not be handed the plan of the default one.
  * The overrides are serialized in a fixed order, so the same overrides
  * always land on the same entry.
+ *
+ * A key whose value is `undefined` or `null` is NOT an override — it means
+ * "no override" — so it is left out of the key. That way `{}` and
+ * `{ tier1Size: undefined }` share one cache entry.
  */
 function cacheKey(root, families) {
   const overrides = Object.entries(families ?? {})
-    .filter(([, options]) => options !== undefined)
-    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .filter(([, options]) => options !== undefined && options !== null)
     .map(([family, options]) => {
-      const entries = Object.entries(options)
+      const entries = Object.entries(options ?? {})
+        .filter(([, value]) => value !== undefined && value !== null)
         .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-        .map(([key, value]) => `${key}=${String(value)}`)
-        .join(',');
-      return `${family}{${entries}}`;
+        .map(([key, value]) => `${key}=${String(value)}`);
+      return { family, entries };
     })
+    .filter(({ entries }) => entries.length > 0)
+    .sort((a, b) => (a.family < b.family ? -1 : a.family > b.family ? 1 : 0))
+    .map(({ family, entries }) => `${family}{${entries.join(',')}}`)
     .join(';');
   return `${root}::${overrides}`;
 }
@@ -680,10 +695,9 @@ function loadScores(root) {
   // brand face: without them those characters fall back to the system font
   // and the game pages mix two typefaces.
   //
-  // The list is folded in HERE, once. It is part of the body face too, but
-  // folding it a second time into sans would count those 8 105 characters
-  // twice and change the score — and with it the composition of the hot
-  // tier, which is measured against a fixed target.
+  // The list is folded in HERE, once. The body faces copy the score of the
+  // brand face, so those 8 105 characters are counted once and reach sans
+  // and serif through that copy — they are not counted again.
   const standard = scanJsonFile(
     join(root, 'data', 'general-standard-chinese-characters.json'),
     state,
@@ -721,9 +735,19 @@ function loadScores(root) {
 
 /**
  * The tier options of one family: the defaults, overridden by the caller.
+ *
+ * Every option is taken BY KEY, never by spreading the override object
+ * over the defaults. A spread lets an explicit `undefined` win the spread
+ * and wipe the default out: `{ tier1Size: undefined }` would give wenkai a
+ * 300 character hot tier it must not have (R14).
  */
 function familyOptions(family, overrides) {
-  return { ...FAMILY_DEFAULTS[family], ...(overrides?.[family] ?? {}) };
+  const defaults = FAMILY_DEFAULTS[family];
+  const override = overrides?.[family] ?? {};
+  return {
+    tier1Size: override.tier1Size ?? defaults.tier1Size,
+    extBlockChars: override.extBlockChars ?? defaults.extBlockChars,
+  };
 }
 
 // Only run when this file is the entry point — the unit test imports the

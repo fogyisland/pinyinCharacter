@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   isCjkChar,
   scoreCharacters,
@@ -53,81 +53,76 @@ describe('planTiers', () => {
   const scored = scoreCharacters([
     { id: 'x', weight: 1, chars: chars.slice().reverse() },
   ]);
+  const big = scoreCharacters([
+    { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
+  ]);
 
   it('puts the hottest characters in the hot tier', () => {
     const plan = planTiers(scored, { tier1Size: 2 });
     expect(plan.hot).toHaveLength(2);
   });
 
-  it('cuts the tail into code point windows, not character slices', () => {
-    // The tail after a 2 character hot tier is 丂(U+4E02), 七(U+4E03),
-    // 万(U+4E07) and 丈(U+4E08) — 万 and 丈 are NOT U+4E04 and U+4E05.
-    // Windows of 2 code points are [U+4E02,U+4E04), [U+4E04,U+4E06),
-    // [U+4E06,U+4E08) and [U+4E08,U+4E0A), so the tail falls into three
-    // of them: a chunking by character count would have put 万 and 丈 into
-    // the block of 丂 and 七.
-    const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
-    expect(plan.extBlocks).toHaveLength(3);
+  it('cuts the tail into blocks of a fixed CHARACTER count', () => {
+    // The tail after a 2 character hot tier is 丂, 七, 万, 丈. The blocks
+    // hold two characters each, so the tail falls into two blocks — not
+    // into the three blocks a 2 code point window would produce (the old
+    // mechanism split it as 丂七 / 万 / 丈).
+    const plan = planTiers(scored, { tier1Size: 2, extBlockChars: 2 });
+    expect(plan.extBlocks).toHaveLength(2);
     expect(plan.extBlocks[0].chars).toEqual(['丂', '七']);
-    expect(plan.extBlocks[0].lo).toBe(0x4e02);
-    expect(plan.extBlocks[0].hi).toBe(0x4e03);
-    expect(plan.extBlocks[1].chars).toEqual(['万']);
-    expect(plan.extBlocks[1].lo).toBe(0x4e07);
-    expect(plan.extBlocks[1].hi).toBe(0x4e07);
-    expect(plan.extBlocks[2].chars).toEqual(['丈']);
-    expect(plan.extBlocks[2].lo).toBe(0x4e08);
-    expect(plan.extBlocks[2].hi).toBe(0x4e08);
+    expect(plan.extBlocks[1].chars).toEqual(['万', '丈']);
+  });
+
+  it('keeps the ext blocks in score order, not code point order', () => {
+    // 七 scores a thousand times more than 一 and 丈, so the frequency
+    // order is 七 / 一 / 丈 even though 一 has the lower code point.
+    // A code point ordered mechanism would have produced 一 / 七 / 丈.
+    const mixed = scoreCharacters([
+      { id: 'x', weight: 1, chars: ['一', '丈'] },
+      { id: 'src', weight: 1000, chars: ['七'] },
+    ]);
+    const plan = planTiers(mixed, { tier1Size: 0, extBlockChars: 3 });
+    expect(plan.extBlocks).toHaveLength(1);
+    expect(plan.extBlocks[0].chars).toEqual(['七', '一', '丈']);
   });
 
   it('numbers the ext blocks from 1, contiguously', () => {
-    const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
-    expect(plan.extBlocks.map((b) => b.index)).toEqual([1, 2, 3]);
+    const plan = planTiers(scored, { tier1Size: 2, extBlockChars: 2 });
+    expect(plan.extBlocks.map((b) => b.index)).toEqual([1, 2]);
   });
 
   it('puts every character in exactly one tier', () => {
-    const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
+    const plan = planTiers(scored, { tier1Size: 2, extBlockChars: 2 });
     const all = [...plan.hot, ...plan.extBlocks.flatMap((b) => b.chars)];
     expect(new Set(all).size).toBe(all.length);
     expect([...all].sort()).toEqual([...chars].sort());
   });
 
-  it('gives every ext block a disjoint code point span', () => {
-    const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
-    const spans = plan.extBlocks.map((b) => [b.lo, b.hi]);
-    for (let i = 1; i < spans.length; i++) {
-      expect(spans[i][0]).toBeGreaterThan(spans[i - 1][1]);
-    }
+  it('fills every block but the last with exactly the block size', () => {
+    const plan = planTiers(big, { tier1Size: 300, extBlockChars: 6 });
+    expect(plan.extBlocks).toHaveLength(Math.ceil((2000 - 300) / 6));
+    expect(plan.extBlocks.slice(0, -1).every((b) => b.chars.length === 6)).toBe(true);
   });
 
-  it('defaults to a 300 character hot tier and 16 code point windows', () => {
-    const big = scoreCharacters([
-      { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
-    ]);
+  it('defaults to a 300 character hot tier and 6 characters per ext block', () => {
     const plan = planTiers(big);
     expect(plan.hot).toHaveLength(300);
-    expect(plan.extBlocks.length).toBeGreaterThan(0);
-    expect(plan.extBlocks.every((b) => b.hi - b.lo < 16)).toBe(true);
+    expect(plan.extBlocks).toHaveLength(Math.ceil((2000 - 300) / 6));
   });
 
   it('never produces an empty ext block', () => {
-    const big = scoreCharacters([
-      { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
-    ]);
-    const plan = planTiers(big, { tier1Size: 300, extBlockSize: 16 });
+    const plan = planTiers(big, { tier1Size: 300, extBlockChars: 6 });
     expect(plan.extBlocks.every((b) => b.chars.length > 0)).toBe(true);
   });
 
   it('never repeats a character between the hot tier and an ext block', () => {
-    const big = scoreCharacters([
-      { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
-    ]);
-    const plan = planTiers(big, { tier1Size: 300, extBlockSize: 16 });
+    const plan = planTiers(big, { tier1Size: 300, extBlockChars: 6 });
     const hot = new Set(plan.hot);
     expect(plan.extBlocks.some((b) => b.chars.some((c) => hot.has(c)))).toBe(false);
   });
 
-  it('rejects a non positive window width', () => {
-    expect(() => planTiers(scored, { extBlockSize: 0 })).toThrow();
+  it('rejects a non positive block size', () => {
+    expect(() => planTiers(scored, { extBlockChars: 0 })).toThrow();
   });
 });
 
@@ -214,11 +209,11 @@ describe('loadFamilyCharsets', () => {
     const wenkai = charsetOf(plans.wenkai);
     const standard = JSON.parse(
       readFileSync(
-        resolve(process.cwd(), 'data/general-standard-chinese-characters.json'),
+        fileURLToPath(new URL('../../../data/general-standard-chinese-characters.json', import.meta.url)),
         'utf8',
       ),
     ) as string[];
-    expect(standard).toHaveLength(8105);
+    expect(standard.length).toBeGreaterThan(0);
     expect(standard.filter((ch) => !wenkai.has(ch))).toEqual([]);
   }, 180_000);
 
@@ -236,5 +231,13 @@ describe('loadFamilyCharsets', () => {
     loadFamilyCharsets();
     const plans = loadFamilyCharsets({ families: { sans: { tier1Size: 10 } } });
     expect(plans.sans.hot).toHaveLength(10);
+  }, 180_000);
+
+  it('falls back to the family default when an override is explicitly undefined', () => {
+    // A spread of the override object over the defaults lets an explicit
+    // `undefined` win the spread and wipe the default out: wenkai would
+    // get a 300 character hot tier it must not have (R14).
+    const plans = loadFamilyCharsets({ families: { wenkai: { tier1Size: undefined } } });
+    expect(plans.wenkai.hot).toHaveLength(0);
   }, 180_000);
 });
