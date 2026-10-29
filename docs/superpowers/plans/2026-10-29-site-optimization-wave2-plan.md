@@ -47,6 +47,8 @@
 
 **测出来的物理约束（后面每条裁决都建立在它上面）：**
 
+> ⚠️ **这一组约束已被 F25 推翻**（见下文「第二轮实测推翻的机制」）：真实的子集成本是 `fixed(≈1 000 B) + perChar × 字数`，不是 `229 B/字`；真实的 CSS 成本是 `2.8 B/字 + 5 B/face`，不是 `13 B/块`。下面三条保留在这里作为**第二轮的原始测量记录**，R8–R17 的机制与数字以 F25 为准。
+
 - 单页静态子集成本 ≈ `229 B × (命中块数 × 块内字数)`。块越小越省字节，但块数（= 请求数）会涨。
 - CSS 成本 ≈ `13 B/块(gzip)`。块数就是 CSS 的字节数。
 - 因此 **CSS 预算与字体预算是直接对立的两端**：压 CSS 就是加块数，加块数就是压字节。spec §3.2 的「单页 ≤ 250 KB」与 §3.3 的「CSS ≤ 25 KB」在静态子集下**不可兼得**。
@@ -66,6 +68,8 @@
 | R17 | R9 原定的「三份 CSS 合计 ≤ 110 KB(gzip)」在 R16 落地后**不可达** | **CSS 预算 110 KB → 125 KB(gzip)** ⚠️ **已被 F25-d 取代（125 → 175 KB）** | (1) CSS 字节数 ≈ `13–20 B/块(gzip)`，块数由字符集规模 × 窗口宽度决定；(2) R16 要求楷体带上 8 105 库字 → 总块数 6 928 → 7 249；(3) 实测把窗口宽度从 16 放宽到 32 才能把 CSS 压回 110 KB 附近，但那时首页 341 KB / 故事 439 KB，窗口内的「填充字」要每个页面买单；(4) 现网三份 CSS 合计 **132.7 KB**(gzip)（Google 的逐码位逗号列表格式），新机制 119.1 KB 仍是**净下降**；(5) CSS 是首次访问的一次性可缓存成本，而字体是每次访问成本——把预算挪给字体是划算的。⚠️ F25 实测真实 CSS 成本模型为 `2.8 B/字 + 5 B/条 face`（不是 13–20 B/块），并给出**无衬线那份是渲染阻塞的**这一事实，预算必须分族设 |
 
 **R16/R17 的实测前沿**（`scripts/fonts/staging/sweep.mjs`，`W` = sans/serif 窗口宽度，`hot` = sans/serif 热区字数，`kaiW` = 楷体窗口宽度；字节为四个测量页里的最差值）：
+
+> ⚠️ 这张表是**码位窗口机制**下的前沿，已被 F25 的实测前沿取代（频率序 6 字/块 → 最差页 441 KB / CSS 168 KB / 8 779 文件）。这张表保留是为了记录「同一个字符集在不同窗口宽度下会怎样」，R11 的热区曲线结论仍然成立。
 
 | 楷体语料 | 配置 | 最差页 | CSS(gzip) | 字体文件数 | 结论 |
 |---|---|---|---|---|---|
@@ -102,13 +106,15 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 
 **机制对决**（同一成本模型、同一批页面；机制 A = 计划的码位窗口，机制 B = 频率序按字符个数切块）
 
+> 表里的 CSS 一列是**模型值**（`2.8 B/字 + 5 B/face`），用来在机制之间横向比较；采用的那一行另外**真实生成**了三份样式表再 gzip 量：**168 KB**（sans 61 / serif 71 / wenkai 37，原始 2 008 KB），与模型值差 1 KB。
+
 | 机制 | 最差页字体 | CSS(gzip) | 文件数 | 请求/页 |
 |---|---|---|---|---|
 | A 码位窗口 8 | 643 KB | 195 KB | 14 551 | 236 |
 | A 码位窗口 16（R8 的取值） | 645 KB | 166 KB | 8 597 | 118 |
 | A 码位窗口 32 | 1 487 KB | 149 KB | 5 053 | 196 |
 | B 频率序 4 字/块 | **391 KB** | 188 KB | 13 166 | 113 |
-| **B 频率序 6 字/块（本轮采用）** | **441 KB** | 167 KB | 8 779 | 109 |
+| **B 频率序 6 字/块（本轮采用）** | **441 KB** | 168 KB | 8 779 | 109 |
 | B 频率序 8 字/块 | 495 KB | 156 KB | 6 585 | 113 |
 | B 频率序 16 字/块 | 629 KB | 140 KB | 3 295 | 94 |
 | B 频率阶梯 12/32/8 | 834 KB | — | — | — |
@@ -122,7 +128,7 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 | **F25-a** | **Ext 块改为「频率序、每块 6 个字符」**，不再是码位窗口。R8 的机制部分与 R10 一起作废；R12（精确并集、不用 min–max 区间）**继续有效且更重要**——频率序的块在码位上是散的，min–max 区间会直接制造豆腐块（G10）。 |
 | **F25-b** | **热区保留**：sans/serif 热区 300 字，wenkai 无热区（R14 不变）。理由变了：无热区时请求数 148–176/页，超 R9 的 130 上限；有热区时 109/页。 |
 | **F25-c** | **重定 R9 的页面预算**（字体字节，不含 CSS）：`/` ≤ 460 KB、`/dictionary` ≤ 420 KB、`/poetry` ≤ 320 KB、`/stories` ≤ 480 KB。实测 **431 / 387 / 287 / 441 KB**。请求数 ≤ 110/页（预算仍是 130）。 |
-| **F25-d** | **重定 R17 的 CSS 预算**：三份合计 ≤ **175 KB**(gzip)，实测 167 KB（sans 60 / serif 71 / wenkai 36）。**无衬线那份单独设限 ≤ 65 KB**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞。 |
+| **F25-d** | **重定 R17 的 CSS 预算**：三份合计 ≤ **175 KB**(gzip)，实测 168 KB（sans 61 / serif 71 / wenkai 37）。**无衬线那份单独设限 ≤ 65 KB**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞。 |
 | **F25-e** | **`subset-font` 的文本参数必须是字符串**：`subsetFont(buffer, chars.join(''), { targetFormat: 'woff2' })`。传数组会抛 `The subset text must be given as a string`。 |
 | **F25-f** | **产物规模**：8 779 个 woff2 文件（sans 2 779 / serif 3 266 / wenkai 2 734），约 22 MB。旧的 Google 子集目录与 `fonts.css` 由 Task 5 删除。 |
 
@@ -130,7 +136,7 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 
 | 配置 | `/` | `/dictionary` | `/poetry` | `/stories` | CSS | 文件 | 请求 |
 |---|---|---|---|---|---|---|---|
-| 频率序 6 字/块 + 热区 300/300/0 | 431 KB | 387 KB | 287 KB | 441 KB | 167 KB | 8 779 | ≤110 |
+| 频率序 6 字/块 + 热区 300/300/0 | 431 KB | 387 KB | 287 KB | 441 KB | 168 KB | 8 779 | ≤110 |
 | 频率序 4 字/块 + 热区 300/300/0 | 391 KB | 354 KB | 251 KB | 391 KB | 188 KB | 13 166 | ≤113 |
 | 频率序 8 字/块 + 热区 300/300/0 | 495 KB | 439 KB | 302 KB | 477 KB | 156 KB | 6 585 | ≤113 |
 | 码位窗口 16 + 热区 300/300/0 | 618 KB | 333 KB | 442 KB | 645 KB | 166 KB | 8 597 | ≤118 |
@@ -904,7 +910,7 @@ Expected（按 2026-10-29 的语料实测，数字允许 ±5 % 浮动，但**必
 | `wenkai` | 8 197 | 1 367 | **2 734** | 无热区；每块 400 + 700 两份（R16） |
 | `sans` | 16 968 | 2 778 | **2 779** | 热区 300 + 2 778 个 Ext 块 |
 | `serif` | 19 888 | 3 265 | **3 266** | 热区 300 + 3 265 个 Ext 块 |
-| 合计 | — | 7 410 | **8 779** | 三份 CSS gzip 合计 ≈ **167 KB**（sans 60 / serif 71 / wenkai 36） |
+| 合计 | — | 7 410 | **8 779** | 三份 CSS gzip 合计 ≈ **168 KB**（sans 61 / serif 71 / wenkai 37） |
 
 单文件大小：`sans/hot.woff2` ≈ 84 KB（≈ 1 000 B 固定开销 + 300 字 × 276 B），每个 `ext-*.woff2` ≈ **2.7 KB**（≈ 1 000 B 固定开销 + 6 字 × 280 B）——这是 F25 实测的成本模型，**不是** 229 B/字 的旧模型。
 `public/font/fonts-manifest.json` 的 `version` 是 12 位 hex。
@@ -1015,7 +1021,7 @@ CLI 输出格式：
 [verify] sans   : 16968 chars, 2779 files, ~7287 KB   OK
 [verify] serif  : 19888 chars, 3266 files, ~8628 KB   OK
 [verify] wenkai :  8197 chars, 1367 blocks, 2734 files, ~6488 KB   OK
-[verify] css    : ~167 KB gzip (sans ~60 / serif ~71 / wenkai ~36)   OK
+[verify] css    : ~168 KB gzip (sans ~61 / serif ~71 / wenkai ~37)   OK
 [verify] pages  : / 431 KB / 110 files   /dictionary 387 KB / 88 files   /poetry 287 KB / 81 files   /stories 441 KB / 109 files   OK
 [verify] 0 error(s)
 ```
@@ -1098,8 +1104,8 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 4. 每条 face 的 `src` 文件在 `public/` 下真实存在。
 5. 每条 face 的 `font-display` 都是 `swap`。
 6. 每条 face 都有非空的 `unicode-range`。
-7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 400 KB。
-8. 三份样式表合起来 gzip 后 ≤ 125 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定 + R17 放宽后的预算；spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
+7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（实测 635 KB）。
+8. 三份样式表合起来 gzip 后 ≤ 175 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；实测 168 KB = sans 61 / serif 71 / wenkai 37。spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
 9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
 10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
 11. `app/globals.css` 包含 `'Noto Sans SC'`、`'Noto Serif SC'`、`'LXGW WenKai TC'` 这 3 个族名，并且**不含** `'Noto Sans SC 1'` / `'Noto Sans SC Ext'` / `'LXGW WenKai TC Ext'` 这类旧的分档族名（防止有人把链改回去）。
