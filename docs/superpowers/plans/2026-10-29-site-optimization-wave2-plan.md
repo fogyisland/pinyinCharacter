@@ -816,7 +816,7 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
      - 热区**装什么字是免费的**：热区的大小由 `tier1Size` 定死，换成并集里的字不花一分钱，却把命中率从「语料频率猜的」变成「页面实测的」。
      - `options.families[family].hotChars` 可以按族覆盖种子（给别的调用方一个口子）。
      - fixture 读不到时**报错退出**（它是一份入库文件，读不到就是仓库坏了，静默退回频率序会悄悄回到今天的命中率）。
-   - **覆盖项里值为 `undefined`（或 `null`）的键视为「没有覆盖」**：必须逐键取值（`override.tier1Size ?? defaults.tier1Size`），**不能**把覆盖对象整个展开到默认值上（`{ ...defaults, ...override }`）——展开会让显式的 `undefined` 赢，楷体因此拿到一个 300 字的热区（R14 禁止）。缓存键也一样忽略值为 `undefined` 的键，让 `{}` 和 `{ tier1Size: undefined }` 共用同一个缓存条目。
+   - **覆盖项里值为 `undefined`（或 `null`）的键视为「没有覆盖」**：必须逐键取值（`override.tier1Size ?? defaults.tier1Size`），**不能**把覆盖对象整个展开到默认值上（`{ ...defaults, ...override }`）——展开会让显式的 `undefined` 赢，于是 `tier1Size` 变成 `undefined`（热区大小算不出来）、`hotChars` 变成 `undefined`（页面画像的种子被抹掉）。⚠️ **注意 F27-j-d 之后楷体本来就有 300 字热区**，这条规则防的不是「楷体多出热区」，而是「默认值被显式的 `undefined` 抹掉」。缓存键也一样忽略值为 `undefined` 的键，让 `{}` 和 `{ tier1Size: undefined }` 共用同一个缓存条目。
    - **缓存键必须包含 `options.families` 与 `options.pageProfiles`**：扫描代价高，同一进程内缓存一次即可，但只按 `root` 缓存会让第二次带 `families` 覆盖的调用拿到第一次的结果（静默忽略调用方的覆盖），也会让换了 fixture 路径的调用拿到旧 fixture 的结果。
    - 函数末尾 `console.log` 每族的字符总数与分档大小，格式：
      `charset sans: 16968 chars (hot 300 / ext 2778 blocks)`。
