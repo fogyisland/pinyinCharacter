@@ -1,7 +1,4 @@
 import { describe, it, expect } from 'vitest';
-// @ts-expect-error -- the module is plain ESM. The repository convention is a
-// sibling `.d.mts` (see scripts/fonts/build-webfont-subsets.d.mts), but the
-// file whitelist of this task allows no new file besides the ones listed in it.
 import { verifyAll, LIMITS } from '../../../scripts/fonts/verify-webfont-subsets.mjs';
 
 describe('verify-webfont-subsets', () => {

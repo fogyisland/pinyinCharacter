@@ -3,9 +3,6 @@ import {
   classTokens,
   stripComments,
   collectFamilyCharsets,
-  // @ts-expect-error -- the module is plain ESM. The repository convention is a
-  // sibling `.d.mts` (see scripts/fonts/webfont-charset.d.mts), but the file
-  // whitelist of this task allows no new file besides the ones listed in it.
 } from '../../../scripts/perf/class-attribution.mjs';
 
 describe('classTokens', () => {
