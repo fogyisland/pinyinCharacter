@@ -2187,6 +2187,23 @@ const conf = readFileSync(resolve(ROOT, 'deploy', 'nginx.ziyun.pudafo.com.conf')
 const brotli = readFileSync(resolve(ROOT, 'deploy', 'nginx-brotli.conf'), 'utf8');
 const manual = readFileSync(resolve(ROOT, 'deploy', 'OPTIMIZATION.md'), 'utf8');
 
+/**
+ * Returns the text of the `location` block that starts at `marker`.
+ *
+ * ⚠️ The config contains TWO `location / {` blocks: the port-80 301 redirect
+ * (line 74) and the HTTPS main server (line 202). `conf.indexOf('location / {')`
+ * finds the FIRST one, which sits before every block we care about — slicing
+ * by it yields an empty string, and the assertion then fails no matter how
+ * correct the config is. Anchor on the marker instead and stop at the NEXT
+ * `location` header.
+ */
+function locationBlock(marker: string): string {
+  const start = conf.indexOf(marker);
+  expect(start, `nginx config has no "${marker}" block`).toBeGreaterThan(-1);
+  const next = conf.indexOf('location ', start + 1);
+  return conf.slice(start, next === -1 ? conf.length : next);
+}
+
 describe('the nginx config caches HTML but never for a logged-in user', () => {
   it('declares the cache zone', () => {
     expect(conf).toMatch(/proxy_cache_path\s+\S+\s+levels=1:2\s+keys_zone=ziyun_html:10m/);
@@ -2217,13 +2234,22 @@ describe('the nginx config caches HTML but never for a logged-in user', () => {
     expect(conf).toContain('proxy_cache_methods GET HEAD;');
   });
 
+  it('keeps the API and MCP blocks below the port-80 redirect block (F31-l)', () => {
+    // The first `location / {` in the file belongs to the port-80 301
+    // redirect; the API / MCP blocks live in the HTTPS server below it.
+    expect(conf.indexOf('location / {')).toBeLessThan(conf.indexOf('location /mcp'));
+    expect(conf.lastIndexOf('location / {')).toBeGreaterThan(conf.indexOf('location /api/ {'));
+  });
+
   it('turns the cache off for every API route', () => {
-    const apiBlock = conf.slice(conf.indexOf('location /api/ {'), conf.indexOf('location / {'));
+    const apiBlock = locationBlock('location /api/ {');
+    expect(apiBlock).not.toBe('');
     expect(apiBlock).toContain('proxy_cache off;');
   });
 
   it('turns the cache off for the MCP stream endpoint', () => {
-    const mcpBlock = conf.slice(conf.indexOf('location /mcp'), conf.indexOf('location / {'));
+    const mcpBlock = locationBlock('location /mcp');
+    expect(mcpBlock).not.toBe('');
     expect(mcpBlock).toContain('proxy_cache off;');
   });
 });
