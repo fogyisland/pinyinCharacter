@@ -1236,6 +1236,10 @@ describe('verify-webfont-subsets', () => {
 Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
 Expected: FAIL —— 找不到模块。
 
+> **Step 4 的前提**：Task 3 的 `npm run fonts:subset-web` 已经跑过，`public/font/web/**`（8 779 个文件）与三份样式表**在磁盘上**。测试读的是工作树，不是 git —— 所以 Task 4 跑测试时产物是未提交状态，这是**预期的**：产物由 **Task 5** 一起提交（见 Task 3 Step 6 的说明）。若磁盘上没有产物，先跑 `npm run fonts:subset-web`（约 5 分钟），**不要**在本任务里 `git add` 它们。
+>
+> 打开全部 8 779 个 woff2（`fontkit.create`）实测约 **48 秒**（现有 Google 子集每文件 5.4 ms，本次的 3 KB 小块更快），测试超时给到 300 秒足够。
+
 - [ ] **Step 3: 实现 `scripts/fonts/verify-webfont-subsets.mjs`**
 
 校验项（**每一项失败都要收集进 `errors`，最后统一退出 1**，不要遇到第一个错就抛）：
