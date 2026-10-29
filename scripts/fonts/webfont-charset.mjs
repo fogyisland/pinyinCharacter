@@ -9,11 +9,18 @@
  *   characters pulls 34 of them — 3.7 MB to 5.0 MB of font for one page.
  *
  *   The replacement is our own tiered subsetting:
- *     tier 1 — the 200 characters the interface itself uses
- *     tier 2 — the next 600 by frequency
- *     Ext    — everything else, cut into blocks
- *   A page downloads one or two files instead of dozens, and the browser
- *   only fetches the Ext block that actually holds the character it needs.
+ *     hot — the 300 characters the interface itself uses, in one file
+ *     Ext — everything else, cut into blocks of 16 CODE POINTS
+ *   A page downloads the hot file plus the one or two Ext blocks that hold
+ *   the characters it needs, and the browser fetches an Ext block only when
+ *   a character of that block is actually painted.
+ *
+ *   The Ext tier is cut by code point window rather than by character count
+ *   because a window is a contiguous run of the code point space: a block
+ *   holds the characters of one window, and its `unicode-range` is the exact
+ *   union of the code points it carries. A min–max span would claim the
+ *   code points the block does NOT have, and the browser would pick that
+ *   face for a character it cannot draw — tofu instead of a fallback.
  *
  * This module is the INPUT of that pipeline: it decides which characters
  * each family has to cover and how they are split into tiers. The
@@ -22,14 +29,17 @@
  * re-derives the same plan to prove no glyph was lost.
  *
  * The three families are NESTED on purpose — wenkai ⊂ sans ⊂ serif:
- *   wenkai  the brand typeface: the UI literals and the corpus titles
+ *   wenkai  the brand typeface: the UI literals, the corpus titles, the
+ *           rare characters and the dictionary radicals
  *   sans    the body typeface: everything wenkai covers plus the corpora
  *   serif   the accent typeface: everything sans covers plus the classics
+ * and the sutras
  * So a character of the classics is covered by all three families and the
  * tiers stay comparable between them.
  *
  * Only the repository's own corpora are read here — no font is opened and
- * nothing is written. Usage:
+ * nothing is written. This is BUILD TIME ONLY: the scan reads ~235 MB and
+ * takes seconds, it must never run inside a request. Usage:
  *   node scripts/fonts/webfont-charset.mjs   print the three charset sizes
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -60,14 +70,24 @@ export const CJK_RANGES = [
   [0x30000, 0x3134f], // Extension G and beyond
 ];
 
-/** The default number of characters in tier 1. */
-const DEFAULT_TIER1_SIZE = 200;
+/** The default number of characters in the hot tier. */
+const DEFAULT_TIER1_SIZE = 300;
 
-/** The default number of characters in tier 2. */
-const DEFAULT_TIER2_SIZE = 600;
+/** The default width of an Ext block, in code points. */
+const DEFAULT_EXT_BLOCK_SIZE = 16;
 
-/** The default number of characters per Ext block. */
-const DEFAULT_EXT_BLOCK_SIZE = 256;
+/**
+ * The tier plan of every family, before the caller overrides it.
+ *
+ * sans and serif carry a hot tier of the 300 characters the interface
+ * uses most; wenkai has NO hot tier, because every character it holds is
+ * rare enough that a file of the 16 most used ones would be wasted weight.
+ */
+const FAMILY_DEFAULTS = {
+  sans: { tier1Size: 300, extBlockSize: 16 },
+  serif: { tier1Size: 300, extBlockSize: 16 },
+  wenkai: { tier1Size: 0, extBlockSize: 16 },
+};
 
 /** A character coming from the source code counts a thousand times more. */
 const SOURCE_CODE_WEIGHT = 1000;
@@ -94,23 +114,6 @@ function buildBmpTable() {
     table.fill(1, start, last + 1);
   }
   return table;
-}
-
-/**
- * Cache of single-character strings for the BMP.
- *
- * The corpus scan asks about the same handful of code points millions of
- * times; allocating the string once per code point keeps the scan cheap.
- */
-const BMP_CHARS = new Array(0x10000);
-
-function bmpChar(codePoint) {
-  let ch = BMP_CHARS[codePoint];
-  if (ch === undefined) {
-    ch = String.fromCharCode(codePoint);
-    BMP_CHARS[codePoint] = ch;
-  }
-  return ch;
 }
 
 /** True when the code point belongs to one of the CJK ranges. */
@@ -184,40 +187,52 @@ export function scoreCharacters(sources) {
 }
 
 /**
- * Split a scored charset into the two hot tiers and the Ext blocks.
+ * Split a scored charset into the hot tier and the Ext blocks.
  *
- * tier 1 and tier 2 keep the score order (the most used characters first),
- * the Ext tier is sorted by code point so its blocks are contiguous runs of
- * the character space.
+ * The hot tier keeps the score order — the most used characters first —
+ * and holds `tier1Size` characters (none at all for wenkai).
  *
- * The Ext tier is cut into blocks of at most `extBlockSize` characters.
- * The cut runs one step beyond the last full block, so the number of
- * blocks is `floor(n / extBlockSize) + 1`: a remainder that is an exact
- * multiple of `extBlockSize` ends with an EMPTY block. Consumers must
- * skip empty blocks — there is no glyph in them to subset.
+ * The Ext tier is the rest, sorted by code point and cut into code point
+ * WINDOWS: the window of a character is `floor(codePoint / extBlockSize)`,
+ * so a block holds every character of one window and its code point span
+ * never overlaps another block's. A window that holds no character produces
+ * no block — there is no glyph in it to subset.
  */
 export function planTiers(scored, options = {}) {
   const tier1Size = options.tier1Size ?? DEFAULT_TIER1_SIZE;
-  const tier2Size = options.tier2Size ?? DEFAULT_TIER2_SIZE;
   const extBlockSize = options.extBlockSize ?? DEFAULT_EXT_BLOCK_SIZE;
 
-  const ordered = scored.ordered;
-  const tier1 = ordered.slice(0, tier1Size);
-  const tier2 = ordered.slice(tier1Size, tier1Size + tier2Size);
-
-  const rest = ordered
-    .slice(tier1Size + tier2Size)
-    .sort((a, b) => a.codePointAt(0) - b.codePointAt(0));
-
-  const extBlocks = [];
-  for (let start = 0; start <= rest.length; start += extBlockSize) {
-    extBlocks.push({
-      index: extBlocks.length + 1,
-      chars: rest.slice(start, start + extBlockSize),
-    });
+  if (!Number.isInteger(extBlockSize) || extBlockSize <= 0) {
+    throw new TypeError(
+      `extBlockSize must be a positive integer number of code points, got ${extBlockSize}`,
+    );
+  }
+  if (!Number.isInteger(tier1Size) || tier1Size < 0) {
+    throw new TypeError(`tier1Size must be a non negative integer, got ${tier1Size}`);
   }
 
-  return { tier1, tier2, extBlocks };
+  const ordered = scored.ordered;
+  const hot = ordered.slice(0, tier1Size);
+  const hotSet = new Set(hot);
+  const tail = ordered
+    .filter((ch) => !hotSet.has(ch))
+    .sort((a, b) => a.codePointAt(0) - b.codePointAt(0));
+
+  const windows = new Map();
+  for (const ch of tail) {
+    const codePoint = ch.codePointAt(0);
+    const window = Math.floor(codePoint / extBlockSize);
+    let block = windows.get(window);
+    if (block === undefined) {
+      block = { index: windows.size + 1, chars: [], lo: codePoint, hi: codePoint };
+      windows.set(window, block);
+    }
+    block.chars.push(ch);
+    if (codePoint < block.lo) block.lo = codePoint;
+    if (codePoint > block.hi) block.hi = codePoint;
+  }
+
+  return { hot, extBlocks: [...windows.values()] };
 }
 
 /**
@@ -233,6 +248,10 @@ function formatCodePoint(codePoint) {
  *
  * Consecutive code points are merged into one range (`U+4E00-4E01`), a gap
  * starts a new range, and the ranges are joined with `, `.
+ *
+ * The result is the EXACT union of the code points — never a min–max span.
+ * A span would claim code points the font does not carry, and the browser
+ * would pick that face for a character it cannot draw.
  */
 export function unicodeRange(chars) {
   const points = [
@@ -265,9 +284,14 @@ export function unicodeRange(chars) {
 /**
  * Count the Chinese characters of a text into `counts`.
  *
- * The scan walks the string by code unit and only builds a string for the
- * characters it keeps. Iterating with `for (const ch of text)` allocates
- * one string per character and is several times slower on a 200 MB corpus.
+ * The counts are keyed by CODE POINT, not by string: the corpus holds about
+ * a hundred million character occurrences and allocating a string for each
+ * one of them costs more than the whole scan. The string of a code point is
+ * built once, when the counts are folded into the score.
+ *
+ * The scan walks the string by code unit. Iterating with
+ * `for (const ch of text)` allocates one string per character and is
+ * several times slower.
  */
 function countChars(counts, text) {
   for (let i = 0; i < text.length; i += 1) {
@@ -280,34 +304,68 @@ function countChars(counts, text) {
       }
     }
     if (!isCjkCodePoint(codePoint)) continue;
-    const ch =
-      codePoint < 0x10000 ? bmpChar(codePoint) : String.fromCodePoint(codePoint);
-    counts.set(ch, (counts.get(ch) ?? 0) + 1);
+    counts.set(codePoint, (counts.get(codePoint) ?? 0) + 1);
   }
 }
 
 /**
  * Walk a parsed JSON value and count every string it holds.
- *
- * `titles` collects the same strings when they sit under a title-like key
- * (`title`, `label`): the corpus titles are the only corpus strings the
- * brand typeface has to render.
  */
-function collectStrings(value, key, counts, titles) {
+function collectStrings(value, counts) {
   if (typeof value === 'string') {
     countChars(counts, value);
-    if (titles && (key === 'title' || key === 'label')) countChars(titles, value);
     return;
   }
   if (Array.isArray(value)) {
-    for (const item of value) collectStrings(item, key, counts, titles);
+    for (const item of value) collectStrings(item, counts);
     return;
   }
   if (value !== null && typeof value === 'object') {
-    for (const [childKey, childValue] of Object.entries(value)) {
-      collectStrings(childValue, childKey, counts, titles);
-    }
+    for (const childValue of Object.values(value)) collectStrings(childValue, counts);
   }
+}
+
+/**
+ * Count the characters of the titles of the entries of a corpus file.
+ *
+ * A corpus file is either one entry (a top level object) or a list of
+ * entries (a top level array). The title of an entry is its `title` field,
+ * or its `label` field when it has none — the sutra files name their sutras
+ * `label`, the classic files name their books `title`.
+ *
+ * Only the TOP level is read. The nested `label` fields of a classic file
+ * are its chapter names, which the site never paints in the brand face, and
+ * the sutra manifest is an index of the corpus rather than an entry of it.
+ */
+function collectEntryTitles(value, titles) {
+  const entries = Array.isArray(value) ? value : [value];
+  for (const entry of entries) {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) continue;
+    const title =
+      typeof entry.title === 'string'
+        ? entry.title
+        : typeof entry.label === 'string'
+          ? entry.label
+          : null;
+    if (title !== null) countChars(titles, title);
+  }
+}
+
+/**
+ * Count the character of a rare content file.
+ *
+ * `data/content/<char>.json` holds a `rare` object for the 1 412
+ * characters that are rare in the corpus. The character itself is the
+ * `char` field; its story (`rare.story`) is NOT part of the brand face —
+ * the story pages paint the story in the body face, and a brand face that
+ * carries every story makes every page pay for them. The story page does
+ * paint the rare CHARACTER itself in the brand face, so the character has
+ * to be covered.
+ */
+function collectRareChar(value, rares) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+  if (!value.rare || typeof value.rare !== 'object' || Array.isArray(value.rare)) return;
+  if (typeof value.char === 'string') countChars(rares, value.char);
 }
 
 /**
@@ -315,10 +373,14 @@ function collectStrings(value, key, counts, titles) {
  *
  * A malformed file is reported and skipped — a broken corpus must not
  * break the font pipeline — and counted so the caller can report it. A
- * missing directory is not an error either: `data/stories` and
- * `data/rare-chars` are optional in this repository.
+ * missing directory is not an error either: a corpus the repository does
+ * not have is skipped with a note.
+ *
+ * `wanted` selects what the caller needs from the files: the strings of
+ * every value (`strings`), the titles of the entries (`titles`) and the
+ * rare characters (`rares`).
  */
-function scanJsonDirectory(dir, state) {
+function scanJsonDirectory(dir, state, wanted = { strings: true, titles: false, rares: false }) {
   if (!existsSync(dir)) {
     console.warn(`[charset] ${dir} not found — skipping`);
     return null;
@@ -333,6 +395,7 @@ function scanJsonDirectory(dir, state) {
 
   const counts = new Map();
   const titles = new Map();
+  const rares = new Map();
   for (const file of entries) {
     if (!file.endsWith('.json')) continue;
     const path = join(dir, file);
@@ -344,12 +407,16 @@ function scanJsonDirectory(dir, state) {
       console.warn(`[charset] skipping malformed JSON ${path}: ${err.message}`);
       continue;
     }
-    collectStrings(parsed, null, counts, titles);
+    if (wanted.strings) collectStrings(parsed, counts);
+    if (wanted.titles) collectEntryTitles(parsed, titles);
+    if (wanted.rares) collectRareChar(parsed, rares);
   }
-  return { counts, titles };
+  return { counts, titles, rares };
 }
 
-/** Scan one JSON file and count every string it holds. */
+/**
+ * Scan one JSON file and count every string it holds.
+ */
 function scanJsonFile(path, state) {
   if (!existsSync(path)) {
     console.warn(`[charset] ${path} not found — skipping`);
@@ -364,7 +431,37 @@ function scanJsonFile(path, state) {
     return null;
   }
   const counts = new Map();
-  collectStrings(parsed, null, counts, null);
+  collectStrings(parsed, counts);
+  return counts;
+}
+
+/**
+ * Scan one JSON file and count the strings of its top level values only.
+ *
+ * `data/radicals.json` maps 70 234 characters to their radical. The KEYS
+ * are a lookup table behind `chars.radical` and are never painted; only the
+ * 214 radical VALUES are rendered — the game draws a radical in the brand
+ * face — so only they are counted.
+ */
+function scanJsonFileValues(path, state) {
+  if (!existsSync(path)) {
+    console.warn(`[charset] ${path} not found — skipping`);
+    return null;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(readFileSync(path, 'utf8'));
+  } catch (err) {
+    state.skipped += 1;
+    console.warn(`[charset] skipping malformed JSON ${path}: ${err.message}`);
+    return null;
+  }
+  const counts = new Map();
+  if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    for (const value of Object.values(parsed)) {
+      if (typeof value === 'string') countChars(counts, value);
+    }
+  }
   return counts;
 }
 
@@ -395,7 +492,7 @@ function scanTextFile(path, state) {
  * Scan the source code for the characters the interface renders.
  *
  * These characters are weighted a thousand times higher than the corpus,
- * so the UI always lands in tier 1.
+ * so the UI always lands in the hot tier.
  */
 function scanSourceCode(root, state) {
   const counts = new Map();
@@ -442,21 +539,29 @@ function scanSourceDirectory(dir, counts, state) {
  * through the `Iterable<string>` interface of `scoreCharacters` would cost
  * more than the whole scan, so the sources are counted once and folded in
  * as `weight × occurrences` — the very sum `scoreCharacters` computes.
+ *
+ * The counts are keyed by code point, so the string of a character is
+ * built here, once, for the few thousand characters the corpus holds.
  */
-function foldSource(score, source) {
-  for (const [ch, count] of source.counts) {
-    addScore(score, ch, source.weight * count);
+function foldSource(score, counts, weight) {
+  if (!counts) return;
+  for (const [codePoint, count] of counts) {
+    addScore(score, String.fromCodePoint(codePoint), weight * count);
   }
-}
-
-function foldSources(score, sources) {
-  for (const source of sources) foldSource(score, source);
 }
 
 /** Turn a score map into the scored charset the tier planner consumes. */
 function toScored(score) {
   return { ordered: orderByScore(score), score };
 }
+
+/**
+ * The plans of a root, computed once per process.
+ *
+ * The scan reads the whole corpus, so a process that asks twice (the unit
+ * test does, the build script does not) must not read it twice.
+ */
+const planCache = new Map();
 
 /**
  * Build the tier plan of every font family.
@@ -467,109 +572,95 @@ function toScored(score) {
  */
 export function loadFamilyCharsets(options = {}) {
   const root = options.root ?? ROOT;
+  const cached = planCache.get(root);
+  if (cached) return cached;
+
   const state = { skipped: 0 };
 
-  const wenkaiSources = [];
-  const sansSources = [];
-  const serifSources = [];
+  // --- wenkai: the brand face ------------------------------------------
+  // The UI literals, the corpus titles, the rare characters and the
+  // dictionary radicals — everything the site paints in the brand face.
+  const wenkaiScore = new Map();
+  foldSource(wenkaiScore, scanSourceCode(root, state), SOURCE_CODE_WEIGHT);
 
-  // --- wenkai: the UI literals and the corpus titles -------------------
-  wenkaiSources.push({
-    id: 'source-code',
-    weight: SOURCE_CODE_WEIGHT,
-    counts: scanSourceCode(root, state),
+  const classics = scanJsonDirectory(join(root, 'data', 'classics'), state, {
+    strings: true,
+    titles: true,
+    rares: false,
   });
+  foldSource(wenkaiScore, classics?.titles, CORPUS_WEIGHT);
 
-  const stories = scanJsonDirectory(join(root, 'data', 'stories'), state);
-  if (stories) {
-    wenkaiSources.push({ id: 'stories', weight: CORPUS_WEIGHT, counts: stories.counts });
-  }
+  const sutras = scanJsonDirectory(join(root, 'data', 'sutras'), state, {
+    strings: true,
+    titles: true,
+    rares: false,
+  });
+  foldSource(wenkaiScore, sutras?.titles, CORPUS_WEIGHT);
 
-  const classics = scanJsonDirectory(join(root, 'data', 'classics'), state);
-  if (classics) {
-    wenkaiSources.push({
-      id: 'classics-titles',
-      weight: CORPUS_WEIGHT,
-      counts: classics.titles,
-    });
-    serifSources.push({ id: 'classics', weight: CORPUS_WEIGHT, counts: classics.counts });
-  }
+  // The rare characters come out of the same pass over data/content that
+  // the body face needs, so the corpus is read once.
+  const content = scanJsonDirectory(join(root, 'data', 'content'), state, {
+    strings: true,
+    titles: false,
+    rares: true,
+  });
+  foldSource(wenkaiScore, content?.rares, CORPUS_WEIGHT);
 
-  const sutras = scanJsonDirectory(join(root, 'data', 'sutras'), state);
-  if (sutras) {
-    wenkaiSources.push({
-      id: 'sutras-titles',
-      weight: CORPUS_WEIGHT,
-      counts: sutras.titles,
-    });
-    serifSources.push({ id: 'sutras', weight: CORPUS_WEIGHT, counts: sutras.counts });
-  }
+  const radicals = scanJsonFileValues(join(root, 'data', 'radicals.json'), state);
+  foldSource(wenkaiScore, radicals, CORPUS_WEIGHT);
 
-  // --- sans: the corpora ------------------------------------------------
-  const content = scanJsonDirectory(join(root, 'data', 'content'), state);
-  if (content) {
-    sansSources.push({ id: 'content', weight: CORPUS_WEIGHT, counts: content.counts });
-  }
+  // --- sans: the body face ---------------------------------------------
+  const sansScore = new Map(wenkaiScore);
+  foldSource(sansScore, content?.counts, CORPUS_WEIGHT);
 
-  const poems = scanJsonDirectory(join(root, 'data', 'poems'), state);
-  if (poems) {
-    sansSources.push({ id: 'poems', weight: CORPUS_WEIGHT, counts: poems.counts });
-  }
-
-  const rareChars = scanJsonDirectory(join(root, 'data', 'rare-chars'), state);
-  if (rareChars) {
-    sansSources.push({ id: 'rare-chars', weight: CORPUS_WEIGHT, counts: rareChars.counts });
-  }
+  const poems = scanJsonDirectory(join(root, 'data', 'poems'), state, {
+    strings: true,
+    titles: false,
+    rares: false,
+  });
+  foldSource(sansScore, poems?.counts, CORPUS_WEIGHT);
 
   const gb2312 = scanTextFile(join(root, 'scripts', 'fonts', 'gb2312-7000.txt'), state);
-  if (gb2312) {
-    sansSources.push({ id: 'gb2312-7000', weight: CORPUS_WEIGHT, counts: gb2312 });
-  }
+  foldSource(sansScore, gb2312, CORPUS_WEIGHT);
 
   const standard = scanJsonFile(
     join(root, 'data', 'general-standard-chinese-characters.json'),
     state,
   );
-  if (standard) {
-    sansSources.push({ id: 'standard-chars', weight: CORPUS_WEIGHT, counts: standard });
-  }
+  foldSource(sansScore, standard, CORPUS_WEIGHT);
 
-  // --- the score of every family ---------------------------------------
-  const wenkaiScore = new Map();
-  foldSources(wenkaiScore, wenkaiSources);
-
-  const sansScore = new Map(wenkaiScore);
-  foldSources(sansScore, sansSources);
-
+  // --- serif: the accent face ------------------------------------------
   const serifScore = new Map(sansScore);
-  foldSources(serifScore, serifSources);
+  foldSource(serifScore, sutras?.counts, CORPUS_WEIGHT);
+  foldSource(serifScore, classics?.counts, CORPUS_WEIGHT);
 
-  const tierOptions = {
-    tier1Size: options.tier1Size,
-    tier2Size: options.tier2Size,
-    extBlockSize: options.extBlockSize,
-  };
-
+  // --- the plan of every family -----------------------------------------
   const plans = {
-    wenkai: planTiers(toScored(wenkaiScore), tierOptions),
-    sans: planTiers(toScored(sansScore), tierOptions),
-    serif: planTiers(toScored(serifScore), tierOptions),
+    wenkai: planTiers(toScored(wenkaiScore), familyOptions('wenkai', options.families)),
+    sans: planTiers(toScored(sansScore), familyOptions('sans', options.families)),
+    serif: planTiers(toScored(serifScore), familyOptions('serif', options.families)),
   };
 
   for (const family of ['wenkai', 'sans', 'serif']) {
     const plan = plans[family];
     const total =
-      plan.tier1.length +
-      plan.tier2.length +
+      plan.hot.length +
       plan.extBlocks.reduce((sum, block) => sum + block.chars.length, 0);
     console.log(
-      `charset ${family}: ${total} chars ` +
-        `(tier1 ${plan.tier1.length} / tier2 ${plan.tier2.length} / ext ${plan.extBlocks.length} blocks)`,
+      `charset ${family}: ${total} chars (hot ${plan.hot.length} / ext ${plan.extBlocks.length} blocks)`,
     );
   }
   console.log(`skipped ${state.skipped} malformed file(s)`);
 
+  planCache.set(root, plans);
   return plans;
+}
+
+/**
+ * The tier options of one family: the defaults, overridden by the caller.
+ */
+function familyOptions(family, overrides) {
+  return { ...FAMILY_DEFAULTS[family], ...(overrides?.[family] ?? {}) };
 }
 
 // Only run when this file is the entry point — the unit test imports the

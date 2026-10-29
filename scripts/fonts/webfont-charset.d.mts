@@ -33,38 +33,47 @@ export interface ScoredCharset {
   score: Map<string, number>;
 }
 
-/** One block of the Ext tier. */
+/**
+ * One block of the Ext tier.
+ *
+ * A block holds every character of one code point WINDOW — the window of a
+ * character is `floor(codePoint / extBlockSize)` — so two blocks never
+ * overlap and the `unicode-range` of a block is the exact union of the code
+ * points it carries.
+ */
 export interface ExtBlock {
-  /** The block number, starting at 1. */
+  /** The block number, starting at 1 and contiguous. */
   index: number;
   /** The characters of the block. */
   chars: string[];
+  /** The smallest code point actually present in the block. */
+  lo: number;
+  /** The largest code point actually present in the block. */
+  hi: number;
 }
 
 /** The tier plan of one family. */
 export interface TierPlan {
-  /** The most used characters. */
-  tier1: string[];
-  /** The next most used characters. */
-  tier2: string[];
-  /** The rest, cut into blocks. */
+  /** The most used characters — the hot tier. */
+  hot: string[];
+  /** The rest, cut into code point windows. */
   extBlocks: ExtBlock[];
 }
 
-/** The sizes of the three tiers. */
+/** The sizes of the tiers of one family. */
 export interface TierOptions {
-  /** How many characters tier 1 holds. Defaults to 200. */
+  /** How many characters the hot tier holds. Defaults to 300. */
   tier1Size?: number;
-  /** How many characters tier 2 holds. Defaults to 600. */
-  tier2Size?: number;
-  /** How many characters one Ext block holds. Defaults to 256. */
+  /** How many code points one Ext window spans. Defaults to 16. */
   extBlockSize?: number;
 }
 
 /** The options of the charset builder. */
-export interface CharsetOptions extends TierOptions {
+export interface CharsetOptions {
   /** The repository root the corpora are read from. Defaults to the repo. */
   root?: string;
+  /** The tier options of a single family, overriding the defaults. */
+  families?: Partial<Record<FamilyName, TierOptions>>;
 }
 
 /** The code point ranges that count as Chinese for the font subsets. */
@@ -76,7 +85,7 @@ export declare function isCjkChar(ch: string): boolean;
 /** Score every character of every source. */
 export declare function scoreCharacters(sources: CharSource[]): ScoredCharset;
 
-/** Split a scored charset into tier 1, tier 2 and the Ext blocks. */
+/** Split a scored charset into the hot tier and the code point windows. */
 export declare function planTiers(scored: ScoredCharset, options?: TierOptions): TierPlan;
 
 /** Render the CSS `unicode-range` of a character list. */
