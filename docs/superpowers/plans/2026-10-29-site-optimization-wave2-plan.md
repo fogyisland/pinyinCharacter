@@ -1340,7 +1340,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 4. 每条 face 的 `src` 文件在 `public/` 下真实存在。
 5. 每条 face 的 `font-display` 都是 `swap`。
 6. 每条 face 都有非空的 `unicode-range`。
-7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（实测 635 KB）。
+7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（实测 **647 KB**，2 779 条 face；余量只有 8 %，因为它随块数线性增长——块数一旦变化这个阈值要重算）。另两份实测：serif 原始 767 KB / gzip 71 KB，wenkai 原始 630 KB / gzip 37 KB，三份合计原始 2 043 KB / gzip 168 KB。
 8. 三份样式表合起来 gzip 后 ≤ 175 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；实测 168 KB = sans 61 / serif 71 / wenkai 37。spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
 9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
 10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
