@@ -17,7 +17,7 @@
 以下每一条都适用于**所有**任务：
 
 - **G1 语言**：给用户的说明用中文；代码标识符、commit message、UI 文案用英文。
-- **G2 commit 格式**：subject 结尾带 `[YYYY-MM-DD HH.MM]`（例：`feat(fonts): ... [2026-10-29 14.30]`），正文末尾加 `Co-Authored-By: Claude Code <noreply@anthropic.com>`。
+- **G2 commit 格式**：subject 结尾带 `[YYYY-MM-DD HH.MM]`（例：`feat(fonts): ... [2026-10-29 14.30]`），正文末尾加 `Co-Authored-By: Claude Code <noreply@anthropic.com>`。⚠️ 下面各任务里 `[2026-10-29 HH.MM]` 是**占位符**：提交时必须换成 `date "+%Y-%m-%d %H.%M"` 的**真实本地时间**，不许把 `HH.MM` 原样提交上去。
 - **G3 包管理**：项目用 **npm**（不是 pnpm）。装包用 `npm install --legacy-peer-deps`。**不引入任何新的运行时依赖**——字体切分工具一律是构建期脚本。
 - **G4 git add**：只允许**显式路径** `git add <path>...`；禁止 `-A`、`.`、以及不带路径的 `-u`。
 - **G5 不得提交**：`Up/`（gitignored 快照）、任何 `.env`、`data/sutras/manifest.json`（**并发会话正在改它**，永远不要 stage 它）。
@@ -1989,7 +1989,7 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 
 - [ ] **Step 5: 删除旧产物并暂存新产物**
 
-> **⚠️ 暂存之前先核对产物数量——这一步是硬闸门。** Task 3 的构建脚本**不清理** `public/font/web/<family>/` 里的陈旧文件（它只 `mkdir -p` 然后覆盖写），所以目录里可能躺着上一次构建留下的孤儿 `ext-NNNN.woff2`：它们**没有任何样式表引用**，但会被 `git add public/font/web` 一起提交 ⇒ 撑大仓库、并且破坏 Task 4 的「文件数 == face 数」断言。暂存前必须逐项核对：
+> **⚠️ 暂存之前先核对产物数量——这一步是硬闸门。** Task 3 的构建脚本现在**会清理** `public/font/web/<family>/` 里上一次构建的陈旧文件（修复轮 2 加的 `sweepStaleFiles`，提交 `1ed36c0ce`：写完一族之后，把该族目录里**不在本次写出集合中**的 `.woff2` 删掉；目录不存在返回空数组、`unlink` 失败抛错不吞）。⇒ **正常情况下不该有孤儿**。但**构建失败过、或者中途有人往里塞过文件**的话，目录里仍可能多出 `ext-NNNN.woff2`：它们**没有任何样式表引用**，会被一起提交 ⇒ 撑大仓库（7 936 个文件已经不少了）并且让下面的数字门禁对不上。暂存前必须逐项核对：
 
 ```bash
 # 恰好 7 936 个 woff2 + 3 份 OFL 许可证，一个不多一个不少
@@ -2006,7 +2006,10 @@ ls public/font/web/wenkai/*.woff2 | wc -l  # 2 636
 ```bash
 git rm -r public/font/noto-sans-sc public/font/noto-serif-sc public/font/lxgw-wenkai-tc
 git rm public/font/fonts.css scripts/fonts/build-fonts-css.mjs scripts/fonts/build-fonts-css.d.mts
-git add public/font/web public/font/fonts-sans.css public/font/fonts-serif.css public/font/fonts-wenkai.css public/font/fonts-manifest.json
+git add public/font/web/sans public/font/web/serif public/font/web/wenkai \
+        public/font/web/OFL-sans.txt public/font/web/OFL-serif.txt public/font/web/OFL-wenkai.txt \
+        public/font/fonts-sans.css public/font/fonts-serif.css public/font/fonts-wenkai.css \
+        public/font/fonts-manifest.json
 ```
 
 > `git add` 只用显式路径（G4）。`data/sutras/manifest.json` **不要**出现在任何 `git add` 里（G5）。
