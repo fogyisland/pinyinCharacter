@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 把生产环境的字体载荷从 3.7–5.0 MB/页降到 209–408 KB/页（R9 的重定预算：首页 295 / 字典 209 / 诗词 282 / 故事 408 KB），首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
+**Goal:** 把生产环境的字体载荷从 3.7–5.0 MB/页降到 307–419 KB/页（R9 的重定预算：首页 307 / 字典 212 / 诗词 284 / 故事 419 KB），首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
 
 **Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（按用字频率取前 N 字）+ 若干 Ext 文件（其余字按 16 个码位一个窗口切）**。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`，再用仓库已有的 `subset-font` 切分（实测 229 B/字，比 Google 自己的 305–407 B/字省 25–42 %）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
 
@@ -35,7 +35,7 @@
 | # | 矛盾 | 裁决 | 理由 |
 |---|---|---|---|
 | R1 | spec §4 标题把「服务器 TCP 调优」叫 W2-3、「CDN」叫 W2-4；spec §5 任务表把「预压缩脚本」叫 W2-3、「服务器调优」叫 W2-4 | 以 **spec §5 任务表**为准（它是明确的交付物分解）：Task 6=W2-2 nginx、Task 7=W2-3 预压缩、Task 8=W2-4 服务器调优、Task 9=W2-5 性能基线 | §5 是「任务分解」章节，粒度更细且逐条给了交付物 |
-| R2 | spec §4.1.4 说 kai 的字符集是「7 + 2 + 3 ≈ 2 000 字」 | **kai 字符集 = 源码字面量 + 古籍/经文标题 + 罕见字本身**（`data/content/<char>.json` 里带 `rare` 字段的那 1 412 个 `char`），**不含故事正文** | 故事正文渲染在 sans/serif 里，把它塞进 kai 会把稠密窗口填满，让**每一个**页面替故事正文付费（实测首页 kai 51 KB vs 35 KB）。但故事详情页的大字（`app/stories/StoryClient.tsx:117` 的 `font-kai font-bold text-9xl`）渲染的是罕见字**本身**，所以罕见字必须进 kai。实测 kai 真实字符集 **2 601 字** → 16 码位窗口 = **1 027 块 × 2 字重 = 2 054 个文件** |
+| R2 | spec §4.1.4 说 kai 的字符集是「7 + 2 + 3 ≈ 2 000 字」 | **kai 字符集 = 源码字面量 + 古籍/经文标题 + 罕见字本身**（`data/content/<char>.json` 里带 `rare` 字段的那 1 412 个 `char`），**不含故事正文** | 故事正文渲染在 sans/serif 里，把它塞进 kai 会把稠密窗口填满，让**每一个**页面替故事正文付费（实测首页 kai 51 KB vs 35 KB）。但故事详情页的大字（`app/stories/StoryClient.tsx:117` 的 `font-kai font-bold text-9xl`）渲染的是罕见字**本身**，所以罕见字必须进 kai。实测 kai 真实字符集 **2 601 字** → 16 码位窗口 = **1 027 块 × 2 字重 = 2 054 个文件**（**R16 在此之上追加了 8 105 个库字符 → 8 197 字 / 1 348 块 / 2 696 个文件**） |
 | R3 | spec §3.6 说「楷体可以只发布 Regular 一个字面」 | **kai 同时发布 400 与 700** | 全站有 3 处 `font-kai font-bold`（`app/ancient/page.tsx:50`、`app/ancient/[slug]/page.tsx:101`、`app/stories/StoryClient.tsx:117`），最后一处是 `text-9xl` 的故事大字——合成加粗在 9xl 上非常难看。Bold 只在真正渲染粗体楷体时才下载 |
 | R4 | spec §4.1.2 给出 fallback 链但没说 `unicode-range` 怎么用 | **每一条 `@font-face`（热区与 Ext 全部）都带精确 `unicode-range`，且同族内两两不相交** | 浏览器对同一 family 的多个 face 会**逐个下载探测**直到找到含该字的字体。Ext 有几千个 face，没有 `unicode-range` 会把整族全下下来。区间不相交还保证「同一个字只可能落在一个文件里」，不会有歧义 |
 | R5 | spec §3.5 说 sans 需要 16 772 字、serif 20 616 字 | **sans 字符集 = 全部语料 + 源码；serif 字符集 = sans 的全部 + 经文 + 古籍**（即 serif ⊇ sans） | 正文（sans）渲染一切内容，serif 只渲染字典/故事/经文/古籍正文。宁可多包含，不可漏字；多出来的成本由 Ext 分块摊薄 |
@@ -54,14 +54,31 @@
 
 | # | 矛盾 | 裁决 | 理由 |
 |---|---|---|---|
-| R8 | spec §4.1.1 的「Tier1 前 200 / Tier2 200–800 / Ext 每 256 码位一块」实测产不出 spec §3.2 自己要的字节：首页 984 KB / 诗词 1 446 KB / 故事 1 350 KB（目标 250 / 250 / 400 KB） | **改为「热区 + Ext 按 16 码位窗口切」**：sans/serif 热区 300 字，Ext 窗口 16 码位；楷体无热区 | 实测新机制（字符集 sans 16 968 / serif 19 888 / kai 2 601，块数 2 786 / 3 115 / 1 027，文件共 **7 955** 个）：首页 **295 KB** / 字典 **209 KB** / 诗词 **282 KB** / 故事 **408 KB**，CSS **97 KB**(gzip)。相比现状的 3 813–4 985 KB 是 **12–18 倍**的下降 |
-| R9 | spec §3.2 的单页 ≤ 250/350/250 KB 与 §3.3 的 CSS ≤ 25 KB(gzip) | **重定预算**（本计划与 Task 4/9 按此执行）：单页字体 `/` ≤ 350 KB、`/dictionary` ≤ 300 KB、`/poetry` ≤ 350 KB、`/stories` ≤ 500 KB；三份 CSS 合计 ≤ 110 KB(gzip)；单页字体请求数 ≤ 130 个；冷加载 ≤ 5 s（现状 21–28 s） | 这是对 spec 目标的**显式偏离**，登记在案而不是默默吸收。CSS 是一次性可缓存成本，字体是每次访问成本——预算该花在后者身上 |
+| R8 | spec §4.1.1 的「Tier1 前 200 / Tier2 200–800 / Ext 每 256 码位一块」实测产不出 spec §3.2 自己要的字节：首页 984 KB / 诗词 1 446 KB / 故事 1 350 KB（目标 250 / 250 / 400 KB） | **改为「热区 + Ext 按 16 码位窗口切」**：sans/serif 热区 300 字，Ext 窗口 16 码位；楷体无热区 | 实测新机制（字符集 sans 16 968 / serif 19 888 / kai **8 197**，块数 2 786 / 3 115 / 1 348，文件共 **8 597** 个）：首页 **307 KB** / 字典 **212 KB** / 诗词 **284 KB** / 故事 **419 KB**，CSS **119.1 KB**(gzip)。相比现状的 3 813–4 985 KB 是 **10–13 倍**的下降 |
+| R9 | spec §3.2 的单页 ≤ 250/350/250 KB 与 §3.3 的 CSS ≤ 25 KB(gzip) | **重定预算**（本计划与 Task 4/9 按此执行）：单页字体 `/` ≤ 350 KB、`/dictionary` ≤ 300 KB、`/poetry` ≤ 350 KB、`/stories` ≤ 500 KB；三份 CSS 合计 ≤ **125 KB**(gzip，见 R17)；单页字体请求数 ≤ 130 个；冷加载 ≤ 5 s（现状 21–28 s） | 这是对 spec 目标的**显式偏离**，登记在案而不是默默吸收。CSS 是一次性可缓存成本，字体是每次访问成本——预算该花在后者身上 |
 | R10 | spec §4.1.3 只说「剩余字符按码位递增后每 N 字一块」，没说按**字符个数**切还是按**码位窗口**切 | **Ext 按码位窗口切**：窗口 = 码位落在 `[k×W, (k+1)×W)` 的全部字符，`W = 16` | Task 1 实现者自己的 C1 发现：256 字一块 + 逐字精确区间 → CSS 185 KB(原始)；同一批字按 min–max 区间 → 1.7 KB。按字符个数切还会产生**空的尾块**（C2） |
 | R11 | spec §4.1.1 保留 Tier2 这一档 | **删掉 Tier2**（热区之后不再分档） | 语料尾部每个字只出现一次 → 尾部频率信号是均匀的，「按频率分档」在尾部等价于任意分组。实测把热区加大只会把热区文件本身撑大（热区文件每页都要整份下载）：首页 热区 0 → 325 KB，热区 300 → **295 KB**，热区 450 → 325 KB，热区 600 → 366 KB，热区 1000 → 504 KB |
 | R12 | Ext 块的 `unicode-range` 用「块内最小–最大码位」的区间，还是「块内码位并集」的精确并集 | **用精确并集**（`unicodeRange()`），不用 min–max 区间 | min–max 区间会覆盖**文件里没有的字**：浏览器按区间选中这个 face → 直接渲染豆腐块，而不是回退系统字体。精确并集多花约 31 KB(gzip) 的 CSS（一次性、可缓存），换掉唯一一条产生豆腐块的路径 |
 | R13 | spec §3.2 想要 ≤ 250 KB/页 | **本轮不做**，登记为下一波 | 真要 250 KB/页需要按页/按需动态子集：新增运行时依赖（G3 明令禁止）+ 约 3 万个文件 |
-| R14 | spec §3.6 没规定楷体要不要热区 | **楷体不设热区**（`tier1Size = 0`），只用 Ext 窗口 | 楷体全站只渲染约 38 字（首页），但 300 字的热区文件按 400/700 两份算 = 每页白付 137 KB。实测：楷体热区 0 → 首页 295 KB，楷体热区 300 → 335 KB |
+| R14 | spec §3.6 没规定楷体要不要热区 | **楷体不设热区**（`tier1Size = 0`），只用 Ext 窗口 | 楷体全站只渲染约 38 字（首页），但 300 字的热区文件按 400/700 两份算 = 每页白付 137 KB。实测：楷体热区 0 → 首页 295 KB，楷体热区 300 → 335 KB（R16 落地后这套数字整体上移，首页 307 KB） |
 | R15 | spec §4.1.2 的 fallback 链暗示「每档一个 font-family 名」（`Noto Sans SC 1` / `2` / `Ext`） | **一族一个 font-family 名**（`Noto Sans SC`），所有 face 靠互不相交的 `unicode-range` 区分 | 区间互不相交时不需要跨族 fallback 链；一族一名去掉了「同族多条 face 谁生效」的歧义，也让 Task 3/5 少一套族名 |
+| R16 | G10（零缺字）要求「站内能渲染的汉字一个都不能落到豆腐块」，但**楷体的字面量语料（2 601 字）盖不住接龙游戏会渲染的库字符** | **楷体字符集 = 原来的 2 601 字 + `data/general-standard-chinese-characters.json` 的 8 105 个通用规范汉字 = 8 197 字**；三族窗口宽度统一为 **16 码位** | `components/game/ChainScroll.tsx:63`、`components/game/ChainPickerModal.tsx:24`、`components/game/quest/WrongBook.tsx:118`、`components/game/quest/QuestCharCard.tsx:52` 都用 `font-kai` 渲染库字符，而选字面板（`ChainPickerModal`）按拼音把整池候选字铺出来——`chars-all` 难度 + HSK 4 级以上时池子就是全部 8 105 字。盖不住 → 这些字落到 `--font-kai` 兜底链的 `Kaiti SC`/`STKaiti`/`serif`，游戏页出现两种字体混排（G10 的实质）。`data/hsk-vocab.json` 的 2 632 个 HSK 字被这 8 105 字完全覆盖（实测差集 0），不必单收。**代价**：楷体 1 030 块 → 1 348 块、2 054 → 2 696 个文件，首页楷体 21 KB → 47 KB，CSS +13 KB。实测见下表 |
+| R17 | R9 原定的「三份 CSS 合计 ≤ 110 KB(gzip)」在 R16 落地后**不可达** | **CSS 预算 110 KB → 125 KB(gzip)** | (1) CSS 字节数 ≈ `13–20 B/块(gzip)`，块数由字符集规模 × 窗口宽度决定；(2) R16 要求楷体带上 8 105 库字 → 总块数 6 928 → 7 249；(3) 实测把窗口宽度从 16 放宽到 32 才能把 CSS 压回 110 KB 附近，但那时首页 341 KB / 故事 439 KB，窗口内的「填充字」要每个页面买单；(4) 现网三份 CSS 合计 **132.7 KB**(gzip)（Google 的逐码位逗号列表格式），新机制 119.1 KB 仍是**净下降**；(5) CSS 是首次访问的一次性可缓存成本，而字体是每次访问成本——把预算挪给字体是划算的 |
+
+**R16/R17 的实测前沿**（`scripts/fonts/staging/sweep.mjs`，`W` = sans/serif 窗口宽度，`hot` = sans/serif 热区字数，`kaiW` = 楷体窗口宽度；字节为四个测量页里的最差值）：
+
+| 楷体语料 | 配置 | 最差页 | CSS(gzip) | 字体文件数 | 结论 |
+|---|---|---|---|---|---|
+| 2 601 字（不含库字） | W=16 hot=300 kaiW=16 | 411 KB | 106.7 KB | 7 961 | 满足原预算，但库字掉到系统字体 |
+| 8 197 字（含库字） | W=16 hot=300 kaiW=16 | **419 KB** | **119.1 KB** | **8 597** | **采用**：页面/请求数全达标，CSS 预算放宽到 125 KB |
+| 8 197 字（含库字） | W=16 hot=300 kaiW=32 | 439 KB | 113.0 KB | 7 427 | 窗口越宽填充字越多，页面更贵 |
+| 8 197 字（含库字） | W=8 hot=300 kaiW=16 | 289 KB | 126.5 KB | 11 828 | 页面最省，但 CSS 与文件数超预算 |
+| 8 197 字（含库字） | W=12 hot=300 kaiW=8 | 346 KB | 140.5 KB | 12 121 | CSS 超预算 |
+| 8 197 字（含库字） | W=24 hot=300 kaiW=16 | 542 KB | 113.4 KB | 7 148 | 故事页超预算（>500 KB） |
+
+热区字数的实测曲线（R16 语料、W=16、kaiW=16）：hot 0 → 589 KB（216 个请求/页）、hot 150 → 472 KB（157 个请求/页）、**hot 300 → 419 KB（114 个请求/页）**；hot 450 以上在 R11 的旧语料曲线上同样是更差（首页 450 → 325 KB vs 300 → 295 KB）。热区 300 是唯一同时压住字节与请求数的取值——热区文件是**整份下载**的，字数越多每个页面白付的越多，而窗口块才是「按需」的。
+
+**已知未覆盖面**：`/game` 接龙页的选字面板（`ChainPickerModal`）把**候选字**——与当前字同音的全部库字——铺在 `font-kai` 里，候选集合随拼音变化，**无法用静态 HTML fixture 抓取**，因此不在四个测量页的预算内。它不会造成缺字（R16 已把 8 105 个库字全部纳入楷体），但最坏情况（某个常用音的候选字最多）它会拉下几十个楷体块。这一页的真实字节数留到 Task 9 的性能基线脚本在真实站点上量。 |
 
 ---
 
@@ -212,16 +229,22 @@ describe('planTiers', () => {
   });
 
   it('cuts the tail into code point windows, not character slices', () => {
-    // tail after a 2 character hot tier: 丂(U+4E02) 七(U+4E03) 万(U+4E04) 丈(U+4E05)
-    // windows of 2 code points: [U+4E02,U+4E04) and [U+4E04,U+4E06)
+    // The tail after a 2 character hot tier is 丂(U+4E02), 七(U+4E03),
+    // 万(U+4E07) and 丈(U+4E08) — 万 and 丈 are NOT U+4E04 and U+4E05.
+    // Windows of 2 code points are [U+4E02,U+4E04), [U+4E04,U+4E06),
+    // [U+4E06,U+4E08) and [U+4E08,U+4E0A), so the tail falls into three
+    // blocks: 丂七 / 万 / 丈.
     const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
-    expect(plan.extBlocks).toHaveLength(2);
+    expect(plan.extBlocks).toHaveLength(3);
     expect(plan.extBlocks[0].chars).toEqual(['丂', '七']);
-    expect(plan.extBlocks[1].chars).toEqual(['万', '丈']);
+    expect(plan.extBlocks[1].chars).toEqual(['万']);
+    expect(plan.extBlocks[2].chars).toEqual(['丈']);
     expect(plan.extBlocks[0].lo).toBe(0x4e02);
     expect(plan.extBlocks[0].hi).toBe(0x4e03);
-    expect(plan.extBlocks[1].lo).toBe(0x4e04);
-    expect(plan.extBlocks[1].hi).toBe(0x4e05);
+    expect(plan.extBlocks[1].lo).toBe(0x4e07);
+    expect(plan.extBlocks[1].hi).toBe(0x4e07);
+    expect(plan.extBlocks[2].lo).toBe(0x4e08);
+    expect(plan.extBlocks[2].hi).toBe(0x4e08);
   });
 
   it('puts every character in exactly one tier', () => {
@@ -349,7 +372,7 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
 
    | 族 | 语料来源 | 权重 |
    |---|---|---|
-   | `wenkai` | 源码字面量（`app/` `components/` `lib/` 的 `.ts`/`.tsx`/`.mjs`/`.js`）× 1000、`data/classics/*.json` 的 `title` 字段、`data/sutras/*.json` 的 `title` 字段、`data/content/*.json` 中**带 `rare` 字段的那些文件的 `char` 字段**、**`data/radicals.json` 的 214 个部首值** | 见左 |
+   | `wenkai` | 源码字面量（`app/` `components/` `lib/` 的 `.ts`/`.tsx`/`.mjs`/`.js`）× 1000、`data/classics/*.json` 的 `title` 字段、`data/sutras/*.json` 的 `title` 字段、`data/content/*.json` 中**带 `rare` 字段的那些文件的 `char` 字段**、**`data/radicals.json` 的 214 个部首值**、**`data/general-standard-chinese-characters.json` 的 8 105 个库字符**（见 R16） | 见左 |
    | `sans` | `wenkai` 的全部 + `data/content/*.json` 全部字符串 + `data/poems/*.json` 全部字符串 + `scripts/fonts/gb2312-7000.txt` + `data/general-standard-chinese-characters.json` | 语料 × 1，源码 × 1000 |
    | `serif` | `sans` 的全部 + `data/sutras/*.json` 全部字符串 + `data/classics/*.json` 全部字符串 | 同上 |
 
@@ -357,19 +380,24 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
    - `gb2312-7000.txt` 每行一个字，按行读；`data/general-standard-chinese-characters.json` 是一个 JSON 数组/对象，**遍历它的全部字符串值**取字（先 `JSON.stringify` 再逐字符也可以，只要不漏）。
    - **`data/radicals.json` 只取 values，不取 keys。** 它是 `Record<char, radical>`，70 234 个 key 是查表用的、页面从不渲染（`scripts/import-chars-data.ts:23` 用它填 `chars.radical` 列），214 个 value 才是页面上的部首字。整份扫描会把字符集从 1.7 万撑到 7 万，机制直接崩。收 values 的理由：`components/game/RadicalToken.tsx:31` 用 `font-kai` 渲染部首，所以部首必须在**楷体**子集里；而 `components/dictionary/RadicalSidebar.tsx` 那份 213 项的 `RADICALS` 字面量把 `戶` 写成简体的 `户`、且根本没有 `韭`——照抄源码字面量会漏掉这两个，游戏里渲染成豆腐块。
    - **`data/unihan/` 两个文件不进语料**：`CJKRadicals.txt` 是 `number; hex; hex` 的码位映射（246 行、0 个汉字），`Unihan_RadicalStrokeCounts.txt` 是 `U+XXXX\tkRSUnicode\t1.4` 行，两者都只被一次性生成脚本 `scripts/build-radicals.ts` 消费，运行时页面不读它们。逐字符扫描对它们是 0 收益。
+   - **`data/general-standard-chinese-characters.json` 同时进 sans 和 wenkai（见 R16）**：这 8 105 个字就是 `chars` 表的种子（`scripts/import-chars-data.ts`），也是游戏渲染的全部库字符。进 sans 是因为字典/详情页用 sans 渲染它们；进 **wenkai** 是因为 `components/game/ChainScroll.tsx:63`、`components/game/ChainPickerModal.tsx:24`、`components/game/quest/WrongBook.tsx:118`、`components/game/quest/QuestCharCard.tsx:52` 都用 `font-kai` 渲染库字符（选字面板一次铺满整池）。不进 wenkai 的话这些字会掉到系统字体（`Kaiti SC`/`STKaiti`/`serif`），游戏页出现混排。`data/hsk-vocab.json` 的 2 632 个 HSK 字**已被这 8 105 个字完全覆盖**（实测差集为 0），不必单独收。
    - 源码字面量扫描：递归遍历 `app/`、`components/`、`lib/`，跳过 `node_modules`，只读 `.ts`/`.tsx`/`.mjs`/`.js`，逐字符取 CJK。
    - 语料目录不存在时**跳过并打印一行说明**，不要抛错。
    - 单个语料文件 JSON 解析失败时跳过该文件并计数，不要让整个构建炸掉；最后打印一行 `skipped N malformed file(s)`。
    - 每族的 `tier1Size` / `extBlockSize` 取上面那张默认表；`options.families` 可以按族覆盖。
    - 函数末尾 `console.log` 每族的字符总数与分档大小，格式：
      `charset sans: 16968 chars (hot 300 / ext 2785 blocks)`。
+     按 R16 的语料，三行分别是：
+     `charset wenkai: 8197 chars (hot 0 / ext 1348 blocks)`、
+     `charset sans: 16968 chars (hot 300 / ext 2785 blocks)`、
+     `charset serif: 19888 chars (hot 300 / ext 3114 blocks)`。
 
 6. `scripts/fonts/webfont-charset.d.mts` 按上面的 Interfaces 段逐字写声明（参考已有的 `scripts/fonts/build-fonts-css.d.mts` 风格）。
 
 - [ ] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run tests/unit/scripts/webfont-charset.test.ts`
-Expected: PASS，全部 12 个用例绿。
+Expected: PASS，全部用例绿（用例数以测试文件为准）。
 
 - [ ] **Step 5: 提交**
 
@@ -764,15 +792,15 @@ Expected（按 2026-10-29 的语料实测，数字允许 ±5 % 浮动，但**必
 
 | 族 | 字符数 | 块数 | woff2 文件数 | 备注 |
 |---|---|---|---|---|
-| `wenkai` | 2 601 | 1 027 | **2 054** | 无热区；每块 400 + 700 两份 |
+| `wenkai` | 8 197 | 1 348 | **2 696** | 无热区；每块 400 + 700 两份（R16） |
 | `sans` | 16 968 | 2 786 | **2 786** | 热区 300 + 2 785 个 Ext 块 |
 | `serif` | 19 888 | 3 115 | **3 115** | 热区 300 + 2 814 个 Ext 块 |
-| 合计 | — | 6 928 | **7 955** | 三份 CSS gzip 合计 ≈ 97 KB |
+| 合计 | — | 7 249 | **8 597** | 三份 CSS gzip 合计 ≈ **119 KB**（sans 42.7 / serif 45.0 / wenkai 31.4） |
 
 单文件大小：`sans/hot.woff2` ≈ 69 KB（300 字 × 229 B），每个 `ext-*.woff2` ≤ 4 KB（一个 16 码位窗口最多 16 字）。
 `public/font/fonts-manifest.json` 的 `version` 是 12 位 hex。
 
-> 这一步会跑十几分钟（切 7 955 次；实测 `subset-font` 94 ms/16 字、210 ms/64 字）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
+> 这一步会跑十几分钟（切 8 597 次；实测 `subset-font` 94 ms/16 字、210 ms/64 字）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
 
 - [ ] **Step 6: 提交**
 
@@ -801,7 +829,7 @@ git commit -m "feat(fonts): add the hot-tier and windowed webfont subsetter [202
   export const LIMITS = {
     hotBytes: 90 * 1024,
     extBlockBytes: 12 * 1024,
-    cssBytes: 110 * 1024,       // 三份样式表 gzip 后合计
+    cssBytes: 125 * 1024,       // 三份样式表 gzip 后合计（R17）
     maxFacesPerCss: 3300,
     maxFontFilesPerPage: 130,
     pageFontBytes: {
@@ -843,7 +871,7 @@ describe('verify-webfont-subsets', () => {
   it('publishes the size limits from the design', () => {
     expect(LIMITS.hotBytes).toBe(90 * 1024);
     expect(LIMITS.extBlockBytes).toBe(12 * 1024);
-    expect(LIMITS.cssBytes).toBe(110 * 1024);
+    expect(LIMITS.cssBytes).toBe(125 * 1024);
     expect(LIMITS.maxFontFilesPerPage).toBe(130);
     expect(LIMITS.pageFontBytes['/dictionary']).toBe(300 * 1024);
   });
@@ -875,9 +903,9 @@ CLI 输出格式：
 ```
 [verify] sans   : 16968 chars, 2786 files, 6082 KB   OK
 [verify] serif  : 19888 chars, 3115 files, 7244 KB   OK
-[verify] wenkai :  2601 chars, 1027 blocks, 2054 files, 1204 KB   OK
-[verify] css    : 97 KB gzip (sans 36 / serif 40 / wenkai 21)   OK
-[verify] pages  : / 295 KB / 120 files   /dictionary 209 KB / 41 files   /poetry 282 KB / 94 files   /stories 408 KB / 114 files   OK
+[verify] wenkai :  8197 chars, 1348 blocks, 2696 files, 2961 KB   OK
+[verify] css    : 119 KB gzip (sans 43 / serif 45 / wenkai 31)   OK
+[verify] pages  : / 307 KB / 86 files   /dictionary 212 KB / 34 files   /poetry 284 KB / 88 files   /stories 419 KB / 114 files   OK
 [verify] 0 error(s)
 ```
 
@@ -958,7 +986,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 5. 每条 face 的 `font-display` 都是 `swap`。
 6. 每条 face 都有非空的 `unicode-range`。
 7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 400 KB。
-8. 三份样式表合起来 gzip 后 ≤ 110 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定后的预算；spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
+8. 三份样式表合起来 gzip 后 ≤ 125 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定 + R17 放宽后的预算；spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
 9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
 10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
 11. `app/globals.css` 包含 `'Noto Sans SC'`、`'Noto Serif SC'`、`'LXGW WenKai TC'` 这 3 个族名，并且**不含** `'Noto Sans SC 1'` / `'Noto Sans SC Ext'` / `'LXGW WenKai TC Ext'` 这类旧的分档族名（防止有人把链改回去）。
