@@ -111,6 +111,7 @@ export default [
       // globs skip dot-directories, so the file belongs to no project.
       '.superpowers/**',
       '.tmp/**',
+      'scripts/fonts/staging/**',
     ],
   },
 ];
