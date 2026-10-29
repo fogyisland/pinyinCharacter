@@ -2448,8 +2448,11 @@ git commit -m "feat(deploy): add nginx brotli snippet and anonymous HTML microca
 
 **Files:**
 - Create: `scripts/precompress-assets.mjs`
+- Create: `scripts/precompress-assets.d.mts`
 - Test: `tests/unit/scripts/precompress-assets.test.ts`
 - Modify: `package.json`
+
+> ⚠️ **`scripts/precompress-assets.d.mts` 不是可选项（Ruling F31-r，2026-10-30）**：本仓库 `tsconfig.json` 是 `allowJs: false`（`:5`），而 Step 1 的测试文件是从 `.ts` 里 `import '../../../scripts/precompress-assets.mjs'` ⇒ 没有同名 `.d.mts` 的话 `tsc --noEmit` 直接红。仓库里每个被 `.ts` import 的 `.mjs` 都有一份同名的 `.d.mts`（`scripts/fonts/build-fonts-css.d.mts`、`build-webfont-subsets.d.mts`、`instance-webfont-axis.d.mts`、`verify-webfont-subsets.d.mts`、`webfont-charset.d.mts`、`scripts/perf/class-attribution.d.mts`）—— 照这个形状写一份：把上面 Interfaces 段列的五个导出（`COMPRESSIBLE_EXTENSIONS`、`SKIPPED_EXTENSIONS`、`isCompressible`、`precompressFile`、`precompressTree`）的**签名**声明出来，类型不许用 `any`。
 
 **Interfaces:**
 - Consumes: 无
@@ -2580,7 +2583,7 @@ Expected: 打印每个目录的 `written/skipped/failed` 与节省字节数。
 - [ ] **Step 6: 提交**
 
 ```bash
-git add scripts/precompress-assets.mjs tests/unit/scripts/precompress-assets.test.ts package.json .gitignore
+git add scripts/precompress-assets.mjs scripts/precompress-assets.d.mts tests/unit/scripts/precompress-assets.test.ts package.json .gitignore
 git commit -m "feat(deploy): add the brotli and gzip asset precompressor [2026-10-29 HH.MM]"
 ```
 
@@ -2665,7 +2668,7 @@ git commit -m "docs(deploy): add the BBR and TCP buffer tuning checklist [2026-1
 - Modify: `package.json`
 
 **Interfaces:**
-- Consumes: Task 4 的 `scripts/perf/class-attribution.mjs`（`collectFamilyCharsets()`）；Task 1 的 `loadFamilyCharsets()`；Task 3 产出的 `public/font/fonts-manifest.json` 与 `public/font/web/**`
+- Consumes: Task 4 的 `scripts/perf/class-attribution.mjs`（`collectFamilyCharsets()`）；Task 3 产出的**已发布的**三份样式表 `public/font/fonts-sans.css` / `fonts-serif.css` / `fonts-wenkai.css` 与 `public/font/web/**`（**页面→文件的映射与字节数一律从这两处实测**，见 Step 3 —— Ruling F31-s，2026-10-30）
 - Produces: 三个测量脚本（都走网络）+ 对应的 npm script
 
   **归因规则只有一份**：HTML → 字族的映射一律调用 Task 4 的 `scripts/perf/class-attribution.mjs`，**不要**在这个任务里再写一份正则——`data/font-page-profiles.json`（fixture）和本任务的 `font-load.mjs`（预算核算）必须用同一条规则，否则测出来的载荷是假的。
@@ -2692,7 +2695,12 @@ Expected: PASS。若不通过，先修 Task 4 留下的那个模块，**不要**
 - [ ] **Step 3: 实现 `scripts/perf/font-load.mjs`**
 
 - 取页面 HTML → **Task 4 的 `collectFamilyCharsets(html)`** → 每族字符集（归属规则与 `data/font-page-profiles.json` 天然一致，因为两者调用的是同一个模块：栈式继承，`font-kai` → wenkai、`font-serif` → serif、`font-sans` → sans，都没有就是 sans）。
-- 用 Task 1 的 `loadFamilyCharsets()`（热区 + 频率序 6 字 Ext 块）与 `public/font/fonts-manifest.json`，算出「每族要下载哪些文件」，累加文件**字节**与**文件数**。
+- **「每族要下载哪些文件」必须从「已发布的三份样式表」推导**，照抄校验器 `checkPageBudget` 的那条路（`scripts/fonts/verify-webfont-subsets.mjs:697-765`）：
+  1. 读 `public/font/fonts-sans.css` / `fonts-serif.css` / `fonts-wenkai.css` 三份**已发布**的样式表，把每条 `@font-face` 的 `unicode-range` 展开成「码位 → `src` 里的文件名」的映射（一个块的两条 face 指向两个文件时，两个文件名都算）；
+  2. 页面的每族字符集按码位查表 ⇒ 得到**去重后**的文件集合；
+  3. **字节数从磁盘上的 woff2 实测**（`public/font/web/<族>/<文件名>`），**文件数** = 去重后的文件个数。
+- ⚠️ **不要用 Task 1 的 `loadFamilyCharsets()` 去推文件名**：它是**未过滤**的计划（sans 2778 / serif 3265 / wenkai 1318 个 Ext 块），而构建脚本的 `filterPlanByCoverage` **会过滤并重新编号**（已发布的是 2458 / 2840 / 1317）⇒ 用未过滤的 Ext 序号拼文件名，**从第一个被过滤掉的块之后全部错位**。
+- ⚠️ **不要拿 `public/font/fonts-manifest.json` 当字节或文件清单的来源**：它只有 `version` 和三个样式表路径，**没有任何字节数或文件清单**。
 - 打印表格：`page | sans KB | serif KB | kai KB | total KB | font files`，并对照预算 `/ ≤ 330 KB`、`/dictionary ≤ 330 KB`、`/poetry ≤ 240 KB`、`/stories ≤ 330 KB`、文件数 ≤ **12**（F27-j-g；实测 308 / 308 / 221 / 308 KB，最多 **4** 个文件）；超标退出码 1。
 
 - [ ] **Step 4: 实现 `scripts/perf/full-load.mjs`**
