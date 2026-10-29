@@ -158,8 +158,8 @@ R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子�
 > | 热区 300/300/**0** | 热区 **300/300/300**，且**并集优先** | F27-j-c / F27-j-d / F27-j-h |
 > | 页面预算 500 / 480 / 360 / 540 KB | **330 / 330 / 240 / 330 KB** | F27-j-g |
 > | 请求数 ≤ 130/页（实测 ≤111） | **≤ 12 个文件/页**（实测 3–4） | F27-j-g |
-> | CSS gzip 168 KB | **158 KB**（sans 60 / serif 71 / wenkai 27） | F27-j-g |
-> | 8 779 个文件 / 净 +8 347 个 | **8 683 个文件 / 净 +8 246 个**、27.45 MB | F27-j-h |
+> | CSS gzip 168 KB | **158 KB**（sans 60 / serif 71 / wenkai 27） | F27-j-g（⚠️ 已被 **F31-a** 再取代：过滤后 ≈ **154–156 KB**） |
+> | 8 779 个文件 / 净 +8 347 个 | **8 683 个文件 / 净 +8 246 个**、27.45 MB | F27-j-h（⚠️ 已被 **F31-a** 再取代：**7 936 个文件 / 净 +7 499 个**、≈ 27.3 MB） |
 > | 实测页面 443 / 430 / 323 / 485 KB | **308 / 308 / 221 / 308 KB** | F27-j |
 > | 「Task 1 已提交的实现不动」 | **Task 1 必须改**（这就是第 4 轮） | F27-j-c / F27-j-d / F27-j-e / F27-j-f |
 >
@@ -377,6 +377,18 @@ fixture 由一段正则切 HTML 产生：它把标签的**直属文本**取成 `
 - 探针（都在 `scripts/fonts/staging/`，gitignored）：`make-page-profiles.mjs`（栈式归因 + 重新生成 fixture）、`probe-legacy-baseline2.mjs`（用修正后的 fixture 重测现网基线）、`probe-final-design.mjs`（E0–E4 设计矩阵）、`probe-full-new-design.mjs`（**把 8 683 个文件全切出来** ⇒ 权威的单文件字节分布）。
 - 归因规则的正确性有**独立证据**：`/` 的楷体字从 38 涨到 52、诗词页从 6 涨到 75，且涨上去的字正是 `font-kai` 元素里的字（`《在岳咏蝉》`、`《诗三百首》`）。
 - 字体覆盖：四个源字体都覆盖全部 8 105 个标准字，**0 缺失** ⇒ 子集化不会造成豆腐块（G10）。诗题的 7 个独有字（鵩 飚 巂 岧 鴈 劒 濬）在 `LXGWWenKaiTC` 与 `NotoSansSC` 里都有字形。
+
+#### F31 裁决（Task 3 任务评审后追加，2026-10-29）
+
+> ⚠️ **本节取代上面 F27 各项里「产物文件数 / CSS gzip / 字符数」的最终值**——那些是**过滤前**的探针数字。F31-a 把字符集按源字体的真实覆盖裁掉之后，产出的文件数从 8 683 降到 **7 936**，字符数从 45 060 降到 **40 584**，Ext 块从 7 361 降到 **6 615**。**机制结论（F27-j-a/b/c/d/e/f）不受影响**，被取代的只有规模数字。
+
+| # | 裁决 |
+|---|---|
+| **F31-a** | **字体是权威，字符集必须按源字体的真实覆盖过滤**。Task 1 的 `CJK_RANGES` 覆盖 Plane 3/4（`0x20000–0x2FA1F` / `0x30000–0x3134F`），但三款源字体**没有**这些区的字形 ⇒ 计划里有 4 476 个字画不出来，652 个 Ext 块**一个字都画不出**（空壳文件：sans 282 / serif 370），CSS 却声明它们 ⇒ **Task 4 的 cmap 门禁永远过不了**。修法：在**切分之前**用 fontkit 读源字体的 `characterSet` 过滤计划，尾部**重新切块**；一个族的覆盖取该族**各个源文件的交集**（楷体 400 与 700 共用一条 `unicode-range`，取并集会让 700 那条 face 声称只有 400 画得出的字 ⇒ 粗体豆腐块）。**过滤不改变任何渲染**：新字体缺的那些 BMP 字在旧的 432 个 Google 子集里同样没有（G10 不受影响）。 |
+| **F31-b** | **Task 4 的 cmap 门禁改写**：①（硬）一个块声明的每个字都必须在**它自己那个文件**里有字形；②（硬）同一族各块的 `unicode-range` 两两不相交；③（信息）文件里超出本块范围的码位**不算失败**，但要排除 `U+FFFF`（每个文件都有 `.notdef` 映射）；④「并集 == Task 1 的字符集」改成「并集 ⊆ 字符集」（过滤后不可能再相等）。 |
+| **F31-c** | **接受评审的 Minor #1 / #2 / #4 / #5**（TOTAL 累加器把 Ext 块数塞进叫 `blocks` 的字段、源字体缺失不预检、`renderFace` 不挡空字符集、`buildAll` 不可测）；**驳回 Minor #3**（`manifestVersion` 没有把文件名也喂进哈希）——R18 的版本令牌已经让「任一 woff2 变了 ⇒ CSS 内容变 ⇒ URL 变」，字节相同的两份样式表不可能出现，把文件名喂进哈希是多余的。 |
+
+> 完整推导、实测数据与「为什么不能用另外两种修法」见账本 `.superpowers/sdd/2026-10-29-site-optimization-wave2-plan/progress.md`。
 
 ---
 
@@ -1166,11 +1178,14 @@ git commit -m "feat(fonts): add the webfont source downloader and axis instancer
   ```js
   export const FAMILIES;                 // 见下表
   export const OUT_ROOT;                 // <repo>/public/font/web
+  export const STAGING_DIR;              // <repo>/scripts/fonts/staging/web（可被 buildAll 的 options 覆盖）
   export function blockFileNames(family, block): string[];
-  export function renderFace(spec): string;
-  export function renderStylesheet(family, plan): string;
+  export function renderFace(spec): string;               // spec 带 version（见 R18）
+  export function renderStylesheet(family, plan, version): string;
   export function manifestVersion(cssByFile): string;
-  export function buildAll(): Promise<BuildReport>;
+  export function createVersionHasher(): { update(name, bytes): void; digest(): string };  // R18
+  export function filterPlanByCoverage(plan, covered, extBlockChars): TierPlan;           // F31-a
+  export function buildAll(options = {}): Promise<BuildReport>;   // options.stagingDir
   ```
 
   **一族一个 font-family 名（R15）**：不再是 `Noto Sans SC 1` / `2` / `Ext` 三条链，而是同族所有 face 共用 `Noto Sans SC`，靠**互不相交的精确 `unicode-range`** 区分命中。
@@ -1183,6 +1198,38 @@ git commit -m "feat(fonts): add the webfont source downloader and axis instancer
 
   文件命名：`hot.woff2` / `ext-001.woff2` / `ext-002.woff2` …（静态族再加 `-<weight>` 后缀：`ext-001-400.woff2`、`ext-001-700.woff2`）。
 
+  **`FAMILIES` 里还有一项 `extBlockChars`（F31-a）**：三族都是 **6**，与 `scripts/fonts/webfont-charset.mjs` 的每族默认值（`DEFAULT_EXT_BLOCK_CHARS = 6`、`FAMILY_DEFAULTS` 的 `{ tier1Size: 300, extBlockChars: 6 }`）**必须一致**——过滤后要**重新切块**，切块宽度就得由 Task 3 自己说了算而不是继承别人的。测试里有一条漂移守卫钉住它。
+
+  **⚠️ woff2 的 URL 必须带版本令牌（R18）**：生成的样式表里每一个 woff2 的 `src` 都是 `url(/font/web/<dir>/<file>?v=<12 hex>) format('woff2')`，**不是**裸 URL。令牌**按族**计算 = 该族写出的每个 woff2 的「文件名 + 字节」按写入顺序（hot → ext-001 → … → ext-N，静态族再加 `-400` / `-700`）喂进 `sha256`，取 hex 前 12 位。
+
+  为什么：**`/font/:path*` 是 `Cache-Control: public, max-age=31536000, immutable`**（`next.config.ts:45`；生产实测逐字吻合）⇒ 回访的浏览器在最长一年内**不会发条件请求**。而这些文件名是**稳定的**（`hot.woff2` / `ext-001.woff2`），**不含内容哈希**（7 936 个文件里含 8 位以上 hex 的文件名 **0** 个）⇒ 语料一变、频率序一变、块成员就整体移位 ⇒ 同一 URL 下的文件内容变了 ⇒ 浏览器继续用旧文件 ⇒ 旧文件里没有新 `unicode-range` 声称的那些字 ⇒ **豆腐块（G10）**。旧机制没有这个问题是因为 Google 的文件名带内容哈希（`k3kXo84MPvpLmixcA63oeALRIIKIyQ4.woff2`），内容变 ⇒ 文件名变 ⇒ URL 变 ⇒ 缓存自然失效——**新设计把文件名改成稳定名时把这个隐式机制弄丢了**。
+
+  代价（**在真实的三份样式表上实测**，不是估算）：统一令牌 `?v=<12 hex>` ⇒ gzip **+310 / +377 / −468 B**，合计 **174 948 → 175 167 B（+219 B）**，仍在 `175 * 1024` = 179 200 之内（余量 4 033 B）；「每个文件各带自己的哈希」⇒ **+83 007 B** ⇒ 直接破预算 ⇒ **否决**。
+
+  令牌取**产物字节**的哈希是安全的，因为切分是确定性的：实测同进程连续切两次字节完全相同；**跨进程**新切出的 `sans/ext-001.woff2` 与几小时前落在磁盘上的那份**逐字节相同**。⇒ 语料没变令牌就不变（不会把 27 MB 的缓存白废掉），语料变了令牌就变。
+
+**⚠️ 字符集必须按源字体的真实覆盖过滤（F31-a；测试写进 Step 1，实现写进 Step 3）**
+
+  **一个 face 只能声称它画得出的字。** 三份源字体本来就没有 CJK 扩展 B/G 区（Plane 3/4）的字形，而 Task 1 的 `CJK_RANGES` 有意覆盖那些区 ⇒ 语料里的生僻字进了计划，却切不出字形 ⇒ 产物里有 **652 个「空壳文件」**（CSS 声明 6 个字符、文件里一个字形都没有：`sans/ext-1364.woff2` 的表目录是 `cmap:4 glyf:0 loca:4`，`fontkit` 取 `characterSet` 直接抛 `Could not find a supported cmap table`）⇒ **Task 4 的 cmap 闸门按现状必然失败**。
+
+  实测的分布（量的是磁盘上的真实产物）：
+
+  | 族 | 计划字符 | 无字形的字符 | 全空块 | 部分空块 | 过滤后 Ext 块 | 过滤后文件 |
+  |---|---|---|---|---|---|---|
+  | sans | 16 968 | **1 925**（Plane 3 = 1 902，Plane 4 = 19，BMP 4） | **282** | 71 | 2 458 | 2 459 |
+  | serif | 19 888 | **2 548**（Plane 3 = 2 511，Plane 4 = 35，BMP 2） | **370** | 107 | 2 840 | 2 841 |
+  | wenkai | 8 204 | **3**（U+3400/U+FF00/U+FFEF） | 0 | 2 | 1 317 | 2 636 |
+  | 合计 | 45 060 | 4 476 | 652 | 180 | 6 615 | **7 936**（原 8 683） |
+
+  **过滤不改变任何一个字的渲染结果**（控制器逐个打开旧的 432 个 Google 子集文件查过：**凡是新字体缺的字，旧子集也缺**——sans 缺的 U+9FFF/U+4DBF 旧 sans 也没有；U+FF00/U+FFEF 是 Unicode 未分配码位，谁都没有；wenkai 缺的 U+3400 旧 wenkai 也没有）⇒ 今天它们就靠系统字体兜底，过滤后仍然靠系统字体兜底。**G10 不受影响。**
+
+  做法：
+  1. 用 `fontkit`（**已经是 devDependency，G3 满足**）打开该族的**每一个源字体**取 `characterSet`（码位集合）。
+  2. **该族的覆盖 = 各个源字体的覆盖的交集**（不是并集）——楷体是静态族，400 与 700 两个文件声明**同一条 `unicode-range`**（R3），取并集会让 700 那条 face 声称只有 400 画得出的字 ⇒ **粗体渲染时那个字变豆腐块**。
+  3. **过滤发生在切分之前**：`hot` = 滤完的热区（保持原顺序，不补不截）；尾块 = 把原 `extBlocks` 摊平 → 滤掉没覆盖的 → **按 `extBlockChars` 重新切成连续编号的块**（不重新切的话，一块 6 字里若 5 字画不出，这块只剩 1 字，白占一个文件）。
+  4. `extBlockChars` 从 `FAMILIES` 表取（**6**，与 `webfont-charset.mjs` 的每族默认值一致）；**测试里要有一条漂移守卫**，不许在两处各写一个魔数。
+  5. 过滤后**不会有空块**，也不会有「0 字符的 face」。`renderFace` 仍要加一道**空字符 ⇒ 抛错**的守卫（`unicode-range: ;` 会让整条 face 被浏览器静默丢弃）。
+
 - [ ] **Step 1: 写失败测试**
 
 创建 `tests/unit/scripts/webfont-subsets.test.ts`：
@@ -1194,13 +1241,17 @@ import {
   renderStylesheet,
   blockFileNames,
   manifestVersion,
+  filterPlanByCoverage,
 } from '../../../scripts/fonts/build-webfont-subsets.mjs';
-import { loadFamilyCharsets } from '../../../scripts/fonts/webfont-charset.mjs';
+import { loadFamilyCharsets, planTiers } from '../../../scripts/fonts/webfont-charset.mjs';
 
 const plan = {
   hot: ['一', '丁'],
   extBlocks: [{ index: 1, chars: ['万', '丈'] }],
 };
+
+// R18: 每个 woff2 的 URL 都带这个版本令牌。
+const VERSION = 'abc123def456';
 
 describe('blockFileNames', () => {
   it('uses one file per block for the variable families', () => {
@@ -1222,7 +1273,7 @@ describe('blockFileNames', () => {
 describe('renderStylesheet', () => {
   it('declares one face per block for a variable family', () => {
     const sans = FAMILIES.find((f) => f.key === 'sans')!;
-    const css = renderStylesheet(sans, plan);
+    const css = renderStylesheet(sans, plan, VERSION);
     expect(css.match(/@font-face/g)).toHaveLength(2);
     expect(css).toContain("font-family: 'Noto Sans SC'");
     expect(css).not.toContain('Noto Sans SC 1');
@@ -1231,7 +1282,7 @@ describe('renderStylesheet', () => {
 
   it('declares one face per weight for the static kai family', () => {
     const kai = FAMILIES.find((f) => f.key === 'wenkai')!;
-    const css = renderStylesheet(kai, plan);
+    const css = renderStylesheet(kai, plan, VERSION);
     expect(css.match(/@font-face/g)).toHaveLength(4);
     expect(css).toContain('font-weight: 400');
     expect(css).toContain('font-weight: 700');
@@ -1239,7 +1290,7 @@ describe('renderStylesheet', () => {
 
   it('gives every face a unicode-range and font-display swap', () => {
     const sans = FAMILIES.find((f) => f.key === 'sans')!;
-    const css = renderStylesheet(sans, plan);
+    const css = renderStylesheet(sans, plan, VERSION);
     const faces = css.split('@font-face').slice(1);
     expect(faces).toHaveLength(2);
     for (const face of faces) {
@@ -1248,11 +1299,22 @@ describe('renderStylesheet', () => {
     }
   });
 
-  it('points every face at /font/web/<family>/<file>', () => {
+  it('points every face at /font/web/<family>/<file> with the version token', () => {
     const sans = FAMILIES.find((f) => f.key === 'sans')!;
-    const css = renderStylesheet(sans, plan);
-    expect(css).toContain('src: url(/font/web/sans/hot.woff2) format(\'woff2\')');
-    expect(css).toContain('src: url(/font/web/sans/ext-001.woff2) format(\'woff2\')');
+    const css = renderStylesheet(sans, plan, VERSION);
+    expect(css).toContain("src: url(/font/web/sans/hot.woff2?v=abc123def456) format('woff2')");
+    expect(css).toContain("src: url(/font/web/sans/ext-001.woff2?v=abc123def456) format('woff2')");
+  });
+
+  it('stamps every face with the version token (R18)', () => {
+    for (const family of FAMILIES) {
+      const css = renderStylesheet(family, plan, VERSION);
+      const urls = [...css.matchAll(/url\(\/font\/web\/[^)]+\)/g)].map((m) => m[0]);
+      expect(urls.length).toBeGreaterThan(0);
+      for (const url of urls) {
+        expect(url).toContain(`?v=${VERSION}`);
+      }
+    }
   });
 });
 
@@ -1266,6 +1328,44 @@ describe('manifestVersion', () => {
     const b = manifestVersion({ 'fonts-sans.css': 'b' });
     expect(a).not.toBe(b);
     expect(manifestVersion({ 'fonts-sans.css': 'a' })).toBe(a);
+  });
+});
+
+describe('filterPlanByCoverage', () => {
+  it('drops the characters the font cannot draw and re-cuts the tail', () => {
+    const covered = new Set(['一', '三', '四', '六'].map((c) => c.codePointAt(0)));
+    const filtered = filterPlanByCoverage(
+      {
+        hot: ['一', '二', '三'],
+        extBlocks: [
+          { index: 1, chars: ['四', '五'] },
+          { index: 2, chars: ['六', '七'] },
+        ],
+      },
+      covered,
+      6,
+    );
+    expect(filtered.hot).toEqual(['一', '三']);
+    // '五' 与 '七' 没有覆盖，被滤掉后剩下的 '四' 与 '六' 合到同一块
+    expect(filtered.extBlocks).toEqual([{ index: 1, chars: ['四', '六'] }]);
+  });
+
+  it('never produces an empty block', () => {
+    const covered = new Set(['四'].map((c) => c.codePointAt(0)));
+    const filtered = filterPlanByCoverage(
+      { hot: ['一'], extBlocks: [{ index: 1, chars: ['四', '五'] }] },
+      covered,
+      6,
+    );
+    expect(filtered.extBlocks.every((b) => b.chars.length > 0)).toBe(true);
+  });
+
+  it('uses the same block width as the charset planner', () => {
+    const chars = Array.from({ length: 20 }, (_, i) => String.fromCodePoint(0x4e00 + i));
+    const planner = planTiers({ ordered: chars, score: new Map() }, {});
+    for (const family of FAMILIES) {
+      expect(family.extBlockChars).toBe(planner.extBlocks[0].chars.length);
+    }
   });
 });
 
@@ -1288,49 +1388,59 @@ Expected: FAIL —— 找不到 `scripts/fonts/build-webfont-subsets.mjs`。
 
 - [ ] **Step 3: 实现 `scripts/fonts/build-webfont-subsets.mjs`**
 
-1. `FAMILIES` 常量按上表写死，含 `key`、`label`（= font-family 名）、`css`、`dir`、`sources`（变量族一个文件、静态族两个文件）、`weights`（变量族 `['400 700']`，静态族 `['400','700']`）、`variable`（boolean）、`hotSize`（**三族都是 300**——F27-j-d 给楷体也留了热区）。
+1. `FAMILIES` 常量按上表写死，含 `key`、`label`（= font-family 名）、`css`、`dir`、`sources`（变量族一个文件、静态族两个文件）、`weights`（变量族 `['400 700']`，静态族 `['400','700']`）、`variable`（boolean）、`hotSize`（**三族都是 300**——F27-j-d 给楷体也留了热区）、`extBlockChars`（**三族都是 6**——必须与 `scripts/fonts/webfont-charset.mjs` 的每族默认值一致，测试里有一条漂移守卫钉住它）。
 
 2. `blockFileNames(family, block)`：
    - `block` = `{ kind: 'hot' }` → 基名 `hot`；`{ kind: 'ext', index }` → 基名 `ext-` + index 补 3 位零（`ext-003`、`ext-123`）。
    - 变量族：文件名 = `<基名>.woff2`（一个文件承载 400–700 变量轴）。
    - 静态族：文件名 = `<基名>-<weight>.woff2`，权重顺序 400、700。
 
-3. `renderFace(spec)` 输出一个 `@font-face` 块，字段顺序固定：
+3. `filterPlanByCoverage(plan, covered, extBlockChars)`（F31-a）：**一个 face 只能声称它画得出的字**。
+   - `covered` = `Set<number>`，码位集合，来源是 `fontkit.create(源字体).characterSet`（`fontkit` 已经是 devDependency，G3 满足）。
+   - 该族的 `covered` = **各个源字体覆盖的交集**（不是并集）：静态族（楷体）400 与 700 两个文件声明**同一条 `unicode-range`**（R3），取并集会让 700 那条 face 声称只有 400 画得出的字 ⇒ **粗体渲染时那个字变豆腐块**。
+   - 返回：`hot` = 滤完的热区（保持原顺序，不补不截）；`extBlocks` = 原 `extBlocks` 摊平 → 滤掉没覆盖的 → **按 `extBlockChars` 重新切成连续编号的块**（不重切的话，一块 6 字里若 5 字画不出，这块只剩 1 字，白占一个文件）。
+
+4. `renderFace(spec)` 输出一个 `@font-face` 块，字段顺序固定：
    ```
    @font-face {
      font-family: '<familyName>';
      font-style: normal;
      font-weight: <weight>;
      font-display: swap;
-     src: url(/font/web/<dir>/<file>) format('woff2');
+     src: url(/font/web/<dir>/<file>?v=<version>) format('woff2');
      unicode-range: <ranges>;
    }
    ```
-   `familyName` **恒为 `family.label`**（R15：一族一名，不再有 `1` / `2` / `Ext` 后缀）。`unicode-range` 由 Task 1 的 `unicodeRange(chars)` 生成——精确并集，不是 min–max 区间（R12）。
+   `familyName` **恒为 `family.label`**（R15：一族一名，不再有 `1` / `2` / `Ext` 后缀）。`unicode-range` 由 Task 1 的 `unicodeRange(chars)` 生成——精确并集，不是 min–max 区间（R12）。**`version` 是该族的版本令牌（R18），必填**——没有它，浏览器会一直用一年前缓存的旧字体文件，而新的 `unicode-range` 声称里面有那个字 ⇒ 豆腐块。
+   **空字符 ⇒ 抛错**：`unicodeRange([])` 返回空串 ⇒ `unicode-range: ;` ⇒ 整条 face 被浏览器**静默丢弃**（不报错、那个字只是悄悄不生效）。守卫要指名是哪个族的哪个文件（G12：文案说真话）。
 
-4. `renderStylesheet(family, plan)`：按 热区 → Ext 块（按 `index` 升序）顺序拼所有 face，前面加一段注释头：
+5. `renderStylesheet(family, plan, version)`：按 热区 → Ext 块（按 `index` 升序）顺序拼所有 face，前面加一段注释头：
    ```
    /* fonts-sans.css — body typeface — --font-han-sans
     * Generated by scripts/fonts/build-webfont-subsets.mjs. Do not edit by hand. */
    ```
-   静态族每个块输出两条 face（400 与 700），变量族每个块输出一条（`font-weight: 400 700`）。
+   静态族每个块输出两条 face（400 与 700），变量族每个块输出一条（`font-weight: 400 700`）。`version` 原样传给每一条 face 的 `src`。
 
-5. `buildAll()`：
+6. `buildAll(options = {})`：
+   - `options.stagingDir` 覆盖暂存目录（默认 `STAGING_DIR` = `scripts/fonts/staging/web`），**为了让「源字体缺失」这条失败路径可测**。
    - 读 `loadFamilyCharsets()` 得到三族的 `{ hot, extBlocks }`。
-   - 读源字体（从 `scripts/fonts/staging/web/`）；**源文件缺失必须报错退出**并提示 `npm run fonts:download-web && npm run fonts:instance-web`。
+   - **预检**：先把三族的**全部源字体与许可证**校验一遍（读得到、非空、是 sfnt、许可证在位），**全部通过之后才开始写任何产物**——否则第二/三族失败时会留下「第一族的新 CSS 已落盘而 manifest 还是旧的」这种半成品（`?v=` 与内容脱钩 ⇒ 浏览器可能拿到旧的 immutable 缓存样式表）。
+   - 读源字体（从暂存目录）；**源文件缺失必须报错退出**并提示 `npm run fonts:download-web && npm run fonts:instance-web`。
+   - 按 `filterPlanByCoverage` 过滤该族的计划（F31-a）。
    - 用 `subsetFont(buffer, chars.join(''), { targetFormat: 'woff2' })` 逐块切分，写到 `public/font/web/<dir>/<file>`（目录先 `mkdir -p`）。**文本参数必须是字符串**：`subset-font` 的第二个参数是「要保留哪些字符」的文本，传数组会抛 `The subset text must be given as a string`（F25-e）。
    - 变量族用同一个源文件切每一块；静态族 400/700 各切一次。
-   - 写 `public/font/fonts-<family>.css`。
+   - **算该族的版本令牌（R18）**：在写文件的循环里，把每个 woff2 的「文件名 + 字节」依次喂进该族的 `sha256`，写完这一族后取 hex 前 12 位。**不额外读盘**。令牌**按族**算（sans 变了不该把 serif 的 URL 也弄脏）。
+   - 写 `public/font/fonts-<family>.css`（用刚算出的令牌）。
    - 写 `public/font/fonts-manifest.json`：
      ```json
      { "version": "<12 hex>", "files": { "wenkai": "/font/fonts-wenkai.css", "sans": "/font/fonts-sans.css", "serif": "/font/fonts-serif.css" } }
      ```
      `version` = `manifestVersion(cssByFile)`，其中 `cssByFile` 是三份样式表内容的 map（键用文件名）。**必须保持 `files` 的三个键名不变**——`lib/font-css.ts` 依赖它。
    - 把三份 OFL 许可证复制到 `public/font/web/OFL-<family>.txt`。
-   - 打印每族的块数、文件数、字符数与产物字节数，最后一行打印总量（块数 / 文件数 / 字节 / CSS gzip 字节）。
+   - 打印每族的块数、文件数、字符数与产物字节数，最后一行打印总量（块数 / 文件数 / 字节 / CSS gzip 字节）。**块数要分清「含热区」与「只 Ext」**——现在 TOTAL 把 Ext 块数累加进一个叫 `blocks` 的字段，打印行说「7361 blocks」而实际是 7 364。
    - **不删除**旧的 Google 子集目录（删除是 Task 5 的事，避免一步做两件事）。
 
-6. `manifestVersion(cssByFile)`：把 map 的内容按键排序后依次喂进 `createHash('sha256')`，取 hex 前 12 位。
+7. `manifestVersion(cssByFile)`：把 map 的内容按键排序后依次喂进 `createHash('sha256')`，取 hex 前 12 位。
 
 - [ ] **Step 4: 跑测试确认通过**
 
@@ -1349,10 +1459,14 @@ Expected（按 2026-10-29 的语料实测，数字允许 ±5 % 浮动，但**必
 
 | 族 | 字符数 | Ext 块数 | woff2 文件数 | 产物字节 | 备注 |
 |---|---|---|---|---|---|
-| `wenkai` | 8 204 | 1 318 | **2 638** | 7 624 KB | 热区 300 + 1 318 个 Ext 块；每块 400 + 700 两份 |
-| `sans` | 16 968 | 2 778 | **2 779** | 8 254 KB | 热区 300 + 2 778 个 Ext 块（变量族一个文件承载 400–700） |
-| `serif` | 19 888 | 3 265 | **3 266** | 12 228 KB | 热区 300 + 3 265 个 Ext 块（变量族一个文件承载 400–700） |
-| 合计 | — | 7 361 | **8 683** | **28 106 KB ≈ 27.45 MB** | 三份 CSS gzip 合计 ≈ **158 KB**（sans 60 / serif 71 / wenkai 27） |
+| `wenkai` | 8 201 | 1 317 | **2 636** | ≈ 7 600 KB | 热区 300 + 1 317 个 Ext 块；每块 400 + 700 两份 |
+| `sans` | 15 043 | 2 458 | **2 459** | ≈ 8 200 KB | 热区 300 + 2 458 个 Ext 块（变量族一个文件承载 400–700） |
+| `serif` | 17 340 | 2 840 | **2 841** | ≈ 12 150 KB | 热区 300 + 2 840 个 Ext 块（变量族一个文件承载 400–700） |
+| 合计 | 40 584 | 6 615 | **7 936** | ≈ 27 100–27 400 KB ≈ 27.3 MB | 三份 CSS gzip 合计 **必须 ≤ 179 200 B（175 KB）**，sans 单独 **必须 ≤ 66 560 B（65 KB）** |
+
+> ⚠️ **这一组数字是 F31-a 过滤之后的**（字符集已按源字体的真实覆盖裁剪）。未过滤的旧数字是 sans 16 968 / 2 778 / 2 779、serif 19 888 / 3 265 / 3 266、wenkai 8 204 / 1 318 / 2 638、合计 7 361 块 / 8 683 个文件 / 27.45 MB / CSS gzip 158 KB——**那 747 个多出来的文件是「声明了 6 个字却一个字都画不出」的空壳**（实测 sans 282 个 / serif 370 个），每个还要占一条 `@font-face`（CSS 变胖）＋ 一次请求（页面变慢）。差额 **4 476 个字**几乎全在 Plane 3/4（生僻字区），源字体里根本没有字形。
+>
+> **CSS gzip 的精确值以实跑为准**（本表给的是按「每条 face ≈ 22.6 B gzip」推的估值：去掉 746 个 Ext 块 ⇒ 约 −25 KB，再加 R18 令牌 +219 B ⇒ 约 154–156 KB）。**硬阈值是 179 200 B（三份合计）与 66 560 B（sans 单独）**，超了就必须回头砍块宽或热区。
 
 单文件大小（**F27-j 全量实测的真实分布**，不是 F25 的线性模型——F25 的 `fixed + perChar` 已被推翻，分布重尾）：
 
@@ -1365,7 +1479,7 @@ Expected（按 2026-10-29 的语料实测，数字允许 ±5 % 浮动，但**必
 ⇒ Task 4 的单文件上限按 **热区 ≤ 96 KB、Ext 块 ≤ 7 KB** 判定（F27-e）。注意 **有相当比例的块超过 4 KB**（F27-j 实测 serif 的 Ext 块 p50 就是 4 076 B、楷体的 p50 是 5 732 B）——F25 的 4 KB 上限会把大量正确的块误判为超限。
 `public/font/fonts-manifest.json` 的 `version` 是 12 位 hex。
 
-> 这一步会跑约 5 分钟（切 8 683 次；实测 `subset-font` 约 31–35 ms/6 字块）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
+> 这一步会跑约 5 分钟（切 7 936 次；实测 `subset-font` 约 31–35 ms/6 字块）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
 
 - [ ] **Step 6: 提交**
 
@@ -1462,37 +1576,45 @@ describe('verify-webfont-subsets', () => {
 Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
 Expected: FAIL —— 找不到模块。
 
-> **Step 4 的前提**：Task 3 的 `npm run fonts:subset-web` 已经跑过，`public/font/web/**`（8 683 个文件）与三份样式表**在磁盘上**。测试读的是工作树，不是 git —— 所以 Task 4 跑测试时产物是未提交状态，这是**预期的**：产物由 **Task 5** 一起提交（见 Task 3 Step 6 的说明）。若磁盘上没有产物，先跑 `npm run fonts:subset-web`（约 5 分钟），**不要**在本任务里 `git add` 它们。
+> **Step 4 的前提**：Task 3 的 `npm run fonts:subset-web` 已经跑过，`public/font/web/**`（**7 936 个文件**，F31-a 过滤后的数量）与三份样式表**在磁盘上**。测试读的是工作树，不是 git —— 所以 Task 4 跑测试时产物是未提交状态，这是**预期的**：产物由 **Task 5** 一起提交（见 Task 3 Step 6 的说明）。若磁盘上没有产物，先跑 `npm run fonts:subset-web`（约 5 分钟），**不要**在本任务里 `git add` 它们。
 >
-> 打开全部 8 683 个 woff2（`fontkit.create`）实测约 **45 秒**（现有 Google 子集每文件 5.4 ms，本次的 3 KB 小块更快），测试超时给到 300 秒足够。
+> 打开全部 7 936 个 woff2（`fontkit.create`）实测约 **45 秒**（现有 Google 子集每文件 5.4 ms，本次的 3 KB 小块更快），测试超时给到 300 秒足够。
 
 - [ ] **Step 3: 实现 `scripts/fonts/verify-webfont-subsets.mjs`**
 
 校验项（**每一项失败都要收集进 `errors`，最后统一退出 1**，不要遇到第一个错就抛）：
 
-1. **覆盖完整**：对每一族，用 Task 1 的字符集与样式表里的 `unicode-range` 求并集，断言并集 == 该族字符集（不多不少）。
+1. **覆盖完整**：对每一族，断言样式表里所有 `unicode-range` 的并集 **⊆** Task 1 的字符集（不多不少地**不能**声明字库之外的字）。
+   ⚠️ **不能**再断言「并集 == 该族字符集」：F31-a 过滤之后，并集**必然小于**字符集——差的就是**源字体画不出的那些字**（sans 1 925 / serif 2 548 / wenkai 3）。等式不成立，⊆ 成立且有意义。
 2. **块不相交**：同一族的**所有**块（热区 + 每个 Ext 块）的 `unicode-range` 两两不相交。
-3. **cmap 正确**：用 `fontkit.create(buffer)` + `font.hasGlyphForCodePoint(cp)` 打开每个产物，断言该块声明的每个字符都能渲染；并断言产物**不包含**该块之外的字符。
+3. **cmap 正确（豆腐块闸门，G10）**：用 `fontkit.create(buffer)` 打开每个产物，断言**该块自己声明的每个字符**在**自己那个文件**里都有字形（`font.hasGlyphForCodePoint(cp)`）。
+   - **硬失败**：声明了却画不出 ⇒ 豆腐块。
+   - **不计失败、只报告**：文件里多出来的码位——**必须排除 `U+FFFF`**（`.notdef` 的 cmap 映射，**每个文件都有**），其余（例如 serif `ext-105` 声明 U+3010 却带 U+3011、`ext-106` 声明 U+3011 却带 U+3010——源字体里这两个码位**共用同一个字形**，harfbuzz 的字形闭包把兄弟码位一起带进来）**记为信息，不判失败**：两个文件都带着它们，浏览器无论选中哪个 face 都画得出 ⇒ 不会出豆腐块。
 4. **文件大小**：热区文件 ≤ `LIMITS.hotBytes`（**96 KB**；F27-j 实测 sans 72 KB / serif 89 KB / wenkai 77 KB/份），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（**7 KB**；F27-j 实测 sans max 5 368 B、serif max 6 600 B、wenkai 的 400+700 两份合计最大 9 096 B ⇒ 单份约 4.5 KB）。⚠️ **不要**用 F25 的 4 KB 上限——F27 实测有五分之一的块超过 4 KB，用 4 KB 会把正确的产物判成失败。
 5. **样式表**：三份 `fonts-<family>.css` **gzip 后合计** ≤ `LIMITS.cssBytes`（175 KB，F25-d），单份的 `@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`（3 400）。**无衬线那一份单独 ≤ `LIMITS.sansCssBytes`（65 KB）**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞首屏。
 6. **每条 face 的 `font-display` 必须是 `swap`**，`src` 指向的文件必须存在。
 7. **manifest**：`version` 是 12 位 hex，且等于三份样式表内容按文件名排序后的 sha256 前 12 位；`files` 的键恰为 `{sans, serif, wenkai}`。
 8. **页面预算**（对应 Review Focus 第 5 条）：读 `data/font-page-profiles.json`，对 `/`、`/dictionary`、`/poetry`、`/stories` 四个页面，用各族的热区/Ext 规则算出「浏览器会下载哪些文件」，累加**字节**与**文件数**，断言字节 ≤ `LIMITS.pageFontBytes[path]` 且文件数 ≤ `LIMITS.maxFontFilesPerPage`。
    计算规则：一个字符落在热区就下载热区文件；落在 Ext 就下载它所在的那一个 Ext 块文件（静态族该块是 2 个文件）。同一块只算一次。
+9. **版本令牌（R18）**：每一族的样式表里**每一个** `url(/font/web/…)` 都必须带 `?v=<12 位 hex>`；且该令牌等于**这一族自己的** woff2 文件的 sha256（按文件名排序，「文件名 + 字节」依次喂进 sha256，取 hex 前 12 位）。
+   **为什么要有这一项**：`/font/**` 在生产上是 `public, max-age=31536000, immutable`（一年不可变），而新设计的 woff2 文件名是**稳定名**（`hot.woff2` / `ext-001.woff2`，7 936 个文件里 0 个带内容哈希）——语料一变、频率顺序一变、Ext 块的成员就整体换位，于是同一个 URL 换了内容：浏览器手里那份 immutable 的旧文件不会重新下载，而新 CSS 的 `unicode-range` 声称那个文件里有那个字 ⇒ **豆腐块（G10）**。令牌一改 URL 就变，浏览器必然重新取。
+   **要断言的是「令牌 = 内容的哈希」，不是「令牌长得像哈希」**：令牌与内容脱钩就等于没令牌。所以校验器要**自己按上文的算法重算一遍**，跟 CSS 里写的比对；重算不出来（少一个文件、顺序变了、字节对不上）就报错。
+   **实测代价**：统一令牌对三份样式表的 gzip 增量合计 **+219 B**（sans +310 / serif +377 / wenkai −468），离 175 KB 预算的余量从 4 252 B 降到 4 033 B；「每个文件各带自己的哈希」是 +83 007 B，直接破预算——所以是**按族**一个令牌，不是按文件。
    **fixture 怎么来的**：`data/font-page-profiles.json` 记录了 2026-10-29 从 `https://ziyun.pudafo.com` 抓到的四个页面服务端 HTML 里、**按栈式归属**得到的 CJK 字符集——元素自己的 `font-kai` / `font-serif` / `font-sans` class 决定它渲染成哪款字，没有就继承父元素，再没有就是 `body` 的 sans。`scripts/fonts/capture-page-font-profiles.mjs` 是它的再生成器：默认从 `--base`（默认 `https://ziyun.pudafo.com`）抓四个页面；也接受 `--html-dir <dir>` 从本地 HTML 目录读（文件名 `<page>.html`，`page` ∈ `home`/`dictionary`/`poetry`/`stories`）。**校验器本身不联网**，只用仓库里的 fixture。
 
 CLI 输出格式：
 
 ```
-[verify] sans   : 16968 chars, 2779 files, ~8.3 MB   OK
-[verify] serif  : 19888 chars, 3266 files, ~12.0 MB   OK
-[verify] wenkai :  8204 chars, 2638 files, ~7.5 MB   OK
-[verify] css    : ~158 KB gzip (sans ~60 / serif ~71 / wenkai ~27)   OK
+[verify] sans   : 15043 chars, 2459 files, ~8 MB   OK
+[verify] serif  : 17340 chars, 2841 files, ~11 MB   OK
+[verify] wenkai :  8201 chars, 2636 files, ~7 MB   OK
+[verify] css    : ~160 KB gzip (待实跑)   OK
 [verify] pages  : / 308 KB / 4 files   /dictionary 308 KB / 4 files   /poetry 221 KB / 3 files   /stories 308 KB / 4 files   OK
 [verify] 0 error(s)
 ```
 
-> 字符数、文件数、每页字节与请求数是 **2026-10-29 F27-j 全量实测值**（`scripts/fonts/staging/probe-full-new-design.mjs` 与 `probe-final-design.mjs` 的 `E2 UNION seeded, caps 300/300/300` 一行）——**不是** F25 的模型值，也不是 F27 的旧值（旧的按语料频率排热区，每页要 87–111 个文件）。产物字节与 CSS gzip 字节带 `≈`，实跑后以真实数字为准。
+> **字符数与文件数是 F31-a 过滤之后的值**（sans 16 968 → **15 043** / 2 459 个文件；serif 19 888 → **17 340** / 2 841；wenkai 8 204 → **8 201** / 2 636；合计 8 683 → **7 936** 个文件、6 615 个 Ext 块）——差额就是**源字体画不出的那些字**（Plane 3/4 的生僻字 + 3 个 BMP 码位）。
+> 每页字节与请求数仍是 **2026-10-29 F27-j 全量实测值**（`scripts/fonts/staging/probe-full-new-design.mjs` 与 `probe-final-design.mjs` 的 `E2 UNION seeded, caps 300/300/300` 一行）——**不是** F25 的模型值，也不是 F27 的旧值（旧的按语料频率排热区，每页要 87–111 个文件）。产物字节与 CSS gzip 字节带 `≈`，实跑后以真实数字为准。
 
 字体文件用 `fontkit` 打开；`fontkit.create` 对 woff2 的支持在本仓库已被 `scripts/fonts/verify-brush-subsets.mjs` 验证过。
 
@@ -1837,6 +1959,8 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 
 文件头注释里「public/font/fonts.css used to be linked ...」那段过时了。改成描述新模型：三份分族样式表（sans 阻塞首屏，另两份 `media="print"` 异步）、每份内部按「热区（页面画像并集优先）+ 频率序 6 字 Ext 块」分块、**一族一个 font-family 名**、每条 face 带**精确且互不相交**的 `unicode-range`。**函数体一字不改**。
 
+⚠️ **注释里有一句现在是不成立的，必须一并改掉**：现有注释说 manifest 的 `?v=` 让「整个 `/font/` 目录树都能用 `Cache-Control: immutable` 而永不过期」。这句话**只对样式表成立**，对 woff2 文件**不成立**——`?v=` 只出现在样式表的 URL 上，样式表里的 woff2 URL 另带**每族一个**的版本令牌（R18）。新注释要把两层令牌说清楚：`manifest.version` 版本化的是**样式表**；**woff2 自己的**令牌写在 CSS 里，由 Task 3 生成。
+
 - [ ] **Step 3: 重写 `tests/unit/lib/fonts-css.test.ts`**
 
 新文件的用例（保留 `describe` 命名风格）：
@@ -1847,12 +1971,14 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 4. 每条 face 的 `src` 文件在 `public/` 下真实存在。
 5. 每条 face 的 `font-display` 都是 `swap`。
 6. 每条 face 都有非空的 `unicode-range`。
-7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（实测 **625 KB**，2 779 条 face；余量约 12 %，因为它随块数线性增长——块数一旦变化这个阈值要重算）。另两份实测：serif 原始 741 KB / gzip 71 KB，wenkai 原始 297 KB / gzip 27 KB，三份合计原始 1 663 KB / gzip 158 KB。
-8. 三份样式表合起来 gzip 后 ≤ 175 KB —— 用 `node:zlib` 的 `gzipSync` 算。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；实测 158 KB = sans 60 / serif 71 / wenkai 27。spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
+7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（**Task 3 未过滤构建实测 661 307 B ≈ 646 KB / 2 779 条 face**；**F31-a 过滤后是 2 459 条 face，预计 ≈ 585 KB**——它随块数线性增长，块数一旦变化这个阈值要重算。**Task 5 的实现者必须以 Task 3 修复轮实跑的输出为准**，把真实字节数写进这条用例的注释）。另两份的同口径实测（未过滤的旧构建）：serif 原始 784 049 B ≈ 766 KB / gzip 73 754 B；wenkai 原始 627 103 B ≈ 613 KB / gzip 38 355 B（wenkai 是**静态族，一个块两份文件**，400 + 700 各一份，所以它的原始字节是单份的两倍——计划里早先写的「wenkai 297 KB」是**单份**数字，别拿它当整族数字用）。三份合计原始 **2 072 459 B** / gzip **174 948 B**（不含令牌）/ **8 683** 个 woff2 / 28 774 592 B 字体字节（**未过滤**）；F31-a 过滤后应为 **7 936** 个 woff2、字符 40 584、Ext 块 6 615。
+8. 三份样式表合起来 gzip 后 ≤ `LIMITS.cssBytes` = **175 × 1024 = 179 200 字节**（F25-d 定的是 175 **KB** = 175 × 1024，不是 175 000 字节——算余量别算错）——用 `node:zlib` 的 `gzipSync` 算。**实测（Task 3 未过滤构建）：174 948 B 合计**（sans 62 839 / serif 73 754 / wenkai 38 355），余量 4 252 B；**加上 R18 的版本令牌后是 175 167 B**（sans +310 / serif +377 / wenkai −468），余量 **4 033 B**。**F31-a 过滤后少 746 个 Ext 块 ⇒ 预计 ≈ 158–160 KB（158 000–164 000 B），余量 ≈ 15 000–21 000 B——最终以 Task 3 修复轮的实跑输出为准。** 另两份的 gzip 预算按同样口径换算：`LIMITS.sansCssBytes` = **65 × 1024 = 66 560 字节**（未过滤 + 令牌实测 63 149 B，余量 3 411 B；过滤后预计 ≈ 56 KB，余量更大）。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
 9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
 10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
 11. `app/globals.css` 包含 `'Noto Sans SC'`、`'Noto Serif SC'`、`'LXGW WenKai TC'` 这 3 个族名，并且**不含** `'Noto Sans SC 1'` / `'Noto Sans SC Ext'` / `'LXGW WenKai TC Ext'` 这类旧的分档族名（防止有人把链改回去）。
 12. 旧的 Google 子集目录**不存在**：`public/font/noto-sans-sc`、`public/font/noto-serif-sc`、`public/font/lxgw-wenkai-tc`、`public/font/fonts.css` 都不在磁盘上。
+13. **每条 face 的 `src` URL 都带 `?v=<12 位 hex>`**（R18），且三份样式表的令牌**各自不同**（令牌按族算：族内容变了令牌才变）。这一条防的是「有人手改 CSS 把令牌删掉」——那会让 woff2 退回一年 immutable 的旧缓存，重新长出豆腐块（G10）。
+14. 旧的 Google 子集目录**不存在**……（并入第 12 条，不重复）。
 
 - [ ] **Step 4: 改 `tests/unit/lib/middleware-redirect.test.ts`**
 
