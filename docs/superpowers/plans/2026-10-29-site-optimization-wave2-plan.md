@@ -72,6 +72,9 @@ spec 是愿景文档：它说了系统**必须**做到什么，但没穷举每�
 1. **字符集漏了一个站内会渲染的字** → 该字走完整条 fallback 链落到系统字体，整页出现两种字体混排；没装 CJK 字体的机器上直接是豆腐块。
    → 归属 Task 1（`webfont-charset.test.ts`：集合并集断言）+ Task 4（`verify-webfont-subsets.mjs`：逐档 cmap 覆盖断言）。
 
+1b. **某个字只在一处被渲染，而那一处的来源是「抄来的字面量」而不是权威数据源** → 抄漏一个就永久豆腐块。本轮已实证一例：`components/game/RadicalToken.tsx:31` 用 `font-kai` 渲染 `chars.radical`，其数据来自 `data/radicals.json` 的 214 个 values；而 `components/dictionary/RadicalSidebar.tsx` 那份 213 项的 `RADICALS` 字面量把 `戶` 写成简体的 `户`、且漏了 `韭` —— 只抄源码字面量会漏掉这两个。权威源是 `data/radicals.json` 的 values。
+   → 归属 Task 1（`webfont-charset.test.ts`：断言 `戶` 与 `韭` 都在楷体字符集里，且楷体 ⊂ sans ⊂ serif）。
+
 2. **登录态页面被 nginx 微缓存喂给了匿名用户** → 把 A 用户的账号页返回给了 B 用户。这是本轮唯一的高危安全项。
    → 归属 Task 6（`nginx-config.test.ts`：断言 `proxy_cache_bypass $cookie_auth_token $http_rsc;`、`proxy_no_cache $cookie_auth_token $upstream_http_set_cookie $http_rsc;`、`proxy_cache_valid 200 10s;` 三行同时存在，且 TTL ≤ 10 s）。
 
@@ -346,12 +349,14 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
 
    | 族 | 语料来源 | 权重 |
    |---|---|---|
-   | `wenkai` | 源码字面量（`app/` `components/` `lib/` 的 `.ts`/`.tsx`/`.mjs`/`.js`）× 1000、`data/classics/*.json` 的 `title` 字段、`data/sutras/*.json` 的 `title` 字段、`data/content/*.json` 中**带 `rare` 字段的那些文件的 `char` 字段** | 见左 |
-   | `sans` | `wenkai` 的全部 + `data/content/*.json` 全部字符串 + `data/poems/*.json` 全部字符串 + `scripts/fonts/gb2312-7000.txt` + `data/general-standard-chinese-characters.json` + `data/unihan/CJKRadicals.txt` | 语料 × 1，源码 × 1000 |
+   | `wenkai` | 源码字面量（`app/` `components/` `lib/` 的 `.ts`/`.tsx`/`.mjs`/`.js`）× 1000、`data/classics/*.json` 的 `title` 字段、`data/sutras/*.json` 的 `title` 字段、`data/content/*.json` 中**带 `rare` 字段的那些文件的 `char` 字段**、**`data/radicals.json` 的 214 个部首值** | 见左 |
+   | `sans` | `wenkai` 的全部 + `data/content/*.json` 全部字符串 + `data/poems/*.json` 全部字符串 + `scripts/fonts/gb2312-7000.txt` + `data/general-standard-chinese-characters.json` | 语料 × 1，源码 × 1000 |
    | `serif` | `sans` 的全部 + `data/sutras/*.json` 全部字符串 + `data/classics/*.json` 全部字符串 | 同上 |
 
    - **`data/stories/` 不存在**：故事正文在 `data/content/<char>.json` 的 `rare.story` 里，正文由 sans/serif 渲染。楷体只在故事详情页渲染那个**生僻字本身**（`app/stories/StoryClient.tsx:117` 的 `font-kai font-bold text-9xl`），所以楷体字符集收 `rare` 文件的 `char`，**不收故事正文**——收了会把密集区的窗口填满，每个页面都替它们买单（实测首页楷体 35 KB vs 收正文时的 51 KB）。
-   - `gb2312-7000.txt` 每行一个字，按行读；`data/general-standard-chinese-characters.json` 是一个 JSON 数组/对象，**遍历它的全部字符串值**取字（先 `JSON.stringify` 再逐字符也可以，只要不漏）；`data/unihan/CJKRadicals.txt` 是纯文本，逐字符取 CJK。
+   - `gb2312-7000.txt` 每行一个字，按行读；`data/general-standard-chinese-characters.json` 是一个 JSON 数组/对象，**遍历它的全部字符串值**取字（先 `JSON.stringify` 再逐字符也可以，只要不漏）。
+   - **`data/radicals.json` 只取 values，不取 keys。** 它是 `Record<char, radical>`，70 234 个 key 是查表用的、页面从不渲染（`scripts/import-chars-data.ts:23` 用它填 `chars.radical` 列），214 个 value 才是页面上的部首字。整份扫描会把字符集从 1.7 万撑到 7 万，机制直接崩。收 values 的理由：`components/game/RadicalToken.tsx:31` 用 `font-kai` 渲染部首，所以部首必须在**楷体**子集里；而 `components/dictionary/RadicalSidebar.tsx` 那份 213 项的 `RADICALS` 字面量把 `戶` 写成简体的 `户`、且根本没有 `韭`——照抄源码字面量会漏掉这两个，游戏里渲染成豆腐块。
+   - **`data/unihan/` 两个文件不进语料**：`CJKRadicals.txt` 是 `number; hex; hex` 的码位映射（246 行、0 个汉字），`Unihan_RadicalStrokeCounts.txt` 是 `U+XXXX\tkRSUnicode\t1.4` 行，两者都只被一次性生成脚本 `scripts/build-radicals.ts` 消费，运行时页面不读它们。逐字符扫描对它们是 0 收益。
    - 源码字面量扫描：递归遍历 `app/`、`components/`、`lib/`，跳过 `node_modules`，只读 `.ts`/`.tsx`/`.mjs`/`.js`，逐字符取 CJK。
    - 语料目录不存在时**跳过并打印一行说明**，不要抛错。
    - 单个语料文件 JSON 解析失败时跳过该文件并计数，不要让整个构建炸掉；最后打印一行 `skipped N malformed file(s)`。
