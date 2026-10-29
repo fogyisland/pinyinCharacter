@@ -19,7 +19,7 @@ import type { FamilyName, TierPlan } from './webfont-charset.mjs';
  * lib/font-css.ts depend on 'Noto Sans SC', 'Noto Serif SC' and
  * 'LXGW WenKai TC' exactly.
  *
- * `sources` are the instanced source fonts, in WEIGHT ORDER: the first one
+ * `sources` are the instanced source fonts, in weight order: the first one
  * carries the first weight of `weights`. The two body faces are variable
  * (one source file, one face per block, `font-weight: 400 700`); the brand
  * face is static (one source file per weight, one face per block AND
@@ -49,6 +49,14 @@ export interface FamilySpec {
    * be longer, and the plan itself decides how long the hot tier really is.
    */
   hotSize: number;
+  /**
+   * How many characters one Ext block holds.
+   *
+   * It must match the per family default of scripts/fonts/webfont-charset.mjs:
+   * the plan is filtered by the real glyph coverage and the tail is cut
+   * into NEW blocks, so the width is this script's own number.
+   */
+  extBlockChars: number;
   /** The licence file of the family, in the staging directory. */
   license: string;
 }
@@ -71,6 +79,30 @@ export interface FaceSpec {
   file: string;
   /** The characters the face carries — its unicode-range is their union. */
   chars: string[];
+  /**
+   * The version token of the family (R18).
+   *
+   * It is REQUIRED: the subset files are served `immutable` for a year
+   * under a stable name, so without a token in the URL the browser would
+   * keep the old file after the corpus changed.
+   *
+   * Its shape is twelve lowercase hex characters — the token travels in the
+   * query string of every URL of the family.
+   */
+  version: string;
+}
+
+/**
+ * The hasher of the version token of one family.
+ *
+ * The bytes are fed in as they are written, so nothing has to be read back
+ * from the disk to compute the token.
+ */
+export interface VersionHasher {
+  /** Feed one file into the hash: its name first, then its bytes. */
+  update(fileName: string, bytes: Buffer): void;
+  /** The token: twelve lowercase hex characters. */
+  digest(): string;
 }
 
 /** What one built family cost. */
@@ -79,14 +111,16 @@ export interface FamilyReport {
   key: FamilyName;
   /** The number of characters the family covers. */
   chars: number;
-  /** The number of blocks, the hot tier included. */
+  /** The number of blocks of the family: the hot tier plus the Ext blocks. */
   blocks: number;
-  /** The number of Ext blocks. */
+  /** The number of Ext blocks of the family. */
   extBlocks: number;
   /** The number of subset files that were written. */
   files: number;
   /** The bytes of the subset files. */
   bytes: number;
+  /** The version token of the family, twelve lowercase hex characters. */
+  version: string;
   /** The bytes of the stylesheet. */
   cssBytes: number;
   /** The bytes of the gzipped stylesheet. */
@@ -106,7 +140,9 @@ export interface BuildReport {
     /** The number of characters of every family together. */
     chars: number;
     /** The number of Ext blocks of every family together. */
-    blocks: number;
+    extBlocks: number;
+    /** The number of blocks of every family together, the hot tiers included. */
+    totalBlocks: number;
     /** The number of subset files of every family together. */
     files: number;
     /** The bytes of the subset files of every family together. */
@@ -118,23 +154,57 @@ export interface BuildReport {
   };
 }
 
+/** The options of a build. */
+export interface BuildOptions {
+  /**
+   * The directory the source fonts and the licences are read from.
+   *
+   * It defaults to STAGING_DIR. It is injectable so the failure path of a
+   * missing source font can be tested without touching the real staging
+   * directory.
+   */
+  stagingDir?: string;
+}
+
 /** The three families the site ships. */
 export declare const FAMILIES: FamilySpec[];
 
 /** Where the subset files are written: <repo>/public/font/web. */
 export declare const OUT_ROOT: string;
 
+/** Where the source fonts and the licences are read from. */
+export declare const STAGING_DIR: string;
+
 /** The file names one block is cut into. */
 export declare function blockFileNames(family: FamilySpec, block: BlockRef): string[];
+
+/**
+ * The hasher of the version token of one family (R18).
+ */
+export declare function createVersionHasher(): VersionHasher;
+
+/**
+ * Drop the characters the font cannot draw, and cut the tail into new
+ * blocks of `extBlockChars` characters.
+ */
+export declare function filterPlanByCoverage(
+  plan: TierPlan,
+  covered: Set<number>,
+  extBlockChars: number,
+): TierPlan;
 
 /** Render one @font-face rule. */
 export declare function renderFace(spec: FaceSpec): string;
 
 /** Render the stylesheet of one family. */
-export declare function renderStylesheet(family: FamilySpec, plan: TierPlan): string;
+export declare function renderStylesheet(
+  family: FamilySpec,
+  plan: TierPlan,
+  version: string,
+): string;
 
 /** The content hash of the stylesheets, twelve lowercase hex characters. */
 export declare function manifestVersion(cssByFile: Record<string, string>): string;
 
 /** Cut every family and write the stylesheets and the manifest. */
-export declare function buildAll(): Promise<BuildReport>;
+export declare function buildAll(options?: BuildOptions): Promise<BuildReport>;
