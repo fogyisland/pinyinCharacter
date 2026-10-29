@@ -66,7 +66,7 @@
  *   npm run fonts:download-web && npm run fonts:instance-web
  */
 import { existsSync } from 'node:fs';
-import { copyFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, readdir, unlink, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -457,6 +457,60 @@ async function copyLicense(family, stagingDir) {
 }
 
 /**
+ * Remove the subset files that this build did not write.
+ *
+ * The output directory of a family belongs to the build: a corpus that
+ * shrinks leaves `ext-NNNN.woff2` files behind that no stylesheet
+ * references any more. They are dead weight in the repository, so they
+ * are swept once the family has been written.
+ *
+ * Only `.woff2` files are candidates, and only the ones that are not in
+ * `keep` are removed. Anything else in the directory is left alone.
+ *
+ * The sweep happens AFTER the family is written, never before: clearing
+ * the directory first would, when the build fails half way through, leave
+ * the old stylesheet pointing at files that are already gone — the whole
+ * family would fall back to the system font, which is worse than a tofu
+ * box. Sweeping at the end keeps that failure mode exactly as it is
+ * today: the old stylesheet, a mixture of old and new files, and a
+ * non-zero exit.
+ *
+ * @param {string} dir      the output directory of one family
+ * @param {Set<string>} keep the file names this build wrote
+ * @returns {Promise<string[]>} the names that were removed, sorted
+ */
+export async function sweepStaleFiles(dir, keep) {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch (err) {
+    // A directory that is not there has nothing to sweep.
+    if (typeof err?.code === 'string' && err.code === 'ENOENT') return [];
+    throw new Error(`[webfont] cannot read the output directory ${dir}: ${err.message}`);
+  }
+
+  const removed = [];
+  for (const entry of entries) {
+    // A subdirectory is not a product of the build, and a file that is not
+    // a subset file is not ours to touch either.
+    if (!entry.isFile()) continue;
+    if (!entry.name.toLowerCase().endsWith('.woff2')) continue;
+    if (keep.has(entry.name)) continue;
+
+    const path = join(dir, entry.name);
+    try {
+      await unlink(path);
+    } catch (err) {
+      throw new Error(`[webfont] cannot remove the stale subset ${path}: ${err.message}`);
+    }
+    removed.push(entry.name);
+  }
+
+  removed.sort();
+  return removed;
+}
+
+/**
  * The code points the family can actually draw.
  *
  * The coverage of a family is the INTERSECTION of the coverage of its source
@@ -500,6 +554,7 @@ async function buildFamily(family, plan, sources, stagingDir) {
 
   const hasher = createVersionHasher();
   const blocks = blocksOf(plan);
+  const written = new Set();
   let files = 0;
   let bytes = 0;
 
@@ -542,6 +597,7 @@ async function buildFamily(family, plan, sources, stagingDir) {
       // The token is built while the files are written: the name and the
       // bytes of every file, in the order they are written.
       hasher.update(name, subset);
+      written.add(name);
 
       files += 1;
       bytes += subset.length;
@@ -562,6 +618,15 @@ async function buildFamily(family, plan, sources, stagingDir) {
     );
   }
   await copyLicense(family, stagingDir);
+
+  // The family is complete now: the stylesheet points at the files that
+  // were just written, so the files of an older corpus that this build
+  // did not write are dead weight and are swept away. The sweep happens
+  // after the write on purpose — see sweepStaleFiles.
+  const swept = await sweepStaleFiles(outDir, written);
+  if (swept.length > 0) {
+    console.log(`[webfont] ${family.key}: swept ${swept.length} stale file(s)`);
+  }
 
   const chars = blocks.reduce((sum, block) => sum + block.chars.length, 0);
   const cssBytes = Buffer.byteLength(css, 'utf8');

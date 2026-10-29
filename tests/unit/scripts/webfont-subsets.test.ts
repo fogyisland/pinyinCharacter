@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync, readdirSync, statSync } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import {
@@ -13,6 +13,7 @@ import {
   createVersionHasher,
   filterPlanByCoverage,
   buildAll,
+  sweepStaleFiles,
 } from '../../../scripts/fonts/build-webfont-subsets.mjs';
 import { loadFamilyCharsets, planTiers } from '../../../scripts/fonts/webfont-charset.mjs';
 
@@ -264,6 +265,81 @@ describe('the planned charsets fit the design budget', () => {
       expect(p.extBlocks[0].chars.length).toBe(family.extBlockChars);
     }
   }, 180_000);
+});
+
+describe('sweepStaleFiles', () => {
+  /** A fresh empty directory for one case. */
+  async function makeTempDir(): Promise<string> {
+    return mkdtemp(join(tmpdir(), 'webfont-sweep-'));
+  }
+
+  it('removes the subset files this build did not write', async () => {
+    const dir = await makeTempDir();
+    try {
+      await writeFile(join(dir, 'hot.woff2'), 'hot');
+      await writeFile(join(dir, 'ext-001.woff2'), 'ext');
+      await writeFile(join(dir, 'ext-999.woff2'), 'stale');
+
+      const removed = await sweepStaleFiles(dir, new Set(['hot.woff2', 'ext-001.woff2']));
+
+      expect(removed).toEqual(['ext-999.woff2']);
+      expect(readdirSync(dir).sort()).toEqual(['ext-001.woff2', 'hot.woff2']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('leaves everything that is not a subset file alone', async () => {
+    const dir = await makeTempDir();
+    try {
+      await writeFile(join(dir, 'notes.txt'), 'notes');
+
+      const removed = await sweepStaleFiles(dir, new Set());
+
+      expect(removed).toEqual([]);
+      expect(readdirSync(dir)).toEqual(['notes.txt']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('does nothing when the directory does not exist', async () => {
+    const dir = join(tmpdir(), 'webfont-sweep-no-such-directory');
+    await rm(dir, { recursive: true, force: true });
+
+    await expect(sweepStaleFiles(dir, new Set())).resolves.toEqual([]);
+  });
+
+  it('removes every subset file when the build wrote none', async () => {
+    const dir = await makeTempDir();
+    try {
+      await writeFile(join(dir, 'hot.woff2'), 'hot');
+      await writeFile(join(dir, 'ext-001.woff2'), 'ext');
+      await writeFile(join(dir, 'notes.txt'), 'notes');
+
+      const removed = await sweepStaleFiles(dir, new Set());
+
+      expect(removed).toEqual(['ext-001.woff2', 'hot.woff2']);
+      expect(readdirSync(dir)).toEqual(['notes.txt']);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('never removes a directory, whatever it is called', async () => {
+    const dir = await makeTempDir();
+    try {
+      await mkdir(join(dir, 'nested.woff2'), { recursive: true });
+      await writeFile(join(dir, 'stale.woff2'), 'stale');
+
+      const removed = await sweepStaleFiles(dir, new Set());
+
+      expect(removed).toEqual(['stale.woff2']);
+      expect(existsSync(join(dir, 'nested.woff2'))).toBe(true);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
 });
 
 describe('buildAll', () => {

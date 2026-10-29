@@ -206,5 +206,14 @@ export declare function renderStylesheet(
 /** The content hash of the stylesheets, twelve lowercase hex characters. */
 export declare function manifestVersion(cssByFile: Record<string, string>): string;
 
+/**
+ * Remove the subset files that this build did not write.
+ *
+ * Only the `.woff2` files of the directory that are not in `keep` are
+ * removed; anything else in the directory is left alone. The names of the
+ * removed files are returned, sorted.
+ */
+export declare function sweepStaleFiles(dir: string, keep: Set<string>): Promise<string[]>;
+
 /** Cut every family and write the stylesheets and the manifest. */
 export declare function buildAll(options?: BuildOptions): Promise<BuildReport>;
