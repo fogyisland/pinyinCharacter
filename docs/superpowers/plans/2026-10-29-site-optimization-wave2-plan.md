@@ -6,7 +6,7 @@
 
 **Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（按用字频率取前 N 字）+ 若干 Ext 文件（其余字按**频率序**每 6 个字符切一块，F25）**。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（实测省 10–11 % 的子集字节，不是 F25 写的 44 %），再用仓库已有的 `subset-font` 切分。**真实成本不是线性模型**：子集字节由每个字形的轮廓复杂度决定，分布重尾——同一个 6 字块实测从 852 B 到 6 600 B（F27 的实测分布，见「第三轮实测修正的字节数（F27）」一节）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
 
-**Tech Stack:** Node 22 · npm · `subset-font@2.5.0`（已有，devDependency）· `fontkit@2.0.4`（已有）· Python `fonttools 4.61.1` + `brotli 1.2.0`（构建期，已装）· nginx（Ubuntu/Debian 包）· vitest
+**Tech Stack:** Node 22 · npm · `subset-font`（`package.json` 声明 `^2.4.0`，已安装 **2.5.0**，devDependency）· `fontkit`（`^2.0.4`，已安装 2.0.4，运行时依赖）· Python `fonttools 4.61.1` + `brotli 1.2.0`（构建期，已装）· nginx（Ubuntu/Debian 包）· vitest
 
 **Spec:** `docs/superpowers/specs/2026-10-29-site-optimization-wave2-design.md`（绑定权威；本计划是它的论证）
 
