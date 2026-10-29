@@ -346,11 +346,17 @@ export function unicodeRange(chars) {
 /**
  * The ScriptKind a source file is parsed with.
  *
- * The file name decides it and the decision matters: a `.tsx` file may
- * hold JSX, so it is parsed as TSX, while a `.ts` file may hold `<T>expr`
- * type assertions, which TSX would mistake for JSX. TSX is the more
- * permissive of the two, so it is the default when the caller names no
- * file.
+ * The file name decides it, and the decision matters in BOTH directions:
+ * a `.tsx` file may hold JSX, so it is parsed as TSX, while a `.ts` file
+ * may hold `<T>expr` type assertions, which TSX would mistake for JSX.
+ *
+ * The default is TSX because a wrong guess has to fail SAFE. Parsed as
+ * TSX, a `.ts` file keeps the comments that sit behind a type assertion,
+ * so the charset covers a few extra characters — harmless. Parsed as TS, a
+ * `.tsx` file loses the JSX text behind a `//`: `https://… 字` reads as a
+ * line comment and the 字 is dropped from the charset, which would paint
+ * a tofu. Over-covering is a slightly larger font; under-covering is a
+ * missing glyph.
  */
 function scriptKindFor(fileName) {
   return /\.tsx$/i.test(fileName) ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
@@ -789,21 +795,22 @@ export function unionOfPages(pages, family) {
 /**
  * How a broken fixture is restored, as a remedy the reader can act on.
  *
- * `data/font-page-profiles.json` is a tracked file of the repository, so
+ * `data/font-page-profiles.json` is the fixture the repository ships, so
  * `git checkout` is what restores it, and the repository relative path is
- * the form that command wants. A path that is NOT that file — a fixture the
- * caller named, or a path that does not exist at all — is not tracked, and
- * git has nothing to say about it: the only remedy left is to point the
- * module at another fixture.
+ * the form that command wants. The rule is the DEFAULT FIXTURE PATH, not
+ * "is this file tracked by git": a path that is NOT that file — a fixture
+ * the caller named, or a path that does not exist at all — gets no claim
+ * about git, and the only remedy left is to point the module at another
+ * fixture.
  */
 function fixtureRestore(path) {
   const rel = relative(ROOT, path);
   const insideRepository = Boolean(rel) && !rel.startsWith('..') && !isAbsolute(rel);
   const label = insideRepository ? rel.split(/[\\/]/).join('/') : path;
-  const isTrackedFixture = label === 'data/font-page-profiles.json';
+  const isDefaultFixture = label === 'data/font-page-profiles.json';
   return {
-    tracked: isTrackedFixture ? ' and it is a tracked repository file' : '',
-    restore: isTrackedFixture
+    tracked: isDefaultFixture ? ' and it is a tracked repository file' : '',
+    restore: isDefaultFixture
       ? `restore it with "git checkout -- ${label}" or pass options.pageProfiles`
       : 'restore it or pass options.pageProfiles',
   };
@@ -819,7 +826,7 @@ function fixtureRestore(path) {
  * order would put the hot tier back to the hit rate this module exists to
  * fix. So this throws instead of guessing.
  *
- * The remedy it names is the one that holds TODAY: the tracked fixture can
+ * The remedy it names is the one that holds TODAY: the default fixture can
  * be restored from git, and the caller may point the module at another
  * fixture instead.
  */
@@ -881,9 +888,9 @@ export function loadFamilyCharsets(options = {}) {
   if (cached) return cached;
 
   // The fixture is validated BEFORE the corpus is scanned. The scan reads
-  // about 270 MB and takes minutes; a fixture that cannot be read is a
-  // three kilobyte mistake, and the caller must not wait minutes to hear
-  // about it.
+  // about 270 MB and takes ten seconds; a fixture that cannot be read is a
+  // three kilobyte mistake, and the caller must not wait for the scan to
+  // hear about it.
   const seeds = loadPageProfileSeeds(pageProfiles);
   const scores = loadScores(root);
 
