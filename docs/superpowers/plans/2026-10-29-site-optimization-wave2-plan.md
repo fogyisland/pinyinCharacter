@@ -1914,6 +1914,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 **Files:**
 - Verify only: `app/globals.css`（`:root` 块，第 465–470 行；**实测已是单族写法，预期不改**，见 Step 1）
 - Modify: `lib/font-css.ts`（只改注释，不改行为）
+- Modify: `next.config.ts`（**只改 `:41-49` 上面那段注释**，第 35–37 行说「`/font/` 的文件名是内容哈希」已经不成立；`headers()` 的三行逻辑**一个字都不许改**，见 Step 2b）
 - Modify: `tests/unit/lib/fonts-css.test.ts`（整体重写）
 - Modify: `tests/unit/lib/middleware-redirect.test.ts`（第 65 行的示例路径）
 - Delete: `public/font/noto-sans-sc/`、`public/font/noto-serif-sc/`、`public/font/lxgw-wenkai-tc/`、`public/font/fonts.css`
@@ -1963,6 +1964,22 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 文件头注释里「public/font/fonts.css used to be linked ...」那段过时了。改成描述新模型：三份分族样式表（sans 阻塞首屏，另两份 `media="print"` 异步）、每份内部按「热区（页面画像并集优先）+ 频率序 6 字 Ext 块」分块、**一族一个 font-family 名**、每条 face 带**精确且互不相交**的 `unicode-range`。**函数体一字不改**。
 
 ⚠️ **注释里有一句现在是不成立的，必须一并改掉**：现有注释说 manifest 的 `?v=` 让「整个 `/font/` 目录树都能用 `Cache-Control: immutable` 而永不过期」。这句话**只对样式表成立**，对 woff2 文件**不成立**——`?v=` 只出现在样式表的 URL 上，样式表里的 woff2 URL 另带**每族一个**的版本令牌（R18）。新注释要把两层令牌说清楚：`manifest.version` 版本化的是**样式表**；**woff2 自己的**令牌写在 CSS 里，由 Task 3 生成。
+
+- [ ] **Step 2b: 改 `next.config.ts` 的注释（**只改注释**）**
+
+`next.config.ts:35-37` 那三行现在写的是：
+
+```
+  //   /font/    — Google Fonts subsets. The file names are content hashes,
+  //               and the generated stylesheets carry a `?v=<hash>` query, so
+  //               `immutable` can never serve a stale file.
+```
+
+**「文件名是内容哈希」这句话现在不成立了**：旧的 Google 子集是内容哈希文件名（要删掉），新的 `/font/web/**` 是**稳定名**（`hot.woff2` / `ext-001.woff2` / `ext-001-400.woff2` …，7 936 个文件里 0 个带内容哈希）。稳定名 + 一年 `immutable` 正是 R18 要防的：**同一个 URL 换了内容，而浏览器手里那份 immutable 的旧文件不会重新下载** ⇒ 新 CSS 的 `unicode-range` 声称某个文件里有某个字，那个文件其实没有 ⇒ 豆腐块（G10）。
+
+改成说清楚两层令牌：`/font/` 下现在有两类东西——**样式表**（`fonts-{sans,serif,wenkai}.css`）由 `lib/font-css.ts` 追加 manifest 的 `?v=<manifest version>`；**woff2 子集**由 Task 3 在 CSS 里给每族一个 `?v=<族令牌>`（R18，sha256 前 12 位）。两者一变 URL 就变，`immutable` 才安全。
+
+⚠️ **`headers()` 的三行逻辑一个字都不许改**（`/font/:path*` → `year`、`/fonts/:path*` → `month`、`/strokes/:path*` → `month`）。这一步是**纯注释**。改完跑 `npx tsc --noEmit` 确认没碰坏类型。
 
 - [ ] **Step 3: 重写 `tests/unit/lib/fonts-css.test.ts`**
 
