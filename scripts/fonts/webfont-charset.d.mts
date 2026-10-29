@@ -124,9 +124,9 @@ export declare function isCjkChar(ch: string): boolean;
  * `fileName` picks the ScriptKind the file is parsed with: a `.tsx` file is
  * parsed as TSX and a `.ts` file as TS. It defaults to TSX because a wrong
  * guess has to fail safe — TSX keeps the comments a `.ts` file hides from
- * its first type assertion on (their characters take hot tier slots, not
- * glyphs), while TS drops the JSX text behind a `//` in a `.tsx` file (a
- * missing glyph).
+ * its first type assertion on (their characters can take hot tier slots,
+ * not glyphs), while TS drops the JSX text behind a `//` in a `.tsx` file
+ * (a missing glyph).
  */
 export declare function stripSourceComments(text: string, fileName?: string): string;
 

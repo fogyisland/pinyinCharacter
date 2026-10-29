@@ -351,9 +351,10 @@ export function unicodeRange(chars) {
  * may hold `<T>expr` type assertions, which TSX would mistake for JSX.
  *
  * The default is TSX because a wrong guess has to fail SAFE. Parsed as
- * TSX, a `.ts` file keeps every comment from its first type assertion to
- * the end of the file: those characters earn the thousandfold source
- * weight and take hot tier slots — a bigger font and a worse hot tier,
+ * TSX, a `.ts` file keeps the statement-level comments that follow its
+ * first type assertion — the ones inside a `{ … }` block are still
+ * stripped — and those characters earn the thousandfold source weight,
+ * so they can take hot tier slots: a bigger font and a worse hot tier,
  * but no missing glyph. Parsed as TS, a `.tsx` file loses the JSX text
  * behind a `//`: `https://… 字` reads as a line comment and the 字 is
  * dropped from the charset, which would paint a tofu. Over-covering costs
