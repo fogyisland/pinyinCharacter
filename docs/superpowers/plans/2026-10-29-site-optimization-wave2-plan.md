@@ -1974,8 +1974,8 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 4. 每条 face 的 `src` 文件在 `public/` 下真实存在。
 5. 每条 face 的 `font-display` 都是 `swap`。
 6. 每条 face 都有非空的 `unicode-range`。
-7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（**Task 3 未过滤构建实测 661 307 B ≈ 646 KB / 2 779 条 face**；**F31-a 过滤后是 2 459 条 face，预计 ≈ 585 KB**——它随块数线性增长，块数一旦变化这个阈值要重算。**Task 5 的实现者必须以 Task 3 修复轮实跑的输出为准**，把真实字节数写进这条用例的注释）。另两份的同口径实测（未过滤的旧构建）：serif 原始 784 049 B ≈ 766 KB / gzip 73 754 B；wenkai 原始 627 103 B ≈ 613 KB / gzip 38 355 B（wenkai 是**静态族，一个块两份文件**，400 + 700 各一份，所以它的原始字节是单份的两倍——计划里早先写的「wenkai 297 KB」是**单份**数字，别拿它当整族数字用）。三份合计原始 **2 072 459 B** / gzip **174 948 B**（不含令牌）/ **8 683** 个 woff2 / 28 774 592 B 字体字节（**未过滤**）；F31-a 过滤后应为 **7 936** 个 woff2、字符 40 584、Ext 块 6 615。
-8. 三份样式表合起来 gzip 后 ≤ `LIMITS.cssBytes` = **175 × 1024 = 179 200 字节**（F25-d 定的是 175 **KB** = 175 × 1024，不是 175 000 字节——算余量别算错）——用 `node:zlib` 的 `gzipSync` 算。**实测（Task 3 未过滤构建）：174 948 B 合计**（sans 62 839 / serif 73 754 / wenkai 38 355），余量 4 252 B；**加上 R18 的版本令牌后是 175 167 B**（sans +310 / serif +377 / wenkai −468），余量 **4 033 B**。**F31-a 过滤后少 746 个 Ext 块 ⇒ 预计 ≈ 158–160 KB（158 000–164 000 B），余量 ≈ 15 000–21 000 B——最终以 Task 3 修复轮的实跑输出为准。** 另两份的 gzip 预算按同样口径换算：`LIMITS.sansCssBytes` = **65 × 1024 = 66 560 字节**（未过滤 + 令牌实测 63 149 B，余量 3 411 B；过滤后预计 ≈ 56 KB，余量更大）。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
+7. `fonts-sans.css`（唯一阻塞首屏的那份）**原始** ≤ 700 KB（700 KB = 700 × 1024 = **716 800 B**）。**Task 3 修复轮（F31-a 过滤 + R18 令牌）的实测值 —— 用这一组，不要用估算**：sans 原始 **620 320 B**（≈ 606 KB）/ **2 459** 条 face；serif 原始 **722 614 B**（≈ 705 KB）/ **2 841** 条 face；wenkai 原始 **666 617 B**（≈ 651 KB）/ **2 636** 条 face；三份合计原始 **2 009 551 B**。⚠️ wenkai 是**静态族，一个块两份文件**（400 + 700 各一份），所以它的原始字节是单份的两倍——计划里早先写的「wenkai 297 KB」是**单份**数字，别拿它当整族数字用；上面 666 617 B 是**整族**。字体字节合计 **28 127 360 B**（28.1 MB）。旧口径留档：未过滤构建是 sans 661 307 / serif 784 049 / wenkai 627 103 B，合计 2 072 459 B、**8 683** 个文件、28 774 592 B 字体字节。
+8. 三份样式表合起来 gzip 后 ≤ `LIMITS.cssBytes` = **175 × 1024 = 179 200 字节**（F25-d 定的是 175 **KB** = 175 × 1024，不是 175 000 字节——算余量别算错）——用 `node:zlib` 的 `gzipSync` 算。**Task 3 修复轮（F31-a 过滤 + R18 令牌）的实测值 —— 用这一组**：合计 **157 282 B**（sans **55 437** / serif **63 915** / wenkai **37 930**），余量 **21 918 B**。另两份的 gzip 预算按同样口径换算：`LIMITS.sansCssBytes` = **65 × 1024 = 66 560 字节**，实测 sans **55 437 B**，余量 **11 123 B**。旧口径留档：未过滤构建 174 948 B 合计（sans 62 839 / serif 73 754 / wenkai 38 355），余量 4 252 B；加上 R18 令牌后 175 167 B，余量 **4 033 B**——过滤掉 746 个空壳 Ext 块之后，余量从 4 KB 级回到 **22 KB 级**。**（这是 R9 重定 + R17 放宽 + F25-d 重定后的预算；spec §3.3 的 25 KB 在静态子集下不可达，原因见「字体机制裁决」）**
 9. manifest 的 `version` 是 12 位 hex；`files` 的值恰为 `/font/fonts-{wenkai,sans,serif}.css`；`version` 等于三份样式表内容按文件名排序后的 sha256 前 12 位（**直接实现这段哈希，不要 import 构建脚本**）。
 10. `app/layout.tsx` 仍然包含 `getFontCssLinks()`、`href={fontCss.sans}`、`media="print"` 的两处 —— 与旧测试同义，保留。
 11. `app/globals.css` 包含 `'Noto Sans SC'`、`'Noto Serif SC'`、`'LXGW WenKai TC'` 这 3 个族名，并且**不含** `'Noto Sans SC 1'` / `'Noto Sans SC Ext'` / `'LXGW WenKai TC Ext'` 这类旧的分档族名（防止有人把链改回去）。
@@ -1988,6 +1988,20 @@ R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测�
 第 65 行的示例路径 `'/font/noto-sans-sc/example.woff2'` 换成 `'/font/web/sans/hot.woff2'`（该目录已不存在，留着会误导）。第 64 行的 `'/font/fonts.css'` 也换成 `'/font/fonts-sans.css'`。**只改这两行**，不改测试逻辑。
 
 - [ ] **Step 5: 删除旧产物并暂存新产物**
+
+> **⚠️ 暂存之前先核对产物数量——这一步是硬闸门。** Task 3 的构建脚本**不清理** `public/font/web/<family>/` 里的陈旧文件（它只 `mkdir -p` 然后覆盖写），所以目录里可能躺着上一次构建留下的孤儿 `ext-NNNN.woff2`：它们**没有任何样式表引用**，但会被 `git add public/font/web` 一起提交 ⇒ 撑大仓库、并且破坏 Task 4 的「文件数 == face 数」断言。暂存前必须逐项核对：
+
+```bash
+# 恰好 7 936 个 woff2 + 3 份 OFL 许可证，一个不多一个不少
+ls public/font/web/*/*.woff2 | wc -l     # 7 936
+ls public/font/web/OFL-*.txt | wc -l     # 3
+# 三族分别是：
+ls public/font/web/sans/*.woff2 | wc -l    # 2 459
+ls public/font/web/serif/*.woff2 | wc -l   # 2 841
+ls public/font/web/wenkai/*.woff2 | wc -l  # 2 636
+```
+
+> 数字对不上 ⇒ **先查清楚多出来/少掉的是什么**（多半是上一次构建的孤儿文件，或上一次构建中途失败留下的半成品），**不要**直接 `git add` 把它们带进去。字体字节合计应约 **28 127 360 B**。
 
 ```bash
 git rm -r public/font/noto-sans-sc public/font/noto-serif-sc public/font/lxgw-wenkai-tc
