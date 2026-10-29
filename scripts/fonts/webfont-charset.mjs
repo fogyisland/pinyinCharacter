@@ -556,12 +556,37 @@ function toScored(score) {
 }
 
 /**
- * The plans of a root, computed once per process.
+ * The scanned scores of a root, and the plans built on top of them.
  *
- * The scan reads the whole corpus, so a process that asks twice (the unit
- * test does, the build script does not) must not read it twice.
+ * The scan reads the whole corpus and the tier plan on top of it is cheap,
+ * so the scan is cached by root and the plan is cached by root AND by the
+ * per family overrides the caller asked for.
  */
+const scanCache = new Map();
 const planCache = new Map();
+
+/**
+ * The cache key of one call.
+ *
+ * The per family overrides are part of the key: a caller that asks for a
+ * different hot tier size must not be handed the plan of the default one.
+ * The overrides are serialized in a fixed order, so the same overrides
+ * always land on the same entry.
+ */
+function cacheKey(root, families) {
+  const overrides = Object.entries(families ?? {})
+    .filter(([, options]) => options !== undefined)
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .map(([family, options]) => {
+      const entries = Object.entries(options)
+        .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+        .map(([key, value]) => `${key}=${String(value)}`)
+        .join(',');
+      return `${family}{${entries}}`;
+    })
+    .join(';');
+  return `${root}::${overrides}`;
+}
 
 /**
  * Build the tier plan of every font family.
@@ -572,14 +597,51 @@ const planCache = new Map();
  */
 export function loadFamilyCharsets(options = {}) {
   const root = options.root ?? ROOT;
-  const cached = planCache.get(root);
+  const key = cacheKey(root, options.families);
+  const cached = planCache.get(key);
+  if (cached) return cached;
+
+  const scores = loadScores(root);
+
+  // --- the plan of every family -----------------------------------------
+  const plans = {
+    wenkai: planTiers(toScored(scores.wenkai), familyOptions('wenkai', options.families)),
+    sans: planTiers(toScored(scores.sans), familyOptions('sans', options.families)),
+    serif: planTiers(toScored(scores.serif), familyOptions('serif', options.families)),
+  };
+
+  for (const family of ['wenkai', 'sans', 'serif']) {
+    const plan = plans[family];
+    const total =
+      plan.hot.length +
+      plan.extBlocks.reduce((sum, block) => sum + block.chars.length, 0);
+    console.log(
+      `charset ${family}: ${total} chars (hot ${plan.hot.length} / ext ${plan.extBlocks.length} blocks)`,
+    );
+  }
+  console.log(`skipped ${scores.skipped} malformed file(s)`);
+
+  planCache.set(key, plans);
+  return plans;
+}
+
+/**
+ * The score of every character of every family, scanned once per root.
+ *
+ * The scan is the expensive part — it reads the whole corpus — while the
+ * tier plan on top of it is cheap. So the SCAN is cached by root and the
+ * PLAN is computed per call, with the overrides the caller asked for.
+ */
+function loadScores(root) {
+  const cached = scanCache.get(root);
   if (cached) return cached;
 
   const state = { skipped: 0 };
 
   // --- wenkai: the brand face ------------------------------------------
-  // The UI literals, the corpus titles, the rare characters and the
-  // dictionary radicals — everything the site paints in the brand face.
+  // The UI literals, the corpus titles, the rare characters, the dictionary
+  // radicals and the standard character set — everything the site paints in
+  // the brand face.
   const wenkaiScore = new Map();
   foldSource(wenkaiScore, scanSourceCode(root, state), SOURCE_CODE_WEIGHT);
 
@@ -609,6 +671,25 @@ export function loadFamilyCharsets(options = {}) {
   const radicals = scanJsonFileValues(join(root, 'data', 'radicals.json'), state);
   foldSource(wenkaiScore, radicals, CORPUS_WEIGHT);
 
+  // The 8 105 standard characters are the seed of the `chars` table and the
+  // whole pool the games draw from. The chain game paints them in the
+  // brand face (components/game/ChainScroll.tsx:63,
+  // components/game/ChainPickerModal.tsx:24,
+  // components/game/quest/WrongBook.tsx:118,
+  // components/game/quest/QuestCharCard.tsx:52), so they belong to the
+  // brand face: without them those characters fall back to the system font
+  // and the game pages mix two typefaces.
+  //
+  // The list is folded in HERE, once. It is part of the body face too, but
+  // folding it a second time into sans would count those 8 105 characters
+  // twice and change the score — and with it the composition of the hot
+  // tier, which is measured against a fixed target.
+  const standard = scanJsonFile(
+    join(root, 'data', 'general-standard-chinese-characters.json'),
+    state,
+  );
+  foldSource(wenkaiScore, standard, CORPUS_WEIGHT);
+
   // --- sans: the body face ---------------------------------------------
   const sansScore = new Map(wenkaiScore);
   foldSource(sansScore, content?.counts, CORPUS_WEIGHT);
@@ -623,37 +704,19 @@ export function loadFamilyCharsets(options = {}) {
   const gb2312 = scanTextFile(join(root, 'scripts', 'fonts', 'gb2312-7000.txt'), state);
   foldSource(sansScore, gb2312, CORPUS_WEIGHT);
 
-  const standard = scanJsonFile(
-    join(root, 'data', 'general-standard-chinese-characters.json'),
-    state,
-  );
-  foldSource(sansScore, standard, CORPUS_WEIGHT);
-
   // --- serif: the accent face ------------------------------------------
   const serifScore = new Map(sansScore);
   foldSource(serifScore, sutras?.counts, CORPUS_WEIGHT);
   foldSource(serifScore, classics?.counts, CORPUS_WEIGHT);
 
-  // --- the plan of every family -----------------------------------------
-  const plans = {
-    wenkai: planTiers(toScored(wenkaiScore), familyOptions('wenkai', options.families)),
-    sans: planTiers(toScored(sansScore), familyOptions('sans', options.families)),
-    serif: planTiers(toScored(serifScore), familyOptions('serif', options.families)),
+  const scores = {
+    wenkai: wenkaiScore,
+    sans: sansScore,
+    serif: serifScore,
+    skipped: state.skipped,
   };
-
-  for (const family of ['wenkai', 'sans', 'serif']) {
-    const plan = plans[family];
-    const total =
-      plan.hot.length +
-      plan.extBlocks.reduce((sum, block) => sum + block.chars.length, 0);
-    console.log(
-      `charset ${family}: ${total} chars (hot ${plan.hot.length} / ext ${plan.extBlocks.length} blocks)`,
-    );
-  }
-  console.log(`skipped ${state.skipped} malformed file(s)`);
-
-  planCache.set(root, plans);
-  return plans;
+  scanCache.set(root, scores);
+  return scores;
 }
 
 /**

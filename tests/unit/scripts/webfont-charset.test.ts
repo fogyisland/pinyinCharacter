@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   isCjkChar,
   scoreCharacters,
@@ -207,12 +209,32 @@ describe('loadFamilyCharsets', () => {
     for (const ch of sans) expect(serif.has(ch)).toBe(true);
   }, 180_000);
 
-  it('keeps the wenkai charset small', () => {
+  it('covers every standard character in wenkai, because the chain game paints them in the brand face', () => {
+    const plans = loadFamilyCharsets();
+    const wenkai = charsetOf(plans.wenkai);
+    const standard = JSON.parse(
+      readFileSync(
+        resolve(process.cwd(), 'data/general-standard-chinese-characters.json'),
+        'utf8',
+      ),
+    ) as string[];
+    expect(standard).toHaveLength(8105);
+    expect(standard.filter((ch) => !wenkai.has(ch))).toEqual([]);
+  }, 180_000);
+
+  it('keeps the wenkai charset inside the measured bounds', () => {
     const plans = loadFamilyCharsets();
     const size = plans.wenkai.hot.length + plans.wenkai.extBlocks.flatMap((b) => b.chars).length;
-    // The measured charset is ~2 600 characters. The ceiling catches an
-    // accidental scan of data/radicals.json, whose 70 234 KEYS are a
-    // lookup table that is never rendered.
-    expect(size).toBeLessThan(3500);
+    // The lower bound is the 8 105 standard characters of R16; the upper
+    // bound catches an accidental scan of the 70 234 KEYS of
+    // data/radicals.json, which are a lookup table that is never rendered.
+    expect(size).toBeGreaterThanOrEqual(8105);
+    expect(size).toBeLessThan(9000);
+  }, 180_000);
+
+  it('honours a per family override even after the default plans were cached', () => {
+    loadFamilyCharsets();
+    const plans = loadFamilyCharsets({ families: { sans: { tier1Size: 10 } } });
+    expect(plans.sans.hot).toHaveLength(10);
   }, 180_000);
 });
