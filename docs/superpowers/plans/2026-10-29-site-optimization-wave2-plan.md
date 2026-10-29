@@ -2432,6 +2432,7 @@ brotli_types
   6. **回滚**：`sudo cp "$LIVE_CONF.bak-<时间戳>" "$LIVE_CONF" && sudo nginx -t && sudo systemctl reload nginx`。
   ⚠️ **第 5 条是本波次的验收项**：字体 404 意味着整个 Wave 2 的产物全废，而页面上**看不出任何错误**（字会悄悄回落到系统字体）。
 - **配置漂移的说明（F30-b）**：写清「仓库配置与线上不一致」这件事，并把两条去漂移的路径列出来（把线上改成与仓库一致 / 把仓库改成与线上一致），注明**这是运维的活，本波次不动那些 `alias` 块**。
+  - ⚠️ **漂移小节里必须写清「哪些压缩今天真的在生效」（F31-x）**：由于 `/font/`、`/_next/static/`、`/strokes/`、`/audio/` 这些路径在生产上**由 Next.js 提供**，`gzip_static on;` / `brotli_static on;` 对它们**是空转的** ⇒ **Task 7 生成的 `.br` / `.gz` 旁挂文件在当前拓扑下不会被选中**。**今天真正生效的只有本任务这条运行时的 `brotli on;`**（作用在被反代的 HTML 上）。要让旁挂文件被用上，前提是线上 nginx 改为从磁盘直出这些路径（运维的活，本波次不动）。**手册里不许把旁挂文件写成「已获得的带宽收益」。**
 - **回滚**：`sudo cp "$LIVE_CONF.bak-<时间戳>" "$LIVE_CONF" && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
   ⚠️ **不要写死线上配置的路径**（Ruling F31-j）：`/etc/nginx/sites-available/ziyun.pudafo.com.conf` 只是**仓库这份文件头部注释里写的**放置位置，而**线上跑的那份在哪个路径从未实测过**；仓库这份与线上那份已经不是同一份了（见 F30-a）。回滚命令里的路径必须来自第 1 步对账时读出来的 `"$LIVE_CONF"`。
 - **上线后验证**（六条命令 + 期望输出）：
@@ -2595,7 +2596,9 @@ Expected: FAIL —— 找不到模块。
   - `.br` 已存在且 mtime ≥ 源文件 mtime 且 `force` 为 false → `{ status: 'skipped' }`；
   - 否则写 `.br`（以及 `.gz`），返回 `{ status: 'written', bytesIn, bytesOut }`；写失败 → `{ status: 'failed' }`（**记录错误，不吞掉**）。
 - `precompressTree(dir, options)`：递归遍历，累加 `written/skipped/failed/savedBytes`（savedBytes = 源文件字节 − `.br` 字节之和）。
+  ⚠️ **目录列表只取一次**（`readdir` 一次拿全量，再逐个处理）：**不要**写成「循环里每轮重新 `readdir`」那种写法——那样会把**刚生成的 `.br` / `.gz`** 也当成源文件数进去，`skipped` 会从 1 变成 4，测试里 `expect(result.skipped).toBe(1)` 直接红。
 - CLI 默认扫描 `.next/static` 与 `public/font`（后者只有 CSS/JSON 有意义，`.woff2` 会被跳过），也接受命令行目录参数。**脚本本身不删任何文件**，只新增 `.br` / `.gz`。
+  ⚠️ **目录不存在不是错误**：`.next/static` 只有**构建过**才有（而本仓库的构建在 `D:/Temp/pinyin-build-check` 里跑，仓库根目录通常**没有** `.next/static`）。⇒ 遇到不存在的目录**打印一行说明并跳过**，**不要抛异常、不要算失败**，退出码仍然是 0。
 
 - [ ] **Step 4: 跑测试确认通过**
 
@@ -2612,6 +2615,13 @@ Run: `npm run assets:precompress`
 Expected: 打印每个目录的 `written/skipped/failed` 与节省字节数。
 
 > `.next/` 与生成的 `.br`/`.gz` 都是构建产物，**不入库**。确认 `.gitignore` 已覆盖 `*.br` / `*.gz`；没覆盖就补两行（属于本任务）。
+
+> ⚠️ **本任务的产物在当前生产拓扑下「不出力」——控制器 2026-10-30 已核实，别把它算成一笔已生效的收益（F31-x）**
+>
+> F30-a 实测表明：线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`/logo.png` 这些路径**是由 Next.js 提供的，不是 nginx 从磁盘 `alias` 出来的**（仓库配置里的 `alias` 块在生产不生效，见 F30-b：仓库的 nginx 配置**不是**线上部署的那份）。
+> ⇒ `gzip_static on;` / `brotli_static on;` **只在 nginx 自己出文件时才起作用**，而 `.br` / `.gz` 旁挂文件**只有 nginx 从磁盘直出时**才会被选中。
+> ⇒ **本任务交付的是「工具」，不是「已生效的收益」。** 今天真正在生效的压缩是 **Task 6 那条运行时的 `brotli on;`**（作用在被反代的 HTML 上）。
+> ⇒ 要让这批旁挂文件真的被用上，前提是**线上 nginx 改为从磁盘直出这些路径**——那是运维侧的事，本波次不动（F30-b）。这条限制必须写进 `deploy/OPTIMIZATION.md` 的「配置漂移」小节（Task 6 负责那个文件），并在最终报告里如实说明。
 
 - [ ] **Step 6: 提交**
 
@@ -2641,12 +2651,18 @@ git commit -m "feat(deploy): add the brotli and gzip asset precompressor [2026-1
 # BBR 把拥塞控制从「缓冲区填满才丢包」换成「按带宽时延积发包」,
 # 在这种高时延链路上通常能翻数倍。
 #
-# 应用:  sudo cp deploy/tuning/ipv4-bbr.conf /etc/sysctl.d/99-ziyun-bbr.conf
-#        sudo sysctl --system
-# 回滚:  sudo rm /etc/sysctl.d/99-ziyun-bbr.conf && sudo sysctl --system
+# 应用:  sudo modprobe tcp_bbr && sudo modprobe sch_fq   # 先加载模块,见下面「应用」
+#        sudo cp deploy/tuning/ipv4-bbr.conf /etc/sysctl.d/99-ziyun-bbr.conf
+#        sudo sysctl --system      # 必须检查退出码: 任何一行失败都会让它返回非零
+# 回滚:  **不是**「删文件 + sysctl --system」——见 README 的「回滚」小节,
+#        必须按「改前现状」里记下的原值逐项 sysctl -w 写回去。
 #
 # 注意: BBR 只对**新建**的连接生效,已在跑的连接仍用旧算法。
 # 验证:  ss -tin | grep -i bbr
+#
+# 另注: 线上 nginx 已在发 `Alt-Svc: quic=":443"; h3=":443"; ...`(控制器 2026-10-30 实测),
+#       即 **HTTP/3 是开着的**。HTTP/3 走 UDP/QUIC,**不受 TCP 拥塞控制影响**
+#       ⇒ 这份配置只作用于**仍留在 TCP 上的那部分流量**(HTTP/1.1 + HTTP/2)。
 
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
@@ -2661,25 +2677,66 @@ net.core.wmem_max = 16777216
 
 必须包含：
 
-- **改前先看现状**：
+- **改前先看现状**（⚠️ **这一步的输出必须原样抄下来，回滚要用**，Ubuntu 20.04/22.04 的典型默认值是 `cubic` / `pfifo_fast`）：
   ```bash
   sysctl net.ipv4.tcp_congestion_control
   sysctl net.core.default_qdisc
+  sysctl net.ipv4.tcp_max_syn_backlog
+  sysctl net.ipv4.tcp_rmem
+  sysctl net.ipv4.tcp_wmem
+  sysctl net.core.rmem_max
+  sysctl net.core.wmem_max
   ```
-- **应用**：
+  **把这七行的原值原样记进一个文件**（例如 `sudo sysctl -a > ~/sysctl-before-bbr.txt`），回滚时要用。
+- **应用**（⚠️ **先加载模块，再写配置**；`sysctl --system` 的退出码**必须检查**）：
   ```bash
+  sudo modprobe tcp_bbr
+  sudo modprobe sch_fq
   sudo cp deploy/tuning/ipv4-bbr.conf /etc/sysctl.d/99-ziyun-bbr.conf
-  sudo sysctl --system
+  sudo sysctl --system; echo "exit=$?"
   ```
-- **确认生效**：
+  ⚠️ **`exit=` 必须是 0**。`sysctl --system` 会把 `/etc/sysctl.d/` 下所有文件都读一遍，**只要有一行设不上就会打印 `sysctl: error setting key ...` 并返回非零**——最常见的是 `net.core.default_qdisc = fq` 设不上（`sch_fq` 是模块且没加载 ⇒ 报 `No such file or directory`），而 **`fq` 恰恰是 BBR 的 pacing 前提**：只有 BBR 没有 fq，收益会打折。⇒ `exit≠0` 时**不要**当成功，先 `sudo modprobe sch_fq` 再重跑；`sch_fq` 加载不了就说明内核太老（需 ≥ 4.9），此时**只应用 qdisc 与缓冲区那几行**，且 README 里要写明「BBR 未完全生效」。
+- **确认生效**（⚠️ **要查两项，不止一项**）：
   ```bash
   sysctl net.ipv4.tcp_congestion_control     # 期望 bbr
-  ss -tin | grep -i bbr                       # 新连接应显示 bbr
+  sysctl net.core.default_qdisc              # 期望 fq   ← 这一项最容易被漏掉
+  ss -tin | grep -i bbr                      # 新连接应显示 bbr
   ```
   `bbr` 不在 `tcp_congestion_control` 的可选值里时，先 `sudo modprobe tcp_bbr && sudo sysctl -w net.ipv4.tcp_congestion_control=bbr`；仍不可用说明内核太老（需 ≥ 4.9），此时**只应用 qdisc 与缓冲区那几行**。
-- **回滚**：删文件 → `sudo sysctl --system`。
+- **⚠️ 回滚（控制器 2026-10-30 02.55 更正：原任务书里的回滚命令是错的）**：
+  原写法是「`sudo rm /etc/sysctl.d/99-ziyun-bbr.conf && sudo sysctl --system`」——**它不回滚**。`sysctl --system` 只负责**把配置文件里的值写进去**，它**不会**把某个 key 恢复成改之前的值；删掉配置文件之后，**内核里仍然是 `fq` + `bbr` + 放大后的缓冲区，直到重启才复原**。手册里必须写成：
+  ```bash
+  # 1) 先把「改前现状」里记下的原值逐项写回去(下面这组是 Ubuntu 20.04/22.04 的默认值,
+  #    **以你自己记下的那份为准**,别照抄)
+  sudo sysctl -w net.ipv4.tcp_congestion_control=cubic
+  sudo sysctl -w net.core.default_qdisc=pfifo_fast
+  sudo sysctl -w net.ipv4.tcp_max_syn_backlog=4096
+  sudo sysctl -w net.ipv4.tcp_rmem="4096 131072 6291456"
+  sudo sysctl -w net.ipv4.tcp_wmem="4096 16384 4194304"
+  sudo sysctl -w net.core.rmem_max=212992
+  sudo sysctl -w net.core.wmem_max=212992
+  # 2) 再删掉配置文件(否则下次开机/任何一次 sysctl --system 又把它写回来)
+  sudo rm -f /etc/sysctl.d/99-ziyun-bbr.conf
+  # 3) 复核
+  sysctl net.ipv4.tcp_congestion_control     # 期望 cubic
+  sysctl net.core.default_qdisc              # 期望 pfifo_fast
+  ```
+  ⚠️ **顺序不能反**：先 `sysctl -w` 写回原值、再删文件。反过来的话，删完文件但还没写回原值的那段时间里，配置仍然生效，而**下一次任何一次 `sysctl --system`（别的脚本、别的运维动作、或重启前的 systemd 动作）都会把旧配置重新写回来**。
+- **⚠️ 收益要自己量，不要只看机制（控制器 2026-10-30 02.55 补）**：
+  上面几条只验证了「**机制生效了**」（`ss` 里出现 bbr），**没有验证「带宽变大了**」。BBR 的宣传语是「通常能翻数倍」，但**这条链路的实际容量有没有被打满，控制器无法从服务器所在机房那边复现**（控制器 2026-10-30 实测：从控制器所在机房到 `45.197.12.253` 的 RTT **< 1 ms**，与 brief 里那条 250 ms 的中国联通→新加坡链路**不是同一条路径**）⇒ **收益必须在「改前」和「改后」各测一次，从中国侧的客户端测**。
+  ```bash
+  # 改前、改后各跑一次,取同一个大文件,比较 speed_download
+  curl -o /dev/null -s -w 'speed=%{speed_download} B/s time=%{time_total}\n' \
+       https://ziyun.pudafo.com/<某个大文件>
+  ```
+  ⇒ **没有「改前」的基线数字，就无法判断这次改动是不是白做**。README 里要写明：先测基线，再改，再测，两次数字都记下来。
+- **⚠️ 适用面（控制器 2026-10-30 02.55 实测）**：线上 nginx 正在发
+  `Alt-Svc: quic=":443"; h3=":443"; h3-29=":443"; ...` ⇒ **HTTP/3 是开着的**。走 HTTP/3 的访客用 UDP/QUIC，**QUIC 有自己的拥塞控制，不吃 TCP 拥塞控制** ⇒ 这份配置只作用于**仍留在 TCP 上的那部分流量**（HTTP/1.1 + HTTP/2）。手册里要写这一句，别让读者以为「调完 TCP 全站都受益」。
 - **风险**：调大 `rmem_max/wmem_max` 会增加单连接内存占用；机器内存紧张时把 `16777216` 调成 `4194304`。
-- **它解决的是什么**：这条链路 250 ms 的 RTT 下,Linux 默认拥塞控制的有效窗口约 44 KB,正好对应实测的 177 KB/s。这是**带宽**问题,和字体瘦身(载荷问题)是两条独立的线。
+- **它解决的是什么**（⚠️ 控制器 2026-10-30 02.55 顺手更正了原来的措辞）：这条链路 RTT 250 ms、实测单连接持续吞吐 **177 KB/s** ⇒ **BDP（带宽时延积）= 177 KB/s × 0.25 s ≈ 44 KB**，而 177 KB/s 恰好等于 **44 KB ÷ 0.25 s**。
+  ⚠️ 原来的措辞「Linux 默认拥塞控制的**有效窗口**约 44 KB」**不准确**：44 KB 是这条链路的 **BDP**，不是「默认拥塞控制把窗口限死在 44 KB」——默认的 cubic 是**涨到丢包为止**的，并不以 BDP 为上限。正确的说法是：**实测吞吐正好落在「窗口 = 1 个 BDP」的形态上**，说明这条链路当时是**窗口受限**（而不是链路容量被打满）——这正是 BBR 可能有数倍空间的地方。
+  ⇒ 但**「窗口受限」是推断，不是结论**：如果这条链路的**实际容量**本来就只有 ~1.4 Mbps，那么 177 KB/s 已经跑满，BBR **一分钱也省不出来**。所以上面那条「改前/改后各测一次」是**必做**的，不是可选的。
+  这是**带宽/窗口**问题，和字体瘦身（**载荷**问题）是两条独立的线。
 
 - [ ] **Step 3: 提交**
 
