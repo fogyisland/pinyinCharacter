@@ -28,7 +28,7 @@ Wave 1 遗留的 Wave 2 / Wave 3 清单（`docs/superpowers/specs/2026-08-05-sit
 
 ### 2.1 目标
 
-把生产环境的**字体载荷**从 3.7–5.0 MB / 页降到 100–300 KB / 页（−94 % 以上），首屏冷加载从 ~21 秒降到 ~1.5 秒，同时：
+把生产环境的**字体载荷**从 3.7–5.0 MB / 页降到 **221–308 KB / 页**（预算 ≤ 330 KB，实测降幅 **−92 % … −95 %**），首屏冷加载从 ~21 秒降到 **≤ 5 s**，同时：
 
 - 首屏渲染的**视觉表现不变**（三款 webfont 仍然在用，字形不换）
 - 所有站点自身能渲染的汉字**不缺字**（tofu = 0）
@@ -39,13 +39,22 @@ Wave 1 遗留的 Wave 2 / Wave 3 清单（`docs/superpowers/specs/2026-08-05-sit
 
 | 指标 | 现状（2026-10-29 实测） | 目标 | 测量方式 |
 |---|---|---|---|
-| `/` 字体 woff2 | **3 813 KB** | ≤ 250 KB | `scripts/perf/font-load.mjs` |
-| `/dictionary` 字体 woff2 | **4 985 KB** | ≤ 350 KB | 同上 |
-| `/poetry` 字体 woff2 | **4 638 KB** | ≤ 250 KB | 同上 |
-| 字体 CSS（gzip） | 132.7 KB | ≤ 25 KB | `curl -w %{size_download}` |
-| 首页冷加载耗时 | ~21 s（字体部分） | ≤ 2.5 s | `scripts/perf/full-load.mjs` |
+| `/` 字体 woff2 | **3 813 KB** | ≤ 330 KB | `scripts/perf/font-load.mjs` |
+| `/dictionary` 字体 woff2 | **4 985 KB** | ≤ 330 KB | 同上 |
+| `/poetry` 字体 woff2 | **4 638 KB** | ≤ 240 KB | 同上 |
+| `/stories` 字体 woff2 | **3 746 KB** | ≤ 330 KB | 同上 |
+| 单页字体请求数 | **63 / 86 / 84 / 63 个**（上表四页依次） | ≤ 12 个 | 同上 |
+| 字体 CSS（gzip） | 132.7 KB（线上是**单份合并**样式表） | ≤ 175 KB（新模型**三份合计**） | `curl -w %{size_download}` |
+| 字体 CSS（gzip，无衬线那份，渲染阻塞） | 30.9 KB | ≤ 65 KB | 同上 |
+| 首页冷加载耗时 | ~21 s（字体部分） | ≤ 5 s | `scripts/perf/full-load.mjs` |
 | 服务端渲染 delta | +5 … +24 ms | ≤ +24 ms（不得劣化） | `scripts/perf/paired-ttfb.mjs` |
 | 站点可渲染汉字缺字数 | 0 | 0 | `scripts/fonts/verify-webfont-subsets.mjs` |
+
+> ⚠️ **「目标」这一列被实测重定过四轮**，当前值是**实际执行的门禁**：R9 → R17 → F25-c/d → F27-c/d/e → F27-j-g（见计划 `docs/superpowers/plans/2026-10-29-site-optimization-wave2-plan.md` 的《裁决记录》）。原始目标（250/350/250 KB、CSS ≤ 25 KB、冷加载 ≤ 2.5 s）建立在「每字 229 B、无每文件固定开销」这个**错误的成本模型**上——按它实现是做不到的。偏离不是静默改写：每个数字都有对应的实测值，依据全部登记在案。
+>
+> **并且要明说一件不体面的事：这一波让 CSS 变大了。** 线上现状是**单份合并样式表** `public/font/fonts.css`，gzip **132.9 KB**（136 065 B，控制器在 HEAD 上实测；本节原写的 132.7 KB 是 2026-10-29 对线上文件的实测值，差值来自线上文件与仓库 HEAD 不是同一份）。新模型是**三份**，合计 **153.6 KB**（157 282 B：sans 55 437 / serif 63 915 / wenkai 37 930）⇒ **+20.7 KB**。新模型的每条 face 都带一条精确且互不相交的 `unicode-range`，加上每族的 R18 版本令牌，CSS 必然比 Google 的逐码位逗号列表更啰嗦。这是**故意的取舍**：CSS 是首次访问的**一次性可缓存**成本，字体是**每次访问**的成本——预算该花在后者身上（§2.2 的字体行实测降了 **92–95 %**，CSS 行涨了 16 %）。**若将来有人拿「CSS ≤ 25 KB」回来当门禁，那是拿一个做不到的数字当标准。**
+>
+> 另：旧模型按族拆开是 sans **30.9 KB** / serif **30.9 KB** / wenkai **70.9 KB**（gzip）；新模型无衬线那份涨到 54.1 KB，但它**是唯一渲染阻塞的那一份**，所以单独设了 ≤ 65 KB 的上限。
 
 ### 2.3 非目标（明确不做）
 
@@ -147,6 +156,23 @@ Wave 1 遗留的 Wave 2 / Wave 3 清单（`docs/superpowers/specs/2026-08-05-sit
 
 ### 4.1 W2-1 字体子集重建（最大杠杆）
 
+> ⚠️ **本节的机制与数字已被实施期裁决取代——请先读这段，再读小节。**
+>
+> §4.1.2～§4.1.8 写的是**设计提案**（每族分三档、每档一个 font-family 名、Ext 按 256 个连续码位切）。落地时这套做法被实测推翻并重做了一遍，**理由与最终数字全部登记在计划 `docs/superpowers/plans/2026-10-29-site-optimization-wave2-plan.md` 的《裁决记录》**（R14–R18、F25、F27、F31）。差异是：
+>
+> | 本节写的 | 实际落地的 |
+> |---|---|
+> | 每族三个 font-family（`Noto Sans SC 1/2/Ext`），CSS 变量串成回退链 | **一族一名**（`Noto Sans SC`），靠**互不相交的精确 `unicode-range`** 决定命中哪个文件（R15） |
+> | 档 1 = 前 200 字，档 2 = 200–800 字 | **热区 = 300 字**（sans/serif/kai 三族都有热区；R14「楷体无热区」已作废，F27-j-d） |
+> | Ext 按 **256 个连续码位**一块 | Ext 按**频率序 6 字**一块（F25 推翻 R10） |
+> | 每块约 29–38 KB | 每块 **≤ 7 KB**（实测 sans max 5 368 B / serif max 6 600 B / 楷体 400+700 合计 max 8 928 B ⇒ 单份约 4.5 KB） |
+> | 投影载荷 163 / 283 / 103 / 380 KB | **实测 308 / 308 / 221 / 308 KB**（预算 330 / 330 / 240 / 330 KB） |
+> | 校验器断言「档 1 ≤ 100 KB、档 2 ≤ 260 KB、每块 ≤ 60 KB、每份 CSS ≤ 200 条 face / ≤ 60 KB」 | 见 §4.1.6 的**现行**阈值（`LIMITS`） |
+>
+> **为什么改**：多档 font-family 会让浏览器在同族多份 `@font-face` 之间出现命中顺序歧义，且档位越多、每个页面要下的文件越多（实测 148–177 个/页）。改成「一族一名 + 精确 unicode-range」之后，浏览器只会下载**真正命中**的文件，页面请求数降到 **4 个**。
+>
+> 本节其余部分（§4.1.1 的核心思路、§4.1.4 的字符集来源、§4.1.8 的风险表）仍然成立，**照着做**；被取代的只有上表列出的那几处。
+
 #### 4.1.1 核心思路
 
 不再按码位区间切分（Google 的做法），而是**按站内实际用字的频率重新切分**，并让每个页面只下载**恰好覆盖它所需字形**的一小组文件。
@@ -235,10 +261,10 @@ Wave 1 遗留的 Wave 2 / Wave 3 清单（`docs/superpowers/specs/2026-08-05-sit
   - `NotoSerifSC[wght].ttf`（25.1 MB，可变）
   - `LXGWWenKaiTC-Regular.ttf`（13.1 MB，静态）
   - 下载脚本 `scripts/fonts/download-webfont-sources.ts`（与现有 `download-hard-pen-fonts.ts` 同一套路）
-- **预处理**：sans / serif 先用 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（站点只用到这四个字重），降到 225 B/字
-- **切分**：`subset-font`（仓库已有），每档一个 woff2；Ext 每 256 码位一块
+- **预处理**：sans / serif 先用 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（站点只用到这四个字重）；⚠️ **别信「225 B/字」那个成本模型**——真实的子集成本是 `fixed(≈1 000 B) + perChar × 字数`（F25 实测）
+- **切分**：`subset-font`（仓库已有），热区一个 woff2；Ext **每 6 字一块**（频率序，F25 推翻「256 码位一块」）
 - **输出**：
-  - `public/font/web/<family>/t1.woff2`、`t2.woff2`、`ext-<block>.woff2`
+  - `public/font/web/<family>/hot.woff2`（楷体是静态族，一块两份：`hot-400.woff2` / `hot-700.woff2`）、`ext-<NNN>.woff2`
   - `public/font/fonts-<family>.css`——**替换**现有的 `fonts-sans.css` / `fonts-serif.css` / `fonts-wenkai.css`
   - `public/font/fonts-manifest.json`——`version` 重新计算；`files` 结构保持 `{ sans, serif, wenkai }`（`lib/font-css.ts` 依赖它）
 - **删除**：`public/font/noto-sans-sc/`、`public/font/noto-serif-sc/`、`public/font/lxgw-wenkai-tc/` 三个 Google 子集目录（21 MB / 437 个文件）
@@ -247,16 +273,16 @@ Wave 1 遗留的 Wave 2 / Wave 3 清单（`docs/superpowers/specs/2026-08-05-sit
 
 新增 `scripts/fonts/verify-webfont-subsets.mjs`：
 
-- 每一族的每个字符**有且只有一个**档覆盖它
-- 用 fontkit 打开每个产物，断言其 cmap 确实包含该档声明的所有字符
-- 断言档 1 文件 ≤ 100 KB、档 2 ≤ 260 KB、每个 Ext 块 ≤ 60 KB
-- 断言 `fonts-<family>.css` 的 `@font-face` 数量 ≤ 200、文件大小 ≤ 60 KB
-- 断言 `public/font/fonts-manifest.json` 的 `version` 与样式表内容哈希一致
-- **对 §3.2 表里的每个页面**跑一次覆盖率断言（用服务端渲染出的字符集）
+- 每一族的每个字符**有且只有一个**块覆盖它
+- 用 fontkit 打开每个产物，断言其 cmap 确实包含该块声明的所有字符
+- 断言热区文件 ≤ `LIMITS.hotBytes`（**96 KB**；实测 sans 72 KB / serif 89 KB / 楷体 77 KB 每份），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（**7 KB**；实测 sans max 5 368 B、serif max 6 600 B、楷体 400+700 两份合计 max 8 928 B ⇒ 单份约 4.5 KB）
+- 断言三份 `fonts-<family>.css` **gzip 后合计** ≤ `LIMITS.cssBytes`（**175 KB**）；**无衬线那一份单独** ≤ `LIMITS.sansCssBytes`（**65 KB** —— `app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**唯一渲染阻塞**的一份）；单份的 `@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`（**3 400**）
+- 断言 `public/font/fonts-manifest.json` 的 `version` 与样式表内容哈希一致（**算哈希之前先把 CRLF 归一化成 LF**，否则在 `core.autocrlf=true` 的 Windows 上会假红）
+- **对 §3.2 表里的每个页面**跑一次覆盖率断言（用服务端渲染出的字符集）：字节 ≤ `LIMITS.pageFontBytes[path]`、文件数 ≤ `LIMITS.maxFontFilesPerPage`（**12**）
 
 #### 4.1.7 应用侧改动
 
-- `app/globals.css`（`:root` 块，约 465–470 行）：三个 `--font-*` 变量改为「档 1 / 档 2 / 档 Ext / 系统」的回退链
+- `app/globals.css`（`:root` 块，约 465–470 行）：三个 `--font-*` 变量**各只点名一个 webfont 族**（R15），后面跟系统字体兜底 —— **不是**「档 1 / 档 2 / 档 Ext / 系统」的多档回退链（那套已作废，见本节开头的对照表）
 - `app/globals.css`（约 29–31 行）：`--font-sans` / `--font-serif` / `--font-kai` 保持不变（它们已引用上面三个变量）
 - `lib/font-css.ts`：**不改**（manifest 结构不变）
 - `app/layout.tsx`：**不改**（三张样式表的加载方式不变）
@@ -307,26 +333,40 @@ proxy_cache_key "$scheme$request_method$host$request_uri";
 proxy_cache_valid 200 10s;
 proxy_cache_methods GET HEAD;
 proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-proxy_cache_bypass $cookie_auth_token;      # 登录用户：不进缓存也不读缓存
+proxy_cache_bypass $cookie_auth_token $http_rsc;   # 读：登录用户与 RSC 飞行请求不读缓存
+proxy_no_cache  $cookie_auth_token $upstream_http_set_cookie $http_rsc;  # 写：同上，且带 Set-Cookie 的一律不写
 proxy_cache_lock on;
-proxy_ignore_headers Cache-Control Set-Cookie; # Next 的 no-store 必须忽略
+proxy_ignore_headers Cache-Control;                # 只忽略 Cache-Control，不忽略 Set-Cookie
 add_header X-Ziyun-Cache $upstream_cache_status always;
+
+# 另加：API 一律不缓存（location / 下挂着 68 个 GET API 路由）
+location /api/ { proxy_cache off; }
 ```
 
 安全约束（**必须全部满足，否则本项不做**）：
 
-1. `proxy_cache_bypass $cookie_auth_token` —— `auth_token` 是 `lib/auth.ts:18` 的会话 cookie 名。登录用户的请求既不写入也不读取缓存。
-2. 未登录用户的响应里不含 `Set-Cookie`（Next 的 `auth_token` 只在登录时种下），因此缓存里不会有用户态响应。
-3. `proxy_cache_valid 200 10s` —— TTL 只 10 秒。
-4. 上线后必须用 `curl -I` 验证 `X-Ziyun-Cache` 从 `MISS` → `HIT`，且登录态请求恒为 `BYPASS`。
+1. `proxy_cache_bypass $cookie_auth_token $http_rsc` —— `auth_token` 是 `lib/auth.ts:18` 的会话 cookie 名。**它只管「读」，不管「写」**：它阻止命中缓存，却**照样会把带登录态的响应写进缓存**给别人看。⇒ 光有它不够，必须同时有第 2 条。
+2. `proxy_no_cache $cookie_auth_token $upstream_http_set_cookie $http_rsc` —— **写的那道闸**。`$upstream_http_set_cookie`（nginx 1.7.5+ 自带）有值即表示上游这个响应种了 cookie，一并挡掉。⚠️ **早期草案写的是 `proxy_ignore_headers Cache-Control Set-Cookie;`——已作废**：忽略 `Set-Cookie` 等于允许把带 cookie 的响应写进缓存，与本条自相矛盾。**只忽略 `Cache-Control`**（Next 的 `private, no-cache, no-store` 必须被忽略才能缓存）。
+3. `$http_rsc` 必须**同时**进上面两条：线上实测 `RSC: 1` 请求头返回的是 flight 数据（`Content-Type: text/x-component`），同一个 URL 不带该头返回 `text/html` 的完整页面——**两者只有这一个请求头不同**，缓存键（`$request_uri`）完全相同 ⇒ 不隔离就是把 HTML 喂给客户端路由 → 白屏。
+4. `proxy_cache_valid 200 10s` —— TTL 只 10 秒；307→`/init`、4xx、5xx 都不入缓存。
+5. `location /api/ { proxy_cache off; }` —— `location /` 下还挂着 68 个 GET API 路由，其中 `/api/chars/random`、`/api/poetry/random`、`/api/game/round`、`/api/stats`、`/api/audio/active` 的语义是「每次给新内容」，缓存 10 秒会让它们对所有用户返回同一个值；`/api/history`、`/api/notes`、`/api/membership/me`、`/api/worksheets/*` 是用户态数据。该块比 `/api/auth/`、`/api/init/` 短，nginx 取最长前缀匹配，那两个限流块不受影响。
+6. 上线后必须用 `curl -I` 验证 `X-Ziyun-Cache` 从 `MISS` → `HIT`，且带 `auth_token` 的请求恒为 `BYPASS`。
 
-> 风险提示：若站点未来新增任何「按未登录 cookie 区分」的响应，必须同步扩展 bypass 列表。
+> 风险提示：若站点未来新增任何「按用户区分」的 cookie 或请求头，**必须同时扩展 `proxy_cache_bypass` 与 `proxy_no_cache` 两条**——只改前者会让登录态响应被写进缓存。
 
 收益：**重复访问 −250 ms（首字节）+ 免掉 HTML 传输**。
 
 #### 4.2.3 线上 nginx 与仓库配置的对账
 
 线上响应带 `Alt-Svc: quic=":443"; h3=":443"`，仓库配置却是 `listen 443 ssl http2`。**本项要求先在服务器上核对 `nginx -V` 与 `/etc/nginx/conf.d/` 的实际配置**，再决定是给仓库补 QUIC 还是把线上改回与仓库一致。同时核对 `nginx -V | grep brotli`。
+
+> ⚠️ **更重要的发现（F30-a，实施期实测）：仓库这份 nginx 配置根本不是线上跑的那份，所以「改仓库里的文件」不等于「改线上」。**
+>
+> 线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`= /logo.png` **全部由 Next.js 提供**（判据：ETag 是 `W/"<size-hex>-<mtime-ms-hex>"` 的 size-first 形状、**没有** `Expires:`、`Cache-Control` 与 `next.config.ts:45` 逐字相同、404 页面带 `X-Powered-By: Next.js`），而仓库配置里对应的 `alias` 块**在生产上没有生效**。
+>
+> ⇒ **绝不许把仓库这份整份 `cp` 覆盖到服务器上**。理由不是「会覆盖掉一些手工配置」，而是**会直接打挂静态资源**：仓库里的 `alias` 块一旦生效，`alias` + `try_files $uri =404` 会用 alias 目录拼**完整请求 URI**（路径多出一层前缀）⇒ 这一整段静态资源**全部 404**，而**页面上看不出任何错误**——字会悄悄回落到系统字体，本波次刚做出来的 7 936 个字体文件全部消失。
+>
+> ⇒ 正确做法：**先 `nginx -T` 对账**（并从 `# configuration file <路径>:` 行里读出线上那份配置的真实路径，记为 `LIVE_CONF`，**不许写死路径**）→ **只把缓存那几行手工合并进去** → `nginx -t` 通过 → `reload` → 冒烟 → 备好回滚命令。完整命令串见 `deploy/OPTIMIZATION.md`。
 
 ### 4.3 W2-3 服务器 TCP 调优（用户执行）
 
@@ -369,10 +409,17 @@ sysctl --system
 
 它们是本设计的**验收工具**，必须随代码一起进仓库。
 
-> **实现注意**：class 归属的切分必须用正确的下标。`re.split(r"<(\w+)([^>]*)>", html)` 的结果是
-> `[text, tag, attrs, text, tag, attrs, text, …]`，第 i 个标签的属性在 `3i+2`、正文在 `3i+3`。
-> 本次诊断的第一版脚本按 2 步长取值，把标签名当成了属性，导致「多数文本块归入 sans」的假象，
-> 把首页字体载荷低估成 2.83 MB（实为 3.81 MB）。新脚本必须带单元测试锁死这个下标。
+> **实现注意（两条，缺一条就测出假数据）**：
+>
+> 1. **下标**。`re.split(r"<(\w+)([^>]*)>", html)` 的结果是
+>    `[text, tag, attrs, text, tag, attrs, text, …]`，第 i 个标签的属性在 `3i+2`、正文在 `3i+3`。
+>    本次诊断的第一版脚本按 2 步长取值，把标签名当成了属性，导致「多数文本块归入 sans」的假象，
+>    把首页字体载荷低估成 2.83 MB（实为 3.81 MB）。新脚本必须带单元测试锁死这个下标。
+> 2. **归属必须栈式**（F27-j-b）。元素**自己**的 `font-kai` / `font-serif` / `font-sans` class 决定它渲染成哪款字，
+>    没有就**继承父元素**，再没有就是 `body` 的 sans。**不要**用「文本块的直属父元素的 class」那条平铺规则——
+>    Next.js SSR 会用 `<!-- -->` 把文本拆开（`《<!-- -->在岳咏蝉<!-- -->》`），平铺规则只抓到 `《`，
+>    楷体集合被掏空，剩下的字全被算成 sans。归因规则**只有一份**：`scripts/perf/class-attribution.mjs`；
+>    fixture（`data/font-page-profiles.json`）与 `font-load.mjs` 的预算核算必须调**同一个模块**，否则测出来的载荷是假的。
 
 ---
 
@@ -384,7 +431,7 @@ sysctl --system
 | W2-1b | 源字体下载 + 轴裁剪 | `scripts/fonts/download-webfont-sources.ts`、`scripts/fonts/instance-webfont-axis.mjs` |
 | W2-1c | 字体子集切分器 | `scripts/fonts/build-webfont-subsets.mjs` |
 | W2-1d | 子集校验器 | `scripts/fonts/verify-webfont-subsets.mjs` |
-| W2-1e | 接入应用 | `app/globals.css` 变量替换、删除 Google 子集目录、manifest 更新、测试更新 |
+| W2-1e | 接入应用 | `app/globals.css` 变量**核对**（实测已是单族写法，**不改**）、删除 Google 子集目录、manifest 更新、测试更新 |
 | W2-2 | nginx 改动 | `deploy/nginx.ziyun.pudafo.com.conf`（brotli + microcache）+ 部署/回滚文档 |
 | W2-3 | 预压缩脚本 | `scripts/precompress-assets.mjs`（brotli `.br`） |
 | W2-4 | 服务器调优清单 | `deploy/tuning/ipv4-bbr.conf` + 操作说明 |
@@ -399,12 +446,12 @@ sysctl --system
 | 风险 | 等级 | 缓解 |
 |---|---|---|
 | 切分后出现缺字 | 高 | 字符集含源码全量中文字面量；校验脚本断言零缺失；系统字体兜底 |
-| 微缓存把登录态页面缓存给匿名 | 高 | `proxy_cache_bypass $cookie_auth_token` + 上线后 `curl -I` 验证 |
+| 微缓存把登录态页面缓存给匿名 | 高 | **两道闸**：`proxy_cache_bypass $cookie_auth_token $http_rsc`（读）+ `proxy_no_cache $cookie_auth_token $upstream_http_set_cookie $http_rsc`（写）。⚠️ `bypass` 只管读不管写，**只写 bypass 会把登录态响应写进缓存**。上线后 `curl -I` 验证：匿名 MISS→HIT、带 `auth_token` 恒为 `BYPASS` |
 | 源字体下载失败（网络/体积） | 中 | 已有 `LXGWWenKaiGB-Regular.ttf` 在 staging；Noto 源可从 `raw.githubusercontent.com` 取；下载失败时脚本给出明确报错并保留旧产物 |
 | brotli 模块不存在 | 中 | 先探测再启用，无模块则退回 gzip 并给安装指引 |
-| 档 1 太小导致首页也要下载档 2 | 中 | 构建后按 §3.2 的页面表实测，必要时上调档 1 的字数 |
+| 热区太小导致页面要下很多 Ext 块 | 中 | 构建后按 §3.2 的页面表实测，必要时上调热区字数（300 → 450 更省请求数，→ 150 更省字节） |
 | 切分耗时过长 | 低 | 一次性约 6 分钟，构建期执行 |
-| 仓库体积 | 低 | 删除 21 MB Google 子集，新增约 9 MB 自切产物，净减约 12 MB |
+| 仓库体积 | 中 | ⚠️ **比原估计大得多，且方向相反**。原写「删 21 MB、新增 9 MB、净减 12 MB」——**实测净增**：删 Google 三目录 **19.9 MB / 432 文件**（磁盘 21 MB），新增 `public/font/web/` **26.8 MB / 7 939 文件**（磁盘 **41 MB**），三份样式表从 0.9 MB 涨到 1.9 MB ⇒ **净 +8.9 MB 字节 / 磁盘净 +21 MB / 文件数净 +7 506**。`.git` 相应再涨约 28 MB。缓解：产物**一次性提交**进仓库，部署时不跑构建 |
 
 ---
 
@@ -415,7 +462,7 @@ sysctl --system
 1. `npm run fonts:verify-webfont` 通过（零缺字、无超限文件）
 2. `npm test` 全绿（含新增的字体与 nginx 配置测试）
 3. `npm run build` 成功
-4. `scripts/perf/font-load.mjs` 报告 `/` ≤ 250 KB、`/dictionary` ≤ 350 KB
+4. `scripts/perf/font-load.mjs` 报告 `/` ≤ 330 KB、`/dictionary` ≤ 330 KB、`/poetry` ≤ 240 KB、`/stories` ≤ 330 KB，且**单页字体请求数 ≤ 12 个**
 5. `scripts/perf/paired-ttfb.mjs` 报告服务端渲染 delta 未劣化（≤ +24 ms）
 6. nginx 配置通过 `nginx -t`（在服务器上）
 7. 部署后 `curl -I` 显示 `X-Ziyun-Cache: HIT`（重复访问）且登录请求为 `BYPASS`
@@ -424,8 +471,11 @@ sysctl --system
 
 ## 8. 未决事项（留给实施期裁决）
 
-1. **档 1 的字数**：默认 200。若实测首页也命中档 2，上调到 300–400。
-2. **档 2 的字数**：默认 600（档 1 + 档 2 合计 800）。
-3. **Ext 块大小**：默认 256 码位一块。可在 128 / 256 / 512 之间调整。
+> ⚠️ 第 1–3 条写的是 §4.1 那套「档 1 / 档 2 / Ext 块」的机制，**已被实施期裁决取代**（见 §4.1 开头的对照表）。当前落地的是：**热区 300 字**（三族都有）+ **Ext 每 6 字一块**（频率序）+ **一族一名**。裁决依据见计划《裁决记录》的 R14–R18、F25、F27、F31。
+
+1. ~~**档 1 的字数**：默认 200。若实测首页也命中档 2，上调到 300–400。~~ ⇒ **已裁决：热区 = 300 字**（sans / serif / kai 三族都有；R14「楷体无热区」已作废，见 F27-j-d）。
+2. ~~**档 2 的字数**：默认 600（档 1 + 档 2 合计 800）。~~ ⇒ **已作废**：不再有「档 2」这一层，只有热区与 Ext 块。
+3. ~~**Ext 块大小**：默认 256 码位一块。可在 128 / 256 / 512 之间调整。~~ ⇒ **已裁决：Ext 块 = 频率序 6 字**（F25 推翻 R10 的「256 码位一块」）。要调的是**块宽**（6 → 8 会让 CSS 变小、请求数变少但页面字节变多），不是码位区间。
 4. **频率权重里的源码字面量系数**：默认 ×1000。
 5. **是否接入 CDN**：属于用户的账号与成本决策，代码侧只预留配置。
+6. **未测量页面的字体请求数**：`/game`、`/sutra`、`/ancient`、`/worksheet` 等页面的字符集**没有被 fixture 覆盖**（现网已初始化并锁定，抓不到它们的真实内容），它们只吃得到热区里的语料频率头，其余落到 Ext 块 ⇒ 这些页面的字体请求数可能明显高于四个测量页面的 4 个。**浏览器 smoke 时要按 `font/woff2` 过滤逐页记录**；若某个页面 > 12 个请求或 > 330 KB，说明热区的语料兜底不够，要回头重估热区种子。
