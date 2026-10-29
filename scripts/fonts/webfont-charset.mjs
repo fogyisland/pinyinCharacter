@@ -72,8 +72,9 @@
  *   node scripts/fonts/webfont-charset.mjs   print the three charset sizes
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { dirname, extname, join, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..', '..');
@@ -343,92 +344,91 @@ export function unicodeRange(chars) {
 }
 
 /**
+ * The ScriptKind a source file is parsed with.
+ *
+ * The file name decides it and the decision matters: a `.tsx` file may
+ * hold JSX, so it is parsed as TSX, while a `.ts` file may hold `<T>expr`
+ * type assertions, which TSX would mistake for JSX. TSX is the more
+ * permissive of the two, so it is the default when the caller names no
+ * file.
+ */
+function scriptKindFor(fileName) {
+  return /\.tsx$/i.test(fileName) ? ts.ScriptKind.TSX : ts.ScriptKind.TS;
+}
+
+/**
  * Strip the comments of a source file.
  *
  * The source scan counts the characters the interface paints, and a
  * comment is never painted: the Chinese characters that existed ONLY in
  * comments held the thousandfold source weight and pushed real characters
- * out of the hot tier (69 of them were comment-only).
+ * out of the hot tier.
  *
- * The stripper is LEXICAL, not a regular expression: it knows the three
- * forms of a source file — a `//` line comment, a `/* … *\/` block comment
- * and a string literal — and a `//` inside a string (`'https://example.com'`)
- * is not a comment. A `\` inside a string escapes the next character, so
- * an escaped quote does not end the literal.
+ * The stripper is the TypeScript scanner, not a hand written one. That
+ * buys the two things a hand written scanner cannot have:
  *
- * A template literal is treated like the other two string forms: it is
- * copied verbatim up to its closing backtick, so its `${…}` interpolation
- * is not re-lexed and a comment inside one is kept. The repository holds
- * no such case, and re-lexing an interpolation would need a real parser.
+ *   - it tells a REGULAR EXPRESSION from a division, so the quotes of a
+ *     regexp literal do not open a string that swallows the code behind
+ *     it — a hand written scanner mistook `/"(\w+)"/g` for a string and
+ *     dropped the comments of the following lines;
+ *   - it knows the JSX grammar, so the `//` of a JSX TEXT is text and not
+ *     a comment — a hand written scanner ate the Chinese characters that
+ *     follow a URL in a JSX text, and they are painted.
+ *
+ * It strips COMMENTS and nothing else: the contents of string and template
+ * literals are kept verbatim, because those characters ARE painted.
+ *
+ * `fileName` picks the ScriptKind (see `scriptKindFor`). The caller that
+ * scans the repository passes the real file name.
  */
-export function stripSourceComments(text) {
-  if (typeof text !== 'string') return '';
+export function stripSourceComments(text, fileName = 'source.tsx') {
+  if (typeof text !== 'string' || text.length === 0) return '';
+
+  const sourceFile = ts.createSourceFile(
+    fileName,
+    text,
+    ts.ScriptTarget.Latest,
+    false,
+    scriptKindFor(fileName),
+  );
+
+  // Every comment of the file is a range of it. The scanner knows where
+  // they are; the tree only says which token a comment hangs on: the
+  // leading trivia of a token and the trailing trivia behind it.
+  const ranges = [];
+  const walk = (node) => {
+    const kids = node.getChildren(sourceFile);
+    if (kids.length === 0) {
+      // A token: the gap in front of it is its leading trivia and the gap
+      // behind it may hold a trailing comment.
+      for (const range of ts.getLeadingCommentRanges(text, node.pos) ?? []) {
+        ranges.push([range.pos, range.end]);
+      }
+      for (const range of ts.getTrailingCommentRanges(text, node.end) ?? []) {
+        ranges.push([range.pos, range.end]);
+      }
+      return;
+    }
+    for (const kid of kids) walk(kid);
+  };
+  walk(sourceFile);
+
+  ranges.sort((a, b) => a[0] - b[0]);
+  const merged = [];
+  for (const range of ranges) {
+    const last = merged[merged.length - 1];
+    if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]);
+    else merged.push([range[0], range[1]]);
+  }
 
   let out = '';
-  let index = 0;
-  // The state of the scanner: 'code' outside of a literal, 'line' inside
-  // a `//` comment, 'block' inside a `/* … */` comment and 'string'
-  // inside a string literal.
-  let state = 'code';
-  let quote = '';
-
-  while (index < text.length) {
-    const ch = text[index];
-    const next = text[index + 1];
-
-    if (state === 'code') {
-      if (ch === '/' && next === '/') {
-        state = 'line';
-        index += 2;
-        continue;
-      }
-      if (ch === '/' && next === '*') {
-        state = 'block';
-        index += 2;
-        continue;
-      }
-      if (ch === '"' || ch === "'" || ch === '`') {
-        state = 'string';
-        quote = ch;
-        out += ch;
-        index += 1;
-        continue;
-      }
-      out += ch;
-      index += 1;
-      continue;
-    }
-
-    if (state === 'line') {
-      // The newline itself is kept, so the lines of the file stay lines.
-      if (ch === '\n') {
-        state = 'code';
-        out += ch;
-      }
-      index += 1;
-      continue;
-    }
-
-    if (state === 'block') {
-      if (ch === '*' && next === '/') {
-        state = 'code';
-        index += 2;
-        continue;
-      }
-      index += 1;
-      continue;
-    }
-
-    out += ch;
-    if (ch === '\\') {
-      out += text[index + 1] ?? '';
-      index += 2;
-      continue;
-    }
-    if (ch === quote) state = 'code';
-    index += 1;
+  let cursor = 0;
+  for (const [start, end] of merged) {
+    if (start < cursor) continue;
+    out += text.slice(cursor, start);
+    cursor = end;
   }
-  return out;
+  return out + text.slice(cursor);
 }
 
 /**
@@ -677,7 +677,7 @@ function scanSourceDirectory(dir, counts, state) {
     }
     if (!SOURCE_EXTENSIONS.has(extname(entry.name))) continue;
     try {
-      countChars(counts, stripSourceComments(readFileSync(full, 'utf8')));
+      countChars(counts, stripSourceComments(readFileSync(full, 'utf8'), full));
     } catch (err) {
       state.skipped += 1;
       console.warn(`[charset] skipping unreadable source file ${full}: ${err.message}`);
@@ -732,6 +732,11 @@ const planCache = new Map();
  * A key whose value is `undefined` or `null` is NOT an override — it means
  * "no override" — so it is left out of the key. That way `{}` and
  * `{ tier1Size: undefined }` share one cache entry.
+ *
+ * The values are serialized with `JSON.stringify`, not with `String()`:
+ * `String(['a','b'])` is `'a,b'`, which is also `String(['a,b'])` — two
+ * different overrides would land on the same cache entry and one of them
+ * would be handed the plan of the other.
  */
 function cacheKey(root, families, pageProfiles) {
   const overrides = Object.entries(families ?? {})
@@ -740,7 +745,7 @@ function cacheKey(root, families, pageProfiles) {
       const entries = Object.entries(options ?? {})
         .filter(([, value]) => value !== undefined && value !== null)
         .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-        .map(([key, value]) => `${key}=${String(value)}`);
+        .map(([key, value]) => `${key}=${JSON.stringify(value)}`);
       return { family, entries };
     })
     .filter(({ entries }) => entries.length > 0)
@@ -758,13 +763,19 @@ function cacheKey(root, families, pageProfiles) {
  * seed of a family is the UNION of the characters of ALL pages, ordered by
  * the number of pages that painted them (descending) and by ascending code
  * point for the ties.
+ *
+ * Only Chinese characters are taken. The hot tier is a scarce resource —
+ * its slots are the characters a page is most likely to paint — so an
+ * ASCII letter, a digit or a space that slipped into the fixture must not
+ * take one of them.
  */
-function unionOfPages(pages, family) {
+export function unionOfPages(pages, family) {
   const pageCount = new Map();
   for (const page of Object.values(pages)) {
     const painted = page?.[family];
     if (typeof painted !== 'string') continue;
     for (const ch of new Set(painted)) {
+      if (!isCjkChar(ch)) continue;
       pageCount.set(ch, (pageCount.get(ch) ?? 0) + 1);
     }
   }
@@ -776,6 +787,29 @@ function unionOfPages(pages, family) {
 }
 
 /**
+ * How a broken fixture is restored, as a remedy the reader can act on.
+ *
+ * `data/font-page-profiles.json` is a tracked file of the repository, so
+ * `git checkout` is what restores it, and the repository relative path is
+ * the form that command wants. A path that is NOT that file — a fixture the
+ * caller named, or a path that does not exist at all — is not tracked, and
+ * git has nothing to say about it: the only remedy left is to point the
+ * module at another fixture.
+ */
+function fixtureRestore(path) {
+  const rel = relative(ROOT, path);
+  const insideRepository = Boolean(rel) && !rel.startsWith('..') && !isAbsolute(rel);
+  const label = insideRepository ? rel.split(/[\\/]/).join('/') : path;
+  const isTrackedFixture = label === 'data/font-page-profiles.json';
+  return {
+    tracked: isTrackedFixture ? ' and it is a tracked repository file' : '',
+    restore: isTrackedFixture
+      ? `restore it with "git checkout -- ${label}" or pass options.pageProfiles`
+      : 'restore it or pass options.pageProfiles',
+  };
+}
+
+/**
  * The hot tier seed of every family, read from the page profile fixture.
  *
  * `data/font-page-profiles.json` was captured from the production HTML: it
@@ -784,16 +818,21 @@ function unionOfPages(pages, family) {
  * repository is broken — and a silent fallback to the corpus frequency
  * order would put the hot tier back to the hit rate this module exists to
  * fix. So this throws instead of guessing.
+ *
+ * The remedy it names is the one that holds TODAY: the tracked fixture can
+ * be restored from git, and the caller may point the module at another
+ * fixture instead.
  */
 function loadPageProfileSeeds(path) {
+  const { tracked, restore } = fixtureRestore(path);
+
   let raw;
   try {
     raw = readFileSync(path, 'utf8');
   } catch (err) {
     throw new Error(
       `[charset] cannot read the page profile fixture ${path}: ${err.message} — ` +
-        'the hot tier is seeded from it; restore the file or pass ' +
-        'options.pageProfiles',
+        `the hot tier is seeded from it${tracked}: ${restore}`,
     );
   }
 
@@ -803,15 +842,15 @@ function loadPageProfileSeeds(path) {
   } catch (err) {
     throw new Error(
       `[charset] the page profile fixture ${path} is not valid JSON: ${err.message} — ` +
-        'regenerate it with the collector of the attribution task',
+        `the file is corrupt: ${restore}`,
     );
   }
 
   const pages = parsed?.pages;
   if (!pages || typeof pages !== 'object' || Array.isArray(pages)) {
     throw new Error(
-      `[charset] the page profile fixture ${path} has no "pages" object — ` +
-        'regenerate it with the collector of the attribution task',
+      `[charset] the page profile fixture ${path} is not a page profile — ` +
+        `the file has no "pages" object: ${restore}`,
     );
   }
 
@@ -841,8 +880,12 @@ export function loadFamilyCharsets(options = {}) {
   const cached = planCache.get(key);
   if (cached) return cached;
 
-  const scores = loadScores(root);
+  // The fixture is validated BEFORE the corpus is scanned. The scan reads
+  // about 270 MB and takes minutes; a fixture that cannot be read is a
+  // three kilobyte mistake, and the caller must not wait minutes to hear
+  // about it.
   const seeds = loadPageProfileSeeds(pageProfiles);
+  const scores = loadScores(root);
 
   // --- the plan of every family -----------------------------------------
   const plans = {

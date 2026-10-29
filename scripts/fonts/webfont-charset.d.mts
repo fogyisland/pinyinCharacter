@@ -80,7 +80,12 @@ export interface TierPlan {
  * falls back to the family default.
  */
 export interface TierOptions {
-  /** How many characters the hot tier holds. */
+  /**
+   * The size of the hot tier — a FLOOR, not a cap.
+   *
+   * The seeded characters are never truncated, so the hot tier holds MORE
+   * than this many characters when the seed is longer.
+   */
   tier1Size?: number;
   /** How many characters one Ext block holds. */
   extBlockChars?: number;
@@ -113,8 +118,14 @@ export declare const CJK_RANGES: Array<[number, number]>;
 /** True when the string is exactly one Chinese character. */
 export declare function isCjkChar(ch: string): boolean;
 
-/** Strip the comments of a source file, keeping the string literals. */
-export declare function stripSourceComments(text: string): string;
+/**
+ * Strip the comments of a source file, keeping the string literals.
+ *
+ * `fileName` picks the ScriptKind the file is parsed with: a `.tsx` file is
+ * parsed as TSX and a `.ts` file as TS. It defaults to a TSX name, which
+ * understands both JSX and plain TypeScript.
+ */
+export declare function stripSourceComments(text: string, fileName?: string): string;
 
 /** Score every character of every source. */
 export declare function scoreCharacters(sources: CharSource[]): ScoredCharset;
@@ -124,6 +135,26 @@ export declare function planTiers(scored: ScoredCharset, options?: TierOptions):
 
 /** Render the CSS `unicode-range` of a character list. */
 export declare function unicodeRange(chars: string[]): string;
+
+/**
+ * The page profile fixture: the characters every page paints, per family.
+ *
+ * The key is the path of the page (`/`, `/dictionary`, …) and the value
+ * holds the painted characters of each family. A family a page does not
+ * paint in is left out.
+ */
+export interface PageProfilePages {
+  [page: string]: Partial<Record<FamilyName, string>>;
+}
+
+/**
+ * The characters the measured pages paint in one family, in seed order.
+ *
+ * The union of the characters of ALL pages, ordered by the number of pages
+ * that painted them (descending) and by ascending code point for the ties.
+ * Only Chinese characters are kept.
+ */
+export declare function unionOfPages(pages: PageProfilePages, family: FamilyName): string[];
 
 /** Build the tier plan of every font family. */
 export declare function loadFamilyCharsets(options?: CharsetOptions): Record<FamilyName, TierPlan>;

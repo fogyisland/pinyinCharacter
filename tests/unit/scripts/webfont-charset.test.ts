@@ -8,6 +8,7 @@ import {
   scoreCharacters,
   planTiers,
   unicodeRange,
+  unionOfPages,
   loadFamilyCharsets,
 } from '../../../scripts/fonts/webfont-charset.mjs';
 
@@ -48,6 +49,121 @@ describe('stripSourceComments', () => {
   it('keeps a template literal and its backticks', () => {
     expect(stripSourceComments('const a = `字 // 字`; // 注\n')).toContain('`字 // 字`');
     expect(stripSourceComments('const a = `字 // 字`; // 注\n')).not.toContain('注');
+  });
+
+  it('keeps the Chinese characters that follow a URL in a JSX text', () => {
+    // components/admin/SiteUrlForm.tsx:95 paints this text. A hand written
+    // stripper read the `//` of the URL as the start of a line comment and
+    // dropped everything behind it — with it ten characters the page really
+    // draws, which then fell out of the charset entirely.
+    const source = [
+      "          {initial.source === 'unset' && (",
+      '            <p className="text-sm text-danger rounded border border-danger/30 bg-danger/8 px-3 py-2">',
+      '              尚未设置站点 URL。当前 sitemap、robots、canonical、JSON-LD 都会退回到',
+      '              http://localhost:3000, 外部爬虫会看到错误的域名。',
+      '            </p>',
+      '          )}',
+      '',
+    ].join('\n');
+    const stripped = stripSourceComments(source, 'SiteUrlForm.tsx');
+    expect(stripped).toContain('http://localhost:3000');
+    expect(stripped).toContain('外部爬虫会看到错误的域名。');
+    expect(stripped).toContain('尚未设置站点 URL。');
+  });
+
+  it('does not let a regexp literal swallow the code behind it', () => {
+    // lib/ai-rare-chars.ts:162 — the quotes of a regexp are not the quotes
+    // of a string. A hand written stripper believed they were: it stayed
+    // in the string state and dropped the comments of the lines behind it,
+    // so their characters took the thousandfold source weight.
+    const source = [
+      '  const kvRe = /"(\\w+)"\\s*:\\s*"((?:[^"\\\\]|\\\\.)*)"/g;',
+      '  let m: RegExpExecArray | null;',
+      '  while ((m = kvRe.exec(stripped)) !== null) {',
+      '    if (!(m[1] in kv)) kv[m[1]] = m[2];',
+      '  }',
+      '  // 注释里的字',
+      '  return kv;',
+      '',
+    ].join('\n');
+    const stripped = stripSourceComments(source, 'ai-rare-chars.ts');
+    expect(stripped).not.toContain('注');
+    expect(stripped).toContain('const kvRe =');
+    expect(stripped).toContain('kvRe.exec(stripped)');
+    expect(stripped).toContain('return kv;');
+  });
+
+  it('strips a comment inside a JSX container', () => {
+    const source = [
+      'const node = (',
+      '  <div>',
+      '    {/* 容器里的注释 */}',
+      '    <span>字</span>',
+      '  </div>',
+      ');',
+      '',
+    ].join('\n');
+    const stripped = stripSourceComments(source, 'Commented.tsx');
+    expect(stripped).not.toContain('注');
+    expect(stripped).toContain('<span>字</span>');
+  });
+
+  it('keeps the characters of a comment out of the source scan', () => {
+    // The contract the source scan depends on: a character that lives only
+    // in a comment is never painted, so it must not earn the thousandfold
+    // source weight and take a slot of the hot tier.
+    const source = 'const label = "字";\n// 注释里的字\nconst other = "文";\n';
+    const stripped = stripSourceComments(source, 'label.ts');
+    expect(stripped).not.toContain('注');
+    expect(stripped).toContain('字');
+    expect(stripped).toContain('文');
+  });
+
+  it('parses a .ts file as TypeScript, so a type assertion does not hide the comments behind it', () => {
+    // `<string>raw` is a type assertion in TypeScript and JSX in TSX. A TSX
+    // parser loses track of the file there, so the file name has to pick
+    // the ScriptKind — which is why `scanSourceDirectory` passes the real
+    // name of every file it reads.
+    const source = 'const value = <string>raw;\n// 注释里的字\nlet x = 1;\n';
+    expect(stripSourceComments(source, 'value.ts')).not.toContain('注');
+    expect(stripSourceComments(source, 'value.ts')).toContain('let x = 1;');
+    expect(stripSourceComments(source, 'value.tsx')).toContain('注');
+  });
+});
+
+describe('unionOfPages', () => {
+  /** The code point of a character — the order assertions are about code points. */
+  const codePointOf = (ch: string): number => ch.codePointAt(0) ?? Number.NaN;
+
+  it('orders the seed by the number of pages that painted a character, then by code point', () => {
+    // F27-j-c: the seed is ordered by how many pages painted a character,
+    // and the ties are broken by ascending code point.
+    const seed = unionOfPages(
+      { p1: { serif: '甲乙' }, p2: { serif: '乙丙' } },
+      'serif',
+    );
+    expect(seed).toHaveLength(3);
+    // 乙 is painted by two pages, so it leads.
+    expect(seed[0]).toBe('乙');
+    // The two singletons are ordered by CODE POINT, not by stroke order:
+    // 丙 is U+4E19 and 甲 is U+7532.
+    expect(codePointOf(seed[1])).toBe(0x4e19);
+    expect(codePointOf(seed[2])).toBe(0x7532);
+    expect(codePointOf(seed[1])).toBeLessThan(codePointOf(seed[2]));
+  });
+
+  it('keeps only Chinese characters', () => {
+    // A hot tier slot is scarce: an ASCII letter or a space that slipped
+    // into the fixture must not take one of them.
+    const seed = unionOfPages(
+      { p1: { serif: '甲a' }, p2: { serif: '丙 ' } },
+      'serif',
+    );
+    expect(seed).toHaveLength(2);
+    expect(seed).not.toContain('a');
+    expect(seed).not.toContain(' ');
+    expect(codePointOf(seed[0])).toBe(0x4e19);
+    expect(codePointOf(seed[1])).toBe(0x7532);
   });
 });
 
@@ -173,6 +289,26 @@ describe('planTiers', () => {
     // found seven of them in the poem titles). It still has to get a glyph.
     const plan = planTiers(scored, { tier1Size: 1, hotChars: ['鵩'] });
     expect(plan.hot[0]).toBe('鵩');
+  });
+
+  it('puts the seeded characters at the head of the hot tier, in seed order', () => {
+    // The seed is the head of the hot tier and it keeps its OWN order — the
+    // page count order — not the corpus frequency order.
+    const seed = unionOfPages(
+      { p1: { serif: '甲乙' }, p2: { serif: '乙丙' } },
+      'serif',
+    );
+    const plan = planTiers(scored, { tier1Size: 10, hotChars: seed });
+    expect(plan.hot.slice(0, seed.length)).toEqual(seed);
+  });
+
+  it('treats the tier size as a floor: a seed longer than the tier grows the hot tier', () => {
+    // `tier1Size` is a floor, not a cap. A painted character that fell out
+    // of the hot tier would have no glyph in it (G10).
+    const seeded = ['一', '二', '三', '四', '五'];
+    const plan = planTiers(scored, { tier1Size: 2, hotChars: seeded });
+    expect(plan.hot.slice(0, 5)).toEqual(seeded);
+    expect(plan.hot.length).toBeGreaterThanOrEqual(5);
   });
 });
 
