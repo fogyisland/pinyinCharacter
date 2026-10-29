@@ -32,6 +32,7 @@
     "fonts:download-web": "tsx scripts/fonts/download-webfont-sources.ts",
     "fonts:instance-web": "node scripts/fonts/instance-webfont-axis.mjs",
     "fonts:subset-web": "node scripts/fonts/build-webfont-subsets.mjs",
+    "fonts:verify-webfont": "node scripts/fonts/verify-webfont-subsets.mjs",
     "chars:import": "tsx scripts/import-chars-data.ts",
     "favicon:build": "tsx scripts/build-favicon.ts",
     "logo:build": "tsx scripts/build-logo-assets.ts",
