@@ -1295,7 +1295,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 ### Task 5: 接入应用（W2-1e）
 
 **Files:**
-- Modify: `app/globals.css`（`:root` 块，第 465–470 行）
+- Verify only: `app/globals.css`（`:root` 块，第 465–470 行；**实测已是单族写法，预期不改**，见 Step 1）
 - Modify: `lib/font-css.ts`（只改注释，不改行为）
 - Modify: `tests/unit/lib/fonts-css.test.ts`（整体重写）
 - Modify: `tests/unit/lib/middleware-redirect.test.ts`（第 65 行的示例路径）
@@ -1306,7 +1306,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 **Interfaces:**
 - Consumes: Task 3 的产物（`public/font/web/**` + 三份样式表 + manifest）
 - Produces:
-  - `app/globals.css` 里三个 CSS 变量改为**单族 + 系统兜底**（R15：一族一名，不再有跨档 fallback 链）：
+  - `app/globals.css` 里三个 CSS 变量必须是**单族 + 系统兜底**（R15：一族一名，不再有跨档 fallback 链）：
     ```css
     --font-han-sans:
       'Noto Sans SC',
@@ -1319,12 +1319,27 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
       'Kaiti SC', 'KaiTi', 'STKaiti', serif;
     ```
     同族的所有 face 共用这个名字，靠互不相交的精确 `unicode-range` 决定命中哪一个文件；浏览器找不到命中的 face 时（字不在字库里）自动落到系统字体。
+    ⚠️ **实测：仓库当前的 `app/globals.css:466-469` 已经就是这个值**（只是换行写法不同）——所以这一步是**核对**而不是改写，详见 Step 1。
   - `lib/font-css.ts` 的**导出签名与行为完全不变**（`FontCssLinks` + `getFontCssLinks()`）；manifest 的 `files` 键名不变，因此 `app/layout.tsx` **不需要改**。
   - `app/globals.css` 第 29–31 行的 `--font-sans` / `--font-serif` / `--font-kai` **不动**。
 
-- [ ] **Step 1: 改 `app/globals.css` 的三个变量**
+- [ ] **Step 1: 核对 `app/globals.css` 的三个变量（**预期：不需要改**）**
 
-把 `:root` 里第 466–469 行的三行替换成上面那三段（每段一个变量，值按上面的换行写）。**只改这三个变量**，不要顺手改 `@theme` 里的 `--font-sans/--font-serif/--font-kai`，也不要动 `--font-kai` 之外的其他排版变量。
+R15 要求「一族一名 + 互不相交的精确 `unicode-range`」。**实测：仓库当前的 `app/globals.css:466-469` 已经是单族写法**，值与 Interfaces 段完全一致，只有换行排版不同：
+
+```css
+  --font-han-sans:
+    'Noto Sans SC', system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-han-serif: 'Noto Serif SC', Georgia, 'Songti SC', 'SimSun', serif;
+  --font-wenkai: 'LXGW WenKai TC', 'Kaiti SC', 'KaiTi', 'STKaiti', serif;
+```
+
+**所以这一步只是核对，不是改写。** 读一遍 `app/globals.css:464-481`，确认这三个变量各自只点名**一个** webfont 族、后面跟的全是系统字体兜底：
+
+- 值已经正确 ⇒ **不要动这个文件**。只改换行会产生纯空白 diff，违反「保持 Git Diff 干净」。
+- 只有当某个变量里混进了第二个 webfont 族名（例如 `'Noto Serif SC'` 出现在 `--font-han-sans` 里）才改成 Interfaces 段那三段。
+
+**不要**顺手改 `@theme` 里的 `--font-sans/--font-serif/--font-kai`（第 29–31 行），也不要动其他排版变量。Step 3 的第 11 条测试会独立复核这一点。
 
 - [ ] **Step 2: 改 `lib/font-css.ts` 的注释**
 
