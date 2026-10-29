@@ -1,5 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { INSTANCER_TARGETS, instancerArgs } from '../../../scripts/fonts/instance-webfont-axis.mjs';
 import {
@@ -78,6 +80,52 @@ describe('instance-webfont-axis', () => {
         process.env.PYTHON = previous;
       }
       vi.resetModules();
+    }
+  });
+
+  it('reports an interpreter that cannot be started as an interpreter problem', async () => {
+    // The file exists but cannot be executed: POSIX answers EACCES,
+    // Windows answers EFTYPE. The errno differs per platform, so the
+    // assertion matches the shape of the errno instead of naming one.
+    const dir = mkdtempSync(join(tmpdir(), 'webfont-interpreter-'));
+    const probePath = join(dir, 'pinyin-no-exec-probe.py');
+    writeFileSync(probePath, 'this file is not an interpreter\n');
+    if (process.platform !== 'win32') {
+      chmodSync(probePath, 0o000);
+    }
+
+    vi.resetModules();
+    const previous = process.env.PYTHON;
+    process.env.PYTHON = probePath;
+    try {
+      const instancer = (await import(
+        '../../../scripts/fonts/instance-webfont-axis.mjs'
+      )) as unknown as {
+        describeFontTools: () => {
+          ok: boolean;
+          moduleMissing: boolean;
+          interpreterMissing: boolean;
+          detail: string;
+        };
+      };
+
+      const probe = instancer.describeFontTools();
+
+      expect(probe.ok).toBe(false);
+      // The subprocess never started, so this is an interpreter
+      // problem — whatever fontTools is installed or not.
+      expect(probe.interpreterMissing).toBe(true);
+      expect(probe.moduleMissing).toBe(false);
+      // The original errno has to survive into the message.
+      expect(probe.detail).toMatch(/E[A-Z]+/);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.PYTHON;
+      } else {
+        process.env.PYTHON = previous;
+      }
+      vi.resetModules();
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

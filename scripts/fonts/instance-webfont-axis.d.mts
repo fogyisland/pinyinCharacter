@@ -68,16 +68,17 @@ export declare function probeFontTools(): boolean;
  * The outcome of the fontTools probe.
  *
  * The three failure modes need three different remedies, so they are
- * told apart: `interpreterMissing` means there was no Python to run at
- * all, `moduleMissing` means Python ran but has no fontTools, and
- * neither means fontTools ran and failed.
+ * told apart: `interpreterMissing` means the Python interpreter never
+ * started (it is missing, or it cannot be executed), `moduleMissing`
+ * means Python ran but has no fontTools, and neither means the
+ * interpreter ran fontTools and fontTools failed.
  */
 export interface FontToolsProbe {
   /** Did the probe succeed? */
   ok: boolean;
   /** Did the interpreter fail because fontTools is not installed? */
   moduleMissing: boolean;
-  /** Did the probe fail because the Python interpreter itself is missing? */
+  /** Did the probe fail because the Python interpreter could not be started? */
   interpreterMissing: boolean;
   /** A one line summary of what happened. */
   detail: string;

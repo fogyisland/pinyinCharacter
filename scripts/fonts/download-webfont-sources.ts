@@ -277,21 +277,30 @@ interface AttemptResult {
  * The code and the message of a failure cause.
  *
  * undici puts the real error in `error.cause`: `ECONNREFUSED`,
- * `ENOTFOUND`, `ETIMEDOUT`. When a request reaches several addresses
- * the cause is an AggregateError and the individual error sits in its
- * `errors` list.
+ * `ENOTFOUND`, `ETIMEDOUT`. When a host resolves to several addresses
+ * — which is the normal case for `fonts.gstatic.com` and
+ * `raw.githubusercontent.com` — undici reports the failures of all of
+ * them as one AggregateError. Its own `code` is only the FIRST failure
+ * and its `message` is empty, so the aggregate says almost nothing; the
+ * sub-errors in `errors` name every address that was tried and why
+ * each one failed. Those are the actionable ones, so they are the ones
+ * that get described.
  */
 function describeCause(cause: unknown): string | null {
   if (!cause || typeof cause !== 'object') return null;
+  const nested = 'errors' in cause ? cause.errors : undefined;
+  if (Array.isArray(nested) && nested.length > 0) {
+    const parts = (nested as unknown[])
+      .map((sub) => describeCause(sub))
+      .filter((part): part is string => part !== null);
+    if (parts.length > 0) return parts.join(' | ');
+  }
   const code = 'code' in cause && typeof cause.code === 'string' ? cause.code : null;
   let text: string | null = null;
   if (cause instanceof Error) {
     text = cause.message;
   } else if ('message' in cause && typeof cause.message === 'string') {
     text = cause.message;
-  }
-  if (!code && !text && 'errors' in cause && Array.isArray(cause.errors) && cause.errors.length > 0) {
-    return describeCause(cause.errors[0]);
   }
   if (code && text && text !== code) return `${code}: ${text}`;
   return code ?? text;
@@ -495,6 +504,22 @@ type SkipDecision =
  * likely to be sitting on disk, so it must never be able to pass as a
  * finished download. The middle tier does not forbid the acceptance —
  * it only admits that the check was impossible.
+ *
+ * The last tier has two more branches that lead to the same verdict,
+ * and both belong to it:
+ *
+ *   - the server declared a size that does NOT match the local file:
+ *     the file is NOT accepted, it has to be downloaded again. This is
+ *     the branch that catches a truncated leftover of an earlier run —
+ *     the server is there and it says how big the file is, and the file
+ *     on disk is a different size, so it cannot be the download;
+ *   - the server answered with an error status and no usable size: the
+ *     file is NOT accepted for the same reason — nothing tells us that
+ *     the local file is whole.
+ *
+ * In short: a local file is only taken for the download when the server
+ * vouches for it. A server that says nothing, or says something that
+ * contradicts the file, sends the file back for a fresh download.
  */
 function decideSkip(dest: string, probe: SizeProbe): SkipDecision {
   const localSize = fileSize(dest);
@@ -532,19 +557,25 @@ function decideSkip(dest: string, probe: SizeProbe): SkipDecision {
 /**
  * Download `url` into `dest`.
  *
- * Returns true when `dest` holds a complete file, by either of two
- * routes:
+ * Returns true when `dest` holds a file the server vouches for, by any
+ * of three routes:
  *
  *   - the local file already matched the size the server declared, so
  *     the download was skipped and nothing was fetched;
+ *   - the server answered with a success status but declared no size, so
+ *     the local file could NOT be checked. It is taken as it is, with a
+ *     warning that says exactly that. The server is there, but nobody
+ *     compared the file against anything;
  *   - the file was downloaded and its size was checked against the
  *     Content-Length of the very response that carried the bytes.
  *
  * So a true result does NOT mean "this call downloaded something": when
  * the file is already in place and matches the server's declaration,
- * the call returns true without downloading a thing. What it does mean
- * is that the file on disk is the one the server serves, as far as the
- * sizes can tell.
+ * the call returns true without downloading a thing. And a true result
+ * does not always mean "the file was verified" either — the second route
+ * is a file nobody could check. What a true result does mean is that
+ * the file on disk is the one the server serves, as far as the sizes can
+ * tell, and that the caller was warned when the sizes could not tell.
  *
  * A failed attempt removes the `.part` file, so the next attempt starts
  * clean and a truncated file can never be mistaken for a finished one.

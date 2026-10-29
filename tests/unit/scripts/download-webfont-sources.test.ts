@@ -237,6 +237,28 @@ describe('downloadFont', () => {
     expect(existsSync(`${dest}.part`)).toBe(false);
   }, 30_000);
 
+  it('names every address it failed to reach when the host resolves to many', async () => {
+    // `localhost` resolves to more than one address, and the font hosts
+    // are like that too. undici tries each of them and folds the
+    // failures into one AggregateError whose own `code` is only the
+    // FIRST failure. The reason has to carry every address, otherwise
+    // the operator sees the noise of the first attempt and never the
+    // actionable one.
+    const port = await findClosedPort();
+    const dir = await makeTempDir();
+
+    const result = await downloadFont(
+      entryFor('sample.bin', `http://localhost:${port}/sample.bin`),
+      dir,
+    );
+
+    expect(result.status).toBe('fail');
+    expect(result.reason).toMatch(/unreachable/i);
+    // The address that really refused the connection has to survive.
+    expect(result.reason).toMatch(/ECONNREFUSED/);
+    expect(result.reason).toMatch(/127\.0\.0\.1/);
+  }, 60_000);
+
   it('takes the size contract from the response that carries the bytes', async () => {
     // The HEAD probe lies about the size: it announces 999 bytes for a
     // file that is 100 bytes long. The contract has to come from the

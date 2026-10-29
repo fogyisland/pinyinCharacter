@@ -121,14 +121,14 @@ function fileSize(path) {
  * three different remedies and only one of them is about fontTools:
  *
  *   - `interpreterMissing` — the Python interpreter could not even be
- *     started (ENOENT). Nothing is wrong with fontTools; the operator
- *     has no interpreter, or the wrong one on PATH.
+ *     started. Nothing is wrong with fontTools; the operator has no
+ *     interpreter, or one that cannot be executed.
  *   - `moduleMissing` — the interpreter ran and fontTools is not in it.
  *   - neither — the interpreter ran fontTools and fontTools failed.
  *
  * Telling an operator to install a package that is already installed —
- * or to look at fontTools when the interpreter is missing — sends them
- * down the wrong path, so the cases must not be lumped together.
+ * or to look at fontTools when the interpreter never started — sends
+ * them down the wrong path, so the cases must not be lumped together.
  */
 export function describeFontTools() {
   try {
@@ -143,14 +143,31 @@ export function describeFontTools() {
       detail: 'fontTools.varLib.instancer answered --help',
     };
   } catch (error) {
-    // The interpreter itself could not be started. That is an ENOENT on
-    // the executable, not a failure of fontTools.
-    if (error?.code === 'ENOENT' || error?.errno === 'ENOENT') {
+    // Did the subprocess start at all? The shape of the error says so,
+    // and the shape is the same on every platform: a spawn failure
+    // carries a STRING code ('ENOENT', 'EFTYPE', 'EACCES', ...) and no
+    // exit status, while a child that ran and failed carries a NUMBER
+    // status and no string code. Enumerating the errno strings would
+    // miss the platform specific ones — Windows answers EFTYPE for a
+    // file that is not an executable, POSIX answers EACCES for a file
+    // that may not be executed.
+    const errno = typeof error?.code === 'string' ? error.code : null;
+    const spawnFailed = errno !== null && (error?.status === null || error?.status === undefined);
+    if (spawnFailed) {
+      // The interpreter never ran, so nothing at all is known about
+      // fontTools. Saying "fonttools is installed" here would assert
+      // something that was never checked.
+      const raw = typeof error?.message === 'string' ? error.message.trim() : '';
+      // The message of a spawn failure is "spawnSync <binary> <ERRNO>",
+      // which repeats the errno. Only a message that adds something is
+      // worth carrying.
+      const extra = raw && !raw.endsWith(errno) ? `: ${raw}` : '';
+      const reason = errno === 'ENOENT' ? 'was not found' : 'could not be started';
       return {
         ok: false,
         moduleMissing: false,
         interpreterMissing: true,
-        detail: `the interpreter "${PYTHON_BIN}" was not found (ENOENT)`,
+        detail: `the interpreter "${PYTHON_BIN}" ${reason} (${errno}${extra})`,
       };
     }
     const stderr = typeof error?.stderr === 'string' ? error.stderr : '';
@@ -290,17 +307,20 @@ async function main() {
     if (fontTools.interpreterMissing) {
       // The interpreter could not be started at all. Saying anything
       // about fontTools here would be a lie: the package was never
-      // reached, because there was no Python to reach it with.
-      console.error(`[instance] the Python interpreter was not found — ${fontTools.detail}`);
+      // reached, because there was no Python to reach it with. The
+      // detail says whether the interpreter is missing or merely could
+      // not be started.
+      console.error(`[instance] the Python interpreter could not be started — ${fontTools.detail}`);
       console.error('    install Python 3, or point PYTHON at the interpreter that owns fontTools:');
       console.error('    set PYTHON=C:\\path\\to\\python.exe');
     } else if (fontTools.moduleMissing) {
       console.error(FONTTOOLS_REMEDY);
     } else {
-      // The package IS there, it just did not answer. Saying "install
-      // fonttools" here would send the operator after a package they
-      // already have.
-      console.error(`[instance] fonttools is installed but the probe failed — ${fontTools.detail}`);
+      // The interpreter ran and the probe failed. Whether fontTools is
+      // installed was never established, so this must not claim that it
+      // is — the operator may have a broken fontTools, or a broken
+      // interpreter, and the detail below says which error came back.
+      console.error(`[instance] the fontTools probe ran but failed — ${fontTools.detail}`);
       console.error('    run the probe by hand to see the full error:');
       console.error(`    ${PYTHON_BIN} -I -m fontTools.varLib.instancer --help`);
     }
