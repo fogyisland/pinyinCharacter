@@ -1596,7 +1596,8 @@ Expected: FAIL —— 找不到模块。
 7. **manifest**：`version` 是 12 位 hex，且等于三份样式表内容按文件名排序后的 sha256 前 12 位；`files` 的键恰为 `{sans, serif, wenkai}`。
 8. **页面预算**（对应 Review Focus 第 5 条）：读 `data/font-page-profiles.json`，对 `/`、`/dictionary`、`/poetry`、`/stories` 四个页面，用各族的热区/Ext 规则算出「浏览器会下载哪些文件」，累加**字节**与**文件数**，断言字节 ≤ `LIMITS.pageFontBytes[path]` 且文件数 ≤ `LIMITS.maxFontFilesPerPage`。
    计算规则：一个字符落在热区就下载热区文件；落在 Ext 就下载它所在的那一个 Ext 块文件（静态族该块是 2 个文件）。同一块只算一次。
-9. **版本令牌（R18）**：每一族的样式表里**每一个** `url(/font/web/…)` 都必须带 `?v=<12 位 hex>`；且该令牌等于**这一族自己的** woff2 文件的 sha256（按文件名排序，「文件名 + 字节」依次喂进 sha256，取 hex 前 12 位）。
+9. **版本令牌（R18）**：每一族的样式表里**每一个** `url(/font/web/…)` 都必须带 `?v=<12 位 hex>`；且该令牌等于**这一族自己的** woff2 文件的 sha256：「文件名 + 字节」依次喂进 sha256，取 hex 前 12 位。
+   **顺序必须是「样式表里 face 的出现顺序」**（热区优先，然后 Ext 块按块号升序；静态族每个块先 400 后 700）——**不是文件名排序**（`ext-001.woff2` 按字母序排在 `hot.woff2` 前面，两者算法会算出两个不同的令牌）。样式表本来就是按写入顺序渲染的，所以校验器**按样式表里 `src` 出现的先后**取文件、重算哈希，就与构建脚本的算法一致了。
    **为什么要有这一项**：`/font/**` 在生产上是 `public, max-age=31536000, immutable`（一年不可变），而新设计的 woff2 文件名是**稳定名**（`hot.woff2` / `ext-001.woff2`，7 936 个文件里 0 个带内容哈希）——语料一变、频率顺序一变、Ext 块的成员就整体换位，于是同一个 URL 换了内容：浏览器手里那份 immutable 的旧文件不会重新下载，而新 CSS 的 `unicode-range` 声称那个文件里有那个字 ⇒ **豆腐块（G10）**。令牌一改 URL 就变，浏览器必然重新取。
    **要断言的是「令牌 = 内容的哈希」，不是「令牌长得像哈希」**：令牌与内容脱钩就等于没令牌。所以校验器要**自己按上文的算法重算一遍**，跟 CSS 里写的比对；重算不出来（少一个文件、顺序变了、字节对不上）就报错。
    **实测代价**：统一令牌对三份样式表的 gzip 增量合计 **+219 B**（sans +310 / serif +377 / wenkai −468），离 175 KB 预算的余量从 4 252 B 降到 4 033 B；「每个文件各带自己的哈希」是 +83 007 B，直接破预算——所以是**按族**一个令牌，不是按文件。
@@ -2027,7 +2028,8 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 
 **Interfaces:**
 - Consumes: 无
-- Produces: 一份可直接 `cp` 到 `/etc/nginx/conf.d/` 的 nginx 配置，以及一份部署/回滚手册。
+- Produces: 一份 nginx 配置（**含微缓存指令**）+ 一份部署/回滚手册（`deploy/OPTIMIZATION.md`）。
+  ⚠️ **不是「可直接 `cp` 覆盖」的配置文件**——仓库这份与线上跑的那份**不一致**（F30-a，见下面的部署前置），手册必须写清「先对账、只搬缓存那几行、备份、冒烟、回滚」。
 
 **安全约束（Review Focus 第 2 条与第 2b 条，全部必须满足，缺一条本任务不做）**：
 
@@ -2045,6 +2047,35 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 6. `$http_rsc` 必须同时进 `proxy_cache_bypass` 与 `proxy_no_cache` —— 线上实测：`RSC: 1` 请求头返回 `Content-Type: text/x-component` 的 flight 数据（22 843 B），同一个 URL 不带该头返回 `text/html` 的完整页面（45 929 B）。两者**只有这一个请求头不同**，缓存键（`$request_uri`）完全相同 → 不隔离就是白屏。
 7. 上线后用 `curl -I` 验证 `X-Ziyun-Cache` 出现 `MISS` → `HIT`，且带 `auth_token` 的请求恒为 `BYPASS`。
 
+**⚠️⚠️ 部署前置（承重；控制器裁决 F30-a / F30-b，2026-10-29 实测）**
+
+> **仓库里的 nginx 配置不是线上跑的那份。** 这一条不是推测，是拿响应头逐项对出来的：
+
+| 判据 | 仓库配置会产生的 | 线上实测（2026-10-29） | 结论 |
+|---|---|---|---|
+| `/font/noto-sans-sc/<hash>.woff2` 的 `ETag` | nginx `alias` + `expires` ⇒ `W/"<mtime-hex>-<size-hex>"` | `W/"2034-19ebc889440"`（**size 在前**、mtime 毫秒在后） | **Next.js** 的形状 |
+| 同一个响应的 `Expires:` | nginx `expires 1y` **必定**带 `Expires:` | **没有 `Expires:`** | 不是 nginx 的 `expires` |
+| `Cache-Control` | nginx 的 `expires` 产出 `max-age=31536000`，再叠 `add_header` 的 `public, immutable` ⇒ **两个** `Cache-Control` 头 | **一个**：`public, max-age=31536000, immutable` —— 与 `next.config.ts:45` 的 `/font/:path*` **逐字相同** | 由 Next.js 发出 |
+| 一个不存在的字体 | nginx `try_files $uri =404` ⇒ nginx 的 404 | `X-Powered-By: Next.js` + `link: </_next/static/css/8cff398d26f7fab1.css>` + `Vary: rsc, …` ⇒ **Next.js 的 404 页面** | 请求根本没进 nginx 的静态分支 |
+
+⇒ **线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`= /logo.png` 全部由 Next.js 提供**，而仓库配置里对应的 `alias` 块（`deploy/nginx.ziyun.pudafo.com.conf:123-177`，2026-07-05 由 `da2955439` 加入）**在生产上没有生效**。
+
+**F30-a（本任务的第一承重约束）**：**不许把仓库这份配置整份覆盖到服务器上。** 仓库文件里那些 `alias` 块一旦生效，静态资源就改由 nginx 出；而且 **`alias` + `try_files $uri =404` 是 nginx 的已知坑**（`try_files` 在 `alias` 语境下会用 alias 目录拼**完整请求 URI**，路径多出一层前缀）⇒ 最坏情况是**这一整段静态资源全部 404**——**本波次刚做出来的 7 936 个字体文件会全部消失**。上线必须按这个顺序：
+
+1. **先对账**：在服务器上 `sudo nginx -T` 导出**当前生效**的完整配置，与仓库这份逐段 diff，**搞清楚线上到底有没有那些 `alias` 块**（本任务之前的实测结论是**没有**）。
+2. **只搬缓存那几行**：把 `proxy_cache_path` 块与 `location /` 里的缓存指令，按线上现有配置的结构**手工合并**进去，不要整文件覆盖。
+3. **先备份**：`sudo cp /etc/nginx/conf.d/<线上那份>.conf{,.bak-$(date +%F-%H%M)}`，并把回滚命令写进 `OPTIMIZATION.md`。
+4. **`nginx -t` 通过后 `reload`**（不是 `restart`）。
+5. **冒烟**（两条都要过，缺一条就回滚）：
+   ```bash
+   curl -sI https://ziyun.pudafo.com/font/web/sans/hot.woff2 | head -20   # 必须 200 + Content-Type: font/woff2
+   curl -sI https://ziyun.pudafo.com/ | grep -i x-ziyun-cache             # 必须出现 X-Ziyun-Cache
+   ```
+   ⚠️ 这条冒烟是**本波次的验收项**：字体 404 意味着整个 Wave 2 的产物全废，而页面上**看不出任何错误**（字会悄悄回落到系统字体）。
+6. **回滚**：`sudo cp <备份> /etc/nginx/conf.d/<线上那份>.conf && sudo nginx -t && sudo systemctl reload nginx`。
+
+**F30-b**：**本波次不碰那些 `alias` 块**——它们在生产上没生效，改它们既无收益、又把一个「已知的部署漂移」变成「未知的部署漂移」。仓库这份配置里的 `alias` 块**保持原样**，本任务只在 `OPTIMIZATION.md` 里把漂移写清楚，并给出去漂移的路径（要么把线上改成与仓库一致，要么把仓库改成与线上一致——**这是运维的活，不是本任务的活**）。
+
 - [ ] **Step 1: 写失败测试**
 
 创建 `tests/unit/deploy/nginx-config.test.ts`：
@@ -2057,6 +2088,7 @@ import { resolve } from 'node:path';
 const ROOT = resolve(__dirname, '..', '..', '..');
 const conf = readFileSync(resolve(ROOT, 'deploy', 'nginx.ziyun.pudafo.com.conf'), 'utf8');
 const brotli = readFileSync(resolve(ROOT, 'deploy', 'nginx-brotli.conf'), 'utf8');
+const manual = readFileSync(resolve(ROOT, 'deploy', 'OPTIMIZATION.md'), 'utf8');
 
 describe('the nginx config caches HTML but never for a logged-in user', () => {
   it('declares the cache zone', () => {
@@ -2108,6 +2140,26 @@ describe('the brotli snippet is opt-in', () => {
 
   it('is not included by the main config', () => {
     expect(conf).not.toContain('include /etc/nginx/conf.d/nginx-brotli.conf;');
+  });
+});
+
+describe('the deploy manual refuses to overwrite the live nginx config (F30-a)', () => {
+  it('says the repository config is not the one running in production', () => {
+    expect(manual).toMatch(/不是线上跑的那份|不是线上生效的那份/);
+  });
+
+  it('requires reconciling the effective config before changing anything', () => {
+    expect(manual).toContain('nginx -T');
+  });
+
+  it('smoke-tests the webfont path, because a 404 there is invisible on the page', () => {
+    expect(manual).toContain('/font/web/sans/hot.woff2');
+    expect(manual).toContain('font/woff2');
+  });
+
+  it('keeps a rollback command', () => {
+    expect(manual).toMatch(/回滚/);
+    expect(manual).toContain('nginx -t');
   });
 });
 ```
@@ -2213,7 +2265,16 @@ brotli_types
 
 内容必须包含：
 
-- **部署顺序**：先 `nginx -t`，再 `systemctl reload nginx`；给出完整的 `cp`/`ln -s`/`nginx -t`/`reload` 命令串。
+- **⚠️ 开头第一段必须是「不要整份覆盖」**（F30-a）：说明**仓库这份 nginx 配置不是线上跑的那份**——线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`= /logo.png` 由 **Next.js** 提供（判据：ETag 是 `W/"<size-hex>-<mtime-ms-hex>"`、没有 `Expires:`、`Cache-Control` 与 `next.config.ts:45` 逐字相同、404 页面带 `X-Powered-By: Next.js`），而仓库配置里对应的 `alias` 块（`deploy/nginx.ziyun.pudafo.com.conf:123-177`）**在生产上没有生效**。因此**不许** `cp` 覆盖，**只搬缓存那几行**。
+- **部署顺序**（F30-a 的六步，逐条给命令）：
+  1. **对账**：`sudo nginx -T > /tmp/nginx-effective.conf`，与仓库这份 diff，确认线上到底有没有那些 `alias` 块；
+  2. **备份**：`sudo cp /etc/nginx/conf.d/<线上那份>.conf{,.bak-$(date +%F-%H%M)}`；
+  3. **合并**（不是覆盖）缓存指令：`proxy_cache_path` 块 + `location /` 里的 `proxy_cache*` 那几行；
+  4. `sudo nginx -t`（**必须通过**）→ `sudo systemctl reload nginx`（**不是 restart**）；
+  5. **冒烟**：`curl -sI https://ziyun.pudafo.com/font/web/sans/hot.woff2` 必须 **200 + `Content-Type: font/woff2`**；`curl -sI https://ziyun.pudafo.com/ | grep -i x-ziyun-cache` 必须出现该头；
+  6. **回滚**：`sudo cp <备份> /etc/nginx/conf.d/<线上那份>.conf && sudo nginx -t && sudo systemctl reload nginx`。
+  ⚠️ **第 5 条是本波次的验收项**：字体 404 意味着整个 Wave 2 的产物全废，而页面上**看不出任何错误**（字会悄悄回落到系统字体）。
+- **配置漂移的说明（F30-b）**：写清「仓库配置与线上不一致」这件事，并把两条去漂移的路径列出来（把线上改成与仓库一致 / 把仓库改成与线上一致），注明**这是运维的活，本波次不动那些 `alias` 块**。
 - **回滚**：`cp deploy/nginx.ziyun.pudafo.com.conf.bak /etc/nginx/sites-available/ziyun.pudafo.com.conf && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
 - **上线后验证**（五条命令 + 期望输出）：
   ```bash
