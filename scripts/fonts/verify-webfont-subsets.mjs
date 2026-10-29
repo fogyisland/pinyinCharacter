@@ -22,13 +22,15 @@
  *   5. stylesheets   the gzip total, the face count, the blocking sheet
  *   6. faces         every face says font-display: swap and points at a
  *                     file that exists
- *   7. manifest      the version is the hash of the three stylesheets and
- *                     every family points at ITS OWN stylesheet
+ *   7. manifest      the version is the hash of the three stylesheets
  *   8. pages         what a page downloads stays inside the page budget
  *   9. tokens        every URL carries the hash of the bytes it serves (R18)
  *  10. identity      every face declares the family of the stylesheet and a
  *                     normal font-style
  *  11. weights       a static face points at the file of its OWN weight
+ *  12. directories   every face points at the directory of its own family,
+ *                     and the file is read along the URL's own path
+ *  13. manifest      every family points at EXACTLY its own stylesheet
  *
  * Every failure is COLLECTED: the run reports all of them and exits 1, so
  * one broken build is one trip through the log, not nine.
@@ -226,12 +228,41 @@ export function checkFaceWeight(family, face) {
 }
 
 /**
- * Check that the manifest points every family at ITS OWN stylesheet.
+ * Check that a face points at the directory of its OWN family.
+ *
+ * The directory in the URL is what the BROWSER downloads from. A face that
+ * points at the directory of another family hands the page a different
+ * typeface — and the R18 token of the family no longer describes the bytes
+ * that are served under it.
+ *
+ * A face whose URL cannot be parsed is reported by the main loop already
+ * (`badUrls`), so nothing is reported twice here.
+ *
+ * @param {{ key: string, dir: string }} family the family of the stylesheet
+ * @param {{ src: string }} face
+ * @returns {string[]} the messages of the failures, empty when the face is right
+ */
+export function checkFaceDirectory(family, face) {
+  const url = parseFaceUrl(face.src);
+  if (!url) return [];
+  if (url.dir === family.dir) return [];
+  return [
+    `[${family.key}] the face ${face.src} points at the directory ${url.dir}, ` +
+      `it must point at the directory of the family (${family.dir})`,
+  ];
+}
+
+/**
+ * Check that the manifest points every family at EXACTLY its own stylesheet.
  *
  * `lib/font-css.ts` builds the URL of the stylesheet of a family out of
  * `manifest.files.<family>`. A manifest that points `serif` at
- * `fonts-sans.css` would drop the serif stylesheet from the page — and
- * every other check would still be green.
+ * `fonts-sans.css` would drop the serif stylesheet from the page, and a
+ * manifest that points `sans` at a path that does not exist would link the
+ * page to a 404 — the whole family would fall back to the system font.
+ *
+ * The expected path is derived from the family, not written out a third
+ * time: it is `/font/` plus the name of the stylesheet of the family.
  *
  * @param {{ files?: Record<string, string> }} manifest the parsed manifest
  * @param {Array<{ key: string, css: string }>} families the families of the site
@@ -246,10 +277,11 @@ export function checkManifestFiles(manifest, families) {
       errors.push(`the manifest lists no stylesheet for ${family.key}`);
       continue;
     }
-    if (!value.endsWith(family.css)) {
+    const expected = `/font/${family.css}`;
+    if (value !== expected) {
       errors.push(
-        `the manifest points ${family.key} at ${value}, it must point at the ` +
-          `stylesheet of the family (${family.css})`,
+        `the manifest points ${family.key} at ${value}, it must point at exactly ` +
+          `${expected}`,
       );
     }
   }
@@ -394,6 +426,7 @@ async function inspectFamily(family, plan) {
   const extraCodepoints = [];
   const badLabels = [];
   const badWeights = [];
+  const badDirectories = [];
   let files = 0;
   let bytes = 0;
 
@@ -411,6 +444,10 @@ async function inspectFamily(family, plan) {
     // --- check 11: a static face must point at the file of its weight -----
     for (const message of checkFaceWeight(family, face)) {
       badWeights.push(message);
+    }
+    // --- check 12: the face must point at the directory of its family -----
+    for (const message of checkFaceDirectory(family, face)) {
+      badDirectories.push(message);
     }
 
     const url = parseFaceUrl(face.src);
@@ -469,11 +506,16 @@ async function inspectFamily(family, plan) {
     }
 
     // --- the file itself --------------------------------------------------
+    // The path is the URL's OWN path: the file the browser downloads is
+    // the file that is checked here. The directory check above holds the
+    // URL to the directory of the family, so the two are equivalent on a
+    // legal artefact — but each of them stands on its own, so neither can
+    // be removed silently.
     let content;
     try {
-      content = await readFile(join(WEB_DIR, family.dir, fileName));
+      content = await readFile(join(WEB_DIR, url.dir, url.file));
     } catch (error) {
-      missingFiles.push(`${fileName} (${error.code ?? error.message})`);
+      missingFiles.push(`${url.dir}/${fileName} (${error.code ?? error.message})`);
       continue;
     }
     files += 1;
@@ -606,6 +648,12 @@ async function inspectFamily(family, plan) {
     errors.push(
       `[${family.key}] ${badWeights.length} face(s) do not point at the file of their ` +
         `own weight: ${summarize(badWeights)}`,
+    );
+  }
+  if (badDirectories.length > 0) {
+    errors.push(
+      `[${family.key}] ${badDirectories.length} face(s) do not point at the directory of ` +
+        `their own family: ${summarize(badDirectories)}`,
     );
   }
 

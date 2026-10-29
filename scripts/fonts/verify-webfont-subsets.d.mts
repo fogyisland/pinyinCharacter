@@ -198,11 +198,26 @@ export declare function checkFaceWeight(
 ): string[];
 
 /**
- * Check that the manifest points every family at ITS OWN stylesheet.
+ * Check that a face points at the directory of its OWN family.
+ *
+ * The directory in the URL is what the browser downloads from: a face that
+ * points at the directory of another family hands the page a different
+ * typeface. A face whose URL cannot be parsed is reported by the main loop
+ * already, so nothing is reported twice here.
+ */
+export declare function checkFaceDirectory(
+  family: { key: FamilyName; dir: string },
+  face: { src: string },
+): string[];
+
+/**
+ * Check that the manifest points every family at EXACTLY its own stylesheet.
  *
  * `lib/font-css.ts` builds the URL of the stylesheet of a family out of
  * `manifest.files.<family>`, so a manifest that points `serif` at
- * `fonts-sans.css` drops the serif stylesheet from the page.
+ * `fonts-sans.css` drops the serif stylesheet from the page, and a manifest
+ * that points a family at a path that does not exist links the page to a
+ * 404.
  */
 export declare function checkManifestFiles(
   manifest: FontManifest,

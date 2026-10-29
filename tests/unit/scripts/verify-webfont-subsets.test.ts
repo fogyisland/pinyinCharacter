@@ -7,8 +7,10 @@ import {
   verifyAll,
   LIMITS,
   parseFaces,
+  parseFaceUrl,
   checkFaceFamily,
   checkFaceWeight,
+  checkFaceDirectory,
   checkManifestFiles,
 } from '../../../scripts/fonts/verify-webfont-subsets.mjs';
 
@@ -92,6 +94,20 @@ describe('parseFaces', () => {
   });
 });
 
+describe('parseFaceUrl', () => {
+  it('reads the directory, the file and the token of a URL', () => {
+    expect(parseFaceUrl('/font/web/sans/hot.woff2?v=f31ca9b32566')).toEqual({
+      dir: 'sans',
+      file: 'hot.woff2',
+      token: 'f31ca9b32566',
+    });
+  });
+
+  it('returns null for a URL that is not under /font/web/', () => {
+    expect(parseFaceUrl('/font/fonts-sans.css')).toBe(null);
+  });
+});
+
 describe('checkFaceFamily', () => {
   it('reports a face that declares another family', () => {
     // The face points at a real file with real glyphs, so every other
@@ -151,6 +167,35 @@ describe('checkFaceWeight', () => {
   });
 });
 
+describe('checkFaceDirectory', () => {
+  it('says nothing when the face points at the directory of its family', () => {
+    const errors = checkFaceDirectory(familyOf('sans'), {
+      src: '/font/web/sans/hot.woff2?v=f31ca9b32566',
+    });
+    expect(errors).toEqual([]);
+  });
+
+  it('reports a face that points at the directory of another family', () => {
+    // The browser would download the serif file for the sans face: the page
+    // is painted in another typeface, and the token of sans no longer
+    // describes the bytes that are served under it.
+    const errors = checkFaceDirectory(familyOf('sans'), {
+      src: '/font/web/serif/hot.woff2?v=f31ca9b32566',
+    });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('sans');
+    expect(errors[0]).toContain('/font/web/serif/hot.woff2');
+  });
+
+  it('says nothing when the URL cannot be parsed', () => {
+    // The main loop reports a broken URL already; nothing is said twice.
+    const errors = checkFaceDirectory(familyOf('sans'), {
+      src: '/font/web/sans/hot.woff2?x=1',
+    });
+    expect(errors).toEqual([]);
+  });
+});
+
 describe('checkManifestFiles', () => {
   it('reports a family that points at the stylesheet of another family', () => {
     // lib/font-css.ts builds the URL of the stylesheet of a family out of
@@ -182,5 +227,38 @@ describe('checkManifestFiles', () => {
   it('says nothing about the committed manifest', () => {
     const manifest = JSON.parse(readFileSync(MANIFEST_PATH, 'utf8'));
     expect(checkManifestFiles(manifest, FAMILIES)).toEqual([]);
+  });
+
+  it('reports a path that only ends with the name of the stylesheet', () => {
+    // `/font/xfonts-sans.css` ends with `fonts-sans.css`, but the file does
+    // not exist: the page would link a 404 and the whole sans family would
+    // fall back to the system font.
+    const errors = checkManifestFiles(
+      {
+        files: {
+          sans: '/font/xfonts-sans.css',
+          serif: '/font/fonts-serif.css',
+          wenkai: '/font/fonts-wenkai.css',
+        },
+      },
+      FAMILIES,
+    );
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('/font/xfonts-sans.css');
+  });
+
+  it('says nothing about the exact path of a stylesheet', () => {
+    expect(
+      checkManifestFiles(
+        {
+          files: {
+            sans: '/font/fonts-sans.css',
+            serif: '/font/fonts-serif.css',
+            wenkai: '/font/fonts-wenkai.css',
+          },
+        },
+        FAMILIES,
+      ),
+    ).toEqual([]);
   });
 });
