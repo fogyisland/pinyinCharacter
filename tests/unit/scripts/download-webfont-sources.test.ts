@@ -148,6 +148,9 @@ describe('downloadFont', () => {
     // The local file must not be taken for a finished download.
     expect(result.status).toBe('fail');
     expect(result.reason).toMatch(/unreachable/i);
+    // The reason has to name the cause, not just the conclusion: a bare
+    // "fetch failed" leaves the operator with nothing to act on.
+    expect(result.reason).toMatch(/ECONNREFUSED/i);
     expect(await readFile(dest)).toEqual(leftover);
 
     // The message has to name the real cause. "The server sent no
@@ -208,5 +211,62 @@ describe('downloadFont', () => {
     expect(result.status).toBe('fail');
     expect(existsSync(`${dest}.part`)).toBe(false);
     expect(await readFile(dest)).toEqual(leftover);
+  }, 30_000);
+
+  it('removes a leftover .part even when the server answers with an error', async () => {
+    const base = await startServer((req, res) => {
+      if (req.method === 'HEAD') {
+        res.writeHead(200, { 'Content-Length': '100' });
+        res.end();
+        return;
+      }
+      // The GET fails. The `.part` of an earlier, crashed attempt must
+      // not survive this attempt: the error path never opens the file,
+      // so nothing else would truncate or remove it.
+      res.writeHead(500, { 'Content-Length': '0' });
+      res.end();
+    });
+
+    const dir = await makeTempDir();
+    const dest = resolve(dir, 'sample.bin');
+    await writeFile(`${dest}.part`, Buffer.alloc(4096, 0x42));
+
+    const result = await downloadFont(entryFor('sample.bin', `${base}/sample.bin`), dir);
+
+    expect(result.status).toBe('fail');
+    expect(existsSync(`${dest}.part`)).toBe(false);
+  }, 30_000);
+
+  it('takes the size contract from the response that carries the bytes', async () => {
+    // The HEAD probe lies about the size: it announces 999 bytes for a
+    // file that is 100 bytes long. The contract has to come from the
+    // GET response — the one that actually carries the bytes — so the
+    // download must succeed even though the probe disagreed.
+    //
+    // This is the test that pins the invariant the whole script is
+    // about. Feed `promote()` the probed size instead (999) and the
+    // bytes on disk (100) no longer match the declaration, the download
+    // fails, and this test goes red.
+    const body = Buffer.alloc(100, 0x41);
+    const base = await startServer((req, res) => {
+      if (req.method === 'HEAD') {
+        res.writeHead(200, { 'Content-Length': '999' });
+        res.end();
+        return;
+      }
+      res.writeHead(200, { 'Content-Length': '100' });
+      res.end(body);
+    });
+
+    const dir = await makeTempDir();
+    const dest = resolve(dir, 'sample.bin');
+    // Nothing on disk: the file has to be fetched, so the contract is
+    // the one of the response that carries the bytes.
+
+    const result = await downloadFont(entryFor('sample.bin', `${base}/sample.bin`), dir);
+
+    expect(result.status, `the download failed: ${result.reason ?? 'unknown error'}`).toBe('ok');
+    expect(await readFile(dest)).toEqual(body);
+    expect(existsSync(`${dest}.part`)).toBe(false);
   }, 30_000);
 });

@@ -117,10 +117,18 @@ function fileSize(path) {
 /**
  * The outcome of the fontTools probe.
  *
- * `moduleMissing` separates the two ways the probe can fail. Telling an
- * operator to install a package that is already installed sends them
- * down the wrong path, so the "the module is not there" and "the module
- * ran and failed" cases have to be told apart.
+ * The three ways the probe can fail are told apart, because they need
+ * three different remedies and only one of them is about fontTools:
+ *
+ *   - `interpreterMissing` — the Python interpreter could not even be
+ *     started (ENOENT). Nothing is wrong with fontTools; the operator
+ *     has no interpreter, or the wrong one on PATH.
+ *   - `moduleMissing` — the interpreter ran and fontTools is not in it.
+ *   - neither — the interpreter ran fontTools and fontTools failed.
+ *
+ * Telling an operator to install a package that is already installed —
+ * or to look at fontTools when the interpreter is missing — sends them
+ * down the wrong path, so the cases must not be lumped together.
  */
 export function describeFontTools() {
   try {
@@ -128,8 +136,23 @@ export function describeFontTools() {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    return { ok: true, moduleMissing: false, detail: 'fontTools.varLib.instancer answered --help' };
+    return {
+      ok: true,
+      moduleMissing: false,
+      interpreterMissing: false,
+      detail: 'fontTools.varLib.instancer answered --help',
+    };
   } catch (error) {
+    // The interpreter itself could not be started. That is an ENOENT on
+    // the executable, not a failure of fontTools.
+    if (error?.code === 'ENOENT' || error?.errno === 'ENOENT') {
+      return {
+        ok: false,
+        moduleMissing: false,
+        interpreterMissing: true,
+        detail: `the interpreter "${PYTHON_BIN}" was not found (ENOENT)`,
+      };
+    }
     const stderr = typeof error?.stderr === 'string' ? error.stderr : '';
     const message = error instanceof Error ? error.message : String(error);
     const output = `${stderr}\n${message}`;
@@ -138,7 +161,7 @@ export function describeFontTools() {
       .split(/\r?\n/)
       .slice(0, 4)
       .join(' | ');
-    return { ok: false, moduleMissing, detail };
+    return { ok: false, moduleMissing, interpreterMissing: false, detail };
   }
 }
 
@@ -264,7 +287,14 @@ async function main() {
 
   const fontTools = describeFontTools();
   if (!fontTools.ok) {
-    if (fontTools.moduleMissing) {
+    if (fontTools.interpreterMissing) {
+      // The interpreter could not be started at all. Saying anything
+      // about fontTools here would be a lie: the package was never
+      // reached, because there was no Python to reach it with.
+      console.error(`[instance] the Python interpreter was not found — ${fontTools.detail}`);
+      console.error('    install Python 3, or point PYTHON at the interpreter that owns fontTools:');
+      console.error('    set PYTHON=C:\\path\\to\\python.exe');
+    } else if (fontTools.moduleMissing) {
       console.error(FONTTOOLS_REMEDY);
     } else {
       // The package IS there, it just did not answer. Saying "install

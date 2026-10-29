@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { INSTANCER_TARGETS, instancerArgs } from '../../../scripts/fonts/instance-webfont-axis.mjs';
@@ -44,6 +44,43 @@ describe('download-webfont-sources', () => {
 });
 
 describe('instance-webfont-axis', () => {
+  it('reports a missing Python interpreter as a missing interpreter', async () => {
+    // The interpreter is read from the environment when the module is
+    // loaded, so the module registry is reset to get a fresh instance
+    // that sees the bogus interpreter.
+    vi.resetModules();
+    const previous = process.env.PYTHON;
+    process.env.PYTHON = 'pinyin-no-such-python-interpreter';
+    try {
+      const instancer = (await import(
+        '../../../scripts/fonts/instance-webfont-axis.mjs'
+      )) as unknown as {
+        describeFontTools: () => {
+          ok: boolean;
+          moduleMissing: boolean;
+          interpreterMissing: boolean;
+          detail: string;
+        };
+      };
+
+      const probe = instancer.describeFontTools();
+
+      expect(probe.ok).toBe(false);
+      expect(probe.interpreterMissing).toBe(true);
+      // The interpreter never ran, so nothing at all is known about
+      // fontTools. Saying "fontTools is missing" here would be a lie.
+      expect(probe.moduleMissing).toBe(false);
+      expect(probe.detail).toMatch(/not found/i);
+    } finally {
+      if (previous === undefined) {
+        delete process.env.PYTHON;
+      } else {
+        process.env.PYTHON = previous;
+      }
+      vi.resetModules();
+    }
+  });
+
   it('pins the wght axis to the four weights the site uses', () => {
     expect(instancerArgs('src.ttf', 'out.ttf')).toEqual([
       '-I',

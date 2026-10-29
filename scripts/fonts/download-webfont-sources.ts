@@ -274,6 +274,46 @@ interface AttemptResult {
 }
 
 /**
+ * The code and the message of a failure cause.
+ *
+ * undici puts the real error in `error.cause`: `ECONNREFUSED`,
+ * `ENOTFOUND`, `ETIMEDOUT`. When a request reaches several addresses
+ * the cause is an AggregateError and the individual error sits in its
+ * `errors` list.
+ */
+function describeCause(cause: unknown): string | null {
+  if (!cause || typeof cause !== 'object') return null;
+  const code = 'code' in cause && typeof cause.code === 'string' ? cause.code : null;
+  let text: string | null = null;
+  if (cause instanceof Error) {
+    text = cause.message;
+  } else if ('message' in cause && typeof cause.message === 'string') {
+    text = cause.message;
+  }
+  if (!code && !text && 'errors' in cause && Array.isArray(cause.errors) && cause.errors.length > 0) {
+    return describeCause(cause.errors[0]);
+  }
+  if (code && text && text !== code) return `${code}: ${text}`;
+  return code ?? text;
+}
+
+/**
+ * The reason of a failed request, with the real cause attached.
+ *
+ * undici reports a failed request as a bare `fetch failed`; the reason
+ * itself sits in `error.cause`. An operator who only sees "fetch failed"
+ * knows the conclusion but not the cause, so the cause is unwrapped
+ * here — its code and its message, never the whole object (it carries
+ * more than the operator needs).
+ */
+function describeFailure(error: unknown): string {
+  const message = error instanceof Error ? error.message : String(error);
+  const cause = error instanceof Error ? error.cause : undefined;
+  const detail = describeCause(cause);
+  return detail ? `${message} (${detail})` : message;
+}
+
+/**
  * Stream one URL into `dest + '.part'`.
  *
  * The bytes are counted on the way through, so the caller can compare
@@ -292,9 +332,15 @@ async function fetchToPart(url: string, dest: string, timeoutMs: number): Promis
       headers: HEADERS,
     });
     if (!res.ok) {
+      // The `.part` of an earlier, crashed attempt must not survive
+      // this one. A leftover on disk is the very class of residue this
+      // script exists to eliminate, and the HTTP error path never
+      // opens the file, so it would never truncate it.
+      rmSync(part, { force: true });
       return { ok: false, bytes: 0, expected: null, reason: `HTTP ${res.status} ${res.statusText}`.trim() };
     }
     if (!res.body) {
+      rmSync(part, { force: true });
       return { ok: false, bytes: 0, expected: null, reason: 'the response carried no body' };
     }
 
@@ -321,11 +367,10 @@ async function fetchToPart(url: string, dest: string, timeoutMs: number): Promis
     }
     return { ok: true, bytes: written, expected, reason: null };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
     // A half written body is not a download. Remove it so the next
     // attempt starts from nothing.
     rmSync(part, { force: true });
-    return { ok: false, bytes: 0, expected: null, reason: message };
+    return { ok: false, bytes: 0, expected: null, reason: describeFailure(error) };
   } finally {
     clearTimeout(timer);
   }
@@ -433,12 +478,23 @@ type SkipDecision =
 /**
  * Decide what to do with the local file, given what the server said.
  *
- * The invariant this function protects: a local file is only accepted
- * as a finished download when the server's own declaration matches it.
- * "The server declared no size" and "the server could not be reached"
- * both forbid the acceptance of a local file that cannot be checked —
- * but they are reported differently, because the operator has to fix
- * different things.
+ * Three tiers, and they are NOT the same thing:
+ *
+ *   - the server declared a size and it matches the local file: the
+ *     file is accepted (`verified`) — the declaration and the file
+ *     agree, so the file IS the download;
+ *   - the server answered but declared no size: the file is accepted
+ *     but marked `unverified`, and the caller prints a warning that
+ *     says exactly that — nobody can check it, but the server IS there;
+ *   - the server did not answer, or answered with an error status and
+ *     no usable size: the file is NOT accepted, it has to be downloaded
+ *     again.
+ *
+ * The last tier is the one that carries the invariant: an unreachable
+ * server is exactly when a truncated leftover of an earlier run is most
+ * likely to be sitting on disk, so it must never be able to pass as a
+ * finished download. The middle tier does not forbid the acceptance —
+ * it only admits that the check was impossible.
  */
 function decideSkip(dest: string, probe: SizeProbe): SkipDecision {
   const localSize = fileSize(dest);
@@ -476,11 +532,22 @@ function decideSkip(dest: string, probe: SizeProbe): SkipDecision {
 /**
  * Download `url` into `dest`.
  *
- * Returns true when the bytes are on disk under `dest` and their size
- * has been checked against the Content-Length of the response that
- * carried them. A failed attempt removes the `.part` file, so the next
- * attempt starts clean and a truncated file can never be mistaken for a
- * finished one.
+ * Returns true when `dest` holds a complete file, by either of two
+ * routes:
+ *
+ *   - the local file already matched the size the server declared, so
+ *     the download was skipped and nothing was fetched;
+ *   - the file was downloaded and its size was checked against the
+ *     Content-Length of the very response that carried the bytes.
+ *
+ * So a true result does NOT mean "this call downloaded something": when
+ * the file is already in place and matches the server's declaration,
+ * the call returns true without downloading a thing. What it does mean
+ * is that the file on disk is the one the server serves, as far as the
+ * sizes can tell.
+ *
+ * A failed attempt removes the `.part` file, so the next attempt starts
+ * clean and a truncated file can never be mistaken for a finished one.
  */
 export async function downloadOnce(
   url: string,
