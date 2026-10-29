@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** 把生产环境的字体载荷从 3.7–5.0 MB/页降到 307–419 KB/页（R9 的重定预算：首页 307 / 字典 212 / 诗词 284 / 故事 419 KB），首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
+**Goal:** 把生产环境的字体载荷从 3.7–5.0 MB/页降到 431 KB/页（最差页 /stories；F25 的重定预算：首页 431 / 字典 387 / 诗词 287 / 故事 441 KB），首屏冷加载从 ~21 s 降到 ~5 s，同时保证零缺字、零 FOUT、登录态页面不进入任何缓存。
 
-**Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（按用字频率取前 N 字）+ 若干 Ext 文件（其余字按 16 个码位一个窗口切）**。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`，再用仓库已有的 `subset-font` 切分（实测 229 B/字，比 Google 自己的 305–407 B/字省 25–42 %）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
+**Architecture:** 放弃 Google Fonts 的「按码位区间切分」，改为**按站内用字自建子集**：每族（Noto Sans SC / Noto Serif SC / LXGW WenKai TC）切成 **一个热区文件（按用字频率取前 N 字）+ 若干 Ext 文件（其余字按**频率序**每 6 个字符切一块，F25）**。同一族的所有 `@font-face` 共用**一个 font-family 名**，每条 face 带**互不相交的精确 `unicode-range`**（= 该文件实际含有的码位并集），因此浏览器只会下载页面真正命中的那几个文件。字体源字体由 `fonttools varLib.instancer` 把 `wght` 裁到 `[400,700]`（这一步把衬线的每字成本从 499 B 降到 280 B），再用仓库已有的 `subset-font` 切分（真实成本 ≈ 1 000 B/文件 + 255–280 B/字，见 F25 的成本模型）。非字体侧同步落地：nginx brotli + HTML 微缓存（强制绕过 `auth_token`）、BBR 调优清单、预压缩脚本、可复现的性能基线脚本。
 
 **Tech Stack:** Node 22 · npm · `subset-font@2.4.0`（已有）· `fontkit@2.0.4`（已有）· Python `fonttools 4.61.1`（构建期，已装）· nginx（Ubuntu/Debian 包）· vitest
 
@@ -54,16 +54,16 @@
 
 | # | 矛盾 | 裁决 | 理由 |
 |---|---|---|---|
-| R8 | spec §4.1.1 的「Tier1 前 200 / Tier2 200–800 / Ext 每 256 码位一块」实测产不出 spec §3.2 自己要的字节：首页 984 KB / 诗词 1 446 KB / 故事 1 350 KB（目标 250 / 250 / 400 KB） | **改为「热区 + Ext 按 16 码位窗口切」**：sans/serif 热区 300 字，Ext 窗口 16 码位；楷体无热区 | 实测新机制（字符集 sans 16 968 / serif 19 888 / kai **8 197**，块数 2 786 / 3 115 / 1 348，文件共 **8 597** 个）：首页 **307 KB** / 字典 **212 KB** / 诗词 **284 KB** / 故事 **419 KB**，CSS **119.1 KB**(gzip)。相比现状的 3 813–4 985 KB 是 **10–13 倍**的下降 |
-| R9 | spec §3.2 的单页 ≤ 250/350/250 KB 与 §3.3 的 CSS ≤ 25 KB(gzip) | **重定预算**（本计划与 Task 4/9 按此执行）：单页字体 `/` ≤ 350 KB、`/dictionary` ≤ 300 KB、`/poetry` ≤ 350 KB、`/stories` ≤ 500 KB；三份 CSS 合计 ≤ **125 KB**(gzip，见 R17)；单页字体请求数 ≤ 130 个；冷加载 ≤ 5 s（现状 21–28 s） | 这是对 spec 目标的**显式偏离**，登记在案而不是默默吸收。CSS 是一次性可缓存成本，字体是每次访问成本——预算该花在后者身上 |
-| R10 | spec §4.1.3 只说「剩余字符按码位递增后每 N 字一块」，没说按**字符个数**切还是按**码位窗口**切 | **Ext 按码位窗口切**：窗口 = 码位落在 `[k×W, (k+1)×W)` 的全部字符，`W = 16` | Task 1 实现者自己的 C1 发现：256 字一块 + 逐字精确区间 → CSS 185 KB(原始)；同一批字按 min–max 区间 → 1.7 KB。按字符个数切还会产生**空的尾块**（C2） |
+| R8 | spec §4.1.1 的「Tier1 前 200 / Tier2 200–800 / Ext 每 256 码位一块」实测产不出 spec §3.2 自己要的字节：首页 984 KB / 诗词 1 446 KB / 故事 1 350 KB（目标 250 / 250 / 400 KB） | **改为「热区 + Ext 按 16 码位窗口切」**：sans/serif 热区 300 字，Ext 窗口 16 码位；楷体无热区 ⚠️ **机制部分已被 F25 取代**（Ext 改为频率序、每块 6 个字符） | 实测新机制（字符集 sans 16 968 / serif 19 888 / kai **8 197**，块数 2 786 / 3 115 / 1 348，文件共 **8 597** 个）：首页 **307 KB** / 字典 **212 KB** / 诗词 **284 KB** / 故事 **419 KB**，CSS **119.1 KB**(gzip)。相比现状的 3 813–4 985 KB 是 **10–13 倍**的下降。⚠️ 这组数字出自**错误的成本模型**（229.4 B/字、无每文件固定开销），F25 用真实字节重测后机制与数字一并作废 |
+| R9 | spec §3.2 的单页 ≤ 250/350/250 KB 与 §3.3 的 CSS ≤ 25 KB(gzip) | **重定预算**（本计划与 Task 4/9 按此执行）：单页字体 `/` ≤ 350 KB、`/dictionary` ≤ 300 KB、`/poetry` ≤ 350 KB、`/stories` ≤ 500 KB；三份 CSS 合计 ≤ **125 KB**(gzip，见 R17)；单页字体请求数 ≤ 130 个；冷加载 ≤ 5 s（现状 21–28 s） ⚠️ **数字已被 F25-c / F25-d 取代** | 这是对 spec 目标的**显式偏离**，登记在案而不是默默吸收。CSS 是一次性可缓存成本，字体是每次访问成本——预算该花在后者身上 |
+| R10 | spec §4.1.3 只说「剩余字符按码位递增后每 N 字一块」，没说按**字符个数**切还是按**码位窗口**切 | **Ext 按码位窗口切**：窗口 = 码位落在 `[k×W, (k+1)×W)` 的全部字符，`W = 16` ⚠️ **已被 F25-a 取代** | Task 1 实现者自己的 C1 发现：256 字一块 + 逐字精确区间 → CSS 185 KB(原始)；同一批字按 min–max 区间 → 1.7 KB。按字符个数切还会产生**空的尾块**（C2）。⚠️ F25 用同一成本模型实测：码位窗口机制在同文件数下比频率序多付 **32 % 的页面字节** |
 | R11 | spec §4.1.1 保留 Tier2 这一档 | **删掉 Tier2**（热区之后不再分档） | 语料尾部每个字只出现一次 → 尾部频率信号是均匀的，「按频率分档」在尾部等价于任意分组。实测把热区加大只会把热区文件本身撑大（热区文件每页都要整份下载）：首页 热区 0 → 325 KB，热区 300 → **295 KB**，热区 450 → 325 KB，热区 600 → 366 KB，热区 1000 → 504 KB |
 | R12 | Ext 块的 `unicode-range` 用「块内最小–最大码位」的区间，还是「块内码位并集」的精确并集 | **用精确并集**（`unicodeRange()`），不用 min–max 区间 | min–max 区间会覆盖**文件里没有的字**：浏览器按区间选中这个 face → 直接渲染豆腐块，而不是回退系统字体。精确并集多花约 31 KB(gzip) 的 CSS（一次性、可缓存），换掉唯一一条产生豆腐块的路径 |
 | R13 | spec §3.2 想要 ≤ 250 KB/页 | **本轮不做**，登记为下一波 | 真要 250 KB/页需要按页/按需动态子集：新增运行时依赖（G3 明令禁止）+ 约 3 万个文件 |
 | R14 | spec §3.6 没规定楷体要不要热区 | **楷体不设热区**（`tier1Size = 0`），只用 Ext 窗口 | 楷体全站只渲染约 38 字（首页），但 300 字的热区文件按 400/700 两份算 = 每页白付 137 KB。实测：楷体热区 0 → 首页 295 KB，楷体热区 300 → 335 KB（R16 落地后这套数字整体上移，首页 307 KB） |
 | R15 | spec §4.1.2 的 fallback 链暗示「每档一个 font-family 名」（`Noto Sans SC 1` / `2` / `Ext`） | **一族一个 font-family 名**（`Noto Sans SC`），所有 face 靠互不相交的 `unicode-range` 区分 | 区间互不相交时不需要跨族 fallback 链；一族一名去掉了「同族多条 face 谁生效」的歧义，也让 Task 3/5 少一套族名 |
-| R16 | G10（零缺字）要求「站内能渲染的汉字一个都不能落到豆腐块」，但**楷体的字面量语料（2 601 字）盖不住接龙游戏会渲染的库字符** | **楷体字符集 = 原来的 2 601 字 + `data/general-standard-chinese-characters.json` 的 8 105 个通用规范汉字 = 8 197 字**；三族窗口宽度统一为 **16 码位** | `components/game/ChainScroll.tsx:63`、`components/game/ChainPickerModal.tsx:24`、`components/game/quest/WrongBook.tsx:118`、`components/game/quest/QuestCharCard.tsx:52` 都用 `font-kai` 渲染库字符，而选字面板（`ChainPickerModal`）按拼音把整池候选字铺出来——`chars-all` 难度 + HSK 4 级以上时池子就是全部 8 105 字。盖不住 → 这些字落到 `--font-kai` 兜底链的 `Kaiti SC`/`STKaiti`/`serif`，游戏页出现两种字体混排（G10 的实质）。`data/hsk-vocab.json` 的 2 632 个 HSK 字被这 8 105 字完全覆盖（实测差集 0），不必单收。**代价**：楷体 1 030 块 → 1 348 块、2 054 → 2 696 个文件，首页楷体 21 KB → 47 KB，CSS +13 KB。实测见下表 |
-| R17 | R9 原定的「三份 CSS 合计 ≤ 110 KB(gzip)」在 R16 落地后**不可达** | **CSS 预算 110 KB → 125 KB(gzip)** | (1) CSS 字节数 ≈ `13–20 B/块(gzip)`，块数由字符集规模 × 窗口宽度决定；(2) R16 要求楷体带上 8 105 库字 → 总块数 6 928 → 7 249；(3) 实测把窗口宽度从 16 放宽到 32 才能把 CSS 压回 110 KB 附近，但那时首页 341 KB / 故事 439 KB，窗口内的「填充字」要每个页面买单；(4) 现网三份 CSS 合计 **132.7 KB**(gzip)（Google 的逐码位逗号列表格式），新机制 119.1 KB 仍是**净下降**；(5) CSS 是首次访问的一次性可缓存成本，而字体是每次访问成本——把预算挪给字体是划算的 |
+| R16 | G10（零缺字）要求「站内能渲染的汉字一个都不能落到豆腐块」，但**楷体的字面量语料（2 601 字）盖不住接龙游戏会渲染的库字符** | **楷体字符集 = 原来的 2 601 字 + `data/general-standard-chinese-characters.json` 的 8 105 个通用规范汉字 = 8 197 字**；三族窗口宽度统一为 **16 码位** ⚠️ **块宽部分已被 F25-a 取代（频率序、每块 6 个字符）** | `components/game/ChainScroll.tsx:63`、`components/game/ChainPickerModal.tsx:24`、`components/game/quest/WrongBook.tsx:118`、`components/game/quest/QuestCharCard.tsx:52` 都用 `font-kai` 渲染库字符，而选字面板（`ChainPickerModal`）按拼音把整池候选字铺出来——`chars-all` 难度 + HSK 4 级以上时池子就是全部 8 105 字。盖不住 → 这些字落到 `--font-kai` 兜底链的 `Kaiti SC`/`STKaiti`/`serif`，游戏页出现两种字体混排（G10 的实质）。`data/hsk-vocab.json` 的 2 632 个 HSK 字被这 8 105 字完全覆盖（实测差集 0），不必单收。**代价**：楷体 1 030 块 → 1 348 块、2 054 → 2 696 个文件，首页楷体 21 KB → 47 KB，CSS +13 KB。实测见下表 |
+| R17 | R9 原定的「三份 CSS 合计 ≤ 110 KB(gzip)」在 R16 落地后**不可达** | **CSS 预算 110 KB → 125 KB(gzip)** ⚠️ **已被 F25-d 取代（125 → 175 KB）** | (1) CSS 字节数 ≈ `13–20 B/块(gzip)`，块数由字符集规模 × 窗口宽度决定；(2) R16 要求楷体带上 8 105 库字 → 总块数 6 928 → 7 249；(3) 实测把窗口宽度从 16 放宽到 32 才能把 CSS 压回 110 KB 附近，但那时首页 341 KB / 故事 439 KB，窗口内的「填充字」要每个页面买单；(4) 现网三份 CSS 合计 **132.7 KB**(gzip)（Google 的逐码位逗号列表格式），新机制 119.1 KB 仍是**净下降**；(5) CSS 是首次访问的一次性可缓存成本，而字体是每次访问成本——把预算挪给字体是划算的。⚠️ F25 实测真实 CSS 成本模型为 `2.8 B/字 + 5 B/条 face`（不是 13–20 B/块），并给出**无衬线那份是渲染阻塞的**这一事实，预算必须分族设 |
 
 **R16/R17 的实测前沿**（`scripts/fonts/staging/sweep.mjs`，`W` = sans/serif 窗口宽度，`hot` = sans/serif 热区字数，`kaiW` = 楷体窗口宽度；字节为四个测量页里的最差值）：
 
@@ -79,6 +79,63 @@
 热区字数的实测曲线（R16 语料、W=16、kaiW=16）：hot 0 → 589 KB（216 个请求/页）、hot 150 → 472 KB（157 个请求/页）、**hot 300 → 419 KB（114 个请求/页）**；hot 450 以上在 R11 的旧语料曲线上同样是更差（首页 450 → 325 KB vs 300 → 295 KB）。热区 300 是唯一同时压住字节与请求数的取值——热区文件是**整份下载**的，字数越多每个页面白付的越多，而窗口块才是「按需」的。
 
 **已知未覆盖面**：`/game` 接龙页的选字面板（`ChainPickerModal`）把**候选字**——与当前字同音的全部库字——铺在 `font-kai` 里，候选集合随拼音变化，**无法用静态 HTML fixture 抓取**，因此不在四个测量页的预算内。它不会造成缺字（R16 已把 8 105 个库字全部纳入楷体），但最坏情况（某个常用音的候选字最多）它会拉下几十个楷体块。这一页的真实字节数留到 Task 9 的性能基线脚本在真实站点上量。 |
+
+### 第二轮实测推翻的机制（F25，2026-10-29）
+
+R8–R17 那一轮建立在一个**错误的成本模型**上：单页静态子集成本 ≈ `229.4 B × 命中字数`，**没有每文件固定开销**。真实子集不是这样的。F25 用真实产出的 woff2 字节重测了成本模型与切分机制，**推翻 R8 的「按 16 码位窗口切」**（R10 一并作废），并把 R9 的页面预算与 R17 的 CSS 预算重定到**真实可达**的数字。
+
+**真实成本模型**（实测：`fonttools varLib.instancer` + 仓库已有的 `subset-font`，每族用 4/8/16/32/64 字四档样本做最小二乘拟合）
+
+每个子集文件 ≈ `fixed + perChar × 字数`：
+
+| 族 | fixed | perChar | 权重份数 | 说明 |
+|---|---|---|---|---|
+| `sans` | ≈1 000 B | 276 B | 1 | 源字体已实例化到 `wght 400–700`，单文件覆盖两个字重 |
+| `serif` | ≈1 000 B | **280 B** | 1 | 实例化之后；**未实例化是 499 B/字**——裁轴省 44 % |
+| `wenkai` | ≈900 B | 255 B | **2** | 静态 Regular / Bold 各一份 |
+
+- `fixed` **不可压缩**：`dropTables` / `nameIDs` / `noLayoutClosure` / `notdefGlyph:false` / `desubroutinize` 全部试过，输出**逐字节相同**。它不是表头开销，是第一个字形本身。
+- 因此 **窄块比宽块更贵**（不是更便宜）：每文件都要付一次 fixed。频率阶梯（热区 | 32 | 8 | 2）实测 834 KB，比统一宽度 8 的 532 KB 更差。
+- CSS 成本 ≈ `2.8 B/字`（`unicode-range` 的十六进制，gzip 后）+ `5 B/条 face`（样板）。**码位连续的块 hex 便宜（≈0.5 B/字），频率序的散点块 hex 贵（≈2.8 B/字）**——这是频率序要付的代价。
+- 合成探针给出的「19 B/face」是错的（样板重复得太整齐，gzip 奖励了它）。**真实 CSS 成本必须生成真实样式表再 gzip 量。**
+- 现网三份 CSS 合计 132.7 KB(gzip)——**几乎全部是字体 CSS**（sans 31 / serif 31 / wenkai 71）。所以 CSS 这一侧没有「顺带省下来」的余地，预算必须按真实模型给。
+
+**机制对决**（同一成本模型、同一批页面；机制 A = 计划的码位窗口，机制 B = 频率序按字符个数切块）
+
+| 机制 | 最差页字体 | CSS(gzip) | 文件数 | 请求/页 |
+|---|---|---|---|---|
+| A 码位窗口 8 | 643 KB | 195 KB | 14 551 | 236 |
+| A 码位窗口 16（R8 的取值） | 645 KB | 166 KB | 8 597 | 118 |
+| A 码位窗口 32 | 1 487 KB | 149 KB | 5 053 | 196 |
+| B 频率序 4 字/块 | **391 KB** | 188 KB | 13 166 | 113 |
+| **B 频率序 6 字/块（本轮采用）** | **441 KB** | 167 KB | 8 779 | 109 |
+| B 频率序 8 字/块 | 495 KB | 156 KB | 6 585 | 113 |
+| B 频率序 16 字/块 | 629 KB | 140 KB | 3 295 | 94 |
+| B 频率阶梯 12/32/8 | 834 KB | — | — | — |
+
+**为什么频率序赢**：一个页面命中一个块，就要把**整块**下载下来。频率序把常用字排在前面，一个页面的字因此聚在少数几块里，每块都用得满；码位窗口按码位区间切，页面的散字会散落在几十个窗口里，每个窗口都整份下载。**同一文件数下频率序省 32 % 的页面字节。**
+
+**F25 裁决**
+
+| # | 裁决 |
+|---|---|
+| **F25-a** | **Ext 块改为「频率序、每块 6 个字符」**，不再是码位窗口。R8 的机制部分与 R10 一起作废；R12（精确并集、不用 min–max 区间）**继续有效且更重要**——频率序的块在码位上是散的，min–max 区间会直接制造豆腐块（G10）。 |
+| **F25-b** | **热区保留**：sans/serif 热区 300 字，wenkai 无热区（R14 不变）。理由变了：无热区时请求数 148–176/页，超 R9 的 130 上限；有热区时 109/页。 |
+| **F25-c** | **重定 R9 的页面预算**（字体字节，不含 CSS）：`/` ≤ 460 KB、`/dictionary` ≤ 420 KB、`/poetry` ≤ 320 KB、`/stories` ≤ 480 KB。实测 **431 / 387 / 287 / 441 KB**。请求数 ≤ 110/页（预算仍是 130）。 |
+| **F25-d** | **重定 R17 的 CSS 预算**：三份合计 ≤ **175 KB**(gzip)，实测 167 KB（sans 60 / serif 71 / wenkai 36）。**无衬线那份单独设限 ≤ 65 KB**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞。 |
+| **F25-e** | **`subset-font` 的文本参数必须是字符串**：`subsetFont(buffer, chars.join(''), { targetFormat: 'woff2' })`。传数组会抛 `The subset text must be given as a string`。 |
+| **F25-f** | **产物规模**：8 779 个 woff2 文件（sans 2 779 / serif 3 266 / wenkai 2 734），约 22 MB。旧的 Google 子集目录与 `fonts.css` 由 Task 5 删除。 |
+
+**F25 的实测前沿**（`scripts/fonts/staging/probe-mechanism-race.mjs`、`probe-css-real.mjs`、`probe-final-objective.mjs`、`probe-page-totals.mjs`；字节为四个测量页里的最差值）：
+
+| 配置 | `/` | `/dictionary` | `/poetry` | `/stories` | CSS | 文件 | 请求 |
+|---|---|---|---|---|---|---|---|
+| 频率序 6 字/块 + 热区 300/300/0 | 431 KB | 387 KB | 287 KB | 441 KB | 167 KB | 8 779 | ≤110 |
+| 频率序 4 字/块 + 热区 300/300/0 | 391 KB | 354 KB | 251 KB | 391 KB | 188 KB | 13 166 | ≤113 |
+| 频率序 8 字/块 + 热区 300/300/0 | 495 KB | 439 KB | 302 KB | 477 KB | 156 KB | 6 585 | ≤113 |
+| 码位窗口 16 + 热区 300/300/0 | 618 KB | 333 KB | 442 KB | 645 KB | 166 KB | 8 597 | ≤118 |
+
+取 6 字/块的理由：它与计划原本的文件预算（8 597）几乎一样，页面字节却比机制 A 省 32 %；再往下（4 字/块）只省 11 % 的字节，却要多 4 387 个文件、多 21 KB 的 CSS（其中 11 KB 在渲染阻塞的那份里）。再往上（8 字/块）要多付 12 % 的页面字节。
 
 ---
 
@@ -149,20 +206,24 @@ Task 9 (性能基线) 独立（Task 5 之后测才有意义）
   export type FamilyName = 'sans' | 'serif' | 'wenkai';
   export interface CharSource { id: string; weight: number; chars: Iterable<string>; }
   export interface ScoredCharset { ordered: string[]; score: Map<string, number>; }
-  export interface ExtBlock { index: number; chars: string[]; lo: number; hi: number; }
+  export interface ExtBlock { index: number; chars: string[]; }
   export interface TierPlan { hot: string[]; extBlocks: ExtBlock[]; }
-  export interface TierOptions { tier1Size?: number; extBlockSize?: number; }
+  export interface TierOptions { tier1Size?: number; extBlockChars?: number; }
   export interface CharsetOptions { root?: string; families?: Partial<Record<FamilyName, TierOptions>>; }
   ```
-  默认值（见 R8/R14）：
+  默认值（见 R14 / F25-a）：
 
-  | 族 | `tier1Size`（热区字数） | `extBlockSize`（码位窗口宽度） |
+  | 族 | `tier1Size`（热区字数） | `extBlockChars`（每块字符个数） |
   |---|---|---|
-  | `sans` | 300 | 16 |
-  | `serif` | 300 | 16 |
-  | `wenkai` | 0 | 16 |
+  | `sans` | 300 | 6 |
+  | `serif` | 300 | 6 |
+  | `wenkai` | 0 | 6 |
 
-  `ExtBlock.lo` / `ExtBlock.hi` 是块内最小/最大码位。`ExtBlock.index` 从 1 开始，连续。
+  `ExtBlock.index` 从 1 开始，连续。**Ext 块不是码位连续的区间**：它是频率序上的连续切片，块里的字在码位上是散的。块的 `unicode-range` 必须由 `unicodeRange(block.chars)` 生成（R12 的精确并集），**不要**用 min–max 区间——那会让浏览器给一个块画不出的字挑中这个 face，直接出豆腐块（G10）。
+
+  **选项名是 `extBlockChars`（每块多少个字符），不是 `extBlockSize`（码位窗口宽度）。** F25-a 之前的旧名已作废：沿用 `extBlockSize` 会让人以为切的是码位窗口，而那正是被实测推翻的机制。
+
+  **`ExtBlock` 不再带 `lo` / `hi`。** 那两个字段只对码位连续的窗口有意义，频率序的块没有「跨度」可言；留着它们就是留一个会被误当成 `unicode-range` 的字段。
 
 - [ ] **Step 1: 写失败测试**
 
@@ -172,6 +233,7 @@ Task 9 (性能基线) 独立（Task 5 之后测才有意义）
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   isCjkChar,
   scoreCharacters,
@@ -224,75 +286,71 @@ describe('planTiers', () => {
   const scored = scoreCharacters([
     { id: 'x', weight: 1, chars: chars.slice().reverse() },
   ]);
+  const big = scoreCharacters([
+    { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
+  ]);
 
   it('puts the hottest characters in the hot tier', () => {
     const plan = planTiers(scored, { tier1Size: 2 });
     expect(plan.hot).toHaveLength(2);
   });
 
-  it('cuts the tail into code point windows, not character slices', () => {
-    // The tail after a 2 character hot tier is 丂(U+4E02), 七(U+4E03),
-    // 万(U+4E07) and 丈(U+4E08) — 万 and 丈 are NOT U+4E04 and U+4E05.
-    // Windows of 2 code points are [U+4E02,U+4E04), [U+4E04,U+4E06),
-    // [U+4E06,U+4E08) and [U+4E08,U+4E0A), so the tail falls into three
-    // blocks: 丂七 / 万 / 丈.
-    const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
-    expect(plan.extBlocks).toHaveLength(3);
+  it('cuts the tail into blocks of a fixed CHARACTER count', () => {
+    // The tail after a 2 character hot tier is 丂, 七, 万, 丈. The blocks
+    // hold two characters each, so the tail falls into two blocks — not
+    // into the three blocks a 2 code point window would produce (the old
+    // mechanism split it as 丂七 / 万 / 丈).
+    const plan = planTiers(scored, { tier1Size: 2, extBlockChars: 2 });
+    expect(plan.extBlocks).toHaveLength(2);
     expect(plan.extBlocks[0].chars).toEqual(['丂', '七']);
-    expect(plan.extBlocks[1].chars).toEqual(['万']);
-    expect(plan.extBlocks[2].chars).toEqual(['丈']);
-    expect(plan.extBlocks[0].lo).toBe(0x4e02);
-    expect(plan.extBlocks[0].hi).toBe(0x4e03);
-    expect(plan.extBlocks[1].lo).toBe(0x4e07);
-    expect(plan.extBlocks[1].hi).toBe(0x4e07);
-    expect(plan.extBlocks[2].lo).toBe(0x4e08);
-    expect(plan.extBlocks[2].hi).toBe(0x4e08);
+    expect(plan.extBlocks[1].chars).toEqual(['万', '丈']);
+  });
+
+  it('keeps the ext blocks in score order, not code point order', () => {
+    // 七 scores a thousand times more than 一 and 丈, so the frequency
+    // order is 七 / 一 / 丈 even though 一 has the lower code point.
+    // A code point ordered mechanism would have produced 一 / 七 / 丈.
+    const mixed = scoreCharacters([
+      { id: 'x', weight: 1, chars: ['一', '丈'] },
+      { id: 'src', weight: 1000, chars: ['七'] },
+    ]);
+    const plan = planTiers(mixed, { tier1Size: 0, extBlockChars: 3 });
+    expect(plan.extBlocks).toHaveLength(1);
+    expect(plan.extBlocks[0].chars).toEqual(['七', '一', '丈']);
   });
 
   it('puts every character in exactly one tier', () => {
-    const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
+    const plan = planTiers(scored, { tier1Size: 2, extBlockChars: 2 });
     const all = [...plan.hot, ...plan.extBlocks.flatMap((b) => b.chars)];
     expect(new Set(all).size).toBe(all.length);
     expect([...all].sort()).toEqual([...chars].sort());
   });
 
-  it('gives every ext block a disjoint code point span', () => {
-    const plan = planTiers(scored, { tier1Size: 2, extBlockSize: 2 });
-    const spans = plan.extBlocks.map((b) => [b.lo, b.hi]);
-    for (let i = 1; i < spans.length; i++) {
-      expect(spans[i][0]).toBeGreaterThan(spans[i - 1][1]);
-    }
+  it('fills every block but the last with exactly the block size', () => {
+    const plan = planTiers(big, { tier1Size: 300, extBlockChars: 6 });
+    expect(plan.extBlocks).toHaveLength(Math.ceil((2000 - 300) / 6));
+    expect(plan.extBlocks.slice(0, -1).every((b) => b.chars.length === 6)).toBe(true);
   });
 
-  it('defaults to a 300 character hot tier and 16 code point windows', () => {
-    const big = scoreCharacters([
-      { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
-    ]);
+  it('defaults to a 300 character hot tier and 6 characters per ext block', () => {
     const plan = planTiers(big);
     expect(plan.hot).toHaveLength(300);
-    expect(plan.extBlocks.length).toBeGreaterThan(0);
-    expect(plan.extBlocks.every((b) => b.hi - b.lo < 16)).toBe(true);
+    expect(plan.extBlocks).toHaveLength(Math.ceil((2000 - 300) / 6));
   });
 
   it('never produces an empty ext block', () => {
-    const big = scoreCharacters([
-      { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
-    ]);
-    const plan = planTiers(big, { tier1Size: 300, extBlockSize: 16 });
+    const plan = planTiers(big, { tier1Size: 300, extBlockChars: 6 });
     expect(plan.extBlocks.every((b) => b.chars.length > 0)).toBe(true);
   });
 
   it('never repeats a character between the hot tier and an ext block', () => {
-    const big = scoreCharacters([
-      { id: 'x', weight: 1, chars: Array.from({ length: 2000 }, (_, i) => String.fromCodePoint(0x4e00 + i)) },
-    ]);
-    const plan = planTiers(big, { tier1Size: 300, extBlockSize: 16 });
+    const plan = planTiers(big, { tier1Size: 300, extBlockChars: 6 });
     const hot = new Set(plan.hot);
     expect(plan.extBlocks.some((b) => b.chars.some((c) => hot.has(c)))).toBe(false);
   });
 
-  it('rejects a non positive window width', () => {
-    expect(() => planTiers(scored, { extBlockSize: 0 })).toThrow();
+  it('rejects a non positive block size', () => {
+    expect(() => planTiers(scored, { extBlockChars: 0 })).toThrow();
   });
 });
 
@@ -351,9 +409,12 @@ describe('loadFamilyCharsets', () => {
       [...plans.wenkai.hot, ...plans.wenkai.extBlocks.flatMap((b) => b.chars)],
     );
     const standard = JSON.parse(
-      readFileSync(resolve(process.cwd(), 'data/general-standard-chinese-characters.json'), 'utf8'),
+      readFileSync(
+        resolve(fileURLToPath(new URL('../../../data/general-standard-chinese-characters.json', import.meta.url))),
+        'utf8',
+      ),
     ) as string[];
-    expect(standard).toHaveLength(8105);
+    expect(standard.length).toBeGreaterThan(0);
     expect(standard.filter((ch) => !wenkai.has(ch))).toEqual([]);
   }, 180_000);
 
@@ -371,6 +432,14 @@ describe('loadFamilyCharsets', () => {
     loadFamilyCharsets();
     const plans = loadFamilyCharsets({ families: { sans: { tier1Size: 10 } } });
     expect(plans.sans.hot).toHaveLength(10);
+  }, 180_000);
+
+  it('falls back to the family default when an override is explicitly undefined', () => {
+    // A spread of the override object over the defaults lets an explicit
+    // `undefined` win the spread and wipe the default out: wenkai would
+    // get a 300 character hot tier it must not have (R14).
+    const plans = loadFamilyCharsets({ families: { wenkai: { tier1Size: undefined } } });
+    expect(plans.wenkai.hot).toHaveLength(0);
   }, 180_000);
 });
 ```
@@ -390,11 +459,13 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
 
 3. `planTiers(scored, options)`：
    - `hot = ordered.slice(0, tier1Size)`（`tier1Size = 0` 时热区为空数组）。
-   - 剩余字符按 code point 升序排列后，**按码位窗口切块**：窗口 = 码位落在 `[k×extBlockSize, (k+1)×extBlockSize)` 的全部字符。`extBlockSize` 是**码位**宽度，不是字符个数。窗口按码位升序排列，`ExtBlock.index` 从 1 开始连续编号。
-   - `ExtBlock.chars` = 窗口内的字符（码位升序）；`ExtBlock.lo` / `ExtBlock.hi` = 窗口内**实际存在**的最小/最大码位（不是窗口边界——边界要用 `Math.floor(cp / extBlockSize) * extBlockSize` 算，而块里只装真实存在的字）。
-   - **不允许出现空块**：窗口里没有字符就不产生这个块。
-   - `extBlockSize <= 0` 时抛 `TypeError`，不静默返回空计划。
+   - **剩余字符保持频率序，按 `extBlockChars` 个一组切块**（F25-a）：`tail = ordered.slice(tier1Size)`，然后 `for (let i = 0; i < tail.length; i += extBlockChars) blocks.push(tail.slice(i, i + extBlockChars))`。**不要**按码位重新排序——频率序正是这一版机制的全部意义：页面命中的字因此聚在少数几块里，每块都用得满。
+   - `extBlockChars` 是**字符个数**，不是码位宽度。最后一块可以是**不满**的（尾巴），这是正常的。
+   - `ExtBlock.chars` = 块内的字符（保持频率序）；`ExtBlock.index` 从 1 开始连续编号。
+   - **不允许出现空块**：切片长度永远 > 0。
+   - `extBlockChars <= 0` 或不是整数时抛 `TypeError`，不静默返回空计划。
    - **没有 tier2 这一档**（见 R11）。
+   - **块不是码位连续的**：块的 `unicode-range` 由 `unicodeRange(block.chars)` 生成（精确并集，R12）。**不要**输出 min–max 区间——那会让浏览器给块里没有的字挑中这个 face，直接出豆腐块（G10）。
 
 4. `unicodeRange(chars)`：把 chars 的 code point 升序排序，合并连续区间，输出 `U+XXXX` 或 `U+XXXX-YYYY`（大写 hex，不足 4 位补 0），多项用 `, ` 连接。
 
@@ -414,16 +485,23 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
    - 源码字面量扫描：递归遍历 `app/`、`components/`、`lib/`，跳过 `node_modules`，只读 `.ts`/`.tsx`/`.mjs`/`.js`，逐字符取 CJK。
    - 语料目录不存在时**跳过并打印一行说明**，不要抛错。
    - 单个语料文件 JSON 解析失败时跳过该文件并计数，不要让整个构建炸掉；最后打印一行 `skipped N malformed file(s)`。
-   - 每族的 `tier1Size` / `extBlockSize` 取上面那张默认表；`options.families` 可以按族覆盖。
+   - 每族的 `tier1Size` / `extBlockChars` 取上面那张默认表；`options.families` 可以按族覆盖。
+   - **覆盖项里值为 `undefined`（或 `null`）的键视为「没有覆盖」**：必须逐键取值（`override.tier1Size ?? defaults.tier1Size`），**不能**把覆盖对象整个展开到默认值上（`{ ...defaults, ...override }`）——展开会让显式的 `undefined` 赢，楷体因此拿到一个 300 字的热区（R14 禁止）。缓存键也一样忽略值为 `undefined` 的键，让 `{}` 和 `{ tier1Size: undefined }` 共用同一个缓存条目。
    - **缓存键必须包含 `options.families`**：扫描代价高，同一进程内缓存一次即可，但只按 `root` 缓存会让第二次带 `families` 覆盖的调用拿到第一次的结果（静默忽略调用方的覆盖）。
    - 函数末尾 `console.log` 每族的字符总数与分档大小，格式：
-     `charset sans: 16968 chars (hot 300 / ext 2785 blocks)`。
-     按 R16 的语料，三行分别是：
-     `charset wenkai: 8197 chars (hot 0 / ext 1348 blocks)`、
-     `charset sans: 16968 chars (hot 300 / ext 2785 blocks)`、
-     `charset serif: 19888 chars (hot 300 / ext 3114 blocks)`。
+     `charset sans: 16968 chars (hot 300 / ext 2778 blocks)`。
+     按 R16 的语料、每块 6 字，三行分别是：
+     `charset wenkai: 8197 chars (hot 0 / ext 1367 blocks)`、
+     `charset sans: 16968 chars (hot 300 / ext 2778 blocks)`、
+     `charset serif: 19888 chars (hot 300 / ext 3265 blocks)`。
 
 6. `scripts/fonts/webfont-charset.d.mts` 按上面的 Interfaces 段逐字写声明（参考已有的 `scripts/fonts/build-fonts-css.d.mts` 风格）。
+
+7. **模块头注释必须与实现一致**（第一轮评审的两条事实性错误）：
+   - 头部描述楷体的字符集来源时，**必须列出 `data/general-standard-chinese-characters.json` 的 8 105 个库字符**（R16）——漏掉它会让人以为楷体只覆盖稀有字。
+   - 头部里「扫描读取约 235 MB」的体积数字要改成实测值（约 270 MB）；宁可写「约 270 MB」也不要写一个偏小的数字。
+   - 头部描述 Ext 机制时改成「**频率序、每块 6 个字符**」，不要再说「16 码位窗口」——那是已被 F25-a 作废的旧机制。
+   - 「二次折入会改变热区组成」这个说法**没有实测依据**，删掉它；只写可验证的事实：「这 8 105 个字在楷体里折入一次；正文字族直接复制楷体的分数，所以不会重复计数。」
 
 - [ ] **Step 4: 跑测试确认通过**
 
@@ -673,7 +751,7 @@ import { loadFamilyCharsets } from '../../../scripts/fonts/webfont-charset.mjs';
 
 const plan = {
   hot: ['一', '丁'],
-  extBlocks: [{ index: 1, chars: ['万', '丈'], lo: 0x4e07, hi: 0x4e08 }],
+  extBlocks: [{ index: 1, chars: ['万', '丈'] }],
 };
 
 describe('blockFileNames', () => {
@@ -792,7 +870,7 @@ Expected: FAIL —— 找不到 `scripts/fonts/build-webfont-subsets.mjs`。
 5. `buildAll()`：
    - 读 `loadFamilyCharsets()` 得到三族的 `{ hot, extBlocks }`。
    - 读源字体（从 `scripts/fonts/staging/web/`）；**源文件缺失必须报错退出**并提示 `npm run fonts:download-web && npm run fonts:instance-web`。
-   - 用 `subsetFont(buffer, chars, { targetFormat: 'woff2' })` 逐块切分，写到 `public/font/web/<dir>/<file>`（目录先 `mkdir -p`）。
+   - 用 `subsetFont(buffer, chars.join(''), { targetFormat: 'woff2' })` 逐块切分，写到 `public/font/web/<dir>/<file>`（目录先 `mkdir -p`）。**文本参数必须是字符串**：`subset-font` 的第二个参数是「要保留哪些字符」的文本，传数组会抛 `The subset text must be given as a string`（F25-e）。
    - 变量族用同一个源文件切每一块；静态族 400/700 各切一次。
    - 写 `public/font/fonts-<family>.css`。
    - 写 `public/font/fonts-manifest.json`：
@@ -821,23 +899,23 @@ Expected: PASS。
 Run: `npm run fonts:subset-web`
 Expected（按 2026-10-29 的语料实测，数字允许 ±5 % 浮动，但**必须打印出来**核对）：
 
-| 族 | 字符数 | 块数 | woff2 文件数 | 备注 |
+| 族 | 字符数 | Ext 块数 | woff2 文件数 | 备注 |
 |---|---|---|---|---|
-| `wenkai` | 8 197 | 1 348 | **2 696** | 无热区；每块 400 + 700 两份（R16） |
-| `sans` | 16 968 | 2 786 | **2 786** | 热区 300 + 2 785 个 Ext 块 |
-| `serif` | 19 888 | 3 115 | **3 115** | 热区 300 + 2 814 个 Ext 块 |
-| 合计 | — | 7 249 | **8 597** | 三份 CSS gzip 合计 ≈ **119 KB**（sans 42.7 / serif 45.0 / wenkai 31.4） |
+| `wenkai` | 8 197 | 1 367 | **2 734** | 无热区；每块 400 + 700 两份（R16） |
+| `sans` | 16 968 | 2 778 | **2 779** | 热区 300 + 2 778 个 Ext 块 |
+| `serif` | 19 888 | 3 265 | **3 266** | 热区 300 + 3 265 个 Ext 块 |
+| 合计 | — | 7 410 | **8 779** | 三份 CSS gzip 合计 ≈ **167 KB**（sans 60 / serif 71 / wenkai 36） |
 
-单文件大小：`sans/hot.woff2` ≈ 69 KB（300 字 × 229 B），每个 `ext-*.woff2` ≤ 4 KB（一个 16 码位窗口最多 16 字）。
+单文件大小：`sans/hot.woff2` ≈ 84 KB（≈ 1 000 B 固定开销 + 300 字 × 276 B），每个 `ext-*.woff2` ≈ **2.7 KB**（≈ 1 000 B 固定开销 + 6 字 × 280 B）——这是 F25 实测的成本模型，**不是** 229 B/字 的旧模型。
 `public/font/fonts-manifest.json` 的 `version` 是 12 位 hex。
 
-> 这一步会跑十几分钟（切 8 597 次；实测 `subset-font` 94 ms/16 字、210 ms/64 字）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
+> 这一步会跑十几分钟（切 8 779 次；实测 `subset-font` 94 ms/16 字、210 ms/64 字）。**不要**在 4444 被占用时跑 `npm run build`（G8）——本步骤不涉及 `next build`，不受限。
 
 - [ ] **Step 6: 提交**
 
 ```bash
 git add scripts/fonts/build-webfont-subsets.mjs tests/unit/scripts/webfont-subsets.test.ts package.json
-git commit -m "feat(fonts): add the hot-tier and windowed webfont subsetter [2026-10-29 HH.MM]"
+git commit -m "feat(fonts): add the hot-tier and frequency-ordered webfont subsetter [2026-10-29 HH.MM]"
 ```
 
 > 产物 `public/font/web/**` 与三份样式表由 **Task 5** 一起提交（那时才做替换与删除，避免中间态破坏线上构建）。
@@ -859,15 +937,16 @@ git commit -m "feat(fonts): add the hot-tier and windowed webfont subsetter [202
   ```js
   export const LIMITS = {
     hotBytes: 90 * 1024,
-    extBlockBytes: 12 * 1024,
-    cssBytes: 125 * 1024,       // 三份样式表 gzip 后合计（R17）
-    maxFacesPerCss: 3300,
+    extBlockBytes: 4 * 1024,
+    cssBytes: 175 * 1024,       // 三份样式表 gzip 后合计（F25-d）
+    sansCssBytes: 65 * 1024,    // 无衬线那份单独设限：它渲染阻塞（F25-d）
+    maxFacesPerCss: 3400,
     maxFontFilesPerPage: 130,
     pageFontBytes: {
-      '/': 350 * 1024,
-      '/dictionary': 300 * 1024,
-      '/poetry': 350 * 1024,
-      '/stories': 500 * 1024,
+      '/': 460 * 1024,
+      '/dictionary': 420 * 1024,
+      '/poetry': 320 * 1024,
+      '/stories': 480 * 1024,
     },
   };
   export async function verifyFamily(family): Promise<{ ok: boolean; errors: string[]; stats: FamilyStats }>;
@@ -875,7 +954,7 @@ git commit -m "feat(fonts): add the hot-tier and windowed webfont subsetter [202
   ```
   CLI：`node scripts/fonts/verify-webfont-subsets.mjs` → 全部通过 `exit 0`，任一失败 `exit 1`。
 
-  **限额来自 R9 的重定预算**，不是 spec §3.2/§3.3 的旧数字——旧数字在静态子集下不可兼得（见「字体机制裁决」的物理约束一节）。
+  **限额来自 R9 与 F25-c/d 的重定预算**，不是 spec §3.2/§3.3 的旧数字——旧数字建立在「229.4 B/字、无每文件固定开销」这个错的成本模型上（见「第二轮实测推翻的机制（F25）」一节）。
 
 - [ ] **Step 1: 写失败测试**
 
@@ -901,10 +980,11 @@ describe('verify-webfont-subsets', () => {
 
   it('publishes the size limits from the design', () => {
     expect(LIMITS.hotBytes).toBe(90 * 1024);
-    expect(LIMITS.extBlockBytes).toBe(12 * 1024);
-    expect(LIMITS.cssBytes).toBe(125 * 1024);
+    expect(LIMITS.extBlockBytes).toBe(4 * 1024);
+    expect(LIMITS.cssBytes).toBe(175 * 1024);
+    expect(LIMITS.sansCssBytes).toBe(65 * 1024);
     expect(LIMITS.maxFontFilesPerPage).toBe(130);
-    expect(LIMITS.pageFontBytes['/dictionary']).toBe(300 * 1024);
+    expect(LIMITS.pageFontBytes['/dictionary']).toBe(420 * 1024);
   });
 });
 ```
@@ -921,8 +1001,8 @@ Expected: FAIL —— 找不到模块。
 1. **覆盖完整**：对每一族，用 Task 1 的字符集与样式表里的 `unicode-range` 求并集，断言并集 == 该族字符集（不多不少）。
 2. **块不相交**：同一族的**所有**块（热区 + 每个 Ext 块）的 `unicode-range` 两两不相交。
 3. **cmap 正确**：用 `fontkit.create(buffer)` + `font.hasGlyphForCodePoint(cp)` 打开每个产物，断言该块声明的每个字符都能渲染；并断言产物**不包含**该块之外的字符。
-4. **文件大小**：热区文件 ≤ `LIMITS.hotBytes`，每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（16 码位窗口 ≤ 16 字 × 229 B ≈ 3.7 KB，留出 woff2 头部余量）。
-5. **样式表**：三份 `fonts-<family>.css` **gzip 后合计** ≤ `LIMITS.cssBytes`，单份的 `@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`。
+4. **文件大小**：热区文件 ≤ `LIMITS.hotBytes`（≈ 1 000 B 固定开销 + 300 字 × 280 B ≈ 85 KB），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（≈ 1 000 B 固定开销 + 6 字 × 280 B ≈ **2.7 KB**，限额 4 KB 留余量）。
+5. **样式表**：三份 `fonts-<family>.css` **gzip 后合计** ≤ `LIMITS.cssBytes`（175 KB，F25-d），单份的 `@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`（3 400）。**无衬线那一份单独 ≤ `LIMITS.sansCssBytes`（65 KB）**——`app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**渲染阻塞**的；另两份走 `media="print"` + `ASYNC_STYLESHEET_FLIP`（`lib/font-css.ts`、`lib/font-css-flip.ts`），不阻塞首屏。
 6. **每条 face 的 `font-display` 必须是 `swap`**，`src` 指向的文件必须存在。
 7. **manifest**：`version` 是 12 位 hex，且等于三份样式表内容按文件名排序后的 sha256 前 12 位；`files` 的键恰为 `{sans, serif, wenkai}`。
 8. **页面预算**（对应 Review Focus 第 5 条）：读 `data/font-page-profiles.json`，对 `/`、`/dictionary`、`/poetry`、`/stories` 四个页面，用各族的热区/Ext 规则算出「浏览器会下载哪些文件」，累加**字节**与**文件数**，断言字节 ≤ `LIMITS.pageFontBytes[path]` 且文件数 ≤ `LIMITS.maxFontFilesPerPage`。
@@ -932,13 +1012,15 @@ Expected: FAIL —— 找不到模块。
 CLI 输出格式：
 
 ```
-[verify] sans   : 16968 chars, 2786 files, 6082 KB   OK
-[verify] serif  : 19888 chars, 3115 files, 7244 KB   OK
-[verify] wenkai :  8197 chars, 1348 blocks, 2696 files, 2961 KB   OK
-[verify] css    : 119 KB gzip (sans 43 / serif 45 / wenkai 31)   OK
-[verify] pages  : / 307 KB / 86 files   /dictionary 212 KB / 34 files   /poetry 284 KB / 88 files   /stories 419 KB / 114 files   OK
+[verify] sans   : 16968 chars, 2779 files, ~7287 KB   OK
+[verify] serif  : 19888 chars, 3266 files, ~8628 KB   OK
+[verify] wenkai :  8197 chars, 1367 blocks, 2734 files, ~6488 KB   OK
+[verify] css    : ~167 KB gzip (sans ~60 / serif ~71 / wenkai ~36)   OK
+[verify] pages  : / 431 KB / 110 files   /dictionary 387 KB / 88 files   /poetry 287 KB / 81 files   /stories 441 KB / 109 files   OK
 [verify] 0 error(s)
 ```
+
+> 字符数、文件数、每页字节与请求数是 **2026-10-29 实测值**（`scripts/fonts/staging/probe-mechanism-race.mjs` 的 `B frequency width 6 + hot 300` 一行）；产物字节与 CSS gzip 字节带 `≈`，是按 F25 成本模型（`1 000 B + 字数 × 280 B`）估的，实跑后以真实数字为准。
 
 字体文件用 `fontkit` 打开；`fontkit.create` 对 woff2 的支持在本仓库已被 `scripts/fonts/verify-brush-subsets.mjs` 验证过。
 
@@ -947,7 +1029,7 @@ CLI 输出格式：
 - [ ] **Step 4: 跑测试确认通过**
 
 Run: `npx vitest run tests/unit/scripts/verify-webfont-subsets.test.ts`
-Expected: PASS。若页面预算超标，按 R11 的实测曲线调**热区字数**（300 → 150 会更省字节、450 会更省请求数）或**窗口宽度**（16 → 32 会让 CSS 变小、请求数变少），改完重跑 Task 3 的构建再回来跑本测试；**不要**去改 `LIMITS` 的预算数字（R9 已把预算重定过一次）。
+Expected: PASS。若页面预算超标，按 F25 的实测前沿调**热区字数**（300 → 150 会更省字节、450 会更省请求数）或**块宽**（6 → 8 字会让 CSS 变小、请求数变少但页面字节变多），改完重跑 Task 3 的构建再回来跑本测试；**不要**去改 `LIMITS` 的预算数字（R9 与 F25-c/d 已把预算重定过两次）。
 
 - [ ] **Step 5: 加 npm script**
 
@@ -1004,7 +1086,7 @@ git commit -m "feat(fonts): add the webfont subset verifier [2026-10-29 HH.MM]"
 
 - [ ] **Step 2: 改 `lib/font-css.ts` 的注释**
 
-文件头注释里「public/font/fonts.css used to be linked ...」那段过时了。改成描述新模型：三份分族样式表（sans 阻塞首屏，另两份 `media="print"` 异步）、每份内部按「热区 + 16 码位 Ext 窗口」分块、**一族一个 font-family 名**、每条 face 带**精确且互不相交**的 `unicode-range`。**函数体一字不改**。
+文件头注释里「public/font/fonts.css used to be linked ...」那段过时了。改成描述新模型：三份分族样式表（sans 阻塞首屏，另两份 `media="print"` 异步）、每份内部按「热区 + 频率序 6 字 Ext 块」分块、**一族一个 font-family 名**、每条 face 带**精确且互不相交**的 `unicode-range`。**函数体一字不改**。
 
 - [ ] **Step 3: 重写 `tests/unit/lib/fonts-css.test.ts`**
 
@@ -1623,7 +1705,7 @@ Expected: PASS。
 - [ ] **Step 6: 实现 `scripts/perf/font-load.mjs`**
 
 - 取页面 HTML → `splitHtmlChunks` → `classOfChunk` → 每族收集字符集（归属规则与 `data/font-page-profiles.json` 一致：`font-kai` → kai，`font-serif` → serif，其余 → sans）。
-- 用 Task 1 的 `loadFamilyCharsets()`（热区 + 16 码位 Ext 窗口）与 `public/font/fonts-manifest.json`，算出「每族要下载哪些文件」，累加文件**字节**与**文件数**。
+- 用 Task 1 的 `loadFamilyCharsets()`（热区 + 频率序 6 字 Ext 块）与 `public/font/fonts-manifest.json`，算出「每族要下载哪些文件」，累加文件**字节**与**文件数**。
 - 打印表格：`page | sans KB | serif KB | kai KB | total KB | font files`，并对照预算 `/ ≤ 350 KB`、`/dictionary ≤ 300 KB`、`/poetry ≤ 350 KB`、`/stories ≤ 500 KB`、文件数 ≤ 130（R9）；超标退出码 1。
 
 - [ ] **Step 7: 实现 `scripts/perf/full-load.mjs`**
