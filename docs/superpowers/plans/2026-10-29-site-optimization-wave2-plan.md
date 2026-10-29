@@ -28,6 +28,7 @@
 - **G10 零缺字**：站内能渲染的汉字，一个都不能因为字体改造而落到豆腐块。校验脚本必须断言这一点。
 - **G11 spec 是权威**：spec 与本计划冲突时以 spec 为准；spec 自身内部矛盾（见下方「裁决记录」）按下方裁决执行，并把裁决写进 ledger。
 - **G12 错误处理**：禁止空 `catch`、禁止 `TODO`、禁止省略号。所有脚本失败必须**非零退出**并给出可执行的补救提示。
+- **G13 微缓存安全**：登录态请求**既不读缓存也不写缓存**；任何带 `Set-Cookie` 的响应**一律不写缓存**。这两条由 nginx 指令强制，不靠「现在恰好没有 GET 响应种 cookie」这种假设。
 
 ### 裁决记录（spec 内部矛盾，按 G11 裁决）
 
@@ -50,7 +51,10 @@ spec 是愿景文档：它说了系统**必须**做到什么，但没穷举每�
    → 归属 Task 1（`webfont-charset.test.ts`：集合并集断言）+ Task 4（`verify-webfont-subsets.mjs`：逐档 cmap 覆盖断言）。
 
 2. **登录态页面被 nginx 微缓存喂给了匿名用户** → 把 A 用户的账号页返回给了 B 用户。这是本轮唯一的高危安全项。
-   → 归属 Task 6（`nginx-config.test.ts`：断言 `proxy_cache_bypass $cookie_auth_token;`、`proxy_cache_valid 200 10s;`、`proxy_ignore_headers Cache-Control Set-Cookie;` 三行同时存在，且 TTL ≤ 10 s）。
+   → 归属 Task 6（`nginx-config.test.ts`：断言 `proxy_cache_bypass $cookie_auth_token $http_rsc;`、`proxy_no_cache $cookie_auth_token $upstream_http_set_cookie $http_rsc;`、`proxy_cache_valid 200 10s;` 三行同时存在，且 TTL ≤ 10 s）。
+
+2b. **同一 URL 的「文档请求」和「RSC 飞行请求」返回两种完全不同的 body**（`text/html` vs `text/x-component`），实测只有 `RSC: 1` 请求头能区分二者（`?_rsc=` 查询参数不行）。微缓存若把 HTML 喂给了飞行请求，Next 的客户端导航会拿到 HTML 而不是 flight 数据 → 页面卡死或白屏。
+   → 归属 Task 6（`nginx-config.test.ts`：断言 `$http_rsc` 同时出现在 `proxy_cache_bypass` 与 `proxy_no_cache` 里）。
 
 3. **浏览器还拿着旧的 `/font/fonts-*.css`**（nginx 对 `/font/` 发 `immutable` + 1 年）→ 站点继续按旧的 432 条 `@font-face` 下载 3.8 MB 字体，优化完全没生效，而且没有任何报错。
    → 归属 Task 5（`fonts-css.test.ts`：断言 manifest 的 `version` 是 12 位 hex、且与三份样式表内容的哈希一致；`lib/font-css.ts` 的 `?v=` 必须带上它）。
@@ -901,11 +905,21 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 - Consumes: 无
 - Produces: 一份可直接 `cp` 到 `/etc/nginx/conf.d/` 的 nginx 配置，以及一份部署/回滚手册。
 
-**安全约束（Review Focus 第 2 条，全部必须满足，缺一条本任务不做）**：
-1. `proxy_cache_bypass $cookie_auth_token;` —— `auth_token` 是 `lib/auth.ts` 里的会话 cookie 名。
-2. `proxy_cache_valid 200 10s;` —— TTL 只有 10 秒。
-3. `proxy_ignore_headers Cache-Control Set-Cookie;` —— Next 的 `no-store` 必须被忽略才能缓存。
-4. 上线后用 `curl -I` 验证 `X-Ziyun-Cache` 出现 `MISS` → `HIT`，且带 `auth_token` 的请求恒为 `BYPASS`。
+**安全约束（Review Focus 第 2 条与第 2b 条，全部必须满足，缺一条本任务不做）**：
+
+> 本段每一条都来自对线上 `https://ziyun.pudafo.com` 的实测（2026-10-29），不是推测。
+
+1. `proxy_cache_bypass $cookie_auth_token $http_rsc;` —— `auth_token` 是 `lib/auth.ts:18` 的会话 cookie 名。
+   **`proxy_cache_bypass` 只管「读」，不管「写」** —— 它阻止命中缓存，但**照样会把带登录态的响应写进缓存**。所以必须同时有第 2 条。
+2. `proxy_no_cache $cookie_auth_token $upstream_http_set_cookie $http_rsc;` —— 登录态请求、带 `Set-Cookie` 的响应、RSC 飞行请求**一律不写缓存**。
+   `$upstream_http_set_cookie` 是 nginx 自带变量（1.7.5+），有值即表示上游这个响应种了 cookie。
+   实测依据：`setSessionCookie()` 只在三个 POST 路由里被调用（`app/api/auth/{login,register,reset}/route.ts`），`setup_completed` 由 Server Action（POST）种下，**当前没有任何 GET 响应会种 cookie** —— 这条指令是把「现在恰好没有」变成「将来也一定没有」。
+3. `proxy_ignore_headers Cache-Control;` —— Next 的 `Cache-Control: private, no-cache, no-store` 必须被忽略才能缓存。
+   **只忽略 `Cache-Control`，不忽略 `Set-Cookie`** —— 忽略 `Set-Cookie` 等于允许把带 cookie 的响应写进缓存，与第 2 条自相矛盾。
+4. `proxy_cache_valid 200 10s;` —— TTL 只有 10 秒；只有 200 会被缓存（307 → `/init`、4xx、5xx 都不入缓存）。
+5. `location /api/ { proxy_cache off; }` —— **`location /` 下还挂着 68 个 GET API 路由**（实测清单见 `app/api/**/route.ts`），其中 `/api/chars/random`、`/api/poetry/random`、`/api/game/round`、`/api/stats`、`/api/audio/active` 的语义是「每次给新内容」，缓存 10 秒会让它们对所有用户返回同一个值；`/api/history`、`/api/notes`、`/api/membership/me`、`/api/worksheets/*` 是用户态数据。新增的 `location /api/` 比 `/api/auth/`、`/api/init/` 短，nginx 取最长前缀匹配，**那两个限流块不受影响**。
+6. `$http_rsc` 必须同时进 `proxy_cache_bypass` 与 `proxy_no_cache` —— 线上实测：`RSC: 1` 请求头返回 `Content-Type: text/x-component` 的 flight 数据（22 843 B），同一个 URL 不带该头返回 `text/html` 的完整页面（45 929 B）。两者**只有这一个请求头不同**，缓存键（`$request_uri`）完全相同 → 不隔离就是白屏。
+7. 上线后用 `curl -I` 验证 `X-Ziyun-Cache` 出现 `MISS` → `HIT`，且带 `auth_token` 的请求恒为 `BYPASS`。
 
 - [ ] **Step 1: 写失败测试**
 
@@ -925,16 +939,21 @@ describe('the nginx config caches HTML but never for a logged-in user', () => {
     expect(conf).toMatch(/proxy_cache_path\s+\S+\s+levels=1:2\s+keys_zone=ziyun_html:10m/);
   });
 
-  it('bypasses the cache for the session cookie', () => {
-    expect(conf).toContain('proxy_cache_bypass $cookie_auth_token;');
+  it('bypasses the cache for the session cookie and for RSC flight requests', () => {
+    expect(conf).toContain('proxy_cache_bypass $cookie_auth_token $http_rsc;');
+  });
+
+  it('never writes the cache for a logged-in user, a cookie-setting response or a flight request', () => {
+    expect(conf).toContain('proxy_no_cache $cookie_auth_token $upstream_http_set_cookie $http_rsc;');
   });
 
   it('never caches for longer than ten seconds', () => {
     expect(conf).toContain('proxy_cache_valid 200 10s;');
   });
 
-  it("ignores Next's private no-store header", () => {
-    expect(conf).toContain('proxy_ignore_headers Cache-Control Set-Cookie;');
+  it("ignores Next's private no-store header but keeps Set-Cookie protection", () => {
+    expect(conf).toContain('proxy_ignore_headers Cache-Control;');
+    expect(conf).not.toContain('proxy_ignore_headers Cache-Control Set-Cookie;');
   });
 
   it('reports the cache status', () => {
@@ -943,6 +962,11 @@ describe('the nginx config caches HTML but never for a logged-in user', () => {
 
   it('only caches GET and HEAD', () => {
     expect(conf).toContain('proxy_cache_methods GET HEAD;');
+  });
+
+  it('turns the cache off for every API route', () => {
+    const apiBlock = conf.slice(conf.indexOf('location /api/ {'), conf.indexOf('location / {'));
+    expect(apiBlock).toContain('proxy_cache off;');
   });
 
   it('turns the cache off for the MCP stream endpoint', () => {
@@ -976,7 +1000,8 @@ Expected: FAIL —— `deploy/nginx-brotli.conf` 不存在。
 ```nginx
 # ---------------------- HTML 微缓存 ----------------------
 # Next 对每个 HTML 都发 private,no-store,不忽略它就永远缓存不了。
-# 只缓存匿名访问;带 auth_token 的登录态请求既不读也不写缓存。
+# 只缓存匿名访问的「文档请求」;带 auth_token 的登录态请求、RSC 飞行请求、
+# 以及所有 API 响应都既不读也不写缓存。
 # TTL 10 秒 —— 目的是省掉往返与传输,不是做内容分发。
 proxy_cache_path /var/cache/nginx/ziyun
     levels=1:2
@@ -989,16 +1014,42 @@ proxy_cache_path /var/cache/nginx/ziyun
 在 `location / {` 块内（`proxy_pass` 之后）插入：
 
 ```nginx
-        # HTML 微缓存(仅匿名)
+        # HTML 微缓存(仅匿名、仅文档请求)
         proxy_cache ziyun_html;
         proxy_cache_key "$scheme$request_method$host$request_uri";
         proxy_cache_valid 200 10s;
         proxy_cache_methods GET HEAD;
         proxy_cache_use_stale error timeout updating http_500 http_502 http_503 http_504;
-        proxy_cache_bypass $cookie_auth_token;
+        # 读:登录态与 RSC 飞行请求都不读缓存
+        proxy_cache_bypass $cookie_auth_token $http_rsc;
+        # 写:登录态、带 Set-Cookie 的响应、RSC 飞行请求都不写缓存
+        # (proxy_cache_bypass 只管读不管写,这一行是必需的第二道闸)
+        proxy_no_cache $cookie_auth_token $upstream_http_set_cookie $http_rsc;
         proxy_cache_lock on;
-        proxy_ignore_headers Cache-Control Set-Cookie;
+        proxy_ignore_headers Cache-Control;
         add_header X-Ziyun-Cache $upstream_cache_status always;
+```
+
+在 `location /mcp` 块之后、`location / {` 之前插入 API 兜底块（比 `/api/auth/`、`/api/init/` 短，最长前缀匹配不受影响）：
+
+```nginx
+    # ---- API 一律不缓存 ----
+    # location / 下还挂着 68 个 GET API 路由,其中 /api/chars/random、/api/game/round、
+    # /api/stats 的语义是「每次给新内容」,缓存会让所有用户拿到同一个值;
+    # /api/history、/api/notes、/api/membership/me 是用户态数据。
+    # 本块比 location /api/auth/ 与 location /api/init/ 短,nginx 取最长前缀匹配,
+    # 那两个限流块不受影响。
+    location /api/ {
+        proxy_pass http://ziyun_app;
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Upgrade           $http_upgrade;
+        proxy_set_header Connection        "upgrade";
+        proxy_cache off;
+    }
 ```
 
 并把文件里注释掉的 brotli 三行换成一行指向片段文件的说明：
@@ -1040,14 +1091,21 @@ brotli_types
 
 - **部署顺序**：先 `nginx -t`，再 `systemctl reload nginx`；给出完整的 `cp`/`ln -s`/`nginx -t`/`reload` 命令串。
 - **回滚**：`cp deploy/nginx.ziyun.pudafo.com.conf.bak /etc/nginx/sites-available/ziyun.pudafo.com.conf && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
-- **上线后验证**（三条命令 + 期望输出）：
+- **上线后验证**（五条命令 + 期望输出）：
   ```bash
   curl -I https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第一次 MISS
   curl -I https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第二次 HIT
   curl -I -H 'Cookie: auth_token=dummy' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS
+  curl -I -H 'RSC: 1' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS（飞行请求不碰缓存）
+  curl -I https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      # 无该头（API 不缓存）
   ```
-- **风险提示**：若将来新增任何「按未登录 cookie 区分」的响应，必须同步扩展 `proxy_cache_bypass` 列表。
+  再手工确认一次「客户端导航没被缓存污染」：浏览器打开首页 → 点进任意内链 → DevTools Network 里该导航请求的响应 `Content-Type` 必须是 `text/x-component`，且页面白屏/卡死都没有。
+- **风险提示（微缓存的三条硬约束）**：
+  1. **新增任何「按用户区分」的 cookie 或请求头时，必须同时扩展 `proxy_cache_bypass` 与 `proxy_no_cache`** —— 只改前者会让登录态响应被写进缓存（`proxy_cache_bypass` 只管读不管写）。
+  2. **不要给 `location /` 之外的路径加缓存**，尤其不要把 `location /api/` 的 `proxy_cache off;` 删掉 —— 68 个 GET API 路由里混着「每次给新内容」的（`/api/chars/random`、`/api/game/round`、`/api/stats`）和用户态数据（`/api/history`、`/api/notes`、`/api/membership/me`）。
+  3. **`$http_rsc` 不能从两条指令里去掉** —— 同一个 URL 带 `RSC: 1` 返回的是 Next 的 flight 数据（`text/x-component`），不带则返回整页 HTML（`text/html`），二者只有这一个请求头不同。缓存键是 `$request_uri`，不隔离就等于把 HTML 喂给客户端路由 → 白屏。
 - **线上配置对账待办**（来自 spec §4.2.3）：线上响应带 `Alt-Svc: quic=":443"; h3=":443"`，而仓库配置只有 `listen 443 ssl http2` —— 上线前必须在服务器上核对 `nginx -V` 与 `/etc/nginx/conf.d/` 的实际配置，决定是给仓库补 QUIC 还是把线上改回与仓库一致；同时确认 brotli 模块是否存在。
+- **已实测的线上事实**（2026-10-29，改配置前请复核）：`RSC: 1` 是区分 flight 数据与 HTML 的唯一手段（`?_rsc=` 查询参数**不**产生 flight 数据，实测返回 200 `text/html`）；`Next-Router-Prefetch: 1` 单独发会得到 **500**（上游 Next 的行为，不是本项目引入的）；无 `RSC` 头的普通文档请求响应头是 `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` + `Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding`。
 
 - [ ] **Step 6: 跑测试确认通过**
 
