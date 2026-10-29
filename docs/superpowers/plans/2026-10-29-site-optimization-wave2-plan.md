@@ -2082,12 +2082,34 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 2. **只搬缓存那几行**：把 `proxy_cache_path` 块与 `location /` 里的缓存指令，按线上现有配置的结构**手工合并**进去，不要整文件覆盖。
 3. **先备份**：`sudo cp /etc/nginx/conf.d/<线上那份>.conf{,.bak-$(date +%F-%H%M)}`，并把回滚命令写进 `OPTIMIZATION.md`。
 4. **`nginx -t` 通过后 `reload`**（不是 `restart`）。
-5. **冒烟**（两条都要过，缺一条就回滚）：
+5. **冒烟**（三条都要过，缺一条就回滚）：
    ```bash
    curl -sI https://ziyun.pudafo.com/font/web/sans/hot.woff2 | head -20   # 必须 200 + Content-Type: font/woff2
    curl -sI https://ziyun.pudafo.com/ | grep -i x-ziyun-cache             # 必须出现 X-Ziyun-Cache
    ```
    ⚠️ 这条冒烟是**本波次的验收项**：字体 404 意味着整个 Wave 2 的产物全废，而页面上**看不出任何错误**（字会悄悄回落到系统字体）。
+
+   **第三条：带 `?v=` 令牌的字体 URL 必须返回正确的字节。** 前两条冒的是「文件在不在」，这一条冒的是 **R18 本身**——令牌的整套设计（`hot.woff2` 这种稳定名 + 一年 immutable 缓存）成立的前提是**带令牌的 URL 取回来的正是本地那个文件**。少验这一条，最坏情况是线上返回的是**另一个文件**（旧缓存里那份），而页面上的字照样是豆腐块。
+
+   ```bash
+   # a) 取 manifest 版本号（部署后的那份），再取 sans 样式表；样式表 URL 上的 ?v= 就是 manifest 的 version
+   MV=$(grep -o '"version": *"[0-9a-f]\{12\}"' /var/www/ziyun/public/font/fonts-manifest.json | grep -o '[0-9a-f]\{12\}')
+   echo "manifest version=$MV"
+   # b) 取线上 sans 样式表里 sans 的令牌
+   TOKEN=$(curl -s "https://ziyun.pudafo.com/font/fonts-sans.css?v=$MV" \
+           | grep -o 'hot\.woff2?v=[0-9a-f]\{12\}' | head -1 | sed 's/.*v=//')
+   echo "token=$TOKEN"                                    # 必须是 12 位小写 hex（当前应为 f31ca9b32566）
+   # c) 带令牌的 URL 必须 200 + font/woff2 + 一年 immutable
+   curl -sI "https://ziyun.pudafo.com/font/web/sans/hot.woff2?v=$TOKEN" | head -20
+   #    必须含：200、Content-Type: font/woff2、Cache-Control: public, max-age=31536000, immutable
+   # d) 取回来的字节必须与服务器上的文件逐字节相同（比服务器上部署后的那份，别拿构建目录比）
+   curl -s "https://ziyun.pudafo.com/font/web/sans/hot.woff2?v=$TOKEN" -o /tmp/sans-hot.woff2
+   sha256sum /tmp/sans-hot.woff2                          # 必须等于服务器上 public/font/web/sans/hot.woff2 的 sha256
+   ```
+
+   > **文件名注意**：sans/serif 是单字重，热区文件叫 `hot.woff2`；楷体（wenkai）是双字重，叫 `hot-400.woff2` / `hot-700.woff2`。用错文件名会拿到 404，而 404 在页面上又看不出错（字回落系统字体）。冒烟 sans 时用 `hot.woff2`。
+
+   ⚠️ **d) 这一条是承重的**：R18 的令牌是「这一族所有文件的 sha256（文件名 + 字节，按写入顺序）」的前 12 位。如果线上返回的字节与本地不一致，那么**要么部署的不是这次构建的产物，要么代理层缓存了旧文件**——两种情况都会让令牌失去意义（浏览器手里的旧文件配新 CSS ⇒ 豆腐块）。
 6. **回滚**：`sudo cp <备份> /etc/nginx/conf.d/<线上那份>.conf && sudo nginx -t && sudo systemctl reload nginx`。
 
 **F30-b**：**本波次不碰那些 `alias` 块**——它们在生产上没生效，改它们既无收益、又把一个「已知的部署漂移」变成「未知的部署漂移」。仓库这份配置里的 `alias` 块**保持原样**，本任务只在 `OPTIMIZATION.md` 里把漂移写清楚，并给出去漂移的路径（要么把线上改成与仓库一致，要么把仓库改成与线上一致——**这是运维的活，不是本任务的活**）。
