@@ -2137,8 +2137,9 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 **F30-a（本任务的第一承重约束）**：**不许把仓库这份配置整份覆盖到服务器上。** 仓库文件里那些 `alias` 块一旦生效，静态资源就改由 nginx 出；而且 **`alias` + `try_files $uri =404` 是 nginx 的已知坑**（`try_files` 在 `alias` 语境下会用 alias 目录拼**完整请求 URI**，路径多出一层前缀）⇒ 最坏情况是**这一整段静态资源全部 404**——**本波次刚做出来的 7 936 个字体文件会全部消失**。上线必须按这个顺序：
 
 1. **先对账**：在服务器上 `sudo nginx -T` 导出**当前生效**的完整配置，与仓库这份逐段 diff，**搞清楚线上到底有没有那些 `alias` 块**（本任务之前的实测结论是**没有**）。
+   ⚠️ **同时确定「线上那份配置」的真实路径**：仓库里的 `deploy/nginx.ziyun.pudafo.com.conf` 头部写的是 `/etc/nginx/sites-available/ziyun.pudafo.com.conf`，但**线上跑的那份究竟在哪个路径，控制器从未实测过**（本机 `~/.ssh/config` 里没有这台服务器的别名，只能由拿到服务器权限的人来定）。`nginx -T` 的输出里每个文件前面都有一行 `# configuration file <路径>:`，从那里读出 ziyun.pudafo.com 那个 server 块属于哪个文件，记为 `LIVE_CONF`；**后面所有备份 / 合并 / 回滚命令一律用 `"$LIVE_CONF"`，不许写死任何一个路径**（计划早先在同一段里同时出现过 `/etc/nginx/conf.d/<线上那份>.conf` 与 `/etc/nginx/sites-available/ziyun.pudafo.com.conf` 两个互相矛盾的路径，Ruling F31-j 裁决：两个都不许写死）。
 2. **只搬缓存那几行**：把 `proxy_cache_path` 块与 `location /` 里的缓存指令，按线上现有配置的结构**手工合并**进去，不要整文件覆盖。
-3. **先备份**：`sudo cp /etc/nginx/conf.d/<线上那份>.conf{,.bak-$(date +%F-%H%M)}`，并把回滚命令写进 `OPTIMIZATION.md`。
+3. **先备份**：`sudo cp "$LIVE_CONF" "$LIVE_CONF.bak-$(date +%F-%H%M)"`，并把回滚命令写进 `OPTIMIZATION.md`。
 4. **`nginx -t` 通过后 `reload`**（不是 `restart`）。
 5. **冒烟**（三条都要过，缺一条就回滚）：
    ```bash
@@ -2168,7 +2169,7 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
    > **文件名注意**：sans/serif 是单字重，热区文件叫 `hot.woff2`；楷体（wenkai）是双字重，叫 `hot-400.woff2` / `hot-700.woff2`。用错文件名会拿到 404，而 404 在页面上又看不出错（字回落系统字体）。冒烟 sans 时用 `hot.woff2`。
 
    ⚠️ **d) 这一条是承重的**：R18 的令牌是「这一族所有文件的 sha256（文件名 + 字节，按写入顺序）」的前 12 位。如果线上返回的字节与本地不一致，那么**要么部署的不是这次构建的产物，要么代理层缓存了旧文件**——两种情况都会让令牌失去意义（浏览器手里的旧文件配新 CSS ⇒ 豆腐块）。
-6. **回滚**：`sudo cp <备份> /etc/nginx/conf.d/<线上那份>.conf && sudo nginx -t && sudo systemctl reload nginx`。
+6. **回滚**：`sudo cp "$LIVE_CONF.bak-<时间戳>" "$LIVE_CONF" && sudo nginx -t && sudo systemctl reload nginx`。
 
 **F30-b**：**本波次不碰那些 `alias` 块**——它们在生产上没生效，改它们既无收益、又把一个「已知的部署漂移」变成「未知的部署漂移」。仓库这份配置里的 `alias` 块**保持原样**，本任务只在 `OPTIMIZATION.md` 里把漂移写清楚，并给出去漂移的路径（要么把线上改成与仓库一致，要么把仓库改成与线上一致——**这是运维的活，不是本任务的活**）。
 
@@ -2246,6 +2247,15 @@ describe('the deploy manual refuses to overwrite the live nginx config (F30-a)',
 
   it('requires reconciling the effective config before changing anything', () => {
     expect(manual).toContain('nginx -T');
+  });
+
+  it('derives the live config path instead of hard-coding one (F31-j)', () => {
+    // The path of the config that is actually running has never been measured;
+    // it comes from the "# configuration file <path>:" lines of `nginx -T`.
+    expect(manual).toContain('LIVE_CONF');
+    // And above all: the manual must never tell anyone to copy the repository
+    // config over a live path -- that is the F30-a failure mode itself.
+    expect(manual).not.toMatch(/cp\s+deploy\/nginx\.ziyun\.pudafo\.com\.conf\s+\/etc\/nginx/);
   });
 
   it('smoke-tests the webfont path, because a 404 there is invisible on the page', () => {
@@ -2363,15 +2373,16 @@ brotli_types
 
 - **⚠️ 开头第一段必须是「不要整份覆盖」**（F30-a）：说明**仓库这份 nginx 配置不是线上跑的那份**——线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`= /logo.png` 由 **Next.js** 提供（判据：ETag 是 `W/"<size-hex>-<mtime-ms-hex>"`、没有 `Expires:`、`Cache-Control` 与 `next.config.ts:45` 逐字相同、404 页面带 `X-Powered-By: Next.js`），而仓库配置里对应的 `alias` 块（`deploy/nginx.ziyun.pudafo.com.conf:123-177`）**在生产上没有生效**。因此**不许** `cp` 覆盖，**只搬缓存那几行**。
 - **部署顺序**（F30-a 的六步，逐条给命令）：
-  1. **对账**：`sudo nginx -T > /tmp/nginx-effective.conf`，与仓库这份 diff，确认线上到底有没有那些 `alias` 块；
-  2. **备份**：`sudo cp /etc/nginx/conf.d/<线上那份>.conf{,.bak-$(date +%F-%H%M)}`；
+  1. **对账**：`sudo nginx -T > /tmp/nginx-effective.conf`，与仓库这份 diff，确认线上到底有没有那些 `alias` 块；**并从 `# configuration file <路径>:` 行里读出线上那份配置的真实路径，记为 `LIVE_CONF`（下面的命令都用 `"$LIVE_CONF"`，不许写死路径）**；
+  2. **备份**：`sudo cp "$LIVE_CONF" "$LIVE_CONF.bak-$(date +%F-%H%M)"`；
   3. **合并**（不是覆盖）缓存指令：`proxy_cache_path` 块 + `location /` 里的 `proxy_cache*` 那几行；
   4. `sudo nginx -t`（**必须通过**）→ `sudo systemctl reload nginx`（**不是 restart**）；
   5. **冒烟**：`curl -sI https://ziyun.pudafo.com/font/web/sans/hot.woff2` 必须 **200 + `Content-Type: font/woff2`**；`curl -sI https://ziyun.pudafo.com/ | grep -i x-ziyun-cache` 必须出现该头；
-  6. **回滚**：`sudo cp <备份> /etc/nginx/conf.d/<线上那份>.conf && sudo nginx -t && sudo systemctl reload nginx`。
+  6. **回滚**：`sudo cp "$LIVE_CONF.bak-<时间戳>" "$LIVE_CONF" && sudo nginx -t && sudo systemctl reload nginx`。
   ⚠️ **第 5 条是本波次的验收项**：字体 404 意味着整个 Wave 2 的产物全废，而页面上**看不出任何错误**（字会悄悄回落到系统字体）。
 - **配置漂移的说明（F30-b）**：写清「仓库配置与线上不一致」这件事，并把两条去漂移的路径列出来（把线上改成与仓库一致 / 把仓库改成与线上一致），注明**这是运维的活，本波次不动那些 `alias` 块**。
-- **回滚**：`cp deploy/nginx.ziyun.pudafo.com.conf.bak /etc/nginx/sites-available/ziyun.pudafo.com.conf && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
+- **回滚**：`sudo cp "$LIVE_CONF.bak-<时间戳>" "$LIVE_CONF" && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
+  ⚠️ **不要写死线上配置的路径**（Ruling F31-j）：`/etc/nginx/sites-available/ziyun.pudafo.com.conf` 只是**仓库这份文件头部注释里写的**放置位置，而**线上跑的那份在哪个路径从未实测过**；仓库这份与线上那份已经不是同一份了（见 F30-a）。回滚命令里的路径必须来自第 1 步对账时读出来的 `"$LIVE_CONF"`。
 - **上线后验证**（五条命令 + 期望输出）：
   ```bash
   curl -I https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第一次 MISS
