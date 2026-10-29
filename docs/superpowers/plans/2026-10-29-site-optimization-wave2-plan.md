@@ -170,6 +170,8 @@ Task 9 (性能基线) 独立（Task 5 之后测才有意义）
 
 ```ts
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   isCjkChar,
   scoreCharacters,
@@ -342,6 +344,34 @@ describe('loadFamilyCharsets', () => {
       expect(sans.has(ch)).toBe(true);
     }
   }, 180_000);
+
+  it('covers every standard character in wenkai, because the chain game paints them in the brand face', () => {
+    const plans = loadFamilyCharsets();
+    const wenkai = new Set(
+      [...plans.wenkai.hot, ...plans.wenkai.extBlocks.flatMap((b) => b.chars)],
+    );
+    const standard = JSON.parse(
+      readFileSync(resolve(process.cwd(), 'data/general-standard-chinese-characters.json'), 'utf8'),
+    ) as string[];
+    expect(standard).toHaveLength(8105);
+    expect(standard.filter((ch) => !wenkai.has(ch))).toEqual([]);
+  }, 180_000);
+
+  it('keeps the wenkai charset inside the measured bounds', () => {
+    const plans = loadFamilyCharsets();
+    const size = plans.wenkai.hot.length + plans.wenkai.extBlocks.flatMap((b) => b.chars).length;
+    // The lower bound is the 8 105 standard characters of R16; the upper
+    // bound catches an accidental scan of the 70 234 KEYS of
+    // data/radicals.json, which are a lookup table that is never rendered.
+    expect(size).toBeGreaterThanOrEqual(8105);
+    expect(size).toBeLessThan(9000);
+  }, 180_000);
+
+  it('honours a per family override even after the default plans were cached', () => {
+    loadFamilyCharsets();
+    const plans = loadFamilyCharsets({ families: { sans: { tier1Size: 10 } } });
+    expect(plans.sans.hot).toHaveLength(10);
+  }, 180_000);
 });
 ```
 
@@ -385,6 +415,7 @@ Expected: FAIL —— `Failed to resolve import "../../../scripts/fonts/webfont-
    - 语料目录不存在时**跳过并打印一行说明**，不要抛错。
    - 单个语料文件 JSON 解析失败时跳过该文件并计数，不要让整个构建炸掉；最后打印一行 `skipped N malformed file(s)`。
    - 每族的 `tier1Size` / `extBlockSize` 取上面那张默认表；`options.families` 可以按族覆盖。
+   - **缓存键必须包含 `options.families`**：扫描代价高，同一进程内缓存一次即可，但只按 `root` 缓存会让第二次带 `families` 覆盖的调用拿到第一次的结果（静默忽略调用方的覆盖）。
    - 函数末尾 `console.log` 每族的字符总数与分档大小，格式：
      `charset sans: 16968 chars (hot 300 / ext 2785 blocks)`。
      按 R16 的语料，三行分别是：
