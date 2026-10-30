@@ -406,4 +406,13 @@ describe('the optimization manual tells the truth about the runbook', () => {
   it('says that a hot entry on the first request is normal', () => {
     expect(manual).toContain('第一次就是 HIT 也正常');
   });
+
+  // F-13: the inline comments on the two smoke commands still said
+  // "first one MISS / second one HIT" — which contradicts the criterion
+  // two lines above them ("both MISS is the failure"). An operator reading
+  // the command block would call a hot entry a fault.
+  it('does not put a fixed MISS/HIT expectation on the two smoke commands', () => {
+    expect(manual).not.toContain('# 第一次 MISS');
+    expect(manual).not.toContain('# 第二次 HIT');
+  });
 });

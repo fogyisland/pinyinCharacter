@@ -2128,7 +2128,7 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 3. `proxy_ignore_headers Cache-Control;` —— Next 的 `Cache-Control: private, no-cache, no-store` 必须被忽略才能缓存。
    **只忽略 `Cache-Control`，不忽略 `Set-Cookie`** —— 忽略 `Set-Cookie` 等于允许把带 cookie 的响应写进缓存，与第 2 条自相矛盾。
 4. `proxy_cache_valid 200 10s;` —— TTL 只有 10 秒；只有 200 会被缓存（307 → `/init`、4xx、5xx 都不入缓存）。
-5. `location /api/ { proxy_cache off; }` —— **`location /` 下还挂着 68 个 GET API 路由**（实测清单见 `app/api/**/route.ts`），其中 `/api/chars/random`、`/api/poetry/random`、`/api/game/round`、`/api/stats`、`/api/audio/active` 的语义是「每次给新内容」，缓存 10 秒会让它们对所有用户返回同一个值；`/api/history`、`/api/notes`、`/api/membership/me`、`/api/worksheets/*` 是用户态数据。新增的 `location /api/` 比 `/api/auth/`、`/api/init/` 短，nginx 取最长前缀匹配，**那两个限流块不受影响**。
+5. `location /api/ { proxy_cache off; }` —— **`location /` 下还挂着 73 个带 GET 的 API 路由**（实测清单见 `app/api/**/route.ts`），其中 `/api/chars/random`、`/api/poetry/random`、`/api/game/round`、`/api/stats`、`/api/audio/active` 的语义是「每次给新内容」，缓存 10 秒会让它们对所有用户返回同一个值；`/api/history`、`/api/notes`、`/api/membership/me`、`/api/worksheets/*` 是用户态数据。新增的 `location /api/` 比 `/api/auth/`、`/api/init/` 短，nginx 取最长前缀匹配，**那两个限流块不受影响**。
 6. `$http_rsc` 必须同时进 `proxy_cache_bypass` 与 `proxy_no_cache` —— 线上实测：`RSC: 1` 请求头返回 `Content-Type: text/x-component` 的 flight 数据（22 843 B），同一个 URL 不带该头返回 `text/html` 的完整页面（45 929 B）。两者**只有这一个请求头不同**，缓存键（`$request_uri`）完全相同 → 不隔离就是白屏。
 7. 上线后用 `curl -I` 验证 `X-Ziyun-Cache` 出现 `MISS` → `HIT`，且带 `auth_token` 的请求恒为 `BYPASS`。
 
@@ -2150,7 +2150,7 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 1. **先对账**：在服务器上 `sudo nginx -T` 导出**当前生效**的完整配置，与仓库这份逐段 diff，**搞清楚线上到底有没有那些 `alias` 块**（本任务之前的实测结论是**没有**）。
    ⚠️ **同时确定「线上那份配置」的真实路径**：仓库里的 `deploy/nginx.ziyun.pudafo.com.conf` 头部写的是 `/etc/nginx/sites-available/ziyun.pudafo.com.conf`，但**线上跑的那份究竟在哪个路径，控制器从未实测过**（本机 `~/.ssh/config` 里没有这台服务器的别名，只能由拿到服务器权限的人来定）。`nginx -T` 的输出里每个文件前面都有一行 `# configuration file <路径>:`，从那里读出 ziyun.pudafo.com 那个 server 块属于哪个文件，记为 `LIVE_CONF`；**后面所有备份 / 合并 / 回滚命令一律用 `"$LIVE_CONF"`，不许写死任何一个路径**（计划早先在同一段里同时出现过 `/etc/nginx/conf.d/<线上那份>.conf` 与 `/etc/nginx/sites-available/ziyun.pudafo.com.conf` 两个互相矛盾的路径，Ruling F31-j 裁决：两个都不许写死）。
 2. **只搬缓存那几行**：把 `proxy_cache_path` 块与 `location /` 里的缓存指令，按线上现有配置的结构**手工合并**进去，不要整文件覆盖。
-3. **先备份**：`sudo cp "$LIVE_CONF" "$LIVE_CONF.bak-$(date +%F-%H%M)"`，并把回滚命令写进 `OPTIMIZATION.md`。
+3. **先备份**：`BAK="$LIVE_CONF.bak-$(date +%F-%H%M)"`，然后 `sudo cp "$LIVE_CONF" "$BAK" && ls -l "$BAK"`（`&&` 保证 `cp` 失败时 `ls` 根本不会执行；`ls` 只列**这一份**，不要用 `$LIVE_CONF.bak-*` 的 glob —— 那会把历史备份也列出来，看起来像成功），并把回滚命令写进 `OPTIMIZATION.md`。
 4. **`nginx -t` 通过后 `reload`**（不是 `restart`）。
 5. **冒烟**（三条都要过，缺一条就回滚）：
    ```bash
@@ -2163,7 +2163,9 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 
    ```bash
    # a) 取 manifest 版本号（部署后的那份），再取 sans 样式表；样式表 URL 上的 ?v= 就是 manifest 的 version
-   MV=$(grep -o '"version": *"[0-9a-f]\{12\}"' /var/www/ziyun/public/font/fonts-manifest.json | grep -o '[0-9a-f]\{12\}')
+   #   0. 先确认应用安装根(仓库默认 /opt/pinyin-character;线上那份以 OPTIMIZATION.md 第 1.6 步对账为准)
+   APP_ROOT=/opt/pinyin-character
+   MV=$(grep -o '"version": *"[0-9a-f]\{12\}"' "$APP_ROOT/public/font/fonts-manifest.json" | grep -o '[0-9a-f]\{12\}')
    echo "manifest version=$MV"
    # b) 取线上 sans 样式表里 sans 的令牌
    TOKEN=$(curl -s "https://ziyun.pudafo.com/font/fonts-sans.css?v=$MV" \
@@ -2234,7 +2236,8 @@ describe('the nginx config caches HTML but never for a logged-in user', () => {
 
   it('keeps the response encodings apart in the cache key (F31-u)', () => {
     // The upstream compresses per Accept-Encoding and answers with
-    // `Vary: Accept-Encoding`, but nginx's proxy_cache ignores `Vary`.
+    // `Vary: Accept-Encoding`. nginx's proxy_cache honours `Vary` since 1.7.7, but the
+    // explicit `$http_accept_encoding` in the key is what guarantees the split.
     // Without the encoding in the key, the first visitor's variant would be
     // served to every later visitor, including ones that accept no encoding.
     expect(conf).toContain(
@@ -2347,7 +2350,7 @@ proxy_cache_path /var/cache/nginx/ziyun
         proxy_cache ziyun_html;
         # 缓存键必须带上 $http_accept_encoding:上游按请求头协商压缩,同一个 URL
         # 会回**两种不同的字节**(带 Accept-Encoding: gzip → gzip 体;不带 → 原始体),
-        # 并且回 `Vary: Accept-Encoding`;而 nginx 的 proxy_cache **不认 Vary**。
+        # 并且回 `Vary: Accept-Encoding`(nginx 的 proxy_cache **1.7.7 起认 Vary**,这正是我们显式写键的第二道保险)。
         # 不把编码变体放进键 ⇒ 第一个访客的变体被缓存下来发给所有后来的访客
         # (包括不接受任何编码的 curl / 监控脚本)。实测见「已实测的线上事实」。
         proxy_cache_key "$scheme$request_method$host$request_uri$http_accept_encoding";
@@ -2368,7 +2371,7 @@ proxy_cache_path /var/cache/nginx/ziyun
 
 ```nginx
     # ---- API 一律不缓存 ----
-    # location / 下还挂着 68 个 GET API 路由,其中 /api/chars/random、/api/game/round、
+    # location / 下还挂着 73 个带 GET 的 API 路由,其中 /api/chars/random、/api/game/round、
     # /api/stats 的语义是「每次给新内容」,缓存会让所有用户拿到同一个值;
     # /api/history、/api/notes、/api/membership/me 是用户态数据。
     # 本块比 location /api/auth/ 与 location /api/init/ 短,nginx 取最长前缀匹配,
@@ -2391,7 +2394,11 @@ proxy_cache_path /var/cache/nginx/ziyun
 ```nginx
 # brotli 需要 nginx-module-brotli;探测到再 include:
 #   nginx -V 2>&1 | grep -o brotli
-#   cp deploy/nginx-brotli.conf /etc/nginx/conf.d/ && sudo nginx -t && sudo systemctl reload nginx
+#   两条落地路径(服务器上有/没有仓库检出)见 deploy/OPTIMIZATION.md 第 3 步:
+#     (a) sudo cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf
+#     (b) scp deploy/nginx-brotli.conf <user>@<host>:/tmp/nginx-brotli.conf
+#         ssh <user>@<host> 'sudo cp /tmp/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf'
+#   放完必须确认真的被 include 了,然后: sudo nginx -t && sudo systemctl reload nginx
 ```
 
 - [ ] **Step 4: 创建 `deploy/nginx-brotli.conf`**
@@ -2401,7 +2408,14 @@ proxy_cache_path /var/cache/nginx/ziyun
 #
 # 启用步骤:
 #   1. nginx -V 2>&1 | grep -o brotli        # 必须有输出
-#   2. cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf
+#   2. 把这个文件放到 /etc/nginx/conf.d/nginx-brotli.conf:
+#      # (a) 服务器上有仓库检出时:
+#      sudo cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf
+#      # (b) 服务器上**没有**仓库检出时(常见)——先在本地 scp 过去再在服务器上 cp:
+#      scp deploy/nginx-brotli.conf <user>@<host>:/tmp/nginx-brotli.conf
+#      ssh <user>@<host> 'sudo cp /tmp/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf'
+#      ⚠️ 只写 (a) 会让没有仓库检出的操作员卡在 `No such file or directory`,
+#      #   而那个报错看不出真实原因 —— 两种都要写。
 #   3. sudo nginx -t && sudo systemctl reload nginx
 #   4. curl -I -H 'Accept-Encoding: br' https://ziyun.pudafo.com/ | grep -i content-encoding
 #
@@ -2419,6 +2433,9 @@ brotli_types
     image/svg+xml;
 ```
 
+**失败了怎么办**：`cp` 报 `Permission denied` ⇒ 忘了 `sudo`（或这台机器上你本来就有权限）⇒ 加上 `sudo` 重跑；
+报 `No such file or directory` ⇒ **多半是 (a) 路径不适用**（这台服务器上没有仓库检出）⇒ 改走 (b) 路径。
+
 - [ ] **Step 5: 创建 `deploy/OPTIMIZATION.md`**
 
 内容必须包含：
@@ -2426,7 +2443,7 @@ brotli_types
 - **⚠️ 开头第一段必须是「不要整份覆盖」**（F30-a）：说明**仓库这份 nginx 配置不是线上跑的那份**——线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`= /logo.png` 由 **Next.js** 提供（判据：ETag 是 `W/"<size-hex>-<mtime-ms-hex>"`、没有 `Expires:`、`Cache-Control` 与 `next.config.ts:45` 逐字相同、404 页面带 `X-Powered-By: Next.js`），而仓库配置里对应的 `alias` 块（`deploy/nginx.ziyun.pudafo.com.conf:123-177`）**在生产上没有生效**。因此**不许** `cp` 覆盖，**只搬缓存那几行**。
 - **部署顺序**（F30-a 的六步，逐条给命令）：
   1. **对账**：`sudo nginx -T > /tmp/nginx-effective.conf`，与仓库这份 diff，确认线上到底有没有那些 `alias` 块；**并从 `# configuration file <路径>:` 行里读出线上那份配置的真实路径，记为 `LIVE_CONF`（下面的命令都用 `"$LIVE_CONF"`，不许写死路径）**；
-  2. **备份**：`sudo cp "$LIVE_CONF" "$LIVE_CONF.bak-$(date +%F-%H%M)"`；
+  2. **备份**：`BAK="$LIVE_CONF.bak-$(date +%F-%H%M)"`，然后 `sudo cp "$LIVE_CONF" "$BAK" && ls -l "$BAK"`（`&&` 保证 `cp` 失败时 `ls` 根本不会执行；`ls` 只列**这一份**，不要用 `$LIVE_CONF.bak-*` 的 glob —— 那会把历史备份也列出来，看起来像成功）；
   3. **合并**（不是覆盖）缓存指令：`proxy_cache_path` 块 + `location /` 里的 `proxy_cache*` 那几行；
   4. `sudo nginx -t`（**必须通过**）→ `sudo systemctl reload nginx`（**不是 restart**）；
   5. **冒烟**：`curl -sI https://ziyun.pudafo.com/font/web/sans/hot.woff2` 必须 **200 + `Content-Type: font/woff2`**；`curl -sI https://ziyun.pudafo.com/ | grep -i x-ziyun-cache` 必须出现该头；
@@ -2437,32 +2454,43 @@ brotli_types
 - **回滚**：`sudo cp "$LIVE_CONF.bak-<时间戳>" "$LIVE_CONF" && sudo nginx -t && sudo systemctl reload nginx`；以及 `sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf` 撤销 brotli。
   ⚠️ **不要写死线上配置的路径**（Ruling F31-j）：`/etc/nginx/sites-available/ziyun.pudafo.com.conf` 只是**仓库这份文件头部注释里写的**放置位置，而**线上跑的那份在哪个路径从未实测过**；仓库这份与线上那份已经不是同一份了（见 F30-a）。回滚命令里的路径必须来自第 1 步对账时读出来的 `"$LIVE_CONF"`。
 - **上线后验证**（六条命令 + 期望输出）：
-  > ⚠️ **每一条都必须带 `Cookie: setup_completed=1`**（F31-v）。站点的初始化闸门（`middleware.ts:92-100`）是**只看 cookie** 的：没有 `setup_completed=1` 的请求**一律 307 跳 `/init`**。307 不在 `proxy_cache_valid 200 10s` 里 ⇒ **永远不会被缓存** ⇒ `X-Ziyun-Cache` 永远是 `MISS`，第二次也**不会**变成 `HIT`。
-  > 控制器 2026-10-30 02.40 在线上实测：`curl -I https://ziyun.pudafo.com/` ⇒ `307 location: /init`；带上 `Cookie: setup_completed=1` ⇒ `200 text/html`。**不带这个 cookie 跑冒烟 ⇒ 必然看到 MISS/MISS ⇒ 会误判成「缓存没生效」，进而乱改配置。**
+  > ⚠️ **每一条都必须带 `Cookie: setup_completed=1`**（F31-v）。站点的初始化闸门（`middleware.ts:92-100`）是**只看 cookie** 的：没有 `setup_completed=1` 的请求**一律 307 跳 `/init`**。307 不在 `proxy_cache_valid 200 10s` 里 ⇒ **307 不会被写进缓存**。
+  > ⚠️ **但「不带 cookie 就一定是 MISS」是错的，不要拿它当判据。** 缓存键**不含 cookie** ⇒ 带 cookie 的请求写下的那条 200 条目，不带 cookie 的请求照样能命中（命中时请求根本到不了 `middleware.ts`）。⇒ 冒烟的判据只有一条：**带 cookie 连发两次，这两次里出现过 `HIT`**。**两次都 MISS 才是故障；第一次就是 HIT 也正常**（最近 10 秒内别的访客把同一个 URL 写进了缓存）。
+  > 控制器 2026-10-30 02.40 在线上实测：`curl -I https://ziyun.pudafo.com/` ⇒ `307 location: /init`；带上 `Cookie: setup_completed=1` ⇒ `200 text/html`。**不带这个 cookie 跑冒烟 ⇒ 可能看到 MISS 也可能命中 ⇒ 判据不是「MISS/MISS」，而是「两次里有没有出现过 HIT」。**
 
   ```bash
   C='Cookie: setup_completed=1'
-  curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第一次 MISS
-  curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第二次 HIT
-  curl -I -H "$C" -H 'Cookie: auth_token=dummy' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS
+  curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # MISS 或 HIT 都行（热条目就是 HIT）
+  curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 这两条里只要出现过一次 HIT 就算通过
+  curl -I -H 'Cookie: setup_completed=1; auth_token=dummy' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS
   curl -I -H "$C" -H 'RSC: 1' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS（飞行请求不碰缓存）
   curl -I -H "$C" https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      # 无该头（API 不缓存）
   # 编码隔离(F31-u):先用 gzip 预热缓存,再发一个**不带** Accept-Encoding 的请求,
   # 它的响应里**不能**出现 Content-Encoding: gzip
-  curl -sI -H "$C" -H 'Accept-Encoding: gzip' https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'   # HIT + content-encoding: gzip
-  curl -sI -H "$C" https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'                              # HIT + **没有** content-encoding
+  curl -sI -H "$C" -H 'Accept-Encoding: gzip' https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'   # 预热:MISS 或 HIT 都行,只要有 content-encoding: gzip
+  curl -sI -H "$C" https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'                              # MISS/HIT 都行,**只看有没有 content-encoding**
   ```
   再手工确认一次「客户端导航没被缓存污染」：浏览器打开首页 → 点进任意内链 → DevTools Network 里该导航请求的响应 `Content-Type` 必须是 `text/x-component`，且页面白屏/卡死都没有。
-- **风险提示（微缓存的五条硬约束）**：
+- **风险提示（微缓存的七条硬约束）**：
   1. **新增任何「按用户区分」的 cookie 或请求头时，必须同时扩展 `proxy_cache_bypass` 与 `proxy_no_cache`** —— 只改前者会让登录态响应被写进缓存（`proxy_cache_bypass` 只管读不管写）。
-  2. **不要给 `location /` 之外的路径加缓存**，尤其不要把 `location /api/` 的 `proxy_cache off;` 删掉 —— 68 个 GET API 路由里混着「每次给新内容」的（`/api/chars/random`、`/api/game/round`、`/api/stats`）和用户态数据（`/api/history`、`/api/notes`、`/api/membership/me`）。
+  2. **不要给 `location /` 之外的路径加缓存**，尤其不要把 `location /api/` 的 `proxy_cache off;` 删掉 —— 73 个带 GET 的 API 路由里混着「每次给新内容」的（`/api/chars/random`、`/api/game/round`、`/api/stats`）和用户态数据（`/api/history`、`/api/notes`、`/api/membership/me`）。
   3. **`$http_rsc` 不能从两条指令里去掉** —— 同一个 URL 带 `RSC: 1` 返回的是 Next 的 flight 数据（`text/x-component`），不带则返回整页 HTML（`text/html`），二者只有这一个请求头不同。缓存键是 `$request_uri`，不隔离就等于把 HTML 喂给客户端路由 → 白屏。
-  4. **缓存键里的 `$http_accept_encoding` 不能去掉**（F31-u）—— 上游按请求头协商压缩：同一个 URL，带 `Accept-Encoding: gzip` 回 **gzip 体**、不带回**原始体**，两者的响应头都写着 `Vary: Accept-Encoding`；而 **nginx 的 `proxy_cache` 不认 `Vary`**。不把编码变体放进键 ⇒ **第一个访客的变体会被缓存下来发给所有后来的访客**（包括不发 `Accept-Encoding` 的 curl / 监控脚本，它们会收到 gzip 字节却以为自己要的是原始体）。
-  5. **冒烟必须带 `Cookie: setup_completed=1`**（F31-v）—— 初始化闸门（`middleware.ts:92-100`）只看 cookie，没有它就 **307 跳 `/init`**，而 307 不在 `proxy_cache_valid 200 10s` 里 ⇒ 永远不会被缓存 ⇒ `X-Ziyun-Cache` 永远是 `MISS`。**这不是「缓存没生效」，是请求压根没走到被缓存的那条路径上。**
+  4. **缓存键里的 `$http_accept_encoding` 不能去掉**（F31-u）—— 上游按请求头协商压缩：同一个 URL，带 `Accept-Encoding: gzip` 回 **gzip 体**、不带回**原始体**，两者的响应头都写着 `Vary: Accept-Encoding`（nginx 的 `proxy_cache` **1.7.7 起认 `Vary`**，所以今天编码分档本来就有两道；显式键防的是上游哪天不再发 `Vary`、或有人往 `proxy_ignore_headers` 里加了 `Vary`）。不把编码变体放进键 ⇒ **第一个访客的变体会被缓存下来发给所有后来的访客**（包括不发 `Accept-Encoding` 的 curl / 监控脚本，它们会收到 gzip 字节却以为自己要的是原始体）。
+  5. **冒烟必须带 `Cookie: setup_completed=1`**（F31-v）—— 初始化闸门（`middleware.ts:92-100`）只看 cookie，没有它就 **307 跳 `/init`**，而 307 不在 `proxy_cache_valid 200 10s` 里 ⇒ **307 不会被写进缓存**。⚠️ 但**缓存键不含 cookie** ⇒ 不带 cookie 的请求**也可能命中** ⇒ 判据是「两次里有没有出现过 `HIT`」，不是「一定 MISS」。**两次都 MISS 才是故障。**
+  6. **`proxy_ignore_headers` 里绝不许加 `Vary`** —— 加上它就会**关掉 nginx 自带的 `Vary` 分档**。
+     本任务只允许 `proxy_ignore_headers Cache-Control;` 这一种写法。
+     ⚠️ **绝不能写成 `proxy_ignore_headers Cache-Control Set-Cookie;`** ——
+     那会让带登录态的响应被写进缓存 ⇒ **用户串号**。
+  7. **静态资源也会进微缓存，这是预期的，不是配置错误** —— 生产上 `/font/`、`/strokes/`、
+     `/_next/static/`、`/audio/` 由 Next.js 提供，走的就是 `location /` ⇒ 它们同样被缓存 10 秒
+     （响应头也会带 `X-Ziyun-Cache`）。这些文件本来就是 immutable 的静态产物，缓存它们只是
+     省掉一次回源往返。⚠️ 但它们**占的是同一个磁盘缓存**（`proxy_cache_path` 那个，
+     `max_size=64m`）⇒ 将来命中率下降时，先查是不是静态资源把 HTML 条目挤出去了：
+     `du -sh /var/cache/nginx/ziyun`。
 - **线上配置对账待办**（来自 spec §4.2.3）：线上响应带 `Alt-Svc: quic=":443"; h3=":443"`，而仓库配置只有 `listen 443 ssl http2` —— 上线前必须在服务器上核对 `nginx -V` 与 `/etc/nginx/conf.d/` 的实际配置，决定是给仓库补 QUIC 还是把线上改回与仓库一致；同时确认 brotli 模块是否存在。
 - **已实测的线上事实**（2026-10-29，改配置前请复核）：`RSC: 1` 是区分 flight 数据与 HTML 的唯一手段（`?_rsc=` 查询参数**不**产生 flight 数据，实测返回 200 `text/html`）；`Next-Router-Prefetch: 1` 单独发会得到 **500**（上游 Next 的行为，不是本项目引入的）；无 `RSC` 头的普通文档请求响应头是 `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` + `Vary: rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch, Accept-Encoding`。
 - **已实测的线上事实（控制器 2026-10-30 02.40 补测，F31-u / F31-v 的依据）**：
-  - **编码变体**：同一个 URL 会回**两种不同的字节**。带 `Accept-Encoding: gzip, deflate, br` 或 `gzip` ⇒ `200` + `Content-Encoding: gzip`；带 `identity` 或**不带** `Accept-Encoding` ⇒ `200` + **没有** `Content-Encoding`。两种情况的响应头**都**带 `Vary: ... Accept-Encoding` ⇒ 缓存必须自己按编码隔离（nginx 不认 `Vary`）。
+  - **编码变体**：同一个 URL 会回**两种不同的字节**。带 `Accept-Encoding: gzip, deflate, br` 或 `gzip` ⇒ `200` + `Content-Encoding: gzip`；带 `identity` 或**不带** `Accept-Encoding` ⇒ `200` + **没有** `Content-Encoding`。两种情况的响应头**都**带 `Vary: ... Accept-Encoding` ⇒ 缓存必须自己按编码隔离（nginx 1.7.7 起认 `Vary`，这是第二道保险；显式键是第一道）。
   - **初始化闸门**：不带 `Cookie: setup_completed=1` ⇒ `307 location: /init`（`/`、`/dictionary`、`/poetry`、`/api/stats`、`/api/chars/random` 全部如此）；带上 ⇒ `200 text/html`。⇒ 冒烟必须带这个 cookie，否则永远看不到 `HIT`。
 
 - [ ] **Step 6: 跑测试确认通过**

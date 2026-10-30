@@ -360,8 +360,8 @@ sha256sum "$APP_ROOT/public/font/web/sans/hot.woff2"
 
 ```bash
 C='Cookie: setup_completed=1'
-curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第一次 MISS
-curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 第二次 HIT
+curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # MISS 或 HIT 都行（热条目就是 HIT）
+curl -I -H "$C" https://ziyun.pudafo.com/ | grep -i x-ziyun-cache      # 这两条里只要出现过一次 HIT 就算通过
 curl -I -H 'Cookie: setup_completed=1; auth_token=dummy' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS
 curl -I -H "$C" -H 'RSC: 1' https://ziyun.pudafo.com/ | grep -i x-ziyun-cache   # BYPASS（飞行请求不碰缓存）
 curl -I -H "$C" https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      # 无该头（API 不缓存）
@@ -372,10 +372,13 @@ curl -I -H "$C" https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      
 | 命令 | 期望 |
 |---|---|
 | 第 1 条 | `X-Ziyun-Cache: MISS` **或** `HIT`（热条目时就是 HIT，不是故障） |
-| 第 2 条 | `X-Ziyun-Cache: HIT`（若还是 MISS，隔几秒再发一次；TTL 只有 10 秒） |
+| 第 2 条 | `X-Ziyun-Cache: MISS` **或** `HIT`（TTL 只有 10 秒，第二次也可能已经过期） |
 | 第 3 条（带 `auth_token`） | `X-Ziyun-Cache: BYPASS` |
 | 第 4 条（带 `RSC: 1`） | `X-Ziyun-Cache: BYPASS` |
 | 第 5 条（`/api/stats`） | **没有 `X-Ziyun-Cache` 这一行** |
+
+> **判据**：**这两条里只要出现过一次 `HIT` 就算通过**；两次都 MISS 才是故障
+> （TTL 只有 10 秒 ⇒ 第二条也可能已经过期 ⇒ 它是 MISS 不是故障）。
 
 > ⚠️ 第 3 条**必须把两个 cookie 写在同一个 `Cookie:` 头里**（用 `;` 分隔）。
 > 写成两个 `-H 'Cookie: …'` 也可以 —— curl 会发成两行 `Cookie:`，Node 的 HTTP 解析器会把它们
