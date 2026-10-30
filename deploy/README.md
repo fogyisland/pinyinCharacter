@@ -14,12 +14,11 @@
 1. 服务器先解包 Up.zip,装依赖,配 .env,跑 `npm run build`
 2. 后台起 Node: `HOST=127.0.0.1 nohup npm start &` (固定 listen :4444)
 3. 申请 TLS: `sudo certbot --nginx -d ziyun.pudafo.com` (会写证书到标准路径)
-4. 拷贝本目录的 nginx 配置到服务器,启用:
-   ```bash
-   sudo cp deploy/nginx.ziyun.pudafo.com.conf /etc/nginx/sites-available/
-   sudo ln -s /etc/nginx/sites-available/ziyun.pudafo.com.conf /etc/nginx/sites-enabled/
-   sudo nginx -t && sudo systemctl reload nginx
-   ```
+4. 反代配置**不要整份覆盖**:仓库这份不是线上跑的那份(见 `OPTIMIZATION.md` 的
+   「不要整份覆盖」一节)。先 `sudo nginx -T > /tmp/nginx-effective.conf` 对账,
+   从 `# configuration file <路径>:` 行读出线上那份的真实路径,备份后**只把需要的
+   指令合并进去**,`sudo nginx -t && sudo systemctl reload nginx`。
+   完整流程(对账/备份/合并/校验/冒烟/回滚)见 `deploy/OPTIMIZATION.md`。
 5. 浏览器访问 `https://ziyun.pudafo.com/`,被中间件重定向到 `/init`,走三步向导
 6. **首次部署完成 → admin 登录 → `/admin/settings/site-url` 把 `NEXT_PUBLIC_SITE_URL` 设为 `https://ziyun.pudafo.com`** (这一步不要手动改 .env)
 

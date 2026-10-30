@@ -132,7 +132,7 @@ location /api/auth/ { limit_req zone=auth burst=5 nodelay; proxy_pass http://127
 location /api/init/ { limit_req zone=auth burst=5 nodelay; proxy_pass http://127.0.0.1:4444; }
 ```
 
-> **生产域名 `ziyun.pudafo.com` 的具体反代配置见 [`deploy/nginx.ziyun.pudafo.com.conf`](deploy/nginx.ziyun.pudafo.com.conf)** —— 已包含 Let's Encrypt 路径、TLS 协议套件、Cloudflare CDN 真实 IP 段占位、HTTPS→HTTP 重定向,直接 `cp` 到 `/etc/nginx/sites-available/` 即可。配套流程见 [`deploy/README.md`](deploy/README.md)。
+> **生产域名 `ziyun.pudafo.com` 的具体反代配置见 [`deploy/nginx.ziyun.pudafo.com.conf`](deploy/nginx.ziyun.pudafo.com.conf)** —— 已包含 Let's Encrypt 路径、TLS 协议套件、Cloudflare CDN 真实 IP 段占位、HTTPS→HTTP 重定向。⚠️ **这是模板,不是线上跑的那份** —— 线上那份的真实路径从未实测过(用 `sudo nginx -T` 输出里的 `# configuration file <路径>:` 行读出),**不要整份覆盖**:先按 [`deploy/OPTIMIZATION.md`](deploy/OPTIMIZATION.md) 对账、备份,**只把需要的指令合并进线上那份**。配套流程见 [`deploy/README.md`](deploy/README.md)。
 
 ## 4. 完整 Nginx 示例
 
