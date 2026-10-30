@@ -84,42 +84,71 @@ grep -n '# configuration file ' /tmp/nginx-effective.conf
 仓库文件头部注释里写的那个路径只是「它自己该放哪」，线上跑的那份**从未实测过**。
 
 ```bash
-# 1.5 查 server 级 / location 级的 add_header（关键，见下）
-sudo nginx -T | grep -n "add_header"
+# 1.5 查 http / server / location 三个层级的 add_header（关键，见下）
+sudo nginx -T | grep -nE '^[[:space:]]*(http|server|location)[[:space:]].*\{|add_header'
 ```
 
-**期望输出**：若干行。**逐条判断每一条在 server 级还是 location 级。**
+**期望输出**：若干行，**块头与 `add_header` 行交错出现** ⇒ 顺着上一行块头就能判断层级。
+**只看 ziyun.pudafo.com 那个 `server` 块，以及它所属的 `http` 块。**
 
 ⚠️ **nginx 的 `add_header` 只在「当前层级没有定义任何 `add_header`」时才继承父级**，
 而且只有「**替换**」语义、**没有「追加」」语义 ⇒ 在 `location /` 里加
-`X-Ziyun-Cache` 这一行，会让该 location **继承到的 server 级 `add_header` 全部消失**
+`X-Ziyun-Cache` 这一行，会让该 location **继承到的父级 `add_header` 全部消失**
 （HSTS / `X-Frame-Options` / `X-Content-Type-Options` 之类）。
 
-- **仓库这份配置 server 级没有 `add_header`**（6 处全在 location 里）⇒ 仓库这份不受影响；
-- **线上那份从未实测过** ⇒ **若第 1.5 步发现 server 级 `add_header`**，
-  **必须把那些条目逐条复制到 `location /` 里**（复制 HSTS 就复制 HSTS 的值与
-  `always` 参数，一条一条来），然后再继续第 3 步。
-  **判断依据**：那几行如果出现在 `server {` 与它的 `}` 之间 ⇒ server 级；
-  如果出现在某个 `location … {` 内部 ⇒ location 级。
+**判断依据（三分，不许再用二分）**：
+
+- 出现在 **`http {` 之内、任何 `server {` 之外** ⇒ **http 级**
+- 出现在 **`server {` 与它的 `}` 之间** ⇒ **server 级**
+- 出现在 **某个 `location … {` 内部** ⇒ **location 级**
+
+⇒ **http 级与 server 级的每一条，都必须逐条复制到 `location /` 里**（复制 HSTS 就复制
+HSTS 的值与 `always` 参数，一条一条来）。**location 级的不用复制** —— 它们各管各的，
+本来就不受影响。
+
+- **仓库这份配置**：http 级 **0 条**、server 级 **0 条**、location 级 **6 条**
+  ⇒ 仓库这份不受影响；
+- **线上那份从未实测过** ⇒ 若第 1.5 步发现 http 级或 server 级 `add_header`，
+  **先把那些条目逐条复制到 `location /` 里**，再继续第 3 步。
 - **不要**把 `X-Ziyun-Cache` 提到 server 级：那会让 `/api/`、`/mcp`、`/font/` 也带上这个头。
 
-#### 对账结论（必须写下这四句）
+```bash
+# 1.6 应用安装根（5.1 的字体验收要用；仓库文档写的是 /opt/pinyin-character）
+APP_ROOT=/opt/pinyin-character
+ls -d "$APP_ROOT"/public/font "$APP_ROOT"/public/font/web/sans
+```
+
+**期望输出**：两个目录都列出来（`hot.woff2` 所在的目录）。
+
+**若这里报 `No such file or directory`** ⇒ 线上安装根不是这个 ⇒ **改 `APP_ROOT` 的值再跑一次**，
+把改成的那个值写进对账结论第 5 条。后面 5.1 用的是同一个 `$APP_ROOT`。
+
+⚠️ **不要凭猜的路径去 `sha256sum`** —— 路径不对会报「文件不存在」，
+而 5.1(d) 的判据是「两个哈希都存在且不同」⇒ **路径写错会把一次健康上线误判成要回滚**。
+
+#### 对账结论（必须写下这五句）
 
 1. 线上有没有 `alias` 块：**有 / 没有**
 2. `/font/` 归谁：**Next.js / nginx**
-3. server 级 `add_header` 有几条、要不要复制进 `location /`：**列出条目或「无」**
+3. http 级 / server 级 `add_header` 各有几条、要不要复制进 `location /`：**列出条目或「无」**
 4. `LIVE_CONF` = **<从 `nginx -T` 读出来的路径>**
+5. `APP_ROOT` = **<第 1.6 步确认的应用安装根>**（仓库默认 `/opt/pinyin-character`）
 
 ### 第 2 步 · 备份
 
 ```bash
-sudo cp "$LIVE_CONF" "$LIVE_CONF.bak-$(date +%F-%H%M)"
-ls -l "$LIVE_CONF".bak-*
+BAK="$LIVE_CONF.bak-$(date +%F-%H%M)"
+sudo cp "$LIVE_CONF" "$BAK" && ls -l "$BAK"
 ```
 
-**期望输出**：一行 `-rw-r--r-- … <LIVE_CONF>.bak-YYYY-MM-DD-HHMM`。
-**若这一步失败** ⇒ 你没有写权限（正常用户对 `/etc/nginx/` 没有写权限）⇒ 必须用 `sudo`，
-`sudo cp` 的两个参数都要带引号（路径里有变量）。**备份失败就不要往下走。**
+**期望输出**：一行 `-rw-r--r-- … <LIVE_CONF>.bak-YYYY-MM-DD-HHMM`（**就是 `ls "$BAK"` 这一条**）。
+
+**若 `ls` 没有任何输出** ⇒ `cp` 失败了（`&&` 保证 `cp` 失败时 `ls` 根本不会执行）
+⇒ 你没有写权限（正常用户对 `/etc/nginx/` 没有写权限）⇒ 用 `sudo`，两个参数都要带引号
+（路径里有变量）。**备份失败就不要往下走** —— 后面第 6 步的回滚要靠它。
+
+**若 `cp` 报 `No such file or directory`** ⇒ `$LIVE_CONF` 这个变量是空的或路径不对
+⇒ 回第 1.4 步重读一次 `nginx -T` 的输出。
 
 ### 第 3 步 · 合并（不是覆盖）
 
@@ -186,7 +215,8 @@ ls -ld /var/cache/nginx/ziyun
 ```
 
 **期望输出**：`drwxr-xr-x … /var/cache/nginx/ziyun`。
-**失败** ⇒ 权限不足，用 `sudo`（一般不用 sudo 也能建）。
+**失败** ⇒ 权限不足（`/var/cache/nginx` 是 root 所有）⇒ 确认命令里带 `sudo`；
+实在建不出来也没关系 —— `proxy_cache_path` 指到的目录 nginx 启动时会自己建。
 
 #### brotli 片段怎么到服务器上（与缓存指令不是一回事）
 
@@ -196,7 +226,7 @@ ls -ld /var/cache/nginx/ziyun
 **(a) 服务器上有仓库检出时**
 
 ```bash
-cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf
+sudo cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf
 ```
 
 **(b) 服务器上**没有**仓库检出时（常见）** —— 先在**本地**机器上：
@@ -209,6 +239,10 @@ ssh <user>@<host> 'sudo cp /tmp/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli
 > ⚠️ **只写 (a) 会让没有仓库检出的操作员卡在 `No such file or directory`** ——
 > 而那个报错看不出真实原因（他不是路径写错了，是**根本没有那份仓库**）。
 > **不知道服务器上有没有仓库检出 ⇒ 走 (b)。**
+
+**失败了怎么办**：`cp` 报 `Permission denied` ⇒ 忘了 `sudo`（或这台机器上你本来就有权限）
+⇒ 加上 `sudo` 重跑；报 `No such file or directory` ⇒ **多半是 (a) 路径不适用**
+（这台服务器上没有仓库检出）⇒ 改走 (b) 路径。
 
 ⚠️ **拷进 `conf.d/` 并不等于它生效。** 只有当线上 `nginx.conf` 的 `http` 块里有
 `include /etc/nginx/conf.d/*.conf;`（Ubuntu 默认有）才自动生效；没有的话，必须自己在
@@ -263,9 +297,12 @@ systemctl is-active nginx
 
 #### 5.1 字体文件（**本波次的验收项**）
 
+> **先确认 `$APP_ROOT` 还在**：它是在第 1.6 步设的 shell 变量。**换了终端要重新设**
+> （`APP_ROOT=/opt/pinyin-character`），否则下面的命令会报「文件不存在」。
+
 ```bash
 # a) 取 manifest 版本号（部署后的那份）
-MV=$(grep -o '"version": *"[0-9a-f]\{12\}"' /var/www/ziyun/public/font/fonts-manifest.json | grep -o '[0-9a-f]\{12\}')
+MV=$(grep -o '"version": *"[0-9a-f]\{12\}"' "$APP_ROOT/public/font/fonts-manifest.json" | grep -o '[0-9a-f]\{12\}')
 echo "manifest version=$MV"
 
 # b) 取线上 sans 样式表里 sans 的令牌
@@ -279,7 +316,7 @@ curl -sI "https://ziyun.pudafo.com/font/web/sans/hot.woff2?v=$TOKEN" | head -20
 # d) 取回来的字节必须与服务器上的文件逐字节相同
 curl -s "https://ziyun.pudafo.com/font/web/sans/hot.woff2?v=$TOKEN" -o /tmp/sans-hot.woff2
 sha256sum /tmp/sans-hot.woff2
-sha256sum /var/www/ziyun/public/font/web/sans/hot.woff2
+sha256sum "$APP_ROOT/public/font/web/sans/hot.woff2"
 ```
 
 **期望输出**
@@ -290,24 +327,36 @@ sha256sum /var/www/ziyun/public/font/web/sans/hot.woff2
 - d) **两个 sha256 完全相同**
 
 > **文件名注意**：sans / serif 是单字重，热区文件叫 `hot.woff2`；楷体（wenkai）是双字重，
-> 叫 `hot-400.woff2` / `hot-700.woff2`。**用错文件名会拿到 404**，而 404 在页面上又看不出错。
+> 叫 `hot-400.woff2` / `hot-700.woff2`。**用错文件名会拿到 404 或 `No such file or directory`**，
+> 而 404 在页面上又看不出错。
 
 **失败了怎么办**
 
+- a) `$MV` **是空的** ⇒ manifest 没找到、或版本号格式不对 ⇒ **先查 `$APP_ROOT` 与文件名**，
+  **不要**当成「字体没上线」，更不要回滚。
 - c) 返回 **404** ⇒ 字体产物没上线，或被某个 `alias` 块挡掉了 ⇒ **立即执行第 6 步回滚**，
   然后查应用发布记录（字体文件是随应用发布上去的）。
-- d) 两个 sha256 **不同** ⇒ 线上返回的不是服务器上那个文件（可能被别的缓存挡着）
+- d) `sha256sum` 报 **`No such file or directory`** ⇒ **这是路径写错了，不是字节不一致**
+  ⇒ 确认 `$APP_ROOT` 与文件名（sans / serif 是单字重、热区文件叫 `hot.woff2`；
+  楷体 wenkai 是双字重，叫 `hot-400.woff2` / `hot-700.woff2`）⇒ **不要回滚**。
+- d) **两个 sha256 都存在且不同** ⇒ 线上返回的不是服务器上那个文件（可能被别的缓存挡着）
   ⇒ **立即回滚**，并把两个哈希都记下来。
-- d) 相同 ⇒ 这一项通过。
+- d) 两个 sha256 相同 ⇒ 这一项通过。
 
 #### 5.2 微缓存与「哪些响应不许进缓存」
 
 > ⚠️ **每一条都必须带 `Cookie: setup_completed=1`**。站点的初始化闸门
 > （`middleware.ts:92-100`）是**只看 cookie** 的：没有 `setup_completed=1` 的请求
-> **一律 307 跳 `/init`**。307 不在 `proxy_cache_valid 200 10s` 里 ⇒ **永远不会被缓存**
-> ⇒ `X-Ziyun-Cache` 永远是 `MISS`，第二次也**不会**变成 `HIT`。
-> **「第二次还是 MISS」不是「缓存没生效」，是请求压根没走到被缓存的那条路径上。**
-> 不带这个 cookie 跑冒烟 ⇒ 必然看到 MISS/MISS ⇒ 会误判成「缓存没生效」，进而乱改配置。
+> **一律 307 跳 `/init`**。307 不在 `proxy_cache_valid 200 10s` 里 ⇒ **不会被写进缓存**。
+>
+> ⚠️ **但「不带 cookie 就一定是 MISS」是错的，不要拿它当判据。**
+> 缓存键是 `$scheme$request_method$host$request_uri$http_accept_encoding` ——
+> **键里不含 cookie** ⇒ 带 cookie 的请求写下的那条 200 条目，**不带 cookie 的请求照样能命中**
+> （命中时 nginx 直接回缓存，**请求根本到不了 `middleware.ts`**）。
+> ⇒ 冒烟的判据只有一条：**带 cookie 连发两次，这两次里出现过 `HIT`**。
+>
+> ⚠️ **两次都 MISS 才是故障**；**第一次就是 HIT 也正常**（最近 10 秒内别的访客把同一个 URL
+> 写进了缓存 ⇒ 你接手的就是热条目）。不要把热条目当成「缓存没生效」。
 
 ```bash
 C='Cookie: setup_completed=1'
@@ -322,8 +371,8 @@ curl -I -H "$C" https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      
 
 | 命令 | 期望 |
 |---|---|
-| 第 1 条 | `X-Ziyun-Cache: MISS` |
-| 第 2 条 | `X-Ziyun-Cache: HIT` |
+| 第 1 条 | `X-Ziyun-Cache: MISS` **或** `HIT`（热条目时就是 HIT，不是故障） |
+| 第 2 条 | `X-Ziyun-Cache: HIT`（若还是 MISS，隔几秒再发一次；TTL 只有 10 秒） |
 | 第 3 条（带 `auth_token`） | `X-Ziyun-Cache: BYPASS` |
 | 第 4 条（带 `RSC: 1`） | `X-Ziyun-Cache: BYPASS` |
 | 第 5 条（`/api/stats`） | **没有 `X-Ziyun-Cache` 这一行** |
@@ -341,12 +390,27 @@ curl -I -H "$C" https://ziyun.pudafo.com/api/stats | grep -i x-ziyun-cache      
 ```bash
 # 先用 gzip 预热缓存,再发一个**不带** Accept-Encoding 的请求,
 # 它的响应里**不能**出现 Content-Encoding: gzip
-curl -sI -H "$C" -H 'Accept-Encoding: gzip' https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'   # HIT + content-encoding: gzip
-curl -sI -H "$C" https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'                              # HIT + **没有** content-encoding
+curl -sI -H "$C" -H 'Accept-Encoding: gzip' https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'   # 预热:MISS 或 HIT 都行,只要有 content-encoding: gzip
+curl -sI -H "$C" https://ziyun.pudafo.com/ | grep -iE 'x-ziyun-cache|content-encoding'                              # MISS/HIT 都行,**只看有没有 content-encoding**
 ```
 
-**期望输出**：第一条有 `Content-Encoding: gzip`，第二条**没有** `Content-Encoding`。
+**期望输出**：第一条有 `Content-Encoding: gzip`；第二条**没有** `Content-Encoding`。
+（两条各自的 `X-Ziyun-Cache` 是 MISS 还是 HIT **都不要紧** —— TTL 只有 10 秒，
+两条之间隔着敲键盘的时间，第二次很可能已经 MISS。**判据只看 `Content-Encoding`。**）
+
 **若第二条也带 `Content-Encoding: gzip`** ⇒ 编码隔离失效 ⇒ **立即回滚**。
+
+> ⚠️ **一个已知的行为差异（微缓存带来的；不是 bug，但要知道）**：
+> 微缓存命中时，请求**不会到达 `middleware.ts`** ⇒ 初始化闸门的那次 307 **不会发生**。
+> ⇒ 一个**第一次访问**的访客，如果先命中了缓存，会**先看到首页**；等他下一次导航命中
+> 未缓存的 URL 时，才会被 307 送去 `/init` 拿 cookie。**改动之前**那次 307 发生在他的
+> **第一个**请求上 —— **只是跳转时机挪后了一次**。
+>
+> 这**不涉及任何用户数据**：缓存里只有匿名页面 —— 登录态 cookie `auth_token` 在
+> `proxy_cache_bypass`（读）与 `proxy_no_cache`（写）两条闸里都被挡掉，
+> 带 `Set-Cookie` 的响应也不会被写进缓存（`proxy_ignore_headers` 里只有 `Cache-Control`）。
+> 真正的初始化闸门在**服务端**（`components/SetupGuard.tsx` → `getSetupState()`），
+> 它是每个请求都跑的。§5.3 的必做清缓存把窗口限死在 10 秒以内。
 
 **再手工确认一次「客户端导航没被缓存污染」**：浏览器打开首页 → 点进任意内链 →
 DevTools Network 里该导航请求的响应 `Content-Type` 必须是 `text/x-component`，
@@ -440,7 +504,7 @@ sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf && sudo nginx -t && sudo systemct
 
 ---
 
-## 微缓存的硬约束（**五条，一个字都不许删**）
+## 微缓存的硬约束（**全部保留，一个字都不许删**）
 
 1. **新增任何「按用户区分」的 cookie 或请求头时，必须同时扩展 `proxy_cache_bypass` 与
    `proxy_no_cache`** —— 只改前者会让登录态响应被写进缓存
@@ -466,7 +530,15 @@ sudo rm -f /etc/nginx/conf.d/nginx-brotli.conf && sudo nginx -t && sudo systemct
    本任务只允许 `proxy_ignore_headers Cache-Control;` 这一种写法。
    ⚠️ **绝不能写成 `proxy_ignore_headers Cache-Control Set-Cookie;`** ——
    那会让带登录态的响应被写进缓存 ⇒ **用户串号**。
-6. **冒烟必须带 `Cookie: setup_completed=1`** —— 见第 5.2 节。
+6. **冒烟必须带 `Cookie: setup_completed=1`** —— 见第 5.2 节。判据只有一条：
+   **带 cookie 连发两次，这两次里出现过 `HIT`**；两次都 MISS 才是故障，
+   第一次就 HIT 是热条目、正常（缓存键里不含 cookie，命中时请求到不了 `middleware.ts`）。
+7. **静态资源也会进微缓存，这是预期的，不是配置错误** —— 生产上 `/font/`、`/strokes/`、
+   `/_next/static/`、`/audio/` 由 Next.js 提供，走的就是 `location /` ⇒ 它们同样被缓存 10 秒
+   （响应头也会带 `X-Ziyun-Cache`）。这些文件本来就是 immutable 的静态产物，缓存它们只是
+   省掉一次回源往返。⚠️ 但它们**占的是同一个磁盘缓存**（`proxy_cache_path` 那个，
+   `max_size=64m`）⇒ 将来命中率下降时，先查是不是静态资源把 HTML 条目挤出去了：
+   `du -sh /var/cache/nginx/ziyun`。
 
 ---
 

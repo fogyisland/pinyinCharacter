@@ -20,6 +20,16 @@ const deployDoc = readFileSync(resolve(ROOT, 'DEPLOY.md'), 'utf8');
  */
 const INSTALL_COMMAND = /^[ \t]*(sudo[ \t]+)?(cp|ln)[ \t]+[^\n]*\/etc\/nginx\/(sites-available|sites-enabled)/m;
 
+// 整份模板安装命令：把 nginx.ziyun.pudafo.com.conf 装进 /etc/nginx/ 的任何一行。
+// 这条对四份文档都要查 —— 手册里如果被误加一条整份覆盖命令，原来那条抓不到。
+const TEMPLATE_INSTALL_COMMAND =
+  /^[ \t]*(sudo[ \t]+)?(cp|ln)[ \t]+[^\n]*nginx\.ziyun\.pudafo\.com\.conf[^\n]*\/etc\/nginx\//m;
+
+// conf.d 也是「安装位置」。只查 conf / README / DEPLOY 三份 ——
+// 手册与 brotli 片段有正当理由把 *brotli 片段*(不是模板)放进 conf.d。
+const CONF_D_INSTALL_COMMAND =
+  /^[ \t]*(sudo[ \t]+)?(cp|ln)[ \t]+[^\n]*\/etc\/nginx\/conf\.d/m;
+
 /**
  * Returns the text of the `location` block that starts at `marker`.
  *
@@ -76,9 +86,9 @@ function braceBalance(text: string): { balance: number; minDepth: number } {
 
 
 describe('the config is structurally sound', () => {
-  // `nginx -t` cannot run on this machine (no nginx, no docker) — the only
-  // real syntax gate is the operator's on the server. This is the cheap
-  // local stand-in for the one mistake that would take the site down.
+  // 这条只兜「漏花括号」这一类粘贴错误 —— 它**不能**证明 nginx 会接受这份配置
+  // (漏 `;`、指令放错层级、字符串未闭合都能过)。真正的闸门是手册第 4 步的 `nginx -t`,
+  // 那一步只能由运维在服务器上跑(本机没有 nginx 也没有 docker)。
   it('has balanced braces', () => {
     const { balance, minDepth } = braceBalance(confDirectives);
     expect(balance, 'the braces of the config do not balance').toBe(0);
@@ -278,6 +288,31 @@ describe('the deploy documents refuse to overwrite the live nginx config (F30-a)
     }
   });
 
+  it('never tells anyone to install the whole template into /etc/nginx', () => {
+    for (const [name, text] of [
+      ['the config header', conf],
+      ['deploy/README.md', readme],
+      ['DEPLOY.md', deployDoc],
+      ['the optimization manual', manual],
+    ] as const) {
+      expect(text, `${name} still tells someone to install the whole template`).not.toMatch(
+        TEMPLATE_INSTALL_COMMAND,
+      );
+    }
+  });
+
+  it('never installs a config into conf.d from the template docs', () => {
+    for (const [name, text] of [
+      ['the config header', conf],
+      ['deploy/README.md', readme],
+      ['DEPLOY.md', deployDoc],
+    ] as const) {
+      expect(text, `${name} still tells someone to install a config into conf.d`).not.toMatch(
+        CONF_D_INSTALL_COMMAND,
+      );
+    }
+  });
+
   it('drops the exact sentences those three documents used to carry', () => {
     expect(readme).not.toContain(
       'sudo cp deploy/nginx.ziyun.pudafo.com.conf /etc/nginx/sites-available/',
@@ -298,5 +333,77 @@ describe('the deploy documents refuse to overwrite the live nginx config (F30-a)
     expect(readme).toContain('OPTIMIZATION.md');
     expect(deployDoc).toContain('OPTIMIZATION.md');
     expect(conf).toContain('OPTIMIZATION.md');
+  });
+});
+
+/**
+ * The fix round (2026-10-30) corrected a set of runbook assumptions that were
+ * simply wrong, and every one of those corrections is a trap that could send
+ * an operator into a wrong rollback. Each of them is pinned here so a later
+ * edit cannot quietly put the wrong text back.
+ */
+describe('the optimization manual tells the truth about the runbook', () => {
+  // F-1: `/var/www/ziyun` is not an install root in this repository — the
+  // repo's own deploy docs and the config's alias paths both say
+  // `/opt/pinyin-character`. A wrong path made a HEALTHY deploy look like a
+  // byte mismatch, and the old failure branch said "roll back immediately".
+  it('never hard-codes an install root that does not exist in this repo', () => {
+    expect(manual).not.toContain('/var/www/ziyun');
+  });
+
+  it('takes the install root from a variable the operator confirms first', () => {
+    expect(manual).toContain('APP_ROOT');
+  });
+
+  // F-2: nginx's add_header inheritance chain is http -> server -> location.
+  // The old two-way criterion (server / location) could not classify an
+  // http-level directive at all.
+  it('classifies add_header on all three levels', () => {
+    expect(manual).toContain('http 级');
+    expect(manual).toContain('server 级');
+    expect(manual).toContain('location 级');
+  });
+
+  // F-3: the brotli snippet lands in /etc/nginx/, which a normal user cannot
+  // write to — the manual's own step 2 already says so.
+  it('copies the brotli snippet with sudo', () => {
+    expect(manual).toContain('sudo cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf');
+  });
+
+  it('says the same thing in the brotli snippet itself', () => {
+    expect(brotli).toContain('sudo cp deploy/nginx-brotli.conf /etc/nginx/conf.d/nginx-brotli.conf');
+  });
+
+  it('points at the runbook from the config header', () => {
+    expect(conf).toContain('deploy/OPTIMIZATION.md');
+  });
+
+  it('gives the config header the second landing path too', () => {
+    expect(conf).toContain('scp deploy/nginx-brotli.conf');
+  });
+
+  // F-4: `cp` without `&&` plus `ls "$LIVE_CONF".bak-*` listed every OLD
+  // backup as well — a failed copy could still look like a successful one.
+  it('chains the backup copy to its own listing', () => {
+    expect(manual).toContain('sudo cp "$LIVE_CONF" "$BAK" && ls -l "$BAK"');
+  });
+
+  // F-6: the heading said "五条" while the list had six, then seven.
+  it('does not count the hard constraints in their heading', () => {
+    expect(manual).not.toMatch(/硬约束[（(][^）)]*[一二三四五六七八九十]条/);
+  });
+
+  // F-8: the cache key contains no cookie, so a request without the cookie
+  // can still HIT a cached entry — "no cookie means MISS" was never true.
+  it('does not claim that a cookie-less request is always a MISS', () => {
+    expect(manual).not.toContain('必然看到 MISS/MISS');
+  });
+
+  it('explains that the cache key carries no cookie', () => {
+    expect(manual).toContain('键里不含 cookie');
+  });
+
+  it('says that a hot entry on the first request is normal', () => {
+    expect(manual).toContain('第一次就是 HIT 也正常');
   });
 });
