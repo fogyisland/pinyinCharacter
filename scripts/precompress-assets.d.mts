@@ -46,6 +46,8 @@ export interface PrecompressTreeResult {
   /**
    * The bytes the brotli sidecars save against their sources: the sum of
    * the source bytes minus the brotli bytes over every written file.
+   * It can be negative: a source file that is smaller than its own brotli
+   * sidecar makes the difference go below zero.
    */
   savedBytes: number;
 }
@@ -73,9 +75,10 @@ export declare function isCompressible(filePath: string): boolean;
 /**
  * Precompress one file: write a `.br` and a `.gz` next to it.
  *
- * The file is left alone when it is not compressible, or when its brotli
- * sidecar is already newer than the file itself (unless `force` says
- * otherwise). A failure is reported by name, never swallowed.
+ * The file is left alone when it is not compressible, or when BOTH of its
+ * sidecars (`.br` and `.gz`) are already newer than the file itself (unless
+ * `force` says otherwise). A half-written pair is repaired: both sidecars
+ * are written again. A failure is reported by name, never swallowed.
  */
 export declare function precompressFile(
   filePath: string,
@@ -87,6 +90,7 @@ export declare function precompressFile(
  *
  * The listing of a directory is taken once, before any file in it is
  * touched, so the sidecars the run writes are never counted as sources.
+ * Symbolic links are never followed; they are counted as `skipped`.
  */
 export declare function precompressTree(
   dir: string,

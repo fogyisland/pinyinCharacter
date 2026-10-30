@@ -1,12 +1,61 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { mkdtemp, readFile, writeFile, stat, rm } from 'node:fs/promises';
+import { execFile } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  symlink,
+  utimes,
+  writeFile,
+  stat,
+  rm,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { promisify } from 'node:util';
+import { brotliDecompressSync, gunzipSync } from 'node:zlib';
 import {
+  COMPRESSIBLE_EXTENSIONS,
   isCompressible,
   precompressFile,
   precompressTree,
 } from '../../../scripts/precompress-assets.mjs';
+
+const execFileAsync = promisify(execFile);
+
+const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
+const SCRIPT = join(REPO_ROOT, 'scripts', 'precompress-assets.mjs');
+
+/** The outcome of running the precompressor as a CLI. */
+interface ScriptRun {
+  code: number;
+  stdout: string;
+  stderr: string;
+}
+
+/**
+ * Run the precompressor as a CLI and report what it did, whatever it did.
+ *
+ * A non-zero exit makes `execFileAsync` reject, so the rejection is turned
+ * back into a plain result: the exit code is exactly what the test is about.
+ */
+async function runScript(args: string[]): Promise<ScriptRun> {
+  try {
+    const result = await execFileAsync(process.execPath, [SCRIPT, ...args], {
+      cwd: REPO_ROOT,
+    });
+    return { code: 0, stdout: result.stdout, stderr: result.stderr };
+  } catch (error) {
+    const failure = error as { code?: number; stdout?: string; stderr?: string };
+    return {
+      code: typeof failure.code === 'number' ? failure.code : -1,
+      stdout: failure.stdout ?? '',
+      stderr: failure.stderr ?? '',
+    };
+  }
+}
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -25,6 +74,18 @@ describe('isCompressible', () => {
       expect(isCompressible(file)).toBe(false);
     }
   });
+
+  it('rejects extensions that are on neither list', () => {
+    for (const file of ['a.xyz', 'a.bin', 'a.exe']) {
+      expect(isCompressible(file)).toBe(false);
+    }
+  });
+
+  it('accepts every extension of the compressible list', () => {
+    for (const extension of COMPRESSIBLE_EXTENSIONS) {
+      expect(isCompressible(`a${extension}`)).toBe(true);
+    }
+  });
 });
 
 describe('precompressFile', () => {
@@ -32,12 +93,27 @@ describe('precompressFile', () => {
     const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
     dirs.push(dir);
     const file = join(dir, 'app.js');
-    await writeFile(file, 'console.log("x");'.repeat(500));
+    const source = 'console.log("x");'.repeat(500);
+    await writeFile(file, source);
     const result = await precompressFile(file);
     expect(result.status).toBe('written');
     expect(result.bytesOut).toBeLessThan(result.bytesIn);
     const br = await readFile(`${file}.br`);
     expect(br.length).toBe(result.bytesOut);
+    expect(brotliDecompressSync(br).toString('utf8')).toBe(source);
+  });
+
+  it('writes a .gz next to the source that decodes back to it', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'app.js');
+    const source = 'console.log("gz");'.repeat(500);
+    await writeFile(file, source);
+    const result = await precompressFile(file);
+    expect(result.status).toBe('written');
+    const gz = await readFile(`${file}.gz`);
+    expect(gz.subarray(0, 2)).toEqual(Buffer.from([0x1f, 0x8b]));
+    expect(gunzipSync(gz).toString('utf8')).toBe(source);
   });
 
   it('skips a file whose .br is newer than the source', async () => {
@@ -59,6 +135,30 @@ describe('precompressFile', () => {
     expect(result.status).toBe('skipped');
     await expect(stat(`${file}.br`)).rejects.toThrow();
   });
+
+  it('reports a missing source as failed instead of skipped', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'there-is-no-such-file.js');
+    const result = await precompressFile(file);
+    expect(result.status).toBe('failed');
+  });
+
+  it('rewrites a pair whose .gz sidecar is missing', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'app.js');
+    await writeFile(file, 'console.log("half");'.repeat(500));
+    // A half-written run: the `.br` landed, the `.gz` did not. The stale
+    // `.br` is newer than the source, so a run that only looks at the `.br`
+    // would call this done and never repair the missing `.gz`.
+    await writeFile(`${file}.br`, 'a brotli stream that is not one');
+    const newer = new Date(Date.now() + 2000);
+    await utimes(`${file}.br`, newer, newer);
+    const result = await precompressFile(file);
+    expect(result.status).toBe('written');
+    expect(existsSync(`${file}.gz`)).toBe(true);
+  });
 });
 
 describe('precompressTree', () => {
@@ -72,5 +172,41 @@ describe('precompressTree', () => {
     expect(result.skipped).toBe(1);
     expect(result.failed).toBe(0);
     expect(result.savedBytes).toBeGreaterThan(0);
+  });
+
+  it.skipIf(process.platform === 'win32')(
+    'counts a symbolic link as skipped and never follows it',
+    async () => {
+      const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+      dirs.push(dir);
+      const targetDir = join(dir, 'target');
+      const linkDir = join(dir, 'links');
+      await mkdir(targetDir);
+      await mkdir(linkDir);
+      const target = join(targetDir, 'real.js');
+      await writeFile(target, 'console.log("link");'.repeat(500));
+      await symlink(target, join(linkDir, 'link.js'));
+      const result = await precompressTree(linkDir);
+      expect(result.skipped).toBe(1);
+      expect(existsSync(`${target}.br`)).toBe(false);
+      expect(existsSync(`${target}.gz`)).toBe(false);
+    },
+  );
+});
+
+describe('precompress-assets CLI', () => {
+  it('exits with 1 and names the option it does not know', async () => {
+    const run = await runScript(['--bogus']);
+    expect(run.code).toBe(1);
+    expect(run.stderr).toContain('unknown option');
+  });
+
+  it('exits with 0 and reports a directory that does not exist', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const missing = join(dir, 'there-is-no-such-directory');
+    const run = await runScript([missing]);
+    expect(run.code).toBe(0);
+    expect(run.stdout).toContain('does not exist');
   });
 });

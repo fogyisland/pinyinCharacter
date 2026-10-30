@@ -26,8 +26,12 @@
  * RULES OF THE TOOL:
  *   - it never deletes anything; it only ADDS `.br` / `.gz` sidecars
  *   - a missing directory is not an error: it is reported and skipped
- *   - a sidecar that is newer than its source is left alone, so a second run
- *     is cheap and a rebuild only refreshes what actually changed
+ *   - a file is left alone only when BOTH of its sidecars (`.br` and `.gz`)
+ *     are newer than its source, so a second run is cheap, a rebuild only
+ *     refreshes what actually changed, and a half-written sidecar pair from
+ *     an interrupted run is repaired instead of being taken for done
+ *   - a symbolic link is never followed: the link itself is counted as
+ *     skipped and reported, its target is left untouched
  *   - a file that cannot be compressed is reported, named and counted as a
  *     failure — the run then exits non-zero, it never fails silently
  *
@@ -35,7 +39,7 @@
  * `node` (no build step, no tsx loader).
  */
 
-import { readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import { lstat, readFile, readdir, stat, writeFile } from 'node:fs/promises';
 import { dirname, extname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
@@ -123,10 +127,9 @@ function reportFailure(filePath, error) {
 }
 
 /**
- * Whether the brotli sidecar of a file is at least as new as the file
- * itself.
+ * Whether one sidecar of a file is at least as new as the file itself.
  *
- * @param {string} sidecarPath The path of the `.br` sidecar.
+ * @param {string} sidecarPath The path of the sidecar.
  * @param {number} sourceMtimeMs The modification time of the source file.
  * @returns {Promise<boolean>} True when the sidecar is up to date.
  */
@@ -143,9 +146,14 @@ async function isSidecarCurrent(sidecarPath, sourceMtimeMs) {
 /**
  * Precompress one file: write a `.br` and a `.gz` next to it.
  *
- * The file is left alone when it is not compressible, or when its brotli
- * sidecar is already newer than the file itself (unless `force` says
- * otherwise).
+ * The file is left alone when it is not compressible, or when BOTH of its
+ * sidecars (`.br` and `.gz`) are already newer than the file itself (unless
+ * `force` says otherwise). A half-written pair — one sidecar present, the
+ * other missing or stale — is repaired: both sidecars are written again, so
+ * an interrupted run can never leave a file behind that claims to be done.
+ *
+ * A symbolic link is never followed: `lstat` is used for the source, so the
+ * link itself is reported as skipped and its target is left untouched.
  *
  * @param {string} filePath The path of the file to precompress.
  * @param {{ force?: boolean }} [options] The options of the run.
@@ -162,7 +170,8 @@ export async function precompressFile(filePath, options = {}) {
 
   let sourceStat;
   try {
-    sourceStat = await stat(filePath);
+    // `lstat`, not `stat`: a symbolic link must not be followed.
+    sourceStat = await lstat(filePath);
   } catch (error) {
     reportFailure(filePath, error);
     return { file: filePath, bytesIn: 0, bytesOut: 0, status: 'failed' };
@@ -175,8 +184,15 @@ export async function precompressFile(filePath, options = {}) {
   const bytesIn = sourceStat.size;
 
   if (!force) {
-    const current = await isSidecarCurrent(`${filePath}.br`, sourceStat.mtimeMs);
-    if (current) {
+    const brotliCurrent = await isSidecarCurrent(
+      `${filePath}.br`,
+      sourceStat.mtimeMs,
+    );
+    const gzipCurrent = await isSidecarCurrent(
+      `${filePath}.gz`,
+      sourceStat.mtimeMs,
+    );
+    if (brotliCurrent && gzipCurrent) {
       return { file: filePath, bytesIn, bytesOut: 0, status: 'skipped' };
     }
   }
@@ -204,6 +220,10 @@ export async function precompressFile(filePath, options = {}) {
  * is being walked, so a walk that re-read the listing would count the
  * `.br` / `.gz` files it just created as source files, and the skipped count
  * would be inflated by the very work the run had just done.
+ *
+ * Symbolic links are never followed. They are counted as `skipped` and
+ * reported, so `written + skipped + failed` stays equal to the number of
+ * entries that were walked.
  *
  * @param {string} dir The root of the tree.
  * @param {{ force?: boolean }} [options] The options of the run.
@@ -236,7 +256,29 @@ async function walk(dir, options, totals) {
       continue;
     }
 
-    if (!entry.isFile()) continue;
+    // A symbolic link is not followed: the link itself is counted as
+    // skipped and reported, and its target is left exactly as it was. It is
+    // not compressed either — `readdir(withFileTypes)` cannot tell a link to
+    // a file from a link to a directory, and following it could compress
+    // something outside the tree.
+    if (entry.isSymbolicLink()) {
+      totals.skipped += 1;
+      console.log(
+        `[precompress] skipped: ${fullPath} is a symbolic link (not followed)`,
+      );
+      continue;
+    }
+
+    // Anything else that is not a regular file (a socket, a FIFO, a device)
+    // is counted as skipped and reported, never silently dropped: the
+    // totals have to add up to the number of entries that were walked.
+    if (!entry.isFile()) {
+      totals.skipped += 1;
+      console.log(
+        `[precompress] skipped: ${fullPath} is not a regular file`,
+      );
+      continue;
+    }
 
     const result = await precompressFile(fullPath, options);
     if (result.status === 'written') {
@@ -325,13 +367,13 @@ async function run(argv) {
 
     console.log(
       `[precompress] ${target}: written ${result.written}, skipped ${result.skipped}, ` +
-        `failed ${result.failed}, saved ${formatBytes(result.savedBytes)} (${result.savedBytes} bytes)`,
+        `failed ${result.failed}, brotli delta ${formatBytes(result.savedBytes)} (${result.savedBytes} bytes, source minus brotli — not a realised saving)`,
     );
   }
 
   console.log(
     `[precompress] total: written ${totals.written}, skipped ${totals.skipped}, ` +
-      `failed ${totals.failed}, saved ${formatBytes(totals.savedBytes)} (${totals.savedBytes} bytes)`,
+      `failed ${totals.failed}, brotli delta ${formatBytes(totals.savedBytes)} (${totals.savedBytes} bytes, source minus brotli — not a realised saving)`,
   );
 
   if (totals.failed > 0) {
