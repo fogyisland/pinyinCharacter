@@ -106,7 +106,7 @@ sudo nginx -T | grep -nE '^[[:space:]]*(http|server|location)[[:space:]].*\{|add
 HSTS 的值与 `always` 参数，一条一条来）。**location 级的不用复制** —— 它们各管各的，
 本来就不受影响。
 
-- **仓库这份配置**：http 级 **0 条**、server 级 **0 条**、location 级 **6 条**
+- **仓库这份配置（`deploy/nginx.ziyun.pudafo.com.conf` 这份片段内）**：http 级 **0 条**、server 级 **0 条**、location 级 **7 条**
   ⇒ 仓库这份不受影响；
 - **线上那份从未实测过** ⇒ 若第 1.5 步发现 http 级或 server 级 `add_header`，
   **先把那些条目逐条复制到 `location /` 里**，再继续第 3 步。
@@ -297,8 +297,9 @@ systemctl is-active nginx
 
 #### 5.1 字体文件（**本波次的验收项**）
 
-> **先确认 `$APP_ROOT` 还在**：它是在第 1.6 步设的 shell 变量。**换了终端要重新设**
-> （`APP_ROOT=/opt/pinyin-character`），否则下面的命令会报「文件不存在」。
+> **先确认 `$APP_ROOT` 和 `$LIVE_CONF` 还在**：它们分别是在第 1.6 步与第 1.4 步设的 shell 变量。
+> **换了终端要重新设**（`APP_ROOT=/opt/pinyin-character`、`LIVE_CONF=<第 1.4 步找到的那个路径>`），
+> 否则下面的命令会报「文件不存在」，第 6 步的回滚也会找不到备份。
 
 ```bash
 # a) 取 manifest 版本号（部署后的那份）

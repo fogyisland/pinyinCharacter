@@ -432,4 +432,25 @@ describe('the optimization manual tells the truth about the runbook', () => {
   it('cross-references both inherited levels from the manual', () => {
     expect(manual).not.toContain('server 级的那几条');
   });
+
+  // F-14: the counts in the prose had drifted from the config (Task 6 added a
+  // seventh add_header of its own) — derive the number from the config instead
+  // of hard-coding it, so the next added directive fails this test.
+  it('quotes the add_header count the config actually contains', () => {
+    const actual = conf
+      .split('\n')
+      .filter((line) => /^\s*add_header\b/.test(line)).length;
+    expect(actual).toBeGreaterThan(0);
+    expect(manual).toContain(`location 级 **${actual} 条**`);
+    expect(conf).toContain(`location 级 ${actual} 条`);
+  });
+
+  // F-14: the config comment and the manual must quote the same command —
+  // if they drift, an operator runs one and reads the other.
+  it('keeps the config comment and the manual on the same nginx -T command', () => {
+    const command =
+      "sudo nginx -T | grep -nE '^[[:space:]]*(http|server|location)[[:space:]].*\\{|add_header'";
+    expect(manual).toContain(command);
+    expect(conf).toContain(command);
+  });
 });

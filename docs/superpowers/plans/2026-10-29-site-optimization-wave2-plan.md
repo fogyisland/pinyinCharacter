@@ -2241,7 +2241,7 @@ describe('the nginx config caches HTML but never for a logged-in user', () => {
     // Without the encoding in the key, the first visitor's variant would be
     // served to every later visitor, including ones that accept no encoding.
     expect(conf).toContain(
-      'proxy_cache_key "$scheme$request_method$host$request_uri$http_accept_encoding;',
+      'proxy_cache_key "$scheme$request_method$host$request_uri$http_accept_encoding";',
     );
   });
 
