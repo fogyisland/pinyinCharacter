@@ -776,4 +776,37 @@ describe('the add_header classifier follows the block keyword', () => {
       'location /api/auth/ { limit_req zone=auth_init burst=5 nodelay; proxy_pass http://ziyun_app; add_header A "1"; }';
     expect(levelsOf(fragment)).toEqual(['location']);
   });
+
+  // ⚠️ The `https` keyword is mapped to the http level on its own branch.
+  // Removing that branch does not change the result for a NESTED `https`
+  // (the enclosing `http` answers first), so the case has to be a TOP-LEVEL
+  // `https` block to pin the documented keyword table at all.
+  // In any legal nginx config `https` always nests inside `http`, so this
+  // rule has no behavioural consequence on a real config — what it guards is
+  // the table itself: if someone folds `case 'https'` into `case 'http'`, or
+  // drops it, this case goes red.
+  it('treats a top-level https block as the http level', () => {
+    const fragment = 'https { add_header A "1"; }';
+    expect(levelsOf(fragment)).toEqual(['http']);
+  });
+
+  // ⚠️ Two block headers on ONE line: the level must come from the
+  // instruction that opens THIS brace (`location`), not from the whole-line
+  // prefix (which would read `server` and swallow the enclosing level).
+  // The repository config never writes two blocks on one line, so this case
+  // pins a general shape rather than a live defect.
+  it('takes the level from the instruction that opens the brace, not from the whole line', () => {
+    const fragment = 'server { listen 80; location / { add_header A "1"; } }';
+    expect(levelsOf(fragment)).toEqual(['location']);
+  });
+
+  // ⚠️ The same whole-line trap in the shape nginx uses for a WebSocket
+  // reverse proxy: a `map` block and a `location` block on the same line.
+  // The whole-line prefix reads `http`; only the instruction that opens the
+  // brace (`location`) gives the right answer.
+  it('reads the location level out of the websocket map idiom', () => {
+    const fragment =
+      "http { map $http_upgrade $connection_upgrade { default upgrade; '' close; } location / { add_header A \"1\"; } }";
+    expect(levelsOf(fragment)).toEqual(['location']);
+  });
 });
