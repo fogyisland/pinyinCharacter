@@ -1,6 +1,6 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { execFile } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import {
   mkdir,
   mkdtemp,
@@ -56,6 +56,34 @@ async function runScript(args: string[]): Promise<ScriptRun> {
     };
   }
 }
+
+/**
+ * Whether this host can create a file symbolic link at all.
+ *
+ * Windows needs Administrator or Developer Mode for a *file* symlink, so the
+ * platform alone does not decide it. Probing once at module load keeps the
+ * symlink case running wherever it can run, instead of switching it off on
+ * every Windows host — including the ones that can do it.
+ *
+ * The probe uses the same call shape as the test it guards: a symlink whose
+ * target exists, with no explicit type.
+ */
+function canCreateFileSymlink(): boolean {
+  const dir = mkdtempSync(join(tmpdir(), 'precompress-symlink-probe-'));
+  try {
+    const target = join(dir, 'target.js');
+    writeFileSync(target, 'probe');
+    symlinkSync(target, join(dir, 'link.js'));
+    return true;
+  } catch {
+    return false;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+/** The symlink case runs wherever a file symlink can actually be made. */
+const symlinkSupported = canCreateFileSymlink();
 
 const dirs: string[] = [];
 afterEach(async () => {
@@ -174,7 +202,7 @@ describe('precompressTree', () => {
     expect(result.savedBytes).toBeGreaterThan(0);
   });
 
-  it.skipIf(process.platform === 'win32')(
+  it.skipIf(!symlinkSupported)(
     'counts a symbolic link as skipped and never follows it',
     async () => {
       const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
