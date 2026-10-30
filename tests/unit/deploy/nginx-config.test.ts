@@ -84,6 +84,141 @@ function braceBalance(text: string): { balance: number; minDepth: number } {
   return { balance: depth, minDepth };
 }
 
+/**
+ * The nesting level an `add_header` directive lives at.
+ *
+ * nginx inherits `add_header` along http -> server -> location, and a level
+ * that declares its own headers REPLACES (never extends) the inherited ones.
+ * That is why the manual and the config comment both have to say how many
+ * headers sit at each level.
+ */
+type AddHeaderLevel = 'http' | 'server' | 'location' | 'other';
+
+interface AddHeaderOccurrence {
+  /** 1-based line number of the directive in the config file. */
+  line: number;
+  /** The level the directive was classified as. */
+  level: AddHeaderLevel;
+  /** The kinds of the blocks the directive is nested in, outermost first. */
+  blocks: AddHeaderLevel[];
+}
+
+/**
+ * The kind of the block a `{` opens.
+ *
+ * ⚠️ Only the text BEFORE the `{` may be looked at. The config contains
+ * `proxy_pass http://ziyun_app;` — the `http` in there is an upstream URL,
+ * NOT a block header. Deciding the kind from the whole line would turn that
+ * directive into an `http` block.
+ */
+function blockKind(headerText: string): AddHeaderLevel {
+  if (headerText.includes('location')) return 'location';
+  if (headerText.includes('server')) return 'server';
+  if (headerText.includes('http')) return 'http';
+  return 'other';
+}
+
+/**
+ * The level of a directive, given the blocks it is nested in.
+ *
+ * The level is the innermost of location / server / http the stack contains:
+ * scan from the top of the stack (the innermost block) inward and take the
+ * first frame that is one of the three.
+ *
+ * A block nested INSIDE a `location` — an `if { … }`, say — does not make the
+ * header "other": nginx evaluates it in the location's context, so the level
+ * is still the location. Frames whose kind is `other` are skipped.
+ */
+function levelOf(stack: AddHeaderLevel[]): AddHeaderLevel {
+  for (let index = stack.length - 1; index >= 0; index -= 1) {
+    const kind = stack[index];
+    if (kind === 'location' || kind === 'server' || kind === 'http') {
+      return kind;
+    }
+  }
+  return 'other';
+}
+
+/**
+ * Classifies every `add_header` directive by the block it sits in.
+ *
+ * ⚠️ Run this on `confDirectives` (the comment-stripped text), NEVER on the
+ * raw file: the config carries a comment that quotes `add_header` several
+ * times, and a raw scan would count that prose as directives.
+ *
+ * ⚠️ This is a plain character walk, not an nginx parser — and it does not
+ * need to be one: no quoted string in this file contains `{`, `}` or `#`.
+ * Two shapes the walk has to survive:
+ *
+ *   - a block that opens AND closes on one line
+ *     (`location /api/auth/ { limit_req ...; proxy_pass http://ziyun_app; }`)
+ *     => a single line can push and pop the stack;
+ *   - a directive whose value mentions `http` but is not a block header
+ *     (see `blockKind` above).
+ */
+function classifyAddHeaders(source: string): AddHeaderOccurrence[] {
+  const occurrences: AddHeaderOccurrence[] = [];
+  const stack: AddHeaderLevel[] = [];
+  let statement = '';
+  let statementLine = 0;
+
+  const lines = source.split('\n');
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const line = lines[lineIndex];
+    for (let charIndex = 0; charIndex < line.length; charIndex += 1) {
+      const char = line[charIndex];
+
+      if (char === '{') {
+        stack.push(blockKind(line.slice(0, charIndex)));
+        statement = '';
+        continue;
+      }
+
+      if (char === '}') {
+        stack.pop();
+        statement = '';
+        continue;
+      }
+
+      if (char === ';') {
+        if (/^\s*add_header\b/.test(statement)) {
+          occurrences.push({
+            line: statementLine,
+            level: levelOf(stack),
+            blocks: [...stack],
+          });
+        }
+        statement = '';
+        continue;
+      }
+
+      // Remember where the directive that is being accumulated starts, so a
+      // header can be reported with the line an operator would grep for.
+      if (statement.trim() === '' && !/\s/.test(char)) {
+        statementLine = lineIndex + 1;
+      }
+      statement += char;
+    }
+  }
+
+  return occurrences;
+}
+
+/**
+ * How many `add_header` directives the config has, per level.
+ *
+ * The counts are DERIVED from the config, never hard-coded: the manual and
+ * the config comment quote these numbers, so a new directive must make the
+ * documents change — that is the whole point of the assertions below.
+ */
+const addHeaderOccurrences = classifyAddHeaders(confDirectives);
+const addHeaderCounts = {
+  http: addHeaderOccurrences.filter((occurrence) => occurrence.level === 'http').length,
+  server: addHeaderOccurrences.filter((occurrence) => occurrence.level === 'server').length,
+  location: addHeaderOccurrences.filter((occurrence) => occurrence.level === 'location').length,
+  other: addHeaderOccurrences.filter((occurrence) => occurrence.level === 'other').length,
+  total: addHeaderOccurrences.length,
+};
 
 describe('the config is structurally sound', () => {
   // 这条只兜「漏花括号」这一类粘贴错误 —— 它**不能**证明 nginx 会接受这份配置
@@ -436,13 +571,42 @@ describe('the optimization manual tells the truth about the runbook', () => {
   // F-14: the counts in the prose had drifted from the config (Task 6 added a
   // seventh add_header of its own) — derive the number from the config instead
   // of hard-coding it, so the next added directive fails this test.
+  //
+  // ⚠️ The number quoted in the prose is the LOCATION-level count, not the
+  // total. The old assertion counted every `add_header` in the file and then
+  // used that total as if it were the location count — so adding a single
+  // SERVER-level header would have demanded that both documents say
+  // "location 级 8 条", which is a lie, and both assertions would still be
+  // green. The documents now quote each level separately, and the level is
+  // derived from where the directive actually sits.
   it('quotes the add_header count the config actually contains', () => {
-    const actual = conf
-      .split('\n')
-      .filter((line) => /^\s*add_header\b/.test(line)).length;
-    expect(actual).toBeGreaterThan(0);
-    expect(manual).toContain(`location 级 **${actual} 条**`);
-    expect(conf).toContain(`location 级 ${actual} 条`);
+    const { http, server, location, other, total } = addHeaderCounts;
+    expect(total).toBeGreaterThan(0);
+    // Every directive is accounted for by exactly one level.
+    expect(http + server + location + other).toBe(total);
+    // In THIS fragment there is no inherited header to copy: all seven
+    // headers live inside a location, which is why the config comment can
+    // say "不受影响".
+    expect(http).toBe(0);
+    expect(server).toBe(0);
+    expect(other).toBe(0);
+    expect(location).toBe(total);
+    expect(manual).toContain(`location 级 **${location} 条**`);
+    expect(conf).toContain(`location 级 ${location} 条`);
+  });
+
+  // F-14 (round 5): each level's number in the prose must follow the config,
+  // not just the location one. If a server-level header is ever added, the
+  // documents have to say so — the operator has to copy every inherited
+  // header into `location /` by hand, and a stale count hides that.
+  it('quotes every add_header level the config actually contains', () => {
+    const { http, server, location } = addHeaderCounts;
+    expect(manual).toContain(`http 级 **${http} 条**`);
+    expect(manual).toContain(`server 级 **${server} 条**`);
+    expect(manual).toContain(`location 级 **${location} 条**`);
+    expect(conf).toContain(`http 级 ${http} 条`);
+    expect(conf).toContain(`server 级 ${server} 条`);
+    expect(conf).toContain(`location 级 ${location} 条`);
   });
 
   // F-14: the config comment and the manual must quote the same command —

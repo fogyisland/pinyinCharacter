@@ -8,6 +8,8 @@
   - HTTPS (Let's Encrypt 路径)
   - WebSocket / 500M body / 静态 1 年缓存 / /api/auth & /api/init 限流
   - 已留好 Cloudflare / 阿里云 CDN 真实 IP 段的位置(默认注释)
+- `OPTIMIZATION.md` — 线上对账 / 备份 / 合并 / 冒烟 / 回滚手册
+- `nginx-brotli.conf` — 可选的 brotli 压缩片段(手动 include,不覆盖现有配置)
 
 ## 部署流程
 

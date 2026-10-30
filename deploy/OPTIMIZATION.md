@@ -79,7 +79,7 @@ grep -n -A6 'location /font/' /tmp/nginx-effective.conf
 grep -n '# configuration file ' /tmp/nginx-effective.conf
 ```
 
-从输出里找到**包含 ziyun.pudafo.com 那个 server 块**的文件路径，记为 `LIVE_CONF`。
+从输出里找到**包含 ziyun.pudafo.com 那个 server 块**的文件路径，记为 `LIVE_CONF`，**并把它赋给 shell 变量** `LIVE_CONF=<第 1.4 步找到的那个路径>`（尖括号里换成实际路径，**不要留尖括号**）。
 **后面所有备份 / 合并 / 回滚命令一律用 `"$LIVE_CONF"`，不许写死任何一个路径** ——
 仓库文件头部注释里写的那个路径只是「它自己该放哪」，线上跑的那份**从未实测过**。
 
@@ -92,7 +92,7 @@ sudo nginx -T | grep -nE '^[[:space:]]*(http|server|location)[[:space:]].*\{|add
 **只看 ziyun.pudafo.com 那个 `server` 块，以及它所属的 `http` 块。**
 
 ⚠️ **nginx 的 `add_header` 只在「当前层级没有定义任何 `add_header`」时才继承父级**，
-而且只有「**替换**」语义、**没有「追加」」语义 ⇒ 在 `location /` 里加
+而且只有「**替换**」语义、**没有「追加」语义 ⇒ 在 `location /` 里加
 `X-Ziyun-Cache` 这一行，会让该 location **继承到的父级 `add_header` 全部消失**
 （HSTS / `X-Frame-Options` / `X-Content-Type-Options` 之类）。
 
