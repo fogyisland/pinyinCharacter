@@ -92,9 +92,9 @@ function braceBalance(text: string): { balance: number; minDepth: number } {
  * That is why the manual and the config comment both have to say how many
  * headers sit at each level.
  */
-type AddHeaderLevel = 'http' | 'server' | 'location' | 'other';
+export type AddHeaderLevel = 'http' | 'server' | 'location' | 'other';
 
-interface AddHeaderOccurrence {
+export interface AddHeaderOccurrence {
   /** 1-based line number of the directive in the config file. */
   line: number;
   /** The level the directive was classified as. */
@@ -104,18 +104,40 @@ interface AddHeaderOccurrence {
 }
 
 /**
- * The kind of the block a `{` opens.
+ * The kind of the block a `{` opens, decided by the block's KEYWORD.
  *
- * ⚠️ Only the text BEFORE the `{` may be looked at. The config contains
- * `proxy_pass http://ziyun_app;` — the `http` in there is an upstream URL,
- * NOT a block header. Deciding the kind from the whole line would turn that
- * directive into an `http` block.
+ * ⚠️ Only the CURRENT INSTRUCTION's text may be looked at, and only its FIRST
+ * WORD. The config contains `proxy_pass http://ziyun_app;` — the `http` in
+ * there is an upstream URL, NOT a block header. Deciding the kind from the
+ * whole line would turn that directive into an `http` block.
+ *
+ * ⚠️ A SUBSTRING match is not good enough either. `if ($http_user_agent ~*
+ * "MSIE") {` mentions `http`, but the block it opens is an `if` block — and
+ * nginx evaluates an `if` in the context of the block that encloses it, so a
+ * header inside it is still location-level. `if` (like `map`, `geo`,
+ * `upstream`, `types`) is therefore `other`, and `levelOf` skips `other`
+ * frames, so the enclosing block wins.
+ *
+ * The keyword table:
+ *   location → 'location' | server → 'server' | http → 'http' |
+ *   https → 'http' (an `https` block is http-level) | everything else →
+ *   'other'.
  */
-function blockKind(headerText: string): AddHeaderLevel {
-  if (headerText.includes('location')) return 'location';
-  if (headerText.includes('server')) return 'server';
-  if (headerText.includes('http')) return 'http';
-  return 'other';
+function blockKind(instructionText: string): AddHeaderLevel {
+  const keyword = /^\s*([A-Za-z_][A-Za-z0-9_]*)/.exec(instructionText);
+  if (keyword === null) return 'other';
+  switch (keyword[1]) {
+    case 'location':
+      return 'location';
+    case 'server':
+      return 'server';
+    case 'http':
+      return 'http';
+    case 'https':
+      return 'http';
+    default:
+      return 'other';
+  }
 }
 
 /**
@@ -147,16 +169,23 @@ function levelOf(stack: AddHeaderLevel[]): AddHeaderLevel {
  * times, and a raw scan would count that prose as directives.
  *
  * ⚠️ This is a plain character walk, not an nginx parser — and it does not
- * need to be one: no quoted string in this file contains `{`, `}` or `#`.
- * Two shapes the walk has to survive:
+ * need to be one: in the COMMENT-STRIPPED text no quoted string (single OR
+ * double quoted) contains `{`, `}`, `;` or `#`. A `;` inside a quoted string
+ * would cut a directive short, and a `{` would open a phantom block.
+ * That premise is ASSERTED, not just documented — see
+ * "the scanner's safety premise holds" below.
+ * Three shapes the walk has to survive:
  *
  *   - a block that opens AND closes on one line
  *     (`location /api/auth/ { limit_req ...; proxy_pass http://ziyun_app; }`)
  *     => a single line can push and pop the stack;
  *   - a directive whose value mentions `http` but is not a block header
- *     (see `blockKind` above).
+ *     (see `blockKind` above);
+ *   - a block header whose own text mentions a level in a VARIABLE
+ *     (`if ($http_user_agent ~* "MSIE") {`) — the keyword decides, not the
+ *     substring (see `blockKind` above).
  */
-function classifyAddHeaders(source: string): AddHeaderOccurrence[] {
+export function classifyAddHeaders(source: string): AddHeaderOccurrence[] {
   const occurrences: AddHeaderOccurrence[] = [];
   const stack: AddHeaderLevel[] = [];
   let statement = '';
@@ -169,7 +198,7 @@ function classifyAddHeaders(source: string): AddHeaderOccurrence[] {
       const char = line[charIndex];
 
       if (char === '{') {
-        stack.push(blockKind(line.slice(0, charIndex)));
+        stack.push(blockKind(statement));
         statement = '';
         continue;
       }
@@ -219,6 +248,45 @@ const addHeaderCounts = {
   other: addHeaderOccurrences.filter((occurrence) => occurrence.level === 'other').length,
   total: addHeaderOccurrences.length,
 };
+
+/**
+ * The level of every `add_header` in a synthetic fragment, outermost first.
+ *
+ * ⚠️ The fragment is fed RAW — it is a config, not a document, and a
+ * synthetic fragment carries no comments to strip.
+ */
+function levelsOf(fragment: string): AddHeaderLevel[] {
+  return classifyAddHeaders(fragment).map((occurrence) => occurrence.level);
+}
+
+/**
+ * A DOUBLE-QUOTED string that holds one of the four characters the scanner
+ * treats as structural (`{`, `}`, `;`, `#`).
+ *
+ * ⚠️ The naive shape — `/"[^"]*[{};#][^"]*"/` — is WRONG here and reports a
+ * false positive on this very config: `[^"]*` happily crosses a newline, and
+ * the quotes in the file are balanced per LINE, not per file. Such a pattern
+ * matches one huge span that starts at a closing quote of one string and ends
+ * at the opening quote of another, with a `;` in between.
+ *
+ * The prefix below therefore consumes COMPLETE quoted strings as units
+ * (`"[^"\n]*"` / `'[^'\n]*'`) and refuses to cross a newline, so the quote
+ * the tail matches is always one that OPENS a string, and the match is
+ * confined to a single line.
+ */
+const DOUBLE_QUOTED_STRING_WITH_STRUCTURAL_CHARACTER =
+  /^(?:[^"'\n]|"[^"\n]*"|'[^'\n]*')*?"[^"\n]*[{};#]/m;
+
+/**
+ * A SINGLE-QUOTED string that holds one of the four structural characters.
+ *
+ * ⚠️ Both quote styles have to be checked: the config's raw text does carry
+ * single quotes, and one of them holds a `{` — but that line is a COMMENT, so
+ * it is gone from `confDirectives`. Checking only double quotes would leave
+ * the single-quoted half of the premise unguarded.
+ */
+const SINGLE_QUOTED_STRING_WITH_STRUCTURAL_CHARACTER =
+  /^(?:[^"'\n]|"[^"\n]*"|'[^'\n]*')*?'[^'\n]*[{};#]/m;
 
 describe('the config is structurally sound', () => {
   // 这条只兜「漏花括号」这一类粘贴错误 —— 它**不能**证明 nginx 会接受这份配置
@@ -616,5 +684,96 @@ describe('the optimization manual tells the truth about the runbook', () => {
       "sudo nginx -T | grep -nE '^[[:space:]]*(http|server|location)[[:space:]].*\\{|add_header'";
     expect(manual).toContain(command);
     expect(conf).toContain(command);
+  });
+});
+
+describe("the scanner's safety premise holds", () => {
+  // The scanner is a character walk: it ends a directive at every `;` and
+  // opens a block at every `{`, wherever they sit. That is only sound while
+  // no QUOTED string holds one of those characters — a `;` inside a string
+  // would cut a directive short, a `{` would open a block that does not
+  // exist.
+  //
+  // ⚠️ The object of the check is the COMMENT-STRIPPED text, not the raw
+  // file: the raw config carries a comment (the `nginx -T` command) whose
+  // single-quoted shell string contains a `{`, and a comment is not a
+  // directive — the scanner never sees it.
+  it('has no quoted string that holds a structural character', () => {
+    expect(confDirectives).not.toMatch(DOUBLE_QUOTED_STRING_WITH_STRUCTURAL_CHARACTER);
+    expect(confDirectives).not.toMatch(SINGLE_QUOTED_STRING_WITH_STRUCTURAL_CHARACTER);
+  });
+});
+
+describe('the add_header classifier follows the block keyword', () => {
+  // ⚠️ These fragments are SYNTHETIC. The repository config has no `if` block
+  // at all, so the assertions above can never reach the defect this
+  // classifier had: `if ($http_user_agent …) {` mentions `http`, and a
+  // substring match called the whole block http-level, which then MASKED the
+  // enclosing `location`. Without these cases the defect comes straight back.
+  //
+  // Each fragment carries exactly one `add_header` and asserts its level.
+  // Every fragment also satisfies the scanner's safety premise: no quoted
+  // string in it holds `{`, `}`, `;` or `#`.
+
+  it('keeps a header inside an if block at the level of the enclosing location', () => {
+    const fragment = [
+      'location / {',
+      '    if ($http_user_agent ~* "MSIE") {',
+      '        add_header A "1";',
+      '    }',
+      '}',
+    ].join('\n');
+    expect(levelsOf(fragment)).toEqual(['location']);
+  });
+
+  it('keeps a header inside an if block at the level of the enclosing server', () => {
+    const fragment = [
+      'server {',
+      '    if ($http_upgrade = websocket) {',
+      '        add_header A "1";',
+      '    }',
+      '}',
+    ].join('\n');
+    expect(levelsOf(fragment)).toEqual(['server']);
+  });
+
+  it('keeps a header inside an if block at the http level', () => {
+    const fragment = ['http {', '    if ($http_x) {', '        add_header A "1";', '    }', '}'].join(
+      '\n',
+    );
+    expect(levelsOf(fragment)).toEqual(['http']);
+  });
+
+  it('skips a map block when it looks for the enclosing block', () => {
+    const fragment = [
+      'http {',
+      '    map $http_x $y {',
+      '        default 0;',
+      '    }',
+      '    location / {',
+      '        add_header A "1";',
+      '    }',
+      '}',
+    ].join('\n');
+    expect(levelsOf(fragment)).toEqual(['location']);
+  });
+
+  it('does not read the upstream URL of a proxy_pass as a block header', () => {
+    const fragment = 'location / { proxy_pass http://ziyun_app; add_header A "1"; }';
+    expect(levelsOf(fragment)).toEqual(['location']);
+  });
+
+  it('keeps a single-line if block at the level of the enclosing location', () => {
+    const fragment = 'location / { if ($request_method = POST) { add_header A "1"; } }';
+    expect(levelsOf(fragment)).toEqual(['location']);
+  });
+
+  it('keeps a single-line location that proxies to an upstream at location level', () => {
+    // ⚠️ The single-line shape of the real `location /api/auth/` block, with an
+    // `add_header` added so that the LEVEL of the block is actually observable:
+    // without a header inside, the classifier has nothing to report.
+    const fragment =
+      'location /api/auth/ { limit_req zone=auth_init burst=5 nodelay; proxy_pass http://ziyun_app; add_header A "1"; }';
+    expect(levelsOf(fragment)).toEqual(['location']);
   });
 });
