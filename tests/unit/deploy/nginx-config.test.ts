@@ -415,4 +415,21 @@ describe('the optimization manual tells the truth about the runbook', () => {
     expect(manual).not.toContain('# 第一次 MISS');
     expect(manual).not.toContain('# 第二次 HIT');
   });
+
+  // F-14: the config's own warning comment still used the two-way criterion
+  // and pointed at `grep -n "add_header"`, which prints the directives but
+  // not the block they sit in — an operator cannot tell an http-level
+  // directive from a server-level one with it.
+  it('gives the config comment the same three-level criterion as the manual', () => {
+    expect(conf).toContain('http 级');
+    expect(conf).toContain('server 级');
+    expect(conf).toContain('location 级');
+    expect(conf).not.toContain('grep -n "add_header"');
+  });
+
+  // F-14: the manual's step 3 cross-reference still said "server 级的那几条",
+  // which is the two-way criterion the step 1.5 judgment replaced.
+  it('cross-references both inherited levels from the manual', () => {
+    expect(manual).not.toContain('server 级的那几条');
+  });
 });

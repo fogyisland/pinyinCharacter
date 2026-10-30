@@ -204,8 +204,8 @@ proxy_cache_path /var/cache/nginx/ziyun
 > **块 C 必须插在 `location /mcp` 之后、`location /` 之前** ——
 > nginx 取最长前缀匹配，所以 `location /api/auth/`、`location /api/init/` 两个限流块不受影响。
 >
-> ⚠️ **线上那份的 `location /` 可能已经有 `add_header`** ⇒ 先按第 1.5 步的结论把 server 级的那几条
-> 复制进来，再加 `X-Ziyun-Cache`。
+> ⚠️ **线上那份的 `location /` 可能已经有 `add_header`** ⇒ 先按第 1.5 步的结论把 **http 级与 server 级的每一条**
+> 逐条复制进来，再加 `X-Ziyun-Cache`。
 
 **缓存目录先建好**：
 

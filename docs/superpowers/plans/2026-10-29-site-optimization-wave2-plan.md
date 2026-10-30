@@ -2130,7 +2130,7 @@ git commit -m "feat(fonts): ship frequency-tiered webfont subsets [2026-10-29 HH
 4. `proxy_cache_valid 200 10s;` —— TTL 只有 10 秒；只有 200 会被缓存（307 → `/init`、4xx、5xx 都不入缓存）。
 5. `location /api/ { proxy_cache off; }` —— **`location /` 下还挂着 73 个带 GET 的 API 路由**（实测清单见 `app/api/**/route.ts`），其中 `/api/chars/random`、`/api/poetry/random`、`/api/game/round`、`/api/stats`、`/api/audio/active` 的语义是「每次给新内容」，缓存 10 秒会让它们对所有用户返回同一个值；`/api/history`、`/api/notes`、`/api/membership/me`、`/api/worksheets/*` 是用户态数据。新增的 `location /api/` 比 `/api/auth/`、`/api/init/` 短，nginx 取最长前缀匹配，**那两个限流块不受影响**。
 6. `$http_rsc` 必须同时进 `proxy_cache_bypass` 与 `proxy_no_cache` —— 线上实测：`RSC: 1` 请求头返回 `Content-Type: text/x-component` 的 flight 数据（22 843 B），同一个 URL 不带该头返回 `text/html` 的完整页面（45 929 B）。两者**只有这一个请求头不同**，缓存键（`$request_uri`）完全相同 → 不隔离就是白屏。
-7. 上线后用 `curl -I` 验证 `X-Ziyun-Cache` 出现 `MISS` → `HIT`，且带 `auth_token` 的请求恒为 `BYPASS`。
+7. 上线后用 `curl -I` 验证 `X-Ziyun-Cache`：**带 cookie 连发两次，这两次里只要出现过一次 `HIT` 就算通过**（TTL 只有 10 秒，第一次就 HIT 是热条目、正常；**两次都 MISS 才是故障**），且带 `auth_token` 的请求恒为 `BYPASS`。
 
 **⚠️⚠️ 部署前置（承重；控制器裁决 F30-a / F30-b，2026-10-29 实测）**
 
