@@ -10,6 +10,7 @@
   - 已留好 Cloudflare / 阿里云 CDN 真实 IP 段的位置(默认注释)
 - `OPTIMIZATION.md` — 线上对账 / 备份 / 合并 / 冒烟 / 回滚手册
 - `nginx-brotli.conf` — 可选的 brotli 压缩片段(手动 include,不覆盖现有配置)
+- `tuning/` — 内核网络参数调优（BBR 等），见 `tuning/README.md`
 
 ## 部署流程
 
