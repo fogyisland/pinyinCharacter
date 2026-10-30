@@ -24,27 +24,24 @@
  */
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { gzipSync } from 'node:zlib';
+import { LIMITS as VERIFIER_LIMITS } from '../../../scripts/fonts/verify-webfont-subsets.mjs';
 
 const ROOT = resolve(__dirname, '..', '..', '..');
 const FONT_DIR = resolve(ROOT, 'public', 'font');
 
 /**
- * The budgets of the design.
+ * The budget of the render-blocking stylesheet, raw.
  *
- * They mirror scripts/fonts/verify-webfont-subsets.mjs (LIMITS) so the test
- * and the verifier can never drift apart. A KB is 1024 bytes here.
+ * This one budget lives only in this file. The two gzipped budgets come
+ * straight from the verifier's exported LIMITS (imported above), so they
+ * cannot drift apart from it; the verifier has no raw-bytes budget of its
+ * own — it budgets the gzipped bytes of the stylesheets. A KB is 1024 bytes
+ * here.
  */
-const LIMITS = {
-  /** The three stylesheets together, gzipped. */
-  cssBytes: 175 * 1024,
-  /** The render-blocking stylesheet, gzipped. */
-  sansCssBytes: 65 * 1024,
-  /** The render-blocking stylesheet, raw. */
-  sansRawBytes: 700 * 1024,
-};
+const SANS_RAW_BYTES = 700 * 1024;
 
 /** The three families of the site, and everything pinned about them. */
 interface Family {
@@ -191,6 +188,23 @@ function subsetFiles(family: Family): string[] {
   );
 }
 
+/**
+ * Every subset file of the site, with its size in bytes.
+ *
+ * The walk is recursive over public/font/web, so it counts the subsets of
+ * a family that is not in FAMILIES too — the payload budget is a property
+ * of the whole font directory, not of the three families the pages use.
+ */
+function allSubsetFiles(): { path: string; bytes: number }[] {
+  const dir = resolve(FONT_DIR, 'web');
+  return readdirSync(dir, { encoding: 'utf8', recursive: true })
+    .filter((name) => name.endsWith('.woff2'))
+    .map((name) => {
+      const path = resolve(dir, name);
+      return { path, bytes: statSync(path).size };
+    });
+}
+
 describe('public/font per-family stylesheets', () => {
   it('ships one stylesheet per family', () => {
     for (const family of FAMILIES) {
@@ -253,18 +267,47 @@ describe('public/font per-family stylesheets', () => {
     expect(offenders).toEqual([]);
   });
 
+  it('declares the weight of the family, not of the subset', () => {
+    // The variable families (sans, serif) ship one file per block and
+    // declare one face with a weight RANGE — the browser interpolates the
+    // bold out of the same file. The static family (wenkai) cuts every
+    // block into a file per weight and declares one face per file, so
+    // every one of its faces carries a single weight.
+    //
+    // A face that lost its range would degrade every bold character of the
+    // site to a synthetic bold, and the byte budgets would not notice.
+    for (const family of FAMILIES) {
+      const expected = family.key === 'wenkai' ? /^(400|700)$/ : /^400 700$/;
+      for (const face of stylesheet(family).faces) {
+        expect(face.fontWeight).toMatch(expected);
+        expect(face.fontStyle).toBe('normal');
+      }
+    }
+  });
+
   it('keeps the render-blocking stylesheet small', () => {
+    let cssBytes = 0;
     for (const family of FAMILIES) {
       const rawBytes = Buffer.byteLength(stylesheet(family).css, 'utf8');
       expect(rawBytes).toBe(family.rawBytes);
+      cssBytes += rawBytes;
     }
+    // The three stylesheets together, raw: the CSS the browser has to parse
+    // before it can paint a single character.
+    expect(cssBytes).toBe(2009551);
     // fonts-sans.css is the only stylesheet on the critical path; the other
     // two are fetched without blocking the first paint.
     const sans = FAMILIES.find((family) => family.key === 'sans');
     if (!sans) throw new Error('the sans family is missing from FAMILIES');
     expect(Buffer.byteLength(stylesheet(sans).css, 'utf8')).toBeLessThanOrEqual(
-      LIMITS.sansRawBytes,
+      SANS_RAW_BYTES,
     );
+    // Every font byte the site can possibly ask for. The browser downloads
+    // only the handful the page draws, but the whole set has to be
+    // deployed, cached and kept in the bundle budget.
+    const subsets = allSubsetFiles();
+    expect(subsets.length).toBe(7936);
+    expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28127360);
   });
 
   it('keeps the gzipped payload within budget', () => {
@@ -280,8 +323,8 @@ describe('public/font per-family stylesheets', () => {
     }
     expect(perFamily.get('sans')).toBe(55437);
     expect(total).toBe(157282);
-    expect(total).toBeLessThanOrEqual(LIMITS.cssBytes);
-    expect(perFamily.get('sans')).toBeLessThanOrEqual(LIMITS.sansCssBytes);
+    expect(total).toBeLessThanOrEqual(VERIFIER_LIMITS.cssBytes);
+    expect(perFamily.get('sans')).toBeLessThanOrEqual(VERIFIER_LIMITS.sansCssBytes);
   });
 });
 
