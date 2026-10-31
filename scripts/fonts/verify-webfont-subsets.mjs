@@ -31,6 +31,8 @@
  *  12. directories   every face points at the directory of its own family,
  *                     and the file is read along the URL's own path
  *  13. manifest      every family points at EXACTLY its own stylesheet
+ *  14. latin         the Latin tier really covers the Latin characters the
+ *                     pages paint, and it is built out of the 24 tone vowels
  *
  * Every failure is COLLECTED: the run reports all of them and exits 1, so
  * one broken build is one trip through the log, not nine.
@@ -49,7 +51,12 @@ import { gzipSync } from 'node:zlib';
 import * as fontkit from 'fontkit';
 
 import { FAMILIES } from './build-webfont-subsets.mjs';
-import { loadFamilyCharsets } from './webfont-charset.mjs';
+import {
+  isLatinChar,
+  loadFamilyCharsets,
+  loadFamilyCoverage,
+  loadToneVowels,
+} from './webfont-charset.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -73,6 +80,7 @@ export const LIMITS = {
   sansCssBytes: 65 * 1024, // 无衬线那份单独设限：它渲染阻塞（F25-d / F27-d）
   maxFacesPerCss: 3400,
   maxFontFilesPerPage: 12, // F27-j-g：实测最多 4 个
+  latinBytes: 12 * 1024, // 拉丁 hot 块的单文件上限（拉丁尾巴复用 extBlockBytes）
   pageFontBytes: {
     '/': 330 * 1024,
     '/dictionary': 330 * 1024,
@@ -332,14 +340,106 @@ function blockKeyOf(family, fileName) {
   return base;
 }
 
-/** The code points of the charset plan of Task 1. */
+/**
+ * The code points of the charset plan of Task 1.
+ *
+ * ⚠️ The LATIN tier is part of the plan and has to be read here: a Latin
+ * face declares a `unicode-range` that is computed from the plan, and a
+ * plan the checker does not know about turns EVERY Latin face into an
+ * "unknown character" error.
+ */
 function planCodePoints(plan) {
   const points = new Set();
   for (const ch of plan.hot) points.add(ch.codePointAt(0));
   for (const block of plan.extBlocks) {
     for (const ch of block.chars) points.add(ch.codePointAt(0));
   }
+  const latin = plan.latin;
+  if (latin) {
+    for (const ch of latin.hot) points.add(ch.codePointAt(0));
+    for (const block of latin.extBlocks) {
+      for (const ch of block.chars) points.add(ch.codePointAt(0));
+    }
+  }
   return points;
+}
+
+/**
+ * The Latin characters of a page that no BUILT block claims.
+ *
+ * Two kinds, and the difference between them is the whole point:
+ *
+ *   `missing`      the source font CAN draw the character, but no subset of
+ *                  the family claims it ⇒ the Latin tier was never built, or
+ *                  it was built and lost this character ⇒ **an error**
+ *   `unsupported`  the source font CANNOT draw the character ⇒ the browser
+ *                  falls back to the system font, which is a limit of the
+ *                  FONT and not a bug of the pipeline ⇒ **reported only**
+ *
+ * ⚠️ The scope comes from the shared glyph coverage of the source fonts
+ * (`loadFamilyCoverage` of scripts/fonts/webfont-charset.mjs) — the SAME
+ * capability the plan builder filters the Latin tier with. A second copy of
+ * "which characters does this font have" here would drift from the plan, and
+ * a drifting scope turns a real error into a silent one (or the other way
+ * around: a false red that makes people relax the rule, and the blind spot
+ * comes back).
+ *
+ * ⚠️ When the coverage cannot be read (a checkout without the staging
+ * fonts) EVERY unpainted Latin character is reported as `missing`: the
+ * check then errs towards red, because a green that cannot be trusted is
+ * worse than a red that can be explained.
+ *
+ * @param {string} chars the characters of one page and one family
+ * @param {Map<number, string>} cpToBlock the code points the BUILT stylesheet claims
+ * @param {Set<number> | null} covered the code points the source fonts can draw
+ * @returns {{ missing: number[], unsupported: number[] }}
+ */
+export function classifyUnpaintedLatin(chars, cpToBlock, covered) {
+  const missing = [];
+  const unsupported = [];
+  const seen = new Set();
+  for (const ch of chars) {
+    if (!isLatinChar(ch)) continue;
+    const point = ch.codePointAt(0);
+    if (seen.has(point)) continue;
+    seen.add(point);
+    if (cpToBlock.get(point) !== undefined) continue;
+    if (covered && !covered.has(point)) unsupported.push(point);
+    else missing.push(point);
+  }
+  return { missing, unsupported };
+}
+
+/**
+ * The Latin hot block of a family must declare the 24 tone vowels.
+ *
+ * The tone marks are NOT in the page fixture — the four measured pages
+ * paint at most a handful of them — so they are in the Latin hot tier
+ * because of `lib/pinyin-tone.ts`, not because of the fixture. This
+ * assertion is therefore NOT idle: it proves that the Latin tier was built
+ * out of the tone table and not out of the fixture.
+ *
+ * @param {{ key: string, label: string }} family
+ * @param {{ points: Set<number> } | undefined} latinBlock the BUILT Latin hot block
+ * @param {string[]} toneVowels the 24 tone vowels of `lib/pinyin-tone.ts`
+ * @returns {string[]} the messages of the failures, empty when the block is right
+ */
+export function checkLatinToneVowels(family, latinBlock, toneVowels) {
+  if (!latinBlock) {
+    return [
+      `[${family.key}] the stylesheet has no Latin hot block — the Latin tier of ` +
+        `${family.label} was never built`,
+    ];
+  }
+  const missing = toneVowels.filter(
+    (vowel) => !latinBlock.points.has(vowel.codePointAt(0)),
+  );
+  if (missing.length === 0) return [];
+  return [
+    `[${family.key}] the Latin hot block does not declare ${missing.length} of the ` +
+      `${toneVowels.length} tone vowels of lib/pinyin-tone.ts: ${missing.join('')} — the ` +
+      'tone marks of the game would fall back to the system font',
+  ];
 }
 
 /** A one line summary of a list of offenders. */
@@ -356,6 +456,8 @@ function emptyStats(family) {
     chars: 0,
     faces: 0,
     blocks: 0,
+    latinBlocks: 0,
+    latinChars: 0,
     files: 0,
     bytes: 0,
     cssBytes: 0,
@@ -528,7 +630,14 @@ async function inspectFamily(family, plan) {
     if (file) file.bytes = content.length;
 
     // --- check 4: the size of the file ----------------------------------
-    const limit = blockKey === 'hot' ? LIMITS.hotBytes : LIMITS.extBlockBytes;
+    // Three budgets, one per kind of block: the Chinese hot tier, the Latin
+    // hot tier and the Ext blocks (the Latin TAIL reuses the Ext budget).
+    // The budget is per FILE, not per block: the brand face cuts one block
+    // into two files (400 and 700) and each of them is checked on its own.
+    const limit =
+      blockKey === 'hot' ? LIMITS.hotBytes
+      : blockKey === 'latin' ? LIMITS.latinBytes
+      : LIMITS.extBlockBytes;
     if (content.length > limit) {
       oversized.push(`${fileName} is ${content.length} B, the budget is ${limit} B`);
     }
@@ -572,6 +681,12 @@ async function inspectFamily(family, plan) {
 
   stats.chars = declared.size;
   stats.blocks = blocks.size;
+  stats.latinBlocks = [...blocks.keys()].filter(
+    (key) => key === 'latin' || key.startsWith('latin-ext'),
+  ).length;
+  stats.latinChars = [...blocks.entries()]
+    .filter(([key]) => key === 'latin' || key.startsWith('latin-ext'))
+    .reduce((sum, [, block]) => sum + block.points.size, 0);
   stats.files = files;
   stats.bytes = bytes;
   stats.version = version;
@@ -733,12 +848,47 @@ async function checkManifest(cssByFile) {
 }
 
 /**
+ * The glyph coverage of the source fonts, or null when it cannot be read.
+ *
+ * The coverage is the ONE rule that knows what a source font can draw, and
+ * it lives in scripts/fonts/webfont-charset.mjs — the plan builder filters
+ * the Latin tier with it, and this checker scopes the unpainted Latin
+ * characters with it. Two copies would drift, and a drifting scope is a
+ * blind spot that reports green.
+ *
+ * The sources are not tracked by git, so a checkout without them cannot
+ * scope the Latin characters. That is reported, not hidden: without the
+ * scope every unpainted Latin character is reported as an error.
+ */
+function loadCoverageOrNull() {
+  try {
+    return loadFamilyCoverage();
+  } catch (error) {
+    console.warn(
+      `[verify] ${error.message} — the unpainted Latin characters cannot be scoped ` +
+        'by the glyph coverage, so every unpainted Latin character is reported as an error',
+    );
+    return null;
+  }
+}
+
+/**
  * Check what a page downloads: the bytes and the number of files.
  *
  * The rule of the design: a character in the hot tier makes the browser
  * fetch the hot file; a character in an Ext block makes it fetch that ONE
  * block. A block of a static family is two files (400 and 700), and a block
  * is only counted once no matter how many of its characters the page paints.
+ *
+ * ⚠️ The Latin characters of the fixture are counted here too: they are
+ * painted by the page, so the browser downloads the Latin subsets — and a
+ * page budget that does not count them does not know what the page costs.
+ *
+ * ⚠️ A Latin character that NO block claims is an ERROR (see
+ * `classifyUnpaintedLatin`): that is the "the Latin tier was never built"
+ * case, and the blind spot of the budget gate closes here. The Chinese
+ * characters that no block claims keep the behaviour they always had: they
+ * are reported and not failed.
  *
  * @returns {Promise<{ errors: string[], costs: object[] }>}
  */
@@ -755,6 +905,40 @@ async function checkPageBudget(details) {
     };
   }
   const pages = profiles.pages ?? {};
+
+  // The coverage is read ONCE and only when there is something to scope:
+  // the source fonts are 65 MB and a run with nothing unpainted does not
+  // need them.
+  let coverage = null;
+  let coverageLoaded = false;
+  const coverageOf = (familyKey) => {
+    if (!coverageLoaded) {
+      coverageLoaded = true;
+      coverage = loadCoverageOrNull();
+    }
+    if (!coverage) return null;
+    return coverage[familyKey] ?? null;
+  };
+
+  // --- the fixture must hold Latin at all --------------------------------
+  // Without it the check below has nothing to check, and a check with
+  // nothing to check reports green — that is the "the fixture was never
+  // updated" blind spot.
+  let fixtureLatin = 0;
+  for (const path of Object.keys(pages)) {
+    const page = pages[path] ?? {};
+    for (const family of FAMILIES) {
+      for (const ch of page[family.key] ?? '') {
+        if (isLatinChar(ch)) fixtureLatin += 1;
+      }
+    }
+  }
+  if (fixtureLatin === 0) {
+    errors.push(
+      'the page profile fixture holds no Latin character at all — the page budget ' +
+        'check of the Latin tier would be empty, so a missing Latin tier would report green',
+    );
+  }
 
   for (const path of Object.keys(LIMITS.pageFontBytes)) {
     const page = pages[path];
@@ -774,7 +958,10 @@ async function checkPageBudget(details) {
         const point = ch.codePointAt(0);
         const blockKey = detail.cpToBlock.get(point);
         if (blockKey === undefined) {
-          unpainted.push(`${family.key} U+${point.toString(16).toUpperCase()}`);
+          // The Chinese part keeps its behaviour: reported, not failed.
+          if (!isLatinChar(ch)) {
+            unpainted.push(`${family.key} U+${point.toString(16).toUpperCase()}`);
+          }
           continue;
         }
         blocks.add(blockKey);
@@ -785,6 +972,26 @@ async function checkPageBudget(details) {
           bytes += file.bytes;
           files += 1;
         }
+      }
+
+      // --- the Latin characters the page paints and nobody ships ---------
+      const latin = classifyUnpaintedLatin(chars, detail.cpToBlock, coverageOf(family.key));
+      for (const point of latin.missing) {
+        errors.push(
+          `[${family.key}] the page ${path} paints U+${point.toString(16).toUpperCase()} ` +
+            'that no subset of the family claims — an unpainted Latin character: the ' +
+            'Latin tier does not cover it',
+        );
+      }
+      if (latin.unsupported.length > 0) {
+        const list = latin.unsupported
+          .map((point) => `U+${point.toString(16).toUpperCase()}`)
+          .join(', ');
+        console.log(
+          `[verify]   info: the page ${path} paints ${latin.unsupported.length} Latin ` +
+            `character(s) the source font of ${family.key} cannot draw (${list}) — the ` +
+            'browser falls back to the system font for them (reported, not failed)',
+        );
       }
     }
 
@@ -853,6 +1060,26 @@ export async function verifyAll() {
   // --- check 7: the manifest ---------------------------------------------
   errors.push(...(await checkManifest(cssByFile)));
 
+  // --- check 14: the Latin hot tier holds the 24 tone vowels ------------
+  // The tone vowels come from `lib/pinyin-tone.ts` and NOT from the page
+  // fixture, so this assertion is not idle: it proves that the Latin tier
+  // was built out of the tone table.
+  let toneVowels = [];
+  try {
+    toneVowels = loadToneVowels();
+  } catch (error) {
+    errors.push(`the tone table cannot be read: ${error.message}`);
+  }
+  if (toneVowels.length > 0) {
+    for (const family of FAMILIES) {
+      const detail = details[family.key];
+      if (!detail) continue;
+      errors.push(
+        ...checkLatinToneVowels(family, detail.blocks.get('latin'), toneVowels),
+      );
+    }
+  }
+
   // --- check 8: the page budget ------------------------------------------
   const pages = await checkPageBudget(details);
   errors.push(...pages.errors);
@@ -876,6 +1103,9 @@ async function main() {
         `~${megabytes} MB   ${mark}`,
     );
     for (const message of problems) console.log(`[verify]   ${message}`);
+    console.log(
+      `[verify]   latin: ${entry.latinChars} char(s) in ${entry.latinBlocks} block(s)`,
+    );
     if (entry.extraCodepoints > 0) {
       console.log(
         `[verify]   info: ${entry.extraCodepoints} code point(s) the files carry ` +

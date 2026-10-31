@@ -3,6 +3,7 @@ import {
   classTokens,
   stripComments,
   collectFamilyCharsets,
+  collectFamilyLatinCharsets,
 } from '../../../scripts/perf/class-attribution.mjs';
 
 describe('classTokens', () => {
@@ -77,5 +78,41 @@ describe('collectFamilyCharsets', () => {
   it('reads the head of the document as nothing to paint', () => {
     const sets = collectFamilyCharsets('<head><title>标题</title></head><body><p>汉</p></body>');
     expect([...sets.sans]).toEqual(['汉']);
+  });
+});
+
+describe('collectFamilyLatinCharsets', () => {
+  it('puts the Latin characters of a page in the face that paints them', () => {
+    const html =
+      '<p class="font-kai">楷 Ā</p><p class="font-serif">宋 É</p><p>黑 á</p>';
+    const sets = collectFamilyLatinCharsets(html);
+    // ⚠️ The SPACE is a Latin character (U+0020 is the first code point of
+    // the ASCII printable range): the pages paint spaces, and a space no
+    // face claims is a space the browser draws with the system font.
+    expect([...sets.wenkai]).toEqual([' ', 'Ā']);
+    expect([...sets.serif]).toEqual([' ', 'É']);
+    expect([...sets.sans]).toEqual([' ', 'á']);
+  });
+
+  it('leaves the Chinese characters to the Chinese collection', () => {
+    // The two collections share ONE walk and ONE inheritance rule — only the
+    // accepted characters differ. Two rules would drift, and a drifted rule
+    // makes the fixture and the budget talk about different characters.
+    const html = '<p class="font-kai">楷 Ā</p>';
+    expect([...collectFamilyCharsets(html).wenkai]).toEqual(['楷']);
+    expect([...collectFamilyLatinCharsets(html).wenkai]).toEqual([' ', 'Ā']);
+  });
+
+  it('inherits the face of the parent, like the Chinese collection does', () => {
+    const sets = collectFamilyLatinCharsets(
+      '<div class="font-serif"><p><em>É</em></p></div>',
+    );
+    expect([...sets.serif]).toEqual(['É']);
+    expect([...sets.sans]).toEqual([]);
+  });
+
+  it('ignores the Latin inside script and style blocks', () => {
+    const html = '<style>.x::after{content:"a"}</style><script>const a="b";</script><p>c</p>';
+    expect([...collectFamilyLatinCharsets(html).sans]).toEqual([' ', 'c']);
   });
 });

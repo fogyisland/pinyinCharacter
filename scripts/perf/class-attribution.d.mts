@@ -62,3 +62,12 @@ export declare function familyOfAttrs(attrs: string, parentFamily: FamilyName): 
  * content of `<head>` is not page text and is skipped.
  */
 export declare function collectFamilyCharsets(html: string): FamilyCharsets;
+
+/**
+ * Attribute every Latin character of an HTML document to its face.
+ *
+ * The same walk and the same inheritance rule as `collectFamilyCharsets` —
+ * only the set of characters differs. The two share one implementation, so
+ * the attribution rule cannot drift between the Chinese and the Latin side.
+ */
+export declare function collectFamilyLatinCharsets(html: string): FamilyCharsets;

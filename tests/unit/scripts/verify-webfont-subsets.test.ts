@@ -12,6 +12,8 @@ import {
   checkFaceWeight,
   checkFaceDirectory,
   checkManifestFiles,
+  classifyUnpaintedLatin,
+  checkLatinToneVowels,
 } from '../../../scripts/fonts/verify-webfont-subsets.mjs';
 
 const MANIFEST_PATH = fileURLToPath(
@@ -68,6 +70,80 @@ describe('verify-webfont-subsets', () => {
     expect(LIMITS.sansCssBytes).toBe(65 * 1024);
     expect(LIMITS.maxFontFilesPerPage).toBe(12);
     expect(LIMITS.pageFontBytes['/dictionary']).toBe(330 * 1024);
+  });
+
+  it('publishes the size limit of the Latin hot tier', () => {
+    // The Latin hot tier is a file of its own, and its budget is its own:
+    // the Latin TAIL reuses the Ext budget.
+    expect(LIMITS.latinBytes).toBe(12 * 1024);
+  });
+});
+
+describe('classifyUnpaintedLatin', () => {
+  /** A built stylesheet that claims one Latin code point and nothing else. */
+  const cpToBlock = new Map<number, string>([[0x0041, 'latin']]);
+
+  it('reports a Latin character the font can draw but no subset claims', () => {
+    // This is the blind spot: the Latin tier was never built, and the page
+    // budget used to report that as an INFO and exit green.
+    const covered = new Set([0x0041, 0x0042]);
+    const result = classifyUnpaintedLatin('AB', cpToBlock, covered);
+    expect(result.missing).toEqual([0x0042]);
+    expect(result.unsupported).toEqual([]);
+  });
+
+  it('reports a Latin character the font cannot draw as a limit of the font', () => {
+    // The browser falls back to the system font for it — that is the FONT's
+    // limit, not a bug of the pipeline, so it must not be an error.
+    const covered = new Set([0x0041]);
+    const result = classifyUnpaintedLatin('AB', cpToBlock, covered);
+    expect(result.missing).toEqual([]);
+    expect(result.unsupported).toEqual([0x0042]);
+  });
+
+  it('says nothing about a character a subset does claim', () => {
+    const result = classifyUnpaintedLatin('A', cpToBlock, new Set([0x0041]));
+    expect(result.missing).toEqual([]);
+    expect(result.unsupported).toEqual([]);
+  });
+
+  it('ignores the Chinese characters of the page', () => {
+    // The Chinese part keeps the behaviour it always had: reported, not
+    // failed. This rule is about the Latin tier.
+    const result = classifyUnpaintedLatin('一A', cpToBlock, new Set([0x0041, 0x4e00]));
+    expect(result.missing).toEqual([]);
+    expect(result.unsupported).toEqual([]);
+  });
+
+  it('errs towards the error when the coverage cannot be read', () => {
+    // Without the coverage the check cannot scope the characters, and a
+    // green that cannot be trusted is worse than a red that can be
+    // explained.
+    const result = classifyUnpaintedLatin('B', cpToBlock, null);
+    expect(result.missing).toEqual([0x0042]);
+  });
+});
+
+describe('checkLatinToneVowels', () => {
+  const vowels = ['ā', 'á', 'ǎ', 'à'];
+
+  it('says nothing when the Latin hot block holds every tone vowel', () => {
+    const block = { points: new Set(vowels.map((vowel) => vowel.codePointAt(0)!)) };
+    expect(checkLatinToneVowels(familyOf('sans'), block, vowels)).toEqual([]);
+  });
+
+  it('names the tone vowels the Latin hot block is missing', () => {
+    const block = { points: new Set([vowels[0].codePointAt(0)!]) };
+    const errors = checkLatinToneVowels(familyOf('sans'), block, vowels);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('á');
+    expect(errors[0]).toContain('sans');
+  });
+
+  it('reports a family whose stylesheet has no Latin hot block at all', () => {
+    const errors = checkLatinToneVowels(familyOf('sans'), undefined, vowels);
+    expect(errors).toHaveLength(1);
+    expect(errors[0]).toContain('Latin');
   });
 });
 

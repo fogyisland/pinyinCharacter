@@ -4,11 +4,16 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   isCjkChar,
+  isLatinChar,
   stripSourceComments,
   scoreCharacters,
   planTiers,
   unicodeRange,
   unionOfPages,
+  unionOfLatinPages,
+  latinSeedOf,
+  filterLatinByCoverage,
+  loadToneVowels,
   loadFamilyCharsets,
 } from '../../../scripts/fonts/webfont-charset.mjs';
 
@@ -23,6 +28,24 @@ describe('isCjkChar', () => {
   it('rejects latin, digits, punctuation and accented letters', () => {
     for (const ch of ['a', '1', ' ', '·', 'é', '—', '“']) {
       expect(isCjkChar(ch)).toBe(false);
+    }
+  });
+});
+
+describe('isLatinChar', () => {
+  it('accepts ASCII, Latin-1 and the punctuation of a Latin text', () => {
+    expect(isLatinChar('a')).toBe(true);   // U+0061
+    expect(isLatinChar('1')).toBe(true);   // U+0031
+    expect(isLatinChar(' ')).toBe(true);   // U+0020
+    expect(isLatinChar('é')).toBe(true);   // U+00E9
+    expect(isLatinChar('·')).toBe(true);   // U+00B7
+    expect(isLatinChar('ā')).toBe(true);   // U+0101
+    expect(isLatinChar('←')).toBe(true);   // U+2190
+  });
+
+  it('rejects Chinese, Japanese and the characters of several code points', () => {
+    for (const ch of ['一', '、', '々', 'ab']) {
+      expect(isLatinChar(ch)).toBe(false);
     }
   });
 });
@@ -164,6 +187,120 @@ describe('unionOfPages', () => {
     expect(seed).not.toContain(' ');
     expect(codePointOf(seed[0])).toBe(0x4e19);
     expect(codePointOf(seed[1])).toBe(0x7532);
+  });
+});
+
+describe('unionOfLatinPages', () => {
+  it('keeps only the Latin characters of the pages', () => {
+    // The twin of the Chinese seed: the Latin characters of the pages, and
+    // nothing else. A Chinese character that slipped into the fixture must
+    // not take a slot of the Latin hot tier.
+    //
+    // ⚠️ The SPACE is a Latin character: U+0020 is the first code point of
+    // the ASCII printable range, and the pages paint spaces — a space that
+    // no face claims is a space the browser draws with the system font.
+    const seed = unionOfLatinPages(
+      { p1: { sans: 'a一' }, p2: { sans: 'b ' } },
+      'sans',
+    );
+    expect(seed).toHaveLength(3);
+    expect(seed).not.toContain('一');
+    expect(seed.sort()).toEqual([' ', 'a', 'b']);
+  });
+
+  it('orders the seed by the number of pages that painted a character', () => {
+    const seed = unionOfLatinPages(
+      { p1: { sans: 'ab' }, p2: { sans: 'b' } },
+      'sans',
+    );
+    expect(seed[0]).toBe('b');
+  });
+});
+
+describe('loadToneVowels', () => {
+  it('reads the 24 tone vowels of lib/pinyin-tone.ts', () => {
+    const vowels = loadToneVowels();
+    expect(vowels).toHaveLength(24);
+    // The table of the site: four tones times six vowels.
+    for (const vowel of ['ā', 'á', 'ǎ', 'à', 'ē', 'ǚ', 'ǜ']) {
+      expect(vowels).toContain(vowel);
+    }
+    expect(new Set(vowels).size).toBe(24);
+  });
+});
+
+describe('latinSeedOf', () => {
+  it('unites the painted Latin characters with the tone vowels', () => {
+    const seed = latinSeedOf('ab', ['ā', 'b']);
+    expect(seed).toEqual(['a', 'b', 'ā']);
+  });
+
+  it('orders the seed by code point, so the same capture always cuts the same file', () => {
+    const seed = latinSeedOf('z a', ['ā']);
+    expect(seed.map((ch) => ch.codePointAt(0))).toEqual([0x20, 0x61, 0x7a, 0x101]);
+  });
+});
+
+describe('filterLatinByCoverage', () => {
+  const covered = new Set(['a', 'b', 'c', 'd'].map((ch) => ch.codePointAt(0)!));
+
+  it('drops the characters the font cannot draw', () => {
+    // `subset-font` drops a code point the source font has no glyph for,
+    // SILENTLY — and the unicode-range of a face is computed from the plan,
+    // not from the cut file. A plan that keeps such a code point produces a
+    // face that claims a character it cannot draw: a tofu box.
+    const plan = {
+      hot: ['a', 'é'],
+      extBlocks: [{ index: 1, chars: ['b', 'é'] }],
+    };
+    const filtered = filterLatinByCoverage(plan, covered, 12);
+    expect(filtered.hot).toEqual(['a']);
+    expect(filtered.extBlocks.flatMap((block) => block.chars)).toEqual(['b']);
+  });
+
+  it('cuts the tail into blocks of the given width again', () => {
+    // A block that lost characters must not keep a file of its own for one
+    // character: the tail is cut into NEW blocks after the filter.
+    const chars = 'abcdefghijklmno'.split('');
+    const plan = {
+      hot: [],
+      extBlocks: [{ index: 1, chars: [...chars, 'é'] }],
+    };
+    const all = new Set(chars.map((ch) => ch.codePointAt(0)!));
+    const filtered = filterLatinByCoverage(plan, all, 3);
+    expect(filtered.extBlocks).toHaveLength(5);
+    expect(filtered.extBlocks.map((block) => block.chars.length)).toEqual([3, 3, 3, 3, 3]);
+    expect(filtered.extBlocks.map((block) => block.index)).toEqual([1, 2, 3, 4, 5]);
+  });
+
+  it('re-cuts the tail of the characters the font CAN draw', () => {
+    // The filter drops the characters the font has no glyph for, and the
+    // blocks it drops them from are cut again — so a block never keeps a
+    // file of its own for a single survivor.
+    const chars = 'abcdefghijklmno'.split('');
+    const plan = {
+      hot: [],
+      extBlocks: [{ index: 1, chars: [...chars, 'é'] }],
+    };
+    const filtered = filterLatinByCoverage(plan, covered, 3);
+    expect(filtered.extBlocks.flatMap((block) => block.chars)).toEqual([
+      'a',
+      'b',
+      'c',
+      'd',
+    ]);
+    expect(filtered.extBlocks.map((block) => block.chars.length)).toEqual([3, 1]);
+    expect(filtered.extBlocks.map((block) => block.index)).toEqual([1, 2]);
+  });
+
+  it('refuses a coverage that is not a set of code points', () => {
+    expect(() =>
+      filterLatinByCoverage(
+        { hot: [], extBlocks: [] },
+        [] as unknown as Set<number>,
+        12,
+      ),
+    ).toThrow();
   });
 });
 
@@ -360,6 +497,11 @@ describe('loadFamilyCharsets', () => {
     // F27-j-c: the hot tier holds a FIXED number of characters, so WHICH
     // characters it holds is free. The page profile fixture is the only
     // evidence of what the pages actually paint.
+    //
+    // ⚠️ The fixture holds the Chinese characters AND the Latin ones (the
+    // Chinese part first, the Latin part after it). The Chinese hot tier
+    // takes the Chinese ones and the Latin hot tier takes the Latin ones —
+    // one tier never takes the characters of the other.
     const plans = loadFamilyCharsets();
     const fixture = JSON.parse(
       readFileSync(
@@ -374,8 +516,13 @@ describe('loadFamilyCharsets', () => {
       }
       expect(painted.size).toBeGreaterThan(0);
       const hot = new Set(plans[family].hot);
-      const missing = [...painted].filter((ch) => !hot.has(ch));
+      const missing = [...painted].filter((ch) => !hot.has(ch) && isCjkChar(ch));
       expect(missing).toEqual([]);
+      const latinHot = new Set(plans[family].latin.hot);
+      const missingLatin = [...painted].filter(
+        (ch) => !latinHot.has(ch) && isLatinChar(ch),
+      );
+      expect(missingLatin).toEqual([]);
     }
   }, 180_000);
 
@@ -485,5 +632,64 @@ describe('loadFamilyCharsets', () => {
     expect(() =>
       loadFamilyCharsets({ pageProfiles: 'no/such/font-page-profiles.json' }),
     ).toThrow(/font-page-profiles|page profile/i);
+  }, 180_000);
+
+  it('gives every family a Latin tier that holds the 24 tone vowels', () => {
+    // The tone vowels are NOT in the page fixture — the four measured pages
+    // paint at most a handful of them. They are in the Latin hot tier
+    // because of lib/pinyin-tone.ts, so the assertion proves that the tier
+    // was built out of the tone table and not out of the fixture.
+    const plans = loadFamilyCharsets();
+    const vowels = loadToneVowels();
+    expect(vowels).toHaveLength(24);
+    for (const family of ['sans', 'serif', 'wenkai'] as const) {
+      const hot = new Set(plans[family].latin.hot);
+      for (const vowel of vowels) {
+        expect(hot.has(vowel)).toBe(true);
+      }
+    }
+  }, 180_000);
+
+  it('holds every Latin character the pages paint in the Latin hot tier', () => {
+    // The Latin seed is the union of the Latin characters of the pages, so
+    // a page never has to reach for a tail block to paint one of them.
+    const plans = loadFamilyCharsets();
+    const fixture = JSON.parse(
+      readFileSync(
+        resolve(fileURLToPath(new URL('../../../data/font-page-profiles.json', import.meta.url))),
+        'utf8',
+      ),
+    ) as { pages: Record<string, Record<string, string>> };
+    for (const family of ['sans', 'serif', 'wenkai'] as const) {
+      const painted = new Set<string>();
+      for (const page of Object.values(fixture.pages)) {
+        for (const ch of page[family] ?? '') {
+          if (isLatinChar(ch)) painted.add(ch);
+        }
+      }
+      expect(painted.size).toBeGreaterThan(0);
+      const hot = new Set(plans[family].latin.hot);
+      const missing = [...painted].filter((ch) => !hot.has(ch));
+      expect(missing).toEqual([]);
+    }
+  }, 180_000);
+
+  it('keeps the Latin characters of the plan apart from the Chinese ones', () => {
+    // The two tiers claim code points in the SAME stylesheet, so an overlap
+    // between them is a build error (the verifier fails on it).
+    const plans = loadFamilyCharsets();
+    for (const family of ['sans', 'serif', 'wenkai'] as const) {
+      const plan = plans[family];
+      const chinese = new Set([
+        ...plan.hot,
+        ...plan.extBlocks.flatMap((block) => block.chars),
+      ]);
+      const latin = [
+        ...plan.latin.hot,
+        ...plan.latin.extBlocks.flatMap((block) => block.chars),
+      ];
+      expect(latin.length).toBeGreaterThan(0);
+      expect(latin.filter((ch) => chinese.has(ch))).toEqual([]);
+    }
   }, 180_000);
 });

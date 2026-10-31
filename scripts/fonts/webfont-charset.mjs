@@ -75,6 +75,7 @@ import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
+import * as fontkit from 'fontkit';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..', '..');
@@ -100,11 +101,54 @@ export const CJK_RANGES = [
   [0x30000, 0x3134f], // Extension G and beyond
 ];
 
+/**
+ * The code point ranges that count as Latin for the font subsets.
+ *
+ * The ranges are the ones a Latin text is made of: ASCII, Latin-1, the
+ * Latin extensions, the general punctuation, the super/subscripts, the
+ * currency signs, the letter-like symbols, the number forms, the arrows,
+ * the mathematical operators, the circled digits and the geometric shapes.
+ *
+ * ⚠️ They must NOT touch CJK_RANGES: the two tiers claim code points in
+ * the SAME stylesheet, and two blocks that claim the same code point are
+ * an overlap — the verifier fails the build on it. CJK_RANGES starts at
+ * 0x2E80 and the Latin ranges stop at 0x25FF, so the two spaces are
+ * disjoint by construction.
+ *
+ * ⚠️ Do NOT use `codePointAt(0) < 0x2E80` as the test for Latin: that
+ * would swallow the CJK punctuation of the compatibility area as well.
+ */
+export const LATIN_RANGES = [
+  [0x0020, 0x007e], // ASCII printable
+  [0x00a0, 0x00ff], // Latin-1 supplement
+  [0x0100, 0x024f], // Latin extended A and B
+  [0x1e00, 0x1eff], // Latin extended additional
+  [0x2000, 0x206f], // General punctuation
+  [0x2070, 0x209f], // Super/subscripts
+  [0x20a0, 0x20bf], // Currency symbols
+  [0x2100, 0x214f], // Letter-like symbols
+  [0x2150, 0x218f], // Number forms
+  [0x2190, 0x21ff], // Arrows
+  [0x2200, 0x22ff], // Mathematical operators
+  [0x2460, 0x24ff], // Enclosed alphanumerics
+  [0x25a0, 0x25ff], // Geometric shapes
+];
+
 /** The default number of characters in the hot tier. */
 const DEFAULT_TIER1_SIZE = 300;
 
 /** The default number of characters in one Ext block. */
 const DEFAULT_EXT_BLOCK_CHARS = 6;
+
+/**
+ * The number of characters in one Latin Ext block.
+ *
+ * The Latin blocks are wider than the Chinese ones: a Chinese glyph costs
+ * far more bytes than a Latin one, so a block of six Chinese characters
+ * is about the size of a block of twelve Latin ones — and a page that
+ * needs one of them downloads the whole file.
+ */
+export const LATIN_EXT_BLOCK_CHARS = 12;
 
 /**
  * The tier plan of every family, before the caller overrides it.
@@ -129,6 +173,26 @@ const FAMILY_DEFAULTS = {
 /** The families the site ships, in the order they are reported. */
 const FAMILIES = ['wenkai', 'sans', 'serif'];
 
+/**
+ * The source font of every family, in WEIGHT ORDER.
+ *
+ * The two body faces are VARIABLE: one file carries the whole 400–700
+ * `wght` axis. The brand face is STATIC: one file per weight, and both
+ * files declare the SAME `unicode-range`, so a code point only ONE of them
+ * can draw may not be in the plan at all.
+ *
+ * The list lives HERE and not in scripts/fonts/build-webfont-subsets.mjs
+ * because the coverage of the source fonts is part of the PLAN (the plan
+ * may only hold characters the font can really draw), and the plan is
+ * built here. The build script imports the list, so there is one source of
+ * truth and not two that drift.
+ */
+export const FAMILY_SOURCE_FILES = {
+  sans: ['NotoSansSC-wght-400-700.ttf'],
+  serif: ['NotoSerifSC-wght-400-700.ttf'],
+  wenkai: ['LXGWWenKaiTC-Regular.ttf', 'LXGWWenKaiTC-Bold.ttf'],
+};
+
 /** A character coming from the source code counts a thousand times more. */
 const SOURCE_CODE_WEIGHT = 1000;
 
@@ -144,11 +208,19 @@ const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.mjs', '.js']);
  * `isCjkChar` is asked about every character of a 200 MB corpus, so the
  * range scan is replaced by a single array read.
  */
-const BMP_TABLE = buildBmpTable();
+const BMP_TABLE = buildBmpTable(CJK_RANGES);
 
-function buildBmpTable() {
+/**
+ * Lookup table for the BMP part of LATIN_RANGES.
+ *
+ * The Latin tier is scanned by the same pass over the same corpus, so it
+ * gets the same table lookup.
+ */
+const LATIN_BMP_TABLE = buildBmpTable(LATIN_RANGES);
+
+function buildBmpTable(ranges) {
   const table = new Uint8Array(0x10000);
-  for (const [start, end] of CJK_RANGES) {
+  for (const [start, end] of ranges) {
     const last = Math.min(end, 0xffff);
     if (start > last) continue;
     table.fill(1, start, last + 1);
@@ -163,6 +235,12 @@ function isCjkCodePoint(codePoint) {
     (codePoint >= 0x20000 && codePoint <= 0x2fa1f) ||
     (codePoint >= 0x30000 && codePoint <= 0x3134f)
   );
+}
+
+/** True when the code point belongs to one of the Latin ranges. */
+export function isLatinCodePoint(codePoint) {
+  if (codePoint < 0x10000) return LATIN_BMP_TABLE[codePoint] === 1;
+  return false;
 }
 
 /**
@@ -185,6 +263,22 @@ export function isCjkChar(ch) {
     }
   }
   return false;
+}
+
+/**
+ * True when the string is exactly one Latin character.
+ *
+ * The shape is the shape of `isCjkChar`: a string of several characters is
+ * not a character, and a supplementary plane character is a surrogate pair.
+ *
+ * ⚠️ No Latin range of `LATIN_RANGES` leaves the BMP, so a surrogate pair is
+ * never Latin — the check is written out anyway so the two predicates read
+ * the same way and neither of them grows a special case later.
+ */
+export function isLatinChar(ch) {
+  if (typeof ch !== 'string' || ch.length === 0) return false;
+  if (ch.length !== 1) return false;
+  return isLatinCodePoint(ch.charCodeAt(0));
 }
 
 /** Add `amount` to the score of one character. */
@@ -440,12 +534,18 @@ export function stripSourceComments(text, fileName = 'source.tsx') {
 }
 
 /**
- * Count the Chinese characters of a text into `counts`.
+ * Count the characters of a text into `counts`.
  *
  * The counts are keyed by CODE POINT, not by string: the corpus holds about
  * a hundred million character occurrences and allocating a string for each
  * one of them costs more than the whole scan. The string of a code point is
  * built once, when the counts are folded into the score.
+ *
+ * ⚠️ The scan counts EVERY code point, Chinese and Latin alike: the tier
+ * the character belongs to is decided when the counts are FOLDED into a
+ * score (see `foldSource`), not here. A filter in this function would drop
+ * the Latin characters before the Latin tier ever saw them — which is
+ * exactly what the Latin tier of wave 2 was missing.
  *
  * The scan walks the string by code unit. Iterating with
  * `for (const ch of text)` allocates one string per character and is
@@ -461,7 +561,6 @@ function countChars(counts, text) {
         i += 1;
       }
     }
-    if (!isCjkCodePoint(codePoint)) continue;
     counts.set(codePoint, (counts.get(codePoint) ?? 0) + 1);
   }
 }
@@ -703,10 +802,18 @@ function scanSourceDirectory(dir, counts, state) {
  *
  * The counts are keyed by code point, so the string of a character is
  * built here, once, for the few thousand characters the corpus holds.
+ *
+ * ⚠️ `filter` decides which tier a counted character belongs to, and its
+ * DEFAULT is `isCjkCodePoint`: the Chinese score table is built here, and
+ * it has to stay byte for byte the table it always was — the 7 936 subset
+ * files of the Chinese tiers are derived from it. The Latin score table is
+ * the SAME counts folded with `isLatinCodePoint` instead: one scan, two
+ * tables, and not one extra byte read.
  */
-function foldSource(score, counts, weight) {
+function foldSource(score, counts, weight, filter = isCjkCodePoint) {
   if (!counts) return;
   for (const [codePoint, count] of counts) {
+    if (!filter(codePoint)) continue;
     addScore(score, String.fromCodePoint(codePoint), weight * count);
   }
 }
@@ -746,7 +853,7 @@ const planCache = new Map();
  * different overrides would land on the same cache entry and one of them
  * would be handed the plan of the other.
  */
-function cacheKey(root, families, pageProfiles) {
+function cacheKey(root, families, pageProfiles, stagingDir) {
   const overrides = Object.entries(families ?? {})
     .filter(([, options]) => options !== undefined && options !== null)
     .map(([family, options]) => {
@@ -761,7 +868,11 @@ function cacheKey(root, families, pageProfiles) {
     .map(({ family, entries }) => `${family}{${entries.join(',')}}`)
     .join(';');
   const profiles = pageProfiles === undefined || pageProfiles === null ? '' : pageProfiles;
-  return `${root}::${profiles}::${overrides}`;
+  // The staging directory is part of the key too: the glyph coverage of the
+  // source fonts filters the Latin tier, so a caller that points at another
+  // set of sources must not be handed the plan of the default one.
+  const sources = stagingDir === undefined || stagingDir === null ? '' : stagingDir;
+  return `${root}::${profiles}::${sources}::${overrides}`;
 }
 
 /**
@@ -784,6 +895,36 @@ export function unionOfPages(pages, family) {
     if (typeof painted !== 'string') continue;
     for (const ch of new Set(painted)) {
       if (!isCjkChar(ch)) continue;
+      pageCount.set(ch, (pageCount.get(ch) ?? 0) + 1);
+    }
+  }
+  return [...pageCount.keys()].sort((a, b) => {
+    const delta = (pageCount.get(b) ?? 0) - (pageCount.get(a) ?? 0);
+    if (delta !== 0) return delta;
+    return a.codePointAt(0) - b.codePointAt(0);
+  });
+}
+
+/**
+ * The Latin characters the measured pages paint in one family.
+ *
+ * The twin of `unionOfPages`: same pages, same ordering, same reason — but
+ * the Latin characters instead of the Chinese ones. The Chinese seed is the
+ * head of the 300 character hot tier; the Latin seed is the WHOLE Latin
+ * hot tier.
+ *
+ * ⚠️ The two seeds are kept apart on purpose. A mixed seed would put the
+ * ASCII space and the digits into the Chinese hot tier, where every slot
+ * is scarce — and the Chinese hot tier of the three families is the one
+ * that decides which Chinese glyph a page downloads.
+ */
+export function unionOfLatinPages(pages, family) {
+  const pageCount = new Map();
+  for (const page of Object.values(pages)) {
+    const painted = page?.[family];
+    if (typeof painted !== 'string') continue;
+    for (const ch of new Set(painted)) {
+      if (!isLatinChar(ch)) continue;
       pageCount.set(ch, (pageCount.get(ch) ?? 0) + 1);
     }
   }
@@ -831,6 +972,11 @@ function fixtureRestore(path) {
  * The remedy it names is the one that holds TODAY: the default fixture can
  * be restored from git, and the caller may point the module at another
  * fixture instead.
+ *
+ * ⚠️ Each family gets TWO seeds: the Chinese characters the pages paint
+ * and the Latin ones. They are kept apart because the two tiers are cut
+ * differently — the Chinese hot tier has 300 slots and is filled from the
+ * corpus, the Latin hot tier holds the seed and NOTHING else.
  */
 function loadPageProfileSeeds(path) {
   const { tracked, restore } = fixtureRestore(path);
@@ -865,9 +1011,248 @@ function loadPageProfileSeeds(path) {
 
   const seeds = {};
   for (const family of FAMILIES) {
-    seeds[family] = unionOfPages(pages, family);
+    seeds[family] = {
+      chinese: unionOfPages(pages, family),
+      latin: unionOfLatinPages(pages, family),
+    };
   }
   return seeds;
+}
+
+/**
+ * Where the instanced source fonts live.
+ *
+ * The sources are the input of the build (`npm run fonts:download-web &&
+ * npm run fonts:instance-web` puts them there) and they are NOT tracked by
+ * git — the licences travel with the subsets, the sources do not.
+ */
+export const STAGING_DIR = resolve(ROOT, 'scripts', 'fonts', 'staging', 'web');
+
+/**
+ * The code points the source fonts of every family can draw.
+ *
+ * The coverage of a family is the INTERSECTION of the coverage of its
+ * source fonts, never the union: the brand face has two files (400 and
+ * 700) and both faces declare the SAME `unicode-range`, so a code point
+ * that only the regular file can draw would be claimed by the bold face
+ * as well — and rendered as a tofu box in bold.
+ *
+ * ⚠️ This is the ONE place that knows what a source font can draw. The
+ * build script (which cuts the files) and the verifier (which checks them)
+ * both take the answer from here — two copies of this rule would drift,
+ * and a drifting copy is a pipeline that reports green while it draws
+ * nothing.
+ *
+ * The coverage is cached by the staging directory: the fonts are read once
+ * per process, not once per family.
+ */
+const coverageCache = new Map();
+
+/**
+ * The code points the source fonts of every family can draw.
+ *
+ * @param {{ root?: string, stagingDir?: string }} options
+ * @returns {Record<string, Set<number>>} the code points of every family
+ * @throws {Error} when a source font is missing — with the two commands
+ *   that fetch it
+ */
+export function loadFamilyCoverage(options = {}) {
+  const root = options.root ?? ROOT;
+  const stagingDir = options.stagingDir ?? resolve(root, 'scripts', 'fonts', 'staging', 'web');
+  const key = `${root}::${stagingDir}`;
+  const cached = coverageCache.get(key);
+  if (cached) return cached;
+
+  const coverage = {};
+  for (const family of Object.keys(FAMILY_SOURCE_FILES)) {
+    coverage[family] = coverageOfFamily(family, stagingDir);
+  }
+  coverageCache.set(key, coverage);
+  return coverage;
+}
+
+/**
+ * The code points ONE family can draw: the intersection of its sources.
+ */
+function coverageOfFamily(family, stagingDir) {
+  const sources = [];
+  for (const fileName of FAMILY_SOURCE_FILES[family]) {
+    const path = join(stagingDir, fileName);
+    if (!existsSync(path)) {
+      throw new Error(
+        `[charset] the source font ${fileName} of the family ${family} is missing from ` +
+          `${stagingDir} — run "npm run fonts:download-web && npm run fonts:instance-web" ` +
+          'to fetch and instance it',
+      );
+    }
+    let buffer;
+    try {
+      buffer = readFileSync(path);
+    } catch (err) {
+      throw new Error(
+        `[charset] cannot read the glyph coverage of ${fileName} (${path}): ${err.message}`,
+      );
+    }
+    sources.push({ label: fileName, path, buffer });
+  }
+  return coverageOfSources(sources);
+}
+
+/**
+ * The code points a set of source fonts can draw: the INTERSECTION of their
+ * coverages.
+ *
+ * This is THE rule of the pipeline, and it lives here so the build (which
+ * cuts the files) and the verifier (which checks them) cannot drift apart.
+ *
+ * ⚠️ It is an intersection and never a union: the static brand face has two
+ * files (400 and 700) and BOTH faces declare the SAME `unicode-range`, so a
+ * code point that only the regular file can draw would be claimed by the
+ * bold face as well — and rendered as a tofu box in bold.
+ *
+ * @param {Array<{ label: string, path: string, buffer: Buffer }>} sources
+ * @returns {Set<number>} the code points every source can draw
+ */
+export function coverageOfSources(sources) {
+  let covered = null;
+  for (const source of sources) {
+    const label = source.label ?? source.fileName ?? 'the source font';
+    let font;
+    try {
+      font = fontkit.create(source.buffer);
+    } catch (err) {
+      throw new Error(
+        `[charset] cannot read the glyph coverage of ${label} (${source.path}): ` +
+          err.message,
+      );
+    }
+    const set = new Set(font.characterSet);
+    covered =
+      covered === null ? set : new Set([...covered].filter((codePoint) => set.has(codePoint)));
+  }
+  return covered ?? new Set();
+}
+
+/**
+ * The 24 tone vowels of the site, read from `lib/pinyin-tone.ts`.
+ *
+ * The single source of those characters is the `TONE_MAP` of that file —
+ * the table the quest builder derives its tone groups from. A second list
+ * of them in a build script would drift from it, and a drifted list means
+ * a tone mark the game paints has no glyph (G10).
+ *
+ * ⚠️ The file is PARSED, not imported: the build scripts are `.mjs` and
+ * the repository has no TypeScript loader for them (`tsconfig.json` sets
+ * `allowJs: false`). The TypeScript compiler is already a dependency of
+ * this module — `stripSourceComments` uses it — so the parser is at hand.
+ */
+export function loadToneVowels(root = ROOT) {
+  const path = join(root, 'lib', 'pinyin-tone.ts');
+  let text;
+  try {
+    text = readFileSync(path, 'utf8');
+  } catch (err) {
+    throw new Error(
+      `[charset] cannot read the tone table ${path}: ${err.message} — the Latin hot ` +
+        'tier is seeded with its 24 keys, so without it the tone marks of the game ' +
+        'would have no glyph',
+    );
+  }
+
+  const sourceFile = ts.createSourceFile(
+    'pinyin-tone.ts',
+    text,
+    ts.ScriptTarget.Latest,
+    false,
+    ts.ScriptKind.TS,
+  );
+
+  const names = [];
+  const visit = (node) => {
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === 'TONE_MAP' &&
+      node.initializer &&
+      ts.isObjectLiteralExpression(node.initializer)
+    ) {
+      for (const property of node.initializer.properties) {
+        if (!ts.isPropertyAssignment(property)) continue;
+        if (ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) {
+          names.push(property.name.text);
+        }
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+
+  if (names.length === 0) {
+    throw new Error(
+      `[charset] the tone table ${path} has no TONE_MAP — the Latin hot tier is ` +
+        'seeded with its keys, and an empty seed would ship the game tone marks ' +
+        'without a glyph',
+    );
+  }
+  return names;
+}
+
+/**
+ * The seed of the Latin hot tier of one family.
+ *
+ * It is the Latin characters the measured pages paint, PLUS the 24 tone
+ * vowels — the tone marks are NOT in the four measured pages (they are
+ * painted by the game pages), so without them the game would fall back to
+ * the system font for the tone it is about to teach.
+ *
+ * The seed is ordered BY CODE POINT: the fixture stores its strings that
+ * way, and a subset file is cut from the seed as one string — the order of
+ * that string must not depend on the order the pages were read.
+ */
+export function latinSeedOf(fixtureLatin, toneVowels) {
+  const chars = new Set(fixtureLatin);
+  for (const vowel of toneVowels) chars.add(vowel);
+  return [...chars].sort((a, b) => a.codePointAt(0) - b.codePointAt(0));
+}
+
+/**
+ * Drop the Latin characters the source font cannot draw.
+ *
+ * ⚠️ This is the load bearing filter of the Latin tier (F31-a for Latin).
+ * `subset-font` DROPS a code point the source font has no glyph for,
+ * silently — and the `unicode-range` of a face is computed from the PLAN,
+ * not from the cut file. A plan that claims a code point the font cannot
+ * draw therefore produces a face that lies about what it can render: the
+ * browser picks it for that character and paints a tofu box.
+ *
+ * The filter is here, in the PLAN, and not in the build step on purpose:
+ * a plan and a set of files that disagree are two truths, and the page
+ * budget cannot tell "the Latin tier was never built" from "this family
+ * cannot draw this character" — and a check that cannot tell them apart
+ * is a check that reports green while the tier is missing.
+ *
+ * The hot tier keeps its order and is neither padded nor truncated. The
+ * tail is flattened, filtered and cut into blocks of `extBlockChars`
+ * characters again, so a block that lost characters does not keep a file
+ * of its own for one character.
+ */
+export function filterLatinByCoverage(plan, covered, extBlockChars = LATIN_EXT_BLOCK_CHARS) {
+  if (!(covered instanceof Set)) {
+    throw new TypeError(`covered must be a Set of code points, got ${typeof covered}`);
+  }
+  const isCovered = (ch) => covered.has(ch.codePointAt(0));
+  const hot = plan.hot.filter(isCovered);
+  const tail = plan.extBlocks.flatMap((block) => block.chars).filter(isCovered);
+
+  const extBlocks = [];
+  for (let start = 0; start < tail.length; start += extBlockChars) {
+    extBlocks.push({
+      index: extBlocks.length + 1,
+      chars: tail.slice(start, start + extBlockChars),
+    });
+  }
+
+  return { hot, extBlocks };
 }
 
 /**
@@ -880,12 +1265,19 @@ function loadPageProfileSeeds(path) {
  * The hot tier of every family is seeded with the characters the measured
  * pages paint in it; the rest of the hot tier is filled by the corpus
  * frequency order.
+ *
+ * ⚠️ Every family gets a LATIN tier as well: a Latin hot tier (the seed
+ * and NOTHING else — it is not padded from the corpus) and a Latin tail
+ * (the Latin characters of the corpus, in blocks of twelve). The Latin
+ * tier is filtered by the real glyph coverage of the source fonts, so the
+ * plan only holds characters the font can really draw.
  */
 export function loadFamilyCharsets(options = {}) {
   const root = options.root ?? ROOT;
   const pageProfiles =
     options.pageProfiles ?? join(root, 'data', 'font-page-profiles.json');
-  const key = cacheKey(root, options.families, pageProfiles);
+  const stagingDir = options.stagingDir ?? resolve(root, 'scripts', 'fonts', 'staging', 'web');
+  const key = cacheKey(root, options.families, pageProfiles, stagingDir);
   const cached = planCache.get(key);
   if (cached) return cached;
 
@@ -895,30 +1287,46 @@ export function loadFamilyCharsets(options = {}) {
   // hear about it.
   const seeds = loadPageProfileSeeds(pageProfiles);
   const scores = loadScores(root);
+  const toneVowels = loadToneVowels(root);
+
+  // The coverage is read from the source fonts. A caller that has them
+  // (the build) hands them over; a caller that does not (a fresh checkout
+  // without the staging fonts) gets a plan without the Latin filter and a
+  // loud warning — a plan that over-claims is caught by the tofu gate of
+  // the build, a silent one is not.
+  const coverage = options.coverage ?? tryLoadCoverage(stagingDir);
 
   // --- the plan of every family -----------------------------------------
-  const plans = {
-    wenkai: planTiers(
-      toScored(scores.wenkai),
-      familyOptions('wenkai', options.families, seeds.wenkai),
-    ),
-    sans: planTiers(
-      toScored(scores.sans),
-      familyOptions('sans', options.families, seeds.sans),
-    ),
-    serif: planTiers(
-      toScored(scores.serif),
-      familyOptions('serif', options.families, seeds.serif),
-    ),
-  };
+  const plans = {};
+  for (const family of FAMILIES) {
+    const chinese = planTiers(
+      toScored(scores[family]),
+      familyOptions(family, options.families, seeds[family].chinese),
+    );
+
+    const latinPlan = planTiers(toScored(scores[`${family}Latin`]), {
+      tier1Size: 0,
+      extBlockChars: LATIN_EXT_BLOCK_CHARS,
+      hotChars: latinSeedOf(seeds[family].latin, toneVowels),
+    });
+    const latin = coverage
+      ? filterLatinByCoverage(latinPlan, coverage[family], LATIN_EXT_BLOCK_CHARS)
+      : latinPlan;
+
+    plans[family] = { ...chinese, latin };
+  }
 
   for (const family of FAMILIES) {
     const plan = plans[family];
     const total =
       plan.hot.length +
       plan.extBlocks.reduce((sum, block) => sum + block.chars.length, 0);
+    const latinTotal =
+      plan.latin.hot.length +
+      plan.latin.extBlocks.reduce((sum, block) => sum + block.chars.length, 0);
     console.log(
-      `charset ${family}: ${total} chars (hot ${plan.hot.length} / ext ${plan.extBlocks.length} blocks)`,
+      `charset ${family}: ${total} chars (hot ${plan.hot.length} / ext ${plan.extBlocks.length} blocks)` +
+        ` + latin ${latinTotal} chars (hot ${plan.latin.hot.length} / ext ${plan.latin.extBlocks.length} blocks)`,
     );
   }
   console.log(`skipped ${scores.skipped} malformed file(s)`);
@@ -928,11 +1336,52 @@ export function loadFamilyCharsets(options = {}) {
 }
 
 /**
+ * The coverage of the source fonts, or null when they are not there.
+ *
+ * The warning is loud on purpose: a plan without the Latin filter claims
+ * code points the font cannot draw, and the build then fails on the tofu
+ * gate. A silent fallback would look like a broken font instead of a
+ * missing input.
+ */
+function tryLoadCoverage(stagingDir) {
+  try {
+    return loadFamilyCoverage({ stagingDir });
+  } catch (err) {
+    console.warn(
+      `[charset] ${err.message} — the Latin tier is NOT filtered by the glyph ` +
+        'coverage, so the build will fail on the tofu gate until the sources are there',
+    );
+    return null;
+  }
+}
+
+/**
+ * Fold one source into a Chinese AND a Latin score table.
+ *
+ * The two tiers come out of the SAME scan: the counts hold every code
+ * point, and the fold decides which tier a character belongs to. One pass
+ * over the corpus, two tables — and the Chinese table stays exactly the
+ * table it always was.
+ */
+function foldBoth(chineseScore, latinScore, counts, weight) {
+  foldSource(chineseScore, counts, weight);
+  foldSource(latinScore, counts, weight, isLatinCodePoint);
+}
+
+/**
  * The score of every character of every family, scanned once per root.
  *
  * The scan is the expensive part — it reads the whole corpus — while the
  * tier plan on top of it is cheap. So the SCAN is cached by root and the
  * PLAN is computed per call, with the overrides the caller asked for.
+ *
+ * ⚠️ There are SIX tables: three Chinese (`wenkai` / `sans` / `serif`) and
+ * three Latin (`wenkaiLatin` / `sansLatin` / `serifLatin`). The Latin ones
+ * are nested exactly like the Chinese ones and come from exactly the same
+ * sources — only the filter of the fold differs. The nesting is the point:
+ * the serif Latin tier has to cover what the serif face paints, and the
+ * serif face paints the Sanskrit transliteration of the sutras, which the
+ * body face does not.
  */
 function loadScores(root) {
   const cached = scanCache.get(root);
@@ -945,21 +1394,27 @@ function loadScores(root) {
   // titles, the rare characters, the dictionary radicals and the standard
   // character set — everything the site paints in the brand face.
   const wenkaiScore = new Map();
-  foldSource(wenkaiScore, scanSourceCode(root, state), SOURCE_CODE_WEIGHT);
+  const wenkaiLatin = new Map();
+  foldBoth(
+    wenkaiScore,
+    wenkaiLatin,
+    scanSourceCode(root, state),
+    SOURCE_CODE_WEIGHT,
+  );
 
   const classics = scanJsonDirectory(join(root, 'data', 'classics'), state, {
     strings: true,
     titles: true,
     rares: false,
   });
-  foldSource(wenkaiScore, classics?.titles, CORPUS_WEIGHT);
+  foldBoth(wenkaiScore, wenkaiLatin, classics?.titles, CORPUS_WEIGHT);
 
   const sutras = scanJsonDirectory(join(root, 'data', 'sutras'), state, {
     strings: true,
     titles: true,
     rares: false,
   });
-  foldSource(wenkaiScore, sutras?.titles, CORPUS_WEIGHT);
+  foldBoth(wenkaiScore, wenkaiLatin, sutras?.titles, CORPUS_WEIGHT);
 
   // The rare characters come out of the same pass over data/content that
   // the body face needs, so the corpus is read once.
@@ -968,10 +1423,10 @@ function loadScores(root) {
     titles: false,
     rares: true,
   });
-  foldSource(wenkaiScore, content?.rares, CORPUS_WEIGHT);
+  foldBoth(wenkaiScore, wenkaiLatin, content?.rares, CORPUS_WEIGHT);
 
   const radicals = scanJsonFileValues(join(root, 'data', 'radicals.json'), state);
-  foldSource(wenkaiScore, radicals, CORPUS_WEIGHT);
+  foldBoth(wenkaiScore, wenkaiLatin, radicals, CORPUS_WEIGHT);
 
   // The 8 105 standard characters are the seed of the `chars` table and the
   // whole pool the games draw from. The chain game paints them in the
@@ -989,7 +1444,7 @@ function loadScores(root) {
     join(root, 'data', 'general-standard-chinese-characters.json'),
     state,
   );
-  foldSource(wenkaiScore, standard, CORPUS_WEIGHT);
+  foldBoth(wenkaiScore, wenkaiLatin, standard, CORPUS_WEIGHT);
 
   // The poem titles are painted in the brand face: components/poetry/
   // PoemCard.tsx:32 renders 《{poem.title}》 in font-kai. Seven of the
@@ -1007,25 +1462,30 @@ function loadScores(root) {
     titles: true,
     rares: false,
   });
-  foldSource(wenkaiScore, poems?.titles, CORPUS_WEIGHT);
+  foldBoth(wenkaiScore, wenkaiLatin, poems?.titles, CORPUS_WEIGHT);
 
   // --- sans: the body face ---------------------------------------------
   const sansScore = new Map(wenkaiScore);
-  foldSource(sansScore, content?.counts, CORPUS_WEIGHT);
-  foldSource(sansScore, poems?.counts, CORPUS_WEIGHT);
+  const sansLatin = new Map(wenkaiLatin);
+  foldBoth(sansScore, sansLatin, content?.counts, CORPUS_WEIGHT);
+  foldBoth(sansScore, sansLatin, poems?.counts, CORPUS_WEIGHT);
 
   const gb2312 = scanTextFile(join(root, 'scripts', 'fonts', 'gb2312-7000.txt'), state);
-  foldSource(sansScore, gb2312, CORPUS_WEIGHT);
+  foldBoth(sansScore, sansLatin, gb2312, CORPUS_WEIGHT);
 
   // --- serif: the accent face ------------------------------------------
   const serifScore = new Map(sansScore);
-  foldSource(serifScore, sutras?.counts, CORPUS_WEIGHT);
-  foldSource(serifScore, classics?.counts, CORPUS_WEIGHT);
+  const serifLatin = new Map(sansLatin);
+  foldBoth(serifScore, serifLatin, sutras?.counts, CORPUS_WEIGHT);
+  foldBoth(serifScore, serifLatin, classics?.counts, CORPUS_WEIGHT);
 
   const scores = {
     wenkai: wenkaiScore,
     sans: sansScore,
     serif: serifScore,
+    wenkaiLatin,
+    sansLatin,
+    serifLatin,
     skipped: state.skipped,
   };
   scanCache.set(root, scores);

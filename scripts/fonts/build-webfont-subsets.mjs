@@ -12,9 +12,22 @@
  *   into the files a browser can actually fetch:
  *     hot     the characters the MEASURED pages paint, in one file
  *     Ext     everything else, cut into blocks of 6 CHARACTERS
+ *     latin   the LATIN characters the measured pages paint (the pinyin,
+ *             the digits, the tone marks), in one file
+ *     latin-ext
+ *             the rest of the Latin characters of the repository, cut into
+ *             blocks of 12 CHARACTERS
  *   A page downloads the hot file plus the one or two Ext blocks that hold
  *   the characters it needs, and the browser fetches an Ext block only when
  *   a character of that block is actually painted.
+ *
+ *   ⚠️ The Latin tier is the SECOND half of every family. Before it, a
+ *   Latin character — a pinyin syllable, a digit, a tone mark — fell back
+ *   to the system font of the operating system, so the site mixed a webfont
+ *   and a system font on the same line. The Latin blocks are cut with
+ *   `noLayoutClosure` and their plan is filtered by the real glyph coverage
+ *   of the source fonts, so a Latin face never claims a code point the font
+ *   cannot draw.
  *
  *   ONE family name per family (R15). The old mechanism gave every tier
  *   its own family name ('Noto Sans SC 1' / '2' / 'Ext') and relied on the
@@ -72,8 +85,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import subsetFont from 'subset-font';
-import * as fontkit from 'fontkit';
-import { loadFamilyCharsets, unicodeRange } from './webfont-charset.mjs';
+import { coverageOfSources, loadFamilyCharsets, unicodeRange } from './webfont-charset.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..', '..');
@@ -114,6 +126,13 @@ const MANIFEST_PATH = join(FONT_DIR, 'fonts-manifest.json');
  * plan is filtered by the glyph coverage and the tail is cut into NEW
  * blocks, so the width has to be this script's own number — not one
  * inherited by accident. A test pins the two together.
+ *
+ * `latinExtBlockChars` is the same thing for the LATIN tail. The Latin
+ * blocks are wider than the Chinese ones (twelve characters against six):
+ * a Latin character carries more of the table of the font than a Chinese
+ * one does, and the whole tail is 155 characters at most — twelve
+ * characters per block keeps it in nine files per family instead of
+ * twenty-six.
  */
 export const FAMILIES = [
   {
@@ -127,6 +146,7 @@ export const FAMILIES = [
     variable: true,
     hotSize: 300,
     extBlockChars: 6,
+    latinExtBlockChars: 12,
     license: 'NotoSansSC-OFL.txt',
   },
   {
@@ -140,6 +160,7 @@ export const FAMILIES = [
     variable: true,
     hotSize: 300,
     extBlockChars: 6,
+    latinExtBlockChars: 12,
     license: 'NotoSerifSC-OFL.txt',
   },
   {
@@ -153,6 +174,7 @@ export const FAMILIES = [
     variable: false,
     hotSize: 300,
     extBlockChars: 6,
+    latinExtBlockChars: 12,
     license: 'LXGWWenKaiTC-OFL.txt',
   },
 ];
@@ -161,13 +183,23 @@ export const FAMILIES = [
  * The base name of a block, without the weight suffix.
  *
  * The hot tier is `hot`; an Ext block is `ext-` and its number, padded to
- * three digits so the files sort in the order of the plan.
+ * three digits so the files sort in the order of the plan. The Latin tier
+ * has two kinds of its own: `latin` (the hot tier of the Latin characters)
+ * and `latin-ext` (the tail of the Latin characters).
+ *
+ * ⚠️ The Latin base names carry their own prefix: a file called `latin.woff2`
+ * and a file called `hot.woff2` live in the same directory, and the number
+ * of the Latin tail blocks starts at one again — `latin-ext-001.woff2` is
+ * the first Latin tail block, `ext-001.woff2` the first Chinese one.
  */
 function blockBaseName(block) {
   if (block.kind === 'hot') return 'hot';
   if (block.kind === 'ext') return `ext-${String(block.index).padStart(3, '0')}`;
+  if (block.kind === 'latin') return 'latin';
+  if (block.kind === 'latin-ext') return `latin-ext-${String(block.index).padStart(3, '0')}`;
   throw new TypeError(
-    `unknown block kind ${JSON.stringify(block.kind)} — expected "hot" or "ext"`,
+    `unknown block kind ${JSON.stringify(block.kind)} — expected "hot", "ext", ` +
+      '"latin" or "latin-ext"',
   );
 }
 
@@ -309,14 +341,35 @@ export function renderFace(spec) {
 
 /**
  * The blocks of a family, in the order the stylesheet lists them: the hot
- * tier first, then the Ext blocks by their number.
+ * tier first, then the Ext blocks by their number, and the Latin tier LAST.
+ *
+ * ⚠️ The Latin blocks come AFTER the Chinese ones on purpose: the stylesheet
+ * lists the blocks in the order the files are written, and the version token
+ * of the family is the hash of the file names and their bytes IN THAT ORDER.
+ * Moving the Latin blocks in front would change the token of every family —
+ * and the token is what tells the browser that the file behind a URL is a
+ * new one.
+ *
+ * A plan without a Latin tier (the shape the unit tests use) yields the
+ * Chinese blocks only — the Latin tier is optional, not required.
  */
 function blocksOf(plan) {
   const ext = [...plan.extBlocks].sort((a, b) => a.index - b.index);
-  return [
+  const blocks = [
     { kind: 'hot', chars: plan.hot },
     ...ext.map((block) => ({ kind: 'ext', index: block.index, chars: block.chars })),
   ];
+
+  const latin = plan.latin;
+  if (latin) {
+    const latinExt = [...latin.extBlocks].sort((a, b) => a.index - b.index);
+    blocks.push({ kind: 'latin', chars: latin.hot });
+    blocks.push(
+      ...latinExt.map((block) => ({ kind: 'latin-ext', index: block.index, chars: block.chars })),
+    );
+  }
+
+  return blocks;
 }
 
 /**
@@ -511,31 +564,51 @@ export async function sweepStaleFiles(dir, keep) {
 }
 
 /**
- * The code points the family can actually draw.
+ * The Latin tail blocks of a plan must not be wider than the family says.
  *
- * The coverage of a family is the INTERSECTION of the coverage of its source
- * fonts, never the union: the static brand face has two files (400 and
- * 700) and both faces declare the SAME `unicode-range`, so a character
- * that only the regular file can draw would be claimed by the bold face
- * as well — and rendered as a tofu box in bold.
+ * The width of the Latin blocks is a contract between the plan builder and
+ * this script: the plan cuts the tail, this script cuts the files. A plan
+ * that was cut at another width would produce files nobody expects — and
+ * the file budget of the Latin tail would be wrong.
  */
-function coverageOf(family, sources) {
-  let covered = null;
-  for (const source of sources) {
-    let font;
-    try {
-      font = fontkit.create(source.buffer);
-    } catch (err) {
+function assertLatinBlockWidth(family, plan) {
+  const latin = plan.latin;
+  if (!latin) return;
+  const limit = family.latinExtBlockChars;
+  for (const block of latin.extBlocks) {
+    if (block.chars.length > limit) {
       throw new Error(
-        `[webfont] cannot read the glyph coverage of ${family.label} from ${source.path}: ` +
-          err.message,
+        `[webfont] the Latin block ${block.index} of ${family.label} holds ` +
+          `${block.chars.length} characters — the plan says a Latin block holds at ` +
+          `most ${limit}. The plan and this script disagree about the width of a ` +
+          'Latin block, and the file budget would be wrong',
       );
     }
-    const set = new Set(font.characterSet);
-    covered =
-      covered === null ? set : new Set([...covered].filter((codePoint) => set.has(codePoint)));
   }
-  return covered ?? new Set();
+}
+
+/**
+ * The subset options of a block.
+ *
+ * The Chinese blocks are cut exactly as they always were: one option, one
+ * format. NOT ONE BYTE of the 7 936 Chinese subsets may change.
+ *
+ * The Latin blocks add `noLayoutClosure: true`: harfbuzz' layout closure
+ * keeps the CLOSURE of the layout in a pure Latin subset, and the closure of
+ * a Latin subset carries the five ligature glyphs the site paints NEVER. The
+ * controller measured it: 434 glyphs with the closure against 119 without, a
+ * factor of 3.2 for glyphs nobody sees.
+ *
+ * The `wght` axis is NOT pinned. Pinning it would build a static instance
+ * and throw the real bold away (G9: the look of the font does not change),
+ * and it FAILS outright on the static brand face: the axis does not exist
+ * there, and harfbuzz answers "returned zero when pinning".
+ */
+function subsetOptionsFor(block) {
+  if (block.kind === 'latin' || block.kind === 'latin-ext') {
+    return { targetFormat: 'woff2', noLayoutClosure: true };
+  }
+  return { targetFormat: 'woff2' };
 }
 
 /**
@@ -580,7 +653,7 @@ async function buildFamily(family, plan, sources, stagingDir) {
 
       let subset;
       try {
-        subset = await subsetFont(sources[index].buffer, text, { targetFormat: 'woff2' });
+        subset = await subsetFont(sources[index].buffer, text, subsetOptionsFor(block));
       } catch (err) {
         throw new Error(
           `[webfont] cannot subset ${family.label} into ${name} ` +
@@ -629,11 +702,19 @@ async function buildFamily(family, plan, sources, stagingDir) {
   }
 
   const chars = blocks.reduce((sum, block) => sum + block.chars.length, 0);
+  const cjkBlocks = blocks.filter(
+    (block) => block.kind === 'hot' || block.kind === 'ext',
+  ).length;
+  const latinBlocks = blocks.length - cjkBlocks;
+  const latinChars = blocks
+    .filter((block) => block.kind === 'latin' || block.kind === 'latin-ext')
+    .reduce((sum, block) => sum + block.chars.length, 0);
   const cssBytes = Buffer.byteLength(css, 'utf8');
   const cssGzipBytes = gzipSync(Buffer.from(css, 'utf8')).length;
 
   console.log(
-    `[webfont] ${family.key}: ${chars} chars, ${blocks.length - 1} ext blocks, ` +
+    `[webfont] ${family.key}: ${chars} chars (${chars - latinChars} cjk + ${latinChars} latin), ` +
+      `${cjkBlocks - 1} ext blocks + ${latinBlocks} latin blocks, ` +
       `${files} files, ${bytes} B (${Math.round(bytes / 1024)} KB), ` +
       `css ${cssBytes} B (gzip ${cssGzipBytes} B), version ${version}`,
   );
@@ -642,7 +723,9 @@ async function buildFamily(family, plan, sources, stagingDir) {
     key: family.key,
     chars,
     blocks: blocks.length,
-    extBlocks: blocks.length - 1,
+    extBlocks: cjkBlocks - 1,
+    latinBlocks,
+    latinChars,
     files,
     bytes,
     version,
@@ -668,19 +751,41 @@ async function buildFamily(family, plan, sources, stagingDir) {
  */
 export async function buildAll(options = {}) {
   const stagingDir = options.stagingDir ?? STAGING_DIR;
-  const plans = loadFamilyCharsets();
 
   // Phase one: check everything. Nothing is written before this passes.
+  //
+  // The coverage of the source fonts is read HERE, from the buffers the
+  // build has read anyway, and it is handed to the plan builder: the Latin
+  // tier is filtered by the real glyph coverage in the PLAN, so the
+  // `unicode-range` of a Latin face never claims a code point the font
+  // cannot draw (the subsetter drops such a code point SILENTLY, and a face
+  // that claims a code point it cannot draw is a tofu box in the browser).
   const prepared = [];
+  const coverage = {};
+  const sourcesByFamily = new Map();
   for (const family of FAMILIES) {
     const sources = [];
     for (const fileName of family.sources) {
       sources.push(await readSourceFont(family, fileName, stagingDir));
     }
     assertLicense(family, stagingDir);
-    const covered = coverageOf(family, sources);
-    const plan = filterPlanByCoverage(plans[family.key], covered, family.extBlockChars);
-    prepared.push({ family, plan, sources });
+    sourcesByFamily.set(family.key, sources);
+    coverage[family.key] = coverageOfSources(sources);
+  }
+
+  const plans = loadFamilyCharsets({ coverage });
+
+  for (const family of FAMILIES) {
+    const covered = coverage[family.key];
+    const chinese = filterPlanByCoverage(plans[family.key], covered, family.extBlockChars);
+    // The Latin tier is already filtered by the same coverage, in the plan
+    // layer, and its tail is already cut into blocks of twelve characters.
+    // It passes through untouched — filtering it again here would cut its
+    // tail into blocks of six, and the block width is part of the contract
+    // of the plan.
+    const plan = { ...chinese, latin: plans[family.key].latin };
+    assertLatinBlockWidth(family, plan);
+    prepared.push({ family, plan, sources: sourcesByFamily.get(family.key) });
   }
 
   // Phase two: write.

@@ -18,9 +18,10 @@
  * grows the render-blocking payload or breaks the cache.
  *
  * The numbers below are MEASUREMENTS, not estimates: they were taken from the
- * shipped build (Task 3, filter round F31-a plus the R18 tokens). A rebuild
- * that changes them has to change the constants here on purpose — the
- * budgets are not to be relaxed to make a build pass.
+ * shipped build (Task 3, filter round F31-a plus the R18 tokens; Task 10
+ * added the local Latin tier). A rebuild that changes them has to change the
+ * constants here on purpose — the budgets are not to be relaxed to make a
+ * build pass.
  */
 import { describe, it, expect } from 'vitest';
 import { createHash } from 'node:crypto';
@@ -67,27 +68,27 @@ const FAMILIES: Family[] = [
     label: 'Noto Sans SC',
     file: 'fonts-sans.css',
     subsetDir: 'web/sans',
-    faces: 2459,
-    rawBytes: 620320,
-    gzipBytes: 55437,
+    faces: 2468,
+    rawBytes: 623000,
+    gzipBytes: 55821,
   },
   {
     key: 'serif',
     label: 'Noto Serif SC',
     file: 'fonts-serif.css',
     subsetDir: 'web/serif',
-    faces: 2841,
-    rawBytes: 722614,
-    gzipBytes: 63915,
+    faces: 2855,
+    rawBytes: 726882,
+    gzipBytes: 64536,
   },
   {
     key: 'wenkai',
     label: 'LXGW WenKai TC',
     file: 'fonts-wenkai.css',
     subsetDir: 'web/wenkai',
-    faces: 2636,
-    rawBytes: 666617,
-    gzipBytes: 37930,
+    faces: 2658,
+    rawBytes: 673293,
+    gzipBytes: 38491,
   },
 ];
 
@@ -294,7 +295,7 @@ describe('public/font per-family stylesheets', () => {
     }
     // The three stylesheets together, raw: the CSS the browser has to parse
     // before it can paint a single character.
-    expect(cssBytes).toBe(2009551);
+    expect(cssBytes).toBe(2023175);
     // fonts-sans.css is the only stylesheet on the critical path; the other
     // two are fetched without blocking the first paint.
     const sans = FAMILIES.find((family) => family.key === 'sans');
@@ -306,8 +307,8 @@ describe('public/font per-family stylesheets', () => {
     // only the handful the page draws, but the whole set has to be
     // deployed, cached and kept in the bundle budget.
     const subsets = allSubsetFiles();
-    expect(subsets.length).toBe(7936);
-    expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28127360);
+    expect(subsets.length).toBe(7981);
+    expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28236168);
   });
 
   it('keeps the gzipped payload within budget', () => {
@@ -321,8 +322,8 @@ describe('public/font per-family stylesheets', () => {
       total += bytes;
       expect(bytes).toBe(family.gzipBytes);
     }
-    expect(perFamily.get('sans')).toBe(55437);
-    expect(total).toBe(157282);
+    expect(perFamily.get('sans')).toBe(55821);
+    expect(total).toBe(158848);
     expect(total).toBeLessThanOrEqual(VERIFIER_LIMITS.cssBytes);
     expect(perFamily.get('sans')).toBeLessThanOrEqual(VERIFIER_LIMITS.sansCssBytes);
   });

@@ -37,6 +37,8 @@ export interface FontLimits {
   maxFacesPerCss: number;
   /** The budget of the number of font files one page downloads. */
   maxFontFilesPerPage: number;
+  /** The budget of the Latin hot tier file of a family. */
+  latinBytes: number;
   /** The budget of the font bytes one page downloads, per page. */
   pageFontBytes: PageFontBudgets;
 }
@@ -60,6 +62,10 @@ export interface FamilyStats {
   faces: number;
   /** The number of blocks of the family: the hot tier plus the Ext blocks. */
   blocks: number;
+  /** The number of Latin blocks of the family: the Latin hot tier plus its tail. */
+  latinBlocks: number;
+  /** The number of code points the Latin blocks of the family claim. */
+  latinChars: number;
   /** The number of subset files the stylesheet points at. */
   files: number;
   /** The bytes of the subset files. */
@@ -222,6 +228,43 @@ export declare function checkFaceDirectory(
 export declare function checkManifestFiles(
   manifest: FontManifest,
   families: Array<{ key: FamilyName; css: string }>,
+): string[];
+
+/**
+ * The Latin characters of a page that no BUILT block claims.
+ *
+ * Two kinds, and the difference between them is the whole point:
+ *
+ *   `missing`      the source font CAN draw the character and no subset of
+ *                  the family claims it ⇒ the Latin tier was never built ⇒
+ *                  an ERROR
+ *   `unsupported`  the source font CANNOT draw the character ⇒ the browser
+ *                  falls back to the system font, which is a limit of the
+ *                  FONT and not a bug of the pipeline ⇒ reported only
+ *
+ * The scope comes from the shared glyph coverage of the source fonts
+ * (`loadFamilyCoverage` of scripts/fonts/webfont-charset.mjs) — the same
+ * capability the plan builder filters the Latin tier with.
+ */
+export declare function classifyUnpaintedLatin(
+  chars: string,
+  cpToBlock: Map<number, string>,
+  covered: Set<number> | null,
+): { missing: number[]; unsupported: number[] };
+
+/**
+ * The Latin hot block of a family must declare the 24 tone vowels.
+ *
+ * The tone marks are NOT in the page fixture — the four measured pages paint
+ * at most a handful of them — so they are in the Latin hot tier because of
+ * `lib/pinyin-tone.ts`, not because of the fixture. The assertion is
+ * therefore not idle: it proves that the Latin tier was built out of the
+ * tone table and not out of the fixture.
+ */
+export declare function checkLatinToneVowels(
+  family: { key: FamilyName; label: string },
+  latinBlock: { points: Set<number> } | undefined,
+  toneVowels: string[],
 ): string[];
 
 /**

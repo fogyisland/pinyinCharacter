@@ -10,7 +10,7 @@
  * so its types come from there too — one plan, one type, no second copy
  * that can drift.
  */
-import type { FamilyName, TierPlan } from './webfont-charset.mjs';
+import type { ExtBlock, FamilyName, TierPlan } from './webfont-charset.mjs';
 
 /**
  * One family the site ships.
@@ -57,6 +57,14 @@ export interface FamilySpec {
    * into NEW blocks, so the width is this script's own number.
    */
   extBlockChars: number;
+  /**
+   * How many characters one LATIN Ext block holds.
+   *
+   * The Latin blocks are wider than the Chinese ones (twelve characters
+   * against six): a Latin character carries more of the table of the font
+   * than a Chinese one does.
+   */
+  latinExtBlockChars: number;
   /** The licence file of the family, in the staging directory. */
   license: string;
 }
@@ -65,9 +73,15 @@ export interface FamilySpec {
  * One block of a family.
  *
  * The hot tier has no number; an Ext block carries its number, which is
- * contiguous and starts at 1.
+ * contiguous and starts at 1. The Latin tier has two kinds of its own: the
+ * Latin hot tier ('latin') and the Latin tail ('latin-ext'), whose numbers
+ * start at 1 again.
  */
-export type BlockRef = { kind: 'hot' } | { kind: 'ext'; index: number };
+export type BlockRef =
+  | { kind: 'hot' }
+  | { kind: 'ext'; index: number }
+  | { kind: 'latin' }
+  | { kind: 'latin-ext'; index: number };
 
 /** One @font-face rule. */
 export interface FaceSpec {
@@ -115,6 +129,10 @@ export interface FamilyReport {
   blocks: number;
   /** The number of Ext blocks of the family. */
   extBlocks: number;
+  /** The number of Latin blocks of the family: the Latin hot tier plus its tail. */
+  latinBlocks: number;
+  /** The number of Latin characters the family covers. */
+  latinChars: number;
   /** The number of subset files that were written. */
   files: number;
   /** The bytes of the subset files. */
@@ -186,12 +204,16 @@ export declare function createVersionHasher(): VersionHasher;
 /**
  * Drop the characters the font cannot draw, and cut the tail into new
  * blocks of `extBlockChars` characters.
+ *
+ * It applies to the CHINESE tier only: the Latin tier is filtered in the
+ * plan layer already, and filtering it again here would cut its tail into
+ * blocks of six instead of twelve.
  */
 export declare function filterPlanByCoverage(
-  plan: TierPlan,
+  plan: { hot: string[]; extBlocks: ExtBlock[] },
   covered: Set<number>,
   extBlockChars: number,
-): TierPlan;
+): { hot: string[]; extBlocks: ExtBlock[] };
 
 /** Render one @font-face rule. */
 export declare function renderFace(spec: FaceSpec): string;

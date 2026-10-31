@@ -26,13 +26,26 @@
  * "initialised" page since 2026-10-29, so a LIVE capture only sees what an
  * anonymous visitor sees. The committed fixture comes from four captures
  * made before the initialisation.
+ *
+ * ⚠️ The capture records TWO character sets per page and family: the
+ * Chinese characters and the Latin ones. The fixture string is the Chinese
+ * part FIRST and the Latin part AFTER it, so the Chinese part of the
+ * committed fixture stays byte for byte the prefix it has always been — a
+ * Latin capture can never rewrite the 7 936 Chinese subset files.
+ *
+ * ⚠️ A live capture MUST carry the initialization cookie and MUST check the
+ * response before it measures anything: without `setup_completed=1` the site
+ * answers with a 307 to `/init` whose body is FIVE bytes long, and a
+ * capture that does not notice records the charset of the gate.
  */
 
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { collectFamilyCharsets } from '../perf/class-attribution.mjs';
+import { collectFamilyCharsets, collectFamilyLatinCharsets } from '../perf/class-attribution.mjs';
+import { DEFAULT_COOKIE, fetchPage } from '../perf/fetch-page.mjs';
+import { isLatinChar } from './webfont-charset.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
@@ -59,9 +72,6 @@ const FAMILIES = ['sans', 'serif', 'wenkai'];
 /** The default origin the live capture reads from. */
 const DEFAULT_BASE = 'https://ziyun.pudafo.com';
 
-/** How long one page may take. */
-const FETCH_TIMEOUT_MS = 30_000;
-
 /**
  * Parse the command line.
  */
@@ -74,6 +84,11 @@ function parseArgs(argv) {
     source: null,
     fixture: FIXTURE_PATH,
     force: false,
+    cookie: DEFAULT_COOKIE,
+    keepCjk: false,
+    latinCapturedAt: null,
+    latinSource: null,
+    union: 1,
   };
   for (let index = 0; index < argv.length; index += 1) {
     const argument = argv[index];
@@ -96,13 +111,37 @@ function parseArgs(argv) {
       case '--fixture':
         options.fixture = argv[++index];
         break;
+      case '--cookie':
+        options.cookie = argv[++index];
+        break;
+      case '--latin-captured-at':
+        options.latinCapturedAt = argv[++index];
+        break;
+      case '--latin-source':
+        options.latinSource = argv[++index];
+        break;
+      case '--keep-cjk':
+        options.keepCjk = true;
+        break;
+      case '--union': {
+        const value = Number(argv[++index]);
+        if (!Number.isInteger(value) || value < 1) {
+          throw new Error(
+            `--union needs a positive integer number of rounds, got ` +
+              `${JSON.stringify(argv[index])}`,
+          );
+        }
+        options.union = value;
+        break;
+      }
       case '--force':
         options.force = true;
         break;
       default:
         throw new Error(
           `unknown argument ${JSON.stringify(argument)} — the options are ` +
-            '--base, --html-dir, --out, --captured-at, --source, --fixture and --force',
+            '--base, --html-dir, --out, --captured-at, --source, --fixture, ' +
+            '--cookie, --latin-captured-at, --latin-source, --keep-cjk, --union and --force',
         );
     }
   }
@@ -113,6 +152,9 @@ function parseArgs(argv) {
     capturedAt: '--captured-at',
     source: '--source',
     fixture: '--fixture',
+    cookie: '--cookie',
+    latinCapturedAt: '--latin-captured-at',
+    latinSource: '--latin-source',
   };
   for (const [name, flag] of Object.entries(flags)) {
     if (options[name] === undefined) {
@@ -145,6 +187,13 @@ function joinByCodePoint(chars) {
  *
  * Either from a local directory (`--html-dir`, one `<page>.html` per page)
  * or from the live site (`--base`).
+ *
+ * ⚠️ The live read goes through `fetchPage` of `scripts/perf/fetch-page.mjs`:
+ * it carries the initialization cookie and it REFUSES a response that is not
+ * a page (status 200, `text/html`, more than 10 000 bytes). A 307 to
+ * `/init` with a five byte body is the gate, not a page — a capture that
+ * does not notice records the charset of the gate and the hot tier is seeded
+ * with it.
  */
 async function readPages(options) {
   const html = {};
@@ -163,17 +212,11 @@ async function readPages(options) {
     const url = `${options.base.replace(/\/+$/, '')}${page.path}`;
     let response;
     try {
-      response = await fetch(url, {
-        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-        headers: { 'user-agent': 'pinyin-character-capture/1.0' },
-      });
+      response = await fetchPage(url, { cookie: options.cookie });
     } catch (error) {
-      throw new Error(`the page ${page.path} cannot be fetched (${url}): ${error.message}`);
+      throw new Error(`the page ${page.path} cannot be captured (${url}): ${error.message}`);
     }
-    if (!response.ok) {
-      throw new Error(`the page ${page.path} answers ${response.status} (${url})`);
-    }
-    html[page.path] = await response.text();
+    html[page.path] = response.body;
   }
   return html;
 }
@@ -278,31 +321,148 @@ async function main() {
   );
   if (!options.htmlDir) {
     console.log(
-      '[capture] warning: the production site answers anonymous requests with the ' +
-        '"initialised" page since 2026-10-29 — a live capture only sees what an ' +
-        'anonymous visitor sees',
+      '[capture] the live capture carries the initialization cookie ' +
+        `(${options.cookie === '' ? 'none — on purpose' : options.cookie}) — without it ` +
+        'the site answers with a 307 to /init and a body of five bytes, and the capture ' +
+        'would record the charset of the gate',
     );
   }
 
-  const html = await readPages(options);
+  const rounds = [];
+  for (let round = 0; round < options.union; round += 1) {
+    rounds.push(await readPages(options));
+  }
+  if (options.union > 1) {
+    console.log(
+      `[capture] ${options.union} rounds were captured and their characters were ` +
+        'united — the live pages serve a different selection of stories on every ' +
+        'request, so one round is a sample of what a page paints, not the whole of it',
+    );
+  }
 
+  // The two character sets of every page: the Chinese ones and the Latin
+  // ones. They are collected with the SAME attribution rule (the same
+  // module, the same walk) — only the accepted characters differ.
+  //
+  // ⚠️ The sets of the rounds are UNITED: the live pages are not
+  // deterministic (two requests for `/stories` answer with two different
+  // bodies), so a single round samples the page. A character the page
+  // paints in one render and not in another is a character the page paints
+  // — and a hot tier that holds only one sample of it lets the browser
+  // fall back to the system font for the other renders.
+  const cjkSets = {};
+  const latinSets = {};
+  for (const page of PAGES) {
+    cjkSets[page.path] = { sans: new Set(), serif: new Set(), wenkai: new Set() };
+    latinSets[page.path] = { sans: new Set(), serif: new Set(), wenkai: new Set() };
+  }
+  for (const html of rounds) {
+    for (const page of PAGES) {
+      const cjk = collectFamilyCharsets(html[page.path]);
+      const latin = collectFamilyLatinCharsets(html[page.path]);
+      for (const family of FAMILIES) {
+        for (const ch of cjk[family]) cjkSets[page.path][family].add(ch);
+        for (const ch of latin[family]) latinSets[page.path][family].add(ch);
+      }
+    }
+  }
+
+  const cjkPages = {};
+  const latinPages = {};
+  for (const page of PAGES) {
+    cjkPages[page.path] = {
+      sans: joinByCodePoint(cjkSets[page.path].sans),
+      serif: joinByCodePoint(cjkSets[page.path].serif),
+      wenkai: joinByCodePoint(cjkSets[page.path].wenkai),
+    };
+    latinPages[page.path] = {
+      sans: joinByCodePoint(latinSets[page.path].sans),
+      serif: joinByCodePoint(latinSets[page.path].serif),
+      wenkai: joinByCodePoint(latinSets[page.path].wenkai),
+    };
+  }
+
+  // ⚠️ The Chinese part of the committed fixture is the PREFIX of every
+  // string, and it must stay byte for byte what it is. `--keep-cjk` takes
+  // it from the committed fixture instead of from the capture: the live
+  // pages have drifted since 2026-10-29, and a capture that rewrote the
+  // Chinese part would rewrite the 7 936 Chinese subset files with it.
+  let chinesePages = cjkPages;
+  if (options.keepCjk) {
+    if (!fixture.parsed) {
+      throw new Error(
+        '--keep-cjk needs the committed fixture to keep the Chinese part from ' +
+          '— point --fixture at it, or drop --keep-cjk',
+      );
+    }
+    const oldPages = fixture.parsed.pages ?? {};
+    chinesePages = {};
+    for (const page of PAGES) {
+      const before = oldPages[page.path] ?? {};
+      chinesePages[page.path] = {};
+      for (const family of FAMILIES) {
+        const kept = before[family];
+        if (typeof kept !== 'string') {
+          throw new Error(
+            `--keep-cjk: the committed fixture has no ${family} string for ` +
+              `${page.path} — the Chinese part cannot be kept`,
+          );
+        }
+        // The committed string is "the Chinese characters and then the Latin
+        // ones". The Chinese part is what is left after the Latin characters
+        // are taken away — everything that is NOT a Latin character is kept,
+        // in its order, byte for byte.
+        chinesePages[page.path][family] = [...kept].filter((ch) => !isLatinChar(ch)).join('');
+      }
+    }
+    console.log(
+      '[capture] the Chinese part is kept from the committed fixture — only the ' +
+        'Latin part comes from this capture',
+    );
+  }
+
+  // The fixture string of a family: the Chinese characters FIRST, the Latin
+  // ones AFTER them. Two sorted runs, not one sorted run — the Chinese part
+  // is the prefix the committed fixture already has.
   const pages = {};
   for (const page of PAGES) {
-    const sets = collectFamilyCharsets(html[page.path]);
-    pages[page.path] = {
-      sans: joinByCodePoint(sets.sans),
-      serif: joinByCodePoint(sets.serif),
-      wenkai: joinByCodePoint(sets.wenkai),
-    };
+    pages[page.path] = {};
+    for (const family of FAMILIES) {
+      pages[page.path][family] = chinesePages[page.path][family] + latinPages[page.path][family];
+    }
   }
 
   // The metadata of a replay: a local capture replays an old capture, so
   // it keeps the metadata of that capture — otherwise the replay could
   // never reproduce the fixture byte for byte.
+  //
+  // ⚠️ The metadata of the CHINESE part belongs to the Chinese part: with
+  // `--keep-cjk` the Chinese characters are the ones of the committed
+  // fixture, so `capturedAt` and `source` are theirs too — a live Latin
+  // capture must not claim that the Chinese characters of 2026-10-29 were
+  // read today.
+  const keepChinese = Boolean(options.keepCjk && fixture.parsed);
   const capturedAt =
     options.capturedAt ??
-    (options.htmlDir && fixture.parsed ? fixture.parsed.capturedAt : today());
-  const source = resolveSource(options, fixture.parsed);
+    (keepChinese || (options.htmlDir && fixture.parsed)
+      ? fixture.parsed.capturedAt
+      : today());
+  const source =
+    options.source ??
+    (keepChinese ? fixture.parsed.source : resolveSource(options, fixture.parsed));
+
+  // The metadata of the Latin part, which is a capture of its own: it says
+  // WHEN the Latin characters were read and WHERE they came from.
+  const latinCapturedAt =
+    options.latinCapturedAt ??
+    (options.htmlDir && fixture.parsed
+      ? (fixture.parsed.latinCapturedAt ?? fixture.parsed.capturedAt)
+      : today());
+  const latinSource =
+    options.latinSource ??
+    (options.htmlDir && fixture.parsed
+      ? (fixture.parsed.latinSource ?? fixture.parsed.source)
+      : source);
 
   if (options.htmlDir && fixture.parsed && !options.capturedAt && !options.source) {
     console.log(
@@ -311,7 +471,7 @@ async function main() {
     );
   }
 
-  const profile = { capturedAt, source, pages };
+  const profile = { capturedAt, source, latinCapturedAt, latinSource, pages };
   const content = `${JSON.stringify(profile, null, 2)}\n`;
 
   reportDifference(fixture, pages);

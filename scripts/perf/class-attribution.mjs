@@ -21,7 +21,7 @@
  * 和预算算的字符集不是一回事，测出来的载荷就是假的。
  */
 
-import { isCjkChar } from '../fonts/webfont-charset.mjs';
+import { isCjkChar, isLatinChar } from '../fonts/webfont-charset.mjs';
 
 /** class 名 → 字族。 */
 const FAMILY_BY_CLASS = {
@@ -75,6 +75,34 @@ export function familyOfAttrs(attrs, parentFamily) {
  * @returns {{ sans: Set<string>, serif: Set<string>, wenkai: Set<string> }}
  */
 export function collectFamilyCharsets(html) {
+  return collectFamilySets(html, isCjkChar);
+}
+
+/**
+ * 把一段 HTML 的**拉丁字符**归到三个字族。
+ *
+ * 与 `collectFamilyCharsets` 是同一个函数、同一条栈式归因规则，只是收的
+ * 字符集不同（拉丁 vs 中文）。
+ *
+ * ⚠️ 归因规则只有一份：`collectFamilySets` 是唯一的实现，两个导出只是把
+ * 不同的过滤器传给它。**不许**另写一份正则或另写一次栈遍历 —— 两份归因
+ * 规则迟早漂移，于是 fixture 说的字符集和预算算的字符集不是一回事，
+ * 测出来的载荷就是假的（这正是 F27-j-a 的教训）。
+ *
+ * @returns {{ sans: Set<string>, serif: Set<string>, wenkai: Set<string> }}
+ */
+export function collectFamilyLatinCharsets(html) {
+  return collectFamilySets(html, isLatinChar);
+}
+
+/**
+ * 把一段 HTML 的字符归到三个字族，收哪些字符由 `accept` 决定。
+ *
+ * @param {string} html 页面的 HTML
+ * @param {(ch: string) => boolean} accept 收下这个字符吗
+ * @returns {{ sans: Set<string>, serif: Set<string>, wenkai: Set<string> }}
+ */
+function collectFamilySets(html, accept) {
   const source = stripComments(stripScriptsAndStyles(html));
   const sets = { sans: new Set(), serif: new Set(), wenkai: new Set() };
   const stack = [{ tag: '#root', family: DEFAULT_FAMILY }];
@@ -86,7 +114,7 @@ export function collectFamilyCharsets(html) {
     if (inHead) return;
     const family = stack[stack.length - 1].family;
     for (const ch of text) {
-      if (isCjkChar(ch)) sets[family].add(ch);
+      if (accept(ch)) sets[family].add(ch);
     }
   };
 
