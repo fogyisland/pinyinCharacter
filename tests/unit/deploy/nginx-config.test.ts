@@ -844,8 +844,8 @@ describe('the sysctl tuning manual never hardcodes a machine-specific qdisc valu
   // scoped to the §5 rollback section, so the reference block is never
   // scanned.
   //
-  // ⚠️ 上面那段注释里「正则要求 `=` 紧跟键名」是旧机制；这一轮换成**作用域**：
-  // 否定断言只读 §5 子串，§1.1 那条参考值根本不在被扫描的文本里。
+  // ⚠️ 否定断言靠**作用域**放过 §1.1 那条参考值：它只读 §5 子串，
+  // §1.1 那条参考值根本不在被扫描的文本里。
 
   // §5「回滚」这一节的正文边界。**不要按行号切**（行号会漂），
   // 按标题切。§4 里那句 `sudo sysctl -w net.core.default_qdisc=fq` 是
