@@ -2,7 +2,7 @@
  * scripts/fonts/verify-webfont-subsets.mjs — proves the shipped webfont
  * subsets are correct.
  *
- * Why this exists: the site ships 7 936 woff2 files (three families, a hot
+ * Why this exists: the site ships 7 981 woff2 files (three families, a hot
  * tier and thousands of Ext blocks) plus three stylesheets that tell the
  * browser which file holds which character. Every one of those declarations
  * is a promise: "this file can draw these characters". A promise that is
