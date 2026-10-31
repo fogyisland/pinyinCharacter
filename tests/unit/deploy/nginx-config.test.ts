@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
+
+import { parseFaces, parseFaceUrl } from '../../../scripts/fonts/verify-webfont-subsets.mjs';
 
 const ROOT = resolve(__dirname, '..', '..', '..');
 const conf = readFileSync(resolve(ROOT, 'deploy', 'nginx.ziyun.pudafo.com.conf'), 'utf8');
@@ -443,26 +445,268 @@ describe('the deploy manual refuses to overwrite the live nginx config (F30-a)',
   });
 });
 
+/**
+ * The font facts of the deploy manual, computed from the published
+ * artefacts.
+ *
+ * ⚠️ The premise this test used to encode is OBSOLETE: it asserted that the
+ * new subsets carry no code point below U+2E80, so that the Latin fell to
+ * the system font, and it asked the manual for a number that any number
+ * would have satisfied. The Latin tier is built and published since Task 10
+ * (W2-6), so the truth has to be READ from the artefacts -- and the manual
+ * has to agree with whatever the artefacts say.
+ */
+
+/** The three families of the site. */
+const FONT_FAMILIES = ['sans', 'serif', 'wenkai'] as const;
+
+/** The first code point of the CJK area: below it there is no Han character. */
+const CJK_BOUNDARY = 0x2e80;
+
+/**
+ * The file of the Latin HOT tier of a family.
+ *
+ * The Latin tier has two kinds of block (`blockFileNames()` of
+ * `scripts/fonts/build-webfont-subsets.mjs`): the hot tier, whose file is
+ * `latin.woff2` for the variable families and `latin-<weight>.woff2` for
+ * the static one, and the tail, whose files are `latin-ext-<index>.woff2`.
+ * These four hot files are the Latin bytes a page actually downloads.
+ */
+const HOT_LATIN_FILE = /^latin(-\d{3})?\.woff2$/;
+
+/** One published face: the file it points at and the range it claims. */
+interface PublishedFace {
+  /** The directory of the family, e.g. 'sans'. */
+  dir: string;
+  /** The file of the face, e.g. 'latin.woff2'. */
+  file: string;
+  /** The code points the face claims. */
+  ranges: Array<{ start: number; end: number }>;
+}
+
+/**
+ * The ranges of a `unicode-range` declaration.
+ *
+ * The verifier of the subsets parses them too, but it does not export the
+ * parser and it is not to be touched, so this is the local copy. An entry
+ * that cannot be read is an ERROR: a range that is skipped silently would
+ * make a family look like it covers the Latin when it covers nothing.
+ */
+function parseUnicodeRanges(text: string): Array<{ start: number; end: number }> {
+  const ranges: Array<{ start: number; end: number }> = [];
+  for (const raw of text.split(',')) {
+    const entry = raw.trim();
+    if (entry === '') continue;
+    const match = /^u\+([0-9a-f]+)(?:-([0-9a-f]+))?$/i.exec(entry);
+    if (!match) {
+      throw new Error(`unreadable unicode-range entry: ${JSON.stringify(entry)}`);
+    }
+    const start = parseInt(match[1], 16);
+    const end = match[2] ? parseInt(match[2], 16) : start;
+    ranges.push({ start, end });
+  }
+  return ranges;
+}
+
+/**
+ * The CSS of a stylesheet without its comments.
+ *
+ * A browser ignores a `/* … *\/` block, so a face inside one is NOT
+ * published -- it is a face somebody commented out. The parser of the
+ * verifier does not know about comments (it is another task's product and
+ * it is not to be touched), so the comments are removed HERE, and what is
+ * left is what the browser really sees.
+ */
+function stripCssComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, ' ');
+}
+
+/** The published faces of one family, read from its stylesheet. */
+function publishedFaces(family: string): PublishedFace[] {
+  const raw = readFileSync(resolve(ROOT, 'public', 'font', `fonts-${family}.css`), 'utf8');
+  const css = stripCssComments(raw);
+  return parseFaces(css).map((face) => {
+    const url = parseFaceUrl(face.src);
+    if (!url) {
+      throw new Error(
+        `the stylesheet fonts-${family}.css points at ${JSON.stringify(face.src)}, which is not a ` +
+          'font URL of this repository (/font/web/<family>/<file>)',
+      );
+    }
+    return { dir: url.dir, file: url.file, ranges: parseUnicodeRanges(face.range) };
+  });
+}
+
+/**
+ * The faces of a family that paint the Latin area.
+ *
+ * A face is a Latin face when it claims a code point below the CJK boundary
+ * -- that is what makes it a Latin face, not the name of its file.
+ */
+function latinFaces(faces: PublishedFace[]): PublishedFace[] {
+  return faces.filter((face) => face.ranges.some((range) => range.start < CJK_BOUNDARY));
+}
+
+/**
+ * The code points the four measured pages paint below the CJK boundary, in
+ * one family.
+ *
+ * They are read from the committed page fixture, so they are what the site
+ * really paints and not what somebody remembered about it.
+ */
+function paintedLatinPoints(family: string): Set<number> {
+  const fixture = JSON.parse(
+    readFileSync(resolve(ROOT, 'data', 'font-page-profiles.json'), 'utf8'),
+  ) as { pages: Record<string, Record<string, string>> };
+  const points = new Set<number>();
+  for (const page of Object.values(fixture.pages)) {
+    const text = page[family];
+    if (!text) continue;
+    for (const char of text) {
+      const point = char.codePointAt(0);
+      if (point !== undefined && point < CJK_BOUNDARY) points.add(point);
+    }
+  }
+  return points;
+}
+
+/**
+ * The Latin area of a family: the code points its stylesheet must claim.
+ *
+ * The printable ASCII (the Latin letters, the digits, the western
+ * punctuation and the space) plus the `u+00xx` code points the measured
+ * pages paint in that family (the accented vowels, the `©` and the `·`),
+ * read from the committed fixture.
+ */
+function latinAreaOf(family: string): Set<number> {
+  const area = new Set<number>();
+  for (let point = 0x20; point <= 0x7e; point += 1) area.add(point);
+  for (const point of paintedLatinPoints(family)) area.add(point);
+  return area;
+}
+
+/** True when the stylesheet of a family claims its whole Latin area. */
+function coversLatinArea(family: string, faces: PublishedFace[]): boolean {
+  const claimed = new Set<number>();
+  for (const face of faces) {
+    for (const range of face.ranges) {
+      for (let point = range.start; point <= range.end; point += 1) claimed.add(point);
+    }
+  }
+  for (const point of latinAreaOf(family)) {
+    if (!claimed.has(point)) return false;
+  }
+  return true;
+}
+
+/**
+ * The section of the manual that talks about the webfont and the Latin.
+ *
+ * The section is found by its CONTENT and not by its heading: the heading is
+ * prose and it is rewritten with every reword, while the content (it talks
+ * about the Latin and about the webfont) is what the test is about.
+ */
+function fontSection(document: string): string {
+  const sections = document.split(/^## /m).slice(1);
+  const found = sections.filter((section) => section.includes('Latin') && section.includes('webfont'));
+  if (found.length !== 1) {
+    throw new Error(
+      'the deploy manual must hold exactly one section about the webfont and the Latin, ' +
+        `it holds ${found.length}`,
+    );
+  }
+  return found[0];
+}
+
+/** The number of Latin faces the manual states for a family. */
+function latinCountInManual(section: string, family: string): number {
+  const match = new RegExp(`\\b${family}\\b[^\\d]{0,16}?(\\d+)`).exec(section);
+  if (!match) {
+    throw new Error(`the manual does not state how many Latin faces the family ${family} has`);
+  }
+  return Number(match[1]);
+}
+
+/** The number of local woff2 files the manual states for the Latin tier. */
+function latinTotalInManual(section: string): number {
+  const match = /共[\s*]*(\d+)/.exec(section);
+  if (!match) {
+    throw new Error('the manual does not state how many local woff2 files the Latin tier is');
+  }
+  return Number(match[1]);
+}
+
+/** The byte cost of the Latin tier the manual states. */
+function latinBytesInManual(section: string): number {
+  const match = /合计[\s*]*([\d\s]+?)\s*B/.exec(section);
+  if (!match) {
+    throw new Error('the manual does not state what the Latin tier costs in bytes');
+  }
+  return Number(match[1].replace(/\s/g, ''));
+}
+
+const publishedFacesByFamily: Record<string, PublishedFace[]> = {
+  sans: publishedFaces('sans'),
+  serif: publishedFaces('serif'),
+  wenkai: publishedFaces('wenkai'),
+};
+
+/** The number of Latin faces of every family, as the artefacts say it. */
+const latinFaceCounts: Record<string, number> = {
+  sans: latinFaces(publishedFacesByFamily.sans).length,
+  serif: latinFaces(publishedFacesByFamily.serif).length,
+  wenkai: latinFaces(publishedFacesByFamily.wenkai).length,
+};
+
+/** The number of local woff2 files the Latin tier of the three families is. */
+const latinFileTotal = new Set(
+  FONT_FAMILIES.flatMap((family) =>
+    latinFaces(publishedFacesByFamily[family]).map((face) => `${face.dir}/${face.file}`),
+  ),
+).size;
+
+/** The bytes of the Latin hot tier -- what a page pays for the Latin. */
+const hotLatinBytes = FONT_FAMILIES.flatMap((family) =>
+  latinFaces(publishedFacesByFamily[family]).filter((face) => HOT_LATIN_FILE.test(face.file)),
+).reduce((total, face) => {
+  return total + statSync(resolve(ROOT, 'public', 'font', 'web', face.dir, face.file)).size;
+}, 0);
+
 describe('the deploy manual states the one known font trade-off (R-28)', () => {
-  // The new webfont subsets cover NO codepoint below U+2E80. Latin letters,
-  // digits, western punctuation and the tone-marked pinyin vowels
-  // (ǎ ǐ ǒ ǔ ǹ ḿ) therefore fall through to the system font
-  // (`--font-sans: var(--font-han-sans), system-ui, …`).
-  //
-  // Before the wave, Google's subsets covered every one of those, so the
-  // pinyin under each character was painted by Noto Sans SC. It is now
-  // painted by system-ui. The Chinese glyphs themselves are untouched.
-  //
-  // The manual is the first document the deployer reads, and this is the one
-  // visible consequence of the whole wave -- it must be stated there, with
-  // the price of putting it back.
-  it('says that Latin is painted by the system font now', () => {
-    expect(manual).toContain('system-ui');
-    expect(manual).toMatch(/Latin/);
+  // The manual is the first document the deployer reads. The Latin tier is
+  // published since Task 10 (W2-6), so the Latin is painted by the LOCAL
+  // webfont; what is still falling back to the system font are the code
+  // points the SOURCE FONTS cannot draw. The manual has to say what the
+  // artefacts say -- and the numbers it states have to be the measured ones.
+  const section = fontSection(manual);
+
+  it('states the Latin tier of the published stylesheets as it is', () => {
+    for (const family of FONT_FAMILIES) {
+      expect(latinCountInManual(section, family)).toBe(latinFaceCounts[family]);
+    }
+    expect(latinTotalInManual(section)).toBe(latinFileTotal);
   });
 
-  it('states what putting Latin back into the webfont would cost', () => {
-    expect(manual).toMatch(/\d+(\.\d+)?\s*(KiB|KB)/);
+  it('says who paints the Latin -- the local webfont or the system font', () => {
+    if (coversLatinArea('sans', publishedFacesByFamily.sans)) {
+      expect(section).toContain('由本地 webfont 绘制');
+      expect(section).not.toContain('由系统字体绘制');
+    } else {
+      expect(section).toContain('由系统字体绘制');
+      expect(section).not.toContain('由本地 webfont 绘制');
+    }
+  });
+
+  it('states the real byte cost of the Latin tier, not the obsolete one', () => {
+    expect(latinBytesInManual(section)).toBe(hotLatinBytes);
+    expect(section).toMatch(/20(\.\d+)?\s*(KB|KiB)/);
+    expect(section).not.toContain('145.8');
+  });
+
+  it('keeps the fallback stacks of the families in the manual', () => {
+    expect(section).toContain('system-ui');
+    expect(section).toContain('Georgia');
+    expect(section).toContain('Kaiti SC');
   });
 });
 
