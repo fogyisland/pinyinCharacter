@@ -40,7 +40,7 @@ sysctl net.core.rmem_max
 sysctl net.core.wmem_max
 ```
 
-**期望输出**（Ubuntu 20.04 / 22.04 的典型默认值，**你的机器不一定一样**）：
+**期望输出**（**典型**默认值 —— **你的机器不一定一样**；`net.core.default_qdisc` 要特别当心，见下面那条提醒）：
 
 ```
 net.ipv4.tcp_congestion_control = cubic
@@ -53,6 +53,8 @@ net.core.wmem_max = 212992
 ```
 
 > ⚠️ 上面这七行是**参考值，不是「应该长这样」**。以你机器上实际打印出来的为准 —— 下一步会把它整份存下来。
+>
+> ⚠️ **`net.core.default_qdisc` 尤其不许照抄。** 内核自带的默认值是 `pfifo_fast`，但**发行版随包的 sysctl 片段会把它换成别的值**（Ubuntu 20.10 起通常是 `fq_codel`）⇒ **它很可能根本不是 `pfifo_fast`**。§5 回滚时**用你在 §1.1 记下的那个值**把这一项写回去，不要照抄上面这份参考值。
 
 **把七行原样记进一个文件**（回滚要用）：
 
@@ -290,10 +292,13 @@ uname -r
 ### 步骤 1：按 §1.1 记下的原值逐项写回去
 
 ```bash
-# 下面这组是 Ubuntu 20.04/22.04 的默认值,
-# **以你自己在「改前先看现状」里记下的那份为准**,别照抄
+# 下面这组是**参考值**,**以你自己在「改前先看现状」里记下的那份为准**,别照抄。
+# ⚠️ `net.core.default_qdisc` 尤其别照抄:内核自带默认是 pfifo_fast,
+#    但发行版随包 sysctl 常给别的值(Ubuntu 20.10 起通常是 fq_codel),
+#    照抄 pfifo_fast 会把机器改成一个它启动时并不存在的状态。
+#    ⇒ 这一条**故意没给命令**:从 §1.1 记下的那一行里取等号后面的值,
+#      自己写成 `sudo sysctl -w net.core.default_qdisc=<你记下的那个值>`。
 sudo sysctl -w net.ipv4.tcp_congestion_control=cubic
-sudo sysctl -w net.core.default_qdisc=pfifo_fast
 sudo sysctl -w net.ipv4.tcp_max_syn_backlog=4096
 sudo sysctl -w net.ipv4.tcp_rmem="4096 131072 6291456"
 sudo sysctl -w net.ipv4.tcp_wmem="4096 16384 4194304"
@@ -319,15 +324,17 @@ sudo rm -f /etc/sysctl.d/99-ziyun-bbr.conf
 
 ```bash
 sysctl net.ipv4.tcp_congestion_control     # 期望 cubic
-sysctl net.core.default_qdisc              # 期望 pfifo_fast
+sysctl net.core.default_qdisc              # 期望 §1.1 里记下的那一行(不一定是 pfifo_fast)
 ```
 
 **期望输出**：
 
 ```
 net.ipv4.tcp_congestion_control = cubic
-net.core.default_qdisc = pfifo_fast
+net.core.default_qdisc = <你在 §1.1 记下的那个值>
 ```
+
+> ⚠️ `default_qdisc` 这一行**要和 §1.1 记下的那一行逐字相同**才算退干净。它**可能是 `pfifo_fast`，也可能是 `fq_codel` 或 `fq`** ⇒ 你机器上原来是什么，滚回去就还是什么。**看到 `fq_codel` 而不是 `pfifo_fast`，不代表回滚失败** —— 那多半就是它原来的值；反过来，**看到 `fq` 而 §1.1 记的不是 `fq`，那就是没退干净**，按 §1.1 的值再写一次。
 
 **失败时怎么办**：还有别的键不对 ⇒ 回步骤 1，把 §1.1 那份「现状表」里**七个键全部**逐项 `sysctl -w` 回去，再复核一遍。
 

@@ -8,6 +8,7 @@ const brotli = readFileSync(resolve(ROOT, 'deploy', 'nginx-brotli.conf'), 'utf8'
 const manual = readFileSync(resolve(ROOT, 'deploy', 'OPTIMIZATION.md'), 'utf8');
 const readme = readFileSync(resolve(ROOT, 'deploy', 'README.md'), 'utf8');
 const deployDoc = readFileSync(resolve(ROOT, 'DEPLOY.md'), 'utf8');
+const tuning = readFileSync(resolve(ROOT, 'deploy', 'tuning', 'README.md'), 'utf8');
 
 /**
  * A command line that installs a file into a live nginx directory.
@@ -819,5 +820,42 @@ describe('the add_header classifier follows the block keyword', () => {
     const fragment =
       "http { map $http_upgrade $connection_upgrade { default upgrade; '' close; } location / { add_header A \"1\"; } }";
     expect(levelsOf(fragment)).toEqual(['location']);
+  });
+});
+
+describe('the sysctl tuning manual never hardcodes a machine-specific qdisc value', () => {
+  // ⚠️ `net.core.default_qdisc` is the ONE key in `deploy/tuning/README.md`
+  // whose default differs from machine to machine: the kernel ships
+  // `pfifo_fast`, but a distribution's packaged sysctl fragment usually
+  // overrides it (Ubuntu 20.10 and later ship `fq_codel`). A rollback value
+  // baked into the manual and copy-pasted therefore does not "undo" the
+  // change — it puts the machine into a state it was never in at boot, and
+  // the verification step then tells the operator the rollback FAILED.
+  //
+  // ⚠️ `deploy/tuning/README.md` was NOT among the documents this file scans,
+  // so nothing pinned that defect. These cases bring it into scope and pin
+  // the whole class: the value written back must come from what §1.1
+  // recorded on the machine, never from a constant in the manual.
+  //
+  // ⚠️ The §1.1 reference-value block legitimately keeps the line
+  // `net.core.default_qdisc = pfifo_fast` — it is a *reference*, clearly
+  // labelled as such. The regex below demands `=` to follow the key name
+  // IMMEDIATELY, so that spaced form is deliberately not matched: only a
+  // value that is actually WRITABLE is forbidden.
+
+  it('does not ship the hardcoded rollback command for default_qdisc', () => {
+    expect(tuning).not.toContain('sudo sysctl -w net.core.default_qdisc=pfifo_fast');
+  });
+
+  it('never writes a machine-specific value immediately after default_qdisc=', () => {
+    expect(tuning).not.toMatch(/default_qdisc=(pfifo_fast|fq_codel)/);
+  });
+
+  it('tells the operator that the distribution may ship a different default', () => {
+    expect(tuning).toContain('发行版随包的 sysctl 片段会把它换成别的值');
+  });
+
+  it('does not tell the operator to expect pfifo_fast when verifying the rollback', () => {
+    expect(tuning).not.toContain('# 期望 pfifo_fast');
   });
 });
