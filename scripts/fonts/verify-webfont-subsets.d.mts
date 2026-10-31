@@ -41,6 +41,10 @@ export interface FontLimits {
   latinBytes: number;
   /** The budget of the font bytes one page downloads, per page. */
   pageFontBytes: PageFontBudgets;
+  /** The budget of the bytes the union sample downloads, per page. */
+  unionSampleBytes: UnionSampleBudgets;
+  /** The budget of the number of font files the union sample downloads. */
+  maxUnionSampleFilesPerPage: number;
 }
 
 /** The font byte budget of every measured page. */
@@ -50,6 +54,29 @@ export interface PageFontBudgets {
   '/poetry': number;
   '/stories': number;
   [path: string]: number;
+}
+
+/** What one page of the union sample is allowed to download. */
+export interface UnionSampleBudgets {
+  '/': number;
+  '/dictionary': number;
+  '/poetry': number;
+  '/stories': number;
+  [path: string]: number;
+}
+
+/** The shape of a page sample: the characters of every measured page. */
+export interface SampleProfile {
+  capturedAt?: string;
+  source?: string;
+  rounds?: number;
+  pages: Record<string, Record<string, string>>;
+}
+
+/** The depth of a measured profile: how far it reaches and what it costs. */
+export interface ProfileMeasurement {
+  extChars: number;
+  costs: Array<{ path: string; files: number }>;
 }
 
 /** What one family costs and how it holds up. */
@@ -274,6 +301,14 @@ export declare function checkLatinToneVowels(
  * artefacts against the plan, not against a copy of it.
  */
 export declare function verifyFamily(family: FamilySpec): Promise<FamilyVerification>;
+
+export declare function checkSampleShape(sample: unknown): string[];
+export declare function checkSampleIsDeeper(
+  sample: unknown,
+  seed: unknown,
+  sampleResult: ProfileMeasurement,
+  seedResult: ProfileMeasurement,
+): string[];
 
 /**
  * Check every family and then the things that span the families: the gzip

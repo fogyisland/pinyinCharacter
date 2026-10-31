@@ -21,59 +21,6 @@ import {
   checkSampleIsDeeper,
 } from '../../../scripts/fonts/verify-webfont-subsets.mjs';
 
-/**
- * The surface of the verifier that its own declaration file does not describe
- * yet.
- *
- * ⚠️ `scripts/fonts/verify-webfont-subsets.d.mts` is NOT one of the files
- * this task may touch, and it was written for the surface the verifier had
- * BEFORE the page budget gate became non-circular: the two budgets of the
- * union sample and the two helpers of the sample were not there. The types
- * below say exactly what those members are, so that the suite stays honest
- * about the shapes it uses — and the numbers they hold are pinned by the
- * tests further down, so a lie in this declaration cannot pass unnoticed.
- */
-declare module '../../../scripts/fonts/verify-webfont-subsets.mjs' {
-  /** What one page of the union sample is allowed to download. */
-  interface UnionSampleBudgets {
-    '/': number;
-    '/dictionary': number;
-    '/poetry': number;
-    '/stories': number;
-    [path: string]: number;
-  }
-
-  interface FontLimits {
-    /** The budget of the bytes the union sample downloads, per page. */
-    unionSampleBytes: UnionSampleBudgets;
-    /** The budget of the number of font files the union sample downloads. */
-    maxUnionSampleFilesPerPage: number;
-  }
-
-  /** The shape of a page sample: the characters of every measured page. */
-  interface SampleProfile {
-    capturedAt?: string;
-    source?: string;
-    rounds?: number;
-    pages: Record<string, Record<string, string>>;
-  }
-
-  /** The depth of a measured profile: how far it reaches and what it costs. */
-  interface ProfileMeasurement {
-    extChars: number;
-    costs: Array<{ path: string; files: number }>;
-  }
-
-  function checkSampleShape(sample: unknown): string[];
-
-  function checkSampleIsDeeper(
-    sample: unknown,
-    seed: unknown,
-    sampleResult: ProfileMeasurement,
-    seedResult: ProfileMeasurement,
-  ): string[];
-}
-
 const REPO_ROOT = fileURLToPath(new URL('../../../', import.meta.url));
 const SCRIPT = join(REPO_ROOT, 'scripts', 'fonts', 'verify-webfont-subsets.mjs');
 const MANIFEST_PATH = fileURLToPath(

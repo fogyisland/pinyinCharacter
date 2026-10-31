@@ -278,7 +278,7 @@ Wave 1 遗留的 Wave 2 / Wave 3 清单（`docs/superpowers/specs/2026-08-05-sit
 - 断言热区文件 ≤ `LIMITS.hotBytes`（**96 KB**；实测 sans 72 KB / serif 89 KB / 楷体 77 KB 每份），每个 Ext 块文件 ≤ `LIMITS.extBlockBytes`（**7 KB**；实测 sans max 5 368 B、serif max 6 600 B、楷体 400+700 两份合计 max 8 928 B ⇒ 单份约 4.5 KB）
 - 断言三份 `fonts-<family>.css` **gzip 后合计** ≤ `LIMITS.cssBytes`（**175 KB**）；**无衬线那一份单独** ≤ `LIMITS.sansCssBytes`（**65 KB** —— `app/layout.tsx` 用普通 `<link rel="stylesheet">` 引入它，是**唯一渲染阻塞**的一份）；单份的 `@font-face` 条数 ≤ `LIMITS.maxFacesPerCss`（**3 400**）
 - 断言 `public/font/fonts-manifest.json` 的 `version` 与样式表内容哈希一致（**算哈希之前先把 CRLF 归一化成 LF**，否则在 `core.autocrlf=true` 的 Windows 上会假红）
-- **对 §3.2 表里的每个页面**跑一次覆盖率断言（用服务端渲染出的字符集）：字节 ≤ `LIMITS.pageFontBytes[path]`、文件数 ≤ `LIMITS.maxFontFilesPerPage`（**12**）
+- **对 §3.2 表里的每个页面**跑一次覆盖率断言（用服务端渲染出的字符集）：字节 ≤ `LIMITS.pageFontBytes[path]`、文件数 ≤ `LIMITS.maxFontFilesPerPage`（**153**）
 
 #### 4.1.7 应用侧改动
 
