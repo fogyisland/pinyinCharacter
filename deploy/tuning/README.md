@@ -296,8 +296,8 @@ uname -r
 # ⚠️ `net.core.default_qdisc` 尤其别照抄:内核自带默认是 pfifo_fast,
 #    但发行版随包 sysctl 常给别的值(Ubuntu 20.10 起通常是 fq_codel),
 #    照抄 pfifo_fast 会把机器改成一个它启动时并不存在的状态。
-#    ⇒ 这一条**故意没给命令**:从 §1.1 记下的那一行里取等号后面的值,
-#      自己写成 `sudo sysctl -w net.core.default_qdisc=<你记下的那个值>`。
+#    ⇒ 这一条**故意没给命令**:从 §1.1 **存进 `~/sysctl-before-bbr.txt` 的那一份**里 `default_qdisc` 那一行取等号后面的值,
+#      自己写成 `sudo sysctl -w net.core.default_qdisc=<把这里换成 §1.1 记下的那个值>`。
 sudo sysctl -w net.ipv4.tcp_congestion_control=cubic
 sudo sysctl -w net.ipv4.tcp_max_syn_backlog=4096
 sudo sysctl -w net.ipv4.tcp_rmem="4096 131072 6291456"
@@ -308,7 +308,7 @@ sudo sysctl -w net.core.wmem_max=212992
 
 **期望输出**：每条打印一行 `net.xxx = <写进去的值>`，**没有** `error` 字样。
 
-**失败时怎么办**：某条报 `sysctl: permission denied` ⇒ 忘了 `sudo`；报 `error setting key` ⇒ 这个键你机器上名字不同/不存在，跳过它并在 §5 步骤 3 的复核里确认它没被改动。
+**失败时怎么办**：某条报 `sysctl: permission denied` ⇒ 忘了 `sudo`；报 `error setting key` ⇒ 这个键你机器上名字不同/不存在，跳过它并在 §5 步骤 3 的复核里确认它没被改动；报 `syntax error` ⇒ 上面 `default_qdisc` 那条的占位符没替换干净，把尖括号里那句说明整个换成 §1.1 记下的实际值再执行。
 
 ### 步骤 2：再删掉配置文件
 
@@ -336,7 +336,7 @@ net.core.default_qdisc = <你在 §1.1 记下的那个值>
 
 > ⚠️ `default_qdisc` 这一行**要和 §1.1 记下的那一行逐字相同**才算退干净。它**可能是 `pfifo_fast`，也可能是 `fq_codel` 或 `fq`** ⇒ 你机器上原来是什么，滚回去就还是什么。**看到 `fq_codel` 而不是 `pfifo_fast`，不代表回滚失败** —— 那多半就是它原来的值；反过来，**看到 `fq` 而 §1.1 记的不是 `fq`，那就是没退干净**，按 §1.1 的值再写一次。
 
-**失败时怎么办**：还有别的键不对 ⇒ 回步骤 1，把 §1.1 那份「现状表」里**七个键全部**逐项 `sysctl -w` 回去，再复核一遍。
+**失败时怎么办**：还有别的键不对 ⇒ 回步骤 1，把 §1.1 那份「现状表」里**七个键全部**逐项 `sysctl -w` 回去（其中 `net.core.default_qdisc` 那一项按步骤 1 的说明**自己写**，用 §1.1 记下的值），再复核一遍。
 
 > 复核完可以把 `~/sysctl-before-bbr.txt` 留着，别删 —— 下次再改的时候它就是现成的基线。
 

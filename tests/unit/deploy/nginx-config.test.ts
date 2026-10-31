@@ -842,13 +842,37 @@ describe('the sysctl tuning manual never hardcodes a machine-specific qdisc valu
   // labelled as such. The regex below demands `=` to follow the key name
   // IMMEDIATELY, so that spaced form is deliberately not matched: only a
   // value that is actually WRITABLE is forbidden.
+  //
+  // ⚠️ 上面那段注释里「正则要求 `=` 紧跟键名」是旧机制；这一轮换成**作用域**：
+  // 否定断言只读 §5 子串，§1.1 那条参考值根本不在被扫描的文本里。
 
-  it('does not ship the hardcoded rollback command for default_qdisc', () => {
-    expect(tuning).not.toContain('sudo sysctl -w net.core.default_qdisc=pfifo_fast');
+  // §5「回滚」这一节的正文边界。**不要按行号切**（行号会漂），
+  // 按标题切。§4 里那句 `sudo sysctl -w net.core.default_qdisc=fq` 是
+  // **BBR 的目标值**（故障排查用），不是回滚值 —— 它在 §5 之外，
+  // 所以下面那条否定断言必须先把 §5 切出来，否则会假红。
+  const rollbackStart = tuning.indexOf('### 步骤 1：按 §1.1 记下的原值逐项写回去');
+  const rollbackEnd = tuning.indexOf('\n## 6. 收益要自己量');
+  const rollbackSection = tuning.slice(rollbackStart, rollbackEnd);
+
+  it('scopes the rollback section the negative assertion reads', () => {
+    expect(rollbackStart).toBeGreaterThan(-1);
+    expect(rollbackEnd).toBeGreaterThan(rollbackStart);
+    expect(rollbackSection).toContain('### 步骤 3：复核');
+    expect(rollbackSection).not.toContain('## 6. 收益要自己量');
   });
 
-  it('never writes a machine-specific value immediately after default_qdisc=', () => {
-    expect(tuning).not.toMatch(/default_qdisc=(pfifo_fast|fq_codel)/);
+  it('never writes a literal qdisc value back in the rollback section', () => {
+    expect(rollbackSection).not.toMatch(
+      /sysctl\s+-w\s+net\.core\.default_qdisc\s*=\s*[A-Za-z_][A-Za-z0-9_]*/,
+    );
+  });
+
+  it('states the rollback expectation as the value recorded in 1.1, not a constant', () => {
+    expect(tuning).toContain('net.core.default_qdisc = <你在 §1.1 记下的那个值>');
+  });
+
+  it('warns that a non-pfifo_fast qdisc after rollback is not a rollback failure', () => {
+    expect(tuning).toContain('看到 `fq_codel` 而不是 `pfifo_fast`，不代表回滚失败');
   });
 
   it('tells the operator that the distribution may ship a different default', () => {
