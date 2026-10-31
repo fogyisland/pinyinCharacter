@@ -384,7 +384,7 @@ scoped 复审判定 M-6「期望值从实测推出来」**未做到** ——
 
 | 想找什么 | 去哪 |
 |---|---|
-| 每一条裁决与它的依据 | `.superpowers/sdd/2026-10-29-site-optimization-wave2-plan/progress.md` §一–§二十二 |
+| 每一条裁决与它的依据 | `.superpowers/sdd/2026-10-29-site-optimization-wave2-plan/progress.md` §一–§二十四（§二十三＝收尾四道关，§二十四＝合并回 `main`） |
 | 计划里被推翻的机制与实测数据（R8–R18、F25、F27、F27-j） | 计划文件的《裁决记录》三节 |
 | W2-7 的派工单 / 报告 / 评审清单 / 修复轮 | 同一目录下的 `w2-7-*.md` |
 | 最终修复轮（F-1…F-7）的评审 | 同一目录下的 `final-re-review.md` |
