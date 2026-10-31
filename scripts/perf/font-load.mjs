@@ -13,7 +13,9 @@
  *      page of four characters;
  *   2. the characters of the page are attributed to the three typefaces by
  *      `class-attribution.mjs` — the SAME module the fixture
- *      `data/font-page-profiles.json` was captured with, so the fixture and
+ *      `data/font-page-profiles.json` was captured with, and with BOTH of its
+ *      collectors: the CJK ones AND the Latin ones. The fixture holds the
+ *      Chinese part first and the Latin part after it, so the fixture and
  *      this budget talk about the same characters;
  *   3. the files those characters live in are derived from the PUBLISHED
  *      stylesheets of this repository (`public/font/fonts-*.css`), face by
@@ -28,12 +30,16 @@
  * ships. The live site may serve a DIFFERENT build of the same stylesheets
  * — the css2 build of the Google Fonts CDN, whose faces point at files like
  * `/font/noto-sans-sc/<hash>.woff2`, whose `?v=` token is not the token of
- * this repository and whose blocks are cut differently. The probe detects
- * that skew (the `?v=` token of the live stylesheet is not the version of
- * this repository) and says so out loud: **a difference between these
- * numbers and the live site is a VERSION SKEW, not a performance
- * regression.** The same warning is printed by the probe, so a reader of the
- * numbers alone cannot mistake one for the other.
+ * this repository and whose blocks are cut differently. The probe ALWAYS
+ * says which build it is talking about, in one of three ways: the live
+ * `?v=` token is the token of this repository (the live site runs this
+ * build), the live `?v=` token is another token (a VERSION SKEW — a
+ * difference between these numbers and the live site is then not a
+ * performance regression), or the token cannot be read at all (the shape of
+ * the link is not the shape this probe knows — the live version is
+ * UNKNOWN). **Silence is never an answer here**: a reader of the numbers
+ * alone must never be able to mistake the repository build for the live
+ * build.
  */
 
 import { readFile } from 'node:fs/promises';
@@ -42,7 +48,7 @@ import { fileURLToPath } from 'node:url';
 
 import { LIMITS, parseFaces, parseFaceUrl } from '../fonts/verify-webfont-subsets.mjs';
 
-import { collectFamilyCharsets } from './class-attribution.mjs';
+import { collectFamilyCharsets, collectFamilyLatinCharsets } from './class-attribution.mjs';
 import { fetchPage, parseCommonArgs, MEASURED_PAGES } from './fetch-page.mjs';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -164,6 +170,38 @@ export function pageFontFiles(charsets, published) {
 }
 
 /**
+ * The characters a page paints, per family: the CJK ones AND the Latin ones.
+ *
+ * ⚠️ The Latin characters count. The Latin tier is a whole layer of the
+ * payload (a page paints its Latin letters, its digits and its accented
+ * vowels, so the browser downloads the Latin subsets), and the fixture
+ * `data/font-page-profiles.json` holds them too — the Chinese part first,
+ * the Latin part after it. A probe that only looked at the Chinese half
+ * would report LESS than the browser really downloads, and the two gates
+ * (the probe here and the verifier of the subsets) would be measuring two
+ * different things.
+ *
+ * ⚠️ The attribution rule is NOT written a second time: both halves come
+ * from `class-attribution.mjs`, which has ONE implementation
+ * (`collectFamilySets`) behind its two exports. A second copy of the rule
+ * would drift from the first, and then the fixture and the budget would
+ * talk about different characters again.
+ *
+ * @param {string} html the HTML of the page
+ * @returns {{ sans: Set<string>, serif: Set<string>, wenkai: Set<string> }}
+ */
+export function collectPageCharsets(html) {
+  const cjk = collectFamilyCharsets(html);
+  const latin = collectFamilyLatinCharsets(html);
+  const merged = { sans: new Set(), serif: new Set(), wenkai: new Set() };
+  for (const family of Object.keys(merged)) {
+    for (const char of cjk[family]) merged[family].add(char);
+    for (const char of latin[family]) merged[family].add(char);
+  }
+  return merged;
+}
+
+/**
  * The version token of the font stylesheets the LIVE page links to.
  *
  * @param {string} html the HTML of the page
@@ -172,6 +210,59 @@ export function pageFontFiles(charsets, published) {
 function liveStylesheetToken(html) {
   const match = /href="\/font\/fonts-[a-z]+\.css\?v=([0-9a-f]{12})"/.exec(html);
   return match ? match[1] : '';
+}
+
+/**
+ * Say out loud which font build the live site runs.
+ *
+ * ⚠️ The probe ALWAYS says something. Three states, three messages:
+ *
+ *   1. the live `?v=` token is the token of this repository — the live site
+ *      runs this build;
+ *   2. the live `?v=` token is another token — a VERSION SKEW;
+ *   3. the token cannot be read at all (the shape of the link is not the
+ *      shape this probe knows) — the live version is UNKNOWN.
+ *
+ * A silent third state is the bug this exists to prevent: the reader of the
+ * numbers would take the repository build for the live build, and the whole
+ * point of the warning is that a difference against the live site is then a
+ * version skew, not a performance regression.
+ *
+ * @param {string} live the token of the live stylesheet, empty when unknown
+ * @param {string} repositoryVersion the token of this repository
+ */
+function reportLiveVersion(live, repositoryVersion) {
+  if (live === '') {
+    console.log(
+      '[perf:fonts] the version of the LIVE font build is UNKNOWN: the font stylesheet link ' +
+        'of the page does not have the expected shape (href="/font/fonts-<family>.css?v=<token>"), ' +
+        'so the probe cannot tell whether the live site runs this build',
+    );
+    console.log(
+      '[perf:fonts]   the payload below is the payload of the REPOSITORY build — with the live ' +
+        'version unknown, no conclusion about the live site can be drawn from these numbers',
+    );
+    return;
+  }
+  if (live === repositoryVersion) {
+    console.log(
+      `[perf:fonts] the LIVE site runs the same font build as this repository (v=${live}) — ` +
+        'the payload below is the payload of the live site',
+    );
+    return;
+  }
+  console.log(
+    `[perf:fonts] WARNING: the LIVE site runs a DIFFERENT font build (v=${live}), ` +
+      `this repository ships v=${repositoryVersion}`,
+  );
+  console.log(
+    '[perf:fonts]   the live site therefore runs a DIFFERENT font build (the css2 build of the ' +
+      'Google Fonts CDN cuts the fonts differently and carries another ?v= token)',
+  );
+  console.log(
+    '[perf:fonts]   the payload below is the payload of the REPOSITORY build — a difference against ' +
+      'the live site is a VERSION SKEW, not a performance regression',
+  );
 }
 
 /** A number of kilobytes, with one decimal. */
@@ -202,7 +293,7 @@ async function main() {
   const sizes = new Map();
   const rows = [];
   const failures = [];
-  let skewReported = false;
+  let versionReported = false;
 
   for (const path of MEASURED_PAGES) {
     const url = `${options.base}${path}`;
@@ -210,24 +301,16 @@ async function main() {
     // that is not a page throws here, and NOTHING below is printed.
     const page = await fetchPage(url, { cookie: options.cookie });
 
-    const live = liveStylesheetToken(page.body);
-    if (!skewReported && live !== '' && live !== manifest.version) {
-      skewReported = true;
-      console.log(
-        `[perf:fonts] WARNING: the live site serves the font stylesheets as v=${live}, ` +
-          `this repository ships v=${manifest.version}`,
-      );
-      console.log(
-        '[perf:fonts]   the live site therefore runs a DIFFERENT font build (the css2 build of the ' +
-          'Google Fonts CDN cuts the fonts differently and carries another ?v= token)',
-      );
-      console.log(
-        '[perf:fonts]   the payload below is the payload of the REPOSITORY build — a difference against ' +
-          'the live site is a VERSION SKEW, not a performance regression',
-      );
+    // ⚠️ The probe ALWAYS says which build it is talking about — the same
+    // build, a skewed build, or an unknown one. Silence is the bug this
+    // replaces: a reader of the numbers must never take the repository
+    // build for the live build.
+    if (!versionReported) {
+      versionReported = true;
+      reportLiveVersion(liveStylesheetToken(page.body), manifest.version);
     }
 
-    const { perFamily, unpainted } = pageFontFiles(collectFamilyCharsets(page.body), published);
+    const { perFamily, unpainted } = pageFontFiles(collectPageCharsets(page.body), published);
     const bytes = { sans: 0, serif: 0, wenkai: 0 };
     const files = new Set();
 
@@ -243,7 +326,17 @@ async function main() {
     }
 
     const total = bytes.sans + bytes.serif + bytes.wenkai;
+    // ⚠️ A page without a byte budget is an ERROR, never a free pass:
+    // `total > undefined` is false, so the byte budget would vanish
+    // silently while the file count would still be checked — the probe
+    // would report "OK" for a page it never measured against a budget.
     const budget = LIMITS.pageFontBytes[path];
+    if (budget === undefined) {
+      throw new Error(
+        `the page ${path} has no byte budget in LIMITS.pageFontBytes — a measured page must ` +
+          'have one, otherwise its bytes are never compared against a budget',
+      );
+    }
     const over = total > budget || files.size > LIMITS.maxFontFilesPerPage;
     if (over) failures.push(path);
     rows.push({ path, bytes, total, files: files.size, budget, over });
