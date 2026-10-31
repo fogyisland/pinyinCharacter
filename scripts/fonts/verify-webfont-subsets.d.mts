@@ -12,6 +12,22 @@
  * (every declared character has a glyph — the tofu gate), the sizes, the
  * manifest, the page budget and the version token of every URL (R18).
  * Every failure is COLLECTED, so one run reports all of them.
+ *
+ * ⚠️ **Which of the numbers is the gate.** The report carries TWO sets of
+ * page costs: `costs` is the cost of the UNION SAMPLE of the live pages and
+ * it is THE GATE (over its budget ⇒ the run fails), while `floorCosts` is the
+ * cost of the SEED of the hot tier and it is only a LOWER BOUND — it is
+ * reported and never fails the run. The seed is not a page: it paints the hot
+ * tier only, so its numbers are a floor, not a measurement of a visit.
+ *
+ * ⚠️ **This file is a HAND-WRITTEN declaration face.** `tsconfig.json` sets
+ * `allowJs: false`, so the `.mjs` implementation is NEVER type checked and
+ * the two faces can drift apart SILENTLY. The consistency between them is
+ * therefore guarded by a machine check, not by the compiler:
+ * `tests/unit/scripts/verify-webfont-subsets.test.ts` compares the shape of
+ * `WebfontVerificationReport` here with the shape `verifyAll()` really
+ * returns. When that check fails, one of the two faces is lying — fix the
+ * implementation or this file, never the check.
  */
 
 import type { FamilySpec } from './build-webfont-subsets.mjs';
@@ -76,6 +92,16 @@ export interface SampleProfile {
 /** The depth of a measured profile: how far it reaches and what it costs. */
 export interface ProfileMeasurement {
   extChars: number;
+  /**
+   * A NARROW VIEW of the cost of every measured page.
+   *
+   * The runtime objects of `measureProfile` carry more than this: `bytes`,
+   * `budget`, `fileBudget`, `unpainted` and `unpaintedChars` as well. Only
+   * `path` and `files` are declared here on purpose: `checkSampleIsDeeper`
+   * reads exactly those two, and a narrow declaration cannot be wrong about
+   * the fields it does not mention. A missing field is what breaks a build —
+   * a narrow view is safe.
+   */
   costs: Array<{ path: string; files: number }>;
 }
 
@@ -133,6 +159,8 @@ export interface PageFontCost {
   unpainted: number;
   /** The characters no subset claims, as readable messages. */
   unpaintedChars: string[];
+  /** The budget of the number of files the page downloads. */
+  fileBudget: number;
 }
 
 /** The result of the check of every family. */
@@ -145,6 +173,44 @@ export interface WebfontVerificationReport {
   stats: FamilyStats[];
   /** What every measured page downloads. */
   costs: PageFontCost[];
+  /**
+   * What the SEED of the hot tier would download.
+   *
+   * A LOWER BOUND and never a page: the seed paints the hot tier only, so it
+   * cannot see the Ext blocks. It is reported and never fails the run.
+   */
+  floorCosts: PageFontCost[];
+  /**
+   * The notes about the seed: the budgets of the seed that it busts.
+   *
+   * They are notes, not errors: the seed is not a page, so busting a budget
+   * of its own says nothing about a visit.
+   */
+  floorNotes: string[];
+  /**
+   * The union sample the gate is measured on.
+   */
+  sample: { path: string; rounds?: number; source: string; capturedAt: string };
+  /**
+   * The failures of the FIXTURES themselves.
+   *
+   * Three channels, kept apart on purpose:
+   *
+   *   `budgetErrors`  the cost of a page against its budget. The SAMPLE is
+   *                   the gate (over its budget ⇒ the run fails); the seed
+   *                   is only a floor and is reported, never failed.
+   *   `latinErrors`   the Latin tier does not cover what the page paints.
+   *   `fixtureErrors` the SEED or the SAMPLE is not a usable fixture. Both
+   *                   fail the run: a broken fixture makes every number of
+   *                   this report a lie, so it must not be able to pass.
+   *
+   * The channel of `checkProfileHasLatin` lives here: a profile that holds
+   * no Latin character at all makes the page budget check of the Latin tier
+   * an empty set, so a Latin tier that was never built would report green.
+   * That is a failure of the FIXTURE, not of the page cost, so it must not
+   * be demoted to a note the way the budget findings of the seed are.
+   */
+  fixtureErrors: string[];
   /**
    * The code points the subset files carry beyond what they declare, per
    * family. They are reported, never failed: harfbuzz pulls the sibling
@@ -308,6 +374,23 @@ export declare function checkSampleIsDeeper(
   seed: unknown,
   sampleResult: ProfileMeasurement,
   seedResult: ProfileMeasurement,
+): string[];
+
+/**
+ * Check that a profile holds Latin characters at all.
+ *
+ * A profile without a single Latin character makes the page budget check of
+ * the Latin tier an EMPTY SET, so a Latin tier that was never built would
+ * report green. That is a failure of the FIXTURE, not of the page cost, so
+ * it belongs to the `fixtureErrors` channel and fails the run for the seed
+ * as well as for the sample.
+ *
+ * The function is pure: it reads the profile and returns one message or an
+ * empty array.
+ */
+export declare function checkProfileHasLatin(
+  profile: SampleProfile,
+  label: string,
 ): string[];
 
 /**

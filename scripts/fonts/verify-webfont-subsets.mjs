@@ -980,6 +980,49 @@ async function readProfile(path, label) {
 }
 
 /**
+ * Check that a profile holds Latin characters at all.
+ *
+ * A profile without a single Latin character makes the page budget check of
+ * the Latin tier an EMPTY SET: there is nothing for the check to look at, so
+ * it reports green — and a Latin tier that was never built looks exactly the
+ * same as a Latin tier that is fine. That blind spot is why this check
+ * exists.
+ *
+ * ⚠️ It is a failure of the FIXTURE, not of the page cost, so it belongs to
+ * the `fixtureErrors` channel and it fails the run for the seed as well as
+ * for the sample. (The budget findings of the seed are demoted to notes
+ * because the seed is a lower bound and not a page — a broken fixture is
+ * neither.)
+ *
+ * The function is PURE: it reads the profile and returns one message or an
+ * empty array.
+ *
+ * @param {object} profile the whole profile to look at
+ * @param {string} label what the profile is called in the messages
+ * @returns {string[]} one message when the profile holds no Latin at all,
+ *   an empty array when it does
+ */
+export function checkProfileHasLatin(profile, label) {
+  const pages = profile?.pages ?? {};
+  let profileLatin = 0;
+  for (const path of Object.keys(pages)) {
+    const page = pages[path] ?? {};
+    for (const family of FAMILIES) {
+      for (const ch of page[family.key] ?? '') {
+        if (isLatinChar(ch)) profileLatin += 1;
+      }
+    }
+  }
+  if (profileLatin === 0) {
+    return [
+      `the ${label} holds no Latin character at all — the page budget check of the ` +
+        'Latin tier would be empty, so a missing Latin tier would report green',
+    ];
+  }
+  return [];
+}
+
+/**
  * Measure what the pages of ONE profile download: the bytes and the number
  * of files.
  *
@@ -1003,11 +1046,12 @@ async function readProfile(path, label) {
  * @param {{ bytes: Record<string, number>, files: number }} limits the budgets
  * @param {string} label what the profile is called in the messages
  * @returns {Promise<{ budgetErrors: string[], latinErrors: string[],
- *   costs: object[], extChars: number }>}
+ *   fixtureErrors: string[], costs: object[], extChars: number }>}
  */
 async function measureProfile(details, profile, limits, label) {
   const budgetErrors = [];
   const latinErrors = [];
+  const fixtureErrors = [];
   const costs = [];
   const pages = profile?.pages ?? {};
 
@@ -1029,21 +1073,11 @@ async function measureProfile(details, profile, limits, label) {
   // Without it the check below has nothing to check, and a check with
   // nothing to check reports green — that is the "the fixture was never
   // updated" blind spot.
-  let profileLatin = 0;
-  for (const path of Object.keys(pages)) {
-    const page = pages[path] ?? {};
-    for (const family of FAMILIES) {
-      for (const ch of page[family.key] ?? '') {
-        if (isLatinChar(ch)) profileLatin += 1;
-      }
-    }
-  }
-  if (profileLatin === 0) {
-    budgetErrors.push(
-      `the ${label} holds no Latin character at all — the page budget check of the ` +
-        'Latin tier would be empty, so a missing Latin tier would report green',
-    );
-  }
+  // ⚠️ It is a failure of the FIXTURE, not of the page cost ⇒ it goes into
+  // `fixtureErrors` and it is NOT demoted to a note the way the budget
+  // findings of the seed are. A broken fixture makes every number of this
+  // report a lie, so it must not be able to pass.
+  fixtureErrors.push(...checkProfileHasLatin(profile, label));
 
   // The characters the hot tier does NOT cover: the ext layer of the page.
   // It is the depth of the profile, and the gate compares the depth of the
@@ -1131,7 +1165,7 @@ async function measureProfile(details, profile, limits, label) {
       unpaintedChars: unpainted,
     });
   }
-  return { budgetErrors, latinErrors, costs, extChars };
+  return { budgetErrors, latinErrors, fixtureErrors, costs, extChars };
 }
 
 /**
@@ -1282,11 +1316,12 @@ export function checkSampleIsDeeper(sample, seed, sampleResult, seedResult) {
  *
  * @param {Record<string, object>} details the block map of every family
  * @returns {Promise<{ errors: string[], costs: object[], floorCosts: object[],
- *   floorNotes: string[], sample: object }>}
+ *   floorNotes: string[], sample: object, fixtureErrors: string[] }>}
  */
 async function checkPageBudget(details) {
   const errors = [];
   const floorNotes = [];
+  const fixtureErrors = [];
 
   const seed = await readProfile(SEED_PATH, 'page profile fixture');
   if (!seed.ok) {
@@ -1296,6 +1331,7 @@ async function checkPageBudget(details) {
       floorCosts: [],
       floorNotes,
       sample: { path: SAMPLE_PATH, rounds: 0, source: '', capturedAt: '' },
+      fixtureErrors,
     };
   }
   const sample = await readProfile(SAMPLE_PATH, 'page sample');
@@ -1306,6 +1342,7 @@ async function checkPageBudget(details) {
       floorCosts: [],
       floorNotes,
       sample: { path: SAMPLE_PATH, rounds: 0, source: '', capturedAt: '' },
+      fixtureErrors,
     };
   }
 
@@ -1322,6 +1359,13 @@ async function checkPageBudget(details) {
   // that no subset claims is a hole in the LATIN TIER, not a fact about the
   // seed — and the seed paints the whole Latin alphabet.
   errors.push(...seedResult.latinErrors);
+  // ⚠️ The FIXTURE findings of the seed are errors too: a seed that holds
+  // no Latin character at all makes the page budget check of the Latin tier
+  // an empty set, so a Latin tier that was never built would report green.
+  // This is the integrity of the fixture, not the cost of a page, so it is
+  // NOT demoted to a note the way the budget findings below are.
+  errors.push(...seedResult.fixtureErrors);
+  fixtureErrors.push(...seedResult.fixtureErrors);
   // ⚠️ The budget findings of the seed are NOT errors: the seed is a lower
   // bound, not a page. They are reported.
   for (const message of seedResult.budgetErrors) {
@@ -1336,6 +1380,10 @@ async function checkPageBudget(details) {
     'sample',
   );
   errors.push(...sampleResult.latinErrors, ...sampleResult.budgetErrors);
+  // ⚠️ The FIXTURE findings of the sample are errors too — for the same
+  // reason as the ones of the seed.
+  errors.push(...sampleResult.fixtureErrors);
+  fixtureErrors.push(...sampleResult.fixtureErrors);
 
   // --- the guards: the gate must prove that it is not circular ----------
   errors.push(...checkSampleIsDeeper(sample.value, seed.value, sampleResult, seedResult));
@@ -1351,6 +1399,7 @@ async function checkPageBudget(details) {
       source: sample.value.source ?? '',
       capturedAt: sample.value.capturedAt ?? '',
     },
+    fixtureErrors,
   };
 }
 
@@ -1359,7 +1408,8 @@ async function checkPageBudget(details) {
  * Check every family and then the things that span the families.
  *
  * @returns {Promise<{ ok: boolean, errors: string[], stats: object[],
- *   costs: object[], floorCosts: object[], floorNotes: string[], sample: object }>}
+ *   costs: object[], floorCosts: object[], floorNotes: string[], sample: object,
+ *   fixtureErrors: string[], extras: object }>}
  */
 export async function verifyAll() {
   const errors = [];
@@ -1429,6 +1479,7 @@ export async function verifyAll() {
     floorCosts: pages.floorCosts,
     floorNotes: pages.floorNotes,
     sample: pages.sample,
+    fixtureErrors: pages.fixtureErrors,
     extras,
   };
 }
@@ -1512,7 +1563,7 @@ async function main() {
             `${cost.path} ${Math.round(cost.bytes / 1024)} KB / ${cost.files} files`,
         )
         .join('   ') +
-      '   (data/font-page-profiles.json — a LOWER BOUND, not a page)',
+      '   (' + displayPath(SEED_PATH) + ' — a LOWER BOUND, not a page)',
   );
 
   // --- the pages: the sample of the live pages, and the gate -------------
@@ -1541,6 +1592,45 @@ async function main() {
       result.costs.map((cost) => `${cost.budget} B`).join(' / ') +
       ')',
   );
+  // --- the union budget: the headroom that is left, and what it means ----
+  // The union budget is a DRIFT DETECTOR and not a page weight budget: the
+  // slack it has is deliberately almost nothing, so a change of the corpus
+  // turns it red. The fix is a HUMAN re-baselining of the two limits by
+  // hand — the backend never changes a budget.
+  //
+  // ⚠️ The headroom of the tightest page is printed, not asserted: an
+  // assertion "the measured files must be strictly fewer than the cap" is
+  // red today (`/stories` downloads 255 files against a cap of 255), and a
+  // two-way assertion "the budget equals the value derived from the sample"
+  // would make a SMALLER corpus red as well — a failure mode that does not
+  // exist today.
+  if (result.costs.length > 0) {
+    const tightest = result.costs.reduce((winner, cost) => {
+      const candidate = {
+        path: cost.path,
+        byteHeadroom: cost.budget - cost.bytes,
+        fileHeadroom: cost.fileBudget - cost.files,
+      };
+      if (!winner) return candidate;
+      if (candidate.byteHeadroom < winner.byteHeadroom) return candidate;
+      if (
+        candidate.byteHeadroom === winner.byteHeadroom &&
+        candidate.fileHeadroom < winner.fileHeadroom
+      ) {
+        return candidate;
+      }
+      return winner;
+    }, null);
+    console.log(
+      `[verify] union  : ${tightest.path} ${tightest.byteHeadroom} B / ` +
+        `${tightest.fileHeadroom} files of headroom left (the tightest page of the ` +
+        'union budget — that one is a DRIFT DETECTOR and not a page weight budget: ' +
+        'the zero headroom is DELIBERATE, a change of the corpus turns it red, and ' +
+        'the fix is a HUMAN re-baselining of LIMITS.unionSampleBytes / ' +
+        'LIMITS.maxUnionSampleFilesPerPage by hand — the backend never changes a ' +
+        'budget)',
+    );
+  }
   // ⚠️ The four numbers above are the UNION of the rounds of the live pages,
   // not the cost of ONE visit. `/` and `/stories` render a RANDOM character
   // story on every request, so one visit is cheaper than the union, and the
