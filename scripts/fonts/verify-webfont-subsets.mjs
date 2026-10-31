@@ -1111,6 +1111,12 @@ async function main() {
         `[verify]   info: ${entry.extraCodepoints} code point(s) the files carry ` +
           'beyond the ranges they declare (reported, not failed)',
       );
+      console.log(
+        '[verify]   info: they come from the subsetting tool itself (the neighbours of a ' +
+          'glyph the font draws and the extra entries of its cmap are carried along when ' +
+          'the block is cut) — they are NOT a "declared but unrenderable" mismatch; that ' +
+          'mismatch is the tofu gate, the third check of this run, and it fails there',
+      );
     }
     const extra = result.extras[entry.key] ?? [];
     if (extra.length > 0) {
@@ -1137,6 +1143,25 @@ async function main() {
         )
         .join('   ') +
       `   ${pageMark}`,
+  );
+  // ⚠️ The four numbers above are ONE SAMPLE, not the live cost of a page.
+  // They are computed from `data/font-page-profiles.json`, the fixture the
+  // capture wrote with `--union 1` (one round — the default), and `/` and
+  // `/stories` render a RANDOM character story on every request: their real
+  // payload differs from request to request, so the numbers above are a
+  // LOWER BOUND. The live cost is measured by the probe of the budget, and
+  // that probe exits non-zero when a page is over its budget.
+  console.log(
+    '[verify] note   : the four page budgets above are ONE SAMPLE — they come from the ' +
+      'fixture data/font-page-profiles.json, captured with --union 1 (a single round)',
+  );
+  console.log(
+    '[verify] note   : / and /stories render a RANDOM character story, so their content ' +
+      'differs on every request and the numbers above are a LOWER BOUND, not the live cost',
+  );
+  console.log(
+    '[verify] note   : measure the live cost with: npm run perf:fonts -- --base <live base> ' +
+      '(that probe exits non-zero when a page is over its budget)',
   );
   for (const cost of result.costs) {
     if (cost.unpainted > 0) {
