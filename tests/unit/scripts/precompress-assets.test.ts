@@ -75,7 +75,14 @@ function canCreateFileSymlink(): boolean {
     writeFileSync(target, 'probe');
     symlinkSync(target, join(dir, 'link.js'));
     return true;
-  } catch {
+  } catch (error) {
+    // Say why the probe failed: without this, "this machine cannot make
+    // symbolic links" and "the temporary directory is not writable" look
+    // identical, and the case below is switched off without a trace.
+    const reason = error instanceof Error ? error.message : String(error);
+    console.warn(
+      `[precompress] symbolic links are unavailable here (${reason}); the symlink case will be skipped`,
+    );
     return false;
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -187,6 +194,39 @@ describe('precompressFile', () => {
     expect(result.status).toBe('written');
     expect(existsSync(`${file}.gz`)).toBe(true);
   });
+
+  it('rewrites a pair whose .br sidecar is stale even when the .gz is current', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'app.js');
+    const source = 'console.log("stale");'.repeat(500);
+    await writeFile(file, source);
+    // The other half of the half-written pair: the `.gz` landed and is newer
+    // than the source, the `.br` did not. A run that only looks at the `.gz`
+    // would call this done and leave the stale `.br` in place.
+    await writeFile(`${file}.br`, 'a brotli stream that is not one');
+    await writeFile(`${file}.gz`, 'a gzip stream that is not one');
+    const sourceTime = Date.now();
+    await utimes(`${file}.br`, new Date(sourceTime - 5000), new Date(sourceTime - 5000));
+    await utimes(`${file}.gz`, new Date(sourceTime + 5000), new Date(sourceTime + 5000));
+    const result = await precompressFile(file);
+    expect(result.status).toBe('written');
+    expect(brotliDecompressSync(await readFile(`${file}.br`)).toString('utf8')).toBe(source);
+  });
+
+  it('reports a sidecar it cannot write as failed instead of skipped', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'app.js');
+    await writeFile(file, 'console.log("x");'.repeat(500));
+    // The `.br` path is occupied by a directory, so writing the sidecar
+    // fails. A failure that was swallowed into `skipped` would never reach
+    // the totals, and the run would exit 0.
+    await mkdir(`${file}.br`);
+    const result = await precompressFile(file);
+    expect(result.status).toBe('failed');
+    expect(result.bytesOut).toBe(0);
+  });
 });
 
 describe('precompressTree', () => {
@@ -236,5 +276,19 @@ describe('precompress-assets CLI', () => {
     const run = await runScript([missing]);
     expect(run.code).toBe(0);
     expect(run.stdout).toContain('does not exist');
+  });
+
+  it('exits with 1 when a file fails and names the file that failed', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'precompress-'));
+    dirs.push(dir);
+    const file = join(dir, 'app.js');
+    await writeFile(file, 'console.log("x");'.repeat(500));
+    // A directory squats on the `.br` path, so the sidecar cannot be
+    // written. The run has to report the failure and exit non-zero.
+    await mkdir(`${file}.br`);
+    const run = await runScript([dir]);
+    expect(run.code).toBe(1);
+    expect(run.stdout).toContain('failed 1');
+    expect(run.stderr).toContain('failed:');
   });
 });
