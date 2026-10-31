@@ -927,6 +927,19 @@ function blockMembers(source: string, mask: boolean[], openIndex: number): strin
       continue;
     }
 
+    if (char === '.' && source.startsWith('...', index)) {
+      // A spread member at the top level of the block. The extractor cannot
+      // see what it carries, so the two faces could compare EQUAL while the
+      // implementation returns a member the declaration does not declare —
+      // the very defect this guard exists to catch. Refuse to compare
+      // instead of comparing blind: a loud red here is the point.
+      throw new Error(
+        'the block has a spread member (`...`) at its top level and the ' +
+          'guard cannot see what it carries — the guard must be taught to ' +
+          'read it before the two faces may be compared',
+      );
+    }
+
     if (!/[A-Za-z_$]/.test(char)) {
       previous = char;
       index += 1;
@@ -1073,6 +1086,17 @@ describe('the declaration face and the implementation face agree', () => {
     // The comparison itself: the order is not compared, the SETS are.
     expect([...declaredMembers].sort()).toEqual([...returnedMembers].sort());
   });
+
+  it('refuses to compare a block that hides a member behind a spread', () => {
+    // A spread at the top level carries a member the extractor cannot see,
+    // so the two faces could compare EQUAL while the implementation returns
+    // something the declaration does not declare — the very defect this
+    // guard exists to catch. It must say so instead of comparing blind.
+    const source = 'const report = { ok: true, ...rest };';
+    expect(() =>
+      blockMembers(source, codeMask(source), source.indexOf('{')),
+    ).toThrow(/spread member/);
+  });
 });
 
 describe('checkProfileHasLatin', () => {
@@ -1167,6 +1191,30 @@ describe('the shipped font files', () => {
   }
 
   /**
+   * Whether a line carries the number as a number of its own.
+   *
+   * A plain substring test would accept "17 981" and "7 9810": a number
+   * that drifted into a neighbouring digit still CONTAINS the old one, so
+   * the check would stay green while the prose says something else. The
+   * digits on either side of the match are what tells the two apart.
+   *
+   * @param line the normalised line
+   * @param number the number as it is written in the prose
+   * @returns true when the line carries the number and not only a part of it
+   */
+  function carriesNumber(line: string, number: string): boolean {
+    let from = 0;
+    for (;;) {
+      const at = line.indexOf(number, from);
+      if (at < 0) return false;
+      const before = at > 0 ? line.charAt(at - 1) : '';
+      const after = line.charAt(at + number.length);
+      if (!/\d/.test(before) && !/\d/.test(after)) return true;
+      from = at + 1;
+    }
+  }
+
+  /**
    * The one line of a file that holds the needle.
    *
    * The needle is used instead of a line number: a line number drifts the
@@ -1183,7 +1231,17 @@ describe('the shipped font files', () => {
     return hits[0];
   }
 
-  it('counts the files the three stylesheets point at', () => {
+  /**
+   * Everything the three stylesheets point at, measured ONCE.
+   *
+   * The prose checks below compare the prose against THIS measurement and
+   * not against a number written into the test. When the corpus changes,
+   * the expectation moves with it, so a prose that was not updated goes
+   * RED — which is the whole point of the check: a number written into the
+   * test would let the two halves drift apart, and the prose would go
+   * stale while the test stayed green.
+   */
+  const SHIPPED = (() => {
     const counts: Record<string, number> = {};
     const all = new Set<string>();
     for (const sheet of STYLESHEETS) {
@@ -1191,33 +1249,41 @@ describe('the shipped font files', () => {
       counts[sheet.family] = files.length;
       for (const file of files) all.add(file);
     }
-    expect(counts.sans).toBe(2468);
-    expect(counts.serif).toBe(2855);
-    expect(counts.wenkai).toBe(2658);
-    expect(all.size).toBe(7981);
-    expect(
-      counts.sans + counts.serif + counts.wenkai,
-      'the three families must not share a file',
-    ).toBe(all.size);
-  });
-
-  it('splits the shipped files into the Latin tier and the Chinese blocks', () => {
-    const all = new Set<string>();
-    for (const sheet of STYLESHEETS) {
-      for (const file of stylesheetFiles(sheet.path)) all.add(file);
-    }
     let latin = 0;
     for (const file of all) {
       if (basename(file).startsWith('latin')) latin += 1;
     }
-    const chinese = all.size - latin;
-    expect(latin).toBe(45);
-    expect(chinese).toBe(7936);
-    expect(chinese + latin).toBe(all.size);
+    return { counts, total: all.size, latin, chinese: all.size - latin };
+  })();
+
+  it('does not accept a number that is only a part of a bigger one', () => {
+    // "17 981" and "7 9810" both CONTAIN "7 981" — a plain substring test
+    // would let a drifted prose pass while the check stays green.
+    expect(carriesNumber('17 981 files', '7 981')).toBe(false);
+    expect(carriesNumber('7 9810 files', '7 981')).toBe(false);
+    expect(carriesNumber('the site ships 7 981 woff2 files', '7 981')).toBe(true);
+    expect(carriesNumber('29MB:7 981 个 woff2', '7 981')).toBe(true);
+  });
+
+  it('counts the files the three stylesheets point at', () => {
+    expect(SHIPPED.counts.sans).toBe(2468);
+    expect(SHIPPED.counts.serif).toBe(2855);
+    expect(SHIPPED.counts.wenkai).toBe(2658);
+    expect(SHIPPED.total).toBe(7981);
+    expect(
+      SHIPPED.counts.sans + SHIPPED.counts.serif + SHIPPED.counts.wenkai,
+      'the three families must not share a file',
+    ).toBe(SHIPPED.total);
+  });
+
+  it('splits the shipped files into the Latin tier and the Chinese blocks', () => {
+    expect(SHIPPED.latin).toBe(45);
+    expect(SHIPPED.chinese).toBe(7936);
+    expect(SHIPPED.chinese + SHIPPED.latin).toBe(SHIPPED.total);
   });
 
   it('the prose that names the whole set carries the measured number', () => {
-    const total = grouped(7981);
+    const total = grouped(SHIPPED.total);
     const places = [
       { file: SCRIPT, needle: 'the site ships ' },
       { file: join(REPO_ROOT, 'deploy', 'OPTIMIZATION.md'), needle: '本波次刚做出来的' },
@@ -1238,12 +1304,15 @@ describe('the shipped font files', () => {
     ];
     for (const place of places) {
       const line = normalizeSpace(lineWithNeedle(place.file, place.needle));
-      expect(line, `${place.file} does not carry ${total}`).toContain(total);
+      expect(
+        carriesNumber(line, total),
+        `${place.file} does not carry ${total} as a number of its own`,
+      ).toBe(true);
     }
   });
 
   it('the prose that names the Chinese blocks carries the measured number', () => {
-    const chinese = grouped(7936);
+    const chinese = grouped(SHIPPED.chinese);
     const places = [
       {
         file: join(REPO_ROOT, 'scripts', 'fonts', 'build-webfont-subsets.mjs'),
@@ -1268,7 +1337,10 @@ describe('the shipped font files', () => {
     ];
     for (const place of places) {
       const line = normalizeSpace(lineWithNeedle(place.file, place.needle));
-      expect(line, `${place.file} does not carry ${chinese}`).toContain(chinese);
+      expect(
+        carriesNumber(line, chinese),
+        `${place.file} does not carry ${chinese} as a number of its own`,
+      ).toBe(true);
     }
   });
 });
