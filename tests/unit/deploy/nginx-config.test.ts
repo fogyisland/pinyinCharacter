@@ -839,9 +839,10 @@ describe('the sysctl tuning manual never hardcodes a machine-specific qdisc valu
   //
   // ⚠️ The §1.1 reference-value block legitimately keeps the line
   // `net.core.default_qdisc = pfifo_fast` — it is a *reference*, clearly
-  // labelled as such. The regex below demands `=` to follow the key name
-  // IMMEDIATELY, so that spaced form is deliberately not matched: only a
-  // value that is actually WRITABLE is forbidden.
+  // labelled as such. What must never appear is a WRITABLE command in §5
+  // that carries a machine-specific value: the negative assertion below is
+  // scoped to the §5 rollback section, so the reference block is never
+  // scanned.
   //
   // ⚠️ 上面那段注释里「正则要求 `=` 紧跟键名」是旧机制；这一轮换成**作用域**：
   // 否定断言只读 §5 子串，§1.1 那条参考值根本不在被扫描的文本里。
@@ -850,20 +851,26 @@ describe('the sysctl tuning manual never hardcodes a machine-specific qdisc valu
   // 按标题切。§4 里那句 `sudo sysctl -w net.core.default_qdisc=fq` 是
   // **BBR 的目标值**（故障排查用），不是回滚值 —— 它在 §5 之外，
   // 所以下面那条否定断言必须先把 §5 切出来，否则会假红。
-  const rollbackStart = tuning.indexOf('### 步骤 1：按 §1.1 记下的原值逐项写回去');
+  const rollbackStart = tuning.indexOf('## 5. 回滚：三步走，顺序不能反');
   const rollbackEnd = tuning.indexOf('\n## 6. 收益要自己量');
   const rollbackSection = tuning.slice(rollbackStart, rollbackEnd);
 
   it('scopes the rollback section the negative assertion reads', () => {
     expect(rollbackStart).toBeGreaterThan(-1);
     expect(rollbackEnd).toBeGreaterThan(rollbackStart);
+    expect(rollbackSection.startsWith('## 5. 回滚：三步走，顺序不能反')).toBe(true);
+    expect(rollbackSection).toContain('### 步骤 1：按 §1.1 记下的原值逐项写回去');
     expect(rollbackSection).toContain('### 步骤 3：复核');
     expect(rollbackSection).not.toContain('## 6. 收益要自己量');
   });
 
   it('never writes a literal qdisc value back in the rollback section', () => {
+    // The written-back value may be quoted (`default_qdisc="fq_codel"`) — this
+    // manual uses exactly that form for `tcp_rmem`/`tcp_wmem`, so a quoted
+    // literal is just as executable as an unquoted one. The quote is optional
+    // in the pattern, not in the shell.
     expect(rollbackSection).not.toMatch(
-      /sysctl\s+-w\s+net\.core\.default_qdisc\s*=\s*[A-Za-z_][A-Za-z0-9_]*/,
+      /sysctl\s+-w\s+net\.core\.default_qdisc\s*=\s*["']?[A-Za-z_][A-Za-z0-9_]*/,
     );
   });
 
@@ -877,6 +884,23 @@ describe('the sysctl tuning manual never hardcodes a machine-specific qdisc valu
 
   it('tells the operator that the distribution may ship a different default', () => {
     expect(tuning).toContain('发行版随包的 sysctl 片段会把它换成别的值');
+  });
+
+  it('tells the operator to write back all seven keys, and says which one to write by hand', () => {
+    expect(tuning).toContain('把 §1.1 那份「现状表」里**七个键全部**逐项 `sysctl -w` 回去');
+    expect(tuning).toContain('（其中 `net.core.default_qdisc` 那一项按步骤 1 的说明**自己写**，用 §1.1 记下的值）');
+  });
+
+  it('points the operator at the snapshot that was actually saved, not at the reference block', () => {
+    expect(tuning).toContain('**存进 `~/sysctl-before-bbr.txt` 的那一份**');
+  });
+
+  it('keeps the placeholder in the write-back command instead of a literal value', () => {
+    expect(tuning).toContain('net.core.default_qdisc=<把这里换成 §1.1 记下的那个值>');
+  });
+
+  it('explains what to do when the placeholder was not replaced', () => {
+    expect(tuning).toContain('报 `syntax error` ⇒ 上面 `default_qdisc` 那条的占位符没替换干净');
   });
 
   it('does not tell the operator to expect pfifo_fast when verifying the rollback', () => {
