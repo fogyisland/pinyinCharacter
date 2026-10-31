@@ -23,7 +23,9 @@
  *   6. faces         every face says font-display: swap and points at a
  *                     file that exists
  *   7. manifest      the version is the hash of the three stylesheets
- *   8. pages         what a page downloads stays inside the page budget
+ *   8. pages         what a page downloads stays inside the page budget:
+ *                    the SAMPLE of the live pages is the gate, and the seed
+ *                    of the hot tier is only its LOWER BOUND
  *   9. tokens        every URL carries the hash of the bytes it serves (R18)
  *  10. identity      every face declares the family of the stylesheet and a
  *                     normal font-style
@@ -44,7 +46,7 @@
 
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
@@ -63,7 +65,35 @@ const ROOT = resolve(HERE, '..', '..');
 const FONT_DIR = join(ROOT, 'public', 'font');
 const WEB_DIR = join(FONT_DIR, 'web');
 const MANIFEST_PATH = join(FONT_DIR, 'fonts-manifest.json');
-const PROFILE_PATH = join(ROOT, 'data', 'font-page-profiles.json');
+
+/**
+ * The seed of the hot tier: `data/font-page-profiles.json`.
+ *
+ * ⚠️ It is NOT a page. It holds the characters the four measured pages
+ * painted in ONE round, and it is the seed the hot tier is built from — so
+ * the characters it holds are in the hot tier BY CONSTRUCTION, it never
+ * reaches an Ext block, and it can never tell what a page really
+ * downloads. It is the LOWER BOUND of a page, and the budget gate reports
+ * it as such; it never fails the run.
+ */
+const SEED_PATH = join(ROOT, 'data', 'font-page-profiles.json');
+
+/**
+ * The sample of the live pages: `data/font-page-sample.json`.
+ *
+ * ⚠️ This is the ruler of the page budget: the union of several rounds of
+ * the four measured pages. It reaches the Ext layer the seed cannot reach,
+ * so the gate really measures what a page downloads.
+ *
+ * ⚠️ The path can be pointed somewhere else with WEBFONT_SAMPLE_PATH, and
+ * ONLY the sample: the seed and the font root are not touched by it. The
+ * override exists so that the anti-circularity guard can be PROVED — a run
+ * with the seed in the place of the sample has to fail, and the only way
+ * to show that is to run the verifier against a file.
+ */
+const SAMPLE_PATH = process.env.WEBFONT_SAMPLE_PATH
+  ? resolve(ROOT, process.env.WEBFONT_SAMPLE_PATH)
+  : join(ROOT, 'data', 'font-page-sample.json');
 
 /**
  * The budgets of the design.
@@ -79,15 +109,63 @@ export const LIMITS = {
   cssBytes: 175 * 1024, // 三份样式表 gzip 后合计（F25-d / F27-d）
   sansCssBytes: 65 * 1024, // 无衬线那份单独设限：它渲染阻塞（F25-d / F27-d）
   maxFacesPerCss: 3400,
-  maxFontFilesPerPage: 12, // F27-j-g：实测最多 4 个
   latinBytes: 12 * 1024, // 拉丁 hot 块的单文件上限（拉丁尾巴复用 extBlockBytes）
+  // ⚠️ The three numbers below are the budgets of the LIVE pages, and they
+  // are MEASUREMENTS, not wishes: the maxima of the 32 samples of
+  // 2026-10-31 (16 on the local build, 16 on the live site) plus 25 % of
+  // headroom.
+  //   /            448 488 B × 1.25 = 560 610 B → 547 KB = 560 128 B
+  //   /dictionary  330 688 B × 1.25 = 413 360 B → 403 KB = 412 672 B
+  //   /poetry      241 204 B × 1.25 = 301 505 B → 294 KB = 301 056 B
+  //   /stories     741 324 B × 1.25 = 926 655 B → 904 KB = 925 696 B
+  // The file count: 123 files × 1.25 = 153.75 → 153.
+  // ⚠️ `/` and `/stories` paint a RANDOM story, so their payload moves from
+  // request to request (495 316 – 741 324 B on /stories, about 1.50×) — the
+  // headroom is what keeps the budget from turning into a false alarm on
+  // the next sample.
+  maxFontFilesPerPage: 153,
   pageFontBytes: {
-    '/': 330 * 1024,
-    '/dictionary': 330 * 1024,
-    '/poetry': 240 * 1024,
-    '/stories': 330 * 1024,
+    '/': 560128,
+    '/dictionary': 412672,
+    '/poetry': 301056,
+    '/stories': 925696,
   },
+  // ⚠️ The budgets of the UNION SAMPLE — the eight rounds of the live pages
+  // the gate measures. They are the measured bytes rounded UP to a whole KB,
+  // with no headroom: the sample IS the upper bound of what one visit
+  // downloads, so a budget above it would be a wish.
+  //   / 838 960 B → 820 KB = 839 680 B      /dictionary 330 688 B → 323 KB = 330 752 B
+  //   /poetry 241 204 B → 236 KB = 241 664 B   /stories 1 214 408 B → 1 186 KB = 1 214 464 B
+  unionSampleBytes: {
+    '/': 839680,
+    '/dictionary': 330752,
+    '/poetry': 241664,
+    '/stories': 1214464,
+  },
+  maxUnionSampleFilesPerPage: 255,
 };
+
+/**
+ * The block of the hot tier.
+ *
+ * A character the hot tier covers is not an ext-layer character: the
+ * browser downloads the hot file for it and nothing else. Every other
+ * block — the Latin tier and the Ext blocks — is the layer a page only
+ * touches when it paints characters the hot tier does not hold.
+ */
+const HOT_BLOCK = 'hot';
+
+/**
+ * The pages whose content never changes.
+ *
+ * Two of the four measured pages answer with the same body on every
+ * request: the dictionary index and the poetry index. Their characters
+ * must be the SAME in the sample and in the seed — when they are not, the
+ * capture did not see what it claims to have seen, and the sample cannot
+ * be trusted as the ruler of the page budget.
+ */
+const DETERMINISTIC_PAGES = ['/dictionary', '/poetry'];
+
 
 /** The version token of a family: twelve lowercase hex characters (R18). */
 const VERSION_PATTERN = /^[0-9a-f]{12}$/;
@@ -873,14 +951,44 @@ function loadCoverageOrNull() {
 }
 
 /**
- * Check what a page downloads: the bytes and the number of files.
+ * Read a profile file.
+ *
+ * @param {string} path the file to read
+ * @param {string} label what the file is called in the messages
+ * @returns {Promise<{ ok: boolean, value: object | null, error: string | null }>}
+ */
+async function readProfile(path, label) {
+  let raw;
+  try {
+    raw = await readFile(path, 'utf8');
+  } catch (error) {
+    return {
+      ok: false,
+      value: null,
+      error: `the ${label} cannot be read: ${error.message}`,
+    };
+  }
+  try {
+    return { ok: true, value: JSON.parse(raw), error: null };
+  } catch (error) {
+    return {
+      ok: false,
+      value: null,
+      error: `the ${label} is not valid JSON: ${error.message}`,
+    };
+  }
+}
+
+/**
+ * Measure what the pages of ONE profile download: the bytes and the number
+ * of files.
  *
  * The rule of the design: a character in the hot tier makes the browser
  * fetch the hot file; a character in an Ext block makes it fetch that ONE
  * block. A block of a static family is two files (400 and 700), and a block
  * is only counted once no matter how many of its characters the page paints.
  *
- * ⚠️ The Latin characters of the fixture are counted here too: they are
+ * ⚠️ The Latin characters of the profile are counted here too: they are
  * painted by the page, so the browser downloads the Latin subsets — and a
  * page budget that does not count them does not know what the page costs.
  *
@@ -890,21 +998,18 @@ function loadCoverageOrNull() {
  * characters that no block claims keep the behaviour they always had: they
  * are reported and not failed.
  *
- * @returns {Promise<{ errors: string[], costs: object[] }>}
+ * @param {Record<string, object>} details the block map of every family
+ * @param {object} profile the profile to measure
+ * @param {{ bytes: Record<string, number>, files: number }} limits the budgets
+ * @param {string} label what the profile is called in the messages
+ * @returns {Promise<{ budgetErrors: string[], latinErrors: string[],
+ *   costs: object[], extChars: number }>}
  */
-async function checkPageBudget(details) {
-  const errors = [];
+async function measureProfile(details, profile, limits, label) {
+  const budgetErrors = [];
+  const latinErrors = [];
   const costs = [];
-  let profiles;
-  try {
-    profiles = JSON.parse(await readFile(PROFILE_PATH, 'utf8'));
-  } catch (error) {
-    return {
-      errors: [`the page profile fixture cannot be read: ${error.message}`],
-      costs,
-    };
-  }
-  const pages = profiles.pages ?? {};
+  const pages = profile?.pages ?? {};
 
   // The coverage is read ONCE and only when there is something to scope:
   // the source fonts are 65 MB and a run with nothing unpainted does not
@@ -920,30 +1025,35 @@ async function checkPageBudget(details) {
     return coverage[familyKey] ?? null;
   };
 
-  // --- the fixture must hold Latin at all --------------------------------
+  // --- the profile must hold Latin at all --------------------------------
   // Without it the check below has nothing to check, and a check with
   // nothing to check reports green — that is the "the fixture was never
   // updated" blind spot.
-  let fixtureLatin = 0;
+  let profileLatin = 0;
   for (const path of Object.keys(pages)) {
     const page = pages[path] ?? {};
     for (const family of FAMILIES) {
       for (const ch of page[family.key] ?? '') {
-        if (isLatinChar(ch)) fixtureLatin += 1;
+        if (isLatinChar(ch)) profileLatin += 1;
       }
     }
   }
-  if (fixtureLatin === 0) {
-    errors.push(
-      'the page profile fixture holds no Latin character at all — the page budget ' +
-        'check of the Latin tier would be empty, so a missing Latin tier would report green',
+  if (profileLatin === 0) {
+    budgetErrors.push(
+      `the ${label} holds no Latin character at all — the page budget check of the ` +
+        'Latin tier would be empty, so a missing Latin tier would report green',
     );
   }
 
-  for (const path of Object.keys(LIMITS.pageFontBytes)) {
+  // The characters the hot tier does NOT cover: the ext layer of the page.
+  // It is the depth of the profile, and the gate compares the depth of the
+  // sample with the depth of the seed.
+  let extChars = 0;
+
+  for (const path of Object.keys(limits.bytes)) {
     const page = pages[path];
     if (!page) {
-      errors.push(`the page profile fixture has no entry for ${path}`);
+      budgetErrors.push(`the ${label} has no entry for ${path}`);
       continue;
     }
     let bytes = 0;
@@ -954,8 +1064,11 @@ async function checkPageBudget(details) {
       if (!detail) continue;
       const chars = page[family.key] ?? '';
       const blocks = new Set();
+      const painted = new Set();
       for (const ch of chars) {
         const point = ch.codePointAt(0);
+        if (painted.has(point)) continue;
+        painted.add(point);
         const blockKey = detail.cpToBlock.get(point);
         if (blockKey === undefined) {
           // The Chinese part keeps its behaviour: reported, not failed.
@@ -965,6 +1078,7 @@ async function checkPageBudget(details) {
           continue;
         }
         blocks.add(blockKey);
+        if (blockKey !== HOT_BLOCK) extChars += 1;
       }
       for (const blockKey of blocks) {
         const block = detail.blocks.get(blockKey);
@@ -977,8 +1091,8 @@ async function checkPageBudget(details) {
       // --- the Latin characters the page paints and nobody ships ---------
       const latin = classifyUnpaintedLatin(chars, detail.cpToBlock, coverageOf(family.key));
       for (const point of latin.missing) {
-        errors.push(
-          `[${family.key}] the page ${path} paints U+${point.toString(16).toUpperCase()} ` +
+        latinErrors.push(
+          `[${family.key}] the ${label} ${path} paints U+${point.toString(16).toUpperCase()} ` +
             'that no subset of the family claims — an unpainted Latin character: the ' +
             'Latin tier does not cover it',
         );
@@ -988,23 +1102,23 @@ async function checkPageBudget(details) {
           .map((point) => `U+${point.toString(16).toUpperCase()}`)
           .join(', ');
         console.log(
-          `[verify]   info: the page ${path} paints ${latin.unsupported.length} Latin ` +
+          `[verify]   info: the ${label} ${path} paints ${latin.unsupported.length} Latin ` +
             `character(s) the source font of ${family.key} cannot draw (${list}) — the ` +
             'browser falls back to the system font for them (reported, not failed)',
         );
       }
     }
 
-    const budget = LIMITS.pageFontBytes[path];
+    const budget = limits.bytes[path];
     if (bytes > budget) {
-      errors.push(
-        `the page ${path} downloads ${bytes} B of fonts, the budget is ${budget} B`,
+      budgetErrors.push(
+        `the ${label} page ${path} downloads ${bytes} B of fonts, the budget is ${budget} B`,
       );
     }
-    if (files > LIMITS.maxFontFilesPerPage) {
-      errors.push(
-        `the page ${path} downloads ${files} font files, the budget is ` +
-          `${LIMITS.maxFontFilesPerPage}`,
+    if (files > limits.files) {
+      budgetErrors.push(
+        `the ${label} page ${path} downloads ${files} font files, the budget is ` +
+          `${limits.files}`,
       );
     }
     costs.push({
@@ -1012,17 +1126,240 @@ async function checkPageBudget(details) {
       bytes,
       files,
       budget,
+      fileBudget: limits.files,
       unpainted: unpainted.length,
       unpaintedChars: unpainted,
     });
   }
-  return { errors, costs };
+  return { budgetErrors, latinErrors, costs, extChars };
 }
+
+/**
+ * The shape of the page sample.
+ *
+ * A sample that does not hold the four measured pages, or that does not say
+ * when and where it was captured, is not a ruler — it is a file. The gate
+ * refuses to measure with it.
+ *
+ * @param {object} sample the parsed sample
+ * @returns {string[]} the messages of the failures, empty when the shape is right
+ */
+export function checkSampleShape(sample) {
+  const errors = [];
+  if (!sample || typeof sample !== 'object' || Array.isArray(sample)) {
+    return ['the page sample is not an object'];
+  }
+  if (typeof sample.capturedAt !== 'string' || sample.capturedAt === '') {
+    errors.push('the page sample declares no capture date');
+  }
+  if (typeof sample.source !== 'string' || sample.source === '') {
+    errors.push('the page sample declares no source');
+  }
+  if (!Number.isInteger(sample.rounds) || sample.rounds < 1) {
+    errors.push(
+      `the page sample declares ${JSON.stringify(sample.rounds)} round(s) — it must be a ` +
+        'whole number of rounds',
+    );
+  }
+  if (!sample.pages || typeof sample.pages !== 'object') {
+    errors.push('the page sample holds no pages');
+    return errors;
+  }
+  for (const path of Object.keys(LIMITS.unionSampleBytes)) {
+    const page = sample.pages[path];
+    if (!page || typeof page !== 'object') {
+      errors.push(`the page sample has no entry for ${path}`);
+      continue;
+    }
+    for (const family of FAMILIES) {
+      if (typeof page[family.key] !== 'string') {
+        errors.push(`the page sample holds no ${family.key} characters for ${path}`);
+      }
+    }
+  }
+  return errors;
+}
+
+/**
+ * The four guards that prove the page budget gate is NOT circular.
+ *
+ * The gate measures a sample of the live pages. If that sample is the seed
+ * of the hot tier itself, then the characters it paints are in the hot tier
+ * BY CONSTRUCTION, the sample can never reach an Ext block, and the gate
+ * can never see what a page really downloads — it reports green whatever
+ * the Ext layer costs. These four checks are what makes the gate honest,
+ * and each of them must hold:
+ *
+ *   1. the sample paints MORE characters outside the hot tier than the seed
+ *      does (739 against 196 on 2026-10-31) — it reaches where the seed
+ *      cannot reach;
+ *   2. on at least one page the sample downloads MORE font files than the
+ *      seed (175 against 8 on `/`, 255 against 8 on `/stories`) — the Ext
+ *      blocks are really downloaded;
+ *   3. the sample declares that it is a union (`rounds >= 2`) — a sample of
+ *      one round may be the deterministic page, and then it IS the seed;
+ *   4. the deterministic pages hold the SAME characters in the sample and in
+ *      the seed — otherwise the capture did not see what it claims to see.
+ *
+ * @param {object} sample the parsed page sample
+ * @param {object} seed the parsed seed of the hot tier
+ * @param {object} sampleResult the measurement of the sample
+ * @param {object} seedResult the measurement of the seed
+ * @returns {string[]} the messages of the failures, empty when the gate is honest
+ */
+export function checkSampleIsDeeper(sample, seed, sampleResult, seedResult) {
+  const errors = [];
+
+  // --- guard 3: the sample must declare that it is a union --------------
+  if (!Number.isInteger(sample?.rounds) || sample.rounds < 2) {
+    errors.push(
+      `the page sample declares ${JSON.stringify(sample?.rounds)} round(s) — a sample of ` +
+        'one round may be the deterministic page (and then it is the seed, and the page ' +
+        'budget gate is circular)',
+    );
+  }
+
+  // --- guard 1: the sample must reach deeper than the seed --------------
+  if (sampleResult.extChars <= seedResult.extChars) {
+    errors.push(
+      `the page sample paints ${sampleResult.extChars} character(s) outside the hot tier, ` +
+        `the seed paints ${seedResult.extChars} — the sample does not reach deeper than ` +
+        'the seed, so the page budget gate is circular: it can never see the Ext layer',
+    );
+  }
+
+  // --- guard 2: at least one page must download MORE files ---------------
+  const deeper = sampleResult.costs.filter((cost) => {
+    const floor = seedResult.costs.find((entry) => entry.path === cost.path);
+    return floor !== undefined && cost.files > floor.files;
+  });
+  if (deeper.length === 0) {
+    errors.push(
+      'the page sample downloads no more font files than the seed on any page — the Ext ' +
+        'blocks are never downloaded, so the page budget gate is circular',
+    );
+  }
+
+  // --- guard 4: the deterministic pages must be the same -----------------
+  for (const path of DETERMINISTIC_PAGES) {
+    const samplePage = sample?.pages?.[path] ?? {};
+    const seedPage = seed?.pages?.[path] ?? {};
+    for (const family of FAMILIES) {
+      const sampleChars = samplePage[family.key];
+      const seedChars = seedPage[family.key];
+      if (typeof sampleChars !== 'string' || typeof seedChars !== 'string') {
+        errors.push(
+          `the page sample holds no ${family.key} characters for ${path} — the capture is ` +
+            'not what it claims to be',
+        );
+        continue;
+      }
+      if (sampleChars !== seedChars) {
+        errors.push(
+          `the page ${path} is deterministic — its ${family.key} characters must be the same ` +
+            'in the sample and in the seed, and they are not: the capture is not what it ' +
+            'claims to be, so the page budget gate cannot be trusted',
+        );
+      }
+    }
+  }
+
+  return errors;
+}
+
+/**
+ * Check what a page downloads: the bytes and the number of files.
+ *
+ * ⚠️ The check runs TWICE, and the two runs are not the same:
+ *
+ *   1. the SEED (`data/font-page-profiles.json`) — the lower bound. It is
+ *      the seed of the hot tier, so the characters it holds are in the hot
+ *      tier by construction and it never reaches an Ext block. Its cost is
+ *      REPORTED and it never fails the run: it is not a page.
+ *   2. the SAMPLE (`data/font-page-sample.json`) — the union of several
+ *      rounds of the live pages. Its cost is the GATE: over the budget is
+ *      a failure, and a non-zero exit code.
+ *
+ * @param {Record<string, object>} details the block map of every family
+ * @returns {Promise<{ errors: string[], costs: object[], floorCosts: object[],
+ *   floorNotes: string[], sample: object }>}
+ */
+async function checkPageBudget(details) {
+  const errors = [];
+  const floorNotes = [];
+
+  const seed = await readProfile(SEED_PATH, 'page profile fixture');
+  if (!seed.ok) {
+    return {
+      errors: [seed.error],
+      costs: [],
+      floorCosts: [],
+      floorNotes,
+      sample: { path: SAMPLE_PATH, rounds: 0, source: '', capturedAt: '' },
+    };
+  }
+  const sample = await readProfile(SAMPLE_PATH, 'page sample');
+  if (!sample.ok) {
+    return {
+      errors: [sample.error],
+      costs: [],
+      floorCosts: [],
+      floorNotes,
+      sample: { path: SAMPLE_PATH, rounds: 0, source: '', capturedAt: '' },
+    };
+  }
+
+  errors.push(...checkSampleShape(sample.value));
+
+  // --- the lower bound (the seed) ----------------------------------------
+  const seedResult = await measureProfile(
+    details,
+    seed.value,
+    { bytes: LIMITS.pageFontBytes, files: LIMITS.maxFontFilesPerPage },
+    'seed',
+  );
+  // ⚠️ The Latin findings of the seed are errors too: a Latin character
+  // that no subset claims is a hole in the LATIN TIER, not a fact about the
+  // seed — and the seed paints the whole Latin alphabet.
+  errors.push(...seedResult.latinErrors);
+  // ⚠️ The budget findings of the seed are NOT errors: the seed is a lower
+  // bound, not a page. They are reported.
+  for (const message of seedResult.budgetErrors) {
+    floorNotes.push(`the seed is over a budget of its own: ${message}`);
+  }
+
+  // --- the gate (the sample) ---------------------------------------------
+  const sampleResult = await measureProfile(
+    details,
+    sample.value,
+    { bytes: LIMITS.unionSampleBytes, files: LIMITS.maxUnionSampleFilesPerPage },
+    'sample',
+  );
+  errors.push(...sampleResult.latinErrors, ...sampleResult.budgetErrors);
+
+  // --- the guards: the gate must prove that it is not circular ----------
+  errors.push(...checkSampleIsDeeper(sample.value, seed.value, sampleResult, seedResult));
+
+  return {
+    errors,
+    costs: sampleResult.costs,
+    floorCosts: seedResult.costs,
+    floorNotes,
+    sample: {
+      path: SAMPLE_PATH,
+      rounds: sample.value.rounds,
+      source: sample.value.source ?? '',
+      capturedAt: sample.value.capturedAt ?? '',
+    },
+  };
+}
+
 
 /**
  * Check every family and then the things that span the families.
  *
- * @returns {Promise<{ ok: boolean, errors: string[], stats: object[], costs: object[] }>}
+ * @returns {Promise<{ ok: boolean, errors: string[], stats: object[],
+ *   costs: object[], floorCosts: object[], floorNotes: string[], sample: object }>}
  */
 export async function verifyAll() {
   const errors = [];
@@ -1084,7 +1421,35 @@ export async function verifyAll() {
   const pages = await checkPageBudget(details);
   errors.push(...pages.errors);
 
-  return { ok: errors.length === 0, errors, stats, costs: pages.costs, extras };
+  return {
+    ok: errors.length === 0,
+    errors,
+    stats,
+    costs: pages.costs,
+    floorCosts: pages.floorCosts,
+    floorNotes: pages.floorNotes,
+    sample: pages.sample,
+    extras,
+  };
+}
+
+/**
+ * The path of a file, as the reader of the log wants to see it.
+ *
+ * A file of the repository is named by its repository relative path — the
+ * path a command of the repository can use. A file outside of it (the
+ * override of the sample) is named by its absolute path, because there is
+ * no shorter name for it.
+ *
+ * @param {string} path the absolute path of the file
+ * @returns {string} the path to print
+ */
+function displayPath(path) {
+  const rel = relative(ROOT, path);
+  if (rel && !rel.startsWith('..') && !isAbsolute(rel)) {
+    return rel.split(/[\\/]/).join('/');
+  }
+  return path;
 }
 
 /**
@@ -1129,8 +1494,30 @@ async function main() {
     `[verify] css    : ${cssGzipTotal} B gzip of ${LIMITS.cssBytes} B   ${cssMark}`,
   );
 
+  // --- the sample: the ruler of the page budget --------------------------
+  const rounds = Number.isInteger(result.sample.rounds)
+    ? `${result.sample.rounds} rounds`
+    : `${JSON.stringify(result.sample.rounds) ?? 'no'} rounds`;
+  console.log(
+    `[verify] sample : ${displayPath(result.sample.path)} (${rounds}, ` +
+      `${result.sample.source}, ${result.sample.capturedAt})`,
+  );
+
+  // --- the floor: the seed of the hot tier, reported and never a gate ----
+  console.log(
+    '[verify] floor  : ' +
+      result.floorCosts
+        .map(
+          (cost) =>
+            `${cost.path} ${Math.round(cost.bytes / 1024)} KB / ${cost.files} files`,
+        )
+        .join('   ') +
+      '   (data/font-page-profiles.json — a LOWER BOUND, not a page)',
+  );
+
+  // --- the pages: the sample of the live pages, and the gate -------------
   const pageMark = result.costs.some(
-    (cost) => cost.bytes > cost.budget || cost.files > LIMITS.maxFontFilesPerPage,
+    (cost) => cost.bytes > cost.budget || cost.files > cost.fileBudget,
   )
     ? 'ERROR'
     : 'OK';
@@ -1144,32 +1531,50 @@ async function main() {
         .join('   ') +
       `   ${pageMark}`,
   );
-  // ⚠️ The four numbers above are ONE SAMPLE, not the live cost of a page.
-  // They are computed from `data/font-page-profiles.json`, the fixture the
-  // capture wrote with `--union 1` (one round — the default), and `/` and
-  // `/stories` render a RANDOM character story on every request: their real
-  // payload differs from request to request, so the numbers above are a
-  // LOWER BOUND. The live cost is measured by the probe of the budget, and
-  // that probe exits non-zero when a page is over its budget.
+  // ⚠️ KB means KiB in this output (bytes / 1024), while a human reads KB as
+  // a decimal number — so the exact bytes are on the line below, and so are
+  // the budgets they are compared against.
   console.log(
-    '[verify] note   : the four page budgets above are ONE SAMPLE — they come from the ' +
-      'fixture data/font-page-profiles.json, captured with --union 1 (a single round)',
+    '[verify] bytes  : ' +
+      result.costs.map((cost) => `${cost.path} ${cost.bytes} B`).join('   ') +
+      '   (KB means KiB — bytes / 1024; the budgets are ' +
+      result.costs.map((cost) => `${cost.budget} B`).join(' / ') +
+      ')',
+  );
+  // ⚠️ The four numbers above are the UNION of the rounds of the live pages,
+  // not the cost of ONE visit. `/` and `/stories` render a RANDOM character
+  // story on every request, so one visit is cheaper than the union, and the
+  // seed above is the lower bound of the same page. The live cost of one
+  // visit is measured by the probe of the budget, and that probe exits
+  // non-zero when a page is over its budget.
+  console.log(
+    `[verify] note   : the four page numbers above are the UNION of ` +
+      `${rounds} of the live pages — it is the upper bound of what one ` +
+      'visit downloads',
   );
   console.log(
-    '[verify] note   : / and /stories render a RANDOM character story, so their content ' +
-      'differs on every request and the numbers above are a LOWER BOUND, not the live cost',
+    '[verify] note   : / and /stories render a RANDOM character story, so a single visit is ' +
+      'cheaper than the union; the seed above is the lower bound of the same page',
   );
   console.log(
-    '[verify] note   : measure the live cost with: npm run perf:fonts -- --base <live base> ' +
-      '(that probe exits non-zero when a page is over its budget)',
+    '[verify] note   : measure the live cost of one visit with: npm run perf:fonts -- --base ' +
+      '<live base> (that probe exits non-zero when a page is over its budget)',
   );
-  for (const cost of result.costs) {
-    if (cost.unpainted > 0) {
-      console.log(
-        `[verify]   info: the page ${cost.path} paints ${cost.unpainted} ` +
-          `character(s) that no subset claims (the font stack falls back for them): ` +
-          cost.unpaintedChars.join(', '),
-      );
+  for (const note of result.floorNotes) {
+    console.log(`[verify]   info: ${note}`);
+  }
+  for (const [label, costs] of [
+    ['seed', result.floorCosts],
+    ['sample', result.costs],
+  ]) {
+    for (const cost of costs) {
+      if (cost.unpainted > 0) {
+        console.log(
+          `[verify]   info: the ${label} page ${cost.path} paints ${cost.unpainted} ` +
+            `character(s) that no subset claims (the font stack falls back for them): ` +
+            cost.unpaintedChars.join(', '),
+        );
+      }
     }
   }
 

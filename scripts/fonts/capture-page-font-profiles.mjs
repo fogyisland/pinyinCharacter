@@ -1,12 +1,22 @@
 /**
  * scripts/fonts/capture-page-font-profiles.mjs — the regenerator of
- * data/font-page-profiles.json.
+ * data/font-page-profiles.json (the SEED of the hot tier) and of
+ * data/font-page-sample.json (the SAMPLE of the live pages that the page
+ * budget gate measures).
  *
  * The fixture records, for four pages, WHICH characters each of the three
  * typefaces paints. The hot tier of the webfont subsets is seeded from it
  * (scripts/fonts/webfont-charset.mjs), so it decides what a browser
  * downloads: a character the pages paint is in the hot tier, everything
  * else waits in an Ext block.
+ *
+ * ⚠️ The seed and the sample are two different files with two different
+ * jobs, and the difference is written into them: the file says how many
+ * ROUNDS it holds. The seed is one round (the hot tier is seeded from it);
+ * the sample is the union of eight rounds, and it is the sample the page
+ * budget gate measures. A sample of ONE round may be the deterministic
+ * page — and then it is the seed, and the gate can never see the Ext
+ * layer.
  *
  * The attribution itself lives in scripts/perf/class-attribution.mjs — the
  * SAME module the per page font load measurement of Task 9 uses. Two
@@ -471,7 +481,24 @@ async function main() {
     );
   }
 
-  const profile = { capturedAt, source, latinCapturedAt, latinSource, pages };
+  // ⚠️ The number of rounds travels with the characters: a profile that
+  // says it is the union of eight rounds can be told apart from a profile
+  // of one round, and the budget gate needs the difference (a sample of one
+  // round may be the deterministic page, and then it is the seed of the hot
+  // tier, and the gate is circular).
+  //
+  // The sample of the live pages is written with:
+  //   npm run fonts:capture-page-profiles -- --base https://ziyun.pudafo.com --union 8 \
+  //     --out data/font-page-sample.json --captured-at 2026-10-31 --source https://ziyun.pudafo.com \
+  //     --latin-captured-at 2026-10-31 --latin-source https://ziyun.pudafo.com
+  const profile = {
+    capturedAt,
+    source,
+    latinCapturedAt,
+    latinSource,
+    rounds: options.union,
+    pages,
+  };
   const content = `${JSON.stringify(profile, null, 2)}\n`;
 
   reportDifference(fixture, pages);

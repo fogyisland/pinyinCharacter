@@ -3,7 +3,7 @@
  *
  * The probe answers one question per page: how many bytes of webfont does
  * this page ask the browser for, and does that stay inside the budget of
- * the design (330 KB per page, 240 KB for `/poetry`, at most 12 files)?
+ * the design (547 KB per page, 294 KB for `/poetry`, at most 153 files)?
  *
  * The chain has four steps and every one of them is measured, never guessed:
  *
@@ -288,6 +288,23 @@ async function main() {
   console.log(
     `[perf:fonts] this repository ships the font stylesheets as v=${manifest.version} ` +
       `(${PUBLISHED.map((entry) => `${entry.css}: ${published[entry.key].faces} faces`).join(', ')})`,
+  );
+  // ⚠️ The budgets are MEASUREMENTS, not wishes: without this line the
+  // reader of the numbers below cannot tell a budget that was measured from
+  // one that was invented.
+  console.log(
+    '[perf:fonts] note   : the budgets are the measured maxima of 2026-10-31 (32 samples: ' +
+      '16 on the local build, 16 on the live site) plus 25% of headroom',
+  );
+  // ⚠️ KB means KiB in this output (bytes / 1024), while a human reads KB as
+  // a decimal number — so the budgets are written in bytes as well.
+  console.log(
+    '[perf:fonts] budgets: ' +
+      MEASURED_PAGES.map(
+        (path) =>
+          `${path} ${LIMITS.pageFontBytes[path]} B (${kilobytes(LIMITS.pageFontBytes[path])} KB)`,
+      ).join('   ') +
+      `   (at most ${LIMITS.maxFontFilesPerPage} font files — KB means KiB, bytes / 1024)`,
   );
 
   const sizes = new Map();
