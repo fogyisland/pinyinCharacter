@@ -267,8 +267,8 @@ export interface FaceDeclaration {
 }
 
 /**
- * The URL of a face: the directory of the family, the file and the version
- * token.
+ * The URL of a face: the directory of the family, the file, the version
+ * token and the optional release directory.
  *
  * It is null when the src is not a URL of `/font/web/…`.
  */
@@ -279,6 +279,13 @@ export interface FaceUrl {
   file: string;
   /** The version token of the URL, twelve lowercase hex characters. */
   token: string;
+  /**
+   * The optional release directory, e.g. 'r0a1b2c3d4e5f'.
+   *
+   * An empty string is release 0: the layout of the published tree, where
+   * the URL of a face is `/font/web/<family>/<file>`.
+   */
+  release: string;
 }
 
 /** The shape of public/font/fonts-manifest.json. */

@@ -1,11 +1,21 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, afterAll, beforeAll, vi } from 'vitest';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { FAMILIES } from '../../../scripts/fonts/build-webfont-subsets.mjs';
+import {
+  FAMILIES,
+  manifestVersion,
+} from '../../../scripts/fonts/build-webfont-subsets.mjs';
 import {
   verifyAll,
   LIMITS,
@@ -487,12 +497,139 @@ describe('parseFaceUrl', () => {
       dir: 'sans',
       file: 'hot.woff2',
       token: 'f31ca9b32566',
+      release: '',
+    });
+  });
+
+  it('reads the release directory of a URL that carries one', () => {
+    // The publish directory model: an apply writes a new tree under
+    // /font/web/r<token>/ and points the stylesheets at it. The release
+    // segment is OPTIONAL — the URL without one is still the URL of this
+    // repository, and it still parses to the same answer.
+    expect(
+      parseFaceUrl('/font/web/r0a1b2c3d4e5f/sans/hot.woff2?v=0a1b2c3d4e5f'),
+    ).toEqual({
+      dir: 'sans',
+      file: 'hot.woff2',
+      token: '0a1b2c3d4e5f',
+      release: 'r0a1b2c3d4e5f',
     });
   });
 
   it('returns null for a URL that is not under /font/web/', () => {
     expect(parseFaceUrl('/font/fonts-sans.css')).toBe(null);
   });
+
+  it('returns null for a directory that is not a release directory', () => {
+    // `xyz` is neither a family of this site nor a release. A parser that
+    // accepted ANY segment would read the family as `xyz` and the file as
+    // `sans/hot.woff2` — and the gate would report a missing file instead
+    // of a URL that does not point at /font/web/ at all. The same holds
+    // for a release segment that is not lowercase hex.
+    expect(parseFaceUrl('/font/web/xyz/sans/hot.woff2')).toBe(null);
+    expect(parseFaceUrl('/font/web/rNOTHEX/sans/hot.woff2')).toBe(null);
+  });
+});
+
+/**
+ * The publish directory model, proved end to end.
+ *
+ * ⚠️ The gate has to accept a tree that uses the release directory: the
+ * whole point of the model is that the stylesheets point at
+ * `/font/web/r<token>/<family>/<file>`, and a parser that does not know
+ * that shape turns the WHOLE gate red on the first apply — every face of
+ * every family is reported as a URL that points at nothing.
+ *
+ * ⚠️ The candidate is built in the TEMP directory and NEVER in
+ * `public/font/`: the published tree is not this test's to write, and the
+ * old release directories are supposed to stay where they are.
+ */
+describe('the release directory layout', () => {
+  /** The release token of the candidate tree. */
+  const RELEASE = 'r0a1b2c3d4e5f';
+
+  /** The root of the temporary tree; removed when the block is over. */
+  let tempRoot = '';
+
+  /** The font root of the candidate — the one `WEBFONT_FONT_DIR` names. */
+  let candidateRoot = '';
+
+  /**
+   * Build the candidate: the published tree with a release directory in
+   * front of the three families, and the stylesheets pointing at it.
+   *
+   * ⚠️ The manifest carries the hash of the REWRITTEN stylesheets. The gate
+   * compares the manifest with the stylesheets it reads, so a hash of the
+   * OLD ones would fail for a reason that has nothing to do with the
+   * parser — and a test that fails for the wrong reason teaches nobody
+   * anything.
+   */
+  function buildCandidate(): void {
+    tempRoot = mkdtempSync(join(tmpdir(), 'webfont-release-'));
+    candidateRoot = join(tempRoot, 'font');
+    cpSync(join(REPO_ROOT, 'public', 'font'), candidateRoot, { recursive: true });
+
+    // The release tree: the same three families, one directory deeper.
+    const releaseDir = join(candidateRoot, 'web', RELEASE);
+    mkdirSync(releaseDir, { recursive: true });
+    for (const family of FAMILY_KEYS) {
+      cpSync(
+        join(candidateRoot, 'web', family),
+        join(releaseDir, family),
+        { recursive: true },
+      );
+    }
+
+    // The stylesheets point at the release tree.
+    const cssByFile: Record<string, string> = {};
+    for (const family of FAMILY_KEYS) {
+      const name = `fonts-${family}.css`;
+      const css = readFileSync(join(candidateRoot, name), 'utf8').replace(/\r\n/g, '\n');
+      const rewritten = css.split('/font/web/').join(`/font/web/${RELEASE}/`);
+      writeFileSync(join(candidateRoot, name), rewritten, 'utf8');
+      cssByFile[name] = rewritten;
+    }
+
+    const manifestPath = join(candidateRoot, 'fonts-manifest.json');
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+    manifest.version = manifestVersion(cssByFile);
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+  }
+
+  beforeAll(() => {
+    buildCandidate();
+  }, 600_000);
+
+  afterAll(() => {
+    // ⚠️ The candidate is ~85 MB of woff2 files: it must not survive the
+    // test, or the temp directory grows by that much on every run.
+    if (tempRoot) rmSync(tempRoot, { recursive: true, force: true });
+  });
+
+  it('passes every check on a tree that uses the release directory', async () => {
+    // ⚠️ The module resolves its font root AT IMPORT TIME, so the
+    // environment variable has to be set BEFORE the import, and the module
+    // cache has to be reset — and it has to be removed afterwards, or
+    // every later test of this file would read the candidate.
+    process.env.WEBFONT_FONT_DIR = candidateRoot;
+    vi.resetModules();
+    try {
+      const { verifyAll: verifyCandidate } = await import(
+        '../../../scripts/fonts/verify-webfont-subsets.mjs'
+      );
+      const result = await verifyCandidate();
+      if (!result.ok) {
+        console.error(
+          `${result.errors.length} error(s), the first 20:\n` +
+            result.errors.slice(0, 20).join('\n'),
+        );
+      }
+      expect(result.errors).toEqual([]);
+      expect(result.ok).toBe(true);
+    } finally {
+      delete process.env.WEBFONT_FONT_DIR;
+    }
+  }, 600_000);
 });
 
 describe('checkFaceFamily', () => {

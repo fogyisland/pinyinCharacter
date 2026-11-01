@@ -480,6 +480,15 @@ interface PublishedFace {
   dir: string;
   /** The file of the face, e.g. 'latin.woff2'. */
   file: string;
+  /**
+   * The optional release directory, e.g. 'r0a1b2c3d4e5f'.
+   *
+   * An empty string is release 0: the layout of the published tree. The
+   * admin pipeline writes the next version under /font/web/r<token>/ and
+   * keeps the old ones, so the path of a file is not only its family and
+   * its name.
+   */
+  release: string;
   /** The code points the face claims. */
   ranges: Array<{ start: number; end: number }>;
 }
@@ -533,7 +542,12 @@ function publishedFaces(family: string): PublishedFace[] {
           'font URL of this repository (/font/web/<family>/<file>)',
       );
     }
-    return { dir: url.dir, file: url.file, ranges: parseUnicodeRanges(face.range) };
+    return {
+      dir: url.dir,
+      file: url.file,
+      release: url.release,
+      ranges: parseUnicodeRanges(face.range),
+    };
   });
 }
 
@@ -669,7 +683,10 @@ const latinFileTotal = new Set(
 const hotLatinBytes = FONT_FAMILIES.flatMap((family) =>
   latinFaces(publishedFacesByFamily[family]).filter((face) => HOT_LATIN_FILE.test(face.file)),
 ).reduce((total, face) => {
-  return total + statSync(resolve(ROOT, 'public', 'font', 'web', face.dir, face.file)).size;
+  return (
+    total +
+    statSync(resolve(ROOT, 'public', 'font', 'web', face.release, face.dir, face.file)).size
+  );
 }, 0);
 
 describe('the deploy manual states the one known font trade-off (R-28)', () => {

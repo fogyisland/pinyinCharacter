@@ -279,14 +279,42 @@ function unquote(value) {
 }
 
 /**
- * The URL of a face: the directory, the file and the version token.
+ * The URL of a face: the directory, the file, the version token and the
+ * OPTIONAL release directory.
  *
- * @returns {{ dir: string, file: string, token: string } | null}
+ * ⚠️ The release directory is the publish directory model: an apply writes
+ * a new tree under `/font/web/r<token>/` and points the stylesheets at it,
+ * so the URL of a face may carry one more segment. It is OPTIONAL — the
+ * URL without one is the URL of the published tree, and it parses to the
+ * same answer as it always did.
+ *
+ * ⚠️ The release segment is `r` followed by lowercase hex, and nothing
+ * else: a segment that is neither a family nor a release is a URL that does
+ * not point at `/font/web/`, and it is reported as such instead of being
+ * read as a family name.
+ *
+ * ⚠️ The two-segment form is tried FIRST. A URL that carries no release
+ * must never be read as one, or `dir` would name the release instead of
+ * the family.
+ *
+ * @param {string} src the URL of the face
+ * @returns {{ dir: string, file: string, token: string, release: string } | null}
  */
 export function parseFaceUrl(src) {
-  const url = /^\/font\/web\/([^/]+)\/([^/?]+)(?:\?v=([^?]*))?$/.exec(src);
-  if (!url) return null;
-  return { dir: url[1], file: url[2], token: url[3] ?? '' };
+  const plain = /^\/font\/web\/([^/]+)\/([^/?]+)(?:\?v=([^?]*))?$/.exec(src);
+  if (plain) {
+    return { dir: plain[1], file: plain[2], token: plain[3] ?? '', release: '' };
+  }
+  const released = /^\/font\/web\/(r[0-9a-f]+)\/([^/]+)\/([^/?]+)(?:\?v=([^?]*))?$/.exec(src);
+  if (released) {
+    return {
+      dir: released[2],
+      file: released[3],
+      token: released[4] ?? '',
+      release: released[1],
+    };
+  }
+  return null;
 }
 
 /**
@@ -753,9 +781,12 @@ async function inspectFamily(family, plan) {
     // URL to the directory of the family, so the two are equivalent on a
     // legal artefact — but each of them stands on its own, so neither can
     // be removed silently.
+    // ⚠️ The release directory is part of the URL's own path. `path.join`
+    // drops the empty segment, so a URL without a release is read from
+    // exactly the path it was read from before.
     let content;
     try {
-      content = await readFile(join(WEB_DIR, url.dir, url.file));
+      content = await readFile(join(WEB_DIR, url.release, url.dir, url.file));
     } catch (error) {
       missingFiles.push(`${url.dir}/${fileName} (${error.code ?? error.message})`);
       continue;

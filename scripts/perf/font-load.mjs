@@ -126,7 +126,11 @@ export async function readPublishedStylesheets() {
             'font URL of this repository (/font/web/<dir>/<file>)',
         );
       }
-      const key = `${url.dir}/${url.file}`;
+      // ⚠️ The key is the URL's OWN path under /font/web/, so it carries
+      // the release directory when the URL has one: the probe reads the
+      // files from the disk, and a file under /font/web/r<token>/ is not
+      // the file /font/web/<family>/<file>.
+      const key = `${url.release ? `${url.release}/` : ''}${url.dir}/${url.file}`;
       for (const range of parseUnicodeRanges(face.range)) {
         for (let point = range.start; point <= range.end; point += 1) {
           const files = byCodePoint.get(point);
