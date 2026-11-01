@@ -19,14 +19,22 @@
 | 判据 | 仓库配置会产生 | 线上实测 | 结论 |
 |---|---|---|---|
 | `/font/…woff2` 的 `ETag` | nginx `alias` + `expires` ⇒ `W/"<mtime-hex>-<size-hex>"`（mtime 在前、带 `T`/`O`） | `W/"1af64-1a16d58bed8"`（**size 在前**） | **Next.js** 的形状 |
-| 同一个响应的 `Expires:` | nginx 的 `expires 1y` **必定**带 `Expires:` | **没有** | 不是 nginx 的 `expires` |
-| `Cache-Control` | nginx 产出 `max-age=…`，再叠 `add_header` ⇒ **两个** `Cache-Control` | **一个**：`public, max-age=31536000, immutable`，与 `next.config.ts:45` 的 `/font/:path*` **逐字相同** | 由 Next.js 发出 |
+| 同一个响应的 `Expires:` | nginx 的 `expires 1y`（**旧模板**）**必定**带 `Expires:`；新模板**两层都不带** `expires` | **没有** | 不是 nginx 的 `expires` |
+| `Cache-Control` | nginx 产出 `max-age=…`，再叠 `add_header` ⇒ **两个** `Cache-Control`（**旧模板**；新模板每个块只留**一个** `add_header Cache-Control`、不用 `expires`） | **一个**：`public, max-age=31536000, immutable`，与 `next.config.ts:64` 的 `/font/web/:path*` **逐字相同** | 由 Next.js 发出 |
 | 一个不存在的字体 | nginx 的 `try_files $uri =404` ⇒ nginx 的 404 | `X-Powered-By: Next.js` + `link: </_next/static/css/…>` + `Vary: rsc, …` ⇒ **Next.js 的 404 页面** | 请求根本没进 nginx 的静态分支 |
 
 ⇒ 线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`/logo.png`
 **全部由 Next.js 提供**，而仓库配置里对应的 `alias` 块（`deploy/nginx.ziyun.pudafo.com.conf` 里的
 `location /_next/static/`、`/strokes/`、`/fonts/`、`/font/`、`/audio/` 及几个 `location = /logo*`）
 **在生产上没有生效**。
+
+⇒ **字体的缓存分两层**（Task 11）：**woff2 的 URL 字节永不变 ⇒ 一年 immutable**；
+**样式表与 manifest 是可变层 ⇒ 30 天**（`max-age=2592000`，**不带** `immutable`）。
+⇒ 具体地：`/font/web/**`（含未来的 `/font/web/r<令牌>/…` 发布目录）走**一年 immutable**；
+`/font/fonts-{sans,serif,wenkai}.css` 与 `/font/fonts-manifest.json` 走 **30 天**
+⇒ **两条规则互斥**（否定前瞻 `/font/:path((?!web/).*)`）⇒ **每个路径只命中一条**。
+⇒ 为什么必须分层：**一刀切 30 天 ⇒ 回访用户每月重下 ~800 KB 字体**（性能倒退）；
+**一刀切一年 ⇒ 可变层没有上界**，而**清理规则依赖这个上界**。
 
 **为什么这条是硬约束**：那些 `alias` 块一旦真的生效，静态资源就改由 nginx 出，
 而 `alias` + `try_files $uri =404` 是 nginx 的已知坑（`try_files` 在 `alias` 语境下会用
@@ -106,7 +114,7 @@ sudo nginx -T | grep -nE '^[[:space:]]*(http|server|location)[[:space:]].*\{|add
 HSTS 的值与 `always` 参数，一条一条来）。**location 级的不用复制** —— 它们各管各的，
 本来就不受影响。
 
-- **仓库这份配置（`deploy/nginx.ziyun.pudafo.com.conf` 这份片段内）**：http 级 **0 条**、server 级 **0 条**、location 级 **7 条**
+- **仓库这份配置（`deploy/nginx.ziyun.pudafo.com.conf` 这份片段内）**：http 级 **0 条**、server 级 **0 条**、location 级 **8 条**
   ⇒ 仓库这份不受影响；
 - **线上那份从未实测过** ⇒ 若第 1.5 步发现 http 级或 server 级 `add_header`，
   **先把那些条目逐条复制到 `location /` 里**，再继续第 3 步。
@@ -314,6 +322,9 @@ echo "token=$TOKEN"          # 必须是 12 位小写 hex
 # c) 带令牌的 URL 必须 200 + font/woff2 + 一年 immutable
 curl -sI "https://ziyun.pudafo.com/font/web/sans/hot.woff2?v=$TOKEN" | head -20
 
+# c2) 可变层(样式表与 manifest)必须 30 天、不带 immutable
+curl -sI "https://ziyun.pudafo.com/font/fonts-sans.css?v=$MV" | grep -i cache-control
+
 # d) 取回来的字节必须与服务器上的文件逐字节相同
 curl -s "https://ziyun.pudafo.com/font/web/sans/hot.woff2?v=$TOKEN" -o /tmp/sans-hot.woff2
 sha256sum /tmp/sans-hot.woff2
@@ -325,6 +336,7 @@ sha256sum "$APP_ROOT/public/font/web/sans/hot.woff2"
 - a) `manifest version=82c79ff72035`（或部署后的新版本，12 位小写 hex）
 - b) `token=f31ca9b32566`（或部署后的新族令牌，12 位小写 hex）
 - c) `HTTP/2 200`、`Content-Type: font/woff2`、`Cache-Control: public, max-age=31536000, immutable`
+- c2) `Cache-Control: public, max-age=2592000`（**没有** `immutable`）
 - d) **两个 sha256 完全相同**
 
 > **文件名注意**：sans / serif 是单字重，热区文件叫 `hot.woff2`；楷体（wenkai）是双字重，
@@ -337,6 +349,8 @@ sha256sum "$APP_ROOT/public/font/web/sans/hot.woff2"
   **不要**当成「字体没上线」，更不要回滚。
 - c) 返回 **404** ⇒ 字体产物没上线，或被某个 `alias` 块挡掉了 ⇒ **立即执行第 6 步回滚**，
   然后查应用发布记录（字体文件是随应用发布上去的）。
+- c2) 拿到的是 `max-age=31536000`（或带 `immutable`）⇒ **两层被并成了一层** ⇒
+  可变层被缓存住 ⇒ **回查 `next.config.ts` 的两条互斥规则**，并按 5.3 **清微缓存**。
 - d) `sha256sum` 报 **`No such file or directory`** ⇒ **这是路径写错了，不是字节不一致**
   ⇒ 确认 `$APP_ROOT` 与文件名（sans / serif 是单字重、热区文件叫 `hot.woff2`；
   楷体 wenkai 是双字重，叫 `hot-400.woff2` / `hot-700.woff2`）⇒ **不要回滚**。
@@ -460,7 +474,7 @@ URL 上**没有查询串令牌** ⇒ 路径即内容地址 ⇒ **旧样式表的
 2. **再上三份样式表与 `fonts-manifest.json`**（样式表的 `?v=` 是 manifest 版本、
    字体文件的 `?v=` 是每族令牌 —— **两级令牌必须同时换**）。
 
-**理由**：字体**文件名是稳定的**（`hot.woff2` / `hot-400.woff2` …），而 `/font/**` 的
+**理由**：字体**文件名是稳定的**（`hot.woff2` / `hot-400.woff2` …），而 `/font/web/**` 的
 `Cache-Control` 是 `public, immutable`（**一年**）⇒ **样式表先上**的话，浏览器会按
 新样式表里的新 URL（`hot.woff2?v=<新族令牌>`）去取，而服务器磁盘上还是**旧文件** ⇒
 **浏览器把旧字节缓存到新 URL 上** ⇒ **缺字（豆腐块）会持续一年**，而**页面上看不出任何错误**
