@@ -30,7 +30,7 @@
  * implementation or this file, never the check.
  */
 
-import type { FamilySpec } from './build-webfont-subsets.mjs';
+import type { EnvRecord, FamilySpec } from './build-webfont-subsets.mjs';
 import type { FamilyName } from './webfont-charset.mjs';
 
 /**
@@ -217,6 +217,32 @@ export interface WebfontVerificationReport {
    * code points of a shared glyph along.
    */
   extras: Record<string, string[]>;
+  /**
+   * Whether the page cost was ENFORCED (the gate) or only REPORTED.
+   */
+  pageCostMode: PageCostMode;
+  /**
+   * The page cost of the measured tree, in the shape the report prints.
+   *
+   * It is null when the page cost was enforced: nothing was reported then,
+   * because the gate speaks for itself.
+   */
+  pageCost: PageCostReport | null;
+}
+
+/** Whether the page cost is enforced (the gate) or only reported. */
+export type PageCostMode = 'enforce' | 'report';
+
+/** The page cost of a candidate, measured against the union sample. */
+export interface PageCostReport {
+  /** The bytes every measured page downloads. */
+  bytes: Record<string, number>;
+  /** The number of font files every measured page downloads. */
+  files: Record<string, number>;
+  /** The byte budget of every measured page. */
+  budgetBytes: Record<string, number>;
+  /** The budget of the number of font files a page downloads. */
+  budgetFiles: number;
 }
 
 /** The budgets of the design. */
@@ -398,3 +424,18 @@ export declare function checkProfileHasLatin(
  * total of the three stylesheets, the manifest and the page budget.
  */
 export declare function verifyAll(): Promise<WebfontVerificationReport>;
+
+/**
+ * The font root: the tree the artefacts are read from.
+ *
+ * `WEBFONT_FONT_DIR` overrides it, and a relative path is resolved against
+ * the repository root and not against the working directory.
+ */
+export declare function resolveFontDir(env?: EnvRecord): string;
+
+/**
+ * Whether the page cost is ENFORCED (the gate) or only REPORTED.
+ *
+ * A misspelled mode throws instead of falling back to one of the two.
+ */
+export declare function resolvePageCostMode(env?: EnvRecord): PageCostMode;

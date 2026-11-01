@@ -67,6 +67,11 @@
  * This script writes the artefacts and nothing else:
  *   public/font/web/<family>/hot.woff2, ext-001.woff2, …   the subsets
  *   public/font/web/OFL-<family>.txt                        the licences
+ *   public/font/web/<family>/OFL-<family>.txt               the licences of
+ *                                                           the family, so
+ *                                                           that a release
+ *                                                           directory is
+ *                                                           self-sufficient
  *   public/font/fonts-<family>.css                          the stylesheets
  *   public/font/fonts-manifest.json                         the version hash
  * The OLD Google subset directories are NOT removed here — replacing them
@@ -90,11 +95,35 @@ import { coverageOfSources, loadFamilyCharsets, unicodeRange } from './webfont-c
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..', '..');
 
-/** Where the subset files are written. */
-export const OUT_ROOT = resolve(ROOT, 'public', 'font', 'web');
+/**
+ * The font root: where the stylesheets, the manifest and the subsets live.
+ *
+ * `WEBFONT_FONT_DIR` overrides it, so a build can write into a staging
+ * tree instead of into the published one. A RELATIVE path is resolved
+ * against the repository root and NOT against the working directory: the
+ * pipeline of the admin page may run from anywhere, and the same command
+ * has to cut the same tree every time.
+ *
+ * ⚠️ ONE environment variable names ONE thing: there is no second
+ * variable for the output directory. Two names for one root are two roots
+ * that drift apart, and the drift is found when a candidate is applied.
+ *
+ * @param {Record<string, string|undefined>} env the environment to read
+ * @returns {string} the absolute path of the font root
+ */
+export function resolveFontDir(env = process.env) {
+  const override = env.WEBFONT_FONT_DIR;
+  if (typeof override === 'string' && override.trim() !== '') {
+    return resolve(ROOT, override.trim());
+  }
+  return join(ROOT, 'public', 'font');
+}
 
 /** Where the stylesheets and the manifest are written. */
-const FONT_DIR = resolve(ROOT, 'public', 'font');
+export const FONT_DIR = resolveFontDir();
+
+/** Where the subset files are written. */
+export const OUT_ROOT = join(FONT_DIR, 'web');
 
 /** Where the instanced source fonts and their licences live. */
 export const STAGING_DIR = resolve(ROOT, 'scripts', 'fonts', 'staging', 'web');
@@ -497,15 +526,46 @@ function assertLicense(family, stagingDir) {
 }
 
 /**
- * Copy the licence of a family next to the subsets.
+ * Copy the licence of a family into the output tree.
+ *
+ * The licence is written TWICE, and the second copy is ADDITIVE:
+ *   - on the root of the output tree (`<root>/web/OFL-<族>.txt`) — where
+ *     it has always been, and where it stays;
+ *   - inside the directory of the family (`<root>/web/<族>/OFL-<族>.txt`) —
+ *     so that every release directory is SELF-SUFFICIENT. A subset of an
+ *     OFL font is still an OFL font, and the licence has to be
+ *     distributed with it: a release that is taken away as a whole
+ *     directory has to carry the licence of its family.
+ *
+ * @param {object} family the family the licence belongs to
+ * @param {string} stagingDir the directory the licence is read from
+ * @param {string} outRoot the root of the output tree
+ * @returns {Promise<void>} resolves when both copies are on the disk
  */
-async function copyLicense(family, stagingDir) {
+export async function copyFamilyLicences(
+  family,
+  stagingDir = STAGING_DIR,
+  outRoot = OUT_ROOT,
+) {
   const from = assertLicense(family, stagingDir);
-  const to = join(OUT_ROOT, `OFL-${family.key}.txt`);
+  const familyDir = join(outRoot, family.dir);
   try {
-    await copyFile(from, to);
+    await mkdir(familyDir, { recursive: true });
   } catch (err) {
-    throw new Error(`[webfont] cannot copy the licence ${from} to ${to}: ${err.message}`);
+    throw new Error(
+      `[webfont] cannot create the output directory ${familyDir}: ${err.message}`,
+    );
+  }
+  const targets = [
+    join(outRoot, `OFL-${family.key}.txt`),
+    join(familyDir, `OFL-${family.key}.txt`),
+  ];
+  for (const to of targets) {
+    try {
+      await copyFile(from, to);
+    } catch (err) {
+      throw new Error(`[webfont] cannot copy the licence ${from} to ${to}: ${err.message}`);
+    }
   }
 }
 
@@ -690,7 +750,7 @@ async function buildFamily(family, plan, sources, stagingDir) {
       `[webfont] cannot write the stylesheet ${join(FONT_DIR, family.css)}: ${err.message}`,
     );
   }
-  await copyLicense(family, stagingDir);
+  await copyFamilyLicences(family, stagingDir);
 
   // The family is complete now: the stylesheet points at the files that
   // were just written, so the files of an older corpus that this build

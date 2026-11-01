@@ -184,14 +184,54 @@ export interface BuildOptions {
   stagingDir?: string;
 }
 
+/**
+ * The environment the font root is read from.
+ *
+ * It is a plain record and not `NodeJS.ProcessEnv`: Next.js makes `NODE_ENV`
+ * a REQUIRED member of `ProcessEnv`, so a caller that only wants to set
+ * `WEBFONT_FONT_DIR` could not pass a plain object at all.
+ */
+export type EnvRecord = Record<string, string | undefined>;
+
 /** The three families the site ships. */
 export declare const FAMILIES: FamilySpec[];
 
-/** Where the subset files are written: <repo>/public/font/web. */
+/**
+ * Where the stylesheets and the manifest are written.
+ *
+ * It is the font root: `<repo>/public/font` by default, and the root that
+ * `WEBFONT_FONT_DIR` names when it is set.
+ */
+export declare const FONT_DIR: string;
+
+/**
+ * Where the subset files are written: the `web` directory of the font
+ * root — `<repo>/public/font/web` by default.
+ */
 export declare const OUT_ROOT: string;
 
 /** Where the source fonts and the licences are read from. */
 export declare const STAGING_DIR: string;
+
+/**
+ * The font root: where the stylesheets, the manifest and the subsets live.
+ *
+ * `WEBFONT_FONT_DIR` overrides it, and a relative path is resolved
+ * against the repository root and not against the working directory.
+ */
+export declare function resolveFontDir(env?: EnvRecord): string;
+
+/**
+ * Copy the licence of a family into the output tree.
+ *
+ * It is written on the root of the tree AND inside the directory of the
+ * family, so that every release directory is self-sufficient.
+ */
+export declare function copyFamilyLicences(
+  family: FamilySpec,
+  stagingDir?: string,
+  outRoot?: string,
+): Promise<void>;
 
 /** The file names one block is cut into. */
 export declare function blockFileNames(family: FamilySpec, block: BlockRef): string[];

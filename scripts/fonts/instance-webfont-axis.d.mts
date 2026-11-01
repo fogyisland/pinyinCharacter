@@ -26,7 +26,7 @@ export interface WeightAxis {
 }
 
 /** The outcome of clipping one variable font. */
-export interface InstanceResult {
+export interface InstanceOutcome {
   /** What happened. */
   status: 'ok' | 'skip' | 'fail';
   /** The clipped file name, when the clip produced one. */
@@ -35,6 +35,36 @@ export interface InstanceResult {
   axis?: WeightAxis;
   /** Why the clip failed. */
   reason?: string;
+}
+
+/**
+ * What happened to one target of the axis clip.
+ */
+export interface InstanceResult {
+  /** The source file of the target. */
+  source: string;
+  /** The file the clip lands in. */
+  out: string;
+  /** Whether the clip ran or was skipped. */
+  status: 'done' | 'skipped';
+  /** The size of the clipped file, null when there is none. */
+  bytes: number | null;
+  /** Why the target was skipped, null when it was clipped. */
+  reason: string | null;
+}
+
+/** The options of a run of the axis clip. */
+export interface InstanceAllOptions {
+  /**
+   * The directory the fonts live in.
+   *
+   * It defaults to STAGING_DIR.
+   */
+  stagingDir?: string;
+  /**
+   * Clip the axis instances again, even when they are already there.
+   */
+  force?: boolean;
 }
 
 /** Where the downloaded sources live. Gitignored, never committed. */
@@ -88,4 +118,17 @@ export interface FontToolsProbe {
 export declare function describeFontTools(): FontToolsProbe;
 
 /** Clip one variable font and verify the result. */
-export declare function instanceOne(target: InstancerTarget): Promise<InstanceResult>;
+export declare function instanceOne(
+  target: InstancerTarget,
+  options?: InstanceAllOptions,
+): Promise<InstanceOutcome>;
+
+/**
+ * Clip every variable font, and say what happened to each one.
+ *
+ * A target whose axis instance is already there is skipped; a failure
+ * throws and says why.
+ */
+export declare function instanceAll(
+  opts?: InstanceAllOptions,
+): Promise<InstanceResult[]>;

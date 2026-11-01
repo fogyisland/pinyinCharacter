@@ -194,10 +194,6 @@ export function probeFontTools() {
   return describeFontTools().ok;
 }
 
-/** The remedy printed when fontTools cannot be found. */
-const FONTTOOLS_REMEDY = `[instance] fonttools not found — install it with:
-    python -m pip install --upgrade fonttools brotli`;
-
 /**
  * Clip one variable font and verify the result.
  *
@@ -205,10 +201,17 @@ const FONTTOOLS_REMEDY = `[instance] fonttools not found — install it with:
  * font has to read exactly 400 / 400 / 700. A clip that silently kept
  * the original axis would ship a font with the wrong default weight and
  * nothing else would notice.
+ *
+ * @param {object} target the source file and the file the clip lands in
+ * @param {{ stagingDir?: string, force?: boolean }} options where the
+ *   fonts live, and whether an existing clip is re-cut
+ * @returns {Promise<object>} the outcome of the clip
  */
-export async function instanceOne(target) {
-  const srcPath = resolve(STAGING_DIR, target.src);
-  const outPath = resolve(STAGING_DIR, target.out);
+export async function instanceOne(target, options = {}) {
+  const stagingDir = options.stagingDir ?? STAGING_DIR;
+  const force = options.force === true;
+  const srcPath = resolve(stagingDir, target.src);
+  const outPath = resolve(stagingDir, target.out);
 
   if (!existsSync(srcPath)) {
     return {
@@ -224,7 +227,7 @@ export async function instanceOne(target) {
   // An output that is newer than its source and already carries the
   // expected axis is up to date; clipping it again would burn minutes
   // for the same bytes.
-  if (existsSync(outPath)) {
+  if (!force && existsSync(outPath)) {
     const outStat = statSync(outPath);
     const srcStat = statSync(srcPath);
     if (outStat.mtimeMs >= srcStat.mtimeMs) {
@@ -252,7 +255,7 @@ export async function instanceOne(target) {
   try {
     stdout = execFileSync(PYTHON_BIN, instancerArgs(target.src, target.out), {
       encoding: 'utf8',
-      cwd: STAGING_DIR,
+      cwd: stagingDir,
       // fontTools reports its table repairs on stderr; they are part of
       // the normal clipping flow and must stay visible.
       stdio: ['ignore', 'pipe', 'inherit'],
@@ -298,58 +301,135 @@ export async function instanceOne(target) {
   return { status: 'ok', out: target.out, axis };
 }
 
+/**
+ * What happened to one target of the axis clip.
+ *
+ * @typedef {object} InstanceResult
+ * @property {string} source the source file of the target
+ * @property {string} out the file the clip lands in
+ * @property {'done'|'skipped'} status whether the clip ran or was skipped
+ * @property {number|null} bytes the size of the clipped file, null when there is none
+ * @property {string|null} reason why the target was skipped, null when it was clipped
+ */
+
+/**
+ * The reason the toolchain cannot clip, in one sentence.
+ *
+ * The three failure modes need three different remedies, so they are
+ * told apart: there is no Python at all, there is a Python without
+ * fontTools, and there is a fontTools that failed.
+ *
+ * @param {object} probe the outcome of the fontTools probe
+ * @returns {string} the message of the failure
+ */
+function fontToolsFailure(probe) {
+  if (probe.interpreterMissing) {
+    return (
+      `[instance] the Python interpreter could not be started — ${probe.detail}. ` +
+      'Install Python 3, or point PYTHON at the interpreter that owns fontTools.'
+    );
+  }
+  if (probe.moduleMissing) {
+    return (
+      `[instance] fontTools is not installed in "${PYTHON_BIN}" — install it with: ` +
+      'python -m pip install --upgrade fonttools brotli'
+    );
+  }
+  return (
+    `[instance] the fontTools probe ran but failed — ${probe.detail}. Run it by hand to ` +
+    `see the full error: ${PYTHON_BIN} -I -m fontTools.varLib.instancer --help`
+  );
+}
+
+/**
+ * Clip every variable font, and say what happened to each one.
+ *
+ * A target whose axis instance is ALREADY there is skipped: clipping it
+ * again would change its bytes, the version token of the family would
+ * change with it, and every font of the site would have to be downloaded
+ * again. `opts.force` says to clip it anyway.
+ *
+ * A failure THROWS, and it says why: there is no Python, there is no
+ * fontTools, or the clip itself failed. A failure that is swallowed
+ * would leave a half built pipeline behind it that looks green.
+ *
+ * @param {{ stagingDir?: string, force?: boolean }} opts where the fonts
+ *   live, and whether an existing clip is re-cut
+ * @returns {Promise<InstanceResult[]>} what happened to every target
+ */
+export async function instanceAll(opts = {}) {
+  const stagingDir = opts.stagingDir ?? STAGING_DIR;
+  const force = opts.force === true;
+  const results = [];
+
+  for (const target of INSTANCER_TARGETS) {
+    const existing = fileSize(resolve(stagingDir, target.out));
+    if (!force && existing > 0) {
+      results.push({
+        source: target.src,
+        out: target.out,
+        status: 'skipped',
+        bytes: existing,
+        reason:
+          'the axis instance already exists — clipping it again would change its bytes',
+      });
+      continue;
+    }
+
+    // A clip is really needed, so the toolchain has to be there — and the
+    // reason it is not has to be exact: "there is no Python" and
+    // "fontTools is missing" need two different remedies.
+    const fontTools = describeFontTools();
+    if (!fontTools.ok) {
+      throw new Error(fontToolsFailure(fontTools));
+    }
+
+    const outcome = await instanceOne(target, { stagingDir, force });
+    if (outcome.status === 'fail') {
+      throw new Error(
+        `[instance] the clip of ${target.src} failed: ${outcome.reason ?? 'unknown error'}`,
+      );
+    }
+    results.push({
+      source: target.src,
+      out: target.out,
+      status: 'done',
+      bytes: fileSize(resolve(stagingDir, target.out)) || null,
+      reason: null,
+    });
+  }
+
+  return results;
+}
+
 async function main() {
   console.log(`[instance] staging dir: ${STAGING_DIR}`);
   console.log(`[instance] python: ${PYTHON_BIN}`);
 
-  const fontTools = describeFontTools();
-  if (!fontTools.ok) {
-    if (fontTools.interpreterMissing) {
-      // The interpreter could not be started at all. Saying anything
-      // about fontTools here would be a lie: the package was never
-      // reached, because there was no Python to reach it with. The
-      // detail says whether the interpreter is missing or merely could
-      // not be started.
-      console.error(`[instance] the Python interpreter could not be started — ${fontTools.detail}`);
-      console.error('    install Python 3, or point PYTHON at the interpreter that owns fontTools:');
-      console.error('    set PYTHON=C:\\path\\to\\python.exe');
-    } else if (fontTools.moduleMissing) {
-      console.error(FONTTOOLS_REMEDY);
-    } else {
-      // The interpreter ran and the probe failed. Whether fontTools is
-      // installed was never established, so this must not claim that it
-      // is — the operator may have a broken fontTools, or a broken
-      // interpreter, and the detail below says which error came back.
-      console.error(`[instance] the fontTools probe ran but failed — ${fontTools.detail}`);
-      console.error('    run the probe by hand to see the full error:');
-      console.error(`    ${PYTHON_BIN} -I -m fontTools.varLib.instancer --help`);
+  try {
+    const results = await instanceAll();
+    for (const result of results) {
+      const mark = result.status === 'done' ? 'DONE' : 'SKIP';
+      console.log(
+        `[instance] ${mark} ${result.out}  ${result.bytes ?? 0} bytes` +
+          (result.reason ? `  (${result.reason})` : ''),
+      );
     }
-    // Set the code and return instead of calling process.exit(): on
-    // Windows a process.exit() right after a write to a pipe can drop the
-    // text that is still sitting in the buffer.
-    process.exitCode = 1;
-    return;
-  }
-  console.log(`[instance] fonttools: ok (${fontTools.detail})`);
-
-  let failed = 0;
-  for (const target of INSTANCER_TARGETS) {
-    const result = await instanceOne(target);
-    if (result.status === 'fail') {
-      failed++;
-      console.error(`[instance] FAIL ${target.out}`);
-      console.error(`[instance]      ${result.reason ?? 'unknown error'}`);
-    }
-  }
-
-  console.log('');
-  if (failed > 0) {
-    console.error(`[instance] ${failed} file(s) failed — fix the source fonts and retry with:`);
+    console.log('');
+    console.log(
+      '[instance] done — every variable font is pinned to wght 400..700 default 400',
+    );
+  } catch (error) {
+    // The reason is in the message: there is no Python, there is no
+    // fontTools, or the clip itself failed. The code is set and the
+    // function returns instead of calling process.exit(): on Windows a
+    // process.exit() right after a write to a pipe can drop the text that
+    // is still sitting in the buffer.
+    console.error(`[instance] ${error instanceof Error ? error.message : String(error)}`);
+    console.error('    fix the source fonts and retry with:');
     console.error('    npm run fonts:download-web && npm run fonts:instance-web');
     process.exitCode = 1;
-    return;
   }
-  console.log('[instance] done — every variable font is pinned to wght 400..700 default 400');
 }
 
 const isMain =

@@ -62,9 +62,71 @@ import {
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(HERE, '..', '..');
-const FONT_DIR = join(ROOT, 'public', 'font');
+
+/**
+ * The font root: the tree the artefacts are read from.
+ *
+ * `WEBFONT_FONT_DIR` overrides it, so a candidate build can be checked
+ * instead of the published one. A RELATIVE path is resolved against the
+ * repository root and NOT against the working directory — the same rule
+ * the subsetter follows, and the same name for the same thing: the two
+ * scripts have to point at ONE tree, or the checker checks a tree nobody
+ * cut.
+ *
+ * ⚠️ ONE environment variable names ONE thing: there is no second
+ * variable for the web directory.
+ *
+ * @param {Record<string, string|undefined>} env the environment to read
+ * @returns {string} the absolute path of the font root
+ */
+export function resolveFontDir(env = process.env) {
+  const override = env.WEBFONT_FONT_DIR;
+  if (typeof override === 'string' && override.trim() !== '') {
+    return resolve(ROOT, override.trim());
+  }
+  return join(ROOT, 'public', 'font');
+}
+
+/** Where the artefacts are read from. */
+const FONT_DIR = resolveFontDir();
+
+/** Where the subsets are read from. */
 const WEB_DIR = join(FONT_DIR, 'web');
+
+/** Where the manifest is read from. */
 const MANIFEST_PATH = join(FONT_DIR, 'fonts-manifest.json');
+
+/**
+ * Whether the page cost is ENFORCED (the gate) or only REPORTED.
+ *
+ * The page cost is measured against the union sample of the LIVE pages,
+ * so it describes the PUBLISHED tree and not a candidate: a candidate
+ * that is checked against it would be judged by a ruler that does not
+ * measure it. In `report` mode the page cost is measured and printed,
+ * and it does not fail the run; every other check — the Latin tier, the
+ * shape of the sample, the two guards against a circular gate — still
+ * fails the run, because those are properties of the candidate itself.
+ *
+ * A misspelled mode THROWS: silently falling back to `enforce` would
+ * turn a typo into a red run nobody understands, and falling back to
+ * `report` would turn it into a green one nobody asked for.
+ *
+ * @param {Record<string, string|undefined>} env the environment to read
+ * @returns {'enforce'|'report'} the mode of the page cost
+ */
+export function resolvePageCostMode(env = process.env) {
+  const raw = env.WEBFONT_PAGE_COST;
+  if (raw === undefined || raw === null || String(raw).trim() === '') {
+    return 'enforce';
+  }
+  const mode = String(raw).trim();
+  if (mode === 'enforce' || mode === 'report') {
+    return mode;
+  }
+  throw new Error(
+    `WEBFONT_PAGE_COST must be "enforce" or "report", got "${String(raw)}"`,
+  );
+}
 
 /**
  * The seed of the hot tier: `data/font-page-profiles.json`.
@@ -1323,6 +1385,11 @@ async function checkPageBudget(details) {
   const floorNotes = [];
   const fixtureErrors = [];
 
+  // ⚠️ The mode is resolved HERE and not at the top level of the module:
+  // a throw at the top level would be a stack trace, while here it is
+  // caught by the CLI and reported as "the verification itself failed".
+  const pageCostMode = resolvePageCostMode();
+
   const seed = await readProfile(SEED_PATH, 'page profile fixture');
   if (!seed.ok) {
     return {
@@ -1332,6 +1399,8 @@ async function checkPageBudget(details) {
       floorNotes,
       sample: { path: SAMPLE_PATH, rounds: 0, source: '', capturedAt: '' },
       fixtureErrors,
+      pageCostMode,
+      pageCost: null,
     };
   }
   const sample = await readProfile(SAMPLE_PATH, 'page sample');
@@ -1343,6 +1412,8 @@ async function checkPageBudget(details) {
       floorNotes,
       sample: { path: SAMPLE_PATH, rounds: 0, source: '', capturedAt: '' },
       fixtureErrors,
+      pageCostMode,
+      pageCost: null,
     };
   }
 
@@ -1379,7 +1450,13 @@ async function checkPageBudget(details) {
     { bytes: LIMITS.unionSampleBytes, files: LIMITS.maxUnionSampleFilesPerPage },
     'sample',
   );
-  errors.push(...sampleResult.latinErrors, ...sampleResult.budgetErrors);
+  // ⚠️ Only the page cost is demoted in report mode: the Latin findings
+  // are holes in the PRODUCT (a character no subset claims) and not a
+  // fact about the live pages, so they fail the run in every mode.
+  errors.push(...sampleResult.latinErrors);
+  if (pageCostMode === 'enforce') {
+    errors.push(...sampleResult.budgetErrors);
+  }
   // ⚠️ The FIXTURE findings of the sample are errors too — for the same
   // reason as the ones of the seed.
   errors.push(...sampleResult.fixtureErrors);
@@ -1400,6 +1477,41 @@ async function checkPageBudget(details) {
       capturedAt: sample.value.capturedAt ?? '',
     },
     fixtureErrors,
+    pageCostMode,
+    pageCost: pageCostMode === 'report' ? pageCostOf(sampleResult.costs) : null,
+  };
+}
+
+/**
+ * The page cost of the measured tree, in the shape the report prints.
+ *
+ * The numbers are the ones of the CANDIDATE (the tree the verifier read),
+ * measured with the ruler of the union sample; the budgets are the ones
+ * of the design. The page keys are sorted, so that the line is the same
+ * every time it is printed — it is a machine readable line, and Task 6
+ * takes the new numbers from it.
+ *
+ * @param {object[]} costs the cost of every measured page
+ * @returns {{ bytes: Record<string, number>, files: Record<string, number>,
+ *   budgetBytes: Record<string, number>, budgetFiles: number }} the report
+ */
+function pageCostOf(costs) {
+  const bytes = {};
+  const files = {};
+  const budgetBytes = {};
+  const paths = [...new Set(costs.map((cost) => cost.path))].sort();
+  for (const path of paths) {
+    const cost = costs.find((entry) => entry.path === path);
+    if (!cost) continue;
+    bytes[path] = cost.bytes;
+    files[path] = cost.files;
+    budgetBytes[path] = cost.budget;
+  }
+  return {
+    bytes,
+    files,
+    budgetBytes,
+    budgetFiles: LIMITS.maxUnionSampleFilesPerPage,
   };
 }
 
@@ -1481,6 +1593,8 @@ export async function verifyAll() {
     sample: pages.sample,
     fixtureErrors: pages.fixtureErrors,
     extras,
+    pageCostMode: pages.pageCostMode,
+    pageCost: pages.pageCost,
   };
 }
 
@@ -1567,11 +1681,16 @@ async function main() {
   );
 
   // --- the pages: the sample of the live pages, and the gate -------------
-  const pageMark = result.costs.some(
-    (cost) => cost.bytes > cost.budget || cost.files > cost.fileBudget,
-  )
-    ? 'ERROR'
-    : 'OK';
+  // ⚠️ In report mode the page cost is NOT judged, so the line must not
+  // say OK either: "OK" would be a claim, and nothing was claimed.
+  const pageMark =
+    result.pageCostMode === 'report'
+      ? 'REPORT'
+      : result.costs.some(
+          (cost) => cost.bytes > cost.budget || cost.files > cost.fileBudget,
+        )
+        ? 'ERROR'
+        : 'OK';
   console.log(
     '[verify] pages  : ' +
       result.costs
@@ -1650,6 +1769,38 @@ async function main() {
     '[verify] note   : measure the live cost of one visit with: npm run perf:fonts -- --base ' +
       '<live base> (that probe exits non-zero when a page is over its budget)',
   );
+  // --- the page cost, reported and not enforced --------------------------
+  // ⚠️ The lines below exist ONLY in report mode: the enforce output has
+  // to stay byte for byte the same, and it already says what it thinks
+  // of the page cost — as an error.
+  if (result.pageCostMode === 'report') {
+    console.log(
+      '[verify] note   : PAGE COST IS REPORTED, NOT ENFORCED — these numbers describe ' +
+        'the LIVE tree, not the candidate',
+    );
+    // The machine readable line: it is the only source of the new numbers
+    // for the person who re-baselines the budgets by hand, so its shape
+    // is pinned.
+    console.log(`[verify] pagecost: ${JSON.stringify(result.pageCost)}`);
+    for (const cost of result.costs) {
+      const overBytes = cost.bytes > cost.budget;
+      const overFiles = cost.files > cost.fileBudget;
+      if (!overBytes && !overFiles) continue;
+      // ⚠️ The sentence is built HERE and not printed from the findings
+      // of the enforce mode: that text is the ERROR text of the gate, and
+      // the report mode must not carry it — the report mode says what is
+      // over the budget, the enforce mode says what is wrong.
+      const comparison = overBytes
+        ? `(${cost.bytes} B > ${cost.budget} B${
+            overFiles ? `, ${cost.files} files > ${cost.fileBudget} files` : ''
+          })`
+        : `(${cost.files} files > ${cost.fileBudget} files)`;
+      const subject = overBytes ? 'its page budget' : 'its file budget';
+      console.log(
+        `[verify]   info: the sample page ${cost.path} is over ${subject} ${comparison}`,
+      );
+    }
+  }
   for (const note of result.floorNotes) {
     console.log(`[verify]   info: ${note}`);
   }
