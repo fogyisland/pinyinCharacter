@@ -821,9 +821,16 @@ function repoRoot(): string {
  * "production-only install" this suite performs would silently install
  * everything and prove nothing at all. Only npm's own CLI may be used
  * here; anything else is ignored rather than believed.
+ *
+ * The environment and node's own path are **parameters** so that the
+ * decision can be tested without a machine that happens to have npm
+ * installed in one particular place.
  */
-function npmCliPath(): string {
-  const fromEnv = process.env.npm_execpath;
+export function npmCliPath(
+  env: Record<string, string | undefined> = process.env,
+  execPath: string = process.execPath,
+): string {
+  const fromEnv = env.npm_execpath;
   // The NAME has to be npm's own, exactly: a suffix match would also
   // accept a file called `foo-npm-cli.js`, which is not npm.
   if (fromEnv && basename(fromEnv) === 'npm-cli.js' && existsSync(fromEnv)) return fromEnv;
@@ -831,8 +838,8 @@ function npmCliPath(): string {
   // npm ships with node: next to it on Windows, and in the sibling
   // `lib/node_modules` on a POSIX install.
   const candidates = [
-    join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
-    join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+    join(dirname(execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+    join(dirname(execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
   ];
   for (const candidate of candidates) {
     if (existsSync(candidate)) return candidate;
@@ -875,6 +882,84 @@ function execCapture(
     );
   });
 }
+
+/**
+ * The npm that installs the production-only tree.
+ *
+ * The decision this suite rests on is "is this npm's own CLI, or some
+ * other package manager's script?". Getting it wrong does not make the
+ * test fail — it makes the test **prove less**: yarn v1 installs the dev
+ * dependencies too, so a "production-only install" would quietly become
+ * "install everything" and still pass.
+ *
+ * So the decision is pinned here, on a machine that does not have to
+ * have npm installed anywhere in particular: the environment and node's
+ * path are parameters.
+ */
+describe('npmCliPath — the npm that installs the production tree', () => {
+  it('trusts npm_execpath only when the file IS npm’s CLI', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'webfont-npm-cli-'));
+    try {
+      const realNpm = join(dir, 'npm-cli.js');
+      const lookAlike = join(dir, 'foo-npm-cli.js');
+      const yarn = join(dir, 'yarn.js');
+      writeFileSync(realNpm, '// npm');
+      writeFileSync(lookAlike, '// not npm');
+      writeFileSync(yarn, '// not npm either');
+
+      // npm's own file is taken.
+      expect(npmCliPath({ npm_execpath: realNpm }, join(dir, 'deep', 'node.exe'))).toBe(realNpm);
+
+      // A look-alike whose name merely ENDS with npm's is refused: the
+      // name has to BE npm's, not end with it.
+      expect(() => npmCliPath({ npm_execpath: lookAlike }, join(dir, 'deep', 'node.exe'))).toThrow(
+        /cannot find npm-cli\.js/,
+      );
+
+      // Another package manager's CLI is refused too.
+      expect(() => npmCliPath({ npm_execpath: yarn }, join(dir, 'deep', 'node.exe'))).toThrow(
+        /cannot find npm-cli\.js/,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('finds npm where it ships with node', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'webfont-npm-layout-'));
+    try {
+      // The Windows layout: next to node.exe.
+      const windowsBin = join(dir, 'win', 'node_modules', 'npm', 'bin');
+      mkdirSync(windowsBin, { recursive: true });
+      const windowsCli = join(windowsBin, 'npm-cli.js');
+      writeFileSync(windowsCli, '// npm');
+      expect(npmCliPath({}, join(dir, 'win', 'node.exe'))).toBe(windowsCli);
+
+      // The POSIX layout: in the sibling `lib/node_modules`.
+      const posixBin = join(dir, 'posix', 'bin');
+      const posixCliDir = join(dir, 'posix', 'lib', 'node_modules', 'npm', 'bin');
+      mkdirSync(posixCliDir, { recursive: true });
+      const posixCli = join(posixCliDir, 'npm-cli.js');
+      writeFileSync(posixCli, '// npm');
+      expect(npmCliPath({}, join(posixBin, 'node'))).toBe(posixCli);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('throws instead of skipping when npm is nowhere', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'webfont-npm-missing-'));
+    try {
+      // A suite that cannot install what it claims to install must not
+      // report success.
+      expect(() => npmCliPath({}, join(dir, 'deep', 'node.exe'))).toThrow(
+        /cannot find npm-cli\.js/,
+      );
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
 
 describe('the build toolchain — how package.json classifies it', () => {
   it('lists the three build packages as production dependencies', () => {
