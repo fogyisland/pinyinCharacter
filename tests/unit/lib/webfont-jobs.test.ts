@@ -18,11 +18,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 let queryResults: Record<string, unknown[]> = {};
 let queryLog: Array<{ sql: string; params: unknown[] }> = [];
+/** A test can hold the database to observe what happens while a query is
+ *  still in flight. */
+let queryGate: Promise<void> | null = null;
 
 vi.mock('@/lib/db', () => ({
   getPool: () => ({
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
       queryLog.push({ sql, params });
+      if (queryGate) await queryGate;
       for (const key of Object.keys(queryResults)) {
         if (sql.includes(key)) return queryResults[key];
       }
@@ -64,6 +68,11 @@ const JOB_ROW = {
 beforeEach(() => {
   queryResults = {};
   queryLog = [];
+  queryGate = null;
+  // The stale-job sweep is cached on globalThis (per process), so a test
+  // that exercises it has to start from a clean slate.
+  delete (globalThis as { __pinyinWebfontStaleJobsSweep?: Promise<void> })
+    .__pinyinWebfontStaleJobsSweep;
 });
 
 describe('createJob', () => {
@@ -150,17 +159,21 @@ describe('appendLog', () => {
   it('appends in SQL (CONCAT) instead of reading the log back and rewriting it', async () => {
     await appendLog('job-1', '切分第 1/3 族');
     const q = queryLog[0];
-    expect(q.sql).toContain('log = CONCAT(log, ?)');
+    expect(q.sql).toContain('log = CONCAT(log,');
     // No read-modify-write: the statement must not read the column first.
     expect(q.sql).not.toMatch(/SELECT/i);
     expect(q.params[0]).toContain('切分第 1/3 族');
     expect(q.params[1]).toBe('job-1');
   });
 
-  it('stamps every line with a timestamp and ends it with a newline', async () => {
+  it('stamps the line with the database clock, not with a JavaScript timestamp', async () => {
     await appendLog('job-1', 'hello');
-    const line = queryLog[0].params[0] as string;
-    expect(line).toMatch(/^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\] hello\n$/);
+    const q = queryLog[0];
+    // The timestamp is part of the SQL, so it comes from MySQL — the same
+    // clock that stamps the row's columns.
+    expect(q.sql).toContain("DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s')");
+    expect(q.params[0]).toBe('hello\n');
+    expect(q.params[0]).not.toMatch(/\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
   });
 });
 
@@ -192,6 +205,50 @@ describe('updateJob', () => {
       updateJob('job-1', { 'status = 1, log': 'x' } as unknown as Partial<WebfontJob>),
     ).rejects.toThrow();
     expect(queryLog).toHaveLength(0);
+  });
+
+  it('refuses a key that only exists on Object.prototype', async () => {
+    // A plain-object whitelist would answer 'constructor' with the
+    // inherited function and put it into the SQL as a column name.
+    await expect(
+      updateJob('job-1', { constructor: 'x' } as unknown as Partial<WebfontJob>),
+    ).rejects.toThrow(/Unknown webfont job field/);
+    await expect(
+      updateJob('job-1', { toString: 'x' } as unknown as Partial<WebfontJob>),
+    ).rejects.toThrow(/Unknown webfont job field/);
+    expect(queryLog).toHaveLength(0);
+  });
+
+  it('clamps step_progress to the 8 code points the column can hold', async () => {
+    // The pipeline's own example text is 9 code points; VARCHAR(8) plus
+    // MySQL's strict mode would reject the whole update.
+    await updateJob('job-1', { stepProgress: '切分第 2/3 族' });
+    const update = queryLog.find((q) => q.sql.includes('step_progress = ?'));
+    expect(update).toBeDefined();
+    expect(Array.from(update!.params[0] as string)).toHaveLength(8);
+  });
+
+  it('records the truncation in the run log instead of doing it silently', async () => {
+    await updateJob('job-1', { stepProgress: '切分第 2/3 族' });
+    const append = queryLog.find((q) => q.sql.includes('CONCAT(log'));
+    expect(append).toBeDefined();
+    expect(append!.params[0]).toContain('截断');
+    expect(append!.params[0]).toContain('step_progress');
+  });
+
+  it('clamps by code point, so a surrogate pair is never cut in half', async () => {
+    await updateJob('job-1', { stepProgress: '😀😀😀😀😀😀😀😀😀' });
+    const update = queryLog.find((q) => q.sql.includes('step_progress = ?'));
+    // String.prototype.slice would have kept four emoji (8 UTF-16 units).
+    expect(update!.params[0]).toBe('😀😀😀😀😀😀😀😀');
+  });
+
+  it('clamps message with the same mechanism', async () => {
+    await updateJob('job-1', { message: 'x'.repeat(600) });
+    const update = queryLog.find((q) => q.sql.includes('message = ?'));
+    expect(update!.params[0] as string).toHaveLength(500);
+    const append = queryLog.find((q) => q.sql.includes('CONCAT(log'));
+    expect(append!.params[0]).toContain('截断');
   });
 
   it('does nothing for an empty patch', async () => {
@@ -227,6 +284,8 @@ describe('markStaleRunningJobsFailed', () => {
     queryResults["SET status = 'failed'"] = [{ affectedRows: 2 }];
     const marked = await markStaleRunningJobsFailed();
     const q = queryLog[0];
+    // Review Focus #8: the job really becomes `failed`.
+    expect(q.sql).toContain("SET status = 'failed'");
     expect(q.sql).toContain("WHERE status = 'running'");
     // A pending job has not started yet — it must not be failed here.
     expect(q.sql).not.toContain("'pending'");
@@ -267,9 +326,6 @@ describe('clearOldJobLogs', () => {
 });
 
 describe('ensureStaleJobsMarked', () => {
-  // This is the only test in the file that calls ensureStaleJobsMarked():
-  // the "once per process" flag lives on globalThis, so a second caller in
-  // the same file would be a no-op and could not be told apart from a bug.
   it('sweeps the stale running jobs once per process', async () => {
     queryResults["SET status = 'failed'"] = [{ affectedRows: 1 }];
     await ensureStaleJobsMarked();
@@ -278,5 +334,36 @@ describe('ensureStaleJobsMarked', () => {
     const sweeps = queryLog.filter((q) => q.sql.includes("SET status = 'failed'"));
     expect(sweeps).toHaveLength(1);
     expect(sweeps[0].params.join(' ')).toContain('进程中断');
+  });
+
+  it('makes a concurrent caller wait for the same sweep', async () => {
+    let release: () => void = () => {};
+    queryGate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    queryResults["SET status = 'failed'"] = [{ affectedRows: 1 }];
+
+    try {
+      let secondResolved = false;
+      const first = ensureStaleJobsMarked();
+      const second = ensureStaleJobsMarked().then(() => {
+        secondResolved = true;
+      });
+
+      // The sweep is gated inside the database. A caller that returned
+      // early would leave a stale job in 'running' — the "the page spins
+      // forever" failure mode — so it must still be waiting here.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      expect(secondResolved).toBe(false);
+
+      release();
+      await Promise.all([first, second]);
+      expect(secondResolved).toBe(true);
+
+      const sweeps = queryLog.filter((q) => q.sql.includes("SET status = 'failed'"));
+      expect(sweeps).toHaveLength(1);
+    } finally {
+      queryGate = null;
+    }
   });
 });

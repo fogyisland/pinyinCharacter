@@ -9,13 +9,15 @@
  *
  * Two invariants this module keeps:
  *
- *  1. **One clock.** Every timestamp in this table is produced by MySQL
- *     (`NOW()`, or the column defaults) — never by JavaScript. The row
- *     mapper turns MySQL's `Date` into an ISO string on the way out, so the
- *     API shape matches the other admin endpoints.
+ *  1. **One clock.** Every timestamp in this table — the row columns *and*
+ *     the per-line timestamps in the log — is produced by MySQL (`NOW()`,
+ *     `DATE_FORMAT(NOW(), …)`, or the column defaults), never by
+ *     JavaScript. The row mapper turns MySQL's `Date` into an ISO string on
+ *     the way out, so the API shape matches the other admin endpoints.
  *  2. **The log is append-only.** `appendLog` concatenates in SQL
- *     (`log = CONCAT(log, ?)`): a read-modify-write would lose concurrent
- *     appends and cost a round trip per line.
+ *     (`log = CONCAT(log, DATE_FORMAT(NOW(), …), ' ', ?)`): a
+ *     read-modify-write would lose concurrent appends and cost a round trip
+ *     per line.
  *
  * All SQL for this table lives here — other modules go through these
  * functions.
@@ -85,20 +87,45 @@ const JOB_COLUMNS =
  * This is the whitelist that keeps a caller-supplied key out of the SQL
  * text: the values always travel as placeholders, the column names only
  * come from here.
+ *
+ * It is a `Map`, not a plain object: a plain object's lookup walks
+ * `Object.prototype`, so `PATCH_COLUMNS['constructor']` hands back the
+ * inherited function and would put `function Object() { [native code] }`
+ * into the SQL as a column name. The whitelist has to be complete, not
+ * merely type-checked.
  */
-const PATCH_COLUMNS: Record<string, string> = {
-  status: 'status',
-  step: 'step',
-  stepProgress: 'step_progress',
-  message: 'message',
-  error: 'error',
-  log: 'log',
-  manifestVersion: 'manifest_version',
-  releaseDir: 'release_dir',
-  startedBy: 'started_by',
-  updatedAt: 'updated_at',
-  finishedAt: 'finished_at',
-};
+const PATCH_COLUMNS = new Map<string, string>([
+  ['status', 'status'],
+  ['step', 'step'],
+  ['stepProgress', 'step_progress'],
+  ['message', 'message'],
+  ['error', 'error'],
+  ['log', 'log'],
+  ['manifestVersion', 'manifest_version'],
+  ['releaseDir', 'release_dir'],
+  ['startedBy', 'started_by'],
+  ['updatedAt', 'updated_at'],
+  ['finishedAt', 'finished_at'],
+]);
+
+/**
+ * The columns the database cannot hold as they are, by column name: the
+ * maximum number of code points the column can store.
+ *
+ * `step_progress` is `VARCHAR(8)` and `message` is `VARCHAR(500)`, and
+ * MySQL runs in strict mode: a longer value is not truncated, it raises
+ * `ER_DATA_TOO_LONG` and the whole update fails. The pipeline's own
+ * example text（「切分第 2/3 族」）is 9 code points, so this is not
+ * hypothetical.
+ *
+ * One table, one mechanism: every column listed here is clamped by the
+ * same loop in `updateJob`, so a column added later is covered as soon as
+ * it is listed here.
+ */
+const COLUMN_MAX_CODE_POINTS = new Map<string, number>([
+  ['step_progress', 8],
+  ['message', 500],
+]);
 
 /**
  * The columns that hold a point in time.
@@ -125,20 +152,17 @@ const STALE_JOB_MESSAGE = '构建因进程中断而终止';
 const STALE_JOB_ERROR =
   '进程中断：服务进程在构建过程中被重启，作业已被标记为失败，请重新开始构建。';
 
-/** Matches a timestamp prefix this module (or the caller) already added. */
-const LOG_TIMESTAMP_PREFIX = /^\[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}\]/;
-
 /**
- * The "stale jobs already swept" flag.
+ * The cached stale-job sweep.
  *
  * It lives on `globalThis`, not in a module-level variable: in `next dev`
- * a module-level flag is re-initialised on every Fast Refresh, so the
+ * a module-level variable is re-initialised on every Fast Refresh, so the
  * sweep would run again on every hot reload. `globalThis` is per-process,
- * so the flag survives a recompile — the same fix the /init wizard's
+ * so the cache survives a recompile — the same fix the /init wizard's
  * credential store needed.
  */
 interface WebfontGlobal {
-  __pinyinWebfontStaleJobsMarked?: boolean;
+  __pinyinWebfontStaleJobsSweep?: Promise<void>;
 }
 
 const globalScope = globalThis as typeof globalThis & WebfontGlobal;
@@ -189,15 +213,17 @@ export async function listJobs(limit: number = DEFAULT_JOB_LIST_LIMIT): Promise<
  * Appends one line to the job's log.
  *
  * The concatenation happens in SQL, so two concurrent appends cannot lose
- * each other's line. The line is stamped with a timestamp and terminated by
- * a newline; a line that already carries a timestamp is left as it is, so
- * the caller may stamp it itself.
+ * each other's line, and the timestamp on the line is MySQL's — the same
+ * clock that stamps the row's columns. One call appends one line: a caller
+ * that has a multi-line chunk calls this once per line.
  */
 export async function appendLog(id: string, line: string): Promise<void> {
-  await getPool().query(`UPDATE ${TABLE} SET log = CONCAT(log, ?) WHERE id = ?`, [
-    stampLogLine(line),
-    id,
-  ]);
+  await getPool().query(
+    `UPDATE ${TABLE}
+        SET log = CONCAT(log, DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), ' ', ?)
+      WHERE id = ?`,
+    [logLineBody(line), id],
+  );
 }
 
 /**
@@ -206,6 +232,12 @@ export async function appendLog(id: string, line: string): Promise<void> {
  * The `SET` clause is built from the keys of `patch`, so a caller that
  * only moves the job to the next step can never wipe the status (or any
  * other column it did not mention).
+ *
+ * A value that is longer than its column can hold is clamped to the
+ * column's width (see {@link COLUMN_MAX_CODE_POINTS}) — MySQL runs in
+ * strict mode and would reject the whole update with
+ * `ER_DATA_TOO_LONG`. The truncation is not silent: it is written to the
+ * job's run log.
  */
 export async function updateJob(
   id: string,
@@ -213,24 +245,45 @@ export async function updateJob(
 ): Promise<void> {
   const sets: string[] = [];
   const params: SqlParam[] = [];
+  const truncations: string[] = [];
 
   for (const [key, value] of Object.entries(patch)) {
     if (value === undefined) continue;
-    const column = PATCH_COLUMNS[key];
-    if (!column) {
+    const column = PATCH_COLUMNS.get(key);
+    if (column === undefined) {
+      // Thrown before any statement is sent: an unknown key must never
+      // reach the SQL text.
       throw new Error(`Unknown webfont job field: ${key}`);
     }
     if (TIMESTAMP_COLUMNS.has(column)) {
       sets.push(value === null ? `${column} = NULL` : `${column} = NOW()`);
       continue;
     }
+
+    const limit = COLUMN_MAX_CODE_POINTS.get(column);
+    let finalValue = value;
+    if (limit !== undefined && typeof value === 'string') {
+      const codePoints = Array.from(value);
+      if (codePoints.length > limit) {
+        finalValue = codePoints.slice(0, limit).join('');
+        truncations.push(
+          `${column} 超过 ${limit} 个字符，已截断（原文 ${codePoints.length} 个字符）`,
+        );
+      }
+    }
     sets.push(`${column} = ?`);
-    params.push(value);
+    params.push(finalValue);
   }
 
   if (sets.length === 0) return;
   params.push(id);
   await getPool().query(`UPDATE ${TABLE} SET ${sets.join(', ')} WHERE id = ?`, params);
+
+  // A truncation is never silent: it goes into the run log, which the
+  // admin page shows.
+  for (const note of truncations) {
+    await appendLog(id, note);
+  }
 }
 
 /**
@@ -309,35 +362,47 @@ export async function markStaleRunningJobsFailed(): Promise<number> {
 /**
  * Runs {@link markStaleRunningJobsFailed} once per process.
  *
- * The flag lives on `globalThis` (see {@link WebfontGlobal}): a
- * module-level flag would be re-initialised on every dev hot reload, and
- * the sweep would run again and again. If the sweep fails the flag is
- * cleared again — a sweep that did not happen must be retried, otherwise a
- * transient database outage at boot would leave `running` jobs stuck.
+ * The **promise** is cached, not a boolean: a boolean that is set before
+ * the sweep runs lets a concurrent caller return while the rows are still
+ * `running` — exactly the "the page spins forever" failure mode. Caching
+ * the promise makes concurrent callers wait for the same sweep; the sweep
+ * itself still runs once per process.
+ *
+ * The cache lives on `globalThis` (see {@link WebfontGlobal}): a
+ * module-level variable would be re-initialised on every dev hot reload.
+ *
+ * If the sweep fails the cache is dropped — a sweep that did not happen
+ * must be retried, otherwise a transient database outage at boot would
+ * leave `running` jobs stuck.
  */
 export async function ensureStaleJobsMarked(): Promise<void> {
-  if (globalScope.__pinyinWebfontStaleJobsMarked) return;
-  globalScope.__pinyinWebfontStaleJobsMarked = true;
+  const running = globalScope.__pinyinWebfontStaleJobsSweep;
+  if (running) {
+    // A sweep is already running (or has run): wait for THAT one, so this
+    // caller never returns while a stale job is still `running`.
+    await running;
+    return;
+  }
+  const sweep = markStaleRunningJobsFailed().then(() => undefined);
+  globalScope.__pinyinWebfontStaleJobsSweep = sweep;
   try {
-    await markStaleRunningJobsFailed();
+    await sweep;
   } catch (error) {
-    globalScope.__pinyinWebfontStaleJobsMarked = false;
+    if (globalScope.__pinyinWebfontStaleJobsSweep === sweep) {
+      delete globalScope.__pinyinWebfontStaleJobsSweep;
+    }
     throw error;
   }
 }
 
-/** Frames one log line: timestamp prefix, text, newline. */
-function stampLogLine(line: string): string {
-  const text = line.replace(/\r?\n$/, '');
-  if (LOG_TIMESTAMP_PREFIX.test(text)) {
-    return `${text}\n`;
-  }
-  const now = new Date();
-  const pad = (value: number): string => String(value).padStart(2, '0');
-  const stamp =
-    `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())} ` +
-    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
-  return `[${stamp}] ${text}\n`;
+/**
+ * One log line: the text without its trailing newline, plus the newline.
+ *
+ * The newline is the framing of "this is one line"; the timestamp on the
+ * line is MySQL's, not ours.
+ */
+function logLineBody(line: string): string {
+  return `${line.replace(/\r?\n$/, '')}\n`;
 }
 
 /** Clamps a caller-supplied row limit to a sane integer. */
