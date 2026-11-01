@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, isAbsolute, join, relative, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { NextRequest } from 'next/server';
 
 import { SOURCES } from '@/scripts/fonts/download-webfont-sources';
@@ -824,7 +824,9 @@ function repoRoot(): string {
  */
 function npmCliPath(): string {
   const fromEnv = process.env.npm_execpath;
-  if (fromEnv && fromEnv.endsWith('npm-cli.js') && existsSync(fromEnv)) return fromEnv;
+  // The NAME has to be npm's own, exactly: a suffix match would also
+  // accept a file called `foo-npm-cli.js`, which is not npm.
+  if (fromEnv && basename(fromEnv) === 'npm-cli.js' && existsSync(fromEnv)) return fromEnv;
 
   // npm ships with node: next to it on Windows, and in the sibling
   // `lib/node_modules` on a POSIX install.
@@ -837,7 +839,7 @@ function npmCliPath(): string {
   }
   throw new Error(
     'cannot find npm-cli.js — this suite installs a production-only dependency tree with ' +
-      'npm, and the package manager that started this run is not npm',
+      'npm, and npm’s CLI was not found next to node',
   );
 }
 
