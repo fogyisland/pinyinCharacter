@@ -115,23 +115,6 @@ function fileSize(path) {
 }
 
 /**
- * The probe of fontTools, remembered for the process.
- *
- * The probe spawns a Python subprocess, and its answer does not change
- * while the process runs: the interpreter either is there or it is not.
- * The clip asks for it once per target, so without this the very same
- * subprocess was spawned again for every target of the run.
- *
- * ⚠️ Only a SUCCESSFUL probe is remembered. A failed one says something
- * about the ENVIRONMENT (no interpreter, no fontTools), and the
- * environment CAN change: the operator may install the interpreter and
- * run the pipeline again. A remembered failure would keep saying a thing
- * that is no longer true (G12). A failed probe is asked again — and the
- * clip throws at the first target anyway, so a run still probes once.
- */
-let fontToolsProbe = null;
-
-/**
  * The outcome of the fontTools probe.
  *
  * The three ways the probe can fail are told apart, because they need
@@ -147,18 +130,24 @@ let fontToolsProbe = null;
  * or to look at fontTools when the interpreter never started — sends
  * them down the wrong path, so the cases must not be lumped together.
  *
- * The answer is remembered after a success: the probe is asked once per
- * process, not once per target.
+ * ⚠️ The answer is NOT remembered here: this function asks the
+ * ENVIRONMENT every time it is called. The run of the clip remembers it
+ * for its own duration only — see `instanceAll()`.
+ *
+ * ⚠️ Why not remember it for the whole process: a remembered SUCCESS
+ * outlives the run that asked for it, and it then answers a later run
+ * with a thing that is no longer true. The operator removes fontTools
+ * (or upgrades it out of band), the cached success keeps the run going,
+ * the clip subprocess fails, and the failure is classified as a failure
+ * of the SOURCE FONTS — the operator is sent to download fonts that are
+ * perfectly fine. That is the very falsehood M7 was about, in a narrow
+ * window (G12).
  *
  * @returns {{ ok: boolean, moduleMissing: boolean, interpreterMissing: boolean, detail: string }}
  *   what the probe found
  */
 export function describeFontTools() {
-  if (fontToolsProbe) return fontToolsProbe;
-  const probe = runFontToolsProbe();
-  // ⚠️ Only a success is remembered — see the note above the cache.
-  if (probe.ok) fontToolsProbe = probe;
-  return probe;
+  return runFontToolsProbe();
 }
 
 /**
@@ -427,6 +416,25 @@ export async function instanceAll(opts = {}) {
   const force = opts.force === true;
   const results = [];
 
+  // ⚠️ The answer of the probe is remembered for THIS RUN and for this
+  // run only. It is a local variable, not a module level one:
+  //
+  //   - The environment can change under a long lived process. A success
+  //     that outlives its run would answer a later run with a thing that
+  //     is no longer true: the operator removes fontTools, the cached
+  //     success keeps the run going, the clip subprocess fails, and the
+  //     failure is classified as a failure of the SOURCE FONTS — the
+  //     operator is sent to download fonts that are perfectly fine. That
+  //     is the very falsehood M7 was about, in a narrow window (G12).
+  //   - A local variable cannot be reset by another run: two runs that
+  //     happen at the same time each ask the environment for themselves
+  //     and never share an answer.
+  //
+  // It starts EMPTY, so every run asks the environment again. The asking
+  // is LAZY — it happens when the first clip is really needed — so a run
+  // in which every axis instance is already there still spawns nothing.
+  let fontTools = null;
+
   for (const target of INSTANCER_TARGETS) {
     const existing = fileSize(resolve(stagingDir, target.out));
     if (!force && existing > 0) {
@@ -444,12 +452,24 @@ export async function instanceAll(opts = {}) {
     // A clip is really needed, so the toolchain has to be there — and the
     // reason it is not has to be exact: "there is no Python" and
     // "fontTools is missing" need two different remedies.
-    const fontTools = describeFontTools();
-    if (!fontTools.ok) {
+    //
+    // ⚠️ The probe is asked AT MOST ONCE per run: the answer does not
+    // change while the run goes on, so the very same subprocess must not
+    // be spawned again for every target.
+    let probe = fontTools;
+    if (probe === null) {
+      probe = describeFontTools();
+      // ⚠️ Only a SUCCESS is remembered — a failure describes the
+      // ENVIRONMENT (no interpreter, no fontTools), and the environment
+      // can change. A remembered failure would keep saying a thing that
+      // is no longer true (G12).
+      if (probe.ok) fontTools = probe;
+    }
+    if (!probe.ok) {
       // The remedy of a missing toolchain is in the message itself: the
       // interpreter or fontTools has to be installed, and the source
       // fonts are innocent here.
-      throw clipFailure(FAILURE_TOOLCHAIN, fontToolsFailure(fontTools));
+      throw clipFailure(FAILURE_TOOLCHAIN, fontToolsFailure(probe));
     }
 
     let outcome;

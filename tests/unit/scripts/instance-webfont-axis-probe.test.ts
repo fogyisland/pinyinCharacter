@@ -136,6 +136,28 @@ describe('the axis clip asks for the toolchain once', () => {
     expect(calls).toHaveLength(0);
   });
 
+  it('asks the environment again on the next run', async () => {
+    // ⚠️ The answer of the probe must not outlive the run that asked for
+    // it. A long lived process that keeps the success of an earlier run
+    // would answer a later run with a thing that is no longer true: the
+    // operator removes fontTools, the clip subprocess fails, and the
+    // failure is classified as a failure of the SOURCE FONTS — the very
+    // falsehood M7 was about, in a narrow window.
+    //
+    // ⇒ TWO runs ⇒ TWO probes. The second run asks the environment
+    // again, even though the first one already asked it.
+    const staging = stagingWith(['NotoSansSC-wght.ttf', 'NotoSerifSC-wght.ttf']);
+    directories.push(staging);
+
+    const instancer = await import('../../../scripts/fonts/instance-webfont-axis.mjs');
+    await instancer.instanceAll({ stagingDir: staging });
+    // `force` re-cuts the axis instances, so the second run really needs
+    // the toolchain — otherwise it would skip everything and never ask.
+    await instancer.instanceAll({ stagingDir: staging, force: true });
+
+    expect(probes()).toHaveLength(2);
+  });
+
   it('tells the operator what to install when the interpreter is missing', async () => {
     // The remedy of a missing toolchain is NOT "fix the source fonts" —
     // the source fonts are innocent here. The failure carries the kind of
