@@ -2,8 +2,8 @@
  * How often the axis clip asks for the toolchain.
  *
  * The probe of fontTools spawns a Python subprocess, and the answer of it
- * does not change while the process runs: the interpreter either is there
- * or it is not. Two properties are proved here:
+ * does not change while ONE RUN of the clip goes on: the interpreter
+ * either is there or it is not. Three properties are proved here:
  *
  *   1. ONE PROBE PER RUN. A run that clips both variable fonts asks the
  *      toolchain ONCE, not once per font.
@@ -12,6 +12,14 @@
  *      probe is asked LAZILY, when a clip is really needed. Hoisting the
  *      probe out of the loop would break this — it would spawn one
  *      subprocess for a run that had nothing to do.
+ *   3. THE PROBE DOES NOT SURVIVE A RUN. The answer is remembered for the
+ *      run that asked for it and for nothing else: the next run asks the
+ *      environment again. A remembered success would outlive the run it
+ *      belongs to and answer a later run with a thing that is no longer
+ *      true — the operator removes fontTools, the cached success keeps
+ *      the run going, and the failure of the clip is blamed on the
+ *      source fonts (the very falsehood M7 was about, in a narrow
+ *      window).
  *
  * The subprocesses are MOCKED here, because the test counts the probes
  * instead of measuring them, and because the real probe would make the

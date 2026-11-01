@@ -91,7 +91,13 @@ export declare function instancerArgs(src: string, out: string): string[];
 /** The `wght` axis of a font, read from its `fvar` table. */
 export declare function readWeightAxis(buffer: Buffer): WeightAxis | null;
 
-/** Is fontTools installed? */
+/**
+ * Is fontTools installed?
+ *
+ * ⚠️ This does NOT cache: every call asks the environment again and
+ * spawns one Python subprocess. A caller that calls it in a loop spawns
+ * one subprocess per call — remember the answer instead.
+ */
 export declare function probeFontTools(): boolean;
 
 /**
@@ -114,7 +120,18 @@ export interface FontToolsProbe {
   detail: string;
 }
 
-/** Run the fontTools probe and describe its outcome. */
+/**
+ * Run the fontTools probe and describe its outcome.
+ *
+ * ⚠️ This does NOT cache: every call asks the environment again and
+ * spawns one Python subprocess. A caller that calls it in a loop spawns
+ * one subprocess per call — remember the answer instead.
+ *
+ * The answer is remembered by a run of the clip (`instanceAll()`), for
+ * the duration of that run only: the environment can change under a
+ * long lived process, and a remembered success would answer a later run
+ * with a thing that is no longer true.
+ */
 export declare function describeFontTools(): FontToolsProbe;
 
 /** Clip one variable font and verify the result. */
