@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NextRequest } from 'next/server';
@@ -467,6 +467,110 @@ describe('probeCapability — the disk', () => {
   });
 });
 
+describe('probeCapability — the disk (two places, two methods)', () => {
+  it('never writes into the font root — the production directory', async () => {
+    // `public/` is served to the world: a probe file that could not be
+    // deleted would go live with the next release. So the font root is
+    // CHECKED, never written to.
+    writeFileSync(join(fontDir, 'fonts-sans.css'), '/* live */');
+    const before = readdirSync(fontDir);
+
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.disk.available).toBe(true);
+    // Not one file more than there was.
+    expect(readdirSync(fontDir)).toEqual(before);
+    expect(readdirSync(fontDir)).toEqual(['fonts-sans.css']);
+  });
+
+  it('creates the staging directory when it is not there yet', async () => {
+    // On a fresh production server the staging directory is not part of
+    // the deploy bundle, so it does not exist. The probe creates it.
+    const fresh = join(fontDir, 'not', 'there', 'yet');
+    expect(existsSync(fresh)).toBe(false);
+
+    const report = await probeCapability({
+      stagingDir: fresh,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.disk.available).toBe(true);
+    // The directory is there …
+    expect(existsSync(fresh)).toBe(true);
+    expect(report.disk.stagingDir).toBe(fresh);
+    // … and the probe file is gone: only the FILE was deleted, the
+    // directory stays.
+    expect(readdirSync(fresh)).toEqual([]);
+  });
+
+  it('leaves a file that was already in the staging directory alone', async () => {
+    // The probe file has a unique name: a fixed one would be deleted by
+    // the next probe (rmSync with force removes a file that is already
+    // there) and two administrators refreshing at the same time would
+    // tread on each other.
+    const existing = join(stagingDir, '.probe');
+    writeFileSync(existing, 'not mine');
+
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.disk.available).toBe(true);
+    expect(readdirSync(stagingDir)).toEqual(['.probe']);
+  });
+
+  it('says the disk is unusable when the staging directory cannot be written', async () => {
+    // The staging path is a FILE, so it can never be a directory.
+    const blocked = join(fontDir, 'blocked');
+    writeFileSync(blocked, 'not a directory');
+
+    const report = await probeCapability({
+      stagingDir: blocked,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.ok).toBe(false);
+    expect(report.disk.available).toBe(false);
+    expect(report.disk.error).toBeTruthy();
+    expect(report.missing.some((m) => m.includes('staging 目录不可写'))).toBe(true);
+  });
+
+  it('says the disk is unusable when the font root cannot be written to', async () => {
+    const report = await probeCapability({
+      stagingDir,
+      // The font root does not exist: the pipeline could not write the
+      // 70 MB of subsets into it either.
+      fontDir: join(fontDir, 'missing', 'font'),
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.ok).toBe(false);
+    expect(report.disk.available).toBe(false);
+    expect(report.missing.some((m) => m.includes('字体根目录不可写'))).toBe(true);
+    // The staging directory is fine, and that does NOT make the disk
+    // usable: the font root is often another volume.
+    expect(report.disk.stagingDir).toBe(stagingDir);
+  });
+});
+
 describe('probeCapability — a filesystem that fails', () => {
   it('still returns a report when the filesystem probe throws', async () => {
     fsFaults.writeThrows = true;
@@ -745,7 +849,12 @@ describe('GET /api/admin/webfonts/capability', () => {
       python: { available: true, version: '3.12.1', error: null },
       fonttools: { available: true, version: '4.61.1', error: null, remedy: null },
       network: { available: true, checkedUrl: SOURCES[0].urls[0], error: null },
-      disk: { available: true, fontDir: '/srv/app/public/font', error: null },
+      disk: {
+        available: true,
+        stagingDir: '/srv/app/scripts/fonts/staging/web',
+        fontDir: '/srv/app/public/font',
+        error: null,
+      },
       toolchain: { subsetFont: true, typescript: true, tsx: true },
       sources: [],
       missing: ok ? [] : ['字体构建工具链没装齐'],

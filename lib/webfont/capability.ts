@@ -13,10 +13,10 @@
  *   | Python     | `python --version` (the `PYTHON` override honoured) |
  *   | fontTools  | `python -I -m fontTools.varLib.instancer --help`   |
  *   | upstream   | one `HEAD` on the first source url — never a GET   |
- *   | disk       | a probe file in the FONT ROOT, deleted again       |
+ *   | disk       | a probe file in the STAGING dir + a permission check |
  *   | toolchain  | `subset-font`, `typescript`, `tsx`                  |
  *
- * Three properties this module keeps, in this order:
+ * Four properties this module keeps, in this order:
  *
  *  1. **The probe reports, it never crashes.** Every probe is an
  *     interaction with the outside world — a subprocess, a file write, an
@@ -30,12 +30,17 @@
  *     three toolchain packages. The admin page keeps the "开始构建"
  *     button disabled while it is false.
  *  3. **The probe measures the thing the pipeline writes.** The disk row
- *     probes the FONT ROOT — the directory the subsetter writes into,
- *     resolved exactly like the subsetter resolves it — and it never
- *     falls back to an ancestor directory: a parent that happens to be
- *     writable says nothing about the directory that will be written,
- *     and the two are not even on the same volume when the font root is
- *     a mount.
+ *     looks at BOTH directories the pipeline writes into, with the
+ *     method each one allows: a probe file in the staging directory
+ *     (deleted again), and a WRITABILITY CHECK on the font root. The
+ *     font root is never written to — it is the production directory,
+ *     Next serves it, and a probe file that could not be deleted would
+ *     go live with the release. It is checked anyway, because it is
+ *     often a MOUNT: a staging volume that takes the 70 MB says
+ *     nothing about a font-root volume that is full or read-only.
+ *  4. **Nothing is written into the production tree.** Not into
+ *     `public/font/`, not anywhere under `public/`. The upstream probe
+ *     is a single HEAD, and the download belongs to step ①, not here.
  *
  * The upstream url is NOT hardcoded: it is read from `SOURCES`, the same
  * list the downloader uses, so the probe and the pipeline can never
@@ -45,7 +50,7 @@ import 'server-only';
 
 import { execFile } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { accessSync, constants, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
 
@@ -60,8 +65,21 @@ export interface CapabilityReport {
   python: { available: boolean; version: string | null; error: string | null };
   fonttools: { available: boolean; version: string | null; error: string | null; remedy: string | null };
   network: { available: boolean; checkedUrl: string; error: string | null };
-  /** The font root the disk row probed, and whether it could be written. */
-  disk: { available: boolean; fontDir: string; error: string | null };
+  /**
+   * The disk row — the two directories the pipeline writes into.
+   *
+   * `stagingDir` is where ① downloads the source fonts and where the
+   * probe file is written (and deleted again). `fontDir` is where ③
+   * writes the subsets and where the release is applied; it is only
+   * CHECKED for writability, never written to. `available` is true only
+   * when both of them are usable.
+   */
+  disk: {
+    available: boolean;
+    stagingDir: string;
+    fontDir: string;
+    error: string | null;
+  };
   toolchain: { subsetFont: boolean; typescript: boolean; tsx: boolean };
   sources: { filename: string; label: string; present: boolean; size: number | null }[];
   /** What is missing, in Chinese, one entry per missing thing, with the remedy. */
@@ -80,9 +98,16 @@ export type RunCommand = (bin: string, args: string[]) => Promise<CommandResult>
 
 /** Everything the probe touches outside of this process, so a test can replace it. */
 export interface ProbeOptions {
-  /** Where the source fonts are staged. Defaults to the pipeline's staging dir. */
+  /**
+   * Where the source fonts are staged, and where the disk probe writes
+   * its probe file (and deletes it again). Defaults to the pipeline's
+   * staging dir.
+   */
   stagingDir?: string;
-  /** The font root the disk row probes. Defaults to the subsetter's font root. */
+  /**
+   * The font root the disk row checks for writability. It is never
+   * written to. Defaults to the subsetter's font root.
+   */
   fontDir?: string;
   /** Runs a command. Defaults to `execFile` without a shell. */
   runCommand?: RunCommand;
@@ -494,36 +519,71 @@ function probeFileName(): string {
 }
 
 /**
- * The disk probe: write a small file into the FONT ROOT, delete it again.
+ * The staging half of the disk probe: write a small file there, delete
+ * it again.
  *
- * The font root is the directory the subsetter writes into — the one
- * the pipeline will really fill. There is deliberately NO fallback to an
- * ancestor: a writable parent says nothing about the directory itself
- * (the two are not even on the same volume when the font root is a
- * mount), so a fallback would report a green light for a disk that
- * cannot take the output.
+ * This is the spec's own method (§3.4): a probe file in the staging
+ * directory, deleted right away. The staging directory is NOT a
+ * production directory — it is gitignored, the deploy bundle leaves it
+ * out (`copy-to-up.py:43-46`), and step ① creates it anyway — so
+ * writing a one-byte file there is harmless.
+ *
+ * The directory may not exist on a fresh server, so it is created
+ * first. That leaves an empty directory behind, which is harmless for
+ * the reasons above and is disclosed in the report of this module.
+ *
+ * There is deliberately NO fallback to an ancestor: a writable parent
+ * says nothing about the directory itself (the two are not even on the
+ * same volume when the staging area is a mount), so a fallback would
+ * report a green light for a disk that cannot take the output.
  *
  * The file is deleted even when the write went wrong, and a delete that
  * fails is reported as an unusable disk rather than silently leaving the
  * file behind.
  */
-function probeDisk(fontDir: string): { available: boolean; fontDir: string; error: string | null } {
-  const probePath = join(fontDir, probeFileName());
+function probeStagingDir(stagingDir: string): { ok: boolean; error: string | null } {
+  try {
+    mkdirSync(stagingDir, { recursive: true });
+  } catch (error) {
+    return { ok: false, error: describeFailure(error) };
+  }
+  const probePath = join(stagingDir, probeFileName());
   try {
     writeFileSync(probePath, 'probe');
   } catch (error) {
-    return { available: false, fontDir, error: describeFailure(error) };
+    return { ok: false, error: describeFailure(error) };
   }
   try {
     rmSync(probePath, { force: true });
   } catch (error) {
-    return {
-      available: false,
-      fontDir,
-      error: `${describeFailure(error)}（探针文件 ${probePath} 删不掉）`,
-    };
+    return { ok: false, error: `${describeFailure(error)}（探针文件 ${probePath} 删不掉）` };
   }
-  return { available: true, fontDir, error: null };
+  return { ok: true, error: null };
+}
+
+/**
+ * The font-root half of the disk probe: a PERMISSION check, and nothing
+ * else.
+ *
+ * The font root is where ③ writes the subsets and where the release is
+ * applied. It is the PRODUCTION directory — `public/` is served to the
+ * world — so nothing is ever written into it: a probe file that could
+ * not be deleted would go live with the next deploy and be reachable
+ * by anyone. Hence a writability check instead of a probe file.
+ *
+ * It has to be checked anyway: the font root is often a MOUNT, so a
+ * staging volume that takes the 70 MB says nothing about a font-root
+ * volume that is full or read-only. Checking only the staging
+ * directory would still be a green light for a disk that cannot take
+ * the output.
+ */
+function checkFontDir(fontDir: string): { ok: boolean; error: string | null } {
+  try {
+    accessSync(fontDir, constants.W_OK);
+    return { ok: true, error: null };
+  } catch (error) {
+    return { ok: false, error: describeFailure(error) };
+  }
 }
 
 /** The build toolchain probe: the two packages and the one executable. */
@@ -607,7 +667,24 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
     probeToolchain(run, resolveModule),
   ]);
 
-  const disk = probeDisk(fontDir);
+  // The disk row is two probes: the staging directory is written into
+  // (and the probe file deleted again), the font root is only checked
+  // for writability — it is the production directory, and nothing is
+  // ever written there.
+  const staging = probeStagingDir(stagingDir);
+  const fontRoot = checkFontDir(fontDir);
+  const disk = {
+    available: staging.ok && fontRoot.ok,
+    stagingDir,
+    fontDir,
+    error:
+      [
+        staging.ok ? null : `staging 目录 ${stagingDir}：${staging.error}`,
+        fontRoot.ok ? null : `字体根目录 ${fontDir}：${fontRoot.error}`,
+      ]
+        .filter((reason): reason is string => reason !== null)
+        .join('；') || null,
+  };
   const sources = probeSources(stagingDir);
 
   // The fontTools remedy says "Python 在，但 fontTools 没装" — that would be
@@ -638,9 +715,15 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
       );
     }
   }
-  if (!disk.available) {
+  if (!staging.ok) {
     missing.push(
-      `字体根目录不可写：${disk.fontDir}（${disk.error ?? '未知原因'}）。` +
+      `staging 目录不可写：${stagingDir}（${staging.error ?? '未知原因'}）。` +
+        '流水线要把下载的源字体写进这个目录，请检查该目录的写权限和磁盘空间。',
+    );
+  }
+  if (!fontRoot.ok) {
+    missing.push(
+      `字体根目录不可写：${fontDir}（${fontRoot.error ?? '未知原因'}）。` +
         '流水线要把切分产物写进这个目录，请检查该目录的写权限和磁盘空间。',
     );
   }
@@ -684,6 +767,7 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
     },
     disk: {
       available: disk.available,
+      stagingDir: disk.stagingDir,
       fontDir: disk.fontDir,
       error: disk.error,
     },
