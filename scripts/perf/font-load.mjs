@@ -123,7 +123,7 @@ export async function readPublishedStylesheets() {
       if (!url) {
         throw new Error(
           `the stylesheet ${entry.css} points at ${JSON.stringify(face.src)}, which is not a ` +
-            'font URL of this repository (/font/web/<dir>/<file>)',
+            'font URL of this repository (/font/web/<dir>/<file> or /font/web/r<token>/<dir>/<file>)',
         );
       }
       // ⚠️ The key is the URL's OWN path under /font/web/, so it carries

@@ -5,6 +5,7 @@ import {
   mkdirSync,
   mkdtempSync,
   readFileSync,
+  renameSync,
   rmSync,
   writeFileSync,
 } from 'node:fs';
@@ -570,14 +571,18 @@ describe('the release directory layout', () => {
     cpSync(join(REPO_ROOT, 'public', 'font'), candidateRoot, { recursive: true });
 
     // The release tree: the same three families, one directory deeper.
+    //
+    // ⚠️ The families are MOVED, not copied. A copy would leave release 0's
+    // copy of every file in the candidate tree, and the release-unaware read
+    // path would still find every one of them there — the test would then
+    // pass with or without the release segment in the read path, and it
+    // would pin nothing. Moving them means the ONLY copy of a file is the
+    // one under the release directory, so a read path that leaves the
+    // release segment out reads nothing at all and the gate goes red.
     const releaseDir = join(candidateRoot, 'web', RELEASE);
     mkdirSync(releaseDir, { recursive: true });
     for (const family of FAMILY_KEYS) {
-      cpSync(
-        join(candidateRoot, 'web', family),
-        join(releaseDir, family),
-        { recursive: true },
-      );
+      renameSync(join(candidateRoot, 'web', family), join(releaseDir, family));
     }
 
     // The stylesheets point at the release tree.
@@ -601,7 +606,7 @@ describe('the release directory layout', () => {
   }, 600_000);
 
   afterAll(() => {
-    // ⚠️ The candidate is ~85 MB of woff2 files: it must not survive the
+    // ⚠️ The candidate is ~43 MB of woff2 files: it must not survive the
     // test, or the temp directory grows by that much on every run.
     if (tempRoot) rmSync(tempRoot, { recursive: true, force: true });
   });
@@ -709,6 +714,25 @@ describe('checkFaceDirectory', () => {
     expect(errors.length).toBeGreaterThan(0);
     expect(errors[0]).toContain('sans');
     expect(errors[0]).toContain('/font/web/serif/hot.woff2');
+  });
+
+  it('reports a release face that points at the directory of another family', () => {
+    // ⚠️ The release directory changes WHERE the file lives, not WHICH
+    // family it belongs to. A face that points at the directory of another
+    // family is still a wrong face — the browser would download the serif
+    // file for the sans face, and the token of sans no longer describes the
+    // bytes that are served under it.
+    //
+    // This is a BEHAVIOUR assertion on purpose: a variant that skips the
+    // family check for a release URL ("the release is a different tree, so
+    // the directory means something else") would silence the protection
+    // for every released face, and only this assertion notices.
+    const errors = checkFaceDirectory(familyOf('sans'), {
+      src: '/font/web/r0a1b2c3d4e5f/serif/hot.woff2?v=0a1b2c3d4e5f',
+    });
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors[0]).toContain('sans');
+    expect(errors[0]).toContain('/font/web/r0a1b2c3d4e5f/serif/hot.woff2');
   });
 
   it('says nothing when the URL cannot be parsed', () => {

@@ -539,7 +539,7 @@ function publishedFaces(family: string): PublishedFace[] {
     if (!url) {
       throw new Error(
         `the stylesheet fonts-${family}.css points at ${JSON.stringify(face.src)}, which is not a ` +
-          'font URL of this repository (/font/web/<family>/<file>)',
+          'font URL of this repository (/font/web/<family>/<file> or /font/web/r<token>/<family>/<file>)',
       );
     }
     return {

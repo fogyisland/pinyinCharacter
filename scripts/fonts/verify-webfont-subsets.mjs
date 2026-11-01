@@ -727,6 +727,12 @@ async function inspectFamily(family, plan) {
     }
     const fileName = url.file;
     const token = url.token;
+    // ⚠️ The release directory is part of the path the operator has to look
+    // at: a file that is missing under /font/web/r<token>/ is NOT the file
+    // of release 0, which may well be there. The prefix is EMPTY for
+    // release 0, so the messages of the published tree stay word for word
+    // what they were.
+    const releasePrefix = url.release ? `${url.release}/` : '';
     if (!VERSION_PATTERN.test(token)) missingTokens.push(fileName);
 
     let points;
@@ -788,7 +794,9 @@ async function inspectFamily(family, plan) {
     try {
       content = await readFile(join(WEB_DIR, url.release, url.dir, url.file));
     } catch (error) {
-      missingFiles.push(`${url.dir}/${fileName} (${error.code ?? error.message})`);
+      missingFiles.push(
+        `${releasePrefix}${url.dir}/${fileName} (${error.code ?? error.message})`,
+      );
       continue;
     }
     files += 1;
@@ -810,7 +818,9 @@ async function inspectFamily(family, plan) {
       : blockKey === 'latin' ? LIMITS.latinBytes
       : LIMITS.extBlockBytes;
     if (content.length > limit) {
-      oversized.push(`${fileName} is ${content.length} B, the budget is ${limit} B`);
+      oversized.push(
+        `${releasePrefix}${fileName} is ${content.length} B, the budget is ${limit} B`,
+      );
     }
 
     // --- check 3: the glyphs (the tofu gate) ----------------------------
@@ -819,14 +829,16 @@ async function inspectFamily(family, plan) {
       font = fontkit.create(content);
     } catch (error) {
       errors.push(
-        `[${family.key}] ${fileName} cannot be opened as a font: ${error.message}`,
+        `[${family.key}] ${releasePrefix}${fileName} cannot be opened as a font: ${error.message}`,
       );
       continue;
     }
     const declaredSet = new Set(points);
     for (const point of points) {
       if (!font.hasGlyphForCodePoint(point)) {
-        missingGlyphs.push(`${fileName} U+${point.toString(16).toUpperCase()}`);
+        missingGlyphs.push(
+          `${releasePrefix}${fileName} U+${point.toString(16).toUpperCase()}`,
+        );
       }
     }
     // The code points the file carries beyond what the face declares are
