@@ -813,19 +813,32 @@ function repoRoot(): string {
  * without a shell (`spawn EINVAL`) — the same trap the `tsx` shim has.
  * npm's CLI is a JavaScript file, so it is started WITH node instead:
  * no shell, on any platform.
+ *
+ * ⚠️ `npm_execpath` names the CLI of WHATEVER package manager started
+ * this process: yarn points it at yarn's own script, pnpm at pnpm's.
+ * Handing one of those the arguments of `npm install` does not install
+ * anything — and yarn v1 installs the DEV dependencies as well, so the
+ * "production-only install" this suite performs would silently install
+ * everything and prove nothing at all. Only npm's own CLI may be used
+ * here; anything else is ignored rather than believed.
  */
 function npmCliPath(): string {
   const fromEnv = process.env.npm_execpath;
-  if (fromEnv && fromEnv.endsWith('.js') && existsSync(fromEnv)) return fromEnv;
-  const besideNode = join(
-    dirname(process.execPath),
-    'node_modules',
-    'npm',
-    'bin',
-    'npm-cli.js',
+  if (fromEnv && fromEnv.endsWith('npm-cli.js') && existsSync(fromEnv)) return fromEnv;
+
+  // npm ships with node: next to it on Windows, and in the sibling
+  // `lib/node_modules` on a POSIX install.
+  const candidates = [
+    join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+    join(dirname(process.execPath), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  throw new Error(
+    'cannot find npm-cli.js — this suite installs a production-only dependency tree with ' +
+      'npm, and the package manager that started this run is not npm',
   );
-  if (existsSync(besideNode)) return besideNode;
-  throw new Error('cannot find npm-cli.js — npm is not where it is expected');
 }
 
 /**
