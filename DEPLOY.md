@@ -26,6 +26,8 @@ rsync -avz --progress Up/ user@server:/opt/pinyin-character/
 # 3. 在服务器装依赖
 cd /opt/pinyin-character
 npm install --omit=dev
+#    字体构建工具链 (subset-font / typescript / tsx) 已经是生产依赖,
+#    --omit=dev 也会装上,不用单独装。
 
 # 4. 配置 .env (先复制模板)
 cp .env.example .env
@@ -225,6 +227,8 @@ git pull origin main
 
 # 4. 装新依赖 + 重新构建
 npm install --omit=dev
+#    字体构建工具链 (subset-font / typescript / tsx) 已经是生产依赖,
+#    --omit=dev 也会装上,不用单独装。
 npm run build
 
 # 5. 重启 (假设用 pm2 / systemd)

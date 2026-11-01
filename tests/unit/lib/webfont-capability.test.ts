@@ -1,5 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
+import { execFile } from 'node:child_process';
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { NextRequest } from 'next/server';
@@ -763,6 +773,198 @@ describe('probeCapability — the build toolchain', () => {
     expect(report.toolchain.tsx).toBe(false);
     expect(report.missing.some((m) => m.includes('--save'))).toBe(true);
   });
+});
+
+/**
+ * The build toolchain is a PRODUCTION dependency (design §3.4.1).
+ *
+ * The server installs with `npm install --omit=dev` (DEPLOY.md:28 and
+ * DEPLOY.md:227), so a package that stayed in `devDependencies` is not
+ * installed there at all — and the pipeline's steps ③ (subsetting) and
+ * ④ (verification) would crash on the production machine.
+ *
+ * The two describes below pin that:
+ *
+ *  1. **the classification** — the three packages are in
+ *     `dependencies` and NOT in `devDependencies`, and
+ *  2. **the consequence** — a REAL production-only install really has
+ *     them. The second one is the important half: reading
+ *     `package.json` a second time would only prove that the file says
+ *     what it says. So a temporary directory gets the manifest and the
+ *     lock file, `npm install --omit=dev` runs there, and node is asked
+ *     to resolve the packages IN THAT DIRECTORY.
+ */
+
+/** The directory that holds the application's `package.json`. */
+function repoRoot(): string {
+  let dir = process.cwd();
+  for (;;) {
+    if (existsSync(join(dir, 'package.json'))) return dir;
+    const parent = dirname(dir);
+    if (parent === dir) return process.cwd();
+    dir = parent;
+  }
+}
+
+/**
+ * npm's own CLI script.
+ *
+ * On Windows `npm` is a `.cmd` shim, and node cannot start a `.cmd`
+ * without a shell (`spawn EINVAL`) — the same trap the `tsx` shim has.
+ * npm's CLI is a JavaScript file, so it is started WITH node instead:
+ * no shell, on any platform.
+ */
+function npmCliPath(): string {
+  const fromEnv = process.env.npm_execpath;
+  if (fromEnv && fromEnv.endsWith('.js') && existsSync(fromEnv)) return fromEnv;
+  const besideNode = join(
+    dirname(process.execPath),
+    'node_modules',
+    'npm',
+    'bin',
+    'npm-cli.js',
+  );
+  if (existsSync(besideNode)) return besideNode;
+  throw new Error('cannot find npm-cli.js — npm is not where it is expected');
+}
+
+/**
+ * Runs a command without a shell and captures what it answered.
+ *
+ * A command that could not be *started* rejects with the error node
+ * reported; a command that ran and failed answers with its exit code.
+ */
+function execCapture(
+  file: string,
+  args: string[],
+  cwd?: string,
+): Promise<{ code: number; stdout: string; stderr: string }> {
+  return new Promise((resolvePromise, rejectPromise) => {
+    execFile(
+      file,
+      args,
+      { cwd, encoding: 'utf8', windowsHide: true, maxBuffer: 32 * 1024 * 1024 },
+      (error, stdout, stderr) => {
+        if (!error) {
+          resolvePromise({ code: 0, stdout, stderr });
+          return;
+        }
+        const exitCode = typeof error.code === 'number' ? error.code : null;
+        if (exitCode === null) {
+          // The process never started: ENOENT, EACCES, EINVAL …
+          rejectPromise(error);
+          return;
+        }
+        resolvePromise({ code: exitCode, stdout, stderr });
+      },
+    );
+  });
+}
+
+describe('the build toolchain — how package.json classifies it', () => {
+  it('lists the three build packages as production dependencies', () => {
+    const manifest = JSON.parse(
+      readFileSync(join(repoRoot(), 'package.json'), 'utf8'),
+    ) as {
+      dependencies?: Record<string, string>;
+      devDependencies?: Record<string, string>;
+    };
+
+    // The server installs with `npm install --omit=dev`: a package that
+    // stayed in `devDependencies` is not installed there at all, and the
+    // pipeline's steps ③ and ④ would crash.
+    expect(manifest.dependencies?.['subset-font']).toBe('^2.4.0');
+    expect(manifest.dependencies?.['typescript']).toBe('^5.6.3');
+    expect(manifest.dependencies?.['tsx']).toBe('^4.19.2');
+
+    // Exactly one map: a package in BOTH is registered twice, npm warns
+    // about it, and the meaning is ambiguous.
+    expect(manifest.devDependencies?.['subset-font']).toBeUndefined();
+    expect(manifest.devDependencies?.['typescript']).toBeUndefined();
+    expect(manifest.devDependencies?.['tsx']).toBeUndefined();
+  });
+});
+
+describe('the build toolchain — a production-only install', () => {
+  let installDir: string;
+
+  beforeAll(async () => {
+    installDir = mkdtempSync(join(tmpdir(), 'webfont-prod-install-'));
+    const root = repoRoot();
+    copyFileSync(join(root, 'package.json'), join(installDir, 'package.json'));
+    copyFileSync(join(root, 'package-lock.json'), join(installDir, 'package-lock.json'));
+
+    // The command the server runs — and NO `--ignore-scripts`: a package
+    // whose postinstall was skipped is not a package that works, so the
+    // conclusion drawn from such an install would be a false one.
+    const result = await execCapture(
+      process.execPath,
+      [npmCliPath(), 'install', '--omit=dev', '--no-audit', '--no-fund'],
+      installDir,
+    );
+    if (result.code !== 0) {
+      throw new Error(
+        `npm install --omit=dev exited with ${result.code}\n${result.stdout}\n${result.stderr}`,
+      );
+    }
+  }, 600_000);
+
+  afterAll(() => {
+    // The guard: when the install itself failed, `installDir` may not
+    // exist — and a cleanup error must not hide the real failure.
+    if (installDir) rmSync(installDir, { recursive: true, force: true });
+  });
+
+  it('resolves subset-font and typescript with node’s own resolver', async () => {
+    for (const specifier of ['subset-font', 'typescript']) {
+      const result = await execCapture(
+        process.execPath,
+        ['-e', `require.resolve(${JSON.stringify(specifier)})`],
+        installDir,
+      );
+      expect(result.code, `${specifier} did not resolve: ${result.stderr}`).toBe(0);
+    }
+  }, 60_000);
+
+  it('runs tsx from the production install — with the argv the probe uses', async () => {
+    // The `.cmd` shim cannot be started without a shell, so the argv is
+    // built the way the capability probe builds it: the package's own
+    // entry point, started with node.
+    const argv = resolveArgv('tsx', ['--version'], installDir);
+    expect(argv[0].endsWith('.cmd')).toBe(false);
+
+    const result = await execCapture(argv[0], argv.slice(1));
+    expect(result.code, result.stderr).toBe(0);
+    expect(result.stdout).toMatch(/\d+\.\d+\.\d+/);
+  }, 60_000);
+
+  it('the capability probe finds the whole toolchain in the production install', async () => {
+    const probeStaging = mkdtempSync(join(tmpdir(), 'webfont-prod-staging-'));
+    const probeFontDir = mkdtempSync(join(tmpdir(), 'webfont-prod-fontdir-'));
+    try {
+      const report = await probeCapability({
+        stagingDir: probeStaging,
+        fontDir: probeFontDir,
+        // Everything but `tsx` is faked: this test is about the build
+        // toolchain, and python / fontTools are not installed on a
+        // production server either.
+        runCommand: async (bin, args) => {
+          if (bin !== 'tsx') return { code: 0, stdout: '', stderr: '' };
+          const argv = resolveArgv('tsx', args, installDir);
+          return execCapture(argv[0], argv.slice(1));
+        },
+        fetchImpl: (async () => new Response(null, { status: 200 })) as typeof fetch,
+        resolveModule: (specifier) => resolveModuleEntry(specifier, installDir),
+      });
+
+      expect(report.toolchain).toEqual({ subsetFont: true, typescript: true, tsx: true });
+      expect(report.ok).toBe(true);
+      expect(report.missing).toEqual([]);
+    } finally {
+      rmSync(probeStaging, { recursive: true, force: true });
+      rmSync(probeFontDir, { recursive: true, force: true });
+    }
+  }, 60_000);
 });
 
 describe('probeCapability — the source fonts on disk', () => {
