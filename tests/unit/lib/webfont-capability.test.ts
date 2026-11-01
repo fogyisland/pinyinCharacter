@@ -1,11 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { NextRequest } from 'next/server';
 
 import { SOURCES } from '@/scripts/fonts/download-webfont-sources';
-import { probeCapability, type CapabilityReport } from '@/lib/webfont/capability';
+import {
+  probeCapability,
+  resolveArgv,
+  type CapabilityReport,
+} from '@/lib/webfont/capability';
 
 /**
  * The capability probe of the admin font pipeline (design §3.4).
@@ -14,20 +18,61 @@ import { probeCapability, type CapabilityReport } from '@/lib/webfont/capability
  * "does this machine have everything the pipeline needs?" and, when the
  * answer is no, it says what is missing AND what to do about it.
  *
- * Two properties are worth more here than anywhere else in the feature:
+ * Three properties are worth more here than anywhere else in the feature:
  *
  *  1. **A missing capability is never a green light.** A server without
  *     Python, or without the three build-toolchain packages, must report
  *     `ok: false` and name the remedy. A probe that answered "everything
  *     is fine" on a machine that cannot build fonts is worse than no
  *     probe at all (the G-12 fake green).
- *  2. **The probe reports, it never crashes.** Every probe is an
+ *  2. **The probe measures the thing the pipeline writes.** The disk row
+ *     probes the FONT ROOT — the directory the subsetter writes into —
+ *     and never an ancestor of it. A writable parent says nothing about
+ *     the directory itself, and the two are not even on the same volume
+ *     when the font root is a mount.
+ *  3. **The probe reports, it never crashes.** Every probe is an
  *     interaction with the outside world (a subprocess, a file write, an
  *     HTTP HEAD). One that throws instead of reporting would show the
  *     administrator an error page instead of the list of what is missing.
  *     ⇒ Every external interaction is injected here, and **no test in
  *     this file reaches the network**: `fetchImpl` is always a fake.
  */
+
+/**
+ * The filesystem is mocked so that a FAILING filesystem can be simulated:
+ * a delete that does not work and a stat that throws are two paths that
+ * no test can reach with a real disk, and they are exactly the paths
+ * that used to escape the probe and turn the admin page into a 500.
+ *
+ * The mock delegates to the real module; only the three calls below can
+ * be made to fail, and only while the matching flag is set.
+ */
+const fsFaults = vi.hoisted(() => ({
+  statThrows: false,
+  writeThrows: false,
+  deleteThrows: false,
+}));
+
+vi.mock('node:fs', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('node:fs')>();
+  const fault = (code: string, what: string) =>
+    Object.assign(new Error(`${code}: ${what}`), { code });
+  return {
+    ...actual,
+    statSync: ((...args: unknown[]) => {
+      if (fsFaults.statThrows) throw fault('EACCES', 'permission denied, stat');
+      return (actual.statSync as unknown as (...a: unknown[]) => unknown)(...args);
+    }) as unknown as typeof actual.statSync,
+    writeFileSync: ((...args: unknown[]) => {
+      if (fsFaults.writeThrows) throw fault('EACCES', 'permission denied, open');
+      return (actual.writeFileSync as unknown as (...a: unknown[]) => unknown)(...args);
+    }) as unknown as typeof actual.writeFileSync,
+    rmSync: ((...args: unknown[]) => {
+      if (fsFaults.deleteThrows) throw fault('EPERM', 'operation not permitted, unlink');
+      return (actual.rmSync as unknown as (...a: unknown[]) => unknown)(...args);
+    }) as unknown as typeof actual.rmSync,
+  };
+});
 
 type FakeOutcome = { code: number; stdout?: string; stderr?: string };
 
@@ -114,13 +159,24 @@ function createFetch(
 const everythingResolvable = () => '/somewhere/node_modules/pkg/index.js';
 
 let stagingDir: string;
+let fontDir: string;
 
 beforeEach(() => {
+  fsFaults.statThrows = false;
+  fsFaults.writeThrows = false;
+  fsFaults.deleteThrows = false;
   stagingDir = mkdtempSync(join(tmpdir(), 'webfont-capability-'));
+  fontDir = mkdtempSync(join(tmpdir(), 'webfont-fontdir-'));
 });
 
 afterEach(() => {
+  // The faults are cleared FIRST: the cleanup below deletes a directory,
+  // and a mocked `rmSync` would throw.
+  fsFaults.statThrows = false;
+  fsFaults.writeThrows = false;
+  fsFaults.deleteThrows = false;
   rmSync(stagingDir, { recursive: true, force: true });
+  rmSync(fontDir, { recursive: true, force: true });
 });
 
 describe('probeCapability — a machine that has everything', () => {
@@ -130,6 +186,7 @@ describe('probeCapability — a machine that has everything', () => {
 
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl,
       resolveModule: everythingResolvable,
@@ -149,6 +206,7 @@ describe('probeCapability — a machine that has everything', () => {
   it('names the node version it runs on', async () => {
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: createRunner().run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
@@ -160,6 +218,7 @@ describe('probeCapability — a machine that has everything', () => {
     const runner = createRunner();
     await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
@@ -179,6 +238,7 @@ describe('probeCapability — a machine that has everything', () => {
       const runner = createRunner();
       await probeCapability({
         stagingDir,
+        fontDir,
         runCommand: runner.run,
         fetchImpl: createFetch().fetchImpl,
         resolveModule: everythingResolvable,
@@ -195,6 +255,7 @@ describe('probeCapability — python', () => {
     const runner = createRunner({ python: () => enoent('python') });
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
@@ -216,6 +277,7 @@ describe('probeCapability — python', () => {
     });
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
@@ -238,6 +300,7 @@ describe('probeCapability — fontTools', () => {
     });
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
@@ -249,19 +312,30 @@ describe('probeCapability — fontTools', () => {
     expect(report.missing.some((m) => m.includes('fontTools'))).toBe(true);
   });
 
-  it('does not blame fontTools when python itself is missing', async () => {
-    const runner = createRunner({ python: () => enoent('python') });
+  it('still names fontTools when python itself is missing', async () => {
+    // The fontTools probe RUNS python, so a machine without python fails
+    // that probe as well — exactly as it does in reality.
+    const runner = createRunner({
+      python: () => enoent('python'),
+      fontTools: () => enoent('python'),
+      fontToolsVersion: () => enoent('python'),
+    });
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
     });
 
-    // The fontTools remedy says "Python 在，但 fontTools 没装" — that would
-    // be a lie on a machine without python at all.
-    expect(report.fonttools.remedy).toBeNull();
-    expect(report.missing.some((m) => m.includes('fontTools'))).toBe(false);
+    // fontTools really is missing — it cannot even be looked for without
+    // python — so the list names it. The remedy is the one that stays
+    // true on a machine without python: it says what to do AFTER python
+    // is installed.
+    expect(report.missing.some((m) => m.includes('Python'))).toBe(true);
+    expect(report.missing.some((m) => m.includes('fontTools'))).toBe(true);
+    expect(report.fonttools.remedy).toContain('fontTools');
+    expect(report.fonttools.remedy).toContain('pip install fonttools');
   });
 });
 
@@ -272,6 +346,7 @@ describe('probeCapability — the upstream', () => {
     });
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: createRunner().run,
       fetchImpl,
       resolveModule: everythingResolvable,
@@ -287,6 +362,7 @@ describe('probeCapability — the upstream', () => {
     const { fetchImpl, calls } = createFetch();
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: createRunner().run,
       fetchImpl,
       resolveModule: everythingResolvable,
@@ -301,26 +377,69 @@ describe('probeCapability — the upstream', () => {
 });
 
 describe('probeCapability — the disk', () => {
-  it('writes a probe file into the staging directory and removes it again', async () => {
+  it('probes the font root — the directory the pipeline writes into', async () => {
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: createRunner().run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
     });
 
     expect(report.disk.available).toBe(true);
-    expect(report.disk.stagingDir).toBe(stagingDir);
+    // The report names the path that was really probed.
+    expect(report.disk.fontDir).toBe(fontDir);
+    // The staging dir is NOT what the disk row measures.
+    expect(report.disk.fontDir).not.toBe(stagingDir);
     // No junk is left behind.
-    expect(readdirSync(stagingDir)).toEqual([]);
+    expect(readdirSync(fontDir)).toEqual([]);
+  });
+
+  it('never falls back to an ancestor directory', async () => {
+    // The font root does not exist, but its parent does and is writable.
+    // Probing the parent would answer "the disk is fine" for a
+    // directory the pipeline cannot write — and the two are not even on
+    // the same volume when the font root is a mount.
+    const report = await probeCapability({
+      stagingDir,
+      fontDir: join(fontDir, 'missing', 'font'),
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.ok).toBe(false);
+    expect(report.disk.available).toBe(false);
+    expect(report.disk.fontDir).toBe(join(fontDir, 'missing', 'font'));
+    // Nothing was written into the parent either.
+    expect(readdirSync(fontDir)).toEqual([]);
+  });
+
+  it('does not remove a file that was already there', async () => {
+    // The probe file has a unique name: a fixed one would be deleted by
+    // the next probe (rmSync with force removes a file that is already
+    // there) and two administrators refreshing at the same time would
+    // tread on each other.
+    const existing = join(fontDir, '.probe');
+    writeFileSync(existing, 'not mine');
+
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.disk.available).toBe(true);
+    expect(readdirSync(fontDir)).toEqual(['.probe']);
   });
 
   it('reports the disk as unusable when the probe file cannot be written', async () => {
-    // A path whose parent is a FILE, not a directory: writing there fails.
-    const blocker = join(stagingDir, 'blocker');
-    writeFileSync(blocker, 'not a directory');
     const report = await probeCapability({
-      stagingDir: join(blocker, 'staging'),
+      stagingDir,
+      // A path whose parent is a FILE, not a directory.
+      fontDir: join(fontDir, 'blocker', 'font'),
       runCommand: createRunner().run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
@@ -329,7 +448,74 @@ describe('probeCapability — the disk', () => {
     expect(report.ok).toBe(false);
     expect(report.disk.available).toBe(false);
     expect(report.disk.error).toBeTruthy();
-    expect(report.missing.some((m) => m.includes('staging'))).toBe(true);
+    expect(report.missing.some((m) => m.includes('字体根目录不可写'))).toBe(true);
+  });
+
+  it('honours WEBFONT_FONT_DIR — the same variable the subsetter reads', async () => {
+    vi.stubEnv('WEBFONT_FONT_DIR', join(fontDir, 'override'));
+    try {
+      const report = await probeCapability({
+        stagingDir,
+        runCommand: createRunner().run,
+        fetchImpl: createFetch().fetchImpl,
+        resolveModule: everythingResolvable,
+      });
+      expect(report.disk.fontDir).toBe(join(fontDir, 'override'));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+});
+
+describe('probeCapability — a filesystem that fails', () => {
+  it('still returns a report when the filesystem probe throws', async () => {
+    fsFaults.writeThrows = true;
+    fsFaults.statThrows = true;
+
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    // The exception stayed inside the probe: the administrator gets the
+    // report, not a 500 with "server error" on it.
+    expect(report.ok).toBe(false);
+    expect(report.disk.available).toBe(false);
+    expect(report.disk.error).toContain('EACCES');
+    // The sources row did not throw either.
+    expect(report.sources.every((s) => s.present === false)).toBe(true);
+  });
+
+  it('reports the disk as unusable when the probe file cannot be deleted', async () => {
+    fsFaults.deleteThrows = true;
+
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.ok).toBe(false);
+    expect(report.disk.available).toBe(false);
+    expect(report.disk.error).toContain('EPERM');
+  });
+
+  it('survives a path the filesystem refuses outright', async () => {
+    const report = await probeCapability({
+      stagingDir: '\0invalid',
+      fontDir: '\0invalid',
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.ok).toBe(false);
+    expect(report.disk.available).toBe(false);
   });
 });
 
@@ -337,6 +523,7 @@ describe('probeCapability — the build toolchain', () => {
   it('fails the probe when subset-font cannot be resolved', async () => {
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: createRunner().run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: (specifier) =>
@@ -356,9 +543,26 @@ describe('probeCapability — the build toolchain', () => {
     expect(entry).toContain('tsx');
   });
 
+  it('keeps markdown out of the user-facing remedy', async () => {
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: () => null,
+    });
+
+    const entry = report.missing.find((m) => m.includes('--save'));
+    expect(entry).toBeDefined();
+    // The admin page does not render markdown: no `**`, no backticks.
+    expect(entry).not.toContain('**');
+    expect(entry).not.toContain('`');
+  });
+
   it('fails the probe when typescript cannot be resolved', async () => {
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: createRunner().run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: (specifier) =>
@@ -374,6 +578,7 @@ describe('probeCapability — the build toolchain', () => {
     const runner = createRunner({ tsx: () => ({ code: 1, stderr: 'not found' }) });
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl: createFetch().fetchImpl,
       resolveModule: everythingResolvable,
@@ -393,6 +598,7 @@ describe('probeCapability — the source fonts on disk', () => {
     const { fetchImpl, calls } = createFetch();
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: createRunner().run,
       fetchImpl,
       resolveModule: everythingResolvable,
@@ -427,6 +633,7 @@ describe('probeCapability — it reports, it never crashes', () => {
 
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: runner.run,
       fetchImpl,
       resolveModule: () => {
@@ -446,6 +653,7 @@ describe('probeCapability — it reports, it never crashes', () => {
   it('keeps the report shape even when everything failed', async () => {
     const report = await probeCapability({
       stagingDir,
+      fontDir,
       runCommand: () => {
         throw new Error('boom');
       },
@@ -472,6 +680,60 @@ describe('probeCapability — it reports, it never crashes', () => {
   });
 });
 
+describe('resolveArgv — how a bare command is started', () => {
+  let fakeRoot: string;
+  let entry: string;
+
+  beforeEach(() => {
+    fakeRoot = mkdtempSync(join(tmpdir(), 'webfont-bin-'));
+    mkdirSync(join(fakeRoot, 'node_modules', '.bin'), { recursive: true });
+    mkdirSync(join(fakeRoot, 'node_modules', 'faketool'), { recursive: true });
+    // The shims npm writes on Windows. A `.cmd` file is NOT executable by
+    // node without a shell (`spawn EINVAL`), and the extensionless twin
+    // is a shell script (`ENOEXEC`).
+    writeFileSync(join(fakeRoot, 'node_modules', '.bin', 'faketool.cmd'), '@echo off\r\nexit /b 1\r\n');
+    writeFileSync(join(fakeRoot, 'node_modules', '.bin', 'faketool'), '#!/bin/sh\nexit 1\n');
+    // The package behind them — this is what the shim actually runs.
+    entry = join(fakeRoot, 'node_modules', 'faketool', 'cli.js');
+    writeFileSync(entry, '// the real entry point\n');
+    writeFileSync(
+      join(fakeRoot, 'node_modules', 'faketool', 'package.json'),
+      JSON.stringify({ name: 'faketool', version: '1.0.0', bin: { faketool: './cli.js' } }),
+    );
+  });
+
+  afterEach(() => {
+    rmSync(fakeRoot, { recursive: true, force: true });
+  });
+
+  it('starts the package entry with node — never the .cmd shim, never a shell', () => {
+    const argv = resolveArgv('faketool', ['--version'], fakeRoot);
+
+    if (process.platform === 'win32') {
+      // The .cmd shim cannot be executed without a shell, so the package's
+      // own entry point is run with node — exactly what the shim does.
+      expect(argv).toEqual([process.execPath, entry, '--version']);
+    } else {
+      expect(argv).toEqual([join(fakeRoot, 'node_modules', '.bin', 'faketool'), '--version']);
+    }
+
+    // The shape is the contract: no shell, no file that cannot run.
+    expect(argv[0]).not.toContain('cmd.exe');
+    expect(argv[0].endsWith('.cmd')).toBe(false);
+    expect(argv).not.toContain('/c');
+    expect(argv.every((part) => typeof part === 'string')).toBe(true);
+  });
+
+  it('falls back to the PATH when the package entry cannot be resolved', () => {
+    // A shim with no package behind it: there is no entry point to run,
+    // so the bare name goes to the PATH. Returning the shim would hand
+    // node a file it cannot execute — `spawn EINVAL` on Windows.
+    writeFileSync(join(fakeRoot, 'node_modules', '.bin', 'lonely.cmd'), '@echo off\r\n');
+
+    expect(resolveArgv('lonely', ['--version'], fakeRoot)).toEqual(['lonely', '--version']);
+  });
+});
+
 describe('GET /api/admin/webfonts/capability', () => {
   const ADMIN = { id: 7, username: 'admin', isAdmin: true };
 
@@ -483,7 +745,7 @@ describe('GET /api/admin/webfonts/capability', () => {
       python: { available: true, version: '3.12.1', error: null },
       fonttools: { available: true, version: '4.61.1', error: null, remedy: null },
       network: { available: true, checkedUrl: SOURCES[0].urls[0], error: null },
-      disk: { available: true, stagingDir: '/srv/app/scripts/fonts/staging/web', error: null },
+      disk: { available: true, fontDir: '/srv/app/public/font', error: null },
       toolchain: { subsetFont: true, typescript: true, tsx: true },
       sources: [],
       missing: ok ? [] : ['字体构建工具链没装齐'],
@@ -527,6 +789,11 @@ describe('GET /api/admin/webfonts/capability', () => {
     const body = await res.json();
     expect(body.ok).toBe(false);
     expect(body.missing).toEqual(['字体构建工具链没装齐']);
+  });
+
+  it('tells the browser not to cache the answer', async () => {
+    const res = await callRoute(reportWith(true));
+    expect(res.headers.get('Cache-Control')).toBe('no-store');
   });
 
   it('rejects an unauthenticated caller', async () => {

@@ -6,6 +6,17 @@ import { probeCapability } from '@/lib/webfont/capability';
 export const dynamic = 'force-dynamic';
 
 /**
+ * Every response of this route carries `no-store` — the errors included.
+ *
+ * The report is the state of the machine, and it changes: a package is
+ * installed, a disk fills up, the upstream goes away. A browser that
+ * cached the answer would keep showing a verdict that is no longer true.
+ */
+const NO_STORE: ResponseInit = {
+  headers: { 'Cache-Control': 'no-store' },
+};
+
+/**
  * GET /api/admin/webfonts/capability — the capability probe (design §3.4).
  *
  * The answer is the report itself, and the report sits at the TOP LEVEL
@@ -27,12 +38,13 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: NextRequest) {
   return withErrorHandling(async () => {
     const auth = await requireAdmin();
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) {
+      auth.response.headers.set('Cache-Control', 'no-store');
+      return auth.response;
+    }
 
     const report = await probeCapability();
 
-    return NextResponse.json(report, {
-      headers: { 'Cache-Control': 'no-store' },
-    });
-  });
+    return NextResponse.json(report, NO_STORE);
+  }, NO_STORE);
 }

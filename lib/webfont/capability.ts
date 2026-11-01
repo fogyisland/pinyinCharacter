@@ -13,7 +13,7 @@
  *   | Python     | `python --version` (the `PYTHON` override honoured) |
  *   | fontTools  | `python -I -m fontTools.varLib.instancer --help`   |
  *   | upstream   | one `HEAD` on the first source url — never a GET   |
- *   | disk       | a `.probe` file in the staging dir, deleted again  |
+ *   | disk       | a probe file in the FONT ROOT, deleted again       |
  *   | toolchain  | `subset-font`, `typescript`, `tsx`                  |
  *
  * Three properties this module keeps, in this order:
@@ -29,10 +29,13 @@
  *     when *any* of the six rows above is missing — including one of the
  *     three toolchain packages. The admin page keeps the "开始构建"
  *     button disabled while it is false.
- *  3. **The probe only reads the production tree.** It never writes into
- *     `public/font/`, and it never downloads a font: the upstream probe
- *     is a single `HEAD`, and the staging directory is the only place it
- *     writes a file at all (one byte, deleted again straight away).
+ *  3. **The probe measures the thing the pipeline writes.** The disk row
+ *     probes the FONT ROOT — the directory the subsetter writes into,
+ *     resolved exactly like the subsetter resolves it — and it never
+ *     falls back to an ancestor directory: a parent that happens to be
+ *     writable says nothing about the directory that will be written,
+ *     and the two are not even on the same volume when the font root is
+ *     a mount.
  *
  * The upstream url is NOT hardcoded: it is read from `SOURCES`, the same
  * list the downloader uses, so the probe and the pipeline can never
@@ -41,6 +44,7 @@
 import 'server-only';
 
 import { execFile } from 'node:child_process';
+import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { dirname, join, resolve } from 'node:path';
@@ -56,7 +60,8 @@ export interface CapabilityReport {
   python: { available: boolean; version: string | null; error: string | null };
   fonttools: { available: boolean; version: string | null; error: string | null; remedy: string | null };
   network: { available: boolean; checkedUrl: string; error: string | null };
-  disk: { available: boolean; stagingDir: string; error: string | null };
+  /** The font root the disk row probed, and whether it could be written. */
+  disk: { available: boolean; fontDir: string; error: string | null };
   toolchain: { subsetFont: boolean; typescript: boolean; tsx: boolean };
   sources: { filename: string; label: string; present: boolean; size: number | null }[];
   /** What is missing, in Chinese, one entry per missing thing, with the remedy. */
@@ -75,8 +80,10 @@ export type RunCommand = (bin: string, args: string[]) => Promise<CommandResult>
 
 /** Everything the probe touches outside of this process, so a test can replace it. */
 export interface ProbeOptions {
-  /** Where the source fonts live. Defaults to the pipeline's staging dir. */
+  /** Where the source fonts are staged. Defaults to the pipeline's staging dir. */
   stagingDir?: string;
+  /** The font root the disk row probes. Defaults to the subsetter's font root. */
+  fontDir?: string;
   /** Runs a command. Defaults to `execFile` without a shell. */
   runCommand?: RunCommand;
   /** Performs the upstream HEAD request. Defaults to the global `fetch`. */
@@ -91,9 +98,6 @@ const NETWORK_TIMEOUT_MS = 10_000;
 /** The timeout of one command. A probe that hangs would hang the page. */
 const COMMAND_TIMEOUT_MS = 20_000;
 
-/** The name of the file the disk probe writes and deletes again. */
-const DISK_PROBE_FILE = '.probe';
-
 /**
  * The command that installs the three build packages where the server
  * can see them.
@@ -107,19 +111,35 @@ const DISK_PROBE_FILE = '.probe';
 const TOOLCHAIN_INSTALL_COMMAND =
   'npm install subset-font@^2.4.0 typescript@^5.6.3 tsx@^4.19.2 --save';
 
-/** The remedy for a machine without the three build packages (design §3.4.1). */
+/**
+ * The remedy for a machine without the three build packages (design
+ * §3.4.1).
+ *
+ * The text is user facing, so it carries no markdown: no `**` and no
+ * backticks. The command itself is literal — a test asserts it.
+ */
 const TOOLCHAIN_REMEDY =
-  '字体构建工具链没装齐：`subset-font` / `typescript` / `tsx` 是**生产依赖**，' +
-  '服务器用 `npm install --omit=dev` 装 ⇒ 缺它们不是这台机器坏了，' +
-  '是依赖没提到 `dependencies` 里。修复：' +
-  `\`${TOOLCHAIN_INSTALL_COMMAND}\` 然后重装。`;
+  '字体构建工具链没装齐：subset-font / typescript / tsx 是生产依赖，' +
+  '服务器用 npm install --omit=dev 装 ⇒ 缺它们不是这台机器坏了，' +
+  '是依赖没提到 dependencies 里。修复：' +
+  `${TOOLCHAIN_INSTALL_COMMAND} 然后重装。`;
 
 /** The remedy for a machine without fontTools (design §3.4). */
 const FONTTOOLS_REMEDY =
-  'Python 在，但 fontTools 没装：`pip install fonttools`（或 `python -m pip install fonttools`）。';
+  'Python 在，但 fontTools 没装：pip install fonttools（或 python -m pip install fonttools）。';
+
+/**
+ * The remedy for fontTools on a machine without python.
+ *
+ * The sentence above would be a lie there ("python IS there"), so this
+ * one says what to do once python is installed — the same command the
+ * axis instancer itself prints (`instance-webfont-axis.mjs:389`).
+ */
+const FONTTOOLS_REMEDY_WITHOUT_PYTHON =
+  'Python 还没装，fontTools 自然也装不上；装好 Python 之后执行 python -m pip install fonttools brotli';
 
 /** The remedy for a machine without a python interpreter (design §3.4). */
-const PYTHON_MISSING_REMEDY = '找不到 Python 解释器。装一个，或者设 `PYTHON` 环境变量指向它。';
+const PYTHON_MISSING_REMEDY = '找不到 Python 解释器。装一个，或者设 PYTHON 环境变量指向它。';
 
 /** The python interpreter the pipeline itself uses. */
 function pythonBin(): string {
@@ -136,12 +156,13 @@ function pythonBin(): string {
  * directory that has a `package.json`. The working directory is the
  * starting point — `next start` reads `.next/` from it, so it is the
  * application root in any deployment that works at all.
+ *
+ * It is NOT cached: the working directory can change under a process,
+ * and a cached root would keep probing paths that belong to another
+ * tree. Every path this module reports is the path it really probed.
  */
-let cachedAppRoot: string | null = null;
-
 function appRoot(): string {
-  if (cachedAppRoot === null) cachedAppRoot = findAppRoot(process.cwd());
-  return cachedAppRoot;
+  return findAppRoot(process.cwd());
 }
 
 function findAppRoot(start: string): string {
@@ -155,9 +176,28 @@ function findAppRoot(start: string): string {
   return resolve(start);
 }
 
-/** Where the source fonts are staged. */
-function defaultStagingDir(): string {
-  return join(appRoot(), 'scripts', 'fonts', 'staging', 'web');
+/**
+ * The font root: where the stylesheets, the manifest and the subsets live.
+ *
+ * The SAME semantics as the subsetter's own `resolveFontDir()`
+ * (`scripts/fonts/build-webfont-subsets.mjs:114`): `WEBFONT_FONT_DIR`
+ * overrides it, a RELATIVE path is resolved against the application root
+ * and not against the working directory, and the default is
+ * `<root>/public/font`.
+ *
+ * ⚠️ ONE environment variable names ONE thing: there is no second
+ * variable for the output directory. Two names for one root are two roots
+ * that drift apart, and the drift is found when a candidate is applied.
+ */
+export function resolveFontDir(
+  root: string = appRoot(),
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const override = env.WEBFONT_FONT_DIR;
+  if (typeof override === 'string' && override.trim() !== '') {
+    return resolve(root, override.trim());
+  }
+  return join(root, 'public', 'font');
 }
 
 /**
@@ -193,16 +233,17 @@ interface ExecutableTarget {
  * running it directly is what the shim would have done — without a
  * shell, which a `.cmd` shim would need.
  */
-function resolvePackageEntry(name: string): string | null {
+function resolvePackageEntry(name: string, root: string): string | null {
   try {
-    const packageDir = join(appRoot(), 'node_modules', name);
+    const packageDir = join(root, 'node_modules', name);
     const manifestPath = join(packageDir, 'package.json');
     if (!existsSync(manifestPath)) return null;
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
       bin?: string | Record<string, string>;
     };
     const bin = manifest.bin;
-    const relative = typeof bin === 'string' ? bin : bin ? (bin[name] ?? Object.values(bin)[0]) : undefined;
+    const relative =
+      typeof bin === 'string' ? bin : bin ? (bin[name] ?? Object.values(bin)[0]) : undefined;
     if (!relative) return null;
     const entry = resolve(packageDir, relative);
     return existsSync(entry) ? entry : null;
@@ -221,24 +262,48 @@ function resolvePackageEntry(name: string): string | null {
  *
  * On Windows the shim is a `.cmd` file, which node cannot execute
  * without a shell; the package's own entry point is run with node
- * instead, which is exactly what the shim does.
+ * instead, which is exactly what the shim does. When that entry point
+ * cannot be resolved, the name is handed to the `PATH` — a `.cmd` file
+ * that is handed to node would fail with `spawn EINVAL`, and the
+ * extensionless shim (a shell script) would fail with `ENOEXEC`: both
+ * are files that cannot run, and a file that cannot run must never be
+ * returned as the answer.
  */
-function resolveExecutable(bin: string): ExecutableTarget {
+function resolveExecutable(bin: string, root: string): ExecutableTarget {
   if (bin.includes('/') || bin.includes('\\')) return { file: bin, args: [] };
 
-  const binDir = join(appRoot(), 'node_modules', '.bin');
+  const binDir = join(root, 'node_modules', '.bin');
   if (process.platform === 'win32') {
     const shim = join(binDir, `${bin}.cmd`);
     if (existsSync(shim)) {
-      const entry = resolvePackageEntry(bin);
+      const entry = resolvePackageEntry(bin, root);
       if (entry) return { file: process.execPath, args: [entry] };
-      return { file: shim, args: [] };
+      // No entry point: fall through to the PATH rather than to a file
+      // that cannot be executed.
     }
+  } else {
+    const plain = join(binDir, bin);
+    // A POSIX shim is a script with a shebang: node runs it directly.
+    if (existsSync(plain)) return { file: plain, args: [] };
   }
 
-  const plain = join(binDir, bin);
-  if (existsSync(plain)) return { file: plain, args: [] };
   return { file: bin, args: [] };
+}
+
+/**
+ * The exact argv a command is started with.
+ *
+ * This is exported because it is the contract the toolchain row rests on:
+ * on Windows the `tsx` shim is a `.cmd` file that node cannot execute
+ * without a shell, so the package's own entry point is run with node
+ * instead. A test has to be able to look at the ARGV — at the shape of
+ * the command, not at "did it run".
+ *
+ * The argv is always an array: no shell is involved, on any platform.
+ */
+export function resolveArgv(bin: string, args: string[], root: string = appRoot()): string[] {
+  const target = resolveExecutable(bin, root);
+  return [target.file, ...target.args, ...args];
 }
 
 /**
@@ -250,11 +315,11 @@ function resolveExecutable(bin: string): ExecutableTarget {
  * different stories and the probe tells them apart.
  */
 async function defaultRunCommand(bin: string, args: string[]): Promise<CommandResult> {
-  const target = resolveExecutable(bin);
+  const argv = resolveArgv(bin, args);
   return new Promise<CommandResult>((resolvePromise, rejectPromise) => {
     execFile(
-      target.file,
-      [...target.args, ...args],
+      argv[0],
+      argv.slice(1),
       { encoding: 'utf8', timeout: COMMAND_TIMEOUT_MS, windowsHide: true },
       (error, stdout, stderr) => {
         if (!error) {
@@ -341,7 +406,6 @@ interface FontToolsOutcome {
   available: boolean;
   version: string | null;
   error: string | null;
-  remedy: string | null;
 }
 
 async function probeFontTools(run: RunCommand): Promise<FontToolsOutcome> {
@@ -349,12 +413,7 @@ async function probeFontTools(run: RunCommand): Promise<FontToolsOutcome> {
   try {
     result = await run(pythonBin(), ['-I', '-m', 'fontTools.varLib.instancer', '--help']);
   } catch (error) {
-    return {
-      available: false,
-      version: null,
-      error: describeFailure(error),
-      remedy: FONTTOOLS_REMEDY,
-    };
+    return { available: false, version: null, error: describeFailure(error) };
   }
 
   if (result.code !== 0) {
@@ -363,7 +422,6 @@ async function probeFontTools(run: RunCommand): Promise<FontToolsOutcome> {
       available: false,
       version: null,
       error: `fontTools.varLib.instancer exited with code ${result.code}${detail ? `: ${detail}` : ''}`,
-      remedy: FONTTOOLS_REMEDY,
     };
   }
 
@@ -371,7 +429,6 @@ async function probeFontTools(run: RunCommand): Promise<FontToolsOutcome> {
     available: true,
     version: await readFontToolsVersion(run),
     error: null,
-    remedy: null,
   };
 }
 
@@ -425,65 +482,48 @@ async function probeNetwork(fetchImpl: typeof fetch): Promise<{
 }
 
 /**
- * Where the disk probe may write its file.
+ * The name of the file the disk probe writes.
  *
- * The staging directory itself, when it is there. When it is not there
- * yet — it is gitignored, so a fresh server does not have it — the
- * nearest directory above it is used: that is the volume the pipeline
- * will write 70 MB into, and the probe must not create the directory
- * tree to find that out.
- *
- * A path component that exists but is not a directory is a hard failure:
- * the staging directory can never exist there.
+ * It has to be unique. A fixed name would be a bug twice over: the probe
+ * deletes its file with `rmSync(..., { force: true })`, which removes a
+ * file that was already there, and two administrators refreshing the page
+ * at the same time would tread on each other.
  */
-function resolveDiskTarget(stagingDir: string): { dir: string | null; error: string | null } {
-  let dir = resolve(stagingDir);
-  for (;;) {
-    const stat = statSync(dir, { throwIfNoEntry: false });
-    if (stat) {
-      if (!stat.isDirectory()) {
-        return { dir: null, error: `ENOTDIR: ${dir} is not a directory` };
-      }
-      return { dir, error: null };
-    }
-    const parent = dirname(dir);
-    if (parent === dir) {
-      return { dir: null, error: `no directory exists above ${stagingDir}` };
-    }
-    dir = parent;
-  }
+function probeFileName(): string {
+  return `.probe-${process.pid}-${Date.now()}-${randomBytes(4).toString('hex')}`;
 }
 
 /**
- * The disk probe: write one byte into the staging directory, delete it
- * again.
+ * The disk probe: write a small file into the FONT ROOT, delete it again.
+ *
+ * The font root is the directory the subsetter writes into — the one
+ * the pipeline will really fill. There is deliberately NO fallback to an
+ * ancestor: a writable parent says nothing about the directory itself
+ * (the two are not even on the same volume when the font root is a
+ * mount), so a fallback would report a green light for a disk that
+ * cannot take the output.
  *
  * The file is deleted even when the write went wrong, and a delete that
  * fails is reported as an unusable disk rather than silently leaving the
  * file behind.
  */
-function probeDisk(stagingDir: string): { available: boolean; stagingDir: string; error: string | null } {
-  const target = resolveDiskTarget(stagingDir);
-  if (!target.dir) {
-    return { available: false, stagingDir, error: target.error };
-  }
-
-  const probePath = join(target.dir, DISK_PROBE_FILE);
+function probeDisk(fontDir: string): { available: boolean; fontDir: string; error: string | null } {
+  const probePath = join(fontDir, probeFileName());
   try {
     writeFileSync(probePath, 'probe');
   } catch (error) {
-    return { available: false, stagingDir, error: describeFailure(error) };
+    return { available: false, fontDir, error: describeFailure(error) };
   }
   try {
     rmSync(probePath, { force: true });
   } catch (error) {
     return {
       available: false,
-      stagingDir,
-      error: `${describeFailure(error)} (the probe file ${probePath} could not be removed)`,
+      fontDir,
+      error: `${describeFailure(error)}（探针文件 ${probePath} 删不掉）`,
     };
   }
-  return { available: true, stagingDir, error: null };
+  return { available: true, fontDir, error: null };
 }
 
 /** The build toolchain probe: the two packages and the one executable. */
@@ -517,14 +557,22 @@ function resolveSafely(
   }
 }
 
-/** What is on disk right now. Read only — nothing is downloaded. */
+/**
+ * What is on disk right now. Read only — nothing is downloaded.
+ *
+ * A filesystem error (EACCES, ENOTDIR, ELOOP …) is not a crash: the file
+ * is reported as not there, and the probe keeps going.
+ */
 function probeSources(stagingDir: string): CapabilityReport['sources'] {
   return SOURCES.map((source) => {
-    const stat = statSync(join(stagingDir, source.filename), { throwIfNoEntry: false });
-    if (!stat || !stat.isFile()) {
-      return { filename: source.filename, label: source.label, present: false, size: null };
+    const missing = { filename: source.filename, label: source.label, present: false, size: null };
+    try {
+      const stat = statSync(join(stagingDir, source.filename), { throwIfNoEntry: false });
+      if (!stat || !stat.isFile()) return missing;
+      return { filename: source.filename, label: source.label, present: true, size: stat.size };
+    } catch {
+      return missing;
     }
-    return { filename: source.filename, label: source.label, present: true, size: stat.size };
   });
 }
 
@@ -545,7 +593,9 @@ function hostOf(url: string): string {
  * yet", which is not an error and not a failed request.
  */
 export async function probeCapability(opts: ProbeOptions = {}): Promise<CapabilityReport> {
-  const stagingDir = opts.stagingDir ?? defaultStagingDir();
+  const root = appRoot();
+  const stagingDir = opts.stagingDir ?? join(root, 'scripts', 'fonts', 'staging', 'web');
+  const fontDir = opts.fontDir ?? resolveFontDir(root);
   const run = opts.runCommand ?? defaultRunCommand;
   const fetchImpl = opts.fetchImpl ?? fetch;
   const resolveModule = opts.resolveModule ?? defaultResolveModule;
@@ -557,15 +607,14 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
     probeToolchain(run, resolveModule),
   ]);
 
-  // The fontTools remedy says "Python 在，但 fontTools 没装" — that would be
-  // a lie on a machine without python at all, so it is only offered when
-  // python is really there.
-  const fonttoolsOutcome: FontToolsOutcome = python.available
-    ? fonttools
-    : { ...fonttools, remedy: null };
-
-  const disk = probeDisk(stagingDir);
+  const disk = probeDisk(fontDir);
   const sources = probeSources(stagingDir);
+
+  // The fontTools remedy says "Python 在，但 fontTools 没装" — that would be
+  // a lie on a machine without python at all, so there the remedy says
+  // what to do once python is installed. Either way the row is reported:
+  // fontTools really is missing when the row says so.
+  const fontToolsRemedy = python.available ? FONTTOOLS_REMEDY : FONTTOOLS_REMEDY_WITHOUT_PYTHON;
 
   const missing: string[] = [];
   if (!python.available) {
@@ -573,11 +622,11 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
       python.notInstalled
         ? PYTHON_MISSING_REMEDY
         : `Python 解释器存在但跑不起来（${python.error}）。检查这个解释器是否装坏了，` +
-          '或设 `PYTHON` 环境变量指向一个可用的解释器。',
+          '或设 PYTHON 环境变量指向一个可用的解释器。',
     );
   }
-  if (fonttoolsOutcome.available === false && python.available) {
-    missing.push(fonttoolsOutcome.remedy ?? FONTTOOLS_REMEDY);
+  if (!fonttools.available) {
+    missing.push(fontToolsRemedy);
   }
   if (!network.available) {
     if (network.checkedUrl === '') {
@@ -591,8 +640,8 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
   }
   if (!disk.available) {
     missing.push(
-      `staging 目录不可写：${disk.stagingDir}（${disk.error ?? '未知原因'}）。` +
-        '流水线要把源字体写进这个目录，请检查该目录的写权限和磁盘空间。',
+      `字体根目录不可写：${disk.fontDir}（${disk.error ?? '未知原因'}）。` +
+        '流水线要把切分产物写进这个目录，请检查该目录的写权限和磁盘空间。',
     );
   }
   // Three of three or nothing: the build steps ③ and ④ need all three
@@ -607,7 +656,7 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
 
   const ok =
     python.available &&
-    fonttoolsOutcome.available &&
+    fonttools.available &&
     network.available &&
     disk.available &&
     toolchain.subsetFont &&
@@ -623,10 +672,10 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
       error: python.error,
     },
     fonttools: {
-      available: fonttoolsOutcome.available,
-      version: fonttoolsOutcome.version,
-      error: fonttoolsOutcome.error,
-      remedy: fonttoolsOutcome.remedy,
+      available: fonttools.available,
+      version: fonttools.version,
+      error: fonttools.error,
+      remedy: fonttools.available ? null : fontToolsRemedy,
     },
     network: {
       available: network.available,
@@ -635,7 +684,7 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
     },
     disk: {
       available: disk.available,
-      stagingDir: disk.stagingDir,
+      fontDir: disk.fontDir,
       error: disk.error,
     },
     toolchain,
