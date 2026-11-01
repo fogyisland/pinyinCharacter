@@ -68,8 +68,9 @@ export interface CapabilityReport {
    * The disk row — the two directories the pipeline writes into.
    *
    * `stagingDir` is where ① downloads the source fonts and where the
-   * probe file is written (and deleted again). `fontDir` is where ③
-   * writes the subsets and where the release is applied; it is only
+   * probe file is written (and deleted again). `fontDir` is where the
+   * apply (release) step writes the published subsets — ③ writes into
+   * the staging output directory, NOT here (design §3.3); it is only
    * CHECKED for writability, never written to. `available` is true only
    * when both of them are usable.
    */
@@ -771,11 +772,19 @@ function probeStagingDir(stagingDir: string): { ok: boolean; error: string | nul
  * The font-root half of the disk probe: a PERMISSION check, and nothing
  * else.
  *
- * The font root is where ③ writes the subsets and where the release is
- * applied. It is the PRODUCTION directory — `public/` is served to the
+ * The font root is where the apply (release) step writes the published
+ * subsets. It is the PRODUCTION directory — `public/` is served to the
  * world — so nothing is ever written into it: a probe file that could
  * not be deleted would go live with the next deploy and be reachable
  * by anyone. Hence a writability check instead of a probe file.
+ *
+ * ⚠️ ③ does NOT write here: the subsetting step writes into the
+ * staging output directory (design §3.3), and the release copies the
+ * result into this root. A reader who took "③ writes the subsets into
+ * the font root" for the truth would "fix" this probe by letting ③
+ * write here — and that is precisely what the design forbids: it would
+ * destroy the staging + explicit-apply model. The probe is read-only
+ * HERE on purpose; copying into the font root is the apply step's job.
  *
  * It has to be checked anyway: the font root is often a MOUNT, so a
  * staging volume that takes the 70 MB says nothing about a font-root
@@ -932,7 +941,7 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
   if (!fontRoot.ok) {
     missing.push(
       `字体根目录不可写：${fontDir}（${fontRoot.error ?? '未知原因'}）。` +
-        '流水线要把切分产物写进这个目录，请检查该目录的写权限和磁盘空间。',
+        '流水线要把发布产物写进这个目录，请检查该目录的写权限和磁盘空间。',
     );
   }
   // Three of three or nothing: the build steps ③ and ④ need all three

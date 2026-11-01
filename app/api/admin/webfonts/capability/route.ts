@@ -32,8 +32,12 @@ const NO_STORE: ResponseInit = {
  * ⇒ A consumer of this endpoint must branch on `data.ok` and NOT on
  * `res.ok`, and must render the report even when `ok` is false.
  *
- * This endpoint reads only: it mutates nothing, so it writes no audit
- * entry (the project audits mutating endpoints).
+ * This endpoint writes no audit entry. It does touch the filesystem —
+ * the disk probe puts a throw-away probe file into the gitignored
+ * staging directory and deletes it again — but a one-off file in a
+ * staging tree that is not part of the application is not a change to
+ * the application's data, and the project audits the endpoints that
+ * change data (the build, the apply, the release).
  */
 export async function GET(_req: NextRequest) {
   return withErrorHandling(async () => {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, isAbsolute, join, relative, sep } from 'node:path';
 import { NextRequest } from 'next/server';
 
 import { SOURCES } from '@/scripts/fonts/download-webfont-sources';
@@ -54,6 +54,24 @@ const fsFaults = vi.hoisted(() => ({
   deleteThrows: false,
 }));
 
+/**
+ * Every path `writeFileSync` was called with, in the order it happened.
+ *
+ * The RESIDUE of a probe file cannot be seen this way: a file that is
+ * written into a directory and deleted again right afterwards leaves the
+ * directory exactly as it was. So a residue check cannot tell "the probe
+ * never wrote there" from "the probe wrote there and cleaned up after
+ * itself" — and the second one is what the spec forbids (design §3.4:
+ * 「the probe only READS the production directory」).
+ *
+ * The WRITES themselves are recorded instead, and the path is pushed
+ * BEFORE the fault is thrown: what the invariant is about is a write
+ * that was ATTEMPTED, not one that succeeded.
+ */
+const fsCalls = vi.hoisted(() => ({
+  writes: [] as string[],
+}));
+
 vi.mock('node:fs', async (importOriginal) => {
   const actual = await importOriginal<typeof import('node:fs')>();
   const fault = (code: string, what: string) =>
@@ -65,6 +83,7 @@ vi.mock('node:fs', async (importOriginal) => {
       return (actual.statSync as unknown as (...a: unknown[]) => unknown)(...args);
     }) as unknown as typeof actual.statSync,
     writeFileSync: ((...args: unknown[]) => {
+      fsCalls.writes.push(String(args[0]));
       if (fsFaults.writeThrows) throw fault('EACCES', 'permission denied, open');
       return (actual.writeFileSync as unknown as (...a: unknown[]) => unknown)(...args);
     }) as unknown as typeof actual.writeFileSync,
@@ -74,6 +93,23 @@ vi.mock('node:fs', async (importOriginal) => {
     }) as unknown as typeof actual.rmSync,
   };
 });
+
+/**
+ * True when `target` is `root` itself or lives inside it.
+ *
+ * "Inside" and never "equal": a write to `…/public/font/x` is as
+ * forbidden as a write to `…/public/font`. `path.relative` is used
+ * because it knows the separator of the platform and compares
+ * case-insensitively on Windows; a path on another drive comes back as
+ * an absolute path and is therefore not inside.
+ */
+function isInside(root: string, target: string): boolean {
+  const relativePath = relative(root, target);
+  if (relativePath === '') return true;
+  if (relativePath === '..') return false;
+  if (relativePath.startsWith(`..${sep}`)) return false;
+  return !isAbsolute(relativePath);
+}
 
 type FakeOutcome = { code: number; stdout?: string; stderr?: string };
 
@@ -166,6 +202,9 @@ beforeEach(() => {
   fsFaults.statThrows = false;
   fsFaults.writeThrows = false;
   fsFaults.deleteThrows = false;
+  // The write log is per test: a test that watches the writes must see
+  // only its own.
+  fsCalls.writes.length = 0;
   stagingDir = mkdtempSync(join(tmpdir(), 'webfont-capability-'));
   fontDir = mkdtempSync(join(tmpdir(), 'webfont-fontdir-'));
 });
@@ -488,6 +527,37 @@ describe('probeCapability — the disk (two places, two methods)', () => {
     // Not one file more than there was.
     expect(readdirSync(fontDir)).toEqual(before);
     expect(readdirSync(fontDir)).toEqual(['fonts-sans.css']);
+  });
+
+  it('never writes into the font root — not even a file it deletes again', async () => {
+    // The residue check above CANNOT see a write that is deleted again:
+    // the directory ends up exactly as it was, so the test stays green
+    // while the probe writes into the production directory. The spec
+    // (design §3.4) forbids that write — 「the probe only READS the
+    // production directory」 — so this test watches the WRITES.
+    writeFileSync(join(fontDir, 'fonts-sans.css'), '/* live */');
+    // Only the writes that happen DURING the probe count: the file
+    // above is the test's own.
+    const writesBefore = fsCalls.writes.length;
+
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+      resolveModule: everythingResolvable,
+    });
+
+    expect(report.disk.available).toBe(true);
+    const writes = fsCalls.writes.slice(writesBefore);
+    // The control: the recorder works, and the probe DID write — into
+    // the staging directory, which is exactly where a write is allowed.
+    expect(writes.some((path) => isInside(stagingDir, path))).toBe(true);
+    // The invariant: not one write landed under the production font
+    // root — neither the root itself nor anything below it.
+    expect(writes.filter((path) => isInside(fontDir, path))).toEqual([]);
+    // And every write was in the staging tree.
+    expect(writes.every((path) => isInside(stagingDir, path))).toBe(true);
   });
 
   it('creates the staging directory when it is not there yet', async () => {
