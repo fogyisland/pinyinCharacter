@@ -115,6 +115,23 @@ function fileSize(path) {
 }
 
 /**
+ * The probe of fontTools, remembered for the process.
+ *
+ * The probe spawns a Python subprocess, and its answer does not change
+ * while the process runs: the interpreter either is there or it is not.
+ * The clip asks for it once per target, so without this the very same
+ * subprocess was spawned again for every target of the run.
+ *
+ * ⚠️ Only a SUCCESSFUL probe is remembered. A failed one says something
+ * about the ENVIRONMENT (no interpreter, no fontTools), and the
+ * environment CAN change: the operator may install the interpreter and
+ * run the pipeline again. A remembered failure would keep saying a thing
+ * that is no longer true (G12). A failed probe is asked again — and the
+ * clip throws at the first target anyway, so a run still probes once.
+ */
+let fontToolsProbe = null;
+
+/**
  * The outcome of the fontTools probe.
  *
  * The three ways the probe can fail are told apart, because they need
@@ -129,8 +146,28 @@ function fileSize(path) {
  * Telling an operator to install a package that is already installed —
  * or to look at fontTools when the interpreter never started — sends
  * them down the wrong path, so the cases must not be lumped together.
+ *
+ * The answer is remembered after a success: the probe is asked once per
+ * process, not once per target.
+ *
+ * @returns {{ ok: boolean, moduleMissing: boolean, interpreterMissing: boolean, detail: string }}
+ *   what the probe found
  */
 export function describeFontTools() {
+  if (fontToolsProbe) return fontToolsProbe;
+  const probe = runFontToolsProbe();
+  // ⚠️ Only a success is remembered — see the note above the cache.
+  if (probe.ok) fontToolsProbe = probe;
+  return probe;
+}
+
+/**
+ * Run the fontTools probe once, and report what it found.
+ *
+ * @returns {{ ok: boolean, moduleMissing: boolean, interpreterMissing: boolean, detail: string }}
+ *   what the probe found
+ */
+function runFontToolsProbe() {
   try {
     execFileSync(PYTHON_BIN, ['-I', '-m', 'fontTools.varLib.instancer', '--help'], {
       encoding: 'utf8',
@@ -313,6 +350,34 @@ export async function instanceOne(target, options = {}) {
  */
 
 /**
+ * The kinds of failure the clip can end in.
+ *
+ * They need DIFFERENT remedies, so a failure says which one it is: a
+ * missing toolchain is fixed by installing the interpreter or fontTools,
+ * while a failed clip is fixed by downloading the source fonts again. One
+ * remedy for both of them sends the operator down the wrong path — and
+ * this text ends up in the log of a backend job (G12).
+ */
+const FAILURE_TOOLCHAIN = 'toolchain';
+const FAILURE_CLIP = 'clip';
+
+/**
+ * A failure of the clip, tagged with the kind of it.
+ *
+ * The tag is what lets the caller pick the remedy that FITS the failure,
+ * instead of printing the same remedy for every failure.
+ *
+ * @param {string} kind what failed: the toolchain or the clip
+ * @param {string} message what went wrong
+ * @returns {Error} the error, with the kind of it on it
+ */
+function clipFailure(kind, message) {
+  const error = new Error(message);
+  error.kind = kind;
+  return error;
+}
+
+/**
  * The reason the toolchain cannot clip, in one sentence.
  *
  * The three failure modes need three different remedies, so they are
@@ -381,12 +446,30 @@ export async function instanceAll(opts = {}) {
     // "fontTools is missing" need two different remedies.
     const fontTools = describeFontTools();
     if (!fontTools.ok) {
-      throw new Error(fontToolsFailure(fontTools));
+      // The remedy of a missing toolchain is in the message itself: the
+      // interpreter or fontTools has to be installed, and the source
+      // fonts are innocent here.
+      throw clipFailure(FAILURE_TOOLCHAIN, fontToolsFailure(fontTools));
     }
 
-    const outcome = await instanceOne(target, { stagingDir, force });
+    let outcome;
+    try {
+      outcome = await instanceOne(target, { stagingDir, force });
+    } catch (error) {
+      // ⚠️ A failure that ESCAPES the clip is a failure of the SOURCE
+      // FONT: a download that is truncated, a file that is not a font at
+      // all. It has to carry the kind of it, or the caller would have no
+      // remedy to offer — the toolchain is innocent here.
+      throw clipFailure(
+        FAILURE_CLIP,
+        `[instance] the clip of ${target.src} failed: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
     if (outcome.status === 'fail') {
-      throw new Error(
+      throw clipFailure(
+        FAILURE_CLIP,
         `[instance] the clip of ${target.src} failed: ${outcome.reason ?? 'unknown error'}`,
       );
     }
@@ -426,8 +509,14 @@ async function main() {
     // process.exit() right after a write to a pipe can drop the text that
     // is still sitting in the buffer.
     console.error(`[instance] ${error instanceof Error ? error.message : String(error)}`);
-    console.error('    fix the source fonts and retry with:');
-    console.error('    npm run fonts:download-web && npm run fonts:instance-web');
+    // ⚠️ The remedy has to FIT the failure (G12). A missing interpreter or
+    // a missing fontTools is NOT a broken source font, and the remedy for
+    // those is already in the message of the failure itself — so the
+    // source font remedy is printed for the clip failure only.
+    if (error instanceof Error && error.kind === FAILURE_CLIP) {
+      console.error('    fix the source fonts and retry with:');
+      console.error('    npm run fonts:download-web && npm run fonts:instance-web');
+    }
     process.exitCode = 1;
   }
 }

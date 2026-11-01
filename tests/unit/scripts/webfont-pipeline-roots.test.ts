@@ -181,6 +181,26 @@ describe('the page cost of a candidate is reported, not enforced', () => {
     },
     300_000,
   );
+
+  it(
+    'prints no pagecost line at all when there is no page cost to print',
+    () => {
+      // ⚠️ The machine readable line is either ONE LINE OF VALID JSON or
+      // it is absent. When a fixture cannot be read there is no page
+      // cost, and "pagecost: null" is not JSON — a parser that reads the
+      // line would choke on it. The run fails anyway in that case, and
+      // the failure is on its own line.
+      const missing = join(temporaryDir('webfont-pipeline-missing-'), 'no-such-sample.json');
+      const run = runVerifier(missing, { WEBFONT_PAGE_COST: 'report' });
+
+      // The fixture really is missing, so the run failed.
+      expect(run.status).not.toBe(0);
+      // ⚠️ The line must be ABSENT, not reworded.
+      expect(run.output).not.toContain('pagecost: null');
+      expect(run.output).not.toMatch(/^\[verify\] pagecost:/m);
+    },
+    300_000,
+  );
 });
 
 describe('every release directory carries the licence of its family', () => {

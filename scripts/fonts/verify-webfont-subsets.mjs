@@ -1485,11 +1485,12 @@ async function checkPageBudget(details) {
 /**
  * The page cost of the measured tree, in the shape the report prints.
  *
- * The numbers are the ones of the CANDIDATE (the tree the verifier read),
- * measured with the ruler of the union sample; the budgets are the ones
- * of the design. The page keys are sorted, so that the line is the same
- * every time it is printed — it is a machine readable line, and Task 6
- * takes the new numbers from it.
+ * The RULER (the characters of the union sample) and the BUDGETS
+ * (`budgetBytes`, `budgetFiles`) come from the LIVE release, while
+ * `bytes` and `files` are what the tree the verifier READ costs — in the
+ * pipeline that tree is the CANDIDATE. The page keys are sorted, so that
+ * the line is the same every time it is printed — it is a machine readable
+ * line, and Task 6 takes the new numbers from it.
  *
  * @param {object[]} costs the cost of every measured page
  * @returns {{ bytes: Record<string, number>, files: Record<string, number>,
@@ -1781,7 +1782,16 @@ async function main() {
     // The machine readable line: it is the only source of the new numbers
     // for the person who re-baselines the budgets by hand, so its shape
     // is pinned.
-    console.log(`[verify] pagecost: ${JSON.stringify(result.pageCost)}`);
+    //
+    // ⚠️ The line is printed ONLY when there is a page cost to print.
+    // `pageCost` is null when a fixture could not be read, and
+    // "pagecost: null" is NOT valid JSON — a parser that reads this line
+    // would choke on it. The line is therefore either one line of valid
+    // JSON or it is absent: the run fails anyway in that case, and the
+    // failure is reported on its own line.
+    if (result.pageCost !== null) {
+      console.log(`[verify] pagecost: ${JSON.stringify(result.pageCost)}`);
+    }
     for (const cost of result.costs) {
       const overBytes = cost.bytes > cost.budget;
       const overFiles = cost.files > cost.fileBudget;
