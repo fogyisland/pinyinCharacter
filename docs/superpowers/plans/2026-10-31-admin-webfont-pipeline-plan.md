@@ -18,7 +18,33 @@
 
 ## Global Constraints
 
-- **零新增运行时依赖**（G3）：`package.json` 的 `dependencies` 一个字都不许动，不许装新 npm 包。
+- **零新增运行时依赖**（G3）：**不许装任何新 npm 包**。
+  ⚠️ **例外一条（用户 2026-10-31 裁定）**：`subset-font`、`typescript`、`tsx`
+  这三个**已经存在**的包，从 `devDependencies` **移到** `dependencies` ——
+  这**不是**新增依赖，是**换分类**（代价 ≈ 24 MB；理由见 spec §3.4.1）。
+  它们**不进浏览器运行时**，只有构建脚本用。
+- **产物必须回灌仓库**（用户裁定，spec §3.5.8）：apply 之后，服务器上的
+  `public/font/web/r<T>/` + 三份改写后的样式表 + 新 manifest **必须回到 git 仓库**，
+  否则下一次 `rsync`（不带 `--delete`）会用仓库里的旧样式表覆盖服务器上的新样式表
+  ⇒ **静默回滚**（页面显示「已发布」，线上其实是旧字体）。
+  ⚠️ **后台绝不做 git 操作**（安全边界）⇒ 回灌由**脚本 + 人工**完成
+  （`scripts/fonts/import-webfont-release.mjs`），且**必须在下一次部署之前**完成。
+- **删除旧 release 的时间基准是「被取代时间」**（用户裁定，spec §3.5.4）：
+  删除条件 = 「不是最近 3 份（当前 + 前 2）」**且**「`supersededAt` 超过 30 天」。
+  ⚠️ **不是创建时间**。`supersededAt` 在 apply 时登记（写进 `public/font/releases.json`）。
+  ⚠️ **release 0 永远不许删**。
+- **清理是单独的动作**（spec §4.2）：apply **顺手不删**任何东西；清理是
+  `POST /api/admin/webfonts/releases/cleanup` 这一个**独立、显式**的动作。
+- **两层 TTL**（spec §3.5.4）：`/font/web/**`（woff2）**保持一年 immutable 不变**；
+  `/font/fonts-*.css` 与 `/font/fonts-manifest.json` 改成 **30 天**
+  （`public, max-age=2592000`）。⚠️ 两层规则**必须互斥**（否定前瞻），不许靠顺序覆盖。
+  ⚠️ **一刀切把 `/font/**` 改成 30 天是错的** —— 回访用户会每月重下 ~800 KB 字体。
+- **每一份 release 目录自带许可证**（spec §3.7 表 1）：`OFL-<族>.txt` 现在只在
+  `web/` 根上，发布目录里一份都没有 ⇒ 每个 `web/r<T>/<族>/` 里也必须有一份。
+- **后台只算不写**（spec §3.5.9）：apply 之后要重标定的那 7 个钉死数字，
+  后台**只显示**（文件:行 + 现在钉的是几 + 新的该是多少），
+  **一个字都不许替人写进仓库** —— 不许改 `LIMITS`，不许改
+  `tests/unit/lib/fonts-css.test.ts` 里的数字，不许改 `tests/unit/deploy/nginx-config.test.ts`。
 - **不许改 wave-2 的 spec**（R-12）：`docs/superpowers/specs/2026-10-29-site-optimization-wave2-design.md` 一个字都不许动。
 - **不许改 wave-2 的切分逻辑与预算**：`scripts/fonts/webfont-charset.mjs`、`scripts/fonts/verify-webfont-subsets.mjs` 的 `LIMITS`、`data/font-page-profiles.json`、`data/font-page-sample.json` 一律不许动。
   ⚠️ **只有三处例外，且必须分别落在 Task 1 与 Task 2 里**：
@@ -76,6 +102,28 @@
     后台若自动把预算改成「让当前产物通过」= **假绿灯**换个方向再来一次。
     ⇒ Task 6 的测试要断言「apply **一个字都不许写** `LIMITS`」；
     Task 8 的测试要断言页面**并排显示**新旧数字并指出要改哪几行。
+15. **构建工具链没进生产依赖** ⇒ 服务器 `npm install --omit=dev` 装不上
+    `subset-font`/`typescript`/`tsx` ⇒ 流水线在 ③/④ 崩。⇒ Task 10 的测试要断言
+    「三个包在 `dependencies`」且「只装生产依赖时 `require.resolve` 成功」。
+16. **apply 的产物没回灌** ⇒ 下一次 `rsync` 用仓库里的旧样式表覆盖服务器上的新样式表
+    ⇒ **静默回滚**：页面显示「已发布」，线上其实还是旧字体，manifest 版本也被覆盖回去。
+    ⇒ Task 13 的测试要断言「apply 的响应里 `reimport.required === true` 且带那条命令」
+    且「面板显示『回灌之前不要部署』」。
+17. **回灌之后仓库树的 `npm test` 变红** ⇒ 这是**预期**的（产物/布局变了）。
+    ⚠️ 但红的位置**必须恰好**是那 7 条；**别的红就是 bug**。
+    ⇒ Task 13 的测试要断言「import 脚本打印的新数字 = 填进去之后测试能过的数字」。
+18. **一刀切把 `/font/**` 改成 30 天** ⇒ 回访用户每月重下 ~800 KB 字体（性能倒退）。
+    ⇒ Task 11 的测试要断言「`/font/web/...` 仍是 31536000 immutable」且
+    「`/font/fonts-sans.css` 是 2592000」且「两条规则互斥」。
+19. **清理按创建时间而不是被取代时间** ⇒ 刚被取代的 release 被提前删
+    ⇒ 缓存了旧样式表的访客拿到 404（回退系统字体，字形不一样）。
+    ⇒ Task 12 的测试要断言「一份**刚被取代**、创建于很久以前的 release **不删**」。
+20. **release 目录里没有 OFL 许可证** ⇒ 许可证不合规（OFL 要求分发时附许可证）。
+    ⇒ Task 1 的测试要断言「每个 release 目录的每个族目录里都有 `OFL-<族>.txt`」。
+21. **`checkFaceDirectory()` 被「顺手改坏」**（把发布段塞进 `dir`）
+    ⇒ 族目录断言失效，门禁失去一个保护。⇒ Task 2 的测试要断言
+    `checkFaceDirectory` **一个字都没改**，且 `parseFaceUrl` 对带发布段的 URL
+    仍返回 `dir === 'sans'`。
 
 ---
 
@@ -91,28 +139,42 @@
 | `scripts/fonts/instance-webfont-axis.mjs` | 轴裁剪。**只加**：导出可调用函数 |
 | `scripts/fonts/download-webfont-sources.ts` | 下载。**不改**（复用已导出的 `downloadFont`） |
 | `lib/webfont/jobs.ts` | 作业表的读写（**唯一**碰 `webfont_build_jobs` 的地方） |
-| `lib/webfont/capability.ts` | 能力探针 |
+| `lib/webfont/capability.ts` | 能力探针（5 行 + **构建工具链**一行，Task 4 / Task 10） |
 | `lib/webfont/pipeline.ts` | 四步流水线的执行器 |
 | `lib/webfont/apply.ts` | 发布目录模型的应用逻辑 |
+| `lib/webfont/releases.ts` | release 台账（读/写 `public/font/releases.json`，**原子写**：临时文件 + rename）+ 清理规则（不是最近 3 份 **且** `supersededAt` 超 30 天；release 0 永不被删） |
 | `lib/webfont/paths.ts` | staging / live 目录常量（避免路径散落在四处） |
 | `app/api/admin/webfonts/capability/route.ts` | `GET` 能力探针 |
 | `app/api/admin/webfonts/build/route.ts` | `POST` 开始构建 / `GET` 列表 |
 | `app/api/admin/webfonts/build/[id]/route.ts` | `GET` 单个作业 |
 | `app/api/admin/webfonts/build/[id]/cancel/route.ts` | `POST` 取消 |
 | `app/api/admin/webfonts/build/[id]/apply/route.ts` | `POST` 应用 |
+| `app/api/admin/webfonts/releases/route.ts` | `GET` release 台账 + 磁盘占用 |
+| `app/api/admin/webfonts/releases/cleanup/route.ts` | `POST` 清理过期 release（**单独的动作**） |
 | `app/admin/settings/webfonts/page.tsx` | 服务端页面壳 |
-| `components/admin/WebfontPipelinePanel.tsx` | 客户端面板（能力 / 构建 / 应用 三块） |
+| `components/admin/WebfontPipelinePanel.tsx` | 客户端面板（能力 / 构建 / 应用 / release 列表 **四块**） |
 | `components/admin/AdminSidebar.tsx` | 导航加一项（**只加一行**） |
-| `lib/audit-format.ts` | `AuditEvent` 联合类型 + `EVENT_LABEL` 加 4 个事件 |
-| `next.config.ts` | `/font/**` 的 `max-age` 一年 → 30 天 |
+| `lib/audit-format.ts` | `AuditEvent` 联合类型 + `EVENT_LABEL` 加 5 个事件（多一个 `admin_webfont_releases_cleaned`） |
+| `next.config.ts` | `/font/web/**` 一年 immutable（不变）；`/font/fonts-*.css` + `fonts-manifest.json` → 30 天 |
 | `scripts/migrations/2026-10-31-webfont-build-jobs.sql` | 作业表 |
+| `scripts/fonts/import-webfont-release.mjs` | **回灌脚本**（新建）：校验 manifest 的 V == 三份样式表的哈希（不一致就拒绝，不 stage）→ `git add` 五样东西 → `git rm -r` 该删的旧 release → **打印新的钉死数字** → 默认只 stage，`--commit` 才提交 |
+| `public/font/releases.json` | release 台账（运行时产物，也在仓库里）：`dir` / `token` / `publishedAt` / `supersededAt` / `deletedAt` / `files` / `bytes` |
+| `package.json` | `subset-font` / `typescript` / `tsx` 从 `devDependencies` 移到 `dependencies` |
+| `package-lock.json` | 随 `package.json` 重新生成（`npm install --package-lock-only`） |
+| `DEPLOY.md` | 两处 `npm install --omit=dev` 旁补一句「字体构建工具链已是生产依赖，不用单独装」 |
+| `deploy/nginx.ziyun.pudafo.com.conf` | `location /font/` 的 `expires 1y` 拆成两层（与 `next.config.ts` 一致）。⚠️ 这份模板**整份不许安装**（F30-a），但不许留着与线上不一致的规则 |
+| `deploy/OPTIMIZATION.md` | `:23` 与 `:327` 的 `max-age=31536000, immutable` 改成两层；字体那节的 Latin 计数/字节数跟着回灌后的产物重算 |
+| `tests/unit/lib/fonts-css.test.ts` | 读盘路径带发布段；4 处钉死的数字改成「当前 release 口径」 |
+| `tests/unit/deploy/nginx-config.test.ts` | 读盘路径带发布段（`statSync` 现在会直接抛）；手册里的 Latin 数字重算 |
 
 ---
 
 ### Task 1: 脚本层 —— 字体根目录可覆盖 + 页面成本模式 + 可调用的入口
 
 **Files:**
-- Modify: `scripts/fonts/build-webfont-subsets.mjs`（`OUT_ROOT` / `FONT_DIR` / `MANIFEST_PATH` 三个常量）
+- Modify: `scripts/fonts/build-webfont-subsets.mjs`（`OUT_ROOT` / `FONT_DIR` / `MANIFEST_PATH` 三个常量
+  ＋ **另加**：把 `OFL-<族>.txt` **同时**写到 `<root>/web/<族>/OFL-<族>.txt`
+  ⇒ 每一份 release 目录自带许可证）
 - Modify: `scripts/fonts/verify-webfont-subsets.mjs`（`FONT_DIR` / `WEB_DIR` / `MANIFEST_PATH` 三个常量 ＋ 页面成本模式）
 - Modify: `scripts/fonts/verify-webfont-subsets.d.mts`（加 `PageCostMode` ＋ `PageCostReport` ＋ `WebfontVerificationReport` 的两个成员，**只许追加**）
 - Modify: `scripts/fonts/instance-webfont-axis.mjs`（`main()` 拆出 `instanceAll()`）
@@ -170,6 +232,16 @@
   - ⚠️ 超时给 **300_000 ms**（wave-2 的同款测试也要 5 分钟）。
   - ⚠️ 跑完**必须**删掉临时目录，不许污染仓库。
 
+  **块三：每一份 release 目录自带许可证（spec §3.7 表 1 第二行 / §9.13）——断言两条：**
+  1. 切分产物里**每个族目录**下都有 `OFL-<族>.txt`
+     （`web/sans/OFL-sans.txt`、`web/serif/OFL-serif.txt`、`web/wenkai/OFL-wenkai.txt`）；
+     ⇒ 许可证跟着字体走 ⇒ 每一份 release 目录（`web/r<T>/`）都是**自足的**
+     ⇒ 回灌时能整目录带走（spec §3.5.8 第 1 项）；
+  2. `web/` 根上的那三份 `OFL-<族>.txt` **仍然存在**
+     （⚠️ **不许**因为加了族目录里的副本就把根上的删掉 ——
+     release 0 的现状必须逐字节不变）。
+  ⚠️ 这条断言**必须能先红**：实现之前族目录里没有许可证。
+
 - [ ] **Step 2: 跑测试，确认失败**
 
   Run: `npx vitest run tests/unit/scripts/webfont-pipeline-roots.test.ts`
@@ -188,6 +260,10 @@
     `MANIFEST_PATH = join(FONT_DIR, 'fonts-manifest.json')`；
     **`FONT_DIR` 要导出**（apply 与校验都要用）。
     ⚠️ 脚本里**其它**引用 `OUT_ROOT` / `FONT_DIR` 的地方**一个字都不许改**（行为不变）。
+  - `build-webfont-subsets.mjs`：**另加**许可证的落盘（spec §3.7 表 1 第二行）——
+    现在 `OFL-<族>.txt` 只写到 `web/` 的根 ⇒ 改成**同时**写
+    `<root>/web/<族>/OFL-<族>.txt`（**同时**写，不是**改**写 ⇒ 根上那三份保留）。
+    ⚠️ 这一条**只许追加文件**，不许移动或删除根上已有的许可证。
   - `verify-webfont-subsets.mjs`：把 `FONT_DIR` 改成由 `resolveFontDir()` 求值，
     `WEB_DIR = join(FONT_DIR, 'web')`、`MANIFEST_PATH = join(FONT_DIR, 'fonts-manifest.json')` 保持由 `FONT_DIR` 派生。
     ⚠️ `LIMITS` 的**每一个数字**不许动。
@@ -282,11 +358,11 @@
   改动前后各跑一次，**整个输出**（不是只看 `pages` 那行）diff 一下：
 
   ```bash
-  npm run fonts:verify-webfont > .superpowers/sdd/2026-10-31-admin-webfont-pipeline/verify-enforce-before.txt 2>&1; echo "EXIT=$?"
+  npm run fonts:verify-webfont > .superpowers/sdd/2026-10-31-admin-webfont-pipeline-plan/verify-enforce-before.txt 2>&1; echo "EXIT=$?"
   # …改动之后…
-  npm run fonts:verify-webfont > .superpowers/sdd/2026-10-31-admin-webfont-pipeline/verify-enforce-after.txt 2>&1; echo "EXIT=$?"
-  diff .superpowers/sdd/2026-10-31-admin-webfont-pipeline/verify-enforce-before.txt \
-       .superpowers/sdd/2026-10-31-admin-webfont-pipeline/verify-enforce-after.txt
+  npm run fonts:verify-webfont > .superpowers/sdd/2026-10-31-admin-webfont-pipeline-plan/verify-enforce-after.txt 2>&1; echo "EXIT=$?"
+  diff .superpowers/sdd/2026-10-31-admin-webfont-pipeline-plan/verify-enforce-before.txt \
+       .superpowers/sdd/2026-10-31-admin-webfont-pipeline-plan/verify-enforce-after.txt
   ```
 
   Expected: EXIT=0，**diff 为空**（逐字节相同）。
@@ -312,8 +388,8 @@
 （裁定二十六-A / ledger §十五）。
 
 **Files:**
-- Modify: `scripts/fonts/verify-webfont-subsets.mjs`（`parseFaceUrl()` `:145-151`；`:618` 的读盘路径）
-- Modify: `scripts/fonts/verify-webfont-subsets.d.mts`（`FaceUrl` `:156-163`）
+- Modify: `scripts/fonts/verify-webfont-subsets.mjs`（`parseFaceUrl()` `:224`；`:696` 的读盘路径）
+- Modify: `scripts/fonts/verify-webfont-subsets.d.mts`（`FaceUrl` `:249`）
 - Modify: `scripts/perf/font-load.mjs`（`:129` 的盘上相对路径）
 - Modify: `tests/unit/scripts/verify-webfont-subsets.test.ts`（`parseFaceUrl` 断言 + 新用例）
 
@@ -402,7 +478,7 @@
     ⚠️ **两个正则的顺序不能换**（先两段、再三段）—— 换了就会让某些两段式 URL
     被当成三段式解析。
     ⚠️ 函数的 JSDoc 要补一句：发布目录段是**可选**的。
-  - 同文件 `:618` 的读盘路径：`join(WEB_DIR, url.release, url.dir, url.file)`
+  - 同文件 `:696` 的读盘路径：`join(WEB_DIR, url.release, url.dir, url.file)`
     —— `release` 为 `''` 时 `path.join` 会丢掉空段 ⇒ 路径与今天**完全相同**。
     ⚠️ `WEB_DIR` / `FONT_DIR` / `MANIFEST_PATH` 的定义**一个字都不许动**
     （Task 1 已经把它们接到 `resolveFontDir()` 上）。
@@ -410,7 +486,7 @@
     （带一句 JSDoc：空串 = release 0）。
   - `scripts/perf/font-load.mjs` `:129`：
     `const key = \`${url.release ? \`${url.release}/\` : ''}${url.dir}/${url.file}\`;`
-    —— 探针**按 URL 自己的路径**读盘（`:320` `readFile(join(WEB_DIR, key))`），
+    —— 探针**按 URL 自己的路径**读盘（`:337` `readFile(join(WEB_DIR, key))`），
     不带发布段就会读到不存在的文件。
     ⚠️ 探针的其它逻辑（拉丁层合并、预算缺失就抛错、版本错位提示、退出码）
     **一个字都不许动**。
@@ -425,7 +501,7 @@
   ⚠️ **必须在改 `parseFaceUrl()` 之前**先跑一次并存档输出：
 
   ```bash
-  npm run fonts:verify-webfont > .superpowers/sdd/2026-10-31-admin-webfont-pipeline/verify-before.txt 2>&1; echo "EXIT=$?"
+  npm run fonts:verify-webfont > .superpowers/sdd/2026-10-31-admin-webfont-pipeline-plan/verify-before.txt 2>&1; echo "EXIT=$?"
   ```
 
   改完再跑一次存 `verify-after.txt`，然后 `diff` 两个文件 ⇒ **必须完全相同**。
@@ -568,6 +644,7 @@
     fonttools: { available: boolean; version: string | null; error: string | null; remedy: string | null };
     network: { available: boolean; checkedUrl: string; error: string | null };
     disk: { available: boolean; stagingDir: string; error: string | null };
+    toolchain: { subsetFont: boolean; typescript: boolean; tsx: boolean };
     sources: { filename: string; label: string; present: boolean; size: number | null }[];
     missing: string[];
   }
@@ -575,9 +652,16 @@
     stagingDir?: string;
     runCommand?: (bin: string, args: string[]) => Promise<{ code: number; stdout: string; stderr: string }>;
     fetchImpl?: typeof fetch;
+    resolveModule?: (specifier: string) => string | null;
   }): Promise<CapabilityReport>;
   ```
-  ⚠️ `runCommand` / `fetchImpl` **必须可注入** ⇒ 测试不碰真网络、不碰真 python。
+  ⚠️ `runCommand` / `fetchImpl` / `resolveModule` **必须可注入** ⇒ 测试不碰真网络、不碰真 python。
+
+  ⚠️ **探针从 5 行变 6 行**（spec §3.4 的表 + §3.4.1）：
+  Node / Python / fontTools / 上游可达 / 磁盘可写 / **构建工具链**。
+  ⇒ `ok` 的判定**必须包含工具链这一行**：三个包里缺任何一个 ⇒ `ok:false`
+  ⇒ 页面上的「开始构建」**不可点**（spec §5 的 capability 契约）。
+  ⚠️ 工具链这一行的提示文案**必须带 `--save`**（见 Step 3）。
 
 - [ ] **Step 1: 写失败的测试**
 
@@ -587,7 +671,11 @@
   2. python 在但 `fontTools.varLib.instancer --help` 退出码非 0 ⇒
      `report.fonttools.available === false` 且 `report.fonttools.remedy` 含 **`fonttools`**；
   3. `fetchImpl` 抛 ⇒ `report.network.available === false`；
-  4. 全部可用 ⇒ `report.ok === true`、`report.missing` 为空数组。
+  4. **缺构建工具链**（`resolveModule` 对 `subset-font` / `typescript` 返回 `null`，
+     或 `tsx` 跑不起来）⇒ `report.ok === false`、
+     `report.toolchain` 里对应的那一项是 `false`，
+     且 `report.missing` 里的那一条**必须含 `--save`**；
+  5. 全部可用 ⇒ `report.ok === true`、`report.missing` 为空数组。
 
 - [ ] **Step 2: 跑测试，确认失败** ⇒ FAIL（模块不存在）。
 
@@ -599,6 +687,19 @@
   - 网络探测：对 `SOURCES[0].urls[0]` 发一个 **`HEAD`** 请求（带 10 s 超时）；
     ⚠️ 只发 HEAD，**不许**在这里下载字体；
   - 磁盘探测：在 staging 目录写一个 `.probe` 文件再删掉；
+  - **构建工具链探测**（spec §3.4 表的**最后一行**「构建工具链」 / §3.4.1）：
+    - `subsetFont`：`resolveModule('subset-font')` 能解析 ⇒ `true`；
+    - `typescript`：`resolveModule('typescript')` 能解析 ⇒ `true`；
+    - `tsx`：`runCommand('tsx', ['--version'])` 退出码为 0 ⇒ `true`
+      （⚠️ `tsx` 是**可执行**，不是可 import 的模块 ⇒ 不能用 `resolveModule`）；
+    - ⚠️ **三个里缺任何一个 ⇒ 整个探针 `ok:false`**；
+    - 提示文案**必须带 `--save`**（spec §3.4.1 的末段裁定）：
+      「字体构建工具链没装齐：`subset-font` / `typescript` / `tsx` 是**生产依赖**，
+      服务器用 `npm install --omit=dev` 装 ⇒ 缺它们不是这台机器坏了，
+      是依赖没提到 `dependencies` 里。修复：
+      `npm install subset-font@^2.4.0 typescript@^5.6.3 tsx@^4.19.2 --save` 然后重装。」
+      ⚠️ **不许**建议无参数的 `npm install`，也**不许**建议 `npm install --omit=dev`
+      （那会把生产机的 dev 依赖装进去）。
   - 源字体现状：读 `SOURCES`，报告每个文件在不在、大小多少（**只读，不下载**）；
   - `missing`：人类可读的清单（中文），例如
     「找不到 Python 解释器（装一个，或设 PYTHON 环境变量指向它）」。
@@ -754,7 +855,9 @@
 
 **Files:**
 - Create: `lib/webfont/apply.ts`
-- Modify: `next.config.ts`（`/font/**` 的 `max-age`）
+- Create: `public/font/releases.json`（apply 时写：登记 `publishedAt` / `supersededAt`）
+- Consume: `lib/webfont/releases.ts`（**Task 12 创建**：apply 用它的 `markSuperseded`
+  登记「被取代时间」并写台账）
 - Test: `tests/unit/lib/webfont-apply.test.ts`
 
 **Interfaces:**
@@ -764,7 +867,9 @@
   - Task 1 的 `WEBFONT_PAGE_COST`（页面成本模式）—— apply 的**候选校验**必须用
     `report`（候选的页面成本**只报不算**，spec §3.5.7）；
   - Task 1 的 `PageCostReport` 类型（**从 `.d.mts` import，不许另写一份**）；
-  - Task 2 的解析器扩展 —— apply 产出的新布局**必须**能过 wave-2 的门禁。
+  - Task 2 的解析器扩展 —— apply 产出的新布局**必须**能过 wave-2 的门禁；
+  - `lib/webfont/releases.ts` 的 `markSuperseded` / `readReleases` / `writeReleases`
+    （Task 12 的台账模块）—— apply 用它登记「被取代时间」并写 `public/font/releases.json`。
 - Produces `lib/webfont/apply.ts`：
   ```ts
   export interface ApplyResult {
@@ -773,7 +878,11 @@
     releaseToken: string | null;       // T：发布令牌（= staging manifest 的 version）
     releaseDir: string | null;         // 'r<T>'
     rewrittenFaces: number;
+    // 本波**恒为空数组**：apply **顺手不删任何东西**（spec §4.2）。
+    // 清理是 Task 12 的独立动作（POST /api/admin/webfonts/releases/cleanup）。
     swept: string[];
+    // 本次被取代的那一份 release 的目录名（= 登记 supersededAt 的那一条）
+    supersededDir: string | null;
     error: string | null;
     // 与「仓库当前产物」的差异摘要（spec §9.6 / §7 风险表最后两行）
     summary: {
@@ -797,13 +906,20 @@
     jobId: string;
     stagedFontDir: string;      // staging 的字体根（含 fonts-*.css 与 web/）
     liveFontDir?: string;        // 缺省 LIVE_FONT_DIR
-    keepReleases?: number;       // 缺省 3（当前 + 前 2）
-    maxAgeDays?: number;         // 缺省 30
+    keepReleases?: number;       // 缺省 3（当前 + 前 2）—— 清理时用，apply 本身不用
+    maxAgeDays?: number;         // 缺省 30 —— 清理时用，apply 本身不用
     runCommand?: (
       bin: string, args: string[], opts: { cwd: string; env: NodeJS.ProcessEnv },
     ) => Promise<{ code: number; stdout: string; stderr: string }>;
   }): Promise<ApplyResult>;
   ```
+- Produces（经由 `lib/webfont/releases.ts`，Task 12 的台账模块）：
+  ```ts
+  export function markSuperseded(previousDir: string, at: string): void;
+  export function planCleanup(now: Date): ReleaseRecord[];
+  ```
+  ⚠️ `apply` **只**用 `markSuperseded`；`planCleanup` 由 Task 12 的清理路由消费
+  （**apply 顺手不删任何东西**，spec §4.2）。
 
 **两个令牌（裁定二十六-B）—— 为什么不是一个：**
 
@@ -847,14 +963,19 @@
      把 apply **之前**那份 `fonts-sans.css` 里的**每一条** woff2 URL 抽出来，
      apply 之后逐条断言「对应文件**仍然存在**，且字节与 apply 之前**完全一致**」。
      ⇒ 这一条**必须覆盖全部 URL**，不许只测一条；
-  7. **保留规则（最近 3 份）**：`live/web/` 下预先造出 `r<A>`、`r<B>`、`r<C>` 三个旧发布目录
-     （mtime 设成很久以前）⇒ apply 之后**这三个都还在**（当前 + 前 2 = 3 份），
-     再预先造出 `r<D>`（同样很老、不在最近 3 份里）⇒ apply 之后**只有 D 被删**；
-  8. **保留规则（30 天）**：再预先造出 `r<E>`（不在最近 3 份里，但 mtime 是**昨天**）
-     ⇒ apply 之后 **E 还在**（不许删）—— `/font/**` 的 max-age 降到 30 天之后，
-     访客可能还缓存着 30 天内的旧样式表；
+  7. **apply 顺手不删任何东西**（spec §4.2）：`live/web/` 下预先造出 `r<A>`、`r<B>`、
+     `r<C>`、`r<D>` 四个旧发布目录（mtime 设成很久以前）⇒ apply 之后**四个都还在**
+     ⇒ `result.swept` **必须是空数组**；
+     ⚠️ 清理是 Task 12 的独立动作（`POST /api/admin/webfonts/releases/cleanup`），
+     **不许**在 apply 里顺手删；
+  8. **登记「被取代时间」**：apply 之后读 `public/font/releases.json` ⇒
+     **刚被取代的那一份**（上一份 release）有一条 `supersededAt` **不为 null**，
+     且 `supersededAt` 的时刻 **晚于** 三份样式表被换上去的时刻
+     （⚠️ 必须在第 7 步之后登记 —— 被取代的时刻 = 新样式表上线的时刻）；
+     **新发布的那一份**的 `supersededAt` 是 `null`；
   9. **release 0 永远不许删**：断言 `live/web/sans`、`live/web/serif`、`live/web/wenkai`
      在 apply 之后**都还在**，且字节**一个字都没变**；
+     ⚠️ release 0 **不在台账里**（它永不被取代、也永不被删，spec §4.1）；
   10. **候选校验失败 ⇒ 线上一个字都不动**：把注入的 `runCommand` 换成返回
       `{ code: 1, stdout: '[verify]   [sans] the face ... is missing\n[verify] 3 error(s)\n', stderr: '' }`
       ⇒ apply 返回 `ok:false`、`error` 里**含那行关键信息**（不许含整段 stderr），
@@ -943,25 +1064,48 @@
        stderr 可能含路径与内部信息）。
     9. **校验通过** ⇒ 才把三份样式表与 manifest 写进线上目录
        （**只有这一步会动线上**）⇒ 「apply 之后 verify 变红」这件事不可能发生。
-    10. **清理**：列出 `<live>/web/` 下**以 `r` 开头**的目录，按**目录 mtime 倒序**排序
-        （⚠️ 发布令牌 T 是哈希，**不是单调的** ⇒ **不许**按 T 排序）；
-        保留**最近 3 份**（`keepReleases`，含当前这一份）；
-        再保留**创建时间不超过 `maxAgeDays`（30）天**的其余目录；
-        **两条都满足「可删」的**目录才删。
-        ⚠️ **非 `r` 开头的目录（release 0 的 `sans/` 等）一个字都不许删**
-        —— 那是旧样式表的依赖。
-    11. 统计并返回 `summary`：apply 前 live 里 woff2 的**文件数 + 总字节**、
+    10. **登记「被取代时间」**（spec §3.5.2 第 8 步）：把**刚被这一份取代的那一份**的
+        `supersededAt` 写下来（写进 `public/font/releases.json`）。
+        ⇒ 这一步**必须**在第 9 步之后：被取代的时刻 = 新样式表上线的时刻，
+        早于它登记就等于把一份**还被引用着**的 release 提前算成过期。
+        ⚠️ 新发布的那一份的 `supersededAt` 保持 `null`（= 当前发布的那份）。
+    11. **标记「待回灌」**（spec §3.5.2 第 9 步 / §3.5.8）：后台**不做 git 操作**
+        （安全边界，spec §9 第 5 条）⇒ 只把「待回灌」的事实与那条命令放进返回值，
+        交由 Task 13 的响应与面板显示。
+    12. **记录审计日志**（spec §3.5.2 第 10 步）：metadata 里**必须含两个事实**
+        —— `published: true` 与 `importedToRepo: false`
+        （后台不知道仓库有没有回灌 ⇒ 它**永远**是 `false`，
+        这一行是让审计日志能回答「这次发布的产物回灌了没有」的**唯一**依据）。
+    13. **删除规则（本次裁定，与清理任务共用，spec §3.5.4）**：
+        一个 release 目录只有在**同时**满足下面两条时才可以删：
+        ① 它**不是**最近 3 份之一（当前 + 前 2，按**目录 mtime** 倒序；
+        ⚠️ 发布令牌 T 是哈希，**不是单调的** ⇒ **不许**按 T 排序）；
+        ② 它的**被取代时间**（`supersededAt`）**超过 30 天**。
+        ⚠️ **时间基准是「被取代时间」，不是创建时间** —— 一份 release 可以在盘上躺很久
+        才被取代，按创建时间算会**提前删掉**一份刚刚被取代的 release ⇒ 直接制造访客 D（404）。
+        ⚠️ `supersededAt` 为 `null` 的（当前发布的那份）**不删**；
+        ⚠️ **release 0 永远不许删**（它不在台账里）。
+        ⚠️ **但 apply 本体不执行删除**（spec §4.2）⇒ 这条规则由
+        `planCleanup()`（Task 12）实现，apply 只负责**登记** `supersededAt`。
+    14. 统计并返回 `summary`：apply 前 live 里 woff2 的**文件数 + 总字节**、
         新产物的**文件数 + 总字节**、新发布目录占用的字节；
-    12. 返回 `swept`（被删掉的目录名）。
-    13. ⚠️ **apply 过程一个字都不许写** `scripts/fonts/verify-webfont-subsets.mjs`
+        返回 `swept`（**恒为空数组**：apply 不删任何东西）。
+    15. ⚠️ **apply 过程一个字都不许写** `scripts/fonts/verify-webfont-subsets.mjs`
         或 `scripts/fonts/verify-webfont-subsets.d.mts`
         ⇒ 门禁预算**只能人工重新标定**（spec §3.5.7 推论三）。
+        ⚠️ 同理，apply **一个字都不许写** `tests/unit/lib/fonts-css.test.ts`
+        与 `tests/unit/deploy/nginx-config.test.ts`（spec §3.5.9：后台**只算不写**）。
 
-- [ ] **Step 4: 改 `next.config.ts` 的 `/font/**` `max-age`**
+- [ ] **Step 4: 确认 `next.config.ts` 的 `/font/**` TTL 由 Task 11 负责**
 
-  一年（31536000）→ **30 天**（2592000）。
-  ⚠️ 必须在同一个文件里加一句注释说明理由：**版本令牌机制负责改版，字体文件不需要 immutable 一年**；
-  保留 3 份发布目录 + 30 天 ⇒ 「缓存了旧样式表但没缓存某个 woff2」的访客不会拿到 404。
+  ⚠️ **本任务不再改 `next.config.ts`** —— 响应头的改动由 **Task 11** 一次性做完
+  （**两层**：`/font/web/**` 一年 immutable **不变**；`/font/fonts-*.css` 与
+  `fonts-manifest.json` → 30 天）。
+  ⚠️ 一刀切把 `/font/**` 全部改成 30 天是**错的**（spec §3.5.4）：
+  回访用户会每月重下 ~800 KB 字体 ⇒ 性能倒退。
+  ⇒ 本任务只**断言** apply 之后线上目录里的 woff2 **字节没变**
+  （旧样式表的每个 URL 仍指向它声明的那批字节），
+  响应头那一层由 Task 11 的测试覆盖。
 
 - [ ] **Step 5: 跑测试 + 类型检查** ⇒ 都 EXIT=0。
 
@@ -973,9 +1117,11 @@
 - [ ] **Step 7: Commit**
 
   ```bash
-  git add lib/webfont/apply.ts next.config.ts tests/unit/lib/webfont-apply.test.ts
+  git add lib/webfont/apply.ts public/font/releases.json tests/unit/lib/webfont-apply.test.ts
   git commit -m "feat(admin): publish font builds as versioned release directories [$(date '+%Y-%m-%d %H.%M')]"
   ```
+  ⚠️ `lib/webfont/releases.ts` 由 **Task 12** 创建 ⇒ **本任务不 stage 它**
+  （它只是**消费**方：apply 用它的 `markSuperseded`）。
 
 ---
 
@@ -986,7 +1132,10 @@
 - Create: `app/api/admin/webfonts/build/[id]/route.ts`
 - Create: `app/api/admin/webfonts/build/[id]/cancel/route.ts`
 - Create: `app/api/admin/webfonts/build/[id]/apply/route.ts`
-- Modify: `lib/audit-format.ts`（`AuditEvent` + `EVENT_LABEL` 加 4 个事件）
+- （由 Task 12 创建）`app/api/admin/webfonts/releases/route.ts` —— 本任务只把它登记进路由契约表
+- （由 Task 12 创建）`app/api/admin/webfonts/releases/cleanup/route.ts`
+- Modify: `lib/audit-format.ts`（`AuditEvent` + `EVENT_LABEL` 加 **4** 个事件；
+  第 5 个 `admin_webfont_releases_cleaned` 由 **Task 12** 加）
 - Test: `tests/unit/app/api/admin/webfonts.test.ts`
 
 **Interfaces:**
@@ -996,6 +1145,7 @@
   - `lib/webfont/capability.ts` 的 `probeCapability`（Task 4）；
   - `lib/webfont/pipeline.ts` 的 `runPipeline`（Task 5）；
   - `lib/webfont/apply.ts` 的 `applyStagedBuild`（Task 6）；
+  - `lib/webfont/releases.ts` 的 `readReleases` / `planCleanup` / `writeReleases`（Task 12）；
   - `lib/webfont/paths.ts` 的 `buildDirFor`（Task 5）。
 - Produces:
 - 路由契约（spec §5）：
@@ -1005,14 +1155,38 @@
   | `GET` | `/api/admin/webfonts/build` | `200 { ok:true, jobs:[…] }`（最近 **10** 条） | — |
   | `GET` | `/api/admin/webfonts/build/[id]` | `200 { ok:true, job }` | `404` |
   | `POST` | `/api/admin/webfonts/build/[id]/cancel` | `200 { ok:true, job }` | `409`（已结束） |
-  | `POST` | `/api/admin/webfonts/build/[id]/apply` | `200 { ok:true, job, manifestVersion, releaseToken, releaseDir, summary }` | `409` / `500` |
+  | `POST` | `/api/admin/webfonts/build/[id]/apply` | `200 { ok:true, job, manifestVersion, releaseToken, releaseDir, summary, reimport, rebaseline }` | `409` / `500` |
+  | `GET` | `/api/admin/webfonts/releases` | `200 { ok:true, releases[], bytes, keep }` | — |
+  | `POST` | `/api/admin/webfonts/releases/cleanup` | `200 { ok:true, removed[], kept[] }` | `409`（没有可清理的） |
 - **入参用 zod 校验**（spec §5，与 `/api/admin/chars/generate` 同款）：
   `build` / `cancel` / `apply` 三个 POST **都没有请求体** ⇒
   用一个**允许空对象**的 schema 解析（`z.object({}).strict().optional()` 或等价写法），
   这样「body 里有未知字段」会被拒，而不是被静默忽略。
   ⚠️ `apply` **不许**接受任何自定义路径参数（防止把产物写到任意目录）。
-- 新增审计事件（`lib/audit-format.ts` 的 `AuditEvent` 联合 + `EVENT_LABEL` 映射）：
+- **capability 路由的响应多一个 `toolchain` 字段**（Task 10 / spec §5）：
+  ```ts
+  toolchain: { subsetFont: boolean; typescript: boolean; tsx: boolean };
+  ```
+  ⇒ 三个里缺任何一个，`ok` 就是 `false`，「开始构建」不可点（spec §3.4.1）。
+- **apply 路由的响应多两块**（Task 13 / spec §5）：
+  ```ts
+  reimport: {
+    required: true;
+    command: string;   // 'node scripts/fonts/import-webfont-release.mjs --release r<令牌>'
+    note: string;      // 说清「不回灌 ⇒ 下次部署会静默回滚」
+  };
+  rebaseline: Array<{
+    file: string; line: number; what: string;
+    current: number | number[] | null;
+    expected: number | number[] | null;   // null = 不用改
+    always: boolean;                        // true = 每次回灌都要改
+    note?: string;
+  }>;
+  ```
+- **新增审计事件**（`lib/audit-format.ts` 的 `AuditEvent` 联合 + `EVENT_LABEL` 映射）：
   `'admin_webfont_build_started' | 'admin_webfont_build_failed' | 'admin_webfont_build_applied' | 'admin_webfont_build_apply_failed'`
+  ⚠️ 第 5 个事件 `admin_webfont_releases_cleaned`（清理旧 release）由 **Task 12** 加 ——
+  本任务不做清理这个动作。
   ⚠️ `lib/audit-format.ts` 里还有一张 `as const satisfies readonly AuditEvent[]` 的清单
   （约 `:163`）⇒ **两处都要加**，否则 `tsc` 报错。
 
@@ -1031,7 +1205,12 @@
   7. `POST /build/[id]/cancel` 对一个 `status ∈ {done, failed, cancelled}` 的作业 ⇒ **409**；
      对一个 `running` 的作业 ⇒ **200** 且作业状态变成 `cancelled`；
   8. `POST /build` 会调用 `clearOldJobLogs(20)`（spec §9.1：只留最近 20 条作业的完整日志）；
-  9. `POST /build` 传了一个**未知字段**的 body ⇒ **400**（zod 生效，不许静默忽略）。
+  9. `POST /build` 传了一个**未知字段**的 body ⇒ **400**（zod 生效，不许静默忽略）；
+  10. apply 成功 ⇒ 响应里有 `reimport.required === true` 且
+      `reimport.command` 含 `--release r<令牌>`，还有 `rebaseline` 数组（Task 13 定义）；
+  11. capability 路由的响应里有 `toolchain: { subsetFont, typescript, tsx }`（Task 10 定义）。
+  ⚠️ **两条 release 路由的实现与测试在 Task 12** ⇒ 本任务的测试**不**覆盖它们
+  （路由文件那时还不存在）。
 
 - [ ] **Step 2: 跑测试，确认失败** ⇒ FAIL（路由不存在）。
 
@@ -1073,6 +1252,16 @@
        ⚠️ `releaseToken` **不许**为它在 `webfont_build_jobs` 上加一列 ——
        `releaseDir` = `r<T>` ⇒ 去掉前缀 `r` 就是 T（**不要**存两份会漂的数据）；
     5. 失败 ⇒ 作业标 `failed` + 审计 `admin_webfont_build_apply_failed` + **500**。
+  - `POST /build/[id]/apply` 的响应**多两块**（Task 13 定义，透传，不许在路由里另算）：
+    `reimport`（待回灌的事实 + 那条命令）与 `rebaseline`（那 7 条钉死数字）。
+    ⚠️ **后台绝不做 git 操作**（安全边界，spec §9 第 5 条）⇒ 路由只把命令给出去。
+  - `GET /api/admin/webfonts/releases` ⇒ 读台账 ⇒ `200 { ok:true, releases[], bytes, keep }`；
+    `bytes` = 盘上 release 占用的总字节；`keep` = 保留策略（最近 3 份 + 30 天）。
+    ⚠️ **这个路由的实现见 Task 12**（它依赖 `lib/webfont/releases.ts`）。
+  - `POST /api/admin/webfonts/releases/cleanup` ⇒ **独立的、显式的**清理动作（spec §4.2），
+    规则与响应形状见 **Task 12**。
+    ⚠️ **apply 顺手不删任何东西**（这条是 Task 6 的约束）。
+    ⚠️ **这个路由的实现见 Task 12**（本任务**不**写它，也**不**测它）。
 
 - [ ] **Step 4: 跑测试 + 类型检查** ⇒ 都 EXIT=0。
 
@@ -1082,6 +1271,8 @@
   git add app/api/admin/webfonts lib/audit-format.ts tests/unit/app/api/admin/webfonts.test.ts
   git commit -m "feat(admin): expose the font pipeline over the admin API [$(date '+%Y-%m-%d %H.%M')]"
   ```
+  ⚠️ `git add app/api/admin/webfonts` 是一个**目录** ⇒ 它只含本任务新建的路由文件，
+  **不会**碰到 `data/sutras/manifest.json`；但**不许**改成 `git add .` / `git add -A`。
 
 ---
 
@@ -1110,6 +1301,19 @@
   ```
   职责：
   - 挂载时 `GET /api/admin/webfonts/capability` ⇒ 渲染**能力面板**（齐备 / 缺什么 / 怎么装）；
+    ⚠️ 能力面板是**五行 + 「构建工具链」一行**（spec §3.4 / §3.4.1）：
+    任一行缺 ⇒ 「开始构建」**不可点**；工具链那行必须给出**带 `--save`** 的安装命令；
+  - 挂载时 `GET /api/admin/webfonts/releases` ⇒ 渲染**release 列表**（第四块）：
+    - 列：**目录名** / **发布时间** / **被取代时间** / **文件数** / **字节数** /
+      **可否清理**；
+    - 「被取代时间」这一列显示台账里的 `supersededAt`（`null` 显示「—」，
+      表示它还是当前发布的那份，**永远不删**）；
+    - 「可否清理」按 **Task 12 的 `planCleanup`** 的口径算（不是最近 3 份 **且**
+      `supersededAt` 超 30 天）⇒ 页面上**不许**自己另算一套；
+    - 一个**独立的**「清理」按钮 ⇒ `POST /api/admin/webfonts/releases/cleanup`
+      ⚠️ **apply 不顺手删任何东西**（spec §4.2）⇒ 清理只能是这个按钮；
+      返回 `409`（没有可清理的）时提示「没有可清理的 release」，
+      返回 `200 { removed[], kept[] }` 时把 `removed` 与 `kept` 都列出来；
   - 「开始构建」⇒ `POST /api/admin/webfonts/build` ⇒ 拿 `jobId` ⇒ **每 1.5 s** 轮询
     `GET /api/admin/webfonts/build/[id]` ⇒ 状态变成终态就停；
   - 日志区**增量追加**（只渲染新增行）；
@@ -1132,6 +1336,21 @@
       现在不影响正确性，只是新版本还没有被令牌化。」
     - 一条**告警**（spec §7 风险表）：「apply 只改服务器上的文件，**不会**自动 commit；
       要让仓库与线上一致，请把 `public/font/` 的变更提交并部署。」
+      ⚠️ Task 13 落地后，这句告警升级为**「待回灌」的醒目提示**（见下）。
+  - **「待回灌」的醒目提示块**（spec §3.5.8，数据由 Task 13 提供）：
+    ⚠️ **不许**写成一行灰色小字 —— 要**醒目**（标题 + 警示色 + 可复制的命令）：
+    - 标题：「产物已发布，但尚未回灌仓库」；
+    - 一句话说清后果：「**不回灌 ⇒ 下次部署会用仓库里的旧样式表覆盖服务器上的新样式表
+      = 静默回滚**（页面显示「已发布」，线上其实是旧字体，manifest 版本也被覆盖回去）」；
+    - **可一键复制**的命令（取 apply 响应里的 `reimport.command`，
+      形如 `node scripts/fonts/import-webfont-release.mjs --release r<令牌>`）；
+    - 最后一句硬话：「**回灌之前不要部署**」。
+    ⇒ 出现条件：apply 响应的 `reimport.required === true`。
+  - **「apply 之后要重标定的钉死数字」表**（数据由 Task 13 提供）：
+    - 列：**文件:行** / **钉的是什么** / **现在钉的是几** / **新的该是多少**；
+    - `expected` 为 `null` 的行标「**不用改**」；
+    - ⚠️ 页面上**没有**「一键修改」按钮 —— 后台**一个字都不许**替人写进仓库
+      （自动改预算 = 假绿灯，spec §3.5.9）。
     - **新旧页面成本并排显示**（spec §3.5.7 推论三）：
       左列 = 候选产物在并集样本口径下的实测（`pageCost.bytes` / `pageCost.files`），
       右列 = **旧**预算（`pageCost.budgetBytes` / `pageCost.budgetFiles`），
@@ -1162,6 +1381,17 @@
      `LIMITS.maxUnionSampleFilesPerPage`」——
      ⚠️ 缺任何一样都判红（spec §3.5.7 推论三）。
      ⚠️ 页面**不许**提供「一键改预算」的按钮 —— 自动改预算 = 假绿灯。
+  7. apply 成功响应里 `reimport.required === true` ⇒ 页面**醒目**渲染出
+     「**回灌之前不要部署**」这句话、那句「静默回滚」的后果说明、
+     以及**可复制的** `reimport.command`（含 `--release r<令牌>`）
+     —— ⚠️ 三样缺任何一样都判红（spec §3.5.8）。
+  8. apply 成功响应里 `rebaseline` 是 §3.5.9 那 7 条 ⇒ 页面**渲染出那 7 行**
+     （文件:行 / 钉的是什么 / 现在钉的是几 / 新的该是多少），
+     `expected` 为 `null` 的行标「不用改」；
+     ⚠️ 页面**不许**出现「一键修改」按钮。
+  9. `GET /api/admin/webfonts/releases` 返回的台账里有一条 `supersededAt` 为
+     ISO 字符串、另一条为 `null` ⇒ release 列表**同时显示**这两个值
+     （`null` 显示「—」）—— 缺一判红（spec §3.5.4 的时间基准）。
 
 - [ ] **Step 2: 跑测试，确认失败** ⇒ FAIL（组件不存在）。
 
@@ -1176,6 +1406,10 @@
   不要另起一套样式。
   ⚠️ 服务端页面先 `requireAdmin()` ⇒ `listJobs(10)` ⇒ 把最近 10 条作为
   `initialJobs` 传给客户端组件（省掉首屏一次往返）。
+  ⚠️ 面板是**四块**：能力 / 构建 / 应用 / release 列表。
+  ⚠️ 「待回灌」块与「要重标定的钉死数字」表的**数据**来自 apply 响应的
+  `reimport` 与 `rebaseline`（形状见 Task 7 的 Interfaces / Task 13）；
+  本任务先按那个形状渲染，Task 13 负责把后端那两个字段真正填上。
 
 - [ ] **Step 4: 加导航项**
 
@@ -1203,6 +1437,9 @@
 **Files:**
 - Modify: `deploy/OPTIMIZATION.md`（加一节「在后台重建字体」）
 - Create: `docs/superpowers/notes/2026-10-31-admin-webfont-pipeline.md`（实施记录，**不是 spec**）
+- Verify（**不新建、不改内容**，只核对别人已经改好的）：
+  `DEPLOY.md`（Task 10 改）、`deploy/nginx.ziyun.pudafo.com.conf`（Task 11 改）、
+  `deploy/OPTIMIZATION.md` 的 TTL 两层描述（Task 11 改）
 
 - [ ] **Step 1: 在 `deploy/OPTIMIZATION.md` 加一节**
 
@@ -1239,19 +1476,74 @@
   `LIMITS.unionSampleBytes` / `LIMITS.maxUnionSampleFilesPerPage`；
   后台**绝不**自动改预算（自动改 = wave-2 修掉的假绿灯换个方向再来一次）。」
 
-- [ ] **Step 3: 收尾验证（全部在仓库根或沙箱里跑）**
+- [ ] **Step 3: 核对三份文档已经写对**
+
+  ⚠️ 这三份**不由本任务改**（由 Task 10 / Task 11 改），本任务**只核对**，
+  核对不过就在实施记录里写明，并**不许**默默改别人的文件：
+
+  | 文档 | 谁改 | 必须写对的内容 |
+  |---|---|---|
+  | `DEPLOY.md` | Task 10 | 两处 `npm install --omit=dev` 旁有一句「字体构建工具链已是生产依赖，不用单独装」 |
+  | `deploy/nginx.ziyun.pudafo.com.conf` | Task 11 | `location /font/web/` 与 `location /font/` **两层**，且每层**只有一个** `Cache-Control` |
+  | `deploy/OPTIMIZATION.md` | Task 9（本文档）+ Task 11（TTL 两层） | `:22`/`:23`/`:327` 附近关于 `Expires:` 与 `Cache-Control` 的描述是**两层**；字体那节的 **Latin 数字保持现状**（Latin 字节数不随发布目录变） |
+
+- [ ] **Step 4: 收尾验证 —— 甲组（仓库里只有 release 0）**
+
+  ⚠️ **甲组 = 仓库里只有 release 0**（`public/font/web/{sans,serif,wenkai}/`，
+  还没有任何 `r<T>/` 目录）的状态。
 
   ```bash
+  npm run fonts:verify-webfont                          # 期望 EXIT=0，输出逐字节不变
   npm test                                              # 期望全绿
   npx tsc --noEmit                                     # 期望 EXIT=0
-  npm run fonts:verify-webfont                          # 期望 EXIT=0，输出逐字节不变
   # 沙箱构建（不动 4444 那棵树）
   git -C D:/Temp/pinyin-build-check checkout --force --detach <tip>
   rm -rf D:/Temp/pinyin-build-check/.next
   cd D:/Temp/pinyin-build-check && npm run build > build.log 2>&1; echo "EXIT=$?"
   ```
 
-  然后**逐条对 spec §8 的 12 条验收**，在实施记录里写下**每条的实际结果**：
+  验收：
+  - `npm run fonts:verify-webfont` **EXIT=0**，且那**四行页数字**
+    （页字节 / 文件数 / 预算 / 判定）**逐字节不变**
+    ⇒ 用改动前后各跑一次的输出做 diff；
+  - `npm test` **全绿**；
+  - `npx tsc --noEmit` **EXIT=0**；
+  - `npm run build` **EXIT=0**（沙箱里，先 `rm -rf .next`）。
+
+- [ ] **Step 5: 收尾验证 —— 乙组（apply 之后、回灌已提交）**
+
+  ⚠️ **乙组 = 服务器上 apply 过、且回灌已经提交进仓库**的状态。
+  乙组**按设计会红**，红是**预期**的：
+
+  1. 仓库树的 `npm test` **变红**（产物/布局变了 ⇒ 钉死的数字不再匹配）；
+  2. 红的位置**必须恰好**是 spec §3.5.9 那 **7 条**
+     （`tests/unit/lib/fonts-css.test.ts` 的 4 处 +
+     `scripts/fonts/verify-webfont-subsets.mjs` 的 `LIMITS` +
+     `tests/unit/deploy/nginx-config.test.ts:672` 的读盘路径）
+     ⇒ **别的红就是 bug**（不是漂移，是回归）；
+  3. 按 **import 脚本打印出来的数字**人工重标定 ⇒ `npm test` **重新全绿**；
+  4. ⚠️ 第 5/6 条（`LIMITS.unionSampleBytes` / `LIMITS.maxUnionSampleFilesPerPage`）
+     **只有语料变了才红** —— 语料没变却红 ⇒ 说明候选产物不对，是 bug。
+
+- [ ] **Step 6: 必查 —— 只装生产依赖时构建工具链还在**
+
+  ⚠️ **不许**只看 `package.json` 就宣布「依赖没问题」：
+
+  ```bash
+  # 一个干净目录里，只装生产依赖
+  mkdir -p D:/Temp/pinyin-proddeps && cd D:/Temp/pinyin-proddeps
+  npm init -y
+  npm install --omit=dev <本仓库的依赖清单>
+  node -e "require.resolve('subset-font'); console.log('subset-font OK')"
+  node -e "require.resolve('typescript'); console.log('typescript OK')"
+  ```
+
+  两条 `require.resolve` **都要成功**；任一失败 ⇒ Task 10 没做到位
+  （`subset-font` / `typescript` / `tsx` 还在 `devDependencies` 里）。
+
+- [ ] **Step 7: 逐条对 spec §8 的 12 条验收**
+
+  在实施记录里写下**每条的实际结果**：
 
   | # | 验收项 | 怎么验 | 本机能验吗 |
   |---|---|---|---|
@@ -1266,12 +1558,14 @@
   | 9 | 并发：两个 POST 只一个 202 | 单元测试 | ✅ 能 |
   | 10 | 权限：401 / 403 | 单元测试 | ✅ 能 |
   | 11 | 门禁相容性：未 apply 的仓库上 verify 逐字节不变 + 带发布目录的目录 14 条校验全照常生效 | Task 2 的测试 | ✅ 能 |
-| 12 | 候选模式不削弱仓库门禁：`WEBFONT_PAGE_COST` 缺省 `enforce` ⇒ 仓库 verify 逐字节不变；`report` 下**内禀**校验照常判失败、页面成本**只报不算** | Task 1 的测试（块二：同一份超预算样本在 enforce 下红、在 report 下绿） | ✅ 能 |
+  | 12 | 候选模式不削弱仓库门禁：`WEBFONT_PAGE_COST` 缺省 `enforce` ⇒ 仓库 verify 逐字节不变；`report` 下**内禀**校验照常判失败、页面成本**只报不算** | Task 1 的测试（块二：同一份超预算样本在 enforce 下红、在 report 下绿） | ✅ 能 |
 
   ⚠️ **不许把「注入式测试通过」写成「真机验证通过」**（G12）。
   凡是标了 ⚠️ 的条目，实施记录里**必须**写明「本机未做真实验证，原因：…」。
+  ⚠️ 乙组（apply + 回灌之后）的实测结果**也要写进这张表**：
+  「变红 → 重标定 → 重新全绿」的过程要逐条留痕。
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 8: Commit**
 
   ```bash
   git add deploy/OPTIMIZATION.md docs/superpowers/notes/2026-10-31-admin-webfont-pipeline.md
@@ -1280,10 +1574,509 @@
 
 ---
 
+### Task 10: 构建工具链提为生产依赖 ＋ 能力探针的「构建工具链」那一行
+
+**为什么单列：** `DEPLOY.md:28` 与 `DEPLOY.md:227` 两处服务器安装命令都是
+`npm install --omit=dev` ⇒ `subset-font` / `typescript` / `tsx` 三个**现在在
+`devDependencies` 里**的包在生产机上**根本不存在** ⇒ 四步流水线在 ③（切分）
+或 ④（校验）**必然**崩掉。⇒ 必须**提到 `dependencies`**（spec §3.4.1）。
+⚠️ 这**不是**新增依赖（没有新包），只是**换分类**（代价 ≈ 24 MB，typescript 占 23 MB）。
+
+**Files:**
+- Modify: `package.json`（`subset-font` / `typescript` / `tsx` 从 `devDependencies`
+  **移到** `dependencies`，版本号**一个字都不许改**）
+- Modify: `package-lock.json`（`npm install --package-lock-only` 重新生成）
+- Modify: `DEPLOY.md`（两处 `npm install --omit=dev` 各补一句）
+- Modify: `lib/webfont/capability.ts`（**只补一件事**，见 Step 3）
+- Modify: `tests/unit/lib/webfont-capability.test.ts`（Task 4 建的，本任务追加两条断言）
+
+**Interfaces:**
+- Consumes: Task 4 的 `probeCapability`（`tests/unit/lib/webfont-capability.test.ts`
+  是 Task 4 建的测试文件 ⇒ 本任务 **Modify** 它，不新建）。
+- Produces:
+  - `package.json` 的 `dependencies` 里**必须**有这三个（版本与今天的 `devDependencies`
+    **逐字相同**）：
+    ```jsonc
+    "dependencies": {
+      "subset-font": "^2.4.0",
+      "typescript": "^5.6.3",
+      "tsx": "^4.19.2"
+    }
+    ```
+    ⇒ 且 `devDependencies` 里**不许**再有这三个（重复登记会让 npm 警告，且语义含糊）。
+  - `DEPLOY.md` 两处 `npm install --omit=dev` 旁各加一句：
+    「字体构建工具链（`subset-font` / `typescript` / `tsx`）**已经是生产依赖**，
+    `--omit=dev` 也会装上，**不用单独装**。」
+  - `lib/webfont/capability.ts` 的探针结果多一个字段（**Task 4 已定好形状**，
+    本任务只让它在**只装生产依赖**的机器上也判得对）：
+    ```ts
+    toolchain: { subsetFont: boolean; typescript: boolean; tsx: boolean };
+    ```
+    ⇒ 三个里缺任何一个 ⇒ `ok:false` ⇒ 页面「开始构建」**不可点**（spec §5）。
+
+- [ ] **Step 1: 写失败的测试**
+
+  在 `tests/unit/lib/webfont-capability.test.ts` 里追加两条：
+
+  1. **分类断言**：读 `package.json` ⇒
+     `expect(pkg.dependencies['subset-font']).toBe('^2.4.0')`、
+     `expect(pkg.dependencies['typescript']).toBe('^5.6.3')`、
+     `expect(pkg.dependencies['tsx']).toBe('^4.19.2')`；
+     且 `expect(pkg.devDependencies?.['subset-font']).toBeUndefined()`、
+     `expect(pkg.devDependencies?.['typescript']).toBeUndefined()`、
+     `expect(pkg.devDependencies?.['tsx']).toBeUndefined()`。
+     ⇒ 今天这三个在 `devDependencies` 里 ⇒ 这条**现在就是红的**。
+  2. **只装生产依赖时能解析**（这一条是「提了分类就真的能用」的证明，
+     **不许**只看 `package.json` 就宣布没问题）：
+     - 建一个临时目录，把 `package.json` 与 `package-lock.json` **复制**进去；
+     - 在临时目录里跑
+       `npm install --omit=dev --no-audit --no-fund`（**不许**加 `--production` 之外的
+       任何会拉 dev 依赖的开关；**不许**用 `--ignore-scripts` —— 那会让 `tsx` 的
+       postinstall 不跑，测出来的结论是假的）；
+     - 在临时目录里跑
+       `node -e "require.resolve('subset-font')"` ⇒ **退出码 0**，
+       `node -e "require.resolve('typescript')"` ⇒ **退出码 0**，
+       `node_modules/.bin/tsx --version`（Windows 是 `node_modules/.bin/tsx.cmd`）
+       ⇒ **退出码 0**；
+     - ⚠️ 这条测试**需要访问 npm registry** ⇒ 单独给它一个长超时
+       （`{ timeout: 600000 }`）；若这台机器**没有外网** ⇒ 实施者**必须**在实施记录里
+       写明「本机未做真实验证，原因：无外网」，**不许**把跳过写成通过。
+
+- [ ] **Step 2: 跑测试，确认失败** ⇒ FAIL（第 1 条断言红：三个包还在 `devDependencies`）。
+
+- [ ] **Step 3: 实现**
+
+  - `package.json`：把三个包**从 `devDependencies` 剪出来、放进 `dependencies`**，
+    版本号**逐字保留**。
+    ⚠️ **不许**升级版本（`^2.4.0` / `^5.6.3` / `^4.19.2` 一个字都不许动）——
+    升级会把「换分类」变成「换版本」，超出本波范围。
+  - `package-lock.json`：**重新生成**
+    ```bash
+    npm install --package-lock-only
+    ```
+    ⚠️ **不许**手改 lock 文件；⚠️ 这一步**不许**动 `node_modules`
+    （`--package-lock-only` 只写 lock）。
+  - `DEPLOY.md`：在**两处** `npm install --omit=dev`（`:28` 与 `:227`）各补上面那句。
+  - `lib/webfont/capability.ts`（**只补这一件事**，其余一个字不许动）：
+    `tsx` 的探测现在写的是 `runCommand('tsx', ['--version'])` ⇒ **只装生产依赖**时
+    `tsx` 的可执行文件在 `node_modules/.bin/` 里，**不一定在 `PATH` 上**
+    ⇒ 生产机上这条探测会**误报缺失**。
+    ⇒ 改成**先**试 `tsx`（`PATH` 上的），**再**试
+    `<repoRoot>/node_modules/.bin/tsx`（Windows 用 `tsx.cmd`），
+    两个都失败才算缺。
+    ⚠️ `subsetFont` / `typescript` 的探测（`require.resolve`）**一个字不许动**。
+    ⚠️ 提示文案**必须带 `--save`**（spec §3.4.1 末段）：
+    `npm install subset-font@^2.4.0 typescript@^5.6.3 tsx@^4.19.2 --save`
+    ⇒ **不许**建议无参数的 `npm install`，**不许**建议 `npm install --omit=dev`
+    （那会把生产机的 dev 依赖装进去）。
+
+- [ ] **Step 4: 跑测试 + 类型检查** ⇒ 都 EXIT=0。
+  ⚠️ 顺便确认 `npm run fonts:verify-webfont` **仍然 EXIT=0**（提分类不该动行为）。
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add package.json package-lock.json DEPLOY.md lib/webfont/capability.ts tests/unit/lib/webfont-capability.test.ts
+  git commit -m "build(admin): promote the font build toolchain to production dependencies [$(date '+%Y-%m-%d %H.%M')]"
+  ```
+  ⚠️ **不许** `git add .` / `git add -A`；⚠️ **不许** stage `data/sutras/manifest.json`。
+
+---
+
+### Task 11: 两层 TTL（`next.config.ts` + nginx 模板 + 优化手册）
+
+**为什么单列：** 一刀切把 `/font/**` 从一年改成 30 天 ⇒ **回访用户每月重下 ~800 KB 字体**
+（性能倒退）。而样式表与 manifest 确实需要 30 天的上界（清理规则依赖这个上界）⇒
+必须**拆成两层**（spec §3.5.4）。
+
+**Files:**
+- Modify: `next.config.ts`（`headers()` 里的 `/font/:path*` 一条拆成**两条互斥**的）
+- Modify: `deploy/nginx.ziyun.pudafo.com.conf`（`location /font/` 的 `expires 1y`
+  拆成**两层**，与 `next.config.ts` 一致）
+- Modify: `deploy/OPTIMIZATION.md`（`:22` / `:23` / `:327` 附近关于 `Expires:` 与
+  `Cache-Control` 的描述改成两层）
+- Test: `tests/unit/deploy/font-cache-headers.test.ts`（**新建** —— 选它而不是改
+  `tests/unit/lib/fonts-css.test.ts`，因为后者在 Task 13 还要**再**动一次
+  （钉死数字重标定）⇒ 一个文件在本波里被两个任务改，容易踩）
+
+**Interfaces:**
+- Consumes: 无（**本任务与 Task 1 无关**，与其它任何任务都无关）。
+- Produces `next.config.ts` 的 `headers()` 里**两条互斥**的规则：
+  ```ts
+  { source: '/font/web/:path*',          headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+  { source: '/font/:path((?!web/).*)',    headers: [{ key: 'Cache-Control', value: 'public, max-age=2592000' }] },
+  ```
+  ⇒ `/font/web/<族>/<文件>.woff2`（以及 `/font/web/r<令牌>/…`）走**一年 immutable**；
+  ⇒ `/font/fonts-sans.css` / `fonts-serif.css` / `fonts-wenkai.css` /
+  `/font/fonts-manifest.json` 走 **30 天**（`2592000`）。
+  ⚠️ **必须用否定前瞻把两者分开**（`'/font/:path((?!web/).*)'`）——
+  **不许**靠「后写的覆盖先写的」，Next.js 命中多条规则时的行为不保证（spec §3.5.4）。
+  ⚠️ `/fonts/:path*`（硬笔/毛笔字体）与 `/strokes/:path*` 那两条**一个字不许动**。
+
+- [ ] **Step 1: 写失败的测试**（`tests/unit/deploy/font-cache-headers.test.ts`）
+
+  从 `next.config.ts` 里 import 那个 `headers` 配置（或读文件后 eval），然后：
+
+  1. 把 `/font/web/sans/hot.woff2` 过一遍规则 ⇒ 命中**唯一**一条，
+     且该条的 `Cache-Control` **等于** `public, max-age=31536000, immutable`；
+  2. 把 `/font/web/r0a1b2c3d4e5f/sans/hot.woff2` 过一遍规则 ⇒ 同上（发布目录**也要**一年）；
+  3. 把 `/font/fonts-sans.css` 过一遍规则 ⇒ `public, max-age=2592000`；
+  4. 把 `/font/fonts-manifest.json` 过一遍规则 ⇒ `public, max-age=2592000`；
+  5. **互斥断言**：对上面每一个路径，**命中条数必须恰好是 1**
+     ⇒ 这条就是「两条规则不许重叠」的证明；
+  6. nginx 模板断言（读 `deploy/nginx.ziyun.pudafo.com.conf` 文本）：
+     - 有一个 `location /font/web/` 块，里面**有**
+       `add_header Cache-Control "public, max-age=31536000, immutable" always;`，
+       且**没有** `expires`；
+     - 有一个 `location /font/` 块，里面**有**
+       `add_header Cache-Control "public, max-age=2592000" always;`，
+       且**没有** `expires`；
+     - ⚠️ 每个块里**只出现一次** `Cache-Control` ⇒ 与 `deploy/OPTIMIZATION.md:22-23`
+       记录的「一个 Cache-Control」事实一致。
+
+- [ ] **Step 2: 跑测试，确认失败** ⇒ FAIL（`/font/fonts-sans.css` 现在还是 31536000）。
+
+- [ ] **Step 3: 实现**
+
+  - `next.config.ts`：把现在那条 `{ source: '/font/:path*', … year }` 换成上面那**两条**。
+    ⚠️ 现有的 `const year` / `const month` 两个常量**留着**（`/fonts/` 与 `/strokes/`
+    还在用 `month`）⇒ 只改 `headers()` 数组里 `/font/` 那一条。
+  - `deploy/nginx.ziyun.pudafo.com.conf`：现在 `location /font/` 是
+    ```
+    location /font/ {
+        alias /opt/pinyin-character/public/font/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        …
+    }
+    ```
+    ⇒ 改成**两个块**（顺序：**长前缀在前**）：
+    ```
+    location /font/web/ {
+        alias /opt/pinyin-character/public/font/web/;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+        access_log off;
+        try_files $uri =404;
+    }
+
+    location /font/ {
+        alias /opt/pinyin-character/public/font/;
+        add_header Cache-Control "public, max-age=2592000" always;
+        access_log off;
+        try_files $uri =404;
+    }
+    ```
+    ⚠️ **不许**用 `expires`：`expires` 会**自己**生成一个 `Cache-Control`
+    ⇒ 叠上 `add_header Cache-Control` 就是**两个** `Cache-Control` 头
+    ⇒ 与 `deploy/OPTIMIZATION.md:22-23` 记录的「一个 Cache-Control」事实冲突。
+    ⚠️ `add_header` 要带 `always`（否则 4xx/5xx 不带这个头）。
+    ⚠️ nginx 的 `add_header` **不继承** ⇒ 子块自己写了 `Cache-Control`，
+    父块的**不会**叠加 ⇒ 不会出两个头。
+    ⚠️ 这份模板**整份不许安装**（F30-a）⇒ 本任务**只改文本**，不许装到服务器。
+  - `deploy/OPTIMIZATION.md`：`:22` / `:23` / `:327` 附近关于 `Expires:` 与
+    `Cache-Control` 的描述改成**两层**；
+    字体那节的 **Latin 计数/字节数跟着回灌后的产物重算**（spec §3.7 表）——
+    ⚠️ 这一项是**回灌之后由人**改的（同 §3.5.9 那 7 条一样），
+    本任务**只**把 TTL 的描述改对；
+    并要**补一句**：
+    「woff2 的 URL 字节永不变 ⇒ 一年 immutable；样式表与 manifest 是**可变层** ⇒ 30 天。」
+
+- [ ] **Step 4: 跑测试 + 类型检查** ⇒ 都 EXIT=0。
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add next.config.ts deploy/nginx.ziyun.pudafo.com.conf deploy/OPTIMIZATION.md tests/unit/deploy/font-cache-headers.test.ts
+  git commit -m "perf(fonts): split the font cache headers into two layers [$(date '+%Y-%m-%d %H.%M')]"
+  ```
+  ⚠️ **不许** `git add .` / `git add -A`。
+
+---
+
+### Task 12: release 台账 ＋ 清理（**单独、显式**的动作）
+
+**为什么单列：** 删是不可逆操作 ⇒ apply **顺手不删任何东西**（spec §4.2）；
+清理是**一个独立、显式**的后台动作。而删除的时间基准是**被取代时间**
+（`supersededAt`），**不是创建时间** ⇒ 一份**刚被取代**、但**创建于很久以前**的
+release **不许**删（按创建时间算会提前删 ⇒ 缓存着旧样式表的访客拿到 404）。
+
+**Files:**
+- Create: `lib/webfont/releases.ts`（台账读写 + 清理规则）
+- Create: `app/api/admin/webfonts/releases/route.ts`（`GET` 台账 + 磁盘占用）
+- Create: `app/api/admin/webfonts/releases/cleanup/route.ts`（`POST` 清理）
+- Modify: `lib/audit-format.ts`（加**第 5 个**事件 `admin_webfont_releases_cleaned`
+  —— 前 4 个由 Task 7 加）
+- Test: `tests/unit/lib/webfont-releases.test.ts`（新建）
+
+**Interfaces:**
+- Consumes: `lib/webfont/paths.ts` 的 `LIVE_FONT_DIR` / `REPO_ROOT`（Task 5）。
+- Produces `lib/webfont/releases.ts`：
+  ```ts
+  export type ReleaseRecord = {
+    dir: string;              // 'r<令牌>'
+    token: string;
+    publishedAt: string;      // ISO
+    supersededAt: string | null;   // null = 还没被取代 = 当前发布的那份
+    deletedAt: string | null;      // 被清理掉的时刻；null = 还在盘上
+    files: number;
+    bytes: number;
+  };
+  export function readReleases(): ReleaseRecord[];
+  export function writeReleases(releases: ReleaseRecord[]): void;  // **原子写**：临时文件 + rename
+  export function markSuperseded(previousDir: string, at: string): void;
+  export function planCleanup(now: Date): ReleaseRecord[];         // **只算，不删**
+  ```
+  - `readReleases()`：读 `public/font/releases.json`；文件**不存在** ⇒ 返回**空数组**
+    （不许抛）；内容坏了 ⇒ 抛**带上下文**的错误（不许静默当成空）。
+  - `writeReleases()`：**原子写** —— 先写同目录的临时文件，再 `rename` 覆盖
+    ⇒ 中途崩了不会留下半个 JSON（spec §4.1）。
+    ⚠️ 写出来的 JSON 里**不许**出现令牌、密钥、路径之类的内部信息
+    （这个文件在 `public/` 下，**任何人**都能通过 URL 读到）。
+  - `markSuperseded(previousDir, at)`：把台账里 `dir === previousDir` 的那条
+    的 `supersededAt` 设成 `at`（ISO）；**找不到就什么都不做**（不许新建一条）。
+    ⇒ Task 6 的 apply 在**第 7 步之后**调用它（被取代的时刻 = 新样式表上线的时刻）。
+  - `planCleanup(now)` 的规则（**两个条件都要满足**才进名单）：
+    1. **不是最近 3 份**（当前 + 前 2）—— 按**目录 mtime 倒序**排；
+       ⚠️ 发布令牌 T 是哈希，**不是单调的** ⇒ **不许**按 T 排序；
+    2. `supersededAt` **不为 null** 且距 `now` **超过 30 天**。
+    ⇒ `supersededAt` 为 `null` 的（当前发布的那份）**永远不进名单**；
+    ⇒ **release 0 永不在名单里**（它根本不在台账里）；
+    ⇒ ⚠️ **不是**按创建时间算 —— 一份**刚被取代**、**创建于 90 天前**的 release
+    **不许**进名单。
+
+- Produces 两条路由（spec §5）：
+  | 方法 | 路径 | 成功 | 失败 |
+  |---|---|---|---|
+  | `GET` | `/api/admin/webfonts/releases` | `200 { ok:true, releases[], bytes, keep }` | — |
+  | `POST` | `/api/admin/webfonts/releases/cleanup` | `200 { ok:true, removed[], kept[] }` | `409`（没有可清理的） |
+  - `GET` 的 `bytes` = 盘上 release 占用的总字节（≈ 41 MB 一份，spec §3.5.4）；
+    `keep` = 保留策略的描述（最近 3 份 + 30 天）。
+  - `POST` 的行为：
+    1. `planCleanup(new Date())` ⇒ 空 ⇒ **409**（「没有可清理的 release」）；
+    2. 有 ⇒ 删掉那些**目录**（`LIVE_FONT_DIR/web/<dir>/`），
+       **只给被删的那一条**加 `deletedAt`，**其余条目一个字不动**
+       （台账是**历史**，不是「当前目录列表」）；
+    3. 返回 `200 { ok:true, removed[], kept[] }`；
+    4. 写审计 `admin_webfont_releases_cleaned`，metadata 带被删的目录名与字节数；
+    5. ⚠️ 响应里要**说清**「**仓库里那份也要 `git rm -r`**」（spec §3.5.8 第 5 项）
+       ⇒ 两边一致；
+    6. ⚠️ **apply 顺手不删任何东西**（这条是 Task 6 的约束）。
+
+- [ ] **Step 1: 写失败的测试**（`tests/unit/lib/webfont-releases.test.ts`）
+
+  在临时目录里造出台账与发布目录（`mtime` 用 `fs.utimes` 设），断言：
+
+  1. **一份刚被取代、创建于 90 天前的 release ⇒ 不删**：
+     `supersededAt` = 昨天、`publishedAt` = 90 天前、目录 mtime = 90 天前，
+     且不在最近 3 份里 ⇒ `planCleanup` 的结果里**没有它**
+     ⇒ ⚠️ 这是本次裁定要防的那个坑（按创建时间算会误删）；
+  2. `supersededAt` = 40 天前、且不在最近 3 份里 ⇒ **该删**（进名单）；
+  3. **最近 3 份里任何一份**（哪怕 400 天前被取代）⇒ **不删**；
+  4. `supersededAt` 为 `null` 的那一份 ⇒ **不删**；
+  5. **release 0 不在名单里**（台账里根本没有它）；
+  6. **排序按目录 mtime，不按令牌** ⇒ 造两个令牌大小相反的目录
+     （`rffffffffffff` 的 mtime 比 `r000000000000` **新**）⇒ 结果里
+     「最近的 3 份」是按 mtime 排出来的那个组合；
+  7. **原子写**：写到一半失败（注入一个会抛的 `writeFile`）⇒ 旧的 `releases.json`
+     **仍然完整可解析**（不是半个 JSON）；
+  8. `markSuperseded('rX', at)` ⇒ 台账里 `dir === 'rX'` 的那条 `supersededAt` 变成 `at`；
+     找不到 `'rY'` ⇒ 台账**一个字都没变**；
+  9. `readReleases()` 在文件**不存在**时返回**空数组**（不抛）。
+
+- [ ] **Step 2: 跑测试，确认失败** ⇒ FAIL（模块不存在）。
+
+- [ ] **Step 3: 实现**
+
+  - `lib/webfont/releases.ts`：按上面的 Interfaces 写。
+    ⚠️ **台账路径** = `<LIVE_FONT_DIR>/releases.json`（`public/font/releases.json`）
+    —— 它**跟着仓库走**（回灌时被一起提交，spec §4.1）。
+    ⚠️ **原子写**用 `fs.writeFileSync(tmp, …)` + `fs.renameSync(tmp, target)`，
+    临时文件与目标**同目录**（跨目录 rename 在 Windows 上不原子）。
+    ⚠️ **不许**在这里做 git 操作（spec §9 第 5 条的安全边界）。
+  - 两条路由：全部 `requireAdmin()` + `withErrorHandling`，错误形状统一
+    `{ ok:false, error:{ code, message } }`（与 Task 7 的其它路由一致）。
+    ⚠️ **入参用 zod 校验**（`z.object({}).strict().optional()`）——
+    cleanup **没有请求体** ⇒ 空 body 要被接受，但**未知字段要 400**。
+  - `lib/audit-format.ts`：加 `admin_webfont_releases_cleaned`
+    ⇒ ⚠️ **两处都要加**（`AuditEvent` 联合 **和** 那张
+    `as const satisfies readonly AuditEvent[]` 的清单）⇒ 否则 `tsc` 报错。
+
+- [ ] **Step 4: 跑测试 + 类型检查** ⇒ 都 EXIT=0。
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add lib/webfont/releases.ts app/api/admin/webfonts/releases/route.ts app/api/admin/webfonts/releases/cleanup/route.ts lib/audit-format.ts tests/unit/lib/webfont-releases.test.ts
+  git commit -m "feat(admin): keep a release ledger and clean old releases on demand [$(date '+%Y-%m-%d %H.%M')]"
+  ```
+  ⚠️ **不许** `git add .` / `git add -A`；⚠️ **不许** stage `data/sutras/manifest.json`。
+
+---
+
+### Task 13: 回灌脚本 ＋ 「待回灌」提示 ＋ 「要重标定的钉死数字」清单
+
+**为什么单列：** apply 的产物**必须回到仓库**，否则下一次 `rsync`（**不带 `--delete`**）
+会用仓库里的旧样式表覆盖服务器上的新样式表 ⇒ **静默回滚**（页面显示「已发布」，
+线上其实还是旧字体，manifest 版本也被覆盖回去，spec §3.5.8）。
+⚠️ **后台绝不做 git 操作**（安全边界，spec §9 第 5 条）⇒ 回灌 = **脚本 + 人工**。
+
+**Files:**
+- Create: `scripts/fonts/import-webfont-release.mjs`（回灌脚本）
+- Modify: `lib/webfont/apply.ts`（apply 的结果多 `reimport` 与 `rebaseline` 两块）
+- Modify: `app/api/admin/webfonts/build/[id]/apply/route.ts`（透传那两块）
+- Modify: `components/admin/WebfontPipelinePanel.tsx`（**两个区块**）
+- Modify: `tests/unit/lib/fonts-css.test.ts`（**只改读盘路径**；钉死数字的**重标定**
+  由人按脚本打印的值改，见 Step 3 的第 4 步）
+- Modify: `tests/unit/deploy/nginx-config.test.ts`（**只改读盘路径**：`:672`）
+- Test: `tests/unit/lib/webfont-reimport.test.ts`（新建）
+- Test: `tests/unit/lib/webfont-rebaseline.test.ts`（新建）
+
+**Interfaces:**
+- Consumes: Task 6 的 `applyStagedBuild`；Task 12 的 `readReleases` / `writeReleases`；
+  Task 8 的面板组件。
+- Produces `lib/webfont/apply.ts` 的 `ApplyResult` 多两块：
+  ```ts
+  reimport: {
+    required: true;
+    command: string;   // 'node scripts/fonts/import-webfont-release.mjs --release r<令牌>'
+    note: string;      // 说清「不回灌 ⇒ 下次部署会静默回滚」
+  };
+  rebaseline: Array<{
+    file: string; line: number; what: string;
+    current: number | number[] | null;
+    expected: number | number[] | null;   // null = 不用改
+    always: boolean;                        // true = 每次回灌都要改
+    note?: string;
+  }>;
+  ```
+  ⚠️ 后端**只算不写** —— 它**不许**碰仓库里的任何文件
+  （不许改 `LIMITS`，不许改 `tests/unit/lib/fonts-css.test.ts` 的数字，
+  不许改 `tests/unit/deploy/nginx-config.test.ts`）⇒ 自动改门禁预算 = **假绿灯**。
+- Produces `scripts/fonts/import-webfont-release.mjs` 的命令行：
+  ```
+  node scripts/fonts/import-webfont-release.mjs --release r<令牌>
+  node scripts/fonts/import-webfont-release.mjs --release r<令牌> --commit
+  ```
+
+- **那 7 条清单**（**逐字照抄** spec §3.5.9 的表 —— 数字不许改）：
+  | # | 文件:行 | 现在钉死的数 | 什么时候要改 | 新值从哪来 |
+  |---|---|---|---|---|
+  | 1 | `tests/unit/lib/fonts-css.test.ts:310` | `subsets.length` = **7 981** | **每次回灌都要改** | import 脚本打印 |
+  | 2 | `tests/unit/lib/fonts-css.test.ts:311` | 总字节 **28 236 168** | 同上 | import 脚本打印 |
+  | 3 | `tests/unit/lib/fonts-css.test.ts:298` | `cssBytes` = **2 023 175**（原始） | **每次回灌都要改** | import 脚本打印 |
+  | 4 | `tests/unit/lib/fonts-css.test.ts:73/82/91` | 三个 `gzipBytes` = **55 821 / 64 536 / 38 491** | 同上 | import 脚本打印 |
+  | 5 | `scripts/fonts/verify-webfont-subsets.mjs` `LIMITS.unionSampleBytes` | **839 680 / 330 752 / 241 664 / 1 214 464** | **只有语料变了**才要改 | 候选校验 `report` 模式的 `[verify] pagecost` |
+  | 6 | 同上 `LIMITS.maxUnionSampleFilesPerPage` | **255** | 同上 | 同上 |
+  | 7 | `tests/unit/deploy/nginx-config.test.ts:672` | 读盘路径 `public/font/web/<dir>/<file>` | **每次回灌都要改** | 解析器新增的 `release` 字段 |
+
+- [ ] **Step 1: 写失败的测试**
+
+  `tests/unit/lib/webfont-reimport.test.ts`：
+  1. import 脚本在 **manifest 的 V 与三份样式表的哈希不一致**时 ⇒ **拒绝**，
+     **一个字节都不 stage**（断言 `git status --porcelain` 干净）；
+  2. V 一致 ⇒ 脚本**只 stage 不提交**（断言 `git log -1` 没变）；
+  3. `--commit` ⇒ 提交消息是
+     `feat(fonts): publish webfont release r<令牌> [YYYY-MM-DD HH.MM]`
+     且正文末尾带 `Co-Authored-By: Claude Code <noreply@anthropic.com>`；
+  4. 脚本**不许** stage `data/sutras/manifest.json`（断言它不在 staged 列表里）。
+
+  `tests/unit/lib/webfont-rebaseline.test.ts`：
+  5. import 脚本打印的 4 组数字（文件数、总字节、原始 CSS 字节、三个 gzip 字节）
+     **填进** `tests/unit/lib/fonts-css.test.ts` 之后 ⇒ 那 4 条断言**真的能过**
+     ⇒ 这是「脚本打印的数字就是对的」的证明；
+  6. apply 的响应里 `reimport.required === true` 且 `reimport.command` 里含
+     `--release r<令牌>`；
+  7. 面板渲染出「**回灌之前不要部署**」这句；
+  8. 面板渲染出那 7 条清单 ⇒ **行数恰好 7**；
+  9. `expected` 为 `null` 的那两行（第 5/6 条）标「**不用改**」。
+
+- [ ] **Step 2: 跑测试，确认失败** ⇒ FAIL（脚本与两个字段都不存在）。
+
+- [ ] **Step 3: 实现**
+
+  - **import 脚本** `scripts/fonts/import-webfont-release.mjs` 做**五件事**：
+    1. 校验 `--release r<T>` 目录**存在**；
+    2. 校验 manifest 的 `version` **等于**三份样式表的哈希
+       （⚠️ 用的正是 wave-2 的规则：三个文件按**文件名排序**、内容按 **LF** 归一化、
+       sha256 取前 12 位）⇒ **不一致就拒绝，一个字节都不 stage**；
+    3. `git add` 五样东西：
+       `public/font/web/r<T>/`、三份 `public/font/fonts-*.css`、
+       `public/font/fonts-manifest.json`、`public/font/releases.json`；
+       并 `git rm -r` 那些**该删的**旧 release（服务器已清掉的那些 ⇒ 两边一致）；
+    4. **打印新的钉死数字**：文件数、总字节、原始 CSS 字节、三个 gzip 字节
+       ⇒ 这些数字**就是**填进 `tests/unit/lib/fonts-css.test.ts` 之后测试能过的值；
+    5. 默认**只 stage 不提交**；`--commit` 才提交。
+    ⚠️ **不许** `git add .` / `git add -A`（只许显式路径）；
+    ⚠️ **不许** stage `data/sutras/manifest.json`。
+  - **`lib/webfont/apply.ts`**：apply 成功后产出 `reimport` 与 `rebaseline`：
+    - `reimport.command` = `node scripts/fonts/import-webfont-release.mjs --release r<令牌>`
+      （令牌 = `releaseToken`）；
+    - `reimport.note` 说清「不回灌 ⇒ 下次部署会用旧样式表覆盖回去 = 静默回滚」；
+    - `rebaseline` = 上面那 7 条（`current` = 现在钉着的数，
+      `expected` = 新值；第 5/6 条的 `expected` **只有语料变了**才有，
+      否则填 `null` ⇒ 面板上标「不用改」）；
+    ⚠️ 后端**只算不写** ⇒ **一个字都不许**写进仓库里的文件。
+  - **apply 路由**：把这两块**原样透传**（不许在路由里另算一套）。
+  - **面板的两个区块**（Task 8 已经把位置与文案要求写好）：
+    1. **「产物已发布，但尚未回灌仓库」** —— **醒目**（不许一行灰色小字）：
+       一句话说清「不回灌 ⇒ 下次部署会用旧样式表覆盖回去 = 静默回滚」、
+       给出**可一键复制**的命令、最后一句「**回灌之前不要部署**」；
+    2. **「apply 之后要重标定的钉死数字」** —— 一张表：
+       `文件:行` / `钉的是什么` / `现在钉的是几` / `新的该是多少`；
+       `expected` 为 `null` 的行标「不用改」；
+       ⚠️ 页面上**没有**「一键修改」按钮。
+  - **读盘路径要改成「当前 release 口径」**（spec §3.7 的 8 文件表；
+    Task 2 已经把 `release` 字段加进解析器了 ⇒ 这里用它）：
+    - `tests/unit/lib/fonts-css.test.ts`：
+      ① `subsetFiles(family)` 现在写死读 `public/font/web/<族>/`
+      ⇒ 回灌之后样式表指向的是 `web/r<T>/<族>/` ⇒
+      **族目录要按样式表里解析出来的 `release` 段来定位**
+      （`release` 为空 ⇒ 仍是今天的 `web/<族>/` ⇒ 行为逐字节不变）；
+      ② `allSubsetFiles()` 的递归遍历**已经**能覆盖 `r<T>/`
+      ⇒ 它统计的是「盘上全部 release」，所以它的两个钉死数字
+      **每次回灌都要重标定**（第 1/2 条）；
+      ③ `rawBytes` / `gzipBytes` / `cssBytes`（第 3/4 条）随样式表改写而变
+      ⇒ **每次回灌都要重标定**；
+    - `tests/unit/deploy/nginx-config.test.ts:672` 的
+      `statSync(resolve(ROOT,'public','font','web', face.dir, face.file))`
+      ⇒ 改成**带发布段**：`face.release` 非空时用
+      `resolve(ROOT,'public','font','web', face.release, face.dir, face.file)`。
+      ⚠️ **不改就是 `statSync` 直接抛**（spec §3.5.9 第 7 条）。
+    ⚠️ **本任务只改「读盘路径」**；**钉死数字的重标定**是**人**在 apply 之后、
+    按脚本打印的值做的**另一次独立的、有人评审的代码改动**
+    （spec §3.7 末段）—— 实施者**不许**自己编一个数字填进去。
+
+- [ ] **Step 4: 跑测试 + 类型检查** ⇒ 都 EXIT=0。
+  ⚠️ 回灌脚本的测试**不许**在真仓库里跑 git 操作 ⇒ 用**临时 git 仓库**
+  （`git init` 一个空目录 + 造出最小的 `public/font/` 布局）⇒ 断言都对着那个仓库做。
+
+- [ ] **Step 5: Commit**
+
+  ```bash
+  git add scripts/fonts/import-webfont-release.mjs lib/webfont/apply.ts app/api/admin/webfonts/build/[id]/apply/route.ts components/admin/WebfontPipelinePanel.tsx tests/unit/lib/fonts-css.test.ts tests/unit/deploy/nginx-config.test.ts tests/unit/lib/webfont-reimport.test.ts tests/unit/lib/webfont-rebaseline.test.ts
+  git commit -m "feat(fonts): add the release reimport script and the rebase checklist [$(date '+%Y-%m-%d %H.%M')]"
+  ```
+  ⚠️ 路径里有 `[id]` ⇒ shell 里**必须加引号**：
+  `git add "app/api/admin/webfonts/build/[id]/apply/route.ts"`。
+  ⚠️ **不许** `git add .` / `git add -A`；⚠️ **不许** stage `data/sutras/manifest.json`。
+
+---
+
 ## 执行顺序与依赖
 
 **推荐实施顺序（一个一个派实施者，不许并行）：**
-`1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9`
+`1 → 2 → 3 → 4 → 10 → 11 → 5 → 12 → 6 → 7 → 8 → 13 → 9`
+
+⚠️ **Task 10 / Task 11 提前到 Task 5 之前**：它们只动 `package.json` /
+`next.config.ts` / nginx 模板 / 手册，**与流水线实现完全无关** ⇒ 早点落地，
+服务器上的 `npm install --omit=dev` 才装得上构建工具链（Task 10），
+线上也才拿到正确的两层 TTL（Task 11）。
+⚠️ **Task 12 排在 Task 6 之前**：Task 6 的 apply 要**消费**
+`lib/webfont/releases.ts` 的 `markSuperseded`（`tsc` 过不了就没法开工）
+⇒ 台账模块必须**先**落地。
+⚠️ **Task 12 与 Task 6 紧挨着派**：台账的**语义**（被取代时间、30 天、最近 3 份）
+由 Task 6 的 apply 决定 ⇒ Task 12 的实现者**必须**读过 Task 6 的 Interfaces。
+（这是**语义**依赖，不是**代码**依赖 —— 代码上是 Task 6 → Task 12 的反向依赖。）
 
 **依赖关系：**
 
@@ -1291,11 +2084,22 @@
 |---|---|---|
 | Task 2 | Task 1 | 测试要能**在别的根**上跑门禁 ⇒ 需要 Task 1 的 `WEBFONT_FONT_DIR` |
 | Task 4 | — | 能力探针只依赖既有脚本，可与 1/2/3 并行**准备**，但实施仍按顺序派 |
+| Task 10 | Task 4 | 任务 10 扩展 Task 4 的探针（`tsx` 的可执行文件定位）＋ 提依赖分类 |
+| Task 11 | — | **与 Task 1 无关**（两层 TTL 只碰 `next.config.ts` / nginx / 手册） |
 | Task 5 | Task 1、Task 3 | 切分/校验要写进 staging（Task 1 的可覆盖根）＋ 校验要跑在 `report` 模式（Task 1 的页面成本模式）；作业类型来自 Task 3 |
-| Task 6 | Task 1、Task 2、Task 5 | 候选校验要用可覆盖的根 ＋ `report` 模式（Task 1）；发布布局必须过门禁（Task 2）；路径常量来自 Task 5 |
-| Task 7 | Task 3、Task 4、Task 5、Task 6 | 路由把四层串起来 |
-| Task 8 | Task 3 | 面板要渲染 `WebfontJob` |
-| Task 9 | 全部 | 收尾验证 |
+| Task 12 | Task 6（**语义**依赖） | 台账的形状与「被取代时间」的语义由 Task 6 的 apply 决定 ⇒ 实现前必须读 Task 6 的 Interfaces |
+| Task 6 | Task 1、Task 2、Task 5、**Task 12** | 候选校验要用可覆盖的根 ＋ `report` 模式（Task 1）；发布布局必须过门禁（Task 2）；路径常量来自 Task 5；**登记 `supersededAt` 要用 Task 12 的 `markSuperseded`** |
+| Task 7 | Task 3、Task 4、Task 5、Task 6、Task 12 | 路由把四层串起来（两条 release 路由由 Task 12 提供实现） |
+| Task 8 | Task 3、Task 12 | 面板要渲染 `WebfontJob`；release 列表要读台账（Task 12） |
+| Task 13 | Task 6、Task 8、Task 12 | 回灌脚本要知道 apply 的产物形状；面板的两个区块要画在 Task 8 的面板上；清单要读台账 |
+| Task 9 | 全部 | 收尾验证（**甲组 + 乙组**） |
+
+**收尾（Task 9）—— 两组验收（spec §8.1 甲组 / §8.2 乙组）：**
+
+| 组 | 状态 | 期望 | 怎么判 |
+|---|---|---|---|
+| **甲组** | 仓库里**只有 release 0**（还没有任何 `r<T>/`） | `npm run fonts:verify-webfont` **EXIT=0** 且四行页数字**逐字节不变**；`npm test` **全绿**；`npx tsc --noEmit` **EXIT=0**；`npm run build` **EXIT=0**（沙箱里，先 `rm -rf .next`） | 改动前后各跑一次 `fonts:verify-webfont` 做 diff |
+| **乙组** | apply 之后、**回灌已提交** | 仓库树的 `npm test` **按设计变红**，红的位置**必须恰好**是 §3.5.9 那 **7 条**；按 import 脚本打印的数字重标定之后 ⇒ **重新全绿** | ⚠️ 第 5/6 条（`LIMITS` 的并集样本预算）**只有语料变了才红** ⇒ 没红说明产物不对，是 bug |
 
 ⚠️ **Task 2 必须单独派实施者、单独过一次评审**（本波第一次动 wave-2 已封板的文件）。
 ⚠️ **不许并行派两个实施者**（同一个仓库 ⇒ 会互相踩工作区）。
