@@ -318,6 +318,26 @@ export function parseFaceUrl(src) {
 }
 
 /**
+ * The file of a face as the operator has to look it UP on the disk.
+ *
+ * ⚠️ With a release directory the file lives at
+ * `/font/web/<release>/<family>/<file>`, and the bare name would point at
+ * release 0's copy — which may well still be there. So a released file is
+ * named by its path relative to `WEB_DIR`.
+ *
+ * ⚠️ WITHOUT a release the messages have always said the bare file name,
+ * and they keep saying it: a name that is not a path says so, while a name
+ * that LOOKS like a path but is not one is worse than no name at all.
+ *
+ * @param {{ dir: string, file: string, release: string }} url the parsed URL
+ * @returns {string} the file as the operator has to look it up
+ */
+function fileLabel(url) {
+  if (!url.release) return url.file;
+  return `${url.release}/${url.dir}/${url.file}`;
+}
+
+/**
  * One @font-face rule of a stylesheet.
  *
  * @returns {Array<{ fontFamily: string, weight: string, fontStyle: string,
@@ -819,7 +839,7 @@ async function inspectFamily(family, plan) {
       : LIMITS.extBlockBytes;
     if (content.length > limit) {
       oversized.push(
-        `${releasePrefix}${fileName} is ${content.length} B, the budget is ${limit} B`,
+        `${fileLabel(url)} is ${content.length} B, the budget is ${limit} B`,
       );
     }
 
@@ -829,7 +849,7 @@ async function inspectFamily(family, plan) {
       font = fontkit.create(content);
     } catch (error) {
       errors.push(
-        `[${family.key}] ${releasePrefix}${fileName} cannot be opened as a font: ${error.message}`,
+        `[${family.key}] ${fileLabel(url)} cannot be opened as a font: ${error.message}`,
       );
       continue;
     }
@@ -837,7 +857,7 @@ async function inspectFamily(family, plan) {
     for (const point of points) {
       if (!font.hasGlyphForCodePoint(point)) {
         missingGlyphs.push(
-          `${releasePrefix}${fileName} U+${point.toString(16).toUpperCase()}`,
+          `${fileLabel(url)} U+${point.toString(16).toUpperCase()}`,
         );
       }
     }
@@ -848,7 +868,7 @@ async function inspectFamily(family, plan) {
     for (const point of font.characterSet) {
       if (point === NOTDEF_CODE_POINT) continue;
       if (declaredSet.has(point)) continue;
-      extraCodepoints.push(`${fileName} U+${point.toString(16).toUpperCase()}`);
+      extraCodepoints.push(`${fileLabel(url)} U+${point.toString(16).toUpperCase()}`);
     }
   }
 
@@ -858,7 +878,9 @@ async function inspectFamily(family, plan) {
     if (!url) continue;
     if (!VERSION_PATTERN.test(url.token)) continue;
     if (url.token !== version) {
-      wrongTokens.push(`${url.file} carries ${url.token}, the content hashes to ${version}`);
+      wrongTokens.push(
+        `${fileLabel(url)} carries ${url.token}, the content hashes to ${version}`,
+      );
     }
   }
 
