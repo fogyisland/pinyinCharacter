@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { NextRequest } from 'next/server';
 
 import { SOURCES } from '@/scripts/fonts/download-webfont-sources';
 import {
   probeCapability,
   resolveArgv,
+  resolveModuleEntry,
   type CapabilityReport,
 } from '@/lib/webfont/capability';
 
@@ -835,6 +836,152 @@ describe('resolveArgv — how a bare command is started', () => {
     writeFileSync(join(fakeRoot, 'node_modules', '.bin', 'lonely.cmd'), '@echo off\r\n');
 
     expect(resolveArgv('lonely', ['--version'], fakeRoot)).toEqual(['lonely', '--version']);
+  });
+
+  it('starts a package whose `bin` is a plain path with node too', () => {
+    // `bin` is either a map of command names or a plain path; both have
+    // to work, because both are written in the wild.
+    writeFileSync(
+      join(fakeRoot, 'node_modules', 'faketool', 'package.json'),
+      JSON.stringify({ name: 'faketool', version: '1.0.0', bin: './cli.js' }),
+    );
+
+    const argv = resolveArgv('faketool', ['--version'], fakeRoot);
+
+    if (process.platform === 'win32') {
+      expect(argv).toEqual([process.execPath, entry, '--version']);
+    } else {
+      expect(argv).toEqual([join(fakeRoot, 'node_modules', '.bin', 'faketool'), '--version']);
+    }
+    // The shape is the contract: no shell, no file that cannot run.
+    expect(argv[0].endsWith('.cmd')).toBe(false);
+    expect(argv).not.toContain('/c');
+  });
+});
+
+describe('resolveModuleEntry — the toolchain packages, read from the disk', () => {
+  let fakeRoot: string;
+
+  /** Writes a package into the fake root's node_modules. */
+  function writePackage(
+    name: string,
+    manifest: unknown,
+    files: Record<string, string> = {},
+  ): string {
+    const packageDir = join(fakeRoot, 'node_modules', name);
+    mkdirSync(packageDir, { recursive: true });
+    writeFileSync(join(packageDir, 'package.json'), JSON.stringify(manifest));
+    for (const [relative, content] of Object.entries(files)) {
+      const file = join(packageDir, ...relative.split('/'));
+      mkdirSync(dirname(file), { recursive: true });
+      writeFileSync(file, content);
+    }
+    return packageDir;
+  }
+
+  beforeEach(() => {
+    fakeRoot = mkdtempSync(join(tmpdir(), 'webfont-modules-'));
+    mkdirSync(join(fakeRoot, 'node_modules'), { recursive: true });
+  });
+
+  afterEach(() => {
+    rmSync(fakeRoot, { recursive: true, force: true });
+  });
+
+  it('finds the three packages the toolchain row asks about', () => {
+    // The bug this guards: in the PRODUCTION bundle the resolver could
+    // not work at all, so the row reported three packages that ARE
+    // installed as "not installed" — and sent the administrator to
+    // install what was already there. The resolver must find them by
+    // reading the disk.
+    for (const name of ['subset-font', 'typescript', 'tsx']) {
+      const entry = resolveModuleEntry(name);
+      expect(entry).toBeTruthy();
+      expect(existsSync(entry as string)).toBe(true);
+      expect((entry as string).includes(join('node_modules', name))).toBe(true);
+    }
+  });
+
+  it('takes the entry from `exports` — the conditions decide', () => {
+    // Node reads the conditions in the manifest's own key order and
+    // takes the first one that is active for a CommonJS require.
+    writePackage(
+      'cond',
+      { name: 'cond', exports: { '.': { require: './cjs.cjs', default: './esm.mjs' } } },
+      { 'cjs.cjs': '', 'esm.mjs': '' },
+    );
+
+    expect(resolveModuleEntry('cond', fakeRoot)).toBe(
+      join(fakeRoot, 'node_modules', 'cond', 'cjs.cjs'),
+    );
+  });
+
+  it('takes the entry from a `*` pattern in `exports`', () => {
+    writePackage(
+      'patterned',
+      { name: 'patterned', exports: { './*': './dist/*.js' } },
+      { 'dist/thing.js': '' },
+    );
+
+    expect(resolveModuleEntry('patterned/thing', fakeRoot)).toBe(
+      join(fakeRoot, 'node_modules', 'patterned', 'dist', 'thing.js'),
+    );
+    // The root of a pattern-only map is not exported — node throws
+    // ERR_PACKAGE_PATH_NOT_EXPORTED there, and so does this.
+    expect(resolveModuleEntry('patterned', fakeRoot)).toBeNull();
+  });
+
+  it('adds the extension to a `main` that has none', () => {
+    // "./lib/index" is a common way to write it; the disk decides
+    // whether it is "./lib/index", "./lib/index.js" or
+    // "./lib/index/index.js" — it is not a guess.
+    writePackage('plain', { name: 'plain', main: './lib/index' }, { 'lib/index.js': '' });
+
+    expect(resolveModuleEntry('plain', fakeRoot)).toBe(
+      join(fakeRoot, 'node_modules', 'plain', 'lib', 'index.js'),
+    );
+  });
+
+  it('lets `exports` win over `main` — the same rule node uses', () => {
+    writePackage(
+      'both',
+      { name: 'both', main: './main.js', exports: { '.': './exported.js' } },
+      { 'main.js': '', 'exported.js': '' },
+    );
+
+    expect(resolveModuleEntry('both', fakeRoot)).toBe(
+      join(fakeRoot, 'node_modules', 'both', 'exported.js'),
+    );
+  });
+
+  it('says "not installed" instead of throwing', () => {
+    expect(resolveModuleEntry('nothing-here', fakeRoot)).toBeNull();
+    // A manifest that is not JSON is a package that cannot be used.
+    writePackage('broken', {});
+    writeFileSync(join(fakeRoot, 'node_modules', 'broken', 'package.json'), '{ not json');
+    expect(resolveModuleEntry('broken', fakeRoot)).toBeNull();
+    // A path is not a package.
+    expect(resolveModuleEntry('./local/file', fakeRoot)).toBeNull();
+    expect(resolveModuleEntry(join(fakeRoot, 'absolute'), fakeRoot)).toBeNull();
+  });
+});
+
+describe('the toolchain row — with the default resolver', () => {
+  it('reports the three build packages as installed on this machine', async () => {
+    // Without a `resolveModule` of its own the probe uses the disk
+    // resolver. The production bundle could not use the require-based
+    // one, and the row said "not installed" for packages that are
+    // installed.
+    const report = await probeCapability({
+      stagingDir,
+      fontDir,
+      runCommand: createRunner().run,
+      fetchImpl: createFetch().fetchImpl,
+    });
+
+    expect(report.toolchain.subsetFont).toBe(true);
+    expect(report.toolchain.typescript).toBe(true);
+    expect(report.toolchain.tsx).toBe(true);
   });
 });
 

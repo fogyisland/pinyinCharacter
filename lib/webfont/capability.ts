@@ -51,8 +51,7 @@ import 'server-only';
 import { execFile } from 'node:child_process';
 import { randomBytes } from 'node:crypto';
 import { accessSync, constants, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { createRequire } from 'node:module';
-import { dirname, join, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 
 import { SOURCES } from '@/scripts/fonts/download-webfont-sources';
 
@@ -226,22 +225,231 @@ export function resolveFontDir(
 }
 
 /**
- * Resolves a package the way node does, from the application root.
- *
- * `createRequire` is anchored on the root's own `package.json`, so the
- * answer does not depend on the working directory and does not depend on
- * `node_modules/.bin` being on `PATH` — which it is not on a machine
- * where the app is started by a service manager.
- *
- * A package that is not installed is `null`, never an exception.
+ * A package's manifest, as far as this module needs it.
  */
-function defaultResolveModule(specifier: string): string | null {
+interface PackageManifest {
+  main?: string;
+  exports?: unknown;
+  bin?: string | Record<string, string>;
+}
+
+/**
+ * The conditions that are active for a CommonJS `require`.
+ *
+ * The order of this list does not decide anything: the manifest's own
+ * key order decides which condition wins, and this list only says
+ * which conditions are active at all — the same rule node uses.
+ */
+const ACTIVE_CONDITIONS = ['node', 'require', 'node-addons', 'default'];
+
+/**
+ * Reads a package's manifest from the disk.
+ *
+ * `null` when there is no manifest, or when it is not readable JSON: a
+ * package that cannot be read is a package that cannot be used.
+ */
+function readPackageManifest(packageDir: string): PackageManifest | null {
+  const manifestPath = join(packageDir, 'package.json');
+  if (!existsSync(manifestPath)) return null;
   try {
-    const requireFromRoot = createRequire(join(appRoot(), 'package.json'));
-    return requireFromRoot.resolve(specifier);
+    return JSON.parse(readFileSync(manifestPath, 'utf8')) as PackageManifest;
   } catch {
     return null;
   }
+}
+
+/**
+ * The `node_modules` directories node would look in, from the root up.
+ */
+function nodeModulesDirs(root: string): string[] {
+  const dirs: string[] = [];
+  let dir = resolve(root);
+  for (;;) {
+    dirs.push(join(dir, 'node_modules'));
+    const parent = dirname(dir);
+    if (parent === dir) break;
+    dir = parent;
+  }
+  return dirs;
+}
+
+/** A package request: the package itself, and the subpath inside it. */
+interface PackageRequest {
+  name: string;
+  subpath: string;
+}
+
+/**
+ * Splits a specifier into a package and a subpath.
+ *
+ * `null` for anything that is not a package name: a relative path and
+ * an absolute path are not packages, and neither is an empty string.
+ */
+function parsePackageRequest(specifier: string): PackageRequest | null {
+  if (specifier === '' || specifier.startsWith('.') || isAbsolute(specifier)) return null;
+  const segments = specifier.split('/');
+  let name: string;
+  if (specifier.startsWith('@')) {
+    // A scoped package: '@scope/name', and whatever follows is the
+    // subpath.
+    if (segments.length < 2 || segments[0] === '' || segments[1] === '') return null;
+    name = `${segments[0]}/${segments[1]}`;
+  } else {
+    if (segments[0] === '') return null;
+    name = segments[0];
+  }
+  const rest = specifier.slice(name.length);
+  return { name, subpath: rest === '' ? '.' : `.${rest}` };
+}
+
+/**
+ * The relative paths an `exports` field points at, in the order node
+ * would try them.
+ *
+ * `exports` is one of three things: a path, a list of paths (node takes
+ * the first one that exists), or an object. An object is either a
+ * subpath map (its keys start with ".") or a map of conditions
+ * ("require", "import", "default", …).
+ */
+function exportCandidates(exportsField: unknown, subpath: string): string[] {
+  if (typeof exportsField === 'string') return [exportsField];
+  if (Array.isArray(exportsField)) {
+    return exportsField.flatMap((item) => exportCandidates(item, subpath));
+  }
+  if (typeof exportsField !== 'object' || exportsField === null) return [];
+
+  const record = exportsField as Record<string, unknown>;
+  const keys = Object.keys(record);
+
+  // A subpath map: the keys start with ".".
+  if (keys.every((key) => key.startsWith('.'))) {
+    if (Object.prototype.hasOwnProperty.call(record, subpath)) {
+      return exportCandidates(record[subpath], subpath);
+    }
+    return patternCandidates(record, subpath);
+  }
+
+  // A map of conditions. The manifest's own key order decides which
+  // condition wins — the same rule node uses — and only the conditions
+  // that are active for a CommonJS require are taken.
+  for (const key of keys) {
+    if (!ACTIVE_CONDITIONS.includes(key)) continue;
+    const candidates = exportCandidates(record[key], subpath);
+    if (candidates.length > 0) return candidates;
+  }
+  // The package IS installed even when it cannot be required, so a
+  // package that only exports "import" still counts as installed.
+  if (Object.prototype.hasOwnProperty.call(record, 'import')) {
+    return exportCandidates(record['import'], subpath);
+  }
+  return [];
+}
+
+/**
+ * The `*` patterns of an exports map.
+ *
+ * The most specific base wins — node sorts the patterns by the length of
+ * their base — and the part the `*` matched is put back into the
+ * target.
+ */
+function patternCandidates(record: Record<string, unknown>, subpath: string): string[] {
+  const patternKeys = Object.keys(record)
+    .filter((key) => key.includes('*'))
+    .sort((left, right) => right.split('*')[0].length - left.split('*')[0].length);
+
+  for (const key of patternKeys) {
+    const star = key.indexOf('*');
+    const base = key.slice(0, star);
+    const suffix = key.slice(star + 1);
+    if (!subpath.startsWith(base) || !subpath.endsWith(suffix)) continue;
+    if (subpath.length < base.length + suffix.length) continue;
+    const matched = subpath.slice(base.length, subpath.length - suffix.length);
+    return exportCandidates(record[key], subpath).map((candidate) =>
+      candidate.split('*').join(matched),
+    );
+  }
+  return [];
+}
+
+/**
+ * The first candidate that is really on the disk.
+ *
+ * A `main` (and a `bin`) is often written without an extension
+ * (`./lib/index`), so the ways node would resolve it are tried — and
+ * which one it is, is decided by the disk and not by a guess.
+ */
+function firstExistingFile(base: string): string | null {
+  const candidates = [
+    base,
+    `${base}.js`,
+    `${base}.json`,
+    join(base, 'index.js'),
+    join(base, 'index.json'),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+/**
+ * The entry of an installed package, from its own manifest.
+ */
+function resolveFromManifest(
+  packageDir: string,
+  manifest: PackageManifest,
+  subpath: string,
+): string | null {
+  // `exports` takes precedence over `main` — that is node's rule.
+  if (manifest.exports !== undefined && manifest.exports !== null) {
+    for (const candidate of exportCandidates(manifest.exports, subpath)) {
+      const absolute = resolve(packageDir, candidate);
+      if (existsSync(absolute)) return absolute;
+    }
+    return null;
+  }
+  if (subpath !== '.') {
+    // Without an exports map, a subpath is a file inside the package.
+    const direct = resolve(packageDir, subpath.slice(2));
+    return existsSync(direct) ? direct : null;
+  }
+  if (typeof manifest.main === 'string' && manifest.main.trim() !== '') {
+    return firstExistingFile(resolve(packageDir, manifest.main));
+  }
+  return firstExistingFile(join(packageDir, 'index'));
+}
+
+/**
+ * Resolves a package the way node does — by reading the disk.
+ *
+ * ⚠️ WHY NOT `createRequire`: Next.js bundles this module for the
+ * server, and webpack replaces `createRequire` with a shim that cannot
+ * parse its argument — the build says so ("module.createRequire failed
+ * parsing argument"). In the production bundle the require that shim
+ * hands back is broken, `resolve()` throws, the throw is caught, and the
+ * toolchain row reports three packages that ARE installed as "not
+ * installed". That is a false negative that sends the administrator to
+ * install what is already there, so the answer is read from the disk
+ * instead: the package's own `package.json` says where its entry is,
+ * and the disk says whether that file is there. The same code runs in
+ * the dev server and in the bundle.
+ *
+ * A package that is not installed — or one whose entry cannot be found —
+ * is `null`, never an exception.
+ */
+export function resolveModuleEntry(specifier: string, root: string = appRoot()): string | null {
+  const request = parsePackageRequest(specifier);
+  if (!request) return null;
+  for (const nodeModules of nodeModulesDirs(root)) {
+    const packageDir = join(nodeModules, request.name);
+    const manifest = readPackageManifest(packageDir);
+    if (!manifest) continue;
+    // The package is here: whether its entry can be found decides the
+    // answer, and node does not go looking in another node_modules
+    // afterwards.
+    return resolveFromManifest(packageDir, manifest, request.subpath);
+  }
+  return null;
 }
 
 /** A command, and the arguments it has to be started with. */
@@ -254,27 +462,25 @@ interface ExecutableTarget {
  * The JavaScript entry point of an installed package, from its own
  * `bin` field.
  *
+ * `bin` is either a path or a map of command names to paths; both are
+ * handled, and the map is asked for the command's own name first.
+ *
  * npm's Windows shims do nothing else: they run this file with node. So
  * running it directly is what the shim would have done — without a
  * shell, which a `.cmd` shim would need.
  */
-function resolvePackageEntry(name: string, root: string): string | null {
-  try {
-    const packageDir = join(root, 'node_modules', name);
-    const manifestPath = join(packageDir, 'package.json');
-    if (!existsSync(manifestPath)) return null;
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8')) as {
-      bin?: string | Record<string, string>;
-    };
+function resolveBinEntry(name: string, root: string): string | null {
+  for (const nodeModules of nodeModulesDirs(root)) {
+    const packageDir = join(nodeModules, name);
+    const manifest = readPackageManifest(packageDir);
+    if (!manifest) continue;
     const bin = manifest.bin;
     const relative =
       typeof bin === 'string' ? bin : bin ? (bin[name] ?? Object.values(bin)[0]) : undefined;
     if (!relative) return null;
-    const entry = resolve(packageDir, relative);
-    return existsSync(entry) ? entry : null;
-  } catch {
-    return null;
+    return firstExistingFile(resolve(packageDir, relative));
   }
+  return null;
 }
 
 /**
@@ -301,7 +507,7 @@ function resolveExecutable(bin: string, root: string): ExecutableTarget {
   if (process.platform === 'win32') {
     const shim = join(binDir, `${bin}.cmd`);
     if (existsSync(shim)) {
-      const entry = resolvePackageEntry(bin, root);
+      const entry = resolveBinEntry(bin, root);
       if (entry) return { file: process.execPath, args: [entry] };
       // No entry point: fall through to the PATH rather than to a file
       // that cannot be executed.
@@ -658,7 +864,9 @@ export async function probeCapability(opts: ProbeOptions = {}): Promise<Capabili
   const fontDir = opts.fontDir ?? resolveFontDir(root);
   const run = opts.runCommand ?? defaultRunCommand;
   const fetchImpl = opts.fetchImpl ?? fetch;
-  const resolveModule = opts.resolveModule ?? defaultResolveModule;
+  // The default resolver reads the disk (see `resolveModuleEntry`) —
+  // the application root is the one every other path is derived from.
+  const resolveModule = opts.resolveModule ?? ((specifier: string) => resolveModuleEntry(specifier, root));
 
   const [python, fonttools, network, toolchain] = await Promise.all([
     probePython(run),
