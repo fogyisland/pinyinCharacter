@@ -63,4 +63,23 @@ describe('resolveMcpEndpoint', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://ziyun.pudafo.com');
     expect(await resolveMcpEndpoint({ url: '/mcp' })).toBe('https://ziyun.pudafo.com/mcp');
   });
+
+  it('drops the default https port from the published endpoint', async () => {
+    // The endpoint an operator hands to an MCP client must be the plain
+    // origin: `https://host:443/mcp` and `https://host/mcp` are the same
+    // server, but the first is not the URL anyone writes down.
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://ziyun.pudafo.com:443');
+    expect(await resolveMcpEndpoint({ url: '/mcp' })).toBe('https://ziyun.pudafo.com/mcp');
+  });
+
+  it('drops the default http port from the published endpoint', async () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'http://ziyun.pudafo.com:80');
+    expect(await resolveMcpEndpoint({ url: '/mcp' })).toBe('http://ziyun.pudafo.com/mcp');
+  });
+
+  it('keeps a non-default port', async () => {
+    // A staging box on 8443 is a different origin — the port is part of it.
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://ziyun.pudafo.com:8443');
+    expect(await resolveMcpEndpoint({ url: '/mcp' })).toBe('https://ziyun.pudafo.com:8443/mcp');
+  });
 });

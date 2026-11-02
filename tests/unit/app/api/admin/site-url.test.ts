@@ -127,4 +127,38 @@ describe('PATCH /api/admin/site-url', () => {
     expect(res.status).toBe(400);
     expect(setConfigMock).not.toHaveBeenCalled();
   });
+
+  it('stores the canonical form — the default port is dropped', async () => {
+    // What is stored has to be what the screen shows back and what every
+    // consumer reads. Storing the raw `:443` would leave the table and
+    // the screen disagreeing.
+    const res = await PATCH(patchReq({ url: 'https://ziyun.pudafo.com:443' }));
+    expect(res.status).toBe(200);
+    expect(setConfigMock).toHaveBeenCalledWith('site.url', 'https://ziyun.pudafo.com', 7);
+    await expect(res.json()).resolves.toEqual({
+      ok: true,
+      data: { url: 'https://ziyun.pudafo.com', source: 'app_config' },
+    });
+  });
+
+  it('stores the canonical form — the trailing slash is dropped', async () => {
+    const res = await PATCH(patchReq({ url: 'https://ziyun.pudafo.com/' }));
+    expect(res.status).toBe(200);
+    expect(setConfigMock).toHaveBeenCalledWith('site.url', 'https://ziyun.pudafo.com', 7);
+  });
+
+  it('keeps a non-default port', async () => {
+    const res = await PATCH(patchReq({ url: 'https://ziyun.pudafo.com:8443' }));
+    expect(res.status).toBe(200);
+    expect(setConfigMock).toHaveBeenCalledWith('site.url', 'https://ziyun.pudafo.com:8443', 7);
+  });
+
+  it('audits the canonical form, not the raw input', async () => {
+    await PATCH(patchReq({ url: 'https://ziyun.pudafo.com:443' }));
+    expect(writeAuditMock).toHaveBeenCalledWith({
+      userId: 7,
+      event: 'site_url_updated',
+      metadata: { url: 'https://ziyun.pudafo.com' },
+    });
+  });
 });

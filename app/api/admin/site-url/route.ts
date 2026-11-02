@@ -4,7 +4,7 @@ import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { setConfig } from '@/lib/config';
 import { writeAudit } from '@/lib/audit';
-import { resolveSiteUrl } from '@/lib/seo/config';
+import { normalizeSiteUrl, resolveSiteUrl } from '@/lib/seo/config';
 
 const SiteUrlSchema = z.object({
   url: z.string().min(1).max(256),
@@ -31,16 +31,22 @@ export async function PATCH(req: NextRequest) {
     if (!/^https?:\/\//.test(url) || url.length > 256) {
       return badRequest('validation', 'URL must start with http:// or https:// and be ≤256 chars');
     }
+    // Store the canonical form: no trailing slash, and no `:443` / `:80`
+    // when the port is the default for the scheme. What is stored has to
+    // be what the admin screen shows back and what every consumer (the
+    // canonical links, the sitemap, the MCP endpoint) reads — otherwise
+    // the value on the screen and the value in the table disagree.
+    const canonicalUrl = normalizeSiteUrl(url);
     try {
-      await setConfig('site.url', url, auth.user.id);
+      await setConfig('site.url', canonicalUrl, auth.user.id);
     } catch (err) {
       return badRequest('validation', (err as Error).message);
     }
     await writeAudit({
       userId: auth.user.id,
       event: 'site_url_updated',
-      metadata: { url },
+      metadata: { url: canonicalUrl },
     });
-    return NextResponse.json({ ok: true, data: { url, source: 'app_config' as const } });
+    return NextResponse.json({ ok: true, data: { url: canonicalUrl, source: 'app_config' as const } });
   });
 }
