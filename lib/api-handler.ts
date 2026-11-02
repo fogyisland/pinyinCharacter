@@ -65,6 +65,9 @@ export function serviceUnavailable(code: string, message: string, init?: Respons
   );
 }
 
-export function conflict(code: string, message: string) {
-  return NextResponse.json({ ok: false, error: { code, message } }, { status: 409 });
+export function conflict(code: string, message: string, init?: ResponseInit) {
+  return NextResponse.json(
+    { ok: false, error: { code, message } },
+    { status: 409, ...(init ?? {}) },
+  );
 }

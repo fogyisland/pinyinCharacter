@@ -79,7 +79,8 @@ export type AuditEvent =
   | 'mcp_token_created'
   | 'mcp_token_regenerated'
   | 'mcp_token_revoked'
-  | 'admin_mcp_token_revoked';
+  | 'admin_mcp_token_revoked'
+  | 'admin_webfont_releases_cleaned';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -160,6 +161,7 @@ export const AUDIT_EVENTS = [
   'mcp_token_regenerated',
   'mcp_token_revoked',
   'admin_mcp_token_revoked',
+  'admin_webfont_releases_cleaned',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -242,6 +244,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   mcp_token_regenerated: '重新生成 MCP Token',
   mcp_token_revoked: '吊销 MCP Token',
   admin_mcp_token_revoked: '管理员吊销 MCP Token',
+  admin_webfont_releases_cleaned: '清理旧 release',
 };
 
 /**
@@ -418,6 +421,15 @@ export function formatLogMessage(
       return `吊销 MCP Token「${str(m.username) || '?'}」`;
     case 'admin_mcp_token_revoked':
       return `管理员吊销 MCP Token「${str(m.username) || '?'}」`;
+
+    case 'admin_webfont_releases_cleaned': {
+      const dirs = Array.isArray(m.removed) ? (m.removed as string[]) : [];
+      const head = join(dirs.slice(0, 3));
+      const more = dirs.length > 3 ? ` 等 ${dirs.length} 份` : '';
+      return `${str(m.title) || '清理旧 release'}${head ? `：${head}${more}` : ''}${
+        num(m.bytes) ? `（${num(m.bytes)} 字节）` : ''
+      }`;
+    }
 
     default: {
       const keys = Object.keys(m);
