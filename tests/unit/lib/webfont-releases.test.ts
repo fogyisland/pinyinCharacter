@@ -170,6 +170,55 @@ describe('readReleases', () => {
 
     expect(readReleases(fontDir)[0].deletedAt).toBeNull();
   });
+
+  it('throws with the ledger path when an entry names a directory outside the tree', () => {
+    // ⚠️ The ledger is under `public/` — anybody can read it. A `dir` of
+    // `../../victim` is corrupt (or hostile) data and must never reach the
+    // delete path. The read refuses loudly, with the path in the message.
+    // ⚠️ Written by hand: `writeReleases` does not validate, and the point
+    // is to prove the READER rejects it.
+    writeFileSync(
+      join(fontDir, 'releases.json'),
+      JSON.stringify({
+        releases: [
+          {
+            dir: '../../victim',
+            token: 'victim',
+            publishedAt: '2026-11-01T10:00:00.000Z',
+            supersededAt: null,
+            files: 1,
+            bytes: 1,
+          },
+        ],
+      }),
+    );
+
+    expect(() => readReleases(fontDir)).toThrow(/releases\.json/);
+    expect(() => readReleases(fontDir)).toThrow(/not a release directory/);
+  });
+
+  it('throws when an entry names a live font directory of release 0', () => {
+    // `sans` is a real directory in `web/` — the one the site serves its
+    // fonts from. It matches no release pattern, so it can never be a
+    // ledger entry.
+    writeFileSync(
+      join(fontDir, 'releases.json'),
+      JSON.stringify({
+        releases: [
+          {
+            dir: 'sans',
+            token: 'sans',
+            publishedAt: '2026-11-01T10:00:00.000Z',
+            supersededAt: null,
+            files: 1,
+            bytes: 1,
+          },
+        ],
+      }),
+    );
+
+    expect(() => readReleases(fontDir)).toThrow(/not a release directory/);
+  });
 });
 
 describe('writeReleases', () => {
@@ -534,8 +583,72 @@ describe('removeReleaseDirs', () => {
   });
 
   it('does not crash when the directory is already gone', () => {
-    const removed = removeReleaseDirs(['rnotthere00000'], fontDir);
+    // ⚠️ The name has to be a legal release directory name (`r` + lowercase
+    // hex) — otherwise the refusal gate would throw instead of reporting
+    // "already gone". The old fixture `rnotthere00000` carried letters that
+    // are not hex; `rdeadbeefcafe` is the same shape, spelled legally.
+    const removed = removeReleaseDirs(['rdeadbeefcafe'], fontDir);
 
-    expect(removed).toEqual([{ dir: 'rnotthere00000', bytes: 0, removed: false }]);
+    expect(removed).toEqual([{ dir: 'rdeadbeefcafe', bytes: 0, removed: false }]);
+  });
+
+  it('refuses a directory that escapes the release root, and deletes nothing', () => {
+    // ⚠️ THE WHOLE POINT OF THIS FIX. The ledger sits under `public/`, so
+    // anybody can read it — and a `dir` of `../outside` used to delete a
+    // directory OUTSIDE the font tree, irreversibly.
+    const outside = join(fontDir, 'outside');
+    mkdirSync(outside, { recursive: true });
+    writeFileSync(join(outside, 'victim.txt'), 'important');
+
+    expect(() => removeReleaseDirs(['../outside'], fontDir)).toThrow(
+      /outside the release root/,
+    );
+
+    // ★ The victim must still be there: "it threw" is not enough.
+    expect(existsSync(outside)).toBe(true);
+    expect(existsSync(join(outside, 'victim.txt'))).toBe(true);
+  });
+
+  it('refuses a directory that escapes two levels up, and deletes nothing', () => {
+    const victim = join(fontDir, '..', 'victim');
+    mkdirSync(victim, { recursive: true });
+    writeFileSync(join(victim, 'victim.txt'), 'important');
+
+    try {
+      expect(() => removeReleaseDirs(['../../victim'], fontDir)).toThrow(
+        /outside the release root/,
+      );
+
+      // ★ The victim and the file inside it must still be there.
+      expect(existsSync(victim)).toBe(true);
+      expect(existsSync(join(victim, 'victim.txt'))).toBe(true);
+    } finally {
+      rmSync(victim, { recursive: true, force: true });
+    }
+  });
+
+  it('refuses the release root itself, and does not delete the whole tree', () => {
+    expect(() => removeReleaseDirs([''], fontDir)).toThrow(/outside the release root/);
+    expect(() => removeReleaseDirs(['.'], fontDir)).toThrow(/outside the release root/);
+
+    // ★ `web/` must still be there — an empty name would otherwise have
+    // wiped every release at once.
+    expect(existsSync(webDir)).toBe(true);
+  });
+
+  it('refuses a live font directory of release 0, and keeps it', () => {
+    // ⚠️ `web/sans` IS inside the release root ⇒ a path check alone would
+    // let it through ⇒ the site would lose its fonts. Only the name
+    // pattern can see this one.
+    mkdirSync(join(webDir, 'sans'), { recursive: true });
+    writeFileSync(join(webDir, 'sans', 'x.woff2'), 'x');
+
+    expect(() => removeReleaseDirs(['sans'], fontDir)).toThrow(
+      /not a release directory name/,
+    );
+
+    // ★ The live font must still be there.
+    expect(existsSync(join(webDir, 'sans'))).toBe(true);
+    expect(existsSync(join(webDir, 'sans', 'x.woff2'))).toBe(true);
   });
 });

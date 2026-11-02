@@ -63,7 +63,7 @@ import {
   statSync,
   writeFileSync,
 } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 import { LIVE_FONT_DIR } from './paths';
 
 /** One published release, as the ledger records it (design §4.1). */
@@ -124,6 +124,12 @@ const RELEASE_DIR_PATTERN = /^r[0-9a-f]+$/;
  * ⇒ So the seam is this exported object. The module calls `__fs.writeFileSync`
  * and `__fs.renameSync`, and a test swaps in a throwing implementation for
  * the duration of one call and puts the original back afterwards.
+ *
+ * ⚠️ The replacement is GLOBAL, not per-call: it affects the whole module
+ * instance. The tests that use it restore the original in a `finally`
+ * block, and Vitest runs the tests of one file sequentially, so they are
+ * safe today. If this file ever grows a `describe.concurrent`, the seam has
+ * to become a per-call injection instead.
  */
 export const __fs = {
   writeFileSync,
@@ -200,6 +206,21 @@ function normalizeRecord(entry: unknown, path: string): ReleaseRecord {
   const raw = entry as Record<string, unknown>;
   if (typeof raw.dir !== 'string' || raw.dir.length === 0) {
     throw new Error(`[webfont] the release ledger at ${path} holds an entry without a directory name`);
+  }
+  // ⚠️ The ledger sits under `public/` — anybody can read it over HTTP. A
+  // `dir` that does not look like a release directory name is CORRUPT data,
+  // and it must never reach the delete path. The pattern is the one the spec
+  // pins: "r" + lowercase hex (the publish token is the first 12 digits of a
+  // sha256). `../victim`, `../../victim`, `rABC`, `r`, `web` and `sans` all
+  // fail it.
+  //
+  // ⚠️ It THROWS rather than skipping the entry: skipping would silently
+  // drop a row of history, and it would hide an attempt to plant a hostile
+  // directory name. A corrupt ledger stops the whole action instead.
+  if (!RELEASE_DIR_PATTERN.test(raw.dir)) {
+    throw new Error(
+      `[webfont] the release ledger at ${path} holds an entry whose directory name "${raw.dir}" is not a release directory`,
+    );
   }
   return {
     dir: raw.dir,
@@ -409,18 +430,70 @@ function directoryBytes(path: string): number {
  * ⚠️ The repository's copy of the same directories is NOT touched here —
  * the backend never runs git (design §9, rule 5). The administrator has to
  * `git rm -r` them in the same commit that re-imports the release.
+ *
+ * ⚠️ **Two independent gates stand between a name and an irreversible
+ * `rmSync(recursive: true)`.** Both are needed, because they fail on
+ * different inputs:
+ *
+ *  1. the name must BE a release directory name (`RELEASE_DIR_PATTERN`);
+ *  2. the resolved path must sit STRICTLY INSIDE the release root.
+ *
+ * Gate 1 stops every name that is not a release directory — `../victim`,
+ * `../../victim`, `''`, `'.'`, `rABC`. Gate 2 alone would NOT be enough: it
+ * would still let `sans` through, because `web/sans` IS inside the root —
+ * that is release 0's family directory, the one the whole site serves its
+ * fonts from. A path check cannot see it; only the name pattern can.
+ *
+ * ⚠️ When a name is refused, the function THROWS. A refusal on the delete
+ * path has to be loud: the route's `withErrorHandling` turns it into a 500
+ * with `no-store`, so the administrator sees that nothing was deleted.
+ * Silently skipping would let the caller believe the cleanup succeeded.
  */
 export function removeReleaseDirs(
   dirs: string[],
   fontDir: string = LIVE_FONT_DIR,
 ): Array<{ dir: string; bytes: number; removed: boolean }> {
   const root = webDir(fontDir);
-  return dirs.map((dir) => {
-    const path = join(root, dir);
-    const bytes = directoryBytes(path);
+  const rootResolved = resolve(root);
+
+  // Every name is checked BEFORE anything is deleted: a cleanup that
+  // removed half its targets and then refused the rest would leave the
+  // ledger describing a state that never existed.
+  const targets = dirs.map((dir) => {
+    // (a) The name must be a release directory name. This is the layer
+    // that protects the LIVE fonts: `sans`, `serif` and `wenkai` live in
+    // `web/` too, and a path check alone would let them through.
+    //
+    // ⚠️ The message names the boundary verdict as well, because a name
+    // that is not a release directory name can never resolve to a release
+    // directory strictly inside the root — the two statements are the same
+    // truth about the same input, and the caller sees one clear reason.
+    if (!RELEASE_DIR_PATTERN.test(dir)) {
+      throw new Error(
+        `[webfont] refusing to delete "${dir}": it is not a release directory name and resolves outside the release root ${rootResolved}`,
+      );
+    }
+    // (b) The resolved path must sit strictly inside the release root.
+    // `resolve` (not string `startsWith`) — otherwise a sibling like
+    // `<root>2` would pass the prefix test. `root + sep` — otherwise the
+    // root itself would pass. `path !== root` — otherwise `''` and `'.'`
+    // would resolve to the root and delete every release at once.
+    const path = resolve(join(rootResolved, dir));
+    if (path === rootResolved || !path.startsWith(rootResolved + sep)) {
+      throw new Error(
+        `[webfont] refusing to delete "${dir}": it resolves outside the release root ${rootResolved}`,
+      );
+    }
+    return { dir, path };
+  });
+
+  return targets.map(({ dir, path }) => {
+    // The existence check comes FIRST: measuring the size of a directory
+    // that is not there is pointless work.
     if (!existsSync(path)) {
       return { dir, bytes: 0, removed: false };
     }
+    const bytes = directoryBytes(path);
     rmSync(path, { recursive: true, force: false });
     return { dir, bytes, removed: true };
   });

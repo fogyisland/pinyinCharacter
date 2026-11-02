@@ -82,17 +82,37 @@ export async function POST(req: NextRequest) {
     // byte-identical — the ledger is a HISTORY, not a listing of what
     // currently exists on disk.
     //
-    // ⚠️ A planned release whose directory was ALREADY GONE (removed by
+    // ⚠️ Only the directories that were REALLY deleted get a `deletedAt`.
+    // A planned release whose directory was already gone (removed by
     // hand, or by a cleanup that died before it could write the ledger)
-    // is stamped as well: the directory is not on disk, and leaving the
-    // row unstamped would make it a candidate for ever.
+    // is reported in `removed[]` with `removed: false` — it was NOT
+    // deleted by this cleanup, and stamping it would make the response
+    // ("removed: false") contradict the ledger ("deletedAt: <now>").
+    // Such a row stays unstamped and may be planned again later; that is
+    // what design §3.5.4 wants (a missing directory cannot be ranked, so
+    // it is never among the kept three).
     const releases = readReleases();
+    const deletedDirSet = new Set(removedDirs);
+    // The PLAN — what this cleanup set out to remove, whether or not the
+    // directory was still there. `kept` is derived from it, so that
+    // `removed[]` and `kept[]` never overlap.
     const cleanedDirs = plan.map((release) => release.dir);
     const cleanedAt = now.toISOString();
     const updated = releases.map((release) =>
-      cleanedDirs.includes(release.dir) ? { ...release, deletedAt: cleanedAt } : release,
+      deletedDirSet.has(release.dir) ? { ...release, deletedAt: cleanedAt } : release,
     );
     writeReleases(updated);
+
+    // The hint is a TODO for the administrator: "the repository's copies
+    // have to be `git rm -r`'d too". With zero directories there is no
+    // todo ⇒ the field must NOT EXIST (not be `null`, not be an empty
+    // string) — otherwise the audit row carries the broken sentence
+    // "仓库里那 0 份也要 git rm -r（）" forever, because this metadata is
+    // persisted.
+    const repoHint =
+      removedDirs.length > 0
+        ? `仓库里那 ${removedDirs.length} 份也要 git rm -r（${removedDirs.join(' ')}）`
+        : undefined;
 
     await writeAudit({
       userId: auth.user.id,
@@ -102,7 +122,7 @@ export async function POST(req: NextRequest) {
         removed: removedDirs,
         count: removedDirs.length,
         bytes: removedBytes,
-        repoHint: `仓库里那 ${removedDirs.length} 份也要 git rm -r（${removedDirs.join(' ')}）`,
+        ...(repoHint ? { repoHint } : {}),
       },
     });
 
@@ -117,10 +137,18 @@ export async function POST(req: NextRequest) {
         // Everything the cleanup did NOT touch: the current release, the
         // two kept predecessors, and anything still inside the 30-day
         // window.
+        //
+        // ⚠️ `kept` is computed from the PLAN, not from the directories
+        // that were really deleted: a planned release whose directory was
+        // already gone was still "touched" by this cleanup, it just had
+        // nothing left to delete. Computing it from the deleted set
+        // instead would put that directory into `removed[]` AND `kept[]`
+        // at the same time — and a release has to end up in exactly one
+        // of the two.
         kept: releases
           .filter((release) => !cleanedDirs.includes(release.dir))
           .map((release) => release.dir),
-        repoHint: `仓库里那 ${removedDirs.length} 份也要 git rm -r（${removedDirs.join(' ')}）`,
+        ...(repoHint ? { repoHint } : {}),
       },
       NO_STORE,
     );

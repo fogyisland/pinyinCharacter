@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NextRequest } from 'next/server';
-import { mkdtempSync, mkdirSync, rmSync, writeFileSync, utimesSync, existsSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync, utimesSync, existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -113,6 +113,60 @@ function seedLedger(): void {
         {
           dir: 'raaaaaaaaaaaa',
           token: 'aaaaaaaaaaaa',
+          publishedAt: '2026-01-01T00:00:00.000Z',
+          supersededAt: new Date(NOW.getTime() - 90 * DAY_MS).toISOString(),
+          files: 10,
+          bytes: 100,
+        },
+        {
+          dir: 'rbbbbbbbbbbb',
+          token: 'bbbbbbbbbbbb',
+          publishedAt: '2026-11-01T00:00:00.000Z',
+          supersededAt: new Date(NOW.getTime() - 2 * DAY_MS).toISOString(),
+          files: 10,
+          bytes: 100,
+        },
+        {
+          dir: 'rcccccccccccc',
+          token: 'cccccccccccc',
+          publishedAt: '2026-11-01T00:00:00.000Z',
+          supersededAt: new Date(NOW.getTime() - 1 * DAY_MS).toISOString(),
+          files: 10,
+          bytes: 100,
+        },
+        {
+          dir: 'rdddddddddddd',
+          token: 'dddddddddddd',
+          publishedAt: '2026-11-01T00:00:00.000Z',
+          supersededAt: null,
+          files: 10,
+          bytes: 100,
+        },
+      ],
+    }),
+  );
+}
+
+/**
+ * Puts a ledger on disk whose only candidate is a directory that is NOT on
+ * disk.
+ *
+ * `r000000000000` has no directory ⇒ it cannot be ranked ⇒ it is not among
+ * the kept three ⇒ it still qualifies on the 30-day rule and IS planned.
+ * The cleanup then finds nothing to delete for it ⇒ `removed: false`.
+ */
+function seedLedgerWithOneMissingDirectory(): void {
+  makeReleaseDir('rbbbbbbbbbbb', new Date(NOW.getTime() - 3 * DAY_MS));
+  makeReleaseDir('rcccccccccccc', new Date(NOW.getTime() - 2 * DAY_MS));
+  makeReleaseDir('rdddddddddddd', new Date(NOW.getTime() - 1 * DAY_MS));
+
+  writeFileSync(
+    join(fontDir, 'releases.json'),
+    JSON.stringify({
+      releases: [
+        {
+          dir: 'r000000000000',
+          token: '000000000000',
           publishedAt: '2026-01-01T00:00:00.000Z',
           supersededAt: new Date(NOW.getTime() - 90 * DAY_MS).toISOString(),
           files: 10,
@@ -341,5 +395,142 @@ describe('POST /api/admin/webfonts/releases/cleanup', () => {
     // The project's audit convention: the metadata carries a title.
     expect(typeof entry.metadata.title).toBe('string');
     expect(String(entry.metadata.title).length).toBeGreaterThan(0);
+  });
+
+  it('refuses a ledger entry that points outside the font tree, and deletes nothing', async () => {
+    // ⚠️ THE END-TO-END ESCAPE TEST — the only one that proves the route
+    // cannot be talked into deleting a directory outside the font tree.
+    // The ledger sits under `public/` and is readable by anybody; a
+    // hand-written `dir` of `../../victim` used to come back as HTTP 200
+    // with the victim directory gone.
+    //
+    // ⚠️ The ledger is written BY HAND: `writeReleases` does not validate,
+    // and the point is to prove the reader + the delete path refuse it.
+    const victim = join(fontDir, '..', 'victim');
+    mkdirSync(victim, { recursive: true });
+    writeFileSync(join(victim, 'victim.txt'), 'important');
+    writeFileSync(
+      join(fontDir, 'releases.json'),
+      JSON.stringify({
+        releases: [
+          {
+            dir: '../../victim',
+            token: 'victim',
+            publishedAt: '2026-01-01T00:00:00.000Z',
+            supersededAt: new Date(NOW.getTime() - 90 * DAY_MS).toISOString(),
+            files: 1,
+            bytes: 1,
+          },
+        ],
+      }),
+    );
+
+    try {
+      const res = await POST(emptyReq());
+
+      // Not a 200 — the cleanup refused, loudly.
+      expect(res.status).not.toBe(200);
+      expect(res.status).toBe(500);
+      // ★ The victim directory and the file inside it must still be there.
+      expect(existsSync(victim)).toBe(true);
+      expect(existsSync(join(victim, 'victim.txt'))).toBe(true);
+      // ★ And the ledger was not rewritten.
+      expect(
+        JSON.parse(readFileSync(join(fontDir, 'releases.json'), 'utf8') as string),
+      ).toMatchObject({ releases: [{ dir: '../../victim' }] });
+    } finally {
+      rmSync(victim, { recursive: true, force: true });
+    }
+  });
+
+  it('does not stamp deletedAt on a row whose directory was already gone', async () => {
+    // ⚠️ The ledger entry names a legal release directory, but that
+    // directory is NOT on disk ⇒ nothing is deleted ⇒ the row must NOT be
+    // stamped. Stamping it would make the response ("removed: false")
+    // contradict the ledger ("deletedAt: <now>").
+    //
+    // ⚠️ `r000000000000` has no directory on disk ⇒ it cannot be ranked ⇒
+    // it is not among the kept three ⇒ it still qualifies on the 30-day
+    // rule and IS planned.
+    seedLedgerWithOneMissingDirectory();
+
+    const res = await POST(emptyReq());
+    const body = (await res.json()) as {
+      removed: Array<{ dir: string; bytes: number; removed: boolean }>;
+    };
+
+    expect(res.status).toBe(200);
+    expect(body.removed).toEqual([
+      { dir: 'r000000000000', bytes: 0, removed: false },
+    ]);
+    // ★ The ledger row stays unstamped.
+    const row = readReleases(fontDir).find(
+      (release) => release.dir === 'r000000000000',
+    );
+    expect(row?.deletedAt).toBeNull();
+  });
+
+  it('says nothing about git rm when there was nothing to remove', async () => {
+    seedLedgerWithOneMissingDirectory();
+
+    const res = await POST(emptyReq());
+    const body = (await res.json()) as Record<string, unknown>;
+
+    expect(res.status).toBe(200);
+    // ⚠️ The key must NOT EXIST — not be `null`, not be an empty string.
+    // A "仓库里那 0 份也要 git rm -r（）" is a broken sentence and this
+    // metadata is persisted.
+    expect('repoHint' in body).toBe(false);
+    expect(body.repoHint).toBeUndefined();
+
+    // ★ The audit metadata must not carry it either.
+    const entry = writeAuditMock.mock.calls[0][0] as {
+      metadata: Record<string, unknown>;
+    };
+    expect('repoHint' in entry.metadata).toBe(false);
+    expect(entry.metadata.repoHint).toBeUndefined();
+  });
+
+  it('counts the releases it really deleted in the audit title', async () => {
+    seedLedgerWithOneMissingDirectory();
+
+    await POST(emptyReq());
+
+    const entry = writeAuditMock.mock.calls[0][0] as {
+      metadata: Record<string, unknown>;
+    };
+    // ⚠️ "清理了 0 个 release" — the number has to be the count of what was
+    // REALLY deleted, not of what was planned.
+    expect(entry.metadata.title).toContain('0');
+    expect(entry.metadata.removed).toEqual([]);
+    expect(entry.metadata.count).toBe(0);
+  });
+
+  it('keeps removed[] and kept[] disjoint on the happy path', async () => {
+    seedLedger();
+
+    const res = await POST(emptyReq());
+    const body = (await res.json()) as {
+      removed: Array<{ dir: string; removed: boolean }>;
+      kept: string[];
+      repoHint?: string;
+    };
+
+    expect(res.status).toBe(200);
+    // The directory really was deleted.
+    expect(body.removed[0].dir).toBe('raaaaaaaaaaaa');
+    expect(body.removed[0].removed).toBe(true);
+    expect(existsSync(join(webDir, 'raaaaaaaaaaaa'))).toBe(false);
+    // Its row IS stamped — this one really was deleted.
+    const row = readReleases(fontDir).find(
+      (release) => release.dir === 'raaaaaaaaaaaa',
+    );
+    expect(row?.deletedAt).not.toBeNull();
+    // The hint exists when there was something to remove.
+    expect(body.repoHint).toContain('git rm -r');
+    // ★ The two lists never overlap: every release is in exactly one.
+    const removedDirs = body.removed.map((entry) => entry.dir);
+    expect(body.kept).not.toContain('raaaaaaaaaaaa');
+    expect(removedDirs.filter((dir) => body.kept.includes(dir))).toEqual([]);
   });
 });
