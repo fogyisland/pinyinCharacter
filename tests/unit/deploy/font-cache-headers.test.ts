@@ -13,8 +13,14 @@
  * so a blanket `/font/:path*` followed by the 30-day rule would happen to
  * produce the right header today — but that guarantee dies the moment a third
  * rule is added. The negative lookahead in the 30-day source is what makes
- * the two layers exclusive, and the "matches exactly one rule" assertion
- * below is the proof.
+ * the two layers exclusive, and the "matches every font path with exactly
+ * one rule" assertion below is the proof.
+ *
+ * ⚠️ The lookahead must reject BOTH `web/…` and the bare `web`: the release
+ * directory is a real path (`public/font/web` is a directory, so a request
+ * for `/font/web` gets Next's 404 page), and a lookahead that only excludes
+ * the literal `web/` lets it fall through to the 30-day rule — the two
+ * layers would overlap on exactly that one path.
  *
  * ⚠️ The matcher here is NEXT'S OWN, not the standalone `path-to-regexp`
  * package: this repository depends on `path-to-regexp@8`, whose v8 syntax
@@ -22,6 +28,12 @@
  * Next 15.5 bundles its own v6-era fork under `next/dist/compiled/`. The
  * production behaviour is the bundled one, so the test uses the same code
  * path `headers()` uses: `getPathMatch` + `modifyRouteRegex`.
+ *
+ * ⚠️ That bundled fork's lexer rejects a NESTED `(` inside a custom pattern
+ * ("Capturing groups are not allowed at N"), so the lookahead has to be a
+ * top-level alternation (`(?!web/|web$)`) and not a nested group
+ * (`(?!web($|/))` would not even compile — it would throw while the config
+ * is being loaded, taking the whole app down).
  */
 
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -93,8 +105,11 @@ function cacheControlValues(rules: HeaderRule[]): string[] {
 /**
  * The font paths whose layer this task decides.
  *
- * The last one is the directory itself: it belongs to the woff2 layer, and it
- * is the path a crawler or a mistyped URL hits first.
+ * The last two are the release directory itself, with and WITHOUT its
+ * trailing slash: the directory belongs to the woff2 layer, and it is the
+ * path a crawler or a mistyped URL hits first. The bare `/font/web` is the
+ * hard case — a lookahead that only excludes the literal `web/` lets it fall
+ * through to the 30-day rule, so the two layers would overlap on it.
  */
 const FONT_PATHS = [
   '/font/web/sans/hot.woff2',
@@ -103,6 +118,7 @@ const FONT_PATHS = [
   '/font/fonts-manifest.json',
   '/font/fonts-serif.css',
   '/font/web/',
+  '/font/web',
 ] as const;
 
 describe('the font cache headers are split into two exclusive layers', () => {
@@ -125,17 +141,41 @@ describe('the font cache headers are split into two exclusive layers', () => {
     expect(cacheControlValues(hits)).toEqual([YEAR]);
   });
 
+  it('keeps the bare release directory out of the thirty-day layer', () => {
+    // ⚠️ `/font/web` WITHOUT a trailing slash is the one path the old
+    // lookahead `(?!web/)` let through: it has no slash after `web`, so the
+    // 30-day rule matched it as well and the two layers overlapped. The
+    // directory is a real path (Next answers it with its 404 page), so the
+    // overlap is observable in the response headers of that 404.
+    for (const pathname of ['/font/web', '/font/web/']) {
+      const hits = matchingRules(pathname);
+      expect(hits, `${pathname} must match exactly one header rule`).toHaveLength(1);
+      expect(hits[0].source, `${pathname} belongs to the woff2 layer`).toBe('/font/web/:path*');
+      expect(cacheControlValues(hits)).toEqual([YEAR]);
+    }
+  });
+
+  it('does not let the lookahead swallow a sibling of the web directory', () => {
+    // The lookahead must reject `web` and `web/…` ONLY. A path whose first
+    // segment merely STARTS with `web` (a directory that happens to be named
+    // `webx`) belongs to the mutable layer like any other /font/ asset.
+    const hits = matchingRules('/font/webx/sans/hot.woff2');
+    expect(hits).toHaveLength(1);
+    expect(hits[0].source).toBe('/font/:path((?!web/|web$).*)');
+    expect(cacheControlValues(hits)).toEqual([MONTH]);
+  });
+
   it('puts the stylesheets on the thirty-day TTL', () => {
     const hits = matchingRules('/font/fonts-sans.css');
     expect(hits).toHaveLength(1);
-    expect(hits[0].source).toBe('/font/:path((?!web/).*)');
+    expect(hits[0].source).toBe('/font/:path((?!web/|web$).*)');
     expect(cacheControlValues(hits)).toEqual([MONTH]);
   });
 
   it('puts the manifest on the thirty-day TTL', () => {
     const hits = matchingRules('/font/fonts-manifest.json');
     expect(hits).toHaveLength(1);
-    expect(hits[0].source).toBe('/font/:path((?!web/).*)');
+    expect(hits[0].source).toBe('/font/:path((?!web/|web$).*)');
     expect(cacheControlValues(hits)).toEqual([MONTH]);
   });
 
@@ -152,7 +192,7 @@ describe('the font cache headers are split into two exclusive layers', () => {
   it('splits the two layers with a negative lookahead instead of relying on order', () => {
     const sources = headerRules.map((rule) => rule.source);
     expect(sources).toContain('/font/web/:path*');
-    expect(sources).toContain('/font/:path((?!web/).*)');
+    expect(sources).toContain('/font/:path((?!web/|web$).*)');
     // The catch-all that used to cover the whole /font/ tree must be gone:
     // it would match every font path and break the exclusivity below.
     expect(sources).not.toContain('/font/:path*');

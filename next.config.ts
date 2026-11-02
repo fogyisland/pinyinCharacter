@@ -43,17 +43,25 @@ const config: NextConfig = {
   //               so `immutable` can never serve a stale file — and a
   //               returning visitor must not re-download ~800 KB of subsets
   //               every month.
-  //     /font/:path((?!web/).*)  (30 days) — the mutable layer: the three
+  //     /font/:path((?!web/|web$).*)  (30 days) — the mutable layer: the three
   //               stylesheets (fonts-{sans,serif,wenkai}.css), versioned
   //               with the manifest hash that lib/font-css.ts appends as
   //               `?v=<manifest version>`, and fonts-manifest.json. They
   //               are rewritten on every apply, so they get a FINITE TTL —
   //               the release/cleanup rules depend on that upper bound.
   //               No `immutable` here: these bytes do change.
-  //               The negative lookahead keeps the two layers disjoint, so
-  //               every path matches exactly one of them. "The later rule
-  //               overwrites the earlier one" is not a guarantee Next.js
-  //               makes, and a third rule must not be able to break it.
+  //               The negative lookahead keeps the two layers disjoint: it
+  //               rejects a path segment that is `web` followed by a slash
+  //               (`web/…`) or by the end of the path (`web`), so the bare
+  //               release directory `/font/web` belongs to the year layer
+  //               too and every path matches exactly one of the two rules.
+  //               "The later rule overwrites the earlier one" is not a
+  //               guarantee Next.js makes, and a third rule must not be able
+  //               to break it.
+  //               ⚠️ The lookahead is a TOP-LEVEL alternation on purpose:
+  //               Next's bundled path-to-regexp rejects a nested `(` inside
+  //               a custom pattern ("Capturing groups are not allowed"), so
+  //               the equivalent `web($|/)` would not even compile.
   //   /fonts/   — the hard-pen / brush fonts. Fixed names, replaced when the
   //               fonts are rebuilt, so they get a long but finite TTL.
   //   /strokes/ — one JSON per character, never changes for a given char.
@@ -62,7 +70,7 @@ const config: NextConfig = {
     const month = 'public, max-age=2592000';
     return [
       { source: '/font/web/:path*', headers: [{ key: 'Cache-Control', value: year }] },
-      { source: '/font/:path((?!web/).*)', headers: [{ key: 'Cache-Control', value: month }] },
+      { source: '/font/:path((?!web/|web$).*)', headers: [{ key: 'Cache-Control', value: month }] },
       { source: '/fonts/:path*', headers: [{ key: 'Cache-Control', value: month }] },
       { source: '/strokes/:path*', headers: [{ key: 'Cache-Control', value: month }] },
     ];
