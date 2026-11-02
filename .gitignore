@@ -6,7 +6,10 @@ node_modules/
 # build output
 .next/
 out/
-build/
+# ⚠️ Root-anchored: a bare `build/` would also match ANY directory named
+# `build` at any depth — including the API route directory
+# `app/api/admin/webfonts/build/`, which must be tracked.
+/build/
 dist/
 tsconfig.tsbuildinfo
 

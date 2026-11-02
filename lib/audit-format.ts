@@ -80,6 +80,10 @@ export type AuditEvent =
   | 'mcp_token_regenerated'
   | 'mcp_token_revoked'
   | 'admin_mcp_token_revoked'
+  | 'admin_webfont_build_started'
+  | 'admin_webfont_build_failed'
+  | 'admin_webfont_build_applied'
+  | 'admin_webfont_build_apply_failed'
   | 'admin_webfont_releases_cleaned';
 
 /**
@@ -161,6 +165,10 @@ export const AUDIT_EVENTS = [
   'mcp_token_regenerated',
   'mcp_token_revoked',
   'admin_mcp_token_revoked',
+  'admin_webfont_build_started',
+  'admin_webfont_build_failed',
+  'admin_webfont_build_applied',
+  'admin_webfont_build_apply_failed',
   'admin_webfont_releases_cleaned',
 ] as const satisfies readonly AuditEvent[];
 
@@ -244,6 +252,10 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   mcp_token_regenerated: '重新生成 MCP Token',
   mcp_token_revoked: '吊销 MCP Token',
   admin_mcp_token_revoked: '管理员吊销 MCP Token',
+  admin_webfont_build_started: '开始字体构建',
+  admin_webfont_build_failed: '字体构建失败',
+  admin_webfont_build_applied: '字体构建已应用',
+  admin_webfont_build_apply_failed: '字体构建应用失败',
   admin_webfont_releases_cleaned: '清理旧 release',
 };
 
@@ -421,6 +433,23 @@ export function formatLogMessage(
       return `吊销 MCP Token「${str(m.username) || '?'}」`;
     case 'admin_mcp_token_revoked':
       return `管理员吊销 MCP Token「${str(m.username) || '?'}」`;
+
+    case 'admin_webfont_build_started':
+      return `开始字体构建${str(m.jobId) ? `（作业 ${str(m.jobId)}）` : ''}`;
+    case 'admin_webfont_build_failed':
+      return `字体构建失败${str(m.jobId) ? `（作业 ${str(m.jobId)}）` : ''}${
+        str(m.error) ? `：${truncate(str(m.error), 80)}` : ''
+      }`;
+    case 'admin_webfont_build_applied':
+      return `字体构建已应用${
+        str(m.manifestVersion) ? `（版本 ${str(m.manifestVersion)}）` : ''
+      }${str(m.releaseDir) ? `，release ${str(m.releaseDir)}` : ''}${
+        m.importedToRepo === false ? '，尚未回灌仓库' : ''
+      }`;
+    case 'admin_webfont_build_apply_failed':
+      return `字体构建应用失败${str(m.jobId) ? `（作业 ${str(m.jobId)}）` : ''}${
+        str(m.error) ? `：${truncate(str(m.error), 80)}` : ''
+      }`;
 
     case 'admin_webfont_releases_cleaned': {
       const dirs = Array.isArray(m.removed) ? (m.removed as string[]) : [];
