@@ -9,6 +9,7 @@ import {
   Bell,
   BookOpen,
   CalendarClock,
+  CaseUpper,
   ClipboardCheck,
   Crown,
   Download,
@@ -103,6 +104,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
       { href: '/admin/settings/site-url', label: '站点设置', icon: Settings },
       { href: '/admin/downloads', label: '下载', icon: Download },
       { href: '/admin/tts', label: '语音设置', icon: Volume2 },
+      { href: '/admin/settings/webfonts', label: '网站字体', icon: CaseUpper },
     ],
   },
   {
