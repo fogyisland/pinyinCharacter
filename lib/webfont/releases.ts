@@ -435,14 +435,23 @@ function directoryBytes(path: string): number {
  * `rmSync(recursive: true)`.** Both are needed, because they fail on
  * different inputs:
  *
- *  1. the name must BE a release directory name (`RELEASE_DIR_PATTERN`);
- *  2. the resolved path must sit STRICTLY INSIDE the release root.
+ *  1. the resolved path must sit STRICTLY INSIDE the release root;
+ *  2. the name must BE a release directory name (`RELEASE_DIR_PATTERN`).
  *
- * Gate 1 stops every name that is not a release directory — `../victim`,
- * `../../victim`, `''`, `'.'`, `rABC`. Gate 2 alone would NOT be enough: it
- * would still let `sans` through, because `web/sans` IS inside the root —
- * that is release 0's family directory, the one the whole site serves its
- * fonts from. A path check cannot see it; only the name pattern can.
+ * The path gate stops the `..` traversals — `../victim`, `../../victim`,
+ * `''`, `'.'`. The name gate stops everything that is inside the root but is
+ * not a release directory — most importantly `sans`, `serif` and `wenkai`:
+ * `web/sans` IS inside the root, so the path gate cannot see it; only the
+ * name pattern can. That is release 0's family directory, the one the whole
+ * site serves its fonts from.
+ *
+ * ⚠️ The path gate comes FIRST, on purpose. The name pattern
+ * (`/^r[0-9a-f]+$/`) contains neither `/` nor `.`, so a name that passes the
+ * name gate can never escape the root — with the name gate first, the path
+ * gate would be unreachable dead code and every "escapes the root" refusal
+ * would really be the name gate wearing the wrong message. With the path
+ * gate first, BOTH gates are reachable, and each one reports the reason
+ * that is actually true.
  *
  * ⚠️ When a name is refused, the function THROWS. A refusal on the delete
  * path has to be loud: the route's `withErrorHandling` turns it into a 500
@@ -460,28 +469,36 @@ export function removeReleaseDirs(
   // removed half its targets and then refused the rest would leave the
   // ledger describing a state that never existed.
   const targets = dirs.map((dir) => {
-    // (a) The name must be a release directory name. This is the layer
-    // that protects the LIVE fonts: `sans`, `serif` and `wenkai` live in
-    // `web/` too, and a path check alone would let them through.
-    //
-    // ⚠️ The message names the boundary verdict as well, because a name
-    // that is not a release directory name can never resolve to a release
-    // directory strictly inside the root — the two statements are the same
-    // truth about the same input, and the caller sees one clear reason.
-    if (!RELEASE_DIR_PATTERN.test(dir)) {
-      throw new Error(
-        `[webfont] refusing to delete "${dir}": it is not a release directory name and resolves outside the release root ${rootResolved}`,
-      );
-    }
-    // (b) The resolved path must sit strictly inside the release root.
+    // (a) The resolved path must sit STRICTLY INSIDE the release root.
     // `resolve` (not string `startsWith`) — otherwise a sibling like
     // `<root>2` would pass the prefix test. `root + sep` — otherwise the
-    // root itself would pass. `path !== root` — otherwise `''` and `'.'`
-    // would resolve to the root and delete every release at once.
+    // root itself would pass.
+    //
+    // ⚠️ THIS GATE COMES FIRST, ON PURPOSE. The name pattern
+    // (`/^r[0-9a-f]+$/`) contains neither `/` nor `.`, so a name that
+    // passes the name gate can NEVER escape the root — with the name gate
+    // first, this path gate would be unreachable dead code and the
+    // "escapes the root" tests would really be testing the name gate.
+    // Putting the path gate first makes both gates reachable, and lets
+    // each of them report the reason that is actually true.
     const path = resolve(join(rootResolved, dir));
-    if (path === rootResolved || !path.startsWith(rootResolved + sep)) {
+    if (path === rootResolved) {
+      throw new Error(
+        `[webfont] refusing to delete "${dir}": it resolves to the release root itself`,
+      );
+    }
+    if (!path.startsWith(rootResolved + sep)) {
       throw new Error(
         `[webfont] refusing to delete "${dir}": it resolves outside the release root ${rootResolved}`,
+      );
+    }
+    // (b) The name must BE a release directory name. This is the layer
+    // that protects the LIVE fonts: `sans`, `serif` and `wenkai` live in
+    // `web/` too — they are INSIDE the root — so the path gate lets them
+    // through and only the name gate can see them.
+    if (!RELEASE_DIR_PATTERN.test(dir)) {
+      throw new Error(
+        `[webfont] refusing to delete "${dir}": it is not a release directory name`,
       );
     }
     return { dir, path };

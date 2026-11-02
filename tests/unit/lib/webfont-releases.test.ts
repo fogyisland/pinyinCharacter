@@ -628,8 +628,11 @@ describe('removeReleaseDirs', () => {
   });
 
   it('refuses the release root itself, and does not delete the whole tree', () => {
-    expect(() => removeReleaseDirs([''], fontDir)).toThrow(/outside the release root/);
-    expect(() => removeReleaseDirs(['.'], fontDir)).toThrow(/outside the release root/);
+    // ⚠️ `''` and `'.'` resolve to the root ITSELF — they do not escape it.
+    // The refusal says so, because "outside the release root" would be a
+    // lie about a path that is exactly the root.
+    expect(() => removeReleaseDirs([''], fontDir)).toThrow(/release root itself/);
+    expect(() => removeReleaseDirs(['.'], fontDir)).toThrow(/release root itself/);
 
     // ★ `web/` must still be there — an empty name would otherwise have
     // wiped every release at once.
@@ -650,5 +653,22 @@ describe('removeReleaseDirs', () => {
     // ★ The live font must still be there.
     expect(existsSync(join(webDir, 'sans'))).toBe(true);
     expect(existsSync(join(webDir, 'sans', 'x.woff2'))).toBe(true);
+  });
+
+  it('reports the two refusals with the reason that is actually true', () => {
+    // ⚠️ `sans` is INSIDE the release root — only the name gate can see it.
+    // `../outside` is OUTSIDE — only the path gate can see it. Both gates
+    // must be reachable, and each must name its own reason.
+    expect(() => removeReleaseDirs(['sans'], fontDir)).toThrow(
+      /not a release directory name/,
+    );
+    expect(() => removeReleaseDirs(['../outside'], fontDir)).toThrow(
+      /outside the release root/,
+    );
+    // ⚠️ And the refusal must NOT claim "outside" for a name that is
+    // inside — that sentence was false and would mislead the admin.
+    expect(() => removeReleaseDirs(['sans'], fontDir)).not.toThrow(
+      /outside the release root/,
+    );
   });
 });
