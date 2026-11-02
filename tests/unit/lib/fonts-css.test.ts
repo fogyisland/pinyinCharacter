@@ -143,7 +143,7 @@ function unquote(value: string): string {
   return value.replace(/^['"]/, '').replace(/['"]$/, '');
 }
 
-/** Parse the @font-face rules of a stylesheet. */
+/** Parse the @font-face rules of a stylesheet — see RELEASE_SEGMENT_NOTE. */
 function parseFaces(css: string): Face[] {
   const faces: Face[] = [];
   const block = /@font-face\s*\{([^}]*)\}/g;
@@ -162,7 +162,7 @@ function parseFaces(css: string): Face[] {
       fontDisplay: cssField(body, 'font-display'),
       url,
       path: queryAt === -1 ? url : url.slice(0, queryAt),
-      token: token ? token[1] : '',
+      token: token ? token[1] : '', release: /^\/font\/web\/(r[0-9a-f]+)\//.exec(url)?.[1] ?? '',
       unicodeRange: cssField(body, 'unicode-range'),
     });
     match = block.exec(css);
@@ -184,7 +184,7 @@ function stylesheet(family: Family): { css: string; faces: Face[] } {
 
 /** The subset files of a family, as they sit on disk. */
 function subsetFiles(family: Family): string[] {
-  return readdirSync(resolve(FONT_DIR, family.subsetDir)).filter((name) =>
+  return readdirSync(resolve(FONT_DIR, subsetDirOf(family))).filter((name) =>
     name.endsWith('.woff2'),
   );
 }
@@ -426,3 +426,54 @@ describe('the webfont model in the app', () => {
     expect(familyTokens.has(readManifest().version)).toBe(false);
   });
 });
+
+/**
+ * The release segment of a face URL — the note of the two places above.
+ *
+ * ⚠️ An apply publishes a NEW release directory (`web/r<token>/`) and
+ * rewrites the stylesheets to point at it. ⇒ The family directory the
+ * subsets live in has to be located FROM THE STYLESHEET and not from the
+ * constant `web/<family>` of release 0 — otherwise the test would look for
+ * the files of the current release in the directory of the published one.
+ *
+ * ⚠️ The two-segment form (with a release) is tried FIRST: a URL that
+ * carries no release must never be read as one, or the family would be
+ * taken for the release.
+ *
+ * ⚠️ The release segment is EMPTY for release 0 — the published tree, where
+ * the URL of a face is `/font/web/<family>/<file>`. ⇒ The path is then
+ * byte-identical to the one the test used before the release directory
+ * model existed (`web/sans`), and the pinned numbers of this file stay
+ * exactly as green as they are today.
+ */
+const RELEASE_SEGMENT_NOTE = 'see the note below the suites';
+
+/**
+ * The release segment of a face.
+ *
+ * ⚠️ The field is declared HERE, at the bottom of the file, and not in the
+ * interface above: the pinned numbers of this file live on fixed lines (the
+ * ones the re-base checklist of an apply names), so nothing may be
+ * inserted above them. TypeScript merges the two declarations of `Face`.
+ */
+interface Face {
+  /** The release segment of the URL, e.g. `r0a1b2c3d4e5f`. */
+  release: string;
+}
+
+/**
+ * The directory the subset files of a family live in, as the stylesheet
+ * says — `web/[<release>/]<family>`.
+ *
+ * ⚠️ It is defined BELOW the suites on purpose, for the same reason.
+ */
+function subsetDirOf(family: Family): string {
+  const releases = new Set(stylesheet(family).faces.map((face) => face.release));
+  if (releases.size > 1) {
+    throw new Error(
+      `the stylesheet of ${family.key} points at more than one release: ${[...releases].join(', ')}`,
+    );
+  }
+  const release = [...releases][0] ?? '';
+  return release === '' ? family.subsetDir : `web/${release}/${family.key}`;
+}
