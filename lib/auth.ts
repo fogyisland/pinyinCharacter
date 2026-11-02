@@ -76,16 +76,34 @@ interface SessionUser extends User {
  * share a single query per request instead of one each. Outside a React
  * render (route handlers) cache() degrades to a direct call, which keeps
  * the behaviour identical.
+ *
+ * ⚠️ The database read is guarded. "We cannot check right now" is neither
+ * "logged in" nor "not logged in" -- but the guard has to answer, and the
+ * only safe answer is "not signed in". An uncaught driver error here would
+ * bubble out of every server component that asks for the session and turn
+ * the whole /admin area into a 500 (in a production build the message is
+ * stripped, so the visitor sees "An error occurred in the Server
+ * Components render" and nothing else). Failing closed keeps the visitor
+ * on the login screen instead of a stack trace, and no protected page
+ * renders.
  */
 const resolveSessionUser = cache(async (): Promise<SessionUser | null> => {
   const token = (await cookies()).get(COOKIE_NAME)?.value;
   if (!token) return null;
   const session = await verifySession(token);
   if (!session) return null;
-  const [rows] = await getPool().query<SessionFlagsRow[]>(
-    `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
-    [session.userId],
-  );
+  let rows: SessionFlagsRow[];
+  try {
+    const [result] = await getPool().query<SessionFlagsRow[]>(
+      `SELECT is_admin, disabled_at FROM users WHERE id = ? LIMIT 1`,
+      [session.userId],
+    );
+    rows = result;
+  } catch (error) {
+    // Fail closed: an unreachable database must never read as an admin.
+    console.error('[auth] the session flags could not be read — treating the session as signed out:', error);
+    return null;
+  }
   if (rows.length === 0) return null;
   // Disabled since the session was issued (e.g. banned right now).
   if (rows[0].disabled_at !== null) return null;
@@ -234,10 +252,26 @@ export async function requireUser(): Promise<RequireUserResult> {
     };
   }
   // Check disabled_at explicitly so the reason is 'account_disabled' (403), not 401
-  const [rows] = await getPool().query<DisabledAtRow[]>(
-    `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
-    [session.userId],
-  );
+  let rows: DisabledAtRow[];
+  try {
+    const [result] = await getPool().query<DisabledAtRow[]>(
+      `SELECT disabled_at FROM users WHERE id = ? LIMIT 1`,
+      [session.userId],
+    );
+    rows = result;
+  } catch (error) {
+    // Fail closed, same reasoning as resolveSessionUser: an unreachable
+    // database cannot confirm that the account is enabled.
+    console.error('[auth] the account state could not be read — refusing the request:', error);
+    return {
+      ok: false,
+      reason: 'unauthenticated',
+      response: NextResponse.json(
+        { ok: false, error: { code: 'unauthenticated', message: '未登录' } },
+        { status: 401 },
+      ),
+    };
+  }
   if (rows.length === 0 || rows[0].disabled_at !== null) {
     return {
       ok: false,
