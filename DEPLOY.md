@@ -106,14 +106,30 @@ proxy_set_header Connection "upgrade";
 ```nginx
 location /_next/static/ { proxy_pass http://127.0.0.1:4444; expires 1y; add_header Cache-Control "public, immutable"; }
 location /strokes/     { proxy_pass http://127.0.0.1:4444; expires 1y; add_header Cache-Control "public, immutable"; }
-location /font/        { proxy_pass http://127.0.0.1:4444; expires 1y; add_header Cache-Control "public, immutable"; }
-location /fonts/       { proxy_pass http://127.0.0.1:4444; expires 1y; add_header Cache-Control "public, immutable"; }
+# ⚠️ /font/ 分两层。/font/web/ 是发布目录(r<令牌>/…),里面的 woff2 按内容哈希命名
+#    ⇒ URL 字节永不变 ⇒ 一年 immutable;/font/ 的其余部分(fonts-*.css 与
+#    fonts-manifest.json)会被重建替换 ⇒ 30 天。两个块都**不用** `expires`
+#    (它自己会再生成一个 Cache-Control ⇒ 两个头)。长前缀在前。
+# ⚠️ 线上 /font/** 的响应头其实是 Next.js 发的(next.config.ts 的 headers()),
+#    本块对 /font/ 不生效 —— 这段是「照抄给别的部署用」的参考,不是线上现状。
+# ⚠️ /font/ 一旦由 Nginx 接管,Next.js 的 headers() 就管不着这一层
+#    ⇒ 两层 TTL 必须在 Nginx 侧配对。
+location /font/web/   { proxy_pass http://127.0.0.1:4444; add_header Cache-Control "public, max-age=31536000, immutable" always; }
+location /font/       { proxy_pass http://127.0.0.1:4444; add_header Cache-Control "public, max-age=2592000" always; }
+location /fonts/      { proxy_pass http://127.0.0.1:4444; expires 1y; add_header Cache-Control "public, immutable"; }
 location /logo.png     { proxy_pass http://127.0.0.1:4444; expires 1d; }
 location /logo-sm.webp { proxy_pass http://127.0.0.1:4444; expires 30d; }
 location /logo-sm.png  { proxy_pass http://127.0.0.1:4444; expires 30d; }
 location /favicon.ico  { proxy_pass http://127.0.0.1:4444; expires 1d; }
 location /manifest.json { proxy_pass http://127.0.0.1:4444; expires 1d; }
 ```
+
+> ⚠️ **`/font/`(无 s)与 `/fonts/`(有 s) 是两条不同的路径、不同的目录**:`/font/` 是
+> 子集 woff2 + 样式表(22 MB),`/fonts/` 是 OFL 笔刷字体(196 MB)。上面**只有 `/font/`
+> 与 `/font/web/` 走两层**,`/fonts/` 仍是一年 immutable(那些文件的 URL 字节永不变)。
+> ⚠️ 另外:**`deploy/nginx.ziyun.pudafo.com.conf` 是参考模板**,它的 `alias` +
+> `try_files $uri` 组合会 **404 整个静态树** ⇒ **不许原样安装**,只手工合并需要的那几行。
+> ⚠️ 完整字体验收流程见 [`deploy/OPTIMIZATION.md`](deploy/OPTIMIZATION.md)。
 
 ### 3.7 真实 IP 透传
 
@@ -164,8 +180,10 @@ server {
     # 静态资源:直接由 Nginx serve 并加 1 年 immutable 缓存
     location /_next/static/ { proxy_pass http://pinyin_app; expires 1y; add_header Cache-Control "public, immutable"; }
     location /strokes/     { proxy_pass http://pinyin_app; expires 1y; add_header Cache-Control "public, immutable"; }
-    location /font/        { proxy_pass http://pinyin_app; expires 1y; add_header Cache-Control "public, immutable"; }
-    location /fonts/       { proxy_pass http://pinyin_app; expires 1y; add_header Cache-Control "public, immutable"; }
+    # ⚠️ /font/ 分两层,理由见 3.6 的说明(与上面那块一样,只是 upstream 不同)
+    location /font/web/   { proxy_pass http://pinyin_app; add_header Cache-Control "public, max-age=31536000, immutable" always; }
+    location /font/       { proxy_pass http://pinyin_app; add_header Cache-Control "public, max-age=2592000" always; }
+    location /fonts/      { proxy_pass http://pinyin_app; expires 1y; add_header Cache-Control "public, immutable"; }
     location /logo.png     { proxy_pass http://pinyin_app; expires 1d; }
     location /logo-sm.webp { proxy_pass http://pinyin_app; expires 30d; }
     location /logo-sm.png  { proxy_pass http://pinyin_app; expires 30d; }
