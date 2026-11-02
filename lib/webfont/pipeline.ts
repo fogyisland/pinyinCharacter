@@ -104,6 +104,14 @@ const VERIFY_SCRIPT = join(REPO_ROOT, 'scripts', 'fonts', 'verify-webfont-subset
 /** The prefix of the line the verifier prints with its page cost. */
 const PAGECOST_PREFIX = '[verify] pagecost: ';
 
+/**
+ * The prefix of a REAL verifier finding: `[verify]` and THREE spaces.
+ *
+ * The verifier prints its statistics with ONE space after the tag; only
+ * the findings have three. See `extractFindings`.
+ */
+const FINDING_PREFIX = '[verify]   ';
+
 /** How many verifier findings the error message quotes. */
 const MAX_QUOTED_FINDINGS = 5;
 
@@ -200,13 +208,25 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   await log(`[subset] cutting the subsets into ${buildDir}`);
 
   // The subsetter reads the SOURCE fonts and writes into the candidate
-  // directory. `WEBFONT_FONT_DIR` is the one variable that names it —
-  // there is deliberately no second variable for the output root, because
-  // two variables that mean the same thing drift apart.
-  const subsetRun = await runCommand(process.execPath, [SUBSET_SCRIPT], {
-    cwd: REPO_ROOT,
-    env: { WEBFONT_FONT_DIR: buildDir },
-  });
+  // directory. `WEBFONT_FONT_DIR` is the one variable that names the
+  // candidate; `WEBFONT_STAGING_DIR` names the sources. There is
+  // deliberately no second variable for the output root, because two
+  // variables that mean the same thing drift apart.
+  let subsetRun: CommandOutcome;
+  try {
+    subsetRun = await runCommand(process.execPath, [SUBSET_SCRIPT], {
+      cwd: REPO_ROOT,
+      env: { WEBFONT_FONT_DIR: buildDir, WEBFONT_STAGING_DIR: sourceDir },
+    });
+  } catch (error) {
+    // A spawn that cannot even start (ENOENT, EPERM, EACCES) rejects.
+    // That is a FAILED STEP, not a thrown error: the pipeline's contract
+    // is that a step either finishes or it fails.
+    const message = errorMessage(error);
+    await log(`[subset] FAILED: ${message}`);
+    await step('subset', 'subsetting failed');
+    return failedResult('subset', message);
+  }
   await log(`[subset] exit code ${subsetRun.code}`);
   if (subsetRun.code !== 0) {
     const message = describeCommandFailure('subset', subsetRun);
@@ -228,10 +248,21 @@ export async function runPipeline(options: PipelineOptions): Promise<PipelineRes
   // separate run in `enforce` mode. The intrinsic checks (coverage,
   // disjointness, glyph count, block size, CSS size, face count, manifest,
   // token, identity, weight, directory, latin) still fail the step.
-  const verifyRun = await runCommand(process.execPath, [VERIFY_SCRIPT], {
-    cwd: REPO_ROOT,
-    env: { WEBFONT_FONT_DIR: buildDir, WEBFONT_PAGE_COST: 'report' },
-  });
+  let verifyRun: CommandOutcome;
+  try {
+    verifyRun = await runCommand(process.execPath, [VERIFY_SCRIPT], {
+      cwd: REPO_ROOT,
+      env: { WEBFONT_FONT_DIR: buildDir, WEBFONT_PAGE_COST: 'report' },
+    });
+  } catch (error) {
+    // Same as step ③: a spawn that cannot start is a failed step, not a
+    // thrown error. There is no page cost to parse on this path — the
+    // child never ran.
+    const message = errorMessage(error);
+    await log(`[verify] FAILED: ${message}`);
+    await step('verify', 'verification failed');
+    return failedResult('verify', message);
+  }
   await log(`[verify] exit code ${verifyRun.code}`);
 
   const pageCost = parsePageCost(verifyRun.stdout);
@@ -321,17 +352,60 @@ async function defaultDownload(entry: FontEntry, destDir: string): Promise<Downl
  * `report` mode, and only when it could actually measure the cost. A
  * missing line means `null`; a line that does not parse is LOGGED and
  * also means `null`. A page cost is never invented.
+ *
+ * ⚠️ The payload is CHECKED, not cast: every one of the five fields of
+ * `PageCostReport` must be there and must have the right type. A JSON
+ * object that merely happens to be an object (`{"foo":1}`) is not a
+ * measurement, and reporting one would put a number in the admin page
+ * that was never measured.
  */
 export function parsePageCost(stdout: string): PageCostReport | null {
   const payload = findPageCostLine(stdout);
   if (payload === null) return null;
+  let parsed: unknown;
   try {
-    const parsed = JSON.parse(payload) as PageCostReport;
-    if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
-    return parsed;
+    parsed = JSON.parse(payload) as unknown;
   } catch {
     return null;
   }
+  return toPageCostReport(parsed);
+}
+
+/**
+ * Turns a parsed JSON value into a `PageCostReport`, or `null` when it
+ * is not one.
+ *
+ * The five fields are all required: `bytes`, `files` and `budgetBytes`
+ * are records of numbers, `budgetFiles` is a number. A record is an
+ * object that is not an array and whose every value is a number.
+ */
+function toPageCostReport(value: unknown): PageCostReport | null {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+
+  const bytes = toNumberRecord(record.bytes);
+  const files = toNumberRecord(record.files);
+  const budgetBytes = toNumberRecord(record.budgetBytes);
+  if (bytes === null || files === null || budgetBytes === null) return null;
+
+  const budgetFiles = record.budgetFiles;
+  if (typeof budgetFiles !== 'number' || !Number.isFinite(budgetFiles)) return null;
+
+  return { bytes, files, budgetBytes, budgetFiles };
+}
+
+/**
+ * A record of numbers, or `null` when the value is not one.
+ */
+function toNumberRecord(value: unknown): Record<string, number> | null {
+  if (value === null || typeof value !== 'object' || Array.isArray(value)) return null;
+  const entries = Object.entries(value as Record<string, unknown>);
+  const result: Record<string, number> = {};
+  for (const [key, entry] of entries) {
+    if (typeof entry !== 'number' || !Number.isFinite(entry)) return null;
+    result[key] = entry;
+  }
+  return result;
 }
 
 /**
@@ -355,7 +429,7 @@ function findPageCostLine(stdout: string): string | null {
  * counted. The whole stderr is never pasted — it is usually a stack
  * trace nobody can act on.
  */
-export function describeCommandFailure(step: string, run: CommandOutcome): string {
+function describeCommandFailure(step: string, run: CommandOutcome): string {
   const findings = extractFindings(run.stdout);
   if (findings.length === 0) {
     const tail = run.stderr.trim().split(/\r?\n/).filter(Boolean).slice(-1)[0];
@@ -375,16 +449,38 @@ export function describeCommandFailure(step: string, run: CommandOutcome): strin
 /**
  * The error lines of the verifier's stdout — the informational ones are
  * not errors and are left out.
+ *
+ * ⚠️ The prefix is THREE spaces, and that is the whole filter:
+ *
+ *   `[verify] sans   : 12000 chars, …`  ← ONE space   (a statistic)
+ *   `[verify] css    : 12345 B gzip …`    ← ONE space   (a statistic)
+ *   `[verify] note   : …`                ← ONE space   (a note)
+ *   `[verify] pagecost: {…}`             ← ONE space   (the measurement)
+ *   `[verify] 3 error(s)`                ← ONE space   (the count)
+ *   `[verify]   latin: 210 char(s) …`    ← THREE spaces (a statistic!)
+ *   `[verify]   info: …`                 ← THREE spaces (information)
+ *   `[verify]   <message>`               ← THREE spaces (A REAL ERROR)
+ *
+ * The one-space lines are the statistics and the count; they are left out
+ * by the prefix alone. Two three-space lines are NOT errors and have to
+ * be excluded by name: `info:` (information) and `latin:` (a count of
+ * the Latin tier). Everything else with three spaces is a real error.
+ *
+ * A looser filter would let the statistics into the findings: the real
+ * errors would be pushed out of the quoted window and the count would be
+ * wrong — the administrator would read "and 13 more" when the verifier
+ * found three errors.
  */
 function extractFindings(stdout: string): string[] {
   const findings: string[] = [];
   for (const line of stdout.split(/\r?\n/)) {
-    if (!line.startsWith('[verify]')) continue;
-    const body = line.slice('[verify]'.length).trim();
+    if (!line.startsWith(FINDING_PREFIX)) continue;
+    const body = line.slice(FINDING_PREFIX.length).trim();
     if (body === '') continue;
     if (body.startsWith('info:')) continue;
-    // The summary line ("3 error(s)") is a count, not a finding.
-    if (/^\d+ error\(s\)$/.test(body)) continue;
+    // The Latin tier's own count has three spaces too — it is a
+    // statistic, not an error.
+    if (body.startsWith('latin:')) continue;
     findings.push(body);
   }
   return findings;

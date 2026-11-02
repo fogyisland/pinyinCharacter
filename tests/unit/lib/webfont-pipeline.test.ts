@@ -21,9 +21,17 @@ import { resolve } from 'node:path';
  *  - a page cost that is fabricated instead of measured ⇒ an absent
  *    `[verify] pagecost:` line must yield `null`.
  *
- * The network and the child processes are faked: `download` and
- * `runCommand` are injected, and the axis clip is mocked at the module
- * boundary (R-26 — it runs in-process, it never goes through `runCommand`).
+ * The network and the FONT SCRIPTS are faked: `download` and `runCommand`
+ * are injected, and the axis clip is mocked at the module boundary (R-26 —
+ * it runs in-process, it never goes through `runCommand`). The pipeline
+ * itself never starts a font script.
+ *
+ * ⚠️ The unit tests of `lib/webfont/run-command` at the bottom of this
+ * file DO spawn a real child process — `process.execPath`, node itself,
+ * running a one-line script. They never start a font script and they never
+ * touch the network; they exist because the runner's real behaviour (the
+ * exit code, the captured output, the env overlay) is exactly what the
+ * pipeline depends on.
  */
 
 const instanceAllMock = vi.fn();
@@ -40,11 +48,12 @@ vi.mock('@/scripts/fonts/instance-webfont-axis.mjs', () => ({
 
 import {
   runPipeline,
+  parsePageCost,
   type PipelineCallbacks,
   type PipelineOptions,
   type PipelineResult,
 } from '@/lib/webfont/pipeline';
-import { REPO_ROOT, LIVE_FONT_DIR, buildDirFor } from '@/lib/webfont/paths';
+import { REPO_ROOT, LIVE_FONT_DIR, SOURCE_DIR, buildDirFor } from '@/lib/webfont/paths';
 import { runCommand as defaultRunCommand } from '@/lib/webfont/run-command';
 import type { FontEntry } from '@/scripts/fonts/download-webfont-sources';
 
@@ -126,6 +135,8 @@ async function runWithFakes(
     download,
     runCommand,
     shouldStop: overrides.shouldStop,
+    sourceDir: overrides.sourceDir,
+    buildDir: overrides.buildDir,
   });
 
   return { steps, logs, downloads, runs, result };
@@ -295,8 +306,15 @@ describe('runPipeline', () => {
 
     const buildDir = buildDirFor('job-1');
     expect(subsetCall.opts?.cwd).toBe(REPO_ROOT);
-    expect(subsetCall.opts?.env).toEqual({ WEBFONT_FONT_DIR: buildDir });
+    // The subsetter needs BOTH roots: the candidate it writes into and
+    // the sources it reads from.
+    expect(subsetCall.opts?.env).toEqual({
+      WEBFONT_FONT_DIR: buildDir,
+      WEBFONT_STAGING_DIR: SOURCE_DIR,
+    });
     expect(verifyCall.opts?.cwd).toBe(REPO_ROOT);
+    // The verifier reads the candidate only — it has no business with
+    // the sources.
     expect(verifyCall.opts?.env).toEqual({
       WEBFONT_FONT_DIR: buildDir,
       WEBFONT_PAGE_COST: 'report',
@@ -384,10 +402,216 @@ describe('runPipeline', () => {
     expect(harness.result.error).toContain('and 2 more');
   });
 
+  it('quotes only the real findings, not the verifier\'s statistics', async () => {
+    // The verifier prints SEVERAL shapes of `[verify]` line, and only one
+    // of them is an error:
+    //
+    //   `[verify] sans   : 12000 chars, …`   ← one space   (a statistic)
+    //   `[verify] css    : 12345 B gzip …`     ← one space   (a statistic)
+    //   `[verify] note   : …`                 ← one space   (a note)
+    //   `[verify] pagecost: {…}`              ← one space   (the measurement)
+    //   `[verify] 3 error(s)`                 ← one space   (the count)
+    //   `[verify]   latin: 210 char(s) …`     ← THREE spaces (a statistic!)
+    //   `[verify]   info: …`                  ← THREE spaces (information)
+    //   `[verify]   <message>`                ← THREE spaces (A REAL ERROR)
+    //
+    // A filter that accepts every `[verify]` line mixes the statistics into
+    // the errors, pushes the real ones out of the quoted window and
+    // reports a wrong count — the administrator would read "and 13 more"
+    // when there are three errors.
+    const stdout = [
+      '[verify] sans   : 12000 chars, 24 files, ~1.20 MB   2 ERROR(S)',
+      '[verify]   [sans] missing glyph for U+5B57',
+      '[verify]   latin: 210 char(s) in 3 block(s)',
+      '[verify] serif  : 11000 chars, 22 files, ~1.10 MB   1 ERROR(S)',
+      '[verify]   [serif] missing glyph for U+4E2D',
+      '[verify] wenkai : 10500 chars, 21 files, ~1.05 MB   1 ERROR(S)',
+      '[verify]   [wenkai] missing glyph for U+6587',
+      '[verify]   info: the sample page / is over its budget',
+      '[verify] css    : 12345 B gzip of 65536 B   OK',
+      '[verify] sample : / (10 rounds, 4 blocks)',
+      '[verify] note   : the four page numbers above are the UNION of …',
+      '[verify] pagecost: {"bytes":{"/":1},"files":{"/":1},"budgetBytes":{"/":2},"budgetFiles":3}',
+      '[verify] 3 error(s)',
+    ].join('\n');
+
+    const harness = await runWithFakes({
+      runCommand: async (bin, args) =>
+        args[0].includes('verify-webfont-subsets')
+          ? { code: 1, stdout, stderr: 'a stack nobody can act on' }
+          : { code: 0, stdout: '', stderr: '' },
+    });
+
+    expect(harness.result.ok).toBe(false);
+    expect(harness.result.step).toBe('verify');
+    const error = harness.result.error ?? '';
+
+    // ⚠️ NONE of the statistics may appear in the error message.
+    expect(error).not.toContain('12000 chars');
+    expect(error).not.toContain('latin:');
+    expect(error).not.toContain('css    :');
+    expect(error).not.toContain('note   :');
+    expect(error).not.toContain('pagecost');
+    expect(error).not.toContain('sample :');
+    expect(error).not.toContain('info:');
+    expect(error).not.toContain('error(s)');
+
+    // ⚠️ AND all three real errors are quoted, with the TRUE count.
+    expect(error).toContain('[sans] missing glyph for U+5B57');
+    expect(error).toContain('[serif] missing glyph for U+4E2D');
+    expect(error).toContain('[wenkai] missing glyph for U+6587');
+    expect(error).not.toContain('and 1 more');
+    expect(error).not.toContain('more)');
+  });
+
+  it('quotes five findings and counts the rest', async () => {
+    // Six real findings: five are quoted, the sixth is counted.
+    const stdout = [
+      '[verify] sans   : 12000 chars, 24 files, ~1.20 MB   6 ERROR(S)',
+      '[verify]   error one',
+      '[verify]   error two',
+      '[verify]   error three',
+      '[verify]   error four',
+      '[verify]   error five',
+      '[verify]   error six',
+      '[verify] 6 error(s)',
+    ].join('\n');
+
+    const harness = await runWithFakes({
+      runCommand: async (bin, args) =>
+        args[0].includes('verify-webfont-subsets')
+          ? { code: 1, stdout, stderr: '' }
+          : { code: 0, stdout: '', stderr: '' },
+    });
+
+    expect(harness.result.ok).toBe(false);
+    const error = harness.result.error ?? '';
+    expect(error).toContain('error one');
+    expect(error).toContain('error five');
+    expect(error).not.toContain('error six');
+    expect(error).toContain('and 1 more');
+  });
+
+  it('turns a failed spawn into a failed subset step, not into a thrown error', async () => {
+    // A spawn that cannot even start (ENOENT, EPERM, EACCES) rejects.
+    // The pipeline's contract is that a step either finishes or it fails —
+    // a rejection must not escape `runPipeline` and take the whole job
+    // with it.
+    const harness = await runWithFakes({
+      runCommand: async (bin, args) => {
+        if (args[0].includes('build-webfont-subsets')) {
+          throw new Error('spawn ENOENT');
+        }
+        return { code: 0, stdout: '', stderr: '' };
+      },
+    });
+
+    expect(harness.result.ok).toBe(false);
+    expect(harness.result.step).toBe('subset');
+    expect(harness.result.error).toContain('ENOENT');
+    expect(harness.logs.join('\n')).toContain('[subset] FAILED');
+  });
+
+  it('turns a failed spawn into a failed verify step, not into a thrown error', async () => {
+    const harness = await runWithFakes({
+      runCommand: async (bin, args) => {
+        if (args[0].includes('verify-webfont-subsets')) {
+          throw new Error('spawn EPERM');
+        }
+        return { code: 0, stdout: '', stderr: '' };
+      },
+    });
+
+    expect(harness.result.ok).toBe(false);
+    expect(harness.result.step).toBe('verify');
+    expect(harness.result.error).toContain('EPERM');
+    expect(harness.logs.join('\n')).toContain('[verify] FAILED');
+  });
+
+  it('gives the subset step the source directory it was told to use', async () => {
+    // The subsetter reads the SOURCE fonts from its own hard-coded staging
+    // directory. Without this the `sourceDir` option would only serve
+    // steps ① and ②, and step ③ would cut a tree nobody asked for.
+    const sourceDir = resolve(REPO_ROOT, 'tmp', 'a-source-dir');
+    const harness = await runWithFakes({ sourceDir });
+
+    expect(harness.runs).toHaveLength(2);
+    const [subsetCall] = harness.runs;
+    expect(subsetCall.opts?.env?.WEBFONT_STAGING_DIR).toBe(sourceDir);
+    // The verifier reads the CANDIDATE, not the source — it must not be
+    // pointed at the sources.
+    expect(harness.runs[1].opts?.env?.WEBFONT_STAGING_DIR).toBeUndefined();
+  });
+
   it('never mutates process.env', async () => {
     const before = { ...process.env };
     await runWithFakes();
     expect(process.env).toEqual(before);
+  });
+});
+
+describe('parsePageCost', () => {
+  /** Wraps a payload in the line the verifier prints. */
+  function line(payload: string): string {
+    return `[verify] pagecost: ${payload}`;
+  }
+
+  it('returns the measurement when every field is there and well typed', () => {
+    const parsed = parsePageCost(
+      line(
+        '{"bytes":{"/":123456,"/stories":23456},"files":{"/":4,"/stories":4},' +
+          '"budgetBytes":{"/":200000,"/stories":200000},"budgetFiles":6}',
+      ),
+    );
+
+    expect(parsed).not.toBeNull();
+    expect(parsed?.bytes['/']).toBe(123456);
+    expect(parsed?.files['/stories']).toBe(4);
+    expect(parsed?.budgetBytes['/']).toBe(200000);
+    expect(parsed?.budgetFiles).toBe(6);
+  });
+
+  it('returns null when a field is missing', () => {
+    // A measurement without its budget is not a measurement: the pipeline
+    // would report a page cost it cannot compare against anything.
+    expect(
+      parsePageCost(
+        line('{"bytes":{"/":123456},"files":{"/":4},"budgetBytes":{"/":200000}}'),
+      ),
+    ).toBeNull();
+  });
+
+  it('returns null when a field has the wrong type', () => {
+    expect(
+      parsePageCost(
+        line(
+          '{"bytes":"not-a-number","files":{"/":4},' +
+            '"budgetBytes":{"/":200000},"budgetFiles":6}',
+        ),
+      ),
+    ).toBeNull();
+  });
+
+  it('returns null when a nested value is not a number', () => {
+    expect(
+      parsePageCost(
+        line(
+          '{"bytes":{"/":"lots"},"files":{"/":4},' +
+            '"budgetBytes":{"/":200000},"budgetFiles":6}',
+        ),
+      ),
+    ).toBeNull();
+  });
+
+  it('returns null when the payload is not an object at all', () => {
+    expect(parsePageCost(line('42'))).toBeNull();
+    expect(parsePageCost(line('[1,2,3]'))).toBeNull();
+    expect(parsePageCost(line('"a string"'))).toBeNull();
+  });
+
+  it('returns null when there is no pagecost line at all', () => {
+    expect(parsePageCost('[verify] 0 error(s)')).toBeNull();
+    expect(parsePageCost('')).toBeNull();
   });
 });
 

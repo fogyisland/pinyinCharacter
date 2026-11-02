@@ -39,6 +39,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   FAMILIES,
   resolveFontDir as resolveBuildFontDir,
+  resolveStagingDir as resolveBuildStagingDir,
 } from '../../../scripts/fonts/build-webfont-subsets.mjs';
 import {
   resolveFontDir as resolveVerifyFontDir,
@@ -96,6 +97,32 @@ describe('the font root is overridable, and both scripts agree on it', () => {
     // the verifier must point at ONE tree, or the checker would check a
     // tree nobody cut.
     expect(build).toBe(verify);
+  });
+});
+
+describe('the staging directory is overridable too', () => {
+  it('defaults to the repository staging tree', () => {
+    // The default must not change: the shipped sources stay where they
+    // are and every script that does not pass an override sees them.
+    expect(resolveBuildStagingDir({})).toBe(
+      join(REPO_ROOT, 'scripts', 'fonts', 'staging', 'web'),
+    );
+  });
+
+  it('resolves a relative override against the repository root', () => {
+    // Same shape as the font root: the working directory of a pipeline
+    // is not the repository root, and the same command has to read the
+    // same sources every time.
+    const dir = resolveBuildStagingDir({ WEBFONT_STAGING_DIR: join('tmp', 'src') });
+    expect(isAbsolute(dir)).toBe(true);
+    expect(dir.startsWith(REPO_ROOT)).toBe(true);
+    expect(dir.endsWith(join('tmp', 'src'))).toBe(true);
+  });
+
+  it('ignores an empty override', () => {
+    expect(resolveBuildStagingDir({ WEBFONT_STAGING_DIR: '   ' })).toBe(
+      join(REPO_ROOT, 'scripts', 'fonts', 'staging', 'web'),
+    );
   });
 });
 

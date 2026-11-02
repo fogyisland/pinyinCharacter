@@ -119,6 +119,39 @@ export function resolveFontDir(env = process.env) {
   return join(ROOT, 'public', 'font');
 }
 
+/**
+ * The default staging directory, computed WITHOUT the override.
+ *
+ * ⚠️ It is a separate constant on purpose: `resolveStagingDir()` reads
+ * `process.env`, and a module-level constant that referenced itself
+ * would be read before it is initialised.
+ */
+const DEFAULT_STAGING_DIR = resolve(ROOT, 'scripts', 'fonts', 'staging', 'web');
+
+/**
+ * The staging directory: where the instanced source fonts and their
+ * licences live.
+ *
+ * `WEBFONT_STAGING_DIR` overrides it, so a pipeline can cut a candidate
+ * from a source tree of its own instead of from the repository's. The
+ * shape is the same as `resolveFontDir`: a RELATIVE path is resolved
+ * against the repository root and not against the working directory.
+ *
+ * ⚠️ ONE environment variable names ONE thing: `WEBFONT_FONT_DIR` names
+ * the OUTPUT root and this one names the INPUT root. They are two
+ * different trees, and two different names are exactly right here.
+ *
+ * @param {Record<string, string|undefined>} env the environment to read
+ * @returns {string} the absolute path of the staging directory
+ */
+export function resolveStagingDir(env = process.env) {
+  const override = env.WEBFONT_STAGING_DIR;
+  if (typeof override === 'string' && override.trim() !== '') {
+    return resolve(ROOT, override.trim());
+  }
+  return DEFAULT_STAGING_DIR;
+}
+
 /** Where the stylesheets and the manifest are written. */
 export const FONT_DIR = resolveFontDir();
 
@@ -126,7 +159,7 @@ export const FONT_DIR = resolveFontDir();
 export const OUT_ROOT = join(FONT_DIR, 'web');
 
 /** Where the instanced source fonts and their licences live. */
-export const STAGING_DIR = resolve(ROOT, 'scripts', 'fonts', 'staging', 'web');
+export const STAGING_DIR = resolveStagingDir();
 
 /** The manifest of the stylesheets. */
 const MANIFEST_PATH = join(FONT_DIR, 'fonts-manifest.json');

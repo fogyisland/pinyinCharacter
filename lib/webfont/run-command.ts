@@ -27,7 +27,7 @@ export interface RunCommandOptions {
 
 /** What the runner reports back. */
 export interface RunCommandResult {
-  /** The exit code; `null` when the child was stopped by a signal. */
+  /** The exit code; `-1` when the child was stopped by a signal. */
   code: number;
   stdout: string;
   stderr: string;

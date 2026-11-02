@@ -222,6 +222,15 @@ export declare const STAGING_DIR: string;
 export declare function resolveFontDir(env?: EnvRecord): string;
 
 /**
+ * The staging directory: where the source fonts and the licences are
+ * read from.
+ *
+ * `WEBFONT_STAGING_DIR` overrides it, and a relative path is resolved
+ * against the repository root and not against the working directory.
+ */
+export declare function resolveStagingDir(env?: EnvRecord): string;
+
+/**
  * Copy the licence of a family into the output tree.
  *
  * It is written on the root of the tree AND inside the directory of the
