@@ -39,7 +39,7 @@ import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
-import { PINNED, buildRebaselineChecklist } from '@/lib/webfont/rebaseline';
+import { PINNED, PINNED_LINES, buildRebaselineChecklist } from '@/lib/webfont/rebaseline';
 import { manifestVersion } from '@/scripts/fonts/build-webfont-subsets.mjs';
 import { parseFaceUrl } from '@/scripts/fonts/verify-webfont-subsets.mjs';
 
@@ -299,6 +299,26 @@ describe('the numbers the re-import script prints (brief case 5)', () => {
     expect(run.output).toContain('tests/unit/lib/fonts-css.test.ts');
   });
 
+  it('names the LINE every printed number goes to', () => {
+    // ⚠️ The file alone is not enough: the operator has to find the LINE,
+    // and a wrong line sends the re-calibration into the wrong assertion.
+    // ⇒ The script prints `key -> file:line` for each of the six numbers.
+    const tree = makeTree();
+
+    const run = runScript(tree.root, ['--release', RELEASE_DIR]);
+    expect(run.status).toBe(0);
+
+    const css = 'tests/unit/lib/fonts-css.test.ts';
+    expect(run.output).toContain(`subsetFiles     -> ${css}:310`);
+    expect(run.output).toContain(`subsetBytes     -> ${css}:311`);
+    expect(run.output).toContain(`cssBytes        -> ${css}:298`);
+    expect(run.output).toContain(`gzipBytes_sans  -> ${css}:73`);
+    expect(run.output).toContain(`gzipBytes_serif -> ${css}:82`);
+    expect(run.output).toContain(`gzipBytes_wenkai -> ${css}:91`);
+    // ⚠️ The seventh entry already names its line — and says 「不用改」.
+    expect(run.output).toContain('第 688 行');
+  });
+
   it('agrees with the build script about the manifest version', () => {
     // ⚠️ THE DRIFT GUARD. The script computes the V hash itself, with
     // `node:crypto`, because importing `build-webfont-subsets.mjs` would
@@ -439,6 +459,47 @@ describe('the pinned numbers of the repository (R-94)', () => {
     expect(testFile).toContain('gzipBytes: 55821,');
     expect(testFile).toContain('gzipBytes: 64536,');
     expect(testFile).toContain('gzipBytes: 38491,');
+  });
+
+  it('guards the pinned LINE NUMBERS against the real file (R-206d)', () => {
+    // ⚠️⚠️ THE GUARD. `PINNED_LINES` is what the re-base checklist shows the
+    // operator: 「the number goes to `tests/unit/lib/fonts-css.test.ts:310`」.
+    // ⇒ If the line numbers drift, the checklist sends the operator to the
+    // WRONG LINE — and a re-calibration would edit the wrong assertion.
+    //
+    // ⚠️ Nothing else in the suite checks this: the constant was only ever
+    // compared with ITSELF (`expect(PINNED_LINES.subsetFiles).toBe(310)` is
+    // a constant against a constant), and the numbers were checked as
+    // CONTENT (`toContain('expect(subsets.length).toBe(7981);')`), which is
+    // independent of the line they sit on. ⇒ Inserting one line above the
+    // pinned block moved all six numbers and NOTHING turned red.
+    //
+    // ⇒ This test reads the REAL lines of the file. It is the same pattern
+    // Task 6 used for the nginx read path (`webfont-apply.test.ts`).
+    const file = resolve(REPO_ROOT, 'tests', 'unit', 'lib', 'fonts-css.test.ts');
+    const lines = readFileSync(file, 'utf8').split(/\r?\n/);
+
+    // ⚠️ The NUMBERS move on every re-calibration (that is the whole point
+    // of the re-import script), so a guard that asserted the numbers would
+    // go red on the day of a re-calibration. Guard the SHAPE of each
+    // pinned line instead.
+    expect(lines[PINNED_LINES.cssGzipBytes[0] - 1]).toContain('gzipBytes:');
+    expect(lines[PINNED_LINES.cssGzipBytes[1] - 1]).toContain('gzipBytes:');
+    expect(lines[PINNED_LINES.cssGzipBytes[2] - 1]).toContain('gzipBytes:');
+    expect(lines[PINNED_LINES.cssBytes - 1]).toContain('expect(cssBytes).toBe(');
+    expect(lines[PINNED_LINES.subsetFiles - 1]).toContain('expect(subsets.length).toBe(');
+    expect(lines[PINNED_LINES.subsetBytes - 1]).toContain(
+      'expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(',
+    );
+
+    // ⚠️ The three gzip lines have the SAME shape ⇒ `toContain('gzipBytes:')`
+    // cannot tell them apart. Guard the family too: the `subsetDir` of the
+    // block sits three lines above the pinned gzip line (measured: :70 for
+    // :73, :79 for :82, :88 for :91).
+    const window = (line: number) => lines.slice(line - 4, line).join('\n');
+    expect(window(PINNED_LINES.cssGzipBytes[0])).toContain("'web/sans'");
+    expect(window(PINNED_LINES.cssGzipBytes[1])).toContain("'web/serif'");
+    expect(window(PINNED_LINES.cssGzipBytes[2])).toContain("'web/wenkai'");
   });
 
   it('leaves the verifier budgets alone', () => {

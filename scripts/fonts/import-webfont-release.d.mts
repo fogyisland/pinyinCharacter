@@ -12,7 +12,6 @@
  * an explicit working directory — so that a test can point it at a
  * TEMPORARY git repository instead of this one.
  */
-import type { EnvRecord } from './build-webfont-subsets.mjs';
 
 /** What the script was asked to do. */
 export interface ImportOptions {

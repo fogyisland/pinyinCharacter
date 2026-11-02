@@ -373,15 +373,32 @@ describe('the re-import script (R-87)', () => {
 });
 
 describe('the release argument is checked BEFORE anything is read (R-206a)', () => {
+  // ⚠️ What this group proves: the script refuses a malformed `--release`
+  // argument **before** it derives any path from it.
+  //
+  // ⚠️ The observable is the REFUSAL MESSAGE. The script can refuse for
+  // exactly three reasons, and each of them proves something different:
+  //
+  //   「不是合法的发布目录名」  the shape check fired — nothing was derived;
+  //   「当前目录不是 git 仓库」  the script had already SPAWNED git, which
+  //                             means it had already got past the shape
+  //                             check and had ALREADY derived the path
+  //                             (`repositoryRoot()` runs before `join()`);
+  //   「发布目录 … 不在 …」      the path was derived AND probed on the disk.
+  //
+  // ⇒ A test that only asserts 「it refused, non-zero, nothing staged」
+  // cannot tell these apart — that is the hole the review found.
   it('refuses a path traversal without staging anything', () => {
     // ⚠️ THE test of this task. `--release ../../evil` must be refused
     // before the script joins it onto any path — the join IS the traversal.
     const repo = makeRepo();
-    // A directory OUTSIDE the repository, so a traversal could reach it and
-    // so that it cannot show up in `git status` of the repository.
-    const outside = mkdtempSync(join(tmpdir(), 'webfont-outside-'));
-    temporaryDirs.push(outside);
-    const evil = join(outside, 'evil');
+    // ⚠️ THE CANARY HAS TO BE WHERE THE TRAVERSAL ACTUALLY REACHES.
+    //
+    // The script joins the argument onto `<repo>/public/font/web` ⇒
+    // `../../evil` resolves to `<repo>/public/evil` — INSIDE the repository.
+    // A canary in an unrelated temp directory is a canary the traversal
+    // can NEVER reach, and asserting on it proves nothing.
+    const evil = join(repo.root, 'public', 'evil');
     mkdirSync(evil, { recursive: true });
     writeFileSync(join(evil, 'secret.txt'), 'secret\n');
 
@@ -390,12 +407,81 @@ describe('the release argument is checked BEFORE anything is read (R-206a)', () 
     expect(run.status).not.toBe(0);
     // A Chinese message that says what is wrong.
     expect(run.output).toMatch(/[一-鿿]/);
+    // ⚠️ The RAW argument is named — that is the expected behaviour.
     expect(run.output).toContain('../../evil');
+    // ⚠️ The refusal must be the SHAPE refusal. If the script had got
+    // past the shape check it would have refused for some OTHER reason
+    // (「不是 git 仓库」/「发布目录 … 不在 …」) — and then the traversal
+    // would already have happened.
+    expect(run.output).toContain('不是合法的发布目录名');
     // ⚠️ NOT ONE BYTE IS STAGED — read twice, two ways.
     expect(stagedPaths(repo.root)).toEqual([]);
     expect(stagedColumn(repo.root)).toEqual([]);
-    // And nothing outside the font tree was touched.
+    // ⚠️ THE POINT OF THIS ASSERTION: the script must refuse BEFORE it
+    // joins the argument onto any path. If it joined first, the release
+    // path would be `<repo>/public/evil` and the error message would NAME
+    // it — the message at scripts/fonts/import-webfont-release.mjs:465
+    // carries `${releasePath}`.
+    //
+    // ⇒ The output must not carry the JOINED path, and it must not carry
+    // the canary's file name either (a script that READ the tree outside
+    // the font tree would have to name what it read).
+    //
+    // ⚠️ The ABSOLUTE path is the assertion that has teeth on Windows:
+    // `join()` writes `public\evil` there, so the forward-slash spelling
+    // below would never match it.
+    expect(run.output).not.toContain(evil);
+    expect(run.output).not.toContain('public/evil');
+    expect(run.output).not.toContain('secret.txt');
+    // And the canary at the reachable path is still there — the script did
+    // not delete it.
     expect(existsSync(join(evil, 'secret.txt'))).toBe(true);
+  });
+
+  it('refuses the traversal BEFORE it spawns git or touches the disk', () => {
+    // ⚠️ THE GUARD WITH TEETH. The case above cannot tell 「refused on the
+    // shape」 from 「refused for some later reason」: a script that joined
+    // the argument onto a path FIRST and validated it afterwards would
+    // still exit non-zero, stage nothing, and print a Chinese message.
+    //
+    // ⇒ The discriminating observable is WHICH refusal it is. Run the
+    // script in a directory that is NOT a git repository:
+    //
+    //   • the correct script refuses on the SHAPE and never spawns git ⇒
+    //     the message is 「不是合法的发布目录名」;
+    //   • a script that derived the path first calls `repositoryRoot()`
+    //     first, which spawns `git rev-parse` ⇒ the message is
+    //     「当前目录不是 git 仓库」 — the traversal has already happened.
+    //
+    // ⇒ This assertion has teeth: moving `validateReleaseName()` after
+    // `join(fontDir, 'web', dir)` turns it red.
+    const outside = mkdtempSync(join(tmpdir(), 'webfont-not-a-repo-'));
+    temporaryDirs.push(outside);
+    // ⚠️ The directory has to be OUTSIDE any git repository — otherwise
+    // `git rev-parse --show-toplevel` would succeed and the refusal would
+    // be a different one. Fail loudly rather than quietly prove nothing.
+    let repoOf = '';
+    try {
+      repoOf = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+        cwd: outside,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }).trim();
+    } catch {
+      repoOf = '';
+    }
+    expect(repoOf, 'the temporary directory must be outside any git repository').toBe('');
+
+    const run = runScript(outside, ['--release', '../../evil']);
+
+    expect(run.status).not.toBe(0);
+    expect(run.output).toContain('不是合法的发布目录名');
+    // ⚠️ It must NOT be the repository refusal — that would mean git was
+    // already spawned, which means the path was already derived.
+    expect(run.output).not.toContain('不是 git 仓库');
+    // ⚠️ And the path must not be named at all.
+    expect(run.output).not.toContain('public/evil');
+    expect(run.output).not.toContain('secret.txt');
   });
 
   it('refuses every malformed release argument', () => {

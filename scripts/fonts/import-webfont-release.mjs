@@ -33,9 +33,8 @@
  * ledger). ⇒ The **shape** of the argument is checked BEFORE anything is
  * read, written or spawned:
  *
- *   parse argv → validate the shape → derive the directory name from the
- *   token → and only THEN read the ledger, look at the directory, compute
- *   the hash and run git.
+ *   parse argv → validate the shape → and only THEN read the ledger, look
+ *   at the directory, compute the hash and run git.
  *
  * ⚠️ It is NOT acceptable to build the path first and check it afterwards:
  * once `join(root, 'public', 'font', 'web', arg)` has been evaluated, a
@@ -43,6 +42,19 @@
  * rejected one line later. The ledger of this project had exactly that bug
  * (`ledger-dir-traversal-deletedir`): a `dir` of `../../etc` made the
  * cleanup delete a directory outside the font tree.
+ *
+ * ## ⚠️ What this script does to the ledger: it only READS it
+ *
+ * This script NEVER writes the ledger. Its only writes are to the git
+ * INDEX (`git add` / `git rm`) — the ledger is among the six paths it
+ * stages, and it is staged exactly as the operator synced it down.
+ *
+ * ⇒ The `dir` inside the ledger is written by `lib/webfont/apply.ts`
+ * (`registerRelease()`; the name is `r${token}`, built from the staging
+ * manifest's version), NOT by this script and NOT from the `--release`
+ * argument. ⇒ This script reads the ledger, checks every `dir` against the
+ * release-directory shape, and refuses the whole run if one of them does
+ * not match — it never reconstructs a directory name from a token.
  *
  * ## The hash rule
  *
@@ -221,22 +233,6 @@ function validateReleaseName(release) {
     );
   }
   return release;
-}
-
-/**
- * The token of a release directory: the name without its `r`.
- *
- * ⚠️ The ledger's `dir` is built from this token, never from the raw
- * argument. The argument is arbitrary user input; the ledger is read back
- * by `lib/webfont/releases.ts`, which REFUSES a `dir` that is not a release
- * directory name. ⇒ The two shapes have to agree, so the ledger always
- * carries the re-derived name — even when the argument happens to be legal.
- *
- * @param {string} dir the validated release directory name
- * @returns {string} the token
- */
-function tokenOf(dir) {
-  return dir.slice(1);
 }
 
 /**
@@ -453,7 +449,6 @@ function run(argv, cwd) {
   // ── ① the arguments, and their shape, BEFORE anything else ──────────────
   const { release, commit } = parseArgs(argv);
   const dir = validateReleaseName(release);
-  const token = tokenOf(dir);
 
   // ── ② the repository, and the release itself ─────────────────────────────
   const root = repositoryRoot(cwd);
@@ -546,6 +541,13 @@ function run(argv, cwd) {
   log('    subsetBytes          <- 总字节');
   log('    cssBytes             <- cssBytes（原始）');
   log('    gzipBytes_sans/serif/wenkai  <- 三个 gzipBytes');
+  log('  ⚠️ 每一行在哪：');
+  log('    subsetFiles     -> tests/unit/lib/fonts-css.test.ts:310');
+  log('    subsetBytes     -> tests/unit/lib/fonts-css.test.ts:311');
+  log('    cssBytes        -> tests/unit/lib/fonts-css.test.ts:298');
+  log('    gzipBytes_sans  -> tests/unit/lib/fonts-css.test.ts:73');
+  log('    gzipBytes_serif -> tests/unit/lib/fonts-css.test.ts:82');
+  log('    gzipBytes_wenkai -> tests/unit/lib/fonts-css.test.ts:91');
   log('');
   log('  scripts/fonts/verify-webfont-subsets.mjs');
   log('    LIMITS.unionSampleBytes        <- 只有语料变了才要改（候选校验 report 模式的 [verify] pagecost）');
