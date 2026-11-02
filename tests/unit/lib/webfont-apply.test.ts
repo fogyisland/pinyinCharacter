@@ -819,6 +819,47 @@ describe('the rebase checklist (R-54)', () => {
     ]);
   });
 
+  it('says 不用改 for the read path, because Task 2 made it dynamic', () => {
+    fillTree(trees.live, { version: '0123456789ab', subsetBytes: 'OLD' });
+    const checklist = buildRebaselineChecklist(trees.live, null);
+
+    // ⚠️ The seventh entry is the read path of the nginx test. The spec's
+    // §3.5.9 says 「每次回灌都要改」 — but that was written BEFORE Task 2
+    // landed the `release` field. The line today is
+    //   statSync(resolve(ROOT, 'public','font','web', face.release, face.dir, face.file))
+    // and `face.release` comes from the STYLESHEET ⇒ the line follows the
+    // apply on its own ⇒ there is nothing for a human to edit.
+    //
+    // ⇒ `expected` is `null` (「不用改」) and `always` is `false`.
+    // ⚠️ This is NOT 「未判定」: the path was read, and it is right already.
+    // ⇒ The note says so, and it must NOT carry 未判定.
+    const entry = checklist[6];
+    expect(entry.file).toBe('tests/unit/deploy/nginx-config.test.ts');
+    expect(entry.line).toBe(688);
+    expect(entry.current).toBe('public/font/web/<release>/<dir>/<file>');
+    expect(entry.expected).toBeNull();
+    expect(entry.always).toBe(false);
+    expect(entry.note).toContain('Task 2');
+    expect(entry.note).not.toContain('未判定');
+  });
+
+  it('guards the premise: the nginx test really follows the stylesheet', () => {
+    // ⚠️⚠️ The seventh entry says 「不用改」 — but that is only true while
+    // the line takes the release segment from the STYLESHEET. If somebody
+    // hard-codes the release name back in, the checklist would be lying:
+    // `always: false` would claim there is nothing to change, while every
+    // import would break the test.
+    //
+    // ⇒ Read the REAL line of the repository and assert it is dynamic.
+    const file = resolve(REPO_ROOT, 'tests', 'unit', 'deploy', 'nginx-config.test.ts');
+    const lines = readFileSync(file, 'utf8').split(/\r?\n/);
+    const line = lines[PINNED_LINES.nginxReadPath - 1];
+
+    expect(line).toContain('face.release');
+    expect(line).toContain("'font'");
+    expect(line).toContain("'web'");
+  });
+
   it('measures the live tree for the four numbers that always move', () => {
     fillTree(trees.live, { version: '0123456789ab', subsetBytes: 'OLD' });
     const checklist = buildRebaselineChecklist(trees.live, null);

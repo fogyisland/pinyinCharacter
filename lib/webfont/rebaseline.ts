@@ -140,10 +140,29 @@ export const PINNED_LINES = {
  * ⚠️ It is the path the test looks a subset file up at. After an apply the
  * stylesheet points at `web/r<token>/<族>/`, so the path has to carry the
  * release segment.
+ *
+ * ⚠️⚠️ **Task 2 already made it so (R-205, 2026-11-02).**
+ * `tests/unit/deploy/nginx-config.test.ts:688` reads
+ * `statSync(resolve(ROOT, 'public', 'font', 'web', face.release, face.dir, face.file))`
+ * — the release segment comes from the **stylesheet** (`face.release`), not
+ * from a hard-coded name ⇒ the line **follows the stylesheet on its own**.
+ * ⇒ There is **nothing for a human to change** after an import.
+ *
+ * ⇒ This constant is therefore the path **as it is today** — the same string
+ * the target is. The spec's §3.5.9 entry 7 ("每次回灌都要改") was written when
+ * the `release` field did not exist yet; Task 2 (`488038be3`) landed it early
+ * on purpose, exactly so the re-import day would not blow up
+ * (`statSync` on a missing path throws ⇒ the whole test file dies at import).
  */
-export const CURRENT_READ_PATH = 'public/font/web/<dir>/<file>';
+export const CURRENT_READ_PATH = 'public/font/web/<release>/<dir>/<file>';
 
-/** The read path after an apply. */
+/**
+ * The read path after an apply.
+ *
+ * ⚠️ It is the **same string** as {@link CURRENT_READ_PATH} — the line
+ * already carries the release segment and follows the stylesheet ⇒ the
+ * checklist's seventh entry says 「不用改」 (`expected: null`).
+ */
 export const RELEASED_READ_PATH = 'public/font/web/<release>/<dir>/<file>';
 
 /**
@@ -303,8 +322,13 @@ export function buildRebaselineChecklist(
       line: PINNED_LINES.nginxReadPath,
       what: '读盘路径',
       current: CURRENT_READ_PATH,
-      expected: RELEASED_READ_PATH,
-      always: true,
+      // ⚠️ `null` = 「不用改」. The line already carries the release segment
+      // (`face.release` comes from the stylesheet) ⇒ it follows the apply on
+      // its own ⇒ there is nothing for a human to edit. See
+      // {@link CURRENT_READ_PATH} for the whole story.
+      expected: null,
+      always: false,
+      note: 'Task 2 已把这一行改成 face.release 动态跟随，不需要人工改',
     },
   ];
 }
