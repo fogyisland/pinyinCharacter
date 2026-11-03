@@ -12,6 +12,7 @@ import {
   CaseUpper,
   ClipboardCheck,
   Crown,
+  Database,
   Download,
   KeyRound,
   LayoutDashboard,
@@ -94,6 +95,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     label: '内容',
     items: [
       { href: '/admin/chars', label: '字典 / 字源', icon: BookOpen },
+      { href: '/admin/seed', label: '内容种子 / 导入', icon: Database },
       { href: '/admin/settings/fonts', label: '字源字体', icon: Type },
       { href: '/admin/settings/audio', label: '佛经音频', icon: AudioLines },
     ],

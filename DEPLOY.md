@@ -309,39 +309,69 @@ npx tsx scripts/migrate.ts
 - 字帖中心 `/worksheets` 支持多字帖 + 重命名 + 追加到现有 (`AddToWorksheetDialog`)
 - 留言笔记 (`/notes` 公共墙 + `/admin/notes` 管理) — 表 `notes`, `notes_rate_limits`. 管理员邮箱通过 `app_config.notes.admin_emails` 配置(逗号分隔,空时回退到 `smtp.from`).
 
-## 9. 种子数据补全 (首次部署必跑)
+## 9. 种子数据 (自动补齐 + 手动导入)
 
-`/init` 三步向导**只**会写入 schema + poems/sutras/chars 三个表 + app_config + activate singleton。以下数据**不在 `/init` 范围内**,首次部署完成 `/init` 后必须手工跑这些脚本(每个都幂等):
+**所有内容数据都是 seed。** 服务器启动时会自动把库里缺的补齐,不需要手工跑脚本。
+
+内容数据集的期望规模定义在 `lib/seed-registry.ts` —— 它读仓库自己的数据文件
+(`data/hsk-vocab.json`、`data/general-standard-chinese-characters.json`、`data/content/`、
+`data/poems-manifest.json`、`data/classics/`、`data/sutras/`),是**唯一事实来源**。
+`scripts/init-db.ts`、`/admin/init` 检查清单、`/admin/seed` 导入页、`npm run seed:run`
+全部读它,所以这四处永远一致。
+
+判定规则是「**够才算 seed**」:库里行数 ≥ 仓库行数才算完整,不足则自动补齐差额,
+超出不删(管理员手动加的行不会被覆盖)。**旧的「有行就 skip」规则已废除** ——
+那会让只导入了一半的库永远保持残缺,而所有检查项都显示「就绪」。
+
+| 数据集 | 期望行数 | 目标表 | 缺失时的后果 |
+|---|---|---|---|
+| HSK 分级 | 2632 | `chars.hsk_level` | /game 闯关每关 404、每轮 503 |
+| 通用规范汉字 | 8105 | `chars` | 字典与字库功能的基础表 |
+| 罕用字 | 1412 | `rare_chars` | /rare-chars 显示「字库为空」 |
+| 字源字体 | 8105 | `char_etymology` | 字源页无字形 |
+| 诗词 | 1160 | `poems` | /poetry 为空 |
+| 古籍 | 196 | `classics` | /ancient 为空 |
+| 经文 | 12 | `sutras` | /sutra 为空 |
+
+### 9.1 自动补齐的触发点
+
+`instrumentation.ts` → `isSetupComplete()` → `scripts/init-db.ts::initDb()` →
+`lib/seed-runner.ts::runAllSeeds()`。**每次启动都跑**,缺什么补什么,幂等。
+单项失败只记日志,**不阻塞启动**(一个数据集坏了不该让整站起不来)。
+
+### 9.2 手动导入
+
+后台:`/admin/seed` —— 列出每个数据集「仓库有多少 / 库里有多少」,可逐个或一次性补齐。
+
+命令行:
 
 ```bash
-# 1. HSK 等级标定 (2632 个 HSK 1-6 字写入 chars.hsk_level)
-#    /game 难度筛选依赖此列;不跑的话 HSK 1-6 chip 都返回 0 字
-npx tsx scripts/import-hsk.ts
-#    数据来源:data/hsk-vocab.json (HSK 2.0 official, 2632 chars)
+# 查看缺口(只读,不写库)
+npm run seed:run -- --dry-run
 
-# 2. 古籍导入 (196 本写入 classics 表)
-#    /ancient 页面依赖此表;不跑的话 /ancient 显示空
-npx tsx scripts/build-classics.ts && \
-npx tsx scripts/build-classics-guwendao.ts && \
-npx tsx scripts/build-pianwen.ts
-#    数据来源:data/classics/<slug>.json (190+ books)
+# 补齐全部缺口
+npm run seed:run
 
-# 3. 字源 etymology_story + era_*_has 标记 (~7905 字)
-#    /etymology 页面依赖此表 + data/era-coverage.json
-npx tsx scripts/import-content.ts
-npx tsx scripts/build-era-coverage.ts   # 生成 data/era-coverage.json (slim-DB fallback)
-#    数据来源:data/content/<char>.json (7905 个文件)
+# 只补某一个
+npm run seed:run -- --only=hsk-grading
 
-# 4. 罕用字 (1412 个,写入 rare_chars 表)
-#    ⚠️ 仓库里暂无 seeder 脚本 —— /rare-chars 页面首次部署会显示空列表
-#    需要从历史备份恢复,或补一个 scripts/import-rare-chars.ts
+# 列出全部数据集及期望规模
+npm run seed:run -- --list
 ```
 
-### 9.1 升级已运行的生产环境
+### 9.3 检查内容是否齐备
 
-如果之前已经手工跑过这些脚本,升级时无需重跑(脚本都是 INSERT ... ON DUPLICATE KEY 幂等)。建议每季度跑一次 `scripts/show-stats.ts` + `scripts/check-progress.ts` 检查:
+`/admin/init` 的第 13、14 步会报告 HSK 分级覆盖率和全部内容数据集的就绪状态。
+生产环境下缺数据 = **红字(fail)**,开发环境 = 黄字(warn)。
 
-- `chars.hsk_level` 是否还有 NULL(应为 5278 NULL = 7910 - 2632,非 HSK 字,正常)
-- `rare_chars` 行数是否还是 1412(没有缺失)
-- `classics` 行数是否与 `ls data/classics/ | wc -l` 一致(都是 196)
-- `data/era-coverage.json` 是否存在(不跑 `build-era-coverage` 的话 slim-DB 字源页面会慢很多)
+### 9.4 升级已运行的生产环境
+
+升级后**不需要**手工跑任何导入脚本 —— 新的启动流程会自动补齐。
+想确认一下:
+
+```bash
+npm run seed:run -- --dry-run
+```
+
+`data/era-coverage.json` 是字源页 slim-DB fallback 的缓存文件,由
+`scripts/build-era-coverage.ts` 生成,不是数据库 seed,升级时若该文件缺失需单独生成。

@@ -16,6 +16,8 @@ import { getPool } from './db';
 import { getConfig } from './config';
 import { getRuntimeSiteUrl } from './seo/config';
 import { isProd } from './env';
+import { getSeedDataset, SEED_DATASETS } from './seed-registry';
+import { readSeedCounts } from './seed-runner';
 
 export type StepStatus = 'ok' | 'warn' | 'fail';
 
@@ -169,10 +171,11 @@ export async function runInitChecks(): Promise<InitReport> {
     CountRow[] | null;
   const adminCount = adminCountRows && adminCountRows[0] ? Number(adminCountRows[0].n) : 0;
 
-  // HSK grading coverage. `chars.hsk_level` is filled by `scripts/import-hsk.ts`
-  // — a DEPLOYMENT script, not a migration, so nothing runs it automatically.
-  // A server whose grading was never imported answers 404 on every /game
-  // level and 503 on every round, while every other checklist step is green.
+  // HSK grading coverage. `chars.hsk_level` is filled by the seed runner
+  // (and, before that, by `scripts/import-hsk.ts` — a DEPLOYMENT script, not
+  // a migration, so nothing ran it automatically). A server whose grading
+  // was never imported answers 404 on every /game level and 503 on every
+  // round, while every other checklist step is green.
   //
   // This step is what makes that failure visible in the admin panel instead
   // of in a learner's browser.
@@ -181,9 +184,10 @@ export async function runInitChecks(): Promise<InitReport> {
   )) as HskCountRow[] | null;
   const hskTotal = hskRows && hskRows[0] ? Number(hskRows[0].total) : 0;
   const hskGraded = hskRows && hskRows[0] ? Number(hskRows[0].graded) : 0;
-  // The import writes 2632 chars across HSK 1-6. A server that graded fewer
-  // than that has not run the import (or ran it against a partial vocabulary).
-  const hskExpected = 2632;
+  // The expected count comes from the seed registry, which reads the
+  // repository's own `data/hsk-vocab.json`. It was 2632 when this step was
+  // written, but hard-coding it would let the two drift apart again.
+  const hskExpected = getSeedDataset('hsk-grading')?.expected ?? 2632;
 
   // app_config snapshot
   const configKeys = ['site.url', 'smtp.transport', 'smtp.from', 'ai.api_key', 'ai.model'];
@@ -390,6 +394,46 @@ export async function runInitChecks(): Promise<InitReport> {
       : `${hskGraded} / ${hskTotal} 字已分级 (未导入) — /game 会 404/503`,
     fixHref: undefined, // no UI to fix; it is a CLI import
     fixLabel: '查看 import-hsk.ts',
+  });
+
+  // 14. The whole content seed. The step above covers the HSK grading
+  // because it is the one whose absence breaks a whole feature area
+  // silently. This step covers everything else: the rare chars, the
+  // etymology rows, the poems, the classics and the sutras. A server can
+  // answer 404 for a classic that was never imported while every other
+  // check is green — the same failure class as the HSK one, one dataset
+  // over.
+  //
+  // The expectations come from the seed registry, which reads the
+  // repository's own data files, so this step and the import screen can
+  // never disagree about what "complete" means.
+  const seedCounts = await readSeedCounts();
+  const seedDatasets = SEED_DATASETS.map((dataset) => {
+    const actual = seedCounts[dataset.id] ?? 0;
+    return { dataset, actual, missing: Math.max(0, dataset.expected - actual) };
+  });
+  const incomplete = seedDatasets.filter((d) => d.missing > 0);
+  const missingRows = incomplete.reduce((sum, d) => sum + d.missing, 0);
+  steps.push({
+    id: 'content-seed',
+    name: '内容 seed 就绪',
+    description: `全部 ${SEED_DATASETS.length} 个内容数据集与仓库一致 — 缺额由启动时自动补齐,也可在此手动导入`,
+    required: prod,
+    status: prod
+      ? incomplete.length === 0
+        ? 'ok'
+        : 'fail'
+      : incomplete.length === 0
+        ? 'ok'
+        : 'warn',
+    details:
+      incomplete.length === 0
+        ? `${SEED_DATASETS.length} 个数据集全部就绪`
+        : `${incomplete.length} 个数据集缺 ${missingRows} 行 (${incomplete
+            .map((d) => d.dataset.label)
+            .join('、')})`,
+    fixHref: '/admin/seed',
+    fixLabel: '去导入',
   });
 
   const context: InitContext = {

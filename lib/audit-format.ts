@@ -41,6 +41,7 @@ export type AuditEvent =
   | 'paypal_webhook_rejected'
   | 'admin_chars_generated'
   | 'admin_chars_init_seed'
+  | 'admin_content_seed_run'
   | 'admin_membership_plans_seeded'
   | 'admin_about_intro_regenerated'
   | 'smtp_config_updated'
@@ -126,6 +127,7 @@ export const AUDIT_EVENTS = [
   'paypal_webhook_rejected',
   'admin_chars_generated',
   'admin_chars_init_seed',
+  'admin_content_seed_run',
   'admin_membership_plans_seeded',
   'admin_about_intro_regenerated',
   'smtp_config_updated',
@@ -213,6 +215,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   paypal_webhook_rejected: 'PayPal 回调拒绝',
   admin_chars_generated: '批量生成字',
   admin_chars_init_seed: '初始化种子字',
+  admin_content_seed_run: '补齐内容种子',
   admin_membership_plans_seeded: '种子会员套餐',
   admin_about_intro_regenerated: '重新生成关于页',
   smtp_config_updated: '更新邮件配置',
@@ -373,6 +376,15 @@ export function formatLogMessage(
     }
     case 'admin_chars_init_seed':
       return `${str(m.action) === 'clear' ? '清空' : '种子'} 测试数据${num(m.inserted) ? ` (${num(m.inserted)} 字)` : num(m.removed) ? ` (删除 ${num(m.removed)} 字)` : ''}`;
+    case 'admin_content_seed_run': {
+      const names = Array.isArray(m.datasets) ? (m.datasets as string[]) : [];
+      const failed = Array.isArray(m.failed) ? (m.failed as string[]) : [];
+      const inserted = num(m.inserted);
+      const head = join(names.slice(0, 4) as string[]);
+      const more = names.length > 4 ? ` 等 ${names.length} 项` : '';
+      const failedNote = failed.length ? ` — 失败 ${join(failed as string[])}` : '';
+      return `补齐内容种子${head ? `: ${head}${more}` : ''}${inserted ? ` — 新增 ${inserted} 行` : ''}${failedNote}`;
+    }
 
     case 'admin_membership_plans_seeded':
       return `种子会员套餐 (${num(m.seeded) || '?'} 个)`;
