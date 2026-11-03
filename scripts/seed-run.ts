@@ -18,7 +18,7 @@
  * once, and running it on a complete database does nothing.
  */
 import { closePool } from '../lib/db';
-import { SEED_DATASETS, type SeedDataset } from '../lib/seed-registry';
+import { SEED_DATASETS, seedOrder, type SeedDataset } from '../lib/seed-registry';
 import {
   runSeedDataset,
   readSeedCounts,
@@ -66,9 +66,16 @@ export function parseArgs(argv: string[]): SeedRunOptions {
   return { only, dryRun };
 }
 
-/** The dataset ids this run should touch, in registry order. */
+/**
+ * The dataset ids this run should touch, in dependency order.
+ *
+ * The order comes from the registry's `requires` field: the HSK grading
+ * writes a column on the `chars` table, so it has to run after the
+ * characters are in place. Seeding them in the wrong order leaves them
+ * empty for good.
+ */
 export function selectDatasets(only: string[]): SeedDataset[] {
-  if (only.length === 0) return [...SEED_DATASETS];
+  if (only.length === 0) return seedOrder(SEED_DATASETS);
   const known = new Set(SEED_DATASETS.map((d) => d.id));
   const unknown = only.filter((id) => !known.has(id));
   if (unknown.length > 0) {
@@ -78,7 +85,7 @@ export function selectDatasets(only: string[]): SeedDataset[] {
     );
   }
   const wanted = new Set(only);
-  return SEED_DATASETS.filter((d) => wanted.has(d.id));
+  return seedOrder(SEED_DATASETS).filter((d) => wanted.has(d.id));
 }
 
 /** Format one outcome as a single console line. */
@@ -129,7 +136,11 @@ export async function runSeed(options: SeedRunOptions): Promise<SeedRunReport> {
   return { dryRun: options.dryRun, outcomes, elapsedMs: Date.now() - started };
 }
 
-async function main(): Promise<void> {
+/**
+ * Run the CLI. Exported so the tests can drive it; the shell entry point
+ * at the bottom of this file is what operators use.
+ */
+export async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
 
   if (args.only.includes('__list__')) {
@@ -141,6 +152,31 @@ async function main(): Promise<void> {
       );
     }
     console.log('\nOptions: --only=<id>[,<id>]  --dry-run  --list');
+    return;
+  }
+
+  // The seed talks to the database, so a missing DATABASE_URL stops the
+  // whole run. Reporting it once, with the fix, beats letting every
+  // dataset fail with the same message and the operator having to work
+  // out which of them is the real cause.
+  //
+  // npm does NOT read `.env` — only Next.js does, at boot. A script run
+  // from a shell therefore sees no DATABASE_URL unless the env file is
+  // loaded explicitly (`tsx --env-file=.env`, which is what the
+  // `seed:run` script in package.json does).
+  if (!process.env.DATABASE_URL) {
+    console.error(
+      'DATABASE_URL is not set in this process.\n\n' +
+        'The seed needs the same database the site uses. The site gets it\n' +
+        'from the `.env` file Next.js loads at boot; a shell script does\n' +
+        'not, so it has to be loaded explicitly:\n\n' +
+        '  npm run seed:run                 (package.json passes --env-file=.env)\n' +
+        '  npx tsx --env-file=.env scripts/seed-run.ts\n' +
+        '  node --env-file=.env --import tsx scripts/seed-run.ts\n\n' +
+        'If the file is not at the project root, point at it:\n' +
+        '  npx tsx --env-file=/path/to/.env scripts/seed-run.ts',
+    );
+    process.exitCode = 1;
     return;
   }
 

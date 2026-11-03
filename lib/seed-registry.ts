@@ -62,6 +62,18 @@ export interface SeedDataset {
   kind: SeedKind;
   /** The npm script or CLI command that can import it on demand. */
   manualCommand: string;
+  /**
+   * The ids of datasets that must be seeded before this one.
+   *
+   * The dependency is real, not advisory: the HSK grading writes a column
+   * on the `chars` table, so a grading that runs before the characters are
+   * in place finds nothing to grade and stays empty. The same holds for
+   * the etymology rows, which are joined against `chars`.
+   *
+   * The seed runner honours this order. Without it the datasets were
+   * seeded in array order, which happened to put the grading first.
+   */
+  requires?: string[];
 }
 
 /** Root of the repository's data directory. */
@@ -200,17 +212,6 @@ export const HSK_EXPECTED = countHskVocab();
  */
 export const SEED_DATASETS: readonly SeedDataset[] = [
   {
-    id: 'hsk-grading',
-    label: 'HSK 分级',
-    table: 'chars',
-    dependsOn: '/game 闯关与小游戏 — 缺分级时每关 404、每轮 503',
-    expected: HSK_EXPECTED,
-    countSource: 'json-entries',
-    strategy: 'auto',
-    kind: 'chars-graded',
-    manualCommand: 'npm run seed:run -- --only=hsk-grading',
-  },
-  {
     id: 'chars',
     label: '通用规范汉字',
     table: 'chars',
@@ -222,6 +223,20 @@ export const SEED_DATASETS: readonly SeedDataset[] = [
     manualCommand: 'npm run seed:run -- --only=chars',
   },
   {
+    id: 'hsk-grading',
+    label: 'HSK 分级',
+    table: 'chars',
+    dependsOn: '/game 闯关与小游戏 — 缺分级时每关 404、每轮 503',
+    expected: HSK_EXPECTED,
+    countSource: 'json-entries',
+    strategy: 'auto',
+    kind: 'chars-graded',
+    manualCommand: 'npm run seed:run -- --only=hsk-grading',
+    // The grading is a column on the `chars` table: without the
+    // characters there is nothing to grade.
+    requires: ['chars'],
+  },
+  {
     id: 'rare-chars',
     label: '罕用字',
     table: 'rare_chars',
@@ -231,6 +246,7 @@ export const SEED_DATASETS: readonly SeedDataset[] = [
     strategy: 'auto',
     kind: 'chars',
     manualCommand: 'npm run seed:run -- --only=rare-chars',
+    requires: ['chars'],
   },
   {
     id: 'char-etymology',
@@ -242,6 +258,8 @@ export const SEED_DATASETS: readonly SeedDataset[] = [
     strategy: 'auto',
     kind: 'chars',
     manualCommand: 'npm run seed:run -- --only=char-etymology',
+    // The etymology rows are joined against `chars`.
+    requires: ['chars'],
   },
   {
     id: 'poems',
@@ -277,6 +295,47 @@ export const SEED_DATASETS: readonly SeedDataset[] = [
     manualCommand: 'npm run seed:run -- --only=sutras',
   },
 ];
+
+/**
+ * The datasets in the order they must be seeded.
+ *
+ * The order comes from the `requires` field, not from the array order:
+ * a dataset that depends on another is seeded after it. Anything the
+ * dependencies do not constrain keeps its declared order, so the result
+ * is stable between runs.
+ *
+ * The HSK grading is the case this exists for. It writes a column on the
+ * `chars` table, so seeding it before the characters are in place finds
+ * nothing to grade and leaves the column empty — and because the grading
+ * then counts as "done" (the run is over), it never gets another chance.
+ */
+export function seedOrder(datasets: readonly SeedDataset[] = SEED_DATASETS): SeedDataset[] {
+  const byId = new Map(datasets.map((d) => [d.id, d]));
+  const ordered: SeedDataset[] = [];
+  const placed = new Set<string>();
+  const visiting = new Set<string>();
+
+  const place = (dataset: SeedDataset): void => {
+    if (placed.has(dataset.id)) return;
+    if (visiting.has(dataset.id)) {
+      // A cycle in the dependency graph: seed it in declared order and
+      // let the caller see the dataset rather than an exception.
+      return;
+    }
+    visiting.add(dataset.id);
+    for (const requirement of dataset.requires ?? []) {
+      const dependency = byId.get(requirement);
+      if (dependency) place(dependency);
+    }
+    visiting.delete(dataset.id);
+    if (placed.has(dataset.id)) return;
+    placed.add(dataset.id);
+    ordered.push(dataset);
+  };
+
+  for (const dataset of datasets) place(dataset);
+  return ordered;
+}
 
 /**
  * Count the poems the manifest declares.

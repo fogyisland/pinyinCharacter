@@ -15,6 +15,7 @@ import radicalsData from '../data/radicals.json';
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { readJsonAuto } from '../lib/json-fs';
+import { describeDbError } from '../lib/db-error';
 // Type-only import: `lib/seed-runner` dynamically imports this module at
 // runtime, so a value import would create a cycle. A type import is erased
 // at compile time and cannot.
@@ -597,8 +598,9 @@ export async function initPoems(): Promise<AutoPopulateResult> {
     console.log(`[initPoems] inserted ${n} poems (auto-populate)`);
     return { inserted: n, skipped: false };
   } catch (err) {
-    console.warn('[initPoems] auto-populate failed (continuing):', (err as Error).message);
-    return { inserted: 0, skipped: false, failed: (err as Error).message };
+    const detail = describeDbError(err);
+    console.warn(`[initPoems] auto-populate failed (continuing): ${detail}`);
+    return { inserted: 0, skipped: false, failed: detail };
   }
 }
 
@@ -623,8 +625,9 @@ export async function initClassics(): Promise<AutoPopulateResult> {
     console.log(`[initClassics] inserted ${n} classics (auto-populate)`);
     return { inserted: n, skipped: false };
   } catch (err) {
-    console.warn('[initClassics] auto-populate failed (continuing):', (err as Error).message);
-    return { inserted: 0, skipped: false, failed: (err as Error).message };
+    const detail = describeDbError(err);
+    console.warn(`[initClassics] auto-populate failed (continuing): ${detail}`);
+    return { inserted: 0, skipped: false, failed: detail };
   }
 }
 
@@ -646,8 +649,9 @@ export async function initSutras(): Promise<AutoPopulateResult> {
     console.log(`[initSutras] inserted ${n} sutras (auto-populate)`);
     return { inserted: n, skipped: false };
   } catch (err) {
-    console.warn('[initSutras] auto-populate failed (continuing):', (err as Error).message);
-    return { inserted: 0, skipped: false, failed: (err as Error).message };
+    const detail = describeDbError(err);
+    console.warn(`[initSutras] auto-populate failed (continuing): ${detail}`);
+    return { inserted: 0, skipped: false, failed: detail };
   }
 }
 
@@ -693,8 +697,13 @@ export async function initChars(): Promise<AutoPopulateResult> {
     console.log(`[initChars] inserted ${imported} chars (bulk auto-populate)`);
     return { inserted: imported, skipped: false };
   } catch (err) {
-    console.warn('[initChars] auto-populate failed (continuing):', (err as Error).message);
-    return { inserted: 0, skipped: false, failed: (err as Error).message };
+    // The failure is reported, not swallowed. A server whose `chars`
+    // table predates a column cannot be populated at all, and the message
+    // has to say WHICH column is missing — otherwise the operator sees
+    // "chars 0/8105" with no way to act on it.
+    const detail = describeDbError(err);
+    console.warn(`[initChars] auto-populate failed (continuing): ${detail}`);
+    return { inserted: 0, skipped: false, failed: detail };
   }
 }
 
@@ -787,8 +796,9 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
     console.log(`[initRareChars] scanned ${files.length}, inserted ${imported} rare chars`);
     return { scanned: files.length, inserted: imported, skipped: false };
   } catch (err) {
-    console.warn('[initRareChars] auto-populate failed (continuing):', (err as Error).message);
-    return { scanned: 0, inserted: 0, skipped: false, failed: (err as Error).message };
+    const detail = describeDbError(err);
+    console.warn(`[initRareChars] auto-populate failed (continuing): ${detail}`);
+    return { scanned: 0, inserted: 0, skipped: false, failed: detail };
   }
 }
 
@@ -855,8 +865,9 @@ export async function initCharEtymology(): Promise<AutoPopulateResult> {
     console.log(`[initCharEtymology] backfilled ${inserted} char_etymology rows`);
     return { inserted, skipped: false };
   } catch (err) {
-    console.warn('[initCharEtymology] backfill failed (continuing):', (err as Error).message);
-    return { inserted: 0, skipped: false, failed: (err as Error).message };
+    const detail = describeDbError(err);
+    console.warn(`[initCharEtymology] backfill failed (continuing): ${detail}`);
+    return { inserted: 0, skipped: false, failed: detail };
   }
 }
 

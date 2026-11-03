@@ -17,7 +17,7 @@
  */
 import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
-import { SEED_DATASETS, getSeedDataset, type SeedDataset } from './seed-registry';
+import { SEED_DATASETS, getSeedDataset, seedOrder, type SeedDataset } from './seed-registry';
 
 /** What happened to one dataset in one run. */
 export type SeedStatus = 'ok' | 'pending' | 'skipped' | 'failed';
@@ -190,20 +190,38 @@ async function countTable(table: string): Promise<number> {
   return scalarCount(`SELECT COUNT(*) AS n FROM \`${table}\``);
 }
 
+/** What a seeder returns: how many rows it wrote, and why it failed. */
+interface SeederResult {
+  inserted: number;
+  failed?: string;
+}
+
 /**
  * Fill a plain table through its builder.
  *
  * The builders (`build-poems`, `build-classics`, `build-sutras`) are
  * file-based and idempotent — they insert what is missing and leave the
  * rest alone.
+ *
+ * The builders report a failure in a `failed` field rather than
+ * throwing, because they are also called from the boot path where a
+ * single broken import must not stop the others. That field is turned
+ * back into a throw here: a seeder that silently inserted nothing would
+ * be reported as a success, and the gap would look closed while the
+ * table is still empty.
  */
 function fillViaBuilder(
-  load: () => Promise<() => Promise<number>>,
+  load: () => Promise<() => Promise<number | SeederResult>>,
 ): (options: { dryRun: boolean }) => Promise<number> {
   return async (options) => {
     if (options.dryRun) return 0;
     const build = await load();
-    return build();
+    const result = await build();
+    if (typeof result === 'number') return result;
+    if (result.failed) {
+      throw new Error(result.failed);
+    }
+    return result.inserted;
   };
 }
 
@@ -222,14 +240,17 @@ const HANDLERS: Record<string, SeedHandler> = {
     count: () => countTable('chars'),
     fill: fillViaBuilder(async () => {
       const { initChars } = await import('../scripts/init-db');
-      return async () => (await initChars()).inserted;
+      // The whole result, not just `inserted`: a seeder that caught its
+      // own error reports it in `failed`, and dropping that field would
+      // turn a failed import into a successful-looking no-op.
+      return async () => initChars();
     }),
   },
   'rare-chars': {
     count: () => countTable('rare_chars'),
     fill: fillViaBuilder(async () => {
       const { initRareChars } = await import('../scripts/init-db');
-      return async () => (await initRareChars()).inserted;
+      return async () => initRareChars();
     }),
   },
   'char-etymology': {
@@ -240,21 +261,21 @@ const HANDLERS: Record<string, SeedHandler> = {
     count: () => countTable('poems'),
     fill: fillViaBuilder(async () => {
       const { initPoems } = await import('../scripts/init-db');
-      return async () => (await initPoems()).inserted;
+      return async () => initPoems();
     }),
   },
   classics: {
     count: () => countTable('classics'),
     fill: fillViaBuilder(async () => {
       const { initClassics } = await import('../scripts/init-db');
-      return async () => (await initClassics()).inserted;
+      return async () => initClassics();
     }),
   },
   sutras: {
     count: () => countTable('sutras'),
     fill: fillViaBuilder(async () => {
       const { initSutras } = await import('../scripts/init-db');
-      return async () => (await initSutras()).inserted;
+      return async () => initSutras();
     }),
   },
 };
@@ -373,12 +394,21 @@ export async function runSeedDataset(
   }
 }
 
-/** Seed every dataset that is incomplete. */
+/**
+ * Seed every dataset that is incomplete.
+ *
+ * The datasets are seeded in dependency order, not in array order: the
+ * HSK grading writes a column on the `chars` table, so it has to run
+ * after the characters are in place, and the etymology rows are joined
+ * against `chars` for the same reason. Seeding them in the wrong order
+ * leaves them empty for good — the run is over, and nothing comes back
+ * to fill them.
+ */
 export async function runAllSeeds(
   options: { dryRun: boolean } = { dryRun: false },
 ): Promise<SeedOutcome[]> {
   const outcomes: SeedOutcome[] = [];
-  for (const dataset of SEED_DATASETS) {
+  for (const dataset of seedOrder(SEED_DATASETS)) {
     outcomes.push(await runSeedDataset(dataset.id, options));
   }
   return outcomes;

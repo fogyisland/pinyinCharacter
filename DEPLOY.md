@@ -257,12 +257,24 @@ systemctl restart pinyin
 # 6. **必跑** schema 迁移 — scripts/migrate.ts 跑 scripts/migrations/ 下所有 SQL,
 #    每个文件幂等 (MODIFY COLUMN / CREATE IF NOT EXISTS / 条件 ALTER),
 #    即使没新迁移也是 no-op,可以每次升级都跑一次
-npx tsx scripts/migrate.ts
+#
+#    用 npm run db:migrate,不要直接 `npx tsx scripts/migrate.ts`:
+#    npm 不会读 .env,只有 Next.js 启动时才读。npm 脚本里带了
+#    --env-file-if-exists=.env,脚本才能拿到 DATABASE_URL。
+npm run db:migrate
+
+# 7. **必跑** 内容 seed 补齐 — 把仓库 data/ 里的内容灌进数据库。
+#    幂等:只补差额,不会删掉你手动加的行。可以重复跑。
+#    先看缺口再补:
+npm run seed:run -- --dry-run
+npm run seed:run
 ```
 
 **注意 1**: `/init` 走完后会自动锁住 (`setup.route_enabled=false`)。下次再想跑 `/init` (例如全新 DB 恢复),需要 admin 登录后到 `/admin/settings/setup` 把它打开,或者直接清掉 `app_config` 里的 `setup.completed` flag。
 
-**注意 2 (schema 兼容)**: `scripts/init-db.ts` 已切换为 **slim schema** —— `chars` 表只有结构列 (`char` / `level` / `pinyin` / `radical` / `stroke_count` / `unicode_codepoint`),LLM 生成的内容 (meaning_zh / meaning_en / pinyin_alt / variants / etymology_story) 已迁到 `data/content/<char>.json` 文件。`lib/content.ts` 读路径优先 JSON、legacy fallback 仍兼容老 rich schema (16+ 列),所以**老库不用迁移也能跑**,但建议跑一次 `scripts/migrate.ts` + 重导 `data/content/` 以彻底对齐。
+**注意 2 (schema 兼容)**: `scripts/init-db.ts` 已切换为 **slim schema** —— `chars` 表只有结构列 (`char` / `level` / `pinyin` / `radical` / `stroke_count` / `unicode_codepoint`),LLM 生成的内容 (meaning_zh / meaning_en / pinyin_alt / variants / etymology_story) 已迁到 `data/content/<char>.json` 文件。`lib/content.ts` 读路径优先 JSON、legacy fallback 仍兼容老 rich schema (16+ 列),所以**老库不用迁移也能跑**,但建议跑一次 `npm run db:migrate` + 重导 `data/content/` 以彻底对齐。
+
+**注意 3 (脚本读不到 DATABASE_URL)**: `npm` **不会**读 `.env` —— 只有 Next.js 启动时才加载它。所以从 shell 里跑的脚本(`npm run db:migrate`、`npm run seed:run`、`npm run build:classics` 等)必须自己带 `--env-file-if-exists=.env`,这也是这些 npm 脚本的写法。直接跑 `npx tsx scripts/migrate.ts` 会报 `DATABASE_URL is not set`,而网站却好好地连着库 —— 看到这个报错就改用 `npm run db:migrate`。
 
 ## 8. 近期 schema 变更清单 (运维参考)
 

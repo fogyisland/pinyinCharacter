@@ -22,6 +22,7 @@ import {
   HSK_EXPECTED,
   getSeedDataset,
   countDataFilesIn,
+  seedOrder,
 } from '@/lib/seed-registry';
 import hskVocab from '@/data/hsk-vocab.json';
 import standardChars from '@/data/general-standard-chinese-characters.json';
@@ -107,6 +108,64 @@ describe('seed registry — expected sizes', () => {
   it('looks a dataset up by id and returns undefined for an unknown one', () => {
     expect(getSeedDataset('sutras')?.table).toBe('sutras');
     expect(getSeedDataset('not-a-dataset')).toBeUndefined();
+  });
+});
+
+describe('seed registry — the seeding order', () => {
+  // The order is not cosmetic. The HSK grading writes a column on the
+  // `chars` table, and the etymology rows are joined against `chars`:
+  // seeding either before the characters are in place leaves them empty,
+  // and because the run is over afterwards, nothing comes back to fill
+  // them. This is what a production server actually looked like.
+
+  it('seeds the characters before the datasets that need them', () => {
+    const order = seedOrder(SEED_DATASETS).map((d) => d.id);
+
+    const charsAt = order.indexOf('chars');
+    expect(charsAt).toBeGreaterThanOrEqual(0);
+
+    for (const dependent of ['hsk-grading', 'rare-chars', 'char-etymology']) {
+      const at = order.indexOf(dependent);
+      expect(at, `${dependent} is missing from the order`).toBeGreaterThanOrEqual(0);
+      expect(at, `${dependent} must be seeded after chars`).toBeGreaterThan(charsAt);
+    }
+  });
+
+  it('seeds the HSK grading after the characters', () => {
+    // The exact failure: the grading ran first, found an empty table,
+    // wrote nothing, and the run never came back.
+    const order = seedOrder(SEED_DATASETS).map((d) => d.id);
+    expect(order.indexOf('chars')).toBeLessThan(order.indexOf('hsk-grading'));
+  });
+
+  it('declares the dependency in the registry', () => {
+    expect(getSeedDataset('hsk-grading')?.requires).toContain('chars');
+    expect(getSeedDataset('char-etymology')?.requires).toContain('chars');
+    expect(getSeedDataset('rare-chars')?.requires).toContain('chars');
+  });
+
+  it('keeps every dataset exactly once', () => {
+    const order = seedOrder(SEED_DATASETS).map((d) => d.id);
+    expect(new Set(order).size).toBe(order.length);
+    expect(order.length).toBe(SEED_DATASETS.length);
+  });
+
+  it('survives a dependency cycle without looping', () => {
+    const cyclic = [
+      { id: 'a', requires: ['b'] },
+      { id: 'b', requires: ['a'] },
+    ] as unknown as Parameters<typeof seedOrder>[0];
+
+    const order = seedOrder(cyclic).map((d) => d.id);
+    expect(order).toHaveLength(2);
+  });
+
+  it('ignores a dependency on a dataset that is not registered', () => {
+    const dangling = [
+      { id: 'a', requires: ['does-not-exist'] },
+    ] as unknown as Parameters<typeof seedOrder>[0];
+
+    expect(seedOrder(dangling).map((d) => d.id)).toEqual(['a']);
   });
 });
 

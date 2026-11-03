@@ -27,7 +27,7 @@ import {
   readSeedCount,
   runAllSeeds,
 } from '@/lib/seed-runner';
-import { SEED_DATASETS } from '@/lib/seed-registry';
+import { SEED_DATASETS, seedOrder } from '@/lib/seed-registry';
 import hskVocab from '@/data/hsk-vocab.json';
 
 /** A recorded query. */
@@ -303,6 +303,36 @@ describe('seed runner — "enough counts as seeded"', () => {
     for (const outcome of outcomes) {
       expect(outcome.datasetId).toBeTruthy();
     }
+  });
+});
+
+describe('seed runner — the order the datasets are seeded in', () => {
+  // The order is not cosmetic. The HSK grading writes a column on the
+  // `chars` table; if it runs first it finds an empty table, grades
+  // nothing, and the run is over — the column stays empty for good.
+  // That is exactly what a production server looked like: every dataset
+  // at zero, and the grading unable to do anything about it.
+
+  it('seeds the characters before the grading', async () => {
+    const outcomes = await runAllSeeds();
+
+    const ids = outcomes.map((o) => o.datasetId);
+    expect(ids.indexOf('chars')).toBeGreaterThanOrEqual(0);
+    expect(ids.indexOf('chars')).toBeLessThan(ids.indexOf('hsk-grading'));
+  });
+
+  it('seeds the characters before the etymology rows', async () => {
+    const outcomes = await runAllSeeds();
+
+    const ids = outcomes.map((o) => o.datasetId);
+    expect(ids.indexOf('chars')).toBeLessThan(ids.indexOf('char-etymology'));
+  });
+
+  it('reports the outcomes in dependency order too', () => {
+    // The report is read by an operator; an order that contradicts the
+    // run would be misleading.
+    const ids = seedOrder(SEED_DATASETS).map((d) => d.id);
+    expect(ids.indexOf('chars')).toBeLessThan(ids.indexOf('hsk-grading'));
   });
 });
 
