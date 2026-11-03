@@ -12,7 +12,20 @@ if os.path.exists(DST):
     shutil.rmtree(DST, ignore_errors=True)
 os.makedirs(DST, exist_ok=True)
 
-# Excludes — never copy these to the deploy bundle
+# Excludes — never copy these to the deploy bundle.
+#
+# These are matched as PATHS relative to the repository root, NOT as bare
+# directory names. Matching by name was a real bug: the rule `coverage`
+# excluded EVERY directory called `coverage` at ANY depth, and
+# `app/api/admin/chars/coverage/route.ts` is a production API route — the
+# admin's per-character coverage statistics — that silently never shipped.
+# A name-based rule cannot tell "the root-level test output folder" from
+# "a source directory that happens to be called coverage".
+#
+# So: every entry below is matched against the path relative to the root,
+# and a directory is excluded when its own relative path matches (or is
+# inside one of them). A nested `app/foo/coverage/` is therefore NOT
+# excluded, while the root-level `coverage/` still is.
 EXCLUDE_DIRS = {
     'node_modules',
     '.next',
@@ -27,7 +40,7 @@ EXCLUDE_DIRS = {
     # bundle so prod deploys skip the 10-min `npm run strokes:build` step.
     'playwright-report',
     'test-results',
-    'coverage',
+    'coverage',          # Test-coverage OUTPUT — but only at the root
     'tests',             # Unit/integration tests — never ship
     '__tests__',         # Co-located test dirs — never ship
     '__mocks__',         # Jest-style mocks — never ship
@@ -35,6 +48,14 @@ EXCLUDE_DIRS = {
     '.vscode',
     '.idea',
     '.tmp',              # Throwaway scratch (font screenshots, dev logs)
+}
+
+# Directory names that are excluded at ANY depth, because they are
+# tool-output folders wherever they appear and never source.
+EXCLUDE_DIR_NAMES_ANYWHERE = {
+    'node_modules',
+    '.next',
+    '.git',
 }
 
 # Path-relative excludes (matched against relative path from SRC).
@@ -67,11 +88,22 @@ EXCLUDE_FILES = {
 ALWAYS_INCLUDE_ROOT = {'.env.example'}  # Server template — safe to upload
 
 def should_exclude_dir(name, rel_path=None):
-    if name in EXCLUDE_DIRS:
+    """Decide whether a directory is excluded from the bundle.
+
+    `rel_path` is the directory's path relative to the repository root.
+    The rules are PATH-based: a root-level `coverage/` is excluded, but
+    `app/api/admin/chars/coverage/` is NOT — it holds a production API
+    route, and excluding it by name is how that route silently stopped
+    shipping.
+    """
+    if name in EXCLUDE_DIR_NAMES_ANYWHERE:
         return True
-    if rel_path:
-        rel_norm = rel_path.replace(os.sep, '/')
-        if rel_norm in EXCLUDE_DIRS or any(rel_norm == ex or rel_norm.startswith(ex + '/') for ex in EXCLUDE_DIRS):
+    if not rel_path:
+        return False
+    rel_norm = rel_path.replace(os.sep, '/')
+    for ex in EXCLUDE_DIRS:
+        ex_norm = ex.replace(os.sep, '/')
+        if rel_norm == ex_norm or rel_norm.startswith(ex_norm + '/'):
             return True
     return False
 
