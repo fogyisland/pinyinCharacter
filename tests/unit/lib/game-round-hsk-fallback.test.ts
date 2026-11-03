@@ -35,12 +35,15 @@ function poolChar(char: string, pinyin: string, level: 1 | 2 | 3 = 1) {
   return {
     char,
     pinyin,
+    pinyinAlt: [],
     meaningZh: 'meaning',
+    meaningEn: null,
     radical: '口',
     level,
     hskLevel: null as number | null,
     strokeCount: 1,
-    unicodeCodepoint: 1,
+    unicodeCodepoint: '1',
+    variants: [],
   };
 }
 

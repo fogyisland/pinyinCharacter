@@ -38,12 +38,15 @@ import { GET as CHARS_GET } from '@/app/api/chars/route';
 const POOL_CHAR = {
   char: '好',
   pinyin: 'hǎo',
+  pinyinAlt: [],
   meaningZh: 'good',
+  meaningEn: null,
   radical: '女',
   level: 1 as const,
   hskLevel: null,
   strokeCount: 6,
-  unicodeCodepoint: 22909,
+  unicodeCodepoint: '22909',
+  variants: [],
 };
 
 function makeReq(path: string, query: string): NextRequest {
