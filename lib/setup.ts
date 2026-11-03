@@ -210,9 +210,44 @@ export async function getSetupState(): Promise<SetupState> {
       `SELECT value FROM app_config WHERE \`key\` = 'setup.completed' LIMIT 1`,
     );
     return rows.length > 0 && rows[0].value === 'true' ? 'complete' : 'incomplete';
-  } catch {
+  } catch (error) {
+    // A missing table is NOT an unknown — it is the clearest possible
+    // "this install has never been initialized". The flag we are asking
+    // about lives in `app_config`, so if that table is not there, the
+    // wizard has not run yet.
+    //
+    // This matters because "empty database" is the *normal* first-run
+    // state, and it used to be misread as "the database is unreachable".
+    // The consequence was the exact opposite of what a first-run visitor
+    // needs: the guard let the request through, the page rendered with
+    // database errors in the console, and the wizard was never reached.
+    //
+    // Everything else — a refused connection, a timeout, a DNS failure —
+    // really is "we cannot find out", and must not lock anyone out.
+    if (isMissingTableError(error)) return 'incomplete';
     return 'unknown';
   }
+}
+
+/**
+ * True when the error says the table (or the schema holding it) is absent.
+ *
+ * MySQL reports this as `ER_NO_SUCH_TABLE` / errno 1146 / SQLSTATE 42S02,
+ * whether the missing thing is a table in an existing schema or the
+ * schema itself. A schema that does not exist is reported the same way,
+ * which is what we want: both mean "there is nothing here yet".
+ *
+ * The `code` is the stable identifier; `errno` and `sqlState` are checked
+ * as well so a driver that only populates one of them still gets caught.
+ */
+export function isMissingTableError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const candidate = error as { code?: unknown; errno?: unknown; sqlState?: unknown };
+  return (
+    candidate.code === 'ER_NO_SUCH_TABLE' ||
+    candidate.errno === 1146 ||
+    candidate.sqlState === '42S02'
+  );
 }
 
 /**
