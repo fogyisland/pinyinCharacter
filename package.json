@@ -38,6 +38,7 @@
     "perf:fonts": "node scripts/perf/font-load.mjs",
     "perf:load": "node scripts/perf/full-load.mjs",
     "chars:import": "tsx scripts/import-chars-data.ts",
+    "seed:run": "tsx scripts/seed-run.ts",
     "favicon:build": "tsx scripts/build-favicon.ts",
     "logo:build": "tsx scripts/build-logo-assets.ts",
     "assets:precompress": "node scripts/precompress-assets.mjs",

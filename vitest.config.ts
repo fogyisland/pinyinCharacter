@@ -22,6 +22,10 @@ export default defineConfig({
     // its tests reference the pre-TTS SutraAudioPlayer API and pollute
     // every vitest run with 17 stale failures. Excluded so the Up/ snapshot
     // stays intact for `git bundle` consumers.
-    exclude: ['node_modules/**', 'Up/**', 'dist/**'],
+    //
+    // .tmp/ holds scratch work (mutation-test copies, comparison
+    // screenshots). Its copies of the test files import paths that only
+    // make sense inside the scratch area, so collecting them fails.
+    exclude: ['node_modules/**', 'Up/**', 'dist/**', '.tmp/**'],
   },
 });

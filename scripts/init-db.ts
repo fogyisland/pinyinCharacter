@@ -15,6 +15,10 @@ import radicalsData from '../data/radicals.json';
 import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { readJsonAuto } from '../lib/json-fs';
+// Type-only import: `lib/seed-runner` dynamically imports this module at
+// runtime, so a value import would create a cycle. A type import is erased
+// at compile time and cannot.
+import type { SeedOutcome } from '../lib/seed-runner';
 
 /** One column row from information_schema.columns. */
 interface ColumnNameRow extends RowDataPacket {
@@ -550,14 +554,41 @@ export async function initAppConfig(): Promise<InitAppConfigStats> {
 }
 
 /**
- * PHASE 3: auto-populate poems table from data/poems/*.json. Idempotent (skip if
- * poems table already has rows). Fail-soft — errors don't propagate.
+ * Decide whether a table is already seeded.
+ *
+ * The rule used to be "any row means seeded", which meant a database with
+ * a single row was considered complete and never topped up — a partial
+ * import stayed partial forever while every check reported green. The
+ * rule is now "enough rows means seeded", where "enough" comes from the
+ * seed registry (the repository's own data files).
+ *
+ * A table with MORE rows than expected is complete: an operator may have
+ * added rows by hand, and those must never be deleted.
+ */
+async function isSeededEnough(table: string, datasetId: string): Promise<boolean> {
+  const { getSeedDataset } = await import('../lib/seed-registry');
+  const dataset = getSeedDataset(datasetId);
+  const pool = getPool();
+  const [[{ count }]] = await pool.query<CountRow[]>(
+    `SELECT COUNT(*) AS count FROM \`${table}\``,
+  );
+  const actual = Number(count);
+  if (!dataset) return actual > 0;
+  return actual >= dataset.expected;
+}
+
+/**
+ * PHASE 3: auto-populate poems table from data/poems/*.json. Idempotent —
+ * a table that already holds the full set is left alone; a partial one is
+ * topped up. Fail-soft — errors don't propagate.
  */
 export async function initPoems(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM poems`);
-    if (Number(count) > 0) {
+    if (await isSeededEnough('poems', 'poems')) {
+      const [[{ count }]] = await pool.query<CountRow[]>(
+        `SELECT COUNT(*) AS count FROM poems`,
+      );
       console.log(`[initPoems] poems table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
     }
@@ -580,8 +611,10 @@ export async function initPoems(): Promise<AutoPopulateResult> {
 export async function initClassics(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM classics`);
-    if (Number(count) > 0) {
+    if (await isSeededEnough('classics', 'classics')) {
+      const [[{ count }]] = await pool.query<CountRow[]>(
+        `SELECT COUNT(*) AS count FROM classics`,
+      );
       console.log(`[initClassics] classics table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
     }
@@ -601,8 +634,10 @@ export async function initClassics(): Promise<AutoPopulateResult> {
 export async function initSutras(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM sutras`);
-    if (Number(count) > 0) {
+    if (await isSeededEnough('sutras', 'sutras')) {
+      const [[{ count }]] = await pool.query<CountRow[]>(
+        `SELECT COUNT(*) AS count FROM sutras`,
+      );
       console.log(`[initSutras] sutras table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
     }
@@ -625,8 +660,10 @@ export async function initSutras(): Promise<AutoPopulateResult> {
 export async function initChars(): Promise<AutoPopulateResult> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM chars`);
-    if (Number(count) > 0) {
+    if (await isSeededEnough('chars', 'chars')) {
+      const [[{ count }]] = await pool.query<CountRow[]>(
+        `SELECT COUNT(*) AS count FROM chars`,
+      );
       console.log(`[initChars] chars table has ${count} rows, skip auto-populate`);
       return { inserted: 0, skipped: true };
     }
@@ -671,7 +708,9 @@ export async function initChars(): Promise<AutoPopulateResult> {
  * non-empty `rare.meaning`. The "needs_review" flag stays at the default (1)
  * — admin tools flag individual chars after human review.
  *
- * Idempotent: skips if table already has rows (matches initChars pattern).
+ * Idempotent: skips when the table already holds the full expected set.
+ * A table with MORE rows than expected is left alone — an operator may
+ * have added rare chars by hand and those must not be deleted.
  *
  * Up/ deploy bundle ships these as .json.gz (saves ~190MB); `readJsonAuto()`
  * reads .json first, falls back to .json.gz via gunzipSync — so both shapes
@@ -684,6 +723,19 @@ export interface InitRareCharsStats {
   skipped: boolean;
   failed?: string;
 }
+
+/**
+ * How many rare chars the repository ships.
+ *
+ * Read from the seed registry, which derives it from
+ * `data/content-manifest.json` (`byField.rare_meaning`) and falls back to
+ * walking `data/content/` when the manifest is missing.
+ */
+async function expectedRareChars(): Promise<number> {
+  const { getSeedDataset } = await import('../lib/seed-registry');
+  const dataset = getSeedDataset('rare-chars');
+  return dataset?.expected ?? 0;
+}
 interface ContentShape {
   char?: string;
   level?: number;
@@ -693,7 +745,7 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
   const pool = getPool();
   try {
     const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM rare_chars`);
-    if (Number(count) > 0) {
+    if (Number(count) >= (await expectedRareChars())) {
       console.log(`[initRareChars] rare_chars table has ${count} rows, skip auto-populate`);
       return { scanned: 0, inserted: 0, skipped: true };
     }
@@ -873,10 +925,19 @@ export async function initActivate(): Promise<InitActivateStats> {
 }
 
 /**
- * Orchestrator: runs all 7 init phases in order. Kept for CLI use
+ * Orchestrator: runs all init phases in order. Kept for CLI use
  * (`npx tsx scripts/init-db.ts`) and for one-shot callers that don't need
  * per-phase progress. The /init wizard calls each phase individually for
  * real-time progress UI.
+ *
+ * Every phase seeds from the repository's own data files and tops up what
+ * is missing rather than skipping when any row exists. The expected sizes
+ * come from `lib/seed-registry.ts`, which is the single source of truth
+ * shared with the admin checklist and the admin import screen.
+ *
+ * `initClassics` and `initCharEtymology` used to exist but were never
+ * called from here, so the classics table and the etymology table were
+ * only ever populated by hand-running a script.
  */
 export interface InitDbStats {
   statementsRun: number;
@@ -887,6 +948,8 @@ export interface InitDbStats {
   chars: AutoPopulateResult;
   rareChars: InitRareCharsStats;
   activateSeeded: boolean;
+  /** Per-dataset seeding outcomes, keyed by dataset id. */
+  seeds: SeedOutcome[];
 }
 
 export async function initDb(): Promise<InitDbStats> {
@@ -897,6 +960,14 @@ export async function initDb(): Promise<InitDbStats> {
   const chars = await initChars();
   const rareChars = await initRareChars();
   const { seeded: activateSeeded } = await initActivate();
+
+  // Top up whatever the per-phase seeders could not complete on their own.
+  // `initClassics` was missing from this sequence entirely, and the HSK
+  // grading has no per-phase seeder at all — it lives in a deployment
+  // script that nothing ran automatically.
+  const { runAllSeeds } = await import('../lib/seed-runner');
+  const seeds = await runAllSeeds({ dryRun: false });
+
   return {
     statementsRun: tables.statementsRun,
     tablesNow: tables.tablesNow,
@@ -906,6 +977,7 @@ export async function initDb(): Promise<InitDbStats> {
     chars,
     rareChars,
     activateSeeded,
+    seeds,
   };
 }
 
