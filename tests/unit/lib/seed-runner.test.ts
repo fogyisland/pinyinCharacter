@@ -69,10 +69,14 @@ beforeEach(() => {
       issued.push({ sql, params });
       // A row-shaped query (the "which chars are ungraded" lookup) answers
       // with chars when the test asked for them.
-      if (sql.includes('AS char')) {
+      //
+      // The lookup aliases the column as `c_char` — `char` is a MySQL
+      // reserved word, and `AS char` was a parse error on the server.
+      // The mock keys off that alias, so it breaks if the alias changes.
+      if (sql.includes('AS c_char')) {
         const wanted = Array.isArray(params[0]) ? (params[0] as string[]) : [];
         const rows = wanted.slice(0, Number(counts['ungraded:limit'] ?? 0)).map((char) => ({
-          char,
+          c_char: char,
         }));
         return [rows, []];
       }
@@ -165,6 +169,43 @@ describe('seed runner — "enough counts as seeded"', () => {
     await runSeedDataset('hsk-grading', { dryRun: true });
 
     expect(issued.filter((q) => q.sql.includes('UPDATE'))).toHaveLength(0);
+  });
+
+  it('never writes the reserved word `char` unquoted', async () => {
+    // `char` is a MySQL reserved word (CHARACTER SET). An unquoted one is
+    // a parse error, and the production server rejected the seed with:
+    //   ER_PARSE_ERROR ... near 'char FROM chars c LEFT JOIN ...'
+    // The mocked pool never parses SQL, so this asserts on the statement
+    // text itself: every `char` that is not inside backticks is a bug.
+    counts['hsk:'] = 0;
+    counts['ungraded:limit'] = 3;
+
+    await runSeedDataset('hsk-grading');
+
+    expect(issued.length).toBeGreaterThan(0);
+    for (const query of issued) {
+      // Strip the string literals and the placeholders, then look for a
+      // bare `char` word.
+      const withoutLiterals = query.sql.replace(/'[^']*'/g, "''").replace(/\?/g, '?');
+      const bare = withoutLiterals.replace(/`[^`]*`/g, '').match(/\bchar\b/i);
+      expect(
+        bare,
+        `statement uses the reserved word char unquoted: ${query.sql}`,
+      ).toBeNull();
+    }
+  });
+
+  it('reads the ungraded chars back under a name MySQL can return', async () => {
+    // The alias has to be backticked too — `AS char` fails the same way
+    // a bare column does — and the row is read back under that name.
+    counts['hsk:'] = 0;
+    counts['ungraded:limit'] = 3;
+
+    await runSeedDataset('hsk-grading');
+
+    const select = issued.find((q) => q.sql.includes('LEFT JOIN'));
+    expect(select).toBeDefined();
+    expect(select!.sql).toMatch(/AS\s+`?\w+`?/);
   });
 
   it('reports a failed dataset without throwing', async () => {

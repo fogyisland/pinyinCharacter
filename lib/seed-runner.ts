@@ -64,7 +64,7 @@ interface CountRow extends RowDataPacket {
 
 /** A char row read back from the `chars` table. */
 interface CharRow extends RowDataPacket {
-  char: string;
+  c_char: string;
 }
 
 /** Read a single count out of the pool, tolerating a missing table. */
@@ -116,14 +116,20 @@ async function fillHskGrading(options: { dryRun: boolean }): Promise<number> {
     const lvl = Number(level);
 
     // Which of these characters exist in `chars` and are still ungraded?
+    //
+    // The alias is `c_char`, not `char`: `char` is a MySQL reserved word
+    // (CHARACTER SET), so `AS char` is a parse error even though the
+    // column reference it aliases is quoted. The server rejected the
+    // seed with:
+    //   ER_PARSE_ERROR ... near 'char FROM chars c LEFT JOIN ...'
     const [existing] = await pool.query<CharRow[]>(
-      `SELECT c.\`char\` AS char FROM chars c
+      `SELECT c.\`char\` AS c_char FROM chars c
         LEFT JOIN (SELECT \`char\`, hsk_level FROM chars WHERE hsk_level IS NOT NULL) g
           ON g.\`char\` = c.\`char\`
        WHERE c.\`char\` IN (?) AND g.\`char\` IS NULL`,
       [chars],
     );
-    const missing = existing.map((r) => r.char);
+    const missing = existing.map((r) => r.c_char);
     if (missing.length === 0) continue;
 
     if (options.dryRun) {

@@ -32,10 +32,13 @@ async function main() {
   console.log(JSON.stringify(stats, null, 2));
 
   // first 10 missing meaning_zh at level 1 (most common)
+  //
+  // The `char` column is backticked: `char` is a MySQL reserved word
+  // (CHARACTER SET), and an unquoted one is a parse error.
   const [missing] = await conn.query<MissingMeaningRow[]>(`
-    SELECT char, pinyin, level FROM chars
+    SELECT \`char\`, pinyin, level FROM chars
     WHERE meaning_zh IS NULL OR meaning_zh = ''
-    ORDER BY level ASC, char ASC
+    ORDER BY level ASC, \`char\` ASC
     LIMIT 20
   `);
   console.log('\nFirst 20 chars missing meaning_zh:');
