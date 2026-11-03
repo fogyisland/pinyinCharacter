@@ -66,8 +66,36 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
  */
 const CONFIG_TTL_MS = 60_000;
 
+/**
+ * How long a FAILED load is remembered, in milliseconds.
+ *
+ * A failed load used to be remembered for no time at all: the cache was
+ * only written on success, so the next read queried the database again
+ * and threw again. The root layout reads `site.url` three times per
+ * render (itself, `buildOrganization`, `buildWebSite`), so one database
+ * hiccup produced three queries and three identical stack traces — and
+ * the same again on every request until the database came back.
+ *
+ * The failure is remembered so the queries collapse; the **error is still
+ * thrown** to every caller, so the operator still learns about it. This
+ * only bounds how often the database is asked, not who finds out.
+ *
+ * The window is short on purpose: a database that has just come back must
+ * become visible again at once. Five seconds collapses the reads inside
+ * one render without hiding a recovered database for a noticeable while.
+ */
+const CONFIG_FAILURE_TTL_MS = 5_000;
+
 let configCache: { at: number; values: Map<string, string> } | null = null;
 let inflightLoad: Promise<Map<string, string>> | null = null;
+
+/**
+ * The error from the last failed load, and when it happened.
+ *
+ * Held separately from `configCache` because it means the opposite thing:
+ * `configCache` holds values, this holds the absence of them.
+ */
+let configFailure: { at: number; error: unknown } | null = null;
 
 async function loadConfigRows(): Promise<Map<string, string>> {
   const [rows] = await getPool().query<AppConfigRow[]>(`SELECT \`key\`, value FROM app_config`);
@@ -80,12 +108,29 @@ async function getConfigMap(): Promise<Map<string, string>> {
   if (configCache && Date.now() - configCache.at < CONFIG_TTL_MS) {
     return configCache.values;
   }
+
+  // A recent failure: do not ask the database again, just fail the same
+  // way. The caller still gets the error — it is only the query that is
+  // skipped.
+  if (configFailure && Date.now() - configFailure.at < CONFIG_FAILURE_TTL_MS) {
+    throw configFailure.error;
+  }
+
   // Collapse concurrent misses into a single query.
   if (!inflightLoad) {
     const load = loadConfigRows()
       .then((values) => {
         configCache = { at: Date.now(), values };
+        // The load succeeded, so any remembered failure is stale.
+        configFailure = null;
         return values;
+      })
+      .catch((error: unknown) => {
+        // Remember the failure briefly so the next read does not query
+        // the database again — but keep throwing it, so the failure is
+        // still reported to every caller.
+        configFailure = { at: Date.now(), error };
+        throw error;
       })
       .finally(() => {
         if (inflightLoad === load) inflightLoad = null;
@@ -98,6 +143,7 @@ async function getConfigMap(): Promise<Map<string, string>> {
 /** Drop the cached config (used by writes and by tests). */
 export function clearConfigCache(): void {
   configCache = null;
+  configFailure = null;
 }
 
 export async function getConfig(key: string): Promise<string | null> {
