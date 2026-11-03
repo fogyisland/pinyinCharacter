@@ -97,10 +97,38 @@ function readJsonAuto(path: string): unknown {
   return null;
 }
 
-/** Count the entries of a JSON array file. Returns 0 when the file is absent. */
-function countJsonArray(fileName: string): number {
-  const value = readJsonAuto(join(DATA_DIR, fileName));
-  return Array.isArray(value) ? value.length : 0;
+/**
+ * Count the characters the importers will actually write.
+ *
+ * `initChars()` and `initCharEtymology()` only take a character whose
+ * JavaScript `String.length` is 1 — that is, a single UTF-16 code unit,
+ * i.e. a character in the Basic Multilingual Plane.
+ *
+ * The source file (`data/general-standard-chinese-characters.json`) holds
+ * 8105 entries, of which **196 live in the Supplementary Planes** (code
+ * point > U+FFFF). In JavaScript those strings have `length === 2`, so the
+ * importers skip them. The skip is deliberate: mysql2's binary protocol
+ * corrupts 4-byte UTF-8, so writing them would store mojibake.
+ *
+ * Counting the raw array length (8105) as the expected value therefore
+ * produced a permanent shortfall: the seed could never reach it, so the
+ * admin screen reported "missing 196 rows" forever and the "fill the gap"
+ * button could do nothing. The expected value must be what the table can
+ * hold — 7909 — not what the file contains.
+ *
+ * ⚠️ The length check below is JavaScript's, not Python's: `String.length`
+ * counts UTF-16 code units, so a supplementary-plane character is 2 here
+ * while `len()` in Python would report 1. Counting with the wrong
+ * semantics is how this defect stayed invisible for a while.
+ */
+function countImportableChars(): number {
+  const value = readJsonAuto(join(DATA_DIR, 'general-standard-chinese-characters.json'));
+  if (!Array.isArray(value)) return 0;
+  let count = 0;
+  for (const entry of value) {
+    if (typeof entry === 'string' && entry.length === 1) count++;
+  }
+  return count;
 }
 
 /**
@@ -121,7 +149,13 @@ export function countDataFilesIn(dir: string): number {
   const names = new Set<string>();
   for (const file of readdirSync(dir)) {
     if (!file.endsWith('.json') && !file.endsWith('.json.gz')) continue;
-    names.add(file.replace(/\.gz$/, ''));
+    const name = file.replace(/\.gz$/, '');
+    // A `manifest.json` is an index of the directory, not a data file in
+    // it. Counting it made the `sutras` expected value 12 while only 11
+    // sutras exist — a shortfall the seed could never close, so the admin
+    // screen asked for a row that does not exist.
+    if (name === 'manifest.json') continue;
+    names.add(name);
   }
   return names.size;
 }
@@ -153,17 +187,31 @@ function countHskVocab(): number {
  * `data/content/<char>.json` holds one file per character. A file counts as
  * rare when its `level` is 3 and it has a non-empty `rare.meaning` — the
  * same rule `init-db.ts::initRareChars` uses when it populates the table.
- * Reading 7905 files on every request is too slow, so the manifest's
- * `rare_meaning` count is used when the manifest is present; the directory
- * walk is the fallback for a checkout without a manifest.
+ *
+ * ⚠️ The manifest's `byField.rare_meaning` is **NOT** that number. It
+ * counts every file with a non-empty `rare.meaning`, whatever its level:
+ * 1412, while the `level === 3` rule yields 1409. The three extras
+ * (`亍`, `尢`, `彳`) are level 2 — they carry a rare meaning but the
+ * difficulty grading puts them below the rare tier, so the importer skips
+ * them.
+ *
+ * Using the manifest number made the expected value 1412 while the table
+ * can only ever hold 1409: the seed reported a permanent 3-row shortfall
+ * and the admin screen kept asking for a gap that could not be closed.
+ * The directory walk is the authority because it applies the import rule
+ * itself.
+ *
+ * The walk reads 7905 files, so it is memoized for the life of the
+ * process — `expected` is computed lazily on first access, and the admin
+ * screen renders it on every request.
  */
+let rareCharsCountCache: number | null = null;
+
 function countRareChars(): number {
-  const manifest = readJsonAuto(join(DATA_DIR, 'content-manifest.json')) as
-    | { byField?: Record<string, number> }
-    | null;
-  const fromManifest = manifest?.byField?.rare_meaning;
-  if (typeof fromManifest === 'number' && fromManifest > 0) return fromManifest;
-  return countContentFilesWithRareMeaning();
+  if (rareCharsCountCache === null) {
+    rareCharsCountCache = countContentFilesWithRareMeaning();
+  }
+  return rareCharsCountCache;
 }
 
 /**
@@ -216,7 +264,7 @@ export const SEED_DATASETS: readonly SeedDataset[] = [
     label: '通用规范汉字',
     table: 'chars',
     dependsOn: '字典与全部字库功能的基础表',
-    expected: countJsonArray('general-standard-chinese-characters.json'),
+    expected: countImportableChars(),
     countSource: 'json',
     strategy: 'auto',
     kind: 'chars',
@@ -253,7 +301,7 @@ export const SEED_DATASETS: readonly SeedDataset[] = [
     label: '字源字体',
     table: 'char_etymology',
     dependsOn: '字源字形 — 缺行时字源页无字形',
-    expected: countJsonArray('general-standard-chinese-characters.json'),
+    expected: countImportableChars(),
     countSource: 'json',
     strategy: 'auto',
     kind: 'chars',

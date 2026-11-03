@@ -54,10 +54,36 @@ describe('seed registry — expected sizes', () => {
     expect(HSK_EXPECTED).toBe(2632);
   });
 
-  it('expects every character of the standard set in `chars`', () => {
+  it('expects every IMPORTABLE character of the standard set in `chars`', () => {
+    // ⚠️ Not `standardChars.length` (8105). The source file holds 196
+    // supplementary-plane characters, and JavaScript's `String.length`
+    // counts them as 2 — so `initChars()` skips them on purpose (mysql2's
+    // binary protocol corrupts 4-byte UTF-8). The expected value has to be
+    // what the table can hold, or the shortfall never closes.
+    const importable = standardChars.filter((c) => c.length === 1).length;
     const dataset = getSeedDataset('chars');
     expect(dataset).toBeDefined();
-    expect(dataset!.expected).toBe(standardChars.length);
+    expect(dataset!.expected).toBe(importable);
+    expect(dataset!.expected).toBeLessThan(standardChars.length);
+    expect(dataset!.expected).toBe(7909);
+  });
+
+  it('expects the same number of rows in `char-etymology` as in `chars`', () => {
+    // The etymology rows are one per importable character — they are
+    // joined against `chars`, so the two tables cannot diverge.
+    expect(getSeedDataset('char-etymology')!.expected).toBe(
+      getSeedDataset('chars')!.expected,
+    );
+  });
+
+  it('expects the rare characters the importer rule selects', () => {
+    // The rule `initRareChars()` applies: `level === 3` AND a non-empty
+    // `rare.meaning`. The manifest's `byField.rare_meaning` counts every
+    // level, so it over-counts by 3 (1412 vs 1409) — using it made the
+    // shortfall permanent.
+    const dataset = getSeedDataset('rare-chars');
+    expect(dataset).toBeDefined();
+    expect(dataset!.expected).toBe(1409);
   });
 
   it('expects the poems the manifest declares', () => {
@@ -97,6 +123,32 @@ describe('seed registry — expected sizes', () => {
   it('never expects zero rows for a dataset that has data', () => {
     for (const dataset of SEED_DATASETS) {
       expect(dataset.expected, `${dataset.id} expects zero rows`).toBeGreaterThan(0);
+    }
+  });
+
+  it('never expects more rows than the importers can write', () => {
+    // The defect class this guards: an expected value computed from a
+    // WIDER rule than the import rule. The count then sits above the
+    // reachable maximum, the seed reports `pending` forever, and the admin
+    // screen keeps asking for a gap that can never be closed.
+    //
+    // `chars` and `char-etymology` are capped by the importable-character
+    // count; `rare-chars` by the `level === 3` rule; `sutras` by the
+    // number of sutra files (the manifest is not one of them).
+    const importableChars = standardChars.filter((c) => c.length === 1).length;
+    const ceilings: Record<string, number> = {
+      chars: importableChars,
+      'char-etymology': importableChars,
+      'rare-chars': 1409,
+      sutras: 11,
+    };
+    for (const dataset of SEED_DATASETS) {
+      const ceiling = ceilings[dataset.id];
+      if (ceiling === undefined) continue;
+      expect(
+        dataset.expected,
+        `${dataset.id} expects ${dataset.expected} but the importers can write at most ${ceiling}`,
+      ).toBeLessThanOrEqual(ceiling);
     }
   });
 
@@ -208,7 +260,29 @@ describe('seed registry — the deploy bundle holds gzipped data', () => {
   it('keeps the sutra count stable whether the files are plain or gzipped', () => {
     // `data/sutras/` is NOT gzipped by the packager, so the plain count is
     // the reference. The count must not depend on the file extension.
-    expect(getSeedDataset('sutras')!.expected).toBe(12);
+    //
+    // ⚠️ 11, not 12: `data/sutras/` holds 11 sutras plus a `manifest.json`
+    // that indexes them. Counting the manifest as a sutra made the
+    // expected value unreachable — the admin screen asked for a row that
+    // does not exist.
+    expect(getSeedDataset('sutras')!.expected).toBe(11);
+  });
+
+  it('does not count a manifest.json as a data file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'seed-manifest-'));
+    writeFileSync(join(dir, 'a.json'), '');
+    writeFileSync(join(dir, 'b.json'), '');
+    writeFileSync(join(dir, 'manifest.json'), '');
+
+    expect(countDataFilesIn(dir)).toBe(2);
+  });
+
+  it('does not count a gzipped manifest.json as a data file', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'seed-manifest-gz-'));
+    writeFileSync(join(dir, 'a.json.gz'), '');
+    writeFileSync(join(dir, 'manifest.json.gz'), '');
+
+    expect(countDataFilesIn(dir)).toBe(1);
   });
 
   it('reads a gzipped manifest when the plain one is absent', () => {
