@@ -133,6 +133,26 @@ const TIER: QuestTier = buildTier(1, FACTS);
 /** The tier of a server whose HSK grading was never imported. */
 const EMPTY_TIER: QuestTier = buildTier(1, []);
 
+/**
+ * A tier that HAS rows but no usable level.
+ *
+ * Every char's only free clause is one character long, so no char is
+ * eligible (④ needs a free clause of at least two characters) and the tier
+ * has no level at all.
+ *
+ * This is NOT the "the grading was never imported" case: the rows are there,
+ * they are just not good enough for a question. The two need different
+ * answers — one is a deployment step, the other is a content problem that
+ * the import command does NOT solve.
+ */
+const INELIGIBLE_TIER: QuestTier = buildTier(
+  1,
+  FACTS.map((fact) => ({
+    ...fact,
+    meaningZh: `看 ${fact.char}`,
+  })),
+);
+
 function makeReq(query: string): NextRequest {
   return new NextRequest(`http://localhost/api/game/quest${query}`);
 }
@@ -187,5 +207,16 @@ describe('GET /api/game/quest — a tier that was never imported', () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.ok).toBe(true);
+  });
+
+  it('does NOT call a tier with rows but no usable level "never imported"', async () => {
+    // The rows are there — they are simply not good enough for a question.
+    // Calling that "the grading was never imported" sends the operator to
+    // run a command that would not help.
+    vi.mocked(getQuestTier).mockResolvedValue(INELIGIBLE_TIER);
+    const res = await GET(makeReq('?hsk=1&level=1'));
+    expect(res.status).toBe(404);
+    const body = await res.json();
+    expect(body.error.code).toBe('level_not_found');
   });
 });
