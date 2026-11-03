@@ -25,6 +25,10 @@
 import 'server-only';
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from '@/lib/db';
+import {
+  isWebfontJobsTableMissing,
+  WebfontSchemaMissingError,
+} from '@/lib/webfont/schema-errors';
 
 /** The lifecycle of a build job (design §4). */
 export type WebfontJobStatus = 'pending' | 'running' | 'done' | 'failed' | 'cancelled';
@@ -75,6 +79,35 @@ interface JobIdRow extends RowDataPacket {
 type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
 
 const TABLE = 'webfont_build_jobs';
+
+/**
+ * Runs one statement against the job table and translates a missing table
+ * into a named error.
+ *
+ * Every read and write of this table goes through here, so the
+ * "the schema has not caught up" case is recognised in exactly one place.
+ * Without it, `ER_NO_SUCH_TABLE` escapes as a driver error and — on the
+ * admin page, which is a server component — becomes an RSC render error
+ * whose message a production build strips, leaving the administrator with
+ * "An error occurred in the Server Components render" and no way to act.
+ *
+ * Any other driver error is re-thrown untouched: this is a translation,
+ * not a filter, and a caller must still see a connection failure as a
+ * connection failure.
+ */
+async function runJobQuery<T extends ResultSetHeader | RowDataPacket[]>(
+  sql: string,
+  params: unknown[] = [],
+): Promise<[T, unknown]> {
+  try {
+    return (await getPool().query<T>(sql, params)) as [T, unknown];
+  } catch (error) {
+    if (isWebfontJobsTableMissing(error)) {
+      throw new WebfontSchemaMissingError(TABLE);
+    }
+    throw error;
+  }
+}
 
 /** The columns every read of the table selects, in the interface's order. */
 const JOB_COLUMNS =
@@ -179,7 +212,7 @@ export async function createJob(input: {
   id: string;
   startedBy: number | null;
 }): Promise<WebfontJob> {
-  await getPool().query(
+  await runJobQuery(
     `INSERT INTO ${TABLE} (id, status, step, step_progress, message, log, started_by)
      VALUES (?, ?, ?, ?, ?, ?, ?)`,
     [input.id, 'pending', '', '', '', '', input.startedBy],
@@ -193,7 +226,7 @@ export async function createJob(input: {
 
 /** Reads one job, or null when there is no such row. */
 export async function getJob(id: string): Promise<WebfontJob | null> {
-  const [rows] = await getPool().query<WebfontJobRow[]>(
+  const [rows] = await runJobQuery<WebfontJobRow[]>(
     `SELECT ${JOB_COLUMNS} FROM ${TABLE} WHERE id = ? LIMIT 1`,
     [id],
   );
@@ -202,7 +235,7 @@ export async function getJob(id: string): Promise<WebfontJob | null> {
 
 /** The most recent jobs, newest first. */
 export async function listJobs(limit: number = DEFAULT_JOB_LIST_LIMIT): Promise<WebfontJob[]> {
-  const [rows] = await getPool().query<WebfontJobRow[]>(
+  const [rows] = await runJobQuery<WebfontJobRow[]>(
     `SELECT ${JOB_COLUMNS} FROM ${TABLE} ORDER BY created_at DESC LIMIT ?`,
     [normalizeLimit(limit, DEFAULT_JOB_LIST_LIMIT, MAX_JOB_LIST_LIMIT)],
   );
@@ -218,7 +251,7 @@ export async function listJobs(limit: number = DEFAULT_JOB_LIST_LIMIT): Promise<
  * that has a multi-line chunk calls this once per line.
  */
 export async function appendLog(id: string, line: string): Promise<void> {
-  await getPool().query(
+  await runJobQuery(
     `UPDATE ${TABLE}
         SET log = CONCAT(log, DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'), ' ', ?)
       WHERE id = ?`,
@@ -277,7 +310,7 @@ export async function updateJob(
 
   if (sets.length === 0) return;
   params.push(id);
-  await getPool().query(`UPDATE ${TABLE} SET ${sets.join(', ')} WHERE id = ?`, params);
+  await runJobQuery(`UPDATE ${TABLE} SET ${sets.join(', ')} WHERE id = ?`, params);
 
   // A truncation is never silent: it goes into the run log, which the
   // admin page shows.
@@ -294,7 +327,7 @@ export async function updateJob(
  * (design §3.2) — the API answers 409 with this job's id.
  */
 export async function findActiveJob(): Promise<WebfontJob | null> {
-  const [rows] = await getPool().query<WebfontJobRow[]>(
+  const [rows] = await runJobQuery<WebfontJobRow[]>(
     `SELECT ${JOB_COLUMNS} FROM ${TABLE}
       WHERE status IN ('pending','running')
       ORDER BY created_at DESC LIMIT 1`,
@@ -313,10 +346,9 @@ export async function findActiveJob(): Promise<WebfontJob | null> {
  * Returns the number of jobs whose log was emptied.
  */
 export async function clearOldJobLogs(keep: number): Promise<number> {
-  const pool = getPool();
   const limit = Number.isFinite(keep) ? Math.max(0, Math.floor(keep)) : 0;
 
-  const [rows] = await pool.query<JobIdRow[]>(
+  const [rows] = await runJobQuery<JobIdRow[]>(
     `SELECT id FROM ${TABLE} ORDER BY created_at DESC LIMIT ?`,
     [limit],
   );
@@ -324,12 +356,12 @@ export async function clearOldJobLogs(keep: number): Promise<number> {
 
   if (keptIds.length === 0) {
     // Nothing to keep — every log goes, no row is deleted.
-    const [result] = await pool.query<ResultSetHeader>(`UPDATE ${TABLE} SET log = ''`);
+    const [result] = await runJobQuery<ResultSetHeader>(`UPDATE ${TABLE} SET log = ''`);
     return affectedRows(result);
   }
 
   const placeholders = keptIds.map(() => '?').join(', ');
-  const [result] = await pool.query<ResultSetHeader>(
+  const [result] = await runJobQuery<ResultSetHeader>(
     `UPDATE ${TABLE} SET log = '' WHERE id NOT IN (${placeholders})`,
     keptIds,
   );
@@ -347,7 +379,7 @@ export async function clearOldJobLogs(keep: number): Promise<number> {
  * Returns the number of jobs that were marked.
  */
 export async function markStaleRunningJobsFailed(): Promise<number> {
-  const [result] = await getPool().query<ResultSetHeader>(
+  const [result] = await runJobQuery<ResultSetHeader>(
     `UPDATE ${TABLE}
         SET status = 'failed',
             message = ?,

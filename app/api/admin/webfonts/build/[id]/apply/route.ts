@@ -4,6 +4,7 @@ import { withErrorHandling, badRequest, conflict, notFound } from '@/lib/api-han
 import { requireAdmin } from '@/lib/auth';
 import { logUserAction } from '@/lib/audit';
 import { getJob, updateJob } from '@/lib/webfont/jobs';
+import { translateWebfontSchemaError } from '@/lib/webfont/api-schema-error';
 import { applyStagedBuild } from '@/lib/webfont/apply';
 import { buildDirFor } from '@/lib/webfont/paths';
 
@@ -162,7 +163,7 @@ export async function POST(
       },
       NO_STORE,
     );
-  }, NO_STORE);
+  }, NO_STORE, translateWebfontSchemaError);
 }
 
 /**

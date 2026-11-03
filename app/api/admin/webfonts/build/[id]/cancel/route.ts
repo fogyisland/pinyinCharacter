@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { withErrorHandling, badRequest, conflict, notFound } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getJob, updateJob } from '@/lib/webfont/jobs';
+import { translateWebfontSchemaError } from '@/lib/webfont/api-schema-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,7 +92,7 @@ export async function POST(
       },
       NO_STORE,
     );
-  }, NO_STORE);
+  }, NO_STORE, translateWebfontSchemaError);
 }
 
 /**

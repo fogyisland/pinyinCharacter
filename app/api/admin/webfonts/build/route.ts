@@ -15,6 +15,7 @@ import {
   type WebfontJobStep,
 } from '@/lib/webfont/jobs';
 import { runPipeline } from '@/lib/webfont/pipeline';
+import { translateWebfontSchemaError } from '@/lib/webfont/api-schema-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -235,7 +236,7 @@ export async function POST(req: NextRequest) {
       });
 
     return NextResponse.json({ ok: true, jobId: id }, { status: 202, ...NO_STORE });
-  }, NO_STORE);
+  }, NO_STORE, translateWebfontSchemaError);
 }
 
 /**
@@ -259,7 +260,7 @@ export async function GET(_req: NextRequest) {
     const jobs = await listJobs(10);
 
     return NextResponse.json({ ok: true, jobs }, NO_STORE);
-  }, NO_STORE);
+  }, NO_STORE, translateWebfontSchemaError);
 }
 
 /**

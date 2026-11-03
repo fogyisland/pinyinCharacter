@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, notFound } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { getJob } from '@/lib/webfont/jobs';
+import { translateWebfontSchemaError } from '@/lib/webfont/api-schema-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,5 +44,5 @@ export async function GET(
     }
 
     return NextResponse.json({ ok: true, job }, NO_STORE);
-  }, NO_STORE);
+  }, NO_STORE, translateWebfontSchemaError);
 }
