@@ -51,6 +51,9 @@ export function DragMatchGame(props: LegacyGameProps = {}) {
   // always false per app/api/chars/route.ts) so the client can decide to
   // show <FallbackBanner />.
   const [hskFallback, setHskFallback] = useState(false);
+  // 2026-11-03: the tier is missing entirely (the HSK grading was never
+  // imported on the server) — a different banner from a merely thin tier.
+  const [hskTierEmpty, setHskTierEmpty] = useState(false);
   const { difficulty, setDifficulty, hskLevel, ready } = useDifficulty();
   // Every new round cancels the request of the previous one, so a fast
   // difficulty switch cannot render an outdated round.
@@ -115,6 +118,7 @@ export function DragMatchGame(props: LegacyGameProps = {}) {
     try {
       let chars: Char[] = [];
       let fallback = false;
+      let tierEmpty = false;
       // 2026-07-04: T9 — pass hskLevel through fetchChars so /api/chars filters
       // by the HSK column. The legacy `level` param is left untouched for
       // backwards compat with the chars-level-1/1-2/all sources.
@@ -122,14 +126,17 @@ export function DragMatchGame(props: LegacyGameProps = {}) {
         const r = await fetchChars({ level: 1, hskLevel, page: 1, signal: controller.signal });
         chars = r.chars.filter((c) => c.meaningZh).map(toChar);
         fallback = r.hskFallback;
+        tierEmpty = r.hskTierEmpty;
       } else if (cfg.source === 'chars-level-1-2') {
         const r = await fetchChars({ hskLevel, page: 1, signal: controller.signal });
         chars = r.chars.filter((c) => c.meaningZh && (c.level === 1 || c.level === 2)).map(toChar);
         fallback = r.hskFallback;
+        tierEmpty = r.hskTierEmpty;
       } else {
         const r = await fetchChars({ hskLevel, page: 1, signal: controller.signal });
         chars = r.chars.filter((c) => c.meaningZh).map(toChar);
         fallback = r.hskFallback;
+        tierEmpty = r.hskTierEmpty;
       }
 
       if (controller.signal.aborted) return;
@@ -151,6 +158,7 @@ export function DragMatchGame(props: LegacyGameProps = {}) {
       // the characters — the game used to send a second request just to
       // learn the value.
       setHskFallback(fallback);
+      setHskTierEmpty(tierEmpty);
       setPhase('playing');
     } catch (e) {
       if (controller.signal.aborted) return;
@@ -284,7 +292,11 @@ export function DragMatchGame(props: LegacyGameProps = {}) {
         </button>
       </div>
 
-      <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
+      <FallbackBanner
+        hskLevel={hskLevel}
+        available={!hskFallback}
+        tierMissing={hskTierEmpty}
+      />
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div className="space-y-2">

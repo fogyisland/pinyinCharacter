@@ -1,5 +1,7 @@
 'use client';
 
+import { HSK_LEVELS_NOT_IMPORTED_TEXT } from '@/lib/game-quest-types';
+
 /**
  * The error state of the quest runner.
  *
@@ -22,6 +24,25 @@ export interface QuestError {
 /** The level does not exist in the tier - it cannot be retried into existence. */
 export const LEVEL_MISSING: QuestError = {
   message: '这一关不存在 —— 它可能已经随着字库更新而移走了',
+  canRetry: false,
+};
+
+/**
+ * The whole tier is missing - the server has no HSK grading for it.
+ *
+ * 2026-11-03: this used to be reported as `level_not_found`, which told the
+ * learner "this level moved" - a message that sends the reader looking for a
+ * content change that is not the problem. The real cause is a deployment
+ * step that was skipped (`scripts/import-hsk.ts`), so the text names the
+ * administrator instead.
+ *
+ * A retry cannot fix it either: the tier is built once per process, and the
+ * import needs a command on the server. So `canRetry` is false — but the
+ * 「重试」 button being absent is a small loss next to a message that points
+ * at the right person, so the runner keeps the exit button as the way out.
+ */
+export const HSK_TIER_MISSING: QuestError = {
+  message: HSK_LEVELS_NOT_IMPORTED_TEXT,
   canRetry: false,
 };
 

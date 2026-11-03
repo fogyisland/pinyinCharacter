@@ -309,6 +309,32 @@ export function isSuppPlaneChar(char: string): boolean {
   return cp !== undefined && cp > 0xffff;
 }
 
+/** A count row, as the COUNT query returns it. */
+interface CountRow extends RowDataPacket {
+  n: number;
+}
+
+/**
+ * How many chars carry the given HSK level.
+ *
+ * The count answers one question: "does this HSK tier exist in the database
+ * at all?". `chars.hsk_level` is filled by `scripts/import-hsk.ts` — a
+ * deployment script, not a migration — so a server that never ran it has a
+ * NULL in every row and every tier counts zero.
+ *
+ * A caller that gets 0 for a tier it asked about can therefore say "the
+ * grading was never imported" instead of the much vaguer "there are not
+ * enough chars".
+ */
+export async function countCharsByHskLevel(hskLevel: number): Promise<number> {
+  const pool = getPool();
+  const [rows] = await pool.query<CountRow[]>(
+    'SELECT COUNT(*) AS n FROM chars WHERE hsk_level = ?',
+    [hskLevel],
+  );
+  return Number(rows[0]?.n ?? 0);
+}
+
 export async function getCharDetail(char: string): Promise<CharWithRelated | null> {
   const base = await getChar(char);
   if (!base) return null;

@@ -10,6 +10,7 @@ import { RadicalToken } from './RadicalToken';
 import { PinyinToken } from './PinyinToken';
 import { ToneRadicalChar } from './ToneRadicalChar';
 import { FallbackBanner } from './FallbackBanner';
+import { roundErrorRemedy, roundErrorText } from './round-error';
 import { useDifficulty } from '@/lib/use-difficulty';
 import { getRevealConfig, type RevealElement } from '@/lib/reveal';
 import type { Tone } from '@/lib/pinyin-tone';
@@ -42,7 +43,9 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
   const { onComplete } = props;
   const [phase, setPhase] = useState<Phase>('loading');
   const [round, setRound] = useState<GameRound | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  // 2026-11-03: the error state holds the API's CODE, not the text — the
+  // text is derived from the code, so one wording serves every surface.
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   // char → matched payload (tone number / radical / pinyin string)
   const [matches, setMatches] = useState<Record<string, string>>({});
   // 2026-10-25 (Task 6): the token INDEXES that were already spent. The bank
@@ -60,6 +63,9 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
   // surface as <FallbackBanner /> so the user knows their HSK selection
   // isn't fully supported yet.
   const [hskFallback, setHskFallback] = useState(false);
+  // 2026-11-03: the tier is missing entirely (the HSK grading was never
+  // imported on the server) — a different banner from a merely thin tier.
+  const [hskTierEmpty, setHskTierEmpty] = useState(false);
   const { difficulty, setDifficulty, hskLevel, ready } = useDifficulty();
   // Every new round cancels the request of the previous one, so a fast
   // difficulty switch cannot render an outdated round.
@@ -123,7 +129,7 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
     reportedRef.current = false;
     setMismatches(0);
     setElapsedMs(0);
-    setError(null);
+    setErrorCode(null);
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
@@ -151,12 +157,23 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
         ok: boolean;
         data: GameRound;
         hskFallback?: boolean;
+        hskTierEmpty?: boolean;
         error?: { code: string };
       };
-      if (!json.ok) throw new Error(`fetchGameRound failed: ${json.error?.code ?? 'unknown'}`);
+      if (!json.ok) {
+        // 2026-11-03: the API's code is carried to the error state, and the
+        // text is derived from it. Throwing the code as a message showed the
+        // learner "fetchGameRound failed: no_chars" — a bug report, not a
+        // situation.
+        const code = json.error?.code ?? 'unknown';
+        console.error('loadGame failed', code);
+        setErrorCode(code);
+        return;
+      }
       const r = json.data;
       setRound(r);
       setHskFallback(json.hskFallback ?? true);
+      setHskTierEmpty(json.hskTierEmpty ?? false);
       setToneOrder(shuffle([...r.toneChoices]));
       setRadicalOrder(shuffle([...r.radicalChoices]));
       setPinyinOrder(shuffle([...r.pinyinChoices]));
@@ -165,7 +182,7 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
     } catch (e) {
       if (controller.signal.aborted) return;
       console.error('loadGame failed', e);
-      setError(e instanceof Error ? e.message : '加载失败');
+      setErrorCode('server');
     }
   };
 
@@ -285,18 +302,19 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
     return matchCount / total;
   }, [mismatches, matchCount]);
 
-  if (error) {
+  if (errorCode) {
+    const remedy = roundErrorRemedy(errorCode);
     return (
       <div className="mx-auto max-w-md rounded-lg border bg-paper p-8 text-center">
         <h2 className="text-xl font-bold text-seal">出错了</h2>
-        <p className="mt-2 text-ink-soft">{error}</p>
-        <p className="mt-1 text-sm text-ink-faint">
-          如果提示「not enough rare chars」,请运行
-          <code className="mx-1 rounded bg-paper-deep px-1">
-            pnpm tsx --env-file=.env scripts/fetch-rare-chars.ts
-          </code>
-          导入数据
-        </p>
+        <p className="mt-2 text-ink-soft">{roundErrorText(errorCode)}</p>
+        {remedy ? (
+          <p className="mt-1 text-sm text-ink-faint">
+            请在服务器上运行
+            <code className="mx-1 rounded bg-paper-deep px-1">{remedy}</code>
+            导入数据
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={() => void loadGame()}
@@ -372,7 +390,11 @@ export function ToneRadicalGame(props: ToneRadicalGameProps & LegacyGameProps = 
 
       <h3 className="text-center font-kai text-lg text-ink-soft">{modeInfo.heading}</h3>
 
-      <FallbackBanner hskLevel={hskLevel} available={!hskFallback} />
+      <FallbackBanner
+        hskLevel={hskLevel}
+        available={!hskFallback}
+        tierMissing={hskTierEmpty}
+      />
 
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {round.chars.map((c) => (

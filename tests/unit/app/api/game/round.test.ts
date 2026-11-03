@@ -58,6 +58,8 @@ interface RoundOkBody {
   revealConfig: unknown;
   hskFallback: boolean;
   hskLevel: number | null;
+  /** 2026-11-03: the tier was never imported on the server. */
+  hskTierEmpty: boolean;
 }
 
 /** The 4xx body of GET /api/game/round (lib/api-handler.ts:27-30). */
@@ -84,6 +86,8 @@ beforeEach(() => {
     round: { ...FIXTURE_ROUND, mode: mode ?? 'pinyin' },
     hskFallback: false,
     hskLevel: null,
+    // 2026-11-03: the tier-missing flag the route passes on to the client.
+    hskTierEmpty: false,
   }));
 });
 
@@ -137,8 +141,11 @@ describe('GET /api/game/round — mode forwarding (Task 5)', () => {
   it('keeps the response shape unchanged', async () => {
     const res = await GET(makeReq('?mode=tone&count=4'));
     const body = await readOkBody(res);
+    // 2026-11-03: `hskTierEmpty` was ADDED — the client has to tell "the
+    // tier is thin" from "the tier was never imported", and only the server
+    // knows which one happened. Every other field is unchanged.
     expect(Object.keys(body).sort()).toEqual(
-      ['data', 'hskFallback', 'hskLevel', 'ok', 'revealConfig'].sort(),
+      ['data', 'hskFallback', 'hskLevel', 'hskTierEmpty', 'ok', 'revealConfig'].sort(),
     );
     expect(Object.keys(body.data).sort()).toEqual(
       ['charToAnswer', 'chars', 'mode', 'pinyinChoices', 'radicalChoices', 'toneChoices'].sort(),

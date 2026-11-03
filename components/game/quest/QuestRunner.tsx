@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { QuestCharPayload, QuestLevelPayload } from '@/lib/game-quest-types';
+import { HSK_LEVELS_NOT_IMPORTED } from '@/lib/game-quest-types';
 import {
   collectChar,
   loadProgress,
@@ -16,7 +17,12 @@ import { isSoundMuted, playChime, playFanfare, playStamp, playThud } from '@/lib
 import { speak, stopSpeaking } from '@/lib/tts';
 import { prefetchTts } from '@/lib/tts-cache';
 import { QuestCharCard } from './QuestCharCard';
-import { LEVEL_MISSING, LOAD_FAILED, QuestErrorState } from './QuestErrorState';
+import {
+  HSK_TIER_MISSING,
+  LEVEL_MISSING,
+  LOAD_FAILED,
+  QuestErrorState,
+} from './QuestErrorState';
 import type { QuestError } from './QuestErrorState';
 import { QuestQuestionCard } from './QuestQuestionCard';
 import { QuestSealRow } from './QuestSealRow';
@@ -160,6 +166,14 @@ export function QuestRunner(props: QuestRunnerProps) {
           if (body.error?.code === 'level_not_found') {
             if (cancelled) return;
             setError(LEVEL_MISSING);
+            return;
+          }
+          // 2026-11-03: the whole tier is missing (the HSK grading was never
+          // imported on the server). It is NOT "this level moved" - saying so
+          // sends the reader after a content change that is not the problem.
+          if (body.error?.code === HSK_LEVELS_NOT_IMPORTED) {
+            if (cancelled) return;
+            setError(HSK_TIER_MISSING);
             return;
           }
           throw new Error(body.error?.code ?? `http_${res.status}`);

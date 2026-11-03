@@ -13,6 +13,13 @@ export interface CharsListResult {
  */
 export interface CharsListResponse extends CharsListResult {
   hskFallback: boolean;
+  /**
+   * 2026-11-03: the tier was missing entirely, not merely thin — the HSK
+   * grading was never imported on this server. The client shows a different
+   * banner for it, because the remedy is an administrator's command rather
+   * than "the pool is still being filled in".
+   */
+  hskTierEmpty: boolean;
 }
 
 // 2026-07-04: T9 — DragMatchGame threads hskLevel to the /api/chars endpoint
@@ -38,8 +45,13 @@ export async function fetchChars(opts: FetchCharsOpts = {}): Promise<CharsListRe
     ok: boolean;
     data: CharsListResult;
     hskFallback?: boolean;
+    hskTierEmpty?: boolean;
     error?: { message: string };
   };
   if (!json.ok) throw new Error(json.error?.message ?? 'fetchChars failed');
-  return { ...json.data, hskFallback: json.hskFallback ?? false };
+  return {
+    ...json.data,
+    hskFallback: json.hskFallback ?? false,
+    hskTierEmpty: json.hskTierEmpty ?? false,
+  };
 }

@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
+import { withErrorHandling, badRequest, notFound, serviceUnavailable } from '@/lib/api-handler';
 import { questQuerySchema } from '@/lib/validators';
 import { getQuestTier } from '@/lib/game-quest-data';
 import { buildLevel } from '@/lib/game-quest';
+import {
+  HSK_LEVELS_NOT_IMPORTED,
+  HSK_LEVELS_NOT_IMPORTED_MESSAGE,
+  isHskTierEmpty,
+} from '@/lib/game-quest-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +51,22 @@ export async function GET(req: NextRequest) {
     }
     const { hsk, level } = parsed.data;
     const tier = await getQuestTier(hsk);
+    // 2026-11-03: an empty tier is not "this level does not exist". It means
+    // the tier's query returned no rows at all — the HSK grading was never
+    // imported on this server (`scripts/import-hsk.ts` is a deployment step,
+    // not a migration, so it is easy to miss). The two failures need
+    // different answers: an empty tier is a 503 with the command that fixes
+    // it, while a level beyond the tier's count stays a 404.
+    if (isHskTierEmpty(tier)) {
+      console.error(
+        `[game-quest] HSK ${hsk} has no chars at all — the HSK grading was not imported on this server`,
+      );
+      return serviceUnavailable(
+        HSK_LEVELS_NOT_IMPORTED,
+        HSK_LEVELS_NOT_IMPORTED_MESSAGE,
+        NO_STORE,
+      );
+    }
     const payload = buildLevel(tier, level);
     if (!payload) {
       return notFound('level_not_found', `level ${level} is beyond HSK ${hsk}`, NO_STORE);

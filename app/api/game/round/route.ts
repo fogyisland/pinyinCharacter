@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, badRequest, serviceUnavailable } from '@/lib/api-handler';
 import { gameRoundQuerySchema } from '@/lib/validators';
 import { buildRound } from '@/lib/game-round';
+import { countCharsByHskLevel } from '@/lib/chars';
 import { getRevealConfig, type GameMode } from '@/lib/reveal';
+import {
+  HSK_LEVELS_NOT_IMPORTED,
+  HSK_LEVELS_NOT_IMPORTED_MESSAGE,
+} from '@/lib/game-quest-types';
 import type { HskLevel } from '@/lib/difficulty';
 
 export const dynamic = 'force-dynamic';
@@ -43,9 +48,24 @@ export async function GET(req: NextRequest) {
       modeOverride,
     );
     if (!result) {
+      // 2026-11-03: "no chars" has two causes and they need different
+      // answers. A tier that holds NO chars at all means the HSK grading was
+      // never imported on this server (`scripts/import-hsk.ts` is a
+      // deployment step, not a migration) — one command fixes it, and the
+      // client should say so. Otherwise the pool is simply too small for
+      // the requested round, which is a normal (retryable) shortage.
+      if (hskLevel != null && (await countCharsByHskLevel(hskLevel)) === 0) {
+        console.error(
+          `[game-round] HSK ${hskLevel} has no chars at all — the HSK grading was not imported on this server`,
+        );
+        return serviceUnavailable(
+          HSK_LEVELS_NOT_IMPORTED,
+          HSK_LEVELS_NOT_IMPORTED_MESSAGE,
+        );
+      }
       return serviceUnavailable('no_chars', 'not enough rare chars with radicals to build a round');
     }
-    const { round, hskFallback, hskLevel: appliedHskLevel } = result;
+    const { round, hskFallback, hskLevel: appliedHskLevel, hskTierEmpty } = result;
     // 2026-07-04: embed revealConfig so progressive-reveal clients can
     // render hints per HSK level. Use modeOverride when present (Tasks
     // 8/9/10 always pass `mode`); otherwise fall back to the mode that
@@ -55,7 +75,16 @@ export async function GET(req: NextRequest) {
     const levelForReveal = (appliedHskLevel ?? hskLevel ?? 1) as HskLevel;
     const revealConfig = getRevealConfig(gameModeKeyForMode[modeForReveal], levelForReveal);
     return NextResponse.json(
-      { ok: true, data: round, revealConfig, hskFallback, hskLevel: appliedHskLevel },
+      {
+        ok: true,
+        data: round,
+        revealConfig,
+        hskFallback,
+        hskLevel: appliedHskLevel,
+        // 2026-11-03: the client shows a different banner when the tier is
+        // missing entirely than when it is merely thin.
+        hskTierEmpty,
+      },
       {
         headers: {
           // 2026-07-04: per feedback-cache-control-route-iterations.md,

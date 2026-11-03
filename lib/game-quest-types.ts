@@ -9,6 +9,69 @@
 
 export type QuestQuestionKind = 'pinyin' | 'tone' | 'radical' | 'meaning';
 
+/**
+ * The error code for "this HSK tier has no chars at all".
+ *
+ * ## Why this code exists
+ *
+ * `chars.hsk_level` is not filled by a migration — it is filled by
+ * `scripts/import-hsk.ts`, a separate script that DEPLOY.md §9 lists as a
+ * mandatory first-deployment step. A deployment that ships the code without
+ * running it leaves every `hsk_level` NULL, so a query for one tier returns
+ * zero rows.
+ *
+ * Without this code the two very different failures of a tier load look the
+ * same:
+ *
+ *   - the tier is empty (a deployment step was skipped) — the fix is one
+ *     command, and it is the same for every level of every tier;
+ *   - the level is beyond the tier's level count (the char pool grew and the
+ *     level moved) — the fix is to pick another level.
+ *
+ * The first is a **503**: the server is fine, its data is not ready, and a
+ * retry will succeed once the import has run. The second stays a **404**:
+ * that level will never come back for this process.
+ *
+ * Both codes are declared here because the server routes and the client
+ * components share this module — it imports nothing, so both sides can use it.
+ */
+export const HSK_LEVELS_NOT_IMPORTED = 'hsk_level_not_imported';
+
+/**
+ * The message the server sends with {@link HSK_LEVELS_NOT_IMPORTED}.
+ *
+ * It names the command that fixes it, because the reader of this message is
+ * an operator (or a learner who is reporting the problem), and "the tier is
+ * empty" on its own is not actionable.
+ */
+export const HSK_LEVELS_NOT_IMPORTED_MESSAGE =
+  '这一层的汉字还没有导入 —— 服务器上缺少 HSK 分级数据。请在服务器上运行：npx tsx scripts/import-hsk.ts';
+
+/**
+ * The Chinese text the client shows for {@link HSK_LEVELS_NOT_IMPORTED}.
+ *
+ * The learner cannot fix it either, so the text says who can — an
+ * administrator — instead of pretending a retry would help.
+ */
+export const HSK_LEVELS_NOT_IMPORTED_TEXT =
+  '这一层还没有汉字 —— 需要管理员先导入 HSK 分级数据，请稍后再试';
+
+/**
+ * Whether a tier holds no chars at all.
+ *
+ * `tierSize` is the number of rows the tier was built from, before the
+ * eligibility filter. A tier of zero means the **query** returned nothing —
+ * not that every char was filtered out (that would leave `tierSize > 0` with
+ * `skipped === tierSize`).
+ *
+ * The distinction matters: "the tier is empty" has one cause and one fix,
+ * while "every char of this tier is ineligible" is a content problem that
+ * the import command does not solve.
+ */
+export function isHskTierEmpty(tier: { tierSize: number }): boolean {
+  return tier.tierSize === 0;
+}
+
 export interface QuestQuestion {
   kind: QuestQuestionKind;
   options: string[];

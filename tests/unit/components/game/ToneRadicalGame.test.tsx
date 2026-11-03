@@ -111,10 +111,14 @@ describe('ToneRadicalGame — HSK reveal wiring (Task 8)', () => {
     await waitFor(() => {
       expect(screen.queryByText(/加载中/)).toBeNull();
     });
-    // FallbackBanner renders role=status and mentions HSK 5 + HSK 4 fallback.
+    // FallbackBanner renders role=status and mentions HSK 5.
+    //
+    // 2026-11-03: the banner no longer claims the game fell back to the HSK
+    // 4 tier — the fallback pool is the DIFFICULTY pool (sourceForHsk), so
+    // that wording described a pool the code never used.
     const status = screen.getByRole('status');
     expect(status.textContent).toContain('HSK 5');
-    expect(status.textContent).toContain('HSK 4');
+    expect(status.textContent).not.toContain('HSK 4');
   });
 
   it('does NOT render FallbackBanner when hskFallback=false', async () => {

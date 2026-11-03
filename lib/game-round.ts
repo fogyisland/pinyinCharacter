@@ -54,6 +54,23 @@ export interface BuildRoundResult {
   /** Echoes the HSK level used (or null when not requested). Route uses
    *  this to derive revealConfig when no mode override is passed. */
   hskLevel: HskLevel | null;
+  /**
+   * True when the requested HSK tier holds **no chars at all** in the
+   * database.
+   *
+   * This is a deployment defect, not a data defect: `chars.hsk_level` is
+   * filled by `scripts/import-hsk.ts`, a separate script that DEPLOY.md §9
+   * lists as a mandatory first-deployment step — it is NOT a migration, so
+   * nothing runs it automatically and a deployment can easily ship the code
+   * without it.
+   *
+   * The distinction from `hskFallback` matters to the client: `hskFallback`
+   * means "this tier is thin, here is a wider pool", while `hskTierEmpty`
+   * means "this tier is missing entirely, and an administrator has to run
+   * one command". The round still plays — the fallback pool is used — but
+   * the banner should say which of the two happened.
+   */
+  hskTierEmpty: boolean;
 }
 
 /** Pick a random mode for this round. The seed makes it deterministic per
@@ -64,43 +81,42 @@ function pickMode(seed: number): RoundMode {
   return modes[seed % modes.length]!;
 }
 
-export async function buildRound(
-  count: number,
-  seed?: number,
-  source: CharSource = 'chars-all',
-  hskLevel?: HskLevel | null,
-  modeOverride?: RoundMode,
-): Promise<BuildRoundResult | null> {
-  // The game needs chars with at least one of: tone-marked pinyin, known
-  // radical, and unique pinyin (for pinyin mode). Pull a page of any chars
-  // that have a non-empty radical AND a tone-marked pinyin (the strictest
-  // filter — neutral/轻声 is filtered out because it can't be matched
-  // against the 1-4 token bank). Filter by level per `source`:
-  //   'chars-level-1'   → level 1 only (simple / common)
-  //   'chars-level-1-2' → level 1 or 2
-  //   'chars-all'       → no filter
-  // 2026-07-03: switched from `lib/rare-chars` to `lib/chars` because the
-  // latter has the `level` column we need to filter on; rare_chars is
-  // L3-only. Single page is enough for 3-6 chars/round, but we still
-  // shuffle in case the first page doesn't have enough usable chars.
-  const allPages: Array<{
-    char: string;
-    pinyin: string;
-    meaning: string;
-    radical: string;
-    level: 1 | 2 | 3;
-    hskLevel?: number | null;
-  }> = [];
+/** One row of the char pool, as the round builder sees it. */
+interface PoolChar {
+  char: string;
+  pinyin: string;
+  meaning: string;
+  radical: string;
+  level: 1 | 2 | 3;
+  hskLevel?: number | null;
+}
+
+/**
+ * Collects the chars of one pool and keeps the ones a round can use.
+ *
+ * The usable chars are the ones with a non-empty radical AND a tone-marked
+ * pinyin (the strictest filter — 轻声 is filtered out because it cannot be
+ * matched against the 1-4 token bank). The level filter follows `source`:
+ *   'chars-level-1'   → level 1 only (simple / common)
+ *   'chars-level-1-2' → level 1 or 2
+ *   'chars-all'       → no filter
+ *
+ * `hskLevel` is passed to the SQL so the WHERE clause pre-filters (avoiding
+ * fetching thousands of rows just to drop them); when it is null the
+ * parameter is omitted and the query is unfiltered.
+ */
+async function collectPool(
+  source: CharSource,
+  hskLevel: HskLevel | null,
+): Promise<PoolChar[]> {
+  const collected: PoolChar[] = [];
   for (let page = 1; page <= 100; page++) {
-    // 2026-07-04: pass `hskLevel` to listChars so the SQL WHERE pre-filters
-    // (avoids fetching thousands of rows just to drop them). When `hskLevel`
-    // is null/undefined the param is omitted and behavior is unchanged.
     const result = await listCharsFromTable({
       page,
       ...(hskLevel != null ? { hskLevel } : {}),
     });
     for (const c of result.chars) {
-      allPages.push({
+      collected.push({
         char: c.char,
         pinyin: c.pinyin,
         meaning: c.meaningZh ?? '',
@@ -111,35 +127,49 @@ export async function buildRound(
     }
     if (result.chars.length < 80) break;
   }
-  // Defensive in-memory filter: the SQL filter above should already narrow
-  // to the right rows, but `filterByHskLevel` is a no-op when hskLevel is
-  // null (preserves legacy behavior). If the SQL filter produced zero rows
-  // (e.g. an HSK level with no imported chars yet), fall back to the full
-  // pool so the game still works — components can render <FallbackBanner/>.
-  let withAll = allPages.filter((c) => {
+  return collected.filter((c) => {
     if (source === 'chars-level-1' && c.level !== 1) return false;
     if (source === 'chars-level-1-2' && c.level !== 1 && c.level !== 2) return false;
     return c.radical !== '' && toneFromPinyin(c.pinyin) !== null;
   });
-  // 2026-07-04: HSK fallback detection. If the SQL filter returned 0 chars
-  // for the requested HSK level AND we had to fall back to the broader
-  // chars.level pool, surface hskFallback=true so the route can render
-  // <FallbackBanner />. The fallback below widens the pool by removing
-  // the HSK restriction; we record whether it actually fired.
+}
+
+export async function buildRound(
+  count: number,
+  seed?: number,
+  source: CharSource = 'chars-all',
+  hskLevel?: HskLevel | null,
+  modeOverride?: RoundMode,
+): Promise<BuildRoundResult | null> {
+  // 2026-07-03: switched from `lib/rare-chars` to `lib/chars` because the
+  // latter has the `level` column we need to filter on; rare_chars is
+  // L3-only. Single page is enough for 3-6 chars/round, but we still
+  // shuffle in case the first page doesn't have enough usable chars.
+  const hskPool = await collectPool(source, hskLevel ?? null);
+
+  // 2026-11-03: the HSK fallback now really widens the pool.
+  //
+  // It used to fall back to the rows that had ALREADY been fetched with
+  // `hsk_level = ?` — so a tier with no rows stayed empty and the round
+  // failed with `no_chars`. The fallback could therefore never help in the
+  // one case it exists for: a server whose HSK grading was never imported
+  // (`scripts/import-hsk.ts` is a deployment step, not a migration).
+  //
+  // The fix is to fetch the unfiltered pool instead of re-filtering the
+  // filtered one — which is what `lib/chars.ts` documents: "callers needing
+  // the fallback path should call listChars without `hskLevel`".
+  let pool = hskPool;
   let hskFallback = false;
-  if (hskLevel != null && withAll.length < count) {
-    // HSK filter too narrow — fall back to the full (un-HSK-filtered) pool.
+  let hskTierEmpty = false;
+  if (hskLevel != null && hskPool.length < count) {
     hskFallback = true;
-    withAll = allPages.filter((c) => {
-      if (source === 'chars-level-1' && c.level !== 1) return false;
-      if (source === 'chars-level-1-2' && c.level !== 1 && c.level !== 2) return false;
-      return c.radical !== '' && toneFromPinyin(c.pinyin) !== null;
-    });
+    hskTierEmpty = hskPool.length === 0;
+    pool = await collectPool(source, null);
   }
-  if (withAll.length < count) return null;
+  if (pool.length < count) return null;
 
   const actualSeed = seed ?? Date.now();
-  const shuffled = seededShuffle(withAll, actualSeed);
+  const shuffled = seededShuffle(pool, actualSeed);
 
   // For pinyin mode we need unique pinyin so the user can unambiguously
   // match pinyin tokens to chars. Pick greedily from the shuffled pool.
@@ -200,6 +230,7 @@ export async function buildRound(
     },
     hskFallback,
     hskLevel: hskLevel ?? null,
+    hskTierEmpty,
   };
 }
 
