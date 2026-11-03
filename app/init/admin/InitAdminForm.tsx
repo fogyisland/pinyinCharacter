@@ -27,6 +27,37 @@ export function InitAdminForm() {
         setErr(data.error?.message ?? '提交失败');
         return;
       }
+
+      // Record that step 2 is done.
+      //
+      // `/api/init/stash-admin` only stashes the credentials and hands back
+      // a token; it does NOT write the wizard marker. The marker
+      // `setup.wizard.admin_done` lives in `/api/init/admin` — and until
+      // this call existed, nothing called that route, so the marker was
+      // never written and `isInitWizardAdminDone()` was permanently false.
+      // That flag is what lets `/init/admin` skip the form on re-entry and
+      // what `/api/init/status` reports as `adminDone`.
+      //
+      // A failure here is not fatal: the credentials are already stashed
+      // and the token is already in hand, so step 3 can still run. The
+      // only loss is the "skip step 2 on re-entry" convenience, so the
+      // error is logged rather than blocking the wizard.
+      try {
+        const flagRes = await fetch('/api/init/admin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, email: email || undefined }),
+        });
+        if (!flagRes.ok) {
+          console.error(
+            '[init] the wizard step-2 marker could not be written; step 2 will be shown again on a later visit:',
+            flagRes.status,
+          );
+        }
+      } catch (flagError) {
+        console.error('[init] the wizard step-2 marker request failed:', flagError);
+      }
+
       // Store token + display info. NO password — server holds it for 30s.
       sessionStorage.setItem(
         STORAGE_KEY,

@@ -7,11 +7,16 @@ vi.mock('@/lib/setup', () => ({
 
 vi.mock('@/lib/init-credentials', () => ({
   stashAdminCredentials: vi.fn(() => 'a'.repeat(32)),
+  // The TTL the route reports must be the TTL the store uses. The two
+  // had drifted apart: the store keeps the token for 10 minutes while the
+  // response said 120 seconds — a client counting down from that number
+  // would expire the token five times too early.
+  ADMIN_TOKEN_TTL_SEC: 600,
 }));
 
 import { POST } from '@/app/api/init/stash-admin/route';
 import { isSetupRouteEnabled } from '@/lib/setup';
-import { stashAdminCredentials } from '@/lib/init-credentials';
+import { stashAdminCredentials, ADMIN_TOKEN_TTL_SEC } from '@/lib/init-credentials';
 
 const mockedRouteEnabled = vi.mocked(isSetupRouteEnabled);
 const mockedStash = vi.mocked(stashAdminCredentials);
@@ -36,12 +41,22 @@ describe('POST /api/init/stash-admin', () => {
     const body = await res.json();
     expect(body.ok).toBe(true);
     expect(body.data.token).toBe('abc123def456abc123def456abc12345');
-    expect(body.data.expiresInSec).toBe(120);
+    expect(body.data.expiresInSec).toBe(600);
     expect(mockedStash).toHaveBeenCalledWith({
       username: 'admin',
       password: 'supersecret',
       email: undefined,
     });
+  });
+
+  it('reports the TTL the store actually uses', async () => {
+    mockedStash.mockReturnValueOnce('abc123def456abc123def456abc12345');
+    const res = await POST(postReq({ username: 'admin', password: 'supersecret' }));
+    const body = await res.json();
+    // The number in the response and the constant the store uses are the
+    // same source — a client can trust the countdown.
+    expect(body.data.expiresInSec).toBe(ADMIN_TOKEN_TTL_SEC);
+    expect(body.data.expiresInSec).toBe(600);
   });
 
   it('passes email when provided', async () => {

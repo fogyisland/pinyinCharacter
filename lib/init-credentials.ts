@@ -49,6 +49,18 @@ function getState(): NonNullable<InitCredentialGlobal['__pinyinInitCredentials']
 
 const TTL_MS = 600_000;
 
+/**
+ * How long a stashed credential stays valid, in seconds.
+ *
+ * Exported so the route that hands the token out can report the same
+ * number the store actually uses. The two had drifted apart: the TTL is
+ * 10 minutes, but the response said `expiresInSec: 120` and the comment
+ * said "120s TTL". A client that counts down from that number would
+ * expire the token five times too early and send the operator back to
+ * step 2 for no reason.
+ */
+export const ADMIN_TOKEN_TTL_SEC = TTL_MS / 1000;
+
 /** Stash admin credentials and return a 32-char hex token. Token is single-use
  *  and expires after 10 minutes.
  *

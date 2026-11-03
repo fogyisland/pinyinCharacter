@@ -4,6 +4,7 @@ import {
   consumeAdminCredentials,
   gcExpired,
   _resetStoreForTest,
+  ADMIN_TOKEN_TTL_SEC,
 } from '@/lib/init-credentials';
 
 beforeEach(() => {
@@ -61,6 +62,22 @@ describe('consumeAdminCredentials', () => {
     const t = stashAdminCredentials({ username: 'admin', password: 'supersecret' });
     vi.advanceTimersByTime(601_000);
     expect(consumeAdminCredentials(t)).toBeNull();
+    vi.useRealTimers();
+  });
+
+  it('exports the TTL it actually uses, in seconds', () => {
+    // The route that hands the token out reports this number, and the
+    // wizard UI counts down from it. It had drifted: the store kept the
+    // token for 10 minutes while the response said 120 seconds.
+    expect(ADMIN_TOKEN_TTL_SEC).toBe(600);
+  });
+
+  it('the exported TTL matches when the token really expires', () => {
+    vi.useFakeTimers();
+    const t = stashAdminCredentials({ username: 'admin', password: 'supersecret' });
+    // Still alive just before the advertised expiry.
+    vi.advanceTimersByTime(ADMIN_TOKEN_TTL_SEC * 1000 - 1_000);
+    expect(consumeAdminCredentials(t)).not.toBeNull();
     vi.useRealTimers();
   });
 });
