@@ -36,6 +36,107 @@ export interface EnvValidationResult {
   issues: EnvIssue[];
 }
 
+/**
+ * How a DATABASE_URL is classified for production use.
+ *
+ * - `ok`   — nothing to say.
+ * - `warn` — the operator should know, but nothing is wrong.
+ * - `error` — this is a development database in production.
+ */
+export interface DatabaseUrlVerdict {
+  level: 'ok' | 'warn' | 'error';
+  message: string;
+  /** The schema name, when the URL names one. */
+  schema: string | null;
+  /** Whether the host is a local socket. */
+  isLocalHost: boolean;
+  /** Whether the schema is a development schema by name. */
+  isDevSchema: boolean;
+}
+
+/**
+ * Schema names that mean "this database is for development".
+ *
+ * The list is by NAME, because the name is the only part of the URL that
+ * reliably states the intent. A host cannot: `127.0.0.1` is a laptop in
+ * one deployment and the production box's own MySQL in another.
+ *
+ * `piyin_dev` is the schema the development tree uses
+ * (`backups/piyin_dev-*.sql` are dumps of it). `piyin_test` is used by the
+ * test suite. Both are always wrong in production.
+ */
+const DEV_SCHEMA_NAMES = ['piyin_dev', 'piyin_test'];
+
+/**
+ * The schema names a production deployment is expected to use.
+ *
+ * A local socket with one of these is the operator's deliberate choice —
+ * the server runs its own MySQL — and is reported as a warning, not an
+ * error. A local socket with any OTHER schema name is unknown to us, and
+ * is reported as a warning too, because refusing to start on a guess is
+ * worse than telling the operator to look.
+ */
+const PROD_SCHEMA_NAMES = ['piyin', 'pinyin', 'piyin_prod', 'pinyin_prod'];
+
+/**
+ * Classify a DATABASE_URL for production.
+ *
+ * The rule, in order:
+ *
+ *  1. a schema that is a development schema by name → **error**, always;
+ *  2. a local socket (127.0.0.1 / localhost) with a production-shaped
+ *     schema → **warn**: the server runs its own MySQL, which is a
+ *     legitimate single-server deployment;
+ *  3. a local socket with an unknown schema → **warn**: the operator
+ *     should confirm which database this is;
+ *  4. a remote host → **ok**, whatever the schema is called — whether a
+ *     remote host is "the" production database is not something a string
+ *     can tell us, and the schema name is already checked by rule 1.
+ *
+ * Rule 1 comes first on purpose: `piyin_dev` is wrong whether it is local
+ * or remote, and it is the case that actually corrupts development state.
+ */
+export function classifyDatabaseUrl(url: string): DatabaseUrlVerdict {
+  const lower = url.toLowerCase();
+  const isLocalHost = /@(127\.0\.0\.1|localhost|\[::1\])(:|\/|$)/.test(lower);
+
+  // The schema is the path segment after the host (and optional port).
+  const schemaMatch = /^[a-z0-9+.-]+:\/\/[^/]*\/([^/?#]+)/i.exec(url.trim());
+  const schema = schemaMatch ? decodeURIComponent(schemaMatch[1]!) : null;
+  const schemaLower = schema ? schema.toLowerCase() : '';
+
+  const isDevSchema = DEV_SCHEMA_NAMES.includes(schemaLower);
+
+  if (isDevSchema) {
+    return {
+      level: 'error',
+      schema,
+      isLocalHost,
+      isDevSchema,
+      message:
+        `DATABASE_URL points to the development schema "${schema}" — production would corrupt dev state. ` +
+        'Point it at the production schema instead.',
+    };
+  }
+
+  if (isLocalHost) {
+    const known = PROD_SCHEMA_NAMES.includes(schemaLower);
+    return {
+      level: 'warn',
+      schema,
+      isLocalHost,
+      isDevSchema,
+      message: known
+        ? `DATABASE_URL points at 127.0.0.1 (this machine) with the schema "${schema}". ` +
+          'That is a valid single-server deployment — confirm it is the intended database.'
+        : `DATABASE_URL points at 127.0.0.1 (this machine) with the schema "${schema ?? 'unknown'}". ` +
+          'Confirm this is the intended production database.',
+    };
+  }
+
+  return { level: 'ok', schema, isLocalHost, isDevSchema, message: '' };
+}
+
 export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidationResult {
   const issues: EnvIssue[] = [];
   const prod = isProd(env);
@@ -85,20 +186,26 @@ export function validateEnv(env: NodeJS.ProcessEnv = process.env): EnvValidation
   // worksheets, history, audit log, AI config). Without it the server can
   // still serve static pages + /init wizard, so we surface as an error
   // for /admin/init's checklist but do NOT block startup.
+  //
+  // The classification is deliberately NOT "is the host local?". A
+  // production server that runs its own MySQL on the same machine is a
+  // perfectly ordinary single-server deployment, and calling that a
+  // development database is a false positive: the check cannot see a
+  // credential, so it cannot know which machine it is running on.
+  //
+  // What it CAN see reliably is the SCHEMA NAME. `piyin_dev` is a
+  // development schema by name and is always wrong in production. A local
+  // socket with a production-shaped schema is the operator's deliberate
+  // choice — see `classifyDatabaseUrl` for the full rule.
   const dbUrl = env.DATABASE_URL;
   if (!dbUrl) {
     issues.push({ level: 'error', var: 'DATABASE_URL', message: 'DATABASE_URL is not set' });
   } else {
-    const lower = dbUrl.toLowerCase();
-    const isLocalHost = /@(127\.0\.0\.1|localhost)(:|\/|$)/.test(lower);
-    const isDevSchema = lower.includes('piyin_dev');
-    if (isLocalHost || isDevSchema) {
-      issues.push({
-        level: 'error',
-        var: 'DATABASE_URL',
-        message:
-          'DATABASE_URL points to a dev/local DB (127.0.0.1, localhost, or piyin_dev schema) — production would corrupt dev state',
-      });
+    const verdict = classifyDatabaseUrl(dbUrl);
+    if (verdict.level === 'error') {
+      issues.push({ level: 'error', var: 'DATABASE_URL', message: verdict.message });
+    } else if (verdict.level === 'warn') {
+      issues.push({ level: 'warn', var: 'DATABASE_URL', message: verdict.message });
     }
   }
 
