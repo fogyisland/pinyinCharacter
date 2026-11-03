@@ -166,6 +166,11 @@ pnpm tsx --env-file=.env scripts/import-chars-data.ts    # 导入 8105 通用规
 pnpm radicals:build                                      # 重新生成 data/radicals.json（若尚未生成）
 ```
 
+⚠️ 源字表是 **8105** 个字，但 `chars` 表实际只有 **7909** 行：
+另外 196 个是补充平面字符（码位 > U+FFFF），mysql2 的二进制协议会弄坏 4 字节 UTF-8，
+所以导入器**有意**跳过它们。`/admin/seed` 期望的行数是 7909 —— 期望值必须等于库里
+**应该**持有的行数，否则那个缺口永远关不掉。
+
 需要 `DATABASE_URL` 在 `.env` 中。脚本可重复运行（`INSERT IGNORE`，已存在不覆盖）。
 
 ### 笔画顺序 (Stroke Order)

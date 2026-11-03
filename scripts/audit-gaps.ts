@@ -17,7 +17,8 @@
  *     that being deliberate (an unlisted runtime dependency),
  *   - a script whose `npm run` entry does not load `.env`, so it fails
  *     with "DATABASE_URL is not set" while the site works fine,
- *   - a script that mentions a script name that does not exist.
+ *   - a script that mentions a script name that does not exist,
+ *   - a number in a document that contradicts the code it describes.
  *
  * Run: npx tsx --env-file-if-exists=.env scripts/audit-gaps.ts
  */
@@ -37,12 +38,21 @@ export interface ScriptEnvGap {
   problem: string;
 }
 
+/** A number in a document that contradicts the code. */
+export interface DocDrift {
+  from: string;
+  what: string;
+  documentSays: string;
+  codeSays: string;
+}
+
 /** The result of the audit. */
 export interface GapReport {
   missingFromBundle: MissingFromBundle[];
   scriptEnvGaps: ScriptEnvGap[];
   brokenScriptReferences: Array<{ from: string; refersTo: string }>;
   unrunnableDocCommands: Array<{ from: string; command: string; problem: string }>;
+  docDrift: DocDrift[];
 }
 
 /**
@@ -404,6 +414,212 @@ export function findUnrunnableDocCommands(): Array<{ from: string; command: stri
   return problems;
 }
 
+/**
+ * The documents that carry numbers the code owns.
+ *
+ * Each entry names the file and the kind of table it holds. The file
+ * list is explicit rather than a directory scan: a doc that is not part
+ * of this list is simply not checked, and adding one is a deliberate act.
+ */
+const DOCS_WITH_SEED_TABLES = ['DEPLOY.md'] as const;
+
+/**
+ * The documents that describe the wizard's run.
+ *
+ * The phase count lives in the deploy notes, which is where an operator
+ * reads it while following the procedure.
+ */
+const DOCS_WITH_PHASE_COUNTS = ['REDEPLOY-2026-07-09.md'] as const;
+
+/**
+ * Find the seed table in a document.
+ *
+ * The table is recognised by its shape, not by its position: a markdown
+ * table row whose first cell is a known dataset label and whose second
+ * cell is a bare integer. Only the *second* cell is read as a number —
+ * a naive scrape of the whole line picks up the row's own number, the
+ * counts in the comment column, and the numbers in the surrounding
+ * prose, and reports mismatches that do not exist.
+ */
+function parseSeedTable(
+  text: string,
+  expectedByLabel: Map<string, number>,
+): Map<string, number> {
+  const found = new Map<string, number>();
+
+  for (const line of text.split('\n')) {
+    const cells = line
+      .split('|')
+      .map((cell) => cell.trim())
+      // A markdown table row starts and ends with a pipe, so splitting
+      // yields an empty first and last cell.
+      .slice(1, -1);
+    if (cells.length < 2) continue;
+
+    const label = cells[0];
+    const expected = expectedByLabel.get(label);
+    if (expected === undefined) continue;
+
+    // The count cell is a bare integer — no thousands separators, no
+    // units, no parenthetical notes.
+    const count = cells[1].match(/^\d+$/);
+    if (!count) continue;
+
+    found.set(label, Number.parseInt(count[0], 10));
+  }
+
+  return found;
+}
+
+/**
+ * Count the wizard's phases by reading the form that renders them.
+ *
+ * The phase list is data in `InitExecuteForm.tsx`, not a constant
+ * elsewhere, so the count has to come from that file. The entries look
+ * like `{ id: 'tables', label: '创建表结构', status: 'idle' }`; counting
+ * the `id:` keys inside the `INITIAL` array is enough.
+ */
+function countWizardPhases(): number | null {
+  const formPath = rooted('app', 'init', 'execute', 'InitExecuteForm.tsx');
+  if (!existsSync(formPath)) return null;
+
+  const text = readFileSync(formPath, 'utf8');
+  const start = text.indexOf('const INITIAL');
+  if (start === -1) return null;
+
+  const end = text.indexOf('];', start);
+  if (end === -1) return null;
+
+  const block = text.slice(start, end);
+  const ids = block.match(/id:\s*'/g);
+  return ids ? ids.length : null;
+}
+
+/**
+ * Compare the numbers in the documents against the numbers in the code.
+ *
+ * Two families are checked:
+ *
+ *   - the seed table's expected row counts, against `SEED_DATASETS`,
+ *   - the wizard's phase count, against the phase list in the form.
+ *
+ * The second family matters because the wizard grew from 9 phases to 12
+ * and the deploy notes still said 9 in three places. A reader following
+ * them would stop waiting after the ninth card and think the run had
+ * finished with three datasets missing.
+ *
+ * Both families are narrow on purpose. A number in a document only
+ * counts as a claim when it is attached to the thing it claims about —
+ * the count cell of a seed table, the word "phase" in a sentence — so a
+ * date, a step number in an unrelated list, or a count in a comment
+ * column cannot produce a false alarm.
+ */
+export function findDocDrift(): DocDrift[] {
+  const drift: DocDrift[] = [];
+
+  // --- the seed table's expected counts -------------------------------
+  // The registry is the single source of truth for what a seeded table
+  // should hold. The documents repeat those numbers for the operator;
+  // when the two disagree, the operator follows the wrong one.
+  //
+  // The numbers are resolved by *running* the registry, because each
+  // one is computed from the data files at import time. Re-deriving
+  // them with a second implementation here would be exactly the drift
+  // this check exists to catch.
+  let expectedByLabel = new Map<string, number>();
+  try {
+    const registry = require(rooted('lib', 'seed-registry.ts')) as {
+      SEED_DATASETS: Array<{ label: string; expected: number }>;
+    };
+    expectedByLabel = new Map(
+      registry.SEED_DATASETS.map((dataset) => [dataset.label, dataset.expected]),
+    );
+  } catch (error) {
+    drift.push({
+      from: 'lib/seed-registry.ts',
+      what: 'the seed registry could not be loaded',
+      documentSays: '(nothing)',
+      codeSays: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  if (expectedByLabel.size > 0) {
+    for (const doc of DOCS_WITH_SEED_TABLES) {
+      const docPath = rooted(doc);
+      if (!existsSync(docPath)) continue;
+
+      const text = readFileSync(docPath, 'utf8');
+      const declared = parseSeedTable(text, expectedByLabel);
+
+      for (const [label, expected] of expectedByLabel) {
+        const documentSays = declared.get(label);
+        if (documentSays === undefined) continue;
+        if (documentSays === expected) continue;
+
+        drift.push({
+          from: doc,
+          what: `the seed table's row count for "${label}"`,
+          documentSays: String(documentSays),
+          codeSays: String(expected),
+        });
+      }
+    }
+  }
+
+  // --- the wizard's phase count ---------------------------------------
+  //
+  // Only a *total-count claim* is checked: a sentence that says how many
+  // phases the wizard has.
+  //
+  // The tricky part is that one sentence can carry two counts:
+  //
+  //   "Brings the 9-phase wizard to **12 phases**"
+  //
+  // Here 9 is the old wizard and 12 is the current one. The sentence is
+  // *correct* precisely because one of its numbers equals what the code
+  // says. So a sentence is drift only when **none** of its phase-related
+  // numbers matches the code — that is what distinguishes "the document
+  // claims a wrong number" from "the document narrates a change".
+  //
+  // A number that is not adjacent to the word "phase" (an ordinal
+  // reference like "第 13、14 步", a date, a step number in an
+  // unrelated list) is not a phase count and is not counted here.
+  const phases = countWizardPhases();
+  if (phases !== null) {
+    for (const doc of DOCS_WITH_PHASE_COUNTS) {
+      const docPath = rooted(doc);
+      if (!existsSync(docPath)) continue;
+
+      const text = readFileSync(docPath, 'utf8');
+      // Split on sentence and line boundaries so a claim cannot leak
+      // across them.
+      const sentences = text.split(/(?<=[.。\n])/);
+      for (const sentence of sentences) {
+        if (!/phase/i.test(sentence)) continue;
+
+        // Every number the sentence attaches to the word "phase".
+        const numbers = Array.from(sentence.matchAll(/(\d+)\s*-?\s*phases?\b/gi)).map((entry) =>
+          Number.parseInt(entry[1], 10),
+        );
+        if (numbers.length === 0) continue;
+
+        // The sentence states the current count somewhere — it is not
+        // drift.
+        if (numbers.includes(phases)) continue;
+
+        drift.push({
+          from: doc,
+          what: 'the wizard phase count',
+          documentSays: numbers.join(', '),
+          codeSays: String(phases),
+        });
+      }
+    }
+  }
+
+  return drift;
+}
+
 /** Run the whole audit. */
 export function auditGaps(): GapReport {
   const pkg = JSON.parse(readFileSync(rooted('package.json'), 'utf8')) as {
@@ -415,6 +631,7 @@ export function auditGaps(): GapReport {
     scriptEnvGaps: findScriptEnvGaps(pkg),
     brokenScriptReferences: findBrokenScriptReferences(),
     unrunnableDocCommands: findUnrunnableDocCommands(),
+    docDrift: findDocDrift(),
   };
 }
 
@@ -464,11 +681,21 @@ function main(): void {
     console.log(`    -> ${item.problem}`);
   }
 
+  console.log('\n=== numbers in the docs that contradict the code ===');
+  if (report.docDrift.length === 0) {
+    console.log('  (none)');
+  }
+  for (const item of report.docDrift) {
+    console.log(`  ${item.from}: ${item.what}`);
+    console.log(`    -> the document says ${item.documentSays}, the code says ${item.codeSays}`);
+  }
+
   const problems =
     report.scriptEnvGaps.length +
     report.missingFromBundle.length +
     report.brokenScriptReferences.length +
     report.unrunnableDocCommands.length +
+    report.docDrift.length +
     missingTargets.length;
 
   if (problems > 0) {

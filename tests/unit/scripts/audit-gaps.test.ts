@@ -24,6 +24,7 @@ import {
   findMissingNpmScriptTargets,
   findUnrunnableDocCommands,
   findMissingRuntimeData,
+  findDocDrift,
   setAuditRoot,
 } from '@/scripts/audit-gaps';
 
@@ -342,5 +343,118 @@ describe('audit-gaps — the unrunnable command check', () => {
     restoreRoot = setAuditRoot(process.cwd());
 
     expect(findUnrunnableDocCommands()).toHaveLength(0);
+  });
+});
+
+/**
+ * The seed registry and the wizard form, as the scratch repository holds
+ * them.
+ *
+ * The registry is required as a module by the check, so the scratch copy
+ * has to be a real module — a text file with the right shape would fail
+ * to load and the check would report a load error instead of a drift.
+ * `expected` is therefore a literal in the scratch copy.
+ */
+const SCRATCH_REGISTRY = `export const SEED_DATASETS = [
+  { id: 'chars', label: '通用规范汉字', expected: 7909 },
+  { id: 'rare-chars', label: '罕用字', expected: 1409 },
+];
+`;
+
+/** The wizard form with its phase list. */
+const SCRATCH_WIZARD_FORM = `const INITIAL = [
+  { id: 'tables', label: '创建表结构', status: 'idle' },
+  { id: 'app_config', label: '写入 app_config 默认值', status: 'idle' },
+  { id: 'poems', label: '导入古诗', status: 'idle' },
+];
+`;
+
+/** A scratch repository that carries a seed table and a phase count. */
+function buildDocRepo(options: {
+  deploy?: string;
+  redeploy?: string;
+}): void {
+  write('lib/seed-registry.ts', SCRATCH_REGISTRY);
+  write('app/init/execute/InitExecuteForm.tsx', SCRATCH_WIZARD_FORM);
+  write(
+    'DEPLOY.md',
+    options.deploy ??
+      '| 通用规范汉字 | 7909 | `chars` | 字典 |\n' +
+        '| 罕用字 | 1409 | `rare_chars` | 罕用 |\n',
+  );
+  write(
+    'REDEPLOY-2026-07-09.md',
+    options.redeploy ?? '4. Click "开始初始化" → 3 phase cards run in order\n',
+  );
+}
+
+describe('audit-gaps — the doc drift check', () => {
+  it('reports nothing when the documents agree with the code', () => {
+    buildDocRepo({});
+
+    expect(findDocDrift()).toHaveLength(0);
+  });
+
+  it('reports a seed table whose row count contradicts the registry', () => {
+    buildDocRepo({
+      deploy: '| 通用规范汉字 | 8105 | `chars` | 字典 |\n',
+    });
+
+    const drift = findDocDrift();
+
+    expect(drift).toHaveLength(1);
+    expect(drift[0].from).toBe('DEPLOY.md');
+    expect(drift[0].documentSays).toBe('8105');
+    expect(drift[0].codeSays).toBe('7909');
+  });
+
+  it('reports a wizard phase count that the code does not have', () => {
+    buildDocRepo({
+      redeploy: '4. Click "开始初始化" → 9 phase cards run in order\n',
+    });
+
+    const drift = findDocDrift();
+
+    expect(drift).toHaveLength(1);
+    expect(drift[0].from).toBe('REDEPLOY-2026-07-09.md');
+    expect(drift[0].documentSays).toBe('9');
+    expect(drift[0].codeSays).toBe('3');
+  });
+
+  it('does not report a sentence that narrates the change from one count to another', () => {
+    buildDocRepo({
+      redeploy:
+        'Brings the 9-phase wizard to **3 phases** so a single run populates everything.\n',
+    });
+
+    expect(findDocDrift()).toHaveLength(0);
+  });
+
+  it('does not report an ordinal reference to a list that is not the phase list', () => {
+    buildDocRepo({
+      redeploy: '`/admin/init` 的第 13、14 步会报告分级覆盖率。\n',
+    });
+
+    expect(findDocDrift()).toHaveLength(0);
+  });
+
+  it('reads the count cell only, not the numbers around it', () => {
+    // The row also carries a number in its comment column and the
+    // surrounding prose carries another one. Only the count cell counts.
+    buildDocRepo({
+      deploy:
+        'The table has 7 datasets.\n\n' +
+        '| 通用规范汉字 | 7909 | `chars` | 8105 rows in the source |\n' +
+        '| 罕用字 | 1409 | `rare_chars` | 罕用 |\n',
+    });
+
+    expect(findDocDrift()).toHaveLength(0);
+  });
+
+  it('does not report the real repository', () => {
+    restoreRoot();
+    restoreRoot = setAuditRoot(process.cwd());
+
+    expect(findDocDrift()).toHaveLength(0);
   });
 });
