@@ -247,6 +247,51 @@ export function findMissingNpmScriptTargets(): Array<{ script: string; target: s
 }
 
 /**
+ * Does the packager's rules exclude this path?
+ *
+ * The path is resolved **relative to the audit root** first. The rules
+ * describe what the packager skips *inside* the tree it copies, so a
+ * directory that merely happens to share a name with an excluded one —
+ * the deploy bundle itself is called `Up/`, and `Up` is in the exclusion
+ * list so the packager does not recurse into its own output — must not
+ * condemn the whole tree.
+ *
+ * Comparing the absolute path instead makes every file under a
+ * directory named `Up` look excluded, which turns the audit into a wall
+ * of false alarms the moment anyone points it at the bundle.
+ */
+function isExcludedPath(
+  path: string,
+  rules: { excludeDirs: Set<string>; excludeFiles: Set<string> },
+): boolean {
+  const relative = relativeToAuditRoot(path);
+  const segments = relative.split('/').filter((segment) => segment.length > 0);
+
+  // The last segment is the file name; the ones before it are directories.
+  const fileName = segments[segments.length - 1];
+  const directories = segments.slice(0, -1);
+
+  if (directories.some((segment) => rules.excludeDirs.has(segment))) return true;
+  if (fileName !== undefined && rules.excludeFiles.has(fileName)) return true;
+  return false;
+}
+
+/**
+ * The path relative to the audit root, in forward slashes.
+ *
+ * Paths outside the root keep their absolute form — the caller then
+ * treats them as "not in this tree", which is the honest answer.
+ */
+function relativeToAuditRoot(path: string): string {
+  const normalizedRoot = auditRoot.replace(/\\/g, '/').replace(/\/+$/, '');
+  const normalized = path.replace(/\\/g, '/');
+  if (normalized.startsWith(normalizedRoot + '/')) {
+    return normalized.slice(normalizedRoot.length + 1);
+  }
+  return normalized;
+}
+
+/**
  * The runtime data files the seed modules reach, that the packager might
  * drop.
  *
@@ -300,8 +345,7 @@ export function findMissingRuntimeData(): MissingFromBundle[] {
     // A directory reference: the directory itself, not a file in it.
     const asDirectory = rooted('data', dataPath);
     if (existsSync(asDirectory) && statSync(asDirectory).isDirectory()) {
-      const segments = asDirectory.replace(/\\/g, '/').split('/');
-      if (segments.some((segment) => rules.excludeDirs.has(segment))) {
+      if (isExcludedPath(asDirectory, rules)) {
         missing.push({
           path: asDirectory,
           reason: `${module} reads it at runtime, and the packager excludes it`,
@@ -314,9 +358,7 @@ export function findMissingRuntimeData(): MissingFromBundle[] {
     const candidates = [rooted('data', dataPath), rooted('data', `${dataPath}.gz`)];
     const present = candidates.some((candidate) => {
       if (!existsSync(candidate)) return false;
-      const segments = candidate.replace(/\\/g, '/').split('/');
-      if (segments.some((segment) => rules.excludeDirs.has(segment))) return false;
-      if (rules.excludeFiles.has(segments[segments.length - 1])) return false;
+      if (isExcludedPath(candidate, rules)) return false;
       return true;
     });
 

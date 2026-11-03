@@ -274,6 +274,28 @@ describe('audit-gaps — the runtime data check', () => {
 
     expect(findMissingRuntimeData()).toHaveLength(0);
   });
+
+  it('does not condemn a tree whose own directory is an excluded name', () => {
+    // The deploy bundle is called `Up/`, and `Up` is in the packager's
+    // exclusion list so the packager does not recurse into its own
+    // output. When the audit is pointed at the bundle, the exclusion
+    // check must not read that as "every file in here is excluded" —
+    // the rules describe what is skipped *inside* the tree, not the
+    // name of the tree itself.
+    const upDir = join(workDir, 'Up');
+    write(
+      'Up/lib/seed-registry.ts',
+      "const DATA_DIR = join(process.cwd(), 'data');\n" +
+        "const p = join(DATA_DIR, 'hsk-vocab.json');\n",
+    );
+    write('Up/data/hsk-vocab.json', '{}');
+    write('Up/scripts/copy-to-up.py', "EXCLUDE_DIRS = {\n    'Up',\n}\n");
+
+    restoreRoot();
+    restoreRoot = setAuditRoot(upDir);
+
+    expect(findMissingRuntimeData()).toHaveLength(0);
+  });
 });
 
 describe('audit-gaps — the unrunnable command check', () => {
