@@ -36,7 +36,7 @@ const STATUS_ICON: Record<StepStatus, string> = {
  * 1. Current environment — DB URL (host/port/db/user, password masked),
  *    JWT_SECRET status (length + dev default), Node env.
  * 2. Admin account — count + first admin username + created_at.
- * 3. 12 auto-checked init steps with ✓ / ⚠ / ✗ icons. Each step
+ * 3. The auto-checked init steps with ✓ / ⚠ / ✗ icons. Each step
  *    has a "去修" link if there's a UI page to fix it.
  */
 export function InitChecklist({ report }: { report: InitReport }) {
@@ -120,7 +120,7 @@ export function InitChecklist({ report }: { report: InitReport }) {
         )}
       </Panel>
 
-      {/* Section 3: 12 init steps */}
+      {/* Section 3: the init steps */}
       <Panel
         title="初始化步骤"
         description={`${okCount} 完成 · ${warnCount} 建议 · ${failCount} 必须修复`}

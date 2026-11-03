@@ -68,6 +68,12 @@ export interface InitContext {
   manifestExists: { content: boolean; poems: boolean; classics: boolean };
   tableCount: number;
   expectedTableCount: number;
+  /** Chars that carry an HSK grade. */
+  hskGraded: number;
+  /** Chars in total. */
+  hskTotal: number;
+  /** How many graded chars the import is expected to produce. */
+  hskExpected: number;
 }
 
 export interface InitReport {
@@ -114,6 +120,14 @@ interface CountRow extends RowDataPacket {
   n: number;
 }
 
+/**
+ * The HSK coverage row: how many chars exist, and how many carry a grade.
+ */
+interface HskCountRow extends RowDataPacket {
+  total: number;
+  graded: number;
+}
+
 /** The admin user row the checklist reads. */
 interface AdminUserRow extends RowDataPacket {
   id: number;
@@ -154,6 +168,22 @@ export async function runInitChecks(): Promise<InitReport> {
   const adminCountRows = (await safeQuery(`SELECT COUNT(*) AS n FROM users WHERE is_admin = 1`)) as
     CountRow[] | null;
   const adminCount = adminCountRows && adminCountRows[0] ? Number(adminCountRows[0].n) : 0;
+
+  // HSK grading coverage. `chars.hsk_level` is filled by `scripts/import-hsk.ts`
+  // — a DEPLOYMENT script, not a migration, so nothing runs it automatically.
+  // A server whose grading was never imported answers 404 on every /game
+  // level and 503 on every round, while every other checklist step is green.
+  //
+  // This step is what makes that failure visible in the admin panel instead
+  // of in a learner's browser.
+  const hskRows = (await safeQuery(
+    `SELECT COUNT(*) AS total, COUNT(hsk_level) AS graded FROM chars`,
+  )) as HskCountRow[] | null;
+  const hskTotal = hskRows && hskRows[0] ? Number(hskRows[0].total) : 0;
+  const hskGraded = hskRows && hskRows[0] ? Number(hskRows[0].graded) : 0;
+  // The import writes 2632 chars across HSK 1-6. A server that graded fewer
+  // than that has not run the import (or ran it against a partial vocabulary).
+  const hskExpected = 2632;
 
   // app_config snapshot
   const configKeys = ['site.url', 'smtp.transport', 'smtp.from', 'ai.api_key', 'ai.model'];
@@ -343,6 +373,25 @@ export async function runInitChecks(): Promise<InitReport> {
         : `${jwtSecret.length} 字节`,
   });
 
+  // 13. HSK grading coverage. Required in prod, because a server whose
+  // grading was never imported answers 404 on every /game level and 503 on
+  // every round — the whole games area is dead while every other step here
+  // is green. `scripts/import-hsk.ts` fills this column, and it is a
+  // deployment step, not a migration, so nothing runs it automatically.
+  const hskOk = hskGraded >= hskExpected;
+  steps.push({
+    id: 'hsk-grading',
+    name: 'HSK 分级数据',
+    description: `chars.hsk_level 已分级 ≥ ${hskExpected} 字 — /game 闯关与小游戏依赖它`,
+    required: prod,
+    status: prod ? (hskOk ? 'ok' : 'fail') : hskOk ? 'ok' : 'warn',
+    details: hskOk
+      ? `${hskGraded} / ${hskTotal} 字已分级`
+      : `${hskGraded} / ${hskTotal} 字已分级 (未导入) — /game 会 404/503`,
+    fixHref: undefined, // no UI to fix; it is a CLI import
+    fixLabel: '查看 import-hsk.ts',
+  });
+
   const context: InitContext = {
     isProd: prod,
     nodeEnv,
@@ -355,6 +404,9 @@ export async function runInitChecks(): Promise<InitReport> {
     manifestExists,
     tableCount,
     expectedTableCount: EXPECTED_TABLES,
+    hskGraded,
+    hskTotal,
+    hskExpected,
   };
 
   return { context, steps };
