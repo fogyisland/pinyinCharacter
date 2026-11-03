@@ -29,7 +29,7 @@ vi.mock('@/lib/seed-runner', () => ({
 import { getPool } from '@/lib/db';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
 import { readSeedCounts } from '@/lib/seed-runner';
-import { runInitChecks } from '@/lib/init-checklist';
+import { runInitChecks, type InitReport, type CheckResult } from '@/lib/init-checklist';
 import { SEED_DATASETS } from '@/lib/seed-registry';
 
 /** Set NODE_ENV for the duration of a test. */
@@ -41,7 +41,7 @@ function setNodeEnv(value: string): void {
 let counts: Record<string, number> = {};
 
 /** Find a step in a report by its id. */
-function step(report: { steps: Array<{ id: string }> }, id: string) {
+function step(report: InitReport, id: string): CheckResult | undefined {
   return report.steps.find((s) => s.id === id);
 }
 

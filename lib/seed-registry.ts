@@ -91,12 +91,32 @@ function countJsonArray(fileName: string): number {
   return Array.isArray(value) ? value.length : 0;
 }
 
-/** Count the files in a `data/` subdirectory, ignoring `.gz` duplicates. */
-function countDataFiles(dirName: string): number {
-  const dir = join(DATA_DIR, dirName);
+/**
+ * Count the data files in a directory, ignoring the gzipped variant of a
+ * file that is also present in plain form.
+ *
+ * The deploy bundle ships `data/classics/` and `data/content/` as
+ * `.json.gz` (about 190MB saved), so a checkout and a bundle hold
+ * different file names for the same data. Both shapes are counted, and a
+ * file present in both forms counts once — the `.gz` suffix is stripped
+ * before the name is recorded.
+ *
+ * Exported for the tests: the directory is a parameter so the gzipped
+ * shape can be exercised without a 190MB fixture.
+ */
+export function countDataFilesIn(dir: string): number {
   if (!existsSync(dir)) return 0;
-  return readdirSync(dir).filter((f) => f.endsWith('.json') && !f.endsWith('.json.gz'))
-    .length;
+  const names = new Set<string>();
+  for (const file of readdirSync(dir)) {
+    if (!file.endsWith('.json') && !file.endsWith('.json.gz')) continue;
+    names.add(file.replace(/\.gz$/, ''));
+  }
+  return names.size;
+}
+
+/** Count the data files in a `data/` subdirectory. */
+function countDataFiles(dirName: string): number {
+  return countDataFilesIn(join(DATA_DIR, dirName));
 }
 
 /** Count the characters across the HSK vocabulary, de-duplicated. */
@@ -134,14 +154,24 @@ function countRareChars(): number {
   return countContentFilesWithRareMeaning();
 }
 
-/** Walk `data/content/` and count the files that qualify as rare chars. */
+/**
+ * Walk `data/content/` and count the files that qualify as rare chars.
+ *
+ * The deploy bundle ships this directory as `.json.gz`, so both shapes are
+ * read — `readJsonAuto` handles either. A file that exists in both forms
+ * is counted once.
+ */
 function countContentFilesWithRareMeaning(): number {
   const dir = join(DATA_DIR, 'content');
   if (!existsSync(dir)) return 0;
+  const seen = new Set<string>();
   let count = 0;
   for (const file of readdirSync(dir)) {
-    if (!file.endsWith('.json') || file.endsWith('.json.gz')) continue;
-    const value = readJsonAuto(join(dir, file)) as
+    if (!file.endsWith('.json') && !file.endsWith('.json.gz')) continue;
+    const name = file.replace(/\.gz$/, '');
+    if (seen.has(name)) continue;
+    seen.add(name);
+    const value = readJsonAuto(join(dir, name)) as
       | { level?: number; rare?: { meaning?: string } }
       | null;
     if (!value) continue;

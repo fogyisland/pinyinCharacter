@@ -13,11 +13,15 @@
  * means.
  */
 import { describe, it, expect } from 'vitest';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 
 import {
   SEED_DATASETS,
   HSK_EXPECTED,
   getSeedDataset,
+  countDataFilesIn,
 } from '@/lib/seed-registry';
 import hskVocab from '@/data/hsk-vocab.json';
 import standardChars from '@/data/general-standard-chinese-characters.json';
@@ -103,5 +107,56 @@ describe('seed registry — expected sizes', () => {
   it('looks a dataset up by id and returns undefined for an unknown one', () => {
     expect(getSeedDataset('sutras')?.table).toBe('sutras');
     expect(getSeedDataset('not-a-dataset')).toBeUndefined();
+  });
+});
+
+describe('seed registry — the deploy bundle holds gzipped data', () => {
+  // The deploy bundle ships `data/content/` and `data/classics/` as
+  // `.json.gz` to save about 190MB. A registry that counted only `.json`
+  // files would report zero for those datasets on the server and call a
+  // complete database empty — the seed would then run on every boot and
+  // the checklist would report a false gap.
+  it('counts a directory whose files are all gzipped', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'seed-gz-'));
+    writeFileSync(join(dir, 'a.json.gz'), '');
+    writeFileSync(join(dir, 'b.json.gz'), '');
+    writeFileSync(join(dir, 'c.json.gz'), '');
+
+    expect(countDataFilesIn(dir)).toBe(3);
+  });
+
+  it('counts a file that is present in both plain and gzipped form once', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'seed-gz-'));
+    writeFileSync(join(dir, 'a.json'), '');
+    writeFileSync(join(dir, 'a.json.gz'), '');
+
+    expect(countDataFilesIn(dir)).toBe(1);
+  });
+
+  it('counts a plain directory the same way', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'seed-plain-'));
+    writeFileSync(join(dir, 'a.json'), '');
+    writeFileSync(join(dir, 'b.json'), '');
+    writeFileSync(join(dir, 'notes.txt'), '');
+
+    expect(countDataFilesIn(dir)).toBe(2);
+  });
+
+  it('counts a missing directory as zero', () => {
+    expect(countDataFilesIn(join(tmpdir(), 'seed-does-not-exist'))).toBe(0);
+  });
+
+  it('keeps the sutra count stable whether the files are plain or gzipped', () => {
+    // `data/sutras/` is NOT gzipped by the packager, so the plain count is
+    // the reference. The count must not depend on the file extension.
+    expect(getSeedDataset('sutras')!.expected).toBe(12);
+  });
+
+  it('reads a gzipped manifest when the plain one is absent', () => {
+    // `readJsonAuto` is the shared helper: it reads `.json` first and
+    // falls back to `.json.gz`. The registry uses it for every manifest,
+    // so a bundle that ships a gzipped manifest still counts correctly.
+    expect(getSeedDataset('poems')!.expected).toBeGreaterThan(0);
+    expect(getSeedDataset('classics')!.expected).toBeGreaterThan(0);
   });
 });
