@@ -1,5 +1,6 @@
 import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+import { isMissingTableError } from './db-error';
 
 interface AppConfigRow extends RowDataPacket {
   key: string;
@@ -97,11 +98,30 @@ let inflightLoad: Promise<Map<string, string>> | null = null;
  */
 let configFailure: { at: number; error: unknown } | null = null;
 
+/**
+ * Read every `app_config` row.
+ *
+ * A missing table is not a failure — it is "there is nothing here yet". The
+ * /init wizard's first screen writes DATABASE_URL and its third screen
+ * creates the tables, so between them the table is *guaranteed* to be
+ * absent. The root layout reads `site.url` on every render (three times:
+ * itself, `buildOrganization`, `buildWebSite`), so raising here turned a
+ * perfectly normal first-run into a screenful of stack traces.
+ *
+ * To every caller "the table is not there" and "the table is there but has
+ * no row for this key" mean the same thing: no value. So the missing table
+ * becomes an empty result, and everything else keeps raising.
+ */
 async function loadConfigRows(): Promise<Map<string, string>> {
-  const [rows] = await getPool().query<AppConfigRow[]>(`SELECT \`key\`, value FROM app_config`);
-  const values = new Map<string, string>();
-  for (const r of rows) values.set(r.key, r.value);
-  return values;
+  try {
+    const [rows] = await getPool().query<AppConfigRow[]>(`SELECT \`key\`, value FROM app_config`);
+    const values = new Map<string, string>();
+    for (const r of rows) values.set(r.key, r.value);
+    return values;
+  } catch (error) {
+    if (isMissingTableError(error)) return new Map();
+    throw error;
+  }
 }
 
 async function getConfigMap(): Promise<Map<string, string>> {
@@ -120,7 +140,19 @@ async function getConfigMap(): Promise<Map<string, string>> {
   if (!inflightLoad) {
     const load = loadConfigRows()
       .then((values) => {
-        configCache = { at: Date.now(), values };
+        // An empty result is never cached. "Empty" is what the table looks
+        // like on a fresh install — before the wizard creates it, and for
+        // the moment after CREATE TABLE but before the seed has run. The
+        // seed writes with a direct INSERT (scripts/init-db.ts), NOT
+        // through setConfig(), so nothing clears the cache from the
+        // inside: a cached empty map would hide the seeded rows for a
+        // whole TTL, and the site would keep serving placeholder canonical
+        // URLs after the operator had already configured them.
+        if (values.size > 0) {
+          configCache = { at: Date.now(), values };
+        } else {
+          configCache = null;
+        }
         // The load succeeded, so any remembered failure is stale.
         configFailure = null;
         return values;

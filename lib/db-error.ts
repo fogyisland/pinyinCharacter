@@ -21,6 +21,34 @@ interface CodedError {
 }
 
 /**
+ * True when the error says the table (or the schema holding it) is absent.
+ *
+ * MySQL reports this as `ER_NO_SUCH_TABLE` / errno 1146 / SQLSTATE 42S02,
+ * whether the missing thing is a table in an existing schema or the schema
+ * itself. A schema that does not exist is reported the same way, which is
+ * what we want: both mean "there is nothing here yet".
+ *
+ * This is the one database error that is **not** a failure but a state. A
+ * fresh install has no tables until the /init wizard's third step creates
+ * them, and anything that reads a table during that window must ask "is
+ * this thing there?" rather than "did this work?". The setup gate
+ * (`lib/setup.ts`) and the config reader (`lib/config.ts`) both need that
+ * question answered, so the predicate lives here.
+ *
+ * The `code` is the stable identifier; `errno` and `sqlState` are checked
+ * as well so a driver that only populates one of them still gets caught.
+ */
+export function isMissingTableError(error: unknown): boolean {
+  if (typeof error !== 'object' || error === null) return false;
+  const candidate = error as { code?: unknown; errno?: unknown; sqlState?: unknown };
+  return (
+    candidate.code === 'ER_NO_SUCH_TABLE' ||
+    candidate.errno === 1146 ||
+    candidate.sqlState === '42S02'
+  );
+}
+
+/**
  * Describe a database error in terms of what the operator should run.
  *
  * The order matters: the more specific codes come first, because a

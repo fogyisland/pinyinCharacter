@@ -24,6 +24,7 @@ import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import mysql from 'mysql2/promise';
 import type { RowDataPacket } from 'mysql2';
+import { isMissingTableError } from './db-error';
 
 /** One `app_config` row: the stored setup-flag value. */
 interface SetupFlagRow extends RowDataPacket {
@@ -232,23 +233,15 @@ export async function getSetupState(): Promise<SetupState> {
 /**
  * True when the error says the table (or the schema holding it) is absent.
  *
- * MySQL reports this as `ER_NO_SUCH_TABLE` / errno 1146 / SQLSTATE 42S02,
- * whether the missing thing is a table in an existing schema or the
- * schema itself. A schema that does not exist is reported the same way,
- * which is what we want: both mean "there is nothing here yet".
+ * The predicate itself lives in `lib/db-error.ts`, beside the other
+ * database-error helpers — the config reader (`lib/config.ts`) needs the
+ * same question answered, and a copy would drift.
  *
- * The `code` is the stable identifier; `errno` and `sqlState` are checked
- * as well so a driver that only populates one of them still gets caught.
+ * It stays exported from here because the setup gate is where this question
+ * gets asked most often, and because importers of `@/lib/setup` should not
+ * have to change.
  */
-export function isMissingTableError(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) return false;
-  const candidate = error as { code?: unknown; errno?: unknown; sqlState?: unknown };
-  return (
-    candidate.code === 'ER_NO_SUCH_TABLE' ||
-    candidate.errno === 1146 ||
-    candidate.sqlState === '42S02'
-  );
-}
+export { isMissingTableError };
 
 /**
  * Check whether the system has been initialized. We use the app_config flag
