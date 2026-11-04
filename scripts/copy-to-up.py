@@ -4,7 +4,13 @@ import sys
 import gzip
 
 SRC = '.'
-DST = './Up'
+# The destination can be redirected with the PIYIN_UP_DEST environment
+# variable. The default is unchanged. The reason it exists: the script
+# deletes its destination directory before copying, so a rebuild that goes
+# wrong destroys the previous bundle. Building into a staging directory
+# first and swapping it in after the audit passes keeps the last good
+# bundle intact until the new one is known to be sound.
+DST = os.environ.get('PIYIN_UP_DEST') or './Up'
 
 # rmtree(Up/) at start — re-runs are hermetic. (If Up/ doesn't exist yet,
 # shutil.rmtree(..., ignore_errors=True) is a no-op.)
