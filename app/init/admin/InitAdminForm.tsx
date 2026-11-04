@@ -38,6 +38,12 @@ export function InitAdminForm() {
       // That flag is what lets `/init/admin` skip the form on re-entry and
       // what `/api/init/status` reports as `adminDone`.
       //
+      // The marker cannot land on a fresh install: `app_config` is created
+      // by step 3, so during step 2 the table does not exist yet. The
+      // server treats that as a state, not an error, and answers 200 with
+      // `markerWritten: false`. Step 3 re-writes the marker once it has
+      // created the table, so the re-entry protection still works.
+      //
       // A failure here is not fatal: the credentials are already stashed
       // and the token is already in hand, so step 3 can still run. The
       // only loss is the "skip step 2 on re-entry" convenience, so the
@@ -50,7 +56,7 @@ export function InitAdminForm() {
         });
         if (!flagRes.ok) {
           console.error(
-            '[init] the wizard step-2 marker could not be written; step 2 will be shown again on a later visit:',
+            '[init] the wizard step-2 marker request was rejected; step 2 may be shown again on a later visit:',
             flagRes.status,
           );
         }

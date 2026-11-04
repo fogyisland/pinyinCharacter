@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
-import { isSetupRouteEnabled } from '@/lib/setup';
-import { getPool } from '@/lib/db';
+import { isSetupRouteEnabled, markInitWizardAdminDone } from '@/lib/setup';
 
 /**
  * Step 2 of /init wizard. After validating the admin schema, writes the
@@ -13,6 +12,24 @@ import { getPool } from '@/lib/db';
  *
  * The actual user INSERT happens in step 3's `/api/init/create-admin`
  * (which consumes the token from /api/init/stash-admin).
+ *
+ * ## The marker cannot be written during a fresh install — and that is fine
+ *
+ * `app_config` is created by step 3 (`initDb()`), so on a brand-new
+ * database step 2 runs against a schema that has **no tables at all**. The
+ * marker therefore cannot land here; the route used to turn that into a
+ * 500, which surfaced in the browser console as
+ *
+ *     [init] the wizard step-2 marker could not be written ...
+ *
+ * A missing table is a *state*, not a fault — the same rule the read side
+ * already follows (`isInitWizardAdminDone()` answers "not done" without
+ * erroring). So the route answers 200 and tells the client, in
+ * `data.markerWritten`, whether the marker actually landed.
+ *
+ * Step 3 re-writes the marker once `initDb()` has created the table, so
+ * the "skip step 2 on re-entry" protection still works once the wizard
+ * has run.
  *
  * All responses carry `Cache-Control: no-store` so a browser cannot replay
  * a previously-seen step-2-completed state from its HTTP cache and skip
@@ -38,12 +55,11 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return badRequest('invalid_input', parsed.error.issues.map((i) => i.message).join('; '));
     }
-    // Write the wizard marker so the orchestrator can skip step 2 on re-entry.
-    await getPool().query(
-      `INSERT INTO app_config (\`key\`, value) VALUES ('setup.wizard.admin_done', 'true')
-       ON DUPLICATE KEY UPDATE value = VALUES(value)`,
-    );
-    return NextResponse.json({ ok: true, data: { validated: true } });
+    // Write the wizard marker so the orchestrator can skip step 2 on
+    // re-entry. `false` means the table does not exist yet — the normal
+    // state on a fresh install, and not an error.
+    const markerWritten = await markInitWizardAdminDone();
+    return NextResponse.json({ ok: true, data: { validated: true, markerWritten } });
   });
   if (result instanceof NextResponse) {
     result.headers.set('Cache-Control', 'no-store');

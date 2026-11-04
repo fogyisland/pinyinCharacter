@@ -294,6 +294,37 @@ export async function isInitWizardAdminDone(): Promise<boolean> {
 }
 
 /**
+ * Write the wizard's step-2 marker `setup.wizard.admin_done='true'`.
+ *
+ * Returns whether the marker actually landed. `false` means "the table is
+ * not there yet" — the normal state during step 2 of a fresh install,
+ * because `app_config` is only created by step 3 (`initDb()`).
+ *
+ * This is the write-side twin of `isInitWizardAdminDone()`, which already
+ * treats a missing table as "not done yet". The two must agree: the reader
+ * says "not done" without erroring, so the writer must not turn the same
+ * state into a 500.
+ *
+ * A missing table is a *state*, not a fault — the same reasoning as
+ * `lib/config.ts` (see R-238). Every other failure (a refused connection,
+ * a denied permission) still throws: those are real problems and must stay
+ * visible.
+ */
+export async function markInitWizardAdminDone(): Promise<boolean> {
+  const { getPool } = await import('./db');
+  try {
+    await getPool().query(
+      `INSERT INTO app_config (\`key\`, value) VALUES ('setup.wizard.admin_done', 'true')
+       ON DUPLICATE KEY UPDATE value = VALUES(value)`,
+    );
+    return true;
+  } catch (error) {
+    if (isMissingTableError(error)) return false;
+    throw error;
+  }
+}
+
+/**
  * Mark setup as complete in app_config. Called by /api/init/run-seed after
  * initDb() succeeds. Sets both the completed flag and route_enabled=false
  * so the wizard locks itself out by default.
