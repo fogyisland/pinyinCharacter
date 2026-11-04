@@ -52,12 +52,30 @@ describe('the quest tier memo', () => {
   });
 
   it('a successful build is memoized, so a second call does not query again', async () => {
-    queryMock.mockResolvedValue([[]]);
+    // A tier that HAS rows. An *empty* tier is deliberately not memoized
+    // (see game-quest-data-empty-tier.test.ts): it means "the HSK grading
+    // has not been imported yet", and caching that would freeze the
+    // answer for the life of the process.
+    queryMock.mockResolvedValue([[{ char: '一', pinyin: 'yī', radical: '一' }]]);
 
     const first = await getQuestTier(1);
     const second = await getQuestTier(1);
 
     expect(second).toBe(first);
     expect(queryMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('an empty tier is evicted, so the next call re-reads the database', async () => {
+    // The tier was empty because `scripts/import-hsk.ts` had not run yet.
+    // Once the data lands, the server must see it without a restart.
+    queryMock.mockResolvedValueOnce([[]]);
+    queryMock.mockResolvedValueOnce([[{ char: '一', pinyin: 'yī', radical: '一' }]]);
+
+    const first = await getQuestTier(1);
+    expect(first.tierSize).toBe(0);
+
+    const second = await getQuestTier(1);
+    expect(second.tierSize).toBeGreaterThan(0);
+    expect(queryMock).toHaveBeenCalledTimes(2);
   });
 });

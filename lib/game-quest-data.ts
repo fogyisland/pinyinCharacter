@@ -9,6 +9,7 @@ import { readJsonAuto } from './json-fs';
 import { getRadical } from './radical';
 import { buildTier, toneFormsOf } from './game-quest';
 import type { QuestCharFact, QuestTier } from './game-quest-types';
+import { isHskTierEmpty } from './game-quest-types';
 import type { CharContent } from '@/scripts/schemas/content';
 
 /**
@@ -188,16 +189,36 @@ const tierMemo = new Map<number, Promise<QuestTier>>();
  *
  * The memoized *promise* is returned, not the value: two concurrent first
  * requests for the same tier share one build instead of racing two.
+ *
+ * ## An empty tier is NOT cached
+ *
+ * `scripts/import-hsk.ts` is a deployment step, not a migration, so a
+ * server can easily be asked for a tier before the grading has been
+ * imported. Caching that empty result would freeze the answer for the
+ * life of the process: the operator runs the import, the data lands, and
+ * the server keeps answering "the HSK grading was never imported" — with
+ * a message that names the very command they just ran.
+ *
+ * An empty tier means "the data is not ready yet", not "this tier is
+ * empty forever", so it is not memoized. The next request rebuilds it.
+ * A tier that *has* rows is still cached — that is the expensive case and
+ * it is the one the memo exists for.
  */
 export function getQuestTier(tier: number): Promise<QuestTier> {
   const memoized = tierMemo.get(tier);
   if (memoized) return memoized;
-  const pending = buildQuestTierFromDb(tier).catch((err: unknown) => {
-    // A failed build must not poison the memo: drop the entry so the next
-    // request retries (the lib/pinyin-index.ts indexPromise pattern).
-    tierMemo.delete(tier);
-    throw err;
-  });
+  const pending = buildQuestTierFromDb(tier)
+    .then((built) => {
+      // Drop the memo for an empty tier so the next request re-reads it.
+      if (isHskTierEmpty(built)) tierMemo.delete(tier);
+      return built;
+    })
+    .catch((err: unknown) => {
+      // A failed build must not poison the memo: drop the entry so the next
+      // request retries (the lib/pinyin-index.ts indexPromise pattern).
+      tierMemo.delete(tier);
+      throw err;
+    });
   tierMemo.set(tier, pending);
   return pending;
 }
@@ -267,12 +288,20 @@ const fileTierMemo = new Map<number, Promise<QuestTier>>();
  * No database is touched: this is what lets the MCP server serve the quest
  * without MySQL. The unit test proves the result is byte-identical to
  * `getQuestTier`'s for all six tiers.
+ *
+ * Like the database-backed tier, an empty tier is not memoized: the files
+ * are regenerated in place, and a process that had cached "this tier is
+ * empty" would keep serving that answer after the content landed.
  */
 export function getFileQuestTier(tier: number): Promise<QuestTier> {
   const memoized = fileTierMemo.get(tier);
   if (memoized) return memoized;
   const pending = Promise.resolve()
     .then(() => buildQuestTier(tier, listTierRowsFromFiles(tier)))
+    .then((built) => {
+      if (isHskTierEmpty(built)) fileTierMemo.delete(tier);
+      return built;
+    })
     .catch((err: unknown) => {
       fileTierMemo.delete(tier);
       throw err;
