@@ -8,11 +8,35 @@ import {
 
 /**
  * Step 3 of /init wizard. Runs three phases in order:
- *   1. runMigrations() — applies all SQL in scripts/migrations/ (idempotent).
- *      Brings older DBs up to current schema before initDb populates them.
- *   2. initDb() — creates the 15 tables (idempotent CREATE IF NOT EXISTS),
+ *   1. initDb() — creates the 15 tables (idempotent CREATE IF NOT EXISTS),
  *      seeds app_config defaults, auto-populates poems/sutras/chars from JSON.
+ *   2. runMigrations() — applies all SQL in scripts/migrations/ (idempotent).
+ *      Brings older DBs up to the current schema.
  *   3. markSetupComplete() — flips setup.completed=true and locks /init.
+ *
+ * ## Why the tables are built BEFORE the migrations
+ *
+ * The order used to be the other way round, and that was a defect. The
+ * migration files begin with `ALTER TABLE worksheets ...`, and on a
+ * brand-new database `worksheets` does not exist yet — it is created by
+ * `initDb()`. So `runMigrations()` died with
+ *
+ *     Error: Table 'pinyin.worksheets' doesn't exist
+ *       at runMigrations (scripts/migrate.ts:39:36)
+ *
+ * **before** `initDb()` ever ran. Nothing was created, nothing was
+ * imported, nothing was seeded — and because the failure happened
+ * outside the route's own error handling, the wizard reported success
+ * on a database that was completely empty.
+ *
+ * The only order in which both steps have what they need is:
+ *
+ *     tables → migrations → data
+ *
+ * `initDb()` is idempotent (`CREATE TABLE IF NOT EXISTS`), so running it
+ * first on an existing database is a no-op; the migrations then bring
+ * that database up to date. On a fresh database the tables exist by the
+ * time the migrations run.
  *
  * It also writes the wizard's step-2 marker (`setup.wizard.admin_done`).
  * Step 2 could not write it — on a fresh install `app_config` does not
@@ -36,8 +60,11 @@ export async function POST() {
     }
     const { runMigrations } = await import('@/scripts/migrate');
     const { initDb } = await import('@/scripts/init-db');
-    const migrations = await runMigrations();
+    // Tables first, then the migrations: the migration files ALTER tables
+    // that `initDb()` creates, so on a fresh database the other order dies
+    // with ER_NO_SUCH_TABLE before a single table exists.
     await initDb();
+    const migrations = await runMigrations();
     const markerWritten = await writeWizardMarker();
     await markSetupComplete();
     return NextResponse.json({

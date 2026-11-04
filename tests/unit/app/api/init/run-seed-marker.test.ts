@@ -61,6 +61,28 @@ describe('POST /api/init/run-seed — the wizard step-2 marker', () => {
     expect(order).toEqual(['initDb', 'markAdminDone']);
   });
 
+  it('builds the tables BEFORE running the migrations', async () => {
+    // The defect: the route ran `runMigrations()` first, and the migrations
+    // begin with `ALTER TABLE worksheets ...` — which needs a table that
+    // only `initDb()` creates. On a brand-new database the migration
+    // therefore died with ER_NO_SUCH_TABLE, `initDb()` never ran, and
+    // **not one dataset was seeded**: no chars, no HSK grading, no poems.
+    // The wizard reported success because the failure happened before the
+    // route's own error handling could see it as a setup failure.
+    const order: string[] = [];
+    initDbMock.mockImplementation(async () => {
+      order.push('initDb');
+    });
+    runMigrationsMock.mockImplementation(async () => {
+      order.push('migrations');
+      return { files: 3, statements: 42 };
+    });
+
+    await POST();
+
+    expect(order).toEqual(['initDb', 'migrations']);
+  });
+
   it('does not fail the whole seed when the marker cannot be written', async () => {
     // The marker is a convenience for re-entry, not a requirement of the
     // seed: by now the tables exist and the admin account has been created.

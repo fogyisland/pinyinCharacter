@@ -21,6 +21,7 @@ interface SubStep {
     | 'create_admin'
     | 'activate'
     | 'migrations'
+    | 'seed'
     | 'mark_complete';
   label: string;
   status: 'idle' | 'running' | 'done' | 'failed';
@@ -52,6 +53,17 @@ interface InitActivateResponse {
 interface MigrateResponse {
   files: number;
   statements: number;
+}
+/** One dataset's outcome from the seed engine. */
+interface SeedOutcome {
+  datasetId: string;
+  status: 'seeded' | 'complete' | 'skipped' | 'failed';
+  actual: number;
+  inserted: number;
+  error?: string;
+}
+interface SeedResponse {
+  seeds: SeedOutcome[];
 }
 
 /** Discriminated union: each phase pins its request body + response shape so a
@@ -122,6 +134,12 @@ type Phase =
       endpoint: '/api/init/migrate';
       body?: never;
       format: (d: MigrateResponse) => string;
+    }
+  | {
+      id: 'seed';
+      endpoint: '/api/init/seed';
+      body?: never;
+      format: (d: SeedResponse) => string;
     };
 
 const INITIAL: SubStep[] = [
@@ -136,6 +154,7 @@ const INITIAL: SubStep[] = [
   { id: 'create_admin', label: '创建管理员账号', status: 'idle' },
   { id: 'activate', label: '写入平台激活信息', status: 'idle' },
   { id: 'migrations', label: '应用迁移文件', status: 'idle' },
+  { id: 'seed', label: '补齐缺失数据 (seed)', status: 'idle' },
   { id: 'mark_complete', label: '标记 setup.completed', status: 'idle' },
 ];
 
@@ -174,6 +193,25 @@ export function InitExecuteForm() {
     if (r.failed) return `失败: ${r.failed}`;
     if (r.skipped) return '已跳过 (表内已有数据)';
     return `新增 ${formatNumber(r.inserted)} 行`;
+  }
+
+  /**
+   * Summarize the seed engine's per-dataset outcomes.
+   *
+   * A dataset that was filled says how many rows it wrote; a dataset that
+   * was already complete says so; a failed one is called out by name,
+   * because it is the one the operator has to act on.
+   */
+  function summarizeSeeds(seeds: SeedOutcome[]): string {
+    const failed = seeds.filter((s) => s.status === 'failed');
+    if (failed.length > 0) {
+      return failed
+        .map((s) => `${s.datasetId}: ${s.error ?? '失败'}`)
+        .join('; ');
+    }
+    const written = seeds.filter((s) => s.status === 'seeded');
+    const total = written.reduce((sum, s) => sum + s.inserted, 0);
+    return `补齐 ${written.length} 个数据集,共 ${formatNumber(total)} 行`;
   }
 
   async function runPhases() {
@@ -219,6 +257,15 @@ export function InitExecuteForm() {
         id: 'migrations',
         endpoint: '/api/init/migrate',
         format: (d) => `${d.files} 个 SQL 文件 / ${d.statements} 条语句`,
+      },
+      {
+        // The seed runs LAST, after the migrations: `chars.hsk_level` is a
+        // column the migration adds, and the seed is what fills it. The
+        // wizard's per-dataset phases are imports; this is the step that
+        // leaves every dataset at its expected count.
+        id: 'seed',
+        endpoint: '/api/init/seed',
+        format: (d) => summarizeSeeds(d.seeds),
       },
     ];
 
@@ -292,7 +339,10 @@ export function InitExecuteForm() {
   }
 
   const groups: { title: string; ids: SubStep['id'][] }[] = [
-    { title: '数据库结构', ids: ['tables', 'app_config', 'migrations'] },
+    // The seed sits right after the migrations because that is where it
+    // runs: the migrations add the column the seed fills. Keeping the two
+    // in one group makes the displayed order match the executed order.
+    { title: '数据库结构', ids: ['tables', 'app_config', 'migrations', 'seed'] },
     {
       title: '数据导入',
       ids: ['poems', 'classics', 'sutras', 'chars', 'rare_chars', 'char_etymology'],
