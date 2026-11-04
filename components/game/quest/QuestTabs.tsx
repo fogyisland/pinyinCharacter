@@ -357,9 +357,24 @@ function useQuestPanelState(tabs: QuestTabsState): QuestPanelState {
     };
   }, [tier, hydrated, retryToken, tab]);
 
-  /** The summary's 「下一关」 - the pointer decides which level comes next. */
+  /**
+   * The summary's 「下一关」 - the pointer decides which level comes next.
+   *
+   * At the **end of a tier** there is no next level: the pointer moves past
+   * the last level and `nextLevel()` clamps it back, so the runner would be
+   * mounted on the very same level - the same React state, no re-render -
+   * and the 通关 screen with its big seal would sit there for good while
+   * 「下一关」 did nothing at all. So the clamp that keeps the runner inside
+   * the tier is also the signal that the tier is over: the runner closes
+   * and the level map comes back.
+   */
   function openNextLevel(): void {
-    setOpenLevel(nextLevel(tier, levelCount));
+    const next = nextLevel(tier, levelCount);
+    if (next === openLevel) {
+      setOpenLevel(null);
+      return;
+    }
+    setOpenLevel(next);
   }
 
   return {

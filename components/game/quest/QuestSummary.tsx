@@ -54,7 +54,10 @@ export function QuestSummary({
         <>
           <h2 className="mt-2 text-2xl font-semibold text-ink">通关</h2>
           <div className="relative mx-auto my-6 h-24 w-24">
-            <QuestSealStamp visible text="通" />
+            {/* The seal stays up for as long as this screen is shown - it is
+                the mark of the 通关, not feedback for one answer. It is
+                centred here: on this screen the seal IS the picture. */}
+            <QuestSealStamp visible text="通" autoHideMs={null} placement="center" />
           </div>
           <button
             type="button"

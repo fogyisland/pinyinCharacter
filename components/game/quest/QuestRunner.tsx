@@ -138,7 +138,16 @@ export function QuestRunner(props: QuestRunnerProps) {
   const [combo, setCombo] = useState(0);
   const [audio, setAudio] = useState<AudioState>('idle');
   const [missed, setMissed] = useState<string[]>([]);
-  const [stampedChars, setStampedChars] = useState<Record<string, boolean>>({});
+  /**
+   * Whether the seal is stamped over the char card right now.
+   *
+   * The seal is the answer **feedback** for the question that was just
+   * answered, so it is a single flag for the card in front of the learner -
+   * not a per-character record. It used to be a map keyed by the character,
+   * which meant the seal stayed over a character for the rest of the level
+   * once that character had been answered correctly.
+   */
+  const [stamped, setStamped] = useState(false);
   const [hintedChars, setHintedChars] = useState<Record<string, boolean>>({});
   /** The chars whose four questions are all correct - they enter the 字卡册. */
   const [masteredChars, setMasteredChars] = useState<Record<string, boolean>>({});
@@ -195,7 +204,7 @@ export function QuestRunner(props: QuestRunnerProps) {
         setAttempt(EMPTY_ATTEMPT);
         setCombo(0);
         setMissed([]);
-        setStampedChars({});
+        setStamped(false);
         setHintedChars({});
         setMasteredChars({});
         setNotedChar(null);
@@ -299,7 +308,7 @@ export function QuestRunner(props: QuestRunnerProps) {
     if (isCorrect) {
       playChime();
       setCombo((value) => value + 1);
-      setStampedChars((previous) => ({ ...previous, [char.char]: true }));
+      setStamped(true);
     } else {
       playThud();
       setCombo(0);
@@ -339,6 +348,9 @@ export function QuestRunner(props: QuestRunnerProps) {
   function handleAdvance(): void {
     const indices = round?.questionIndices[charIndex] ?? [];
     setAttempt(EMPTY_ATTEMPT);
+    // The seal was the feedback for the question just answered. The next
+    // question gets a clean card.
+    setStamped(false);
     if (questionIndex < indices.length - 1) {
       setQuestionIndex(questionIndex + 1);
       return;
@@ -451,7 +463,7 @@ export function QuestRunner(props: QuestRunnerProps) {
         showPinyin={facets.pinyin}
         showRadical={facets.radical}
         showMeaning={facets.meaning}
-        stamped={stampedChars[current.char.char] === true}
+        stamped={stamped}
         hinted={hintedChars[current.char.char] === true}
         wrong={attempt.answered && !attempt.correct}
       />

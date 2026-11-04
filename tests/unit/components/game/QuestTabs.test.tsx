@@ -229,13 +229,19 @@ describe('QuestTabs — the four panels', () => {
     expect(runnerLevel()).toBe('5');
   });
 
-  it('clamps 「下一关」 to the last level of the tier', async () => {
+  it('closes the runner when 「下一关」 has nowhere to go', async () => {
+    // The last level of a tier has no next level: the pointer moves to 32,
+    // which does not exist, and the clamp brings it back to 31. The runner
+    // would then be mounted on the very same level - the same React state,
+    // no re-render - so the 通关 screen with its big seal would sit on the
+    // screen for good and 「下一关」 would be a button that does nothing.
+    //
+    // The answer: at the end of a tier 「下一关」 returns to the level map.
     setUrl('');
     seedProgress({ '1': { level: 31 } });
     const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
     render(<QuestTabs />);
 
-    // The tier's board - HSK 1 has 31 levels.
     await waitFor(() => {
       expect(document.querySelector('[data-level="31"]')).not.toBeNull();
     });
@@ -244,18 +250,43 @@ describe('QuestTabs — the four panels', () => {
     await waitFor(() => {
       expect(document.querySelector('[data-quest-runner]')).not.toBeNull();
     });
-    expect(runnerLevel()).toBe('31');
 
     // The level is 通关 - the tier's pointer moves to 32, which does not exist.
     fireEvent.click(screen.getByRole('button', { name: '通关本局' }));
     fireEvent.click(screen.getByRole('button', { name: '下一关' }));
 
+    // The runner is gone and the board is back.
+    await waitFor(() => {
+      expect(document.querySelector('[data-quest-runner]')).toBeNull();
+    });
+    expect(document.querySelector('[data-level="31"]')).not.toBeNull();
+  });
+
+  it('opens the next level when the tier has one', async () => {
+    // The ordinary case: level 1 of a 31-level tier, the pointer at 1. The
+    // 「下一关」 must move the runner to level 2, not close it.
+    setUrl('');
+    seedProgress({ '1': { level: 1 } });
+    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+    render(<QuestTabs />);
+
+    await waitFor(() => {
+      expect(document.querySelector('[data-level="1"]')).not.toBeNull();
+    });
+    fireEvent.click(document.querySelector('[data-level="1"]') as HTMLElement);
+
     await waitFor(() => {
       expect(document.querySelector('[data-quest-runner]')).not.toBeNull();
     });
-    // The clamp keeps the next level inside the tier - without it the runner
-    // would open level 32, which the API does not have.
-    expect(runnerLevel()).toBe('31');
+    expect(runnerLevel()).toBe('1');
+
+    fireEvent.click(screen.getByRole('button', { name: '通关本局' }));
+    fireEvent.click(screen.getByRole('button', { name: '下一关' }));
+
+    await waitFor(() => {
+      expect(runnerLevel()).toBe('2');
+    });
+    expect(document.querySelector('[data-quest-runner]')).not.toBeNull();
   });
 
   it('does not request the level map outside the 闯关 panel', async () => {

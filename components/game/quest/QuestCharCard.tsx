@@ -42,16 +42,27 @@ export function QuestCharCard({
   return (
     <div
       data-wrong={wrong ? 'true' : undefined}
-      className={`card-paper rounded-lg p-6 text-center ${
+      className={`card-paper relative rounded-lg p-6 text-center ${
         // The tint is a hand-written class: `.card-paper` sets the background in
         // the utilities layer and would swallow a Tailwind utility here.
         wrong ? 'quest-shake quest-card-wrong' : ''
       }`}
     >
       <div className="relative mx-auto flex h-32 w-32 items-center justify-center">
-        <span className="font-kai text-7xl leading-none">{char.char}</span>
-        <QuestSealStamp visible={stamped} />
+        <span data-char-glyph="" className="font-kai text-7xl leading-none">
+          {char.char}
+        </span>
       </div>
+      {/* The seal is anchored to the CARD, not to the glyph box: the glyph box
+          is only 128px wide and the character fills its middle, so a seal in
+          that box's corner would still sit on top of the character. On the
+          card the top-right corner is empty space.
+
+          The seal bears a ✓, not the 通 glyph. This is the answer feedback -
+          "right" - and the 通 glyph is the mark of the 通关 screen. For the
+          character 通 the old seal printed a red 通 on top of the black 通
+          and the character looked like it had never been revealed. */}
+      <QuestSealStamp visible={stamped} text="✓" />
 
       {showPinyin ? (
         <p data-facet="pinyin" className="mt-3 text-lg text-ink">
