@@ -18,6 +18,27 @@ vi.mock('next/navigation', () => ({
 /** Every fetch call the form made, in order. */
 let calls: string[] = [];
 
+/** The seeds the seed endpoint answers with. */
+let seedResponse: {
+  seeds: Array<{
+    datasetId: string;
+    status: 'ok' | 'pending' | 'skipped' | 'failed';
+    actual: number;
+    inserted: number;
+    skippedReason?: string;
+    message?: string;
+    error?: string;
+  }>;
+} = {
+  seeds: [
+    { datasetId: 'hsk-grading', status: 'ok', actual: 2632, inserted: 2632 },
+  ],
+};
+
+function stubSeedResponse(response: typeof seedResponse): void {
+  seedResponse = response;
+}
+
 function jsonResponse(data: unknown, ok = true): Response {
   return {
     ok,
@@ -47,14 +68,7 @@ function responseFor(url: string): Response {
     case '/api/init/migrate':
       return jsonResponse({ ok: true, data: { files: 23, statements: 90 } });
     case '/api/init/seed':
-      return jsonResponse({
-        ok: true,
-        data: {
-          seeds: [
-            { datasetId: 'hsk-grading', status: 'seeded', actual: 2632, inserted: 2632 },
-          ],
-        },
-      });
+      return jsonResponse({ ok: true, data: seedResponse });
     case '/api/init/mark-complete':
       return jsonResponse({ ok: true, data: { completed: true } });
     default:
@@ -65,6 +79,11 @@ function responseFor(url: string): Response {
 beforeEach(() => {
   cleanup();
   calls = [];
+  seedResponse = {
+    seeds: [
+      { datasetId: 'hsk-grading', status: 'ok', actual: 2632, inserted: 2632 },
+    ],
+  };
   pushMock.mockClear();
   replaceMock.mockClear();
   window.sessionStorage.setItem(
@@ -86,12 +105,18 @@ afterEach(() => {
 });
 
 async function runWizard(): Promise<void> {
+  const { getByRole } = await renderWizard();
+  fireEvent.click(getByRole('button', { name: /开始初始化/ }));
+}
+
+/** Render the form with the credentials in place. */
+async function renderWizard(): Promise<ReturnType<typeof render>> {
   const { InitExecuteForm } = await import('@/app/init/execute/InitExecuteForm');
-  const { getByRole } = render(<InitExecuteForm />);
+  const result = render(<InitExecuteForm />);
   await waitFor(() => {
     expect(window.sessionStorage.getItem('piyin.init.admin.creds')).toBeTruthy();
   });
-  fireEvent.click(getByRole('button', { name: /开始初始化/ }));
+  return result;
 }
 
 describe('InitExecuteForm — the seed phase', () => {
@@ -139,6 +164,64 @@ describe('InitExecuteForm — the seed phase', () => {
     await runWizard();
     await waitFor(() => {
       expect(pushMock).toHaveBeenCalledWith('/init');
+    });
+  });
+
+  it('reports how many rows the seed wrote', async () => {
+    // The seed engine's real status value is 'ok', not 'seeded' — the
+    // status list is 'ok' | 'pending' | 'skipped' | 'failed'. A summary
+    // that looked for 'seeded' would report "补齐 0 个数据集" on a run
+    // that had just filled the whole database.
+    const { getByRole, getByText } = await renderWizard();
+    fireEvent.click(getByRole('button', { name: /开始初始化/ }));
+
+    await waitFor(() => {
+      expect(getByText(/补齐 1 个数据集/)).toBeTruthy();
+    });
+    expect(getByText(/共 2,632 行/)).toBeTruthy();
+  });
+
+  it('says so when every dataset was already complete', async () => {
+    // The seed is idempotent: on a database that is already seeded it
+    // writes nothing. Reporting "补齐 0 个数据集,共 0 行" there would
+    // read like the seed had done nothing at all, which is not the same
+    // thing as "the data was already there".
+    stubSeedResponse({
+      seeds: [
+        {
+          datasetId: 'hsk-grading',
+          status: 'ok',
+          actual: 2632,
+          inserted: 0,
+          skippedReason: 'already complete (2632/2632)',
+        },
+      ],
+    });
+    const { getByRole, getByText } = await renderWizard();
+    fireEvent.click(getByRole('button', { name: /开始初始化/ }));
+
+    await waitFor(() => {
+      expect(getByText(/全部 1 个数据集已完整/)).toBeTruthy();
+    });
+  });
+
+  it('reports a dataset that failed by name', async () => {
+    stubSeedResponse({
+      seeds: [
+        {
+          datasetId: 'hsk-grading',
+          status: 'failed',
+          actual: 0,
+          inserted: 0,
+          error: 'ER_NO_SUCH_TABLE',
+        },
+      ],
+    });
+    const { getByRole, getByText } = await renderWizard();
+    fireEvent.click(getByRole('button', { name: /开始初始化/ }));
+
+    await waitFor(() => {
+      expect(getByText(/hsk-grading: ER_NO_SUCH_TABLE/)).toBeTruthy();
     });
   });
 });

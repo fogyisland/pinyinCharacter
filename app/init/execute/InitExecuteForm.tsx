@@ -54,12 +54,27 @@ interface MigrateResponse {
   files: number;
   statements: number;
 }
-/** One dataset's outcome from the seed engine. */
+/**
+ * One dataset's outcome from the seed engine.
+ *
+ * These mirror `lib/seed-runner.ts`'s `SeedOutcome` exactly. The status
+ * values are the engine's own `SeedStatus`: 'ok' | 'pending' | 'skipped' |
+ * 'failed'. Do NOT invent a different set here — a summary that looked
+ * for a status the engine never returns would report "补齐 0 个数据集"
+ * on a run that had just filled the whole database.
+ */
 interface SeedOutcome {
   datasetId: string;
-  status: 'seeded' | 'complete' | 'skipped' | 'failed';
+  status: 'ok' | 'pending' | 'skipped' | 'failed';
+  /** How many rows the database holds for this dataset after the run. */
   actual: number;
+  /** How many rows this run wrote. */
   inserted: number;
+  /** Why the dataset was skipped, when it was. */
+  skippedReason?: string;
+  /** Why the dataset is still incomplete, when it is. */
+  message?: string;
+  /** The failure text, when it failed. */
   error?: string;
 }
 interface SeedResponse {
@@ -198,9 +213,14 @@ export function InitExecuteForm() {
   /**
    * Summarize the seed engine's per-dataset outcomes.
    *
-   * A dataset that was filled says how many rows it wrote; a dataset that
-   * was already complete says so; a failed one is called out by name,
-   * because it is the one the operator has to act on.
+   * The engine's statuses are 'ok' (the dataset is at its expected count
+   * now), 'pending' (it is still short), 'skipped' (it was left alone on
+   * purpose) and 'failed'.
+   *
+   * A failure is called out by name, because it is the one the operator
+   * has to act on. Otherwise the summary says how many rows this run
+   * wrote — and, when nothing needed writing, that every dataset was
+   * already complete.
    */
   function summarizeSeeds(seeds: SeedOutcome[]): string {
     const failed = seeds.filter((s) => s.status === 'failed');
@@ -209,9 +229,17 @@ export function InitExecuteForm() {
         .map((s) => `${s.datasetId}: ${s.error ?? '失败'}`)
         .join('; ');
     }
-    const written = seeds.filter((s) => s.status === 'seeded');
-    const total = written.reduce((sum, s) => sum + s.inserted, 0);
-    return `补齐 ${written.length} 个数据集,共 ${formatNumber(total)} 行`;
+    const pending = seeds.filter((s) => s.status === 'pending');
+    if (pending.length > 0) {
+      return pending
+        .map((s) => `${s.datasetId}: ${s.message ?? '未补齐'}`)
+        .join('; ');
+    }
+    const written = seeds.reduce((sum, s) => sum + s.inserted, 0);
+    if (written > 0) {
+      return `补齐 ${seeds.length} 个数据集,共 ${formatNumber(written)} 行`;
+    }
+    return `全部 ${seeds.length} 个数据集已完整`;
   }
 
   async function runPhases() {
