@@ -23,7 +23,7 @@
  * Run: npx tsx --env-file-if-exists=.env scripts/audit-gaps.ts
  */
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 
 /** A file that is missing from the deploy bundle but should be in it. */
 export interface MissingFromBundle {
@@ -68,7 +68,13 @@ let auditRoot = process.cwd();
 /** Point the audit at another directory. Returns a function to restore it. */
 export function setAuditRoot(root: string): () => void {
   const previous = auditRoot;
-  auditRoot = root;
+  // Absolute, because the root is joined with module paths that are then
+  // handed to `require()` — and `require` resolves a relative path
+  // against *this file's* directory, not against the process's working
+  // directory. A relative root made `require('Up/lib/seed-registry.ts')`
+  // look for `scripts/Up/lib/seed-registry.ts`, and the audit reported a
+  // broken registry instead of the real state.
+  auditRoot = resolve(root);
   return () => {
     auditRoot = previous;
   };

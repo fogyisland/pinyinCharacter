@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, relative } from 'node:path';
 
 import {
   scriptNeedsDatabase,
@@ -34,6 +34,14 @@ let restoreRoot: () => void;
 /** Write a file into the scratch repository, creating parents. */
 function write(relativePath: string, content: string): string {
   const full = join(workDir, relativePath);
+  mkdirSync(join(full, '..'), { recursive: true });
+  writeFileSync(full, content, 'utf8');
+  return full;
+}
+
+/** Write a file into an arbitrary directory, creating parents. */
+function writeAt(base: string, relativePath: string, content: string): string {
+  const full = join(base, relativePath);
   mkdirSync(join(full, '..'), { recursive: true });
   writeFileSync(full, content, 'utf8');
   return full;
@@ -478,5 +486,53 @@ describe('audit-gaps — the doc drift check', () => {
     restoreRoot = setAuditRoot(process.cwd());
 
     expect(findDocDrift()).toHaveLength(0);
+  });
+
+  it('finds the seed registry when the audit root is a relative path', () => {
+    // The registry is loaded with `require()`, and `require` resolves a
+    // relative path against *the requiring module's* directory — not
+    // against the process's working directory. A relative audit root
+    // therefore made the registry unloadable, and the check reported a
+    // load error instead of the real drift.
+    //
+    // This is not a corner case: the audit is pointed at the deploy
+    // bundle as `Up`, a relative path.
+    //
+    // The scratch tree is built *inside* the working directory, because
+    // a path on another drive cannot be expressed relatively at all —
+    // `relative()` returns an absolute path in that case, and the test
+    // would quietly stop testing what it claims to.
+    const scratchRelative = join('.tmp', `audit-gaps-relative-${process.pid}`);
+    const scratchAbsolute = join(process.cwd(), scratchRelative);
+    mkdirSync(scratchAbsolute, { recursive: true });
+    try {
+      writeAt(scratchAbsolute, 'lib/seed-registry.ts', SCRATCH_REGISTRY);
+      writeAt(scratchAbsolute, 'app/init/execute/InitExecuteForm.tsx', SCRATCH_WIZARD_FORM);
+      writeAt(
+        scratchAbsolute,
+        'DEPLOY.md',
+        '| 通用规范汉字 | 8105 | `chars` | 字典 |\n',
+      );
+      writeAt(
+        scratchAbsolute,
+        'REDEPLOY-2026-07-09.md',
+        '4. Click "开始初始化" → 3 phase cards run in order\n',
+      );
+
+      restoreRoot();
+      restoreRoot = setAuditRoot(scratchRelative);
+
+      const drift = findDocDrift();
+
+      // The registry loaded, so the drift is reported as a drift — and
+      // not as "the seed registry could not be loaded".
+      expect(drift).toHaveLength(1);
+      expect(drift[0].from).toBe('DEPLOY.md');
+      expect(drift[0].documentSays).toBe('8105');
+      expect(drift[0].codeSays).toBe('7909');
+    } finally {
+      restoreRoot();
+      rmSync(scratchAbsolute, { recursive: true, force: true });
+    }
   });
 });
