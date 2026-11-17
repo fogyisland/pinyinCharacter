@@ -1,3 +1,5 @@
+import { sanitizeCampaignHtml } from './campaign-html';
+
 export interface PasswordResetArgs {
   username: string;
   resetUrl: string;
@@ -203,9 +205,16 @@ export function emailVerificationEmail(args: EmailVerificationArgs): EmailConten
 // Marketing campaign email — wraps an admin-authored HTML body with the
 // site chrome + footer unsubscribe link. The body is trusted (admin only)
 // but we still escape any {username} interpolation defensively.
+//
+// The body itself is SANITIZED, not trusted. An admin session that was
+// hijacked would let an attacker write a body carrying script or a
+// tracking pixel, and that body lands in the inbox of every subscriber.
+// The sanitizer keeps the formatting an admin needs and drops the parts
+// that can execute or phone home. See lib/campaign-html.ts.
 export function campaignEmail(args: CampaignEmailArgs): EmailContent {
   const safeUser = escapeHtml(args.username);
   const safeUnsub = escapeAttr(args.unsubscribeUrl);
+  const safeBodyHtml = sanitizeCampaignHtml(args.bodyHtml);
   const html = `<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8"></head>
 <body style="margin:0;padding:0;background:#f5f5f5;font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',Helvetica,Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;color:#1f2937;">
@@ -215,7 +224,7 @@ export function campaignEmail(args: CampaignEmailArgs): EmailContent {
     </div>
     <div style="padding:24px;font-size:15px;line-height:1.7;color:#1f2937;">
       <p style="margin:0 0 12px 0;">你好 ${safeUser},</p>
-      ${args.bodyHtml}
+      ${safeBodyHtml}
     </div>
     <div style="background:#f9fafb;padding:16px 24px;border-top:1px solid #e5e7eb;font-size:12px;color:#9ca3af;text-align:center;">
       <p style="margin:0 0 6px 0;">© ${new Date().getFullYear()} 字 ↔ 拼音 工具</p>

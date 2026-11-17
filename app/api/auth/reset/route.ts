@@ -4,6 +4,12 @@ import { getPool } from '@/lib/db';
 import { hashPassword, signSession, setSessionCookie, validatePassword } from '@/lib/auth';
 import { findValidResetRow, markResetUsed } from '@/lib/password-reset';
 import { writeAudit } from '@/lib/audit';
+import { checkAttemptLimit } from '@/lib/ratelimit';
+
+/** Reset attempts allowed per IP per window. */
+const MAX_IP_ATTEMPTS = 10;
+/** The window the reset budget is measured over. */
+const WINDOW_MS = 15 * 60 * 1000;
 
 interface Body {
   token?: string;
@@ -16,6 +22,19 @@ interface ResetUserRow extends RowDataPacket {
 }
 
 export async function POST(req: NextRequest) {
+  // Rate limit per IP. The reset token is 32 random bytes, so guessing
+  // it is not the threat; but this route also WRITES the account's
+  // password, so an unbounded endpoint is a target worth hammering and
+  // a cheap way to keep the database busy.
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+  const limit = checkAttemptLimit(`reset:ip:${ip}`, MAX_IP_ATTEMPTS, WINDOW_MS);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      { ok: false, error: { code: 'rate_limited', message: '尝试过于频繁,请稍后再试' } },
+      { status: 429 },
+    );
+  }
+
   let body: Body;
   try {
     body = await req.json();
@@ -66,7 +85,7 @@ export async function POST(req: NextRequest) {
   await pool.query(`UPDATE users SET password_hash = ? WHERE id = ?`, [newHash, user.id]);
   await markResetUsed(row.id);
 
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
+  // `ip` was resolved at the top of the handler, for the rate limit.
   const ua = req.headers.get('user-agent') ?? null;
   await writeAudit({
     userId: user.id,
