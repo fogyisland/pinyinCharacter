@@ -5,7 +5,7 @@
  * Outputs:
  *   app/icon.png         (32x32)
  *   app/apple-icon.png   (180x180)
- *   app/favicon.ico      (16+32+48 multi-size, via `to-ico`)
+ *   app/favicon.ico      (16+32+48 multi-size, via `png-to-ico`)
  *
  * Note: do NOT also write to public/favicon.ico — Next.js 15 500s when both
  * an app/ route and a public/ asset resolve to the same path.
@@ -13,7 +13,7 @@
  * Run: pnpm favicon:build
  */
 import sharp from 'sharp';
-import toIco from 'to-ico';
+import pngToIco from 'png-to-ico';
 import { readFileSync, writeFileSync, statSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,12 +30,12 @@ async function main() {
   const icon32 = await img.clone().resize(32, 32).png().toBuffer();
   const apple180 = await img.clone().resize(180, 180).png().toBuffer();
 
-  // Multi-size ICO via to-ico: generate 16, 32, 48 px PNGs and combine.
-  // to-ico API: toIco(Buffer[]) => Promise<Buffer>
+  // Multi-size ICO: generate 16, 32, 48 px PNGs and combine.
+  // png-to-ico API: pngToIco(Buffer[]) => Promise<Buffer>
   const ico16 = await img.clone().resize(16, 16).png().toBuffer();
   const ico32 = await img.clone().resize(32, 32).png().toBuffer();
   const ico48 = await img.clone().resize(48, 48).png().toBuffer();
-  const ico = await toIco([ico16, ico32, ico48]);
+  const ico = await pngToIco([ico16, ico32, ico48]);
 
   const dests = [
     { path: 'app/icon.png', data: icon32 },

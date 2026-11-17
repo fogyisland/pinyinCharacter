@@ -485,8 +485,14 @@ describe('audit-gaps — the doc drift check', () => {
     restoreRoot();
     restoreRoot = setAuditRoot(process.cwd());
 
+    // This is the only test in the file that scans the WHOLE repository —
+    // every other one works against a small scratch tree. It reads the
+    // real DEPLOY.md, REDEPLOY-*.md, the seed registry and the wizard
+    // form, so it costs ~6 s here, which does not fit inside vitest's
+    // 5 s default. The timeout is this test's own cost, not a sign that
+    // it is hanging.
     expect(findDocDrift()).toHaveLength(0);
-  });
+  }, 30_000);
 
   it('finds the seed registry when the audit root is a relative path', () => {
     // The registry is loaded with `require()`, and `require` resolves a

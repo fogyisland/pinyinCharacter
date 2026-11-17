@@ -344,7 +344,11 @@ describe('seed runner — "enough counts as seeded"', () => {
     for (const outcome of outcomes) {
       expect(outcome.datasetId).toBeTruthy();
     }
-  });
+    // `runAllSeeds()` runs EVERY dataset's auto-populate, and the HSK
+    // grading walks the whole `chars` table — ~4 s on this machine, which
+    // does not fit inside vitest's 5 s default once the suite runs its
+    // files in parallel. The timeout covers this test's own cost.
+  }, 30_000);
 });
 
 describe('seed runner — the order the datasets are seeded in', () => {

@@ -55,9 +55,9 @@
     "hanzi-writer": "^3.7.0",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.21.0",
-    "mysql2": "^3.22.5",
-    "next": "^15.1.6",
-    "nodemailer": "^8.0.10",
+    "mysql2": "^3.24.6",
+    "next": "^15.5.29",
+    "nodemailer": "^10.6.0",
     "opencc-js": "^1.0.5",
     "pinyin-pro": "^3.25.0",
     "react": "^19.0.0",
@@ -68,8 +68,11 @@
     "tsx": "^4.19.2",
     "typescript": "^5.6.3",
     "ws": "^8.21.0",
-    "zod": "^4.4.3",
+    "zod": "^4.6.7",
     "zustand": "^5.0.1"
+  },
+  "overrides": {
+    "postcss": "^8.5.23"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0-beta.3",
@@ -85,20 +88,20 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.66.0",
     "@typescript-eslint/parser": "^8.66.0",
-    "@vitest/ui": "^2.1.0",
+    "@vitest/ui": "^4.1.12",
     "cnchar": "^3.2.6",
     "cnchar-radical": "^3.2.6",
     "eslint": "^9.39.5",
     "eslint-config-next": "^15.5.22",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.1.1",
-    "happy-dom": "^15.0.0",
+    "happy-dom": "^21.0.4",
     "p-limit": "^6.0.0",
-    "postcss": "^8.4.49",
+    "png-to-ico": "^3.0.2",
+    "postcss": "^8.5.23",
     "prettier": "^3.9.6",
-    "sharp": "0.33.5",
+    "sharp": "^0.35.5",
     "tailwindcss": "^4.0.0-beta.3",
-    "to-ico": "^1.1.5",
-    "vitest": "^2.1.0"
+    "vitest": "^4.1.12"
   }
 }
