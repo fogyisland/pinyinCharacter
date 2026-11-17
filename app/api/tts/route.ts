@@ -2,15 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { synthesize, TtsUpstreamError, type AudioFormat } from '@/lib/tts-edge';
 import { getTtsConfig } from '@/lib/tts-config';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
+import { checkAttemptLimit } from '@/lib/ratelimit';
 import { z } from 'zod';
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
 
 const schema = z.object({
-  text: z.string().min(1).max(10000),
+  // The server cap was 10 000 characters while every real client in this
+  // project sends 500-800 per request (`lib/tts.ts` batches at 500,
+  // `SutraAudioPlayer` at 800). A single request could therefore burn
+  // 12-20x the upstream work a legitimate request needs — and this route
+  // is unauthenticated, so that is an amplification lever.
+  //
+  // 2 000 leaves generous headroom above the legitimate batch size and
+  // still bounds one request to a quarter of what it used to allow.
+  text: z.string().min(1).max(2000),
   voice: z.enum(['male', 'female']).default('female'),
 });
+
+/** Synthesis requests allowed per IP per window. */
+const MAX_IP_REQUESTS = 30;
+/** The window the request budget is measured over. */
+const WINDOW_MS = 60 * 1000;
 
 /**
  * 把合成失败映射成合适的 HTTP 状态码。
@@ -39,6 +53,21 @@ function ttsFailureResponse(error: unknown): NextResponse {
 
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
+    // Rate limit per IP. This route proxies to an external speech service,
+    // so every request costs the server a WebSocket, some CPU and some
+    // upstream quota. Unbounded, it was both a cost amplifier and a way
+    // to exhaust the upstream quota so that LEGITIMATE users get denied.
+    // The budget is per minute and generous enough for a reader working
+    // through a chapter (which batches at 500-800 characters per request).
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const limit = checkAttemptLimit(`tts:ip:${ip}`, MAX_IP_REQUESTS, WINDOW_MS);
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { ok: false, error: { code: 'rate_limited', message: '语音请求过于频繁，请稍后再试' } },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json();
     const parsed = schema.safeParse(body);
     if (!parsed.success)

@@ -10,6 +10,7 @@ import { checkRateLimit } from '@/lib/ratelimit';
 import { sendEmail } from '@/lib/email';
 import { passwordResetEmail } from '@/lib/email-templates';
 import { writeAudit } from '@/lib/audit';
+import { getRuntimeSiteUrl } from '@/lib/seo/config';
 
 interface Body {
   username?: string;
@@ -62,8 +63,19 @@ export async function POST(req: NextRequest) {
   const token = generateResetToken();
   await createResetRow(user.id, token);
 
-  const baseUrl =
-    process.env.PUBLIC_BASE_URL ?? `http://${req.headers.get('host') ?? 'localhost:5555'}`;
+  // The reset link's host must come from the site's own configuration, NOT
+  // from the request. Taking it from the `Host` header let an attacker
+  // send `Host: evil.example` and receive a genuine reset email, from
+  // the real SMTP relay, containing a link to
+  // `http://evil.example/reset-password?token=…`. Clicking it hands the
+  // token to the attacker, who can then POST it to /api/auth/reset and
+  // take over the account.
+  //
+  // `getRuntimeSiteUrl()` reads the admin-configured `site.url` (app_config)
+  // and falls back to NEXT_PUBLIC_SITE_URL — neither is attacker-supplied.
+  // The scheme is part of that value, so the link is https on a real
+  // deployment instead of the hardcoded http:// this used to emit.
+  const baseUrl = await getRuntimeSiteUrl();
   const resetUrl = `${baseUrl}/reset-password?token=${encodeURIComponent(token)}`;
 
   let emailError: string | null = null;

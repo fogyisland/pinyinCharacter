@@ -12,7 +12,7 @@ import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import { PrintButton } from '@/components/common/PrintButton';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { buildMetadata } from '@/lib/seo/metadata';
-import { buildCreativeWork, buildBreadcrumbList } from '@/lib/seo/jsonld';
+import { buildCreativeWork, buildBreadcrumbList, serializeJsonLd } from '@/lib/seo/jsonld';
 import { getPoetryBackLink } from './back-link';
 
 export const dynamic = 'force-dynamic';
@@ -51,13 +51,13 @@ export default async function PoemDetailPage({ params, searchParams }: Props) {
       <script
         type="application/ld+json"
 
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildCreativeWork(poem)) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildCreativeWork(poem)) }}
       />
       <script
         type="application/ld+json"
 
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '诗词', url: '/poetry' },

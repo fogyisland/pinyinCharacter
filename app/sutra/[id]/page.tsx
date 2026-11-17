@@ -11,7 +11,7 @@ import { SutraAudioPlayer } from '@/components/sutra/SutraAudioPlayer';
 import { SutraChunkPickerClient } from './SutraChunkPickerClient';
 import { SutraRightColumn } from './SutraRightColumn';
 import { getSutraBackLink } from './back-link';
-import { buildBook, buildBreadcrumbList } from '@/lib/seo/jsonld';
+import { buildBook, buildBreadcrumbList, serializeJsonLd } from '@/lib/seo/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,11 +62,11 @@ export default async function SutraDetailPage({ params, searchParams }: Props) {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(bookJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(bookJsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: serializeJsonLd(breadcrumbJsonLd) }}
       />
       <Suspense>
         <Header />

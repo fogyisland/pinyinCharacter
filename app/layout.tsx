@@ -5,7 +5,7 @@ import { ToastViewport } from '@/components/common/Toast';
 import { ActivationGuard } from '@/components/ActivationGuard';
 import { SetupGuard } from '@/components/SetupGuard';
 import { PageViewTracker } from '@/components/PageViewTracker';
-import { buildOrganization, buildWebSite } from '@/lib/seo/jsonld';
+import { buildOrganization, buildWebSite, serializeJsonLd } from '@/lib/seo/jsonld';
 import { getRuntimeSiteUrl } from '@/lib/seo/config';
 import { getFontCssLinks } from '@/lib/font-css';
 import { ASYNC_STYLESHEET_FLIP } from '@/lib/font-css-flip';
@@ -61,7 +61,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+          dangerouslySetInnerHTML={{ __html: serializeJsonLd(siteJsonLd) }}
         />
       </head>
       <body className="font-sans antialiased min-h-screen">

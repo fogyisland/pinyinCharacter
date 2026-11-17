@@ -9,6 +9,8 @@
 export type AuditEvent =
   | 'register'
   | 'login'
+  | 'login_rate_limited'
+  | 'login_disabled'
   | 'logout'
   | 'history_create'
   | 'history_delete'
@@ -95,6 +97,8 @@ export type AuditEvent =
 export const AUDIT_EVENTS = [
   'register',
   'login',
+  'login_rate_limited',
+  'login_disabled',
   'logout',
   'history_create',
   'history_delete',
@@ -183,6 +187,8 @@ export const AUDIT_EVENTS = [
 export const EVENT_LABEL: Record<AuditEvent, string> = {
   register: '注册',
   login: '登录',
+  login_rate_limited: '登录尝试过于频繁',
+  login_disabled: '已停用账号尝试登录',
   logout: '登出',
   history_create: '历史创建',
   history_delete: '历史删除',
@@ -282,6 +288,10 @@ export function formatLogMessage(
       return '注册新账号';
     case 'login':
       return `登录${str(m.username) ? `(${str(m.username)})` : ''}`;
+    case 'login_rate_limited':
+      return `登录尝试过于频繁${str(m.username) ? `(${str(m.username)})` : ''}`;
+    case 'login_disabled':
+      return `已停用账号尝试登录${str(m.username) ? `(${str(m.username)})` : ''}`;
     case 'logout':
       return '退出登录';
     case 'history_create': {

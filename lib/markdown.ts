@@ -50,14 +50,52 @@ function renderInline(text: string): string {
   return out;
 }
 
+/**
+ * The URL schemes a rendered link is allowed to carry.
+ *
+ * `http:` and `mailto:` are the two the /guide page actually needs, and
+ * a relative link (no scheme) is always fine. Everything else is
+ * refused.
+ *
+ * ⚠️ Without this check, `[x](javascript:alert(1))` produced
+ * `<a href="javascript:alert(1)">` — the link renderer escaped `"` but
+ * never validated the scheme, so clicking it executed script in the
+ * page's origin. `data:text/html,…` worked the same way.
+ *
+ * The URL is matched case-insensitively because browsers treat
+ * `JaVaScRiPt:` as `javascript:`.
+ */
+const ALLOWED_LINK_SCHEMES = new Set(['http:', 'https:', 'mailto:']);
+
+/**
+ * True when the URL is safe to put in an `href`.
+ *
+ * A URL with NO scheme (`/guide`, `#section`, `page.md`) is relative and
+ * safe by construction. A URL with a scheme must be on the allowlist.
+ */
+function isSafeLinkUrl(url: string): boolean {
+  // A scheme is `letters/digits/+-.` followed by a colon. The colon has to
+  // come before any `/`, `?` or `#`, otherwise it is part of the path
+  // (`/a:b` is a relative path, not a scheme).
+  const schemeMatch = /^([a-zA-Z][a-zA-Z0-9+.-]*):/.exec(url);
+  if (!schemeMatch) return true; // relative
+  return ALLOWED_LINK_SCHEMES.has(schemeMatch[1].toLowerCase() + ':');
+}
+
 function renderInlineNoCode(s: string): string {
   let out = escapeHtml(s);
   // Links: [text](url)
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text, url) => {
+    const safeText = String(text);
+    // Refuse a URL whose scheme is not on the allowlist. The link is
+    // rendered as plain text instead of an anchor, so nothing clickable
+    // is produced for a `javascript:` / `data:` target.
+    if (!isSafeLinkUrl(url)) {
+      return safeText;
+    }
     // External URLs get target=_blank rel=noopener; relative links stay internal.
     const isExternal = /^https?:\/\//i.test(url);
     const safeUrl = url.replace(/"/g, '&quot;');
-    const safeText = String(text);
     if (isExternal) {
       return `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="text-seal hover:underline">${safeText}</a>`;
     }

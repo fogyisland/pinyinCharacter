@@ -8,7 +8,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { getChar, getCharDetail, isSuppPlaneChar } from '@/lib/chars';
 import { DictionaryDetailTabs } from '@/components/dictionary/DictionaryDetailTabs';
 import { buildMetadata } from '@/lib/seo/metadata';
-import { buildDefinedTerm, buildBreadcrumbList } from '@/lib/seo/jsonld';
+import { buildDefinedTerm, buildBreadcrumbList, serializeJsonLd } from '@/lib/seo/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,14 +77,14 @@ export default async function DictionaryDetailPage({ params }: Props) {
         type="application/ld+json"
 
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(buildDefinedTerm({ char: data.char, meaning: data.meaningZh })),
+          __html: serializeJsonLd(buildDefinedTerm({ char: data.char, meaning: data.meaningZh })),
         }}
       />
       <script
         type="application/ld+json"
 
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '字典', url: '/dictionary' },

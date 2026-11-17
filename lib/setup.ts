@@ -259,17 +259,57 @@ export async function isSetupComplete(): Promise<boolean> {
  * Whether the /init route is currently enabled. Default false after setup
  * completes — admins must toggle this back on via /admin/settings/setup
  * to re-run setup (e.g. schema reset).
+ *
+ * ⚠️ THIS GATE FAILS CLOSED. Every failure mode returns `false`, never
+ * `true`, because the routes behind it are unauthenticated and can rewrite
+ * `.env` (see `app/api/init/db-config/route.ts`). The previous version
+ * failed OPEN on three separate paths, and each one was a takeover:
+ *
+ *   1. no `DATABASE_URL`        -> true. On a fresh install this is right,
+ *                                  but it also means an attacker who can
+ *                                  make the variable disappear re-opens
+ *                                  the wizard.
+ *   2. `app_config` has no
+ *      `setup.route_enabled` row -> true. The row is only written by
+ *                                  `markSetupComplete()`, so any install
+ *                                  that completed setup through a path
+ *                                  that did not write it (the `init-db`
+ *                                  CLI, a partial wizard run) sat with
+ *                                  the wizard open.
+ *   3. ANY database error       -> true. The project treats
+ *                                  "schema behind code" (`ER_NO_SUCH_TABLE`)
+ *                                  as a recurring, normal state — see
+ *                                  `lib/db-error.ts`. So a production site
+ *                                  whose `app_config` table went missing,
+ *                                  or whose database was briefly
+ *                                  unreachable, silently re-opened every
+ *                                  `/api/init/*` endpoint to the internet.
+ *
+ * The rule now: the route is enabled ONLY when the install has NOT been
+ * completed, or when an admin explicitly turned it back on. "We cannot
+ * find out" means closed.
  */
 export async function isSetupRouteEnabled(): Promise<boolean> {
-  if (!process.env.DATABASE_URL) return true; // Pre-setup: route is always available
+  // No DATABASE_URL: the install was never configured, so the wizard has
+  // to stay reachable — this is the genuine first-run state. (It is the
+  // one path that legitimately returns true without asking the database.)
+  if (!process.env.DATABASE_URL) return true;
   try {
     const { getPool } = await import('./db');
     const [rows] = await getPool().query<SetupFlagRow[]>(
       `SELECT value FROM app_config WHERE \`key\` = 'setup.route_enabled' LIMIT 1`,
     );
-    return rows.length === 0 || rows[0].value === 'true';
+    // The row is ABSENT -> closed. `setup.route_enabled` is written by
+    // `markSetupComplete()` (as 'false') and by `setSetupRouteEnabled()`,
+    // so its absence means "nobody ever made a decision", and the safe
+    // reading of an unmade decision on an unauthenticated door is closed.
+    if (rows.length === 0) return false;
+    return rows[0].value === 'true';
   } catch {
-    return true;
+    // Fail closed: an unreachable database cannot confirm that the setup
+    // route should be open. Same discipline as `lib/auth.ts` — an
+    // unreachable database must never read as "permission granted".
+    return false;
   }
 }
 

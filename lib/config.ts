@@ -7,8 +7,65 @@ interface AppConfigRow extends RowDataPacket {
   value: string;
 }
 
+/**
+ * Hosts the AI base URL may not point at.
+ *
+ * `ai.base_url` is admin-configurable and the AI client sends it an
+ * `Authorization: Bearer <api key>` header. With `http://` and no host
+ * restriction, a compromised (or simply careless) admin could point the
+ * app at `http://127.0.0.1:3306/` or `http://169.254.169.254/` and turn
+ * the server into a request proxy for the internal network — carrying the
+ * API key with it.
+ *
+ * The base URL is a trusted-input boundary, so it gets a boundary of its
+ * own: HTTPS only, and no address that resolves inside the machine.
+ */
+const BLOCKED_AI_HOSTS = new Set([
+  'localhost',
+  '127.0.0.1',
+  '0.0.0.0',
+  '::1',
+  '[::1]',
+  // The cloud metadata endpoint. Reading it from a server is how a
+  // credential usually leaks.
+  '169.254.169.254',
+  'metadata.google.internal',
+]);
+
+/**
+ * True when the base URL is an https URL pointing at a host that is not
+ * on the internal-address blocklist.
+ *
+ * An empty value is allowed (it means "not configured" — the caller
+ * falls back to its default endpoint).
+ */
+function isValidAiBaseUrl(v: string): boolean {
+  if (v.length === 0) return true;
+  if (v.length > 256) return false;
+  // https only. `http://` would put the API key on the wire in clear.
+  if (!/^https:\/\//i.test(v)) return false;
+  let host: string;
+  try {
+    host = new URL(v).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  if (host.length === 0) return false;
+  if (BLOCKED_AI_HOSTS.has(host)) return false;
+  // Any address in 127.0.0.0/8, 10.0.0.0/8, 172.16.0.0/12 or
+  // 192.168.0.0/16 is private. Matching on the literal prefix covers the
+  // common spellings; a hostname that resolves to a private address is
+  // not covered here, because the validator is synchronous and cannot
+  // resolve.
+  if (/^127\./.test(host)) return false;
+  if (/^10\./.test(host)) return false;
+  if (/^192\.168\./.test(host)) return false;
+  if (/^172\.(1[6-9]|2\d|3[01])\./.test(host)) return false;
+  return true;
+}
+
 const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
-  'ai.base_url': (v) => v.length === 0 || (/^https?:\/\//.test(v) && v.length <= 256),
+  'ai.base_url': isValidAiBaseUrl,
   'ai.api_key': (v) => v.length <= 256,
   'ai.model': (v) => v.length > 0 && v.length <= 64,
   'ai.rate_limit_per_user_per_day': (v) => {

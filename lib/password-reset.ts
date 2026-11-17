@@ -38,6 +38,25 @@ interface UserIdRow extends RowDataPacket {
 export async function createResetRow(userId: number, rawToken: string): Promise<number> {
   const pool = getPool();
   const hash = hashResetToken(rawToken);
+  // Invalidate any outstanding reset tokens for this user before issuing
+  // the new one.
+  //
+  // Without this, a user who requested a reset twice held TWO
+  // independently valid tokens. Each was individually single-use, but the
+  // OLD one stayed usable for its full 15 minutes — so an attacker who
+  // had obtained an earlier reset email (a leaked inbox, a shared
+  // mailbox, a Referer leak) kept a working password-reset capability
+  // long after the user had asked for a new one. Users rely on "I asked
+  // for a new link" to cut off a compromised link; without this, that
+  // did nothing.
+  //
+  // This mirrors `issueVerificationToken` in `lib/email-verification.ts`,
+  // which has always enforced one live token per user.
+  await pool.query(
+    `UPDATE password_resets SET used_at = NOW()
+     WHERE user_id = ? AND used_at IS NULL`,
+    [userId],
+  );
   const [res] = await pool.query<ResultSetHeader>(
     `INSERT INTO password_resets (user_id, token_hash, expires_at)
      VALUES (?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))`,

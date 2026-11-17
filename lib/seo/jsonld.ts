@@ -1,5 +1,40 @@
 import { getRuntimeSiteUrl, SITE_NAME } from './config';
 
+/**
+ * Serialize a JSON-LD object for injection into a `<script>` element.
+ *
+ * ⚠️ `JSON.stringify` alone is NOT safe in a `<script>` context.
+ *
+ * The HTML parser ends a script element at the FIRST `</script`, whether
+ * or not it appears inside a JSON string. `JSON.stringify` escapes quotes
+ * and backslashes, but NOT `<`, `>` or `/`, so a value containing
+ * `</script>` closes the element early:
+ *
+ *   JSON.stringify({name: 'Book </script><script>alert(1)</script>'})
+ *   → {"name":"Book </script><script>alert(1)</script>"}
+ *
+ * Everything after that closing tag is parsed as LIVE MARKUP in the
+ * document, not as JSON-LD text — so it executes.
+ *
+ * The standard fix is to escape the characters that could close or open a
+ * tag, using the JSON escape sequences so the string still parses to the
+ * same value:
+ *
+ *   <  →  <   >  →  >   &  →  &
+ *
+ * The values here are not user input today (they are book titles, poem
+ * titles, a dictionary meaning), but several of them ARE editable or
+ * scraped — `chars.meaning_zh` is LLM-generated and admin-editable, and
+ * the classics come from a third-party scrape. A single hostile record
+ * would otherwise become stored XSS on the live site.
+ */
+export function serializeJsonLd(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026');
+}
+
 export interface PoemForJsonLd {
   title: string;
   author: string;

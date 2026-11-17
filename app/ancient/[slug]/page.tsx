@@ -13,7 +13,7 @@ import {
   getClassicMetaBySlug,
 } from '@/lib/classics';
 import { buildMetadata } from '@/lib/seo/metadata';
-import { buildBook, buildBreadcrumbList } from '@/lib/seo/jsonld';
+import { buildBook, buildBreadcrumbList, serializeJsonLd } from '@/lib/seo/jsonld';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,7 +66,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
         type="application/ld+json"
 
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             buildBook({ title: meta.title, author: meta.author, era: meta.era }),
           ),
         }}
@@ -75,7 +75,7 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
         type="application/ld+json"
 
         dangerouslySetInnerHTML={{
-          __html: JSON.stringify(
+          __html: serializeJsonLd(
             await buildBreadcrumbList([
               { name: '首页', url: '/' },
               { name: '古籍', url: '/ancient' },

@@ -30,6 +30,18 @@ const dbConfigSchema = z.object({
  * them in the success message — never the raw value — to limit exposure).
  *
  * Public: only callable when setup is incomplete OR setup.route_enabled=true.
+ *
+ * ⚠️ This route can rewrite `.env` — including `JWT_SECRET` — so it is one
+ * of the most dangerous endpoints in the codebase. Two rules keep it from
+ * being an unauthenticated takeover:
+ *
+ *   1. `isSetupRouteEnabled()` must return true. That gate fails CLOSED
+ *      (see `lib/setup.ts`), so a production site whose `app_config` table
+ *      went missing does NOT silently re-open this door.
+ *   2. `JWT_SECRET` is only generated when there is none to keep. On a
+ *      live install the existing secret is preserved, because rotating it
+ *      invalidates every session AND hands the signing key to whoever
+ *      triggered the rotation.
  */
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
@@ -50,7 +62,13 @@ export async function POST(req: NextRequest) {
       return badRequest('connection_failed', conn.error ?? 'Connection failed');
     }
     const databaseUrl = buildDatabaseUrl(cfg);
-    const jwtSecret = generateJwtSecret();
+    // Keep the secret that is already in force. Regenerating it would
+    // invalidate every issued session and hand the new signing key to
+    // whoever called this route. A first run has no secret yet, so one is
+    // generated then.
+    const existingSecret = process.env.JWT_SECRET;
+    const hasUsableSecret = typeof existingSecret === 'string' && existingSecret.length >= 32;
+    const jwtSecret = hasUsableSecret ? existingSecret : generateJwtSecret();
     // /init is only reachable pre-setup, so production here means the user
     // is deploying prod for the first time. Lock down cookie transport.
     const cookieSecure = process.env.NODE_ENV === 'production' ? 'true' : 'false';
@@ -69,8 +87,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       ok: true,
       data: {
-        databaseUrl, // echo back so the UI can show "connected to mysql://..."
+        // The connection succeeded, but the URL carries the database
+        // password — a credential that must not travel back to the client
+        // (it would land in the browser's network log, in a proxy's log,
+        // and in this project's own access logs). The UI only needs to
+        // show which database was configured, so it gets the host and the
+        // schema name — never the assembled URL.
         host: cfg.host,
+        port: cfg.port,
         database: cfg.database,
         // Never return the raw JWT_SECRET to the client — the user doesn't
         // need it and leaking it through JSON would defeat the purpose.

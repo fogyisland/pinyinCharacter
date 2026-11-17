@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { loginRequest } from '@/lib/api-auth';
 import { useAppStore } from '@/lib/store';
-import { validateUsername, validatePassword } from '@/lib/auth-client';
+import { validateUsername, validatePassword, safeInternalPath } from '@/lib/auth-client';
 
 export function LoginForm() {
   const router = useRouter();
@@ -33,8 +33,10 @@ export function LoginForm() {
       return;
     }
     setUser(r.data.user);
-    const next = search.get('next') || '/';
-    router.push(next);
+    // `?next=` is attacker-controllable, and an off-site target turns the
+    // login page into a phishing amplifier — so it is constrained to a
+    // path on this site before it is used.
+    router.push(safeInternalPath(search.get('next')));
   }
 
   return (

@@ -895,6 +895,28 @@ export async function createAdminUser(input: CreateAdminInput): Promise<CreateAd
   if (existing.length > 0) {
     throw new Error(`username_taken: A user with username '${input.username}' already exists.`);
   }
+  // ⚠️ Refuse if an administrator ALREADY exists.
+  //
+  // This function creates an account with `is_admin = 1`, and it is
+  // reachable over HTTP through `POST /api/init/create-admin`. Checking
+  // only the username meant that anyone who could reach that route could
+  // mint a brand-new administrator on an install that already had one —
+  // bypassing the promote/demote admin APIs and their audit trail
+  // entirely.
+  //
+  // The first-run case is unaffected: a fresh install has no admin, so
+  // this check passes. Re-running the wizard on an install that already
+  // has an administrator is refused, which is the correct answer — the
+  // operator can promote an account from /admin/users instead.
+  const [admins] = await pool.query<UserIdRow[]>(
+    `SELECT id FROM users WHERE is_admin = 1 LIMIT 1`,
+  );
+  if (admins.length > 0) {
+    throw new Error(
+      'admin_already_exists: This install already has an administrator. ' +
+        'Use /admin/users to promote an account instead of creating another admin.',
+    );
+  }
   const bcrypt = await import('bcryptjs');
   const hash = await bcrypt.hash(input.password, 10);
   const [r] = await pool.query<ResultSetHeader>(
