@@ -19,6 +19,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { MEMBERSHIP_FEATURES } from '@/lib/membership-features';
 import { join } from 'node:path';
 
 /** The features that no code path enforces. */
@@ -34,31 +35,58 @@ function readSource(relativePath: string): string {
 
 describe('the feature enum', () => {
   it('no longer offers a feature that nothing enforces', () => {
-    // The type is now derived from MEMBERSHIP_FEATURES, so the source of
-    // truth is that array. Check it — and check the union agrees with it.
-    const source = readSource('lib/membership.ts');
-    const list = source.match(
-      /export const MEMBERSHIP_FEATURES\s*=\s*\[([^\]]*)\]/,
-    );
-    expect(list, 'the MEMBERSHIP_FEATURES list must exist').toBeTruthy();
+    // The list is imported, not parsed: it is a runtime value, and the
+    // runtime value is what the admin UI and the API schema are built from.
     for (const dead of DEAD_FEATURES) {
       expect(
-        list![1],
+        MEMBERSHIP_FEATURES,
         `MEMBERSHIP_FEATURES still offers "${dead}" — nothing enforces it`,
-      ).not.toContain(`'${dead}'`);
+      ).not.toContain(dead);
     }
   });
 
   it('still offers the two features that are enforced', () => {
-    const source = readSource('lib/membership.ts');
-    const list = source.match(
-      /export const MEMBERSHIP_FEATURES\s*=\s*\[([^\]]*)\]/,
-    );
-    expect(list).toBeTruthy();
     for (const live of LIVE_FEATURES) {
-      expect(list![1], `MEMBERSHIP_FEATURES must still offer "${live}"`).toContain(
-        `'${live}'`,
-      );
+      expect(
+        MEMBERSHIP_FEATURES,
+        `MEMBERSHIP_FEATURES must still offer "${live}"`,
+      ).toContain(live);
+    }
+  });
+
+  it('lives in a module that a client component can import', () => {
+    // The admin plan picker and the public plan card are CLIENT components.
+    // They used to import the list from lib/membership.ts, which pulls
+    // lib/db (and mysql2) into the client bundle, and the build failed with
+    // "Module not found: Can't resolve 'net'". The list therefore lives in
+    // its own module with no server-only imports — the same split the repo
+    // already uses for lib/audit-format.ts.
+    const source = readSource('lib/membership-features.ts');
+    expect(source, 'the client-safe module must exist').toContain(
+      'export const MEMBERSHIP_FEATURES',
+    );
+    // Only the import statements matter — the doc comment is allowed to
+    // NAME mysql2, it just may not import it.
+    const imports = [...source.matchAll(/^import\s+[\s\S]*?from\s+'([^']+)';/gm)].map(
+      (m) => m[1],
+    );
+    for (const specifier of imports) {
+      expect(
+        specifier,
+        `the client-safe module imports "${specifier}" — that drags server code into the client bundle`,
+      ).not.toBe('./db');
+      expect(specifier).not.toContain('mysql2');
+      expect(specifier).not.toBe('next/server');
+    }
+
+    for (const clientComponent of [
+      'components/admin/memberships/PlanRow.tsx',
+      'components/membership/PlanCard.tsx',
+    ]) {
+      expect(
+        readSource(clientComponent),
+        `${clientComponent} must import the client-safe list, not lib/membership.ts`,
+      ).toContain("from '@/lib/membership-features'");
     }
   });
 });

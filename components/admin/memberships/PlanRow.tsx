@@ -4,15 +4,18 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, RotateCcw, Check, AlertTriangle } from 'lucide-react';
 import { updateAdminPlanRequest, type AdminPlanRow as Plan } from '@/lib/api-admin';
-import { MEMBERSHIP_FEATURES } from '@/lib/membership';
+import { MEMBERSHIP_FEATURES } from '@/lib/membership-features';
 import { AdminButton } from '@/components/admin/AdminButton';
 
 // ⚠️ The key list comes from MEMBERSHIP_FEATURES — the same source the API
 // schema validates against. A key that nothing checks with `hasFeature()`
 // would be sold to the operator as a perk the buyer never receives, so the
 // list deliberately contains only the enforced features.
+//
+// The label map is keyed by that list, so adding a feature without writing
+// its label is a TYPE ERROR rather than a silent gap in the UI.
 const ALL_FEATURES = MEMBERSHIP_FEATURES;
-const FEATURE_LABELS: Record<string, string> = {
+const FEATURE_LABELS: Record<(typeof MEMBERSHIP_FEATURES)[number], string> = {
   ai_calls: 'AI 调用',
   multi_worksheet_print: '批量 / 多页打印',
 };

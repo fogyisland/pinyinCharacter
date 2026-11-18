@@ -1,11 +1,14 @@
 import { Crown } from 'lucide-react';
 import { CheckoutButton } from './CheckoutButton';
-import { MEMBERSHIP_FEATURES } from '@/lib/membership';
+import { MEMBERSHIP_FEATURES } from '@/lib/membership-features';
 
-// ⚠️ A label here is a promise the buyer pays for. The key list comes from
-// MEMBERSHIP_FEATURES — the features that are actually enforced — so a
-// plan can never advertise something the buyer will not receive.
-const FEATURE_LABELS: Record<string, string> = {
+// ⚠️ A label here is a promise the buyer pays for.
+//
+// The map is keyed by the shared MEMBERSHIP_FEATURES list, so adding a
+// feature without writing its label is a TYPE ERROR, and a feature that
+// nothing enforces cannot be advertised here at all — the list only holds
+// the features that are actually checked with `hasFeature()`.
+const FEATURE_LABELS: Record<(typeof MEMBERSHIP_FEATURES)[number], string> = {
   ai_calls: 'AI 释义',
   multi_worksheet_print: '批量 / 多页打印',
 };
@@ -40,7 +43,12 @@ export function PlanCard({
       <ul className="text-sm space-y-1 text-ink-soft flex-1">
         {plan.features.map((f) => (
           <li key={f} className="inline-flex items-center gap-1">
-            <span className="text-success">✓</span> {FEATURE_LABELS[f] ?? f}
+            <span className="text-success">✓</span>{' '}
+            {/* `plan.features` comes from the API as a plain string. A plan
+                row that still carries one of the removed keys (a row the
+                migration has not cleaned up yet) falls back to the raw key
+                rather than printing "undefined". */}
+            {FEATURE_LABELS[f as keyof typeof FEATURE_LABELS] ?? f}
           </li>
         ))}
       </ul>

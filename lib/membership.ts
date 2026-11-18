@@ -1,6 +1,7 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { cache } from 'react';
+import { MEMBERSHIP_FEATURES, type MembershipFeature } from './membership-features';
 
 export const PLAN_KEYS = ['monthly_usd', 'yearly_usd', 'monthly_cny', 'yearly_cny'] as const;
 export type PlanKey = (typeof PLAN_KEYS)[number];
@@ -10,28 +11,15 @@ export type MembershipCurrency = 'CNY' | 'USD';
 /**
  * The features a plan can grant.
  *
- * ⚠️ EVERY KEY IN THIS LIST MUST BE ENFORCED SOMEWHERE.
+ * The list itself lives in `lib/membership-features.ts` — a client-safe
+ * module with no server-only imports — because the admin plan picker and
+ * the public plan card are CLIENT components and have to import it.
+ * Importing it from here would drag `lib/db` (and mysql2) into the client
+ * bundle, and the build fails on the Node built-ins.
  *
- * A feature that is listed here but never checked by `hasFeature()` is a
- * promise the buyer pays for and does not receive. Three keys used to be
- * in this list — `unlimited_history`, `download_pdf` and `priority_tts` —
- * and none of them was ever enforced: the history list is capped at 200
- * rows for everybody, the PDF download is open to anonymous visitors, and
- * the TTS pipeline has no priority branch. They were seeded onto every
- * plan and rendered to buyers as Chinese labels. On 2026-11-18 they were
- * removed rather than left as an unfulfilled promise.
- *
- * Before adding a key here, write the code that checks it.
- *
- * This array is the SINGLE SOURCE OF TRUTH for the key set. The admin
- * plan picker, the public plan card and the admin PATCH schema all derive
- * from it — they used to carry their own copies and drifted: the PATCH
- * schema was missing `multi_worksheet_print`, so ticking "批量 / 多页打印"
- * in the admin UI and saving failed with a validation error, and the one
- * feature that IS enforced could not be granted at all.
+ * ⚠️ EVERY KEY IN THAT LIST MUST BE ENFORCED SOMEWHERE. See the note there.
  */
-export const MEMBERSHIP_FEATURES = ['ai_calls', 'multi_worksheet_print'] as const;
-export type MembershipFeature = (typeof MEMBERSHIP_FEATURES)[number];
+export { MEMBERSHIP_FEATURES, type MembershipFeature };
 
 /** The value shapes mysql2 accepts as a bound SQL parameter. */
 type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
