@@ -55,7 +55,6 @@ vi.mock('@/lib/db', () => ({
 import {
   listPlaylists,
   getPlaylist,
-  getActivePlaylist,
   createPlaylist,
   updatePlaylist,
   deletePlaylist,
@@ -134,37 +133,6 @@ describe('getPlaylist', () => {
   it('returns null when playlist not found', async () => {
     queryResults['FROM playlists'] = [[], []];
     expect(await getPlaylist(404)).toBeNull();
-  });
-});
-
-describe('getActivePlaylist', () => {
-  it('returns the default playlist with tracks', async () => {
-    queryResults['WHERE is_default = 1'] = [[{ id: 5 }], []];
-    queryResults['FROM playlists'] = [
-      [
-        {
-          id: 5,
-          title: 'Default',
-          is_default: 1,
-          created_at: '2026-06-29T00:00:00Z',
-          updated_at: '2026-06-29T00:00:00Z',
-        },
-      ],
-      [],
-    ];
-    queryResults['FROM playlist_tracks'] = [
-      [{ id: 1, position: 1, title: 'A', filename: '1.mp3' }],
-      [],
-    ];
-    const p = await getActivePlaylist();
-    expect(p?.id).toBe(5);
-    expect(p?.title).toBe('Default');
-    expect(p?.tracks).toHaveLength(1);
-  });
-
-  it('returns null when no default exists', async () => {
-    queryResults['WHERE is_default = 1'] = [[], []];
-    expect(await getActivePlaylist()).toBeNull();
   });
 });
 

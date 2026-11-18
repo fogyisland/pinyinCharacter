@@ -42,10 +42,20 @@ export interface AudioTrack {
   updatedAt: string;
 }
 
-/** Public-facing shape (no internal fields, only src + title). */
-export interface ActiveAudioTrack {
-  src: string;
-  title: string;
+/**
+ * The file name of a track, in the one shape the upload route writes:
+ * `<id>.mp3`.
+ *
+ * It is a WHITELIST, not a sanitiser. The caller hands the name to
+ * `unlink(join(AUDIO_DIR, name))`, and a name like `../../.env` would
+ * resolve outside the audio directory — so the check is "does it look
+ * exactly like what we write", not "does it look safe enough".
+ */
+const TRACK_FILENAME_PATTERN = /^\d+\.mp3$/;
+
+/** True when a stored filename is one this module wrote. */
+export function isTrackFilename(filename: string): boolean {
+  return TRACK_FILENAME_PATTERN.test(filename);
 }
 
 /** Upper bound for the admin track list. The table is hand-curated
@@ -68,20 +78,6 @@ export async function getTrack(id: number): Promise<AudioTrack | null> {
     [id],
   );
   return rows.length ? rowToTrack(rows[0]) : null;
-}
-
-/** Returns the public-facing default track. Falls back to the first row
- *  if no is_default=1 exists (shouldn't happen post-admin, but keeps
- *  the player alive if data drifts). Returns null only if the table is
- *  empty. */
-export async function getActiveTrack(): Promise<ActiveAudioTrack | null> {
-  const [rows] = await getPool().query<AudioTrackRow[]>(
-    `SELECT id, title, filename FROM audio_tracks
-     ORDER BY is_default DESC, id ASC LIMIT 1`,
-  );
-  if (!rows.length) return null;
-  const r = rows[0];
-  return { src: `/audio/${r.filename}`, title: r.title };
 }
 
 export interface CreateTrackInput {
@@ -165,8 +161,16 @@ export async function deleteTrack(id: number): Promise<{ filename: string } | nu
     [id],
   );
   if (!rows.length) return null;
+
+  const filename = rows[0].filename;
+  // A row whose filename is not one we wrote is bad data. Deleting it
+  // would either leave an orphan file (the name does not point at one)
+  // or — worse — let a hand-edited row make the server unlink a file
+  // outside public/audio. Refuse, and let the caller report it.
+  if (!isTrackFilename(filename)) return null;
+
   await getPool().query(`DELETE FROM audio_tracks WHERE id = ?`, [id]);
-  return { filename: rows[0].filename };
+  return { filename };
 }
 
 function rowToTrack(r: AudioTrackRow): AudioTrack {

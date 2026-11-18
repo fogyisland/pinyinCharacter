@@ -25,10 +25,6 @@ interface PlaylistRow extends RowDataPacket {
   updated_at: Date | string;
 }
 
-interface PlaylistIdRow extends RowDataPacket {
-  id: number;
-}
-
 interface PlaylistTrackRow extends RowDataPacket {
   id: number;
   position: number;
@@ -106,18 +102,6 @@ export async function getPlaylist(id: number): Promise<PlaylistWithTracks | null
       position: Number(r.position),
     })),
   };
-}
-
-/** Returns the default playlist with its tracks (position-ordered).
- *  Returns null if no playlist exists or no default is set. */
-export async function getActivePlaylist(): Promise<PlaylistWithTracks | null> {
-  const [rows] = await getPool().query<PlaylistIdRow[]>(
-    `SELECT id FROM playlists
-     WHERE is_default = 1
-     ORDER BY id ASC LIMIT 1`,
-  );
-  if (!rows.length) return null;
-  return getPlaylist(Number(rows[0].id));
 }
 
 export interface CreatePlaylistInput {

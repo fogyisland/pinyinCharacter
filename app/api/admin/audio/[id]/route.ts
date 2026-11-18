@@ -62,12 +62,24 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const removed = await deleteTrack(id);
     if (!removed) return notFound('not_found', 'audio track not found');
 
-    // Best-effort unlink — don't fail the request if file is already gone.
+    // The file is removed on a best-effort basis: the row is gone either
+    // way, and a failure here must not fail the request.
+    //
+    // But the failure is NOT silent. ENOENT means the file was already
+    // gone — fine, nothing to do. Any other error (EACCES, EPERM, EISDIR)
+    // means the file is still on disk while its row is gone: an orphan
+    // that will never be cleaned up. That is worth a line in the log.
     const filePath = join(AUDIO_DIR, removed.filename);
     try {
       await unlink(filePath);
-    } catch {
-      // swallow ENOENT and other fs errors
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT') {
+        console.error(
+          `[admin.audio.delete] could not remove ${filePath}: ${code ?? 'unknown error'} — ` +
+            'the row is gone but the file is still on disk',
+        );
+      }
     }
 
     await writeAudit({

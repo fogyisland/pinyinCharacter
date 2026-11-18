@@ -56,7 +56,6 @@ vi.mock('@/lib/db', () => ({
 import {
   listTracks,
   getTrack,
-  getActiveTrack,
   createTrack,
   updateTrack,
   deleteTrack,
@@ -156,19 +155,6 @@ describe('getTrack', () => {
   it('returns null when not found', async () => {
     queryResults['FROM audio_tracks'] = [[], []];
     expect(await getTrack(404)).toBeNull();
-  });
-});
-
-describe('getActiveTrack', () => {
-  it('returns src as /audio/<filename> for the first row (is_default DESC)', async () => {
-    queryResults['FROM audio_tracks'] = [[{ id: 3, title: '心经', filename: '3.mp3' }], []];
-    const a = await getActiveTrack();
-    expect(a).toEqual({ src: '/audio/3.mp3', title: '心经' });
-  });
-
-  it('returns null when the table is empty', async () => {
-    queryResults['FROM audio_tracks'] = [[], []];
-    expect(await getActiveTrack()).toBeNull();
   });
 });
 
