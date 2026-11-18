@@ -73,6 +73,46 @@ const config: NextConfig = {
       { source: '/font/:path((?!web/|web$).*)', headers: [{ key: 'Cache-Control', value: month }] },
       { source: '/fonts/:path*', headers: [{ key: 'Cache-Control', value: month }] },
       { source: '/strokes/:path*', headers: [{ key: 'Cache-Control', value: month }] },
+      // The baseline security headers, on EVERY route.
+      //
+      // ⚠️ The catch-all comes FIRST on purpose. Next.js applies every
+      // matching rule, and a later rule's header wins over an earlier
+      // one for the same key. These rules set different keys from the
+      // cache rules above, so the two groups do not actually collide —
+      // but the order is kept explicit so that adding a Cache-Control
+      // rule later cannot accidentally shadow it.
+      //
+      // ⚠️ There is deliberately NO Content-Security-Policy here. The
+      // layout carries three inline <script> blocks (the async stylesheet
+      // flip and two JSON-LD blocks) and several pages use
+      // dangerouslySetInnerHTML. A strict CSP needs a nonce threaded
+      // through every one of them; that is its own piece of work with
+      // its own risk, and a half-done CSP breaks the site rather than
+      // protecting it. The four headers below are the ones that need no
+      // such change.
+      {
+        source: '/:path*',
+        headers: [
+          // The site cannot be framed by another origin, so a hostile page
+          // cannot overlay the login form and harvest what is typed into
+          // it (clickjacking).
+          { key: 'X-Frame-Options', value: 'DENY' },
+          // The browser does not second-guess the Content-Type. Without
+          // it, a "text/plain" response that happens to hold HTML can be
+          // sniffed into script.
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          // The URL of a page is not handed to the third party it links
+          // to. The site has URLs that carry the reading position, and a
+          // password-reset link that carries a token.
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          // The browser features the site does not use are switched off
+          // for the whole origin.
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          },
+        ],
+      },
     ];
   },
   // Dev-only: keep webpack's file watcher out of the large data directories.
