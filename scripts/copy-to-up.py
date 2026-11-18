@@ -267,7 +267,9 @@ npm ci --omit=dev --legacy-peer-deps
 #    --legacy-peer-deps 不能省(本项目 peer 依赖树有冲突)。
 
 # 2. 构建
-npm run build
+npm run build:clean
+#    build:clean 会先删掉 .next/cache 再 build —— 增量缓存带着上一版
+#    的产物,新装/升级时会让 build 带进陈旧的文件。
 
 # 3. 启动(默认端口 4444)
 npm start -- -p 4444

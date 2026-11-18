@@ -894,14 +894,24 @@ describe('the rebase checklist (R-54)', () => {
       ),
     );
     // The gzipped bytes, in the family order sans → serif → wenkai.
-    // Two stylesheets per family now, so there are six of them.
-    expect(checklist[3].expected).toHaveLength(6);
-    for (const family of FAMILIES) {
-      for (const tier of ['hot', 'ext'] as const) {
-        expect(checklist[3].expected).toContain(
-          gzipSync(readFileSync(join(trees.live, `fonts-${family}-${tier}.css`))).length,
-        );
-      }
+    //
+    // ⚠️ ONE number per FAMILY, not one per tier. The budget in
+    // `tests/unit/lib/fonts-css.test.ts` is per family: the two tiers of
+    // a family are gzipped separately (they are two responses), and the
+    // budget is what the family costs together. `PINNED.cssGzipBytes`
+    // holds three numbers for the same reason, and the admin table's
+    // label says 「sans / serif / wenkai」.
+    //
+    // Measuring per tier would put six numbers against a three-slot pin,
+    // and the comparison is POSITIONAL — so it would not report a drift,
+    // it would report nonsense: every cell of the row compared a per-tier
+    // measurement against a per-family budget.
+    expect(checklist[3].expected).toHaveLength(3);
+    const measured = checklist[3].expected as number[];
+    for (const [index, family] of FAMILIES.entries()) {
+      const hot = gzipSync(readFileSync(join(trees.live, `fonts-${family}-hot.css`)));
+      const ext = gzipSync(readFileSync(join(trees.live, `fonts-${family}-ext.css`)));
+      expect(measured[index]).toBe(hot.length + ext.length);
     }
   });
 

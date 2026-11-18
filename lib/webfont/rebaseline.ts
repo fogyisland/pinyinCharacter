@@ -209,6 +209,26 @@ export function subsetFilesOf(liveFontDir: string): Array<{ path: string; bytes:
  * level** — the same measurement `tests/unit/lib/fonts-css.test.ts` makes.
  * A different level would produce a different number, and the number would
  * not fit the assertion it has to satisfy.
+ *
+ * ⚠️ ONE NUMBER PER FAMILY, not one per tier. The budget in
+ * `tests/unit/lib/fonts-css.test.ts` is per family — the two tiers of a
+ * family are gzipped separately (they are two responses), and the budget
+ * is what the family costs together. `PINNED.cssGzipBytes` holds three
+ * numbers for the same reason, and the admin table's label says
+ * 「sans / serif / wenkai」.
+ *
+ * Measuring per tier instead would put SIX numbers against a THREE-slot
+ * pin, and the comparison is POSITIONAL — so it would not report a
+ * drift, it would report nonsense: every cell of the row compared a
+ * per-tier measurement against a per-family budget.
+ *
+ * ⚠️ The line endings are normalized to LF before measuring, exactly as
+ * `scripts/fonts/verify-webfont-subsets.mjs` (`normalizeNewlines`) and
+ * `scripts/fonts/import-webfont-release.mjs` (`readStylesheet`) do. A
+ * Windows working tree with `core.autocrlf=true` holds the same
+ * stylesheets with CRLF endings; measuring those would produce a
+ * different number than the same file on a Linux checkout, and the
+ * number in the admin table would depend on where the admin ran it.
  */
 export function stylesheetSizes(
   liveFontDir: string,
@@ -217,12 +237,14 @@ export function stylesheetSizes(
   const gzipBytes: number[] = [];
 
   for (const family of FAMILIES) {
+    let familyGzipBytes = 0;
     for (const tier of ['hot', 'ext'] as const) {
       const path = join(liveFontDir, `fonts-${family}-${tier}.css`);
-      const content = readFileSync(path);
-      rawBytes += content.length;
-      gzipBytes.push(gzipSync(content).length);
+      const content = readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+      rawBytes += Buffer.byteLength(content, 'utf8');
+      familyGzipBytes += gzipSync(Buffer.from(content, 'utf8')).length;
     }
+    gzipBytes.push(familyGzipBytes);
   }
 
   return { rawBytes, gzipBytes };

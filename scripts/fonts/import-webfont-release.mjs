@@ -73,14 +73,19 @@
  * kept apart by a **drift-guard test** (`tests/unit/lib/webfont-rebaseline.test.ts`),
  * which is the pattern this repository uses everywhere.
  *
- * ## The staged paths — exactly six
+ * ## The staged paths
  *
  *   1. `public/font/web/r<T>/`        the new release directory
- *   2. `public/font/fonts-sans.css`
- *   3. `public/font/fonts-serif.css`
- *   4. `public/font/fonts-wenkai.css`
- *   5. `public/font/fonts-manifest.json`
- *   6. `public/font/releases.json`    the ledger
+ *   2. `public/font/fonts-<family>-hot.css`   the hot tier, for each
+ *      family (`sans`, `serif`, `wenkai`)
+ *   3. `public/font/fonts-<family>-ext.css`   the ext tier, for each
+ *      family — six stylesheets in all, since the ext tier was split out
+ *      of the render-blocking one (2026-11-18)
+ *   4. `public/font/fonts-manifest.json`
+ *   5. `public/font/releases.json`    the ledger
+ *
+ * The list itself is `STYLESHEETS` below — the comment names the shape,
+ * the constant is the truth.
  *
  * ⚠️ NEVER `git add .` and NEVER `git add -A`: the tree of this project
  * carries a permanently modified `data/sutras/manifest.json` that must never

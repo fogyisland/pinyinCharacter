@@ -18,7 +18,11 @@ const ROOT = process.cwd();
 /** Every source file of the app, as absolute paths. */
 function sourceFiles(): string[] {
   const found: string[] = [];
-  for (const dir of ['app', 'lib', 'components', 'scripts']) {
+  // ⚠️ Every directory that holds TypeScript the app ships. A scan that
+  // misses one is a scan with a hole in it: a client re-wired into
+  // `server/` or `mcp/` would not be caught, and the endpoint would be
+  // back without its authentication.
+  for (const dir of ['app', 'lib', 'components', 'scripts', 'server', 'mcp']) {
     const walk = (current: string): void => {
       for (const entry of readdirSync(current, { withFileTypes: true })) {
         const path = join(current, entry.name);

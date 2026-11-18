@@ -70,9 +70,7 @@ describe('getFontCssLinks', () => {
 
     // The ext tier does not: it carries media="print", and the inline
     // script promotes it once it arrives.
-    const extIndex = layout.indexOf('href={fontCss.sansExt}');
-    expect(extIndex).toBeGreaterThan(-1);
-    expect(layout.slice(extIndex, extIndex + 200)).toContain('media="print"');
+    expect(extLinkTag(layout, 'sansExt')).toContain('media="print"');
     expect(layout).toContain('ASYNC_STYLESHEET_FLIP');
   });
 
@@ -86,9 +84,41 @@ describe('getFontCssLinks', () => {
       'utf8',
     );
     for (const key of ['sansExt', 'wenkaiExt', 'serifExt']) {
-      const index = layout.indexOf(`href={fontCss.${key}}`);
-      expect(index, `${key} is not linked in app/layout.tsx`).toBeGreaterThan(-1);
-      expect(layout.slice(index, index + 200)).toContain('media="print"');
+      expect(extLinkTag(layout, key), `${key} is not linked in app/layout.tsx`).toContain(
+        'media="print"',
+      );
     }
   });
 });
+
+/**
+ * The `<link>` tag of an async stylesheet, from its `href` to its close.
+ *
+ * ⚠️ The window must END AT THE TAG, not at a fixed number of characters.
+ * A 200-character window from the `sansExt` href reaches past the end of
+ * that tag and into the NEXT one (`wenkai`), which also carries
+ * `media="print"` — so removing the attribute from `sansExt` (or from
+ * `wenkaiExt`) left the assertion green. Only the LAST ext link was
+ * actually guarded, because nothing follows it.
+ *
+ * ⇒ The tag is closed at its own `/>`, and the assertion looks at that
+ * tag alone.
+ *
+ * @param layout the markup of `app/layout.tsx`
+ * @param key the `fontCss` key of the stylesheet (`sansExt`, `wenkaiExt`, …)
+ * @returns the tag's text, from `<link` to `/>`
+ */
+function extLinkTag(layout: string, key: string): string {
+  const href = `href={fontCss.${key}}`;
+  const hrefIndex = layout.indexOf(href);
+  expect(hrefIndex, `${key} is not linked in app/layout.tsx`).toBeGreaterThan(-1);
+
+  // The tag opens before the href and closes after it.
+  const openIndex = layout.lastIndexOf('<link', hrefIndex);
+  expect(openIndex, `the ${key} link has no opening tag`).toBeGreaterThan(-1);
+
+  const closeIndex = layout.indexOf('/>', hrefIndex);
+  expect(closeIndex, `the ${key} link is not closed`).toBeGreaterThan(-1);
+
+  return layout.slice(openIndex, closeIndex + 2);
+}

@@ -557,3 +557,67 @@ describe('the script refuses to work outside a git repository', () => {
     expect(run.output).toContain(RELEASE_DIR);
   });
 });
+
+describe('the gzipped bytes are measured per FAMILY', () => {
+  it('produces one number per family, the shape the pin and the label use', () => {
+    // ⚠️ The hot/ext split changed what the producer emits. It used to
+    // push one gzipped size per family; it now pushes one per TIER, so
+    // six numbers where the pin has three and the label says
+    // 「sans / serif / wenkai」.
+    //
+    // The comparison is POSITIONAL (`current[i]` against `expected[i]`),
+    // so three pinned numbers against six measured ones do not report a
+    // drift — they report nonsense: the admin table shows six unlabeled
+    // numbers where it promises three families, and every one of them
+    // is a per-tier measurement compared against a per-family budget.
+    //
+    // The source of truth is `tests/unit/lib/fonts-css.test.ts`, which
+    // budgets each FAMILY by the sum of its two tiers (the browser
+    // downloads two gzip streams per family, and the budget is what the
+    // family costs together).
+    const tree = makeTree();
+    const checklist = buildRebaselineChecklist(tree.fontDir, null);
+
+    expect(checklist[3].current).toHaveLength(3);
+    expect(checklist[3].expected).toHaveLength(3);
+  });
+
+  it('measures each family as the sum of its two tiers', () => {
+    const tree = makeTree();
+    const checklist = buildRebaselineChecklist(tree.fontDir, null);
+
+    const expected = FAMILIES.map((family) => {
+      const hot = gzipSync(readFileSync(join(tree.fontDir, `fonts-${family}-hot.css`)));
+      const ext = gzipSync(readFileSync(join(tree.fontDir, `fonts-${family}-ext.css`)));
+      return hot.length + ext.length;
+    });
+
+    expect(checklist[3].expected).toEqual(expected);
+  });
+
+  it('normalizes the line endings before measuring, like the verifier does', () => {
+    // ⚠️ The verifier (`scripts/fonts/verify-webfont-subsets.mjs`) and
+    // the importer both normalize CRLF to LF before they hash a
+    // stylesheet. A measurement that does NOT normalize measures a
+    // different file on a Windows working tree than on a Linux one — so
+    // the number in the table would depend on where the admin happened
+    // to run it.
+    const tree = makeTree();
+    // Write the stylesheets with CRLF endings.
+    for (const file of STYLESHEETS) {
+      const path = join(tree.fontDir, file);
+      const content = readFileSync(path, 'utf8');
+      writeFileSync(path, content.replace(/\n/g, '\r\n'), 'utf8');
+    }
+
+    const checklist = buildRebaselineChecklist(tree.fontDir, null);
+
+    const expected = FAMILIES.map((family) => {
+      const hot = readFileSync(join(tree.fontDir, `fonts-${family}-hot.css`), 'utf8').replace(/\r\n/g, '\n');
+      const ext = readFileSync(join(tree.fontDir, `fonts-${family}-ext.css`), 'utf8').replace(/\r\n/g, '\n');
+      return gzipSync(Buffer.from(hot, 'utf8')).length + gzipSync(Buffer.from(ext, 'utf8')).length;
+    });
+
+    expect(checklist[3].expected).toEqual(expected);
+  });
+});
