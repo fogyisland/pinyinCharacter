@@ -47,13 +47,16 @@ HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 
 ## 测试
 
-> ⚠️ 本项目已移除测试基础设施 (vitest + 175 个测试文件)。所有测试由人工浏览器烟测替代。
+测试基础设施已经恢复并在使用中：vitest,246 个测试文件,约 2500 个用例。
 
 ```bash
-# 历史命令 (不再可用)
-# pnpm test
-# pnpm test:watch
+npm test          # 跑一遍全部用例
+npm run test:watch  # 监听模式
+npx vitest run tests/unit/lib/audit.test.ts  # 只跑一个文件
 ```
+
+> ⚠️ 单元测试跑的是逻辑,不是浏览器。环境相关的行为(字体加载、WebSocket、PDF 渲染、
+> 打印样式)仍需要人工在浏览器里走查 —— 仓库里有若干次"单测全绿但真机打挂"的记录。
 
 ## 技术栈
 
