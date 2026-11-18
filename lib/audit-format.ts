@@ -87,7 +87,12 @@ export type AuditEvent =
   | 'admin_webfont_build_failed'
   | 'admin_webfont_build_applied'
   | 'admin_webfont_build_apply_failed'
-  | 'admin_webfont_releases_cleaned';
+  | 'admin_webfont_releases_cleaned'
+  | 'wecom_webhook_created'
+  | 'wecom_webhook_updated'
+  | 'wecom_webhook_deleted'
+  | 'wecom_test_sent'
+  | 'wecom_delivery_retried';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -176,6 +181,11 @@ export const AUDIT_EVENTS = [
   'admin_webfont_build_applied',
   'admin_webfont_build_apply_failed',
   'admin_webfont_releases_cleaned',
+  'wecom_webhook_created',
+  'wecom_webhook_updated',
+  'wecom_webhook_deleted',
+  'wecom_test_sent',
+  'wecom_delivery_retried',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -266,6 +276,11 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   admin_webfont_build_applied: '字体构建已应用',
   admin_webfont_build_apply_failed: '字体构建应用失败',
   admin_webfont_releases_cleaned: '清理旧 release',
+  wecom_webhook_created: '新建企业微信群',
+  wecom_webhook_updated: '修改企业微信群',
+  wecom_webhook_deleted: '删除企业微信群',
+  wecom_test_sent: '发送企业微信测试消息',
+  wecom_delivery_retried: '重推企业微信消息',
 };
 
 /**
@@ -481,6 +496,17 @@ export function formatLogMessage(
         num(m.bytes) ? `（${num(m.bytes)} 字节）` : ''
       }`;
     }
+
+    case 'wecom_webhook_created':
+      return `新建企业微信群「${str(m.name) || '?'}」`;
+    case 'wecom_webhook_updated':
+      return `修改企业微信群「${str(m.name) || '?'}」`;
+    case 'wecom_webhook_deleted':
+      return `删除企业微信群 #${num(m.id) || '?'}`;
+    case 'wecom_test_sent':
+      return `发送企业微信测试消息到「${str(m.name) || '?'}」`;
+    case 'wecom_delivery_retried':
+      return `重推企业微信消息 #${num(m.id) || '?'}`;
 
     default: {
       const keys = Object.keys(m);
