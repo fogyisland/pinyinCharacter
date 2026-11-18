@@ -39,7 +39,7 @@ cp .env.example .env
 nano .env    # 至少改 DATABASE_URL / JWT_SECRET / COOKIE_SECURE
 
 # 5. 构建 + 启动
-npm run build
+npm run build:clean
 HOST=127.0.0.1 npm start    # 只 listen 在 127.0.0.1,反代访问
 ```
 
@@ -312,7 +312,10 @@ npm ci --omit=dev --legacy-peer-deps
 #    同首次部署:`npm ci` 严格按 lock 装,`--legacy-peer-deps` 不能省。
 #    字体构建工具链 (subset-font / typescript / tsx) 已经是生产依赖,
 #    --omit=dev 也会装上,不用单独装。
-npm run build
+npm run build:clean
+#    `build:clean` 先删 `.next/cache` 再构建 —— 服务器上不会跑第二次构建,
+#    增量缓存没有价值,只会白占磁盘(实测本机 `.next/cache` 达 718 MB,
+#    而 `.next` 总共 847 MB)。产物完全一致。
 
 # 5. 重启 (假设用 pm2 / systemd)
 pm2 restart pinyin

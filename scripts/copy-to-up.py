@@ -322,7 +322,7 @@ npm start -- -p 4444
 
 ## 升级
 
-`DEPLOY.md` 升级流程速查。**必须**在 `npm run build` 之前 `rm -rf .next`。
+`DEPLOY.md` 升级流程速查。**必须**在 `npm run build:clean` 之前 `rm -rf .next` ——
 
 ## 重新打包
 

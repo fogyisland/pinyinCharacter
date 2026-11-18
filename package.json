@@ -6,6 +6,7 @@
     "dev": "next dev -p 4444 --turbopack",
     "dev:webpack": "next dev -p 4444",
     "build": "next build",
+    "build:clean": "node -e \"require('node:fs').rmSync('.next/cache',{recursive:true,force:true})\" && next build",
     "start": "next start -p 4444",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
