@@ -304,7 +304,7 @@ const DDL = [
      id          BIGINT       NOT NULL AUTO_INCREMENT,
      user_id     BIGINT       NOT NULL,
      format      ENUM('pdf','print') NOT NULL,
-     source_type ENUM('worksheet','poem','sutra','rare-char-card') NOT NULL,
+     source_type ENUM('worksheet','poem','sutra','classic','rare-char-card') NOT NULL,
      source_id   VARCHAR(64)  NULL,
      status      ENUM('ok','error') NOT NULL DEFAULT 'ok',
      duration_ms INT UNSIGNED NULL,

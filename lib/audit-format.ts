@@ -33,6 +33,7 @@ export type AuditEvent =
   | 'worksheet_batch_printed'
   | 'poem_saved'
   | 'sutra_saved'
+  | 'classic_saved'
   | 'rare_char_card_saved'
   | 'membership_granted'
   | 'membership_granted_paypal'
@@ -126,6 +127,7 @@ export const AUDIT_EVENTS = [
   'worksheet_batch_printed',
   'poem_saved',
   'sutra_saved',
+  'classic_saved',
   'rare_char_card_saved',
   'membership_granted',
   'membership_granted_paypal',
@@ -221,6 +223,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   worksheet_batch_printed: '批量打印字帖',
   poem_saved: '保存古诗',
   sutra_saved: '保存佛经',
+  classic_saved: '保存古籍',
   rare_char_card_saved: '保存生字卡',
   membership_granted: '管理员开通会员',
   membership_granted_paypal: 'PayPal 开通会员',
@@ -364,6 +367,10 @@ export function formatLogMessage(
     }
     case 'sutra_saved': {
       const action = str(m.action) === 'print' ? '打印佛经' : '保存佛经';
+      return `${action}「${str(m.title) || str(m.slug) || '?'}」`;
+    }
+    case 'classic_saved': {
+      const action = str(m.action) === 'print' ? '打印古籍' : '保存古籍';
       return `${action}「${str(m.title) || str(m.slug) || '?'}」`;
     }
     case 'rare_char_card_saved': {

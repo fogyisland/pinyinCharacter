@@ -154,6 +154,7 @@ export async function getDownloadStats(days = 7): Promise<DownloadStats> {
     worksheet: 0,
     poem: 0,
     sutra: 0,
+    classic: 0,
     'rare-char-card': 0,
   };
   for (const r of bySrc) bySourceType[r.source_type] = Number(r.n);

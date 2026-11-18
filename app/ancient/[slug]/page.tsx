@@ -7,6 +7,9 @@ import { PageContainer } from '@/components/common/PageContainer';
 import { ClassicChunkPicker } from '@/components/classics/ClassicChunkPicker';
 import { ClassicReader } from '@/components/classics/ClassicReader';
 import { SutraAudioPlayer } from '@/components/sutra/SutraAudioPlayer';
+import { PrintButton } from '@/components/common/PrintButton';
+import { ReadAloudButton } from '@/components/ReadAloudButton';
+import { SaveAsWorksheetButton } from './SaveAsWorksheetButton';
 import {
   getClassicChunkBySlug,
   getClassicChunkMetaBySlug,
@@ -114,15 +117,44 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
               />
             </Suspense>
             <div className="flex-1 min-w-0">
-              <ClassicReader
-                chunk={activeChunk}
-                book={{
-                  slug: meta.slug,
-                  title: meta.title,
-                  chunkCount: chunkMeta.length,
-                }}
-              />
+              {/* The printable container. `classic-print-area` must stay in
+                  all three lists of the @media print whitelist in
+                  app/globals.css — a container that is not whitelisted
+                  prints a BLANK page. That regression happened for the
+                  poem and the sutra on 2026-07-04. */}
+              <div className="classic-print-area">
+                <ClassicReader
+                  chunk={activeChunk}
+                  book={{
+                    slug: meta.slug,
+                    title: meta.title,
+                    chunkCount: chunkMeta.length,
+                  }}
+                />
+              </div>
             </div>
+          </div>
+
+          {/* The action row: the same three actions the poems and the
+              sutras offer. The classics are the longest text on the site
+              and the most likely material for copying practice, so they
+              need them the most. */}
+          <div className="worksheet-no-print flex flex-wrap items-center justify-center gap-3 mt-6">
+            <ReadAloudButton
+              text={activeChunk.content.join('\n')}
+              size="sm"
+              variant="seal"
+            />
+            <PrintButton
+              endpoint={`/api/classics/${meta.slug}/print`}
+              sourceId={`${meta.slug}#${activeChunk.id}`}
+              loginRedirect={`/ancient/${meta.slug}`}
+            />
+            <SaveAsWorksheetButton
+              title={meta.title}
+              chapterLabel={activeChunk.label}
+              content={activeChunk.content}
+            />
           </div>
         </div>
       </PageContainer>

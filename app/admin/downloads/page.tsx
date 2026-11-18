@@ -33,6 +33,16 @@ function sourceHref(sourceType: string, sourceId: string | null): string | null 
     const slug = sourceId.split('#')[0];
     return `/sutra/${encodeURIComponent(slug)}`;
   }
+  if (sourceType === 'classic') {
+    // The source id is `<slug>#<chapterId>`; the chapter id is 1-based, and
+    // the page's `?chunk=` parameter is 0-based. A row without a chapter
+    // (the endpoint's fallback) links to the first chapter.
+    const [slug, chapter] = sourceId.split('#');
+    if (!slug) return null;
+    const idx = Number(chapter) - 1;
+    const query = Number.isInteger(idx) && idx >= 0 ? `?chunk=${idx}` : '';
+    return `/ancient/${encodeURIComponent(slug)}${query}`;
+  }
   if (sourceType === 'rare-char-card') {
     try {
       return `/rare-chars/${encodeURIComponent(decodeURIComponent(sourceId))}`;

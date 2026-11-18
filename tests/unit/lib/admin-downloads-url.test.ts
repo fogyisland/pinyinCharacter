@@ -92,12 +92,13 @@ describe('buildDownloadsHref', () => {
 });
 
 describe('the source options', () => {
-  it('offers the 4 types plus "all"', () => {
+  it('offers the 5 types plus "all"', () => {
     expect(DOWNLOAD_SOURCE_OPTIONS.map((o) => o.value)).toEqual([
       '',
       'worksheet',
       'poem',
       'sutra',
+      'classic',
       'rare-char-card',
     ]);
   });
