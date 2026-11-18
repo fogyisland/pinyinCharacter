@@ -11,6 +11,7 @@
  * The split is why a WeCom outage cannot fail a user's registration: the
  * request path never waits on WeCom, and it never throws.
  */
+import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { webhooksForCategory } from './wecom-webhooks';
 import type { WecomCategory, WecomDelivery } from './wecom-types';
@@ -140,7 +141,7 @@ export async function pushWecomDelivery(
  * delivery module only needs the URL, and the two modules can drift apart
  * without either breaking.
  */
-interface WebhookRow {
+interface WebhookRow extends RowDataPacket {
   id: number;
   name: string;
   webhook_url: string;
@@ -149,7 +150,7 @@ interface WebhookRow {
 }
 
 /** A `wecom_deliveries` row as the driver hands it back. */
-interface DeliveryRow {
+interface DeliveryRow extends RowDataPacket {
   id: number;
   webhook_id: number;
   category: string;

@@ -6,6 +6,7 @@
  * needs to ask "which groups want the `campaign` category?" — that question
  * is answered by the SQL filter in `webhooksForCategory`.
  */
+import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import {
   isValidWebhookUrl,
@@ -15,7 +16,7 @@ import {
 } from './wecom-types';
 
 /** A `wecom_webhooks` row as the driver hands it back. */
-interface WebhookRow {
+interface WebhookRow extends RowDataPacket {
   id: number;
   name: string;
   webhook_url: string;
@@ -108,7 +109,7 @@ function assertValid(input: WebhookInput): void {
  */
 export async function createWebhook(input: WebhookInput): Promise<number> {
   assertValid(input);
-  const [result] = await getPool().query<{ insertId: number }>(
+  const [result] = await getPool().query<ResultSetHeader>(
     `INSERT INTO wecom_webhooks (name, webhook_url, enabled, categories)
      VALUES (?, ?, ?, ?)`,
     [
@@ -118,7 +119,7 @@ export async function createWebhook(input: WebhookInput): Promise<number> {
       JSON.stringify(input.categories),
     ],
   );
-  return result.insertId;
+  return Number(result.insertId);
 }
 
 /** Updates a group. Throws when the URL is not a WeCom webhook. */
