@@ -25,6 +25,9 @@
 import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
+import { readJsonAuto } from '@/lib/json-fs';
+import { corpusJsonFiles } from '@/scripts/corpus-files';
+
 /** A file that is missing from the deploy bundle but should be in it. */
 export interface MissingFromBundle {
   path: string;
@@ -46,6 +49,47 @@ export interface DocDrift {
   codeSays: string;
 }
 
+/**
+ * A chapter whose id does not match the convention its corpus follows.
+ *
+ * The two corpora use DIFFERENT conventions, on purpose:
+ *
+ *   data/classics/*.json   one-based   — the id equals the array index
+ *                                           plus one, so the first chapter
+ *                                           is 1.
+ *   data/sutras/*.json     zero-based  — the id equals the array index.
+ *
+ * The read paths line up with those conventions:
+ *   - lib/classics/queries.ts's parseChunks uses `c.id ?? i + 1`
+ *   - lib/sutras.ts's normalizeChunks uses `id: i`
+ *
+ * And the URLs that address a chapter use the ARRAY INDEX:
+ *   - app/ancient/[slug]/page.tsx reads `?chunk=N` and indexes with N
+ *   - components/classics/ClassicChunkPicker.tsx converts a chunk id
+ *     into that index with `c.id - 1` (twice)
+ *
+ * So the convention is only correct as long as every one of those
+ * conversions stays in step. A regenerated corpus that changed its
+ * convention, or a new entry point that forgot the `-1`, would shift every
+ * chapter by one — SILENTLY, because a chapter id that is off by one is
+ * still a valid id.
+ *
+ * This rule pins the convention to the data, so a drift is reported
+ * instead of shipped.
+ */
+export interface ChapterIdDrift {
+  /** The file, relative to the audit root. */
+  file: string;
+  /** Which corpus the file belongs to. */
+  kind: 'classics' | 'sutras';
+  /** The array index of the offending chunk. */
+  index: number;
+  /** The id the convention requires at that index. */
+  expected: number;
+  /** The id the file actually carries. */
+  actual: number;
+}
+
 /** The result of the audit. */
 export interface GapReport {
   missingFromBundle: MissingFromBundle[];
@@ -53,6 +97,7 @@ export interface GapReport {
   brokenScriptReferences: Array<{ from: string; refersTo: string }>;
   unrunnableDocCommands: Array<{ from: string; command: string; problem: string }>;
   docDrift: DocDrift[];
+  chapterIdDrift: ChapterIdDrift[];
 }
 
 /**
@@ -668,6 +713,110 @@ export function findDocDrift(): DocDrift[] {
   return drift;
 }
 
+/**
+ * The id the convention of a corpus requires at an array index.
+ *
+ * classics is one-based, sutras is zero-based.
+ */
+function expectedChapterId(kind: 'classics' | 'sutras', index: number): number {
+  return kind === 'classics' ? index + 1 : index;
+}
+
+/**
+ * Read a corpus file, in whichever of the two storage shapes it is.
+ *
+ * ⚠️ `readJsonAuto(path)` reads `path` if it exists and only then falls
+ * back to `path + '.gz'`. Handing it a path that ALREADY ends in `.gz`
+ * therefore does NOT decompress anything: the file exists, so it is read
+ * as plain text and `JSON.parse` chokes on the gzip header. That failure
+ * is silent here — a file that cannot be parsed is another rule's
+ * business, so the chapter check would simply skip it and stay green.
+ *
+ * ⇒ The `.gz` suffix is stripped first, and `readJsonAuto` picks the
+ * shape that is actually on disk.
+ */
+function readCorpusJson(dir: string, name: string): unknown {
+  const plainName = name.endsWith('.gz') ? name.slice(0, -'.gz'.length) : name;
+  try {
+    return readJsonAuto(join(dir, plainName));
+  } catch (error) {
+    // A file that is not JSON is another rule's business — but say so,
+    // because a silently-skipped file is a file the audit never checked.
+    console.error(
+      `[audit-gaps] could not parse ${join(dir, name)}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return null;
+  }
+}
+
+/**
+ * Every chapter whose id breaks the convention of its corpus.
+ *
+ * ⚠️ The classics corpus is stored GZIPPED in the repository since
+ * 2026-11-18, and its files are named `<book>.json.gz` — they do NOT end
+ * in `.json`. A `name.endsWith('.json')` filter therefore matches ZERO of
+ * them, and the rule reports an empty array on every run: a check that
+ * can never fail, which is worse than no check at all. (The plan assumed
+ * `readJsonAuto`'s `.json` → `.json.gz` fallback would cover it; the
+ * fallback works for a path that ENDS in `.json`, and no such file exists
+ * in the gzipped corpus.)
+ *
+ * ⇒ The file list comes from `corpusJsonFiles`, the same helper the
+ * font pipeline and the build scripts use — it carries BOTH storage
+ * shapes, and de-duplicates a file that exists in both.
+ */
+export function findChapterIdDrift(): ChapterIdDrift[] {
+  const drift: ChapterIdDrift[] = [];
+
+  const check = (kind: 'classics' | 'sutras', relPath: string, chunks: unknown[]): void => {
+    chunks.forEach((chunk, index) => {
+      if (!chunk || typeof chunk !== 'object') return;
+      const id = (chunk as { id?: unknown }).id;
+      // A chunk without an id is fine: the reader falls back to the
+      // index (`c.id ?? i + 1` / `id: i`).
+      if (typeof id !== 'number') return;
+      const expected = expectedChapterId(kind, index);
+      if (id !== expected) {
+        drift.push({
+          file: relPath,
+          kind,
+          index,
+          expected,
+          actual: id,
+        });
+      }
+    });
+  };
+
+  // classics 的形状是对象 { chunks: [...] }；sutras 的形状是顶层数组
+  const classicsDir = rooted('data', 'classics');
+  if (existsSync(classicsDir)) {
+    for (const name of corpusJsonFiles(classicsDir)) {
+      const parsed = readCorpusJson(classicsDir, name);
+      if (!parsed || typeof parsed !== 'object') continue;
+      const chunks = (parsed as { chunks?: unknown }).chunks;
+      if (!Array.isArray(chunks)) continue;
+      check('classics', `data/classics/${name}`, chunks);
+    }
+  }
+
+  // sutras: a top-level ARRAY
+  const sutrasDir = rooted('data', 'sutras');
+  if (existsSync(sutrasDir)) {
+    for (const name of corpusJsonFiles(sutrasDir)) {
+      // manifest.json is the index of the corpus, not a chapter file.
+      if (name === 'manifest.json' || name === 'manifest.json.gz') continue;
+      const parsed = readCorpusJson(sutrasDir, name);
+      if (!Array.isArray(parsed)) continue;
+      check('sutras', `data/sutras/${name}`, parsed);
+    }
+  }
+
+  return drift;
+}
+
 /** Run the whole audit. */
 export function auditGaps(): GapReport {
   const pkg = JSON.parse(readFileSync(rooted('package.json'), 'utf8')) as {
@@ -680,6 +829,7 @@ export function auditGaps(): GapReport {
     brokenScriptReferences: findBrokenScriptReferences(),
     unrunnableDocCommands: findUnrunnableDocCommands(),
     docDrift: findDocDrift(),
+    chapterIdDrift: findChapterIdDrift(),
   };
 }
 
@@ -738,12 +888,21 @@ function main(): void {
     console.log(`    -> the document says ${item.documentSays}, the code says ${item.codeSays}`);
   }
 
+  console.log('\n=== chapter ids that break their corpus convention ===');
+  if (report.chapterIdDrift.length === 0) {
+    console.log('  (none)');
+  }
+  for (const drift of report.chapterIdDrift) {
+    console.log(`  ${drift.file}: chunk #${drift.index} has id ${drift.actual}, expected ${drift.expected}`);
+  }
+
   const problems =
     report.scriptEnvGaps.length +
     report.missingFromBundle.length +
     report.brokenScriptReferences.length +
     report.unrunnableDocCommands.length +
     report.docDrift.length +
+    report.chapterIdDrift.length +
     missingTargets.length;
 
   if (problems > 0) {

@@ -16,6 +16,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { mkdtempSync, writeFileSync, rmSync, mkdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
+import { gzipSync } from 'node:zlib';
 
 import {
   scriptNeedsDatabase,
@@ -25,6 +26,7 @@ import {
   findUnrunnableDocCommands,
   findMissingRuntimeData,
   findDocDrift,
+  findChapterIdDrift,
   setAuditRoot,
 } from '@/scripts/audit-gaps';
 
@@ -44,6 +46,22 @@ function writeAt(base: string, relativePath: string, content: string): string {
   const full = join(base, relativePath);
   mkdirSync(join(full, '..'), { recursive: true });
   writeFileSync(full, content, 'utf8');
+  return full;
+}
+
+/**
+ * Write a GZIPPED corpus file, the shape `data/classics/` takes in the
+ * repository since 2026-11-18.
+ *
+ * The chapter check reads the corpus in BOTH shapes, so a test that only
+ * ever writes plain `.json` would pass against a check that had silently
+ * stopped looking at the gzipped corpus altogether — which is exactly
+ * the bug this rule was written to catch.
+ */
+function writeGzipped(relativePath: string, value: unknown): string {
+  const full = join(workDir, relativePath);
+  mkdirSync(join(full, '..'), { recursive: true });
+  writeFileSync(full, gzipSync(Buffer.from(JSON.stringify(value), 'utf8')));
   return full;
 }
 
@@ -540,5 +558,150 @@ describe('audit-gaps — the doc drift check', () => {
       restoreRoot();
       rmSync(scratchAbsolute, { recursive: true, force: true });
     }
+  });
+});
+
+describe('audit-gaps — the chapter id convention', () => {
+  it('reports a classics file whose chunk id is not the index plus one', () => {
+    // The classics corpus is ONE-based: the first chapter is 1.
+    write(
+      'data/classics/broken.json',
+      JSON.stringify({
+        slug: 'broken',
+        title: '断',
+        chunks: [
+          { id: 1, label: '一' },
+          { id: 2, label: '二' },
+          { id: 5, label: '五' }, // should be 3
+        ],
+      }),
+    );
+
+    const drift = findChapterIdDrift();
+
+    expect(drift).toHaveLength(1);
+    expect(drift[0].kind).toBe('classics');
+    expect(drift[0].index).toBe(2);
+    expect(drift[0].expected).toBe(3);
+    expect(drift[0].actual).toBe(5);
+    expect(drift[0].file).toContain('broken.json');
+  });
+
+  it('reports a sutras file whose chunk id is not the index', () => {
+    // The sutras corpus is ZERO-based, and its files are a TOP-LEVEL ARRAY
+    // — not an object with a `chunks` key.
+    write(
+      'data/sutras/broken.json',
+      JSON.stringify([
+        { id: 0, label: '甲' },
+        { id: 7, label: '乙' }, // should be 1
+      ]),
+    );
+
+    const drift = findChapterIdDrift();
+
+    expect(drift).toHaveLength(1);
+    expect(drift[0].kind).toBe('sutras');
+    expect(drift[0].index).toBe(1);
+    expect(drift[0].expected).toBe(1);
+    expect(drift[0].actual).toBe(7);
+  });
+
+  it('reports nothing for a corpus that follows the convention', () => {
+    write(
+      'data/classics/good.json',
+      JSON.stringify({
+        slug: 'good',
+        title: '好',
+        chunks: [
+          { id: 1, label: '一' },
+          { id: 2, label: '二' },
+        ],
+      }),
+    );
+    write(
+      'data/sutras/good.json',
+      JSON.stringify([
+        { id: 0, label: '甲' },
+        { id: 1, label: '乙' },
+      ]),
+    );
+
+    expect(findChapterIdDrift()).toEqual([]);
+  });
+
+  it('ignores the sutras manifest, which is an index and not a chapter file', () => {
+    write(
+      'data/sutras/manifest.json',
+      JSON.stringify({ version: 1, generatedAt: '2026-01-01', items: [{ id: 99 }] }),
+    );
+
+    expect(findChapterIdDrift()).toEqual([]);
+  });
+
+  it('reports a drift inside a GZIPPED classics file', () => {
+    // The corpus in the repository is gzipped: `data/classics/*.json.gz`.
+    // A check that only ever looked at `*.json` would read ZERO of the
+    // real corpus and report an empty array on every run — a rule that
+    // can never fail.
+    writeGzipped('data/classics/broken.json.gz', {
+      slug: 'broken',
+      title: '断',
+      chunks: [
+        { id: 1, label: '一' },
+        { id: 4, label: '四' }, // should be 2
+      ],
+    });
+
+    const drift = findChapterIdDrift();
+
+    expect(drift).toHaveLength(1);
+    expect(drift[0].kind).toBe('classics');
+    expect(drift[0].index).toBe(1);
+    expect(drift[0].expected).toBe(2);
+    expect(drift[0].actual).toBe(4);
+    expect(drift[0].file).toContain('broken.json.gz');
+  });
+
+  it('reports a drift inside a GZIPPED sutras file', () => {
+    writeGzipped('data/sutras/broken.json.gz', [
+      { id: 0, label: '甲' },
+      { id: 5, label: '乙' }, // should be 1
+    ]);
+
+    const drift = findChapterIdDrift();
+
+    expect(drift).toHaveLength(1);
+    expect(drift[0].kind).toBe('sutras');
+    expect(drift[0].index).toBe(1);
+    expect(drift[0].expected).toBe(1);
+    expect(drift[0].actual).toBe(5);
+  });
+
+  it('ignores a gzipped sutras manifest', () => {
+    writeGzipped('data/sutras/manifest.json.gz', { version: 1, items: [{ id: 99 }] });
+
+    expect(findChapterIdDrift()).toEqual([]);
+  });
+
+  it('reports a drift in whichever shape the corpus file takes', () => {
+    // The same corpus, stored plain and stored compressed, must produce
+    // the same finding — the rule is about the DATA, not about how the
+    // bytes are laid down.
+    write('data/classics/plain.json', JSON.stringify({
+      chunks: [{ id: 1 }, { id: 7 }],
+    }));
+    writeGzipped('data/classics/zipped.json.gz', {
+      chunks: [{ id: 1 }, { id: 7 }],
+    });
+
+    const drift = findChapterIdDrift();
+
+    expect(drift).toHaveLength(2);
+    expect(drift.map((d) => d.actual)).toEqual([7, 7]);
+    expect(drift.map((d) => d.file).sort()).toEqual([
+      'data/classics/plain.json',
+      'data/classics/zipped.json.gz',
+    ]);
   });
 });
