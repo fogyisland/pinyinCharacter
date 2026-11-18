@@ -35,6 +35,7 @@
     "fonts:subset-web": "node scripts/fonts/build-webfont-subsets.mjs",
     "fonts:verify-webfont": "node scripts/fonts/verify-webfont-subsets.mjs",
     "fonts:capture-page-profiles": "node scripts/fonts/capture-page-font-profiles.mjs",
+    "classics:gzip": "tsx scripts/gzip-classics.ts",
     "perf:ttfb": "node scripts/perf/paired-ttfb.mjs",
     "perf:fonts": "node scripts/perf/font-load.mjs",
     "perf:load": "node scripts/perf/full-load.mjs",

@@ -14,9 +14,11 @@
  */
 import { pinyin } from 'pinyin-pro';
 import * as OpenCC from 'opencc-js';
-import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { getPool, closePool } from '../lib/db';
+import { corpusJsonFiles } from './corpus-files';
 
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
 
@@ -80,19 +82,40 @@ function writeVolumeJson(vol: VolumeJson): { path: string; bytes: number } {
   const json = JSON.stringify(vol, null, 2);
   const filePath = join(DATA_DIR, `${vol.slug}.json`);
   writeFileSync(filePath, json, 'utf8');
+  // ⚠️ The corpus is stored gzipped in the repository since
+  // 2026-11-18, so a book that is written here as a plain `.json` may have
+  // a stale `.json.gz` twin. Two shapes of the same book would make the
+  // reader pick one at random — and the stale one is the wrong one.
+  // The compressed twin goes; `npm run classics:gzip` puts it back.
+  if (existsSync(`${filePath}.gz`)) rmSync(`${filePath}.gz`);
   return { path: filePath, bytes: json.length };
 }
 
-function buildManifestFromDisk(): Manifest {
+/**
+ * Build the manifest from the books on disk.
+ *
+ * ⚠️ The corpus is stored GZIPPED in the repository since 2026-11-18, so
+ * the walk accepts BOTH shapes (`.json` and `.json.gz`) — see
+ * `scripts/corpus-files.ts`. A `*.json`-only filter would produce an EMPTY
+ * manifest here, and `scripts/init-db.ts` seeds the `classics` table from
+ * that manifest: a fresh install would seed ZERO books and the site would
+ * look complete while holding nothing.
+ *
+ * @param dir the classics directory — defaults to the repository's
+ */
+function buildManifestFromDisk(dir: string = DATA_DIR): Manifest {
   const entries: ManifestEntry[] = [];
-  if (!existsSync(DATA_DIR)) {
+  if (!existsSync(dir)) {
     return { version: 1, updatedAt: new Date().toISOString(), books: entries };
   }
-  for (const name of readdirSync(DATA_DIR)) {
-    if (!name.endsWith('.json')) continue;
-    const filePath = join(DATA_DIR, name);
+  for (const name of corpusJsonFiles(dir)) {
+    const filePath = join(dir, name);
     const stat = statSync(filePath);
-    const vol: VolumeJson = JSON.parse(readFileSync(filePath, 'utf8'));
+    const vol: VolumeJson = JSON.parse(
+      name.endsWith('.gz')
+        ? gunzipSync(readFileSync(filePath)).toString('utf8')
+        : readFileSync(filePath, 'utf8'),
+    );
     entries.push({
       slug: vol.slug,
       title: vol.title,

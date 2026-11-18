@@ -13,9 +13,11 @@
  * Idempotent: re-running skips files that already exist + DB rows that exist.
  */
 import { writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import type { RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
+import { corpusJsonFiles } from './corpus-files';
 
 const DATA_DIR = join(process.cwd(), 'data', 'classics');
 const MANIFEST_PATH = join(process.cwd(), 'data', 'classics-manifest.json');
@@ -106,11 +108,20 @@ async function exportDbOnlyBooks(): Promise<{ written: string[]; skipped: string
   for (const slug of DB_ONLY_SLUGS) {
     const filePath = join(DATA_DIR, `${slug}.json`);
     try {
+      // ⚠️ The corpus is gzipped in the repository since 2026-11-18, so
+      // the probe has to look for the compressed twin too — otherwise every
+      // book looks "not on disk" and gets exported over its own file.
       await readFileSync(filePath);
       skipped.push(slug);
       continue;
     } catch {
-      /* not on disk — export below */
+      try {
+        await readFileSync(`${filePath}.gz`);
+        skipped.push(slug);
+        continue;
+      } catch {
+        /* not on disk — export below */
+      }
     }
     const [rows] = await pool.query<ClassicRow[]>(
       `SELECT slug, title, category, author, era, chunks, source FROM classics WHERE slug = ?`,
@@ -182,11 +193,16 @@ async function insertManifestOnlyBooks(): Promise<{ inserted: string[]; skipped:
 }
 
 async function rebuildManifest(): Promise<Manifest> {
-  const files = (await readdirSync(DATA_DIR)).filter((f) => f.endsWith('.json')).sort();
+  // ⚠️ `corpusJsonFiles` carries BOTH storage shapes (`.json` and
+  // `.json.gz`): the corpus is gzipped in the repository since 2026-11-18, so
+  // a `*.json`-only filter would rebuild an EMPTY manifest here.
+  const files = corpusJsonFiles(DATA_DIR);
   const entries: ManifestEntry[] = [];
   for (const name of files) {
     const filePath = join(DATA_DIR, name);
-    const raw = await readFileSync(filePath, 'utf8');
+    const raw = name.endsWith('.gz')
+      ? gunzipSync(await readFileSync(filePath)).toString('utf8')
+      : await readFileSync(filePath, 'utf8');
     const vol: VolumeJson = JSON.parse(raw);
     entries.push({
       slug: vol.slug,

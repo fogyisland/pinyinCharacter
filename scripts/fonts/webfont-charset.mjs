@@ -72,10 +72,13 @@
  *   node scripts/fonts/webfont-charset.mjs   print the three charset sizes
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { dirname, extname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import * as fontkit from 'fontkit';
+
+import { corpusJsonFiles } from './corpus-files.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..', '..');
@@ -626,6 +629,27 @@ function collectRareChar(value, rares) {
 }
 
 /**
+ * Read a corpus JSON file, transparently handling the `.json.gz` shape.
+ *
+ * The classics corpus is stored GZIPPED in the repository since
+ * 2026-11-18 (see `scripts/gzip-classics.ts`). A scan that only knew
+ * `*.json` would find ZERO of the 196 classics files and would silently
+ * drop the 10 970 distinct CJK characters they hold — the font would
+ * ship without the ability to draw the classics, and NOTHING would turn
+ * red. So the corpus is read in both shapes.
+ *
+ * The runtime read path (`lib/json-fs.ts`'s `readJsonAuto`) already
+ * worked this way; this is the same rule on the build side.
+ */
+function readCorpusJson(path) {
+  const raw = readFileSync(path);
+  if (path.endsWith('.gz')) {
+    return JSON.parse(gunzipSync(raw).toString('utf8'));
+  }
+  return JSON.parse(raw.toString('utf8'));
+}
+
+/**
  * Scan every JSON file of a directory.
  *
  * A malformed file is reported and skipped — a broken corpus must not
@@ -644,7 +668,11 @@ function scanJsonDirectory(dir, state, wanted = { strings: true, titles: false, 
   }
   let entries;
   try {
-    entries = readdirSync(dir);
+    // ⚠️ `corpusJsonFiles` carries BOTH storage shapes (`.json` and
+    // `.json.gz`). The classics corpus is gzipped in the repository, so a
+    // plain `*.json` filter here would scan an EMPTY directory and the
+    // charset would lose the whole corpus — silently.
+    entries = corpusJsonFiles(dir);
   } catch (err) {
     console.warn(`[charset] cannot read ${dir}: ${err.message} — skipping`);
     return null;
@@ -654,11 +682,10 @@ function scanJsonDirectory(dir, state, wanted = { strings: true, titles: false, 
   const titles = new Map();
   const rares = new Map();
   for (const file of entries) {
-    if (!file.endsWith('.json')) continue;
     const path = join(dir, file);
     let parsed;
     try {
-      parsed = JSON.parse(readFileSync(path, 'utf8'));
+      parsed = readCorpusJson(path);
     } catch (err) {
       state.skipped += 1;
       console.warn(`[charset] skipping malformed JSON ${path}: ${err.message}`);

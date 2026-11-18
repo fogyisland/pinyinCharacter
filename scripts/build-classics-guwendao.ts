@@ -14,11 +14,13 @@
  *
  * Usage: DATABASE_URL=<db> pnpm tsx scripts/build-classics-guwendao.ts
  */
-import { writeFileSync, mkdirSync, readFileSync, readdirSync, existsSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { join } from 'node:path';
 import { pinyin } from 'pinyin-pro';
 import * as OpenCC from 'opencc-js';
 import { getPool, closePool } from '../lib/db';
+import { corpusJsonFiles } from './corpus-files';
 import { scrapeChapterContent } from '../lib/guwendao-scraper';
 
 const t2s = OpenCC.Converter({ from: 't', to: 'cn' });
@@ -1193,6 +1195,12 @@ function writeVolumeJson(vol: VolumeJson): { path: string; bytes: number } {
   const json = JSON.stringify(vol, null, 2);
   const filePath = join(DATA_DIR, `${vol.slug}.json`);
   writeFileSync(filePath, json, 'utf8');
+  // ⚠️ The corpus is stored gzipped in the repository since
+  // 2026-11-18, so a book that is written here as a plain `.json` may have
+  // a stale `.json.gz` twin. Two shapes of the same book would make the
+  // reader pick one at random — and the stale one is the wrong one.
+  // The compressed twin goes; `npm run classics:gzip` puts it back.
+  if (existsSync(`${filePath}.gz`)) rmSync(`${filePath}.gz`);
   return { path: filePath, bytes: json.length };
 }
 
@@ -1206,11 +1214,17 @@ function buildManifestFromDisk(): Manifest {
   if (!existsSync(DATA_DIR)) {
     return { version: 1, updatedAt: new Date().toISOString(), books: entries };
   }
-  for (const name of readdirSync(DATA_DIR)) {
-    if (!name.endsWith('.json')) continue;
+  // ⚠️ `corpusJsonFiles` carries BOTH storage shapes (`.json` and
+  // `.json.gz`): the corpus is gzipped in the repository since 2026-11-18, so
+  // a `*.json`-only filter would build an EMPTY manifest here.
+  for (const name of corpusJsonFiles(DATA_DIR)) {
     const filePath = join(DATA_DIR, name);
     const stat = statSync(filePath);
-    const vol: VolumeJson = JSON.parse(readFileSync(filePath, 'utf8'));
+    const vol: VolumeJson = JSON.parse(
+      name.endsWith('.gz')
+        ? gunzipSync(readFileSync(filePath)).toString('utf8')
+        : readFileSync(filePath, 'utf8'),
+    );
     entries.push({
       slug: vol.slug,
       title: vol.title,

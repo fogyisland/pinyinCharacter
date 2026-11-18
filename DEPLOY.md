@@ -373,6 +373,8 @@ npm run seed:run
 
 - `data/content/<char>.json` 成为内容单一来源 (取代 chars 表的内容列)
 - `classics` 表的 `chunks` / `chunk_count` 列已 drop,内容迁到 `data/classics/<slug>.json`
+- `data/classics/` 在**仓库里**也存成了 gzip(`data/classics/<slug>.json.gz`,196 个文件 251 MB → 39 MB)⇒ 仓库瘦身 212 MB。**读取路径不变**:`lib/json-fs.ts` 的 `readJsonAuto` 先试 `.json`、再试 `.json.gz`,发布包(`scripts/copy-to-up.py`)里也是同样的形态。⚠️ 若要改语料内容,先 `npm run classics:gzip -- --decompress` 展开成裸 `.json`,改完再 `npm run classics:gzip` 压回去。
+  ⚠️ **构建期的脚本也必须认这两种形态**:任何遍历 `data/classics/` 的脚本都要走 `scripts/corpus-files.ts`(TypeScript)或 `scripts/fonts/corpus-files.mjs`(字体流水线),它们把 `.json` 和 `.json.gz` 一起列出来、同一本书只列一次。**只认 `.json` 的脚本会静默看到空目录**——字体字符集会少掉 10 970 个汉字(`npm run fonts:subset-web` 会切出一个画不了经典的字体,而且**没有任何一项会变红**),`data/classics-manifest.json` 会重建成空的(而 `scripts/init-db.ts` 正是用它灌 `classics` 表 ⇒ 新装一台机器一本书都没有)。
 - `poems` 表同样迁到 `data/poems/<id>.json`(不影响字段,只是数据物理位置变化)
 - 新增 SEO 路由:`/sitemap.xml`、`/sitemap-poetry.xml`、`/sitemap-ancient.xml`、`/sitemap-chars.xml`、`/robots.txt`(反代无需变更,Next.js 自动 serve)
 - 新增 `deploy/nginx.ziyun.pudafo.com.conf`(具体域名配置模板)

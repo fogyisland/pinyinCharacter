@@ -1,5 +1,5 @@
 // scripts/build-pianwen.ts
-import { writeFileSync, readFileSync, existsSync, mkdirSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Pool } from 'mysql2/promise';
 import type { RowDataPacket } from 'mysql2';
@@ -95,7 +95,11 @@ export async function buildPianwen(): Promise<PianwenResult> {
   const categoryStatus = await ensurePianwenCategory(pool);
 
   const filePath = join(DATA_DIR, `${SLUG}.json`);
-  if (existsSync(filePath)) {
+  // ⚠️ The corpus is gzipped in the repository since 2026-11-18, so
+  // the "is it already on disk" probe has to accept the compressed twin:
+  // without it the book looks absent and gets rebuilt over itself.
+  const fileExists = existsSync(filePath) || existsSync(`${filePath}.gz`);
+  if (fileExists) {
     const [rows] = await pool.query<RowDataPacket[]>(
       `SELECT 1 FROM classics WHERE slug = ? LIMIT 1`,
       [SLUG],
@@ -133,6 +137,12 @@ export async function buildPianwen(): Promise<PianwenResult> {
   };
   const json = JSON.stringify(vol, null, 2);
   writeFileSync(filePath, json, 'utf8');
+  // ⚠️ The corpus is stored gzipped in the repository since
+  // 2026-11-18, so a book that is written here as a plain `.json` may have
+  // a stale `.json.gz` twin. Two shapes of the same book would make the
+  // reader pick one at random — and the stale one is the wrong one.
+  // The compressed twin goes; `npm run classics:gzip` puts it back.
+  if (existsSync(`${filePath}.gz`)) rmSync(`${filePath}.gz`);
 
   await pool.query(
     `INSERT INTO classics (slug, title, category, author, era, source)
