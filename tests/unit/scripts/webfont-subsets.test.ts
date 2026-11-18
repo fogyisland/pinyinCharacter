@@ -8,6 +8,7 @@ import {
   OUT_ROOT,
   renderFace,
   renderStylesheet,
+  renderStylesheets,
   blockFileNames,
   manifestVersion,
   createVersionHasher,
@@ -27,6 +28,18 @@ const VERSION = 'abc123def456';
 
 /** The directory the stylesheets live in. */
 const FONT_DIR = resolve(OUT_ROOT, '..');
+
+/**
+ * How many @font-face rules a stylesheet declares.
+ *
+ * `lib/webfont/apply.ts` exports `countFaceRules` for the same purpose,
+ * but importing it here would drag a TypeScript server module into this
+ * script's dependency graph. The two agree, and that agreement is what
+ * the release importer relies on.
+ */
+function faceCount(css: string): number {
+  return (css.match(/@font-face\s*\{/g) ?? []).length;
+}
 
 /** How many files are below a directory. */
 function countFiles(dir: string): number {
@@ -365,4 +378,70 @@ describe('buildAll', () => {
       await rm(emptyDir, { recursive: true, force: true });
     }
   }, 180_000);
+});
+
+describe('renderStylesheets — the ext tier is a stylesheet of its own', () => {
+  it('puts the hot tier in the hot stylesheet and the ext tier in the ext one', () => {
+    const sans = FAMILIES.find((f) => f.key === 'sans')!;
+
+    const { hot, ext } = renderStylesheets(sans, plan, VERSION);
+
+    // The hot stylesheet carries the hot tier ...
+    expect(hot).toContain('hot.woff2');
+    expect(hot).not.toContain('ext-001');
+    // ... and the ext stylesheet carries the ext tier.
+    expect(ext).toContain('ext-001');
+    expect(ext).not.toContain('hot.woff2');
+    // Both carry the version token on every URL.
+    expect(hot).toContain(`?v=${VERSION}`);
+    expect(ext).toContain(`?v=${VERSION}`);
+    // And the two together are exactly what the old single stylesheet was.
+    expect(faceCount(hot) + faceCount(ext)).toBe(
+      faceCount(renderStylesheet(sans, plan, VERSION)),
+    );
+  });
+
+  it('keeps both faces of a weight pair in the same stylesheet', () => {
+    // The 400 and the 700 face of one block share a unicode-range, so they
+    // must not be split across two stylesheets — a split would make the
+    // browser pick the wrong weight for the characters in the other file.
+    //
+    // The wenkai family is NOT variable: it has one file per weight, so
+    // the ext block declares two faces too. Both of them belong to the
+    // ext sheet — the hot sheet must not carry the 700 face of a block
+    // whose 400 face is in the ext sheet.
+    const kai = FAMILIES.find((f) => f.key === 'wenkai')!;
+
+    const { hot, ext } = renderStylesheets(kai, plan, VERSION);
+
+    // The hot block has one file per weight, and both land in the hot sheet.
+    expect(hot).toContain('hot-400.woff2');
+    expect(hot).toContain('hot-700.woff2');
+    // The ext block has one file per weight, and both land in the ext sheet.
+    expect(ext).toContain('ext-001-400.woff2');
+    expect(ext).toContain('ext-001-700.woff2');
+    // Neither sheet carries the other one's block.
+    expect(hot).not.toContain('ext-001');
+    expect(ext).not.toContain('hot-400');
+  });
+
+  it('keeps the latin hot tier with the hot stylesheet', () => {
+    // `blocksOf()` yields four kinds: 'hot', 'ext', 'latin', 'latin-ext'.
+    // The latin hot block is the handful of latin faces every page paints,
+    // so it belongs with the blocking tier; the latin ext blocks do not.
+    const sans = FAMILIES.find((f) => f.key === 'sans')!;
+    const withLatin = {
+      hot: plan.hot,
+      extBlocks: plan.extBlocks,
+      latin: { hot: ['a', 'b'], extBlocks: [{ index: 1, chars: ['c'] }] },
+    };
+
+    const { hot, ext } = renderStylesheets(sans, withLatin, VERSION);
+
+    // The latin hot block is named `latin`; the latin ext blocks are
+    // `latin-ext-NNN`.
+    expect(hot).toContain('/latin.woff2');
+    expect(ext).not.toContain('/latin.woff2');
+    expect(ext).toContain('/latin-ext-001.woff2');
+  });
 });

@@ -267,7 +267,33 @@ export declare function filterPlanByCoverage(
 /** Render one @font-face rule. */
 export declare function renderFace(spec: FaceSpec): string;
 
-/** Render the stylesheet of one family. */
+/** The two stylesheets of one family: the hot tier and the ext tier. */
+export interface FamilyStylesheets {
+  /** The blocking stylesheet — the characters every page paints. */
+  hot: string;
+  /** The non-blocking stylesheet — one face per six characters. */
+  ext: string;
+}
+
+/**
+ * Render the two stylesheets of one family.
+ *
+ * The hot tier and the ext tier are two files: the hot tier is
+ * render-blocking, the ext tier is loaded with `media="print"` and
+ * promoted by the inline script in app/layout.tsx.
+ */
+export declare function renderStylesheets(
+  family: FamilySpec,
+  plan: TierPlan,
+  version: string,
+): FamilyStylesheets;
+
+/**
+ * The one-stylesheet form — the hot tier and the ext tier concatenated.
+ *
+ * Kept for the release importer and for callers that want the whole
+ * family in one string.
+ */
 export declare function renderStylesheet(
   family: FamilySpec,
   plan: TierPlan,

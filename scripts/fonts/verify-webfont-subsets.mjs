@@ -2,7 +2,7 @@
  * scripts/fonts/verify-webfont-subsets.mjs — proves the shipped webfont
  * subsets are correct.
  *
- * Why this exists: the site ships 7 981 woff2 files (three families, a hot
+ * Why this exists: the site ships 7 982 woff2 files (three families, a hot
  * tier and thousands of Ext blocks) plus three stylesheets that tell the
  * browser which file holds which character. Every one of those declarations
  * is a promise: "this file can draw these characters". A promise that is
@@ -196,15 +196,15 @@ export const LIMITS = {
   // the gate measures. They are the measured bytes rounded UP to a whole KB,
   // with no headroom: the sample IS the upper bound of what one visit
   // downloads, so a budget above it would be a wish.
-  //   / 838 960 B → 820 KB = 839 680 B      /dictionary 330 688 B → 323 KB = 330 752 B
-  //   /poetry 241 204 B → 236 KB = 241 664 B   /stories 1 214 408 B → 1 186 KB = 1 214 464 B
+  //   / 849 916 B → 830 KB = 849 920 B      /dictionary 329 448 B → 322 KB = 329 728 B
+  //   /poetry 239 788 B → 235 KB = 240 640 B   /stories 1 234 088 B → 1 206 KB = 1 234 944 B
   unionSampleBytes: {
-    '/': 839680,
-    '/dictionary': 330752,
-    '/poetry': 241664,
-    '/stories': 1214464,
+    '/': 849920,
+    '/dictionary': 329728,
+    '/poetry': 240640,
+    '/stories': 1234944,
   },
-  maxUnionSampleFilesPerPage: 255,
+  maxUnionSampleFilesPerPage: 260,
 };
 
 /**
@@ -457,28 +457,38 @@ export function checkFaceDirectory(family, face) {
  * manifest that points `sans` at a path that does not exist would link the
  * page to a 404 — the whole family would fall back to the system font.
  *
- * The expected path is derived from the family, not written out a third
- * time: it is `/font/` plus the name of the stylesheet of the family.
+ * The expected paths are derived from the family, not written out a
+ * third time: they are `/font/` plus the names of the TWO stylesheets
+ * of the family — the hot tier and the ext tier.
+ *
+ * The ext tier has a key of its own (`<family>Ext`), because the
+ * manifest is the single source of truth for `lib/font-css.ts` and the
+ * layout links the two tiers separately.
  *
  * @param {{ files?: Record<string, string> }} manifest the parsed manifest
- * @param {Array<{ key: string, css: string }>} families the families of the site
+ * @param {Array<{ key: string, css: string, cssHot: string, cssExt: string }>} families the families of the site
  * @returns {string[]} the messages of the failures, empty when the manifest is right
  */
 export function checkManifestFiles(manifest, families) {
   const errors = [];
   const files = manifest?.files ?? {};
   for (const family of families) {
-    const value = files[family.key];
-    if (typeof value !== 'string' || value === '') {
-      errors.push(`the manifest lists no stylesheet for ${family.key}`);
-      continue;
-    }
-    const expected = `/font/${family.css}`;
-    if (value !== expected) {
-      errors.push(
-        `the manifest points ${family.key} at ${value}, it must point at exactly ` +
-          `${expected}`,
-      );
+    for (const [key, name] of [
+      [family.key, family.cssHot],
+      [`${family.key}Ext`, family.cssExt],
+    ]) {
+      const value = files[key];
+      if (typeof value !== 'string' || value === '') {
+        errors.push(`the manifest lists no stylesheet for ${key}`);
+        continue;
+      }
+      const expected = `/font/${name}`;
+      if (value !== expected) {
+        errors.push(
+          `the manifest points ${key} at ${value}, it must point at exactly ` +
+            `${expected}`,
+        );
+      }
     }
   }
   return errors;
@@ -506,6 +516,64 @@ function parseUnicodeRange(text) {
     for (let point = start; point <= end; point += 1) points.push(point);
   }
   return points;
+}
+
+/**
+ * The version token of a family: the hash of its subset files, in the
+ * order the build wrote them.
+ *
+ * That order is the order of the BLOCKS of the plan: the hot block
+ * first, then the Chinese ext blocks by their index, then the Latin hot
+ * block, then the Latin ext blocks by their index. It is NOT the order
+ * of the faces in the stylesheets: the stylesheets are split into a hot
+ * tier and an ext tier, and the hot tier holds the hot block AND the
+ * Latin hot block.
+ *
+ * ⚠️ `blocksOf()` of the builder walks the plan in exactly this
+ * sequence, and the two implementations have to agree — the token the
+ * stylesheets carry is the token the build computed.
+ *
+ * @param {object} plan the charset plan of the family
+ * @param {{ key: string, variable: boolean, weights: string[] }} family the family
+ * @param {string[]} fileOrder the file names, in the order they were met
+ * @param {Map<string, Buffer>} fileBytes the bytes of every file
+ * @returns {string} the token, twelve lowercase hex characters
+ */
+function versionTokenOf(plan, family, fileOrder, fileBytes) {
+  // The blocks of the plan, in the order of the builder.
+  const pad3 = (index) => String(index).padStart(3, '0');
+  const blockKeys = ['hot'];
+  for (const block of [...plan.extBlocks].sort((a, b) => a.index - b.index)) {
+    blockKeys.push(`ext-${pad3(block.index)}`);
+  }
+  const latin = plan.latin;
+  if (latin) {
+    blockKeys.push('latin');
+    for (const block of [...latin.extBlocks].sort((a, b) => a.index - b.index)) {
+      blockKeys.push(`latin-ext-${pad3(block.index)}`);
+    }
+  }
+
+  // The files of every block, in the order the faces of the block name
+  // them: for a static family the weight pair of one block shares the
+  // unicode-range and is written in the order of the weights.
+  const filesOfBlock = new Map();
+  for (const name of fileOrder) {
+    const key = blockKeyOf(family, name);
+    if (!filesOfBlock.has(key)) filesOfBlock.set(key, []);
+    filesOfBlock.get(key).push(name);
+  }
+
+  const hash = createHash('sha256');
+  for (const key of blockKeys) {
+    const names = filesOfBlock.get(key);
+    if (!names) continue;
+    for (const name of names) {
+      hash.update(name, 'utf8');
+      hash.update(fileBytes.get(name));
+    }
+  }
+  return hash.digest('hex').slice(0, 12);
 }
 
 /**
@@ -666,13 +734,22 @@ async function inspectFamily(family, plan) {
   const errors = [];
   const stats = emptyStats(family);
 
-  const cssPath = join(FONT_DIR, family.css);
+  // TWO stylesheets per family: the hot tier (render-blocking) and the
+  // ext tier (loaded with media="print" and promoted). Both are read,
+  // and the faces of the two together are what the family declares —
+  // a face of the ext tier is a face of the family just as much as a
+  // face of the hot tier.
+  //
+  // The gzip budget of the render-blocking stylesheet is measured on
+  // the HOT TIER ALONE: it is the only stylesheet the browser has to
+  // parse before it can paint a character.
+  const cssPath = join(FONT_DIR, family.cssHot);
   let cssRaw;
   try {
     cssRaw = await readFile(cssPath, 'utf8');
   } catch (error) {
     errors.push(
-      `[${family.key}] the stylesheet ${family.css} cannot be read: ${error.message}`,
+      `[${family.key}] the stylesheet ${family.cssHot} cannot be read: ${error.message}`,
     );
     return { errors, stats, detail: null };
   }
@@ -680,22 +757,46 @@ async function inspectFamily(family, plan) {
   stats.cssBytes = Buffer.byteLength(css, 'utf8');
   stats.cssGzipBytes = gzipSync(Buffer.from(css, 'utf8')).length;
 
-  const faces = parseFaces(css);
+  const extPath = join(FONT_DIR, family.cssExt);
+  let extRaw;
+  try {
+    extRaw = await readFile(extPath, 'utf8');
+  } catch (error) {
+    errors.push(
+      `[${family.key}] the stylesheet ${family.cssExt} cannot be read: ${error.message}`,
+    );
+    return { errors, stats, detail: null };
+  }
+  const extCss = normalizeNewlines(extRaw);
+  // The gzip budget of the family is the sum of the two tiers: the
+  // browser downloads both, as two responses with two gzip streams.
+  const familyGzipBytes =
+    stats.cssGzipBytes + gzipSync(Buffer.from(extCss, 'utf8')).length;
+
+  const faces = [...parseFaces(css), ...parseFaces(extCss)];
   stats.faces = faces.length;
 
   // --- check 5: the face count of the stylesheet --------------------------
   if (faces.length > LIMITS.maxFacesPerCss) {
     errors.push(
-      `[${family.key}] ${family.css} declares ${faces.length} faces, ` +
-        `the budget is ${LIMITS.maxFacesPerCss}`,
+      `[${family.key}] ${family.cssHot} and ${family.cssExt} declare ` +
+        `${faces.length} faces, the budget is ${LIMITS.maxFacesPerCss}`,
     );
   }
 
   // --- check 5: the blocking stylesheet has its own budget ----------------
   if (family.key === 'sans' && stats.cssGzipBytes > LIMITS.sansCssBytes) {
     errors.push(
-      `[${family.key}] ${family.css} is ${stats.cssGzipBytes} B gzipped, ` +
+      `[${family.key}] ${family.cssHot} is ${stats.cssGzipBytes} B gzipped, ` +
         `the budget of the render blocking stylesheet is ${LIMITS.sansCssBytes} B`,
+    );
+  }
+
+  // --- check 5: the whole family has its own budget ------------------------
+  if (familyGzipBytes > LIMITS.cssBytes) {
+    errors.push(
+      `[${family.key}] ${family.cssHot} and ${family.cssExt} are ` +
+        `${familyGzipBytes} B gzipped together, the budget is ${LIMITS.cssBytes} B`,
     );
   }
 
@@ -720,11 +821,13 @@ async function inspectFamily(family, plan) {
   let files = 0;
   let bytes = 0;
 
-  // The hash is fed in the order the faces appear in the stylesheet: that
-  // IS the order the build wrote the files in (the stylesheet is rendered
-  // from the same list of blocks), so recomputing it here reproduces the
-  // token of the build.
-  const hasher = createHash('sha256');
+  // The subset files are COLLECTED here, not hashed: the order the build
+  // wrote them in is the order of the blocks of the plan, and the faces
+  // of the two stylesheets are not in that order any more (the hot
+  // stylesheet holds the hot block AND the Latin hot block). The hash is
+  // taken below, in the plan's order.
+  const fileBytes = new Map();
+  const fileOrder = [];
 
   for (const face of faces) {
     // --- check 10: the face must declare the family and the style ---------
@@ -822,8 +925,8 @@ async function inspectFamily(family, plan) {
     files += 1;
     bytes += content.length;
 
-    hasher.update(fileName, 'utf8');
-    hasher.update(content);
+    if (!fileBytes.has(fileName)) fileOrder.push(fileName);
+    fileBytes.set(fileName, content);
 
     const file = block.files.find((entry) => entry.name === fileName);
     if (file) file.bytes = content.length;
@@ -872,7 +975,7 @@ async function inspectFamily(family, plan) {
     }
   }
 
-  const version = hasher.digest('hex').slice(0, 12);
+  const version = versionTokenOf(plan, family, fileOrder, fileBytes);
   for (const face of faces) {
     const url = parseFaceUrl(face.src);
     if (!url) continue;
@@ -980,7 +1083,13 @@ async function inspectFamily(family, plan) {
   return {
     errors,
     stats,
-    detail: { blocks, cpToBlock, css, extraCodepoints: extraCodepoints.slice(0, SAMPLE_SIZE) },
+    detail: {
+      blocks,
+      cpToBlock,
+      css,
+      extCss,
+      extraCodepoints: extraCodepoints.slice(0, SAMPLE_SIZE),
+    },
   };
 }
 
@@ -1031,14 +1140,21 @@ async function checkManifest(cssByFile) {
   const expected = hash.digest('hex').slice(0, 12);
   if (version !== expected) {
     errors.push(
-      `the manifest version is ${JSON.stringify(version)}, the three stylesheets ` +
+      `the manifest version is ${JSON.stringify(version)}, the six stylesheets ` +
         `hash to ${expected}`,
     );
   }
 
   const files = manifest.files ?? {};
   const keys = Object.keys(files).sort();
-  const expectedKeys = ['sans', 'serif', 'wenkai'];
+  const expectedKeys = [
+    'sans',
+    'sansExt',
+    'serif',
+    'serifExt',
+    'wenkai',
+    'wenkaiExt',
+  ];
   if (keys.join(',') !== expectedKeys.join(',')) {
     errors.push(
       `the manifest lists ${keys.join(', ') || 'nothing'}, it must list exactly ` +
@@ -1610,10 +1726,13 @@ export async function verifyAll() {
     stats.push(report.stats);
     details[family.key] = report.detail;
     extras[family.key] = report.detail ? report.detail.extraCodepoints : [];
-    if (report.detail) cssByFile[family.css] = report.detail.css;
+    if (report.detail) {
+      cssByFile[family.cssHot] = report.detail.css;
+      cssByFile[family.cssExt] = report.detail.extCss;
+    }
   }
 
-  // --- check 5: the three stylesheets together ---------------------------
+  // --- check 5: the six stylesheets together -----------------------------
   const cssGzipTotal = stats.reduce((sum, entry) => sum + entry.cssGzipBytes, 0);
   if (cssGzipTotal > LIMITS.cssBytes) {
     errors.push(

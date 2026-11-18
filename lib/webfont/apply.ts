@@ -80,8 +80,22 @@ import type { PageCostReport } from '@/scripts/fonts/verify-webfont-subsets.d.mt
 /** The three families of the site. */
 const FAMILIES = ['sans', 'serif', 'wenkai'] as const;
 
-/** The three stylesheets, by their file name — the key of the V hash. */
-const STYLESHEETS = ['fonts-sans.css', 'fonts-serif.css', 'fonts-wenkai.css'] as const;
+/**
+ * The six stylesheets, by their file name — the key of the V hash.
+ *
+ * Every family has TWO stylesheets since the ext tier was split out of
+ * the render-blocking one: the hot tier and the ext tier. Both are
+ * released together — a release with only the hot sheet would leave the
+ * ext characters of the site without a font.
+ */
+const STYLESHEETS = [
+  'fonts-sans-hot.css',
+  'fonts-sans-ext.css',
+  'fonts-serif-hot.css',
+  'fonts-serif-ext.css',
+  'fonts-wenkai-hot.css',
+  'fonts-wenkai-ext.css',
+] as const;
 
 /** The prefix of the line the verifier prints with its page cost. */
 const PAGECOST_PREFIX = '[verify] pagecost: ';

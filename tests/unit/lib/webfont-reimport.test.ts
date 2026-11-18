@@ -54,11 +54,34 @@ const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', '
 /** The script under test. */
 const SCRIPT = join(REPO_ROOT, 'scripts', 'fonts', 'import-webfont-release.mjs');
 
+/**
+ * The timeout of every test of this file.
+ *
+ * ⚠️ Every test of this file spawns `git` several times in a TEMPORARY
+ * repository — `git init`, `git add`, `git commit`, `git status`, `git rm`.
+ * On a busy Windows box (a virus scanner walking the 7 982 woff2 files of
+ * the WORKING tree while the test runs) a single commit takes seconds, not
+ * milliseconds. The default 5 s timeout of vitest made this file fail for
+ * reasons that have nothing to do with the code under test.
+ *
+ * ⇒ The budget is set explicitly and generously. It is not a licence to
+ * make the script slower — the script's own work is measured by the
+ * assertions, not by the clock.
+ */
+const TEST_TIMEOUT = 60_000;
+
 /** The three families of the site — the stylesheets the script hashes. */
 const FAMILIES = ['sans', 'serif', 'wenkai'] as const;
 
-/** The three stylesheets, by their file name — the key order of the V hash. */
-const STYLESHEETS = ['fonts-sans.css', 'fonts-serif.css', 'fonts-wenkai.css'] as const;
+/** The six stylesheets, by their file name — the key order of the V hash. */
+const STYLESHEETS = [
+  'fonts-sans-hot.css',
+  'fonts-sans-ext.css',
+  'fonts-serif-hot.css',
+  'fonts-serif-ext.css',
+  'fonts-wenkai-hot.css',
+  'fonts-wenkai-ext.css',
+] as const;
 
 /** A release token: twelve lowercase hex characters. */
 const TOKEN = 'a1b2c3d4e5f6';
@@ -191,12 +214,17 @@ function makeRepo(options: { manifestVersion?: string | null } = {}): TempRepo {
     const familyDir = join(fontDir, 'web', family);
     mkdirSync(familyDir, { recursive: true });
     writeFileSync(join(familyDir, 'hot.woff2'), 'OLD');
-    files[family] = `/font/fonts-${family}.css`;
-    // The OLD stylesheet points at release 0.
-    writeFileSync(
-      join(fontDir, `fonts-${family}.css`),
-      stylesheetFor(family, 'hot.woff2', '000000000000', ''),
-    );
+    writeFileSync(join(familyDir, 'ext-001.woff2'), 'OLD');
+    files[family] = `/font/fonts-${family}-hot.css`;
+    files[`${family}Ext`] = `/font/fonts-${family}-ext.css`;
+    // The OLD stylesheets point at release 0.
+    for (const tier of ['hot', 'ext'] as const) {
+      const subset = tier === 'hot' ? 'hot.woff2' : 'ext-001.woff2';
+      writeFileSync(
+        join(fontDir, `fonts-${family}-${tier}.css`),
+        stylesheetFor(family, subset, '000000000000', ''),
+      );
+    }
   }
   writeFileSync(
     join(fontDir, 'fonts-manifest.json'),
@@ -221,10 +249,15 @@ function makeRepo(options: { manifestVersion?: string | null } = {}): TempRepo {
     const releaseFamily = join(fontDir, 'web', RELEASE_DIR, family);
     mkdirSync(releaseFamily, { recursive: true });
     writeFileSync(join(releaseFamily, 'hot.woff2'), 'NEW');
+    writeFileSync(join(releaseFamily, 'ext-001.woff2'), 'NEW');
   }
   for (const family of FAMILIES) {
-    cssByFile[`fonts-${family}.css`] = stylesheetFor(family, 'hot.woff2', TOKEN, RELEASE_DIR);
-    writeFileSync(join(fontDir, `fonts-${family}.css`), cssByFile[`fonts-${family}.css`]);
+    for (const tier of ['hot', 'ext'] as const) {
+      const subset = tier === 'hot' ? 'hot.woff2' : 'ext-001.woff2';
+      const name = `fonts-${family}-${tier}.css`;
+      cssByFile[name] = stylesheetFor(family, subset, TOKEN, RELEASE_DIR);
+      writeFileSync(join(fontDir, name), cssByFile[name]);
+    }
   }
   const version = options.manifestVersion === undefined ? hashOf(cssByFile) : options.manifestVersion;
   writeFileSync(
@@ -303,7 +336,7 @@ describe('the re-import script (R-87)', () => {
     // ⚠️ NOT ONE BYTE IS STAGED — read twice, two ways.
     expect(stagedPaths(repo.root)).toEqual([]);
     expect(stagedColumn(repo.root)).toEqual([]);
-  });
+  }, TEST_TIMEOUT);
 
   it('stages the release and only stages — it does not commit', () => {
     const repo = makeRepo();
@@ -318,12 +351,15 @@ describe('the re-import script (R-87)', () => {
     // The six paths of the contract are staged.
     const staged = stagedPaths(repo.root);
     expect(staged).toContain(`public/font/web/${RELEASE_DIR}/sans/hot.woff2`);
-    expect(staged).toContain('public/font/fonts-sans.css');
-    expect(staged).toContain('public/font/fonts-serif.css');
-    expect(staged).toContain('public/font/fonts-wenkai.css');
+    expect(staged).toContain('public/font/fonts-sans-hot.css');
+    expect(staged).toContain('public/font/fonts-sans-ext.css');
+    expect(staged).toContain('public/font/fonts-serif-hot.css');
+    expect(staged).toContain('public/font/fonts-serif-ext.css');
+    expect(staged).toContain('public/font/fonts-wenkai-hot.css');
+    expect(staged).toContain('public/font/fonts-wenkai-ext.css');
     expect(staged).toContain('public/font/fonts-manifest.json');
     expect(staged).toContain('public/font/releases.json');
-  });
+  }, TEST_TIMEOUT);
 
   it('stages nothing beyond the six paths — and never the sutras manifest', () => {
     // ⚠️ R-97: the script stages EXPLICIT paths. `git add .` would stage
@@ -344,7 +380,7 @@ describe('the re-import script (R-87)', () => {
     }
     // The untouched file is still dirty, but NOT staged.
     expect(statusOf(repo.root)).toContain('data/sutras/manifest.json');
-  });
+  }, TEST_TIMEOUT);
 
   it('commits with the expected subject and attribution when it is told to', () => {
     const repo = makeRepo();
@@ -369,7 +405,7 @@ describe('the re-import script (R-87)', () => {
     expect(committed).toContain('public/font/fonts-manifest.json');
     // The sutras manifest was never part of it.
     expect(committed).not.toContain('data/sutras/manifest.json');
-  });
+  }, TEST_TIMEOUT);
 });
 
 describe('the release argument is checked BEFORE anything is read (R-206a)', () => {
@@ -436,7 +472,7 @@ describe('the release argument is checked BEFORE anything is read (R-206a)', () 
     // And the canary at the reachable path is still there — the script did
     // not delete it.
     expect(existsSync(join(evil, 'secret.txt'))).toBe(true);
-  });
+  }, TEST_TIMEOUT);
 
   it('refuses the traversal BEFORE it spawns git or touches the disk', () => {
     // ⚠️ THE GUARD WITH TEETH. The case above cannot tell 「refused on the
@@ -482,7 +518,7 @@ describe('the release argument is checked BEFORE anything is read (R-206a)', () 
     // ⚠️ And the path must not be named at all.
     expect(run.output).not.toContain('public/evil');
     expect(run.output).not.toContain('secret.txt');
-  });
+  }, TEST_TIMEOUT);
 
   it('refuses every malformed release argument', () => {
     const repo = makeRepo();
@@ -501,7 +537,7 @@ describe('the release argument is checked BEFORE anything is read (R-206a)', () 
         `the argument ${JSON.stringify(argument)} must stage nothing`,
       ).toEqual([]);
     }
-  });
+  }, TEST_TIMEOUT);
 
   it('refuses an unknown flag instead of silently staging nothing', () => {
     // ⚠️ A typo like `--relesae` must not look like a successful run.
@@ -513,7 +549,7 @@ describe('the release argument is checked BEFORE anything is read (R-206a)', () 
     expect(run.output).toMatch(/[一-鿿]/);
     expect(stagedPaths(repo.root)).toEqual([]);
     expect(stagedColumn(repo.root)).toEqual([]);
-  });
+  }, TEST_TIMEOUT);
 });
 
 describe('the git rm rule (R-206c)', () => {
@@ -549,7 +585,7 @@ describe('the git rm rule (R-206c)', () => {
     expect(stagedPaths(repo.root)).toContain(`public/font/web/${oldDir}/sans/hot.woff2`);
     // And the file is really gone from the working tree.
     expect(existsSync(join(repo.fontDir, 'web', oldDir, 'sans', 'hot.woff2'))).toBe(false);
-  });
+  }, TEST_TIMEOUT);
 
   it('refuses a ledger entry whose directory is not a release directory', () => {
     // ⚠️ The ledger is external input too: the backend writes it, but the
@@ -576,5 +612,5 @@ describe('the git rm rule (R-206c)', () => {
     // And the ledger is NOT staged — a hostile entry does not go into the
     // repository, where `readReleases` would throw on it.
     expect(stagedPaths(repo.root)).not.toContain('public/font/releases.json');
-  });
+  }, TEST_TIMEOUT);
 });

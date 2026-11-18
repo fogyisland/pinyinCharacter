@@ -185,13 +185,31 @@ describe('async font stylesheets and React hydration', () => {
 describe('app/layout.tsx', () => {
   const layout = readFileSync(resolve(ROOT, 'app', 'layout.tsx'), 'utf8');
 
-  it('marks both async stylesheets with suppressHydrationWarning', () => {
+  it('marks every async stylesheet with suppressHydrationWarning', () => {
     // `[^>]*?` keeps the match inside a single tag, so the blocking
     // stylesheet (which has no media attribute) cannot be picked up.
+    //
+    // ⚠️ FIVE, not two: the sans ext tier, the hot tiers of the brand and
+    // serif typefaces, and the ext tiers of the brand and serif typefaces.
+    // A count that is too low would let a NEW async stylesheet ship
+    // without the flag — React would then report a hydration mismatch on
+    // every page load, in production, where nobody reads the console.
     const asyncLinks = layout.match(/<link\s[^>]*?media="print"[^>]*?\/>/g) ?? [];
-    expect(asyncLinks).toHaveLength(2);
+    expect(asyncLinks).toHaveLength(5);
     for (const link of asyncLinks) {
       expect(link).toContain('suppressHydrationWarning');
+    }
+  });
+
+  it('points every async stylesheet at a manifest entry', () => {
+    // Every async link has to carry a `fontCss.<key>` href — a href that
+    // is not in the manifest is a 404, and the browser silently falls back
+    // to the system font.
+    const asyncLinks = layout.match(/<link\s[^>]*?media="print"[^>]*?\/>/g) ?? [];
+    const hrefs = asyncLinks.map((link) => /href=\{fontCss\.(\w+)\}/.exec(link)?.[1]);
+    expect(hrefs).toEqual(['sansExt', 'wenkai', 'serif', 'wenkaiExt', 'serifExt']);
+    for (const href of hrefs) {
+      expect(href, 'an async stylesheet has no fontCss href').toBeTruthy();
     }
   });
 

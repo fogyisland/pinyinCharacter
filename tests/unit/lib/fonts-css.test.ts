@@ -1,10 +1,15 @@
 /**
  * Regression tests for the per-family webfont stylesheets.
  *
- * public/font/fonts-{sans,serif,wenkai}.css are the generated stylesheets of
- * the frequency-tiered webfont model. `fonts-sans.css` is the only one on the
- * critical path — the body typeface draws every character of every page — and
- * the other two are fetched with media="print" and promoted once they arrive.
+ * public/font/fonts-{sans,serif,wenkai}-{hot,ext}.css are the generated
+ * stylesheets of the frequency-tiered webfont model. Every family has TWO:
+ * the hot tier (the characters the pages actually paint) and the ext tier
+ * (one face per six characters, the rest of the corpus).
+ *
+ * Only the sans hot tier is on the critical path — the body typeface draws
+ * every character of every page. Everything else, the sans ext tier and
+ * both tiers of the other two families, is fetched with media="print" and
+ * promoted once it arrives.
  *
  * A stylesheet declares one @font-face per subset file. Every face of a
  * family carries the SAME font-family name and a precise unicode-range; the
@@ -50,15 +55,19 @@ interface Family {
   key: string;
   /** The font-family name every face of the family declares. */
   label: string;
-  /** The stylesheet of the family. */
-  file: string;
+  /** The hot tier of the family — the blocking stylesheet. */
+  hotFile: string;
+  /** The ext tier of the family — the non-blocking stylesheet. */
+  extFile: string;
   /** The directory the subset files of the family live in, under /public/font. */
   subsetDir: string;
-  /** The faces of the stylesheet: the hot zone plus the Ext blocks. */
+  /** The faces of the two stylesheets together: the hot zone plus the Ext blocks. */
   faces: number;
-  /** The raw size of the stylesheet, in bytes. */
-  rawBytes: number;
-  /** The gzipped size of the stylesheet, in bytes. */
+  /** The raw size of the hot stylesheet, in bytes. */
+  hotRawBytes: number;
+  /** The raw size of the ext stylesheet, in bytes. */
+  extRawBytes: number;
+  /** The gzipped size of the two stylesheets together, in bytes. */
   gzipBytes: number;
 }
 
@@ -66,29 +75,35 @@ const FAMILIES: Family[] = [
   {
     key: 'sans',
     label: 'Noto Sans SC',
-    file: 'fonts-sans.css',
+    hotFile: 'fonts-sans-hot.css',
+    extFile: 'fonts-sans-ext.css',
     subsetDir: 'web/sans',
     faces: 2468,
-    rawBytes: 623000,
-    gzipBytes: 55821,
+    hotRawBytes: 3166,
+    extRawBytes: 619989,
+    gzipBytes: 56065,
   },
   {
     key: 'serif',
     label: 'Noto Serif SC',
-    file: 'fonts-serif.css',
+    hotFile: 'fonts-serif-hot.css',
+    extFile: 'fonts-serif-ext.css',
     subsetDir: 'web/serif',
-    faces: 2855,
-    rawBytes: 726882,
-    gzipBytes: 64536,
+    faces: 2856,
+    hotRawBytes: 2946,
+    extRawBytes: 724327,
+    gzipBytes: 64818,
   },
   {
     key: 'wenkai',
     label: 'LXGW WenKai TC',
-    file: 'fonts-wenkai.css',
+    hotFile: 'fonts-wenkai-hot.css',
+    extFile: 'fonts-wenkai-ext.css',
     subsetDir: 'web/wenkai',
     faces: 2658,
-    rawBytes: 673293,
-    gzipBytes: 38491,
+    hotRawBytes: 5988,
+    extRawBytes: 667530,
+    gzipBytes: 38849,
   },
 ];
 
@@ -170,15 +185,39 @@ function parseFaces(css: string): Face[] {
   return faces;
 }
 
-/** The parsed stylesheet of a family, read once per run. */
-const stylesheetCache = new Map<string, { css: string; faces: Face[] }>();
+/**
+ * The parsed stylesheets of a family, read once per run.
+ *
+ * `css` is the two tiers CONCATENATED — that is the model the old
+ * single-stylesheet layout had, and most of the assertions below are
+ * about the family as a whole. The hot and ext tiers are also kept apart
+ * so the size budgets can be measured per tier.
+ */
+interface ParsedFamily {
+  /** The two tiers concatenated. */
+  css: string;
+  /** The faces of both tiers. */
+  faces: Face[];
+  /** The hot tier alone. */
+  hotCss: string;
+  /** The ext tier alone. */
+  extCss: string;
+}
 
-function stylesheet(family: Family): { css: string; faces: Face[] } {
-  const cached = stylesheetCache.get(family.file);
+const stylesheetCache = new Map<string, ParsedFamily>();
+
+function stylesheet(family: Family): ParsedFamily {
+  const cached = stylesheetCache.get(family.hotFile);
   if (cached) return cached;
-  const css = readStylesheet(family.file);
-  const parsed = { css, faces: parseFaces(css) };
-  stylesheetCache.set(family.file, parsed);
+  const hotCss = readStylesheet(family.hotFile);
+  const extCss = readStylesheet(family.extFile);
+  const parsed = {
+    css: hotCss + extCss,
+    faces: parseFaces(hotCss).concat(parseFaces(extCss)),
+    hotCss,
+    extCss,
+  };
+  stylesheetCache.set(family.hotFile, parsed);
   return parsed;
 }
 
@@ -207,9 +246,21 @@ function allSubsetFiles(): { path: string; bytes: number }[] {
 }
 
 describe('public/font per-family stylesheets', () => {
-  it('ships one stylesheet per family', () => {
+  it('ships two stylesheets per family', () => {
     for (const family of FAMILIES) {
-      expect(existsSync(resolve(FONT_DIR, family.file))).toBe(true);
+      expect(existsSync(resolve(FONT_DIR, family.hotFile))).toBe(true);
+      expect(existsSync(resolve(FONT_DIR, family.extFile))).toBe(true);
+    }
+  });
+
+  it('ships no stylesheet from the one-stylesheet layout', () => {
+    // The old layout had one file per family. They are gone, and they have
+    // to stay gone: `/font/:path*` is cached for 30 days, so a leftover
+    // `fonts-sans.css` could still be served to a browser that has the old
+    // URL cached — and it would declare faces whose subset files no
+    // longer exist.
+    for (const family of FAMILIES) {
+      expect(existsSync(resolve(FONT_DIR, `fonts-${family.key}.css`))).toBe(false);
     }
   });
 
@@ -287,43 +338,60 @@ describe('public/font per-family stylesheets', () => {
   });
 
   it('keeps the render-blocking stylesheet small', () => {
-    let cssBytes = 0;
+    let hotBytes = 0;
+    let totalBytes = 0;
     for (const family of FAMILIES) {
-      const rawBytes = Buffer.byteLength(stylesheet(family).css, 'utf8');
-      expect(rawBytes).toBe(family.rawBytes);
-      cssBytes += rawBytes;
+      const { hotCss, extCss } = stylesheet(family);
+      const hotRawBytes = Buffer.byteLength(hotCss, 'utf8');
+      const extRawBytes = Buffer.byteLength(extCss, 'utf8');
+      expect(hotRawBytes).toBe(family.hotRawBytes);
+      expect(extRawBytes).toBe(family.extRawBytes);
+      hotBytes += hotRawBytes;
+      totalBytes += hotRawBytes + extRawBytes;
     }
-    // The three stylesheets together, raw: the CSS the browser has to parse
-    // before it can paint a single character.
-    expect(cssBytes).toBe(2023175);
-    // fonts-sans.css is the only stylesheet on the critical path; the other
-    // two are fetched without blocking the first paint.
+    // ⚠️ THIS IS THE POINT OF THE SPLIT. The three hot tiers together, raw:
+    // the CSS the browser has to parse before it can paint a single
+    // character. It was 2023175 bytes when every family had one
+    // stylesheet; it is 12100 now.
+    expect(hotBytes).toBe(12100);
+    // The whole corpus, hot and ext together, barely moved — the split
+    // moved the bytes off the critical path, it did not delete them.
+    expect(totalBytes).toBe(2023946);
+    // The sans hot tier is the ONLY stylesheet on the critical path; the
+    // sans ext tier and both tiers of the other two families are fetched
+    // without blocking the first paint.
     const sans = FAMILIES.find((family) => family.key === 'sans');
     if (!sans) throw new Error('the sans family is missing from FAMILIES');
-    expect(Buffer.byteLength(stylesheet(sans).css, 'utf8')).toBeLessThanOrEqual(
+    expect(Buffer.byteLength(stylesheet(sans).hotCss, 'utf8')).toBeLessThanOrEqual(
       SANS_RAW_BYTES,
     );
     // Every font byte the site can possibly ask for. The browser downloads
     // only the handful the page draws, but the whole set has to be
     // deployed, cached and kept in the bundle budget.
     const subsets = allSubsetFiles();
-    expect(subsets.length).toBe(7981);
-    expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28236168);
+    expect(subsets.length).toBe(7982);
+    expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28239668);
   });
 
   it('keeps the gzipped payload within budget', () => {
     // The measurement is pinned: gzipSync at the zlib default level, no
     // options object — the same as scripts/fonts/verify-webfont-subsets.mjs.
+    //
+    // The two tiers are gzipped SEPARATELY, because that is how the
+    // browser sees them: two responses, two gzip streams.
     let total = 0;
     const perFamily = new Map<string, number>();
     for (const family of FAMILIES) {
-      const bytes = gzipSync(Buffer.from(stylesheet(family).css, 'utf8')).length;
+      const { hotCss, extCss } = stylesheet(family);
+      const bytes =
+        gzipSync(Buffer.from(hotCss, 'utf8')).length +
+        gzipSync(Buffer.from(extCss, 'utf8')).length;
       perFamily.set(family.key, bytes);
       total += bytes;
       expect(bytes).toBe(family.gzipBytes);
     }
-    expect(perFamily.get('sans')).toBe(55821);
-    expect(total).toBe(158848);
+    expect(perFamily.get('sans')).toBe(56065);
+    expect(total).toBe(159732);
     expect(total).toBeLessThanOrEqual(VERIFIER_LIMITS.cssBytes);
     expect(perFamily.get('sans')).toBeLessThanOrEqual(VERIFIER_LIMITS.sansCssBytes);
   });
@@ -334,15 +402,25 @@ describe('public/font/fonts-manifest.json', () => {
     const manifest = readManifest();
     expect(manifest.version).toMatch(/^[0-9a-f]{12}$/);
     expect(Object.values(manifest.files).sort()).toEqual(
-      FAMILIES.map((family) => `/font/${family.file}`).sort(),
+      FAMILIES.flatMap((family) => [
+        `/font/${family.hotFile}`,
+        `/font/${family.extFile}`,
+      ]).sort(),
     );
 
-    // The version is the sha256 of the three stylesheet CONTENTS, taken in
+    // The version is the sha256 of the six stylesheet CONTENTS, taken in
     // file name order, cut to twelve characters. It is implemented here
     // instead of imported: the build script is not the only truth, and the
     // assertion has to keep working when the script moves on.
+    //
+    // ⚠️ ALL SIX go into the hash. A stylesheet that is not hashed is a
+    // stylesheet whose bytes can change without the `?v=` token changing —
+    // and the browser would then keep the old file for a year.
     const hash = createHash('sha256');
-    for (const file of FAMILIES.map((family) => family.file).sort()) {
+    for (const file of FAMILIES.flatMap((family) => [
+      family.hotFile,
+      family.extFile,
+    ]).sort()) {
       hash.update(readStylesheet(file));
     }
     expect(hash.digest('hex').slice(0, 12)).toBe(manifest.version);
@@ -352,11 +430,17 @@ describe('public/font/fonts-manifest.json', () => {
     const manifest = readManifest();
     const layout = readFileSync(resolve(ROOT, 'app', 'layout.tsx'), 'utf8');
     expect(layout).toContain('getFontCssLinks()');
-    // The body typeface stays on the critical path, the other two do not.
+    // Only the sans HOT tier stays on the critical path. Everything else
+    // — the sans ext tier and both tiers of the other two families — is
+    // fetched without blocking the first paint.
     expect(layout).toMatch(/href=\{fontCss\.sans\}[^>]*\/>/);
-    expect(layout).toMatch(/href=\{fontCss\.wenkai\}[^>]*media="print"/);
-    expect(layout).toMatch(/href=\{fontCss\.serif\}[^>]*media="print"/);
-    expect(manifest.files.sans).toContain('fonts-sans.css');
+    for (const key of ['sansExt', 'wenkai', 'wenkaiExt', 'serif', 'serifExt']) {
+      expect(layout).toMatch(
+        new RegExp(`href=\{fontCss\.${key}\}[^>]*media="print"`),
+      );
+    }
+    expect(manifest.files.sans).toContain('fonts-sans-hot.css');
+    expect(manifest.files.sansExt).toContain('fonts-sans-ext.css');
   });
 });
 

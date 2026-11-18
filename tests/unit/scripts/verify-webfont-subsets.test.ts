@@ -119,11 +119,11 @@ describe('verify-webfont-subsets', () => {
     expect(LIMITS.pageFontBytes['/dictionary']).toBe(412672);
     expect(LIMITS.pageFontBytes['/poetry']).toBe(301056);
     expect(LIMITS.pageFontBytes['/stories']).toBe(925696);
-    expect(LIMITS.unionSampleBytes['/']).toBe(839680);
-    expect(LIMITS.unionSampleBytes['/dictionary']).toBe(330752);
-    expect(LIMITS.unionSampleBytes['/poetry']).toBe(241664);
-    expect(LIMITS.unionSampleBytes['/stories']).toBe(1214464);
-    expect(LIMITS.maxUnionSampleFilesPerPage).toBe(255);
+    expect(LIMITS.unionSampleBytes['/']).toBe(849920);
+    expect(LIMITS.unionSampleBytes['/dictionary']).toBe(329728);
+    expect(LIMITS.unionSampleBytes['/poetry']).toBe(240640);
+    expect(LIMITS.unionSampleBytes['/stories']).toBe(1234944);
+    expect(LIMITS.maxUnionSampleFilesPerPage).toBe(260);
   });
 
   it('publishes the size limit of the Latin hot tier', () => {
@@ -586,13 +586,18 @@ describe('the release directory layout', () => {
     }
 
     // The stylesheets point at the release tree.
+    //
+    // ⚠️ BOTH tiers of every family: the hot tier and the ext tier are
+    // two stylesheets now, and the gate hashes all of them.
     const cssByFile: Record<string, string> = {};
     for (const family of FAMILY_KEYS) {
-      const name = `fonts-${family}.css`;
-      const css = readFileSync(join(candidateRoot, name), 'utf8').replace(/\r\n/g, '\n');
-      const rewritten = css.split('/font/web/').join(`/font/web/${RELEASE}/`);
-      writeFileSync(join(candidateRoot, name), rewritten, 'utf8');
-      cssByFile[name] = rewritten;
+      for (const tier of ['hot', 'ext'] as const) {
+        const name = `fonts-${family}-${tier}.css`;
+        const css = readFileSync(join(candidateRoot, name), 'utf8').replace(/\r\n/g, '\n');
+        const rewritten = css.split('/font/web/').join(`/font/web/${RELEASE}/`);
+        writeFileSync(join(candidateRoot, name), rewritten, 'utf8');
+        cssByFile[name] = rewritten;
+      }
     }
 
     const manifestPath = join(candidateRoot, 'fonts-manifest.json');
@@ -752,9 +757,12 @@ describe('checkManifestFiles', () => {
     const errors = checkManifestFiles(
       {
         files: {
-          sans: '/font/fonts-sans.css',
-          serif: '/font/fonts-sans.css',
-          wenkai: '/font/fonts-wenkai.css',
+          sans: '/font/fonts-sans-hot.css',
+          sansExt: '/font/fonts-sans-ext.css',
+          serif: '/font/fonts-sans-hot.css',
+          serifExt: '/font/fonts-serif-ext.css',
+          wenkai: '/font/fonts-wenkai-hot.css',
+          wenkaiExt: '/font/fonts-wenkai-ext.css',
         },
       },
       FAMILIES,
@@ -765,11 +773,19 @@ describe('checkManifestFiles', () => {
 
   it('reports a family the manifest does not list', () => {
     const errors = checkManifestFiles(
-      { files: { sans: '/font/fonts-sans.css', wenkai: '/font/fonts-wenkai.css' } },
+      {
+        files: {
+          sans: '/font/fonts-sans-hot.css',
+          sansExt: '/font/fonts-sans-ext.css',
+          wenkai: '/font/fonts-wenkai-hot.css',
+          wenkaiExt: '/font/fonts-wenkai-ext.css',
+        },
+      },
       FAMILIES,
     );
-    expect(errors).toHaveLength(1);
+    expect(errors).toHaveLength(2);
     expect(errors[0]).toContain('serif');
+    expect(errors[1]).toContain('serifExt');
   });
 
   it('says nothing about the committed manifest', () => {
@@ -784,15 +800,18 @@ describe('checkManifestFiles', () => {
     const errors = checkManifestFiles(
       {
         files: {
-          sans: '/font/xfonts-sans.css',
-          serif: '/font/fonts-serif.css',
-          wenkai: '/font/fonts-wenkai.css',
+          sans: '/font/xfonts-sans-hot.css',
+          sansExt: '/font/fonts-sans-ext.css',
+          serif: '/font/fonts-serif-hot.css',
+          serifExt: '/font/fonts-serif-ext.css',
+          wenkai: '/font/fonts-wenkai-hot.css',
+          wenkaiExt: '/font/fonts-wenkai-ext.css',
         },
       },
       FAMILIES,
     );
     expect(errors).toHaveLength(1);
-    expect(errors[0]).toContain('/font/xfonts-sans.css');
+    expect(errors[0]).toContain('/font/xfonts-sans-hot.css');
   });
 
   it('says nothing about the exact path of a stylesheet', () => {
@@ -800,9 +819,12 @@ describe('checkManifestFiles', () => {
       checkManifestFiles(
         {
           files: {
-            sans: '/font/fonts-sans.css',
-            serif: '/font/fonts-serif.css',
-            wenkai: '/font/fonts-wenkai.css',
+            sans: '/font/fonts-sans-hot.css',
+            sansExt: '/font/fonts-sans-ext.css',
+            serif: '/font/fonts-serif-hot.css',
+            serifExt: '/font/fonts-serif-ext.css',
+            wenkai: '/font/fonts-wenkai-hot.css',
+            wenkaiExt: '/font/fonts-wenkai-ext.css',
           },
         },
         FAMILIES,
@@ -1298,11 +1320,23 @@ describe('checkProfileHasLatin', () => {
 });
 
 describe('the shipped font files', () => {
-  /** The three stylesheets of the site. */
+  /**
+   * The six stylesheets of the site — the hot tier and the ext tier of
+   * every family.
+   *
+   * ⚠️ The hot tier and the ext tier of ONE family are two stylesheets,
+   * but they hold DIFFERENT subset files: the hot tier points at the
+   * hot block and the latin hot block, the ext tier at the Chinese ext
+   * blocks and the latin ext blocks. Counting them together is what
+   * the family count is.
+   */
   const STYLESHEETS = [
-    { family: 'sans', path: join(REPO_ROOT, 'public', 'font', 'fonts-sans.css') },
-    { family: 'serif', path: join(REPO_ROOT, 'public', 'font', 'fonts-serif.css') },
-    { family: 'wenkai', path: join(REPO_ROOT, 'public', 'font', 'fonts-wenkai.css') },
+    { family: 'sans', tier: 'hot', path: join(REPO_ROOT, 'public', 'font', 'fonts-sans-hot.css') },
+    { family: 'sans', tier: 'ext', path: join(REPO_ROOT, 'public', 'font', 'fonts-sans-ext.css') },
+    { family: 'serif', tier: 'hot', path: join(REPO_ROOT, 'public', 'font', 'fonts-serif-hot.css') },
+    { family: 'serif', tier: 'ext', path: join(REPO_ROOT, 'public', 'font', 'fonts-serif-ext.css') },
+    { family: 'wenkai', tier: 'hot', path: join(REPO_ROOT, 'public', 'font', 'fonts-wenkai-hot.css') },
+    { family: 'wenkai', tier: 'ext', path: join(REPO_ROOT, 'public', 'font', 'fonts-wenkai-ext.css') },
   ];
 
   /**
@@ -1403,13 +1437,26 @@ describe('the shipped font files', () => {
    * stale while the test stayed green.
    */
   const SHIPPED = (() => {
-    const counts: Record<string, number> = {};
+    // ⚠️ A family ships TWO stylesheets (the hot tier and the ext tier), so
+    // the count of a family is the UNION of the two — an assignment would
+    // let the ext tier overwrite the hot tier and report the smaller of
+    // the two as if it were the whole family.
+    const perFamily = new Map<string, Set<string>>();
     const all = new Set<string>();
     for (const sheet of STYLESHEETS) {
       const files = stylesheetFiles(sheet.path);
-      counts[sheet.family] = files.length;
-      for (const file of files) all.add(file);
+      let bucket = perFamily.get(sheet.family);
+      if (!bucket) {
+        bucket = new Set<string>();
+        perFamily.set(sheet.family, bucket);
+      }
+      for (const file of files) {
+        bucket.add(file);
+        all.add(file);
+      }
     }
+    const counts: Record<string, number> = {};
+    for (const [family, files] of perFamily) counts[family] = files.size;
     let latin = 0;
     for (const file of all) {
       if (basename(file).startsWith('latin')) latin += 1;
@@ -1428,9 +1475,9 @@ describe('the shipped font files', () => {
 
   it('counts the files the three stylesheets point at', () => {
     expect(SHIPPED.counts.sans).toBe(2468);
-    expect(SHIPPED.counts.serif).toBe(2855);
+    expect(SHIPPED.counts.serif).toBe(2856);
     expect(SHIPPED.counts.wenkai).toBe(2658);
-    expect(SHIPPED.total).toBe(7981);
+    expect(SHIPPED.total).toBe(7982);
     expect(
       SHIPPED.counts.sans + SHIPPED.counts.serif + SHIPPED.counts.wenkai,
       'the three families must not share a file',
@@ -1438,7 +1485,7 @@ describe('the shipped font files', () => {
   });
 
   it('splits the shipped files into the Latin tier and the Chinese blocks', () => {
-    expect(SHIPPED.latin).toBe(45);
+    expect(SHIPPED.latin).toBe(46);
     expect(SHIPPED.chinese).toBe(7936);
     expect(SHIPPED.chinese + SHIPPED.latin).toBe(SHIPPED.total);
   });

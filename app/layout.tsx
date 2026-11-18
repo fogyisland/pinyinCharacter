@@ -29,6 +29,31 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         {/* Body typeface — render-blocking, every glyph of every page uses it. */}
         <link rel="stylesheet" href={fontCss.sans} />
         {/*
+          The ext tier of the body typeface — one face per six characters,
+          2458 of them for the sans family. It is loaded without blocking:
+          `media="print"` keeps it off the critical path and the inline
+          script below promotes it once it arrives.
+
+          ⚠️ THE TRADE: until this stylesheet arrives, the browser does not
+          know that a character lives in an ext block, so the first paint of
+          such a character waits for it. That is ONE extra round trip for
+          the characters outside the hot tier — paid once per cold load.
+          The alternative, one 608 KB blocking stylesheet, cost the SAME
+          parse on EVERY page load for characters the page almost never
+          paints. This trade is deliberate.
+
+          The `suppressHydrationWarning` is the same escape hatch the
+          brand and serif faces use below: the promotion script rewrites
+          `media` before hydration, so React would find `media="all"` in
+          the DOM while its own tree says `media="print"`.
+        */}
+        <link
+          rel="stylesheet"
+          href={fontCss.sansExt}
+          media="print"
+          suppressHydrationWarning
+        />
+        {/*
           Brand + serif typefaces — fetched without blocking the first paint.
 
           `media="print"` keeps them off the critical path: the browser still
@@ -53,6 +78,26 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
         <link
           rel="stylesheet"
           href={fontCss.serif}
+          media="print"
+          suppressHydrationWarning
+        />
+        {/*
+          The ext tiers of the brand and serif typefaces. Same deal as the
+          body typeface's ext tier: the hot tiers above carry the
+          characters the brand mark and the section titles use, and these
+          carry the rest — without them the brand and serif faces would
+          fall back to the system font for every character outside their
+          hot tier.
+        */}
+        <link
+          rel="stylesheet"
+          href={fontCss.wenkaiExt}
+          media="print"
+          suppressHydrationWarning
+        />
+        <link
+          rel="stylesheet"
+          href={fontCss.serifExt}
           media="print"
           suppressHydrationWarning
         />

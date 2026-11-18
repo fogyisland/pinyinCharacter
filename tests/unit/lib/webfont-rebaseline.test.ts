@@ -52,8 +52,15 @@ const SCRIPT = join(REPO_ROOT, 'scripts', 'fonts', 'import-webfont-release.mjs')
 /** The three families of the site. */
 const FAMILIES = ['sans', 'serif', 'wenkai'] as const;
 
-/** The three stylesheets, by their file name — the key order of the V hash. */
-const STYLESHEETS = ['fonts-sans.css', 'fonts-serif.css', 'fonts-wenkai.css'] as const;
+/** The six stylesheets, by their file name — the key order of the V hash. */
+const STYLESHEETS = [
+  'fonts-sans-hot.css',
+  'fonts-sans-ext.css',
+  'fonts-serif-hot.css',
+  'fonts-serif-ext.css',
+  'fonts-wenkai-hot.css',
+  'fonts-wenkai-ext.css',
+] as const;
 
 /** A release token: twelve lowercase hex characters. */
 const TOKEN = 'a1b2c3d4e5f6';
@@ -137,9 +144,15 @@ function makeTree(): Tree {
     const familyDir = join(fontDir, 'web', family);
     mkdirSync(familyDir, { recursive: true });
     writeFileSync(join(familyDir, 'hot.woff2'), 'OLD');
-    cssByFile[`fonts-${family}.css`] = stylesheetFor(family, 'hot.woff2', TOKEN, RELEASE_DIR);
-    files[family] = `/font/fonts-${family}.css`;
-    writeFileSync(join(fontDir, `fonts-${family}.css`), cssByFile[`fonts-${family}.css`]);
+    writeFileSync(join(familyDir, 'ext-001.woff2'), 'OLD');
+    for (const tier of ['hot', 'ext'] as const) {
+      const subset = tier === 'hot' ? 'hot.woff2' : 'ext-001.woff2';
+      const name = `fonts-${family}-${tier}.css`;
+      cssByFile[name] = stylesheetFor(family, subset, TOKEN, RELEASE_DIR);
+      writeFileSync(join(fontDir, name), cssByFile[name]);
+    }
+    files[family] = `/font/fonts-${family}-hot.css`;
+    files[`${family}Ext`] = `/font/fonts-${family}-ext.css`;
   }
 
   for (const family of FAMILIES) {
@@ -245,7 +258,7 @@ describe('the numbers the re-import script prints (brief case 5)', () => {
     // ⚠️ The count is the ALL-RELEASE count (release 0 AND the new release),
     // not the count of the new release alone — the assertion in the
     // repository counts the whole tree.
-    expect(expected.count).toBe(6);
+    expect(expected.count).toBe(9);
     expect(Number(valueOf(run.output, 'subsetFiles'))).toBe(expected.count);
     expect(Number(valueOf(run.output, 'subsetBytes'))).toBe(expected.bytes);
   });
@@ -280,11 +293,14 @@ describe('the numbers the re-import script prints (brief case 5)', () => {
     // would print a different number, and the pasted value would not
     // satisfy the assertion it is meant to satisfy.
     for (const family of FAMILIES) {
-      const css = readFileSync(join(tree.fontDir, `fonts-${family}.css`), 'utf8').replace(
-        /\r\n/g,
-        '\n',
-      );
-      const expected = gzipSync(Buffer.from(css, 'utf8')).length;
+      let expected = 0;
+      for (const tier of ['hot', 'ext'] as const) {
+        const css = readFileSync(
+          join(tree.fontDir, `fonts-${family}-${tier}.css`),
+          'utf8',
+        ).replace(/\r\n/g, '\n');
+        expected += gzipSync(Buffer.from(css, 'utf8')).length;
+      }
       expect(Number(valueOf(run.output, `gzipBytes_${family}`))).toBe(expected);
     }
   });
@@ -309,12 +325,12 @@ describe('the numbers the re-import script prints (brief case 5)', () => {
     expect(run.status).toBe(0);
 
     const css = 'tests/unit/lib/fonts-css.test.ts';
-    expect(run.output).toContain(`subsetFiles     -> ${css}:310`);
-    expect(run.output).toContain(`subsetBytes     -> ${css}:311`);
-    expect(run.output).toContain(`cssBytes        -> ${css}:298`);
-    expect(run.output).toContain(`gzipBytes_sans  -> ${css}:73`);
-    expect(run.output).toContain(`gzipBytes_serif -> ${css}:82`);
-    expect(run.output).toContain(`gzipBytes_wenkai -> ${css}:91`);
+    expect(run.output).toContain(`subsetFiles     -> ${css}:372`);
+    expect(run.output).toContain(`subsetBytes     -> ${css}:373`);
+    expect(run.output).toContain(`cssBytes        -> ${css}:359`);
+    expect(run.output).toContain(`gzipBytes_sans  -> ${css}:84`);
+    expect(run.output).toContain(`gzipBytes_serif -> ${css}:95`);
+    expect(run.output).toContain(`gzipBytes_wenkai -> ${css}:106`);
     // ⚠️ The seventh entry already names its line — and says 「不用改」.
     expect(run.output).toContain('第 688 行');
   });
@@ -403,7 +419,7 @@ describe('the release-aware read path of the repository test (R-91)', () => {
     const tree = makeTree();
 
     // The stylesheet of the tree points at the release.
-    const css = readFileSync(join(tree.fontDir, 'fonts-sans.css'), 'utf8');
+    const css = readFileSync(join(tree.fontDir, 'fonts-sans-hot.css'), 'utf8');
     const face = /src:\s*url\(([^)]*)\)/.exec(css);
     expect(face).not.toBeNull();
 
@@ -453,12 +469,12 @@ describe('the pinned numbers of the repository (R-94)', () => {
       'utf8',
     );
 
-    expect(testFile).toContain('expect(subsets.length).toBe(7981);');
-    expect(testFile).toContain('expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28236168);');
-    expect(testFile).toContain('expect(cssBytes).toBe(2023175);');
-    expect(testFile).toContain('gzipBytes: 55821,');
-    expect(testFile).toContain('gzipBytes: 64536,');
-    expect(testFile).toContain('gzipBytes: 38491,');
+    expect(testFile).toContain('expect(subsets.length).toBe(7982);');
+    expect(testFile).toContain('expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28239668);');
+    expect(testFile).toContain('expect(totalBytes).toBe(2023946);');
+    expect(testFile).toContain('gzipBytes: 56065,');
+    expect(testFile).toContain('gzipBytes: 64818,');
+    expect(testFile).toContain('gzipBytes: 38849,');
   });
 
   it('guards the pinned LINE NUMBERS against the real file (R-206d)', () => {
@@ -486,7 +502,7 @@ describe('the pinned numbers of the repository (R-94)', () => {
     expect(lines[PINNED_LINES.cssGzipBytes[0] - 1]).toContain('gzipBytes:');
     expect(lines[PINNED_LINES.cssGzipBytes[1] - 1]).toContain('gzipBytes:');
     expect(lines[PINNED_LINES.cssGzipBytes[2] - 1]).toContain('gzipBytes:');
-    expect(lines[PINNED_LINES.cssBytes - 1]).toContain('expect(cssBytes).toBe(');
+    expect(lines[PINNED_LINES.cssBytes - 1]).toContain('expect(totalBytes).toBe(');
     expect(lines[PINNED_LINES.subsetFiles - 1]).toContain('expect(subsets.length).toBe(');
     expect(lines[PINNED_LINES.subsetBytes - 1]).toContain(
       'expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(',
@@ -494,9 +510,9 @@ describe('the pinned numbers of the repository (R-94)', () => {
 
     // ⚠️ The three gzip lines have the SAME shape ⇒ `toContain('gzipBytes:')`
     // cannot tell them apart. Guard the family too: the `subsetDir` of the
-    // block sits three lines above the pinned gzip line (measured: :70 for
-    // :73, :79 for :82, :88 for :91).
-    const window = (line: number) => lines.slice(line - 4, line).join('\n');
+    // block sits four lines above the pinned gzip line (measured: :80 for
+    // :84, :91 for :95, :102 for :106).
+    const window = (line: number) => lines.slice(line - 5, line).join('\n');
     expect(window(PINNED_LINES.cssGzipBytes[0])).toContain("'web/sans'");
     expect(window(PINNED_LINES.cssGzipBytes[1])).toContain("'web/serif'");
     expect(window(PINNED_LINES.cssGzipBytes[2])).toContain("'web/wenkai'");
@@ -508,11 +524,11 @@ describe('the pinned numbers of the repository (R-94)', () => {
       'utf8',
     );
 
-    expect(verifier).toContain("'/': 839680");
-    expect(verifier).toContain("'/dictionary': 330752");
-    expect(verifier).toContain("'/poetry': 241664");
-    expect(verifier).toContain("'/stories': 1214464");
-    expect(verifier).toContain('maxUnionSampleFilesPerPage: 255');
+    expect(verifier).toContain("'/': 849920");
+    expect(verifier).toContain("'/dictionary': 329728");
+    expect(verifier).toContain("'/poetry': 240640");
+    expect(verifier).toContain("'/stories': 1234944");
+    expect(verifier).toContain('maxUnionSampleFilesPerPage: 260');
   });
 });
 

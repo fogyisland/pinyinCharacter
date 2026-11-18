@@ -30,17 +30,32 @@ import manifest from '@/public/font/fonts-manifest.json';
 export interface FontCssLinks {
   /** Body typeface (--font-han-sans) — every character of every page. */
   sans: string;
+  /**
+   * The ext tier of the body typeface — one face per six characters.
+   *
+   * It is loaded WITHOUT blocking the first paint (the layout gives it
+   * `media="print"` and promotes it once it arrives), because it is the
+   * big one: the hot tier is a few kilobytes, the ext tier is hundreds.
+   */
+  sansExt: string;
   /** Brand typeface (--font-kai) — the header mark, the section titles. */
   wenkai: string;
+  /** The ext tier of the brand typeface. */
+  wenkaiExt: string;
   /** Serif accent typeface (--font-han-serif) — dictionary, story, admin. */
   serif: string;
+  /** The ext tier of the serif accent typeface. */
+  serifExt: string;
 }
 
 export function getFontCssLinks(): FontCssLinks {
   const version = manifest.version;
   return {
     sans: `${manifest.files.sans}?v=${version}`,
+    sansExt: `${manifest.files.sansExt}?v=${version}`,
     wenkai: `${manifest.files.wenkai}?v=${version}`,
+    wenkaiExt: `${manifest.files.wenkaiExt}?v=${version}`,
     serif: `${manifest.files.serif}?v=${version}`,
+    serifExt: `${manifest.files.serifExt}?v=${version}`,
   };
 }

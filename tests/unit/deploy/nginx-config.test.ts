@@ -530,25 +530,38 @@ function stripCssComments(css: string): string {
   return css.replace(/\/\*[\s\S]*?\*\//g, ' ');
 }
 
-/** The published faces of one family, read from its stylesheet. */
+/**
+ * The published faces of one family, read from its stylesheets.
+ *
+ * ⚠️ A family ships TWO stylesheets since the ext tier was split out of
+ * the render-blocking one: `fonts-<family>-hot.css` and
+ * `fonts-<family>-ext.css`. The faces of BOTH are published faces — nginx
+ * serves every file either of them points at, so the set nginx has to be
+ * able to serve is the union of the two tiers, not the hot tier alone.
+ */
 function publishedFaces(family: string): PublishedFace[] {
-  const raw = readFileSync(resolve(ROOT, 'public', 'font', `fonts-${family}.css`), 'utf8');
-  const css = stripCssComments(raw);
-  return parseFaces(css).map((face) => {
-    const url = parseFaceUrl(face.src);
-    if (!url) {
-      throw new Error(
-        `the stylesheet fonts-${family}.css points at ${JSON.stringify(face.src)}, which is not a ` +
-          'font URL of this repository (/font/web/<family>/<file> or /font/web/r<token>/<family>/<file>)',
-      );
+  const faces: PublishedFace[] = [];
+  for (const tier of ['hot', 'ext'] as const) {
+    const name = `fonts-${family}-${tier}.css`;
+    const raw = readFileSync(resolve(ROOT, 'public', 'font', name), 'utf8');
+    const css = stripCssComments(raw);
+    for (const face of parseFaces(css)) {
+      const url = parseFaceUrl(face.src);
+      if (!url) {
+        throw new Error(
+          `the stylesheet ${name} points at ${JSON.stringify(face.src)}, which is not a ` +
+            'font URL of this repository (/font/web/<family>/<file> or /font/web/r<token>/<family>/<file>)',
+        );
+      }
+      faces.push({
+        dir: url.dir,
+        file: url.file,
+        release: url.release,
+        ranges: parseUnicodeRanges(face.range),
+      });
     }
-    return {
-      dir: url.dir,
-      file: url.file,
-      release: url.release,
-      ranges: parseUnicodeRanges(face.range),
-    };
-  });
+  }
+  return faces;
 }
 
 /**

@@ -364,7 +364,7 @@ location /api/ { proxy_cache off; }
 >
 > 线上 `/font/`、`/fonts/`、`/strokes/`、`/_next/static/`、`/audio/`、`= /logo.png` **全部由 Next.js 提供**（判据：ETag 是 `W/"<size-hex>-<mtime-ms-hex>"` 的 size-first 形状、**没有** `Expires:`、`Cache-Control` 与 `next.config.ts:45` 逐字相同、404 页面带 `X-Powered-By: Next.js`），而仓库配置里对应的 `alias` 块**在生产上没有生效**。
 >
-> ⇒ **绝不许把仓库这份整份 `cp` 覆盖到服务器上**。理由不是「会覆盖掉一些手工配置」，而是**会直接打挂静态资源**：仓库里的 `alias` 块一旦生效，`alias` + `try_files $uri =404` 会用 alias 目录拼**完整请求 URI**（路径多出一层前缀）⇒ 这一整段静态资源**全部 404**，而**页面上看不出任何错误**——字会悄悄回落到系统字体，本波次刚做出来的 7 981 个字体文件全部消失。
+> ⇒ **绝不许把仓库这份整份 `cp` 覆盖到服务器上**。理由不是「会覆盖掉一些手工配置」，而是**会直接打挂静态资源**：仓库里的 `alias` 块一旦生效，`alias` + `try_files $uri =404` 会用 alias 目录拼**完整请求 URI**（路径多出一层前缀）⇒ 这一整段静态资源**全部 404**，而**页面上看不出任何错误**——字会悄悄回落到系统字体，本波次刚做出来的 7 982 个字体文件全部消失。
 >
 > ⇒ 正确做法：**先 `nginx -T` 对账**（并从 `# configuration file <路径>:` 行里读出线上那份配置的真实路径，记为 `LIVE_CONF`，**不许写死路径**）→ **只把缓存那几行手工合并进去** → `nginx -t` 通过 → `reload` → 冒烟 → 备好回滚命令。完整命令串见 `deploy/OPTIMIZATION.md`。
 

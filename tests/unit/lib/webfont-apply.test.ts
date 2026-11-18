@@ -67,7 +67,14 @@ import { manifestVersion } from '@/scripts/fonts/build-webfont-subsets.mjs';
 const FAMILIES = ['sans', 'serif', 'wenkai'] as const;
 
 /** The three stylesheets, by their file name — the key of the V hash. */
-const STYLESHEETS = ['fonts-sans.css', 'fonts-serif.css', 'fonts-wenkai.css'] as const;
+const STYLESHEETS = [
+  'fonts-sans-hot.css',
+  'fonts-sans-ext.css',
+  'fonts-serif-hot.css',
+  'fonts-serif-ext.css',
+  'fonts-wenkai-hot.css',
+  'fonts-wenkai-ext.css',
+] as const;
 
 /** What a fake gate reports back. */
 type FakeRun = {
@@ -123,7 +130,7 @@ function makeTrees(): Trees {
 /** The CSS of one family of the staged tree, with one face. */
 function stylesheetFor(family: string, file: string, version: string): string {
   return [
-    `/* fonts-${family}.css — test */`,
+    `/* fonts-${family}-hot.css — test */`,
     '@font-face {',
     "  font-family: 'Noto Sans SC';",
     '  font-style: normal;',
@@ -151,11 +158,17 @@ function fillTree(
     mkdirSync(familyDir, { recursive: true });
     writeFileSync(join(familyDir, 'hot.woff2'), options.subsetBytes);
     writeFileSync(join(familyDir, `OFL-${family}.txt`), `licence of ${family}\n`);
+    writeFileSync(join(familyDir, 'ext-001.woff2'), options.subsetBytes);
     writeFileSync(
-      join(dir, `fonts-${family}.css`),
+      join(dir, `fonts-${family}-hot.css`),
       stylesheetFor(family, 'hot.woff2', options.version),
     );
-    files[family] = `/font/fonts-${family}.css`;
+    writeFileSync(
+      join(dir, `fonts-${family}-ext.css`),
+      stylesheetFor(family, 'ext-001.woff2', options.version),
+    );
+    files[family] = `/font/fonts-${family}-hot.css`;
+    files[`${family}Ext`] = `/font/fonts-${family}-ext.css`;
   }
   writeFileSync(join(dir, 'web', 'OFL-sans.txt'), 'licence of sans\n');
   writeFileSync(join(dir, 'web', 'OFL-serif.txt'), 'licence of serif\n');
@@ -232,7 +245,7 @@ describe('applyStagedBuild', () => {
     );
 
     // Every woff2 URL of the live stylesheet now points at the release.
-    const css = readFileSync(join(trees.live, 'fonts-sans.css'), 'utf8');
+    const css = readFileSync(join(trees.live, 'fonts-sans-hot.css'), 'utf8');
     expect(css).toContain(`/font/web/${releaseDir}/sans/hot.woff2`);
     expect(css).not.toContain('/font/web/sans/hot.woff2');
 
@@ -245,7 +258,7 @@ describe('applyStagedBuild', () => {
     expect(manifest.version).toMatch(/^[0-9a-f]{12}$/);
 
     // The manifest still points at the published stylesheets.
-    expect(manifest.files.sans).toBe('/font/fonts-sans.css');
+    expect(manifest.files.sans).toBe('/font/fonts-sans-hot.css');
   });
 
   it('keeps every URL of the old stylesheet alive, byte for byte', async () => {
@@ -263,7 +276,7 @@ describe('applyStagedBuild', () => {
       '',
     ].join('\n');
     fillTree(trees.live, { version: '0123456789ab', subsetBytes: 'OLD' });
-    writeFileSync(join(trees.live, 'fonts-sans.css'), liveCss);
+    writeFileSync(join(trees.live, 'fonts-sans-hot.css'), liveCss);
     mkdirSync(join(trees.live, 'web', 'sans'), { recursive: true });
     writeFileSync(join(trees.live, 'web', 'sans', 'ext-001.woff2'), 'OLD-EXT');
 
@@ -510,7 +523,7 @@ describe('applyStagedBuild', () => {
     fillTree(trees.staged, { version: 'a1b2c3d4e5f6', subsetBytes: 'NEW' });
     // A stylesheet whose faces point somewhere else entirely.
     writeFileSync(
-      join(trees.staged, 'fonts-sans.css'),
+      join(trees.staged, 'fonts-sans-hot.css'),
       [
         '@font-face {',
         "  font-family: 'Noto Sans SC';",
@@ -541,7 +554,7 @@ describe('applyStagedBuild', () => {
     // ledger refuses anything else, because the name reaches the delete path.
     const previousDir = 'r0a1b2c3d4e5f';
     writeFileSync(
-      join(trees.live, 'fonts-sans.css'),
+      join(trees.live, 'fonts-sans-hot.css'),
       stylesheetFor('sans', 'hot.woff2', '0123456789ab').replace(
         '/font/web/sans/',
         `/font/web/${previousDir}/sans/`,
@@ -585,7 +598,7 @@ describe('applyStagedBuild', () => {
     expect(old).toBeDefined();
     expect(old!.supersededAt).not.toBeNull();
     // The supersession was stamped AFTER the stylesheets went live.
-    const stylesheetMtime = statSync(join(trees.live, 'fonts-sans.css')).mtimeMs;
+    const stylesheetMtime = statSync(join(trees.live, 'fonts-sans-hot.css')).mtimeMs;
     expect(Date.parse(old!.supersededAt!)).toBeGreaterThanOrEqual(stylesheetMtime - 1000);
 
     // The NEW release is in the ledger too, and it is not superseded.
@@ -655,11 +668,12 @@ describe('applyStagedBuild', () => {
     });
 
     expect(result.summary).not.toBeNull();
-    // Three live files before the apply, three new ones in the product.
-    expect(result.summary!.liveFiles).toBe(3);
-    expect(result.summary!.liveBytes).toBe(9);
-    expect(result.summary!.newFiles).toBe(3);
-    expect(result.summary!.newBytes).toBe(9);
+    // Six live files before the apply (two tiers of three families),
+    // six new ones in the product.
+    expect(result.summary!.liveFiles).toBe(6);
+    expect(result.summary!.liveBytes).toBe(18);
+    expect(result.summary!.newFiles).toBe(6);
+    expect(result.summary!.newBytes).toBe(18);
     expect(result.summary!.releaseBytes).toBeGreaterThan(0);
   });
 
@@ -780,10 +794,10 @@ describe('the rebase checklist (R-54)', () => {
     //
     // The numbers below are the ones `tests/unit/lib/fonts-css.test.ts`
     // asserts today (they are read from that file by eye, not parsed).
-    expect(PINNED.subsetFiles).toBe(7981);
-    expect(PINNED.subsetBytes).toBe(28236168);
-    expect(PINNED.cssBytes).toBe(2023175);
-    expect([...PINNED.cssGzipBytes]).toEqual([55821, 64536, 38491]);
+    expect(PINNED.subsetFiles).toBe(7982);
+    expect(PINNED.subsetBytes).toBe(28239668);
+    expect(PINNED.cssBytes).toBe(2023946);
+    expect([...PINNED.cssGzipBytes]).toEqual([56065, 64818, 38849]);
 
     // And the two numbers that live in the verifier's LIMITS are read from
     // the verifier itself — it is importable, so there is no copy here.
@@ -797,10 +811,10 @@ describe('the rebase checklist (R-54)', () => {
   });
 
   it('names the lines the numbers live on', () => {
-    expect(PINNED_LINES.subsetFiles).toBe(310);
-    expect(PINNED_LINES.subsetBytes).toBe(311);
-    expect(PINNED_LINES.cssBytes).toBe(298);
-    expect([...PINNED_LINES.cssGzipBytes]).toEqual([73, 82, 91]);
+    expect(PINNED_LINES.subsetFiles).toBe(372);
+    expect(PINNED_LINES.subsetBytes).toBe(373);
+    expect(PINNED_LINES.cssBytes).toBe(359);
+    expect([...PINNED_LINES.cssGzipBytes]).toEqual([84, 95, 106]);
   });
 
   it('builds exactly seven entries', () => {
@@ -835,7 +849,7 @@ describe('the rebase checklist (R-54)', () => {
     // ⇒ The note says so, and it must NOT carry 未判定.
     const entry = checklist[6];
     expect(entry.file).toBe('tests/unit/deploy/nginx-config.test.ts');
-    expect(entry.line).toBe(688);
+    expect(entry.line).toBe(701);
     expect(entry.current).toBe('public/font/web/<release>/<dir>/<file>');
     expect(entry.expected).toBeNull();
     expect(entry.always).toBe(false);
@@ -864,23 +878,30 @@ describe('the rebase checklist (R-54)', () => {
     fillTree(trees.live, { version: '0123456789ab', subsetBytes: 'OLD' });
     const checklist = buildRebaselineChecklist(trees.live, null);
 
-    // Three subset files of three bytes each.
-    expect(checklist[0].expected).toBe(3);
-    expect(checklist[1].expected).toBe(9);
-    // The raw bytes of the three stylesheets of the tree.
+    // Six subset files of three bytes each — the hot tier and the
+    // ext tier of every family.
+    expect(checklist[0].expected).toBe(6);
+    expect(checklist[1].expected).toBe(18);
+    // The raw bytes of the six stylesheets of the tree — the hot tier
+    // AND the ext tier of every family.
     expect(checklist[2].expected).toBe(
       FAMILIES.reduce(
         (total, family) =>
-          total + readFileSync(join(trees.live, `fonts-${family}.css`)).length,
+          total +
+          readFileSync(join(trees.live, `fonts-${family}-hot.css`)).length +
+          readFileSync(join(trees.live, `fonts-${family}-ext.css`)).length,
         0,
       ),
     );
     // The gzipped bytes, in the family order sans → serif → wenkai.
-    expect(checklist[3].expected).toHaveLength(3);
+    // Two stylesheets per family now, so there are six of them.
+    expect(checklist[3].expected).toHaveLength(6);
     for (const family of FAMILIES) {
-      expect(checklist[3].expected).toContain(
-        gzipSync(readFileSync(join(trees.live, `fonts-${family}.css`))).length,
-      );
+      for (const tier of ['hot', 'ext'] as const) {
+        expect(checklist[3].expected).toContain(
+          gzipSync(readFileSync(join(trees.live, `fonts-${family}-${tier}.css`))).length,
+        );
+      }
     }
   });
 

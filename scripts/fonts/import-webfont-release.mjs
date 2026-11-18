@@ -106,8 +106,19 @@ const RELEASE_DIR_PATTERN = /^r[0-9a-f]{12}$/;
 /** The three families of the site — the stylesheets the script hashes. */
 const FAMILIES = ['sans', 'serif', 'wenkai'];
 
-/** The stylesheets, by their file name — the key order of the V hash. */
-const STYLESHEETS = FAMILIES.map((family) => `fonts-${family}.css`);
+/**
+ * The stylesheets, by their file name — the key order of the V hash.
+ *
+ * Every family has TWO stylesheets since the ext tier was split out of
+ * the render-blocking one: the hot tier and the ext tier. Both go into
+ * the hash — a stylesheet that is not hashed is a stylesheet whose bytes
+ * can change without the `?v=` token changing, and the browser would
+ * then keep the old file for a year.
+ */
+const STYLESHEETS = FAMILIES.flatMap((family) => [
+  `fonts-${family}-hot.css`,
+  `fonts-${family}-ext.css`,
+]);
 
 /** The name of the ledger, inside the font tree. */
 const LEDGER_FILE = 'releases.json';
@@ -333,9 +344,20 @@ function stylesheetSizes(fontDir) {
   const gzipBytes = {};
 
   for (const family of FAMILIES) {
-    const css = readStylesheet(join(fontDir, `fonts-${family}.css`));
-    rawBytes += Buffer.byteLength(css, 'utf8');
-    gzipBytes[family] = gzipSync(Buffer.from(css, 'utf8')).length;
+    const sheets = STYLESHEETS.filter((file) => file.startsWith(`fonts-${family}-`));
+    let raw = 0;
+    let gzip = 0;
+    // ⚠️ The two tiers are measured SEPARATELY, and then added up.
+    // The browser downloads them as two responses with two gzip streams,
+    // so the number that describes what the browser pays is the sum of
+    // the two — not the gzip of the two concatenated.
+    for (const file of sheets) {
+      const css = readStylesheet(join(fontDir, file));
+      raw += Buffer.byteLength(css, 'utf8');
+      gzip += gzipSync(Buffer.from(css, 'utf8')).length;
+    }
+    rawBytes += raw;
+    gzipBytes[family] = gzip;
   }
 
   return { rawBytes, gzipBytes };
@@ -542,12 +564,12 @@ function run(argv, cwd) {
   log('    cssBytes             <- cssBytes（原始）');
   log('    gzipBytes_sans/serif/wenkai  <- 三个 gzipBytes');
   log('  ⚠️ 每一行在哪：');
-  log('    subsetFiles     -> tests/unit/lib/fonts-css.test.ts:310');
-  log('    subsetBytes     -> tests/unit/lib/fonts-css.test.ts:311');
-  log('    cssBytes        -> tests/unit/lib/fonts-css.test.ts:298');
-  log('    gzipBytes_sans  -> tests/unit/lib/fonts-css.test.ts:73');
-  log('    gzipBytes_serif -> tests/unit/lib/fonts-css.test.ts:82');
-  log('    gzipBytes_wenkai -> tests/unit/lib/fonts-css.test.ts:91');
+  log('    subsetFiles     -> tests/unit/lib/fonts-css.test.ts:372');
+  log('    subsetBytes     -> tests/unit/lib/fonts-css.test.ts:373');
+  log('    cssBytes        -> tests/unit/lib/fonts-css.test.ts:359');
+  log('    gzipBytes_sans  -> tests/unit/lib/fonts-css.test.ts:84');
+  log('    gzipBytes_serif -> tests/unit/lib/fonts-css.test.ts:95');
+  log('    gzipBytes_wenkai -> tests/unit/lib/fonts-css.test.ts:106');
   log('');
   log('  scripts/fonts/verify-webfont-subsets.mjs');
   log('    LIMITS.unionSampleBytes        <- 只有语料变了才要改（候选校验 report 模式的 [verify] pagecost）');

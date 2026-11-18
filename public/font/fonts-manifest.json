@@ -1,8 +1,11 @@
 {
-  "version": "b3f4e8e92be1",
+  "version": "3257d5f518b2",
   "files": {
-    "wenkai": "/font/fonts-wenkai.css",
-    "sans": "/font/fonts-sans.css",
-    "serif": "/font/fonts-serif.css"
+    "wenkai": "/font/fonts-wenkai-hot.css",
+    "wenkaiExt": "/font/fonts-wenkai-ext.css",
+    "sans": "/font/fonts-sans-hot.css",
+    "sansExt": "/font/fonts-sans-ext.css",
+    "serif": "/font/fonts-serif-hot.css",
+    "serifExt": "/font/fonts-serif-ext.css"
   }
 }

@@ -97,23 +97,28 @@ export const UNJUDGED_NOTE = '量不出页成本（并集样本读不到），�
  */
 export const PINNED = {
   /** `tests/unit/lib/fonts-css.test.ts` — the number of subset files. */
-  subsetFiles: 7981,
+  subsetFiles: 7982,
   /** `tests/unit/lib/fonts-css.test.ts` — the bytes of every subset file. */
-  subsetBytes: 28236168,
-  /** `tests/unit/lib/fonts-css.test.ts` — the raw bytes of the three stylesheets. */
-  cssBytes: 2023175,
+  subsetBytes: 28239668,
+  /**
+   * `tests/unit/lib/fonts-css.test.ts` — the raw bytes of the SIX
+   * stylesheets (the hot tier and the ext tier of three families).
+   */
+  cssBytes: 2023946,
   /**
    * `tests/unit/lib/fonts-css.test.ts` — the gzipped bytes of the three
-   * stylesheets, in the family order sans → serif → wenkai.
+   * families, in the family order sans → serif → wenkai. Each
+   * entry is the sum of the two tiers of that family, because that
+   * is how the browser downloads them.
    */
-  cssGzipBytes: [55821, 64536, 38491],
+  cssGzipBytes: [56065, 64818, 38849],
   /**
    * `scripts/fonts/verify-webfont-subsets.mjs` — `LIMITS.unionSampleBytes`,
    * in the key order `/`, `/dictionary`, `/poetry`, `/stories`.
    */
-  unionSampleBytes: [839680, 330752, 241664, 1214464],
+  unionSampleBytes: [849920, 329728, 240640, 1234944],
   /** `scripts/fonts/verify-webfont-subsets.mjs` — `LIMITS.maxUnionSampleFilesPerPage`. */
-  maxUnionSampleFilesPerPage: 255,
+  maxUnionSampleFilesPerPage: 260,
 } as const;
 
 /** The paths of the pinned numbers, as the checklist shows them. */
@@ -125,13 +130,13 @@ export const PINNED_FILES = {
 
 /** The lines of the pinned numbers, as the checklist shows them. */
 export const PINNED_LINES = {
-  subsetFiles: 310,
-  subsetBytes: 311,
-  cssBytes: 298,
-  cssGzipBytes: [73, 82, 91],
+  subsetFiles: 372,
+  subsetBytes: 373,
+  cssBytes: 359,
+  cssGzipBytes: [84, 95, 106],
   unionSampleBytes: 201,
   maxUnionSampleFilesPerPage: 207,
-  nginxReadPath: 688,
+  nginxReadPath: 701,
 } as const;
 
 /**
@@ -193,7 +198,12 @@ export function subsetFilesOf(liveFontDir: string): Array<{ path: string; bytes:
 }
 
 /**
- * The raw and the gzipped bytes of the three stylesheets of a font tree.
+ * The raw and the gzipped bytes of the stylesheets of a font tree.
+ *
+ * ⚠️ Every family ships TWO stylesheets since the ext tier was split out
+ * of the render-blocking one: the hot tier and the ext tier. Both are
+ * measured, and the gzipped bytes come out in the family order
+ * (sans, serif, wenkai) with the hot tier before the ext tier.
  *
  * ⚠️ The gzipped bytes are measured with `gzipSync` at the **zlib default
  * level** — the same measurement `tests/unit/lib/fonts-css.test.ts` makes.
@@ -207,10 +217,12 @@ export function stylesheetSizes(
   const gzipBytes: number[] = [];
 
   for (const family of FAMILIES) {
-    const path = join(liveFontDir, `fonts-${family}.css`);
-    const content = readFileSync(path);
-    rawBytes += content.length;
-    gzipBytes.push(gzipSync(content).length);
+    for (const tier of ['hot', 'ext'] as const) {
+      const path = join(liveFontDir, `fonts-${family}-${tier}.css`);
+      const content = readFileSync(path);
+      rawBytes += content.length;
+      gzipBytes.push(gzipSync(content).length);
+    }
   }
 
   return { rawBytes, gzipBytes };
