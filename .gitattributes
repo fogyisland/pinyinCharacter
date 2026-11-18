@@ -3,9 +3,23 @@
 # the same on every platform, so their line endings are pinned to LF: with
 # core.autocrlf=true a Windows checkout would otherwise rewrite them to
 # CRLF and the manifest would no longer match the file it names.
-public/font/fonts-sans.css text eol=lf
-public/font/fonts-serif.css text eol=lf
-public/font/fonts-wenkai.css text eol=lf
+#
+# ⚠️ Every family has TWO stylesheets since the ext tier was split out of
+# the render-blocking one (2026-11-18, commit 0c08b0587): the hot tier and
+# the ext tier. Both go into the hash, so BOTH need the pin.
+#
+# ⚠️ A pattern that matches no file protects NOTHING — and the rewrite it
+# was written to prevent comes back silently, because `git status` reports
+# the file as clean (autocrlf normalizes it back to LF on the way in). The
+# test `tests/unit/deploy/font-stylesheet-eol.test.ts` asserts that every
+# stylesheet the manifest names is pinned, and that no pin names a file
+# that does not exist.
+public/font/fonts-sans-hot.css text eol=lf
+public/font/fonts-sans-ext.css text eol=lf
+public/font/fonts-serif-hot.css text eol=lf
+public/font/fonts-serif-ext.css text eol=lf
+public/font/fonts-wenkai-hot.css text eol=lf
+public/font/fonts-wenkai-ext.css text eol=lf
 
 # The subsets are binary. Git already detects them as binary (the WOFF2
 # signature has a NUL byte at offset 4), but say so rather than rely on it.
