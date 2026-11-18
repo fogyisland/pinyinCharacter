@@ -25,7 +25,12 @@ rsync -avz --progress Up/ user@server:/opt/pinyin-character/
 
 # 3. 在服务器装依赖
 cd /opt/pinyin-character
-npm install --omit=dev
+npm ci --omit=dev --legacy-peer-deps
+#    `npm ci` 严格按 package-lock.json 装,可复现;--omit=dev 跳过 dev 依赖。
+#    ⚠️ 别用 `npm install --omit=dev`:它会顺手改写 package-lock.json,
+#    服务器上的 lock 与仓库漂移,下次升级 `npm ci` 就会失败。
+#    ⚠️ 别漏掉 --legacy-peer-deps:本项目的 peer 依赖树有冲突,
+#    不加这个参数 npm 会直接拒绝安装。
 #    字体构建工具链 (subset-font / typescript / tsx) 已经是生产依赖,
 #    --omit=dev 也会装上,不用单独装。
 
@@ -40,11 +45,27 @@ HOST=127.0.0.1 npm start    # 只 listen 在 127.0.0.1,反代访问
 
 **首次启动**访问 `http://your-server/` 会被中间件重定向到 `/init`,按向导三步走:
 
-1. 数据库连接
-2. 管理员账号
-3. 初始化数据 (poems / sutras / chars / activate singleton)
+1. 数据库连接 —— 填 MySQL host/port/user/password/db,向导会写好服务器上的 `.env`
+   (`DATABASE_URL` + 自动生成的 `JWT_SECRET` + `COOKIE_SECURE`),**不需要手改任何配置文件**
+2. 管理员账号 —— 创建第一个管理员
+3. 初始化数据 —— 一键跑完 12 个阶段
 
-完成后 `setup_completed=true` 写入 `app_config`,wizard 锁死。
+第 3 步的阶段顺序是 `表结构 → 配置 → 各数据集导入 → 管理员 → 激活 → **迁移** → **种子**`,
+最后两个阶段最关键,别跳:
+
+- **迁移** (`/api/init/migrate` → `scripts/migrations/*.sql`,23 个文件,幂等)
+  负责把 schema 补到当前代码的样子 —— `chars.hsk_level`、`playlists`、`audio_tracks`、
+  `page_views`、`mcp_tokens`、`webfont_build_jobs` 等列和表都是这一步加的。
+  **少了这一步,代码读不存在的表会整页 RSC 崩掉(表现为 404/503)。**
+- **种子** (`/api/init/seed` → `lib/seed-runner.ts`)
+  负责把数据填到位 —— 其中 `hsk-grading` 这一项批量写 `chars.hsk_level`
+  (2632 个字),不做的话游戏区每个关卡都返回 `503 hsk_level_not_imported`。
+
+> 迁移只加结构,种子只填数据,**两者都不是「部署脚本」自动做的** ——
+> 它们由 `/init` 向导的第 3 步调用。走向导 = 两者都做了。
+> 如果跳过向导直接在旧库上升级,请手动跑 `npm run db:migrate` + `npm run seed:run`。
+
+完成后 `setup_completed=true` 写入 `app_config`,wizard 锁死,`/init` 路径返回「已完成」卡片。
 
 ## 3. 反向代理关键配置
 
@@ -222,6 +243,49 @@ server {
 | 6   | sitemap 域名对                       | `https://your.domain/sitemap.xml` 里的 URL 都是 `https://your.domain/...` 不是 `localhost:3000` (要先去 admin 后台配 `NEXT_PUBLIC_SITE_URL`) |
 | 7   | `/init` 三步全跑通                   | 浏览器走完 DB → admin → seed 三步,看到绿色"完成"卡                                                                                           |
 
+### 5.1 依赖安全现状（`npm audit`）
+
+生产依赖树是干净的:
+
+```bash
+npm audit --omit=dev     # → found 0 vulnerabilities
+```
+
+这是**唯一有意义的口径** —— 它正是服务器上 `npm ci --omit=dev --legacy-peer-deps` 装出来的那棵树。
+
+全树 audit（含 devDependencies）会报 **16 个 high**,但它们**全部**来自同一条链:
+
+```
+picomatch@4.0.7  ReDoS (GHSA-fc5q-39xc-vjpf, CVSS 7.5)
+  └─ tinyglobby ─┬─ vitest / @vitest/ui
+                 ├─ @typescript-eslint/*
+                 └─ eslint-import-resolver-typescript
+picomatch@2.3.2  (同上,经 fast-glob → micromatch)
+  └─ @next/eslint-plugin-next → eslint-config-next
+```
+
+**这 16 条目前无法修复**,原因不是本项目的配置,而是上游:
+
+| 事实 | 证据 |
+| --- | --- |
+| `picomatch` 最新版就是 `4.0.7`(2026-08-24 发布) | `npm view picomatch dist-tags` → `latest: 4.0.7` |
+| 通告的漏洞区间是 `<=4.0.7` —— **最新版自己也在区间内** | `npm view picomatch versions` → 全部版本都 ≤ 4.0.7 |
+| 所有 `tinyglobby` 版本都依赖 `picomatch@^4.x` | `npm view tinyglobby@0.2.14…0.2.17 dependencies.picomatch` |
+| `vitest@5.1.0` 仍依赖 `picomatch@^4.0.7` | `npm view vitest@5.1.0 dependencies` |
+| `vite@9` 才彻底移除 picomatch,但 `vitest@5` 的 peer 范围还不允许 vite 9 | `vitest@5.1.0` peer `vite: ^6.4.0 \|\| ^7.0.0 \|\| ^8.0.0` |
+| `npm audit fix --force` 的建议是**降级到 vitest@3.1.4** | 会丢掉当前测试运行器,不值得 |
+
+**风险评估:可忽略**,理由:
+
+1. **不进生产树** —— `npm ls picomatch --omit=dev` 返回 `(empty)`。服务器上根本不装。
+2. **本项目从不直接调用 picomatch** —— `grep -rn picomatch app lib scripts components` 为空。
+3. **ReDoS 需要攻击者控制的 glob 模式** —— 而这里的 glob 全部来自仓库里的测试文件和源码配置(开发者可控),不是用户输入。
+4. 影响面仅限开发机上的 lint / test 工具链。
+
+**待上游修复后应做的**:升级 `vitest` 到首个不再依赖 `picomatch@4.x` 的版本
+(或 `vite@9` 进入 vitest 的 peer 范围后一并升),然后重跑 `npm audit` 确认归零。
+在此之前不要为了「消灭 audit 计数」而降级 vitest。
+
 ## 6. 常见踩坑
 
 - **漏掉 WebSocket 的 `Upgrade` 头** → 字帖打印页 console 报 `WebSocket connection failed`,其他功能都正常,容易忽略
@@ -244,7 +308,8 @@ git pull origin main
 #    或者:   直接覆盖服务器上 Up/ 目录的对应文件(单仓部署,git pull 后 up-to-date)
 
 # 4. 装新依赖 + 重新构建
-npm install --omit=dev
+npm ci --omit=dev --legacy-peer-deps
+#    同首次部署:`npm ci` 严格按 lock 装,`--legacy-peer-deps` 不能省。
 #    字体构建工具链 (subset-font / typescript / tsx) 已经是生产依赖,
 #    --omit=dev 也会装上,不用单独装。
 npm run build

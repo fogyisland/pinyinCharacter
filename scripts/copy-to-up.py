@@ -262,7 +262,9 @@ def write_up_readme():
 chmod -R u+rwX,g+rX,o+rX .
 
 # 1. 安装依赖
-npm ci --legacy-peer-deps
+npm ci --omit=dev --legacy-peer-deps
+#    --omit=dev 跳过 dev 依赖(服务器上不需要测试/构建工具链);
+#    --legacy-peer-deps 不能省(本项目 peer 依赖树有冲突)。
 
 # 2. 构建
 npm run build
@@ -276,7 +278,11 @@ npm start -- -p 4444
 **`/init` 三屏走完即可上线**:
 1. `/init/db` — 填 MySQL 连接(host / port / user / password / db),自动写入 `DATABASE_URL`(并生成 `JWT_SECRET`)到服务器上的 `.env`
 2. `/init/admin` — 创建第一个管理员账号(username + password + email)
-3. `/init/execute` — 一键执行 9 阶段初始化(建表 + 导入数据 + 创建账号 + 激活 + 迁移 + mark-complete)
+3. `/init/execute` — 一键执行 12 阶段初始化(建表 + 配置 + 导入数据 + 创建账号 + 激活 + **迁移** + **种子**)
+
+> 第 3 步最后两个阶段不能跳:
+> - **迁移** —— 把 schema 补到当前代码的样子(`chars.hsk_level` / `playlists` / `audio_tracks` / `page_views` / `mcp_tokens` 等列和表)。少了这一步,读不存在的表会让整页崩掉。
+> - **种子** —— 把数据填到位,其中 `hsk-grading` 批量写 `chars.hsk_level`(2632 个字)。不做的话游戏区每个关卡都返回 `503 hsk_level_not_imported`。
 
 完成后:
 - `setup_completed=1` cookie 写入浏览器
