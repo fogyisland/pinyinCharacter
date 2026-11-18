@@ -1,11 +1,12 @@
 import { Crown } from 'lucide-react';
 import { CheckoutButton } from './CheckoutButton';
+import { MEMBERSHIP_FEATURES } from '@/lib/membership';
 
+// ⚠️ A label here is a promise the buyer pays for. The key list comes from
+// MEMBERSHIP_FEATURES — the features that are actually enforced — so a
+// plan can never advertise something the buyer will not receive.
 const FEATURE_LABELS: Record<string, string> = {
-  unlimited_history: '无限历史记录',
-  download_pdf: 'PDF 下载',
   ai_calls: 'AI 释义',
-  priority_tts: '优先 TTS',
   multi_worksheet_print: '批量 / 多页打印',
 };
 
