@@ -195,11 +195,19 @@ export async function runWecomDeliver(): Promise<{
   skipped: number;
 }> {
   const pool = getPool();
+  // ⚠️ The scan takes 'failed' as well as 'pending'. A push that fails is
+  // written back as `status = 'failed'` with `next_attempt_at` one minute
+  // out — and the failure is NOT a terminal state: once that time comes,
+  // the message becomes pushable again. A scan that reads only 'pending'
+  // never sees a failed message again, the retry never happens, and the
+  // message sits in the table forever.
+  //
+  // 'sent' is the only terminal state.
   const [rows] = await pool.query<DeliveryRow[]>(
     `SELECT id, webhook_id, category, subject, body, status, attempts, last_error,
             next_attempt_at, sent_at, created_at
      FROM wecom_deliveries
-     WHERE status = 'pending' AND next_attempt_at <= CURRENT_TIMESTAMP(3)
+     WHERE status IN ('pending', 'failed') AND next_attempt_at <= CURRENT_TIMESTAMP(3)
      ORDER BY next_attempt_at ASC
      LIMIT ?`,
     [BATCH],
