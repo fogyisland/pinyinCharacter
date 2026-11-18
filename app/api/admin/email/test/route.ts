@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
         subject: '字·韵 SMTP 测试',
         html: '<p>这是一封来自字·韵管理后台的测试邮件,看到说明 SMTP 配置正确。</p>',
         text: '这是一封来自字·韵管理后台的测试邮件,看到说明 SMTP 配置正确。',
+        template: 'email_test',
       });
       ok = true;
     } catch (e) {
