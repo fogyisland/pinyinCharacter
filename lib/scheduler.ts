@@ -42,6 +42,7 @@ function defaultConfig(): SchedulerConfig {
     taskDailyChar: true,
     taskStatsRefresh: true,
     taskEmailCampaign: true,
+    taskWecomDeliver: true,
   };
 }
 
@@ -51,6 +52,7 @@ function enabledTasks(cfg: SchedulerConfig): TaskName[] {
   if (cfg.taskDailyChar) out.push('daily-char');
   if (cfg.taskStatsRefresh) out.push('stats-refresh');
   if (cfg.taskEmailCampaign) out.push('email-campaign-send');
+  if (cfg.taskWecomDeliver) out.push('wecom-deliver');
   return out;
 }
 
