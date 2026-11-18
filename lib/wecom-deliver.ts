@@ -225,6 +225,17 @@ export async function runWecomDeliver(): Promise<{
       skipped += 1;
       continue;
     }
+    // A group that was switched off after the message was queued must not
+    // receive it. The `enabled` flag filters at enqueue time, but the queue
+    // holds messages for minutes — without this check, the switch is a lie:
+    // it stops NEW messages from being queued and says nothing about the
+    // ones already waiting, so they land in the group after the admin
+    // turned it off. The row stays `pending` and is picked up again if the
+    // group is switched back on.
+    if (group.enabled !== 1) {
+      skipped += 1;
+      continue;
+    }
     const result = await pushWecomDelivery(delivery, group.webhook_url);
     if (result.ok) {
       await pool.query(

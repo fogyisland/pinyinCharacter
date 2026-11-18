@@ -8,6 +8,7 @@ import {
   deleteWebhook,
   listWebhooks,
   updateWebhook,
+  WecomDuplicateNameError,
 } from '@/lib/wecom-webhooks';
 import { isWecomCategory, type WecomCategory } from '@/lib/wecom-types';
 
@@ -55,6 +56,9 @@ export async function POST(req: NextRequest) {
       });
       return NextResponse.json({ ok: true, data: { id } });
     } catch (error) {
+      if (error instanceof WecomDuplicateNameError) {
+        return badRequest('duplicate_name', error.message);
+      }
       return badRequest('invalid_webhook', (error as Error).message);
     }
   });
@@ -85,6 +89,9 @@ export async function PUT(req: NextRequest) {
       });
       return NextResponse.json({ ok: true, data: { id } });
     } catch (error) {
+      if (error instanceof WecomDuplicateNameError) {
+        return badRequest('duplicate_name', error.message);
+      }
       return badRequest('invalid_webhook', (error as Error).message);
     }
   });

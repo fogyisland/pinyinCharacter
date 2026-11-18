@@ -24,6 +24,12 @@ vi.mock('@/lib/wecom-webhooks', () => ({
   createWebhook: (...args: unknown[]) => createWebhookMock(...args),
   updateWebhook: (...args: unknown[]) => updateWebhookMock(...args),
   deleteWebhook: (...args: unknown[]) => deleteWebhookMock(...args),
+  // The route checks `error instanceof WecomDuplicateNameError`. A mock
+  // that does not export it makes the route throw a TypeError instead of
+  // answering — the mock must carry the same shape as the real module.
+  WecomDuplicateNameError: class WecomDuplicateNameError extends Error {
+    code = 'duplicate_name' as const;
+  },
 }));
 
 const enqueueMock = vi.fn();

@@ -5,6 +5,7 @@ import { withErrorHandling, badRequest } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
 import { getPool } from '@/lib/db';
+import { isMissingTableError } from '@/lib/db-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,13 +17,27 @@ export async function POST(req: NextRequest) {
     if (!auth.ok) return auth.response;
     const parsed = RetrySchema.safeParse(await req.json());
     if (!parsed.success) return badRequest('validation', parsed.error.message);
-    const [result] = await getPool().query<ResultSetHeader>(
-      `UPDATE wecom_deliveries
-       SET status = 'pending', attempts = 0, last_error = NULL,
-           next_attempt_at = CURRENT_TIMESTAMP(3)
-       WHERE id = ?`,
-      [parsed.data.id],
-    );
+    let result: ResultSetHeader;
+    try {
+      const [outcome] = await getPool().query<ResultSetHeader>(
+        `UPDATE wecom_deliveries
+         SET status = 'pending', attempts = 0, last_error = NULL,
+             next_attempt_at = CURRENT_TIMESTAMP(3)
+         WHERE id = ?`,
+        [parsed.data.id],
+      );
+      result = outcome;
+    } catch (error) {
+      // A missing table means the migration has not been run yet. Say so,
+      // instead of the generic "server error" the admin cannot act on.
+      if (isMissingTableError(error)) {
+        return badRequest(
+          'migration_missing',
+          'The WeCom tables are not there yet — run the migration on the server.',
+        );
+      }
+      throw error;
+    }
     if (result.affectedRows === 0) {
       return badRequest('not_found', 'delivery not found');
     }

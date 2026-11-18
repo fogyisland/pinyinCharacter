@@ -18,7 +18,17 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) return badRequest('validation', parsed.error.message);
     const groups = await listWebhooks();
     const group = groups.find((g) => g.id === parsed.data.webhookId);
-    if (!group) return badRequest('not_found', 'group not found');
+    if (!group) {
+      // No groups at all means the table is not there yet — the migration
+      // has not been run. Say that, not "group not found".
+      if (groups.length === 0) {
+        return badRequest(
+          'migration_missing',
+          'The WeCom tables are not there yet — run the migration on the server.',
+        );
+      }
+      return badRequest('not_found', 'group not found');
+    }
     const result = await pushWecomDelivery(
       {
         id: 0,

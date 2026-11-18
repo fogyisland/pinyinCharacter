@@ -8,6 +8,7 @@
  */
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
+import { isMissingTableError } from './db-error';
 import {
   isValidWebhookUrl,
   isWecomCategory,
@@ -51,13 +52,31 @@ function toWebhook(row: WebhookRow): WecomWebhook {
   };
 }
 
-/** Every configured group, oldest first. */
+/**
+ * Every configured group, oldest first.
+ *
+ * A missing table means the migration has not been run yet. That is a
+ * STATE, not a failure: the admin page is a server component, and an
+ * unhandled throw there takes down the whole route — the admin cannot
+ * reach the page that would tell them to run the migration. This mirrors
+ * `getAllConfig()`, which swallows the same error and returns an empty map.
+ */
 export async function listWebhooks(): Promise<WecomWebhook[]> {
-  const [rows] = await getPool().query<WebhookRow[]>(
-    `SELECT id, name, webhook_url, enabled, categories
-     FROM wecom_webhooks ORDER BY id ASC`,
-  );
-  return rows.map(toWebhook);
+  try {
+    const [rows] = await getPool().query<WebhookRow[]>(
+      `SELECT id, name, webhook_url, enabled, categories
+       FROM wecom_webhooks ORDER BY id ASC`,
+    );
+    return rows.map(toWebhook);
+  } catch (error) {
+    if (isMissingTableError(error)) {
+      console.warn(
+        '[wecom] the wecom_webhooks table does not exist yet — run the migration',
+      );
+      return [];
+    }
+    throw error;
+  }
 }
 
 /**
@@ -87,7 +106,9 @@ export interface WebhookInput {
   categories: WecomCategory[];
 }
 
-/** Rejects an input the storage cannot hold. */
+/**
+ * Rejects an input the storage cannot hold.
+ */
 function assertValid(input: WebhookInput): void {
   if (!input.name || input.name.trim().length === 0) {
     throw new Error('The group needs a name');
@@ -103,40 +124,77 @@ function assertValid(input: WebhookInput): void {
 }
 
 /**
+ * The message the admin sees when the name is already taken.
+ *
+ * The migration puts a UNIQUE KEY on the name, so a duplicate is a
+ * constraint the database enforces — but the raw MySQL error ("Duplicate
+ * entry 'ops' for key 'wecom_webhooks.uq_wecom_webhook_name'") is
+ * database jargon that does not say WHICH field is taken, and it leaks the
+ * table and index names into the admin screen.
+ */
+export class WecomDuplicateNameError extends Error {
+  code = 'duplicate_name' as const;
+  constructor() {
+    super('A group with this name already exists — pick another name.');
+  }
+}
+
+/**
+ * Turns the database's duplicate-key error into the one the admin can act
+ * on.
+ *
+ * Every other error is left alone: it is a genuine failure, and its
+ * message says more than a generic one would.
+ */
+function translateWriteError(error: unknown): unknown {
+  const code = (error as { code?: string } | null)?.code;
+  if (code === 'ER_DUP_ENTRY') return new WecomDuplicateNameError();
+  return error;
+}
+
+/**
  * Creates a group and returns its id.
  *
  * @throws when the name is taken or the URL is not a WeCom webhook.
  */
 export async function createWebhook(input: WebhookInput): Promise<number> {
   assertValid(input);
-  const [result] = await getPool().query<ResultSetHeader>(
-    `INSERT INTO wecom_webhooks (name, webhook_url, enabled, categories)
-     VALUES (?, ?, ?, ?)`,
-    [
-      input.name.trim(),
-      input.webhookUrl,
-      input.enabled ? 1 : 0,
-      JSON.stringify(input.categories),
-    ],
-  );
-  return Number(result.insertId);
+  try {
+    const [result] = await getPool().query<ResultSetHeader>(
+      `INSERT INTO wecom_webhooks (name, webhook_url, enabled, categories)
+       VALUES (?, ?, ?, ?)`,
+      [
+        input.name.trim(),
+        input.webhookUrl,
+        input.enabled ? 1 : 0,
+        JSON.stringify(input.categories),
+      ],
+    );
+    return Number(result.insertId);
+  } catch (error) {
+    throw translateWriteError(error);
+  }
 }
 
 /** Updates a group. Throws when the URL is not a WeCom webhook. */
 export async function updateWebhook(id: number, input: WebhookInput): Promise<void> {
   assertValid(input);
-  await getPool().query(
-    `UPDATE wecom_webhooks
-     SET name = ?, webhook_url = ?, enabled = ?, categories = ?
-     WHERE id = ?`,
-    [
-      input.name.trim(),
-      input.webhookUrl,
-      input.enabled ? 1 : 0,
-      JSON.stringify(input.categories),
-      id,
-    ],
-  );
+  try {
+    await getPool().query(
+      `UPDATE wecom_webhooks
+       SET name = ?, webhook_url = ?, enabled = ?, categories = ?
+       WHERE id = ?`,
+      [
+        input.name.trim(),
+        input.webhookUrl,
+        input.enabled ? 1 : 0,
+        JSON.stringify(input.categories),
+        id,
+      ],
+    );
+  } catch (error) {
+    throw translateWriteError(error);
+  }
 }
 
 /** Deletes a group. Its deliveries go with it (the FK cascades). */
