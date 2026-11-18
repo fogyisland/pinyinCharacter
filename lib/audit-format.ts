@@ -16,6 +16,7 @@ export type AuditEvent =
   | 'history_delete'
   | 'password_reset_request'
   | 'password_reset_complete'
+  | 'password_changed'
   | 'admin_user_delete'
   | 'admin_user_password_reset'
   | 'admin_user_promote'
@@ -110,6 +111,7 @@ export const AUDIT_EVENTS = [
   'history_delete',
   'password_reset_request',
   'password_reset_complete',
+  'password_changed',
   'admin_user_delete',
   'admin_user_password_reset',
   'admin_user_promote',
@@ -206,6 +208,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   history_delete: '历史删除',
   password_reset_request: '密码重置申请',
   password_reset_complete: '密码重置完成',
+  password_changed: '修改密码',
   admin_user_delete: '管理员删除用户',
   admin_user_password_reset: '管理员重置密码',
   admin_user_promote: '管理员提升',
@@ -324,6 +327,8 @@ export function formatLogMessage(
       return `请求重置密码${str(m.email) ? `(${str(m.email)})` : ''}`;
     case 'password_reset_complete':
       return '完成密码重置';
+    case 'password_changed':
+      return '修改自己的密码';
 
     case 'admin_user_delete':
       return `删除用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
