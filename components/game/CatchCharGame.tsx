@@ -209,6 +209,8 @@ export function CatchCharGame({ timeScale = 1 }: CatchCharGameProps = {}) {
   const [missed, setMissed] = useState(0);
   const [round, setRound] = useState(1);
   const [records, setRecords] = useState<CaughtRecord[]>([]);
+  /** Whether the last pronunciation failed and the player must read instead. */
+  const [pronounceError, setPronounceError] = useState(false);
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -283,14 +285,19 @@ export function CatchCharGame({ timeScale = 1 }: CatchCharGameProps = {}) {
    * The site's own TTS is used (Edge TTS, cached), not the browser's
    * speechSynthesis: the site's voices are consistent across platforms
    * and the audio is cached, so a repeated word costs nothing.
+   *
+   * A failed pronunciation must not break the round — the pinyin is on
+   * screen — but the player has to be TOLD: a silent wave in a 听音接字
+   * game looks like a broken game, and the pinyin is the fallback only
+   * if the player knows to use it.
    */
   const speakTarget = useCallback(
     (char: CatchChar | null) => {
       if (!char) return;
+      setPronounceError(false);
       void speak(char.char).catch((e) => {
-        // A failed pronunciation must not break the round — the pinyin is
-        // on screen anyway.
         console.warn('catch-char pronunciation failed', e);
+        setPronounceError(true);
       });
     },
     [],
@@ -595,6 +602,14 @@ export function CatchCharGame({ timeScale = 1 }: CatchCharGameProps = {}) {
             >
               再听一遍
             </button>
+            {pronounceError ? (
+              <p
+                data-testid="catch-pronounce-error"
+                className="mb-4 rounded-md border border-warning bg-paper-deep px-2 py-1 text-xs text-ink-soft"
+              >
+                发音没有出来，请看拼音接字。
+              </p>
+            ) : null}
             <div className="flex justify-around text-sm">
               <span>
                 接住{' '}

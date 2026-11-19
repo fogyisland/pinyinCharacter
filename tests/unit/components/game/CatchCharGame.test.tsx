@@ -11,6 +11,25 @@ import { act, render, screen, fireEvent, waitFor, cleanup } from '@testing-libra
 import type { CharInfo } from '@/lib/chain-types';
 import { installLocalStorageShim } from './helpers';
 
+/**
+ * The pronunciation is mocked so a test can make it FAIL.
+ *
+ * The real Edge TTS is rate-limited upstream: a round of ten different
+ * characters costs ten syntheses, and the upstream budget is tight enough
+ * that roughly one in five of them comes back 429. A player whose word
+ * does not speak has to be told, or they sit there waiting for a sound
+ * that never comes - the game is 听音接字, so a silent wave is a broken
+ * wave.
+ */
+const mockState = vi.hoisted(() => ({
+  speak: vi.fn(async (): Promise<void> => {}),
+}));
+
+vi.mock('@/lib/tts', () => ({
+  speak: mockState.speak,
+  stopSpeaking: vi.fn(),
+}));
+
 const ci = (char: string, pinyin: string, tone: 1 | 2 | 3 | 4 = 1): CharInfo => ({
   char,
   pinyin,
@@ -208,6 +227,8 @@ describe('CatchCharGame', () => {
     cleanup();
     vi.restoreAllMocks();
     vi.resetModules();
+    mockState.speak.mockReset();
+    mockState.speak.mockResolvedValue(undefined);
     installLocalStorageShim();
     installCanvasStub();
     mockFetch();
@@ -351,6 +372,69 @@ describe('CatchCharGame', () => {
         expect(screen.getByTestId('catch-count').textContent).toBe('0');
       });
       expect(screen.getByTestId('catch-miss-count').textContent).toBe('0');
+    });
+  });
+
+  /**
+   * The pronunciation's failure.
+   *
+   * Edge TTS is rate-limited upstream, so a wave can lose its voice. The
+   * game must say so: a silent wave in a 听音接字 game looks like a broken
+   * game, and the player has no way to tell that the sound is coming.
+   */
+  describe('when the pronunciation fails', () => {
+    it('tells the player that the sound did not come', async () => {
+      mockState.speak.mockRejectedValueOnce(new Error('TTS failed: HTTP 502'));
+
+      await renderPlaying();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('catch-pronounce-error')).toBeTruthy();
+      });
+      // The message has to say what to do instead: read the pinyin.
+      expect(screen.getByTestId('catch-pronounce-error').textContent).toMatch(/发音|拼音/);
+    });
+
+    it('keeps the round going after a failed pronunciation', async () => {
+      mockState.speak.mockRejectedValueOnce(new Error('TTS failed: HTTP 502'));
+
+      await renderPlaying();
+
+      // The wave still runs: the canvas is there and the target is set.
+      await waitFor(() => {
+        expect(document.querySelector('canvas')).toBeTruthy();
+      });
+      expect(screen.getByTestId('catch-target-pinyin').textContent).not.toBe('');
+      // And the error does not stop the player from catching.
+      await playUntil(() => screen.queryByTestId('catch-count')?.textContent === '1');
+      expect(screen.getByTestId('catch-count').textContent).toBe('1');
+    });
+
+    it('says nothing about it while the pronunciation works', async () => {
+      await renderPlaying();
+      await waitFor(() => {
+        expect(screen.getByTestId('catch-target-pinyin').textContent).not.toBe('');
+      });
+      expect(screen.queryByTestId('catch-pronounce-error')).toBeNull();
+    });
+
+    it('takes the notice away once the word speaks again', async () => {
+      // The notice has to be cleared, not just set: a stale notice tells
+      // the player to read the pinyin when the sound is working, and the
+      // player stops trusting the sound.
+      mockState.speak.mockRejectedValueOnce(new Error('TTS failed: HTTP 502'));
+      await renderPlaying();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('catch-pronounce-error')).toBeTruthy();
+      });
+
+      // The replay button speaks the same word again — and this time it works.
+      fireEvent.click(screen.getByText(/再听一遍/));
+
+      await waitFor(() => {
+        expect(screen.queryByTestId('catch-pronounce-error')).toBeNull();
+      });
     });
   });
 });
