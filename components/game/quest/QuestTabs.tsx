@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { HskPicker } from '@/components/game/HskPicker';
 import { CatchCharGame } from '@/components/game/CatchCharGame';
-import { MagicCharGame } from '@/components/game/MagicCharGame';
 import { DailyChallenge } from '@/components/game/daily/DailyChallenge';
 import { CharCollection } from '@/components/game/quest/CharCollection';
 import { QuestBoard } from '@/components/game/quest/QuestBoard';
@@ -31,7 +30,7 @@ import type { Difficulty, HskLevel } from '@/lib/difficulty';
  * below: the URL contract, the state of the tab strip and the state of the
  * 闯关 panel.
  */
-export type QuestTab = 'quest' | 'daily' | 'catch' | 'magic' | 'collection' | 'wrong';
+export type QuestTab = 'quest' | 'daily' | 'catch' | 'collection' | 'wrong';
 
 interface TabSpec {
   id: QuestTab;
@@ -42,7 +41,6 @@ const TABS: TabSpec[] = [
   { id: 'quest', label: '闯关' },
   { id: 'daily', label: '每日一局' },
   { id: 'catch', label: '接字' },
-  { id: 'magic', label: '变字' },
   { id: 'collection', label: '字卡册' },
   { id: 'wrong', label: '生字本' },
 ];
@@ -484,8 +482,6 @@ export function QuestTabs() {
               <DailyChallenge tier={tabs.tier} difficulty={tabs.difficulty} />
             ) : tabs.tab === 'catch' ? (
               <CatchCharGame />
-            ) : tabs.tab === 'magic' ? (
-              <MagicCharGame />
             ) : tabs.tab === 'collection' ? (
               <div>
                 <h3 className="mb-3 text-sm text-ink-soft">

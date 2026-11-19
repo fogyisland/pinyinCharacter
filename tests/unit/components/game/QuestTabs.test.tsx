@@ -73,15 +73,6 @@ vi.mock('@/components/game/CatchCharGame', () => ({
   CatchCharGame: () => <div data-catch-game />,
 }));
 
-/**
- * The 变字 game is mocked too: the panel's job is only to SHOW it, and the
- * real game needs a relation table and a character pool — both of which
- * are covered by the game's own test file.
- */
-vi.mock('@/components/game/MagicCharGame', () => ({
-  MagicCharGame: () => <div data-magic-game />,
-}));
-
 /** The query string of the page under test. */
 function setUrl(search: string): void {
   window.history.replaceState({}, '', `/game${search}`);
@@ -138,52 +129,6 @@ describe('QuestTabs — the four panels', () => {
     vi.resetModules();
     installLocalStorageShim();
     mockLevelCount();
-  });
-
-  it('offers a 变字 tab', async () => {
-    setUrl('');
-    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
-    render(<QuestTabs />);
-    await waitFor(() => {
-      expect(screen.getByRole('tab', { name: '变字' })).toBeTruthy();
-    });
-  });
-
-  it('opens the 变字 panel for ?tab=magic', async () => {
-    setUrl('?tab=magic');
-    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
-    render(<QuestTabs />);
-    await waitFor(() => {
-      expect(document.querySelector('[data-magic-game]')).not.toBeNull();
-    });
-    expect(document.querySelector('[data-level="1"]')).toBeNull();
-  });
-
-  it('switches to the 变字 panel when the tab is clicked', async () => {
-    setUrl('');
-    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
-    render(<QuestTabs />);
-    await waitFor(() => {
-      expect(document.querySelector('[data-level="1"]')).not.toBeNull();
-    });
-    fireEvent.click(screen.getByRole('tab', { name: '变字' }));
-    await waitFor(() => {
-      expect(document.querySelector('[data-magic-game]')).not.toBeNull();
-    });
-    expect(document.querySelector('[data-level="1"]')).toBeNull();
-  });
-
-  it('does not request the level map for the 变字 panel', async () => {
-    setUrl('?tab=magic');
-    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
-    render(<QuestTabs />);
-    await waitFor(() => {
-      expect(document.querySelector('[data-magic-game]')).not.toBeNull();
-    });
-    const questCalls = vi
-      .mocked(global.fetch)
-      .mock.calls.filter((call) => String(call[0]).includes('/api/game/quest'));
-    expect(questCalls).toHaveLength(0);
   });
 
   it('opens the 生字本 panel for ?tab=wrong', async () => {
