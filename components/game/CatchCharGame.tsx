@@ -618,7 +618,6 @@ export function CatchCharGame({ timeScale = 1 }: CatchCharGameProps = {}) {
             ref={canvasRef}
             width={CATCH_CANVAS_WIDTH}
             height={CATCH_CANVAS_HEIGHT}
-            data-basket-x={Math.round(simRef.current?.basketX ?? CATCH_CANVAS_WIDTH / 2)}
             data-wave-seed={waveSeed}
             data-target-char={target?.char ?? ''}
             onMouseMove={onCanvasMove}

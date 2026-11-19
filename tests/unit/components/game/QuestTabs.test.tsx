@@ -64,6 +64,15 @@ vi.mock('@/components/game/quest/QuestRunner', async () => {
   };
 });
 
+/**
+ * The catch-the-character game is mocked: the panel's job is only to SHOW
+ * it, and the real game needs a canvas and a character pool — both of
+ * which are covered by the game's own test file.
+ */
+vi.mock('@/components/game/CatchCharGame', () => ({
+  CatchCharGame: () => <div data-catch-game />,
+}));
+
 /** The query string of the page under test. */
 function setUrl(search: string): void {
   window.history.replaceState({}, '', `/game${search}`);
@@ -332,6 +341,78 @@ describe('QuestTabs — the four panels', () => {
     // given the muted flag, not the flag it was mounted with.
     await waitFor(() => {
       expect(runnerMuted()).toBe('true');
+    });
+  });
+
+  /**
+   * The 接字 panel — the catch-the-character game.
+   *
+   * The game is mocked: the real one needs a canvas and a character pool,
+   * and the panel's job is only to SHOW it.
+   */
+  describe('the 接字 panel', () => {
+    it('offers a 接字 tab', async () => {
+      setUrl('');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: '接字' })).toBeTruthy();
+      });
+    });
+
+    it('opens the 接字 panel for ?tab=catch', async () => {
+      setUrl('?tab=catch');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-catch-game]')).not.toBeNull();
+      });
+    });
+
+    it('switches to the 接字 panel when the tab is clicked', async () => {
+      setUrl('');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-level="1"]')).not.toBeNull();
+      });
+
+      fireEvent.click(screen.getByRole('tab', { name: '接字' }));
+      await waitFor(() => {
+        expect(document.querySelector('[data-catch-game]')).not.toBeNull();
+      });
+      // The level map is gone - only one panel is shown at a time.
+      expect(document.querySelector('[data-level="1"]')).toBeNull();
+    });
+
+    it('does not request the level map for the 接字 panel', async () => {
+      setUrl('?tab=catch');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-catch-game]')).not.toBeNull();
+      });
+
+      const questCalls = vi
+        .mocked(global.fetch)
+        .mock.calls.filter((call) => String(call[0]).includes('/api/game/quest'));
+      expect(questCalls).toHaveLength(0);
+    });
+
+    it('falls back to 闯关 for an unknown tab, not to 接字', async () => {
+      // A broken link must land on the default panel.
+      setUrl('?tab=nonsense');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-level="1"]')).not.toBeNull();
+      });
+      expect(document.querySelector('[data-catch-game]')).toBeNull();
     });
   });
 });
