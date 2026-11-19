@@ -3,6 +3,7 @@ import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { readContentFromFs } from './content';
 import { getLegacyContentSchema, toSelectList } from './legacy-content-schema';
+import { resolvePinyin } from './pinyin-index';
 
 export interface RareChar {
   char: string;
@@ -165,7 +166,10 @@ async function readRareContent(char: string): Promise<DbContentRow> {
 function hydrate(char: string, pinyin: string, needsReview: boolean, db: DbContentRow): RareChar {
   return {
     char,
-    pinyin,
+    // A blank pinyin renders as a broken card: the character, then an
+    // empty line, then the meaning. The column was seeded empty once;
+    // the fallback makes that impossible to see.
+    pinyin: resolvePinyin(char, pinyin),
     meaning: db.meaning ?? '',
     story: db.story ?? '',
     needsReview,

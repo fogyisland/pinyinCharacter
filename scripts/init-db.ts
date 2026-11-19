@@ -16,6 +16,7 @@ import { readdirSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { readJsonAuto } from '../lib/json-fs';
 import { describeDbError } from '../lib/db-error';
+import { pinyin as toPinyin } from 'pinyin-pro';
 // Type-only import: `lib/seed-runner` dynamically imports this module at
 // runtime, so a value import would create a cycle. A type import is erased
 // at compile time and cannot.
@@ -748,14 +749,45 @@ async function expectedRareChars(): Promise<number> {
 interface ContentShape {
   char?: string;
   level?: number;
+  pinyin?: string;
   rare?: { meaning?: string };
 }
+
+/**
+ * A rare character's pinyin, from its content JSON or generated.
+ *
+ * The content JSON carries the pinyin for almost every rare character
+ * (`data/content/<char>.json` has a `pinyin` field). The few that do not
+ * get one from pinyin-pro.
+ *
+ * A rare character with NO pinyin at all still has to be seeded — the
+ * /rare-chars card renders a pinyin line, and an empty one reads as a
+ * broken card.
+ */
+function rareCharPinyin(char: string, fromContent?: string): string {
+  const trimmed = (fromContent ?? '').trim();
+  if (trimmed) return trimmed;
+  try {
+    return toPinyin(char, { toneType: 'symbol' }).trim();
+  } catch {
+    // pinyin-pro does not know this character. Seed it without a pinyin
+    // rather than losing the character altogether.
+    return '';
+  }
+}
+
 export async function initRareChars(): Promise<InitRareCharsStats> {
   const pool = getPool();
   try {
-    const [[{ count }]] = await pool.query<CountRow[]>(`SELECT COUNT(*) AS count FROM rare_chars`);
+    // "Seeded" means the rows are USABLE, not merely present. A table full
+    // of rows whose pinyin is empty renders as 1409 broken cards on
+    // /rare-chars — the row count alone would call that seeded and the
+    // seeder would skip it forever.
+    const [[{ count }]] = await pool.query<CountRow[]>(
+      `SELECT COUNT(*) AS count FROM rare_chars WHERE pinyin <> ''`,
+    );
     if (Number(count) >= (await expectedRareChars())) {
-      console.log(`[initRareChars] rare_chars table has ${count} rows, skip auto-populate`);
+      console.log(`[initRareChars] rare_chars table has ${count} rows with a pinyin, skip auto-populate`);
       return { scanned: 0, inserted: 0, skipped: true };
     }
     const contentDir = join(process.cwd(), 'data', 'content');
@@ -766,7 +798,7 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
     const files = readdirSync(contentDir).filter(
       (f) => f.endsWith('.json') || f.endsWith('.json.gz'),
     );
-    const rows: Array<[string]> = [];
+    const rows: Array<[string, string]> = [];
     for (const f of files) {
       try {
         // readJsonAuto() expects a path WITHOUT the .gz suffix (it appends
@@ -775,7 +807,7 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
         const baseName = f.endsWith('.json.gz') ? f.slice(0, -'.gz'.length) : f;
         const raw = readJsonAuto(join(contentDir, baseName)) as ContentShape | null;
         if (raw?.level === 3 && raw.rare?.meaning && raw.char) {
-          rows.push([raw.char]);
+          rows.push([raw.char, rareCharPinyin(raw.char, raw.pinyin)]);
         }
       } catch {
         // Skip malformed JSON — log but don't abort the whole seed.
@@ -786,20 +818,65 @@ export async function initRareChars(): Promise<InitRareCharsStats> {
     let imported = 0;
     for (let off = 0; off < rows.length; off += BATCH) {
       const batch = rows.slice(off, off + BATCH);
-      const placeholders = batch.map(() => '(?)').join(', ');
+      const placeholders = batch.map(() => '(?, ?)').join(', ');
       await pool.query(
-        `INSERT IGNORE INTO rare_chars (\`char\`) VALUES ${placeholders}`,
+        `INSERT IGNORE INTO rare_chars (\`char\`, pinyin) VALUES ${placeholders}`,
         batch.flat(),
       );
       imported += batch.length;
     }
-    console.log(`[initRareChars] scanned ${files.length}, inserted ${imported} rare chars`);
+    // INSERT IGNORE skips the rows that already exist — but those rows are
+    // exactly the broken ones (present, but with no pinyin). Fill them in.
+    const updated = await backfillRareCharPinyin(pool, rows);
+    console.log(
+      `[initRareChars] scanned ${files.length}, inserted ${imported} rare chars, filled ${updated} pinyin`,
+    );
     return { scanned: files.length, inserted: imported, skipped: false };
   } catch (err) {
     const detail = describeDbError(err);
     console.warn(`[initRareChars] auto-populate failed (continuing): ${detail}`);
     return { scanned: 0, inserted: 0, skipped: false, failed: detail };
   }
+}
+
+/**
+ * Fill in the pinyin of rare characters that are already in the table.
+ *
+ * The seeder inserts with INSERT IGNORE, so a character that was seeded
+ * before the pinyin was written keeps its empty pinyin forever. This
+ * updates exactly those rows — a row that already has a pinyin is left
+ * alone, because the operator may have corrected it by hand.
+ *
+ * The update is a CASE expression, not a row-per-statement loop: MySQL
+ * evaluates a WHERE clause once per statement, so
+ *
+ *     UPDATE t SET pinyin = ? WHERE `char` = ?
+ *
+ * with several parameter sets only ever matches the FIRST row. The CASE
+ * form assigns each row its own value in one statement.
+ */
+async function backfillRareCharPinyin(
+  pool: ReturnType<typeof getPool>,
+  rows: Array<[string, string]>,
+): Promise<number> {
+  const BATCH = 500;
+  let updated = 0;
+  for (let off = 0; off < rows.length; off += BATCH) {
+    const batch = rows.slice(off, off + BATCH);
+    const cases = batch.map(() => 'WHEN ? THEN ?').join(' ');
+    const params: unknown[] = [];
+    for (const [char, value] of batch) {
+      params.push(char, value);
+    }
+    params.push(...batch.map(([char]) => char));
+    const [result] = await pool.query<ResultSetHeader>(
+      `UPDATE rare_chars SET pinyin = CASE \`char\` ${cases} ELSE pinyin END
+       WHERE pinyin = '' AND \`char\` IN (${batch.map(() => '?').join(', ')})`,
+      params,
+    );
+    updated += result.affectedRows ?? 0;
+  }
+  return updated;
 }
 
 /**
