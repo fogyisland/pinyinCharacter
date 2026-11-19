@@ -182,6 +182,23 @@ function countHskVocab(): number {
 }
 
 /**
+ * Count the idioms the repository ships.
+ *
+ * `data/idioms.json` holds one object per idiom. The count is the number of
+ * objects in the file — not a number typed by hand, which is how the other
+ * datasets drifted apart in the first place.
+ *
+ * The file is a plain JSON array, so it needs no `.gz` handling, but
+ * `readJsonAuto` is used anyway so a gzipped bundle is read the same way as
+ * a checkout.
+ */
+function countIdioms(): number {
+  const value = readJsonAuto(join(DATA_DIR, 'idioms.json')) as unknown;
+  if (!Array.isArray(value)) return 0;
+  return value.length;
+}
+
+/**
  * Count the content files that carry a rare-character meaning.
  *
  * `data/content/<char>.json` holds one file per character. A file counts as
@@ -341,6 +358,17 @@ export const SEED_DATASETS: readonly SeedDataset[] = [
     strategy: 'auto',
     kind: 'rows',
     manualCommand: 'npm run seed:run -- --only=sutras',
+  },
+  {
+    id: 'idioms',
+    label: '成语',
+    table: 'idioms',
+    dependsOn: '/game 成语拖字 — 缺数据时游戏没有题目',
+    expected: countIdioms(),
+    countSource: 'json',
+    strategy: 'auto',
+    kind: 'rows',
+    manualCommand: 'npm run seed:run -- --only=idioms',
   },
 ];
 

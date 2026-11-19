@@ -73,6 +73,14 @@ vi.mock('@/components/game/CatchCharGame', () => ({
   CatchCharGame: () => <div data-catch-game />,
 }));
 
+/**
+ * The idiom drag game is mocked for the same reason as the catch game: the
+ * panel's job is only to SHOW it, and the game has its own test file.
+ */
+vi.mock('@/components/game/IdiomDragGame', () => ({
+  IdiomDragGame: () => <div data-idiom-game />,
+}));
+
 /** The query string of the page under test. */
 function setUrl(search: string): void {
   window.history.replaceState({}, '', `/game${search}`);
@@ -413,6 +421,64 @@ describe('QuestTabs — the four panels', () => {
         expect(document.querySelector('[data-level="1"]')).not.toBeNull();
       });
       expect(document.querySelector('[data-catch-game]')).toBeNull();
+    });
+  });
+
+  /**
+   * The 成语 panel — the idiom drag game.
+   *
+   * The game is mocked: the panel's job is only to SHOW it.
+   */
+  describe('the 成语 panel', () => {
+    it('offers a 成语 tab', async () => {
+      setUrl('');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: '成语' })).toBeTruthy();
+      });
+    });
+
+    it('opens the 成语 panel for ?tab=idiom', async () => {
+      setUrl('?tab=idiom');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-idiom-game]')).not.toBeNull();
+      });
+    });
+
+    it('switches to the 成语 panel when the tab is clicked', async () => {
+      setUrl('');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-level="1"]')).not.toBeNull();
+      });
+
+      fireEvent.click(screen.getByRole('tab', { name: '成语' }));
+      await waitFor(() => {
+        expect(document.querySelector('[data-idiom-game]')).not.toBeNull();
+      });
+      expect(document.querySelector('[data-level="1"]')).toBeNull();
+    });
+
+    it('does not request the level map for the 成语 panel', async () => {
+      setUrl('?tab=idiom');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-idiom-game]')).not.toBeNull();
+      });
+
+      const questCalls = vi
+        .mocked(global.fetch)
+        .mock.calls.filter((call) => String(call[0]).includes('/api/game/quest'));
+      expect(questCalls).toHaveLength(0);
     });
   });
 });

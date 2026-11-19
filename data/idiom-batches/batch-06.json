@@ -1,0 +1,352 @@
+[
+  {
+    "word": "心花怒放",
+    "pinyin": "xīn huā nù fàng",
+    "meaning": "形容内心极度高兴，像花儿一样绽放开怀，脸上满是喜悦。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "喜出望外",
+    "pinyin": "xǐ chū wàng wài",
+    "meaning": "遇到意外的好事而欢喜超出原先的期望，显得十分惊喜。",
+    "level": 3,
+    "category": "情绪"
+  },
+  {
+    "word": "眉开眼笑",
+    "pinyin": "méi kāi yǎn xiào",
+    "meaning": "眉毛舒展、眼睛含笑，形容人心情愉快、笑意盈盈的样子。",
+    "level": 1,
+    "category": "情绪"
+  },
+  {
+    "word": "兴高采烈",
+    "pinyin": "xìng gāo cǎi liè",
+    "meaning": "兴致高昂、情绪热烈，形容因高兴而精神抖擞、劲头十足。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "欢天喜地",
+    "pinyin": "huān tiān xǐ dì",
+    "meaning": "形容非常快乐高兴，整日沉浸在欢愉气氛之中毫无愁绪。",
+    "level": 1,
+    "category": "情绪"
+  },
+  {
+    "word": "悲痛欲绝",
+    "pinyin": "bēi tòng yù jué",
+    "meaning": "悲伤痛苦到了极点，仿佛要断绝气息一般，形容极度哀痛。",
+    "level": 4,
+    "category": "情绪"
+  },
+  {
+    "word": "泪流满面",
+    "pinyin": "lèi liú mǎn miàn",
+    "meaning": "眼泪从脸上不停淌下，满脸都是泪水，形容十分悲伤或感动。",
+    "level": 1,
+    "category": "情绪"
+  },
+  {
+    "word": "痛心疾首",
+    "pinyin": "tòng xīn jí shǒu",
+    "meaning": "心痛得好像头部也要疼痛，形容对错误或坏事极其悲愤痛恨。",
+    "level": 3,
+    "category": "情绪"
+  },
+  {
+    "word": "怒不可遏",
+    "pinyin": "nù bù kě è",
+    "meaning": "怒气无法抑制住，形容愤怒到了极点，恨不得立刻发作。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "大发雷霆",
+    "pinyin": "dà fā léi tíng",
+    "meaning": "像雷霆一样大发脾气，形容因恼怒而猛烈发作、厉声呵斥。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "暴跳如雷",
+    "pinyin": "bào tiào rú léi",
+    "meaning": "像雷轰一样又蹦又跳地怒吼，形容盛怒到了极点难以自控。",
+    "level": 3,
+    "category": "情绪"
+  },
+  {
+    "word": "心灰意冷",
+    "pinyin": "xīn huī yì lěng",
+    "meaning": "心如死灰意念冷淡，形容因失望受挫而完全丧失斗志与希望。",
+    "level": 3,
+    "category": "情绪"
+  },
+  {
+    "word": "沮丧失望",
+    "pinyin": "jǔ sàng shī wàng",
+    "meaning": "情绪低落灰心，对原本指望的事情不再抱有希望和信心。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "愁眉苦脸",
+    "pinyin": "chóu méi kǔ liǎn",
+    "meaning": "皱着眉头、绷着一张苦脸，形容心中忧愁、很不高兴的样子。",
+    "level": 1,
+    "category": "情绪"
+  },
+  {
+    "word": "闷闷不乐",
+    "pinyin": "mèn mèn bù lè",
+    "meaning": "心里闷闷的，一点也不快乐，形容精神抑郁、情绪低落。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "忐忑不安",
+    "pinyin": "tǎn tè bù ān",
+    "meaning": "心神极度惶恐不安定，七上八下，坐立不安地担心着。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "心惊肉跳",
+    "pinyin": "xīn jīng ròu tiào",
+    "meaning": "心跳肉颤都害怕，形容因惊恐或担忧而浑身不自在。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "提心吊胆",
+    "pinyin": "tí xīn diào dǎn",
+    "meaning": "心悬着、胆也吊着，形容十分担心害怕、处处谨慎。",
+    "level": 1,
+    "category": "情绪"
+  },
+  {
+    "word": "惊慌失措",
+    "pinyin": "jīng huāng shī cuò",
+    "meaning": "慌张得不知怎么办才好，形容遇到突发变故时手足无措。",
+    "level": 2,
+    "category": "情绪"
+  },
+  {
+    "word": "欣喜若狂",
+    "pinyin": "xīn xǐ ruò kuáng",
+    "meaning": "高兴到了发狂的地步，形容心情极度兴奋难以自持。",
+    "level": 3,
+    "category": "情绪"
+  },
+  {
+    "word": "乐不可支",
+    "pinyin": "lè bù kè zhī",
+    "meaning": "快乐到了无法支撑的地步，形容喜笑颜开、高兴到了极点。",
+    "level": 3,
+    "category": "情绪"
+  },
+  {
+    "word": "哭笑不得",
+    "pinyin": "kū xiào bù dé",
+    "meaning": "又想哭又想笑，没办法哭也不好笑，形容处境十分尴尬。",
+    "level": 1,
+    "category": "情绪"
+  },
+  {
+    "word": "愁肠百结",
+    "pinyin": "chóu cháng bǎi jié",
+    "meaning": "忧愁好像结成许多结，形容心中郁结着难以排解的愁绪。",
+    "level": 4,
+    "category": "情绪"
+  },
+  {
+    "word": "心满意足",
+    "pinyin": "xīn mǎn yì zú",
+    "meaning": "心里十分满足，形容所求如愿、称心如意感到十分惬意。",
+    "level": 1,
+    "category": "情绪"
+  },
+  {
+    "word": "忐忑难安",
+    "pinyin": "tǎn tè nán ān",
+    "meaning": "心里七上八下难以安定，形容因忧虑挂念而无法平静。",
+    "level": 3,
+    "category": "情绪"
+  },
+  {
+    "word": "光明磊落",
+    "pinyin": "guāng míng lěi luò",
+    "meaning": "心地光明，胸怀坦白，形容没有私心邪念、待人处世正大。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "廉洁奉公",
+    "pinyin": "lián jié fèng gōng",
+    "meaning": "为官清廉，一心为公办事，不利用职权谋取私利。",
+    "level": 3,
+    "category": "品格"
+  },
+  {
+    "word": "刚正不阿",
+    "pinyin": "gāng zhèng bù ē",
+    "meaning": "刚强正直不偏袒任何人，即使面对压力也无所畏惧。",
+    "level": 3,
+    "category": "品格"
+  },
+  {
+    "word": "大公无私",
+    "pinyin": "dà gōng wú sī",
+    "meaning": "完全为公着想，一点私心也没有，形容公正无私、胸怀坦白。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "实事求是",
+    "pinyin": "shí shì qiú shì",
+    "meaning": "按照客观事实和客观规律办事，不凭主观臆断夸大其词。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "一丝不苟",
+    "pinyin": "yī sī bù gǒu",
+    "meaning": "连最细小的地方也不马虎，形容做事认真负责、极为严谨。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "认真负责",
+    "pinyin": "rèn zhēn fù zé",
+    "meaning": "做事仔细踏实、敢于承担后果，形容对工作尽心尽力。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "任劳任怨",
+    "pinyin": "rèn láo rèn yuàn",
+    "meaning": "做事不怕辛苦也不怕别人埋怨，形容踏实肯干、毫无怨言。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "乐于助人",
+    "pinyin": "lè yú zhù rén",
+    "meaning": "乐意帮助别人，形容心地善良、主动给他人带来方便。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "见义勇为",
+    "pinyin": "jiàn yì yǒng wéi",
+    "meaning": "看到正义的事就勇敢去做，形容有正义感、敢于挺身而出。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "舍己为人",
+    "pinyin": "shě jǐ wèi rén",
+    "meaning": "牺牲自己的利益甚至生命去帮助别人，形容无私奉献。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "尊老爱幼",
+    "pinyin": "zūn lǎo ài yòu",
+    "meaning": "尊敬老人、疼爱小孩，形容有敬老慈幼的传统美德。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "尊师重道",
+    "pinyin": "zūn shī zhòng dào",
+    "meaning": "尊敬师长并重视他们传授的道理，形容谦逊好学的态度。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "谦虚谨慎",
+    "pinyin": "qiān xū jǐn shèn",
+    "meaning": "态度谦逊而做事小心，形容不骄傲、处处留有余地。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "虚怀若谷",
+    "pinyin": "xū huái ruò gǔ",
+    "meaning": "胸怀像山谷一样宽广空旷，形容十分谦虚能容纳他人意见。",
+    "level": 4,
+    "category": "品格"
+  },
+  {
+    "word": "虚心求教",
+    "pinyin": "xū xīn qiú jiào",
+    "meaning": "怀着空手的心态向别人请教，形容不满足而谦虚求知。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "言行一致",
+    "pinyin": "yán xíng yī zhì",
+    "meaning": "说的话和做的事完全相符，形容为人诚实、说到做到。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "表里如一",
+    "pinyin": "biǎo lǐ rú yī",
+    "meaning": "外表和内心完全一样，形容为人真诚、内外如一毫不虚假。",
+    "level": 2,
+    "category": "品格"
+  },
+  {
+    "word": "正大光明",
+    "pinyin": "zhèng dà guāng míng",
+    "meaning": "心怀坦白，行事正派，形容不搞阴谋诡计、光明磊落。",
+    "level": 1,
+    "category": "品格"
+  },
+  {
+    "word": "铁面无私",
+    "pinyin": "tiě miàn wú sī",
+    "meaning": "像铁铸的面孔一样不为私情所动，形容秉公断事不徇私。",
+    "level": 3,
+    "category": "品格"
+  },
+  {
+    "word": "不徇私情",
+    "pinyin": "bù xùn sī qíng",
+    "meaning": "办事不徇私情，不照顾关系和人情，形容坚持原则公正无私。",
+    "level": 4,
+    "category": "品格"
+  },
+  {
+    "word": "秉公执法",
+    "pinyin": "bǐng gōng zhí fǎ",
+    "meaning": "按照公布的法令条文公正地处理案件，形容依法行事不偏袒。",
+    "level": 3,
+    "category": "品格"
+  },
+  {
+    "word": "尽忠职守",
+    "pinyin": "jìn zhōng zhí shǒu",
+    "meaning": "竭尽全力忠于自己的职分，形容责任心强、尽职尽责。",
+    "level": 3,
+    "category": "品格"
+  },
+  {
+    "word": "克己奉公",
+    "pinyin": "kè jǐ fèng gōng",
+    "meaning": "严格约束自己、一心为公，形容廉洁自律不谋私利。",
+    "level": 3,
+    "category": "品格"
+  },
+  {
+    "word": "以身作则",
+    "pinyin": "yǐ shēn zuò zé",
+    "meaning": "用自己的行动做出榜样，形容以亲身示范来带领别人。",
+    "level": 1,
+    "category": "品格"
+  }
+]

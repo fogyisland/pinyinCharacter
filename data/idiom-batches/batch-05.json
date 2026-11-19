@@ -1,0 +1,352 @@
+[
+  {
+    "word": "悬梁刺股",
+    "pinyin": "xuán liáng cì gǔ",
+    "meaning": "把头发系在屋梁上、用锥子刺大腿，靠疼痛驱散困意以刻苦读书。",
+    "level": 3,
+    "category": "勤学"
+  },
+  {
+    "word": "囊萤映雪",
+    "pinyin": "náng yíng yìng xuě",
+    "meaning": "用口袋装萤火虫、借雪的反光读书，形容家境贫寒仍刻苦求学。",
+    "level": 3,
+    "category": "勤学"
+  },
+  {
+    "word": "手不释卷",
+    "pinyin": "shǒu bù shì juàn",
+    "meaning": "书本不离手，形容勤奋好学、读书入迷而不放下书卷。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "废寝忘食",
+    "pinyin": "fèi qǐn wàng shí",
+    "meaning": "顾不上睡觉和吃饭，形容一心扑在学习或工作上非常专注。",
+    "level": 1,
+    "category": "勤学"
+  },
+  {
+    "word": "勤能补拙",
+    "pinyin": "qín néng bǔ zhuō",
+    "meaning": "勤奋能够弥补天资的不足，强调后天努力胜过聪慧天分。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "笨鸟先飞",
+    "pinyin": "bèn niǎo xiān fēi",
+    "meaning": "能力不足者提前行动，用勤奋弥补天生的条件不够。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "持之以恒",
+    "pinyin": "chí zhī yǐ héng",
+    "meaning": "长久坚持下去不松懈，强调做事有恒心、能够长期坚持。",
+    "level": 1,
+    "category": "勤学"
+  },
+  {
+    "word": "孜孜不倦",
+    "pinyin": "zī zī bù juàn",
+    "meaning": "勤勉努力不知疲倦，形容学习或工作不知疲乏、乐在其中。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "温故知新",
+    "pinyin": "wēn gù zhī xīn",
+    "meaning": "温习旧知识从而获得新体会，说明复习能带来新的理解。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "学而不厌",
+    "pinyin": "xué ér bù yàn",
+    "meaning": "学习总不满足，形容求知欲望强烈、乐于向他人请教。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "博学多才",
+    "pinyin": "bó xué duō cái",
+    "meaning": "学问广博、才能丰富，形容读书多见识广，兼有多种才干。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "才高八斗",
+    "pinyin": "cái gāo bā dǒu",
+    "meaning": "形容文才极高，多用于称赞学识出众的文人。",
+    "level": 3,
+    "category": "勤学"
+  },
+  {
+    "word": "学富五车",
+    "pinyin": "xué fù wǔ chē",
+    "meaning": "读书极多、学问渊博，用五车书之多夸耀学识丰富。",
+    "level": 3,
+    "category": "勤学"
+  },
+  {
+    "word": "融会贯通",
+    "pinyin": "róng huì guàn tōng",
+    "meaning": "把各方面的知识和道理联系起来，得到全面透彻的理解。",
+    "level": 3,
+    "category": "勤学"
+  },
+  {
+    "word": "举一反三",
+    "pinyin": "jǔ yī fǎn sān",
+    "meaning": "由一件事推知同类的许多事，形容善于联想、触类旁通。",
+    "level": 1,
+    "category": "勤学"
+  },
+  {
+    "word": "循序渐进",
+    "pinyin": "xún xù jiàn jìn",
+    "meaning": "按照一定步骤逐渐深入，形容学习按次序稳步推进。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "集思广益",
+    "pinyin": "jí sī guǎng yì",
+    "meaning": "集中众人的智慧和意见，以取得更多更好的效果。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "精益求精",
+    "pinyin": "jīng yì qiú jīng",
+    "meaning": "在已经好的基础上追求更好，形容做事要求不断提高。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "熟能生巧",
+    "pinyin": "shú néng shēng qiǎo",
+    "meaning": "熟练了就能掌握窍门，说明反复实践能提高技能水平。",
+    "level": 1,
+    "category": "勤学"
+  },
+  {
+    "word": "韦编三绝",
+    "pinyin": "wéi biān sān jué",
+    "meaning": "串联竹简的皮绳多次磨断，形容读书勤奋刻苦、卷帙厚重。",
+    "level": 4,
+    "category": "勤学"
+  },
+  {
+    "word": "十年寒窗",
+    "pinyin": "shí nián hán chuāng",
+    "meaning": "十年在寒窗苦读，指长期艰苦的求学生活与漫长磨砺。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "夙兴夜寐",
+    "pinyin": "sù xīng yè mèi",
+    "meaning": "天不亮就起床、深夜才睡觉，形容勤奋工作毫不懈怠。",
+    "level": 4,
+    "category": "勤学"
+  },
+  {
+    "word": "闻鸡起舞",
+    "pinyin": "wén jī qǐ wǔ",
+    "meaning": "听到鸡叫就起床练剑，比喻有志者及时奋发努力。",
+    "level": 2,
+    "category": "勤学"
+  },
+  {
+    "word": "凿壁偷光",
+    "pinyin": "záo bì tōu guāng",
+    "meaning": "凿穿墙壁借邻家灯光读书，形容家境贫寒仍刻苦用功。",
+    "level": 3,
+    "category": "勤学"
+  },
+  {
+    "word": "映雪读书",
+    "pinyin": "yìng xuě dú shū",
+    "meaning": "借雪地反光映照读书，形容贫寒子弟发愤苦读。",
+    "level": 4,
+    "category": "勤学"
+  },
+  {
+    "word": "一举两得",
+    "pinyin": "yī jǔ liǎng dé",
+    "meaning": "做一件事同时得到两方面的好处，形容办事效率很高。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "三心二意",
+    "pinyin": "sān xīn èr yì",
+    "meaning": "心里想这样又想那样，形容主意不定、做事不专心。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "五湖四海",
+    "pinyin": "wǔ hú sì hǎi",
+    "meaning": "指全国各地，形容交往范围广、来自五洲四海。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "九牛一毛",
+    "pinyin": "jiǔ niú yī máo",
+    "meaning": "九头牛身上的一根毛，比喻极其微小微不足道。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "百里挑一",
+    "pinyin": "bǎi lǐ tiǎo yī",
+    "meaning": "一百个里挑出一个，形容人才优秀、难得少见。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "千变万化",
+    "pinyin": "qiān biàn wàn huà",
+    "meaning": "变化极多难以预测，形容事物纷繁复杂、多种多样。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "万紫千红",
+    "pinyin": "wàn zǐ qiān hóng",
+    "meaning": "形容百花齐放色彩绚丽，也比喻事业兴旺、繁荣多样。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "千钧一发",
+    "pinyin": "qiān jūn yī fà",
+    "meaning": "一根头发丝吊着千钧重物，形容情况危急万分。",
+    "level": 2,
+    "category": "数量"
+  },
+  {
+    "word": "一丝不苟",
+    "pinyin": "yī sī bù gǒu",
+    "meaning": "连最细小的地方也不马虎，形容做事极为认真严谨。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "一诺千金",
+    "pinyin": "yī nuò qiān jīn",
+    "meaning": "许下的诺言价值千金，形容说话算数、极守信用。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "万无一失",
+    "pinyin": "wàn wú yī shī",
+    "meaning": "一万件事没有一件出差错，形容办事十分可靠有把握。",
+    "level": 2,
+    "category": "数量"
+  },
+  {
+    "word": "三头六臂",
+    "pinyin": "sān tóu liù bì",
+    "meaning": "形容人本领极大，也形容事情面广、需要多方施展。",
+    "level": 2,
+    "category": "数量"
+  },
+  {
+    "word": "四通八达",
+    "pinyin": "sì tōng bā dá",
+    "meaning": "四面八方都畅通，形容道路四通八达或办事手段灵活。",
+    "level": 2,
+    "category": "数量"
+  },
+  {
+    "word": "七上八下",
+    "pinyin": "qī shàng bā xià",
+    "meaning": "心里慌乱不安，形容心情紧张、忐忑难安。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "十有八九",
+    "pinyin": "shí yǒu bā jiǔ",
+    "meaning": "十件事里有八九件如此，形容推断的情况大体准确可靠。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "十全十美",
+    "pinyin": "shí quán shí měi",
+    "meaning": "各方面都完美无缺，形容事物毫无缺陷十分理想。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "百发百中",
+    "pinyin": "bǎi fā bǎi zhòng",
+    "meaning": "每次发射都命中目标，形容射箭或办事准确无误。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "千方百计",
+    "pinyin": "qiān fāng bǎi jì",
+    "meaning": "想尽一切办法，形容为达到目的用尽各种手段。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "一目十行",
+    "pinyin": "yī mù shí háng",
+    "meaning": "一眼能看十行字，形容阅读速度极快、聪慧敏捷。",
+    "level": 2,
+    "category": "数量"
+  },
+  {
+    "word": "一表人才",
+    "pinyin": "yī biǎo rén cái",
+    "meaning": "外表俊秀端正，气度不凡，形容相貌出众的人。",
+    "level": 2,
+    "category": "数量"
+  },
+  {
+    "word": "一鸣惊人",
+    "pinyin": "yī míng jīng rén",
+    "meaning": "平时默默无闻，一开口做事就使众人震惊。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "半途而废",
+    "pinyin": "bàn tú ér fèi",
+    "meaning": "事情做到一半就停止，形容不能坚持到底、半途而改。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "一五一十",
+    "pinyin": "yī wǔ yī shí",
+    "meaning": "从一数到十，原指一五一十，形容叙述得清清楚楚。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "千言万语",
+    "pinyin": "qiān yán wàn yǔ",
+    "meaning": "话多得数不清，形容要说的话非常多、难以尽述。",
+    "level": 1,
+    "category": "数量"
+  },
+  {
+    "word": "千差万别",
+    "pinyin": "qiān chā wàn bié",
+    "meaning": "差别极多、多种多样，形容事物之间情况各不相同。",
+    "level": 2,
+    "category": "数量"
+  }
+]

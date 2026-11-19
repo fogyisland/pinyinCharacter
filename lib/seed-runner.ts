@@ -284,6 +284,22 @@ const HANDLERS: Record<string, SeedHandler> = {
       return async () => initSutras();
     }),
   },
+  idioms: {
+    count: () => countTable('idioms'),
+    // The importer lives in `scripts/`, not `lib/`, so it is imported here
+    // rather than being inlined — one script owns the write, and the seed
+    // runner calls it. `importIdioms` throws on an invalid file, which
+    // `fillViaBuilder` turns into a reported failure rather than a partial
+    // write.
+    fill: fillViaBuilder(async () => {
+      const { readIdiomRows, importIdioms } = await import('../scripts/import-idioms');
+      return async () => {
+        const rows = readIdiomRows();
+        await importIdioms(rows);
+        return { inserted: rows.length };
+      };
+    }),
+  },
 };
 
 /**

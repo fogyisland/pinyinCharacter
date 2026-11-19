@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { HskPicker } from '@/components/game/HskPicker';
 import { CatchCharGame } from '@/components/game/CatchCharGame';
+import { IdiomDragGame } from '@/components/game/IdiomDragGame';
 import { DailyChallenge } from '@/components/game/daily/DailyChallenge';
 import { CharCollection } from '@/components/game/quest/CharCollection';
 import { QuestBoard } from '@/components/game/quest/QuestBoard';
@@ -20,7 +21,7 @@ import {
 import type { Difficulty, HskLevel } from '@/lib/difficulty';
 
 /**
- * The five flat panels of the game page.
+ * The six flat panels of the game page.
  *
  * The HSK picker sits **above** the tabs and is shared by 闯关 and 每日一局.
  * The quest keeps its **own** per-tier level pointer in the progress store,
@@ -30,7 +31,7 @@ import type { Difficulty, HskLevel } from '@/lib/difficulty';
  * below: the URL contract, the state of the tab strip and the state of the
  * 闯关 panel.
  */
-export type QuestTab = 'quest' | 'daily' | 'catch' | 'collection' | 'wrong';
+export type QuestTab = 'quest' | 'daily' | 'catch' | 'idiom' | 'collection' | 'wrong';
 
 interface TabSpec {
   id: QuestTab;
@@ -41,13 +42,14 @@ const TABS: TabSpec[] = [
   { id: 'quest', label: '闯关' },
   { id: 'daily', label: '每日一局' },
   { id: 'catch', label: '接字' },
+  { id: 'idiom', label: '成语' },
   { id: 'collection', label: '字卡册' },
   { id: 'wrong', label: '生字本' },
 ];
 
 const TAB_IDS = new Set<string>(TABS.map((tab) => tab.id));
 
-/** The id of the panel the five tabs control - only one panel is rendered at a time. */
+/** The id of the panel the tabs control - only one panel is rendered at a time. */
 const PANEL_ID = 'game-panel';
 
 /** The id of one tab - the panel points back at the tab that is active. */
@@ -172,10 +174,14 @@ interface TabBarProps {
   onSelect: (tab: QuestTab) => void;
 }
 
-/** The four tabs - flat, one row, no nesting. */
+/** The six tabs - flat, one row, no nesting. */
 function TabBar({ active, onSelect }: TabBarProps) {
   return (
-    <div role="tablist" aria-label="游戏模式" className="mb-5 flex gap-2 border-b border-ink/10">
+    <div
+      role="tablist"
+      aria-label="游戏模式"
+      className="mb-5 flex flex-wrap gap-2 border-b border-ink/10"
+    >
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -449,7 +455,7 @@ function QuestPanel({ tier, currentLevel, passedLevels, panel, muted }: QuestPan
 }
 
 /**
- * The game page - five flat panels under one shared tier picker.
+ * The game page - six flat panels under one shared tier picker.
  *
  * The component reads the three hooks and wires their handlers; every piece
  * of state lives in one of them.
@@ -482,6 +488,8 @@ export function QuestTabs() {
               <DailyChallenge tier={tabs.tier} difficulty={tabs.difficulty} />
             ) : tabs.tab === 'catch' ? (
               <CatchCharGame />
+            ) : tabs.tab === 'idiom' ? (
+              <IdiomDragGame />
             ) : tabs.tab === 'collection' ? (
               <div>
                 <h3 className="mb-3 text-sm text-ink-soft">
