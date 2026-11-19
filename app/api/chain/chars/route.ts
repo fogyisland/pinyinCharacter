@@ -6,8 +6,6 @@ import { toneFromPinyin } from '@/lib/pinyin-tone';
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-const TONE_DIACRITIC_RE = /[āēīōūǔǎěǐǒùǜàèìòù]/;
-
 // 2026-07-04: added hskLevel param for /game progressive reveal (Task 6).
 // When provided, rows are filtered to chars.hsk_level === hskLevel. The
 // `hskFallback` flag tells the client whether the response came from the
@@ -75,7 +73,19 @@ export async function GET(req: NextRequest) {
     tone: 1 | 2 | 3 | 4;
   }> = [];
   for (const row of rows) {
-    if (!row.pinyin || !TONE_DIACRITIC_RE.test(row.pinyin)) continue;
+    // 2026-11-20: the tone comes from the READING, never from a regex.
+    //
+    // This used to be `!TONE_DIACRITIC_RE.test(row.pinyin)`, with a
+    // character class that held 16 of pinyin's 24 tone marks — no
+    // `á é í ó ú`, no `ǖ ǘ ǚ`. Every second-tone character (麻 má,
+    // 人 rén, 学 xué) was dropped before it got here, so the pool was
+    // missing a quarter of its characters and one of its two tone
+    // classes was half empty.
+    //
+    // `toneFromPinyin` reads TONE_MAP, which holds all 24 marks, and it
+    // already returns null for a neutral reading (的 de). It is strictly
+    // stronger than the regex, so the regex is gone.
+    if (!row.pinyin) continue;
     const tone = toneFromPinyin(row.pinyin);
     if (tone === null) continue;
     allChars.push({
@@ -100,7 +110,10 @@ export async function GET(req: NextRequest) {
   // The client-side fetchChainChars() already memoizes by source for
   // 1h in module-level state, so we don't need HTTP caching here.
   return NextResponse.json(
-    { chars: allChars, hskFallback },
+    // 2026-11-20: `failed` is additive. A DB exception used to come back
+    // as HTTP 200 with `chars: []`, which the client could not tell apart
+    // from a tier that is genuinely empty. Existing consumers ignore it.
+    { chars: allChars, hskFallback, failed: poolFailed },
     {
       headers: {
         'Cache-Control': 'no-store',

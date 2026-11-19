@@ -89,4 +89,71 @@ describe('fetchChainChars', () => {
     expect(result.chars).toEqual([]);
     expect(result.hskFallback).toBe(true);
   });
+
+  /**
+   * A failed fetch must not be cached.
+   *
+   * `cache` holds the fetch PROMISE, and a rejection is a value like any
+   * other — so one network blip used to make the key fail for the life of
+   * the tab. 重试 could not work: the retry re-read the same rejected
+   * promise.
+   */
+  it('does not cache a rejected fetch', async () => {
+    let calls = 0;
+    global.fetch = vi.fn().mockImplementation(async () => {
+      calls += 1;
+      if (calls === 1) throw new Error('the network is down');
+      return {
+        ok: true,
+        headers: { get: () => 'application/json' },
+        json: async () => ({ chars: [{ char: '好', pinyin: 'hǎo' }], hskFallback: false }),
+      };
+    });
+    const { fetchChainChars, __resetChainCache } = await import('@/lib/api-chain');
+    __resetChainCache();
+
+    await expect(fetchChainChars('chars-level-1', 1)).rejects.toThrow(/network/);
+    // The retry must issue a REAL request, not read the rejected promise.
+    const retried = await fetchChainChars('chars-level-1', 1);
+    expect(global.fetch).toHaveBeenCalledTimes(2);
+    expect(retried.chars[0].char).toBe('好');
+  });
+
+  it('surfaces a failed pool from the envelope', async () => {
+    // The route answers HTTP 200 with `failed: true` when its query threw.
+    // That is not a thin tier, and the client has to be able to tell.
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ chars: [], hskFallback: true, failed: true }),
+    });
+    const { fetchChainChars, __resetChainCache } = await import('@/lib/api-chain');
+    __resetChainCache();
+    const result = await fetchChainChars('chars-level-1', 2);
+    expect(result.failed).toBe(true);
+  });
+
+  it('reports a successful pool as not failed', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => ({ chars: [], hskFallback: false, failed: false }),
+    });
+    const { fetchChainChars, __resetChainCache } = await import('@/lib/api-chain');
+    __resetChainCache();
+    const result = await fetchChainChars('chars-level-1', 3);
+    expect(result.failed).toBe(false);
+  });
+
+  it('treats a legacy bare array as not failed', async () => {
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: { get: () => 'application/json' },
+      json: async () => [{ char: '安', pinyin: 'ān', meaning: '', radical: '宀', tone: 1 }],
+    });
+    const { fetchChainChars, __resetChainCache } = await import('@/lib/api-chain');
+    __resetChainCache();
+    const result = await fetchChainChars('chars-level-1', 4);
+    expect(result.failed).toBe(false);
+  });
 });
