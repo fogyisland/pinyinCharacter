@@ -313,22 +313,33 @@ textarea.adm-input {
    一张 A4" bug.
 
    Pinning the columns makes the grid's width a function of the brush
-   layout instead of the viewport:
-     brush-12 → 4 × 140px + 3 × 8px = 584px
-     brush-24 → 6 × 100px + 5 × 8px = 640px
-     brush-28 → 7 ×  85px + 6 × 8px = 643px
-   All three fit A4's 680px printable width.
+   layout instead of the viewport.
+
+   ⚠️ The shape (column count) is what makes the sheet FILL the page.
+   The brush cells are square, so the column count pins the cell size and
+   the height then follows from the row count. The old shapes were too
+   wide and left the bottom half of the page empty — the user's
+   "毛笔只显示上半页" report (2026-11-19):
+     brush-12 → 4 cols × 3 rows → 129mm of a 267mm page (48%)
+     brush-24 → 6 cols × 4 rows → 126mm of a 267mm page (47%)
+     brush-28 → 7 cols × 4 rows → 110mm of a 267mm page (41%)
+
+   The shapes below fill A4 in both dimensions:
+     brush-12 → 3 × 219px + 2 × 8px = 673px  (178mm of 180mm)
+     brush-24 → 4 × 143px + 3 × 8px = 596px  (158mm of 180mm)
+     brush-28 → 4 × 122px + 3 × 8px = 512px  (135mm of 180mm)
 
    The sizes come from cellSizeFor() in lib/worksheet-types.ts — the same
-   source the component renders the cells at. Keep the two in step. */
+   source the component renders the cells at. Keep the two in step;
+   tests/unit/app/brush-print-a4.test.ts pins them together. */
 .worksheet-grid--brush-12 {
-  grid-template-columns: repeat(4, 140px);
+  grid-template-columns: repeat(3, 219px);
 }
 .worksheet-grid--brush-24 {
-  grid-template-columns: repeat(6, 100px);
+  grid-template-columns: repeat(4, 143px);
 }
 .worksheet-grid--brush-28 {
-  grid-template-columns: repeat(7, 85px);
+  grid-template-columns: repeat(4, 122px);
 }
 
 /* Lined-paper (钢笔·横线) variants: 1 column, rows = linesPerPage. The
@@ -458,6 +469,16 @@ textarea.adm-input {
     left: 0;
     top: 0;
     width: 100%;
+    /* ⚠️ `max-width` beats `width`, so a SCREEN constraint would win here.
+       The worksheet grid carries Tailwind's `max-w-3xl` = 768px = 203mm,
+       which is wider than A4's printable area (190mm at Chrome's default
+       10mm margins, 180mm at the page's own 1.5cm margin). The sheet's box
+       was therefore 13-23mm too wide for the paper and the browser pushed
+       the overflow onto a second page — the "毛笔打印没有完整显示为一张
+       A4" the user reported.
+       `max-width: none` lets the grid take the page's content width, so
+       the sheet always fits the paper it prints on. */
+    max-width: none;
   }
   /* Force backgrounds to print. Chrome silently drops background-color
      and background-image in print unless the element opts in. The 4-line
