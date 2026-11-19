@@ -1,4 +1,5 @@
 import type { ApiResult } from './api-auth';
+import type { MembershipFeature } from './membership';
 
 export interface AdminUserRow {
   id: number;
@@ -160,7 +161,7 @@ export async function updateAdminPlanRequest(
     amount?: string;
     enabled?: boolean;
     displayOrder?: number;
-    features?: ('unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts')[];
+    features?: MembershipFeature[];
   },
 ): Promise<ApiResult<{ plan: AdminPlanRow }>> {
   return call(`/api/admin/memberships/plans/${id}`, {

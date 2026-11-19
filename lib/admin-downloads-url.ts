@@ -19,7 +19,12 @@ import {
 export const DOWNLOADS_PAGE_SIZE = 50;
 
 /** Mirrors `DownloadSourceType` in lib/downloads.ts — kept local so this file stays client-safe. */
-export type DownloadSourceTypeFilter = 'worksheet' | 'poem' | 'sutra' | 'rare-char-card';
+export type DownloadSourceTypeFilter =
+  | 'worksheet'
+  | 'poem'
+  | 'sutra'
+  | 'classic'
+  | 'rare-char-card';
 
 export interface DownloadsQuery {
   sourceType: DownloadSourceTypeFilter | '';
@@ -34,10 +39,17 @@ export const DOWNLOAD_SOURCE_OPTIONS: { value: DownloadSourceTypeFilter | ''; la
   { value: 'worksheet', label: '字帖' },
   { value: 'poem', label: '古诗' },
   { value: 'sutra', label: '佛经' },
+  { value: 'classic', label: '古籍' },
   { value: 'rare-char-card', label: '生字卡' },
 ];
 
-const VALID_SOURCE_TYPES = new Set<string>(['worksheet', 'poem', 'sutra', 'rare-char-card']);
+const VALID_SOURCE_TYPES = new Set<string>([
+  'worksheet',
+  'poem',
+  'sutra',
+  'classic',
+  'rare-char-card',
+]);
 
 /** Validate a raw source type — an unknown type means "all types". */
 export function parseDownloadSourceType(raw: string): DownloadSourceTypeFilter | '' {

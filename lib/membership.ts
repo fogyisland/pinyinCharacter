@@ -1,13 +1,25 @@
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 import { cache } from 'react';
+import { MEMBERSHIP_FEATURES, type MembershipFeature } from './membership-features';
 
 export const PLAN_KEYS = ['monthly_usd', 'yearly_usd', 'monthly_cny', 'yearly_cny'] as const;
 export type PlanKey = (typeof PLAN_KEYS)[number];
 
 export type MembershipCurrency = 'CNY' | 'USD';
-export type MembershipFeature =
-  'unlimited_history' | 'download_pdf' | 'ai_calls' | 'priority_tts' | 'multi_worksheet_print';
+
+/**
+ * The features a plan can grant.
+ *
+ * The list itself lives in `lib/membership-features.ts` — a client-safe
+ * module with no server-only imports — because the admin plan picker and
+ * the public plan card are CLIENT components and have to import it.
+ * Importing it from here would drag `lib/db` (and mysql2) into the client
+ * bundle, and the build fails on the Node built-ins.
+ *
+ * ⚠️ EVERY KEY IN THAT LIST MUST BE ENFORCED SOMEWHERE. See the note there.
+ */
+export { MEMBERSHIP_FEATURES, type MembershipFeature };
 
 /** The value shapes mysql2 accepts as a bound SQL parameter. */
 type SqlParam = string | number | bigint | boolean | Date | Buffer | null;
@@ -190,13 +202,7 @@ const SEED_PLANS = [
     display_order: 4,
   },
 ];
-const ALL_FEATURES: MembershipFeature[] = [
-  'unlimited_history',
-  'download_pdf',
-  'ai_calls',
-  'priority_tts',
-  'multi_worksheet_print',
-];
+const ALL_FEATURES: MembershipFeature[] = [...MEMBERSHIP_FEATURES];
 
 export async function seedDefaultPlans(): Promise<number> {
   const pool = getPool();

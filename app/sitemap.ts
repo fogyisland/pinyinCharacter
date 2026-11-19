@@ -79,9 +79,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
       changeFrequency: 'weekly',
     },
+    {
+      url: `${base}/rare-chars`,
+      lastModified: contentMtime,
+      priority: 0.8,
+      changeFrequency: 'weekly',
+    },
+    {
+      url: `${base}/stories`,
+      lastModified: contentMtime,
+      priority: 0.7,
+      changeFrequency: 'weekly',
+    },
     { url: `${base}/sitemap/poetry.xml`, lastModified: manifest.updatedAt },
     { url: `${base}/sitemap/ancient.xml`, lastModified: classics?.updatedAt ?? staticDate },
     { url: `${base}/sitemap/chars.xml`, lastModified: contentMtime },
+    // ⚠️ The etymology sitemap is a ROUTE (app/sitemap/etymology.xml),
+    // but nothing pointed at it — it was an orphan until now. A crawler
+    // that only reads the sitemap index never learned those ~8000 URLs
+    // existed. Keep every sitemap route listed here: a sitemap that is
+    // not linked from the index is invisible.
+    { url: `${base}/sitemap/etymology.xml`, lastModified: contentMtime },
     ...poems,
     ...classicsEntries,
     ...sutraEntries,

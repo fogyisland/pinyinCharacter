@@ -4,33 +4,31 @@ import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Save, RotateCcw, Check, AlertTriangle } from 'lucide-react';
 import { updateAdminPlanRequest, type AdminPlanRow as Plan } from '@/lib/api-admin';
+import { MEMBERSHIP_FEATURES } from '@/lib/membership-features';
 import { AdminButton } from '@/components/admin/AdminButton';
 
-const ALL_FEATURES = [
-  'unlimited_history',
-  'download_pdf',
-  'ai_calls',
-  'priority_tts',
-  'multi_worksheet_print',
-] as const;
-const FEATURE_LABELS: Record<string, string> = {
-  unlimited_history: '无限历史',
-  download_pdf: 'PDF 下载',
+// ⚠️ The key list comes from MEMBERSHIP_FEATURES — the same source the API
+// schema validates against. A key that nothing checks with `hasFeature()`
+// would be sold to the operator as a perk the buyer never receives, so the
+// list deliberately contains only the enforced features.
+//
+// The label map is keyed by that list, so adding a feature without writing
+// its label is a TYPE ERROR rather than a silent gap in the UI.
+const ALL_FEATURES = MEMBERSHIP_FEATURES;
+const FEATURE_LABELS: Record<(typeof MEMBERSHIP_FEATURES)[number], string> = {
   ai_calls: 'AI 调用',
-  priority_tts: '优先 TTS',
   multi_worksheet_print: '批量 / 多页打印',
 };
 
 /**
- * The feature keys `updateAdminPlanRequest` accepts. The picker above also
- * offers `multi_worksheet_print`, which the request type does not list —
- * the API accepts it at runtime, the client-side type just does not.
+ * The feature keys `updateAdminPlanRequest` accepts.
+ *
+ * Derived from the picker list instead of being written out again: the two
+ * used to drift (the type listed four keys, the picker offered five, and
+ * `multi_worksheet_print` was missing from the type even though the API
+ * accepted it). One list, one source of truth.
  */
-type UpdatableFeature =
-  | 'unlimited_history'
-  | 'download_pdf'
-  | 'ai_calls'
-  | 'priority_tts';
+type UpdatableFeature = (typeof ALL_FEATURES)[number];
 
 export function PlanRow({ plan }: { plan: Plan }) {
   const router = useRouter();

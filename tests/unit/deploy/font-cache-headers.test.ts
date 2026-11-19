@@ -90,9 +90,26 @@ beforeAll(async () => {
   headerRules = await build();
 });
 
-/** The rules that match `pathname`, in the order the config lists them. */
+/**
+ * The rules that match `pathname`, in the order the config lists them.
+ *
+ * ⚠️ This counts the rules that set a Cache-Control, NOT the rules that
+ * match. The config also carries a catch-all rule that sets the security
+ * headers (X-Frame-Options and friends) on every path — it matches every
+ * font path too, and it sets no Cache-Control.
+ *
+ * The exclusivity this file proves is about the CACHE layers: two rules
+ * that both set a Cache-Control on the same path would mean the last one
+ * silently wins, and the guarantee would rest on the order of the array
+ * instead of on the sources. A rule that sets no Cache-Control cannot
+ * compete for that value, so it does not break the guarantee.
+ */
 function matchingRules(pathname: string): HeaderRule[] {
-  return headerRules.filter((rule) => nextHeaderMatcher(rule.source)(pathname) !== false);
+  return headerRules.filter(
+    (rule) =>
+      nextHeaderMatcher(rule.source)(pathname) !== false &&
+      rule.headers.some((header) => header.key === 'Cache-Control'),
+  );
 }
 
 /** Every Cache-Control value of the given rules, in order. */
@@ -198,15 +215,20 @@ describe('the font cache headers are split into two exclusive layers', () => {
     expect(sources).not.toContain('/font/:path*');
   });
 
-  it('matches every font path with exactly one rule', () => {
+  it('matches every font path with exactly one CACHE rule', () => {
     // ⚠️ THIS is the proof that the two layers are disjoint. Next.js does
     // not merge header rules — it applies every matching one — so a path that
     // matched two rules would take the last one's value, and the guarantee
     // would rest on the order of the array instead of on the sources.
+    //
+    // ⚠️ "One rule" means one rule that sets a Cache-Control. The config
+    // also carries a catch-all for the security headers; it matches every
+    // font path as well, but it sets no Cache-Control and therefore cannot
+    // compete for the value. See matchingRules() above.
     for (const pathname of FONT_PATHS) {
       expect(
         matchingRules(pathname).map((rule) => rule.source),
-        `the path ${pathname} must match exactly one header rule`,
+        `the path ${pathname} must match exactly one cache rule`,
       ).toHaveLength(1);
     }
   });

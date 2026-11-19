@@ -1,5 +1,7 @@
 import nodemailer, { type Transporter } from 'nodemailer';
 import { getMailTransport, getSmtpConfig } from './smtp-config';
+import { enqueueWecomNotification } from './wecom-deliver';
+import { isWecomCategory, type WecomCategory } from './wecom-types';
 
 export { notesNotificationEmail } from './email-templates';
 
@@ -9,7 +11,7 @@ export interface EmailMessage {
   html: string;
   text: string;
   /** Optional template key, e.g. 'password_reset'. Stored in email_send_history. */
-  template?: string;
+  template?: WecomCategory;
 }
 
 export class EmailNotConfiguredError extends Error {
@@ -49,6 +51,24 @@ export async function sendEmail(msg: EmailMessage): Promise<void> {
     console.debug(`[email] To: ${msg.to} | Subject: ${msg.subject}\n${msg.text}`);
     await recordSend({ msg, status: 'console', at });
     return;
+  }
+
+  // Forward to the WeCom groups that want this category.
+  //
+  // This runs BEFORE the mail is sent, and it runs even when the mail
+  // later fails. The forwarding is a separate channel: a message the group
+  // should see is queued whether or not SMTP accepts it.
+  //
+  // `void` + `.catch()` — the enqueue is fire-and-forget. It must never
+  // delay the mail (the request path is the user's registration) and must
+  // never fail it.
+  if (msg.template && isWecomCategory(msg.template)) {
+    void enqueueWecomNotification(msg.template, msg.subject, msg.text).catch((error: unknown) => {
+      console.warn(
+        '[email] could not queue the WeCom forwarding:',
+        error instanceof Error ? error.message : String(error),
+      );
+    });
   }
 
   const cfg = await getSmtpConfig();

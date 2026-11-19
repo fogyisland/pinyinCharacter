@@ -83,7 +83,13 @@ export async function POST(req: NextRequest) {
     const tpl = passwordResetEmail({ username, resetUrl, expiresInMinutes: RESET_TTL_MINUTES });
     // v1: 暂用 username 作为 to（dev console 模式不验证地址；SMTP 模式需 v2 加 users.email 列）。
     // 任何邮件错误都吞掉，audit 记录，client 永远收到 ok:true 防用户名枚举。
-    await sendEmail({ to: username, subject: tpl.subject, html: tpl.html, text: tpl.text });
+    await sendEmail({
+      to: username,
+      subject: tpl.subject,
+      html: tpl.html,
+      text: tpl.text,
+      template: 'password_reset',
+    });
   } catch (e) {
     emailError = e instanceof Error ? e.message : String(e);
     console.error('[forgot] email send failed', emailError);

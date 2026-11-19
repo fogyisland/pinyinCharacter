@@ -113,6 +113,7 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     label: '通讯',
     items: [
       { href: '/admin/email', label: '邮件', exact: true, icon: Mail },
+      { href: '/admin/wecom', label: '企业微信', exact: true, icon: MessageSquare },
       { href: '/admin/email/campaigns', label: '营销邮件', icon: Send },
       { href: '/admin/notes', label: '留言笔记', icon: MessageSquare },
       { href: '/admin/settings/notes', label: '留言通知邮箱', icon: Bell },

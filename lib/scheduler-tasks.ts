@@ -18,8 +18,14 @@ import { getPool } from './db';
 import { sendEmail } from './email';
 import { campaignEmail } from './email-templates';
 import { issueUnsubscribeToken, markRecipient, finalizeCampaignIfDone } from './email-campaigns';
+import { runWecomDeliver } from './wecom-deliver';
 
-export type TaskName = 'content-refresh' | 'daily-char' | 'stats-refresh' | 'email-campaign-send';
+export type TaskName =
+  | 'content-refresh'
+  | 'daily-char'
+  | 'stats-refresh'
+  | 'email-campaign-send'
+  | 'wecom-deliver';
 
 /** An active campaign row the sender picks up. */
 interface ActiveCampaignRow extends RowDataPacket {
@@ -209,6 +215,33 @@ export async function runEmailCampaignSend(): Promise<TaskResult> {
   };
 }
 
+/**
+ * WeCom delivery — pushes the queued notifications to the group robots.
+ *
+ * The scheduler tick is the only thing that talks to WeCom, so a WeCom
+ * outage slows the forwarding down but never touches the site.
+ */
+async function runWecomDeliverTask(): Promise<TaskResult> {
+  const t0 = Date.now();
+  try {
+    const result = await runWecomDeliver();
+    const ms = Date.now() - t0;
+    return {
+      name: 'wecom-deliver',
+      ok: true,
+      summary: `sent=${result.sent} failed=${result.failed} skipped=${result.skipped} (${ms}ms)`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      name: 'wecom-deliver',
+      ok: false,
+      summary: 'delivery run failed',
+      error: message,
+    };
+  }
+}
+
 export async function runTask(name: TaskName): Promise<TaskResult> {
   switch (name) {
     case 'content-refresh':
@@ -219,6 +252,8 @@ export async function runTask(name: TaskName): Promise<TaskResult> {
       return runStatsRefresh();
     case 'email-campaign-send':
       return runEmailCampaignSend();
+    case 'wecom-deliver':
+      return runWecomDeliverTask();
   }
 }
 
@@ -227,4 +262,5 @@ export const ALL_TASKS: TaskName[] = [
   'daily-char',
   'stats-refresh',
   'email-campaign-send',
+  'wecom-deliver',
 ];

@@ -274,6 +274,7 @@ export const adminSchedulerConfigSchema = z.object({
   taskContentRefresh: z.boolean().optional(),
   taskDailyChar: z.boolean().optional(),
   taskStatsRefresh: z.boolean().optional(),
+  taskWecomDeliver: z.boolean().optional(),
 });
 
 export const registerSchema = z.object({

@@ -7,6 +7,7 @@
  */
 import type { ResultSetHeader, RowDataPacket } from 'mysql2';
 import { getPool, closePool } from '../lib/db';
+import { MEMBERSHIP_FEATURES } from '../lib/membership';
 
 const DDL = [
   `CREATE TABLE IF NOT EXISTS memberships (
@@ -114,7 +115,11 @@ const SEED_PLANS = [
   },
 ];
 
-const ALL_FEATURES = ['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts'];
+// The feature list comes from lib/membership.ts — the same source the admin
+// UI and the API schema use. It used to carry its own copy of all four
+// original keys, so running this script re-granted features that nothing
+// enforces.
+const ALL_FEATURES = [...MEMBERSHIP_FEATURES];
 
 /** One seeded plan row: its id and key. */
 interface PlanRow extends RowDataPacket {

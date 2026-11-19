@@ -1,7 +1,12 @@
 import { getPool } from './db';
 
 export type DownloadFormat = 'pdf' | 'print';
-export type DownloadSourceType = 'worksheet' | 'poem' | 'sutra' | 'rare-char-card';
+export type DownloadSourceType =
+  | 'worksheet'
+  | 'poem'
+  | 'sutra'
+  | 'classic'
+  | 'rare-char-card';
 export type DownloadStatus = 'ok' | 'error';
 
 export interface LogDownloadArgs {

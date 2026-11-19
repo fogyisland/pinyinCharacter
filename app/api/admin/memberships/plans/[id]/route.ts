@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandling, badRequest, notFound } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
-import { updatePlan, type PlanPatch } from '@/lib/membership';
+import { updatePlan, MEMBERSHIP_FEATURES, type PlanPatch } from '@/lib/membership';
 
 const PatchSchema = z.object({
   displayName: z.string().min(1).max(64).optional(),
@@ -13,9 +13,12 @@ const PatchSchema = z.object({
     .optional(),
   enabled: z.boolean().optional(),
   displayOrder: z.number().int().min(0).max(999).optional(),
-  features: z
-    .array(z.enum(['unlimited_history', 'download_pdf', 'ai_calls', 'priority_tts']))
-    .optional(),
+  // The enum comes from MEMBERSHIP_FEATURES, the same list the admin picker
+  // offers. It used to carry its own copy that was missing
+  // `multi_worksheet_print` — so the operator could tick "批量 / 多页打印"
+  // and save, and the request was rejected with a validation error. The one
+  // feature that IS enforced could not be granted through the UI at all.
+  features: z.array(z.enum(MEMBERSHIP_FEATURES)).optional(),
 });
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

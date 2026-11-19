@@ -16,6 +16,7 @@ export type AuditEvent =
   | 'history_delete'
   | 'password_reset_request'
   | 'password_reset_complete'
+  | 'password_changed'
   | 'admin_user_delete'
   | 'admin_user_password_reset'
   | 'admin_user_promote'
@@ -33,6 +34,7 @@ export type AuditEvent =
   | 'worksheet_batch_printed'
   | 'poem_saved'
   | 'sutra_saved'
+  | 'classic_saved'
   | 'rare_char_card_saved'
   | 'membership_granted'
   | 'membership_granted_paypal'
@@ -87,7 +89,12 @@ export type AuditEvent =
   | 'admin_webfont_build_failed'
   | 'admin_webfont_build_applied'
   | 'admin_webfont_build_apply_failed'
-  | 'admin_webfont_releases_cleaned';
+  | 'admin_webfont_releases_cleaned'
+  | 'wecom_webhook_created'
+  | 'wecom_webhook_updated'
+  | 'wecom_webhook_deleted'
+  | 'wecom_test_sent'
+  | 'wecom_delivery_retried';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -104,6 +111,7 @@ export const AUDIT_EVENTS = [
   'history_delete',
   'password_reset_request',
   'password_reset_complete',
+  'password_changed',
   'admin_user_delete',
   'admin_user_password_reset',
   'admin_user_promote',
@@ -121,6 +129,7 @@ export const AUDIT_EVENTS = [
   'worksheet_batch_printed',
   'poem_saved',
   'sutra_saved',
+  'classic_saved',
   'rare_char_card_saved',
   'membership_granted',
   'membership_granted_paypal',
@@ -176,6 +185,11 @@ export const AUDIT_EVENTS = [
   'admin_webfont_build_applied',
   'admin_webfont_build_apply_failed',
   'admin_webfont_releases_cleaned',
+  'wecom_webhook_created',
+  'wecom_webhook_updated',
+  'wecom_webhook_deleted',
+  'wecom_test_sent',
+  'wecom_delivery_retried',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -194,6 +208,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   history_delete: '历史删除',
   password_reset_request: '密码重置申请',
   password_reset_complete: '密码重置完成',
+  password_changed: '修改密码',
   admin_user_delete: '管理员删除用户',
   admin_user_password_reset: '管理员重置密码',
   admin_user_promote: '管理员提升',
@@ -211,6 +226,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   worksheet_batch_printed: '批量打印字帖',
   poem_saved: '保存古诗',
   sutra_saved: '保存佛经',
+  classic_saved: '保存古籍',
   rare_char_card_saved: '保存生字卡',
   membership_granted: '管理员开通会员',
   membership_granted_paypal: 'PayPal 开通会员',
@@ -266,6 +282,11 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   admin_webfont_build_applied: '字体构建已应用',
   admin_webfont_build_apply_failed: '字体构建应用失败',
   admin_webfont_releases_cleaned: '清理旧 release',
+  wecom_webhook_created: '新建企业微信群',
+  wecom_webhook_updated: '修改企业微信群',
+  wecom_webhook_deleted: '删除企业微信群',
+  wecom_test_sent: '发送企业微信测试消息',
+  wecom_delivery_retried: '重推企业微信消息',
 };
 
 /**
@@ -306,6 +327,8 @@ export function formatLogMessage(
       return `请求重置密码${str(m.email) ? `(${str(m.email)})` : ''}`;
     case 'password_reset_complete':
       return '完成密码重置';
+    case 'password_changed':
+      return '修改自己的密码';
 
     case 'admin_user_delete':
       return `删除用户 #${num(m.targetUserId) || '?'}${str(m.targetUsername) ? `「${str(m.targetUsername)}」` : ''}`;
@@ -349,6 +372,10 @@ export function formatLogMessage(
     }
     case 'sutra_saved': {
       const action = str(m.action) === 'print' ? '打印佛经' : '保存佛经';
+      return `${action}「${str(m.title) || str(m.slug) || '?'}」`;
+    }
+    case 'classic_saved': {
+      const action = str(m.action) === 'print' ? '打印古籍' : '保存古籍';
       return `${action}「${str(m.title) || str(m.slug) || '?'}」`;
     }
     case 'rare_char_card_saved': {
@@ -481,6 +508,17 @@ export function formatLogMessage(
         num(m.bytes) ? `（${num(m.bytes)} 字节）` : ''
       }`;
     }
+
+    case 'wecom_webhook_created':
+      return `新建企业微信群「${str(m.name) || '?'}」`;
+    case 'wecom_webhook_updated':
+      return `修改企业微信群「${str(m.name) || '?'}」`;
+    case 'wecom_webhook_deleted':
+      return `删除企业微信群 #${num(m.id) || '?'}`;
+    case 'wecom_test_sent':
+      return `发送企业微信测试消息到「${str(m.name) || '?'}」`;
+    case 'wecom_delivery_retried':
+      return `重推企业微信消息 #${num(m.id) || '?'}`;
 
     default: {
       const keys = Object.keys(m);

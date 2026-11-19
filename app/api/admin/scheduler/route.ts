@@ -33,7 +33,12 @@ export async function POST(req: NextRequest) {
     const updates: Partial<
       Pick<
         SchedulerConfig,
-        'enabled' | 'intervalMin' | 'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh'
+        | 'enabled'
+        | 'intervalMin'
+        | 'taskContentRefresh'
+        | 'taskDailyChar'
+        | 'taskStatsRefresh'
+        | 'taskWecomDeliver'
       >
     > = parsed.data;
     await writeSchedulerConfig(updates, auth.user.id);

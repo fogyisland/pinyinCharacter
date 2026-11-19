@@ -12,6 +12,7 @@ import { WorksheetHistoryList } from '@/components/worksheet/WorksheetHistoryLis
 import { MembershipStatusCard } from '@/components/membership/MembershipStatusCard';
 import { PinyinToggle } from '@/components/PinyinToggle';
 import { McpTokenCard } from '@/components/mcp/McpTokenCard';
+import { ChangePasswordCard } from '@/components/profile/ChangePasswordCard';
 import { hasFeature } from '@/lib/membership';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,7 @@ export default async function ProfilePage() {
           <PinyinToggle />
         </div>
         <McpTokenCard userId={session.userId} />
+        <ChangePasswordCard />
         <div className="mt-10 mb-4 flex items-end justify-between gap-3">
           <SectionTitle subtitle="保存的字帖，可继续编辑或打印">我的字帖</SectionTitle>
           <Link href="/worksheet" className="btn-seal text-sm shrink-0">

@@ -40,6 +40,7 @@ export const SCHEDULER_KEYS = {
   taskDailyChar: 'scheduler.task_daily_char',
   taskStatsRefresh: 'scheduler.task_stats_refresh',
   taskEmailCampaign: 'scheduler.task_email_campaign',
+  taskWecomDeliver: 'scheduler.task_wecom_deliver',
 } as const;
 
 export interface SchedulerConfig {
@@ -51,6 +52,7 @@ export interface SchedulerConfig {
   taskDailyChar: boolean;
   taskStatsRefresh: boolean;
   taskEmailCampaign: boolean;
+  taskWecomDeliver: boolean;
 }
 
 export const DEFAULT_CONFIG: SchedulerConfig = {
@@ -62,6 +64,7 @@ export const DEFAULT_CONFIG: SchedulerConfig = {
   taskDailyChar: true,
   taskStatsRefresh: true,
   taskEmailCampaign: true,
+  taskWecomDeliver: true,
 };
 
 const DEFAULTS: Record<string, string> = {
@@ -71,6 +74,7 @@ const DEFAULTS: Record<string, string> = {
   [SCHEDULER_KEYS.taskDailyChar]: '1',
   [SCHEDULER_KEYS.taskStatsRefresh]: '1',
   [SCHEDULER_KEYS.taskEmailCampaign]: '1',
+  [SCHEDULER_KEYS.taskWecomDeliver]: '1',
 };
 
 export async function readSchedulerConfig(): Promise<SchedulerConfig> {
@@ -91,6 +95,7 @@ export async function readSchedulerConfig(): Promise<SchedulerConfig> {
     taskDailyChar: out[SCHEDULER_KEYS.taskDailyChar] !== '0',
     taskStatsRefresh: out[SCHEDULER_KEYS.taskStatsRefresh] !== '0',
     taskEmailCampaign: out[SCHEDULER_KEYS.taskEmailCampaign] !== '0',
+    taskWecomDeliver: out[SCHEDULER_KEYS.taskWecomDeliver] !== '0',
   };
 }
 
@@ -104,6 +109,7 @@ export async function writeSchedulerConfig(
       | 'taskDailyChar'
       | 'taskStatsRefresh'
       | 'taskEmailCampaign'
+      | 'taskWecomDeliver'
     >
   >,
   byUserId: number | null,
@@ -128,6 +134,8 @@ export async function writeSchedulerConfig(
     await set(SCHEDULER_KEYS.taskStatsRefresh, updates.taskStatsRefresh ? '1' : '0');
   if (updates.taskEmailCampaign !== undefined)
     await set(SCHEDULER_KEYS.taskEmailCampaign, updates.taskEmailCampaign ? '1' : '0');
+  if (updates.taskWecomDeliver !== undefined)
+    await set(SCHEDULER_KEYS.taskWecomDeliver, updates.taskWecomDeliver ? '1' : '0');
 }
 
 export async function recordSchedulerRun(summary: string, at: Date = new Date()): Promise<void> {
@@ -147,7 +155,11 @@ export async function recordSchedulerRun(summary: string, at: Date = new Date())
 // Per-task history. Each task in a run gets its own row; run_id groups them.
 
 export type SchedulerHistoryTaskName =
-  'content-refresh' | 'daily-char' | 'stats-refresh' | 'email-campaign-send';
+  | 'content-refresh'
+  | 'daily-char'
+  | 'stats-refresh'
+  | 'email-campaign-send'
+  | 'wecom-deliver';
 
 export interface SchedulerHistoryRow {
   id: number;
