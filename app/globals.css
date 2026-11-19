@@ -303,14 +303,32 @@ textarea.adm-input {
 .worksheet-grid--b5 {
   grid-template-columns: repeat(6, minmax(0, 1fr));
 }
+/* ⚠️ The brush papers pin their column width to the CELL SIZE (px), NOT to
+   `minmax(0, 1fr)`.
+   `1fr` makes the columns stretch to the container width, and the container
+   is capped at `max-w-3xl` = 768px = 203mm — but A4's printable area (210mm
+   minus the 1.5cm margin on each side) is only 180mm = 680px. The grid
+   therefore overflowed the page by 23mm and the browser pushed the overflow
+   onto a SECOND, mostly blank page. That was the "毛笔打印没有完整显示为
+   一张 A4" bug.
+
+   Pinning the columns makes the grid's width a function of the brush
+   layout instead of the viewport:
+     brush-12 → 4 × 140px + 3 × 8px = 584px
+     brush-24 → 6 × 100px + 5 × 8px = 640px
+     brush-28 → 7 ×  85px + 6 × 8px = 643px
+   All three fit A4's 680px printable width.
+
+   The sizes come from cellSizeFor() in lib/worksheet-types.ts — the same
+   source the component renders the cells at. Keep the two in step. */
 .worksheet-grid--brush-12 {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, 140px);
 }
 .worksheet-grid--brush-24 {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(6, 100px);
 }
 .worksheet-grid--brush-28 {
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(7, 85px);
 }
 
 /* Lined-paper (钢笔·横线) variants: 1 column, rows = linesPerPage. The

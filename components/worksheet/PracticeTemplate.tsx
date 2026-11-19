@@ -17,6 +17,7 @@ import {
   isBrushSize,
   linedHeightPx,
   linesPerPage,
+  pageSizeFor,
 } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 
@@ -151,8 +152,12 @@ export function PracticeTemplate() {
   return (
     <div>
       {/* Print: page size matches selection. Brush sizes are not valid @page
-          values — the browser falls back to the printer default. */}
-      <style>{`@page { size: ${paperSize}; margin: 1.5cm; }`}</style>
+          values — `size: brush-12` invalidates the WHOLE declaration (an
+          invalid value kills the property, not just the value), so the
+          sheet falls back to the printer default and spills onto a second
+          page. pageSizeFor() maps the brush papers (a LAYOUT, not a paper
+          size) onto A4. */}
+      <style>{`@page { size: ${pageSizeFor(paperSize)}; margin: 1.5cm; }`}</style>
 
       {/* Form: hidden in print. */}
       <div className="worksheet-no-print card-paper rounded-lg p-4 mb-4">

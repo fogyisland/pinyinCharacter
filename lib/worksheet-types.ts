@@ -180,6 +180,34 @@ const PRACTICE_LINED_HEIGHT: Record<PaperSize, number> = {
   'brush-28': 0,
 };
 
+/**
+ * The cell size (CSS px) the grid renders at, per paper.
+ *
+ * ⚠️ This is the SOURCE OF TRUTH for the brush papers' column width: the
+ * CSS rule `.worksheet-grid--brush-N` pins its columns to exactly this
+ * size, so the grid's printed width is a function of the brush layout
+ * rather than of the viewport. If the two drift apart, the sheet either
+ * overflows the page (a second, mostly blank page) or leaves a gap.
+ *
+ * The brush sizes are fixed literals (the brush spec), not a heuristic:
+ *   brush-12 → 4 cols × 140px = 560px  (+ 3 × 8px gaps = 584px)
+ *   brush-24 → 6 cols × 100px = 600px  (+ 5 × 8px gaps = 640px)
+ *   brush-28 → 7 cols ×  85px = 595px  (+ 6 × 8px gaps = 643px)
+ * All three fit A4's printable width (180mm = 680px at a 1.5cm margin).
+ */
+const CELL_SIZE: Record<PaperSize, number> = {
+  A3: 80,
+  A4: 70, // 8×11=88 cells × 70px fits A4 PDF (was 80, would overflow)
+  B5: 80,
+  'brush-12': 140,
+  'brush-24': 100,
+  'brush-28': 85,
+};
+
+export function cellSizeFor(p: PaperSize): number {
+  return CELL_SIZE[p];
+}
+
 export function linedHeightPx(paperSize: PaperSize): number {
   return PRACTICE_LINED_HEIGHT[paperSize];
 }
@@ -252,6 +280,35 @@ export type BrushPaperSize = (typeof BRUSH_PAPER_SIZES)[number];
 
 export function isBrushSize(p: PaperSize): p is BrushPaperSize {
   return (BRUSH_PAPER_SIZES as readonly string[]).includes(p);
+}
+
+/**
+ * The CSS `@page size` a paper prints on.
+ *
+ * ⚠️ The brush papers are NOT CSS @page keywords. Writing
+ * `@page { size: brush-12 }` makes the browser drop the WHOLE
+ * declaration (an invalid value invalidates the property, not just the
+ * value), so the sheet falls back to the printer's default paper —
+ * which is how a brush sheet stopped being an A4 page and started
+ * spilling onto a second one.
+ *
+ * The brush papers print on A4: they are a LAYOUT (4 columns of big
+ * brush cells), not a paper size. The name says how many characters fit
+ * on the page, and the sheet they produce is an A4 sheet.
+ *
+ * A3 / A4 / B5 ARE valid CSS keywords and map to themselves.
+ */
+export function pageSizeFor(p: PaperSize): 'a3' | 'a4' | 'b5' {
+  if (isBrushSize(p)) return 'a4';
+  switch (p) {
+    case 'A3':
+      return 'a3';
+    case 'B5':
+      return 'b5';
+    case 'A4':
+    default:
+      return 'a4';
+  }
 }
 
 export function paperSizeLabel(p: PaperSize): string {

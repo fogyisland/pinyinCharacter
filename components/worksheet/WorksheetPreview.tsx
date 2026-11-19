@@ -8,24 +8,11 @@ import {
   linedHeightPx,
   fontFamilyLabel,
   fontFamilyCssVar,
+  pageSizeFor,
+  cellSizeFor,
 } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PrintButton } from '@/components/common/PrintButton';
-
-function cellSizeFor(p: PaperSize): number {
-  switch (p) {
-    case 'brush-12':
-      return 140; // 4×140=560px, fits screen 768 + A4 print 680
-    case 'brush-24':
-      return 100; // 6×100=600px, fits both
-    case 'brush-28':
-      return 85; // 7×85=595px, fits both
-    case 'A4':
-      return 70; // 8×11=88 cells × 70px fits A4 PDF (was 80, would overflow)
-    default:
-      return 80; // A3/B5 keep 80px (G2 default)
-  }
-}
 
 // Host-only display for the printed page footer: strip protocol + path so
 // the printed sheet shows e.g. "fogyisland.github.io" instead of the full
@@ -83,8 +70,12 @@ export function WorksheetPreview(props: Props) {
   return (
     <div>
       {/* Inline @page rule so the printed sheet actually uses the selected size. */}
-      {/* Brush sizes (brush-12/24/28) are not valid CSS @page values; browser falls back to printer default — this matches the "free-form page" intent in plan G3 R4. */}
-      <style>{`@page { size: ${props.paperSize}; margin: 1.5cm; }`}</style>
+      {/* ⚠️ The size comes from pageSizeFor(), NOT from the raw paperSize:
+          `size: brush-12` is not a CSS keyword, so the browser drops the
+          whole declaration and falls back to the printer default — the
+          brush sheet stopped being an A4 page. pageSizeFor() maps the
+          brush papers (a LAYOUT, not a paper size) onto A4. */}
+      <style>{`@page { size: ${pageSizeFor(props.paperSize)}; margin: 1.5cm; }`}</style>
 
       {isFormView && props.showHeader !== false && (
         <div className="worksheet-no-print mb-4 flex items-center justify-between">
