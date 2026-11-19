@@ -537,3 +537,121 @@ export function isOneStrokeApart(
 ): boolean {
   return relate(a, b, ratio) !== null;
 }
+
+/**
+ * 一道题：一个基础字 + 四个选项。
+ */
+export interface MagicQuestion {
+  /** 玩家出题的那个字。 */
+  base: string;
+  /** 正确答案。 */
+  answer: string;
+  /** 四个选项（正确答案也在里面）。 */
+  options: string[];
+  /** 从基础字到正确答案的关系。 */
+  relation: MagicRelation;
+}
+
+/**
+ * 一个带种子的随机数发生器（mulberry32）。
+ *
+ * 出题必须是可复现的：同一颗种子必须出同一道题，否则一个断言
+ * 「干扰项是哪些字」的测试什么都断言不了。每一轮把种子传进来，
+ * 同一个种子永远出同一道题。
+ *
+ * 这份实现是照着 `lib/catch-char-rules.ts` 里那一份重写的 —— 那是
+ * 另一个游戏的模块，不跨文件引用。
+ */
+export function makeRng(seed: number): () => number {
+  let state = seed >>> 0;
+  return function next(): number {
+    state = (state + 0x6d2b79f5) >>> 0;
+    let t = state;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/** 用给定的随机数把一个数组洗牌（返回新数组）。 */
+function shuffle<T>(items: readonly T[], rng: () => number): T[] {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const swap = out[i];
+    out[i] = out[j];
+    out[j] = swap;
+  }
+  return out;
+}
+
+/** 一道题有几个选项。 */
+const OPTION_COUNT = 4;
+
+/**
+ * 从关系表里造一道题。
+ *
+ * 正确答案是基础字一笔之差的字，三个错误选项是**一笔之差以外**的
+ * 字 —— 玩家得懂规则，不能靠看形状蒙。
+ *
+ * `pool` 是这次能出题的字：基础字和干扰项都从这里取。正确答案来自
+ * 关系表 —— 它是基础字的邻居，不必在 pool 里（pool 是玩家能看见的
+ * 候选范围，答案是其中被选中的那个邻居）。
+ *
+ * 出不了题就返回 `null`：pool 里没有任何一个有邻居，或者凑不出三个
+ * 「不是邻居」的干扰项。
+ */
+export function buildQuestion(
+  table: Record<string, Record<string, MagicRelation>>,
+  pool: readonly string[],
+  seed: number,
+): MagicQuestion | null {
+  if (pool.length === 0) return null;
+
+  const rng = makeRng(seed);
+
+  // 基础字：自己在 pool 里，而且至少有一个邻居（邻居在不在 pool 里
+  // 不作要求 —— 答案是从表里选的）。
+  const bases = pool.filter((char) => {
+    const neighbours = table[char];
+    if (!neighbours) return false;
+    return Object.keys(neighbours).length > 0;
+  });
+  if (bases.length === 0) return null;
+
+  const base = bases[Math.floor(rng() * bases.length)];
+  const neighbours = table[base] ?? {};
+
+  // 正确答案：表里的任意一个邻居。
+  const answers = Object.keys(neighbours);
+  if (answers.length === 0) return null;
+  const answer = answers[Math.floor(rng() * answers.length)];
+
+  // 错误选项：**不是**邻居的字。
+  //
+  // 先从 pool 里取 —— pool 是玩家这一轮能看见的字。pool 不够的时候，
+  // 从表里的其他字补：补进来的必须是这个基础字**没有邻居关系**的字
+  // （邻居关系是双向的，基础字的邻居就是答案那一类，补进来会多一个
+  // 正确答案）。基础字自己也不能当干扰项。
+  const wrongs = pool.filter(
+    (char) => char !== base && char !== answer && neighbours[char] === undefined,
+  );
+  const topUp = Object.keys(table).filter(
+    (char) =>
+      char !== base &&
+      char !== answer &&
+      !wrongs.includes(char) &&
+      neighbours[char] === undefined &&
+      table[char]?.[base] === undefined,
+  );
+  for (const char of topUp) {
+    if (wrongs.length >= OPTION_COUNT - 1) break;
+    wrongs.push(char);
+  }
+  if (wrongs.length < OPTION_COUNT - 1) return null;
+
+  const picked = shuffle(wrongs, rng).slice(0, OPTION_COUNT - 1);
+  const options = shuffle([answer, ...picked], rng);
+
+  return { base, answer, options, relation: neighbours[answer] };
+}

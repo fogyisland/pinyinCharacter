@@ -5,6 +5,8 @@ import {
   strokeTypes,
   parseStrokes,
   isOneStrokeApart,
+  buildQuestion,
+  type MagicRelation,
   type Stroke,
 } from '@/lib/magic-char-rules';
 import { readFileSync } from 'node:fs';
@@ -269,5 +271,174 @@ describe('the magic-character rules', () => {
         expect(relate(loadStrokes(a), loadStrokes(b))).toBeNull();
       }
     });
+  });
+});
+
+describe('buildQuestion', () => {
+  const table: Record<string, Record<string, MagicRelation>> = {
+    大: { 太: 'add', 犬: 'add', 天: 'add', 夫: 'add' },
+    木: { 本: 'add', 末: 'add', 未: 'add' },
+    水: { 永: 'add' },
+    日: { 曰: 'modify' },
+  };
+
+  it('returns null when the pool has no base with neighbours', () => {
+    expect(buildQuestion(table, ['山'], 1)).toBeNull();
+  });
+
+  it('returns null when the pool is empty', () => {
+    expect(buildQuestion(table, [], 1)).toBeNull();
+  });
+
+  it('picks a base that has at least one neighbour', () => {
+    const question = buildQuestion(table, ['山', '木'], 1);
+    expect(question?.base).toBe('木');
+  });
+
+  it('offers the answer among the options', () => {
+    const question = buildQuestion(table, ['大', '木'], 1);
+    expect(question).toBeTruthy();
+    expect(question?.options).toContain(question?.answer);
+  });
+
+  it('offers four options in total', () => {
+    const question = buildQuestion(table, ['大', '木', '水', '日'], 1);
+    expect(question?.options).toHaveLength(4);
+  });
+
+  it('fills the options with characters that are NOT one stroke away', () => {
+    const question = buildQuestion(table, ['大', '木', '水', '日'], 1);
+    const wrong = question?.options.filter((c) => c !== question.answer) ?? [];
+    for (const char of wrong) {
+      expect(table[question!.base]?.[char]).toBeUndefined();
+    }
+  });
+
+  it('does not repeat a character in the options', () => {
+    const question = buildQuestion(table, ['大', '木', '水', '日'], 1);
+    expect(new Set(question?.options).size).toBe(4);
+  });
+
+  it('is reproducible from its seed', () => {
+    const a = buildQuestion(table, ['大', '木', '水', '日'], 7);
+    const b = buildQuestion(table, ['大', '木', '水', '日'], 7);
+    expect(a).toEqual(b);
+  });
+
+  it('gives a different question for a different seed', () => {
+    const answers = new Set(
+      [1, 2, 3, 4, 5, 6, 7, 8].map((s) => buildQuestion(table, ['大', '木', '水', '日'], s)?.answer),
+    );
+    expect(answers.size).toBeGreaterThan(1);
+  });
+
+  it('always leaves exactly one correct answer among the options', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const question = buildQuestion(table, ['大', '木', '水', '日'], seed);
+      const correct = question?.options.filter((c) => table[question!.base]?.[c] !== undefined);
+      expect(correct).toHaveLength(1);
+    }
+  });
+});
+
+/**
+ * The three behaviours the plan's own tests left unpinned.
+ *
+ * The plan's ten tests pass on a builder that never shuffles the options,
+ * that offers a valid neighbour as a wrong answer, and that lets the
+ * top-up hand out neighbours. Each of those was caught by mutation — the
+ * mutant survived the plan's tests — so each needs a test of its own.
+ */
+describe('buildQuestion, the behaviours the first ten tests left open', () => {
+  /**
+   * A table shaped like the real one.
+   *
+   * The builder writes a relation in BOTH directions, so every character
+   * that has a relation is a base in its own right. 「太」is one stroke
+   * from 「大」, so the real table has a 「太」entry — and that is the
+   * entry the top-up could wrongly reach for.
+   *
+   * The plan's table leaves those entries out, which is why the mutants
+   * below survive there.
+   */
+  const table: Record<string, Record<string, MagicRelation>> = {
+    大: { 太: 'add', 犬: 'add', 天: 'add', 夫: 'add' },
+    太: { 大: 'remove', 犬: 'modify', 夫: 'modify' },
+    犬: { 大: 'remove', 太: 'modify', 天: 'modify' },
+    天: { 大: 'remove', 夫: 'modify', 犬: 'modify' },
+    夫: { 大: 'remove', 天: 'modify', 太: 'modify' },
+    木: { 本: 'add', 末: 'add', 未: 'add' },
+    本: { 木: 'remove', 末: 'modify', 未: 'modify' },
+    末: { 木: 'remove', 本: 'modify', 未: 'modify' },
+    未: { 木: 'remove', 本: 'modify', 末: 'modify' },
+    水: { 永: 'add' },
+    永: { 水: 'remove' },
+    日: { 曰: 'modify' },
+    曰: { 日: 'modify' },
+  };
+
+  /**
+   * The answer must not always sit in the same place.
+   *
+   * If the options were never shuffled the answer would sit first every
+   * time, and a player could learn "pick the first button" instead of
+   * learning the rule. The position has to move.
+   */
+  it('moves the answer around the options', () => {
+    const positions = new Set<number>();
+    for (let seed = 1; seed <= 40; seed++) {
+      const question = buildQuestion(table, ['大', '木', '水', '日'], seed);
+      if (!question) continue;
+      positions.add(question.options.indexOf(question.answer));
+    }
+    expect(positions.size).toBeGreaterThan(1);
+  });
+
+  /**
+   * A character that IS one stroke away must never be offered as a wrong
+   * answer.
+   *
+   * 「太」is one stroke from 「大」 — so a question whose base is 「大」
+   * must never put 「太」among the wrong options: the player would count
+   * two right answers. The test pools the base together with its own
+   * neighbour, which is exactly the case where a careless builder would
+   * offer that neighbour as a distractor.
+   */
+  it('never offers a valid neighbour as a wrong answer', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const question = buildQuestion(table, ['大', '太', '木', '水', '日'], seed);
+      if (!question) continue;
+      const wrong = question.options.filter((char) => char !== question.answer);
+      for (const char of wrong) {
+        expect(table[question.base]?.[char]).toBeUndefined();
+      }
+    }
+  });
+
+  /**
+   * The same rule for the characters that fill the options up.
+   *
+   * When the pool is too small to supply three wrong answers, the builder
+   * tops them up from the characters the table knows about. Those topped-
+   * up characters must also be no relation to the base — otherwise the
+   * question ends up with two right answers in it.
+   */
+  it('tops the options up with characters that are no relation to the base', () => {
+    // A pool of two cannot supply three wrong answers, so the third has
+    // to come from the top-up.
+    //
+    // 「太」is a neighbour of 「大」and it is in the pool — so the top-up
+    // must not reach for it. The seeds sweep is what finds the case: the
+    // answer is drawn from the base's neighbours, and when the draw
+    // picks a neighbour OTHER than 「太」, the top-up has 「太」in reach.
+    for (let seed = 1; seed <= 40; seed++) {
+      const question = buildQuestion(table, ['大', '太'], seed);
+      if (!question) continue;
+      const wrong = question.options.filter((char) => char !== question.answer);
+      expect(wrong).toHaveLength(3);
+      for (const char of wrong) {
+        expect(table[question.base]?.[char]).toBeUndefined();
+      }
+    }
   });
 });
