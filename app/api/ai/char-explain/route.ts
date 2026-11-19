@@ -7,6 +7,7 @@ import { hasFeature } from '@/lib/membership';
 import { explainChar } from '@/lib/char-ai';
 import { getPool } from '@/lib/db';
 import { logAiCall, checkAiRateLimit } from '@/lib/ai-calls';
+import { resolvePinyin } from '@/lib/pinyin-index';
 
 const Schema = z.object({ char: z.string().length(1) });
 
@@ -34,7 +35,9 @@ export async function POST(req: NextRequest) {
       [parsed.data.char],
     );
     if (rows.length === 0) return badRequest('char_not_found', 'char not in dictionary');
-    const pinyin = String(rows[0].pinyin);
+    // `chars.pinyin` is empty for every row since the 2026-06-17 content
+    // migration — the prompt must not be built without a pronunciation.
+    const pinyin = resolvePinyin(parsed.data.char, rows[0].pinyin);
 
     const start = Date.now();
     try {
