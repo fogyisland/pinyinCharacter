@@ -30,17 +30,12 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');
     }
-    const updates: Partial<
-      Pick<
-        SchedulerConfig,
-        | 'enabled'
-        | 'intervalMin'
-        | 'taskContentRefresh'
-        | 'taskDailyChar'
-        | 'taskStatsRefresh'
-        | 'taskWecomDeliver'
-      >
-    > = parsed.data;
+    // ⚠️ The type is `Partial<SchedulerConfig>` on purpose. A narrower
+    // `Pick<>` looked right but was inert: `parsed.data` is not a fresh
+    // object literal, so assigning it to a narrower type is allowed and
+    // nothing is filtered at runtime. The zod schema is what actually
+    // decides which fields reach `writeSchedulerConfig`.
+    const updates: Partial<SchedulerConfig> = parsed.data;
     await writeSchedulerConfig(updates, auth.user.id);
     // (Re)start the in-process scheduler so live config changes take effect.
     try {

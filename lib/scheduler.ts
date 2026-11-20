@@ -43,6 +43,7 @@ function defaultConfig(): SchedulerConfig {
     taskStatsRefresh: true,
     taskEmailCampaign: true,
     taskWecomDeliver: true,
+    taskWechatBroadcast: true,
   };
 }
 
@@ -53,6 +54,7 @@ function enabledTasks(cfg: SchedulerConfig): TaskName[] {
   if (cfg.taskStatsRefresh) out.push('stats-refresh');
   if (cfg.taskEmailCampaign) out.push('email-campaign-send');
   if (cfg.taskWecomDeliver) out.push('wecom-deliver');
+  if (cfg.taskWechatBroadcast) out.push('wechat-broadcast-send');
   return out;
 }
 

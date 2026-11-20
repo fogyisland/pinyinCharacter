@@ -19,13 +19,16 @@ import { sendEmail } from './email';
 import { campaignEmail } from './email-templates';
 import { issueUnsubscribeToken, markRecipient, finalizeCampaignIfDone } from './email-campaigns';
 import { runWecomDeliver } from './wecom-deliver';
+import { listBroadcasts } from './wechat-broadcasts';
+import { sendBroadcast } from './wechat-sender';
 
 export type TaskName =
   | 'content-refresh'
   | 'daily-char'
   | 'stats-refresh'
   | 'email-campaign-send'
-  | 'wecom-deliver';
+  | 'wecom-deliver'
+  | 'wechat-broadcast-send';
 
 /** An active campaign row the sender picks up. */
 interface ActiveCampaignRow extends RowDataPacket {
@@ -242,6 +245,53 @@ async function runWecomDeliverTask(): Promise<TaskResult> {
   }
 }
 
+/**
+ * WeChat broadcast — sends the queued announcement to every follower.
+ *
+ * One announcement per tick: a broadcast walks every follower of the
+ * account, and a second one in the same tick would double the quota
+ * cost for no benefit. Whatever is left queued goes out on the next
+ * tick.
+ *
+ * ⚠️ The runner catches its own errors — a scheduler that throws is a
+ * scheduler that stops.
+ */
+async function runWechatBroadcastTask(): Promise<TaskResult> {
+  const t0 = Date.now();
+  try {
+    const queued = (await listBroadcasts()).filter((broadcast) => broadcast.status === 'queued');
+    if (queued.length === 0) {
+      return { name: 'wechat-broadcast-send', ok: true, summary: 'no queued announcements (0ms)' };
+    }
+
+    const result = await sendBroadcast(queued[0].id);
+    const ms = Date.now() - t0;
+
+    if (result.status === 'failed') {
+      return {
+        name: 'wechat-broadcast-send',
+        ok: false,
+        summary: `accepted=${result.accepted} skipped=${result.skipped} failed=${result.failed} (${ms}ms)`,
+        error: result.error ?? 'the announcement failed',
+      };
+    }
+
+    return {
+      name: 'wechat-broadcast-send',
+      ok: true,
+      summary: `accepted=${result.accepted} skipped=${result.skipped} failed=${result.failed} (${ms}ms)`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      name: 'wechat-broadcast-send',
+      ok: false,
+      summary: 'broadcast run failed',
+      error: message,
+    };
+  }
+}
+
 export async function runTask(name: TaskName): Promise<TaskResult> {
   switch (name) {
     case 'content-refresh':
@@ -254,6 +304,8 @@ export async function runTask(name: TaskName): Promise<TaskResult> {
       return runEmailCampaignSend();
     case 'wecom-deliver':
       return runWecomDeliverTask();
+    case 'wechat-broadcast-send':
+      return runWechatBroadcastTask();
   }
 }
 
@@ -263,4 +315,5 @@ export const ALL_TASKS: TaskName[] = [
   'stats-refresh',
   'email-campaign-send',
   'wecom-deliver',
+  'wechat-broadcast-send',
 ];

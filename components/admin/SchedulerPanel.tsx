@@ -24,7 +24,11 @@ const INTERVAL_OPTIONS = [
 const TASK_LABELS: Record<
   keyof Pick<
     SchedulerConfig,
-    'taskContentRefresh' | 'taskDailyChar' | 'taskStatsRefresh' | 'taskWecomDeliver'
+    'taskContentRefresh'
+    | 'taskDailyChar'
+    | 'taskStatsRefresh'
+    | 'taskWecomDeliver'
+    | 'taskWechatBroadcast'
   >,
   string
 > = {
@@ -32,6 +36,7 @@ const TASK_LABELS: Record<
   taskDailyChar: '今日汉字 (预热)',
   taskStatsRefresh: '系统统计 (DB 探活)',
   taskWecomDeliver: '企业微信转发',
+  taskWechatBroadcast: '微信公告',
 };
 
 export function SchedulerPanel({ initial }: { initial: SchedulerConfig }) {
