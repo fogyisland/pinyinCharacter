@@ -81,6 +81,15 @@ vi.mock('@/components/game/IdiomDragGame', () => ({
   IdiomDragGame: () => <div data-idiom-game />,
 }));
 
+/**
+ * The couplet matching game is mocked for the same reason as the idiom
+ * game: the panel's job is only to SHOW it, and the game has its own
+ * test file.
+ */
+vi.mock('@/components/game/DuiYunGame', () => ({
+  DuiYunGame: () => <div data-duiyun-game />,
+}));
+
 /** The query string of the page under test. */
 function setUrl(search: string): void {
   window.history.replaceState({}, '', `/game${search}`);
@@ -473,6 +482,64 @@ describe('QuestTabs — the four panels', () => {
 
       await waitFor(() => {
         expect(document.querySelector('[data-idiom-game]')).not.toBeNull();
+      });
+
+      const questCalls = vi
+        .mocked(global.fetch)
+        .mock.calls.filter((call) => String(call[0]).includes('/api/game/quest'));
+      expect(questCalls).toHaveLength(0);
+    });
+  });
+
+  /**
+   * The 对韵 panel - the couplet matching game.
+   *
+   * The game is mocked: the panel's job is only to SHOW it.
+   */
+  describe('the 对韵 panel', () => {
+    it('offers a 对韵 tab', async () => {
+      setUrl('');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(screen.getByRole('tab', { name: '对韵' })).toBeTruthy();
+      });
+    });
+
+    it('opens the 对韵 panel for ?tab=duiyun', async () => {
+      setUrl('?tab=duiyun');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-duiyun-game]')).not.toBeNull();
+      });
+    });
+
+    it('switches to the 对韵 panel when the tab is clicked', async () => {
+      setUrl('');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-level="1"]')).not.toBeNull();
+      });
+
+      fireEvent.click(screen.getByRole('tab', { name: '对韵' }));
+      await waitFor(() => {
+        expect(document.querySelector('[data-duiyun-game]')).not.toBeNull();
+      });
+      expect(document.querySelector('[data-level="1"]')).toBeNull();
+    });
+
+    it('does not request the level map for the 对韵 panel', async () => {
+      setUrl('?tab=duiyun');
+      const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+      render(<QuestTabs />);
+
+      await waitFor(() => {
+        expect(document.querySelector('[data-duiyun-game]')).not.toBeNull();
       });
 
       const questCalls = vi
