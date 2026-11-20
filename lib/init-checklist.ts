@@ -18,6 +18,7 @@ import { getRuntimeSiteUrl } from './seo/config';
 import { isProd } from './env';
 import { getSeedDataset, SEED_DATASETS } from './seed-registry';
 import { readSeedCounts } from './seed-runner';
+import { compareSchema, type SchemaComparison } from './schema-check';
 
 export type StepStatus = 'ok' | 'warn' | 'fail';
 
@@ -69,6 +70,16 @@ export interface InitContext {
   firstAdmin: AdminUserInfo | null;
   manifestExists: { content: boolean; poems: boolean; classics: boolean };
   tableCount: number;
+  /**
+   * How many tables the repository declares.
+   *
+   * This used to be a hand-written floor (`EXPECTED_TABLES = 22`) next to
+   * a moving target — it drifted as migrations added tables, and a count
+   * cannot tell a missing table from a missing column. It is now the
+   * exact number derived from the repository's own schema sources, and
+   * `0` when the schema probe could not run (meaning "unknown", not
+   * "none expected").
+   */
   expectedTableCount: number;
   /** Chars that carry an HSK grade. */
   hskGraded: number;
@@ -83,11 +94,16 @@ export interface InitReport {
   steps: CheckResult[];
 }
 
-// Minimum table count for a fully-migrated piyin schema. The base schema is
-// defined in scripts/init-db.ts (16 tables); the rest come from subsequent
-// migrations (memberships, payment_orders, sutra_copy_progress, char_story).
-// If the count drops below this, the DB is missing a migration.
-const EXPECTED_TABLES = 22;
+// The table count is no longer hand-written here. The expectation is
+// derived from the repository itself (the base DDL in scripts/init-db.ts
+// plus scripts/migrations/*.sql) by lib/schema-expectations.ts, and
+// compared per table and per column by lib/schema-check.ts.
+//
+// A hand-written count was wrong in two ways: it could not name what was
+// missing, and a missing column did not move the count at all — so the
+// step stayed green while the feature it guarded was broken. The count
+// that survives below is only used as a fallback when the schema probe
+// cannot run at all.
 const DEV_DEFAULT_JWT = 'local-dev-secret-must-be-32-chars-long-1234';
 
 export function parseDbUrl(url: string): DbUrlParts | null {
@@ -123,6 +139,80 @@ interface CountRow extends RowDataPacket {
 }
 
 /**
+ * Build the "required tables" step from the schema comparison.
+ *
+ * The step answers a question the old table-count check could not: **what
+ * exactly is missing**. A count says "21 / 22" and leaves the operator to
+ * diff forty-odd tables by hand; worse, a missing *column* does not move
+ * the count at all, so the step stayed green while the feature it guarded
+ * was broken in one corner of the site.
+ *
+ * So the details name the missing tables and columns, and the fix button
+ * points at the admin screen that runs the migrations.
+ *
+ * When the probe itself failed, the step does **not** report success. An
+ * unreadable database is not a healthy one — and the old check reported
+ * green in exactly that case, because the count query had failed quietly
+ * and left `tableCount` at zero against a floor it never reached by luck.
+ */
+function buildSchemaStep(comparison: SchemaComparison | null): CheckResult {
+  const base = {
+    id: 'db-tables',
+    name: '必需表',
+    description: '数据库的表和列是否跟得上代码(init-db.ts + 所有 migrations)',
+    required: true,
+    fixHref: '/admin/seed',
+    fixLabel: '去补齐',
+  };
+
+  if (!comparison) {
+    return {
+      ...base,
+      status: 'fail',
+      details: '无法读取数据库结构 —— 请检查数据库连接后刷新页面。',
+    };
+  }
+
+  const missingTables = comparison.missingTables;
+  const missingColumns = comparison.missingColumns;
+  const missingCount = missingTables.length + missingColumns.length;
+
+  if (missingCount === 0) {
+    return {
+      ...base,
+      status: 'ok',
+      details:
+        `表 ${comparison.actualTables} / 期望 ${comparison.expectedTables}` +
+        ` · 列 ${comparison.actualColumns} / 期望 ${comparison.expectedColumns}`,
+    };
+  }
+
+  // The tables come first — a missing table is the bigger fact, and its
+  // columns are not listed separately (the table is what has to be
+  // created first).
+  //
+  // The de-duplication is done here and not only upstream: `compareSchema`
+  // is exported, and a display layer that assumes an invariant it does
+  // not control is a display layer that breaks when that assumption
+  // changes.
+  const missingTableNames = new Set(comparison.missingTables.map((missing) => missing.table));
+  const parts: string[] = [];
+  for (const missing of comparison.missingTables) {
+    parts.push(`缺表 ${missing.table}`);
+  }
+  for (const missing of comparison.missingColumns) {
+    if (missingTableNames.has(missing.table)) continue;
+    parts.push(`缺列 ${missing.table}.${missing.column}`);
+  }
+
+  return {
+    ...base,
+    status: 'fail',
+    details: `${parts.join(' · ')}(共 ${parts.length} 项)`,
+  };
+}
+
+/**
  * The HSK coverage row: how many chars exist, and how many carry a grade.
  */
 interface HskCountRow extends RowDataPacket {
@@ -152,6 +242,15 @@ export async function runInitChecks(): Promise<InitReport> {
      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_TYPE = 'BASE TABLE'`,
   )) as CountRow[] | null;
   const tableCount = tableRows && tableRows[0] ? Number(tableRows[0].n) : 0;
+
+  // The schema probe compares the database against what the repository
+  // declares, per table and per column. It is allowed to fail: "we could
+  // not find out" is not the same as "it is fine", and the step below
+  // reports the difference — never a false green.
+  const comparison = await compareSchema().catch((error: unknown) => {
+    console.error('[init-checklist] schema comparison failed:', error);
+    return null;
+  });
 
   const adminRows = (await safeQuery(
     `SELECT id, username, created_at FROM users WHERE is_admin = 1 ORDER BY id LIMIT 1`,
@@ -231,17 +330,8 @@ export async function runInitChecks(): Promise<InitReport> {
       : '连接失败 — 检查 DATABASE_URL 与 MySQL 状态',
   });
 
-  // 2. Required tables
-  steps.push({
-    id: 'db-tables',
-    name: '必需表',
-    description: `init-db.ts + 所有 migrations 至少 ${EXPECTED_TABLES} 张表(chars/users/audit_log/...)`,
-    required: true,
-    status: tableCount >= EXPECTED_TABLES ? 'ok' : 'fail',
-    details: `实际 ${tableCount} / 期望 ≥ ${EXPECTED_TABLES}`,
-    fixHref: undefined, // no UI to fix; tell user to run `pnpm tsx scripts/init-db.ts`
-    fixLabel: '查看 init-db.ts',
-  });
+    // 2. Required tables
+  steps.push(buildSchemaStep(comparison));
 
   // 3. Admin user
   steps.push({
@@ -447,7 +537,7 @@ export async function runInitChecks(): Promise<InitReport> {
     firstAdmin,
     manifestExists,
     tableCount,
-    expectedTableCount: EXPECTED_TABLES,
+    expectedTableCount: comparison ? comparison.expectedTables : 0,
     hskGraded,
     hskTotal,
     hskExpected,

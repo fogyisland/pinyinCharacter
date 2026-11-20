@@ -58,13 +58,13 @@ interface ColumnRow extends RowDataPacket {
 function mockSchema(tables: string[], columns: Array<[string, string]>): void {
   queryMock.mockImplementation(async (sql: string) => {
     if (sql.includes('information_schema.tables')) {
-      const rows: TableRow[] = tables.map((table_name) => ({ table_name }));
+      const rows = tables.map((table_name) => ({ table_name })) as TableRow[];
       return [rows, []];
     }
-    const rows: ColumnRow[] = columns.map(([table_name, column_name]) => ({
+    const rows = columns.map(([table_name, column_name]) => ({
       table_name,
       column_name,
-    }));
+    })) as ColumnRow[];
     return [rows, []];
   });
 }

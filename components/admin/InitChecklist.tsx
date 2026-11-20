@@ -84,8 +84,8 @@ export function InitChecklist({ report }: { report: InitReport }) {
             <dt className="text-ink-soft">表数量</dt>
             <dd className="font-mono text-xs">
               {context.tableCount} 张
-              {context.tableCount < context.expectedTableCount && (
-                <span className="ml-2 text-danger">(期望 ≥ {context.expectedTableCount})</span>
+              {context.expectedTableCount > 0 && context.tableCount !== context.expectedTableCount && (
+                <span className="ml-2 text-danger">(期望 {context.expectedTableCount})</span>
               )}
             </dd>
           </div>

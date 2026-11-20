@@ -20,6 +20,7 @@
  *    state *after* the migration, not before it.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextResponse } from 'next/server';
 
 vi.mock('@/lib/auth', () => ({
   requireAdmin: vi.fn(),
@@ -83,7 +84,8 @@ describe('GET /api/admin/migrate', () => {
   it('refuses a caller who is not an administrator', async () => {
     mockedRequireAdmin.mockResolvedValue({
       ok: false,
-      response: Response.json({ ok: false, error: 'forbidden' }, { status: 403 }),
+      reason: 'forbidden',
+      response: NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 }),
     });
     const res = await GET();
     expect(res.status).toBe(403);
@@ -98,7 +100,8 @@ describe('POST /api/admin/migrate', () => {
     // between the internet and the DDL.
     mockedRequireAdmin.mockResolvedValue({
       ok: false,
-      response: Response.json({ ok: false, error: 'forbidden' }, { status: 403 }),
+      reason: 'forbidden',
+      response: NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 }),
     });
     const res = await POST();
     expect(res.status).toBe(403);
@@ -130,8 +133,9 @@ describe('POST /api/admin/migrate', () => {
     expect(mockedWriteAudit).toHaveBeenCalledTimes(1);
     const call = mockedWriteAudit.mock.calls[0][0];
     expect(call.event).toBe('admin_schema_migrate');
-    expect(call.metadata).toMatchObject({ files: 23, statements: 120 });
-    expect(typeof call.metadata.title).toBe('string');
+    const metadata = call.metadata as { files?: number; statements?: number; title?: string };
+    expect(metadata).toMatchObject({ files: 23, statements: 120 });
+    expect(typeof metadata.title).toBe('string');
   });
 
   it('does not report a failed migration as a success', async () => {

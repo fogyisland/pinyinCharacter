@@ -3,7 +3,8 @@
  *
  * The admin seed screen has to answer one question: **is the database
  * behind the code?** The old answer was a hand-written table count
- * (`EXPECTED_TABLES = 22` in `lib/init-checklist.ts`) compared against
+ * (`EXPECTED_TABLES = 22`, which used to live in
+ * `lib/init-checklist.ts` and has since been removed) compared against
  * `COUNT(*) FROM information_schema.tables`. That check has two holes:
  *
  *  1. **A count cannot name what is missing.** "21 / 22" tells the admin
@@ -220,7 +221,7 @@ export function parseMigrationSql(sql: string): { tables: string[]; columns: str
  */
 export function parseInitDbDdl(source: string): { tables: string[]; columns: string[] } {
   const arrayMatch = source.match(/const\s+DDL[^=]*=\s*\[/);
-  if (!arrayMatch) return { tables: [], columns: [] };
+  if (!arrayMatch || arrayMatch.index === undefined) return { tables: [], columns: [] };
   const body = stripComments(source.slice(arrayMatch.index + arrayMatch[0].length));
   const parsed = parseMigrationSql(body);
   return parsed;
