@@ -1,0 +1,10090 @@
+[
+  {
+    "upper": "天",
+    "lower": "地",
+    "upperPinyin": [
+      "tiān"
+    ],
+    "lowerPinyin": [
+      "dì"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雨",
+    "lower": "风",
+    "upperPinyin": [
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "fēng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "大陆",
+    "lower": "长空",
+    "upperPinyin": [
+      "dà",
+      "lù"
+    ],
+    "lowerPinyin": [
+      "cháng",
+      "kōng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "山花",
+    "lower": "海树",
+    "upperPinyin": [
+      "shān",
+      "huā"
+    ],
+    "lowerPinyin": [
+      "hǎi",
+      "shù"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "赤日",
+    "lower": "苍穹",
+    "upperPinyin": [
+      "chì",
+      "rì"
+    ],
+    "lowerPinyin": [
+      "cāng",
+      "qióng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "日下",
+    "lower": "天中",
+    "upperPinyin": [
+      "rì",
+      "xià"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "zhōng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "河",
+    "lower": "汉",
+    "upperPinyin": [
+      "hé"
+    ],
+    "lowerPinyin": [
+      "hàn"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "绿",
+    "lower": "红",
+    "upperPinyin": [
+      "lǜ"
+    ],
+    "lowerPinyin": [
+      "hóng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "烟楼",
+    "lower": "雪洞",
+    "upperPinyin": [
+      "yān",
+      "lóu"
+    ],
+    "lowerPinyin": [
+      "xuě",
+      "dòng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "月殿",
+    "lower": "天宫",
+    "upperPinyin": [
+      "yuè",
+      "diàn"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "gōng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "山",
+    "lower": "海",
+    "upperPinyin": [
+      "shān"
+    ],
+    "lowerPinyin": [
+      "hǎi"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "四岳",
+    "lower": "三公",
+    "upperPinyin": [
+      "sì",
+      "yuè"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "gōng"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "宫花",
+    "lower": "禁柳",
+    "upperPinyin": [
+      "gōng",
+      "huā"
+    ],
+    "lowerPinyin": [
+      "jìn",
+      "liǔ"
+    ],
+    "rhyme": "一东",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "晨",
+    "lower": "午",
+    "upperPinyin": [
+      "chén"
+    ],
+    "lowerPinyin": [
+      "wǔ"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "夏",
+    "lower": "冬",
+    "upperPinyin": [
+      "xià"
+    ],
+    "lowerPinyin": [
+      "dōng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "下饷",
+    "lower": "高舂",
+    "upperPinyin": [
+      "xià",
+      "xiǎng"
+    ],
+    "lowerPinyin": [
+      "gāo",
+      "chōng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "古柏",
+    "lower": "苍松",
+    "upperPinyin": [
+      "gǔ",
+      "bǎi"
+    ],
+    "lowerPinyin": [
+      "cāng",
+      "sōng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "清",
+    "lower": "淡",
+    "upperPinyin": [
+      "qīng"
+    ],
+    "lowerPinyin": [
+      "dàn"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "暮鼓",
+    "lower": "晨钟",
+    "upperPinyin": [
+      "mù",
+      "gǔ"
+    ],
+    "lowerPinyin": [
+      "chén",
+      "zhōng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "绿绮",
+    "lower": "青锋",
+    "upperPinyin": [
+      "lǜ",
+      "qǐ"
+    ],
+    "lowerPinyin": [
+      "qīng",
+      "fēng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "繁",
+    "lower": "简",
+    "upperPinyin": [
+      "fán"
+    ],
+    "lowerPinyin": [
+      "jiǎn"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "叠",
+    "lower": "重",
+    "upperPinyin": [
+      "dié"
+    ],
+    "lowerPinyin": [
+      "zhòng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "意懒",
+    "lower": "心慵",
+    "upperPinyin": [
+      "yì",
+      "lǎn"
+    ],
+    "lowerPinyin": [
+      "xīn",
+      "yōng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "仙翁",
+    "lower": "释伴",
+    "upperPinyin": [
+      "xiān",
+      "wēng"
+    ],
+    "lowerPinyin": [
+      "shì",
+      "bàn"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "道范",
+    "lower": "儒宗",
+    "upperPinyin": [
+      "dào",
+      "fàn"
+    ],
+    "lowerPinyin": [
+      "rú",
+      "zōng"
+    ],
+    "rhyme": "二冬",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "奇",
+    "lower": "偶",
+    "upperPinyin": [
+      "qí"
+    ],
+    "lowerPinyin": [
+      "ǒu"
+    ],
+    "rhyme": "三江",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "大海",
+    "lower": "长江",
+    "upperPinyin": [
+      "dà",
+      "hǎi"
+    ],
+    "lowerPinyin": [
+      "cháng",
+      "jiāng"
+    ],
+    "rhyme": "三江",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "金盘",
+    "lower": "玉盏",
+    "upperPinyin": [
+      "jīn",
+      "pán"
+    ],
+    "lowerPinyin": [
+      "yù",
+      "zhǎn"
+    ],
+    "rhyme": "三江",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "颜",
+    "lower": "貌",
+    "upperPinyin": [
+      "yán"
+    ],
+    "lowerPinyin": [
+      "mào"
+    ],
+    "rhyme": "三江",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "像",
+    "lower": "庞",
+    "upperPinyin": [
+      "xiàng"
+    ],
+    "lowerPinyin": [
+      "páng"
+    ],
+    "rhyme": "三江",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "揽辔",
+    "lower": "飞艎",
+    "upperPinyin": [
+      "lǎn",
+      "pèi"
+    ],
+    "lowerPinyin": [
+      "fēi",
+      "huáng"
+    ],
+    "rhyme": "三江",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "山亭",
+    "lower": "水榭",
+    "upperPinyin": [
+      "shān",
+      "tíng"
+    ],
+    "lowerPinyin": [
+      "shuǐ",
+      "xiè"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "菹",
+    "lower": "醢",
+    "upperPinyin": [
+      "zū"
+    ],
+    "lowerPinyin": [
+      "hǎi"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "赋",
+    "lower": "诗",
+    "upperPinyin": [
+      "fù"
+    ],
+    "lowerPinyin": [
+      "shī"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "剑客",
+    "lower": "琴师",
+    "upperPinyin": [
+      "jiàn",
+      "kè"
+    ],
+    "lowerPinyin": [
+      "qín",
+      "shī"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "箴",
+    "lower": "赞",
+    "upperPinyin": [
+      "zhēn"
+    ],
+    "lowerPinyin": [
+      "zàn"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "缶",
+    "lower": "卮",
+    "upperPinyin": [
+      "fǒu"
+    ],
+    "lowerPinyin": [
+      "zhī"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "瑞草",
+    "lower": "灵芝",
+    "upperPinyin": [
+      "ruì",
+      "cǎo"
+    ],
+    "lowerPinyin": [
+      "líng",
+      "zhī"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "争",
+    "lower": "让",
+    "upperPinyin": [
+      "zhēng"
+    ],
+    "lowerPinyin": [
+      "ràng"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "望",
+    "lower": "思",
+    "upperPinyin": [
+      "wàng"
+    ],
+    "lowerPinyin": [
+      "sī"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "野葛",
+    "lower": "山栀",
+    "upperPinyin": [
+      "yě",
+      "gě"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "zhī"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "仙风",
+    "lower": "道骨",
+    "upperPinyin": [
+      "xiān",
+      "fēng"
+    ],
+    "lowerPinyin": [
+      "dào",
+      "gǔ"
+    ],
+    "rhyme": "四支",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "贤",
+    "lower": "圣",
+    "upperPinyin": [
+      "xián"
+    ],
+    "lowerPinyin": [
+      "shèng"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "是",
+    "lower": "非",
+    "upperPinyin": [
+      "shì"
+    ],
+    "lowerPinyin": [
+      "fēi"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鱼书",
+    "lower": "雁字",
+    "upperPinyin": [
+      "yú",
+      "shū"
+    ],
+    "lowerPinyin": [
+      "yàn",
+      "zì"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "草舍",
+    "lower": "柴扉",
+    "upperPinyin": [
+      "cǎo",
+      "shè"
+    ],
+    "lowerPinyin": [
+      "chái",
+      "fēi"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "红瘦",
+    "lower": "绿肥",
+    "upperPinyin": [
+      "hóng",
+      "shòu"
+    ],
+    "lowerPinyin": [
+      "lǜ",
+      "féi"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "戈",
+    "lower": "甲",
+    "upperPinyin": [
+      "gē"
+    ],
+    "lowerPinyin": [
+      "jiǎ"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "幄",
+    "lower": "帏",
+    "upperPinyin": [
+      "wò"
+    ],
+    "lowerPinyin": [
+      "wéi"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "荡荡",
+    "lower": "巍巍",
+    "upperPinyin": [
+      "dàng",
+      "dàng"
+    ],
+    "lowerPinyin": [
+      "wēi",
+      "wēi"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "严滩",
+    "lower": "邵圃",
+    "upperPinyin": [
+      "yán",
+      "tān"
+    ],
+    "lowerPinyin": [
+      "shào",
+      "pǔ"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "虎榜",
+    "lower": "龙旗",
+    "upperPinyin": [
+      "hǔ",
+      "bǎng"
+    ],
+    "lowerPinyin": [
+      "lóng",
+      "qí"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "衰",
+    "lower": "盛",
+    "upperPinyin": [
+      "shuāi"
+    ],
+    "lowerPinyin": [
+      "shèng"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "密",
+    "lower": "稀",
+    "upperPinyin": [
+      "mì"
+    ],
+    "lowerPinyin": [
+      "xī"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鸡窗",
+    "lower": "雁塔",
+    "upperPinyin": [
+      "jī",
+      "chuāng"
+    ],
+    "lowerPinyin": [
+      "yàn",
+      "tǎ"
+    ],
+    "rhyme": "五微",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "羹",
+    "lower": "饭",
+    "upperPinyin": [
+      "gēng"
+    ],
+    "lowerPinyin": [
+      "fàn"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "柳",
+    "lower": "榆",
+    "upperPinyin": [
+      "liǔ"
+    ],
+    "lowerPinyin": [
+      "yú"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "短袖",
+    "lower": "长裾",
+    "upperPinyin": [
+      "duǎn",
+      "xiù"
+    ],
+    "lowerPinyin": [
+      "cháng",
+      "jū"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鸡冠",
+    "lower": "凤尾",
+    "upperPinyin": [
+      "jī",
+      "guān"
+    ],
+    "lowerPinyin": [
+      "fèng",
+      "wěi"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "吾",
+    "lower": "汝",
+    "upperPinyin": [
+      "wú"
+    ],
+    "lowerPinyin": [
+      "rǔ"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "尔",
+    "lower": "余",
+    "upperPinyin": [
+      "ěr"
+    ],
+    "lowerPinyin": [
+      "yú"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "选授",
+    "lower": "升除",
+    "upperPinyin": [
+      "xuǎn",
+      "shòu"
+    ],
+    "lowerPinyin": [
+      "shēng",
+      "chú"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "书箱",
+    "lower": "药柜",
+    "upperPinyin": [
+      "shū",
+      "xiāng"
+    ],
+    "lowerPinyin": [
+      "yào",
+      "guì"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "耒耜",
+    "lower": "耰锄",
+    "upperPinyin": [
+      "lěi",
+      "sì"
+    ],
+    "lowerPinyin": [
+      "yōu",
+      "chú"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "欹",
+    "lower": "正",
+    "upperPinyin": [
+      "qī"
+    ],
+    "lowerPinyin": [
+      "zhèng"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "密",
+    "lower": "疏",
+    "upperPinyin": [
+      "mì"
+    ],
+    "lowerPinyin": [
+      "shū"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "水曲",
+    "lower": "山纡",
+    "upperPinyin": [
+      "shuǐ",
+      "qǔ"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "yū"
+    ],
+    "rhyme": "六鱼",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "有",
+    "lower": "无",
+    "upperPinyin": [
+      "yǒu"
+    ],
+    "lowerPinyin": [
+      "wú"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "布谷",
+    "lower": "提壶",
+    "upperPinyin": [
+      "bù",
+      "gǔ"
+    ],
+    "lowerPinyin": [
+      "tí",
+      "hú"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "毛锥",
+    "lower": "羽扇",
+    "upperPinyin": [
+      "máo",
+      "zhuī"
+    ],
+    "lowerPinyin": [
+      "yǔ",
+      "shàn"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "蹈海",
+    "lower": "归湖",
+    "upperPinyin": [
+      "dǎo",
+      "hǎi"
+    ],
+    "lowerPinyin": [
+      "guī",
+      "hú"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "罗",
+    "lower": "绮",
+    "upperPinyin": [
+      "luó"
+    ],
+    "lowerPinyin": [
+      "qǐ"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "柏秀",
+    "lower": "松枯",
+    "upperPinyin": [
+      "bǎi",
+      "xiù"
+    ],
+    "lowerPinyin": [
+      "sōng",
+      "kū"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "中元",
+    "lower": "上巳",
+    "upperPinyin": [
+      "zhōng",
+      "yuán"
+    ],
+    "lowerPinyin": [
+      "shàng",
+      "sì"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "返璧",
+    "lower": "还珠",
+    "upperPinyin": [
+      "fǎn",
+      "bì"
+    ],
+    "lowerPinyin": [
+      "hái",
+      "zhū"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "宾",
+    "lower": "主",
+    "upperPinyin": [
+      "bīn"
+    ],
+    "lowerPinyin": [
+      "zhǔ"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "婢",
+    "lower": "奴",
+    "upperPinyin": [
+      "bì"
+    ],
+    "lowerPinyin": [
+      "nú"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "升堂",
+    "lower": "入室",
+    "upperPinyin": [
+      "shēng",
+      "táng"
+    ],
+    "lowerPinyin": [
+      "rù",
+      "shì"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鼓瑟",
+    "lower": "投壶",
+    "upperPinyin": [
+      "gǔ",
+      "sè"
+    ],
+    "lowerPinyin": [
+      "tóu",
+      "hú"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "君",
+    "lower": "父",
+    "upperPinyin": [
+      "jūn"
+    ],
+    "lowerPinyin": [
+      "fù"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "魏",
+    "lower": "吴",
+    "upperPinyin": [
+      "wèi"
+    ],
+    "lowerPinyin": [
+      "wú"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "北岳",
+    "lower": "西湖",
+    "upperPinyin": [
+      "běi",
+      "yuè"
+    ],
+    "lowerPinyin": [
+      "xī",
+      "hú"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "菜蔬",
+    "lower": "茶荈",
+    "upperPinyin": [
+      "cài",
+      "shū"
+    ],
+    "lowerPinyin": [
+      "chá",
+      "chuǎn"
+    ],
+    "rhyme": "七虞",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鸾",
+    "lower": "凤",
+    "upperPinyin": [
+      "luán"
+    ],
+    "lowerPinyin": [
+      "fèng"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "犬",
+    "lower": "鸡",
+    "upperPinyin": [
+      "quǎn"
+    ],
+    "lowerPinyin": [
+      "jī"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "长生",
+    "lower": "益智",
+    "upperPinyin": [
+      "cháng",
+      "shēng"
+    ],
+    "lowerPinyin": [
+      "yì",
+      "zhì"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "老幼",
+    "lower": "旄倪",
+    "upperPinyin": [
+      "lǎo",
+      "yòu"
+    ],
+    "lowerPinyin": [
+      "máo",
+      "ní"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鸣",
+    "lower": "吠",
+    "upperPinyin": [
+      "míng"
+    ],
+    "lowerPinyin": [
+      "fèi"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "泛",
+    "lower": "栖",
+    "upperPinyin": [
+      "fàn"
+    ],
+    "lowerPinyin": [
+      "qī"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "燕语",
+    "lower": "莺啼",
+    "upperPinyin": [
+      "yàn",
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "yīng",
+      "tí"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "珊瑚",
+    "lower": "玛瑙",
+    "upperPinyin": [
+      "shān",
+      "hú"
+    ],
+    "lowerPinyin": [
+      "mǎ",
+      "nǎo"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "琥珀",
+    "lower": "玻璃",
+    "upperPinyin": [
+      "hǔ",
+      "pò"
+    ],
+    "lowerPinyin": [
+      "bō",
+      "lí"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "楚",
+    "lower": "齐",
+    "upperPinyin": [
+      "chǔ"
+    ],
+    "lowerPinyin": [
+      "qí"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "柳岸",
+    "lower": "桃蹊",
+    "upperPinyin": [
+      "liǔ",
+      "àn"
+    ],
+    "lowerPinyin": [
+      "táo",
+      "qī"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "纱窗",
+    "lower": "绣户",
+    "upperPinyin": [
+      "shā",
+      "chuāng"
+    ],
+    "lowerPinyin": [
+      "xiù",
+      "hù"
+    ],
+    "rhyme": "八齐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "门",
+    "lower": "户",
+    "upperPinyin": [
+      "mén"
+    ],
+    "lowerPinyin": [
+      "hù"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "陌",
+    "lower": "街",
+    "upperPinyin": [
+      "mò"
+    ],
+    "lowerPinyin": [
+      "jiē"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "斗鸡",
+    "lower": "挥麈",
+    "upperPinyin": [
+      "dòu",
+      "jī"
+    ],
+    "lowerPinyin": [
+      "huī",
+      "zhǔ"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "凤髻",
+    "lower": "鸾钗",
+    "upperPinyin": [
+      "fèng",
+      "jì"
+    ],
+    "lowerPinyin": [
+      "luán",
+      "chāi"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "冠",
+    "lower": "履",
+    "upperPinyin": [
+      "guān"
+    ],
+    "lowerPinyin": [
+      "lǚ"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "袜",
+    "lower": "鞋",
+    "upperPinyin": [
+      "wà"
+    ],
+    "lowerPinyin": [
+      "xié"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "海角",
+    "lower": "天涯",
+    "upperPinyin": [
+      "hǎi",
+      "jiǎo"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "yá"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鸡人",
+    "lower": "虎旅",
+    "upperPinyin": [
+      "jī",
+      "rén"
+    ],
+    "lowerPinyin": [
+      "hǔ",
+      "lǚ"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "六市",
+    "lower": "三街",
+    "upperPinyin": [
+      "liù",
+      "shì"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "jiē"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "皎皎",
+    "lower": "皑皑",
+    "upperPinyin": [
+      "jiǎo",
+      "jiǎo"
+    ],
+    "lowerPinyin": [
+      "ái",
+      "ái"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "勤",
+    "lower": "俭",
+    "upperPinyin": [
+      "qín"
+    ],
+    "lowerPinyin": [
+      "jiǎn"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "巧",
+    "lower": "乖",
+    "upperPinyin": [
+      "qiǎo"
+    ],
+    "lowerPinyin": [
+      "guāi"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "水榭",
+    "lower": "山斋",
+    "upperPinyin": [
+      "shuǐ",
+      "xiè"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "zhāi"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "冰桃",
+    "lower": "雪藕",
+    "upperPinyin": [
+      "bīng",
+      "táo"
+    ],
+    "lowerPinyin": [
+      "xuě",
+      "ǒu"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "舞裙",
+    "lower": "歌袖",
+    "upperPinyin": [
+      "wǔ",
+      "qún"
+    ],
+    "lowerPinyin": [
+      "gē",
+      "xiù"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "玉陛",
+    "lower": "瑶阶",
+    "upperPinyin": [
+      "yù",
+      "bì"
+    ],
+    "lowerPinyin": [
+      "yáo",
+      "jiē"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "虎兕",
+    "lower": "狼豺",
+    "upperPinyin": [
+      "hǔ",
+      "sì"
+    ],
+    "lowerPinyin": [
+      "láng",
+      "chái"
+    ],
+    "rhyme": "九佳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "春",
+    "lower": "夏",
+    "upperPinyin": [
+      "chūn"
+    ],
+    "lowerPinyin": [
+      "xià"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "喜",
+    "lower": "哀",
+    "upperPinyin": [
+      "xǐ"
+    ],
+    "lowerPinyin": [
+      "āi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "大手",
+    "lower": "长才",
+    "upperPinyin": [
+      "dà",
+      "shǒu"
+    ],
+    "lowerPinyin": [
+      "cháng",
+      "cái"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "风清",
+    "lower": "月朗",
+    "upperPinyin": [
+      "fēng",
+      "qīng"
+    ],
+    "lowerPinyin": [
+      "yuè",
+      "lǎng"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "地阔",
+    "lower": "天开",
+    "upperPinyin": [
+      "dì",
+      "kuò"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "kāi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "朝",
+    "lower": "暮",
+    "upperPinyin": [
+      "cháo"
+    ],
+    "lowerPinyin": [
+      "mù"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "去",
+    "lower": "来",
+    "upperPinyin": [
+      "qù"
+    ],
+    "lowerPinyin": [
+      "lái"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "庶矣",
+    "lower": "康哉",
+    "upperPinyin": [
+      "shù",
+      "yǐ"
+    ],
+    "lowerPinyin": [
+      "kāng",
+      "zāi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "马肝",
+    "lower": "鸡肋",
+    "upperPinyin": [
+      "mǎ",
+      "gān"
+    ],
+    "lowerPinyin": [
+      "jī",
+      "lèi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "杏眼",
+    "lower": "桃腮",
+    "upperPinyin": [
+      "xìng",
+      "yǎn"
+    ],
+    "lowerPinyin": [
+      "táo",
+      "sāi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "朔雪",
+    "lower": "春雷",
+    "upperPinyin": [
+      "shuò",
+      "xuě"
+    ],
+    "lowerPinyin": [
+      "chūn",
+      "léi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "忠",
+    "lower": "信",
+    "upperPinyin": [
+      "zhōng"
+    ],
+    "lowerPinyin": [
+      "xìn"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "忖度",
+    "lower": "疑猜",
+    "upperPinyin": [
+      "cǔn",
+      "dù"
+    ],
+    "lowerPinyin": [
+      "yí",
+      "cāi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鹊喜",
+    "lower": "蛩哀",
+    "upperPinyin": [
+      "què",
+      "xǐ"
+    ],
+    "lowerPinyin": [
+      "qióng",
+      "āi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "倒斝",
+    "lower": "衔杯",
+    "upperPinyin": [
+      "dǎo",
+      "jiǎ"
+    ],
+    "lowerPinyin": [
+      "xián",
+      "bēi"
+    ],
+    "rhyme": "十灰",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "凤",
+    "lower": "麟",
+    "upperPinyin": [
+      "fèng"
+    ],
+    "lowerPinyin": [
+      "lín"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "兄",
+    "lower": "弟",
+    "upperPinyin": [
+      "xiōng"
+    ],
+    "lowerPinyin": [
+      "dì"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "吏",
+    "lower": "民",
+    "upperPinyin": [
+      "lì"
+    ],
+    "lowerPinyin": [
+      "mín"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "父子",
+    "lower": "君臣",
+    "upperPinyin": [
+      "fù",
+      "zǐ"
+    ],
+    "lowerPinyin": [
+      "jūn",
+      "chén"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "勾丁",
+    "lower": "甫甲",
+    "upperPinyin": [
+      "gōu",
+      "dīng"
+    ],
+    "lowerPinyin": [
+      "fǔ",
+      "jiǎ"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "赴卯",
+    "lower": "同寅",
+    "upperPinyin": [
+      "fù",
+      "mǎo"
+    ],
+    "lowerPinyin": [
+      "tóng",
+      "yín"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "四皓",
+    "lower": "三仁",
+    "upperPinyin": [
+      "sì",
+      "hào"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "rén"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "申",
+    "lower": "午",
+    "upperPinyin": [
+      "shēn"
+    ],
+    "lowerPinyin": [
+      "wǔ"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "侃",
+    "lower": "訚",
+    "upperPinyin": [
+      "kǎn"
+    ],
+    "lowerPinyin": [
+      "yín"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "楚兰",
+    "lower": "湘芷",
+    "upperPinyin": [
+      "chǔ",
+      "lán"
+    ],
+    "lowerPinyin": [
+      "xiāng",
+      "zhǐ"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "碧柳",
+    "lower": "青筠",
+    "upperPinyin": [
+      "bì",
+      "liǔ"
+    ],
+    "lowerPinyin": [
+      "qīng",
+      "yún"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "粉颈",
+    "lower": "朱唇",
+    "upperPinyin": [
+      "fěn",
+      "jǐng"
+    ],
+    "lowerPinyin": [
+      "zhū",
+      "chún"
+    ],
+    "rhyme": "十一真",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "忧",
+    "lower": "喜",
+    "upperPinyin": [
+      "yōu"
+    ],
+    "lowerPinyin": [
+      "xǐ"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "五典",
+    "lower": "三坟",
+    "upperPinyin": [
+      "wǔ",
+      "diǎn"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "fén"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "夏耨",
+    "lower": "春耘",
+    "upperPinyin": [
+      "xià",
+      "nòu"
+    ],
+    "lowerPinyin": [
+      "chūn",
+      "yún"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "暮雨",
+    "lower": "朝云",
+    "upperPinyin": [
+      "mù",
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "cháo",
+      "yún"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "词",
+    "lower": "赋",
+    "upperPinyin": [
+      "cí"
+    ],
+    "lowerPinyin": [
+      "fù"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "懒",
+    "lower": "勤",
+    "upperPinyin": [
+      "lǎn"
+    ],
+    "lowerPinyin": [
+      "qín"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "类聚",
+    "lower": "群分",
+    "upperPinyin": [
+      "lèi",
+      "jù"
+    ],
+    "lowerPinyin": [
+      "qún",
+      "fēn"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "带草",
+    "lower": "香芸",
+    "upperPinyin": [
+      "dài",
+      "cǎo"
+    ],
+    "lowerPinyin": [
+      "xiāng",
+      "yún"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "旧话",
+    "lower": "新闻",
+    "upperPinyin": [
+      "jiù",
+      "huà"
+    ],
+    "lowerPinyin": [
+      "xīn",
+      "wén"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "言",
+    "lower": "笑",
+    "upperPinyin": [
+      "yán"
+    ],
+    "lowerPinyin": [
+      "xiào"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "绩",
+    "lower": "勋",
+    "upperPinyin": [
+      "jì"
+    ],
+    "lowerPinyin": [
+      "xūn"
+    ],
+    "rhyme": "十二文",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "季",
+    "lower": "昆",
+    "upperPinyin": [
+      "jì"
+    ],
+    "lowerPinyin": [
+      "kūn"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "永巷",
+    "lower": "长门",
+    "upperPinyin": [
+      "yǒng",
+      "xiàng"
+    ],
+    "lowerPinyin": [
+      "cháng",
+      "mén"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "旅舍",
+    "lower": "军屯",
+    "upperPinyin": [
+      "lǚ",
+      "shè"
+    ],
+    "lowerPinyin": [
+      "jūn",
+      "tún"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "叠坎",
+    "lower": "重坤",
+    "upperPinyin": [
+      "dié",
+      "kǎn"
+    ],
+    "lowerPinyin": [
+      "zhòng",
+      "kūn"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "祖",
+    "lower": "孙",
+    "upperPinyin": [
+      "zǔ"
+    ],
+    "lowerPinyin": [
+      "sūn"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "兰台",
+    "lower": "桂殿",
+    "upperPinyin": [
+      "lán",
+      "tái"
+    ],
+    "lowerPinyin": [
+      "guì",
+      "diàn"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "海岛",
+    "lower": "山村",
+    "upperPinyin": [
+      "hǎi",
+      "dǎo"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "cūn"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "报怨",
+    "lower": "怀恩",
+    "upperPinyin": [
+      "bào",
+      "yuàn"
+    ],
+    "lowerPinyin": [
+      "huái",
+      "ēn"
+    ],
+    "rhyme": "十三元",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "治",
+    "lower": "安",
+    "upperPinyin": [
+      "zhì"
+    ],
+    "lowerPinyin": [
+      "ān"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "地主",
+    "lower": "天官",
+    "upperPinyin": [
+      "dì",
+      "zhǔ"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "guān"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "坎男",
+    "lower": "离女",
+    "upperPinyin": [
+      "kǎn",
+      "nán"
+    ],
+    "lowerPinyin": [
+      "lí",
+      "nǚ"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "杜撰",
+    "lower": "包弹",
+    "upperPinyin": [
+      "dù",
+      "zhuàn"
+    ],
+    "lowerPinyin": [
+      "bāo",
+      "tán"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "肥",
+    "lower": "瘦",
+    "upperPinyin": [
+      "féi"
+    ],
+    "lowerPinyin": [
+      "shòu"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "窄",
+    "lower": "宽",
+    "upperPinyin": [
+      "zhǎi"
+    ],
+    "lowerPinyin": [
+      "kuān"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "指环",
+    "lower": "腰带",
+    "upperPinyin": [
+      "zhǐ",
+      "huán"
+    ],
+    "lowerPinyin": [
+      "yāo",
+      "dài"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "画栋",
+    "lower": "雕栏",
+    "upperPinyin": [
+      "huà",
+      "dòng"
+    ],
+    "lowerPinyin": [
+      "diāo",
+      "lán"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "行",
+    "lower": "卧",
+    "upperPinyin": [
+      "xíng"
+    ],
+    "lowerPinyin": [
+      "wò"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "听",
+    "lower": "看",
+    "upperPinyin": [
+      "tīng"
+    ],
+    "lowerPinyin": [
+      "kàn"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鹿洞",
+    "lower": "鱼滩",
+    "upperPinyin": [
+      "lù",
+      "dòng"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "tān"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "蛟腾",
+    "lower": "豹变",
+    "upperPinyin": [
+      "jiāo",
+      "téng"
+    ],
+    "lowerPinyin": [
+      "bào",
+      "biàn"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "虎踞",
+    "lower": "龙蟠",
+    "upperPinyin": [
+      "hǔ",
+      "jù"
+    ],
+    "lowerPinyin": [
+      "lóng",
+      "pán"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "手辣",
+    "lower": "心酸",
+    "upperPinyin": [
+      "shǒu",
+      "là"
+    ],
+    "lowerPinyin": [
+      "xīn",
+      "suān"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "莺莺",
+    "lower": "燕燕",
+    "upperPinyin": [
+      "yīng",
+      "yīng"
+    ],
+    "lowerPinyin": [
+      "yàn",
+      "yàn"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "小小",
+    "lower": "端端",
+    "upperPinyin": [
+      "xiǎo",
+      "xiǎo"
+    ],
+    "lowerPinyin": [
+      "duān",
+      "duān"
+    ],
+    "rhyme": "十四寒",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "林",
+    "lower": "坞",
+    "upperPinyin": [
+      "lín"
+    ],
+    "lowerPinyin": [
+      "wù"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "岭",
+    "lower": "峦",
+    "upperPinyin": [
+      "lǐng"
+    ],
+    "lowerPinyin": [
+      "luán"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "昼永",
+    "lower": "春闲",
+    "upperPinyin": [
+      "zhòu",
+      "yǒng"
+    ],
+    "lowerPinyin": [
+      "chūn",
+      "xián"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "谋深",
+    "lower": "望重",
+    "upperPinyin": [
+      "móu",
+      "shēn"
+    ],
+    "lowerPinyin": [
+      "wàng",
+      "zhòng"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "任大",
+    "lower": "投艰",
+    "upperPinyin": [
+      "rèn",
+      "dà"
+    ],
+    "lowerPinyin": [
+      "tóu",
+      "jiān"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "临",
+    "lower": "仿",
+    "upperPinyin": [
+      "lín"
+    ],
+    "lowerPinyin": [
+      "fǎng"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "吝",
+    "lower": "悭",
+    "upperPinyin": [
+      "lìn"
+    ],
+    "lowerPinyin": [
+      "qiān"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "讨逆",
+    "lower": "平蛮",
+    "upperPinyin": [
+      "tǎo",
+      "nì"
+    ],
+    "lowerPinyin": [
+      "píng",
+      "mán"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "忠肝",
+    "lower": "义胆",
+    "upperPinyin": [
+      "zhōng",
+      "gān"
+    ],
+    "lowerPinyin": [
+      "yì",
+      "dǎn"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雾鬓",
+    "lower": "云鬟",
+    "upperPinyin": [
+      "wù",
+      "bìn"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "huán"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "月貌",
+    "lower": "天颜",
+    "upperPinyin": [
+      "yuè",
+      "mào"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "yán"
+    ],
+    "rhyme": "十五删",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "寒",
+    "lower": "暑",
+    "upperPinyin": [
+      "hán"
+    ],
+    "lowerPinyin": [
+      "shǔ"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "日",
+    "lower": "年",
+    "upperPinyin": [
+      "rì"
+    ],
+    "lowerPinyin": [
+      "nián"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "丹山",
+    "lower": "碧水",
+    "upperPinyin": [
+      "dān",
+      "shān"
+    ],
+    "lowerPinyin": [
+      "bì",
+      "shuǐ"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "淡雨",
+    "lower": "轻烟",
+    "upperPinyin": [
+      "dàn",
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "qīng",
+      "yān"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雪赋",
+    "lower": "云笺",
+    "upperPinyin": [
+      "xuě",
+      "fù"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "jiān"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "轻",
+    "lower": "重",
+    "upperPinyin": [
+      "qīng"
+    ],
+    "lowerPinyin": [
+      "zhòng"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "脆",
+    "lower": "坚",
+    "upperPinyin": [
+      "cuì"
+    ],
+    "lowerPinyin": [
+      "jiān"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "碧玉",
+    "lower": "青钱",
+    "upperPinyin": [
+      "bì",
+      "yù"
+    ],
+    "lowerPinyin": [
+      "qīng",
+      "qián"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "郊寒",
+    "lower": "岛瘦",
+    "upperPinyin": [
+      "jiāo",
+      "hán"
+    ],
+    "lowerPinyin": [
+      "dǎo",
+      "shòu"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "酒圣",
+    "lower": "诗仙",
+    "upperPinyin": [
+      "jiǔ",
+      "shèng"
+    ],
+    "lowerPinyin": [
+      "shī",
+      "xiān"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "吟",
+    "lower": "咏",
+    "upperPinyin": [
+      "yín"
+    ],
+    "lowerPinyin": [
+      "yǒng"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "授",
+    "lower": "传",
+    "upperPinyin": [
+      "shòu"
+    ],
+    "lowerPinyin": [
+      "chuán"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "乐矣",
+    "lower": "凄然",
+    "upperPinyin": [
+      "lè",
+      "yǐ"
+    ],
+    "lowerPinyin": [
+      "qī",
+      "rán"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "风鹏",
+    "lower": "雪雁",
+    "upperPinyin": [
+      "fēng",
+      "péng"
+    ],
+    "lowerPinyin": [
+      "xuě",
+      "yàn"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "董杏",
+    "lower": "周莲",
+    "upperPinyin": [
+      "dǒng",
+      "xìng"
+    ],
+    "lowerPinyin": [
+      "zhōu",
+      "lián"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "钟鼓",
+    "lower": "管弦",
+    "upperPinyin": [
+      "zhōng",
+      "gǔ"
+    ],
+    "lowerPinyin": [
+      "guǎn",
+      "xián"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "中",
+    "lower": "外",
+    "upperPinyin": [
+      "zhōng"
+    ],
+    "lowerPinyin": [
+      "wài"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "后",
+    "lower": "先",
+    "upperPinyin": [
+      "hòu"
+    ],
+    "lowerPinyin": [
+      "xiān"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "树下",
+    "lower": "花前",
+    "upperPinyin": [
+      "shù",
+      "xià"
+    ],
+    "lowerPinyin": [
+      "huā",
+      "qián"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "玉树",
+    "lower": "金屋",
+    "upperPinyin": [
+      "yù",
+      "shù"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "wū"
+    ],
+    "rhyme": "一先",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "琴",
+    "lower": "管",
+    "upperPinyin": [
+      "qín"
+    ],
+    "lowerPinyin": [
+      "guǎn"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "釜",
+    "lower": "瓢",
+    "upperPinyin": [
+      "fǔ"
+    ],
+    "lowerPinyin": [
+      "piáo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "水怪",
+    "lower": "花妖",
+    "upperPinyin": [
+      "shuǐ",
+      "guài"
+    ],
+    "lowerPinyin": [
+      "huā",
+      "yāo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "斗胆",
+    "lower": "弓腰",
+    "upperPinyin": [
+      "dòu",
+      "dǎn"
+    ],
+    "lowerPinyin": [
+      "gōng",
+      "yāo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "荣",
+    "lower": "悴",
+    "upperPinyin": [
+      "róng"
+    ],
+    "lowerPinyin": [
+      "cuì"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "露地",
+    "lower": "云霄",
+    "upperPinyin": [
+      "lù",
+      "dì"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "xiāo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "六诏",
+    "lower": "三苗",
+    "upperPinyin": [
+      "liù",
+      "zhào"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "miáo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "牧",
+    "lower": "樵",
+    "upperPinyin": [
+      "mù"
+    ],
+    "lowerPinyin": [
+      "qiáo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "琥珀",
+    "lower": "琼瑶",
+    "upperPinyin": [
+      "hǔ",
+      "pò"
+    ],
+    "lowerPinyin": [
+      "qióng",
+      "yáo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "兔毫",
+    "lower": "鸿爪",
+    "upperPinyin": [
+      "tù",
+      "háo"
+    ],
+    "lowerPinyin": [
+      "hóng",
+      "zhuǎ"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "桂棹",
+    "lower": "兰桡",
+    "upperPinyin": [
+      "guì",
+      "zhào"
+    ],
+    "lowerPinyin": [
+      "lán",
+      "ráo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "水远",
+    "lower": "山遥",
+    "upperPinyin": [
+      "shuǐ",
+      "yuǎn"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "yáo"
+    ],
+    "rhyme": "二萧",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "诗",
+    "lower": "礼",
+    "upperPinyin": [
+      "shī"
+    ],
+    "lowerPinyin": [
+      "lǐ"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "卦",
+    "lower": "爻",
+    "upperPinyin": [
+      "guà"
+    ],
+    "lowerPinyin": [
+      "yáo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "燕引",
+    "lower": "莺调",
+    "upperPinyin": [
+      "yàn",
+      "yǐn"
+    ],
+    "lowerPinyin": [
+      "yīng",
+      "tiáo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "晨钟",
+    "lower": "暮鼓",
+    "upperPinyin": [
+      "chén",
+      "zhōng"
+    ],
+    "lowerPinyin": [
+      "mù",
+      "gǔ"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "野蔌",
+    "lower": "山肴",
+    "upperPinyin": [
+      "yě",
+      "sù"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "yáo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "猛虎",
+    "lower": "神獒",
+    "upperPinyin": [
+      "měng",
+      "hǔ"
+    ],
+    "lowerPinyin": [
+      "shén",
+      "áo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "歌",
+    "lower": "舞",
+    "upperPinyin": [
+      "gē"
+    ],
+    "lowerPinyin": [
+      "wǔ"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "笑",
+    "lower": "嘲",
+    "upperPinyin": [
+      "xiào"
+    ],
+    "lowerPinyin": [
+      "cháo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "耳语",
+    "lower": "神交",
+    "upperPinyin": [
+      "ěr",
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "shén",
+      "jiāo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "焉乌",
+    "lower": "亥豕",
+    "upperPinyin": [
+      "yān",
+      "wū"
+    ],
+    "lowerPinyin": [
+      "hài",
+      "shǐ"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "獭髓",
+    "lower": "鸾胶",
+    "upperPinyin": [
+      "tǎ",
+      "suǐ"
+    ],
+    "lowerPinyin": [
+      "luán",
+      "jiāo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "衙",
+    "lower": "舍",
+    "upperPinyin": [
+      "yá"
+    ],
+    "lowerPinyin": [
+      "shè"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "廪",
+    "lower": "庖",
+    "upperPinyin": [
+      "lǐn"
+    ],
+    "lowerPinyin": [
+      "páo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "玉磬",
+    "lower": "金铙",
+    "upperPinyin": [
+      "yù",
+      "qìng"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "náo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "起凤",
+    "lower": "腾蛟",
+    "upperPinyin": [
+      "qǐ",
+      "fèng"
+    ],
+    "lowerPinyin": [
+      "téng",
+      "jiāo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "露果",
+    "lower": "风梢",
+    "upperPinyin": [
+      "lù",
+      "guǒ"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "shāo"
+    ],
+    "rhyme": "三肴",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "麦浪",
+    "lower": "松涛",
+    "upperPinyin": [
+      "mài",
+      "làng"
+    ],
+    "lowerPinyin": [
+      "sōng",
+      "tāo"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "美誉",
+    "lower": "嘉褒",
+    "upperPinyin": [
+      "měi",
+      "yù"
+    ],
+    "lowerPinyin": [
+      "jiā",
+      "bāo"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "梅",
+    "lower": "杏",
+    "upperPinyin": [
+      "méi"
+    ],
+    "lowerPinyin": [
+      "xìng"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "李",
+    "lower": "桃",
+    "upperPinyin": [
+      "lǐ"
+    ],
+    "lowerPinyin": [
+      "táo"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "棫朴",
+    "lower": "旌旄",
+    "upperPinyin": [
+      "yù",
+      "pǔ"
+    ],
+    "lowerPinyin": [
+      "jīng",
+      "máo"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "酒仙",
+    "lower": "诗史",
+    "upperPinyin": [
+      "jiǔ",
+      "xiān"
+    ],
+    "lowerPinyin": [
+      "shī",
+      "shǐ"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "拙逸",
+    "lower": "贵劳",
+    "upperPinyin": [
+      "zhuō",
+      "yì"
+    ],
+    "lowerPinyin": [
+      "guì",
+      "láo"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "台",
+    "lower": "省",
+    "upperPinyin": [
+      "tái"
+    ],
+    "lowerPinyin": [
+      "shěng"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "署",
+    "lower": "曹",
+    "upperPinyin": [
+      "shǔ"
+    ],
+    "lowerPinyin": [
+      "cáo"
+    ],
+    "rhyme": "四豪",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "微",
+    "lower": "巨",
+    "upperPinyin": [
+      "wēi"
+    ],
+    "lowerPinyin": [
+      "jù"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "少",
+    "lower": "多",
+    "upperPinyin": [
+      "shǎo"
+    ],
+    "lowerPinyin": [
+      "duō"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雨笠",
+    "lower": "烟蓑",
+    "upperPinyin": [
+      "yǔ",
+      "lì"
+    ],
+    "lowerPinyin": [
+      "yān",
+      "suō"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "妙舞",
+    "lower": "清歌",
+    "upperPinyin": [
+      "miào",
+      "wǔ"
+    ],
+    "lowerPinyin": [
+      "qīng",
+      "gē"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "慈",
+    "lower": "善",
+    "upperPinyin": [
+      "cí"
+    ],
+    "lowerPinyin": [
+      "shàn"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "虐",
+    "lower": "苛",
+    "upperPinyin": [
+      "nüè"
+    ],
+    "lowerPinyin": [
+      "kē"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "缥缈",
+    "lower": "婆娑",
+    "upperPinyin": [
+      "piǎo",
+      "miǎo"
+    ],
+    "lowerPinyin": [
+      "pó",
+      "suō"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "长杨",
+    "lower": "细柳",
+    "upperPinyin": [
+      "cháng",
+      "yáng"
+    ],
+    "lowerPinyin": [
+      "xì",
+      "liǔ"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "嫩蕊",
+    "lower": "寒莎",
+    "upperPinyin": [
+      "nèn",
+      "ruǐ"
+    ],
+    "lowerPinyin": [
+      "hán",
+      "shā"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "玉液",
+    "lower": "金波",
+    "upperPinyin": [
+      "yù",
+      "yè"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "bō"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "荇",
+    "lower": "荷",
+    "upperPinyin": [
+      "xìng"
+    ],
+    "lowerPinyin": [
+      "hé"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "薜荔",
+    "lower": "藤萝",
+    "upperPinyin": [
+      "bì",
+      "lì"
+    ],
+    "lowerPinyin": [
+      "téng",
+      "luó"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "梯云",
+    "lower": "步月",
+    "upperPinyin": [
+      "tī",
+      "yún"
+    ],
+    "lowerPinyin": [
+      "bù",
+      "yuè"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "北海",
+    "lower": "东坡",
+    "upperPinyin": [
+      "běi",
+      "hǎi"
+    ],
+    "lowerPinyin": [
+      "dōng",
+      "pō"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "笼",
+    "lower": "槛",
+    "upperPinyin": [
+      "lóng"
+    ],
+    "lowerPinyin": [
+      "kǎn"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "冰清",
+    "lower": "玉润",
+    "upperPinyin": [
+      "bīng",
+      "qīng"
+    ],
+    "lowerPinyin": [
+      "yù",
+      "rùn"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "地利",
+    "lower": "人和",
+    "upperPinyin": [
+      "dì",
+      "lì"
+    ],
+    "lowerPinyin": [
+      "rén",
+      "hé"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "青女",
+    "lower": "素娥",
+    "upperPinyin": [
+      "qīng",
+      "nǚ"
+    ],
+    "lowerPinyin": [
+      "sù",
+      "é"
+    ],
+    "rhyme": "五歌",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "美",
+    "lower": "嘉",
+    "upperPinyin": [
+      "měi"
+    ],
+    "lowerPinyin": [
+      "jiā"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鄙吝",
+    "lower": "矜夸",
+    "upperPinyin": [
+      "bǐ",
+      "lìn"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "kuā"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "花须",
+    "lower": "柳眼",
+    "upperPinyin": [
+      "huā",
+      "xū"
+    ],
+    "lowerPinyin": [
+      "liǔ",
+      "yǎn"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雷",
+    "lower": "电",
+    "upperPinyin": [
+      "léi"
+    ],
+    "lowerPinyin": [
+      "diàn"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雾",
+    "lower": "霞",
+    "upperPinyin": [
+      "wù"
+    ],
+    "lowerPinyin": [
+      "xiá"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "酿酒",
+    "lower": "烹茶",
+    "upperPinyin": [
+      "niàng",
+      "jiǔ"
+    ],
+    "lowerPinyin": [
+      "pēng",
+      "chá"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "正",
+    "lower": "斜",
+    "upperPinyin": [
+      "zhèng"
+    ],
+    "lowerPinyin": [
+      "xié"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "笑语",
+    "lower": "咨嗟",
+    "upperPinyin": [
+      "xiào",
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "zī",
+      "jiē"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "沈腰",
+    "lower": "潘鬓",
+    "upperPinyin": [
+      "shěn",
+      "yāo"
+    ],
+    "lowerPinyin": [
+      "pān",
+      "bìn"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "孟笋",
+    "lower": "卢茶",
+    "upperPinyin": [
+      "mèng",
+      "sǔn"
+    ],
+    "lowerPinyin": [
+      "lú",
+      "chá"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "帝里",
+    "lower": "仙家",
+    "upperPinyin": [
+      "dì",
+      "lǐ"
+    ],
+    "lowerPinyin": [
+      "xiān",
+      "jiā"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "疏",
+    "lower": "密",
+    "upperPinyin": [
+      "shū"
+    ],
+    "lowerPinyin": [
+      "mì"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "朴",
+    "lower": "华",
+    "upperPinyin": [
+      "pǔ"
+    ],
+    "lowerPinyin": [
+      "huá"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鹅群",
+    "lower": "雁阵",
+    "upperPinyin": [
+      "é",
+      "qún"
+    ],
+    "lowerPinyin": [
+      "yàn",
+      "zhèn"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "肃静",
+    "lower": "喧哗",
+    "upperPinyin": [
+      "sù",
+      "jìng"
+    ],
+    "lowerPinyin": [
+      "xuān",
+      "huá"
+    ],
+    "rhyme": "六麻",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "沼",
+    "lower": "塘",
+    "upperPinyin": [
+      "zhǎo"
+    ],
+    "lowerPinyin": [
+      "táng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "游人",
+    "lower": "隐士",
+    "upperPinyin": [
+      "yóu",
+      "rén"
+    ],
+    "lowerPinyin": [
+      "yǐn",
+      "shì"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "谢女",
+    "lower": "秋娘",
+    "upperPinyin": [
+      "xiè",
+      "nǚ"
+    ],
+    "lowerPinyin": [
+      "qiū",
+      "niáng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "玉液",
+    "lower": "琼浆",
+    "upperPinyin": [
+      "yù",
+      "yè"
+    ],
+    "lowerPinyin": [
+      "qióng",
+      "jiāng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "绿",
+    "lower": "黄",
+    "upperPinyin": [
+      "lǜ"
+    ],
+    "lowerPinyin": [
+      "huáng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "龙飞",
+    "lower": "凤舞",
+    "upperPinyin": [
+      "lóng",
+      "fēi"
+    ],
+    "lowerPinyin": [
+      "fèng",
+      "wǔ"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "锦缆",
+    "lower": "牙樯",
+    "upperPinyin": [
+      "jǐn",
+      "lǎn"
+    ],
+    "lowerPinyin": [
+      "yá",
+      "qiáng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "衰",
+    "lower": "壮",
+    "upperPinyin": [
+      "shuāi"
+    ],
+    "lowerPinyin": [
+      "zhuàng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "弱",
+    "lower": "强",
+    "upperPinyin": [
+      "ruò"
+    ],
+    "lowerPinyin": [
+      "qiáng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "艳饰",
+    "lower": "新妆",
+    "upperPinyin": [
+      "yàn",
+      "shì"
+    ],
+    "lowerPinyin": [
+      "xīn",
+      "zhuāng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "御龙",
+    "lower": "司马",
+    "upperPinyin": [
+      "yù",
+      "lóng"
+    ],
+    "lowerPinyin": [
+      "sī",
+      "mǎ"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "水色",
+    "lower": "山光",
+    "upperPinyin": [
+      "shuǐ",
+      "sè"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "guāng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "臣",
+    "lower": "子",
+    "upperPinyin": [
+      "chén"
+    ],
+    "lowerPinyin": [
+      "zǐ"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "帝",
+    "lower": "王",
+    "upperPinyin": [
+      "dì"
+    ],
+    "lowerPinyin": [
+      "wáng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "日月",
+    "lower": "风霜",
+    "upperPinyin": [
+      "rì",
+      "yuè"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "shuāng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "乌台",
+    "lower": "紫府",
+    "upperPinyin": [
+      "wū",
+      "tái"
+    ],
+    "lowerPinyin": [
+      "zǐ",
+      "fǔ"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雪牖",
+    "lower": "云房",
+    "upperPinyin": [
+      "xuě",
+      "yǒu"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "fáng"
+    ],
+    "rhyme": "七阳",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "形",
+    "lower": "貌",
+    "upperPinyin": [
+      "xíng"
+    ],
+    "lowerPinyin": [
+      "mào"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "色",
+    "lower": "声",
+    "upperPinyin": [
+      "sè"
+    ],
+    "lowerPinyin": [
+      "shēng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "夏邑",
+    "lower": "周京",
+    "upperPinyin": [
+      "xià",
+      "yì"
+    ],
+    "lowerPinyin": [
+      "zhōu",
+      "jīng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "江云",
+    "lower": "渭树",
+    "upperPinyin": [
+      "jiāng",
+      "yún"
+    ],
+    "lowerPinyin": [
+      "wèi",
+      "shù"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "玉磬",
+    "lower": "银筝",
+    "upperPinyin": [
+      "yù",
+      "qìng"
+    ],
+    "lowerPinyin": [
+      "yín",
+      "zhēng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "晓燕",
+    "lower": "春莺",
+    "upperPinyin": [
+      "xiǎo",
+      "yàn"
+    ],
+    "lowerPinyin": [
+      "chūn",
+      "yīng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "功",
+    "lower": "业",
+    "upperPinyin": [
+      "gōng"
+    ],
+    "lowerPinyin": [
+      "yè"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "性",
+    "lower": "情",
+    "upperPinyin": [
+      "xìng"
+    ],
+    "lowerPinyin": [
+      "qíng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "月上",
+    "lower": "云行",
+    "upperPinyin": [
+      "yuè",
+      "shàng"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "xíng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "乘龙",
+    "lower": "附骥",
+    "upperPinyin": [
+      "chéng",
+      "lóng"
+    ],
+    "lowerPinyin": [
+      "fù",
+      "jì"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "昏",
+    "lower": "旦",
+    "upperPinyin": [
+      "hūn"
+    ],
+    "lowerPinyin": [
+      "dàn"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "晦",
+    "lower": "明",
+    "upperPinyin": [
+      "huì"
+    ],
+    "lowerPinyin": [
+      "míng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "久雨",
+    "lower": "新晴",
+    "upperPinyin": [
+      "jiǔ",
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "xīn",
+      "qíng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "蓼湾",
+    "lower": "花港",
+    "upperPinyin": [
+      "liǎo",
+      "wān"
+    ],
+    "lowerPinyin": [
+      "huā",
+      "gǎng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "犬吠",
+    "lower": "鸡鸣",
+    "upperPinyin": [
+      "quǎn",
+      "fèi"
+    ],
+    "lowerPinyin": [
+      "jī",
+      "míng"
+    ],
+    "rhyme": "八庚",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "庚",
+    "lower": "甲",
+    "upperPinyin": [
+      "gēng"
+    ],
+    "lowerPinyin": [
+      "jiǎ"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "巳",
+    "lower": "丁",
+    "upperPinyin": [
+      "sì"
+    ],
+    "lowerPinyin": [
+      "dīng"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "梅妻",
+    "lower": "鹤子",
+    "upperPinyin": [
+      "méi",
+      "qī"
+    ],
+    "lowerPinyin": [
+      "hè",
+      "zǐ"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "危",
+    "lower": "乱",
+    "upperPinyin": [
+      "wēi"
+    ],
+    "lowerPinyin": [
+      "luàn"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "泰",
+    "lower": "宁",
+    "upperPinyin": [
+      "tài"
+    ],
+    "lowerPinyin": [
+      "níng"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "纳陛",
+    "lower": "趋庭",
+    "upperPinyin": [
+      "nà",
+      "bì"
+    ],
+    "lowerPinyin": [
+      "qū",
+      "tíng"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "金盘",
+    "lower": "玉箸",
+    "upperPinyin": [
+      "jīn",
+      "pán"
+    ],
+    "lowerPinyin": [
+      "yù",
+      "zhù"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "泛梗",
+    "lower": "浮萍",
+    "upperPinyin": [
+      "fàn",
+      "gěng"
+    ],
+    "lowerPinyin": [
+      "fú",
+      "píng"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "旧典",
+    "lower": "新型",
+    "upperPinyin": [
+      "jiù",
+      "diǎn"
+    ],
+    "lowerPinyin": [
+      "xīn",
+      "xíng"
+    ],
+    "rhyme": "九青",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "苹",
+    "lower": "蓼",
+    "upperPinyin": [
+      "píng"
+    ],
+    "lowerPinyin": [
+      "liǎo"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "芡",
+    "lower": "菱",
+    "upperPinyin": [
+      "qiàn"
+    ],
+    "lowerPinyin": [
+      "líng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "雁弋",
+    "lower": "鱼罾",
+    "upperPinyin": [
+      "yàn",
+      "yì"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "zēng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "齐纨",
+    "lower": "鲁缟",
+    "upperPinyin": [
+      "qí",
+      "wán"
+    ],
+    "lowerPinyin": [
+      "lǔ",
+      "gǎo"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "蜀锦",
+    "lower": "吴绫",
+    "upperPinyin": [
+      "shǔ",
+      "jǐn"
+    ],
+    "lowerPinyin": [
+      "wú",
+      "líng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "九聘",
+    "lower": "三征",
+    "upperPinyin": [
+      "jiǔ",
+      "pìn"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "zhēng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "谈",
+    "lower": "吐",
+    "upperPinyin": [
+      "tán"
+    ],
+    "lowerPinyin": [
+      "tǔ"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "谓",
+    "lower": "称",
+    "upperPinyin": [
+      "wèi"
+    ],
+    "lowerPinyin": [
+      "chēng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "冉闵",
+    "lower": "颜曾",
+    "upperPinyin": [
+      "rǎn",
+      "mǐn"
+    ],
+    "lowerPinyin": [
+      "yán",
+      "céng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "祖逖",
+    "lower": "孙登",
+    "upperPinyin": [
+      "zǔ",
+      "tì"
+    ],
+    "lowerPinyin": [
+      "sūn",
+      "dēng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "胜友",
+    "lower": "良朋",
+    "upperPinyin": [
+      "shèng",
+      "yǒu"
+    ],
+    "lowerPinyin": [
+      "liáng",
+      "péng"
+    ],
+    "rhyme": "十蒸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "荣",
+    "lower": "辱",
+    "upperPinyin": [
+      "róng"
+    ],
+    "lowerPinyin": [
+      "rǔ"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "喜",
+    "lower": "忧",
+    "upperPinyin": [
+      "xǐ"
+    ],
+    "lowerPinyin": [
+      "yōu"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "吴娃",
+    "lower": "越女",
+    "upperPinyin": [
+      "wú",
+      "wá"
+    ],
+    "lowerPinyin": [
+      "yuè",
+      "nǚ"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "野马",
+    "lower": "沙鸥",
+    "upperPinyin": [
+      "yě",
+      "mǎ"
+    ],
+    "lowerPinyin": [
+      "shā",
+      "ōu"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "舄",
+    "lower": "裘",
+    "upperPinyin": [
+      "xì"
+    ],
+    "lowerPinyin": [
+      "qiú"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "院小",
+    "lower": "庭幽",
+    "upperPinyin": [
+      "yuàn",
+      "xiǎo"
+    ],
+    "lowerPinyin": [
+      "tíng",
+      "yōu"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "面墙",
+    "lower": "膝地",
+    "upperPinyin": [
+      "miàn",
+      "qiáng"
+    ],
+    "lowerPinyin": [
+      "xī",
+      "dì"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "错智",
+    "lower": "良筹",
+    "upperPinyin": [
+      "cuò",
+      "zhì"
+    ],
+    "lowerPinyin": [
+      "liáng",
+      "chóu"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "鱼",
+    "lower": "鸟",
+    "upperPinyin": [
+      "yú"
+    ],
+    "lowerPinyin": [
+      "niǎo"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "翠馆",
+    "lower": "红楼",
+    "upperPinyin": [
+      "cuì",
+      "guǎn"
+    ],
+    "lowerPinyin": [
+      "hóng",
+      "lóu"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "爱日",
+    "lower": "悲秋",
+    "upperPinyin": [
+      "ài",
+      "rì"
+    ],
+    "lowerPinyin": [
+      "bēi",
+      "qiū"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "列辟",
+    "lower": "诸侯",
+    "upperPinyin": [
+      "liè",
+      "pì"
+    ],
+    "lowerPinyin": [
+      "zhū",
+      "hóu"
+    ],
+    "rhyme": "十一尤",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "歌",
+    "lower": "曲",
+    "upperPinyin": [
+      "gē"
+    ],
+    "lowerPinyin": [
+      "qǔ"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "啸",
+    "lower": "吟",
+    "upperPinyin": [
+      "xiào"
+    ],
+    "lowerPinyin": [
+      "yín"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "往古",
+    "lower": "来今",
+    "upperPinyin": [
+      "wǎng",
+      "gǔ"
+    ],
+    "lowerPinyin": [
+      "lái",
+      "jīn"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "山头",
+    "lower": "水面",
+    "upperPinyin": [
+      "shān",
+      "tóu"
+    ],
+    "lowerPinyin": [
+      "shuǐ",
+      "miàn"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "远浦",
+    "lower": "遥岑",
+    "upperPinyin": [
+      "yuǎn",
+      "pǔ"
+    ],
+    "lowerPinyin": [
+      "yáo",
+      "cén"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "茂树",
+    "lower": "平林",
+    "upperPinyin": [
+      "mào",
+      "shù"
+    ],
+    "lowerPinyin": [
+      "píng",
+      "lín"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "登",
+    "lower": "眺",
+    "upperPinyin": [
+      "dēng"
+    ],
+    "lowerPinyin": [
+      "tiào"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "涉",
+    "lower": "临",
+    "upperPinyin": [
+      "shè"
+    ],
+    "lowerPinyin": [
+      "lín"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "瑞雪",
+    "lower": "甘霖",
+    "upperPinyin": [
+      "ruì",
+      "xuě"
+    ],
+    "lowerPinyin": [
+      "gān",
+      "lín"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "主欢",
+    "lower": "民乐",
+    "upperPinyin": [
+      "zhǔ",
+      "huān"
+    ],
+    "lowerPinyin": [
+      "mín",
+      "lè"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "顾曲",
+    "lower": "知音",
+    "upperPinyin": [
+      "gù",
+      "qǔ"
+    ],
+    "lowerPinyin": [
+      "zhī",
+      "yīn"
+    ],
+    "rhyme": "十二侵",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "座",
+    "lower": "龛",
+    "upperPinyin": [
+      "zuò"
+    ],
+    "lowerPinyin": [
+      "kān"
+    ],
+    "rhyme": "十三覃",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "水北",
+    "lower": "天南",
+    "upperPinyin": [
+      "shuǐ",
+      "běi"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "nán"
+    ],
+    "rhyme": "十三覃",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "伟论",
+    "lower": "高谈",
+    "upperPinyin": [
+      "wěi",
+      "lùn"
+    ],
+    "lowerPinyin": [
+      "gāo",
+      "tán"
+    ],
+    "rhyme": "十三覃",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "闻",
+    "lower": "见",
+    "upperPinyin": [
+      "wén"
+    ],
+    "lowerPinyin": [
+      "jiàn"
+    ],
+    "rhyme": "十三覃",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "解",
+    "lower": "谙",
+    "upperPinyin": [
+      "jiě"
+    ],
+    "lowerPinyin": [
+      "ān"
+    ],
+    "rhyme": "十三覃",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "静女",
+    "lower": "奇男",
+    "upperPinyin": [
+      "jìng",
+      "nǚ"
+    ],
+    "lowerPinyin": [
+      "qí",
+      "nán"
+    ],
+    "rhyme": "十三覃",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "海色",
+    "lower": "山岚",
+    "upperPinyin": [
+      "hǎi",
+      "sè"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "lán"
+    ],
+    "rhyme": "十三覃",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "宽",
+    "lower": "猛",
+    "upperPinyin": [
+      "kuān"
+    ],
+    "lowerPinyin": [
+      "měng"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "冷",
+    "lower": "炎",
+    "upperPinyin": [
+      "lěng"
+    ],
+    "lowerPinyin": [
+      "yán"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "云头",
+    "lower": "雨脚",
+    "upperPinyin": [
+      "yún",
+      "tóu"
+    ],
+    "lowerPinyin": [
+      "yǔ",
+      "jiǎo"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "保泰",
+    "lower": "鸣谦",
+    "upperPinyin": [
+      "bǎo",
+      "tài"
+    ],
+    "lowerPinyin": [
+      "míng",
+      "qiān"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "连",
+    "lower": "断",
+    "upperPinyin": [
+      "lián"
+    ],
+    "lowerPinyin": [
+      "duàn"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "减",
+    "lower": "添",
+    "upperPinyin": [
+      "jiǎn"
+    ],
+    "lowerPinyin": [
+      "tiān"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "水底",
+    "lower": "山尖",
+    "upperPinyin": [
+      "shuǐ",
+      "dǐ"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "jiān"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "人",
+    "lower": "己",
+    "upperPinyin": [
+      "rén"
+    ],
+    "lowerPinyin": [
+      "jǐ"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "爱",
+    "lower": "嫌",
+    "upperPinyin": [
+      "ài"
+    ],
+    "lowerPinyin": [
+      "xián"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "举止",
+    "lower": "观瞻",
+    "upperPinyin": [
+      "jǔ",
+      "zhǐ"
+    ],
+    "lowerPinyin": [
+      "guān",
+      "zhān"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "四知",
+    "lower": "三语",
+    "upperPinyin": [
+      "sì",
+      "zhī"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "yǔ"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "义正",
+    "lower": "辞严",
+    "upperPinyin": [
+      "yì",
+      "zhèng"
+    ],
+    "lowerPinyin": [
+      "cí",
+      "yán"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "漏箭",
+    "lower": "书笺",
+    "upperPinyin": [
+      "lòu",
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "shū",
+      "jiān"
+    ],
+    "rhyme": "十四盐",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "薙",
+    "lower": "芟",
+    "upperPinyin": [
+      "tì"
+    ],
+    "lowerPinyin": [
+      "shān"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "柏",
+    "lower": "杉",
+    "upperPinyin": [
+      "bǎi"
+    ],
+    "lowerPinyin": [
+      "shān"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "夏濩",
+    "lower": "韶咸",
+    "upperPinyin": [
+      "xià",
+      "hù"
+    ],
+    "lowerPinyin": [
+      "sháo",
+      "xián"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "涧瀍",
+    "lower": "溱洧",
+    "upperPinyin": [
+      "jiàn",
+      "chán"
+    ],
+    "lowerPinyin": [
+      "zhēn",
+      "wěi"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "巩洛",
+    "lower": "崤函",
+    "upperPinyin": [
+      "gǒng",
+      "luò"
+    ],
+    "lowerPinyin": [
+      "xiáo",
+      "hán"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "袍",
+    "lower": "笏",
+    "upperPinyin": [
+      "páo"
+    ],
+    "lowerPinyin": [
+      "hù"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "履",
+    "lower": "衫",
+    "upperPinyin": [
+      "lǚ"
+    ],
+    "lowerPinyin": [
+      "shān"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "匹马",
+    "lower": "孤帆",
+    "upperPinyin": [
+      "pǐ",
+      "mǎ"
+    ],
+    "lowerPinyin": [
+      "gū",
+      "fān"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "刻划",
+    "lower": "镌镵",
+    "upperPinyin": [
+      "kè",
+      "huà"
+    ],
+    "lowerPinyin": [
+      "juān",
+      "chán"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "卮漏",
+    "lower": "鼎馋",
+    "upperPinyin": [
+      "zhī",
+      "lòu"
+    ],
+    "lowerPinyin": [
+      "dǐng",
+      "chán"
+    ],
+    "rhyme": "十五咸",
+    "book": "笠翁对韵"
+  },
+  {
+    "upper": "云",
+    "lower": "雨",
+    "upperPinyin": [
+      "yún"
+    ],
+    "lowerPinyin": [
+      "yǔ"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雪",
+    "lower": "风",
+    "upperPinyin": [
+      "xuě"
+    ],
+    "lowerPinyin": [
+      "fēng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "晚照",
+    "lower": "晴空",
+    "upperPinyin": [
+      "wǎn",
+      "zhào"
+    ],
+    "lowerPinyin": [
+      "qíng",
+      "kōng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "来鸿",
+    "lower": "去燕",
+    "upperPinyin": [
+      "lái",
+      "hóng"
+    ],
+    "lowerPinyin": [
+      "qù",
+      "yàn"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宿鸟",
+    "lower": "鸣虫",
+    "upperPinyin": [
+      "sù",
+      "niǎo"
+    ],
+    "lowerPinyin": [
+      "míng",
+      "chóng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "岭北",
+    "lower": "江东",
+    "upperPinyin": [
+      "lǐng",
+      "běi"
+    ],
+    "lowerPinyin": [
+      "jiāng",
+      "dōng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "异",
+    "lower": "同",
+    "upperPinyin": [
+      "yì"
+    ],
+    "lowerPinyin": [
+      "tóng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "江风",
+    "lower": "海雾",
+    "upperPinyin": [
+      "jiāng",
+      "fēng"
+    ],
+    "lowerPinyin": [
+      "hǎi",
+      "wù"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "牧子",
+    "lower": "渔翁",
+    "upperPinyin": [
+      "mù",
+      "zǐ"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "wēng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "冀北",
+    "lower": "辽东",
+    "upperPinyin": [
+      "jì",
+      "běi"
+    ],
+    "lowerPinyin": [
+      "liáo",
+      "dōng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "贫",
+    "lower": "富",
+    "upperPinyin": [
+      "pín"
+    ],
+    "lowerPinyin": [
+      "fù"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "野叟",
+    "lower": "溪童",
+    "upperPinyin": [
+      "yě",
+      "sǒu"
+    ],
+    "lowerPinyin": [
+      "xī",
+      "tóng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鬓皤",
+    "lower": "眉绿",
+    "upperPinyin": [
+      "bìn",
+      "pó"
+    ],
+    "lowerPinyin": [
+      "méi",
+      "lǜ"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "齿皓",
+    "lower": "唇红",
+    "upperPinyin": [
+      "chǐ",
+      "hào"
+    ],
+    "lowerPinyin": [
+      "chún",
+      "hóng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "佩剑",
+    "lower": "弯弓",
+    "upperPinyin": [
+      "pèi",
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "wān",
+      "gōng"
+    ],
+    "rhyme": "一东",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "明",
+    "lower": "暗",
+    "upperPinyin": [
+      "míng"
+    ],
+    "lowerPinyin": [
+      "àn"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "淡",
+    "lower": "浓",
+    "upperPinyin": [
+      "dàn"
+    ],
+    "lowerPinyin": [
+      "nóng"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "上智",
+    "lower": "中庸",
+    "upperPinyin": [
+      "shàng",
+      "zhì"
+    ],
+    "lowerPinyin": [
+      "zhōng",
+      "yōng"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "镜奁",
+    "lower": "衣笥",
+    "upperPinyin": [
+      "jìng",
+      "lián"
+    ],
+    "lowerPinyin": [
+      "yī",
+      "sì"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "野杵",
+    "lower": "村舂",
+    "upperPinyin": [
+      "yě",
+      "chǔ"
+    ],
+    "lowerPinyin": [
+      "cūn",
+      "chōng"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "九夏",
+    "lower": "三冬",
+    "upperPinyin": [
+      "jiǔ",
+      "xià"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "dōng"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "仁",
+    "lower": "义",
+    "upperPinyin": [
+      "rén"
+    ],
+    "lowerPinyin": [
+      "yì"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "让",
+    "lower": "恭",
+    "upperPinyin": [
+      "ràng"
+    ],
+    "lowerPinyin": [
+      "gōng"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "禹舜",
+    "lower": "羲农",
+    "upperPinyin": [
+      "yǔ",
+      "shùn"
+    ],
+    "lowerPinyin": [
+      "xī",
+      "nóng"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雪花",
+    "lower": "云叶",
+    "upperPinyin": [
+      "xuě",
+      "huā"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "yè"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "绣虎",
+    "lower": "雕龙",
+    "upperPinyin": [
+      "xiù",
+      "hǔ"
+    ],
+    "lowerPinyin": [
+      "diāo",
+      "lóng"
+    ],
+    "rhyme": "二冬",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "户",
+    "lower": "窗",
+    "upperPinyin": [
+      "hù"
+    ],
+    "lowerPinyin": [
+      "chuāng"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "巨海",
+    "lower": "长江",
+    "upperPinyin": [
+      "jù",
+      "hǎi"
+    ],
+    "lowerPinyin": [
+      "cháng",
+      "jiāng"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "玉斝",
+    "lower": "银釭",
+    "upperPinyin": [
+      "yù",
+      "jiǎ"
+    ],
+    "lowerPinyin": [
+      "yín",
+      "gāng"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宝剑",
+    "lower": "金釭",
+    "upperPinyin": [
+      "bǎo",
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "gāng"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "旌",
+    "lower": "旆",
+    "upperPinyin": [
+      "jīng"
+    ],
+    "lowerPinyin": [
+      "pèi"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "千山",
+    "lower": "万水",
+    "upperPinyin": [
+      "qiān",
+      "shān"
+    ],
+    "lowerPinyin": [
+      "wàn",
+      "shuǐ"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "铢",
+    "lower": "两",
+    "upperPinyin": [
+      "zhū"
+    ],
+    "lowerPinyin": [
+      "liǎng"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "朝车",
+    "lower": "禁鼓",
+    "upperPinyin": [
+      "cháo",
+      "chē"
+    ],
+    "lowerPinyin": [
+      "jìn",
+      "gǔ"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宿火",
+    "lower": "寒缸",
+    "upperPinyin": [
+      "sù",
+      "huǒ"
+    ],
+    "lowerPinyin": [
+      "hán",
+      "gāng"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "汉社",
+    "lower": "周邦",
+    "upperPinyin": [
+      "hàn",
+      "shè"
+    ],
+    "lowerPinyin": [
+      "zhōu",
+      "bāng"
+    ],
+    "rhyme": "三江",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "茶",
+    "lower": "酒",
+    "upperPinyin": [
+      "chá"
+    ],
+    "lowerPinyin": [
+      "jiǔ"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "燕子",
+    "lower": "莺儿",
+    "upperPinyin": [
+      "yàn",
+      "zǐ"
+    ],
+    "lowerPinyin": [
+      "yīng",
+      "ér"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "落絮",
+    "lower": "游丝",
+    "upperPinyin": [
+      "luò",
+      "xù"
+    ],
+    "lowerPinyin": [
+      "yóu",
+      "sī"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鸲鹆",
+    "lower": "鹭鸶",
+    "upperPinyin": [
+      "qú",
+      "yù"
+    ],
+    "lowerPinyin": [
+      "lù",
+      "sī"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "行",
+    "lower": "止",
+    "upperPinyin": [
+      "xíng"
+    ],
+    "lowerPinyin": [
+      "zhǐ"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "速",
+    "lower": "迟",
+    "upperPinyin": [
+      "sù"
+    ],
+    "lowerPinyin": [
+      "chí"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "舞剑",
+    "lower": "围棋",
+    "upperPinyin": [
+      "wǔ",
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "wéi",
+      "qí"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "花笺",
+    "lower": "草字",
+    "upperPinyin": [
+      "huā",
+      "jiān"
+    ],
+    "lowerPinyin": [
+      "cǎo",
+      "zì"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "虎豹",
+    "lower": "熊罴",
+    "upperPinyin": [
+      "hǔ",
+      "bào"
+    ],
+    "lowerPinyin": [
+      "xióng",
+      "pí"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鼓",
+    "lower": "旗",
+    "upperPinyin": [
+      "gǔ"
+    ],
+    "lowerPinyin": [
+      "qí"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "紫燕",
+    "lower": "黄鹂",
+    "upperPinyin": [
+      "zǐ",
+      "yàn"
+    ],
+    "lowerPinyin": [
+      "huáng",
+      "lí"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "梅酸",
+    "lower": "李苦",
+    "upperPinyin": [
+      "méi",
+      "suān"
+    ],
+    "lowerPinyin": [
+      "lǐ",
+      "kǔ"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雨打",
+    "lower": "风吹",
+    "upperPinyin": [
+      "yǔ",
+      "dǎ"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "chuī"
+    ],
+    "rhyme": "四支",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "来",
+    "lower": "往",
+    "upperPinyin": [
+      "lái"
+    ],
+    "lowerPinyin": [
+      "wǎng"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "燕舞",
+    "lower": "莺飞",
+    "upperPinyin": [
+      "yàn",
+      "wǔ"
+    ],
+    "lowerPinyin": [
+      "yīng",
+      "fēi"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "露重",
+    "lower": "烟微",
+    "upperPinyin": [
+      "lù",
+      "zhòng"
+    ],
+    "lowerPinyin": [
+      "yān",
+      "wēi"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "客路",
+    "lower": "渔矶",
+    "upperPinyin": [
+      "kè",
+      "lù"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "jī"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "珊瑚",
+    "lower": "玳瑁",
+    "upperPinyin": [
+      "shān",
+      "hú"
+    ],
+    "lowerPinyin": [
+      "dài",
+      "mào"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "锦绣",
+    "lower": "珠玑",
+    "upperPinyin": [
+      "jǐn",
+      "xiù"
+    ],
+    "lowerPinyin": [
+      "zhū",
+      "jī"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "绿暗",
+    "lower": "红稀",
+    "upperPinyin": [
+      "lǜ",
+      "àn"
+    ],
+    "lowerPinyin": [
+      "hóng",
+      "xī"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "声",
+    "lower": "色",
+    "upperPinyin": [
+      "shēng"
+    ],
+    "lowerPinyin": [
+      "sè"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "饱",
+    "lower": "饥",
+    "upperPinyin": [
+      "bǎo"
+    ],
+    "lowerPinyin": [
+      "jī"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "杨花",
+    "lower": "桂叶",
+    "upperPinyin": [
+      "yáng",
+      "huā"
+    ],
+    "lowerPinyin": [
+      "guì",
+      "yè"
+    ],
+    "rhyme": "五微",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "无",
+    "lower": "有",
+    "upperPinyin": [
+      "wú"
+    ],
+    "lowerPinyin": [
+      "yǒu"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "作赋",
+    "lower": "观书",
+    "upperPinyin": [
+      "zuò",
+      "fù"
+    ],
+    "lowerPinyin": [
+      "guān",
+      "shū"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "绿窗",
+    "lower": "朱户",
+    "upperPinyin": [
+      "lǜ",
+      "chuāng"
+    ],
+    "lowerPinyin": [
+      "zhū",
+      "hù"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宝马",
+    "lower": "香车",
+    "upperPinyin": [
+      "bǎo",
+      "mǎ"
+    ],
+    "lowerPinyin": [
+      "xiāng",
+      "chē"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "弋雁",
+    "lower": "求鱼",
+    "upperPinyin": [
+      "yì",
+      "yàn"
+    ],
+    "lowerPinyin": [
+      "qiú",
+      "yú"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "终",
+    "lower": "始",
+    "upperPinyin": [
+      "zhōng"
+    ],
+    "lowerPinyin": [
+      "shǐ"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "短褐",
+    "lower": "华裾",
+    "upperPinyin": [
+      "duǎn",
+      "hè"
+    ],
+    "lowerPinyin": [
+      "huá",
+      "jū"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "有若",
+    "lower": "相如",
+    "upperPinyin": [
+      "yǒu",
+      "ruò"
+    ],
+    "lowerPinyin": [
+      "xiāng",
+      "rú"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "麟",
+    "lower": "凤",
+    "upperPinyin": [
+      "lín"
+    ],
+    "lowerPinyin": [
+      "fèng"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "内史",
+    "lower": "中书",
+    "upperPinyin": [
+      "nèi",
+      "shǐ"
+    ],
+    "lowerPinyin": [
+      "zhōng",
+      "shū"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "犁锄",
+    "lower": "耒耜",
+    "upperPinyin": [
+      "lí",
+      "chú"
+    ],
+    "lowerPinyin": [
+      "lěi",
+      "sì"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "畎浍",
+    "lower": "郊墟",
+    "upperPinyin": [
+      "quǎn",
+      "huì"
+    ],
+    "lowerPinyin": [
+      "jiāo",
+      "xū"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "驷马",
+    "lower": "安车",
+    "upperPinyin": [
+      "sì",
+      "mǎ"
+    ],
+    "lowerPinyin": [
+      "ān",
+      "chē"
+    ],
+    "rhyme": "六鱼",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "金",
+    "lower": "玉",
+    "upperPinyin": [
+      "jīn"
+    ],
+    "lowerPinyin": [
+      "yù"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宝",
+    "lower": "珠",
+    "upperPinyin": [
+      "bǎo"
+    ],
+    "lowerPinyin": [
+      "zhū"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "玉兔",
+    "lower": "金乌",
+    "upperPinyin": [
+      "yù",
+      "tù"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "wū"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "孤舟",
+    "lower": "短棹",
+    "upperPinyin": [
+      "gū",
+      "zhōu"
+    ],
+    "lowerPinyin": [
+      "duǎn",
+      "zhào"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "智",
+    "lower": "愚",
+    "upperPinyin": [
+      "zhì"
+    ],
+    "lowerPinyin": [
+      "yú"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "傅粉",
+    "lower": "施朱",
+    "upperPinyin": [
+      "fù",
+      "fěn"
+    ],
+    "lowerPinyin": [
+      "shī",
+      "zhū"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "名缰",
+    "lower": "利锁",
+    "upperPinyin": [
+      "míng",
+      "jiāng"
+    ],
+    "lowerPinyin": [
+      "lì",
+      "suǒ"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "秦",
+    "lower": "赵",
+    "upperPinyin": [
+      "qín"
+    ],
+    "lowerPinyin": [
+      "zhào"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "越",
+    "lower": "吴",
+    "upperPinyin": [
+      "yuè"
+    ],
+    "lowerPinyin": [
+      "wú"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "钓客",
+    "lower": "耕夫",
+    "upperPinyin": [
+      "diào",
+      "kè"
+    ],
+    "lowerPinyin": [
+      "gēng",
+      "fū"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "箕裘",
+    "lower": "杖履",
+    "upperPinyin": [
+      "jī",
+      "qiú"
+    ],
+    "lowerPinyin": [
+      "zhàng",
+      "lǚ"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "杞梓",
+    "lower": "桑榆",
+    "upperPinyin": [
+      "qǐ",
+      "zǐ"
+    ],
+    "lowerPinyin": [
+      "sāng",
+      "yú"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "狡兔",
+    "lower": "妖狐",
+    "upperPinyin": [
+      "jiǎo",
+      "tù"
+    ],
+    "lowerPinyin": [
+      "yāo",
+      "hú"
+    ],
+    "rhyme": "七虞",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "岩",
+    "lower": "岫",
+    "upperPinyin": [
+      "yán"
+    ],
+    "lowerPinyin": [
+      "xiù"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "涧",
+    "lower": "溪",
+    "upperPinyin": [
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "xī"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "远岸",
+    "lower": "危堤",
+    "upperPinyin": [
+      "yuǎn",
+      "àn"
+    ],
+    "lowerPinyin": [
+      "wēi",
+      "dī"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鹤长",
+    "lower": "凫短",
+    "upperPinyin": [
+      "hè",
+      "cháng"
+    ],
+    "lowerPinyin": [
+      "fú",
+      "duǎn"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "水雁",
+    "lower": "山鸡",
+    "upperPinyin": [
+      "shuǐ",
+      "yàn"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "jī"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "汉露",
+    "lower": "汤霓",
+    "upperPinyin": [
+      "hàn",
+      "lù"
+    ],
+    "lowerPinyin": [
+      "tāng",
+      "ní"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "水",
+    "lower": "泥",
+    "upperPinyin": [
+      "shuǐ"
+    ],
+    "lowerPinyin": [
+      "ní"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "献瓜",
+    "lower": "投李",
+    "upperPinyin": [
+      "xiàn",
+      "guā"
+    ],
+    "lowerPinyin": [
+      "tóu",
+      "lǐ"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "禁鼓",
+    "lower": "征鼙",
+    "upperPinyin": [
+      "jìn",
+      "gǔ"
+    ],
+    "lowerPinyin": [
+      "zhēng",
+      "pí"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "凤翥",
+    "lower": "鸾栖",
+    "upperPinyin": [
+      "fèng",
+      "zhù"
+    ],
+    "lowerPinyin": [
+      "luán",
+      "qī"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "熊",
+    "lower": "虎",
+    "upperPinyin": [
+      "xióng"
+    ],
+    "lowerPinyin": [
+      "hǔ"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "象",
+    "lower": "犀",
+    "upperPinyin": [
+      "xiàng"
+    ],
+    "lowerPinyin": [
+      "xī"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "桂岭",
+    "lower": "梅溪",
+    "upperPinyin": [
+      "guì",
+      "lǐng"
+    ],
+    "lowerPinyin": [
+      "méi",
+      "xī"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "远近",
+    "lower": "高低",
+    "upperPinyin": [
+      "yuǎn",
+      "jìn"
+    ],
+    "lowerPinyin": [
+      "gāo",
+      "dī"
+    ],
+    "rhyme": "八齐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "河",
+    "lower": "海",
+    "upperPinyin": [
+      "hé"
+    ],
+    "lowerPinyin": [
+      "hǎi"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "汉",
+    "lower": "淮",
+    "upperPinyin": [
+      "hàn"
+    ],
+    "lowerPinyin": [
+      "huái"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "赤岸",
+    "lower": "朱崖",
+    "upperPinyin": [
+      "chì",
+      "àn"
+    ],
+    "lowerPinyin": [
+      "zhū",
+      "yá"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鹭飞",
+    "lower": "鱼跃",
+    "upperPinyin": [
+      "lù",
+      "fēi"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "yuè"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宝钿",
+    "lower": "金钗",
+    "upperPinyin": [
+      "bǎo",
+      "diàn"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "chāi"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "草履",
+    "lower": "芒鞋",
+    "upperPinyin": [
+      "cǎo",
+      "lǚ"
+    ],
+    "lowerPinyin": [
+      "máng",
+      "xié"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "丰",
+    "lower": "俭",
+    "upperPinyin": [
+      "fēng"
+    ],
+    "lowerPinyin": [
+      "jiǎn"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "布袄",
+    "lower": "荆钗",
+    "upperPinyin": [
+      "bù",
+      "ǎo"
+    ],
+    "lowerPinyin": [
+      "jīng",
+      "chāi"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雁行",
+    "lower": "鱼阵",
+    "upperPinyin": [
+      "yàn",
+      "xíng"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "zhèn"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "城",
+    "lower": "市",
+    "upperPinyin": [
+      "chéng"
+    ],
+    "lowerPinyin": [
+      "shì"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "巷",
+    "lower": "街",
+    "upperPinyin": [
+      "xiàng"
+    ],
+    "lowerPinyin": [
+      "jiē"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "桃枝",
+    "lower": "桂叶",
+    "upperPinyin": [
+      "táo",
+      "zhī"
+    ],
+    "lowerPinyin": [
+      "guì",
+      "yè"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "砌蚓",
+    "lower": "墙蜗",
+    "upperPinyin": [
+      "qì",
+      "yǐn"
+    ],
+    "lowerPinyin": [
+      "qiáng",
+      "wō"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "季路",
+    "lower": "高柴",
+    "upperPinyin": [
+      "jì",
+      "lù"
+    ],
+    "lowerPinyin": [
+      "gāo",
+      "chái"
+    ],
+    "rhyme": "九佳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "增",
+    "lower": "损",
+    "upperPinyin": [
+      "zēng"
+    ],
+    "lowerPinyin": [
+      "sǔn"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "闭",
+    "lower": "开",
+    "upperPinyin": [
+      "bì"
+    ],
+    "lowerPinyin": [
+      "kāi"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "碧草",
+    "lower": "苍苔",
+    "upperPinyin": [
+      "bì",
+      "cǎo"
+    ],
+    "lowerPinyin": [
+      "cāng",
+      "tái"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "书签",
+    "lower": "笔架",
+    "upperPinyin": [
+      "shū",
+      "qiān"
+    ],
+    "lowerPinyin": [
+      "bǐ",
+      "jià"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "两曜",
+    "lower": "三台",
+    "upperPinyin": [
+      "liǎng",
+      "yào"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "tái"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "沙",
+    "lower": "水",
+    "upperPinyin": [
+      "shā"
+    ],
+    "lowerPinyin": [
+      "shuǐ"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "火",
+    "lower": "灰",
+    "upperPinyin": [
+      "huǒ"
+    ],
+    "lowerPinyin": [
+      "huī"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雨雪",
+    "lower": "风雷",
+    "upperPinyin": [
+      "yǔ",
+      "xuě"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "léi"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "水浒",
+    "lower": "岩隈",
+    "upperPinyin": [
+      "shuǐ",
+      "hǔ"
+    ],
+    "lowerPinyin": [
+      "yán",
+      "wēi"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "舞馆",
+    "lower": "歌台",
+    "upperPinyin": [
+      "wǔ",
+      "guǎn"
+    ],
+    "lowerPinyin": [
+      "gē",
+      "tái"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "休",
+    "lower": "咎",
+    "upperPinyin": [
+      "xiū"
+    ],
+    "lowerPinyin": [
+      "jiù"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "象箸",
+    "lower": "犀杯",
+    "upperPinyin": [
+      "xiàng",
+      "zhù"
+    ],
+    "lowerPinyin": [
+      "xī",
+      "bēi"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宫花",
+    "lower": "御柳",
+    "upperPinyin": [
+      "gōng",
+      "huā"
+    ],
+    "lowerPinyin": [
+      "yù",
+      "liǔ"
+    ],
+    "rhyme": "十灰",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "邪",
+    "lower": "正",
+    "upperPinyin": [
+      "xié"
+    ],
+    "lowerPinyin": [
+      "zhèng"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "假",
+    "lower": "真",
+    "upperPinyin": [
+      "jiǎ"
+    ],
+    "lowerPinyin": [
+      "zhēn"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "獬豸",
+    "lower": "麒麟",
+    "upperPinyin": [
+      "xiè",
+      "zhì"
+    ],
+    "lowerPinyin": [
+      "qí",
+      "lín"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "北魏",
+    "lower": "西秦",
+    "upperPinyin": [
+      "běi",
+      "wèi"
+    ],
+    "lowerPinyin": [
+      "xī",
+      "qín"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "哀",
+    "lower": "乐",
+    "upperPinyin": [
+      "āi"
+    ],
+    "lowerPinyin": [
+      "lè"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "富",
+    "lower": "贫",
+    "upperPinyin": [
+      "fù"
+    ],
+    "lowerPinyin": [
+      "pín"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "好友",
+    "lower": "嘉宾",
+    "upperPinyin": [
+      "hǎo",
+      "yǒu"
+    ],
+    "lowerPinyin": [
+      "jiā",
+      "bīn"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "虎爪",
+    "lower": "龙鳞",
+    "upperPinyin": [
+      "hǔ",
+      "zhuǎ"
+    ],
+    "lowerPinyin": [
+      "lóng",
+      "lín"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "香",
+    "lower": "火",
+    "upperPinyin": [
+      "xiāng"
+    ],
+    "lowerPinyin": [
+      "huǒ"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "炭",
+    "lower": "薪",
+    "upperPinyin": [
+      "tàn"
+    ],
+    "lowerPinyin": [
+      "xīn"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "禅心",
+    "lower": "道眼",
+    "upperPinyin": [
+      "chán",
+      "xīn"
+    ],
+    "lowerPinyin": [
+      "dào",
+      "yǎn"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "野妇",
+    "lower": "宫嫔",
+    "upperPinyin": [
+      "yě",
+      "fù"
+    ],
+    "lowerPinyin": [
+      "gōng",
+      "pín"
+    ],
+    "rhyme": "十一真",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "武",
+    "lower": "文",
+    "upperPinyin": [
+      "wǔ"
+    ],
+    "lowerPinyin": [
+      "wén"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "四辅",
+    "lower": "三军",
+    "upperPinyin": [
+      "sì",
+      "fǔ"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "jūn"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "九经",
+    "lower": "三史",
+    "upperPinyin": [
+      "jiǔ",
+      "jīng"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "shǐ"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "见",
+    "lower": "闻",
+    "upperPinyin": [
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "wén"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "偃武",
+    "lower": "修文",
+    "upperPinyin": [
+      "yǎn",
+      "wǔ"
+    ],
+    "lowerPinyin": [
+      "xiū",
+      "wén"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "羊车",
+    "lower": "鹤驾",
+    "upperPinyin": [
+      "yáng",
+      "chē"
+    ],
+    "lowerPinyin": [
+      "hè",
+      "jià"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "朝旭",
+    "lower": "晚曛",
+    "upperPinyin": [
+      "cháo",
+      "xù"
+    ],
+    "lowerPinyin": [
+      "wǎn",
+      "xūn"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "马燧",
+    "lower": "羊欣",
+    "upperPinyin": [
+      "mǎ",
+      "suì"
+    ],
+    "lowerPinyin": [
+      "yáng",
+      "xīn"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "尧",
+    "lower": "舜",
+    "upperPinyin": [
+      "yáo"
+    ],
+    "lowerPinyin": [
+      "shùn"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "夏",
+    "lower": "殷",
+    "upperPinyin": [
+      "xià"
+    ],
+    "lowerPinyin": [
+      "yīn"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "蔡惠",
+    "lower": "刘蕡",
+    "upperPinyin": [
+      "cài",
+      "huì"
+    ],
+    "lowerPinyin": [
+      "liú",
+      "fén"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "山明",
+    "lower": "水秀",
+    "upperPinyin": [
+      "shān",
+      "míng"
+    ],
+    "lowerPinyin": [
+      "shuǐ",
+      "xiù"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "事父",
+    "lower": "忠君",
+    "upperPinyin": [
+      "shì",
+      "fù"
+    ],
+    "lowerPinyin": [
+      "zhōng",
+      "jūn"
+    ],
+    "rhyme": "十二文",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "幽",
+    "lower": "显",
+    "upperPinyin": [
+      "yōu"
+    ],
+    "lowerPinyin": [
+      "xiǎn"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "寂",
+    "lower": "喧",
+    "upperPinyin": [
+      "jì"
+    ],
+    "lowerPinyin": [
+      "xuān"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "柳岸",
+    "lower": "桃源",
+    "upperPinyin": [
+      "liǔ",
+      "àn"
+    ],
+    "lowerPinyin": [
+      "táo",
+      "yuán"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "莺朋",
+    "lower": "燕友",
+    "upperPinyin": [
+      "yīng",
+      "péng"
+    ],
+    "lowerPinyin": [
+      "yàn",
+      "yǒu"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "早暮",
+    "lower": "寒暄",
+    "upperPinyin": [
+      "zǎo",
+      "mù"
+    ],
+    "lowerPinyin": [
+      "hán",
+      "xuān"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "醉胆",
+    "lower": "吟魂",
+    "upperPinyin": [
+      "zuì",
+      "dǎn"
+    ],
+    "lowerPinyin": [
+      "yín",
+      "hún"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "儿",
+    "lower": "女",
+    "upperPinyin": [
+      "ér"
+    ],
+    "lowerPinyin": [
+      "nǚ"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "子",
+    "lower": "孙",
+    "upperPinyin": [
+      "zǐ"
+    ],
+    "lowerPinyin": [
+      "sūn"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "药圃",
+    "lower": "花村",
+    "upperPinyin": [
+      "yào",
+      "pǔ"
+    ],
+    "lowerPinyin": [
+      "huā",
+      "cūn"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "赤豹",
+    "lower": "玄猿",
+    "upperPinyin": [
+      "chì",
+      "bào"
+    ],
+    "lowerPinyin": [
+      "xuán",
+      "yuán"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "旷野",
+    "lower": "平原",
+    "upperPinyin": [
+      "kuàng",
+      "yě"
+    ],
+    "lowerPinyin": [
+      "píng",
+      "yuán"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "犬马",
+    "lower": "鸡豚",
+    "upperPinyin": [
+      "quǎn",
+      "mǎ"
+    ],
+    "lowerPinyin": [
+      "jī",
+      "tún"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "龙池",
+    "lower": "凤沼",
+    "upperPinyin": [
+      "lóng",
+      "chí"
+    ],
+    "lowerPinyin": [
+      "fèng",
+      "zhǎo"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雨骤",
+    "lower": "云屯",
+    "upperPinyin": [
+      "yǔ",
+      "zhòu"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "tún"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "唳鹤",
+    "lower": "啼猿",
+    "upperPinyin": [
+      "lì",
+      "hè"
+    ],
+    "lowerPinyin": [
+      "tí",
+      "yuán"
+    ],
+    "rhyme": "十三元",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "多",
+    "lower": "少",
+    "upperPinyin": [
+      "duō"
+    ],
+    "lowerPinyin": [
+      "shǎo"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "易",
+    "lower": "难",
+    "upperPinyin": [
+      "yì"
+    ],
+    "lowerPinyin": [
+      "nán"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "龙舟",
+    "lower": "凤辇",
+    "upperPinyin": [
+      "lóng",
+      "zhōu"
+    ],
+    "lowerPinyin": [
+      "fèng",
+      "niǎn"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鲁隐",
+    "lower": "齐桓",
+    "upperPinyin": [
+      "lǔ",
+      "yǐn"
+    ],
+    "lowerPinyin": [
+      "qí",
+      "huán"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "夜饮",
+    "lower": "晨餐",
+    "upperPinyin": [
+      "yè",
+      "yǐn"
+    ],
+    "lowerPinyin": [
+      "chén",
+      "cān"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "横",
+    "lower": "竖",
+    "upperPinyin": [
+      "héng"
+    ],
+    "lowerPinyin": [
+      "shù"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "朱帘",
+    "lower": "画栋",
+    "upperPinyin": [
+      "zhū",
+      "lián"
+    ],
+    "lowerPinyin": [
+      "huà",
+      "dòng"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "彩槛",
+    "lower": "雕栏",
+    "upperPinyin": [
+      "cǎi",
+      "kǎn"
+    ],
+    "lowerPinyin": [
+      "diāo",
+      "lán"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "百辟",
+    "lower": "千官",
+    "upperPinyin": [
+      "bǎi",
+      "pì"
+    ],
+    "lowerPinyin": [
+      "qiān",
+      "guān"
+    ],
+    "rhyme": "十四寒",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "兴",
+    "lower": "废",
+    "upperPinyin": [
+      "xīng"
+    ],
+    "lowerPinyin": [
+      "fèi"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "附",
+    "lower": "攀",
+    "upperPinyin": [
+      "fù"
+    ],
+    "lowerPinyin": [
+      "pān"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "露草",
+    "lower": "霜菅",
+    "upperPinyin": [
+      "lù",
+      "cǎo"
+    ],
+    "lowerPinyin": [
+      "shuāng",
+      "jiān"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "歌廉",
+    "lower": "借寇",
+    "upperPinyin": [
+      "gē",
+      "lián"
+    ],
+    "lowerPinyin": [
+      "jiè",
+      "kòu"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "犹",
+    "lower": "尚",
+    "upperPinyin": [
+      "yóu"
+    ],
+    "lowerPinyin": [
+      "shàng"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "侈",
+    "lower": "悭",
+    "upperPinyin": [
+      "chǐ"
+    ],
+    "lowerPinyin": [
+      "qiān"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雾髻",
+    "lower": "烟鬟",
+    "upperPinyin": [
+      "wù",
+      "jì"
+    ],
+    "lowerPinyin": [
+      "yān",
+      "huán"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "莺啼",
+    "lower": "鹊噪",
+    "upperPinyin": [
+      "yīng",
+      "tí"
+    ],
+    "lowerPinyin": [
+      "què",
+      "zào"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "姚",
+    "lower": "宋",
+    "upperPinyin": [
+      "yáo"
+    ],
+    "lowerPinyin": [
+      "sòng"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "柳",
+    "lower": "颜",
+    "upperPinyin": [
+      "liǔ"
+    ],
+    "lowerPinyin": [
+      "yán"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "赏善",
+    "lower": "惩奸",
+    "upperPinyin": [
+      "shǎng",
+      "shàn"
+    ],
+    "lowerPinyin": [
+      "chéng",
+      "jiān"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "愁中",
+    "lower": "梦里",
+    "upperPinyin": [
+      "chóu",
+      "zhōng"
+    ],
+    "lowerPinyin": [
+      "mèng",
+      "lǐ"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "巧慧",
+    "lower": "痴顽",
+    "upperPinyin": [
+      "qiǎo",
+      "huì"
+    ],
+    "lowerPinyin": [
+      "chī",
+      "wán"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "使越",
+    "lower": "征蛮",
+    "upperPinyin": [
+      "shǐ",
+      "yuè"
+    ],
+    "lowerPinyin": [
+      "zhēng",
+      "mán"
+    ],
+    "rhyme": "十五删",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "晴",
+    "lower": "雨",
+    "upperPinyin": [
+      "qíng"
+    ],
+    "lowerPinyin": [
+      "yǔ"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "地",
+    "lower": "天",
+    "upperPinyin": [
+      "dì"
+    ],
+    "lowerPinyin": [
+      "tiān"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "山川",
+    "lower": "草木",
+    "upperPinyin": [
+      "shān",
+      "chuān"
+    ],
+    "lowerPinyin": [
+      "cǎo",
+      "mù"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "赤壁",
+    "lower": "青田",
+    "upperPinyin": [
+      "chì",
+      "bì"
+    ],
+    "lowerPinyin": [
+      "qīng",
+      "tián"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "木笔",
+    "lower": "苔钱",
+    "upperPinyin": [
+      "mù",
+      "bǐ"
+    ],
+    "lowerPinyin": [
+      "tái",
+      "qián"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "前",
+    "lower": "后",
+    "upperPinyin": [
+      "qián"
+    ],
+    "lowerPinyin": [
+      "hòu"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "众丑",
+    "lower": "孤妍",
+    "upperPinyin": [
+      "zhòng",
+      "chǒu"
+    ],
+    "lowerPinyin": [
+      "gū",
+      "yán"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鼠目",
+    "lower": "鸢肩",
+    "upperPinyin": [
+      "shǔ",
+      "mù"
+    ],
+    "lowerPinyin": [
+      "yuān",
+      "jiān"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "离",
+    "lower": "坎",
+    "upperPinyin": [
+      "lí"
+    ],
+    "lowerPinyin": [
+      "kǎn"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "震",
+    "lower": "干",
+    "upperPinyin": [
+      "zhèn"
+    ],
+    "lowerPinyin": [
+      "gān"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "尧天",
+    "lower": "舜日",
+    "upperPinyin": [
+      "yáo",
+      "tiān"
+    ],
+    "lowerPinyin": [
+      "shùn",
+      "rì"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "蜀水",
+    "lower": "秦川",
+    "upperPinyin": [
+      "shǔ",
+      "shuǐ"
+    ],
+    "lowerPinyin": [
+      "qín",
+      "chuān"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "涧壑",
+    "lower": "林泉",
+    "upperPinyin": [
+      "jiàn",
+      "hè"
+    ],
+    "lowerPinyin": [
+      "lín",
+      "quán"
+    ],
+    "rhyme": "一先",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "恭",
+    "lower": "慢",
+    "upperPinyin": [
+      "gōng"
+    ],
+    "lowerPinyin": [
+      "màn"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "吝",
+    "lower": "骄",
+    "upperPinyin": [
+      "lìn"
+    ],
+    "lowerPinyin": [
+      "jiāo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雪赋",
+    "lower": "风谣",
+    "upperPinyin": [
+      "xuě",
+      "fù"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "yáo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "开",
+    "lower": "落",
+    "upperPinyin": [
+      "kāi"
+    ],
+    "lowerPinyin": [
+      "luò"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "暗",
+    "lower": "昭",
+    "upperPinyin": [
+      "àn"
+    ],
+    "lowerPinyin": [
+      "zhāo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "赵瑟",
+    "lower": "虞韶",
+    "upperPinyin": [
+      "zhào",
+      "sè"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "sháo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "锦绣",
+    "lower": "琼瑶",
+    "upperPinyin": [
+      "jǐn",
+      "xiù"
+    ],
+    "lowerPinyin": [
+      "qióng",
+      "yáo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "范甑",
+    "lower": "颜瓢",
+    "upperPinyin": [
+      "fàn",
+      "zèng"
+    ],
+    "lowerPinyin": [
+      "yán",
+      "piáo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "班",
+    "lower": "马",
+    "upperPinyin": [
+      "bān"
+    ],
+    "lowerPinyin": [
+      "mǎ"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "董",
+    "lower": "晁",
+    "upperPinyin": [
+      "dǒng"
+    ],
+    "lowerPinyin": [
+      "cháo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "夏昼",
+    "lower": "春宵",
+    "upperPinyin": [
+      "xià",
+      "zhòu"
+    ],
+    "lowerPinyin": [
+      "chūn",
+      "xiāo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雷声",
+    "lower": "电影",
+    "upperPinyin": [
+      "léi",
+      "shēng"
+    ],
+    "lowerPinyin": [
+      "diàn",
+      "yǐng"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "麦穗",
+    "lower": "禾苗",
+    "upperPinyin": [
+      "mài",
+      "suì"
+    ],
+    "lowerPinyin": [
+      "hé",
+      "miáo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "总角",
+    "lower": "垂髫",
+    "upperPinyin": [
+      "zǒng",
+      "jiǎo"
+    ],
+    "lowerPinyin": [
+      "chuí",
+      "tiáo"
+    ],
+    "rhyme": "二萧",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "风",
+    "lower": "雅",
+    "upperPinyin": [
+      "fēng"
+    ],
+    "lowerPinyin": [
+      "yǎ"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "象",
+    "lower": "爻",
+    "upperPinyin": [
+      "xiàng"
+    ],
+    "lowerPinyin": [
+      "yáo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "巨蟒",
+    "lower": "长蛟",
+    "upperPinyin": [
+      "jù",
+      "mǎng"
+    ],
+    "lowerPinyin": [
+      "cháng",
+      "jiāo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "天文",
+    "lower": "地理",
+    "upperPinyin": [
+      "tiān",
+      "wén"
+    ],
+    "lowerPinyin": [
+      "dì",
+      "lǐ"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "蜃",
+    "lower": "蛟",
+    "upperPinyin": [
+      "shèn"
+    ],
+    "lowerPinyin": [
+      "jiāo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "麟薮",
+    "lower": "鹊巢",
+    "upperPinyin": [
+      "lín",
+      "sǒu"
+    ],
+    "lowerPinyin": [
+      "què",
+      "cháo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "风声",
+    "lower": "月色",
+    "upperPinyin": [
+      "fēng",
+      "shēng"
+    ],
+    "lowerPinyin": [
+      "yuè",
+      "sè"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "麦穗",
+    "lower": "桑苞",
+    "upperPinyin": [
+      "mài",
+      "suì"
+    ],
+    "lowerPinyin": [
+      "sāng",
+      "bāo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "楚甸",
+    "lower": "商郊",
+    "upperPinyin": [
+      "chǔ",
+      "diàn"
+    ],
+    "lowerPinyin": [
+      "shāng",
+      "jiāo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "牛",
+    "lower": "马",
+    "upperPinyin": [
+      "niú"
+    ],
+    "lowerPinyin": [
+      "mǎ"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "犬",
+    "lower": "猫",
+    "upperPinyin": [
+      "quǎn"
+    ],
+    "lowerPinyin": [
+      "māo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "旨酒",
+    "lower": "嘉肴",
+    "upperPinyin": [
+      "zhǐ",
+      "jiǔ"
+    ],
+    "lowerPinyin": [
+      "jiā",
+      "yáo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "桃红",
+    "lower": "柳绿",
+    "upperPinyin": [
+      "táo",
+      "hóng"
+    ],
+    "lowerPinyin": [
+      "liǔ",
+      "lǜ"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "北野",
+    "lower": "东郊",
+    "upperPinyin": [
+      "běi",
+      "yě"
+    ],
+    "lowerPinyin": [
+      "dōng",
+      "jiāo"
+    ],
+    "rhyme": "三肴",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "琴",
+    "lower": "瑟",
+    "upperPinyin": [
+      "qín"
+    ],
+    "lowerPinyin": [
+      "sè"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "剑",
+    "lower": "刀",
+    "upperPinyin": [
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "dāo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "地迥",
+    "lower": "天高",
+    "upperPinyin": [
+      "dì",
+      "jiǒng"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "gāo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "紫绶",
+    "lower": "绯袍",
+    "upperPinyin": [
+      "zǐ",
+      "shòu"
+    ],
+    "lowerPinyin": [
+      "fēi",
+      "páo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "虎兕",
+    "lower": "猿猱",
+    "upperPinyin": [
+      "hǔ",
+      "sì"
+    ],
+    "lowerPinyin": [
+      "yuán",
+      "náo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "刑",
+    "lower": "赏",
+    "upperPinyin": [
+      "xíng"
+    ],
+    "lowerPinyin": [
+      "shǎng"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "贬",
+    "lower": "褒",
+    "upperPinyin": [
+      "biǎn"
+    ],
+    "lowerPinyin": [
+      "bāo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "破斧",
+    "lower": "征袍",
+    "upperPinyin": [
+      "pò",
+      "fǔ"
+    ],
+    "lowerPinyin": [
+      "zhēng",
+      "páo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "橄榄",
+    "lower": "葡萄",
+    "upperPinyin": [
+      "gǎn",
+      "lǎn"
+    ],
+    "lowerPinyin": [
+      "pú",
+      "táo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "瓜",
+    "lower": "果",
+    "upperPinyin": [
+      "guā"
+    ],
+    "lowerPinyin": [
+      "guǒ"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "犬子",
+    "lower": "羊羔",
+    "upperPinyin": [
+      "quǎn",
+      "zǐ"
+    ],
+    "lowerPinyin": [
+      "yáng",
+      "gāo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "春分",
+    "lower": "夏至",
+    "upperPinyin": [
+      "chūn",
+      "fēn"
+    ],
+    "lowerPinyin": [
+      "xià",
+      "zhì"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "谷水",
+    "lower": "山涛",
+    "upperPinyin": [
+      "gǔ",
+      "shuǐ"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "tāo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "主逸",
+    "lower": "臣劳",
+    "upperPinyin": [
+      "zhǔ",
+      "yì"
+    ],
+    "lowerPinyin": [
+      "chén",
+      "láo"
+    ],
+    "rhyme": "四豪",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "山",
+    "lower": "水",
+    "upperPinyin": [
+      "shān"
+    ],
+    "lowerPinyin": [
+      "shuǐ"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "海",
+    "lower": "河",
+    "upperPinyin": [
+      "hǎi"
+    ],
+    "lowerPinyin": [
+      "hé"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "新欢",
+    "lower": "旧恨",
+    "upperPinyin": [
+      "xīn",
+      "huān"
+    ],
+    "lowerPinyin": [
+      "jiù",
+      "hèn"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "痛饮",
+    "lower": "高歌",
+    "upperPinyin": [
+      "tòng",
+      "yǐn"
+    ],
+    "lowerPinyin": [
+      "gāo",
+      "gē"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "媚柳",
+    "lower": "枯荷",
+    "upperPinyin": [
+      "mèi",
+      "liǔ"
+    ],
+    "lowerPinyin": [
+      "kū",
+      "hé"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "里咏",
+    "lower": "途歌",
+    "upperPinyin": [
+      "lǐ",
+      "yǒng"
+    ],
+    "lowerPinyin": [
+      "tú",
+      "gē"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "玉律",
+    "lower": "金科",
+    "upperPinyin": [
+      "yù",
+      "lǜ"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "kē"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "霜",
+    "lower": "露",
+    "upperPinyin": [
+      "shuāng"
+    ],
+    "lowerPinyin": [
+      "lù"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "浪",
+    "lower": "波",
+    "upperPinyin": [
+      "làng"
+    ],
+    "lowerPinyin": [
+      "bō"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "酒阑",
+    "lower": "歌罢",
+    "upperPinyin": [
+      "jiǔ",
+      "lán"
+    ],
+    "lowerPinyin": [
+      "gē",
+      "bà"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "日暖",
+    "lower": "风和",
+    "upperPinyin": [
+      "rì",
+      "nuǎn"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "hé"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "放鹤",
+    "lower": "观鹅",
+    "upperPinyin": [
+      "fàng",
+      "hè"
+    ],
+    "lowerPinyin": [
+      "guān",
+      "é"
+    ],
+    "rhyme": "五歌",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "松",
+    "lower": "柏",
+    "upperPinyin": [
+      "sōng"
+    ],
+    "lowerPinyin": [
+      "bǎi"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "缕",
+    "lower": "麻",
+    "upperPinyin": [
+      "lǚ"
+    ],
+    "lowerPinyin": [
+      "má"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "蚁阵",
+    "lower": "蜂衙",
+    "upperPinyin": [
+      "yǐ",
+      "zhèn"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "yá"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "冻雀",
+    "lower": "昏鸦",
+    "upperPinyin": [
+      "dòng",
+      "què"
+    ],
+    "lowerPinyin": [
+      "hūn",
+      "yā"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "优",
+    "lower": "劣",
+    "upperPinyin": [
+      "yōu"
+    ],
+    "lowerPinyin": [
+      "liè"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "松杉",
+    "lower": "杞梓",
+    "upperPinyin": [
+      "sōng",
+      "shān"
+    ],
+    "lowerPinyin": [
+      "qǐ",
+      "zǐ"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "煮酒",
+    "lower": "烹茶",
+    "upperPinyin": [
+      "zhǔ",
+      "jiǔ"
+    ],
+    "lowerPinyin": [
+      "pēng",
+      "chá"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "吴",
+    "lower": "楚",
+    "upperPinyin": [
+      "wú"
+    ],
+    "lowerPinyin": [
+      "chǔ"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "蜀",
+    "lower": "巴",
+    "upperPinyin": [
+      "shǔ"
+    ],
+    "lowerPinyin": [
+      "bā"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "落日",
+    "lower": "流霞",
+    "upperPinyin": [
+      "luò",
+      "rì"
+    ],
+    "lowerPinyin": [
+      "liú",
+      "xiá"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "酒钱",
+    "lower": "诗债",
+    "upperPinyin": [
+      "jiǔ",
+      "qián"
+    ],
+    "lowerPinyin": [
+      "shī",
+      "zhài"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "柏叶",
+    "lower": "松花",
+    "upperPinyin": [
+      "bǎi",
+      "yè"
+    ],
+    "lowerPinyin": [
+      "sōng",
+      "huā"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "碧玉",
+    "lower": "丹砂",
+    "upperPinyin": [
+      "bì",
+      "yù"
+    ],
+    "lowerPinyin": [
+      "dān",
+      "shā"
+    ],
+    "rhyme": "六麻",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "高",
+    "lower": "下",
+    "upperPinyin": [
+      "gāo"
+    ],
+    "lowerPinyin": [
+      "xià"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "短",
+    "lower": "长",
+    "upperPinyin": [
+      "duǎn"
+    ],
+    "lowerPinyin": [
+      "cháng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "柳影",
+    "lower": "花香",
+    "upperPinyin": [
+      "liǔ",
+      "yǐng"
+    ],
+    "lowerPinyin": [
+      "huā",
+      "xiāng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "词人",
+    "lower": "赋客",
+    "upperPinyin": [
+      "cí",
+      "rén"
+    ],
+    "lowerPinyin": [
+      "fù",
+      "kè"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "五帝",
+    "lower": "三王",
+    "upperPinyin": [
+      "wǔ",
+      "dì"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "wáng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "晚眺",
+    "lower": "晨妆",
+    "upperPinyin": [
+      "wǎn",
+      "tiào"
+    ],
+    "lowerPinyin": [
+      "chén",
+      "zhuāng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "禹",
+    "lower": "汤",
+    "upperPinyin": [
+      "yǔ"
+    ],
+    "lowerPinyin": [
+      "tāng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "晋宋",
+    "lower": "隋唐",
+    "upperPinyin": [
+      "jìn",
+      "sòng"
+    ],
+    "lowerPinyin": [
+      "suí",
+      "táng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "奇花",
+    "lower": "异卉",
+    "upperPinyin": [
+      "qí",
+      "huā"
+    ],
+    "lowerPinyin": [
+      "yì",
+      "huì"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "夏日",
+    "lower": "秋霜",
+    "upperPinyin": [
+      "xià",
+      "rì"
+    ],
+    "lowerPinyin": [
+      "qiū",
+      "shuāng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "地久",
+    "lower": "天长",
+    "upperPinyin": [
+      "dì",
+      "jiǔ"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "cháng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "荀",
+    "lower": "孟",
+    "upperPinyin": [
+      "xún"
+    ],
+    "lowerPinyin": [
+      "mèng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "老",
+    "lower": "庄",
+    "upperPinyin": [
+      "lǎo"
+    ],
+    "lowerPinyin": [
+      "zhuāng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "亸柳",
+    "lower": "垂杨",
+    "upperPinyin": [
+      "duǒ",
+      "liǔ"
+    ],
+    "lowerPinyin": [
+      "chuí",
+      "yáng"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "仙宫",
+    "lower": "梵宇",
+    "upperPinyin": [
+      "xiān",
+      "gōng"
+    ],
+    "lowerPinyin": [
+      "fàn",
+      "yǔ"
+    ],
+    "rhyme": "七阳",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "深",
+    "lower": "浅",
+    "upperPinyin": [
+      "shēn"
+    ],
+    "lowerPinyin": [
+      "qiǎn"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "重",
+    "lower": "轻",
+    "upperPinyin": [
+      "zhòng"
+    ],
+    "lowerPinyin": [
+      "qīng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "有影",
+    "lower": "无声",
+    "upperPinyin": [
+      "yǒu",
+      "yǐng"
+    ],
+    "lowerPinyin": [
+      "wú",
+      "shēng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "宿醉",
+    "lower": "余酲",
+    "upperPinyin": [
+      "sù",
+      "zuì"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "chéng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "送",
+    "lower": "迎",
+    "upperPinyin": [
+      "sòng"
+    ],
+    "lowerPinyin": [
+      "yíng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "后甲",
+    "lower": "先庚",
+    "upperPinyin": [
+      "hòu",
+      "jiǎ"
+    ],
+    "lowerPinyin": [
+      "xiān",
+      "gēng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "渔",
+    "lower": "猎",
+    "upperPinyin": [
+      "yú"
+    ],
+    "lowerPinyin": [
+      "liè"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "钓",
+    "lower": "耕",
+    "upperPinyin": [
+      "diào"
+    ],
+    "lowerPinyin": [
+      "gēng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "玉振",
+    "lower": "金声",
+    "upperPinyin": [
+      "yù",
+      "zhèn"
+    ],
+    "lowerPinyin": [
+      "jīn",
+      "shēng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "柳袅",
+    "lower": "葵倾",
+    "upperPinyin": [
+      "liǔ",
+      "niǎo"
+    ],
+    "lowerPinyin": [
+      "kuí",
+      "qīng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "阮杖",
+    "lower": "桓筝",
+    "upperPinyin": [
+      "ruǎn",
+      "zhàng"
+    ],
+    "lowerPinyin": [
+      "huán",
+      "zhēng"
+    ],
+    "rhyme": "八庚",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "红",
+    "lower": "紫",
+    "upperPinyin": [
+      "hóng"
+    ],
+    "lowerPinyin": [
+      "zǐ"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "唐诗",
+    "lower": "汉史",
+    "upperPinyin": [
+      "táng",
+      "shī"
+    ],
+    "lowerPinyin": [
+      "hàn",
+      "shǐ"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "释典",
+    "lower": "仙经",
+    "upperPinyin": [
+      "shì",
+      "diǎn"
+    ],
+    "lowerPinyin": [
+      "xiān",
+      "jīng"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "月榭",
+    "lower": "风亭",
+    "upperPinyin": [
+      "yuè",
+      "xiè"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "tíng"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "行",
+    "lower": "坐",
+    "upperPinyin": [
+      "xíng"
+    ],
+    "lowerPinyin": [
+      "zuò"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "佩紫",
+    "lower": "纡青",
+    "upperPinyin": [
+      "pèi",
+      "zǐ"
+    ],
+    "lowerPinyin": [
+      "yū",
+      "qīng"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "棋枰",
+    "lower": "笔架",
+    "upperPinyin": [
+      "qí",
+      "píng"
+    ],
+    "lowerPinyin": [
+      "bǐ",
+      "jià"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雨雪",
+    "lower": "雷霆",
+    "upperPinyin": [
+      "yǔ",
+      "xuě"
+    ],
+    "lowerPinyin": [
+      "léi",
+      "tíng"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "水岸",
+    "lower": "沙汀",
+    "upperPinyin": [
+      "shuǐ",
+      "àn"
+    ],
+    "lowerPinyin": [
+      "shā",
+      "tīng"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "书",
+    "lower": "史",
+    "upperPinyin": [
+      "shū"
+    ],
+    "lowerPinyin": [
+      "shǐ"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "绿草",
+    "lower": "青萍",
+    "upperPinyin": [
+      "lǜ",
+      "cǎo"
+    ],
+    "lowerPinyin": [
+      "qīng",
+      "píng"
+    ],
+    "rhyme": "九青",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "新",
+    "lower": "旧",
+    "upperPinyin": [
+      "xīn"
+    ],
+    "lowerPinyin": [
+      "jiù"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "降",
+    "lower": "升",
+    "upperPinyin": [
+      "jiàng"
+    ],
+    "lowerPinyin": [
+      "shēng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "葛巾",
+    "lower": "藜杖",
+    "upperPinyin": [
+      "gě",
+      "jīn"
+    ],
+    "lowerPinyin": [
+      "lí",
+      "zhàng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "涧水",
+    "lower": "池冰",
+    "upperPinyin": [
+      "jiàn",
+      "shuǐ"
+    ],
+    "lowerPinyin": [
+      "chí",
+      "bīng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "燕雀",
+    "lower": "鹍鹏",
+    "upperPinyin": [
+      "yàn",
+      "què"
+    ],
+    "lowerPinyin": [
+      "kūn",
+      "péng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "儒",
+    "lower": "士",
+    "upperPinyin": [
+      "rú"
+    ],
+    "lowerPinyin": [
+      "shì"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "面友",
+    "lower": "心朋",
+    "upperPinyin": [
+      "miàn",
+      "yǒu"
+    ],
+    "lowerPinyin": [
+      "xīn",
+      "péng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "春残",
+    "lower": "夏老",
+    "upperPinyin": [
+      "chūn",
+      "cán"
+    ],
+    "lowerPinyin": [
+      "xià",
+      "lǎo"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "夜寝",
+    "lower": "晨兴",
+    "upperPinyin": [
+      "yè",
+      "qǐn"
+    ],
+    "lowerPinyin": [
+      "chén",
+      "xīng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "规",
+    "lower": "矩",
+    "upperPinyin": [
+      "guī"
+    ],
+    "lowerPinyin": [
+      "jǔ"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "墨",
+    "lower": "绳",
+    "upperPinyin": [
+      "mò"
+    ],
+    "lowerPinyin": [
+      "shéng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "访友",
+    "lower": "寻僧",
+    "upperPinyin": [
+      "fǎng",
+      "yǒu"
+    ],
+    "lowerPinyin": [
+      "xún",
+      "sēng"
+    ],
+    "rhyme": "十蒸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "夜宴",
+    "lower": "春游",
+    "upperPinyin": [
+      "yè",
+      "yàn"
+    ],
+    "lowerPinyin": [
+      "chūn",
+      "yóu"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "蜀犬",
+    "lower": "吴牛",
+    "upperPinyin": [
+      "shǔ",
+      "quǎn"
+    ],
+    "lowerPinyin": [
+      "wú",
+      "niú"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "唇",
+    "lower": "齿",
+    "upperPinyin": [
+      "chún"
+    ],
+    "lowerPinyin": [
+      "chǐ"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "角",
+    "lower": "头",
+    "upperPinyin": [
+      "jiǎo"
+    ],
+    "lowerPinyin": [
+      "tóu"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "策马",
+    "lower": "骑牛",
+    "upperPinyin": [
+      "cè",
+      "mǎ"
+    ],
+    "lowerPinyin": [
+      "qí",
+      "niú"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "毫尖",
+    "lower": "笔底",
+    "upperPinyin": [
+      "háo",
+      "jiān"
+    ],
+    "lowerPinyin": [
+      "bǐ",
+      "dǐ"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "语燕",
+    "lower": "啼鸠",
+    "upperPinyin": [
+      "yǔ",
+      "yàn"
+    ],
+    "lowerPinyin": [
+      "tí",
+      "jiū"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "庵",
+    "lower": "寺",
+    "upperPinyin": [
+      "ān"
+    ],
+    "lowerPinyin": [
+      "sì"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "殿",
+    "lower": "楼",
+    "upperPinyin": [
+      "diàn"
+    ],
+    "lowerPinyin": [
+      "lóu"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "酒艇",
+    "lower": "渔舟",
+    "upperPinyin": [
+      "jiǔ",
+      "tǐng"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "zhōu"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "金龙",
+    "lower": "彩凤",
+    "upperPinyin": [
+      "jīn",
+      "lóng"
+    ],
+    "lowerPinyin": [
+      "cǎi",
+      "fèng"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "四季",
+    "lower": "三秋",
+    "upperPinyin": [
+      "sì",
+      "jì"
+    ],
+    "lowerPinyin": [
+      "sān",
+      "qiū"
+    ],
+    "rhyme": "十一尤",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "眉",
+    "lower": "目",
+    "upperPinyin": [
+      "méi"
+    ],
+    "lowerPinyin": [
+      "mù"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "口",
+    "lower": "心",
+    "upperPinyin": [
+      "kǒu"
+    ],
+    "lowerPinyin": [
+      "xīn"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "锦瑟",
+    "lower": "瑶琴",
+    "upperPinyin": [
+      "jǐn",
+      "sè"
+    ],
+    "lowerPinyin": [
+      "yáo",
+      "qín"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "晓耕",
+    "lower": "寒钓",
+    "upperPinyin": [
+      "xiǎo",
+      "gēng"
+    ],
+    "lowerPinyin": [
+      "hán",
+      "diào"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "闵损",
+    "lower": "曾参",
+    "upperPinyin": [
+      "mǐn",
+      "sǔn"
+    ],
+    "lowerPinyin": [
+      "céng",
+      "cān"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "古",
+    "lower": "今",
+    "upperPinyin": [
+      "gǔ"
+    ],
+    "lowerPinyin": [
+      "jīn"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "野兽",
+    "lower": "山禽",
+    "upperPinyin": [
+      "yě",
+      "shòu"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "qín"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "犍牛",
+    "lower": "牝马",
+    "upperPinyin": [
+      "jiān",
+      "niú"
+    ],
+    "lowerPinyin": [
+      "pìn",
+      "mǎ"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "水浅",
+    "lower": "山深",
+    "upperPinyin": [
+      "shuǐ",
+      "qiǎn"
+    ],
+    "lowerPinyin": [
+      "shān",
+      "shēn"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "剑",
+    "lower": "琴",
+    "upperPinyin": [
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "qín"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "素志",
+    "lower": "丹心",
+    "upperPinyin": [
+      "sù",
+      "zhì"
+    ],
+    "lowerPinyin": [
+      "dān",
+      "xīn"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "虎啸",
+    "lower": "龙吟",
+    "upperPinyin": [
+      "hǔ",
+      "xiào"
+    ],
+    "lowerPinyin": [
+      "lóng",
+      "yín"
+    ],
+    "rhyme": "十二侵",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "千",
+    "lower": "百",
+    "upperPinyin": [
+      "qiān"
+    ],
+    "lowerPinyin": [
+      "bǎi"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "两",
+    "lower": "三",
+    "upperPinyin": [
+      "liǎng"
+    ],
+    "lowerPinyin": [
+      "sān"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "地北",
+    "lower": "天南",
+    "upperPinyin": [
+      "dì",
+      "běi"
+    ],
+    "lowerPinyin": [
+      "tiān",
+      "nán"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "道院",
+    "lower": "禅庵",
+    "upperPinyin": [
+      "dào",
+      "yuàn"
+    ],
+    "lowerPinyin": [
+      "chán",
+      "ān"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雪岭",
+    "lower": "云潭",
+    "upperPinyin": [
+      "xuě",
+      "lǐng"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "tán"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "将",
+    "lower": "欲",
+    "upperPinyin": [
+      "jiāng"
+    ],
+    "lowerPinyin": [
+      "yù"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "可",
+    "lower": "堪",
+    "upperPinyin": [
+      "kě"
+    ],
+    "lowerPinyin": [
+      "kān"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "权衡",
+    "lower": "尺度",
+    "upperPinyin": [
+      "quán",
+      "héng"
+    ],
+    "lowerPinyin": [
+      "chǐ",
+      "dù"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雪寺",
+    "lower": "云庵",
+    "upperPinyin": [
+      "xuě",
+      "sì"
+    ],
+    "lowerPinyin": [
+      "yún",
+      "ān"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "不愧",
+    "lower": "无惭",
+    "upperPinyin": [
+      "bù",
+      "kuì"
+    ],
+    "lowerPinyin": [
+      "wú",
+      "cán"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "北",
+    "lower": "南",
+    "upperPinyin": [
+      "běi"
+    ],
+    "lowerPinyin": [
+      "nán"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "贝母",
+    "lower": "宜男",
+    "upperPinyin": [
+      "bèi",
+      "mǔ"
+    ],
+    "lowerPinyin": [
+      "yí",
+      "nán"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "移山",
+    "lower": "浚井",
+    "upperPinyin": [
+      "yí",
+      "shān"
+    ],
+    "lowerPinyin": [
+      "jùn",
+      "jǐng"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "谏苦",
+    "lower": "言甘",
+    "upperPinyin": [
+      "jiàn",
+      "kǔ"
+    ],
+    "lowerPinyin": [
+      "yán",
+      "gān"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "魏尚",
+    "lower": "周堪",
+    "upperPinyin": [
+      "wèi",
+      "shàng"
+    ],
+    "lowerPinyin": [
+      "zhōu",
+      "kān"
+    ],
+    "rhyme": "十三覃",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "悲",
+    "lower": "乐",
+    "upperPinyin": [
+      "bēi"
+    ],
+    "lowerPinyin": [
+      "lè"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "玉兔",
+    "lower": "银蟾",
+    "upperPinyin": [
+      "yù",
+      "tù"
+    ],
+    "lowerPinyin": [
+      "yín",
+      "chán"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "醉侯",
+    "lower": "诗史",
+    "upperPinyin": [
+      "zuì",
+      "hóu"
+    ],
+    "lowerPinyin": [
+      "shī",
+      "shǐ"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "眼底",
+    "lower": "眉尖",
+    "upperPinyin": [
+      "yǎn",
+      "dǐ"
+    ],
+    "lowerPinyin": [
+      "méi",
+      "jiān"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "李苦",
+    "lower": "瓜甜",
+    "upperPinyin": [
+      "lǐ",
+      "kǔ"
+    ],
+    "lowerPinyin": [
+      "guā",
+      "tián"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "如",
+    "lower": "似",
+    "upperPinyin": [
+      "rú"
+    ],
+    "lowerPinyin": [
+      "sì"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "绣幕",
+    "lower": "朱帘",
+    "upperPinyin": [
+      "xiù",
+      "mù"
+    ],
+    "lowerPinyin": [
+      "zhū",
+      "lián"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "鹭立",
+    "lower": "鱼潜",
+    "upperPinyin": [
+      "lù",
+      "lì"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "qián"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "手剑",
+    "lower": "腰镰",
+    "upperPinyin": [
+      "shǒu",
+      "jiàn"
+    ],
+    "lowerPinyin": [
+      "yāo",
+      "lián"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "逢",
+    "lower": "遇",
+    "upperPinyin": [
+      "féng"
+    ],
+    "lowerPinyin": [
+      "yù"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "仰",
+    "lower": "瞻",
+    "upperPinyin": [
+      "yǎng"
+    ],
+    "lowerPinyin": [
+      "zhān"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "市井",
+    "lower": "闾阎",
+    "upperPinyin": [
+      "shì",
+      "jǐng"
+    ],
+    "lowerPinyin": [
+      "lǘ",
+      "yán"
+    ],
+    "rhyme": "十四盐",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "苦",
+    "lower": "咸",
+    "upperPinyin": [
+      "kǔ"
+    ],
+    "lowerPinyin": [
+      "xián"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "烟蓑",
+    "lower": "雨笠",
+    "upperPinyin": [
+      "yān",
+      "suō"
+    ],
+    "lowerPinyin": [
+      "yǔ",
+      "lì"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "月榜",
+    "lower": "风帆",
+    "upperPinyin": [
+      "yuè",
+      "bǎng"
+    ],
+    "lowerPinyin": [
+      "fēng",
+      "fān"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "能",
+    "lower": "否",
+    "upperPinyin": [
+      "néng"
+    ],
+    "lowerPinyin": [
+      "fǒu"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "圣",
+    "lower": "贤",
+    "upperPinyin": [
+      "shèng"
+    ],
+    "lowerPinyin": [
+      "xián"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "卫瓘",
+    "lower": "浑瑊",
+    "upperPinyin": [
+      "wèi",
+      "guàn"
+    ],
+    "lowerPinyin": [
+      "hún",
+      "jiān"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "雀罗",
+    "lower": "鱼网",
+    "upperPinyin": [
+      "què",
+      "luó"
+    ],
+    "lowerPinyin": [
+      "yú",
+      "wǎng"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "冠",
+    "lower": "带",
+    "upperPinyin": [
+      "guān"
+    ],
+    "lowerPinyin": [
+      "dài"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "帽",
+    "lower": "衫",
+    "upperPinyin": [
+      "mào"
+    ],
+    "lowerPinyin": [
+      "shān"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "议鲠",
+    "lower": "言谗",
+    "upperPinyin": [
+      "yì",
+      "gěng"
+    ],
+    "lowerPinyin": [
+      "yán",
+      "chán"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "行舟",
+    "lower": "御马",
+    "upperPinyin": [
+      "xíng",
+      "zhōu"
+    ],
+    "lowerPinyin": [
+      "yù",
+      "mǎ"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  },
+  {
+    "upper": "史册",
+    "lower": "书缄",
+    "upperPinyin": [
+      "shǐ",
+      "cè"
+    ],
+    "lowerPinyin": [
+      "shū",
+      "jiān"
+    ],
+    "rhyme": "十五咸",
+    "book": "声律启蒙"
+  }
+]
