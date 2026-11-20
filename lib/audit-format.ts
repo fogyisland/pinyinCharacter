@@ -46,6 +46,7 @@ export type AuditEvent =
   | 'admin_chars_generated'
   | 'admin_chars_init_seed'
   | 'admin_content_seed_run'
+  | 'admin_schema_migrate'
   | 'admin_membership_plans_seeded'
   | 'admin_about_intro_regenerated'
   | 'smtp_config_updated'
@@ -141,6 +142,7 @@ export const AUDIT_EVENTS = [
   'admin_chars_generated',
   'admin_chars_init_seed',
   'admin_content_seed_run',
+  'admin_schema_migrate',
   'admin_membership_plans_seeded',
   'admin_about_intro_regenerated',
   'smtp_config_updated',
@@ -238,6 +240,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   admin_chars_generated: '批量生成字',
   admin_chars_init_seed: '初始化种子字',
   admin_content_seed_run: '补齐内容种子',
+  admin_schema_migrate: '运行数据库结构迁移',
   admin_membership_plans_seeded: '种子会员套餐',
   admin_about_intro_regenerated: '重新生成关于页',
   smtp_config_updated: '更新邮件配置',
@@ -421,6 +424,14 @@ export function formatLogMessage(
       const more = names.length > 4 ? ` 等 ${names.length} 项` : '';
       const failedNote = failed.length ? ` — 失败 ${join(failed as string[])}` : '';
       return `补齐内容种子${head ? `: ${head}${more}` : ''}${inserted ? ` — 新增 ${inserted} 行` : ''}${failedNote}`;
+    }
+
+    case 'admin_schema_migrate': {
+      const files = num(m.files);
+      const statements = num(m.statements);
+      const failed = str(m.failed);
+      const head = files ? ` — ${files} 个文件 / ${statements || 0} 条语句` : '';
+      return `运行数据库结构迁移${head}${failed ? ` — 失败: ${failed}` : ''}`;
     }
 
     case 'admin_membership_plans_seeded':
