@@ -97,41 +97,110 @@ export function toneOf(syllable: string): Tone | null {
 /**
  * 去掉声调符号的音节。
  *
- * 两件事要注意：
+ * 三件事要注意：
  *
  * 1. 不能只把带调的字符**删掉** —— 'ō' 删掉就不是 'o' 了。Unicode 分解
  *    （NFD）会把 'ō' 拆成 'o' + 组合音符，再把组合音符去掉，才是 'o'。
  *
- * 2. 语料里的 ü 写成 `l` + 组合分音符（U+01DC），而这个音符要落在 u 上
- *    —— 绿读 lǜ，不是 l + ǜ。所以先把「声母 + 组合分音符」挪成「声母 + ü」，
- *    再做分解。
+ * 2. 语料里的 ü 是**预组合**字符：lǜ = 006C 01DC、lǚ = 006C 01DA、
+ *    lǘ = 006C 01D8、nǚ = 006E 01DA。声调不同，字母就不同 ——
+ *    只认其中一种（以前只认 ǜ），其余的 ü 就悄悄变成了 u，
+ *    「履」「闾」「女」于是跟「鲁」「卢」混成一类。
  *
- * ü 在纯 ASCII 的拼音记法里写作 v。
+ * 3. ü 在纯 ASCII 的拼音记法里写作 v。
+ *
+ * 另外，j/q/x/y 后的 u 念的是 ü —— 语料里就是这么写的（ju、qu、xu、
+ * jue、xue、yuan、yu），一个声调符号都不带。而 y 不是声母，是韵母的头，
+ * y 后的 i（yan、yao、ye、yin、ying、yang）是韵母的一部分，不能丢。
+ *
+ * 所以这里先把音节拆成「声母 + 韵母」，再单独处理 ü，
+ * 而不是拿正则一路替换 —— 一路替换会把 y 的 i 一起吃掉。
  */
 function plain(syllable: string): string {
-  // 把挂在声母后面的组合分音符挪到 u 上：'l' + U+01DC → 'l' + 'ü'。
-  const fixed = syllable.replace(/([jqxnl])ǜ/g, '$1ü');
   // ü 要在 NFD **之前**换成 v —— NFD 会把 'ü' 拆成 'u' + 组合音符，到时候
-  // 就找不到 'ü' 了。
-  const withV = fixed.replace(/ü/g, 'v');
+  // 就找不到 'ü' 了。四种带调的 ü 都要换。
+  const withV = syllable.replace(/[üǖǘǚǜ]/g, 'v');
   const stripped = withV.normalize('NFD').replace(/[̀-ͯ]/g, '');
   return stripped.toLowerCase();
 }
 
+/**
+ * 零声母音节的首字母。
+ *
+ * 这些字母开头的音节没有声母（爱 ài、鹅 é、欧 ōu、昂 áng），整个音节
+ * 都是韵母。它们也是声母表里的字母 —— 区别在于「ai」这种组合本身
+ * 就是一个韵母，而不是「a」声母加「i」韵母。
+ */
+const ZERO_INITIAL = new Set(['a', 'o', 'e', 'ê']);
+
+/** 双字母声母。zh/ch/sh 的第一个字母跟零声母的字母重叠，要先排除它们。 */
+const REAL_INITIALS = new Set(['zh', 'ch', 'sh']);
+
+/**
+ * 把音节拆成声母和韵母。
+ *
+ * 声母最长两个字母（zh、ch、sh），其余是一个。y 不算声母 —— 它是
+ * 韵母的头（yan 的韵母是 ian），算成声母的话韵母就会被砍掉一截。
+ *
+ * 零声母音节（爱、鹅、欧、昂）整个音节都是韵母 —— 它们没有声母，
+ * 第一个字母就是韵母的一部分，不能当成声母砍掉。
+ */
+function split(syllable: string): { initial: string; final: string } {
+  const p = plain(syllable);
+
+  // y 开头的：y 自己不算声母，y 后面紧跟的 i 也是韵母的一部分。
+  if (p.startsWith('y')) {
+    // yu/yuan/yue 里的 u 念的是 ü —— 语料写的是 u，还原成 v。
+    const rest = p.slice(1);
+    if (rest.startsWith('u')) {
+      // yuan → van（üan），yu → v（ü），yue → ve（üe）。
+      // i 要留着：yuan 里 u 是 ü，前面没有 i。
+      return { initial: '', final: 'v' + rest.slice(1) };
+    }
+    // yan → ian，yao → iao，ye → ie，yin → in，ying → ing，yang → iang。
+    return { initial: '', final: rest.startsWith('i') ? rest : 'i' + rest };
+  }
+
+  // 零声母音节：整个音节都是韵母。
+  // 这些是《汉语拼音方案》里 a、o、e、ê 开头的音节，以及 ai、ei、ao、
+  // ou、an、en、ang、eng、ong、er —— 它们的第一个字母不是声母。
+  if (ZERO_INITIAL.has(p.slice(0, 1)) && !REAL_INITIALS.has(p.slice(0, 2))) {
+    return { initial: '', final: p };
+  }
+
+  let initial = '';
+  if (p.startsWith('zh')) initial = 'zh';
+  else if (p.startsWith('ch')) initial = 'ch';
+  else if (p.startsWith('sh')) initial = 'sh';
+  else initial = p.slice(0, 1);
+
+  let rest = p.slice(initial.length);
+
+  // j/q/x 后的 u 念的是 ü —— 语料里就是这么写的（ju、qu、xu、jue、xue）。
+  // 不还原的话「居」的韵母算成 u，跟「猪」混成一类。
+  if ((initial === 'j' || initial === 'q' || initial === 'x') && rest.startsWith('u')) {
+    rest = 'v' + rest.slice(1);
+  }
+
+  return { initial, final: rest };
+}
+
 /** 声母。'zhōng' → 'zh'，'mā' → 'm'。 */
 export function initialOf(syllable: string): string {
-  const p = plain(syllable);
-  if (p.startsWith('zh')) return 'zh';
-  if (p.startsWith('ch')) return 'ch';
-  if (p.startsWith('sh')) return 'sh';
-  return p.slice(0, 1);
+  return split(syllable).initial;
 }
 
 /** 韵母。'zhōng' → 'ong'，'mā' → 'a'。 */
 export function finalOf(syllable: string): string {
-  const p = plain(syllable);
-  const initial = initialOf(syllable);
-  return p.length > initial.length ? p.slice(initial.length) : '';
+  const { initial, final } = split(syllable);
+  if (final.length === 0) return '';
+  // j/q/x 后的 iu 其实念 iou ——「九」是 jiǔ，不是 juǔ。拼音书里 iou
+  // 在 j/q/x 后省写成 iu，但韵母还是 iou。干扰字是按韵母挑的，算错了
+  // 就挑不准（跟 iu 近的字该挑没挑，不该挑的挑进来了）。
+  if ((initial === 'j' || initial === 'q' || initial === 'x') && final === 'iu') {
+    return 'iou';
+  }
+  return final;
 }
 
 /** 平声（1、2）还是仄声（3、4）。 */
@@ -260,12 +329,20 @@ export function buildRound(
     for (let i = 0; i < s.chars.length; i++) {
       const syllable = s.pinyin[i] ?? '';
       const tone = toneOf(syllable);
+      // 没有声调就判不了平仄 —— 轻声（de、le、ma）就是这样。
+      // 硬把它当成平声，界面上的平仄标记就是错的，玩家照着错标记去对，
+      // 对出来的东西也是错的。宁可这一局开不起来，也不能给错标记。
+      if (tone === null) {
+        throw new Error(
+          `duiyun: the couplet "${pair.upper} / ${pair.lower}" has a syllable without a tone: ${syllable || '(empty)'}`,
+        );
+      }
       slots.push({
         side: s.side,
         index: i,
         char: s.chars[i]!,
         pinyin: syllable,
-        tone: tone ?? 1,
+        tone,
         isBlank: false,
         filled: false,
       });

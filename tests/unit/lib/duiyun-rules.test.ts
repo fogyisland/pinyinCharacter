@@ -71,6 +71,95 @@ describe('duiyun rules', () => {
     expect(finalOf('lǜ')).toBe('v');
   });
 
+  it('spells the final of jiu as iou, not iu', () => {
+    // 拼音里 j/q/x 后的 iu 其实念的是 iou ——「九」是 jiǔ 不是 juǔ。
+    // 干扰字是按韵母挑的，韵母算错，干扰字就挑不准。
+    expect(finalOf('jiu')).toBe('iou');
+    expect(finalOf('qiu')).toBe('iou');
+    expect(finalOf('xiu')).toBe('iou');
+    // 没有 iu 的字不受影响。
+    expect(finalOf('jiao')).toBe('iao');
+  });
+
+  it('reads the bare u after j/q/x/y as the ü it really is', () => {
+    // 语料里 j/q/x/y 后的 ü 一个声调符号都不带（ju、qu、xu、jue、xue、
+    // yuan、yu），韵母要自己还原成 ü —— 不还原的话「居」的韵母算成 u，
+    // 跟「猪」混成一类。
+    expect(finalOf('ju')).toBe('v');
+    expect(finalOf('qu')).toBe('v');
+    expect(finalOf('xu')).toBe('v');
+    expect(finalOf('jue')).toBe('ve');
+    expect(finalOf('xue')).toBe('ve');
+    expect(finalOf('yuan')).toBe('van');
+    expect(finalOf('yu')).toBe('v');
+    expect(finalOf('yue')).toBe('ve');
+    // l 后的 u 就是 u，不是 ü。
+    expect(finalOf('lu')).toBe('u');
+  });
+
+  it('reads the ü after l and n, whatever tone it carries', () => {
+    // 语料里 ü 是**预组合**字符（lǜ = 006C 01DC、lǚ = 006C 01DA、
+    // lǘ = 006C 01D8、nǚ = 006E 01DA），不带任何组合记号。
+    // 之前只认了 ǜ（一声那个），于是「履」lǚ、「闾」lǘ、「女」nǚ 的
+    // 韵母都算成了 u —— 跟「鲁」「卢」混成一类，干扰字就挑不准。
+    expect(finalOf('lǜ')).toBe('v');
+    expect(finalOf('lǚ')).toBe('v');
+    expect(finalOf('lǘ')).toBe('v');
+    expect(finalOf('nǚ')).toBe('v');
+    expect(finalOf('nüè')).toBe('ve');
+    // l/n 后的 u 真的是 u，不是 ü。
+    expect(finalOf('lù')).toBe('u');
+    expect(finalOf('nǚ')).not.toBe('u');
+  });
+
+  it('keeps the i glide after the y initial', () => {
+    // y 不是声母，是韵母头 —— 「严」yán 的韵母是 ian，不是 an。
+    // 之前把 y 后的 u 换成 v 的时候，把 yán 的 i 一起吃掉了，
+    // 「岩」yán 跟「安」ān 混成一类。
+    expect(finalOf('yán')).toBe('ian');
+    expect(finalOf('yáo')).toBe('iao');
+    expect(finalOf('yè')).toBe('ie');
+    expect(finalOf('yīn')).toBe('in');
+    expect(finalOf('yīng')).toBe('ing');
+    expect(finalOf('yǎng')).toBe('iang');
+    // y 后的 u 是 ü，但前面的 i 要留着：yuan 的韵母是 üan（记作 van）。
+    expect(finalOf('yuán')).toBe('van');
+    // 「云」yun 是 ün —— y 就是 ü 的省写，所以韵母是 vn，跟「绿」的 v 一族。
+    expect(finalOf('yún')).toBe('vn');
+    expect(finalOf('yù')).toBe('v');
+    expect(finalOf('yuè')).toBe('ve');
+  });
+
+  it('gives a zero-initial syllable its whole body as the final', () => {
+    // 零声母音节（爱、鹅、欧、昂）整个音节都是韵母。
+    // 之前一律把第一个字母当声母，于是「爱」ài 的韵母成了 'i'、
+    // 「昂」áng 成了 'ng'、「鹅」é 成了空 —— 韵母算错，干扰字就挑不准。
+    expect(finalOf('ài')).toBe('ai');
+    expect(finalOf('é')).toBe('e');
+    expect(finalOf('óu')).toBe('ou');
+    expect(finalOf('áng')).toBe('ang');
+    expect(finalOf('ér')).toBe('er');
+    expect(finalOf('ēi')).toBe('ei');
+    // 有声母的音节不受影响。
+    expect(finalOf('mā')).toBe('a');
+    expect(finalOf('zhōng')).toBe('ong');
+  });
+
+  it('refuses a couplet whose syllables have no tone', () => {
+    // 轻声（de、le、ma）没有平仄，判不了对。抽取脚本会把这样的对句丢掉，
+    // 但语料文件要是被人手改过、或者换了别的脚本生成，就可能混进来。
+    // 这样的对句必须被拒绝 —— 硬把轻声当成平声，界面上的平仄标记就是错的。
+    const neutral: DuiyunPair = {
+      upper: '天地',
+      lower: '古今',
+      upperPinyin: ['tiān', 'de'],
+      lowerPinyin: ['gǔ', 'jīn'],
+      rhyme: '一东',
+      book: '笠翁对韵',
+    };
+    expect(() => buildRound(neutral, DUIYUN_CONFIG.easy, 1, [neutral])).toThrow(/声调|tone/i);
+  });
+
   it('gives an empty final to a syllable that is only an initial', () => {
     // 'zh' 这样的音节没有韵母 —— 韵母是空串，不是 'zh'，也不是 'h'。
     expect(initialOf('zh')).toBe('zh');

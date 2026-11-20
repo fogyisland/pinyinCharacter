@@ -277,6 +277,93 @@ describe('DuiYunGame', () => {
     expect(slot.textContent).not.toContain('？');
   });
 
+  it('says so instead of crashing when a couplet cannot be judged', () => {
+    // 语料里混进一副判不了平仄的对句时，规则会拒绝。组件不能跟着崩 ——
+    // 崩了整页就没了。玩家该看到一句话。
+    vi.mocked(fetchDuiyunPairs).mockResolvedValue({
+      pairs: [
+        {
+          upper: '天地',
+          lower: '古今',
+          upperPinyin: ['tiān', 'de'],
+          lowerPinyin: ['gǔ', 'jīn'],
+          rhyme: '一东',
+          book: '笠翁对韵',
+        },
+      ],
+      failed: false,
+    });
+    render(<DuiYunGame />);
+    return waitFor(() => expect(screen.getByText('对韵消消')).toBeInTheDocument()).then(() => {
+      fireEvent.click(screen.getByRole('button', { name: '开始' }));
+      expect(screen.getByText(/这一副对韵有点问题/)).toBeInTheDocument();
+    });
+  });
+
+  it('does not replay the same couplet after the difficulty changes', async () => {
+    // 「换难度」把整个 state 重置成了 READY —— READY.seed 是 0，于是下一局
+    // 的 seed 又是 1，跟第一局一模一样：同一副对联、同样挖空的位置、
+    // 同样的一盘字。玩家拼完第一局、换个难度、看到的还是刚才那副，
+    // 像是游戏没听见他换了难度。
+    render(<DuiYunGame />);
+    await waitFor(() => expect(screen.getByRole('button', { name: '开始' })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: '开始' }));
+
+    const first = slotButtons().map((b) => b.textContent).join('');
+    expect(first.length).toBeGreaterThan(0);
+
+    // 拼完这一局。
+    for (let guard = 0; guard < 6; guard++) {
+      const slots = slotButtons();
+      const texts = slotTexts();
+      const blankIndex = texts.findIndex((text) => text.includes('？'));
+      if (blankIndex === -1) break;
+      const wanted = slots[blankIndex]!.getAttribute('aria-label')?.match(/需要 (\S)/)?.[1];
+      const tile = trayButtons().find((b) => b.getAttribute('aria-label')?.includes(`字 ${wanted}`));
+      if (!tile) break;
+      fireEvent.click(tile);
+      fireEvent.click(slots[blankIndex]);
+    }
+    await waitFor(() => expect(screen.getByText(/拼对了：/)).toBeInTheDocument());
+
+    // 换难度，再来一副。
+    fireEvent.click(screen.getByRole('button', { name: '换难度' }));
+    fireEvent.click(screen.getByRole('button', { name: '开始' }));
+
+    const second = slotButtons().map((b) => b.textContent).join('');
+    // 换难度之后必须换一副对联。
+    expect(second).not.toBe(first);
+  });
+
+  it('keeps the count of the couplets the player has solved', async () => {
+    // 「已拼好 N 副」是玩家自己的成绩。换个难度不该把它清零 ——
+    // 成绩是自己挣的，不是难度给的。
+    render(<DuiYunGame />);
+    await waitFor(() => expect(screen.getByRole('button', { name: '开始' })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: '开始' }));
+
+    for (let guard = 0; guard < 6; guard++) {
+      const slots = slotButtons();
+      const texts = slotTexts();
+      const blankIndex = texts.findIndex((text) => text.includes('？'));
+      if (blankIndex === -1) break;
+      const wanted = slots[blankIndex]!.getAttribute('aria-label')?.match(/需要 (\S)/)?.[1];
+      const tile = trayButtons().find((b) => b.getAttribute('aria-label')?.includes(`字 ${wanted}`));
+      if (!tile) break;
+      fireEvent.click(tile);
+      fireEvent.click(slots[blankIndex]);
+    }
+    await waitFor(() => expect(screen.getByText(/拼对了：/)).toBeInTheDocument());
+    expect(screen.getByText(/已拼好 1 副/)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: '换难度' }));
+    // 「已拼好 N 副」是玩家自己的成绩，换难度不该把它清零 ——
+    // 成绩是自己挣的，不是难度给的。计数器只在对局里显示，
+    // 所以要开下一局才看得见它还在。
+    fireEvent.click(screen.getByRole('button', { name: '开始' }));
+    expect(screen.getByText(/已拼好 1 副/)).toBeInTheDocument();
+  });
+
   it('holds three blanks on hard', async () => {
     render(<DuiYunGame />);
     await waitFor(() => expect(screen.getByText('对韵消消')).toBeInTheDocument());

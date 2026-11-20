@@ -170,7 +170,20 @@ export function DuiYunGame() {
       if (current.pool.length === 0) return { ...current, seed };
       const config = DUIYUN_CONFIG[difficulty];
       const pair = current.pool[seed % current.pool.length];
-      const round = buildRound(pair, config, seed, current.pool);
+      let round: DuiyunRound;
+      try {
+        round = buildRound(pair, config, seed, current.pool);
+      } catch (err) {
+        // 语料里有判不了平仄的对句（轻声，或者音节缺了）—— 规则会拒绝。
+        // 宁可这一局开不起来，也不能给玩家一个错的平仄标记。
+        console.error('[duiyun-game] the round could not be built', err);
+        return {
+          ...current,
+          phase: 'error',
+          error: '这一副对韵有点问题，请再试一次。',
+          message: '',
+        };
+      }
       return {
         ...current,
         phase: 'playing',
@@ -432,7 +445,19 @@ export function DuiYunGame() {
             <button
               type="button"
               className="rounded border border-ink/20 bg-paper px-4 py-2 text-sm hover:bg-ink/5"
-              onClick={() => setState({ ...READY, pool: state.pool })}
+              onClick={() =>
+                // 换难度只换难度 —— seed 和成绩都要留着。
+                // seed 归零的话，下一局的 seed 又变回 1，跟第一局抽到
+                // 同一副对联、同样挖空的位置、同样的一盘字：玩家拼完
+                // 第一局、换个难度，看到的还是刚才那副，像是游戏没听见他。
+                // 成绩是玩家自己挣的，更不该被一个难度按钮清零。
+                setState((current) => ({
+                  ...READY,
+                  pool: current.pool,
+                  seed: current.seed,
+                  solved: current.solved,
+                }))
+              }
             >
               换难度
             </button>
