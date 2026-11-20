@@ -46,6 +46,11 @@ export interface SaveWechatConfigInput {
  * An empty app secret keeps the stored one — the admin screen sends an
  * empty string when the field was left alone.
  *
+ * ⚠️ The app id is different: an empty string CLEARS it, and only
+ * `undefined` (the field was not sent at all) keeps the stored one.
+ * Otherwise an admin who mistypes the AppID could never unset it — the
+ * only way out would be to type a different wrong one.
+ *
  * @throws Error when the app id does not look like one.
  */
 export async function saveWechatConfig(
@@ -56,8 +61,8 @@ export async function saveWechatConfig(
   if (input.enabled !== undefined) {
     updates[WECHAT_CONFIG_KEYS.enabled] = input.enabled ? 'true' : 'false';
   }
-  if (input.appId !== undefined && input.appId !== '') {
-    if (!isValidWechatAppId(input.appId)) {
+  if (input.appId !== undefined) {
+    if (input.appId !== '' && !isValidWechatAppId(input.appId)) {
       throw new Error('the WeChat app id does not look like a WeChat app id');
     }
     updates[WECHAT_CONFIG_KEYS.appId] = input.appId;

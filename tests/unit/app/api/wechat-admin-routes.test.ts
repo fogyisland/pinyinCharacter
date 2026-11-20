@@ -495,3 +495,55 @@ describe('the follower route tells the admin what to fix', () => {
     expect(body.error.code).toBe('server');
   });
 });
+
+describe('the config route can clear the app id', () => {
+  it('passes an empty app id through to the store', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1, username: 'admin' } });
+    saveConfigMock.mockResolvedValue(undefined);
+    const { PUT } = await import('@/app/api/admin/wechat/config/route');
+    const response = await PUT(
+      new NextRequest('http://localhost/api/admin/wechat/config', {
+        method: 'PUT',
+        body: JSON.stringify({ appId: '' }),
+      }),
+    );
+    expect(response.status).toBe(200);
+    // An empty app id CLEARS it — the store decides, not the route.
+    expect(saveConfigMock).toHaveBeenCalledWith(
+      { appId: '' },
+      1,
+    );
+  });
+
+  it('refuses an app id that does not look like one', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1, username: 'admin' } });
+    const { PUT } = await import('@/app/api/admin/wechat/config/route');
+    const response = await PUT(
+      new NextRequest('http://localhost/api/admin/wechat/config', {
+        method: 'PUT',
+        body: JSON.stringify({ appId: 'nope' }),
+      }),
+    );
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe('validation');
+    // The store is never even asked — the shape check happens first.
+    expect(saveConfigMock).not.toHaveBeenCalled();
+  });
+
+  it('reports a store failure as a server error, not as a bad app id', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1, username: 'admin' } });
+    saveConfigMock.mockRejectedValue(new Error('ER_NO_SUCH_TABLE: app_config'));
+    const { PUT } = await import('@/app/api/admin/wechat/config/route');
+    const response = await PUT(
+      new NextRequest('http://localhost/api/admin/wechat/config', {
+        method: 'PUT',
+        body: JSON.stringify({ appId: 'wx0123456789abcdef' }),
+      }),
+    );
+    // A dead database must not be reported as the admin's typo.
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.error.code).toBe('server');
+  });
+});

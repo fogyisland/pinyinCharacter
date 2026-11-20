@@ -61,6 +61,10 @@ export function WechatConfigForm({ initialConfig }: Props) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           enabled: config.enabled,
+          // ⚠️ An empty AppID CLEARS it, so the field's own value is sent
+          // as-is: empty means "clear it on purpose". `appSecret` is the
+          // opposite — empty keeps the stored one, so it is only sent
+          // when the admin typed something.
           appId: config.appId,
           appSecret,
         }),

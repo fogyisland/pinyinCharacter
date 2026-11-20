@@ -129,6 +129,30 @@ describe('saving the WeChat configuration', () => {
 
     expect(setConfigBatchMock).not.toHaveBeenCalled();
   });
+
+  it('clears the app id when it is set to empty on purpose', async () => {
+    // ⚠️ The admin screen sends an empty string when the field was left
+    // alone — the same value a deliberate clear sends. The two must be
+    // told apart, or an admin who wants to turn the feature off can
+    // never un-set a mistyped AppID.
+    await saveWechatConfig({ appId: '' }, 7);
+
+    expect(setConfigBatchMock).toHaveBeenCalledWith(
+      { 'wechat.app_id': '' },
+      7,
+    );
+  });
+
+  it('keeps the stored app id when the field was not sent at all', async () => {
+    // `undefined` means "the admin did not touch this field" — that is a
+    // different thing from an empty string.
+    await saveWechatConfig({ enabled: true }, 7);
+
+    expect(setConfigBatchMock).toHaveBeenCalledWith(
+      { 'wechat.enabled': 'true' },
+      7,
+    );
+  });
 });
 
 describe('whether WeChat is configured', () => {
