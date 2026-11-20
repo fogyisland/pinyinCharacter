@@ -45,4 +45,28 @@ describe('the audit event catalogue', () => {
     expect(formatLogMessage('mcp_token_regenerated', {})).toContain('「?」');
     expect(formatLogMessage('mcp_token_revoked', {})).toContain('「?」');
   });
+
+  it('labels the five WeChat events in Chinese', () => {
+    expect(EVENT_LABEL.wechat_config_updated).toBe('微信配置已更新');
+    expect(EVENT_LABEL.wechat_broadcast_created).toBe('已创建微信公告');
+    expect(EVENT_LABEL.wechat_broadcast_sent).toBe('已发送微信公告');
+    expect(EVENT_LABEL.wechat_broadcast_cancelled).toBe('已取消微信公告');
+    expect(EVENT_LABEL.wechat_test_sent).toBe('已发送微信测试消息');
+  });
+
+  it('never renders an empty title for the WeChat announcement events', () => {
+    expect(formatLogMessage('wechat_broadcast_created', {})).toContain('「?」');
+    expect(formatLogMessage('wechat_broadcast_sent', {})).toContain('「?」');
+    expect(formatLogMessage('wechat_broadcast_cancelled', {})).toContain('「?」');
+    expect(formatLogMessage('wechat_test_sent', {})).toContain('「?」');
+  });
+
+  it('renders the announcement title when there is one', () => {
+    expect(formatLogMessage('wechat_broadcast_created', { title: 'v1.2 已上线' })).toContain(
+      'v1.2 已上线',
+    );
+    expect(formatLogMessage('wechat_broadcast_sent', { title: 'v1.2 已上线' })).toContain(
+      'v1.2 已上线',
+    );
+  });
 });

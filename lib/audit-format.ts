@@ -95,7 +95,12 @@ export type AuditEvent =
   | 'wecom_webhook_updated'
   | 'wecom_webhook_deleted'
   | 'wecom_test_sent'
-  | 'wecom_delivery_retried';
+  | 'wecom_delivery_retried'
+  | 'wechat_config_updated'
+  | 'wechat_broadcast_created'
+  | 'wechat_broadcast_sent'
+  | 'wechat_broadcast_cancelled'
+  | 'wechat_test_sent';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -192,6 +197,11 @@ export const AUDIT_EVENTS = [
   'wecom_webhook_deleted',
   'wecom_test_sent',
   'wecom_delivery_retried',
+  'wechat_config_updated',
+  'wechat_broadcast_created',
+  'wechat_broadcast_sent',
+  'wechat_broadcast_cancelled',
+  'wechat_test_sent',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -290,6 +300,11 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   wecom_webhook_deleted: '删除企业微信群',
   wecom_test_sent: '发送企业微信测试消息',
   wecom_delivery_retried: '重推企业微信消息',
+  wechat_config_updated: '微信配置已更新',
+  wechat_broadcast_created: '已创建微信公告',
+  wechat_broadcast_sent: '已发送微信公告',
+  wechat_broadcast_cancelled: '已取消微信公告',
+  wechat_test_sent: '已发送微信测试消息',
 };
 
 /**
@@ -530,6 +545,17 @@ export function formatLogMessage(
       return `发送企业微信测试消息到「${str(m.name) || '?'}」`;
     case 'wecom_delivery_retried':
       return `重推企业微信消息 #${num(m.id) || '?'}`;
+
+    case 'wechat_config_updated':
+      return `更新微信配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
+    case 'wechat_broadcast_created':
+      return `已创建微信公告「${str(m.title) || '?'}」`;
+    case 'wechat_broadcast_sent':
+      return `已发送微信公告「${str(m.title) || '?'}」`;
+    case 'wechat_broadcast_cancelled':
+      return `已取消微信公告「${str(m.title) || '?'}」`;
+    case 'wechat_test_sent':
+      return `已发送微信测试消息「${str(m.title) || '?'}」`;
 
     default: {
       const keys = Object.keys(m);

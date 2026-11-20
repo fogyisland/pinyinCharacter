@@ -19,13 +19,28 @@ import { sendEmail } from './email';
 import { campaignEmail } from './email-templates';
 import { issueUnsubscribeToken, markRecipient, finalizeCampaignIfDone } from './email-campaigns';
 import { runWecomDeliver } from './wecom-deliver';
+import { listQueuedBroadcasts, requeueStaleBroadcasts } from './wechat-broadcasts';
+import { getWechatConfig, isWechatConfigured } from './wechat-config';
+import { sendBroadcast } from './wechat-sender';
+
+/**
+ * How long a `sending` announcement may sit untouched before it is
+ * treated as abandoned.
+ *
+ * It has to be longer than one run can take: a run walks every follower
+ * of the account, one at a time, and a big account takes a while. An
+ * hour is comfortably longer than a run and short enough that an
+ * announcement is not lost for a whole day.
+ */
+const STALE_SENDING_MINUTES = 60;
 
 export type TaskName =
   | 'content-refresh'
   | 'daily-char'
   | 'stats-refresh'
   | 'email-campaign-send'
-  | 'wecom-deliver';
+  | 'wecom-deliver'
+  | 'wechat-broadcast-send';
 
 /** An active campaign row the sender picks up. */
 interface ActiveCampaignRow extends RowDataPacket {
@@ -242,6 +257,80 @@ async function runWecomDeliverTask(): Promise<TaskResult> {
   }
 }
 
+/**
+ * WeChat broadcast — sends the queued announcement to every follower.
+ *
+ * One announcement per tick: a broadcast walks every follower of the
+ * account, and a second one in the same tick would double the quota
+ * cost for no benefit. Whatever is left queued goes out on the next
+ * tick.
+ *
+ * ⚠️ The runner catches its own errors — a scheduler that throws is a
+ * scheduler that stops.
+ */
+async function runWechatBroadcastTask(): Promise<TaskResult> {
+  const t0 = Date.now();
+  try {
+    // ⚠️ A process that died mid-run leaves its announcement in
+    // `sending` forever, and the admin screen offers no way out of it.
+    // The announcement would simply be lost. So before looking for work,
+    // put the abandoned ones back in the queue.
+    //
+    // The recovery is a repair job: if it fails, the announcements that
+    // are properly queued still go out.
+    try {
+      await requeueStaleBroadcasts(STALE_SENDING_MINUTES);
+    } catch (error) {
+      console.error(
+        '[wechat] could not recover an abandoned announcement:',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+
+    // ⚠️ The switch reaches the scheduler too. An admin who turns the
+    // feature off expects the queued announcements to stay queued.
+    const config = await getWechatConfig();
+    if (!isWechatConfigured(config)) {
+      return {
+        name: 'wechat-broadcast-send',
+        ok: true,
+        summary: 'the WeChat announcement is off (0ms)',
+      };
+    }
+
+    const queued = await listQueuedBroadcasts(5);
+    if (queued.length === 0) {
+      return { name: 'wechat-broadcast-send', ok: true, summary: 'no queued announcements (0ms)' };
+    }
+
+    const result = await sendBroadcast(queued[0].id);
+    const ms = Date.now() - t0;
+
+    if (result.status === 'failed') {
+      return {
+        name: 'wechat-broadcast-send',
+        ok: false,
+        summary: `accepted=${result.accepted} skipped=${result.skipped} failed=${result.failed} (${ms}ms)`,
+        error: result.error ?? 'the announcement failed',
+      };
+    }
+
+    return {
+      name: 'wechat-broadcast-send',
+      ok: true,
+      summary: `accepted=${result.accepted} skipped=${result.skipped} failed=${result.failed} (${ms}ms)`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      name: 'wechat-broadcast-send',
+      ok: false,
+      summary: 'broadcast run failed',
+      error: message,
+    };
+  }
+}
+
 export async function runTask(name: TaskName): Promise<TaskResult> {
   switch (name) {
     case 'content-refresh':
@@ -254,6 +343,8 @@ export async function runTask(name: TaskName): Promise<TaskResult> {
       return runEmailCampaignSend();
     case 'wecom-deliver':
       return runWecomDeliverTask();
+    case 'wechat-broadcast-send':
+      return runWechatBroadcastTask();
   }
 }
 
@@ -263,4 +354,5 @@ export const ALL_TASKS: TaskName[] = [
   'stats-refresh',
   'email-campaign-send',
   'wecom-deliver',
+  'wechat-broadcast-send',
 ];

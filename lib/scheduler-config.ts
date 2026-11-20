@@ -41,6 +41,7 @@ export const SCHEDULER_KEYS = {
   taskStatsRefresh: 'scheduler.task_stats_refresh',
   taskEmailCampaign: 'scheduler.task_email_campaign',
   taskWecomDeliver: 'scheduler.task_wecom_deliver',
+  taskWechatBroadcast: 'scheduler.task_wechat_broadcast',
 } as const;
 
 export interface SchedulerConfig {
@@ -53,6 +54,7 @@ export interface SchedulerConfig {
   taskStatsRefresh: boolean;
   taskEmailCampaign: boolean;
   taskWecomDeliver: boolean;
+  taskWechatBroadcast: boolean;
 }
 
 export const DEFAULT_CONFIG: SchedulerConfig = {
@@ -65,6 +67,7 @@ export const DEFAULT_CONFIG: SchedulerConfig = {
   taskStatsRefresh: true,
   taskEmailCampaign: true,
   taskWecomDeliver: true,
+  taskWechatBroadcast: true,
 };
 
 const DEFAULTS: Record<string, string> = {
@@ -75,6 +78,7 @@ const DEFAULTS: Record<string, string> = {
   [SCHEDULER_KEYS.taskStatsRefresh]: '1',
   [SCHEDULER_KEYS.taskEmailCampaign]: '1',
   [SCHEDULER_KEYS.taskWecomDeliver]: '1',
+  [SCHEDULER_KEYS.taskWechatBroadcast]: '1',
 };
 
 export async function readSchedulerConfig(): Promise<SchedulerConfig> {
@@ -96,6 +100,7 @@ export async function readSchedulerConfig(): Promise<SchedulerConfig> {
     taskStatsRefresh: out[SCHEDULER_KEYS.taskStatsRefresh] !== '0',
     taskEmailCampaign: out[SCHEDULER_KEYS.taskEmailCampaign] !== '0',
     taskWecomDeliver: out[SCHEDULER_KEYS.taskWecomDeliver] !== '0',
+    taskWechatBroadcast: out[SCHEDULER_KEYS.taskWechatBroadcast] !== '0',
   };
 }
 
@@ -110,6 +115,7 @@ export async function writeSchedulerConfig(
       | 'taskStatsRefresh'
       | 'taskEmailCampaign'
       | 'taskWecomDeliver'
+      | 'taskWechatBroadcast'
     >
   >,
   byUserId: number | null,
@@ -136,6 +142,8 @@ export async function writeSchedulerConfig(
     await set(SCHEDULER_KEYS.taskEmailCampaign, updates.taskEmailCampaign ? '1' : '0');
   if (updates.taskWecomDeliver !== undefined)
     await set(SCHEDULER_KEYS.taskWecomDeliver, updates.taskWecomDeliver ? '1' : '0');
+  if (updates.taskWechatBroadcast !== undefined)
+    await set(SCHEDULER_KEYS.taskWechatBroadcast, updates.taskWechatBroadcast ? '1' : '0');
 }
 
 export async function recordSchedulerRun(summary: string, at: Date = new Date()): Promise<void> {
@@ -159,7 +167,8 @@ export type SchedulerHistoryTaskName =
   | 'daily-char'
   | 'stats-refresh'
   | 'email-campaign-send'
-  | 'wecom-deliver';
+  | 'wecom-deliver'
+  | 'wechat-broadcast-send';
 
 export interface SchedulerHistoryRow {
   id: number;
