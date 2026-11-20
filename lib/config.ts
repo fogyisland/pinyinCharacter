@@ -107,6 +107,9 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'era.xiaozhuan.font': (v) => ['QuanZiKuShuoWen', 'HanDianJinWen'].includes(v),
   'era.lishu.font': (v) => ['WangHanzongLishu', 'ZCOOLXiaoWei'].includes(v),
   'era.kaishu.font': (v) => ['ZCOOLXiaoWei', 'KaiTi', 'Iansui', 'MaShanZheng'].includes(v),
+  'wechat.enabled': (v) => v === 'true' || v === 'false',
+  'wechat.app_id': (v) => /^wx[0-9a-f]{16}$/.test(v),
+  'wechat.app_secret': (v) => v.length > 0 && v.length <= 256,
 };
 
 /**
