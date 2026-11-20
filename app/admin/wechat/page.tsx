@@ -31,8 +31,9 @@ export default async function AdminWechatPage() {
       <div className="space-y-4">
         <Panel title="配置">
           <p className="text-sm text-ink-soft mb-3">
-            推送由后台的定时任务（scheduler）完成，每分钟一次。如果 scheduler
-            没有启用，公告会一直排队而不会发出 —— 请到「定期更新」页面确认它已开启。
+            推送由后台的定时任务（scheduler）完成，默认每 60 分钟跑一次。如果
+            scheduler 没有启用，公告会一直排队而不会发出 —— 请到「定期更新」页面
+            确认它已开启（scheduler 整体默认是关的，而「微信公告」这个任务默认是开的）。
           </p>
           <WechatConfigForm initialConfig={config} />
         </Panel>

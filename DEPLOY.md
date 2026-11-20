@@ -507,12 +507,18 @@ AppSecret 只写不回显,留空表示不修改。
 
 ### 10.3 打开定时任务
 
-`/admin/scheduler` —— 确认 **`wechat-broadcast-send`** 这个任务已启用。
+`/admin/scheduler` —— 确认 **`wechat-broadcast-send`** 这个任务已启用,
+并且**整个 scheduler 是开着的**。
 
-⚠️ 默认**关闭**。写完公告会一直排队不发,直到这个任务打开。
+⚠️ 两层开关,别只看一层:
 
-⚠️ **默认 scheduler 间隔是 60 分钟**,不是 1 分钟。要更快就把
-`scheduler.interval_min` 调小。
+- **`wechat-broadcast-send` 默认是开的**（`scheduler.task_wechat_broadcast` 默认 `'1'`）。
+- ⚠️ **但 scheduler 本身默认是关的**（`scheduler.enabled` 默认 `'0'`）。
+  整个 scheduler 关着的时候,任务开关设成什么都没用 —— 写完公告会一直
+  排队不发。这个才是常见卡住的地方。
+
+⚠️ **默认间隔是 60 分钟**,不是 1 分钟。要更快就把 `scheduler.interval_min`
+调小（最小 1,最大 1440）。
 
 ### 10.4 流程
 

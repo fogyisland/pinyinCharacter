@@ -98,6 +98,15 @@ describe('the WeChat admin screen', () => {
     expect(source).toContain('白名单');
   });
 
+  it('says the real scheduler interval, not one that sounds better', () => {
+    // ⚠️ The default interval is 60 minutes, not 1. A page that says
+    // "every minute" sends the administrator waiting for something that
+    // will not arrive for an hour.
+    const source = read('app/admin/wechat/page.tsx');
+    expect(source).toContain('60 分钟');
+    expect(source).not.toContain('每分钟一次');
+  });
+
   it('warns when there are no followers', () => {
     const source = read('components/admin/WechatConfigForm.tsx');
     expect(source).toContain('关注者');
