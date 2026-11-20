@@ -1,10 +1,12 @@
 import { Database, PackageCheck, TriangleAlert } from 'lucide-react';
 import { SEED_DATASETS } from '@/lib/seed-registry';
 import { readSeedCounts } from '@/lib/seed-runner';
+import { compareSchema } from '@/lib/schema-check';
 import { PageHeader } from '@/components/admin/PageHeader';
 import { Panel } from '@/components/admin/Panel';
 import { StatCard } from '@/components/admin/StatCard';
 import { SeedManager, type SeedDatasetRow } from '@/components/admin/SeedManager';
+import { SchemaMigratePanel } from '@/components/admin/SchemaMigratePanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +24,16 @@ export const dynamic = 'force-dynamic';
  */
 export default async function AdminSeedPage() {
   const counts = await readSeedCounts();
+
+  // The schema comparison is a separate probe, and it is allowed to
+  // fail: an unreachable database must not take the whole page down.
+  // The seed panel above still works (it counts 0 for what it cannot
+  // read), so the page shows the content state and says the schema
+  // state is unknown, rather than 500-ing the operator's screen.
+  const comparison = await compareSchema().catch((error: unknown) => {
+    console.error('[admin/seed] schema comparison failed:', error);
+    return null;
+  });
 
   const rows: SeedDatasetRow[] = SEED_DATASETS.map((dataset) => {
     const actual = counts[dataset.id] ?? 0;
@@ -63,6 +75,20 @@ export default async function AdminSeedPage() {
         <StatCard label="已就绪" value={complete} icon={PackageCheck} />
         <StatCard label="待补齐行数" value={missingRows.toLocaleString('en-US')} icon={TriangleAlert} />
       </div>
+
+      <Panel
+        title="数据结构"
+        description="数据库的表和列是否跟得上代码 —— 复制新代码到服务器后,这里能看出缺了什么,并一键补上"
+        className="mb-4"
+      >
+        {comparison ? (
+          <SchemaMigratePanel comparison={comparison} />
+        ) : (
+          <p className="text-xs text-danger">
+            无法读取数据库结构 —— 请检查数据库连接后刷新页面。
+          </p>
+        )}
+      </Panel>
 
       <Panel
         title="数据集"
