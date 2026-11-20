@@ -503,18 +503,44 @@ export function englishCharsPerRow(paperSize: PaperSize): number {
   }
 }
 
+/**
+ * Repeats `content` until it is exactly `length` characters long.
+ *
+ * The trace layout fills a page by repeating what the user typed, so a
+ * 3-character worksheet on an 88-cell page shows the same three
+ * characters in every cell. The repeat is TRUNCATED to `length` — a
+ * row that overflowed its cell would push the grid onto a second page.
+ *
+ * @param content the characters to repeat.
+ * @param length how many characters the result must have.
+ * @returns the repeated string, exactly `length` characters.
+ */
+export function repeatToFill(content: string[], length: number): string {
+  if (content.length === 0) return '';
+  const source = content.join('');
+  if (source === '') return '';
+  const repeats = Math.ceil(length / source.length);
+  return source.repeat(repeats).slice(0, length);
+}
+
 export function generateLayout(content: string[], style: CellStyle, paperSize?: PaperSize): Cell[] {
   if (getPresentation(style) === 'four-line') {
     const perRow = paperSize ? englishCharsPerRow(paperSize) : 88;
     const rowsTotal = paperSize ? fourLineRowsPerPage(paperSize) : 14;
     const cells: Cell[] = [];
-    let i = 0;
-    let rowIdx = 0;
-    while (rowIdx < rowsTotal) {
-      const slice = i < content.length ? content.slice(i, i + perRow).join('') : '';
-      cells.push({ char: slice, style, index: rowIdx });
-      i += perRow;
-      rowIdx++;
+    // ⚠️ The four-line paper has exactly ONE presentation: the trace
+    // layout (the pale red-outlined letters ARE the guide). So its rows
+    // are always filled by repeating what the user typed — there is no
+    // non-trace four-line style to leave blank.
+    //
+    // The whole sheet is ONE stream: the letters run from the first
+    // cell of the first row to the last cell of the last row, and only
+    // wraps around at the very end. A row is therefore a slice of that
+    // stream, not a repetition of the content on its own.
+    const stream = repeatToFill(content, rowsTotal * perRow);
+    for (let rowIdx = 0; rowIdx < rowsTotal; rowIdx++) {
+      const start = rowIdx * perRow;
+      cells.push({ char: stream.slice(start, start + perRow), style, index: rowIdx });
     }
     return cells;
   }

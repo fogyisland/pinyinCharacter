@@ -6,6 +6,7 @@ import {
   linesPerPage,
   PRACTICE_GRID_CELL_SIZE,
   generateLayout,
+  repeatToFill,
   validateWorksheetInput,
 } from '@/lib/worksheet-types';
 
@@ -32,7 +33,7 @@ describe('getPresentation — four-line branch (English trace)', () => {
 });
 
 describe('generateLayout — four-line row packing (English trace)', () => {
-  it('packs 88 letters into a single A4 row; fills the rest of the page with blanks', () => {
+  it('packs 88 letters into a single A4 row; every row repeats them', () => {
     const letters = Array.from({ length: 88 }, (_, i) => String.fromCharCode(65 + (i % 26)));
     const cells = generateLayout(letters, 'pen-english', 'A4');
     // A4 = 16 rows/page (tuned 2026-07-03 from 14 to fill the A4 sheet
@@ -40,24 +41,28 @@ describe('generateLayout — four-line row packing (English trace)', () => {
     expect(cells).toHaveLength(16);
     expect(cells[0].char).toBe(letters.join(''));
     expect(cells[0].style).toBe('pen-english');
-    expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
+    // The sheet is one stream: every row repeats the same 88 letters.
+    expect(cells.slice(1).every((c) => c.char === cells[0].char)).toBe(true);
   });
 
-  it('always renders rowsPerPage rows even with short content (blank practice lines fill the page)', () => {
+  it('always renders rowsPerPage rows even with short content (the letters repeat to fill the page)', () => {
     const cells = generateLayout(['A'], 'pen-english', 'A4');
     // A4 = 16 rows/page. The 1 letter occupies row 0; rows 1-15 are blank.
     expect(cells).toHaveLength(16);
-    expect(cells[0].char).toBe('A');
-    expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
+    expect(cells[0].char).toBe('A'.repeat(88));
+    expect(cells.slice(1).every((c) => c.char === cells[0].char)).toBe(true);
   });
 
-  it('splits 89 letters across 2 A4 rows; the rest of the page is blank practice', () => {
+  it('splits 89 letters across 2 A4 rows; the second row continues and wraps around', () => {
     const letters = Array.from({ length: 89 }, () => 'A');
     const cells = generateLayout(letters, 'pen-english', 'A4');
     expect(cells).toHaveLength(16);
     expect(cells[0].char).toHaveLength(88);
-    expect(cells[1].char).toHaveLength(1);
-    expect(cells.slice(2).every((c) => c.char === '')).toBe(true);
+    // Row 1 continues with the 89th letter and then wraps around.
+    expect(cells[1].char).toHaveLength(88);
+    expect(cells[1].char[0]).toBe(letters[88]);
+    expect(cells[1].char[1]).toBe(letters[0]);
+    expect(cells.slice(2).every((c) => c.char === cells[0].char)).toBe(true);
   });
 
   it('A3 = 21 rows/page, B5 = 12 rows/page (tuned 2026-07-03 with A4=16)', () => {
@@ -185,6 +190,40 @@ describe('generateLayout — trace fills the page by repeating the content', () 
     expect(cells).toHaveLength(88);
     expect(cells.every((c) => c.char === '')).toBe(true);
   });
+
+  it('fills the four-line rows with the repeated letters', () => {
+    // A4: 88 letters per row, 16 rows.
+    const cells = generateLayout(['a', 'b', 'c'], 'pen-english', 'A4');
+    expect(cells).toHaveLength(16);
+    expect(cells[0].char).toHaveLength(88);
+    // The row is filled to the row width: 'abc' repeated and truncated
+    // to exactly 88 letters.
+    expect(cells[0].char).toBe('abc'.repeat(29) + 'a');
+    expect(cells[15].char).toHaveLength(88);
+  });
+
+  it('runs the four-line letters on across the row break', () => {
+    // 89 letters on A4: row 0 holds the first 88, row 1 continues with
+    // the 89th and then wraps around.
+    const letters = Array.from({ length: 89 }, (_, i) => String.fromCharCode(65 + (i % 26)));
+    const cells = generateLayout(letters, 'pen-english', 'A4');
+    expect(cells[0].char).toBe(letters.slice(0, 88).join(''));
+    expect(cells[1].char).toHaveLength(88);
+    expect(cells[1].char[0]).toBe(letters[88]);
+    expect(cells[1].char[1]).toBe(letters[0]);
+  });
+
+  it('fills a four-line row exactly, never past the row width', () => {
+    const cells = generateLayout(['x'], 'pen-english', 'B5');
+    expect(cells[0].char).toHaveLength(48);
+    expect(cells[0].char).toBe('x'.repeat(48));
+  });
+
+  it('leaves the four-line rows blank when there is no content', () => {
+    const cells = generateLayout([], 'pen-english', 'A4');
+    expect(cells).toHaveLength(16);
+    expect(cells.every((c) => c.char === '')).toBe(true);
+  });
 });
 
 describe('cellStyleLabel — four-line branch (English trace)', () => {
@@ -309,5 +348,23 @@ describe('PRACTICE_GRID_CELL_SIZE — grid mode cell sizing', () => {
   });
   it('B5 stays at 80px (6 × 80 + 5 × 8 = 520 ≈ 540 B5 inner)', () => {
     expect(PRACTICE_GRID_CELL_SIZE['B5']).toBe(80);
+  });
+});
+
+describe('repeatToFill', () => {
+  it('repeats the content to the requested length', () => {
+    expect(repeatToFill(['a', 'b', 'c'], 8)).toBe('abcabcab');
+  });
+
+  it('truncates instead of overflowing', () => {
+    expect(repeatToFill(['abc'], 5)).toBe('abcab');
+  });
+
+  it('returns an empty string for no content', () => {
+    expect(repeatToFill([], 10)).toBe('');
+  });
+
+  it('returns an empty string for a zero length', () => {
+    expect(repeatToFill(['a'], 0)).toBe('');
   });
 });
