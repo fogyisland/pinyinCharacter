@@ -131,6 +131,62 @@ describe('generateLayout — auto-fill empty cells (CJK grid + lined)', () => {
   });
 });
 
+describe('generateLayout — trace fills the page by repeating the content', () => {
+  it('repeats a single character across the whole brush-trace page', () => {
+    const cells = generateLayout(['永'], 'brush-trace-square', 'brush-24');
+    expect(cells).toHaveLength(24);
+    expect(cells.every((c) => c.char === '永')).toBe(true);
+  });
+
+  it('cycles through the characters in order', () => {
+    const cells = generateLayout(['永', '安', '乐'], 'brush-trace-square', 'brush-12');
+    expect(cells).toHaveLength(12);
+    expect(cells.map((c) => c.char)).toEqual([
+      '永', '安', '乐', '永', '安', '乐',
+      '永', '安', '乐', '永', '安', '乐',
+    ]);
+  });
+
+  it('fills a cross-grid trace page too', () => {
+    const cells = generateLayout(['水'], 'brush-trace-cross', 'A4');
+    expect(cells).toHaveLength(88);
+    expect(cells.every((c) => c.char === '水')).toBe(true);
+  });
+
+  it('runs the content on across the page break', () => {
+    // 100 chars on A4 (88 per page) → 2 pages. The second page starts
+    // where the first one stopped — the content is one stream, and it
+    // only wraps around at the very end.
+    const chars = Array.from({ length: 100 }, (_, i) => `字${i}`);
+    const cells = generateLayout(chars, 'brush-trace-square', 'A4');
+    expect(cells).toHaveLength(176);
+    expect(cells[0].char).toBe('字0');
+    expect(cells[87].char).toBe('字87');
+    expect(cells[88].char).toBe('字88');
+    expect(cells[99].char).toBe('字99');
+    // The stream wrapped: cell 100 is the first character again.
+    expect(cells[100].char).toBe('字0');
+    expect(cells[175].char).toBe('字75');
+  });
+
+  it('leaves a non-trace sheet blank instead of repeating', () => {
+    // The auto-fill behaviour is unchanged for a sheet the user writes
+    // ON: the extra cells stay empty for their own characters.
+    const cells = generateLayout(['永'], 'brush-square', 'brush-24');
+    expect(cells).toHaveLength(24);
+    expect(cells[0].char).toBe('永');
+    expect(cells.slice(1).every((c) => c.char === '')).toBe(true);
+  });
+
+  it('leaves a trace sheet blank when there is no content', () => {
+    // content.length === 0 would make `i % 0` NaN, so the helper has to
+    // fall back to the blank cells.
+    const cells = generateLayout([], 'brush-trace-square', 'A4');
+    expect(cells).toHaveLength(88);
+    expect(cells.every((c) => c.char === '')).toBe(true);
+  });
+});
+
 describe('cellStyleLabel — four-line branch (English trace)', () => {
   it('labels pen-english as "钢笔·英文描红"', () => {
     expect(cellStyleLabel('pen-english')).toBe('钢笔·英文描红');

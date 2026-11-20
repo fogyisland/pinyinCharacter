@@ -528,9 +528,24 @@ export function generateLayout(content: string[], style: CellStyle, paperSize?: 
   // previews via canPreview, but the helper must not return []).
   const perPage = cellsPerPage(paperSize ?? 'A4');
   const total = Math.max(perPage, Math.ceil(content.length / perPage) * perPage);
+  // ⚠️ The trace layout fills every cell with the content REPEATED, so a
+  // one-character worksheet on an 88-cell page is 88 practice cells
+  // instead of one character and 87 blank ones. A non-trace sheet keeps
+  // the blank cells: those are the places to write a character of a
+  // longer text, and repeating the content there would copy it over
+  // the handwriting.
+  //
+  // The content is ONE stream across all the pages: cell 88 continues
+  // where cell 87 stopped. It only wraps around at the very end, so
+  // "fill the page to the last cell" means what it says.
+  const isTrace = getIsTrace(style);
   const cells: Cell[] = [];
   for (let i = 0; i < total; i++) {
-    cells.push({ char: i < content.length ? content[i] : '', style, index: i });
+    if (isTrace && content.length > 0) {
+      cells.push({ char: content[i % content.length], style, index: i });
+    } else {
+      cells.push({ char: i < content.length ? content[i] : '', style, index: i });
+    }
   }
   return cells;
 }
