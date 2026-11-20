@@ -775,3 +775,22 @@ describe('a field that WeChat would reject', () => {
     expect(createMock).toHaveBeenCalled();
   });
 });
+
+describe('the message the admin sees when the app id is wrong', () => {
+  it('says what is wrong, not a JSON dump', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+
+    const response = await putConfigRoute(
+      new NextRequest('http://localhost/api/admin/wechat/config', {
+        method: 'PUT',
+        body: JSON.stringify({ appId: 'not-an-app-id' }),
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.message).toBe('the WeChat app id does not look like a WeChat app id');
+    // A JSON dump of the zod issues is not something an admin can act on.
+    expect(body.error.message).not.toContain('"code"');
+  });
+});

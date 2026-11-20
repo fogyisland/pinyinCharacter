@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       return badRequest('not_configured', 'the WeChat account is not configured yet');
     }
     const parsed = TestSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) return badRequest('validation', parsed.error.message);
+    if (!parsed.success) return badRequest('validation', parsed.error.issues[0]?.message ?? 'bad input');
     let data;
     try {
       data = validateTemplateData(parsed.data.data);

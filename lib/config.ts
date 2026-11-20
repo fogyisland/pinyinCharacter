@@ -108,7 +108,10 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'era.lishu.font': (v) => ['WangHanzongLishu', 'ZCOOLXiaoWei'].includes(v),
   'era.kaishu.font': (v) => ['ZCOOLXiaoWei', 'KaiTi', 'Iansui', 'MaShanZheng'].includes(v),
   'wechat.enabled': (v) => v === 'true' || v === 'false',
-  'wechat.app_id': (v) => /^wx[0-9a-f]{16}$/.test(v),
+  // ⚠️ An empty app id is allowed ON PURPOSE: it is how the admin
+  // clears a mistyped one. The shape check happens where the value is
+  // set — the route's schema and the store — not here.
+  'wechat.app_id': (v) => v === '' || /^wx[0-9a-f]{16}$/.test(v),
   'wechat.app_secret': (v) => v.length > 0 && v.length <= 256,
 };
 

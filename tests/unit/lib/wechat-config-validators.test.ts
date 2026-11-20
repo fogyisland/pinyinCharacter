@@ -61,7 +61,13 @@ describe('the wechat.app_id validator', () => {
     expect(await accepts('wechat.app_id', 'not-an-app-id')).toBe(false);
     expect(await accepts('wechat.app_id', 'wx123')).toBe(false);
     expect(await accepts('wechat.app_id', 'WX1234567890ABCDEF')).toBe(false);
-    expect(await accepts('wechat.app_id', '')).toBe(false);
+  });
+
+  it('accepts an empty app id — that is how it is cleared', async () => {
+    // ⚠️ An admin who typed a wrong AppID must be able to empty the
+    // field. If the storage layer refused an empty value, the only way
+    // out of a typo would be to type a different wrong one.
+    expect(await accepts('wechat.app_id', '')).toBe(true);
   });
 });
 

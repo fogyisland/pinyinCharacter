@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest) {
     const auth = await requireAdmin();
     if (!auth.ok) return auth.response;
     const parsed = ConfigSchema.safeParse(await req.json().catch(() => ({})));
-    if (!parsed.success) return badRequest('validation', parsed.error.message);
+    if (!parsed.success) return badRequest('validation', parsed.error.issues[0]?.message ?? 'bad input');
     // ⚠️ No try/catch here on purpose: a store failure is a SERVER
     // error, not a validation error. Swallowing it into a 400 would tell
     // the admin their AppID was wrong when the database was down.
