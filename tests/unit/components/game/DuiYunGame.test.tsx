@@ -1,7 +1,7 @@
 // @vitest-environment happy-dom
 import '@testing-library/jest-dom/vitest';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, fireEvent } from '@testing-library/react';
 
 /**
  * 对韵消消, as the player meets it.
@@ -243,6 +243,38 @@ describe('DuiYunGame', () => {
     const second = slotButtons().map((b) => b.textContent).join('');
     // 每一局都该换一副对联 —— 一直抽同一副的话，玩家玩两局就没得玩了。
     expect(second).not.toBe(first);
+  });
+
+  it('fills the blank when the tile and the slot are clicked in one go', async () => {
+    // 真机走查抓到的坑：玩家点一下字、再点一下空格，这两次点击在浏览器里
+    // 是同一个任务里的两件事，React 会把它们合并成一次渲染。
+    // 于是空格那个按钮的 onClick 拿到的还是「点字之前」的闭包 ——
+    // selectedTileId 还是空的，点下去什么也不会发生。
+    //
+    // fireEvent.click 每一次都自带一次 act()（每次都刷一遍渲染），
+    // 所以用 fireEvent 写的用例永远抓不到这个坑 —— 必须在同一个
+    // act() 里连点两次，才和真机一样。
+    render(<DuiYunGame />);
+    const tiles = () => Array.from(screen.getByTestId('duiyun-tray').querySelectorAll('button'));
+    const slots = () => Array.from(screen.getByTestId('duiyun-board').querySelectorAll('button'));
+
+    // 等语料到了、开始卡出现。
+    await waitFor(() => expect(screen.getByRole('button', { name: '开始' })).toBeInTheDocument());
+    act(() => {
+      screen.getByRole('button', { name: '开始' }).click();
+    });
+
+    const slot = slots()[0]!;
+    const wanted = slot.getAttribute('aria-label')?.match(/需要 (\S)/)?.[1];
+    const tile = tiles().find((b) => b.getAttribute('aria-label')?.includes(`字 ${wanted}`))!;
+
+    // 同一次 act 里连点两下 —— 这就是浏览器的 batching。
+    act(() => {
+      tile.click();
+      slot.click();
+    });
+
+    expect(slot.textContent).not.toContain('？');
   });
 
   it('holds three blanks on hard', async () => {

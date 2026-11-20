@@ -24,7 +24,7 @@
  * tile, a second click on a slot drops it.
  */
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchDuiyunPairs } from '@/lib/api-duiyun';
 import { DifficultyPicker } from '@/components/common/DifficultyPicker';
 import { playChime, playFanfare, playThud } from '@/lib/game-sound';
@@ -100,6 +100,19 @@ function toneMark(tone: number): string {
 export function DuiYunGame() {
   const [state, setState] = useState<GameState>(INITIAL);
   const [difficulty, setDifficulty] = useState<Difficulty>('easy');
+  /**
+   * The selected tile, mirrored in a ref.
+   *
+   * The state is what the screen draws, but a click handler cannot read it
+   * reliably: React batches the update, so a player who clicks a tile and
+   * then the slot - two clicks in one breath - hands the slot's handler a
+   * closure from *before* the tile was picked. The handler would see no
+   * selection and do nothing, and the game would look broken.
+   *
+   * The ref is written the moment the tile is picked, so the very next
+   * click reads the truth.
+   */
+  const selectedTileRef = useRef<string | null>(null);
   // Bumped to make the loader run again — the retry button changes it, and
   // the effect below watches it.
   const [reloadToken, setReloadToken] = useState(0);
@@ -153,6 +166,7 @@ export function DuiYunGame() {
   const nextRound = useCallback(() => {
     setState((current) => {
       const seed = (current.seed + 1) >>> 0;
+      selectedTileRef.current = null;
       if (current.pool.length === 0) return { ...current, seed };
       const config = DUIYUN_CONFIG[difficulty];
       const pair = current.pool[seed % current.pool.length];
@@ -174,6 +188,9 @@ export function DuiYunGame() {
       setState((current) => {
         if (!current.round) return current;
         const result = dropCharacter(current.round, slotIndex, tileId);
+        // The tile is spent either way - a refused drop takes the selection
+        // back too, so the player is not left holding a tile that is gone.
+        selectedTileRef.current = null;
         if (!result.ok) {
           playThud();
           return {
@@ -208,9 +225,12 @@ export function DuiYunGame() {
 
   /** Pick a tray tile up, or put it down again. */
   const toggleTile = useCallback((tileId: string) => {
+    const next = selectedTileRef.current === tileId ? null : tileId;
+    // The ref first: the next click has to see this, batched or not.
+    selectedTileRef.current = next;
     setState((current) => ({
       ...current,
-      selectedTileId: current.selectedTileId === tileId ? null : tileId,
+      selectedTileId: next,
       message: '',
     }));
   }, []);
@@ -317,6 +337,7 @@ export function DuiYunGame() {
             onDragStart={(event) => {
               event.dataTransfer.setData('text/plain', tile.id);
               event.dataTransfer.effectAllowed = 'move';
+              selectedTileRef.current = tile.id;
               setState((current) => ({ ...current, selectedTileId: tile.id }));
             }}
             onClick={() => toggleTile(tile.id)}
@@ -355,8 +376,11 @@ export function DuiYunGame() {
                     if (tileId) dropInto(globalIndex, tileId);
                   }}
                   onClick={() => {
-                    if (state.selectedTileId) {
-                      dropInto(globalIndex, state.selectedTileId);
+                    // The ref, not the state: the selection may have been
+                    // made a moment ago and React has not re-rendered yet.
+                    const selected = selectedTileRef.current;
+                    if (selected) {
+                      dropInto(globalIndex, selected);
                     } else if (slot.filled) {
                       liftFromSlot(globalIndex);
                     }

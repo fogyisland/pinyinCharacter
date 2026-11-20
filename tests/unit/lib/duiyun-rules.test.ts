@@ -239,4 +239,81 @@ describe('duiyun rules', () => {
       expect(answers.some((t) => t.char === blank.char)).toBe(true);
     }
   });
+
+  it('never puts the same character on the tray twice', () => {
+    // 字盘上出现两个一样的字，玩家就分不清哪个是哪个了 —— 而且他无从
+    // 知道这两个字是一道题的答案还是干扰字。
+    // 语料里同一个字出现在好几副对句里（纡、带、杉…），挑选干扰字的时候
+    // 必须按字去重，否则七成的局都会出问题。
+    // 语料里同一个字常常出现在好几副对句里（纡 出现在五副），
+    // 而干扰字是按字挑的 —— 不去重的话字盘上就有两个一样的字。
+    // 真机走查里「雨/风」那一局字盘上就是两个纡。
+    const pool = [
+      PAIR,
+      { ...PAIR, upper: '绿纡', lower: '红锦', upperPinyin: ['lǜ', 'yū'], lowerPinyin: ['hóng', 'jǐn'] },
+      { ...PAIR, upper: '素纡', lower: '端绵', upperPinyin: ['sù', 'yū'], lowerPinyin: ['duān', 'mián'] },
+      { ...PAIR, upper: '翠纡', lower: '白纱', upperPinyin: ['cuì', 'yū'], lowerPinyin: ['bái', 'shā'] },
+      { ...PAIR, upper: '青纡', lower: '紫绡', upperPinyin: ['qīng', 'yū'], lowerPinyin: ['zǐ', 'xiāo'] },
+      { ...PAIR, upper: '黄纡', lower: '白绫', upperPinyin: ['huáng', 'yū'], lowerPinyin: ['bái', 'líng'] },
+    ];
+    // 只看「同一批候选里有多少个不同的字」：纡 出现了五次，
+    // 一次挖空、挖两个空的时候，选中的干扰字很可能撞车。
+    for (let seed = 0; seed < 200; seed++) {
+      for (const difficulty of ['easy', 'medium', 'hard'] as const) {
+        const round = buildRound(PAIR, DUIYUN_CONFIG[difficulty], seed, pool);
+        const chars = round.tray.map((t) => t.char);
+        expect(new Set(chars).size).toBe(chars.length);
+      }
+    }
+  });
+
+  it('never puts a blank answer on the tray as a distractor', () => {
+    // 一个空要的字，出现在字盘上两次 —— 玩家看得见两个一样的字，却只填
+    // 得出一个格。剩下的那个就是死字，而「放错了」看上去又是玩家的错。
+    // 干扰字必须避开这一局所有的答案字。
+    const pair: DuiyunPair = {
+      upper: '地阔',
+      lower: '天开',
+      upperPinyin: ['dì', 'kuò'],
+      lowerPinyin: ['tiān', 'kāi'],
+      rhyme: '一东',
+      book: '笠翁对韵',
+    };
+    const pool = [
+      pair,
+      { ...pair, upper: '门开', lower: '户阔', upperPinyin: ['mén', 'kāi'], lowerPinyin: ['hù', 'kuò'] },
+      { ...pair, upper: '窗开', lower: '径阔', upperPinyin: ['chuāng', 'kāi'], lowerPinyin: ['jìng', 'kuò'] },
+    ];
+    for (let seed = 0; seed < 40; seed++) {
+      const round = buildRound(pair, DUIYUN_CONFIG.medium, seed, pool);
+      const answerChars = round.slots.filter((s) => s.isBlank).map((s) => s.char);
+      for (const tile of round.tray) {
+        if (tile.isAnswer) continue;
+        expect(answerChars).not.toContain(tile.char);
+      }
+    }
+  });
+
+  it('keeps the number of distractors even when some candidates are dropped', () => {
+    // 去重和排除答案之后，可选的字可能不够数 —— 宁可少给几个干扰字，
+    // 也不能拿答案字来凑数。
+    const pair: DuiyunPair = {
+      upper: '地阔',
+      lower: '天开',
+      upperPinyin: ['dì', 'kuò'],
+      lowerPinyin: ['tiān', 'kāi'],
+      rhyme: '一东',
+      book: '笠翁对韵',
+    };
+    const pool = [
+      pair,
+      { ...pair, upper: '门开', lower: '户阔', upperPinyin: ['mén', 'kāi'], lowerPinyin: ['hù', 'kuò'] },
+    ];
+    const round = buildRound(pair, DUIYUN_CONFIG.medium, 3, pool);
+    const answers = round.tray.filter((t) => t.isAnswer);
+    const distractors = round.tray.filter((t) => !t.isAnswer);
+    expect(answers).toHaveLength(2);
+    expect(distractors.length).toBeGreaterThan(0);
+    expect(new Set(round.tray.map((t) => t.char)).size).toBe(round.tray.length);
+  });
 });

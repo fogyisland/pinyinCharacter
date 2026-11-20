@@ -164,15 +164,26 @@ interface DistractorCandidate {
  *
  * 干扰字要好认 —— 挑跟答案音近但字不同的字，玩家才需要看清而不是乱猜。
  * 优先挑同声母的，其次同韵母的。
+ *
+ * 两条硬规矩：
+ *
+ * 1. **一个字只能出现一次。** 语料里同一个字常常出现在好几副对句里，
+ *    按字挑的时候不���重，字盘上就会有两个一模一样的字 —— 玩家分不清
+ *    哪个是哪个，也不知道哪个是答案。
+ * 2. **干扰字不能是这一局任何一个空的答案。** 一个空要的字在字盘上出现
+ *    两次，玩家看得见两个一样的字却只填得出一个格，剩下的那个就成了死字，
+ *    而「放错了」在玩家眼里像是他自己的错。
  */
 function pickDistractors(
   pool: readonly DuiyunPair[],
-  answerChar: string,
+  answerChars: readonly string[],
   answerPinyin: string,
   count: number,
   rng: () => number,
 ): Array<{ char: string; pinyin: string; tone: Tone }> {
+  const forbidden = new Set(answerChars);
   const candidates: DistractorCandidate[] = [];
+  const seen = new Set<string>();
   for (const pair of pool) {
     const sides: Array<{ chars: string; pinyin: string[] }> = [
       { chars: pair.upper, pinyin: pair.upperPinyin },
@@ -182,9 +193,12 @@ function pickDistractors(
       for (let i = 0; i < side.chars.length; i++) {
         const char = side.chars[i]!;
         const syllable = side.pinyin[i] ?? '';
-        if (char === answerChar) continue;
+        if (forbidden.has(char)) continue;
+        // 同一个字只算一次候选。
+        if (seen.has(char)) continue;
         const tone = toneOf(syllable);
         if (tone === null) continue;
+        seen.add(char);
         let score = 0;
         if (initialOf(syllable) === initialOf(answerPinyin)) score += 2;
         if (finalOf(syllable) === finalOf(answerPinyin)) score += 1;
@@ -274,9 +288,17 @@ export function buildRound(
     });
   }
 
+  // 干扰字要避开这一局**所有**空的答案字 —— 挖两个空的时候，
+  // 第二个空的答案字也不能作为干扰字出现在字盘上。
   const firstAnswer = answerTiles[0];
   const distractors = firstAnswer
-    ? pickDistractors(pool, firstAnswer.char, firstAnswer.pinyin, config.distractors, rng)
+    ? pickDistractors(
+        pool,
+        answerTiles.map((t) => t.char),
+        firstAnswer.pinyin,
+        config.distractors,
+        rng,
+      )
     : [];
   const distractorTiles: DuiyunTile[] = distractors.map((d, i) => ({
     id: `distractor-${i}`,
