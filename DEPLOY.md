@@ -338,6 +338,20 @@ npm run seed:run -- --dry-run
 npm run seed:run
 ```
 
+### 7.1 后台一键补齐(不用登录服务器)
+
+第 6、7 步也可以在后台点一下完成 —— 适合没有 shell 权限、或者忘了跑命令的情况:
+
+| 后台页面 | 能做什么 |
+|---|---|
+| `/admin/seed` 的 **数据结构** 面板 | 逐表逐列对比数据库与代码声明的结构,**点名**缺了什么(缺哪张表、缺哪个列、该由哪个迁移文件创建),点「运行迁移」一键补齐 |
+| `/admin/seed` 的 **数据集** 面板 | 内容 seed 的缺口与补齐 |
+| `/admin/init` 的 **必需表** 检查项 | 同一套结构对比,直接点名缺表/缺列;探测失败时显示为**失败**而不是伪装成通过 |
+
+两个面板背后的结构期望不是手写的清单,而是从仓库自身推导出来的(`scripts/init-db.ts` 的基础 DDL + `scripts/migrations/*.sql`),所以代码加了表或列,面板会跟着知道。迁移本身幂等 —— 没有新变更时点「运行迁移」不会改动任何东西。
+
+> **复制代码上去不会自动升级 schema。** `/init` 向导走完后会自锁 (`setup.route_enabled=false`),而启动时的 `initDb()` 只建基础表、不读 `scripts/migrations/*.sql`。所以每次升级仍然要跑第 6 步(或用上面的后台面板)。漏掉这一步的症状很隐蔽:网站照常运行,只有用到新表的那一块报 `ER_NO_SUCH_TABLE`。
+
 **注意 1**: `/init` 走完后会自动锁住 (`setup.route_enabled=false`)。下次再想跑 `/init` (例如全新 DB 恢复),需要 admin 登录后到 `/admin/settings/setup` 把它打开,或者直接清掉 `app_config` 里的 `setup.completed` flag。
 
 **注意 2 (schema 兼容)**: `scripts/init-db.ts` 已切换为 **slim schema** —— `chars` 表只有结构列 (`char` / `level` / `pinyin` / `radical` / `stroke_count` / `unicode_codepoint`),LLM 生成的内容 (meaning_zh / meaning_en / pinyin_alt / variants / etymology_story) 已迁到 `data/content/<char>.json` 文件。`lib/content.ts` 读路径优先 JSON、legacy fallback 仍兼容老 rich schema (16+ 列),所以**老库不用迁移也能跑**,但建议跑一次 `npm run db:migrate` + 重导 `data/content/` 以彻底对齐。
