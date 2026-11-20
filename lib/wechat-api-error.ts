@@ -29,7 +29,14 @@ import {
  */
 
 /** The errcode -> what to tell the administrator. */
-const REMEDIES: ReadonlyMap<number, { code: string; message: string }> = new Map([
+/**
+ * The errcode → what-to-do map.
+ *
+ * ⚠️ Exported so the deployment notes can be checked against it: the
+ * table in DEPLOY.md is what the admin reads when a broadcast fails, and
+ * the two drifting apart sends them to fix the wrong thing.
+ */
+export const REMEDIES: ReadonlyMap<number, { code: string; message: string }> = new Map([
   [
     40164,
     {

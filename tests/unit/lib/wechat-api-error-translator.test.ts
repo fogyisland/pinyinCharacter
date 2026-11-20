@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { translateWechatApiError } from '@/lib/wechat-api-error';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { translateWechatApiError, REMEDIES } from '@/lib/wechat-api-error';
+const ROOT = process.cwd();
+
 import {
   WechatApiError,
   WechatTokenError,
@@ -87,5 +91,29 @@ describe('the WeChat API error translator', () => {
     // that drops it sends them hunting.
     const translated = translateWechatApiError(new WechatApiError(40164, 'invalid ip'));
     expect(translated!.message).toContain('40164');
+  });
+});
+
+describe('the deployment notes and the translator agree', () => {
+  it('lists every errcode the translator knows', () => {
+    // The table in DEPLOY.md is what the admin reads when a broadcast
+    // fails. If a code is missing or means something else there, the
+    // admin is sent to fix the wrong thing.
+    const deploy = readFileSync(join(ROOT, 'DEPLOY.md'), 'utf8');
+    for (const errcode of REMEDIES.keys()) {
+      expect(deploy).toContain(String(errcode));
+    }
+  });
+
+  it('does not claim that 47003 is a permission problem', () => {
+    // 47003 is the template/field-name mismatch — the commonest
+    // mistake. 48001 is the permission problem.
+    const deploy = readFileSync(join(ROOT, 'DEPLOY.md'), 'utf8');
+    const row = deploy
+      .split(String.fromCharCode(10))
+      .find((line) => line.includes('`47003`'));
+    expect(row).toBeDefined();
+    expect(row).toContain('模板');
+    expect(row).not.toContain('认证服务号');
   });
 });

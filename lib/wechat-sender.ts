@@ -27,9 +27,9 @@ import {
   WechatTokenError,
 } from './wechat-types';
 import {
+  claimBroadcast,
   finishBroadcast,
   getBroadcast,
-  markBroadcastSending,
   recordBroadcastOutcome,
 } from './wechat-broadcasts';
 
@@ -88,7 +88,21 @@ export async function sendBroadcast(id: number): Promise<BroadcastSendResult> {
     };
   }
 
-  await markBroadcastSending(id, openids.length);
+  // ⚠️ The claim is atomic. If somebody else already has this
+  // announcement — a scheduler tick and a manual send overlapping — this
+  // run must NOT send it: the daily quota would be spent twice on the
+  // same message.
+  const claimed = await claimBroadcast(id, openids.length);
+  if (!claimed) {
+    return {
+      status: 'failed',
+      totalRecipients: openids.length,
+      accepted: 0,
+      skipped: 0,
+      failed: 0,
+      error: 'the announcement was already claimed by another run',
+    };
+  }
 
   let accepted = 0;
   let skipped = 0;

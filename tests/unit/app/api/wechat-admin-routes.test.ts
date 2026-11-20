@@ -53,6 +53,11 @@ vi.mock('@/lib/wechat-sender', () => ({
   sendBroadcast: (...args: unknown[]) => sendMock(...args),
 }));
 
+const siteUrlMock = vi.fn();
+vi.mock('@/lib/seo/config', () => ({
+  getRuntimeSiteUrl: () => siteUrlMock(),
+}));
+
 import { GET as getConfigRoute, PUT as putConfigRoute } from '@/app/api/admin/wechat/config/route';
 import { GET as getFollowersRoute } from '@/app/api/admin/wechat/followers/route';
 import { GET as listRoute, POST as createRoute } from '@/app/api/admin/wechat/broadcasts/route';
@@ -105,6 +110,8 @@ beforeEach(() => {
   queueMock.mockReset();
   cancelMock.mockReset();
   sendMock.mockReset();
+  siteUrlMock.mockReset();
+  siteUrlMock.mockResolvedValue('https://ziyun.pudafo.com');
   adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
   configMock.mockResolvedValue({ enabled: true, appId: 'wx1234567890abcdef', appSecretSet: true });
   getMock.mockResolvedValue(BROADCAST);
@@ -545,5 +552,226 @@ describe('the config route can clear the app id', () => {
     expect(response.status).toBe(500);
     const body = await response.json();
     expect(body.error.code).toBe('server');
+  });
+});
+
+describe('the jump url of an announcement', () => {
+  const ANNOUNCEMENT = {
+    title: '公告',
+    templateId: 'TEMPLATE_ID',
+    data: { keyword1: { value: '内容' } },
+  };
+
+  it('refuses a url pointing at another host', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    const response = await createRoute(
+      request({ ...ANNOUNCEMENT, url: 'https://evil.example.com/steal' }),
+    );
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe('validation');
+    // Nothing is written — the announcement never reaches the queue.
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a url that only looks like ours', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    const response = await createRoute(
+      request({ ...ANNOUNCEMENT, url: 'https://ziyun.pudafo.com.evil.example.com/' }),
+    );
+    expect(response.status).toBe(400);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses a protocol-relative url', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    const response = await createRoute(
+      request({ ...ANNOUNCEMENT, url: '//evil.example.com/steal' }),
+    );
+    expect(response.status).toBe(400);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it('turns a site-relative path into an absolute url', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    createMock.mockResolvedValue(7);
+    const response = await createRoute(request({ ...ANNOUNCEMENT, url: '/guide' }));
+    expect(response.status).toBe(200);
+    // WeChat wants an absolute url; a relative one would be a parameter
+    // error and would stop the whole broadcast.
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://ziyun.pudafo.com/guide' }),
+    );
+  });
+
+  it('keeps a url that is already on the site', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    createMock.mockResolvedValue(7);
+    const response = await createRoute(
+      request({ ...ANNOUNCEMENT, url: 'https://ziyun.pudafo.com/guide' }),
+    );
+    expect(response.status).toBe(200);
+    expect(createMock).toHaveBeenCalledWith(
+      expect.objectContaining({ url: 'https://ziyun.pudafo.com/guide' }),
+    );
+  });
+
+  it('refuses a foreign url in the test message too', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    const response = await testRoute(
+      request({
+        openid: 'OPENID',
+        templateId: 'TEMPLATE_ID',
+        url: 'https://evil.example.com/steal',
+        data: { keyword1: { value: '内容' } },
+      }),
+    );
+    expect(response.status).toBe(400);
+    expect(sendTemplateMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('the send route refuses an announcement that already went out', () => {
+  it('refuses to send a broadcast that was already sent', async () => {
+    // Re-sending would deliver the announcement to every follower a
+    // second time and burn the daily quota that the feature is rationed
+    // against.
+    getMock.mockResolvedValue({ ...BROADCAST, status: 'sent' });
+    const response = await sendRoute(
+      new NextRequest('http://localhost/api/admin/wechat/broadcasts/5/send'),
+      { params: Promise.resolve({ id: '5' }) },
+    );
+    expect(response.status).toBe(409);
+    const body = await response.json();
+    expect(body.error.code).toBe('bad_state');
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses to send a broadcast that was cancelled', async () => {
+    getMock.mockResolvedValue({ ...BROADCAST, status: 'cancelled' });
+    const response = await sendRoute(
+      new NextRequest('http://localhost/api/admin/wechat/broadcasts/5/send'),
+      { params: Promise.resolve({ id: '5' }) },
+    );
+    expect(response.status).toBe(409);
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses to send a broadcast that is still a draft', async () => {
+    getMock.mockResolvedValue({ ...BROADCAST, status: 'draft' });
+    const response = await sendRoute(
+      new NextRequest('http://localhost/api/admin/wechat/broadcasts/5/send'),
+      { params: Promise.resolve({ id: '5' }) },
+    );
+    expect(response.status).toBe(409);
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it('sends a queued broadcast', async () => {
+    getMock.mockResolvedValue(BROADCAST);
+    sendMock.mockResolvedValue({
+      status: 'sent',
+      totalRecipients: 3,
+      accepted: 3,
+      skipped: 0,
+      failed: 0,
+      error: null,
+    });
+    const response = await sendRoute(
+      new NextRequest('http://localhost/api/admin/wechat/broadcasts/5/send'),
+      { params: Promise.resolve({ id: '5' }) },
+    );
+    expect(response.status).toBe(200);
+    expect(sendMock).toHaveBeenCalledWith(5);
+  });
+});
+
+describe('the enabled switch', () => {
+  it('refuses to write an announcement when the feature is off', async () => {
+    // An admin who unticks the switch expects the feature to stop.
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    configMock.mockResolvedValue({ enabled: false, appId: 'wx1234567890abcdef', appSecretSet: true });
+
+    const response = await createRoute(
+      request({
+        title: '公告',
+        templateId: 'TEMPLATE_ID',
+        data: { keyword1: { value: '内容' } },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe('not_configured');
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses to write an announcement when the credentials are missing', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    configMock.mockResolvedValue({ enabled: true, appId: '', appSecretSet: false });
+
+    const response = await createRoute(
+      request({
+        title: '公告',
+        templateId: 'TEMPLATE_ID',
+        data: { keyword1: { value: '内容' } },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it('refuses to send an announcement when the feature is off', async () => {
+    // The switch must stop the sending too, not just the writing.
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    configMock.mockResolvedValue({ enabled: false, appId: 'wx1234567890abcdef', appSecretSet: true });
+
+    const response = await sendRoute(
+      new NextRequest('http://localhost/api/admin/wechat/broadcasts/5/send'),
+      { params: Promise.resolve({ id: '5' }) },
+    );
+
+    expect(response.status).toBe(400);
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('a field that WeChat would reject', () => {
+  it('refuses to queue an announcement whose field is too long', async () => {
+    // A `thing` field over 20 characters is a PARAMETER error for
+    // WeChat, and a parameter error stops the whole broadcast — so one
+    // field that is one character too long would deny the announcement
+    // to every follower. It has to be caught here.
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+
+    const response = await createRoute(
+      request({
+        title: '公告',
+        templateId: 'TEMPLATE_ID',
+        data: { thing1: { value: 'x'.repeat(21) } },
+      }),
+    );
+
+    expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.error.code).toBe('validation');
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it('queues an announcement whose field fits', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1 } });
+    createMock.mockResolvedValue(7);
+
+    const response = await createRoute(
+      request({
+        title: '公告',
+        templateId: 'TEMPLATE_ID',
+        data: { thing1: { value: 'x'.repeat(20) } },
+      }),
+    );
+
+    expect(response.status).toBe(200);
+    expect(createMock).toHaveBeenCalled();
   });
 });

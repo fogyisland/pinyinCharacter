@@ -127,6 +127,56 @@ export async function listBroadcasts(limit = 50): Promise<WechatBroadcast[]> {
   return rows.map(toBroadcast);
 }
 
+/**
+ * The announcements that are waiting to be sent.
+ *
+ * ⚠️ The filter is in SQL, not in JS. Filtering the newest page in
+ * JavaScript would strand an older queued announcement: it falls outside
+ * the window, and it is never sent — silently, forever.
+ */
+export async function listQueuedBroadcasts(limit = 5): Promise<WechatBroadcast[]> {
+  const [rows] = await getPool().query<BroadcastRow[]>(
+    `SELECT ${COLUMNS}
+     FROM wechat_broadcasts
+     WHERE status = 'queued'
+     ORDER BY id ASC
+     LIMIT ?`,
+    [limit],
+  );
+  return rows.map(toBroadcast);
+}
+
+/**
+ * Returns abandoned `sending` announcements to the queue.
+ *
+ * ⚠️ A process that dies mid-run leaves the row in `sending` forever.
+ * The admin screen offers no way out of that state, so the announcement
+ * would simply be lost — silently, with no error anywhere.
+ *
+ * A row is abandoned when it has not been touched for `staleMinutes`. A
+ * run that is going on right now keeps its row fresh, so it is never
+ * stolen from under itself.
+ *
+ * ⚠️ The announcement is sent again from the start, so followers that
+ * already received it may receive it twice. That is the trade this
+ * design takes: a duplicate message is better than a lost one, and the
+ * design deliberately keeps no per-recipient table to do better.
+ *
+ * @param staleMinutes how long a `sending` row may sit untouched.
+ * @returns how many rows were returned to the queue.
+ */
+export async function requeueStaleBroadcasts(staleMinutes: number): Promise<number> {
+  const [result] = await getPool().query<ResultSetHeader>(
+    `UPDATE wechat_broadcasts
+     SET status = 'queued', total_recipients = 0,
+         accepted_count = 0, skipped_count = 0, failed_count = 0, last_error = NULL
+     WHERE status = 'sending'
+       AND updated_at < DATE_SUB(NOW(), INTERVAL ? MINUTE)`,
+    [staleMinutes],
+  );
+  return result.affectedRows;
+}
+
 /** One announcement, or null when there is no such row. */
 export async function getBroadcast(id: number): Promise<WechatBroadcast | null> {
   const [rows] = await getPool().query<BroadcastRow[]>(
@@ -163,19 +213,28 @@ export async function cancelBroadcast(id: number): Promise<boolean> {
 }
 
 /**
- * Records how many recipients the run is about to send to.
+ * Claims an announcement for a run.
  *
- * The counters are cleared here: they describe THIS run, so a second run
- * of the same announcement must not add to the first run's numbers.
+ * ⚠️ The claim is ATOMIC: the UPDATE only fires when the row is still
+ * `queued`, so two runs that overlap — a scheduler tick and a manual
+ * send, say — cannot both claim the same announcement. That is what
+ * keeps the daily quota from being spent twice on the same message.
+ *
+ * @returns whether this run got the row. False means somebody else has
+ *          it, and the caller must not send.
  */
-export async function markBroadcastSending(id: number, totalRecipients: number): Promise<void> {
-  await getPool().query(
+export async function claimBroadcast(
+  id: number,
+  totalRecipients: number,
+): Promise<boolean> {
+  const [result] = await getPool().query<ResultSetHeader>(
     `UPDATE wechat_broadcasts
      SET status = 'sending', total_recipients = ?,
          accepted_count = 0, skipped_count = 0, failed_count = 0
-     WHERE id = ?`,
+     WHERE id = ? AND status = 'queued'`,
     [totalRecipients, id],
   );
+  return result.affectedRows > 0;
 }
 
 /** What one run achieved. */

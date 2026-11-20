@@ -140,11 +140,56 @@ export function classifyWechatError(errcode: number, errmsg: string): WechatApiE
 const TEMPLATE_KEY_PATTERN = /^[A-Za-z][A-Za-z0-9_]{0,31}$/;
 
 /**
+ * How many characters WeChat accepts in each kind of field.
+ *
+ * ⚠️ These are WeChat's own limits, and exceeding them is a PARAMETER
+ * error — which, by the error-code rules, STOPS the whole broadcast. So
+ * one field that is three characters too long denies the announcement to
+ * every follower. Catching it here turns that into a message to the one
+ * admin who wrote it.
+ *
+ * The type is in the field NAME (`thing2`, `first`, `remark`), because
+ * that is how the template library names them.
+ */
+const FIELD_TYPE_LIMITS: Readonly<Record<string, number>> = {
+  thing: 20,
+  short_thing: 5,
+  phrase: 5,
+  symbol: 5,
+  first: 10,
+  remark: 20,
+  const: 20,
+  character_string: 32,
+  number: 32,
+  letter: 32,
+  time: 24,
+  amount: 12,
+  phone_number: 17,
+  car_number: 8,
+};
+
+/** A `keyword1` field carries no type of its own — the library says. */
+const GENERIC_VALUE_LIMIT = 32;
+
+/**
+ * The limit for one field, derived from its name.
+ *
+ * `thing2` is a `thing` (20 characters). `thingABC` is not a type WeChat
+ * knows, so the generic limit applies.
+ */
+export function getTemplateValueLimit(key: string): number {
+  const match = /^([a-z_]+?)(?:\d+)?$/.exec(key);
+  const type = match ? match[1] : '';
+  return FIELD_TYPE_LIMITS[type] ?? GENERIC_VALUE_LIMIT;
+}
+
+/**
  * Checks the admin-authored template data.
  *
  * The field names are whatever the admin chose in the WeChat template
  * library — `keyword1`, `thing2`, `first`, `remark` — so the code cannot
- * know them and must not guess. It only checks the shape.
+ * know what each one MEANS. It can know how long WeChat accepts them
+ * though, because the type is in the name.
  *
  * @throws Error when the data cannot be sent as it is.
  */
@@ -170,6 +215,14 @@ export function validateTemplateData(data: unknown): WechatTemplateData {
     }
     if (value.trim().length === 0) {
       throw new Error(`the template key "${key}" has an empty value`);
+    }
+    // The characters, not the bytes: a Chinese character is three bytes
+    // in UTF-8 but one character to WeChat.
+    const limit = getTemplateValueLimit(key);
+    if ([...value].length > limit) {
+      throw new Error(
+        `the template key "${key}" holds ${[...value].length} characters, but WeChat accepts at most ${limit}`,
+      );
     }
     result[key] = { value };
   }

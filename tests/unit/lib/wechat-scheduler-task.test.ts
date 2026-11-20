@@ -11,8 +11,17 @@ vi.mock('@/lib/wechat-sender', () => ({
 }));
 
 const listMock = vi.fn();
+const requeueMock = vi.fn();
 vi.mock('@/lib/wechat-broadcasts', () => ({
-  listBroadcasts: (...args: unknown[]) => listMock(...args),
+  listQueuedBroadcasts: (...args: unknown[]) => listMock(...args),
+  requeueStaleBroadcasts: (...args: unknown[]) => requeueMock(...args),
+}));
+
+const configMock = vi.fn();
+vi.mock('@/lib/wechat-config', () => ({
+  getWechatConfig: () => configMock(),
+  isWechatConfigured: (config: { enabled: boolean; appId: string; appSecretSet: boolean }) =>
+    config.enabled && config.appId.length > 0 && config.appSecretSet,
 }));
 
 import { ALL_TASKS, runTask } from '@/lib/scheduler-tasks';
@@ -42,6 +51,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   sendMock.mockReset();
   listMock.mockReset();
+  requeueMock.mockReset();
+  requeueMock.mockResolvedValue(0);
+  configMock.mockReset();
+  configMock.mockResolvedValue({ enabled: true, appId: 'wx1234567890abcdef', appSecretSet: true });
 });
 
 describe('the scheduler task registration', () => {
@@ -65,13 +78,15 @@ describe('the WeChat broadcast task', () => {
     expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it('ignores an announcement that is not queued', async () => {
-    listMock.mockResolvedValue([{ ...queued(1), status: 'sent' }]);
+  it('asks the database for queued announcements only', async () => {
+    // The filter is in SQL: filtering the newest page in JavaScript
+    // would strand an older queued announcement outside the window, and
+    // it would never be sent.
+    listMock.mockResolvedValue([]);
 
-    const result = await runTask('wechat-broadcast-send');
+    await runTask('wechat-broadcast-send');
 
-    expect(result.ok).toBe(true);
-    expect(sendMock).not.toHaveBeenCalled();
+    expect(listMock).toHaveBeenCalledWith(5);
   });
 
   it('sends the queued announcement', async () => {
@@ -159,5 +174,69 @@ describe('the WeChat broadcast task', () => {
 
     expect(result.ok).toBe(false);
     expect(result.error).toContain('the table does not exist');
+  });
+});
+
+describe('an announcement abandoned by a dead process', () => {
+  it('is put back in the queue before the task looks for work', async () => {
+    // A process that dies mid-run leaves the row in `sending` forever,
+    // and the admin screen offers no way out of it. The announcement
+    // would simply be lost.
+    listMock.mockResolvedValue([]);
+
+    await runTask('wechat-broadcast-send');
+
+    expect(requeueMock).toHaveBeenCalled();
+  });
+
+  it('is sent after it was recovered', async () => {
+    listMock.mockResolvedValue([queued(9)]);
+    sendMock.mockResolvedValue({
+      status: 'sent',
+      totalRecipients: 1,
+      accepted: 1,
+      skipped: 0,
+      failed: 0,
+      error: null,
+    });
+
+    const result = await runTask('wechat-broadcast-send');
+
+    expect(result.ok).toBe(true);
+    expect(sendMock).toHaveBeenCalledWith(9);
+  });
+
+  it('does not fail the task when the recovery itself fails', async () => {
+    // The recovery is a repair job; failing it must not stop the
+    // announcements that are properly queued.
+    requeueMock.mockRejectedValue(new Error('the table does not exist'));
+    listMock.mockResolvedValue([]);
+
+    const result = await runTask('wechat-broadcast-send');
+
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe('the switch the admin turned off', () => {
+  it('stops the task from sending anything', async () => {
+    // The switch must reach the scheduler too — otherwise turning it off
+    // only stops the writing, and the queued announcements still go out.
+    configMock.mockResolvedValue({ enabled: false, appId: 'wx1234567890abcdef', appSecretSet: true });
+    listMock.mockResolvedValue([queued(1)]);
+
+    const result = await runTask('wechat-broadcast-send');
+
+    expect(sendMock).not.toHaveBeenCalled();
+    expect(result.ok).toBe(true);
+  });
+
+  it('stops the task when the credentials are gone', async () => {
+    configMock.mockResolvedValue({ enabled: true, appId: '', appSecretSet: false });
+    listMock.mockResolvedValue([queued(1)]);
+
+    await runTask('wechat-broadcast-send');
+
+    expect(sendMock).not.toHaveBeenCalled();
   });
 });

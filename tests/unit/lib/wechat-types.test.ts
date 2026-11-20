@@ -17,6 +17,7 @@ import {
   WechatRecipientError,
   WechatTokenError,
   WECHAT_CONFIG_KEYS,
+  getTemplateValueLimit,
 } from '@/lib/wechat-types';
 
 describe('the WeChat error classification', () => {
@@ -147,5 +148,80 @@ describe('the config keys', () => {
     expect(WECHAT_CONFIG_KEYS.enabled).toBe('wechat.enabled');
     expect(WECHAT_CONFIG_KEYS.appId).toBe('wechat.app_id');
     expect(WECHAT_CONFIG_KEYS.appSecret).toBe('wechat.app_secret');
+  });
+});
+
+describe('the length limits WeChat enforces on a template field', () => {
+  it('accepts a thing field of exactly twenty characters', () => {
+    expect(() =>
+      validateTemplateData({ thing1: { value: 'x'.repeat(20) } }),
+    ).not.toThrow();
+  });
+
+  it('refuses a thing field of twenty-one characters', () => {
+    // WeChat caps `thing` at 20 characters. A longer value passes the
+    // shape check and is then rejected by WeChat with a PARAMETER
+    // error — which stops the whole broadcast, so every follower is
+    // denied the announcement because of one field.
+    expect(() =>
+      validateTemplateData({ thing1: { value: 'x'.repeat(21) } }),
+    ).toThrow(/20/);
+  });
+
+  it('refuses a first field longer than ten characters', () => {
+    expect(() =>
+      validateTemplateData({ first: { value: 'x'.repeat(11) } }),
+    ).toThrow(/10/);
+  });
+
+  it('refuses a remark field longer than twenty characters', () => {
+    expect(() =>
+      validateTemplateData({ remark: { value: 'x'.repeat(21) } }),
+    ).toThrow(/20/);
+  });
+
+  it('refuses a phrase field longer than five characters', () => {
+    expect(() =>
+      validateTemplateData({ phrase1: { value: 'x'.repeat(6) } }),
+    ).toThrow(/5/);
+  });
+
+  it('accepts a plain keyword field of thirty-two characters', () => {
+    // `keyword1` carries no type of its own — the template library says
+    // what it is — so the generic limit applies.
+    expect(() =>
+      validateTemplateData({ keyword1: { value: 'x'.repeat(32) } }),
+    ).not.toThrow();
+  });
+
+  it('refuses a plain keyword field longer than thirty-two characters', () => {
+    expect(() =>
+      validateTemplateData({ keyword1: { value: 'x'.repeat(33) } }),
+    ).toThrow(/32/);
+  });
+
+  it('counts the characters, not the bytes', () => {
+    // A Chinese character is three bytes in UTF-8 but one character.
+    expect(() =>
+      validateTemplateData({ thing1: { value: '字'.repeat(20) } }),
+    ).not.toThrow();
+  });
+});
+
+describe('the limit derived from the field name', () => {
+  it('knows the limit of each WeChat field type', () => {
+    expect(getTemplateValueLimit('thing1')).toBe(20);
+    expect(getTemplateValueLimit('thing2')).toBe(20);
+    expect(getTemplateValueLimit('short_thing1')).toBe(5);
+    expect(getTemplateValueLimit('phrase1')).toBe(5);
+    expect(getTemplateValueLimit('first')).toBe(10);
+    expect(getTemplateValueLimit('remark')).toBe(20);
+    expect(getTemplateValueLimit('character_string1')).toBe(32);
+    expect(getTemplateValueLimit('number1')).toBe(32);
+  });
+
+  it('falls back to the generic limit for a name it does not know', () => {
+    expect(getTemplateValueLimit('keyword1')).toBe(32);
+    expect(getTemplateValueLimit('whatever')).toBe(32);
   });
 });

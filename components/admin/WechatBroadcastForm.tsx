@@ -1,11 +1,7 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-
-interface TemplateField {
-  key: string;
-  value: string;
-}
+import { collectTemplateFields, type TemplateField } from '@/lib/wechat-template-fields';
 
 /**
  * The announcement composer.
@@ -38,11 +34,11 @@ export function WechatBroadcastForm() {
     setBusy(true);
     setMessage(null);
     setError(null);
-    const data: Record<string, { value: string }> = {};
-    for (const field of fields) {
-      if (field.key.trim() === '') continue;
-      data[field.key.trim()] = { value: field.value };
-    }
+    // ⚠️ A row with a name but no value is left out: WeChat refuses an
+    // empty field value, and that refusal is a PARAMETER error — which
+    // stops the whole broadcast. The composer starts with empty rows, so
+    // one of them left alone would deny the announcement to everyone.
+    const { data, skipped } = collectTemplateFields(fields);
     try {
       const response = await fetch('/api/admin/wechat/broadcasts', {
         method: 'POST',
@@ -51,7 +47,9 @@ export function WechatBroadcastForm() {
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error?.message ?? '提交失败');
-      setMessage(`已入队：${body.data.id}，下一次 scheduler tick 会发出。`);
+      const skippedNote =
+        skipped.length > 0 ? `（已忽略没有填内容的字段：${skipped.join('、')}）` : '';
+      setMessage(`已入队：${body.data.id}，下一次 scheduler tick 会发出。${skippedNote}`);
       setTitle('');
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
@@ -88,8 +86,11 @@ export function WechatBroadcastForm() {
           className="mt-1 w-full rounded border border-rule px-2 py-1 font-mono"
           value={url}
           onChange={(event) => setUrl(event.target.value)}
-          placeholder="https://..."
+          placeholder="/guide 或 https://本站域名/..."
         />
+        <span className="mt-1 block text-xs text-ink-soft">
+          必须是本站的地址或站内路径 —— 消息里的链接来自公众号，指向别处会变成钓鱼链接。
+        </span>
       </label>
 
       <div className="space-y-2">

@@ -7,6 +7,7 @@ import { getWechatConfig, isWechatConfigured } from '@/lib/wechat-config';
 import { sendTemplateMessage } from '@/lib/wechat-api';
 import { validateTemplateData } from '@/lib/wechat-types';
 import { translateWechatApiError } from '@/lib/wechat-api-error';
+import { resolveWechatJumpUrlForSite } from '@/lib/wechat-jump-url';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,8 @@ const TestSchema = z.object({
   openid: z.string().min(1).max(64),
   templateId: z.string().min(1).max(64),
   url: z.string().max(512).optional(),
+  // The precise limit depends on the field type and is checked by
+  // `validateTemplateData`; this cap only stops a huge payload.
   data: z.record(z.string(), z.object({ value: z.string().min(1).max(200) })),
 });
 
@@ -40,12 +43,25 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       return badRequest('validation', error instanceof Error ? error.message : String(error));
     }
+    // The jump url goes into the message, and the follower taps it — it
+    // must point at THIS site, or it is a phishing link wearing our
+    // official account's name.
+    let url: string | null = null;
+    if (parsed.data.url) {
+      url = await resolveWechatJumpUrlForSite(parsed.data.url);
+      if (url === null) {
+        return badRequest(
+          'validation',
+          "the jump url must be a path on this site, or an address on this site's own domain",
+        );
+      }
+    }
     try {
       await sendTemplateMessage(
         parsed.data.openid,
         parsed.data.templateId,
         data,
-        parsed.data.url || null,
+        url,
       );
     } catch (error) {
       // A WeChat failure gets the same actionable answer as the follower

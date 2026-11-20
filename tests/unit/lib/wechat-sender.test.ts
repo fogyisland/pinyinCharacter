@@ -24,12 +24,12 @@ vi.mock('@/lib/wechat-api', () => ({
 }));
 
 const getBroadcastMock = vi.fn();
-const markSendingMock = vi.fn();
+const claimMock = vi.fn();
 const recordOutcomeMock = vi.fn();
 const finishMock = vi.fn();
 vi.mock('@/lib/wechat-broadcasts', () => ({
   getBroadcast: (...args: unknown[]) => getBroadcastMock(...args),
-  markBroadcastSending: (...args: unknown[]) => markSendingMock(...args),
+  claimBroadcast: (...args: unknown[]) => claimMock(...args),
   recordBroadcastOutcome: (...args: unknown[]) => recordOutcomeMock(...args),
   finishBroadcast: (...args: unknown[]) => finishMock(...args),
 }));
@@ -69,9 +69,11 @@ beforeEach(() => {
   sendMock.mockReset();
   getBroadcastMock.mockReset();
   getBroadcastMock.mockResolvedValue(broadcast());
-  markSendingMock.mockReset();
+  claimMock.mockReset();
   recordOutcomeMock.mockReset();
   finishMock.mockReset();
+  // By default the run gets the row — a test that cares sets it otherwise.
+  claimMock.mockResolvedValue(true);
 });
 
 describe('sending an announcement', () => {
@@ -92,7 +94,7 @@ describe('sending an announcement', () => {
 
     await sendBroadcast(1);
 
-    expect(markSendingMock).toHaveBeenCalledWith(1, 1);
+    expect(claimMock).toHaveBeenCalledWith(1, 1);
   });
 
   it('passes the template id and the data to every message', async () => {
@@ -300,5 +302,31 @@ describe('the recording of the outcome', () => {
     await sendBroadcast(999);
 
     expect(recordOutcomeMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('the atomic claim', () => {
+  it('sends nothing when another run already claimed the announcement', async () => {
+    // A scheduler tick and a manual send can overlap. The claim is what
+    // stops the daily quota from being spent twice on the same message.
+    followerMock.mockResolvedValue(['a', 'b', 'c']);
+    sendMock.mockResolvedValue(undefined);
+    claimMock.mockResolvedValue(false);
+
+    const result = await sendBroadcast(1);
+
+    expect(sendMock).not.toHaveBeenCalled();
+    expect(result.status).toBe('failed');
+    expect(result.error).toContain('already claimed');
+  });
+
+  it('does not overwrite the row when the claim failed', async () => {
+    followerMock.mockResolvedValue(['a']);
+    claimMock.mockResolvedValue(false);
+
+    await sendBroadcast(1);
+
+    expect(recordOutcomeMock).not.toHaveBeenCalled();
+    expect(finishMock).not.toHaveBeenCalled();
   });
 });

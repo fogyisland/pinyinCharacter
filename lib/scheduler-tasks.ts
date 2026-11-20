@@ -19,8 +19,20 @@ import { sendEmail } from './email';
 import { campaignEmail } from './email-templates';
 import { issueUnsubscribeToken, markRecipient, finalizeCampaignIfDone } from './email-campaigns';
 import { runWecomDeliver } from './wecom-deliver';
-import { listBroadcasts } from './wechat-broadcasts';
+import { listQueuedBroadcasts, requeueStaleBroadcasts } from './wechat-broadcasts';
+import { getWechatConfig, isWechatConfigured } from './wechat-config';
 import { sendBroadcast } from './wechat-sender';
+
+/**
+ * How long a `sending` announcement may sit untouched before it is
+ * treated as abandoned.
+ *
+ * It has to be longer than one run can take: a run walks every follower
+ * of the account, one at a time, and a big account takes a while. An
+ * hour is comfortably longer than a run and short enough that an
+ * announcement is not lost for a whole day.
+ */
+const STALE_SENDING_MINUTES = 60;
 
 export type TaskName =
   | 'content-refresh'
@@ -259,7 +271,34 @@ async function runWecomDeliverTask(): Promise<TaskResult> {
 async function runWechatBroadcastTask(): Promise<TaskResult> {
   const t0 = Date.now();
   try {
-    const queued = (await listBroadcasts()).filter((broadcast) => broadcast.status === 'queued');
+    // ⚠️ A process that died mid-run leaves its announcement in
+    // `sending` forever, and the admin screen offers no way out of it.
+    // The announcement would simply be lost. So before looking for work,
+    // put the abandoned ones back in the queue.
+    //
+    // The recovery is a repair job: if it fails, the announcements that
+    // are properly queued still go out.
+    try {
+      await requeueStaleBroadcasts(STALE_SENDING_MINUTES);
+    } catch (error) {
+      console.error(
+        '[wechat] could not recover an abandoned announcement:',
+        error instanceof Error ? error.message : String(error),
+      );
+    }
+
+    // ⚠️ The switch reaches the scheduler too. An admin who turns the
+    // feature off expects the queued announcements to stay queued.
+    const config = await getWechatConfig();
+    if (!isWechatConfigured(config)) {
+      return {
+        name: 'wechat-broadcast-send',
+        ok: true,
+        summary: 'the WeChat announcement is off (0ms)',
+      };
+    }
+
+    const queued = await listQueuedBroadcasts(5);
     if (queued.length === 0) {
       return { name: 'wechat-broadcast-send', ok: true, summary: 'no queued announcements (0ms)' };
     }

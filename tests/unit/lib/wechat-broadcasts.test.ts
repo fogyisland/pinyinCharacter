@@ -19,7 +19,9 @@ import {
   finishBroadcast,
   getBroadcast,
   listBroadcasts,
-  markBroadcastSending,
+  claimBroadcast,
+  listQueuedBroadcasts,
+  requeueStaleBroadcasts,
   queueBroadcast,
   recordBroadcastOutcome,
 } from '@/lib/wechat-broadcasts';
@@ -203,7 +205,8 @@ describe('the state changes', () => {
   });
 
   it('records the recipient count when the run starts', async () => {
-    await markBroadcastSending(4, 12);
+    queryMock.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+    await claimBroadcast(4, 12);
 
     const [sql, params] = queryMock.mock.calls[0];
     expect(String(sql)).toContain("status = 'sending'");
@@ -214,12 +217,39 @@ describe('the state changes', () => {
   it('clears the counters when a run starts', async () => {
     // A second run of the same announcement must not add to the first
     // run's counts — the counters describe THIS run.
-    await markBroadcastSending(4, 12);
+    queryMock.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+    await claimBroadcast(4, 12);
 
     const sql = String(queryMock.mock.calls[0][0]);
     expect(sql).toContain('accepted_count = 0');
     expect(sql).toContain('skipped_count = 0');
     expect(sql).toContain('failed_count = 0');
+  });
+
+  it('claims a queued announcement only', async () => {
+    // The claim has to be atomic: two overlapping runs must not both
+    // send the same announcement and spend the daily quota twice.
+    queryMock.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+    await claimBroadcast(4, 12);
+
+    const sql = String(queryMock.mock.calls[0][0]);
+    expect(sql).toContain("AND status = 'queued'");
+  });
+
+  it('reports that the row was taken by another run', async () => {
+    queryMock.mockResolvedValueOnce([{ affectedRows: 0 }, []]);
+
+    const claimed = await claimBroadcast(4, 12);
+
+    expect(claimed).toBe(false);
+  });
+
+  it('reports that this run got the row', async () => {
+    queryMock.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+    const claimed = await claimBroadcast(4, 12);
+
+    expect(claimed).toBe(true);
   });
 
   it('records the outcome counts', async () => {
@@ -262,5 +292,45 @@ describe('the state changes', () => {
     const params = queryMock.mock.calls[0][1];
     const error = params.find((param: unknown) => typeof param === 'string' && param.startsWith('x'));
     expect((error as string).length).toBe(1024);
+  });
+});
+
+describe('the announcements the scheduler picks up', () => {
+  it('asks the database for the queued ones', async () => {
+    // Filtering in SQL, not in JS: with more announcements than the
+    // page size, an older queued one falls outside the newest window and
+    // would never be sent.
+    queryMock.mockResolvedValueOnce([[], []]);
+
+    await listQueuedBroadcasts(5);
+
+    const [sql, params] = queryMock.mock.calls[0];
+    expect(String(sql)).toContain("status = 'queued'");
+    expect(params).toContain(5);
+  });
+
+  it('returns a stranded sending announcement to the queue', async () => {
+    // A process that died mid-run leaves the row in `sending` forever,
+    // and the UI offers no way out of it. The next tick must pick it up.
+    queryMock.mockResolvedValueOnce([{ affectedRows: 1 }, []]);
+
+    const recovered = await requeueStaleBroadcasts(30);
+
+    expect(recovered).toBe(1);
+    const [sql] = queryMock.mock.calls[0];
+    expect(String(sql)).toContain("status = 'sending'");
+    expect(String(sql)).toContain("status = 'queued'");
+  });
+
+  it('does not touch a sending row that is still fresh', async () => {
+    // A run that is going on right now — its row must not be stolen.
+    queryMock.mockResolvedValueOnce([{ affectedRows: 0 }, []]);
+
+    const recovered = await requeueStaleBroadcasts(30);
+
+    expect(recovered).toBe(0);
+    const [sql, params] = queryMock.mock.calls[0];
+    expect(String(sql)).toContain('updated_at');
+    expect(params).toContain(30);
   });
 });

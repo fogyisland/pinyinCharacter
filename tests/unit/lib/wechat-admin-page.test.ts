@@ -122,3 +122,22 @@ describe('the WeChat admin screen', () => {
     expect(source).toMatch(/还没有关注者/);
   });
 });
+
+describe('the announcement composer', () => {
+  it('leaves an empty row out of what it sends', () => {
+    // An empty field value is a PARAMETER error for WeChat, and a
+    // parameter error stops the whole broadcast.
+    const source = read('components/admin/WechatBroadcastForm.tsx');
+    expect(source).toContain('collectTemplateFields(fields)');
+  });
+
+  it('tells the admin which rows it left out', () => {
+    const source = read('components/admin/WechatBroadcastForm.tsx');
+    expect(source).toContain('skipped');
+  });
+
+  it('says the jump url has to point at this site', () => {
+    const source = read('components/admin/WechatBroadcastForm.tsx');
+    expect(source).toMatch(/本站|自己的域名|这个站点/);
+  });
+});

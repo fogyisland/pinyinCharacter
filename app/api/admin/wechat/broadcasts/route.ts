@@ -5,9 +5,13 @@ import { requireAdmin } from '@/lib/auth';
 import { writeAudit } from '@/lib/audit';
 import { createBroadcast, listBroadcasts, queueBroadcast } from '@/lib/wechat-broadcasts';
 import { validateTemplateData } from '@/lib/wechat-types';
+import { resolveWechatJumpUrlForSite } from '@/lib/wechat-jump-url';
+import { getWechatConfig, isWechatConfigured } from '@/lib/wechat-config';
 
 export const dynamic = 'force-dynamic';
 
+// The precise limit depends on the field type and is checked by
+// `validateTemplateData`; this cap only stops a huge payload.
 const TemplateValueSchema = z.object({ value: z.string().min(1).max(200) });
 
 const BroadcastSchema = z.object({
@@ -44,6 +48,12 @@ export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
     const auth = await requireAdmin();
     if (!auth.ok) return auth.response;
+    // ⚠️ The switch has to be honored here, not only on the screen: an
+    // admin who turns the feature off expects no announcement to go out.
+    const config = await getWechatConfig();
+    if (!isWechatConfigured(config)) {
+      return badRequest('not_configured', 'the WeChat announcement is not enabled or not configured yet');
+    }
     const parsed = BroadcastSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return badRequest('validation', parsed.error.message);
     let data;
@@ -52,10 +62,26 @@ export async function POST(req: NextRequest) {
     } catch (error) {
       return badRequest('validation', error instanceof Error ? error.message : String(error));
     }
+    // ⚠️ The jump url goes into a message from the official account, and
+    // the follower taps it. It must point at THIS site — a url to another
+    // host would be a phishing link inside our own message. A relative
+    // path is resolved against the site url, because WeChat wants an
+    // absolute one and would reject a relative one as a parameter error
+    // — which stops the whole broadcast.
+    let url: string | null = null;
+    if (parsed.data.url) {
+      url = await resolveWechatJumpUrlForSite(parsed.data.url);
+      if (url === null) {
+        return badRequest(
+          'validation',
+          "the jump url must be a path on this site, or an address on this site's own domain",
+        );
+      }
+    }
     const id = await createBroadcast({
       title: parsed.data.title,
       templateId: parsed.data.templateId,
-      url: parsed.data.url || null,
+      url,
       data,
       createdBy: auth.user.id,
     });
