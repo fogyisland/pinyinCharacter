@@ -2061,32 +2061,65 @@ export const ALL_TASKS: TaskName[] = [
 ];
 ```
 
-3. Add the runner and wire it into `runTask`. Read `runTask` first and add a case that matches the existing shape, e.g.:
+3. Add the runner, and add a `case` to the `runTask` switch.
+
+⚠️ **`runTask` is a `switch (name)` on `TaskName`, not a chain of `if`s** — a
+new task needs a `case`, or `runTask` will not return anything for it and
+TypeScript will flag the missing branch.
+
+⚠️ **The runner must catch its own errors.** `runTask` has no `try` around
+the dispatch — every existing runner (`runWecomDeliverTask`,
+`runEmailCampaignSend`) catches internally and returns `{ ok: false, error }`.
+A runner that throws would take the whole scheduler tick down.
+
 ```ts
-  if (name === 'wechat-broadcast-send') {
-    const queued = await listBroadcasts(5).catch(() => [] as WechatBroadcast[]);
+async function runWechatBroadcastTask(): Promise<TaskResult> {
+  const t0 = Date.now();
+  try {
+    const queued = await listBroadcasts(5);
     const pending = queued.filter((broadcast) => broadcast.status === 'queued');
     if (pending.length === 0) {
-      return { name: 'wechat-broadcast-send', ok: true, summary: 'no queued broadcasts' };
+      return {
+        name: 'wechat-broadcast-send',
+        ok: true,
+        summary: 'no queued broadcasts',
+      };
     }
-    // One announcement per tick. A broadcast to many followers takes
-    // many calls, and a tick that runs long blocks the other tasks.
+    // One announcement per tick. A broadcast to many followers takes many
+    // calls, and a tick that runs long blocks the other tasks.
     const result = await sendBroadcast(pending[0].id);
-    const summary =
-      `broadcast=${pending[0].id} recipients=${result.totalRecipients}` +
-      ` accepted=${result.accepted} skipped=${result.skipped} failed=${result.failed}`;
+    const ms = Date.now() - t0;
     return {
       name: 'wechat-broadcast-send',
       ok: result.status === 'sent',
-      summary,
-      error: result.error,
+      summary:
+        `broadcast=${pending[0].id} recipients=${result.totalRecipients}` +
+        ` accepted=${result.accepted} skipped=${result.skipped}` +
+        ` failed=${result.failed} (${ms}ms)`,
+      error: result.error ?? undefined,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      name: 'wechat-broadcast-send',
+      ok: false,
+      summary: 'broadcast run failed',
+      error: message,
     };
   }
+}
 ```
+
+And in `runTask`:
+```ts
+    case 'wechat-broadcast-send':
+      return runWechatBroadcastTask();
+```
+
 Add the imports at the top of the file:
 ```ts
 import { sendBroadcast } from './wechat-sender';
-import { listBroadcasts, type WechatBroadcast } from './wechat-broadcasts';
+import { listBroadcasts } from './wechat-broadcasts';
 ```
 
 **`lib/scheduler-config.ts`** — four edits:
@@ -2105,16 +2138,31 @@ import { listBroadcasts, type WechatBroadcast } from './wechat-broadcasts';
 
 3. `DEFAULT_CONFIG`:
 ```ts
-  taskWechatBroadcast: false,
+  taskWechatBroadcast: true,
 ```
 
-4. `SchedulerHistoryTaskName` union:
+4. The **loader** — where `SchedulerConfig` is read back out of `app_config`:
+```ts
+      taskWechatBroadcast: out[SCHEDULER_KEYS.taskWechatBroadcast] !== '0',
+```
+
+5. The **writer** — where a change is persisted:
+```ts
+  if (updates.taskWechatBroadcast !== undefined)
+    await set(SCHEDULER_KEYS.taskWechatBroadcast, updates.taskWechatBroadcast ? '1' : '0');
+```
+
+6. `SchedulerHistoryTaskName` union:
 ```ts
   | 'wecom-deliver'
   | 'wechat-broadcast-send';
 ```
 
-⚠️ **Read `lib/scheduler-config.ts` around `DEFAULT_CONFIG` and the config loader before editing** — there is very likely a mapping between the `SchedulerConfig` fields and the `app_config` rows (the `SCHEDULER_KEYS` object gives the key names). Add the new field wherever the other five appear, so the switch actually persists. Search for `taskWecomDeliver` in that file and mirror every occurrence.
+⚠️ **`taskWecomDeliver` appears in SIX places in `lib/scheduler-config.ts`** —
+`SCHEDULER_KEYS`, the `SchedulerConfig` interface, `DEFAULT_CONFIG`, the
+`DEFAULT_ROWS` map, the loader, and the writer. **All six need the new
+field**, or the switch will read as `undefined` and never persist. Grep for
+`taskWecomDeliver` and mirror every occurrence.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
@@ -2143,10 +2191,11 @@ git commit -m "feat(wechat): send the queued announcements on the scheduler tick
 
 **Interfaces:**
 - Consumes: `getConfig`, `setConfigBatch` from `@/lib/config`; `isValidWechatAppId` from `@/lib/wechat-types`; `resetWechatTokenCache` from `@/lib/wechat-api`.
+- Modifies: `lib/config.ts` — add the two `KEY_VALIDATORS` entries.
 - Produces:
   - `interface WechatConfig { enabled: boolean; appId: string; appSecretSet: boolean }`
   - `async function getWechatConfig(): Promise<WechatConfig>`
-  - `async function saveWechatConfig(input: { enabled?: boolean; appId?: string; appSecret?: string }): Promise<void>`
+  - `async function saveWechatConfig(input: { enabled?: boolean; appId?: string; appSecret?: string }, byUserId: number): Promise<void>`
   - `function isWechatConfigured(config: WechatConfig): boolean`
 
 **为什么单独的模块**：凭据和「是否配好」这两个判断会被 API 路由、sender、后台页三处用到。集中在一处才不会散。
@@ -2216,7 +2265,7 @@ describe('reading the WeChat configuration', () => {
 
 describe('saving the WeChat configuration', () => {
   it('writes the fields it was given', async () => {
-    await saveWechatConfig({ enabled: false, appId: 'wxabcdefabcdef0123' });
+    await saveWechatConfig({ enabled: false, appId: 'wxabcdefabcdef0123' }, 7);
 
     const [updates] = setConfigBatchMock.mock.calls[0];
     expect(updates['wechat.enabled']).toBe('false');
@@ -2224,25 +2273,32 @@ describe('saving the WeChat configuration', () => {
   });
 
   it('does not write the secret when it was left blank', async () => {
-    await saveWechatConfig({ enabled: true, appId: 'wx1234567890abcdef', appSecret: '' });
+    await saveWechatConfig({ enabled: true, appId: 'wx1234567890abcdef', appSecret: '' }, 7);
 
     const [updates] = setConfigBatchMock.mock.calls[0];
     expect(updates).not.toHaveProperty('wechat.app_secret');
   });
 
+  it('records who changed the credentials', async () => {
+    await saveWechatConfig({ appSecret: 'new-secret' }, 42);
+
+    const [, byUserId] = setConfigBatchMock.mock.calls[0];
+    expect(byUserId).toBe(42);
+  });
+
   it('writes the secret when it was given', async () => {
-    await saveWechatConfig({ appSecret: 'new-secret' });
+    await saveWechatConfig({ appSecret: 'new-secret' }, 7);
 
     const [updates] = setConfigBatchMock.mock.calls[0];
     expect(updates['wechat.app_secret']).toBe('new-secret');
   });
 
   it('rejects an app id that is not shaped like one', async () => {
-    await expect(saveWechatConfig({ appId: 'not-an-app-id' })).rejects.toThrow(/app id/i);
+    await expect(saveWechatConfig({ appId: 'not-an-app-id' }, 7)).rejects.toThrow(/app id/i);
   });
 
   it('forgets the cached token — the old one belongs to the old credentials', async () => {
-    await saveWechatConfig({ appSecret: 'new-secret' });
+    await saveWechatConfig({ appSecret: 'new-secret' }, 7);
 
     expect(resetTokenMock).toHaveBeenCalled();
   });
@@ -2272,7 +2328,25 @@ describe('whether WeChat is configured', () => {
 Run: `npx vitest run tests/unit/lib/wechat-config.test.ts`
 Expected: FAIL — cannot resolve `@/lib/wechat-config`.
 
-- [ ] **Step 3: Implement the module**
+- [ ] **Step 3: Add the config validators**
+
+`lib/config.ts` enforces a per-key validator in `setConfig`. A key with no
+validator accepts anything, so the app id shape check would live only in
+`lib/wechat-config.ts` — and a direct `setConfig('wechat.app_id', ...)` call
+from anywhere else could write garbage. Add both keys to `KEY_VALIDATORS`:
+
+```ts
+  'wechat.enabled': (v) => v === 'true' || v === 'false',
+  'wechat.app_id': (v) => /^wx[0-9a-f]{16}$/.test(v),
+  'wechat.app_secret': (v) => v.length > 0 && v.length <= 256,
+```
+
+⚠️ `KEY_VALIDATORS` lives in `lib/config.ts`, which is a **client-unsafe**
+module in some contexts. `lib/wechat-config.ts` imports `isValidWechatAppId`
+from `@/lib/wechat-types` — keep the validator there too, but **do not import
+`lib/config` into `lib/wechat-types`** (that would create a cycle).
+
+- [ ] **Step 4: Implement the module**
 
 `lib/wechat-config.ts`:
 
@@ -2323,7 +2397,10 @@ export interface SaveWechatConfigInput {
  *
  * @throws Error when the app id does not look like one.
  */
-export async function saveWechatConfig(input: SaveWechatConfigInput): Promise<void> {
+export async function saveWechatConfig(
+  input: SaveWechatConfigInput,
+  byUserId: number,
+): Promise<void> {
   const updates: Record<string, string> = {};
   if (input.enabled !== undefined) {
     updates[WECHAT_CONFIG_KEYS.enabled] = input.enabled ? 'true' : 'false';
@@ -2338,7 +2415,7 @@ export async function saveWechatConfig(input: SaveWechatConfigInput): Promise<vo
     updates[WECHAT_CONFIG_KEYS.appSecret] = input.appSecret;
   }
   if (Object.keys(updates).length > 0) {
-    await setConfigBatch(updates);
+    await setConfigBatch(updates, byUserId);
   }
   // The credentials may have changed, and the cached token belongs to the
   // old ones. WeChat invalidates the previous token when a new one is
@@ -2356,15 +2433,15 @@ export function isWechatConfigured(config: WechatConfig): boolean {
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [ ] **Step 5: Run the test to verify it passes**
 
 Run: `npx vitest run tests/unit/lib/wechat-config.test.ts`
 Expected: PASS — 12 tests green.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add lib/wechat-config.ts tests/unit/lib/wechat-config.test.ts
+git add lib/wechat-config.ts lib/config.ts tests/unit/lib/wechat-config.test.ts
 git commit -m "feat(wechat): keep the credentials in one place [2026-11-20 17.05]"
 ```
 
@@ -2385,7 +2462,7 @@ git commit -m "feat(wechat): keep the credentials in one place [2026-11-20 17.05
 
 **Interfaces:**
 - Consumes: `requireAdmin` from `@/lib/auth`; `withErrorHandling`, `badRequest` from `@/lib/api-handler`; `writeAudit` from `@/lib/audit`; the config/store/sender/api modules from Tasks 3–7.
-- Produces: 7 admin routes; 4 new audit events: `wechat_config_updated`, `wechat_broadcast_created`, `wechat_broadcast_sent`, `wechat_broadcast_cancelled`.
+- Produces: 7 admin routes; 5 new audit events: `wechat_config_updated`, `wechat_broadcast_created`, `wechat_broadcast_sent`, `wechat_broadcast_cancelled`, `wechat_test_sent`.
 
 **⚠️ 审计事件必须加在 4 个地方**（`lib/audit-format.ts`）：`AuditEvent` 联合、`AUDIT_EVENTS` 元组、`EVENT_LABEL` 记录、`formatLogMessage` 函数。`tests/unit/lib/audit.test.ts` 会断言元组和 label 完全一致 —— 少一处就红。
 
@@ -2452,6 +2529,13 @@ function request(body: unknown): Request {
   } as unknown as Request;
 }
 
+/**
+ * The [id] routes take the id from the path, not the body.
+ */
+function idContext(id: string): { params: Promise<{ id: string }> } {
+  return { params: Promise.resolve({ id }) };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   adminMock.mockReset();
@@ -2505,6 +2589,9 @@ describe('the configuration route', () => {
     const response = await putConfigRoute(request({ appId: 'nope' }));
 
     expect(response.status).toBe(400);
+    const body = await response.json();
+    expect(body.ok).toBe(false);
+    expect(body.error.message).toContain('app id');
   });
 });
 
@@ -2581,7 +2668,7 @@ describe('the announcement routes', () => {
       error: null,
     });
 
-    const response = await sendRoute(request({ id: 5 }));
+    const response = await sendRoute(request({}), idContext('5'));
 
     expect(response.status).toBe(200);
     expect(sendMock).toHaveBeenCalledWith(5);
@@ -2593,7 +2680,7 @@ describe('the announcement routes', () => {
   it('cancels an announcement', async () => {
     cancelMock.mockResolvedValue(true);
 
-    const response = await cancelRoute(request({ id: 5 }));
+    const response = await cancelRoute(request({}), idContext('5'));
 
     expect(response.status).toBe(200);
     expect(cancelMock).toHaveBeenCalledWith(5);
@@ -2605,7 +2692,7 @@ describe('the announcement routes', () => {
   it('refuses to cancel an announcement that already went out', async () => {
     cancelMock.mockResolvedValue(false);
 
-    const response = await cancelRoute(request({ id: 5 }));
+    const response = await cancelRoute(request({}), idContext('5'));
 
     expect(response.status).toBe(400);
   });
@@ -2627,9 +2714,10 @@ Expected: FAIL — cannot resolve the route modules.
   | 'wechat_broadcast_created'
   | 'wechat_broadcast_sent'
   | 'wechat_broadcast_cancelled'
+  | 'wechat_test_sent'
 ```
 
-2. In the `AUDIT_EVENTS` tuple, add the same four strings.
+2. In the `AUDIT_EVENTS` tuple, add the same five strings.
 
 3. In the `EVENT_LABEL` record, add:
 ```ts
@@ -2637,6 +2725,7 @@ Expected: FAIL — cannot resolve the route modules.
   wechat_broadcast_created: '已创建微信公告',
   wechat_broadcast_sent: '已发送微信公告',
   wechat_broadcast_cancelled: '已取消微信公告',
+  wechat_test_sent: '已发送微信测试消息',
 ```
 
 4. In `formatLogMessage`, add a case that renders the announcement title. **Read the existing function first** and follow its shape — it must never render an empty name; the existing MCP tests assert a `「?」` placeholder, so follow that convention:
@@ -2649,6 +2738,8 @@ Expected: FAIL — cannot resolve the route modules.
       return `已发送微信公告「${metadata.title ?? '?'}」`;
     case 'wechat_broadcast_cancelled':
       return `已取消微信公告「${metadata.title ?? '?'}」`;
+    case 'wechat_test_sent':
+      return `已发送微信测试消息「${metadata.title ?? '?'}」`;
 ```
 
 - [ ] **Step 4: Write the routes**
@@ -2687,14 +2778,14 @@ export async function PUT(req: NextRequest) {
     const parsed = ConfigSchema.safeParse(await req.json().catch(() => ({})));
     if (!parsed.success) return badRequest('validation', parsed.error.message);
     try {
-      await saveWechatConfig(parsed.data);
+      await saveWechatConfig(parsed.data, auth.user.id);
     } catch (error) {
       return badRequest('validation', (error as Error).message);
     }
     await writeAudit({
       userId: auth.user.id,
       event: 'wechat_config_updated',
-      metadata: { keys: Object.keys(parsed.data) },
+      metadata: { title: '微信配置', keys: Object.keys(parsed.data) },
     });
     const config = await getWechatConfig();
     return NextResponse.json({ ok: true, data: { config } });
@@ -2935,7 +3026,7 @@ export async function POST(req: NextRequest) {
     }
     await writeAudit({
       userId: auth.user.id,
-      event: 'wechat_broadcast_sent',
+      event: 'wechat_test_sent',
       metadata: { title: '测试消息', openid: parsed.data.openid },
     });
     return NextResponse.json({ ok: true, data: { accepted: true } });
@@ -3015,6 +3106,28 @@ describe('the WeChat admin screen', () => {
     expect(sidebar).toContain('微信公众号');
   });
 
+  it('reuses an icon that is already imported', () => {
+    const sidebar = read('components/admin/AdminSidebar.tsx');
+    const iconMatch = sidebar.match(/href: '\/admin\/wechat', label: '[^']+',[^}]*icon: (\w+)/);
+    expect(iconMatch).not.toBeNull();
+    const iconName = iconMatch![1];
+    expect(sidebar).toContain(`\n  ${iconName},`);
+  });
+
+  it('uses the shared header and panel — the admin layout already has the sidebar', () => {
+    const source = read('app/admin/wechat/page.tsx');
+    expect(source).toContain('PageHeader');
+    expect(source).toContain('Panel');
+    expect(source).not.toContain('AdminSidebar');
+    expect(source).not.toContain('<h1');
+  });
+
+  it('reads the rows on the server and passes them down', () => {
+    const source = read('app/admin/wechat/page.tsx');
+    expect(source).toContain('listBroadcasts');
+    expect(source).toContain('initialBroadcasts');
+  });
+
   it('does not promise delivery — WeChat gives no delivery receipt', () => {
     const files = [
       'app/admin/wechat/page.tsx',
@@ -3053,45 +3166,58 @@ Expected: FAIL — `app/admin/wechat/page.tsx` does not exist.
 
 - [ ] **Step 3: Write the admin screen**
 
-**`app/admin/wechat/page.tsx`** — a server component that renders the three client components inside the admin shell. **Read `app/admin/wecom/page.tsx` first and follow its structure exactly** (the header, the section layout, the Suspense wrapper around the admin sidebar).
+**`app/admin/wechat/page.tsx`** — ⚠️ **the admin layout already renders the
+sidebar.** An admin page does NOT import `AdminSidebar`, does NOT wrap itself
+in a `<div className="flex">`, and does NOT render its own `<h1>`. It opens
+with `PageHeader` and lays its sections out in `Panel`s. **Copy
+`app/admin/wecom/page.tsx` exactly** — same imports, same `dynamic` export,
+same `async` server component shape.
 
 ```tsx
-import { Suspense } from 'react';
-import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { PageHeader } from '@/components/admin/PageHeader';
+import { Panel } from '@/components/admin/Panel';
 import { WechatConfigForm } from '@/components/admin/WechatConfigForm';
 import { WechatBroadcastForm } from '@/components/admin/WechatBroadcastForm';
 import { WechatBroadcastTable } from '@/components/admin/WechatBroadcastTable';
+import { getWechatConfig } from '@/lib/wechat-config';
+import { listBroadcasts } from '@/lib/wechat-broadcasts';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: '微信公众号 · 管理后台',
-  description: '用服务号模板消息把公告推送给关注者。',
-};
-
-export default function WechatAdminPage() {
+export default async function AdminWechatPage() {
+  const config = await getWechatConfig();
+  const broadcasts = await listBroadcasts();
   return (
-    <div className="min-h-screen bg-paper">
-      <div className="flex">
-        <Suspense>
-          <AdminSidebar />
-        </Suspense>
-        <main className="flex-1 p-6 space-y-6">
-          <header>
-            <h1 className="text-2xl font-bold text-ink">微信公众号</h1>
-            <p className="text-sm text-ink-soft mt-1">
-              用服务号模板消息把公告推送给公众号的关注者。
-            </p>
-          </header>
-          <WechatConfigForm />
+    <div>
+      <PageHeader
+        title="微信公众号"
+        description="用服务号模板消息把公告推送给公众号的关注者。"
+      />
+      <div className="space-y-4">
+        <Panel title="配置">
+          <p className="text-sm text-ink-soft mb-3">
+            推送由后台的定时任务（scheduler）完成，每分钟一次。如果 scheduler
+            没有启用，公告会一直排队而不会发出 —— 请到「定期更新」页面确认它已开启。
+          </p>
+          <WechatConfigForm initialConfig={config} />
+        </Panel>
+        <Panel title="写公告">
           <WechatBroadcastForm />
-          <WechatBroadcastTable />
-        </main>
+        </Panel>
+        <Panel title="公告记录">
+          <WechatBroadcastTable initialBroadcasts={broadcasts} />
+        </Panel>
       </div>
     </div>
   );
 }
 ```
+
+⚠️ **The page reads the database on the server** and passes the rows down as
+props. The follower count is NOT read here — it needs a live call to WeChat,
+so the config panel fetches it client-side from `/api/admin/wechat/followers`
+after mount. A server component cannot await it without blocking the page on
+a third-party API.
 
 **`components/admin/WechatConfigForm.tsx`** — a `'use client'` component:
 
@@ -3108,15 +3234,43 @@ interface WechatConfig {
 
 interface Props {
   initialConfig: WechatConfig;
-  followerCount: number | null;
 }
 
-export function WechatConfigForm({ initialConfig, followerCount }: Props) {
+export function WechatConfigForm({ initialConfig }: Props) {
   const [config, setConfig] = useState<WechatConfig>(initialConfig);
   const [appSecret, setAppSecret] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [followerCount, setFollowerCount] = useState<number | null>(null);
+  const [followerError, setFollowerError] = useState<string | null>(null);
+
+  // The follower count needs a live call to WeChat, so it is fetched after
+  // mount rather than read on the server — a server component must not
+  // block the whole page on a third-party API.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const response = await fetch('/api/admin/wechat/followers');
+        const body = await response.json();
+        if (cancelled) return;
+        if (!response.ok) {
+          setFollowerError(body.error?.message ?? '读取关注者数量失败');
+          return;
+        }
+        setFollowerCount(body.data.count);
+      } catch (caught) {
+        if (!cancelled) {
+          setFollowerError(caught instanceof Error ? caught.message : String(caught));
+        }
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const save = useCallback(async () => {
     setBusy(true);
@@ -3133,7 +3287,7 @@ export function WechatConfigForm({ initialConfig, followerCount }: Props) {
         }),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? '保存失败');
+      if (!response.ok) throw new Error(body.error?.message ?? 'save failed');
       setConfig(body.data.config);
       setAppSecret('');
       setMessage('已保存');
@@ -3145,9 +3299,7 @@ export function WechatConfigForm({ initialConfig, followerCount }: Props) {
   }, [config, appSecret]);
 
   return (
-    <section className="rounded-lg border border-rule bg-surface p-4 space-y-3">
-      <h2 className="text-lg font-semibold text-ink">配置</h2>
-
+    <div className="space-y-3">
       <label className="flex items-center gap-2 text-sm text-ink">
         <input
           type="checkbox"
@@ -3212,7 +3364,7 @@ export function WechatConfigForm({ initialConfig, followerCount }: Props) {
         {message && <span className="text-sm text-ink-soft">{message}</span>}
         {error && <span className="text-sm text-danger">{error}</span>}
       </div>
-    </section>
+    </div>
   );
 }
 ```
@@ -3265,7 +3417,7 @@ export function WechatBroadcastForm() {
         body: JSON.stringify({ title, templateId, url, data }),
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? '发送失败');
+      if (!response.ok) throw new Error(body.error?.message ?? 'send failed');
       setMessage(`已入队：${body.data.id}，下一次 scheduler tick 会发出。`);
       setTitle('');
     } catch (caught) {
@@ -3276,9 +3428,7 @@ export function WechatBroadcastForm() {
   }, [title, templateId, url, fields]);
 
   return (
-    <section className="rounded-lg border border-rule bg-surface p-4 space-y-3">
-      <h2 className="text-lg font-semibold text-ink">写公告</h2>
-
+    <div className="space-y-3">
       <label className="block text-sm text-ink">
         标题
         <input
@@ -3358,7 +3508,7 @@ export function WechatBroadcastForm() {
         {message && <span className="text-sm text-ink-soft">{message}</span>}
         {error && <span className="text-sm text-danger">{error}</span>}
       </div>
-    </section>
+    </div>
   );
 }
 ```
@@ -3383,8 +3533,12 @@ interface Broadcast {
   createdAt: string;
 }
 
-export function WechatBroadcastTable() {
-  const [broadcasts, setBroadcasts] = useState<Broadcast[]>([]);
+interface Props {
+  initialBroadcasts: Broadcast[];
+}
+
+export function WechatBroadcastTable({ initialBroadcasts }: Props) {
+  const [broadcasts, setBroadcasts] = useState<Broadcast[]>(initialBroadcasts);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
@@ -3392,16 +3546,15 @@ export function WechatBroadcastTable() {
     try {
       const response = await fetch('/api/admin/wechat/broadcasts');
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error ?? '读取失败');
+      if (!response.ok) throw new Error(body.error?.message ?? 'read failed');
       setBroadcasts(body.data.broadcasts ?? []);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : String(caught));
     }
   }, []);
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  // The server already rendered the rows; refetching on mount would
+  // replace them with the same rows for no reason.
 
   const act = useCallback(
     async (id: number, action: 'send' | 'cancel') => {
@@ -3413,7 +3566,7 @@ export function WechatBroadcastTable() {
           { method: 'POST' },
         );
         const body = await response.json();
-        if (!response.ok) throw new Error(body.error ?? '操作失败');
+        if (!response.ok) throw new Error(body.error?.message ?? 'the action failed');
         await load();
       } catch (caught) {
         setError(caught instanceof Error ? caught.message : String(caught));
@@ -3425,13 +3578,12 @@ export function WechatBroadcastTable() {
   );
 
   return (
-    <section className="rounded-lg border border-rule bg-surface p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-ink">公告记录</h2>
+    <div className="space-y-3">
+      <div className="flex items-center justify-end">
         <button
           type="button"
           onClick={() => void load()}
-          className="rounded border border-rule px-2 py-1 text-sm text-ink-soft"
+          className="rounded border border-ink/20 px-2 py-1 text-sm text-ink-soft"
         >
           刷新
         </button>
@@ -3499,7 +3651,7 @@ export function WechatBroadcastTable() {
           </tbody>
         </table>
       )}
-    </section>
+    </div>
   );
 }
 ```
@@ -3507,9 +3659,13 @@ export function WechatBroadcastTable() {
 **`components/admin/AdminSidebar.tsx`** — add the entry to the 通讯 group:
 ```tsx
       { href: '/admin/wecom', label: '企业微信', exact: true, icon: MessageSquare },
-      { href: '/admin/wechat', label: '微信公众号', exact: true, icon: MessageCircle },
+      { href: '/admin/wechat', label: '微信公众号', exact: true, icon: Send },
+      { href: '/admin/email/campaigns', label: '营销邮件', icon: Send },
 ```
-⚠️ **Check which icon is already imported** in that file — add `MessageCircle` to the import if it is not there. If it is not imported, use an icon that IS already imported (e.g. `Send` or `Bell`).
+⚠️ **`Send` is already imported** in that file (it is the 营销邮件 icon) —
+**do not add a new import**. `MessageCircle` is NOT imported; using it would
+mean editing the import list, and `Send` is already available. Two entries
+sharing an icon is fine: the icon is a scan aid, not an identifier.
 
 - [ ] **Step 4: Run the test to verify it passes**
 
