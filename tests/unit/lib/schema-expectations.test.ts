@@ -17,6 +17,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
 import {
   parseMigrationSql,
   parseInitDbDdl,
@@ -145,6 +146,104 @@ describe('parseInitDbDdl', () => {
     expect(parsed.tables).toEqual([]);
     expect(parsed.columns).toEqual([]);
   });
+
+  it('reads a backtick-quoted column without the escape backslash', () => {
+    // The DDL lives in a JavaScript template string, so MySQL's
+    // identifier quotes appear escaped in the SOURCE FILE: the bytes on
+    // disk are backslash-backtick-char-backslash-backtick. The parser
+    // reads that file as text, so it sees the backslashes; the column
+    // in the database is called `char`, with no backslash.
+    //
+    // Reading the escaped form as the name produced a name that never
+    // matches the database, and made a present column look missing.
+    // `String.raw` reproduces the file's bytes exactly; a plain
+    // template literal would have consumed the escapes and tested a
+    // different input.
+    const source = String.raw`
+      const DDL = [
+        \`CREATE TABLE IF NOT EXISTS chars (
+          \`char\` VARCHAR(8) NOT NULL,
+          level INT NOT NULL
+        )\`,
+      ];
+    `;
+    const parsed = parseInitDbDdl(source);
+    expect(parsed.columns).toContain('chars.char');
+    // The wrong name must not be in there either: the old parser put
+    // the escaped form into the set.
+    expect(parsed.columns.some((column) => column.includes(String.fromCharCode(92)))).toBe(false);
+  });
+
+  it('reads a backtick-quoted column from a table constraint', () => {
+    // The constraint also names the column, and a wrong name there is
+    // just as wrong.
+    const source = String.raw`
+      const DDL = [
+        \`CREATE TABLE IF NOT EXISTS app_config (
+          \`key\`       VARCHAR(64)  NOT NULL,
+          value       TEXT         NOT NULL,
+          PRIMARY KEY (\`key\`)
+        )\`,
+      ];
+    `;
+    const parsed = parseInitDbDdl(source);
+    expect(parsed.columns).toContain('app_config.key');
+  });
+
+  it('does not expect a column the current schema replaced', () => {
+    // `2026-06-20-classics.sql` creates the classics table WITH a
+    // `chunks` column; the current base schema in `scripts/init-db.ts`
+    // creates the same table WITHOUT it. The base schema runs first on
+    // every deploy, and `CREATE TABLE IF NOT EXISTS` leaves an existing
+    // table alone, so the database never gets `chunks` — and no
+    // migration would add it either.
+    //
+    // Expecting it anyway would report a column that is permanently
+    // missing and that no run of the migrations could ever create.
+    const expectations = collectSchemaExpectations();
+    const columns = new Set(
+      expectations.filter((e) => e.column !== null).map((e) => `${e.table}.${e.column}`),
+    );
+    expect(columns.has('classics.chunks')).toBe(false);
+    expect(columns.has('classics.chunk_count')).toBe(false);
+    // The columns the current schema does declare are still expected.
+    expect(columns.has('classics.slug')).toBe(true);
+    expect(columns.has('classics.title')).toBe(true);
+  });
+
+  it('keeps a column whose name is a SQL keyword', () => {
+    // `key` is a reserved word, so the column is written with backtick
+    // quotes. It is a COLUMN, not an index — but its name matches the
+    // keyword that introduces a table constraint, and dropping it made
+    // the expectation miss a column the database really has.
+    const source = String.raw`
+      const DDL = [
+        \`CREATE TABLE IF NOT EXISTS app_config (
+          \`key\`       VARCHAR(64)  NOT NULL,
+          value       TEXT         NOT NULL
+        )\`,
+      ];
+    `;
+    const parsed = parseInitDbDdl(source);
+    expect(parsed.columns).toContain('app_config.key');
+  });
+
+  it('still drops a real table constraint', () => {
+    // The counterpart: `KEY idx_x (...)` really is an index, and
+    // reporting it as a column would invent a column that is not there.
+    const source = String.raw`
+      const DDL = [
+        \`CREATE TABLE IF NOT EXISTS users (
+          id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+          username VARCHAR(64) NOT NULL,
+          PRIMARY KEY (id),
+          UNIQUE KEY idx_users_username (username)
+        )\`,
+      ];
+    `;
+    const parsed = parseInitDbDdl(source);
+    expect(parsed.columns).toEqual(['users.id', 'users.username']);
+  });
 });
 
 describe('the real repository', () => {
@@ -233,12 +332,28 @@ describe('the real repository', () => {
   });
 
   it('finds every column a migration file adds', () => {
+    // Every column an `ALTER TABLE … ADD COLUMN` declares applies
+    // unconditionally, so all of them must be expected.
+    //
+    // A column declared by a migration's own `CREATE TABLE` is a
+    // different matter: it only reaches the database when the table
+    // does not exist yet, and the base schema in `scripts/init-db.ts`
+    // creates the shared tables first. Those are checked separately —
+    // see "does not expect a column the current schema replaced".
     const expectations = collectSchemaExpectations();
     const columns = new Set(
       expectations.filter((e) => e.column !== null).map((e) => `${e.table}.${e.column}`),
     );
+    const baseTables = new Set(
+      parseInitDbDdl(readFileSync(join(ROOT, 'scripts', 'init-db.ts'), 'utf8')).tables,
+    );
     for (const summary of summarizeMigrations()) {
-      for (const column of summary.columns) {
+      for (const column of summary.addedColumns) {
+        expect(columns.has(column)).toBe(true);
+      }
+      for (const column of summary.createdColumns) {
+        const table = column.slice(0, column.indexOf('.'));
+        if (baseTables.has(table)) continue;
         expect(columns.has(column)).toBe(true);
       }
     }

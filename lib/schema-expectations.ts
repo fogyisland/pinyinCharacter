@@ -85,6 +85,10 @@ export interface MigrationSummary {
   tables: string[];
   /** The columns this file adds, as `table.column`. */
   columns: string[];
+  /** The columns this file's `CREATE TABLE` declares. */
+  createdColumns: string[];
+  /** The columns this file's `ALTER TABLE … ADD COLUMN` declares. */
+  addedColumns: string[];
 }
 
 const MIGRATIONS_DIR = join(process.cwd(), 'scripts', 'migrations');
@@ -159,18 +163,49 @@ function stripComments(sql: string): string {
 }
 
 /**
+ * Undo the JavaScript escape on MySQL's identifier quotes.
+ *
+ * The base DDL lives in `scripts/init-db.ts` as JavaScript template
+ * strings, so MySQL's backtick quoting appears in the SOURCE FILE as
+ * backslash-backtick. The parser reads that file as text, so it sees the
+ * backslash — and a column it reported as "\char\" never matched the
+ * database, which calls the column "char". Every such column then
+ * looked missing, on a database that was perfectly complete.
+ *
+ * Only backslash-backtick is touched. The other escapes in these
+ * templates are not SQL, and the migration files are plain SQL where a
+ * backtick is a real backtick — so this belongs to the TypeScript side
+ * of the parser, not to `parseMigrationSql`.
+ */
+function unescapeIdentifierQuotes(source: string): string {
+  return source.replace(/\\`/g, '`');
+}
+
+/**
  * The columns a `CREATE TABLE` body declares.
  *
  * A definition whose first word is a constraint keyword (`PRIMARY KEY`,
  * `UNIQUE KEY`, `KEY`, …) is a table constraint, not a column.
+ *
+ * The keyword check needs one more thing to be right: a column whose
+ * NAME is a keyword. `app_config.key` is a real column — `key` is a
+ * reserved word, which is exactly why it is written with backtick
+ * quotes. Matching the bare word against the keyword list dropped it,
+ * and a column the database really has went missing from the
+ * expectation.
+ *
+ * Backtick quoting settles it: a definition whose first token is
+ * wrapped in backticks is a column, whatever the name inside says.
  */
 function columnsOfCreateBody(body: string): string[] {
   const columns: string[] = [];
   for (const definition of splitTopLevel(body)) {
     const trimmed = definition.trim();
     if (!trimmed) continue;
-    const firstWord = trimmed.split(/\s+/)[0].replace(/`/g, '');
-    if (CONSTRAINT_KEYWORDS.has(firstWord.toUpperCase())) continue;
+    const firstToken = trimmed.split(/\s+/)[0];
+    const isQuoted = firstToken.startsWith('`') && firstToken.endsWith('`');
+    const firstWord = firstToken.replace(/`/g, '');
+    if (!isQuoted && CONSTRAINT_KEYWORDS.has(firstWord.toUpperCase())) continue;
     columns.push(firstWord);
   }
   return columns;
@@ -181,11 +216,28 @@ function columnsOfCreateBody(body: string): string[] {
  *
  * `MODIFY COLUMN` statements are skipped on purpose: they change a
  * column's type, never its existence.
+ *
+ * The columns come in two kinds, and the difference matters:
+ *
+ *  - `createdColumns` — the columns a `CREATE TABLE` declares. These
+ *    only reach the database if the table does not exist yet.
+ *  - `addedColumns` — the columns an `ALTER TABLE … ADD COLUMN`
+ *    declares. These reach the database unconditionally, whether the
+ *    table was created by this file or by an earlier one.
+ *
+ * `columns` is the union of the two, for callers that only need the
+ * set.
  */
-export function parseMigrationSql(sql: string): { tables: string[]; columns: string[] } {
+export function parseMigrationSql(sql: string): {
+  tables: string[];
+  columns: string[];
+  createdColumns: string[];
+  addedColumns: string[];
+} {
   const body = stripComments(sql);
   const tables = new Set<string>();
-  const columns = new Set<string>();
+  const createdColumns = new Set<string>();
+  const addedColumns = new Set<string>();
 
   CREATE_TABLE_RE.lastIndex = 0;
   let createMatch: RegExpExecArray | null;
@@ -195,7 +247,7 @@ export function parseMigrationSql(sql: string): { tables: string[]; columns: str
     if (!parsed) continue;
     tables.add(table);
     for (const column of columnsOfCreateBody(parsed.body)) {
-      columns.add(`${table}.${column}`);
+      createdColumns.add(`${table}.${column}`);
     }
   }
 
@@ -206,10 +258,16 @@ export function parseMigrationSql(sql: string): { tables: string[]; columns: str
     const column = alterMatch[2];
     // `ADD KEY idx_… ` is an index, not a column.
     if (CONSTRAINT_KEYWORDS.has(column.toUpperCase())) continue;
-    columns.add(`${table}.${column}`);
+    addedColumns.add(`${table}.${column}`);
   }
 
-  return { tables: [...tables].sort(), columns: [...columns].sort() };
+  const columns = new Set([...createdColumns, ...addedColumns]);
+  return {
+    tables: [...tables].sort(),
+    columns: [...columns].sort(),
+    createdColumns: [...createdColumns].sort(),
+    addedColumns: [...addedColumns].sort(),
+  };
 }
 
 /**
@@ -219,10 +277,19 @@ export function parseMigrationSql(sql: string): { tables: string[]; columns: str
  * `CREATE TABLE` statements in it use the same shape as the migration
  * files, so the same body reader applies.
  */
-export function parseInitDbDdl(source: string): { tables: string[]; columns: string[] } {
+export function parseInitDbDdl(source: string): {
+  tables: string[];
+  columns: string[];
+  createdColumns: string[];
+  addedColumns: string[];
+} {
   const arrayMatch = source.match(/const\s+DDL[^=]*=\s*\[/);
-  if (!arrayMatch || arrayMatch.index === undefined) return { tables: [], columns: [] };
-  const body = stripComments(source.slice(arrayMatch.index + arrayMatch[0].length));
+  if (!arrayMatch || arrayMatch.index === undefined) {
+    return { tables: [], columns: [], createdColumns: [], addedColumns: [] };
+  }
+  const body = stripComments(
+    unescapeIdentifierQuotes(source.slice(arrayMatch.index + arrayMatch[0].length)),
+  );
   const parsed = parseMigrationSql(body);
   return parsed;
 }
@@ -246,7 +313,13 @@ export function summarizeMigrations(migrationsDir: string = MIGRATIONS_DIR): Mig
   return listMigrationFiles(migrationsDir).map((file) => {
     const sql = readFileSync(join(migrationsDir, file), 'utf8');
     const parsed = parseMigrationSql(sql);
-    return { file, tables: parsed.tables, columns: parsed.columns };
+    return {
+      file,
+      tables: parsed.tables,
+      columns: parsed.columns,
+      createdColumns: parsed.createdColumns,
+      addedColumns: parsed.addedColumns,
+    };
   });
 }
 
@@ -261,6 +334,24 @@ export function summarizeMigrations(migrationsDir: string = MIGRATIONS_DIR): Mig
  * absorbed them, so the repository genuinely declares those tables
  * twice. Deduplicating keeps the report readable; keeping both sources
  * keeps the fact visible.
+ *
+ * ## Which version of a table counts
+ *
+ * When the base schema and a migration declare the SAME table with
+ * DIFFERENT columns, the base schema wins — because it runs first on
+ * every deploy (`initDb()` at boot) and `CREATE TABLE IF NOT EXISTS`
+ * leaves an existing table exactly as it is.
+ *
+ * `scripts/migrations/2026-06-20-classics.sql` creates `classics` with
+ * a `chunks` column; the current base schema creates it without. The
+ * database has the base schema's version, the migration would not
+ * change it (`IF NOT EXISTS`), and nothing else adds `chunks` — so
+ * expecting it would report a column that is permanently missing and
+ * that no run of the migrations could ever create.
+ *
+ * A column an `ALTER TABLE … ADD COLUMN` declares is different: it
+ * applies whether or not the table already exists, so those always
+ * count.
  */
 export function collectSchemaExpectations(
   initDbPath: string = INIT_DB_PATH,
@@ -285,6 +376,7 @@ export function collectSchemaExpectations(
 
   const initDbSource = readFileSync(initDbPath, 'utf8');
   const base = parseInitDbDdl(initDbSource);
+  const baseTables = new Set(base.tables);
   for (const table of base.tables) {
     declare(table, null, 'scripts/init-db.ts');
   }
@@ -298,7 +390,18 @@ export function collectSchemaExpectations(
     for (const table of summary.tables) {
       declare(table, null, source);
     }
-    for (const column of summary.columns) {
+    // A column the migration's own `CREATE TABLE` declares only reaches
+    // the database if the table is not already there — and the base
+    // schema creates it first. The base schema's version of the table
+    // is the one that exists.
+    for (const column of summary.createdColumns) {
+      const dot = column.indexOf('.');
+      const table = column.slice(0, dot);
+      if (baseTables.has(table)) continue;
+      declare(table, column.slice(dot + 1), source);
+    }
+    // An `ALTER TABLE … ADD COLUMN` applies unconditionally.
+    for (const column of summary.addedColumns) {
       const dot = column.indexOf('.');
       declare(column.slice(0, dot), column.slice(dot + 1), source);
     }
