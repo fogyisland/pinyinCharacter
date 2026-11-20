@@ -7,6 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import { WechatApiError } from '@/lib/wechat-types';
 
 const adminMock = vi.fn();
 vi.mock('@/lib/auth', () => ({
@@ -462,5 +463,35 @@ describe('the test-message route', () => {
     const body = await response.json();
     expect(body.error.message).toContain('40037');
     expect(auditMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('the follower route tells the admin what to fix', () => {
+  it('turns a WeChat error into an actionable message, not "server error"', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1, username: 'admin' } });
+    followerMock.mockRejectedValue(
+      new WechatApiError(40164, 'invalid ip 1.2.3.4 not in whitelist'),
+    );
+    const { GET } = await import('@/app/api/admin/wechat/followers/route');
+    const response = await GET();
+    const body = await response.json();
+    expect(response.status).toBe(503);
+    expect(body.ok).toBe(false);
+    // The errcode and the remedy are both in the message — a bare
+    // "server error" would leave the admin with nothing to act on.
+    expect(body.error.code).toBe('wechat_ip_not_whitelisted');
+    expect(body.error.message).toContain('40164');
+    expect(body.error.message).toContain('白名单');
+    expect(body.error.message).not.toBe('server error');
+  });
+
+  it('leaves a non-WeChat error as the generic 500', async () => {
+    adminMock.mockResolvedValue({ ok: true, user: { id: 1, username: 'admin' } });
+    followerMock.mockRejectedValue(new Error('the database is on fire'));
+    const { GET } = await import('@/app/api/admin/wechat/followers/route');
+    const response = await GET();
+    const body = await response.json();
+    expect(response.status).toBe(500);
+    expect(body.error.code).toBe('server');
   });
 });

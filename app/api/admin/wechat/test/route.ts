@@ -6,6 +6,7 @@ import { writeAudit } from '@/lib/audit';
 import { getWechatConfig, isWechatConfigured } from '@/lib/wechat-config';
 import { sendTemplateMessage } from '@/lib/wechat-api';
 import { validateTemplateData } from '@/lib/wechat-types';
+import { translateWechatApiError } from '@/lib/wechat-api-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,6 +48,15 @@ export async function POST(req: NextRequest) {
         parsed.data.url || null,
       );
     } catch (error) {
+      // A WeChat failure gets the same actionable answer as the follower
+      // count: the errcode and what to change, not a raw message.
+      const translated = translateWechatApiError(error);
+      if (translated) {
+        return NextResponse.json(
+          { ok: false, error: { code: translated.code, message: translated.message } },
+          { status: translated.status ?? 500 },
+        );
+      }
       return badRequest('send_failed', error instanceof Error ? error.message : String(error));
     }
     await writeAudit({
@@ -55,5 +65,5 @@ export async function POST(req: NextRequest) {
       metadata: { title: '测试消息', openid: parsed.data.openid },
     });
     return NextResponse.json({ ok: true, data: { accepted: true } });
-  });
+  }, undefined, translateWechatApiError);
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { withErrorHandling } from '@/lib/api-handler';
 import { requireAdmin } from '@/lib/auth';
 import { fetchFollowerOpenids } from '@/lib/wechat-api';
+import { translateWechatApiError } from '@/lib/wechat-api-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,5 +21,5 @@ export async function GET() {
     if (!auth.ok) return auth.response;
     const openids = await fetchFollowerOpenids();
     return NextResponse.json({ ok: true, data: { count: openids.length } });
-  });
+  }, undefined, translateWechatApiError);
 }
