@@ -137,6 +137,12 @@ export function WrongBook({ wrong, onRemove }: WrongBookProps) {
               </div>
               <div className="flex shrink-0 items-center gap-3 text-xs">
                 <a
+                  href="/game?tab=review"
+                  className="text-seal hover:underline"
+                >
+                  去复习
+                </a>
+                <a
                   href={`/game?tab=quest&hsk=${hsk}&level=${level}`}
                   className="text-seal hover:underline"
                 >

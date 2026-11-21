@@ -9,12 +9,14 @@ import { DailyChallenge } from '@/components/game/daily/DailyChallenge';
 import { CharCollection } from '@/components/game/quest/CharCollection';
 import { QuestBoard } from '@/components/game/quest/QuestBoard';
 import { QuestRunner } from '@/components/game/quest/QuestRunner';
+import { ReviewPanel } from '@/components/game/quest/ReviewPanel';
 import { WrongBook } from '@/components/game/quest/WrongBook';
 import { useDifficulty } from '@/lib/use-difficulty';
 import { isSoundMuted, setSoundMuted } from '@/lib/game-sound';
 import {
   defaultProgress,
   loadProgress,
+  recordReview,
   removeWrong,
   saveProgress,
   type GameProgress,
@@ -32,7 +34,15 @@ import type { Difficulty, HskLevel } from '@/lib/difficulty';
  * below: the URL contract, the state of the tab strip and the state of the
  * 闯关 panel.
  */
-export type QuestTab = 'quest' | 'daily' | 'catch' | 'idiom' | 'duiyun' | 'collection' | 'wrong';
+export type QuestTab =
+  | 'quest'
+  | 'daily'
+  | 'catch'
+  | 'idiom'
+  | 'duiyun'
+  | 'review'
+  | 'collection'
+  | 'wrong';
 
 interface TabSpec {
   id: QuestTab;
@@ -45,6 +55,7 @@ const TABS: TabSpec[] = [
   { id: 'catch', label: '接字' },
   { id: 'idiom', label: '成语' },
   { id: 'duiyun', label: '对韵' },
+  { id: 'review', label: '今日复习' },
   { id: 'collection', label: '字卡册' },
   { id: 'wrong', label: '生字本' },
 ];
@@ -504,6 +515,13 @@ export function QuestTabs() {
                   onFilterTierChange={tabs.setCollectionTier}
                 />
               </div>
+            ) : tabs.tab === 'review' ? (
+              <ReviewPanel
+                wrong={tabs.progress.wrong}
+                onReview={(char, isRight) =>
+                  tabs.mutate((current) => recordReview(current, char, isRight))
+                }
+              />
             ) : (
               <WrongBook
                 wrong={tabs.progress.wrong}

@@ -158,6 +158,21 @@ describe('QuestTabs — the four panels', () => {
     });
   });
 
+  it('offers a 今日复习 tab and opens it for ?tab=review', async () => {
+    // The wrong book's queue: a character missed once and never revisited
+    // is not learned, so the book has a plan now.
+    setUrl('?tab=review');
+    const { QuestTabs } = await import('@/components/game/quest/QuestTabs');
+    render(<QuestTabs />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('tab', { name: '今日复习' })).toBeTruthy();
+    });
+    await waitFor(() => {
+      expect(screen.getByText(/生字本是空的/)).toBeTruthy();
+    });
+  });
+
   it('opens the 字卡册 panel for ?tab=collection', async () => {
     setUrl('?tab=collection');
     const { QuestTabs } = await import('@/components/game/quest/QuestTabs');

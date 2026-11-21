@@ -5,15 +5,24 @@
  * wrong book and the daily rounds - lives in localStorage. The store is
  * deliberately split in two halves:
  *
- * - the **mutators** (`collectChar`, `recordMiss`, `markLevelPassed`,
- *   `recordDaily`) are pure: they return a brand new state and never touch
- *   localStorage. That keeps them unit-testable without a DOM and leaves the
- *   "one write per answer" rule in the caller's hands;
+ * - the **mutators** (`collectChar`, `recordMiss`, `recordReview`,
+ *   `markLevelPassed`, `recordDaily`) are pure: they return a brand new state
+ *   and never touch localStorage. That keeps them unit-testable without a DOM
+ *   and leaves the "one write per answer" rule in the caller's hands;
  * - the **accessors** (`loadProgress`, `saveProgress`) own the storage. A
  *   broken storage - a corrupt payload, a private-mode browser, an unknown
  *   schema version - must never break the page, so they degrade to the
  *   default state instead of throwing.
  */
+import { FIRST_REVIEW, nextReview, type ReviewSchedule } from './review-schedule';
+
+/**
+ * The local midnight of a day, re-exported for the review panel.
+ *
+ * @param date any moment.
+ */
+export { startOfLocalDay } from './review-schedule';
+export type { ReviewSchedule } from './review-schedule';
 
 /** The storage key. The `v1` suffix is the schema version of the payload. */
 export const PROGRESS_KEY = 'pinyin-character:game-progress:v1';
@@ -49,6 +58,14 @@ export interface WrongChar extends CharSnapshot {
   lastAt: number;
   hsk: number;
   level: number;
+  /**
+   * The spaced-repetition schedule (see lib/review-schedule.ts).
+   *
+   * Optional on purpose: every character collected before this feature
+   * existed has no schedule, and the review panel treats those as due
+   * immediately rather than hiding the backlog.
+   */
+  review?: ReviewSchedule;
 }
 
 /** The whole stored state. */
@@ -332,8 +349,44 @@ export function recordMiss(
     lastAt,
     hsk,
     level,
+    // A miss puts the character back on the first rung of the review
+    // curve: it is due today, whatever the previous schedule said.
+    review: nextReview(previous?.review, new Date(), false),
   };
   next.streak = 0;
+  return next;
+}
+
+/**
+ * Record one review of a wrong-book character and advance its schedule.
+ *
+ * A review is not a miss: a correct answer must NOT inflate the miss count,
+ * or the book would gradually rank a character as hard as it is rehearsed.
+ * A wrong answer is recorded as a fresh miss instead — that is what the
+ * learner just did, and the count is exactly the memory the panel needs.
+ *
+ * @param progress the stored state.
+ * @param char the character reviewed.
+ * @param isRight did the learner get it right?
+ * @returns the new state; unchanged when the character is not in the book.
+ */
+export function recordReview(
+  progress: GameProgress,
+  char: string,
+  isRight: boolean,
+): GameProgress {
+  const entry = progress.wrong[char];
+  if (!entry) return progress;
+  if (!isRight) {
+    // Reuse the miss path so the count, the streak and the schedule all
+    // follow the one rule that already exists.
+    return recordMiss(progress, char, entry, entry.hsk, entry.level);
+  }
+  const next = cloneProgress(progress);
+  next.wrong[char] = {
+    ...entry,
+    review: nextReview(entry.review ?? { level: FIRST_REVIEW, dueAt: 0, lastReviewedAt: 0 }, new Date(), true),
+  };
   return next;
 }
 
