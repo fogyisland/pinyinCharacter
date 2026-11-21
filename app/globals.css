@@ -378,6 +378,38 @@ textarea.adm-input {
   background-color: #fff;
   padding: 16px 24px;
 }
+/* ⚠️ The four-line paper must be as WIDE as the paper's printable area.
+ *
+ * It used to be width-agnostic: the wrapper capped it at `max-w-3xl`
+ * (768px) on every paper, so the rules of an A4 sheet ran 43px past the
+ * printable area (and 171px on B5), and an A3 sheet wasted 286px of its
+ * width. This is the same overflow the brush papers had — see the note on
+ * .worksheet-grid--brush-* above.
+ *
+ * The width is set inline per worksheet (see WorksheetPreview) because CSS
+ * has no per-element way to read the @page size. The value comes from
+ * `fourLinePrintableWidthPx()` in lib/four-line-geometry.ts — the SAME
+ * function that decides how many letters fit on a row, so the box the
+ * letters are drawn in and the number of letters in it can never disagree.
+ *
+ * `.four-line-paper` is width:100% of the wrapper; the wrapper is the
+ * element that carries the printable width. The wrapper's own padding is
+ * removed (no p-10) and the inner .four-line-paper's horizontal padding is
+ * zeroed below, so the row spans the printable width edge to edge and the
+ * letters fill it exactly — see lib/four-line-geometry.ts. The @page margin
+ * already provides the 1.5cm inset in print. */
+.four-line-paper-wrapper {
+  width: 100%;
+}
+/* The row must span the printable width edge to edge so the letters fill it
+ * (see lib/four-line-geometry.ts). The inner .four-line-paper normally insets
+ * its content by 24px for the blank practice sheet (PracticeTemplate), but the
+ * worksheet's trace rows need the full width — zero the horizontal padding
+ * here, scoped to the wrapper so PracticeTemplate's blank sheet is untouched. */
+.four-line-paper-wrapper .four-line-paper {
+  padding-left: 0;
+  padding-right: 0;
+}
 .four-line-paper-row {
   position: relative;
   height: calc(var(--grid-gap) * 3 + 2px); /* rules 1-4 = 3 gaps + 2px descender */

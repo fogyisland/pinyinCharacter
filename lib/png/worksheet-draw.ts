@@ -20,6 +20,10 @@ import { parseColor, type Color, type Polygon } from './geometry';
 import { fillPolygon, strokeLine, strokeOutline, type Canvas } from './raster';
 import type { FontSet } from './glyph';
 import { getIsTrace, getPresentation, type Cell } from '../worksheet-types';
+import {
+  FOUR_LINE_LETTER_SIZE_PX,
+  FOUR_LINE_TEXT_INSET_PX,
+} from '../four-line-geometry';
 import type { PageLayout, WorksheetPageRequest } from './worksheet-page';
 
 /** The smallest gap between the title and the right-aligned label of the band. */
@@ -31,9 +35,14 @@ export const FOOTER_SIZE = 9;
 /** The em size of a character inside a grid cell: the full cell for a trace, 60 % otherwise. */
 const TRACE_SIZE_RATIO = 1;
 const NORMAL_SIZE_RATIO = 0.6;
-/** The em size of the four-line text and the distance of its left edge from the row. */
-const FOUR_LINE_TEXT_SIZE = 28;
-const FOUR_LINE_TEXT_INSET = 8;
+/**
+ * The em size of the four-line text and the distance of its left edge from
+ * the row — the SAME geometry that decides how many letters fit on a row
+ * (see `lib/four-line-geometry.ts`), so the glyphs this paints can never
+ * disagree with the row width `generateLayout` packs.
+ */
+const FOUR_LINE_TEXT_SIZE = FOUR_LINE_LETTER_SIZE_PX;
+const FOUR_LINE_TEXT_INSET = FOUR_LINE_TEXT_INSET_PX;
 /** The distance between the four rules of a four-line row, as a fraction of the row height. */
 const FOUR_LINE_GAP_RATIO = 12 / 38;
 /** The width of the four rules of a four-line row. */

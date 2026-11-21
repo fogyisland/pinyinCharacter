@@ -10,6 +10,7 @@ import {
   fontFamilyCssVar,
   pageSizeFor,
   cellSizeFor,
+  fourLinePrintableWidthPx,
 } from '@/lib/worksheet-types';
 import { WorksheetCell } from './WorksheetCell';
 import { PrintButton } from '@/components/common/PrintButton';
@@ -62,6 +63,11 @@ export function WorksheetPreview(props: Props) {
   );
   const isFormView = 'onBack' in props;
   const sizeClass = isFourLine ? '' : `worksheet-grid--${props.paperSize.toLowerCase()}`;
+  // The four-line sheet is drawn in a box as wide as the paper's printable
+  // area, so the rules reach the paper edge and the letters fit it. The
+  // same number decides how many letters a row carries — one source for
+  // both (lib/four-line-geometry.ts).
+  const printableWidthPx = `${fourLinePrintableWidthPx(props.paperSize)}px`;
   const cellSize = isFourLine ? linedHeightPx(props.paperSize) : cellSizeFor(props.paperSize);
   // Footer line: source URL host (or brand name fallback) — same logic as
   // PracticeTemplate so the printed page is traceable back to the site.
@@ -135,7 +141,22 @@ export function WorksheetPreview(props: Props) {
           // Putting it outside (as a sibling of .four-line-paper) caused
           // the header to be left behind and hidden by
           // `body * { visibility: hidden }` (regression 2026-07-03).
-          <div className="mx-auto min-w-full sm:min-w-[640px] max-w-3xl print:min-w-0 p-10">
+          <div
+            className="four-line-paper-wrapper mx-auto min-w-full sm:min-w-[640px] max-w-3xl print:min-w-0 py-10"
+            // The wrapper carries the paper's printable width, so the rules
+            // and the letters are drawn in a box that matches the paper
+            // exactly. Without it the paper was capped at max-w-3xl on
+            // every size: the A4 rules ran 43px past the page edge.
+            //
+            // No horizontal padding (py-10, not p-10): the row must span the
+            // printable width edge to edge for the letters to fit — see
+            // lib/four-line-geometry.ts. The @page margin provides the inset
+            // in print; on screen the sheet is centred by mx-auto.
+            style={{
+              width: printableWidthPx,
+              maxWidth: printableWidthPx,
+            }}
+          >
             <div className="four-line-paper">
               <div className="flex items-center justify-between border-b border-ink/20 pb-2 mb-3">
                 <div className="flex items-center gap-2">

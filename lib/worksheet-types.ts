@@ -1,4 +1,5 @@
 import { cellsPerPage } from './worksheet-page-count';
+import { fourLineLettersPerRow } from './four-line-geometry';
 
 export type Tool = 'brush' | 'pen';
 export type Presentation = 'square' | 'cross' | 'lined' | 'four-line';
@@ -468,11 +469,11 @@ const SINGLE_LATIN = /^[A-Za-z]$/;
 const VALID_PAPER_SIZES = ['A3', 'A4', 'B5', 'brush-12', 'brush-24', 'brush-28'] as const;
 
 // Four-line (English trace) layout: pack content into rows. `charsPerRow` is
-// the practical letter capacity per ruled line — A4 fits ~88 letters across
-// the inner width at ~6pt/letter. Each Cell here is one ruled row, `char` is
-// the substring for that row. Always renders `rowsPerPage` total rows so the
-// printed page fills the entire A4 sheet with practice space — empty rows
-// have `char === ''` (drawn as a blank ruled line).
+// the letter capacity per ruled line — DERIVED from the paper's printable
+// width and the rendered letter size (see lib/four-line-geometry.ts), so it
+// is ~32 on A4, not the old hard-coded 88. Each Cell here is one ruled row,
+// `char` is the substring for that row. Always renders `rowsPerPage` total
+// rows so the printed page fills the entire sheet with practice space.
 const FOUR_LINE_ROWS_PER_PAGE: Record<PaperSize, number> = {
   // Tuned 2026-07-03: was 14/18/11. A4 +2, A3 +3 to fill the page more
   // tightly. B5 limited to +1 (11→12) because the 12pt inter-row gap
@@ -490,17 +491,36 @@ export function fourLineRowsPerPage(p: PaperSize): number {
   return FOUR_LINE_ROWS_PER_PAGE[p] ?? 14;
 }
 
+/**
+ * Re-exported four-line geometry so callers need only one import.
+ *
+ * @see lib/four-line-geometry.ts for the derivation and why the letter
+ * count cannot be a hard-coded number.
+ */
+export {
+  FOUR_LINE_CSS_LETTER_ADVANCE_PX,
+  FOUR_LINE_FONT_ADVANCE_PX,
+  FOUR_LINE_LETTER_SIZE_PX,
+  FOUR_LINE_TEXT_INSET_PX,
+  fourLinePrintableWidthPx,
+} from './four-line-geometry';
+
+/**
+ * The number of letters that fit on one four-line row of that paper.
+ *
+ * ⚠️ DERIVED, NOT CHOSEN. The count is the printable width of the paper
+ * divided by the advance of one letter, capped by the tighter of the two
+ * renderers (the printed page and the PNG rasteriser). See
+ * `lib/four-line-geometry.ts` for why a hard-coded number cannot work
+ * here: the old value (A4 = 88) was a content-packing figure calibrated
+ * for a ~6pt letter, while the renderers draw the letters at 28px — 88 of
+ * them are 1848px wide, 2.4x an A4 sheet.
+ *
+ * @param paperSize the paper the sheet prints on.
+ * @returns the letters per row; 0 for a paper with no four-line rows.
+ */
 export function englishCharsPerRow(paperSize: PaperSize): number {
-  switch (paperSize) {
-    case 'A3':
-      return 168;
-    case 'A4':
-      return 88;
-    case 'B5':
-      return 48;
-    default:
-      return cellsPerPage(paperSize);
-  }
+  return fourLineLettersPerRow(paperSize);
 }
 
 /**
@@ -525,7 +545,7 @@ export function repeatToFill(content: string[], length: number): string {
 
 export function generateLayout(content: string[], style: CellStyle, paperSize?: PaperSize): Cell[] {
   if (getPresentation(style) === 'four-line') {
-    const perRow = paperSize ? englishCharsPerRow(paperSize) : 88;
+    const perRow = paperSize ? englishCharsPerRow(paperSize) : englishCharsPerRow('A4');
     const rowsTotal = paperSize ? fourLineRowsPerPage(paperSize) : 14;
     const cells: Cell[] = [];
     // ⚠️ The four-line paper has exactly ONE presentation: the trace

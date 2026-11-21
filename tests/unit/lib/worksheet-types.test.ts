@@ -6,6 +6,7 @@ import {
   linesPerPage,
   PRACTICE_GRID_CELL_SIZE,
   generateLayout,
+  englishCharsPerRow,
   repeatToFill,
   validateWorksheetInput,
 } from '@/lib/worksheet-types';
@@ -33,34 +34,40 @@ describe('getPresentation — four-line branch (English trace)', () => {
 });
 
 describe('generateLayout — four-line row packing (English trace)', () => {
-  it('packs 88 letters into a single A4 row; every row repeats them', () => {
-    const letters = Array.from({ length: 88 }, (_, i) => String.fromCharCode(65 + (i % 26)));
+  it('packs a full row of letters into a single A4 row; every row repeats them', () => {
+    // The row width is DERIVED from the paper geometry (see
+    // lib/four-line-geometry.ts), so the test asks for it instead of
+    // hard-coding a number the geometry owns.
+    const perRow = englishCharsPerRow('A4');
+    const letters = Array.from({ length: perRow }, (_, i) => String.fromCharCode(65 + (i % 26)));
     const cells = generateLayout(letters, 'pen-english', 'A4');
     // A4 = 16 rows/page (tuned 2026-07-03 from 14 to fill the A4 sheet
     // more tightly; see FOUR_LINE_ROWS_PER_PAGE in worksheet-types.ts).
     expect(cells).toHaveLength(16);
     expect(cells[0].char).toBe(letters.join(''));
     expect(cells[0].style).toBe('pen-english');
-    // The sheet is one stream: every row repeats the same 88 letters.
+    // The sheet is one stream: every row repeats the same letters.
     expect(cells.slice(1).every((c) => c.char === cells[0].char)).toBe(true);
   });
 
   it('always renders rowsPerPage rows even with short content (the letters repeat to fill the page)', () => {
     const cells = generateLayout(['A'], 'pen-english', 'A4');
-    // A4 = 16 rows/page. The 1 letter occupies row 0; rows 1-15 are blank.
+    const perRow = englishCharsPerRow('A4');
+    // A4 = 16 rows/page. The one letter repeats to fill every row.
     expect(cells).toHaveLength(16);
-    expect(cells[0].char).toBe('A'.repeat(88));
+    expect(cells[0].char).toBe('A'.repeat(perRow));
     expect(cells.slice(1).every((c) => c.char === cells[0].char)).toBe(true);
   });
 
-  it('splits 89 letters across 2 A4 rows; the second row continues and wraps around', () => {
-    const letters = Array.from({ length: 89 }, () => 'A');
+  it('splits one letter past the row across 2 A4 rows; the second row continues and wraps around', () => {
+    const perRow = englishCharsPerRow('A4');
+    const letters = Array.from({ length: perRow + 1 }, () => 'A');
     const cells = generateLayout(letters, 'pen-english', 'A4');
     expect(cells).toHaveLength(16);
-    expect(cells[0].char).toHaveLength(88);
-    // Row 1 continues with the 89th letter and then wraps around.
-    expect(cells[1].char).toHaveLength(88);
-    expect(cells[1].char[0]).toBe(letters[88]);
+    expect(cells[0].char).toHaveLength(perRow);
+    // Row 1 continues with the (perRow+1)th letter and then wraps around.
+    expect(cells[1].char).toHaveLength(perRow);
+    expect(cells[1].char[0]).toBe(letters[perRow]);
     expect(cells[1].char[1]).toBe(letters[0]);
     expect(cells.slice(2).every((c) => c.char === cells[0].char)).toBe(true);
   });
@@ -192,31 +199,34 @@ describe('generateLayout — trace fills the page by repeating the content', () 
   });
 
   it('fills the four-line rows with the repeated letters', () => {
-    // A4: 88 letters per row, 16 rows.
+    // A4: the derived row width × 16 rows.
+    const perRow = englishCharsPerRow('A4');
     const cells = generateLayout(['a', 'b', 'c'], 'pen-english', 'A4');
     expect(cells).toHaveLength(16);
-    expect(cells[0].char).toHaveLength(88);
+    expect(cells[0].char).toHaveLength(perRow);
     // The row is filled to the row width: 'abc' repeated and truncated
-    // to exactly 88 letters.
-    expect(cells[0].char).toBe('abc'.repeat(29) + 'a');
-    expect(cells[15].char).toHaveLength(88);
+    // to exactly the row width.
+    expect(cells[0].char).toBe('abc'.repeat(Math.ceil(perRow / 3)).slice(0, perRow));
+    expect(cells[15].char).toHaveLength(perRow);
   });
 
   it('runs the four-line letters on across the row break', () => {
-    // 89 letters on A4: row 0 holds the first 88, row 1 continues with
-    // the 89th and then wraps around.
-    const letters = Array.from({ length: 89 }, (_, i) => String.fromCharCode(65 + (i % 26)));
+    // One letter past the row: row 0 holds the first perRow, row 1
+    // continues with the overflow letter and then wraps around.
+    const perRow = englishCharsPerRow('A4');
+    const letters = Array.from({ length: perRow + 1 }, (_, i) => String.fromCharCode(65 + (i % 26)));
     const cells = generateLayout(letters, 'pen-english', 'A4');
-    expect(cells[0].char).toBe(letters.slice(0, 88).join(''));
-    expect(cells[1].char).toHaveLength(88);
-    expect(cells[1].char[0]).toBe(letters[88]);
+    expect(cells[0].char).toBe(letters.slice(0, perRow).join(''));
+    expect(cells[1].char).toHaveLength(perRow);
+    expect(cells[1].char[0]).toBe(letters[perRow]);
     expect(cells[1].char[1]).toBe(letters[0]);
   });
 
   it('fills a four-line row exactly, never past the row width', () => {
+    const perRow = englishCharsPerRow('B5');
     const cells = generateLayout(['x'], 'pen-english', 'B5');
-    expect(cells[0].char).toHaveLength(48);
-    expect(cells[0].char).toBe('x'.repeat(48));
+    expect(cells[0].char).toHaveLength(perRow);
+    expect(cells[0].char).toBe('x'.repeat(perRow));
   });
 
   it('leaves the four-line rows blank when there is no content', () => {
