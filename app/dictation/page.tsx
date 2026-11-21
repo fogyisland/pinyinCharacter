@@ -1,32 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import type { DictationItem } from '@/lib/dictation';
-import { DictationPrep } from '@/components/dictation/DictationPrep';
+import { Suspense } from 'react';
+import { DictationTabs } from '@/components/dictation/DictationTabs';
 
 /**
- * The dictation tool page: choose items, print the paper.
- *
- * The tabs (出卷 / 报听写) arrive with the runner in the next task; this
- * page already owns the item draft so the runner can share it.
+ * The dictation tool: 出卷 (build and print the paper) and 报听写 (the
+ * classroom runner), sharing one item draft. The two tabs live in
+ * DictationTabs so the batch flows from the form into the runner.
  */
 export default function DictationPage() {
-  const [items, setItems] = useState<DictationItem[]>([]);
-  const params = useSearchParams();
-  const router = useRouter();
-  const pathname = usePathname();
-
-  // The tab lives in the URL (?tab=runner), like the game page's panels,
-  // so a teacher can bookmark the runner.
-  const tab = params?.get('tab') === 'runner' ? 'runner' : 'prep';
-  useEffect(() => {
-    if (tab === 'prep') return;
-    // The runner is wired in the next task; until then a stray ?tab=runner
-    // falls back to the form rather than showing an empty page.
-    router.replace(pathname ?? '/dictation');
-  }, [tab, router, pathname]);
-
   return (
     <main className="mx-auto max-w-5xl px-4 py-6">
       <div className="worksheet-no-print mb-4">
@@ -35,7 +17,10 @@ export default function DictationPage() {
           选词条 → 生成听写卷与答案页 → 打印上课。答题卷留空给学生写，答案页带浅灰范字。
         </p>
       </div>
-      <DictationPrep items={items} onChange={setItems} />
+      {/* useSearchParams needs a Suspense boundary on a static route. */}
+      <Suspense fallback={null}>
+        <DictationTabs />
+      </Suspense>
     </main>
   );
 }
