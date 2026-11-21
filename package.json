@@ -49,7 +49,8 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "dict:tone": "tsx scripts/build-pinyin-tone.ts",
-    "dict:words": "tsx scripts/build-char-words.ts"
+    "dict:words": "tsx scripts/build-char-words.ts",
+    "lookalike:build": "tsx scripts/build-look-alikes.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

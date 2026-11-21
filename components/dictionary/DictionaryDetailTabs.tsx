@@ -4,8 +4,10 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import type { CharWithRelated } from '@/lib/chars-types';
 import type { WordEntry } from '@/lib/char-words';
+import type { LookAlikeView } from '@/lib/look-alike';
 import { StrokeOrderCard } from './StrokeOrderCard';
 import { CharWords } from './CharWords';
+import { LookAlikeSection } from './LookAlikeSection';
 import { DictionaryDetailAddToWorksheet } from './DictionaryDetailAddToWorksheet';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { DetailPrefetchButton } from './DetailPrefetchButton';
@@ -20,9 +22,16 @@ interface Props {
    * client component never imports the data layer.
    */
   words?: WordEntry[];
+  /**
+   * The look-alike view, resolved on the server.
+   *
+   * The comparison needs stroke files and the table; both are disk reads and
+   * must stay on the server side of the boundary.
+   */
+  lookAlikes?: LookAlikeView | null;
 }
 
-export function DictionaryDetailTabs({ char, words = [] }: Props) {
+export function DictionaryDetailTabs({ char, words = [], lookAlikes = null }: Props) {
   // The stroke count comes from public/strokes/<char>.json and is 0 for the
   // ~13% of chars the upstream hanzi-writer data does not cover. Printing
   // "0 画" there would be a lie, so the count is omitted instead.
@@ -134,6 +143,7 @@ export function DictionaryDetailTabs({ char, words = [] }: Props) {
           )}
 
           <CharWords char={char.char} words={words} />
+          <LookAlikeSection view={lookAlikes} />
         </div>
 
         {char.char.length === 1 && (

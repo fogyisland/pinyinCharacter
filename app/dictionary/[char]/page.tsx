@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/common/EmptyState';
 import { getChar, getCharDetail, isSuppPlaneChar } from '@/lib/chars';
 import { DictionaryDetailTabs } from '@/components/dictionary/DictionaryDetailTabs';
 import { wordsForChar } from '@/lib/char-words';
+import { resolveLookAlikeView } from '@/lib/look-alike-data';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { buildDefinedTerm, buildBreadcrumbList, serializeJsonLd } from '@/lib/seo/jsonld';
 
@@ -107,7 +108,11 @@ export default async function DictionaryDetailPage({ params }: Props) {
         <SectionTitle subtitle={`${data.unicodeCodepoint} · 通用规范 ${data.level} 级`}>
           <span className="text-7xl font-serif text-ink mr-3">{data.char}</span>
         </SectionTitle>
-        <DictionaryDetailTabs char={data} words={wordsForChar(data.char)} />
+        <DictionaryDetailTabs
+          char={data}
+          words={wordsForChar(data.char)}
+          lookAlikes={resolveLookAlikeView(data.char)}
+        />
       </PageContainer>
       <Footer />
     </>
