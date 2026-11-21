@@ -48,7 +48,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
-    "dict:tone": "tsx scripts/build-pinyin-tone.ts"
+    "dict:tone": "tsx scripts/build-pinyin-tone.ts",
+    "dict:words": "tsx scripts/build-char-words.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

@@ -3,13 +3,26 @@
 import { useEffect } from 'react';
 import Link from 'next/link';
 import type { CharWithRelated } from '@/lib/chars-types';
+import type { WordEntry } from '@/lib/char-words';
 import { StrokeOrderCard } from './StrokeOrderCard';
+import { CharWords } from './CharWords';
 import { DictionaryDetailAddToWorksheet } from './DictionaryDetailAddToWorksheet';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { DetailPrefetchButton } from './DetailPrefetchButton';
 import { prefetchTts } from '@/lib/tts-cache';
 
-export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
+interface Props {
+  char: CharWithRelated;
+  /**
+   * The words this character appears in, most common first.
+   *
+   * Resolved on the server (the table is 0.5 MB) and passed in, so the
+   * client component never imports the data layer.
+   */
+  words?: WordEntry[];
+}
+
+export function DictionaryDetailTabs({ char, words = [] }: Props) {
   // The stroke count comes from public/strokes/<char>.json and is 0 for the
   // ~13% of chars the upstream hanzi-writer data does not cover. Printing
   // "0 画" there would be a lie, so the count is omitted instead.
@@ -119,6 +132,8 @@ export function DictionaryDetailTabs({ char }: { char: CharWithRelated }) {
               )}
             </div>
           )}
+
+          <CharWords char={char.char} words={words} />
         </div>
 
         {char.char.length === 1 && (
