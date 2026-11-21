@@ -30,7 +30,7 @@ describe('DictationPaper', () => {
     expect(rows).toHaveLength(4);
     for (let i = 0; i < 4; i += 1) {
       const row = rows[i] as HTMLElement;
-      expect(row.querySelector('[data-dictation-number]')?.textContent).toBe(String(i + 1));
+      expect(row.querySelector('[data-dictation-number]')?.textContent).toBe(`${i + 1}.`);
     }
   });
 
@@ -114,6 +114,31 @@ describe('DictationPaper', () => {
     const numbers = [...document.querySelectorAll('[data-dictation-number]')].map(
       (el) => el.textContent,
     );
-    expect(numbers).toEqual(Array.from({ length: 12 }, (_, i) => String(i + 1)));
+    expect(numbers).toEqual(Array.from({ length: 12 }, (_, i) => `${i + 1}.`));
+  });
+
+  it('splits 12 items across two pages and breaks the page between them', () => {
+    const many: DictationItem[] = Array.from({ length: 12 }, (_, i) =>
+      item(String.fromCharCode(0x4e00 + i)),
+    );
+    render(<DictationPaper items={many} mode="blank" />);
+    const pages = document.querySelectorAll('[data-dictation-page]');
+    expect(pages).toHaveLength(2);
+    // The break must be a real print page break, not a screen-only gap:
+    // two sheets on one paper is not a dictation sheet.
+    expect(pages[0].className).toContain('print-page-break');
+    expect(pages[1].className).not.toContain('print-page-break');
+    expect(pages[0].querySelectorAll('[data-dictation-row]')).toHaveLength(10);
+    expect(pages[1].querySelectorAll('[data-dictation-row]')).toHaveLength(2);
+  });
+
+  it('repeats the name line on every page', () => {
+    // A second sheet without the name line belongs to nobody once the
+    // class hands them in.
+    const many: DictationItem[] = Array.from({ length: 12 }, (_, i) =>
+      item(String.fromCharCode(0x4e00 + i)),
+    );
+    render(<DictationPaper items={many} mode="blank" />);
+    expect(document.querySelectorAll('[data-dictation-name-line]')).toHaveLength(2);
   });
 });

@@ -51,10 +51,13 @@ export function DictationRunner({ items, intervalSec = null, onRoundEnd }: Props
   const [finished, setFinished] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // The current item is read from a ref inside the speak callback: closing
-  // over `round` would speak the item from the render the timer was set in.
+  // The callbacks read the current round from a ref: closing over `round`
+  // would speak the item from the render the timer was set in. The ref is
+  // synced in an effect (never during render — react-hooks/refs).
   const roundRef = useRef<RoundState | null>(null);
-  roundRef.current = round;
+  useEffect(() => {
+    roundRef.current = round;
+  }, [round]);
 
   const speakCurrent = useCallback((state: RoundState) => {
     const current = state.items[state.index];

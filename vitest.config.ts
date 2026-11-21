@@ -54,6 +54,11 @@ export default defineConfig({
     // .tmp/ holds scratch work (mutation-test copies, comparison
     // screenshots). Its copies of the test files import paths that only
     // make sense inside the scratch area, so collecting them fails.
-    exclude: ['node_modules/**', 'Up/**', 'dist/**', '.tmp/**'],
+    //
+    // .worktrees/ holds git worktrees — full copies of this repo, each with
+    // its own node_modules. Collecting them runs every test twice (and the
+    // vendored packages' own tests, which fail), so the worktree copies are
+    // excluded: each worktree runs its own suite from its own directory.
+    exclude: ['node_modules/**', 'Up/**', 'dist/**', '.tmp/**', '.worktrees/**'],
   },
 });

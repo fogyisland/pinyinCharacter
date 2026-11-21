@@ -111,6 +111,11 @@ export default [
       // globs skip dot-directories, so the file belongs to no project.
       '.superpowers/**',
       '.tmp/**',
+      // Git worktrees: full copies of this repo, each with its own
+      // tsconfig and lint run from its own directory. Linting them from
+      // here fails `parserOptions.project` resolution (the copies are
+      // outside this tsconfig's include) and triples the lint time.
+      '.worktrees/**',
       'scripts/fonts/staging/**',
     ],
   },

@@ -1,6 +1,7 @@
 'use client';
 
 import type { DictationItem } from '@/lib/dictation';
+import { paginate } from '@/lib/dictation';
 import type { CellStyle } from '@/lib/worksheet-types';
 import { WorksheetCell } from '@/components/worksheet/WorksheetCell';
 
@@ -58,70 +59,85 @@ export function DictationPaper({
   // hints; the answer page always does.
   const printPinyin = isAnswer || showPinyin;
   const style = cellStyle(grid);
+  // Ten rows fill one A4 sheet; further items go on their own sheets.
+ // The page break is the CSS class the print block already knows.
+  const pages = paginate(items);
 
   return (
     <div data-dictation-paper data-dictation-mode={mode} className="dictation-paper">
-      {showNameLine ? (
-        <div
-          data-dictation-name-line
-          className="mb-3 flex items-end justify-between gap-6 border-b border-ink/20 pb-2 text-xs text-ink-soft"
-        >
-          <span>姓名：____________</span>
-          <span>日期：____________</span>
-          <span>得分：__________</span>
-        </div>
-      ) : null}
-
       {items.length === 0 ? (
         <p data-dictation-empty className="py-8 text-center text-sm text-ink-faint">
           还没有词条：先在上面选一批字或粘贴词表。
         </p>
       ) : (
-        <div className="space-y-3">
-          {items.map((item, index) => (
-            <div
-              key={`${item.word}-${index}`}
-              data-dictation-row
-              className="dictation-row flex items-center gap-3"
-            >
-              <span
-                data-dictation-number
-                className="w-7 shrink-0 text-right text-sm tabular-nums text-ink-soft"
+        pages.map((page, pageIndex) => (
+          <div
+            key={pageIndex}
+            data-dictation-page
+            className={pageIndex < pages.length - 1 ? 'print-page-break mb-6' : ''}
+          >
+            {showNameLine ? (
+              <div
+                data-dictation-name-line
+                className="mb-3 flex items-end justify-between gap-6 border-b border-ink/20 pb-2 text-xs text-ink-soft"
               >
-                {index + 1}
-              </span>
-              <span className="-ml-2 shrink-0 text-sm text-ink-soft">.</span>
-              <div className="flex flex-1 items-center gap-2">
-                {printPinyin && item.pinyin !== '' ? (
-                  <span
-                    data-dictation-pinyin
-                    className="w-24 shrink-0 text-xs text-ink-faint"
-                    style={{ fontFamily: 'var(--font-han-serif)' }}
-                  >
-                    {item.pinyin}
-                  </span>
-                ) : null}
-                <div className="flex flex-wrap items-center gap-1">
-                  {item.chars.map((char, cellIndex) => (
-                    <span
-                      key={`${char}-${cellIndex}`}
-                      data-dictation-cell
-                      data-dictation-char={isAnswer ? char : ''}
-                      className="dictation-cell inline-block"
-                    >
-                      <WorksheetCell
-                        char={isAnswer ? char : ''}
-                        style={style}
-                        size={cellSize}
-                        fontFamily="kai"
-                      />
-                    </span>
-                  ))}
-                </div>
+                <span>姓名：____________</span>
+                <span>日期：____________</span>
+                <span>得分：__________</span>
               </div>
+            ) : null}
+
+            <div className="space-y-3">
+              {page.map((item, indexOnPage) => {
+                // Numbering runs through the whole list, not per page:
+                // the answer key and the sheet must agree on item 11.
+                const number = pageIndex * 10 + indexOnPage + 1;
+                return (
+                  <div
+                    key={`${item.word}-${number}`}
+                    data-dictation-row
+                    className="dictation-row flex items-center gap-2"
+                  >
+                    <span
+                      data-dictation-number
+                      className="w-7 shrink-0 text-right text-sm tabular-nums text-ink-soft"
+                    >
+                      {number}.
+                    </span>
+                    <div className="flex flex-1 items-center gap-2">
+                      {printPinyin && item.pinyin !== '' ? (
+                        <span
+                          data-dictation-pinyin
+                          className="w-24 shrink-0 text-xs text-ink-faint"
+                          style={{ fontFamily: 'var(--font-han-serif)' }}
+                        >
+                          {item.pinyin}
+                        </span>
+                      ) : null}
+                      <div className="flex flex-wrap items-center gap-1">
+                        {item.chars.map((char, cellIndex) => (
+                          <span
+                            key={`${char}-${cellIndex}`}
+                            data-dictation-cell
+                            data-dictation-char={isAnswer ? char : ''}
+                            className="dictation-cell inline-block"
+                          >
+                            <WorksheetCell
+                              char={isAnswer ? char : ''}
+                              style={style}
+                              size={cellSize}
+                              fontFamily="kai"
+                            />
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          </div>
+        ))
       )}
     </div>
   );
