@@ -168,7 +168,7 @@ it('blank mode draws empty cells, one per character');     // '长大' → 2 空
 it('answer mode fills the pale model character');          // 格内文本 == 字
 it('shows the pinyin row when asked, and on the answer page'); // showPinyin/answer 模式
 it('hides the pinyin row by default in blank mode');
-it('marks the name/date header as no-print');              // 含 worksheet-no-print
+it('marks the print controls as no-print, and the name line printable'); // 控件 worksheet-no-print；姓名/日期栏必须上纸
 it('renders items of four characters without wrapping');   // 成语一条一行
 ```
 

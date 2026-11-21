@@ -487,7 +487,9 @@ textarea.adm-input {
   .sutra-print-area,
   .sutra-print-area *,
   .classic-print-area,
-  .classic-print-area * {
+  .classic-print-area *,
+  .dictation-paper,
+  .dictation-paper * {
     visibility: visible;
   }
   .worksheet-grid,
@@ -496,7 +498,8 @@ textarea.adm-input {
   .lined-paper,
   .poem-print-area,
   .sutra-print-area,
-  .classic-print-area {
+  .classic-print-area,
+  .dictation-paper {
     position: absolute;
     left: 0;
     top: 0;
@@ -523,7 +526,8 @@ textarea.adm-input {
   .lined-paper,
   .poem-print-area,
   .sutra-print-area,
-  .classic-print-area {
+  .classic-print-area,
+  .dictation-paper {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }

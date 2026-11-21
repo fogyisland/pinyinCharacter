@@ -33,6 +33,13 @@ const ITEMS: BentoItem[] = [
     variant: 'outline',
   },
   {
+    char: '听',
+    title: '听写练习',
+    description: '出卷 · 报听写 · 错词再练',
+    href: '/dictation',
+    variant: 'outline',
+  },
+  {
     char: '戏',
     title: '趣味识字游戏',
     description: '拼音与字配对',

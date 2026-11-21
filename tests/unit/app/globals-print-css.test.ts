@@ -73,4 +73,13 @@ describe('app/globals.css — @media print whitelist for worksheet templates', (
     const block = readPrintBlock();
     expect(block).toMatch(/\.worksheet-no-print\s*\{[^}]*display:\s*none/);
   });
+
+  it('whitelists .dictation-paper so the dictation sheet prints', () => {
+    // Same regression class as .four-line-paper: a printable container that
+    // is not in the visibility whitelist prints a blank page.
+    const block = readPrintBlock();
+    expect(block).toMatch(/\.dictation-paper[^{]*\{[^}]*visibility:\s*visible/);
+    expect(block).toMatch(/\.dictation-paper[^{]*\{[^}]*position:\s*absolute/);
+    expect(block).toMatch(/\.dictation-paper[^{]*\{[^}]*print-color-adjust:\s*exact/);
+  });
 });
