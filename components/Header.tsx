@@ -20,28 +20,25 @@ const GROUP_ORDER: readonly NavGroupId[] = [
 ];
 
 function DesktopNav({ links, currentPath }: { links: readonly NavLink[]; currentPath: string }) {
-  // Walk links in original group order; insert a wider gap when the group changes.
+  // The row is ONE line, always. The dots are gone and the group gap carries
+  // the grouping instead: at 6 groups the 9 separator dots cost ~108px of
+  // width, which was exactly what pushed 留言笔记 onto a second line even
+  // on a 1440 display. Grouping is a rhythm, not decoration.
   let prevGroup: NavGroupId | null = null;
   return (
-    <nav className="hidden md:flex flex-1 min-w-0 items-center justify-center flex-wrap text-sm">
+    <nav className="hidden lg:flex flex-1 min-w-0 items-center justify-center text-sm">
       {links.map((item) => {
         const isFirstInGroup = item.group !== prevGroup;
-        const separator = !isFirstInGroup && (
-          <span aria-hidden="true" className="px-1 text-ink-faint/50 select-none">
-            ·
-          </span>
-        );
+        const groupGap = isFirstInGroup && prevGroup !== null ? 'ml-3' : '';
         prevGroup = item.group;
         const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
-        const groupGap = isFirstInGroup && prevGroup !== null ? 'ml-3 pl-0' : '';
         return (
           <span key={item.href} className={'inline-flex items-center shrink-0 ' + groupGap}>
-            {separator}
             <Link
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
               className={
-                'px-1.5 py-0.5 whitespace-nowrap transition-colors hover:text-seal ' +
+                'px-1 py-0.5 whitespace-nowrap transition-colors hover:text-seal ' +
                 (isActive ? 'text-seal font-medium border-b-2 border-seal' : 'text-ink-soft')
               }
             >
@@ -112,7 +109,7 @@ export function Header() {
 
   return (
     <header className="border-b border-ink/10 bg-paper-soft/95">
-      <div className="max-w-6xl mx-auto px-6 h-[72px] flex items-center gap-4">
+      <div className="max-w-6xl xl:max-w-7xl mx-auto px-6 h-[72px] flex items-center gap-4">
         <Link
           href="/"
           className="flex items-center gap-2 hover:opacity-80 transition-opacity shrink-0"
@@ -130,9 +127,9 @@ export function Header() {
           </span>
         </Link>
         <DesktopNav links={links} currentPath={currentPath} />
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {safeMode && (
-            <span className="hidden sm:inline text-xs px-2 py-0.5 rounded bg-success/15 text-success">
+            <span className="hidden xl:inline text-xs px-2 py-0.5 rounded bg-success/15 text-success">
               已开启儿童模式
             </span>
           )}
@@ -144,18 +141,15 @@ export function Header() {
               <Link href="/login" className="btn-seal text-sm">
                 登录
               </Link>
-              <Link
-                href="/register"
-                className="hidden sm:inline text-sm text-ink-soft hover:text-seal"
-              >
-                注册
-              </Link>
+              {/* 注册 lives in the mobile drawer and on the login page; in the
+                  header row it was the 28px that decided whether the nav
+                  wrapped. */}
             </>
           )}
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
-            className="md:hidden p-1 text-ink"
+            className="lg:hidden p-1 text-ink"
             aria-label="打开菜单"
           >
             <Menu size={22} />
@@ -164,7 +158,7 @@ export function Header() {
       </div>
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 z-20 bg-ink/40"
+          className="lg:hidden fixed inset-0 z-20 bg-ink/40"
           onClick={() => setMobileOpen(false)}
         >
           <div
