@@ -14,6 +14,7 @@ const GROUP_ORDER: readonly NavGroupId[] = [
   'dictionary',
   'worksheet',
   'classics',
+  'teach',
   'game',
   'feedback',
 ];

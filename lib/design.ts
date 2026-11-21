@@ -13,12 +13,13 @@ export type NavItem = { href: string; label: string };
  * by "·" with tight spacing; groups are separated by a wider gap so the eye
  * reads each cluster as one section.
  */
-export type NavGroupId = 'dictionary' | 'worksheet' | 'classics' | 'game' | 'feedback';
+export type NavGroupId = 'dictionary' | 'worksheet' | 'classics' | 'teach' | 'game' | 'feedback';
 
 export const NAV_GROUPS: Readonly<Record<NavGroupId, { label: string }>> = {
   dictionary: { label: '字典' },
-  worksheet: { label: '字帖' },
+  worksheet: { label: '学习' },
   classics: { label: '诗词' },
+  teach: { label: '教学' },
   game: { label: '游戏' },
   feedback: { label: '留言笔记' },
 } as const;
@@ -31,9 +32,11 @@ export const NAV_LINKS: readonly NavLink[] = [
   { group: 'dictionary', href: '/pinyin', label: '字转拼音' },
   { group: 'worksheet', href: '/worksheet', label: '字帖' },
   { group: 'worksheet', href: '/worksheet/practice', label: '练字模板' },
+  { group: 'worksheet', href: '/dictation', label: '听写' },
   { group: 'classics', href: '/poetry', label: '诗词' },
   { group: 'classics', href: '/ancient', label: '古籍' },
   { group: 'classics', href: '/sutra', label: '佛经' },
+  { group: 'teach', href: '/classes', label: '班级' },
   { group: 'game', href: '/game', label: '游戏' },
   { group: 'feedback', href: '/notes', label: '留言笔记' },
 ] as const;

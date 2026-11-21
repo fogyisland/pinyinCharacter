@@ -100,7 +100,11 @@ export type AuditEvent =
   | 'wechat_broadcast_created'
   | 'wechat_broadcast_sent'
   | 'wechat_broadcast_cancelled'
-  | 'wechat_test_sent';
+  | 'wechat_test_sent'
+  | 'class_created'
+  | 'class_joined'
+  | 'class_member_removed'
+  | 'class_assignment_created';
 
 /**
  * Tuple form of the union. Order matches the union declaration so the admin
@@ -202,6 +206,10 @@ export const AUDIT_EVENTS = [
   'wechat_broadcast_sent',
   'wechat_broadcast_cancelled',
   'wechat_test_sent',
+  'class_created',
+  'class_joined',
+  'class_member_removed',
+  'class_assignment_created',
 ] as const satisfies readonly AuditEvent[];
 
 /**
@@ -305,6 +313,10 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   wechat_broadcast_sent: '已发送微信公告',
   wechat_broadcast_cancelled: '已取消微信公告',
   wechat_test_sent: '已发送微信测试消息',
+  class_created: '新建班级',
+  class_joined: '加入班级',
+  class_member_removed: '移出班级成员',
+  class_assignment_created: '发布班级作业',
 };
 
 /**
@@ -556,6 +568,15 @@ export function formatLogMessage(
       return `已取消微信公告「${str(m.title) || '?'}」`;
     case 'wechat_test_sent':
       return `已发送微信测试消息「${str(m.title) || '?'}」`;
+
+    case 'class_created':
+      return `新建班级「${str(m.name) || '?'}」(#${num(m.classId) || '?'})`;
+    case 'class_joined':
+      return `加入班级 #${num(m.classId) || '?'}`;
+    case 'class_member_removed':
+      return `把成员 #${num(m.targetUserId) || '?'} 移出班级 #${num(m.classId) || '?'}`;
+    case 'class_assignment_created':
+      return `发布${str(m.kind) === 'dictation' ? '听写' : '字帖'}作业「${str(m.title) || '?'}」到班级 #${num(m.classId) || '?'}`;
 
     default: {
       const keys = Object.keys(m);
