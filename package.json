@@ -47,7 +47,8 @@
     "assets:precompress": "node scripts/precompress-assets.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "dict:tone": "tsx scripts/build-pinyin-tone.ts"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",

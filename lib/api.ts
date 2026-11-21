@@ -19,8 +19,8 @@ export async function fetchSentence(
   pinyin: string,
   safeMode: boolean,
   script: 'simplified' | 'traditional',
-): Promise<ApiResult<{ sentence: string }>> {
+): Promise<ApiResult<{ sentence: string; engine?: 'tone-aware' | 'classic' }>> {
   const params = new URLSearchParams({ pinyin, safeMode: String(safeMode), script });
   const res = await fetch(`/api/pinyin/sentence?${params}`);
-  return (await res.json()) as ApiResult<{ sentence: string }>;
+  return (await res.json()) as ApiResult<{ sentence: string; engine?: 'tone-aware' | 'classic' }>;
 }

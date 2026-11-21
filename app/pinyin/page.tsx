@@ -1,7 +1,7 @@
 import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
-import { TextToPinyin } from '@/components/TextToPinyin';
+import { PinyinTabs } from '@/components/PinyinTabs';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { buildMetadata } from '@/lib/seo/metadata';
@@ -24,8 +24,8 @@ export default function PinyinPage() {
         <Header />
       </Suspense>
       <PageContainer>
-        <SectionTitle subtitle="整句智能转换">字 → 拼音 互转</SectionTitle>
-        <TextToPinyin />
+        <SectionTitle subtitle="整句智能转换 · 拼音打汉字">字 ⇄ 拼音 互转</SectionTitle>
+        <PinyinTabs />
       </PageContainer>
       <Footer />
     </>
