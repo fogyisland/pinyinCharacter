@@ -19,38 +19,28 @@
 | `bbca66cf6` | **形近字辨析** | 3500 一级字扫描 1.9 秒；2207 字 / 10572 条 / 54 KB |
 | `e075b20d1` | **班级与作业（第一期）** | 3 张表 + 8 个路由 + 2 个页面；63 个新测试 |
 | `a22b1947b` | **顶栏固定一行** | 三处像素回收，11 个宽度实测一行 |
+| `59077710d` | **作业完成状态（第二期）** | `class_submissions` 表；学生勾选才算完成；老师看「已完成 N / M 人」 |
 
-测试规模：起步 3152 → 现在 **3398 passed / 21 skipped / 0 failed**。
+测试规模：起步 3152 → 现在 **3425 passed / 21 skipped / 0 failed**。
 
 ---
 
 ## 二、明天要继续的三件事
 
-### 1. 班级作业的「学生完成状态」（用户明确要求「整套体系完整」）
+### 1. 班级作业的「学生完成状态」—— ✅ 已完成（`59077710d`）
 
-**现状**：第一期只做了「老师派作业 + 成员看到作业列表」。**没有**提交/完成状态，
-所以老师看不到「谁做完了」。
+**口径已定**：学生手动勾选「我练完了」才算完成。打印、朗读、听写分数都**不**自动算。
+若将来要让听写按分数判定，得先把听写结果持久化（`dictation_results` 表 +
+报听写结束后 POST），那是另一项工作。
 
-**待补**：
-- 新表 `class_submissions`（`assignment_id` + `user_id` + `completed_at` + 可选 `note`）
-- 迁移 `scripts/migrations/2026-11-22-class-submissions.sql`（幂等，参考
-  `2026-11-21-classes.sql` 的写法）
-- `lib/classes-store.ts` 加 `recordSubmission` / `listSubmissions` / `clearSubmission`
-- 路由 `POST /api/classes/[id]/assignments/[assignmentId]/submit`（学生提交）
-- 班级详情页显示进度：`已完成 8 / 12 人`，逐行标「已完成/未完成」
-- 老师看板（可选）：一页看到多个班的完成率
+**已交付**：`class_submissions` 表（`(assignment_id, user_id)` 唯一键）、
+`recordSubmission/clearSubmission/listSubmissions/listClassProgress/listMySubmissions`、
+`POST/DELETE /api/classes/[id]/assignments/[assignmentId]/submit`、
+学生侧「我练完了 + 撤销 + 自己的留言」、老师侧「已完成 8 / 12 人 + 逐人名」。
 
-**⚠️ 开工前必须先问用户一个问题（未决）**：
-> 「完成」怎么算？
-> - A. 学生点「我练完了」手动勾选（最省事，也最诚实）
-> - B. 点过「打印字帖」自动算完成（可追踪，但打印不等于练）
-> - C. 听写作业按分数阈值判定（需要听写结果落库，目前听写结果是浏览器内存态）
->
-> 我的建议是 **A 为主 + B 为辅**：手动勾选是学生自己的承诺，打印作为佐证显示
-> 「已打印」而不作为完成条件。听写若要按分数判定，得先把听写结果持久化
-> （那是另一项工作：`dictation_results` 表 + 报听写结束后 POST）。
+**仍未做（可选的下一步）**：跨班看板（一页看到所有班的完成率）。
 
-### 2. 剩下两个优先级方向（用户此前排序中尚未做）
+### 2. 剩下两个优先级方向（尚未做）
 
 - **C. 例句**：组词已有「词」，但没「句子」。数据可用 Tatoeba 中文语料（CC-BY），
   做 `{ word: [ { zh, en } ] }` 表，字典页在组词旁显示 1-2 条例句。
@@ -130,6 +120,20 @@ POST /api/admin/chars/generate
 `.tmp/*-walkthrough.mjs` 的脚本都是「先 `Page.navigate` 到 about:blank →
 `Network.setCookie` → 再导航到目标页」。顺序反了会跳 `/init`。
 
+### 9. 登录/注册接口有 IP 限流，端到端走查要用已有账号
+
+连续注册 3 个账号就会 `429 rate_limited`，登录同理。走查脚本因此改用
+`.tmp/mint-tokens.ts` 直接签发 JWT cookie（复用 `lib/auth.ts::signSession`），
+把 token 写进 `.tmp/walk-tokens.json` 再用 `Network.setCookie` 注入。
+**不要为了走查反复新建账号** —— 那是限流本来的作用。
+
+### 10. 给路由加新的 store 导出时，记得同步更新测试里的 `vi.mock`
+
+`app/api/classes/[id]/route.ts` 新增 `listClassProgress` / `listMySubmissions`
+后，`tests/unit/app/api/classes.test.ts` 的 mock 没有这两个键 → 路由拿到
+`undefined` → 崩在 `.role`，看起来像功能坏了。**规则**：路由新增 store 调用，
+必须同步补 mock，否则失败原因会被错误信息掩盖。
+
 ---
 
 ## 四、数据资产一览（这一轮新增的）
@@ -178,6 +182,7 @@ ICU 顺序不同）→ `<option>` 顺序两侧不一致 → React 整树重建 �
 
 ## 六、用户未决的问题（明天开工先问）
 
-1. **作业「完成」的判定口径**（见上，A/B/C 三选）
-2. 是否继续做 **D 语音评测**（涉及外部付费服务 + 隐私）
-3. 是否 **push 到 `origin/main`**（目前有 40+ 个本地提交未推送）
+1. 是否继续做 **C 例句**（Tatoeba CC-BY 语料，字典页显示 1-2 句）
+2. 是否继续做 **D 语音评测**（涉及外部付费服务 + 隐私，需明确授权）
+3. 是否做**跨班看板**（一页看到所有班的完成率）
+4. 是否 **push 到 `origin/main`**（目前有 45+ 个本地提交未推送）
