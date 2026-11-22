@@ -25,6 +25,8 @@ const {
   createAssignmentMock,
   deleteAssignmentMock,
   deleteClassMock,
+  listClassProgressMock,
+  listMySubmissionsMock,
 } = vi.hoisted(() => ({
   getCurrentUserMock: vi.fn(),
   createClassMock: vi.fn(),
@@ -40,6 +42,8 @@ const {
   createAssignmentMock: vi.fn(),
   deleteAssignmentMock: vi.fn(),
   deleteClassMock: vi.fn(),
+  listClassProgressMock: vi.fn(),
+  listMySubmissionsMock: vi.fn(),
 }));
 
 vi.mock('@/lib/auth', () => ({ getCurrentUser: getCurrentUserMock }));
@@ -58,6 +62,9 @@ vi.mock('@/lib/classes-store', () => ({
   createAssignment: createAssignmentMock,
   deleteAssignment: deleteAssignmentMock,
   deleteClass: deleteClassMock,
+  // 班级详情页还要读「谁做完了」：进度与当前用户的提交记录。
+  listClassProgress: listClassProgressMock,
+  listMySubmissions: listMySubmissionsMock,
 }));
 
 import { GET as listClasses, POST as createClassRoute } from '@/app/api/classes/route';
@@ -97,6 +104,8 @@ beforeEach(() => {
     createAssignmentMock,
     deleteAssignmentMock,
     deleteClassMock,
+    listClassProgressMock,
+    listMySubmissionsMock,
   ]) {
     mock.mockReset();
   }
@@ -143,6 +152,9 @@ beforeEach(() => {
   createAssignmentMock.mockResolvedValue({ id: 5 });
   deleteAssignmentMock.mockResolvedValue(true);
   deleteClassMock.mockResolvedValue(true);
+  // 默认没有提交记录：详情页的进度是空对象，当前用户的提交记录也是空。
+  listClassProgressMock.mockResolvedValue({});
+  listMySubmissionsMock.mockResolvedValue({});
 });
 
 describe('GET /api/classes', () => {

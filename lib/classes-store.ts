@@ -80,6 +80,22 @@ export interface Assignment {
   createdAt: string;
 }
 
+/** 一个学生对一份作业的完成记录。 */
+export interface Submission {
+  userId: number;
+  username: string;
+  note: string;
+  completedAt: string;
+}
+
+/** 一份作业 + 它的完成情况。 */
+export interface AssignmentProgress {
+  /** 已完成的用户 id。 */
+  completedUserIds: number[];
+  /** 班里一共多少学生（不含老师）。 */
+  total: number;
+}
+
 /** 把 DATE / DATETIME 转成字符串，不吃时区。 */
 function toDateString(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -398,4 +414,135 @@ export async function deleteClass(classId: number): Promise<boolean> {
   const pool = getPool();
   const [result] = await pool.query(`DELETE FROM classes WHERE id = ?`, [classId]);
   return Number((result as { affectedRows?: number }).affectedRows ?? 0) > 0;
+}
+
+/**
+ * 学生标记一份作业「我练完了」。
+ *
+ * 用 `ON DUPLICATE KEY UPDATE` 而不是 INSERT：同一个学生点两次不是错误，
+ * 第二次是更新留言与时间。唯一索引在 (assignment_id, user_id) 上。
+ *
+ * **作业必须属于这个学生所在的班** —— 这条检查无法只靠 WHERE 完成（作业
+ * 与班级的关联在另一张表），所以调用方（路由）必须先确认班级归属。
+ * 存储层再做一次 Join 校验，防止路由层的疏漏变成一个能跨班交作业的漏洞。
+ *
+ * @param assignmentId 作业 id。
+ * @param classId 这个作业应该所属的班级。
+ * @param userId 学生 id。
+ * @param note 可选留言（最长 512，超出截断）。
+ * @returns true 表示记录被写入；false 表示作业不属于这个班。
+ */
+export async function recordSubmission(
+  assignmentId: number,
+  classId: number,
+  userId: number,
+  note: string,
+): Promise<boolean> {
+  const pool = getPool();
+  // 归属校验：作业的 class_id 必须是这个班，且提交人必须是这个班的成员。
+  const [guards] = await pool.query(
+    `SELECT a.id
+       FROM class_assignments a
+       JOIN class_members m ON m.class_id = a.class_id AND m.user_id = ?
+      WHERE a.id = ? AND a.class_id = ?
+      LIMIT 1`,
+    [userId, assignmentId, classId],
+  );
+  if ((guards as unknown[]).length === 0) return false;
+
+  await pool.query(
+    `INSERT INTO class_submissions (assignment_id, user_id, note)
+     VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE note = VALUES(note), completed_at = CURRENT_TIMESTAMP`,
+    [assignmentId, userId, note.slice(0, 512)],
+  );
+  return true;
+}
+
+/** 学生撤销「我练完了」（勾错了、或者想重练）。 */
+export async function clearSubmission(assignmentId: number, userId: number): Promise<boolean> {
+  const pool = getPool();
+  const [result] = await pool.query(
+    `DELETE FROM class_submissions WHERE assignment_id = ? AND user_id = ?`,
+    [assignmentId, userId],
+  );
+  return Number((result as { affectedRows?: number }).affectedRows ?? 0) > 0;
+}
+
+/** 一份作业的所有完成记录（含留言），最早完成的在前。 */
+export async function listSubmissions(assignmentId: number): Promise<Submission[]> {
+  const pool = getPool();
+  const [rows] = await pool.query(
+    `SELECT s.user_id, u.username, s.note, s.completed_at
+       FROM class_submissions s
+       JOIN users u ON u.id = s.user_id
+      WHERE s.assignment_id = ?
+      ORDER BY s.completed_at ASC`,
+    [assignmentId],
+  );
+  return (rows as Array<Record<string, unknown>>).map((row) => ({
+    userId: Number(row.user_id),
+    username: String(row.username),
+    note: String(row.note ?? ''),
+    completedAt: toTimestamp(row.completed_at),
+  }));
+}
+
+/**
+ * 一个班所有作业的完成情况（一次查询，N 份作业）。
+ *
+ * 老师的班级页要显示「已完成 8 / 12 人」× N 份作业 —— 逐份作业查一次是
+ * N 次往返。这里用一条 GROUP BY 拿到全部，再按作业 id 建索引。
+ *
+ * @param classId 班级 id。
+ * @returns assignmentId → 已完成的用户 id 列表。
+ */
+export async function listClassProgress(classId: number): Promise<Record<number, number[]>> {
+  const pool = getPool();
+  const [rows] = await pool.query(
+    `SELECT s.assignment_id, s.user_id
+       FROM class_submissions s
+       JOIN class_assignments a ON a.id = s.assignment_id
+      WHERE a.class_id = ?
+      ORDER BY s.assignment_id, s.completed_at`,
+    [classId],
+  );
+  const out: Record<number, number[]> = {};
+  for (const row of rows as Array<Record<string, unknown>>) {
+    const id = Number(row.assignment_id);
+    (out[id] ??= []).push(Number(row.user_id));
+  }
+  return out;
+}
+
+/**
+ * 当前用户在一个班里交过哪些作业（含留言）。
+ *
+ * 学生打开班级页要看到「我练完了」的状态与自己的留言 —— 逐份作业查一次
+ * 是 N 次往返，这里一条语句拿全部。
+ *
+ * @param classId 班级 id。
+ * @param userId 当前用户。
+ * @returns assignmentId → 留言与完成时间。
+ */
+export async function listMySubmissions(
+  classId: number,
+  userId: number,
+): Promise<Record<number, { note: string; completedAt: string }>> {
+  const pool = getPool();
+  const [rows] = await pool.query(
+    `SELECT s.assignment_id, s.note, s.completed_at
+       FROM class_submissions s
+       JOIN class_assignments a ON a.id = s.assignment_id
+      WHERE a.class_id = ? AND s.user_id = ?`,
+    [classId, userId],
+  );
+  const out: Record<number, { note: string; completedAt: string }> = {};
+  for (const row of rows as Array<Record<string, unknown>>) {
+    out[Number(row.assignment_id)] = {
+      note: String(row.note ?? ''),
+      completedAt: toTimestamp(row.completed_at),
+    };
+  }
+  return out;
 }

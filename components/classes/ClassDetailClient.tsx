@@ -7,6 +7,8 @@ import {
   deleteAssignmentRequest,
   fetchClassDetail,
   removeMemberRequest,
+  submitAssignmentRequest,
+  withdrawSubmissionRequest,
   type ClassDetail,
 } from '@/lib/api-classes';
 import { AssignmentComposer } from './AssignmentComposer';
@@ -63,6 +65,43 @@ export function ClassDetailClient({ classId }: { classId: number }) {
       return;
     }
     await load();
+  }
+
+  /** 学生勾选「我练完了」。 */
+  async function handleSubmit(assignmentId: number): Promise<void> {
+    setBusy(true);
+    setError(null);
+    const result = await submitAssignmentRequest(classId, assignmentId, '');
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error.message);
+      return;
+    }
+    await load();
+  }
+
+  /** 学生撤销完成。 */
+  async function handleWithdraw(assignmentId: number): Promise<void> {
+    setBusy(true);
+    setError(null);
+    const result = await withdrawSubmissionRequest(classId, assignmentId);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error.message);
+      return;
+    }
+    await load();
+  }
+
+  /** 老师视图：把已完成的用户 id 换成名字。 */
+  function completedNames(assignmentId: number): string {
+    const ids = detail?.progress[assignmentId] ?? [];
+    if (ids.length === 0) return '';
+    const names = ids.map((id) => {
+      const member = detail?.members.find((m) => m.userId === id);
+      return member ? member.username : `#${id}`;
+    });
+    return names.join('、');
   }
 
   if (loadError !== null) {
@@ -150,6 +189,13 @@ export function ClassDetailClient({ classId }: { classId: number }) {
                   {assignment.dueAt ? (
                     <span className="text-xs text-ink-faint">截止 {assignment.dueAt}</span>
                   ) : null}
+                  {/* 完成进度：老师看全班，学生看自己。 */}
+                  <span
+                    className="text-xs text-ink-soft"
+                    data-testid={`progress-${assignment.id}`}
+                  >
+                    已完成 {(detail.progress[assignment.id] ?? []).length} / {detail.members.length} 人
+                  </span>
                   <span className="ml-auto flex items-center gap-2 text-xs">
                     {assignment.kind === 'worksheet' ? (
                       <Link
@@ -175,6 +221,49 @@ export function ClassDetailClient({ classId }: { classId: number }) {
                     ) : null}
                   </span>
                 </div>
+
+                {/* 学生：勾选「我练完了」。完成的口径就是这次勾选 —— 打印
+                    不作为完成条件。 */}
+                {!isTeacher ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                    {detail.mySubmissions[assignment.id] ? (
+                      <>
+                        <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-800">
+                          我练完了 · {detail.mySubmissions[assignment.id].completedAt.slice(0, 10)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => void handleWithdraw(assignment.id)}
+                          disabled={busy}
+                          className="text-ink-faint hover:text-danger disabled:opacity-40"
+                        >
+                          撤销
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void handleSubmit(assignment.id)}
+                        disabled={busy}
+                        className="rounded border border-seal px-2 py-0.5 text-seal hover:bg-seal/10 disabled:opacity-50"
+                      >
+                        我练完了
+                      </button>
+                    )}
+                    {detail.mySubmissions[assignment.id]?.note ? (
+                      <span className="text-ink-soft">
+                        留言：{detail.mySubmissions[assignment.id].note}
+                      </span>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {/* 老师：谁做完了（头像式的名字列表）。 */}
+                {isTeacher ? (
+                  <p className="mt-2 text-xs text-ink-faint">
+                    已完成：{completedNames(assignment.id) || '还没有人'}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ul>

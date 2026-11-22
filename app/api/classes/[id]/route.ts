@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorHandling, badRequest, unauthorized } from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
-import { getClassForUser, listAssignments, listClassMembers } from '@/lib/classes-store';
+import {
+  getClassForUser,
+  listAssignments,
+  listClassMembers,
+  listClassProgress,
+  listMySubmissions,
+} from '@/lib/classes-store';
 import { sortAssignments } from '@/lib/classes';
 
 export const dynamic = 'force-dynamic';
@@ -36,10 +42,13 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
         { status: 404 },
       );
     }
-    const [members, assignments] = await Promise.all([
+    const [members, assignments, progress, mySubmissions] = await Promise.all([
       listClassMembers(classId),
       listAssignments(classId),
+      listClassProgress(classId),
+      listMySubmissions(classId, user.id),
     ]);
+
     return NextResponse.json({
       ok: true,
       data: {
@@ -51,6 +60,8 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
         teacherId: found.teacherId,
         members,
         assignments: sortAssignments(assignments),
+        progress,
+        mySubmissions,
       },
     });
   });

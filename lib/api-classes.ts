@@ -76,6 +76,14 @@ export interface AssignmentViewItem {
   createdAt: string;
 }
 
+/** 一份作业的完成情况。 */
+export interface AssignmentProgressView {
+  /** 已完成的成员 id。 */
+  completedUserIds: number[];
+  /** 班里一共多少人（含老师，由调用方判定）。 */
+  total: number;
+}
+
 /** 班级详情。 */
 export interface ClassDetail {
   id: number;
@@ -87,6 +95,10 @@ export interface ClassDetail {
   teacherId: number;
   members: MemberView[];
   assignments: AssignmentViewItem[];
+  /** assignmentId → 已完成的 userId 列表。 */
+  progress: Record<number, number[]>;
+  /** 当前用户自己的完成记录：assignmentId → 留言与完成时间。 */
+  mySubmissions: Record<number, { note: string; completedAt: string }>;
 }
 
 export async function fetchMyClasses(): Promise<
@@ -163,4 +175,29 @@ export async function deleteAssignmentRequest(
   assignmentId: number,
 ): Promise<ClassApiResult<{ deleted: boolean }>> {
   return call(`/api/classes/${classId}/assignments/${assignmentId}`, { method: 'DELETE' });
+}
+
+/**
+ * 学生标记「我练完了」。
+ *
+ * 完成的口径是学生自己勾选，不是「点过打印」—— 打印一张纸不等于练了。
+ */
+export async function submitAssignmentRequest(
+  classId: number,
+  assignmentId: number,
+  note: string,
+): Promise<ClassApiResult<{ recorded: boolean }>> {
+  return call(`/api/classes/${classId}/assignments/${assignmentId}/submit`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ note }),
+  });
+}
+
+/** 学生撤销完成（勾错了，或者想重练）。 */
+export async function withdrawSubmissionRequest(
+  classId: number,
+  assignmentId: number,
+): Promise<ClassApiResult<{ cleared: boolean }>> {
+  return call(`/api/classes/${classId}/assignments/${assignmentId}/submit`, { method: 'DELETE' });
 }
