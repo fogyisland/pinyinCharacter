@@ -8,6 +8,7 @@ import type { ExampleEntry } from '@/lib/char-examples';
 import type { LookAlikeView } from '@/lib/look-alike';
 import { StrokeOrderCard } from './StrokeOrderCard';
 import { CharWords } from './CharWords';
+import { PronouncePanel } from './PronouncePanel';
 import { LookAlikeSection } from './LookAlikeSection';
 import { DictionaryDetailAddToWorksheet } from './DictionaryDetailAddToWorksheet';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
@@ -50,6 +51,11 @@ export function DictionaryDetailTabs({
   // "0 画" there would be a lie, so the count is omitted instead.
   const radicalValue =
     char.strokeCount > 0 ? `${char.radical} · ${char.strokeCount} 画` : char.radical || '—';
+
+  // The first 组词 is what the page already recommends, so it is the natural
+  // thing to read back: its reading is already split into syllables, which
+  // is exactly what the comparison needs.
+  const firstWord = words[0];
 
   // Auto-prefetch audios for the first 6 chars sharing the radical. Skips
   // cached entries (prefetchTts no-ops). Cancelled on unmount.
@@ -156,6 +162,18 @@ export function DictionaryDetailTabs({
           )}
 
           <CharWords char={char.char} words={words} examples={examples} />
+          <PronouncePanel
+            word={firstWord?.word ?? char.char}
+            pinyin={firstWord?.pinyin ?? char.pinyin}
+            chars={
+              firstWord
+                ? Array.from(firstWord.word).map((entry, index) => ({
+                    char: entry,
+                    pinyin: firstWord.pinyin.split(/\s+/)[index] ?? '',
+                  }))
+                : []
+            }
+          />
           <LookAlikeSection view={lookAlikes} />
         </div>
 
