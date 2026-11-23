@@ -21,8 +21,9 @@
 | `a22b1947b` | **顶栏固定一行** | 三处像素回收，11 个宽度实测一行 |
 | `59077710d` | **作业完成状态（第二期）** | `class_submissions` 表；学生勾选才算完成；老师看「已完成 N / M 人」 |
 | `d771cb5a2` | **例句（C）** | Tatoeba CC-BY；4382 词 / 691 KB；每词最多 2 句中英对照 |
+| `5b7062e43` | **跟读（D）** | 浏览器 SpeechRecognition（Edge 上即微软语音）+ 本站自比对；逐字判定 exact/tone/similar/wrong |
 
-测试规模：起步 3152 → 现在 **3432 passed / 21 skipped / 0 failed**。
+测试规模：起步 3152 → 现在 **3485 passed / 21 skipped / 0 failed**。
 
 ---
 
@@ -47,8 +48,13 @@
   覆盖 61% 的组词），Tatoeba CC-BY 2.0 FR，`npm run examples:build`。
   四条过滤规则（必有英文翻译 / 只留简体字 / 6–30 字 / 每词 2 句）都写进了
   `scripts/build-examples.py` 的文件头。
-- **D. 语音评测**（唯一未做）：学生朗读打分纠声调。依赖外部服务（Azure
-  Pronunciation Assessment 或同类），涉及**成本 + 隐私**，需要用户明确授权才开工。
+- **D. 语音评测** —— ✅ 已完成（`5b7062e43`）：`lib/pronunciation.ts`（逐字判定 +
+  滑窗对齐）、`lib/pronunciation-client.ts`（浏览器 SpeechRecognition 封装）、
+  `components/dictionary/PronouncePanel.tsx`。
+  **没有用 Azure Pronunciation Assessment**：探测表明 Edge 的免费端点是
+  TTS-only（识别路径全 404），真正能打分的是 Azure 付费服务（401）。所以识别
+  走**浏览器自带**（Edge 上即微软语音，无 key、录音不出浏览器），打分用
+  **本站自己的规则**。若将来要音素级打分，需要 Azure 订阅 + 明确授权。
 
 ### 3. 四个缺内容的常规字（几分钟即可）
 
@@ -136,6 +142,15 @@ POST /api/admin/chars/generate
 `undefined` → 崩在 `.role`，看起来像功能坏了。**规则**：路由新增 store 调用，
 必须同步补 mock，否则失败原因会被错误信息掩盖。
 
+### 11. `useState(() => 探测浏览器能力())` 会 hydration mismatch
+
+`PronouncePanel` 最初写 `useState(() => isSpeechSupported())`：服务端没有
+`window` → false，客户端 → true，React 报 `Hydration failed` 并重建整棵树
+（每个字典页 3 条 Uncaught）。**规则**：任何只在浏览器成立的能力探测
+（`SpeechRecognition`、`localStorage`、`matchMedia`）都必须
+`useState<boolean | null>(null)` + `useEffect` 里探测，让服务端与客户端先渲染
+同一个占位符。单测看不见这类问题，只有真机走查或 build 能抓。
+
 ---
 
 ## 四、数据资产一览（这一轮新增的）
@@ -184,6 +199,6 @@ ICU 顺序不同）→ `<option>` 顺序两侧不一致 → React 整树重建 �
 
 ## 六、用户未决的问题（明天开工先问）
 
-1. 是否继续做 **D 语音评测**（唯一未做的方向；涉及外部付费服务 + 隐私，需明确授权）
+1. 是否升级到 **Azure Pronunciation Assessment**（音素级打分；需要订阅 + 学生录音上传到第三方，需明确授权）
 2. 是否做**跨班看板**（一页看到所有班的完成率）
-3. 是否 **push 到 `origin/main`**（目前有 48+ 个本地提交未推送）
+3. 是否 **push 到 `origin/main`**（目前有 50+ 个本地提交未推送）
