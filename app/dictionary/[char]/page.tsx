@@ -7,7 +7,8 @@ import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
 import { EmptyState } from '@/components/common/EmptyState';
 import { getChar, getCharDetail, isSuppPlaneChar } from '@/lib/chars';
 import { DictionaryDetailTabs } from '@/components/dictionary/DictionaryDetailTabs';
-import { wordsForChar } from '@/lib/char-words';
+import { wordsForChar, type WordEntry } from '@/lib/char-words';
+import { examplesForWord, type ExampleEntry } from '@/lib/char-examples';
 import { resolveLookAlikeView } from '@/lib/look-alike-data';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { buildDefinedTerm, buildBreadcrumbList, serializeJsonLd } from '@/lib/seo/jsonld';
@@ -30,6 +31,22 @@ export async function generateMetadata({ params }: { params: Promise<{ char: str
     path: `/dictionary/${encoded}`,
     ogType: 'article',
   });
+}
+
+/**
+ * Resolve the example sentences for a character's words.
+ *
+ * One lookup per word, done on the server (the table is 691 KB and must not
+ * reach the client bundle). A word with no sentence is simply absent from
+ * the map — the section renders no sentence for it instead of an empty slot.
+ */
+function buildExampleMap(words: WordEntry[]): Record<string, ExampleEntry[]> {
+  const map: Record<string, ExampleEntry[]> = {};
+  for (const entry of words) {
+    const sentences = examplesForWord(entry.word);
+    if (sentences.length > 0) map[entry.word] = sentences;
+  }
+  return map;
 }
 
 export default async function DictionaryDetailPage({ params }: Props) {
@@ -112,6 +129,7 @@ export default async function DictionaryDetailPage({ params }: Props) {
           char={data}
           words={wordsForChar(data.char)}
           lookAlikes={resolveLookAlikeView(data.char)}
+          examples={buildExampleMap(wordsForChar(data.char))}
         />
       </PageContainer>
       <Footer />

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import Link from 'next/link';
 import type { CharWithRelated } from '@/lib/chars-types';
 import type { WordEntry } from '@/lib/char-words';
+import type { ExampleEntry } from '@/lib/char-examples';
 import type { LookAlikeView } from '@/lib/look-alike';
 import { StrokeOrderCard } from './StrokeOrderCard';
 import { CharWords } from './CharWords';
@@ -29,9 +30,21 @@ interface Props {
    * must stay on the server side of the boundary.
    */
   lookAlikes?: LookAlikeView | null;
+  /**
+   * word → its example sentences, resolved on the server.
+   *
+   * Same reason as `words`: the table is a disk read, and the client must
+   * not import the reader.
+   */
+  examples?: Record<string, ExampleEntry[]>;
 }
 
-export function DictionaryDetailTabs({ char, words = [], lookAlikes = null }: Props) {
+export function DictionaryDetailTabs({
+  char,
+  words = [],
+  lookAlikes = null,
+  examples = {},
+}: Props) {
   // The stroke count comes from public/strokes/<char>.json and is 0 for the
   // ~13% of chars the upstream hanzi-writer data does not cover. Printing
   // "0 画" there would be a lie, so the count is omitted instead.
@@ -142,7 +155,7 @@ export function DictionaryDetailTabs({ char, words = [], lookAlikes = null }: Pr
             </div>
           )}
 
-          <CharWords char={char.char} words={words} />
+          <CharWords char={char.char} words={words} examples={examples} />
           <LookAlikeSection view={lookAlikes} />
         </div>
 

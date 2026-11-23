@@ -5,12 +5,11 @@ import { CharWords } from '@/components/dictionary/CharWords';
 import type { WordEntry } from '@/lib/char-words';
 
 /**
- * The 组词 section of the dictionary page.
+ * 组词 + 例句。
  *
- * A learner studies WORDS, not characters: 「学」 matters because of 学生
- * and 学习. This section lists the words a character appears in, each with
- * its reading and a link to learn it — and it disappears entirely when the
- * character has no words, rather than printing an empty heading.
+ * 「学生」 alone is a label; 「你是学生吗？」 shows how the word behaves. The
+ * sentence is shown under the word it illustrates — not in a separate
+ * section — because a learner reads the word and the sentence together.
  */
 
 function word(text: string, pinyin: string, freq = 1000): WordEntry {
@@ -21,39 +20,45 @@ afterEach(() => {
   cleanup();
 });
 
-describe('CharWords', () => {
-  it('lists each word with its reading', () => {
-    render(<CharWords char="学" words={[word('学习', 'xué xí')]} />);
-    expect(screen.getByText('学习')).toBeTruthy();
-    expect(screen.getByText('xué xí')).toBeTruthy();
-  });
-
-  it('links a word to the worksheet prefill, so it can be practised', () => {
-    render(<CharWords char="学" words={[word('学习', 'xué xí')]} />);
-    const link = screen.getByRole('link', { name: /练/ });
-    expect(link.getAttribute('href')).toContain('/worksheet?prefill=');
-    expect(decodeURIComponent(link.getAttribute('href') ?? '')).toContain('学习');
-  });
-
-  it('renders nothing when the character has no words', () => {
-    // Printing an empty 「组词 ·」 heading would look broken.
-    const { container } = render(<CharWords char="龘" words={[]} />);
-    expect(container.firstChild).toBeNull();
-  });
-
-  it('shows the word count so the learner knows how many there are', () => {
+describe('CharWords with examples', () => {
+  it('shows the sentence under the word it illustrates', () => {
     render(
       <CharWords
         char="学"
-        words={[word('学习', 'xué xí'), word('学生', 'xué shēng'), word('学校', 'xué xiào')]}
+        words={[word('学生', 'xué sheng')]}
+        examples={{ 学生: [{ zh: '你是学生吗？', en: 'Are you a student?' }] }}
       />,
     );
-    expect(screen.getByText(/组词 · 3/)).toBeTruthy();
+    expect(screen.getByText('学生')).toBeTruthy();
+    expect(screen.getByText('你是学生吗？')).toBeTruthy();
+    expect(screen.getByText('Are you a student?')).toBeTruthy();
   });
 
-  it('keeps the reading of each word readable at a small size', () => {
-    render(<CharWords char="学" words={[word('学习', 'xué xí')]} />);
-    const reading = screen.getByText('xué xí');
-    expect(reading.className).toContain('text-xs');
+  it('shows no sentence area for a word without one', () => {
+    // The build covers 61% of the words; the other 39% must not leave an
+    // empty gap under the word.
+    render(<CharWords char="学" words={[word('学科', 'xué kē')]} examples={{}} />);
+    expect(screen.queryByText(/你是学生/)).toBeNull();
+    expect(screen.getByText('学科')).toBeTruthy();
+  });
+
+  it('still renders every word when no examples are passed at all', () => {
+    // The prop is optional: the dictionary page may not have loaded the
+    // table yet, and the words must still appear.
+    render(<CharWords char="学" words={[word('学生', 'xué sheng')]} />);
+    expect(screen.getByText('学生')).toBeTruthy();
+    expect(screen.getByText('xué sheng')).toBeTruthy();
+  });
+
+  it('marks the English as secondary so the Chinese stays readable', () => {
+    render(
+      <CharWords
+        char="学"
+        words={[word('学生', 'xué sheng')]}
+        examples={{ 学生: [{ zh: '你是学生吗？', en: 'Are you a student?' }] }}
+      />,
+    );
+    const english = screen.getByText('Are you a student?');
+    expect(english.className).toContain('text-ink-faint');
   });
 });

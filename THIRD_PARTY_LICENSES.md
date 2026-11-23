@@ -43,3 +43,14 @@ This project bundles the following fonts, all under the [SIL Open Font License 1
 - Upstream: https://www.babelstone.co.uk/Fonts/BabelStoneHan.html
 - Copyright: © 2019 BabelStone.
 - License: SIL OFL 1.1
+
+## Tatoeba example sentences (CC-BY 2.0 FR)
+
+- Upstream: https://tatoeba.org — downloads at https://downloads.tatoeba.org/exports/
+- Used for: `data/examples.json`, the example sentences shown next to 组词 on the
+  dictionary page. Only sentences that carry an English translation are kept, and
+  only those whose Chinese characters are all in the 8105 通用规范 table, so a
+  traditional-script sentence is never shown next to a simplified headword.
+- License: CC-BY 2.0 FR — attribution required. The sentence pairs are used
+  verbatim; `scripts/build-examples.py` records exactly which files were fetched.
+- Rebuilt with: `npm run examples:build`
