@@ -19,7 +19,7 @@
 | 4 | 班级听写作业接通 | ✅ 已做（`?classId=&assignmentId=` → 服务端取词） |
 | 5 | 音素展示 | ✅ 已做（「最弱的音」最多 3 个） |
 | 6 | 语音用量看板 | ✅ 已做（`/admin/speech` 三卡 + 最近 20 条） |
-| 7 | 4 个 BMP 字 | ⬜ **卡在 AI 未配置**（`app_config` 无 `ai.api_key`） |
+| 7 | 4 个 BMP 字 | ✅ 已补齐词条，逐页核对了四篇故事正文 |
 | 8 | 班级 401 英文 | ✅ 已做（`unauthorizedForLogin()`，11 处） |
 | 9 | 集成测试空转 | ✅ 已做（`it.skipIf` + 顶层探测，实测 4 passed） |
 | 10 | README 未更新 | ✅ 已做（功能/语音配置/测试数字/路线图） |
@@ -311,7 +311,7 @@ data/content/齉.json  缺
 `data/strokes-manifest.json` 里 `齉` 在 `missing`（总缺 1239，其余 1238 个都在增补平面，
 详情页已有「字库不支持该字符」空态）。
 
-**⬜ 未做 —— 需要 AI 凭据**
+**补录结果**：四份 JSON 已写入 `data/content/`。逐一访问 `/stories/乜`、`/stories/亟`、`/stories/龠`、`/stories/齉`，均返回 200，页面显示完整正文。读音、释义及古籍用例据教育部《重编国语辞典修订本》核对：[乜](https://www.moedict.tw/乜)、[亟](https://www.moedict.tw/亟)、[龠](https://www.moedict.tw/龠)、[齉](https://www.moedict.tw/齉)。下文保留初次排查时的自动生成方案。
 
 实测 `app_config` 里**没有 `ai.api_key`**（只有 `ai.model = gpt-4o-mini` 等），
 `/api/admin/chars/generate` 会逐字失败、计数不动。所以这一步卡在**配置**上，
@@ -478,11 +478,7 @@ lib/azure-speech.ts:42       export type SpeechConfigKey      ← 全仓零引�
 全量 **3664 passed / 18 skipped / 0 failed**（338 文件，332 通过 / 6 跳过），
 `tsc` 干净，`lint` 0 error，真机走查 6 项全过（见各条「验收（实测）」）。
 
-**只剩一项**：
-
-| # | 项 | 为什么停 |
-|---|---|---|
-| 7 | 4 个 BMP 字缺内容 | 卡在**配置**：`app_config` 里没有 `ai.api_key`，生成接口会逐字失败 |
+**清单 11/11 已完成。** 第 7 项的条目及验收记录见上文。Azure 精评的真实录音验收另行跟踪。
 
 本轮改动已提交：`c40ad11a7`（50 个文件，+2011 / −161）。**55 个本地提交待 push。**
 

@@ -1,0 +1,13 @@
+{
+  "char": "龠",
+  "pinyin": "yuè",
+  "level": 2,
+  "dict": {
+    "meaning_zh": "古代吹管乐器。也用作古代容量单位，二龠为一合。",
+    "meaning_en": "an ancient wind instrument; an old measure of capacity equal to half a gě",
+    "pinyin_alt": ["yuè"]
+  },
+  "etymology": {
+    "story": "古书里遇到“龠”（yuè），先看旁边写的是奏乐还是量东西。说到奏乐，龠是一种古代吹管乐器，通常用竹管制成。翻到《汉书·律历志》，龠却和合、升、斗、斛排在一起。在这份度量表里，龠是最小的一项，两龠才有一合。这里的“合”读 gě。认得同一个字的两种用法，就能读懂乐师手里的龠，也能算清量器里的两龠。"
+  }
+}
