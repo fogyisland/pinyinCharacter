@@ -22,8 +22,9 @@
 | `59077710d` | **作业完成状态（第二期）** | `class_submissions` 表；学生勾选才算完成；老师看「已完成 N / M 人」 |
 | `d771cb5a2` | **例句（C）** | Tatoeba CC-BY；4382 词 / 691 KB；每词最多 2 句中英对照 |
 | `5b7062e43` | **跟读（D）** | 浏览器 SpeechRecognition（Edge 上即微软语音）+ 本站自比对；逐字判定 exact/tone/similar/wrong |
+| （本轮） | **Azure 音素级精评（D+）** | 可选付费路径；音节级分数；配额；后台配置 + 测试连接 |
 
-测试规模：起步 3152 → 现在 **3485 passed / 21 skipped / 0 failed**。
+测试规模：起步 3152 → 现在 **3614 passed / 21 skipped / 0 failed**。
 
 ---
 
@@ -51,10 +52,11 @@
 - **D. 语音评测** —— ✅ 已完成（`5b7062e43`）：`lib/pronunciation.ts`（逐字判定 +
   滑窗对齐）、`lib/pronunciation-client.ts`（浏览器 SpeechRecognition 封装）、
   `components/dictionary/PronouncePanel.tsx`。
-  **没有用 Azure Pronunciation Assessment**：探测表明 Edge 的免费端点是
-  TTS-only（识别路径全 404），真正能打分的是 Azure 付费服务（401）。所以识别
-  走**浏览器自带**（Edge 上即微软语音，无 key、录音不出浏览器），打分用
-  **本站自己的规则**。若将来要音素级打分，需要 Azure 订阅 + 明确授权。
+  首版**没有用 Azure Pronunciation Assessment**（当时没有订阅）：识别走
+  **浏览器自带**（Edge 上即微软语音，无 key、录音不出浏览器），打分用
+  **本站自己的规则**（字级判定）。
+- **D+ Azure 音素级精评** —— ✅ 已完成（2026-11-23）：用户提供订阅与后台配置后
+  在免费路径之上加了一条**可选的付费路径**。见下一节。
 
 ### 3. 四个缺内容的常规字（几分钟即可）
 
@@ -74,6 +76,77 @@ POST /api/admin/chars/generate
 
 接口内部每条间隔 1 秒，四条几秒钟。**注意**：`齉` 缺笔画数据，字源页的
 字形演变会只剩楷书，这是数据缺失不是代码 bug。
+
+---
+
+## 二之二、Azure 音素级精评（2026-11-23）
+
+用户提供订阅 + 后台配置后，在「跟读」之上加了一条**可选**的付费路径。
+它不是替换，是叠加：没有 key 的站点仍然是原来那套（浏览器识别 + 本站判定）。
+
+### 分层
+
+| 文件 | 职责 |
+|---|---|
+| `lib/azure-speech.ts` | 配置读取（DB 优先、env 后备）、失败分类、评估头、每日上限、**凭据验证** |
+| `lib/azure-assessment.ts` | 调 Azure 短音频端点、把冗长回复压成三层（词/音节/音素） |
+| `lib/speech-types.ts` | 纯类型（**无 import**）—— 面板要 import，`import type` 也会被 bundler 追踪，这是本仓踩过两次的坑 |
+| `lib/speech-store.ts` | 记分（谁/哪词/四分）、数今日次数（配额的唯一来源） |
+| `lib/pronunciation-recorder.ts` | Web Audio 录音 → 单声道 → 16 kHz → WAV |
+| `lib/api-speech.ts` | 客户端封装（状态探测返回 **两个** 布尔） |
+| `app/api/speech/assess/route.ts` | GET 探测 + POST 打分（登录、配额、大小） |
+| `app/api/admin/speech/config/route.ts` | 后台读写配置（key 永不回显、空值不清空、region 校验） |
+| `app/api/admin/speech/verify/route.ts` | 测试连接（只测已存的那组，打令牌端点，不计费） |
+| `components/admin/SpeechConfigForm.tsx` | 三个字段 + 测试连接 + 判定结果 |
+| `app/admin/speech/page.tsx` | 配置页 + 「怎么拿到区域和密钥」四步 |
+| `scripts/migrations/2026-11-23-speech-assessments.sql` | 记分表 |
+
+### 五个决定（都有理由，不要随手改）
+
+1. **录音只到本站，不到浏览器直连 Azure。** key 在服务端，浏览器永远拿不到。
+   录音存在内存里、随请求丢弃，不落盘、不进日志。
+2. **没有 key 时按钮根本不出现。** 不是灰掉、不是点了报错 —— 上传声音必须
+   是显式选择的结果，不能是「代码能做就做了」。
+3. **检测返回两个布尔**：`configured`（站长配了 key）与 `loggedIn`（调用者有
+   会话）。合成一个会让面板要么给游客一个必然 401 的按钮，要么把已付费的
+   功能对所有人藏起来。走查实测这两种文案都对。
+4. **每日上限是配额，不是礼仪。** Azure 按音频秒计费；成功才记一条，
+   400/429/5xx 都不记（那些没花钱）。`0` = 不限。
+5. **失败分六类，每类对应动作**：auth 去后台改 key、rate-limit 等一下重试、
+   upstream 稍后再试、unconfigured 回退免费路径、bad-request 重读、unknown 兜底。
+   一个 429 报成「密钥错误」会让管理员去改一个没问题的密钥。
+
+### 测试连接查的是「已存的那组」
+
+表单里 key 框永远是空的（读不到已存值）。所以 verify 只能测**已保存**的
+region+key。这不是妥协：它语义明确，也不用把密钥在浏览器里多传一次。
+测试打 `https://<region>.api.cognitive.microsoft.com/sts/v1.0/issueToken`
+—— 只验凭据、不收音频、**不产生计费**。401 的文案必须同时点名 region 和 key：
+两者都在同一页复制，错 region 产生的 401 与错 key 一模一样。
+
+### 顺手修的两个真问题
+
+- **`unauthorized()` 会说英文 `unauthorized`**，学生看到的是一句英文。
+  改成 `unauthorized('login_required', '精评需要登录后使用。跟读不需要登录，可以先用它。')`。
+- **`buildAssessmentHeader` 缺 `EnableProsodyAssessment`**：Azure 不给
+  `ProsodyScore`，声调/语调错误会被当成满分。补上 `Dimension: 'Comprehensive'`
+  + `EnableProsodyAssessment: true`。
+
+### 验收
+
+- 全量 **3614 passed / 21 skipped / 0 failed**（+129 个新测试）
+- lint 0 errors、tsc 干净
+- 迁移已应用：31 文件 / 77 语句（新增 `speech_assessments`）
+- 真机走查 `.tmp/azure-speech-walkthrough.mjs`：
+  ```
+  /admin/speech：三个字段 ✓ key 是 password 且为空 ✓ 测试连接禁用 ✓
+                 门户四步文案 ✓ F0 免费层 ✓ 不落盘说明 ✓
+  DOM 里没有 key 的回显 ✓
+  字典页（无 key）：无「精评」按钮、无「需要登录」、无上传提示，免费路径在 ✓
+  字典页（有 key + 游客）：无「精评」按钮、「需要登录后使用」在、无上传提示 ✓
+  390px：无横向滚动、三个字段都在视口内 ✓
+  console errors 0
+  ```
 
 ---
 
@@ -151,6 +224,36 @@ POST /api/admin/chars/generate
 `useState<boolean | null>(null)` + `useEffect` 里探测，让服务端与客户端先渲染
 同一个占位符。单测看不见这类问题，只有真机走查或 build 能抓。
 
+### 12. 服务端才知道的布尔值，必须走「探测接口」而不是「页面里猜」
+
+精评按钮是否出现有两个条件，都在服务端：站长配了 key（`configured`）、
+调用者登录了（`loggedIn`）。页面里猜任何一个都会错：猜 key 会把功能对所有人
+藏起来，猜 login 会给游客一个必然 401 的按钮。**规则**：服务端才知道的条件，
+由 `GET /api/xxx` 明确返回**两个分开的布尔**，面板两个都读、两种文案分开写。
+把两个条件合成一个布尔是本轮已经修掉的一个缺陷。
+
+### 13. 后台密钥表单：**空值 = 不改**，且接口必须有对应语义
+
+表单读不到已存的 key，所以 key 框渲染时一定是空的。如果「空值」被当成
+「删除」，管理员每次点保存都会把密钥擦掉，功能静默失效——而 UI 看起来
+完全正常。**规则**：只要一个字段是「写不可读」（密码、密钥、token），
+PUT 语义必须是「空/缺 = 不改」；同时配一条「测试连接」，否则保存成功
+和密钥真的可用是两件事。
+
+### 14. 验证付费凭据要用**不计费**的端点
+
+「测试连接」如果打的是评估端点，每点一次就产生一次计费，而且还要构造
+一段音频。改用令牌端点（`<region>.api.cognitive.microsoft.com/sts/v1.0/
+issueToken`）：只验凭据、不收音频、**零成本**。401 的文案必须同时点名
+region 和 key —— 两者从同一页复制，错 region 与错 key 的响应一模一样。
+
+### 15. 付费接口的配额必须在**读 body 之前**判
+
+`/api/speech/assess` 的每日上限如果放在读完 `arrayBuffer()` 之后，一个
+6 MB 的重试循环仍然会把内存和带宽打满，而且每次都要先把音频读完才知道
+该不该拒绝。**规则**：配额 → 鉴权 → 体积 → 内容，顺序固定。同样地，
+只有**成功**的打分才记入配额：429/5xx 没花钱，不能吃掉学生的次数。
+
 ---
 
 ## 四、数据资产一览（这一轮新增的）
@@ -199,6 +302,5 @@ ICU 顺序不同）→ `<option>` 顺序两侧不一致 → React 整树重建 �
 
 ## 六、用户未决的问题（明天开工先问）
 
-1. 是否升级到 **Azure Pronunciation Assessment**（音素级打分；需要订阅 + 学生录音上传到第三方，需明确授权）
-2. 是否做**跨班看板**（一页看到所有班的完成率）
-3. 是否 **push 到 `origin/main`**（目前有 50+ 个本地提交未推送）
+1. 是否做**跨班看板**（一页看到所有班的完成率）
+2. 是否 **push 到 `origin/main`**（目前有 50+ 个本地提交未推送）

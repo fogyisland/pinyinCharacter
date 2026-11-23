@@ -25,6 +25,7 @@ export type AuditEvent =
   | 'user_reenabled'
   | 'ai_config_updated'
   | 'ai_call_logged'
+  | 'speech_config_updated'
   | 'tts_config_updated'
   | 'scheduler_config_updated'
   | 'scheduler_manual_trigger'
@@ -130,6 +131,7 @@ export const AUDIT_EVENTS = [
   'user_reenabled',
   'ai_config_updated',
   'ai_call_logged',
+  'speech_config_updated',
   'tts_config_updated',
   'scheduler_config_updated',
   'scheduler_manual_trigger',
@@ -237,6 +239,7 @@ export const EVENT_LABEL: Record<AuditEvent, string> = {
   user_reenabled: '重新启用用户',
   ai_config_updated: '更新 AI 配置',
   ai_call_logged: 'AI 调用',
+  speech_config_updated: '更新语音评测配置',
   tts_config_updated: '更新 TTS 配置',
   scheduler_config_updated: '更新定时器配置',
   scheduler_manual_trigger: '手动触发定时器',
@@ -377,6 +380,8 @@ export function formatLogMessage(
       return `更新 AI 配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
     case 'ai_call_logged':
       return `AI 调用: ${str(m.feature) || '?'}`;
+    case 'speech_config_updated':
+      return `更新语音评测配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;
 
     case 'tts_config_updated':
       return `更新 TTS 配置${Array.isArray(m.keys) && m.keys.length ? `(${join(m.keys as string[])})` : ''}`;

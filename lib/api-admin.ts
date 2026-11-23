@@ -99,6 +99,45 @@ export async function updateTtsConfigRequest(
   });
 }
 
+/** The shape the speech config route answers with. */
+export interface SpeechConfigPayload {
+  config: Record<string, string>;
+  hasKey: boolean;
+}
+
+/** What 「测试连接」 concluded. */
+export interface SpeechVerifyPayload {
+  ok: boolean;
+  reason: string | null;
+  message: string;
+}
+
+/**
+ * Test the SAVED region + key against Azure.
+ *
+ * Only the stored pair can be tested — the form never holds the key. The
+ * caller must save first, and the route's message says so.
+ */
+export async function verifySpeechConfigRequest(): Promise<ApiResult<SpeechVerifyPayload>> {
+  return call('/api/admin/speech/verify', { method: 'POST' });
+}
+
+/**
+ * Save the Azure Speech region and/or key.
+ *
+ * An empty field means "unchanged", so the form can safely send both fields
+ * every time without wiping the stored key it cannot display.
+ */
+export async function updateSpeechConfigRequest(
+  body: Record<string, string>,
+): Promise<ApiResult<SpeechConfigPayload>> {
+  return call('/api/admin/speech/config', {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function grantAdminMembershipRequest(body: {
   userId: number;
   planKey: string;

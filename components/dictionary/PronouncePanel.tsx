@@ -16,6 +16,9 @@ import {
   type CharReading,
   type Comparison,
 } from '@/lib/pronunciation';
+import { recordOnce, RECORD_FAILURE_MESSAGES } from '@/lib/pronunciation-recorder';
+import { assessWithAzure, fetchAssessStatus, type SpeechAvailability } from '@/lib/api-speech';
+import type { Assessment } from '@/lib/speech-types';
 
 /**
  * 跟读 —— read the word back and see how it compared.
@@ -49,6 +52,8 @@ interface Attempt {
   comparison: Comparison;
   /** Where the window started in `heard`. */
   offset: number;
+  /** Azure's syllable scores, when the paid path answered. */
+  assessment?: Assessment;
 }
 
 /** Advice → the sentence the learner reads. */
@@ -83,9 +88,33 @@ export function PronouncePanel({ word, pinyin, chars }: PronouncePanelProps) {
    * and the probe happens after mount where it belongs.
    */
   const [supported, setSupported] = useState<boolean | null>(null);
+  /**
+   * Whether the site has an Azure key — the PAID path.
+   *
+   * `null` until the probe runs, for the same hydration reason as
+   * `supported`. It starts hidden on purpose: a button that uploads a
+   * learner's voice must not appear just because the code could do it.
+   */
+  const [azure, setAzure] = useState<SpeechAvailability | null>(null);
+  const [assessing, setAssessing] = useState(false);
 
   useEffect(() => {
     setSupported(isSpeechSupported());
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchAssessStatus()
+      .then((availability) => {
+        if (!cancelled) setAzure(availability);
+      })
+      .catch((failure: unknown) => {
+        console.warn('[pronounce] could not read the assessment status', failure);
+        if (!cancelled) setAzure({ configured: false, loggedIn: false });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const listen = useCallback(async () => {
@@ -127,6 +156,67 @@ export function PronouncePanel({ word, pinyin, chars }: PronouncePanelProps) {
     setPhase('result');
   }, [chars]);
 
+  /**
+   * Record the word and have Azure score it.
+   *
+   * This is the ONLY path that sends audio anywhere: the recording goes to
+   * our own route, which forwards it to Azure and drops it. The browser-only
+   * path above never leaves the machine, which is why the two are separate
+   * buttons rather than one button with a hidden upgrade.
+   */
+  const assess = useCallback(async () => {
+    setAssessing(true);
+    setError(null);
+    setAttempt(null);
+    setHasTried(true);
+    const recorded = await recordOnce();
+    if (!recorded.ok) {
+      setAssessing(false);
+      setError(RECORD_FAILURE_MESSAGES[recorded.reason]);
+      return;
+    }
+    const result = await assessWithAzure(recorded.wav, word);
+    setAssessing(false);
+    if (!result.ok) {
+      // A broken paid path must not take the free one down with it: the
+      // error is shown and the local button stays available.
+      setError(result.message);
+      return;
+    }
+    // Turn Azure's per-syllable scores into the same per-character marks the
+    // local path produces, so the learner reads one interface.
+    const assessments = result.assessment.syllables;
+    const graded: Comparison['verdicts'] = assessments
+      .slice(0, chars.length)
+      .map((syllable) => {
+        if (syllable.accuracy >= 80) return 'exact';
+        if (syllable.accuracy >= 50) return 'tone';
+        return 'wrong';
+      });
+    // Azure returns one syllable per character it heard. A skipped character
+    // is a miscue with no syllable, so the marks must be PADDED to the
+    // target's length — otherwise a char with no mark would show as wrong by
+    // accident of an undefined class rather than because it was missing.
+    while (graded.length < chars.length) graded.push('missing');
+    const heardScore = result.assessment.pronunciation;
+    setAttempt({
+      heard: Array.from(result.assessment.recognised),
+      comparison: {
+        verdicts: graded,
+        score: Math.round(heardScore),
+        advice:
+          heardScore >= 90
+            ? 'perfect'
+            : assessments.some((s) => s.accuracy < 50)
+              ? 'sounds'
+              : 'tones',
+      },
+      offset: 0,
+      assessment: result.assessment,
+    });
+    setPhase('result');
+  }, [chars.length, word]);
+
   if (chars.length === 0) return null;
 
   return (
@@ -144,17 +234,46 @@ export function PronouncePanel({ word, pinyin, chars }: PronouncePanelProps) {
       {supported === false ? (
         <p className="mt-3 text-xs text-ink-faint">{FAILURE_MESSAGES.unsupported}</p>
       ) : supported === true ? (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => void listen()}
-            disabled={phase === 'listening'}
-            className="rounded bg-seal px-3 py-1.5 text-sm text-white hover:bg-seal/80 disabled:bg-ink/20"
-          >
-            {phase === 'listening' ? '正在听…' : hasTried ? '再读一遍' : '跟读（点一下开始）'}
-          </button>
-          {phase === 'listening' ? (
-            <span className="text-xs text-ink-faint">请读完整个词，然后等一下。</span>
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void listen()}
+              disabled={phase === 'listening' || assessing}
+              className="rounded bg-seal px-3 py-1.5 text-sm text-white hover:bg-seal/80 disabled:bg-ink/20"
+            >
+              {phase === 'listening' ? '正在听…' : hasTried ? '再读一遍' : '跟读（点一下开始）'}
+            </button>
+            {azure?.configured && azure.loggedIn ? (
+              <button
+                type="button"
+                onClick={() => void assess()}
+                disabled={phase === 'listening' || assessing}
+                className="rounded border border-seal px-3 py-1.5 text-sm text-seal hover:bg-seal/10 disabled:opacity-50"
+              >
+                {assessing ? '正在评测…' : '精评（Azure 音素打分）'}
+              </button>
+            ) : null}
+            {phase === 'listening' || assessing ? (
+              <span className="text-xs text-ink-faint">请读完整个词，然后等一下。</span>
+            ) : null}
+          </div>
+          {/* Two different reasons the 精评 button is missing, and two
+              different sentences: a visitor needs to log in, while everyone
+              needs the operator to configure a key. Showing one message for
+              both is how a visitor waits for an admin who already did the
+              work. */}
+          {azure?.configured && azure.loggedIn === false ? (
+            <p className="text-xs text-ink-faint">
+              精评（Azure 音素打分）需要登录后使用。跟读不用登录，现在就能用。
+            </p>
+          ) : null}
+          {/* The paid button uploads audio; saying so BEFORE the click is the
+              honest thing to do, not a footnote after it. */}
+          {azure?.configured && azure.loggedIn ? (
+            <p className="text-xs text-ink-faint">
+              精评会把这段录音传给 Azure 语音服务打分（录音不留在本站）。
+            </p>
           ) : null}
         </div>
       ) : null}
@@ -202,6 +321,27 @@ export function PronouncePanel({ word, pinyin, chars }: PronouncePanelProps) {
           <p className="text-xs text-ink-faint">
             听到的：<span data-testid="pronounce-heard">{attempt.heard.join('')}</span>
           </p>
+
+          {/* Azure's per-syllable scores are the whole reason for the paid
+              call: 88 vs 96 tells the learner WHICH syllable to fix, which
+              the local comparison can only guess at. */}
+          {attempt.assessment ? (
+            <ul
+              data-testid="pronounce-syllables"
+              className="flex flex-wrap gap-2 text-xs text-ink-soft"
+            >
+              {attempt.assessment.syllables.map((syllable) => (
+                <li
+                  key={syllable.syllable}
+                  className="rounded bg-paper px-2 py-0.5"
+                  title={`准确 ${syllable.accuracy} · 流利 ${syllable.fluency} · 完整 ${syllable.completeness}`}
+                >
+                  <span className="font-kai">{syllable.syllable}</span>
+                  <span className="ml-1 tabular-nums">{Math.round(syllable.accuracy)}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
     </section>

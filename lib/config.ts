@@ -68,6 +68,14 @@ const KEY_VALIDATORS: Record<string, (v: string) => boolean> = {
   'ai.base_url': isValidAiBaseUrl,
   'ai.api_key': (v) => v.length <= 256,
   'ai.model': (v) => v.length > 0 && v.length <= 64,
+  /**
+   * Azure Speech: the region goes into a hostname, so it must be a plain
+   * lowercase identifier. Anything with a slash or a dot could redirect the
+   * request — carrying the subscription key with it.
+   */
+  'speech.region': (v) => /^[a-z]{2,20}$/.test(v),
+  'speech.key': (v) => v.length > 0 && v.length <= 512,
+  'speech.daily_limit': (v) => /^\d{1,4}$/.test(v),
   'ai.rate_limit_per_user_per_day': (v) => {
     const n = parseInt(v, 10);
     return Number.isInteger(n) && n >= 0 && n <= 1000;
