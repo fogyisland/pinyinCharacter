@@ -5,7 +5,30 @@
 用途：今晚按批次动手，每项都写了**证据（文件:行）**与**验收方法**，可直接照做。
 
 测试口径：`npx vitest run --testTimeout=60000`（默认 5s 在满并发下会假失败）。
-当前全量：**326 passed files（333 总）/ 3615 passed tests（3636 总）**，lint 0 error，tsc 干净。
+扫描时全量：**326 passed files（333 总）/ 3615 passed tests（3636 总）**，lint 0 error，tsc 干净。
+
+---
+
+## ⏱ 进度（滚动更新）
+
+| # | 项 | 状态 |
+|---|---|---|
+| 1 | 缺表容错 | ✅ 已做（改 `lib/speech-schema-error.ts` + 路由翻译，**fail closed**） |
+| 2 | `.worktrees/` 忽略 | ✅ 已做（`.gitignore` 一行） |
+| 3 | SEO 标题 / canonical / sitemap | ✅ 已做（15 个页面 + 9 条 sitemap） |
+| 4 | 班级听写作业接通 | ✅ 已做（`?classId=&assignmentId=` → 服务端取词） |
+| 5 | 音素展示 | ✅ 已做（「最弱的音」最多 3 个） |
+| 6 | 语音用量看板 | ✅ 已做（`/admin/speech` 三卡 + 最近 20 条） |
+| 7 | 4 个 BMP 字 | ⬜ **卡在 AI 未配置**（`app_config` 无 `ai.api_key`） |
+| 8 | 班级 401 英文 | ✅ 已做（`unauthorizedForLogin()`，11 处） |
+| 9 | 集成测试空转 | ✅ 已做（`it.skipIf` + 顶层探测，实测 4 passed） |
+| 10 | README 未更新 | ✅ 已做（功能/语音配置/测试数字/路线图） |
+| 11 | 零引用导出 | ✅ 已做（删 `ASSESSMENT_SCORES`、`SpeechConfigKey`） |
+
+测试规模：**3664 passed / 18 skipped / 0 failed**（338 文件，332 通过 / 6 跳过）。
+
+> 跳过数从 21 降到 18：`seo.test.ts` 的 4 条现在真的会跑（dev 在时 4 passed）。
+
 
 ---
 
@@ -26,13 +49,26 @@
 **修法**（本仓已有现成工具，`lib/db-error.ts`）
 
 - `isMissingTableError(error)` 已在 `wecom` / `config` / `setup` 使用
-- 让 `countAssessmentsToday` 捕获 `isMissingTableError` → 返回 **0**（视作「今天还没用」，
-  不让配额判断把功能打死），并 `console.warn` 明确提示
-  「缺少 speech_assessments 表：请运行 npm run db:migrate」
-- **不要**让它返回 `null` 或抛出：配额是防账单的，宁可放行一次也不能让整条链路 500
-- 补一个单测：`query` 抛 `{ code: 'ER_NO_SUCH_TABLE' }` → 返回 0 且发出 warn
+- ~~让 `countAssessmentsToday` 捕获并返回 0~~ —— **实际做法相反，见下**
 
-**验收**：`npx vitest run tests/unit/lib/speech-store.test.ts`
+**✅ 实际做法（2026-11-23 夜）**
+
+第一版想「缺表就返回 0、别把功能打死」。想清楚后改成 **fail closed**：
+
+- 配额存在的**唯一理由**是挡住「重试循环 → 无上限账单」。配额只能数
+  `speech_assessments` 的行；表不存在时能数到的永远是 0，而「0 次」在配额判断里
+  等于「还没用完」——付费路径会**完全失去上限**，正好是配额要防的事。
+- 所以 `countAssessmentsToday` **故意不吞异常**（`lib/speech-store.ts` 的注释写了
+  这个不对称：读失败=配额数不出→必须抛；写失败=只丢账单记录→只 warn）。
+- 新增 `lib/speech-schema-error.ts`：`isSpeechTableMissing`（**还核对错误里是否
+  点名 `speech_assessments`**，否则缺的是 `users` 时会把原因说错）+
+  `translateSpeechSchemaError` → 503 `schema_migration_pending` +
+  「请管理员运行 npm run db:migrate 后重试；跟读功能不受影响」。
+- 路由把 translator 传给 `withErrorHandling`（和 webfont 的现成做法一致）。
+
+**验收**：`tests/unit/lib/speech-schema-error.test.ts`、`tests/unit/lib/speech-store.test.ts`、
+`tests/unit/app/api/speech-assess.test.ts`（37 用例全绿）。
+
 
 ---
 
@@ -101,6 +137,27 @@ git status --short                                    → ?? .worktrees/
   client 页不能 `export const metadata`，要拆出一个 server 层（外层 `page.tsx`
   做 metadata + 内层渲染原组件），或改用 `<Head>` 之外的正确做法
 
+**✅ 实际做法（2026-11-23 夜）**
+
+- 全部换成 `generateMetadata` + `buildMetadata`（连 `/about` `/guide` `/notes`
+  `/ancient` 的静态 metadata 也换了 —— 它们本来就没有 canonical）
+- `/dictation` 拆成 **`app/dictation/page.tsx`（server，只做 metadata）
+  + `app/dictation/DictationClient.tsx`（原客户端内容）**。这是唯一正确的做法：
+  `'use client'` 的页面不能导出 `generateMetadata`
+- 详情页补了 title/canonical 的：`/rare-chars/[char]` `/stories/[char]`
+  `/etymology/[char]` `/sutra/[id]`
+  （`/dictionary/[char]` `/poetry/[id]` 本来就有）
+- **未做**：`/worksheet/[id]` `/classes/[id]` `/ancient-texts` —— 前两个是登录后
+  页面（无 SEO 价值），`/ancient-texts` 是内部工具页
+
+**sitemap**：`app/sitemap.ts` 加了 9 条（`/pinyin` `/worksheet`
+`/worksheet/practice` `/dictation` `/game` `/guide` `/about` `/notes` `/membership`），
+`tests/unit/app/sitemap-readme-drift.test.ts` 的断言从 2 页扩到 11 页。
+
+**验收（实测）**：15 个公共路由**全部有自己的 title 且有 canonical**；首页的 title
+与 layout 相同是**正确**的（它就是首页）。sitemap 从 1377 → **1386** 条，
+9 个新页面全部在列，missing = []。
+
 **sitemap 缺 9 个公共页**（`app/sitemap.ts:63-102` 现有条目只有
 `/` `/dictionary` `/rare-chars` `/stories` `/poetry` `/ancient` `/sutra` + 4 个子 sitemap）
 
@@ -142,11 +199,42 @@ curl -s http://localhost:4444/sitemap.xml | grep -c '<loc>'
 
 **修法与注意点**
 
-- `DictationTabs` 增加读 `?items=`（JSON 或 `词|拼音` 逐行编码，二选一，注意 URL 长度上限，
-  10 个词没问题，但 200 条上限要截断到 60–80 条再进 URL，或只带前 N 条 + 提示「完整列表见班级页」）
-- `DictationPrep` 接收初始 items（受控组件已有 `items`/`onChange` 协议，**不要改协议**）
-- 班级页把 `payload.items` 渲染出来（词 + 拼音），学生至少看得见清单
-- 编码要 `encodeURIComponent`，并处理「学生手改 URL 塞进超长内容」→ 服务端/客户端都截断校验
+- ~~`DictationTabs` 增加读 `?items=`（JSON 或 `词|拼音` 逐行编码，注意 URL 长度上限）~~
+- ~~`DictationPrep` 接收初始 items~~
+- ~~班级页把 `payload.items` 渲染出来~~
+
+**✅ 实际做法（2026-11-23 夜）—— 换了方案，理由很硬**
+
+第一版把词表编码进 `?items=`。**实测 60 个词 = 5480 个字符**（URL 里每个汉字是
+9 个字符的 `%E5%AD%A6`）。代理在 2 KB 左右开始拒绝或截断，而一份作业可以有 200 条
+——「老师派了 30 个词，学生只看到 12 个」会成为常态且无提示。
+
+改成 **`/dictation?classId=<n>&assignmentId=<n>`**：
+
+- 链接只有 ~34 个字符，**永远完整**，与词数无关
+- 词表**只有一份真相**（班级库里那份），不存在「URL 里的副本被改/被截断」
+- 权限由已有的 `/api/classes/[id]` 判（非本班成员拿不到），所以链接本身不泄露内容
+- 新增 `lib/dictation-url.ts`（纯函数、零 import）：
+  `parseAssignmentLink`（拒绝 0/负数/小数/非数字/SQL 形状，永不抛）、
+  `buildAssignmentDictationHref`
+- `DictationTabs`：拿到链接 → `fetchClassDetail` → 找到那份作业 → **替换**草稿
+  （不是追加：学生是为这一份作业来的）；三种失败都有明确文案（作业被删 / 是字帖 / 班级拒绝）
+- 切换「出卷 ⇄ 报听写」时**保留 classId+assignmentId**，否则刷新后表单又空了
+- 班级页的听写链接旁显示「N 个词」，学生点之前就知道任务多大
+
+**验收（实测，真机）**
+
+```
+无链接：       无「来自班级作业」行，prep 空（且不发请求）
+有链接：       「来自班级作业「第 4 课听写」， 3 条」，表单里能看到 学生/老师/同学
+切到报听写：   URL 变成 ?tab=runner&classId=2&assignmentId=4，「来自班级作业」仍在
+作业被删：     role=alert「这份作业不在该班级里，可能已被老师删除」
+是字帖作业：   role=alert「这份作业是字帖，不是听写」
+班级拒绝：     role=alert 显示服务端那句「班级不存在」
+半截链接：     不发请求、不显示来源行
+'7 OR 1=1'：   不发请求
+```
+
 - 补测：`ClassDetailClient` 断言听写链接**带 query**；`DictationTabs` 断言能从参数建出 items
 
 **验收**：派一个听写作业 → 学生点「去听写」→ 表单里已经有那 10 个词。
@@ -169,7 +257,18 @@ curl -s http://localhost:4444/sitemap.xml | grep -c '<loc>'
 word 级），要么按 `Words[]` 分组（需要顺手把解析改成保留分组），要么只做「最差 3 个音素」
 的提示。**推荐后者**：一行「最弱：ue 86 / x 90」，性价比最高。
 
-**验收**：`PronouncePanelAzure.test.tsx` 加一条：phonemes 有值时出现「最弱」文案。
+**✅ 实际做法（2026-11-23 夜）**
+
+按「最弱几个」做，并定了一条口径：**低于 90 才点名，最多 3 个，最差在前**。
+
+- 94/96 这种读得好的，不点名 —— 列一串高分是成绩单，不是建议，还会让读得好的学生
+  以为自己错了
+- `weakestPhonemes()` 是纯函数，`[]` 时不渲染那块（不留空行）
+- 低于 60 用琥珀色标出（`text-amber-700`），其余 `text-ink-faint`
+
+**验收**：`PronouncePanelAzure.test.tsx` 两个新用例 ——
+`ue 58 / sh 82 / x 90 / eng 95` 时只出现 `ue 58` 和 `sh 82` 且 `ue` 在前；
+全部 94+ 时 `pronounce-phonemes` 根本不渲染。
 
 ---
 
@@ -184,7 +283,17 @@ word 级），要么按 `Words[]` 分组（需要顺手把解析改成保留分�
 今天总次数 / 活跃人数 / 平均分 / 最近 20 条（词 · 分 · 时间）。
 **不要**在这里展示录音（从来就不存）。
 
-**验收**：`/admin/speech` 能看到数字；无数据时显示空态而不是 0。
+**✅ 实际做法（2026-11-23 夜）**
+
+- `lib/speech-store.ts` 新增 `readSpeechUsage()`（读侧，和 `recordAssessment` 的写侧分开）
+- `/admin/speech` 顶部三张 `StatCard`：今日精评次数 / 今日使用人数 / 近 7 天平均分
+- 下方「最近的精评」表格：学生 · 练的词 · **听到的**（与目标不同才显示，这正是
+  「某个词全班都读错」的信号）· 分 · 时间
+- 空态是「还没有人用过精评」这句话，不是一张 0 的表
+- **读失败给空面板而不是报错**（这是给人看的读，不是账单的守卫）；缺表也一样
+- 有一条测试专门断言 SQL 里**不出现 `audio` / `wav`** —— 提醒后来人这张表不该存声音
+
+**验收（实测）**：`/admin/speech` 三卡 + 表格 + 空态都在，390px 下表格不溢出。
 
 ---
 
@@ -201,6 +310,21 @@ data/content/齉.json  缺
 
 `data/strokes-manifest.json` 里 `齉` 在 `missing`（总缺 1239，其余 1238 个都在增补平面，
 详情页已有「字库不支持该字符」空态）。
+
+**⬜ 未做 —— 需要 AI 凭据**
+
+实测 `app_config` 里**没有 `ai.api_key`**（只有 `ai.model = gpt-4o-mini` 等），
+`/api/admin/chars/generate` 会逐字失败、计数不动。所以这一步卡在**配置**上，
+不是代码：
+
+1. 后台 `/admin/ai` 配好 API key（或打开 mock 模式只验证链路）
+2. 再打：
+   ```
+   POST /api/admin/chars/generate
+   { "chars": ["乜","亟","龠","齉"], "fields": { "etymology_story": true } }
+   ```
+3. 注意 `齉` 无笔画数据，字源页字形演变只剩楷书 —— 数据缺失，不是 bug
+
 
 **现成接口**（在 dev 上直接打）
 
@@ -237,6 +361,19 @@ app/api/classes/[id]/members/[userId]/route.ts:32   1
 **修法**：统一 `unauthorized('login_required', '请先登录。登录后回到本页即可。')`。
 补测：任一路由断言 `error.message` 含中文字符。
 
+**✅ 实际做法（2026-11-23 夜）**
+
+没有在 11 处各写一句话，而是在 `lib/api-handler.ts` 里加了一个**共享出口**：
+
+```ts
+export const LOGIN_REQUIRED_MESSAGE = '请先登录，登录后回到本页即可。';
+export function unauthorizedForLogin(init?: ResponseInit) { ... }
+```
+
+`code` 保持 `'unauthorized'`（面板与测试都按它分支，只有给人看的那句话变了）。
+11 处全部换成 `unauthorizedForLogin()`。测试盯的是「这句话里**没有拉丁字母**」——
+将来谁改回英文，测试会红。
+
 ---
 
 ### 9. 集成测试写了但从来没跑
@@ -255,6 +392,23 @@ app/api/classes/[id]/members/[userId]/route.ts:32   1
 
 **修法**：把 `seo.test.ts` 的三个 `it.skip` 改成 `it.skipIf(!SERVER_UP)`，
 用 `fetch` 探一下 4444；dev 活着就跑，不在就跳。这样既不破坏 CI，也不再是永久死代码。
+
+**✅ 已做（2026-11-23 夜），但踩了一个坑**
+
+第一版把探测放在 `beforeAll` 里 → **仍然 4 条全跳**。原因：`it.skipIf(...)` 在
+**收集阶段**求值，早于任何 hook 运行，那时 `serverUp` 还是 `false`。
+
+改成**模块顶层 `await probeServer()`**（顶层 await 在 ESM 里合法），
+`it.skipIf(!serverUp)` 拿到的才是真实结果。实测 dev 在跑时 **4 passed**。
+
+另外两处细节：
+
+- `AbortSignal.timeout` 从 15s 提到 **60s**：dev 里首次访问某路由要现编译，
+  `/pinyin` 冷启动超过 15s，第一次跑就是这么「失败」的
+- 请求带 `setup_completed=1` cookie —— 否则未完成的站点会把每页重定向到 `/init`，
+  title 断言读到的是向导页，失败原因与 SEO 无关
+- 顺手加了第 4 条：sitemap 必须列 `/dictation` `/worksheet` `/pinyin` `/game`
+
 
 ---
 
@@ -278,7 +432,17 @@ app/api/classes/[id]/members/[userId]/route.ts:32   1
    「今天没用过」（第 1 项修完后的新行为）
 4. 测试数字改成 326 / 3615（顺手把「246 / 2500」改掉）
 
-**验收**：`curl -s localhost:4444/guide | grep 跟读` 有输出。
+**✅ 实际做法（2026-11-23 夜）**
+
+- 功能清单新增「教学功能（2026-11 起）」小节，八项一条不少
+- 新增「派生数据」命令块（`dict:tone` / `dict:words` / `lookalike:build` / `examples:build`）
+- 环境变量表补两行（Azure 的后备 key/region/limit）
+- 新增「语音评测（可选，付费）」小节：四步开通 + 缺表时的行为 + 「只存分数不存录音」
+- 测试数字改成实测值（**338 文件 / 3660 用例**）+ 补上「满并发要加
+  `--testTimeout=60000`」这条踩过的坑
+- 路线图补「教学层（已交付）」与「未完成：跨班看板 / 4 个缺字」
+
+**验收**：`/guide` 页面（就是 README）现在包含「跟读」「班级」「精评」等字样。
 
 ---
 
@@ -290,6 +454,8 @@ lib/azure-speech.ts:42       export type SpeechConfigKey      ← 全仓零引�
 ```
 
 删掉或接进使用点。`lint` 不报（导出不算 unused），但属于「写了没用」的债。
+
+**✅ 已删（2026-11-23 夜）**：两个都直接删除（没有使用点值得接）。
 
 ---
 
@@ -306,6 +472,23 @@ lib/azure-speech.ts:42       export type SpeechConfigKey      ← 全仓零引�
 6. 时间够就继续第二、三批；不够就停在干净的绿线上
 ```
 
+## 2026-11-23 夜的实际进度
+
+第一批 + 第二批（除第 7 项）+ 第三批三项（8/10/11）都已**做完并实测**：
+全量 **3664 passed / 18 skipped / 0 failed**（338 文件，332 通过 / 6 跳过），
+`tsc` 干净，`lint` 0 error，真机走查 6 项全过（见各条「验收（实测）」）。
+
+**只剩三项**：
+
+| # | 项 | 为什么停 |
+|---|---|---|
+| 7 | 4 个 BMP 字缺内容 | 卡在**配置**：`app_config` 里没有 `ai.api_key`，生成接口会逐字失败 |
+| — | 提交 | 这一大轮的改动**还没提交**（50 个文件：35 改 + 8 新增 + 7 个新测试） |
+| — | push | 54 个本地提交待推送（含本轮） |
+
+第 9 项也做完了：`seo.test.ts` 改成 `it.skipIf(!serverUp)` + **顶层 await 探测**
+（放在 `beforeAll` 里会永远跳过 —— 收集阶段早于 hook），实测 dev 在跑时 4 passed。
+
 ## 铁律（这轮已经踩过的坑，别再来一次）
 
 - **dev server 活着时绝不 `npm run build`**（`.next` 被清，dev 会 500）
@@ -313,8 +496,13 @@ lib/azure-speech.ts:42       export type SpeechConfigKey      ← 全仓零引�
   （类型放纯模块，本轮的 `lib/speech-types.ts` 就是为此而生）
 - 只在浏览器成立的能力探测必须 `useState<boolean|null>(null)` + `useEffect`，
   否则 hydration mismatch（本轮已踩）
+- **带 `'use client'` 的页面不能导出 `generateMetadata`** —— 要拆成 server 页面
+  + client 组件（`/dictation` 就是这么修的）
 - 后台「写不可读」的密钥字段，PUT 语义必须「空 = 不改」
-- 付费接口配额要在**读 body 之前**判，且只记成功
+- 付费接口配额要在**读 body 之前**判，且只记成功；**读失败必须 fail closed**
+  （返回 0 = 失去上限，正是配额要防的）（本轮想清楚后改的）
+- 把一个词表塞进 URL 前先算长度：汉字在 URL 里是 9 个字符，60 个词 = 5.5 KB，
+  代理会截断 → 用编号 + 服务端取，不要用内容
 - 路由新增 store 调用，记得同步补测试里的 `vi.mock`
 - 不 push
 
@@ -323,3 +511,6 @@ lib/azure-speech.ts:42       export type SpeechConfigKey      ← 全仓零引�
 - robots 里的 `Sitemap: http://localhost:3000/sitemap.xml` 是 dev 的兜底值；
   **上线前必须在 `/admin/settings/site-url` 配真实域名**（或 `NEXT_PUBLIC_SITE_URL`），
   否则 canonical 和 robots 都会指向 localhost
+- 走查用的账号 token：`.tmp/admin-token.json`（admin #1）、
+  `.tmp/walk-owner-token.json`（class #2 的老师 #111）。
+  **班级接口按成员身份判权限**，用 admin 的 cookie 读不到别人的班——这是对的，不是 bug

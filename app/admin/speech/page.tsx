@@ -1,7 +1,11 @@
 import { getAllConfig } from '@/lib/config';
 import { SpeechConfigForm } from '@/components/admin/SpeechConfigForm';
 import { PageHeader } from '@/components/admin/PageHeader';
+import { StatCard } from '@/components/admin/StatCard';
 import { SPEECH_DAILY_LIMIT_KEY } from '@/lib/azure-speech';
+import { readSpeechUsage, type SpeechUsage } from '@/lib/speech-store';
+import { formatDateTime } from '@/lib/format';
+import { Mic, Users, Gauge } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,12 +17,17 @@ export const dynamic = 'force-dynamic';
  *
  * Only the region is readable: the key is passed as a boolean. A page that
  * can render a secret is a page that leaks it through a screenshot.
+ *
+ * The usage panel below answers the two questions that decide whether the
+ * daily cap is right — "is anybody using this?" and "which words keep scoring
+ * low?". Without it the cap was a number nobody could justify.
  */
 export default async function AdminSpeechPage() {
   let region = '';
   let dailyLimit = '';
   let hasKey = false;
   let error: string | null = null;
+  let usage: SpeechUsage = { todayCount: 0, todayUsers: 0, avgScore: null, recent: [] };
 
   try {
     const all = await getAllConfig();
@@ -30,6 +39,11 @@ export default async function AdminSpeechPage() {
     error = (err as Error).message || '配置读取失败';
   }
 
+  // The usage read never throws (a missing table yields an empty panel), so
+  // it is deliberately outside the try above: a config read failing must not
+  // hide the usage figures, and vice versa.
+  usage = await readSpeechUsage();
+
   return (
     <div>
       <PageHeader
@@ -40,15 +54,82 @@ export default async function AdminSpeechPage() {
       {error && <p className="text-sm text-danger mb-4">配置读取失败：{error}</p>}
 
       <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <StatCard label="今日精评次数" value={usage.todayCount} icon={Mic} />
+          <StatCard label="今日使用人数" value={usage.todayUsers} icon={Users} />
+          <StatCard
+            label="近 7 天平均分"
+            value={usage.avgScore === null ? '—' : usage.avgScore}
+            icon={Gauge}
+          />
+        </div>
+
         {/* The form brings its own panel — wrapping it again would stack a
             card inside a card. */}
         <SpeechConfigForm
           initialConfig={{ 'speech.region': region, 'speech.daily_limit': dailyLimit }}
           initialHasKey={hasKey}
         />
+        <UsagePanel usage={usage} />
         <HowToPanel />
       </div>
     </div>
+  );
+}
+
+/**
+ * The most recent assessments.
+ *
+ * Reference, what was heard, the score, who and when. Nothing about the
+ * recording — there never was one to read.
+ */
+function UsagePanel({ usage }: { usage: SpeechUsage }) {
+  return (
+    <section className="card-paper rounded-lg max-w-xl">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 px-4 py-2.5">
+        <h2 className="font-kai text-base text-ink">最近的精评</h2>
+        <span className="text-xs text-ink-faint">最近 20 条 · 只记分数，不存录音</span>
+      </div>
+      {usage.recent.length === 0 ? (
+        <p className="p-4 text-sm text-ink-faint">
+          还没有人用过精评。配置好凭据后，学生在字词页点「精评」就会出现在这里。
+        </p>
+      ) : (
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-ink/10 text-left text-xs text-ink-soft">
+              <th className="px-4 py-1.5 font-normal">学生</th>
+              <th className="px-2 py-1.5 font-normal">练的词</th>
+              <th className="px-2 py-1.5 font-normal">听到的</th>
+              <th className="px-2 py-1.5 text-right font-normal">分</th>
+              <th className="px-4 py-1.5 text-right font-normal">时间</th>
+            </tr>
+          </thead>
+          <tbody>
+            {usage.recent.map((row) => (
+              <tr key={row.id} className="border-b border-ink/5 last:border-b-0">
+                <td className="px-4 py-1.5">
+                  {row.username ?? <span className="text-ink-faint">#{row.userId}</span>}
+                </td>
+                <td className="px-2 py-1.5 font-kai">{row.reference}</td>
+                <td className="px-2 py-1.5 text-ink-soft">
+                  {/* 「听到的」 differs from the target exactly when the
+                      learner said something else — which is the useful signal
+                      when a whole class keeps failing one word. */}
+                  {row.recognised === row.reference ? '—' : row.recognised}
+                </td>
+                <td className="px-2 py-1.5 text-right tabular-nums">
+                  {Number.isFinite(row.pronunciation) ? Math.round(row.pronunciation) : '—'}
+                </td>
+                <td className="px-4 py-1.5 text-right text-xs text-ink-faint">
+                  {formatDateTime(row.createdAt)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </section>
   );
 }
 

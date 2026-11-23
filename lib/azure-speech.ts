@@ -39,8 +39,6 @@ import { getConfig } from './config';
 /** The keys the admin panel writes. */
 export const ASSESSMENT_KEYS = ['speech.key', 'speech.region'] as const;
 
-export type SpeechConfigKey = (typeof ASSESSMENT_KEYS)[number];
-
 /**
  * The per-user daily cap on paid assessments.
  *

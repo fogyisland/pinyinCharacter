@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { isSpeechConfigured, resolveDailyLimit, type SpeechFailure } from '@/lib/azure-speech';
 import { assessPronunciation } from '@/lib/azure-assessment';
 import { countAssessmentsToday, recordAssessment } from '@/lib/speech-store';
+import { translateSpeechSchemaError } from '@/lib/speech-schema-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,75 +71,86 @@ export async function GET() {
  * keep.
  */
 export async function POST(req: NextRequest) {
-  return withErrorHandling(async () => {
-    const user = await getCurrentUser();
-    // Not `unauthorized()`: that answers the English word "unauthorized",
-    // which the panel would show as the learner's error message. A learner
-    // who is not logged in needs to be told what to do.
-    if (!user) return unauthorized('login_required', '精评需要登录后使用。跟读不需要登录，可以先用它。');
+  return withErrorHandling(
+    async () => {
+      const user = await getCurrentUser();
+      // Not `unauthorized()`: that answers the English word "unauthorized",
+      // which the panel would show as the learner's error message. A learner
+      // who is not logged in needs to be told what to do.
+      if (!user) {
+        return unauthorized('login_required', '精评需要登录后使用。跟读不需要登录，可以先用它。');
+      }
 
-    const url = new URL(req.url);
-    const reference = (url.searchParams.get('reference') ?? '').trim();
-    if (reference === '' || reference.length > MAX_REFERENCE) {
-      return badRequest('bad_reference', 'reference text is required (max 32 characters)');
-    }
+      const url = new URL(req.url);
+      const reference = (url.searchParams.get('reference') ?? '').trim();
+      if (reference === '' || reference.length > MAX_REFERENCE) {
+        return badRequest('bad_reference', 'reference text is required (max 32 characters)');
+      }
 
-    // The quota is checked BEFORE the audio is read and BEFORE Azure is
-    // called: this is the only guard between a retry loop and a bill. `0`
-    // means unlimited, matching the other limits on the site.
-    const limit = await resolveDailyLimit();
-    if (limit > 0) {
-      const used = await countAssessmentsToday(user.id);
-      if (used >= limit) {
+      // The quota is checked BEFORE the audio is read and BEFORE Azure is
+      // called: this is the only guard between a retry loop and a bill. `0`
+      // means unlimited, matching the other limits on the site.
+      //
+      // `countAssessmentsToday` deliberately throws when the table is absent
+      // — the translator below turns that into 503 + 「请跑迁移」. Treating it
+      // as 0 would leave the paid path uncapped, which is the one thing the
+      // cap exists to prevent.
+      const limit = await resolveDailyLimit();
+      if (limit > 0) {
+        const used = await countAssessmentsToday(user.id);
+        if (used >= limit) {
+          return NextResponse.json(
+            {
+              ok: false,
+              error: {
+                code: 'daily_limit',
+                message: `今天的精评次数用完了（每天 ${limit} 次）。跟读不受影响，明天再来。`,
+              },
+            },
+            { status: 429 },
+          );
+        }
+      }
+
+      const declared = Number(req.headers.get('content-length') ?? '0');
+      if (Number.isFinite(declared) && declared > MAX_BYTES) {
         return NextResponse.json(
           {
             ok: false,
-            error: {
-              code: 'daily_limit',
-              message: `今天的精评次数用完了（每天 ${limit} 次）。跟读不受影响，明天再来。`,
-            },
+            error: { code: 'audio_too_large', message: `录音太大（上限 ${MAX_BYTES / 1024 / 1024} MB）` },
           },
-          { status: 429 },
+          { status: 413 },
         );
       }
-    }
 
-    const declared = Number(req.headers.get('content-length') ?? '0');
-    if (Number.isFinite(declared) && declared > MAX_BYTES) {
-      return NextResponse.json(
-        {
-          ok: false,
-          error: { code: 'audio_too_large', message: `录音太大（上限 ${MAX_BYTES / 1024 / 1024} MB）` },
-        },
-        { status: 413 },
-      );
-    }
+      const bytes = new Uint8Array(await req.arrayBuffer());
+      if (bytes.byteLength === 0) {
+        return badRequest('empty_audio', '录音是空的，请再读一遍');
+      }
+      if (bytes.byteLength > MAX_BYTES) {
+        // A request without a content-length can only be judged after reading.
+        return NextResponse.json(
+          {
+            ok: false,
+            error: { code: 'audio_too_large', message: `录音太大（上限 ${MAX_BYTES / 1024 / 1024} MB）` },
+          },
+          { status: 413 },
+        );
+      }
 
-    const bytes = new Uint8Array(await req.arrayBuffer());
-    if (bytes.byteLength === 0) {
-      return badRequest('empty_audio', '录音是空的，请再读一遍');
-    }
-    if (bytes.byteLength > MAX_BYTES) {
-      // A request without a content-length can only be judged after reading.
-      return NextResponse.json(
-        {
-          ok: false,
-          error: { code: 'audio_too_large', message: `录音太大（上限 ${MAX_BYTES / 1024 / 1024} MB）` },
-        },
-        { status: 413 },
-      );
-    }
-
-    const result = await assessPronunciation(bytes, reference);
-    if (!result.ok) {
-      return NextResponse.json(
-        { ok: false, error: { code: result.reason, message: result.message } },
-        { status: statusOf(result.reason) },
-      );
-    }
-    // Only a SUCCESS is billed, so only a success is counted: a 429 or a bad
-    // key costs nothing and must not eat the learner's daily quota.
-    await recordAssessment(user.id, result.assessment);
-    return NextResponse.json({ ok: true, data: { assessment: result.assessment } });
-  });
+      const result = await assessPronunciation(bytes, reference);
+      if (!result.ok) {
+        return NextResponse.json(
+          { ok: false, error: { code: result.reason, message: result.message } },
+          { status: statusOf(result.reason) },
+        );
+      }
+      // Only a SUCCESS is billed, so only a success is counted: a 429 or a bad
+      // key costs nothing and must not eat the learner's daily quota.
+      await recordAssessment(user.id, result.assessment);
+      return NextResponse.json({ ok: true, data: { assessment: result.assessment } });
+    },
+    undefined,
+    translateSpeechSchemaError,
+  );
 }

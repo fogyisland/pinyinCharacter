@@ -99,6 +99,22 @@ export function unauthorized(code = 'unauthorized', message = 'unauthorized', in
   );
 }
 
+/**
+ * The sentence a learner or teacher actually needs when a session expired.
+ *
+ * `unauthorized()` defaults to the English word "unauthorized", which is an
+ * operator's vocabulary, not a student's — and several pages render
+ * `error.message` straight into the UI. Every route that guards a USER-facing
+ * feature should pass this instead, so the answer is always the same one
+ * sentence rather than eleven slightly different ones.
+ */
+export const LOGIN_REQUIRED_MESSAGE = '请先登录，登录后回到本页即可。';
+
+/** A 401 that says what to do, in the user's language. */
+export function unauthorizedForLogin(init?: ResponseInit) {
+  return unauthorized('unauthorized', LOGIN_REQUIRED_MESSAGE, init);
+}
+
 export function serviceUnavailable(code: string, message: string, init?: ResponseInit) {
   return NextResponse.json(
     { ok: false, error: { code, message } },

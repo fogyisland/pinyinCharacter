@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { Header } from '@/components/Header';
@@ -11,11 +12,29 @@ import { EtymologyMorph } from '@/components/etymology/EtymologyMorph';
 import { EtymologyPrevNext } from '@/components/etymology/EtymologyPrevNext';
 import { ReadAloudButton } from '@/components/ReadAloudButton';
 import { getActiveEraFonts } from '@/lib/era-fonts';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ char: string }>;
+}
+
+/**
+ * Each etymology page needs its own title: this route covers ~7900
+ * characters, and they all used to inherit the home page's.
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { char } = await params;
+  const decoded = decodeURIComponent(char);
+  const charRow = await getChar(decoded);
+  if (!charRow) return { title: `${decoded} | 字·韵` };
+  return buildMetadata({
+    title: `${decoded} 的字源演变 | 字·韵`,
+    description: `汉字「${decoded}」的字形演变：甲骨文、金文、篆书、隶书到楷书。`,
+    path: `/etymology/${char}`,
+    ogType: 'article',
+  });
 }
 
 export default async function EtymologyPage({ params }: Props) {

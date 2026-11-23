@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
@@ -6,13 +7,23 @@ import { ClassicCategoryNav } from '@/components/classics/ClassicCategoryNav';
 import { ClassicCard } from '@/components/classics/ClassicCard';
 import { listClassics, countByCategory } from '@/lib/classics';
 import type { ClassicCategory } from '@/lib/classics-types';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: '古籍 · 字·韵',
-  description: '四书五经、弟子规 等经典文本,提供原文与拼音注释,可一键生成字帖。',
-};
+/**
+ * `buildMetadata` rather than a static `metadata` object: the object supplied
+ * a title but no canonical link, and a page that is linked from anywhere with
+ * a tracking parameter then looks like a duplicate of itself.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '古籍 · 字·韵',
+    description: '四书五经、弟子规 等经典文本，提供原文与拼音注释，可一键生成字帖。',
+    path: '/ancient',
+    ogType: 'website',
+  });
+}
 
 interface Props {
   searchParams: Promise<{ category?: string; q?: string; page?: string }>;

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { Header } from '@/components/Header';
@@ -6,14 +7,19 @@ import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { renderMarkdown } from '@/lib/markdown';
 import { GITHUB_REPO_URL } from '@/lib/design';
+import { buildMetadata } from '@/lib/seo/metadata';
 import { filterUserReadme } from './filter';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: '使用指南 · 字·韵',
-  description: '字·韵 完整使用说明,基于项目 README 自动生成。',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '使用指南 · 字·韵',
+    description: '字·韵 完整使用说明，基于项目 README 自动生成。',
+    path: '/guide',
+    ogType: 'article',
+  });
+}
 
 function readReadme(): string {
   // process.cwd() at runtime = repo root for `next dev`/`next start`.

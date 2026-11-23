@@ -342,8 +342,59 @@ export function PronouncePanel({ word, pinyin, chars }: PronouncePanelProps) {
               ))}
             </ul>
           ) : null}
+
+          {/* The phonemes are what justifies 「音素级」 rather than 「音节级」:
+              a syllable can score 88 while one sound inside it scored 60, and
+              THAT sound is what the learner has to fix. Only the weakest few
+              are shown — a full phoneme table is noise for a two-syllable
+              word, and the learner acts on one thing at a time. */}
+          {attempt.assessment && weakestPhonemes(attempt.assessment.phonemes).length > 0 ? (
+            <p data-testid="pronounce-phonemes" className="text-xs text-ink-soft">
+              最弱的音：
+              {weakestPhonemes(attempt.assessment.phonemes).map((phoneme, index) => (
+                <span key={`${phoneme.phoneme}-${index}`} className="ml-1">
+                  <span className="font-kai">{phoneme.phoneme}</span>
+                  <span
+                    className={
+                      'ml-0.5 tabular-nums ' +
+                      (phoneme.accuracy < 60 ? 'text-amber-700' : 'text-ink-faint')
+                    }
+                  >
+                    {Math.round(phoneme.accuracy)}
+                  </span>
+                </span>
+              ))}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </section>
   );
+}
+
+/** How many phonemes the panel names when several are weak. */
+const MAX_WEAK_PHONEMES = 3;
+
+/**
+ * The lowest-scoring phonemes worth mentioning.
+ *
+ * Azure scores every phoneme of the word. A learner reading 「学生」 sees
+ * `x`, `ue`, `sh`, `eng` — listing all four is a grade sheet, not advice.
+ * The panel names the worst few, and only when they are actually weak: at
+ * 92+ there is nothing to fix, and a list of high scores reads as a scolding
+ * of a learner who read well.
+ *
+ * @param phonemes what Azure scored, possibly empty.
+ * @returns at most {@link MAX_WEAK_PHONEMES} entries, worst first; `[]` when
+ *          nothing is weak enough to name.
+ */
+function weakestPhonemes(
+  phonemes: ReadonlyArray<{ phoneme: string; accuracy: number }>,
+): Array<{ phoneme: string; accuracy: number }> {
+  const WEAK_BELOW = 90;
+  return phonemes
+    .filter((phoneme) => phoneme.phoneme !== '' && phoneme.accuracy < WEAK_BELOW)
+    .slice()
+    .sort((a, b) => a.accuracy - b.accuracy)
+    .slice(0, MAX_WEAK_PHONEMES);
 }

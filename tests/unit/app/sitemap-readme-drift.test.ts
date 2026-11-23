@@ -52,7 +52,21 @@ describe('the sitemap index', () => {
 
   it('lists the public pages that are in no other sitemap', () => {
     const source = readSource(SITEMAP);
-    for (const page of ['/rare-chars', '/stories']) {
+    // Every public page with its own content belongs here. A page that is in
+    // no sitemap and no sub-sitemap is one a crawler only finds by luck.
+    for (const page of [
+      '/rare-chars',
+      '/stories',
+      '/pinyin',
+      '/worksheet',
+      '/worksheet/practice',
+      '/dictation',
+      '/game',
+      '/guide',
+      '/about',
+      '/notes',
+      '/membership',
+    ]) {
       expect(
         source,
         `the sitemap index must list ${page}`,

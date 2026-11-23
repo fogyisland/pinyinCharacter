@@ -12,6 +12,22 @@
 - 儿童模式：默认开启，过滤拼音→字 方向的不适宜内容
 - 简/繁切换（占位，Plan C 实现）
 
+### 教学功能（2026-11 起）
+
+站内围绕「老师带班、学生练字」补齐的一层，全部离线可用：
+
+- **听写练习**（`/dictation`）— 按 HSK 等级或成语选词、自动注音、生成听写卷与答案页；
+  也能当课堂工具逐条报听写（5 / 8 / 12 秒自动间隔）。
+  班级作业里的听写会带上词表打开它（`/dictation?classId=&assignmentId=`）。
+- **拼音 → 汉字**（`/pinyin`）— 带声调感知的整句解码，1548 个音节桶。
+- **今日复习**（游戏页）— 0-1-2-4-7-15 天复习曲线，答对进阶、答错回今天。
+- **组词 / 例句 / 形近字**（字典详情页）— 每字最多 10 个词、每词最多 2 句中英对照、
+  最多 12 个形近字（对称：互指才保留）。
+- **跟读**（字典详情页）— 浏览器 SpeechRecognition 听一次，本站逐字判定
+  `exact / tone / similar / wrong / missing`；录音**不出浏览器**。
+- **精评（可选，付费）**— 配置 Azure 后多出「精评」按钮：录音交 Azure 做**音节级**
+  打分并列出最弱的音素。没有 key 时按钮根本不出现。
+
 ## 启动
 
 ```bash
@@ -26,6 +42,15 @@ pnpm install
 pnpm dict:build
 pnpm radicals:build
 pnpm dev
+```
+
+派生数据（按需重建，均从公网拉语料，带 CDN 镜像与重试）：
+
+```bash
+npm run dict:tone          # data/pinyin-tone.json      声调解码用
+npm run dict:words         # data/char-words.json       组词
+npm run lookalike:build    # data/look-alikes.json      形近字
+npm run examples:build     # data/examples.json         例句（需要 python + bz2）
 ```
 
 ## 生产部署
@@ -47,13 +72,18 @@ HOST=127.0.0.1 npm start   # 跑在 :4444,只 listen 本地,由反代对外
 
 ## 测试
 
-测试基础设施已经恢复并在使用中：vitest,246 个测试文件,约 2500 个用例。
+测试基础设施已经恢复并在使用中：vitest，**338 个测试文件**（331 通过 / 7 跳过），
+约 **3660 个用例**（另有 21 个按环境跳过）。
 
 ```bash
 npm test          # 跑一遍全部用例
 npm run test:watch  # 监听模式
+npx vitest run --testTimeout=60000   # 满并发时默认 5s 超时会假失败，加这个
 npx vitest run tests/unit/lib/audit.test.ts  # 只跑一个文件
 ```
+
+集成测试（`tests/integration/`）在 `DATABASE_URL` 存在时会跑，SEO 那几条需要 dev server
+在 4444 上；否则自动跳过。
 
 > ⚠️ 单元测试跑的是逻辑,不是浏览器。环境相关的行为(字体加载、WebSocket、PDF 渲染、
 > 打印样式)仍需要人工在浏览器里走查 —— 仓库里有若干次"单测全绿但真机打挂"的记录。
@@ -253,6 +283,22 @@ pnpm strokes:build
 | `MAIL_FROM`                                                           |      | `MAIL_TRANSPORT=smtp` 时填入（`noreply@example.com`）                                            |
 | `MAIL_FROM_NAME`                                                      |      | 发件人显示名，缺省为空                                                                           |
 | `PUBLIC_BASE_URL`                                                     |      | 密码重置邮件里的链接域名，缺省取请求 host                                                        |
+| `AZURE_SPEECH_KEY` / `AZURE_SPEECH_REGION`                            |      | Azure 语音评测的后备凭据。**优先用后台 `/admin/speech` 配，那里能在线改**                        |
+| `AZURE_SPEECH_DAILY_LIMIT`                                            |      | 每人每天精评次数后备值（默认 20，`0` = 不限）                                                     |
+
+### 语音评测（可选，付费）
+
+「精评」是唯一会花钱的功能，默认关闭。开启方式：后台 **站点 → 语音评测**（`/admin/speech`）
+
+1. Azure 门户创建 **Speech service** 资源，选学生所在区域（如 `eastasia`）
+2. 该资源的「密钥和终结点」页拿 **key** 与 **区域代码**，粘贴到后台
+3. 点 **测试连接** —— 它打令牌端点，只验凭据、**不收音频、零计费**
+4. 设置 **每人每天上限**（默认 20，`0` = 不限）
+
+没有 key 时「精评」按钮**根本不出现**；「跟读」永远可用，录音不出浏览器。
+
+数据落在 `speech_assessments`（`npm run db:migrate` 建）：**只存分数，不存录音**。
+缺这张表时精评会回答 503 + 「请跑迁移」，不会静默放行（配额是防账单的唯一守卫）。
 
 ## 路线图
 
@@ -266,3 +312,6 @@ pnpm strokes:build
 - Plan L: 完整字典（8105 通用规范汉字）+ 字源页（5 时代字形 + AI 故事）+ admin 字源批量生成
 - Plan M: 笔画顺序 / 动画（hanzi-writer 田字格笔顺,hanzi-writer-data 数据集）
 - Plan N: 难度分级（3 级,2 款游戏 + 拼音输入法）+ 独立登录/注册（必填邮箱）+ 佛经阅读模式（横/竖从右到左/竖从左到右）
+- **教学层（2026-11，已交付）**: 听写练习 · 拼音→汉字声调解码 · 今日复习曲线 · 组词 · 形近字辨析 ·
+  例句（Tatoeba CC-BY）· 班级与作业（含学生完成状态）· 跟读（浏览器识别）· Azure 音素级精评（可选付费）
+- **未完成**: 跨班看板（一页看所有班完成率）；`乜 亟 龠 齉` 四字仍缺内容（`齉` 也无笔画数据）

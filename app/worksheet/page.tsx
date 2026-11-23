@@ -1,10 +1,21 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { WorksheetGenerator } from '@/components/worksheet/WorksheetGenerator';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '字帖生成器 — 毛笔格 · 田字格 · 打印友好 | 字·韵',
+    description: '选字、选格、直接打印。田字格与毛笔格字帖，支持笔顺动画与描红，老师上课用不着另外排版。',
+    path: '/worksheet',
+    ogType: 'website',
+  });
+}
 
 export default function WorksheetPage() {
   return (

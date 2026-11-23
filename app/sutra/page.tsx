@@ -8,10 +8,21 @@ import { SutraCard } from '@/components/sutra/SutraCard';
 import { SutraPagination } from '@/components/sutra/SutraPagination';
 import { listSutras } from '@/lib/sutras';
 import { SUTRA_PAGE_SIZE, buildSutraHref, parseSutraQuery } from '@/lib/sutra-url';
+import type { Metadata } from 'next';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 // The list is rendered on the server, so the route depends on the query
 // string and cannot be prerendered.
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '佛经选读 — 分品块抄写 | 字·韵',
+    description: '12 部佛经选读，带拼音与分品块，可逐品抄写或生成字帖。',
+    path: '/sutra',
+    ogType: 'website',
+  });
+}
 
 interface Props {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

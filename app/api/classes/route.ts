@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling, badRequest, unauthorized } from '@/lib/api-handler';
+import { withErrorHandling, badRequest, unauthorizedForLogin } from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
 import { logUserAction } from '@/lib/audit';
 import { createClassSchema } from '@/lib/classes-schema';
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: NextRequest) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
-    if (!user) return unauthorized();
+    if (!user) return unauthorizedForLogin();
     const [teaching, joined] = await Promise.all([
       listTeacherClasses(user.id),
       listStudentClasses(user.id),
@@ -33,7 +33,7 @@ export async function GET(_req: NextRequest) {
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
-    if (!user) return unauthorized();
+    if (!user) return unauthorizedForLogin();
     const parsed = createClassSchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) {
       return badRequest('bad_input', parsed.error.issues[0]?.message ?? 'bad input');

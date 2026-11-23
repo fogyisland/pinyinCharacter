@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling, badRequest, unauthorized } from '@/lib/api-handler';
+import { withErrorHandling, badRequest, unauthorizedForLogin } from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
 import { logUserAction } from '@/lib/audit';
 import { getClassForUser, leaveClass, removeMember } from '@/lib/classes-store';
@@ -29,7 +29,7 @@ export async function DELETE(
 ) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
-    if (!user) return unauthorized();
+    if (!user) return unauthorizedForLogin();
     const { id, userId } = await context.params;
     const classId = toId(id);
     const targetId = toId(userId);

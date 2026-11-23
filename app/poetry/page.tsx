@@ -13,10 +13,21 @@ import {
   parsePoetryQuery,
   type PoetryQuery,
 } from '@/lib/poetry-url';
+import type { Metadata } from 'next';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 // The list is rendered on the server, so the route depends on the query
 // string and cannot be prerendered.
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '古诗词 — 诗三百首 · 词三百首 | 字·韵',
+    description: '按朝代与体裁浏览古诗词，每首带拼音与注释，可一键生成字帖或抄写练习。',
+    path: '/poetry',
+    ogType: 'website',
+  });
+}
 
 interface Props {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

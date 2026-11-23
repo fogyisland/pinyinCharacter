@@ -194,11 +194,3 @@ export function toAssessment(payload: AzureResponse, reference: string): AssessR
     },
   };
 }
-
-/**
- * The three scores Azure needs every request, and the two it cannot infer.
- *
- * Kept next to the assessment call so the route and the panel agree on what
- * was asked for.
- */
-export const ASSESSMENT_SCORES = ['AccuracyScore', 'FluencyScore', 'CompletenessScore'] as const;

@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
@@ -6,13 +7,18 @@ import { readAboutIntro, DEFAULT_INTRO } from '@/lib/about-config';
 import { AboutIntro } from '@/components/about/AboutIntro';
 import { GITHUB_REPO_URL, GITHUB_ISSUES_URL } from '@/lib/design';
 import { getCurrentUserWithAdmin } from '@/lib/auth';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = {
-  title: '关于 · 字·韵',
-  description: '字·韵 项目介绍 + GitHub 反馈入口',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '关于 · 字·韵',
+    description: '字·韵 项目介绍 + GitHub 反馈入口。',
+    path: '/about',
+    ogType: 'website',
+  });
+}
 
 export default async function AboutPage() {
   const cached = await readAboutIntro();

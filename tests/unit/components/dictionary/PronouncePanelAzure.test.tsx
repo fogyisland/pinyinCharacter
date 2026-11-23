@@ -153,6 +153,74 @@ describe('PronouncePanel — with Azure configured', () => {
     expect(screen.getByRole('button', { name: /再读一遍/ })).toBeTruthy();
   });
 
+  it('names the weakest phonemes, worst first', async () => {
+    // 「音素级」 is the whole point of the paid call: a syllable can score 88
+    // while ONE sound inside it scored 60, and that sound is what to fix.
+    recordOnceMock.mockResolvedValue({ ok: true, wav: new ArrayBuffer(4) });
+    assessWithAzureMock.mockResolvedValue({
+      ok: true,
+      assessment: {
+        reference: '学生',
+        recognised: '学生',
+        accuracy: 88,
+        fluency: 90,
+        completeness: 100,
+        prosody: null,
+        pronunciation: 88,
+        syllables: [
+          { syllable: 'xué', accuracy: 88, fluency: 90, completeness: 100, prosody: null },
+          { syllable: 'shēng', accuracy: 90, fluency: 90, completeness: 100, prosody: null },
+        ],
+        phonemes: [
+          { phoneme: 'x', accuracy: 90 },
+          { phoneme: 'ue', accuracy: 58 },
+          { phoneme: 'sh', accuracy: 82 },
+          { phoneme: 'eng', accuracy: 95 },
+        ],
+      },
+    });
+    render(<PronouncePanel {...WORD} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /精评/ })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /精评/ }));
+    await waitFor(() => expect(screen.getByTestId('pronounce-phonemes')).toBeTruthy());
+    const text = screen.getByTestId('pronounce-phonemes').textContent ?? '';
+    // Worst first: ue 58 before sh 82; a 95 is not worth naming.
+    expect(text).toContain('ue');
+    expect(text).toContain('58');
+    expect(text).toContain('sh');
+    expect(text).not.toContain('eng');
+  });
+
+  it('names nothing when every phoneme is already good', async () => {
+    // A learner who read well must not be shown a grade sheet; the list is
+    // advice, and there is no advice at 92+.
+    recordOnceMock.mockResolvedValue({ ok: true, wav: new ArrayBuffer(4) });
+    assessWithAzureMock.mockResolvedValue({
+      ok: true,
+      assessment: {
+        reference: '学生',
+        recognised: '学生',
+        accuracy: 95,
+        fluency: 95,
+        completeness: 100,
+        prosody: null,
+        pronunciation: 95,
+        syllables: [
+          { syllable: 'xué', accuracy: 95, fluency: 95, completeness: 100, prosody: null },
+        ],
+        phonemes: [
+          { phoneme: 'x', accuracy: 96 },
+          { phoneme: 'ue', accuracy: 94 },
+        ],
+      },
+    });
+    render(<PronouncePanel {...WORD} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: /精评/ })).toBeTruthy());
+    fireEvent.click(screen.getByRole('button', { name: /精评/ }));
+    await waitFor(() => expect(screen.getByTestId('pronounce-score')).toBeTruthy());
+    expect(screen.queryByTestId('pronounce-phonemes')).toBeNull();
+  });
+
   it('reports a microphone refusal from the recorder', async () => {
     recordOnceMock.mockResolvedValue({ ok: false, reason: 'not-allowed' });
     render(<PronouncePanel {...WORD} />);

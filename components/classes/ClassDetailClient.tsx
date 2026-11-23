@@ -12,6 +12,7 @@ import {
   type ClassDetail,
 } from '@/lib/api-classes';
 import { AssignmentComposer } from './AssignmentComposer';
+import { buildAssignmentDictationHref } from '@/lib/dictation-url';
 
 /**
  * 一个班的详情页：邀请码、成员名单、作业列表。
@@ -205,10 +206,20 @@ export function ClassDetailClient({ classId }: { classId: number }) {
                         打印字帖
                       </Link>
                     ) : (
-                      <Link href="/dictation" className="text-seal hover:underline">
+                      <Link
+                        href={buildAssignmentDictationHref(classId, assignment.id)}
+                        className="text-seal hover:underline"
+                      >
                         打开听写
                       </Link>
                     )}
+                    {/* The learner should be able to READ the words, not just
+                        trust the link. The list is what the teacher assigned. */}
+                    {assignment.payload.kind === 'dictation' ? (
+                      <span className="text-xs text-ink-faint">
+                        {assignment.payload.items.length} 个词
+                      </span>
+                    ) : null}
                     {isTeacher ? (
                       <button
                         type="button"

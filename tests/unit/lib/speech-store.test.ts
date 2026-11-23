@@ -76,6 +76,19 @@ describe('countAssessmentsToday', () => {
     scripted([{ n: null }]);
     expect(await countAssessmentsToday(9)).toBe(0);
   });
+
+  it('throws when the count cannot be read, rather than reporting "not used today"', async () => {
+    // The quota is the only guard between a retry loop and a bill. A read
+    // failure that answered 0 would read as "quota never reached" and leave
+    // the paid path uncapped — so it must surface, not default.
+    queryMock.mockRejectedValue(
+      Object.assign(new Error("ER_NO_SUCH_TABLE: Table 'pinyin_test.speech_assessments' doesn't exist"), {
+        code: 'ER_NO_SUCH_TABLE',
+        errno: 1146,
+      }),
+    );
+    await expect(countAssessmentsToday(9)).rejects.toThrow(/speech_assessments/);
+  });
 });
 
 describe('recordAssessment', () => {

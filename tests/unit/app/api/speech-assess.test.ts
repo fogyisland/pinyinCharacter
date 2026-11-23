@@ -239,4 +239,33 @@ describe('POST /api/speech/assess', () => {
     expect(body.error.message).toContain('登录');
     expect(body.error.message).toContain('跟读');
   });
+
+  it('answers 503 with a migration hint when the quota table is missing', async () => {
+    // A deploy that skipped `npm run db:migrate` must not surface as a bare
+    // 500: the operator needs the command, and the learner needs to know the
+    // free path still works.
+    resolveDailyLimitMock.mockResolvedValue(20);
+    countAssessmentsTodayMock.mockRejectedValue(
+      Object.assign(new Error("ER_NO_SUCH_TABLE: Table 'pinyin_test.speech_assessments' doesn't exist"), {
+        code: 'ER_NO_SUCH_TABLE',
+        errno: 1146,
+      }),
+    );
+    const res = await assess(audioReq(100));
+    expect(res.status).toBe(503);
+    const body = await res.json();
+    expect(body.error.code).toBe('schema_migration_pending');
+    expect(body.error.message).toContain('db:migrate');
+    // Nothing was sent to Azure, so nothing was billed.
+    expect(assessPronunciationMock).not.toHaveBeenCalled();
+  });
+
+  it('leaves an unrelated database failure at 500', async () => {
+    // If `users` were missing the whole site is down; naming this feature's
+    // table would send the operator after the wrong migration.
+    resolveDailyLimitMock.mockResolvedValue(20);
+    countAssessmentsTodayMock.mockRejectedValue(new Error('boom'));
+    const res = await assess(audioReq(100));
+    expect(res.status).toBe(500);
+  });
 });

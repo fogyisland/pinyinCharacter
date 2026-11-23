@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getSutraChunk, getSutraMeta, toChunkText } from '@/lib/sutras';
@@ -12,12 +13,31 @@ import { SutraChunkPickerClient } from './SutraChunkPickerClient';
 import { SutraRightColumn } from './SutraRightColumn';
 import { getSutraBackLink } from './back-link';
 import { buildBook, buildBreadcrumbList, serializeJsonLd } from '@/lib/seo/jsonld';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
 
 interface Props {
   params: Promise<{ id: string }>;
   searchParams: Promise<{ chunk?: string; from?: string }>;
+}
+
+/**
+ * Each sutra needs its own title: this route has eleven of them, and they
+ * all used to inherit the home page's.
+ */
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { id: idStr } = await params;
+  const id = Number(idStr);
+  if (!Number.isInteger(id) || id <= 0) return { title: '佛经选读 | 字·韵' };
+  const meta = await getSutraMeta(id);
+  if (!meta) return { title: '佛经选读 | 字·韵' };
+  return buildMetadata({
+    title: `${meta.title} — 分品抄写 | 字·韵`,
+    description: `《${meta.title}》全文，共 ${meta.chunkCount} 品。带拼音，可逐品抄写或生成字帖。`,
+    path: `/sutra/${id}`,
+    ogType: 'book',
+  });
 }
 
 export default async function SutraDetailPage({ params, searchParams }: Props) {

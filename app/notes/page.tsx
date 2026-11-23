@@ -2,11 +2,16 @@ import type { Metadata } from 'next';
 import { listActiveNotes } from '@/lib/notes';
 import { getCurrentUser } from '@/lib/auth';
 import { NotesWall, type ClientNote } from '@/components/notes/NotesWall';
+import { buildMetadata } from '@/lib/seo/metadata';
 
-export const metadata: Metadata = {
-  title: '留言笔记 · 汉字·韵',
-  description: '分享建议与想法 — 汉字·韵用户反馈墙',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '留言笔记 | 字·韵',
+    description: '分享建议与想法 — 字·韵 用户反馈墙。',
+    path: '/notes',
+    ogType: 'website',
+  });
+}
 
 export const dynamic = 'force-dynamic';
 

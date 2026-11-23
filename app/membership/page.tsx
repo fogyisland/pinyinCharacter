@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
 import { PageContainer, SectionTitle } from '@/components/common/PageContainer';
@@ -6,8 +7,18 @@ import { listPlans, getMyActiveMembership } from '@/lib/membership';
 import { getCurrentUser } from '@/lib/auth';
 import { PlanCard } from '@/components/membership/PlanCard';
 import { MembershipBadge } from '@/components/membership/MembershipBadge';
+import { buildMetadata } from '@/lib/seo/metadata';
 
 export const dynamic = 'force-dynamic';
+
+export async function generateMetadata(): Promise<Metadata> {
+  return buildMetadata({
+    title: '会员 — 支持站点持续运营 | 字·韵',
+    description: '字·韵 的公益工具全部免费。会员计划用于承担服务器与印刷成本，并解锁不限量的字帖导出。',
+    path: '/membership',
+    ogType: 'website',
+  });
+}
 
 export default async function MembershipPage() {
   const user = await getCurrentUser();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorHandling, badRequest, unauthorized } from '@/lib/api-handler';
+import { withErrorHandling, badRequest, unauthorizedForLogin } from '@/lib/api-handler';
 import { getCurrentUser } from '@/lib/auth';
 import {
   getClassForUser,
@@ -30,7 +30,7 @@ function toId(raw: string): number | null {
 export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
-    if (!user) return unauthorized();
+    if (!user) return unauthorizedForLogin();
     const { id } = await context.params;
     const classId = toId(id);
     if (classId === null) return badRequest('bad_input', '班级 id 不合法');
@@ -75,7 +75,7 @@ export async function GET(_req: NextRequest, context: { params: Promise<{ id: st
 export async function DELETE(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   return withErrorHandling(async () => {
     const user = await getCurrentUser();
-    if (!user) return unauthorized();
+    if (!user) return unauthorizedForLogin();
     const { id } = await context.params;
     const classId = toId(id);
     if (classId === null) return badRequest('bad_input', '班级 id 不合法');

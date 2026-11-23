@@ -145,6 +145,55 @@ describe('ClassDetailClient — student view', () => {
   });
 });
 
+describe('ClassDetailClient — dictation assignment', () => {
+  const dictationDetail = () =>
+    detail({
+      assignments: [
+        {
+          id: 7,
+          title: '第 4 课听写',
+          kind: 'dictation',
+          payload: {
+            kind: 'dictation',
+            title: '第 4 课听写',
+            items: [
+              { word: '学生', pinyin: 'xué shēng' },
+              { word: '老师', pinyin: 'lǎo shī' },
+            ],
+          },
+          dueAt: null,
+          createdAt: '2026-11-20T00:00:00Z',
+        },
+      ],
+      progress: {},
+      mySubmissions: {},
+    });
+
+  it('links the dictation assignment with BOTH ids', async () => {
+    // The words are not in the URL: 200 words of JSON is ~6 KB and gets
+    // truncated. Two ids stay short and let the runner fetch the list from
+    // the class API, which enforces membership.
+    fetchClassDetailMock.mockResolvedValue(dictationDetail());
+    render(<ClassDetailClient classId={7} />);
+    await waitFor(() => expect(screen.getByText('第 4 课听写')).toBeTruthy());
+    const link = screen.getByRole('link', { name: '打开听写' }) as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/dictation?classId=7&assignmentId=7');
+  });
+
+  it('tells the learner how many words the assignment holds', async () => {
+    // A learner should be able to see the size of the task before clicking.
+    fetchClassDetailMock.mockResolvedValue(dictationDetail());
+    render(<ClassDetailClient classId={7} />);
+    await waitFor(() => expect(screen.getByText('2 个词')).toBeTruthy());
+  });
+
+  it('does not add a word count to a worksheet assignment', async () => {
+    render(<ClassDetailClient classId={7} />);
+    await waitFor(() => expect(screen.getByText('第 3 课生字')).toBeTruthy());
+    expect(screen.queryByText(/个词/)).toBeNull();
+  });
+});
+
 describe('ClassDetailClient — teacher view', () => {
   const teacherDetail = () =>
     detail({

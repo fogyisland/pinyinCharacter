@@ -16,6 +16,18 @@
  *
  * Azure 按音频秒数计费。配额 = 今天这张表里这个人的行数。没有配额，一个
  * 循环脚本就能把账单推到不可控。`0` 表示不限，和站内其它限制一致。
+ *
+ * ## 为什么 `countAssessmentsToday` 故意**不**吞异常
+ *
+ * 它和 `recordAssessment` 的容错方向相反，是有意的：
+ *
+ * - **写**失败只是丢一条给运维看账单的记录，学生已经拿到分数了，不能因此
+ *   报「评测失败」→ 只 warn。
+ * - **读**失败意味着配额**数不出来**。如果这时返回 0，就等于告诉调用方
+ *   「今天还没用过」——付费路径会完全失去上限，正好是配额要防的事。
+ *   所以它把异常抛出去，由路由翻译成 503 + 「请跑迁移」。
+ *
+ * 缺表（迁移没跑）是最常见的那种读失败，见 `lib/speech-schema-error.ts`。
  */
 import { getPool } from './db';
 import type { RowDataPacket } from 'mysql2';
@@ -50,6 +62,115 @@ export async function countAssessmentsToday(userId: number): Promise<number> {
   );
   const value = Number(rows[0]?.n ?? 0);
   return Number.isFinite(value) ? value : 0;
+}
+
+/** What the operator's panel shows about the paid path. */
+export interface SpeechUsage {
+  /** Assessments scored today, across every user. */
+  todayCount: number;
+  /** Distinct users who scored something today. */
+  todayUsers: number;
+  /** Average pronunciation score over the last seven days, or null. */
+  avgScore: number | null;
+  /** The most recent assessments, newest first. */
+  recent: Array<{
+    id: number;
+    username: string | null;
+    userId: number;
+    reference: string;
+    recognised: string;
+    pronunciation: number;
+    createdAt: Date;
+  }>;
+}
+
+/** One row of the recent list. */
+interface RecentRow extends RowDataPacket {
+  id: number | string;
+  user_id: number | string;
+  username: string | null;
+  reference: string;
+  recognised: string;
+  pronunciation: string | number;
+  created_at: Date | string;
+}
+
+/** One aggregate row. */
+interface UsageRow extends RowDataPacket {
+  today_count: number | string | null;
+  today_users: number | string | null;
+  avg_score: string | number | null;
+}
+
+/** How many recent assessments the panel lists. */
+const RECENT_LIMIT = 20;
+
+/**
+ * Read the usage figures for the admin panel.
+ *
+ * ## Why this exists
+ *
+ * The table was written only to enforce the daily cap. An operator who pays
+ * for Azure could not answer the two questions that decide whether the cap is
+ * right: "is anybody using this?" and "which words keep scoring low?".
+ *
+ * ## What is NOT read
+ *
+ * No audio was ever stored, so there is nothing about a voice to read — only
+ * the scores the learner already saw.
+ *
+ * ## Why a missing table is an empty panel, not an error
+ *
+ * This is a READ for a human, not a guard on a bill. A site that has not run
+ * the migration should show "还没有人用过精评" on the settings page instead of
+ * a red error — the operator is already being told to run the migration by
+ * the assessment route when a learner hits it.
+ *
+ * @returns the figures; every field is a usable number or null.
+ */
+export async function readSpeechUsage(): Promise<SpeechUsage> {
+  try {
+    const pool = getPool();
+    const [usageRows] = await pool.query<UsageRow[]>(
+      `SELECT
+         SUM(created_at >= CURDATE()) AS today_count,
+         COUNT(DISTINCT CASE WHEN created_at >= CURDATE() THEN user_id END) AS today_users,
+         AVG(CASE WHEN created_at >= CURDATE() - INTERVAL 7 DAY THEN pronunciation END) AS avg_score
+       FROM speech_assessments`,
+    );
+    const usage = usageRows[0];
+    const todayCount = Number(usage?.today_count ?? 0);
+    const todayUsers = Number(usage?.today_users ?? 0);
+    const avg = usage?.avg_score === null || usage?.avg_score === undefined ? null : Number(usage.avg_score);
+
+    const [recentRows] = await pool.query<RecentRow[]>(
+      `SELECT a.id, a.user_id, u.username, a.reference, a.recognised,
+              a.pronunciation, a.created_at
+       FROM speech_assessments a
+       LEFT JOIN users u ON u.id = a.user_id
+       ORDER BY a.id DESC
+       LIMIT ?`,
+      [RECENT_LIMIT],
+    );
+
+    return {
+      todayCount: Number.isFinite(todayCount) ? todayCount : 0,
+      todayUsers: Number.isFinite(todayUsers) ? todayUsers : 0,
+      avgScore: avg !== null && Number.isFinite(avg) ? Math.round(avg * 10) / 10 : null,
+      recent: recentRows.map((row) => ({
+        id: Number(row.id),
+        userId: Number(row.user_id),
+        username: row.username,
+        reference: row.reference,
+        recognised: row.recognised,
+        pronunciation: Number(row.pronunciation),
+        createdAt: row.created_at instanceof Date ? row.created_at : new Date(row.created_at),
+      })),
+    };
+  } catch (error) {
+    console.warn('[speech-store] could not read the usage figures:', (error as Error).message);
+    return { todayCount: 0, todayUsers: 0, avgScore: null, recent: [] };
+  }
 }
 
 /**
