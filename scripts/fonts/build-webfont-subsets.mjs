@@ -739,7 +739,7 @@ function assertLatinBlockWidth(family, plan) {
  * The subset options of a block.
  *
  * The Chinese blocks are cut exactly as they always were: one option, one
- * format. NOT ONE BYTE of the 7 936 Chinese subsets may change.
+ * format. NOT ONE BYTE of the 7 944 Chinese subsets may change.
  *
  * The Latin blocks add `noLayoutClosure: true`: harfbuzz' layout closure
  * keeps the CLOSURE of the layout in a pure Latin subset, and the closure of

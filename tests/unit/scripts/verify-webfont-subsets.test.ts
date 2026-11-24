@@ -122,8 +122,8 @@ describe('verify-webfont-subsets', () => {
     expect(LIMITS.unionSampleBytes['/']).toBe(849920);
     expect(LIMITS.unionSampleBytes['/dictionary']).toBe(329728);
     expect(LIMITS.unionSampleBytes['/poetry']).toBe(240640);
-    expect(LIMITS.unionSampleBytes['/stories']).toBe(1234944);
-    expect(LIMITS.maxUnionSampleFilesPerPage).toBe(260);
+    expect(LIMITS.unionSampleBytes['/stories']).toBe(1278976);
+    expect(LIMITS.maxUnionSampleFilesPerPage).toBe(271);
   });
 
   it('publishes the size limit of the Latin hot tier', () => {
@@ -1475,9 +1475,9 @@ describe('the shipped font files', () => {
 
   it('counts the files the three stylesheets point at', () => {
     expect(SHIPPED.counts.sans).toBe(2468);
-    expect(SHIPPED.counts.serif).toBe(2856);
-    expect(SHIPPED.counts.wenkai).toBe(2658);
-    expect(SHIPPED.total).toBe(7982);
+    expect(SHIPPED.counts.serif).toBe(2863);
+    expect(SHIPPED.counts.wenkai).toBe(2662);
+    expect(SHIPPED.total).toBe(7993);
     expect(
       SHIPPED.counts.sans + SHIPPED.counts.serif + SHIPPED.counts.wenkai,
       'the three families must not share a file',
@@ -1485,8 +1485,8 @@ describe('the shipped font files', () => {
   });
 
   it('splits the shipped files into the Latin tier and the Chinese blocks', () => {
-    expect(SHIPPED.latin).toBe(46);
-    expect(SHIPPED.chinese).toBe(7936);
+    expect(SHIPPED.latin).toBe(49);
+    expect(SHIPPED.chinese).toBe(7944);
     expect(SHIPPED.chinese + SHIPPED.latin).toBe(SHIPPED.total);
   });
 

@@ -797,7 +797,7 @@ describe('the rebase checklist (R-54)', () => {
     expect(PINNED.subsetFiles).toBe(7982);
     expect(PINNED.subsetBytes).toBe(28239668);
     expect(PINNED.cssBytes).toBe(2023946);
-    expect([...PINNED.cssGzipBytes]).toEqual([56065, 64818, 38849]);
+    expect([...PINNED.cssGzipBytes]).toEqual([56049, 64908, 39498]);
 
     // And the two numbers that live in the verifier's LIMITS are read from
     // the verifier itself — it is importable, so there is no copy here.

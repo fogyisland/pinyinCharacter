@@ -111,14 +111,14 @@ export const PINNED = {
    * entry is the sum of the two tiers of that family, because that
    * is how the browser downloads them.
    */
-  cssGzipBytes: [56065, 64818, 38849],
+  cssGzipBytes: [56049, 64908, 39498],
   /**
    * `scripts/fonts/verify-webfont-subsets.mjs` — `LIMITS.unionSampleBytes`,
    * in the key order `/`, `/dictionary`, `/poetry`, `/stories`.
    */
-  unionSampleBytes: [849920, 329728, 240640, 1234944],
+  unionSampleBytes: [849920, 329728, 240640, 1278976],
   /** `scripts/fonts/verify-webfont-subsets.mjs` — `LIMITS.maxUnionSampleFilesPerPage`. */
-  maxUnionSampleFilesPerPage: 260,
+  maxUnionSampleFilesPerPage: 271,
 } as const;
 
 /** The paths of the pinned numbers, as the checklist shows them. */

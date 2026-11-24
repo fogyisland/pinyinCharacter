@@ -469,12 +469,12 @@ describe('the pinned numbers of the repository (R-94)', () => {
       'utf8',
     );
 
-    expect(testFile).toContain('expect(subsets.length).toBe(7982);');
-    expect(testFile).toContain('expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28239668);');
-    expect(testFile).toContain('expect(totalBytes).toBe(2023946);');
-    expect(testFile).toContain('gzipBytes: 56065,');
-    expect(testFile).toContain('gzipBytes: 64818,');
-    expect(testFile).toContain('gzipBytes: 38849,');
+    expect(testFile).toContain('expect(subsets.length).toBe(7993);');
+    expect(testFile).toContain('expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28292884);');
+    expect(testFile).toContain('expect(totalBytes).toBe(2028497);');
+    expect(testFile).toContain('gzipBytes: 56049,');
+    expect(testFile).toContain('gzipBytes: 64908,');
+    expect(testFile).toContain('gzipBytes: 39498,');
   });
 
   it('guards the pinned LINE NUMBERS against the real file (R-206d)', () => {
@@ -527,8 +527,8 @@ describe('the pinned numbers of the repository (R-94)', () => {
     expect(verifier).toContain("'/': 849920");
     expect(verifier).toContain("'/dictionary': 329728");
     expect(verifier).toContain("'/poetry': 240640");
-    expect(verifier).toContain("'/stories': 1234944");
-    expect(verifier).toContain('maxUnionSampleFilesPerPage: 260');
+    expect(verifier).toContain("'/stories': 1278976");
+    expect(verifier).toContain('maxUnionSampleFilesPerPage: 271');
   });
 });
 

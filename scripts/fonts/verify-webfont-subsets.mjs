@@ -2,7 +2,7 @@
  * scripts/fonts/verify-webfont-subsets.mjs — proves the shipped webfont
  * subsets are correct.
  *
- * Why this exists: the site ships 7 982 woff2 files (three families, a hot
+ * Why this exists: the site ships 7 993 woff2 files (three families, a hot
  * tier and thousands of Ext blocks) plus three stylesheets that tell the
  * browser which file holds which character. Every one of those declarations
  * is a promise: "this file can draw these characters". A promise that is
@@ -197,14 +197,18 @@ export const LIMITS = {
   // with no headroom: the sample IS the upper bound of what one visit
   // downloads, so a budget above it would be a wish.
   //   / 849 916 B → 830 KB = 849 920 B      /dictionary 329 448 B → 322 KB = 329 728 B
-  //   /poetry 239 788 B → 235 KB = 240 640 B   /stories 1 234 088 B → 1 206 KB = 1 234 944 B
+  //   /poetry 239 788 B → 235 KB = 240 640 B   /stories 1 278 156 B → 1 249 KB = 1 278 976 B
+  // Re-baselined 2026-11-25: repairing corrupted U+FFFD content and the poem
+  // blank tails changed the charset, so the ext-block boundaries shifted and
+  // the /stories union sample now pulls 11 more blocks. All four numbers are
+  // still measured from the committed artifacts, not padded estimates.
   unionSampleBytes: {
     '/': 849920,
     '/dictionary': 329728,
     '/poetry': 240640,
-    '/stories': 1234944,
+    '/stories': 1278976,
   },
-  maxUnionSampleFilesPerPage: 260,
+  maxUnionSampleFilesPerPage: 271,
 };
 
 /**

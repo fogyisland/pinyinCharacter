@@ -832,7 +832,7 @@ function scanSourceDirectory(dir, counts, state) {
  *
  * ⚠️ `filter` decides which tier a counted character belongs to, and its
  * DEFAULT is `isCjkCodePoint`: the Chinese score table is built here, and
- * it has to stay byte for byte the table it always was — the 7 936 subset
+ * it has to stay byte for byte the table it always was — the 7 944 subset
  * files of the Chinese tiers are derived from it. The Latin score table is
  * the SAME counts folded with `isLatinCodePoint` instead: one scan, two
  * tables, and not one extra byte read.

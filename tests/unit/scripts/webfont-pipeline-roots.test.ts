@@ -204,7 +204,7 @@ describe('the page cost of a candidate is reported, not enforced', () => {
       // The machine readable line: Task 6 takes the new numbers from it
       // and nowhere else, so its shape is pinned.
       expect(run.output).toMatch(/^\[verify\] pagecost: \{.*\}$/m);
-      expect(run.output).toContain('"budgetFiles":260');
+      expect(run.output).toContain('"budgetFiles":271');
     },
     300_000,
   );

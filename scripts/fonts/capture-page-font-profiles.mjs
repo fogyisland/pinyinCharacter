@@ -41,7 +41,7 @@
  * Chinese characters and the Latin ones. The fixture string is the Chinese
  * part FIRST and the Latin part AFTER it, so the Chinese part of the
  * committed fixture stays byte for byte the prefix it has always been — a
- * Latin capture can never rewrite the 7 936 Chinese subset files.
+ * Latin capture can never rewrite the 7 944 Chinese subset files.
  *
  * ⚠️ A live capture MUST carry the initialization cookie and MUST check the
  * response before it measures anything: without `setup_completed=1` the site
@@ -396,7 +396,7 @@ async function main() {
   // string, and it must stay byte for byte what it is. `--keep-cjk` takes
   // it from the committed fixture instead of from the capture: the live
   // pages have drifted since 2026-10-29, and a capture that rewrote the
-  // Chinese part would rewrite the 7 936 Chinese subset files with it.
+  // Chinese part would rewrite the 7 944 Chinese subset files with it.
   let chinesePages = cjkPages;
   if (options.keepCjk) {
     if (!fixture.parsed) {

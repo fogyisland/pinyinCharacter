@@ -27,7 +27,6 @@ export async function GET() {
   const [rows] = await pool.query<CharRow[]>(
     `SELECT c.\`char\` FROM chars c
        INNER JOIN char_etymology e ON c.\`char\` = e.\`char\`
-       WHERE c.\`char\` REGEXP '^[一-鿿]$'
        LIMIT 50000`,
   );
   const urls = rows.map((r) => ({

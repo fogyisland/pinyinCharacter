@@ -79,9 +79,9 @@ const FAMILIES: Family[] = [
     extFile: 'fonts-sans-ext.css',
     subsetDir: 'web/sans',
     faces: 2468,
-    hotRawBytes: 3166,
-    extRawBytes: 619989,
-    gzipBytes: 56065,
+    hotRawBytes: 3148,
+    extRawBytes: 619846,
+    gzipBytes: 56049,
   },
   {
     key: 'serif',
@@ -89,10 +89,10 @@ const FAMILIES: Family[] = [
     hotFile: 'fonts-serif-hot.css',
     extFile: 'fonts-serif-ext.css',
     subsetDir: 'web/serif',
-    faces: 2856,
+    faces: 2863,
     hotRawBytes: 2946,
-    extRawBytes: 724327,
-    gzipBytes: 64818,
+    extRawBytes: 725983,
+    gzipBytes: 64908,
   },
   {
     key: 'wenkai',
@@ -100,10 +100,10 @@ const FAMILIES: Family[] = [
     hotFile: 'fonts-wenkai-hot.css',
     extFile: 'fonts-wenkai-ext.css',
     subsetDir: 'web/wenkai',
-    faces: 2658,
-    hotRawBytes: 5988,
-    extRawBytes: 667530,
-    gzipBytes: 38849,
+    faces: 2662,
+    hotRawBytes: 5978,
+    extRawBytes: 670596,
+    gzipBytes: 39498,
   },
 ];
 
@@ -353,10 +353,10 @@ describe('public/font per-family stylesheets', () => {
     // the CSS the browser has to parse before it can paint a single
     // character. It was 2023175 bytes when every family had one
     // stylesheet; it is 12100 now.
-    expect(hotBytes).toBe(12100);
+    expect(hotBytes).toBe(12072);
     // The whole corpus, hot and ext together, barely moved — the split
     // moved the bytes off the critical path, it did not delete them.
-    expect(totalBytes).toBe(2023946);
+    expect(totalBytes).toBe(2028497);
     // The sans hot tier is the ONLY stylesheet on the critical path; the
     // sans ext tier and both tiers of the other two families are fetched
     // without blocking the first paint.
@@ -369,8 +369,8 @@ describe('public/font per-family stylesheets', () => {
     // only the handful the page draws, but the whole set has to be
     // deployed, cached and kept in the bundle budget.
     const subsets = allSubsetFiles();
-    expect(subsets.length).toBe(7982);
-    expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28239668);
+    expect(subsets.length).toBe(7993);
+    expect(subsets.reduce((total, file) => total + file.bytes, 0)).toBe(28292884);
   });
 
   it('keeps the gzipped payload within budget', () => {
@@ -390,8 +390,8 @@ describe('public/font per-family stylesheets', () => {
       total += bytes;
       expect(bytes).toBe(family.gzipBytes);
     }
-    expect(perFamily.get('sans')).toBe(56065);
-    expect(total).toBe(159732);
+    expect(perFamily.get('sans')).toBe(56049);
+    expect(total).toBe(160455);
     expect(total).toBeLessThanOrEqual(VERIFIER_LIMITS.cssBytes);
     expect(perFamily.get('sans')).toBeLessThanOrEqual(VERIFIER_LIMITS.sansCssBytes);
   });
