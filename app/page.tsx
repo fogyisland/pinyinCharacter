@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Hero } from '@/components/Hero';
 import { BentoGrid } from '@/components/BentoGrid';
-import { ValueProps } from '@/components/ValueProps';
 import { Footer } from '@/components/Footer';
 import { PageContainer } from '@/components/common/PageContainer';
 import { buildMetadata } from '@/lib/seo/metadata';
@@ -36,7 +35,6 @@ export default function Home() {
       <PageContainer>
         <Hero />
         <BentoGrid />
-        <ValueProps />
       </PageContainer>
       <Footer />
     </>

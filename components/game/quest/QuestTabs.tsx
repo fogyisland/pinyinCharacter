@@ -481,7 +481,7 @@ export function QuestTabs() {
 
   return (
     <div>
-      <div className="flex items-start justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <HskPicker />
         <SoundToggle muted={tabs.muted} onToggle={tabs.toggleSound} />
       </div>

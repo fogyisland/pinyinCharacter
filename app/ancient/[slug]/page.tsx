@@ -100,15 +100,15 @@ export default async function ClassicDetailPage({ params, searchParams }: Props)
               ← 返回古籍列表
             </Link>
           </div>
-          <header className="worksheet-no-print">
-            <h1 className="text-2xl font-bold text-ink font-kai">《{meta.title}》</h1>
+          <header className="worksheet-no-print publication-heading">
+            <h1>《{meta.title}》</h1>
             <p className="text-sm text-ink-soft mt-1">
               {[meta.author, meta.era].filter(Boolean).join(' · ')}
               {chunkMeta.length > 1 && ` · ${activeChunk.label}`}
             </p>
           </header>
 
-          <div className="flex gap-6">
+          <div className="flex flex-col gap-6 md:flex-row md:gap-10">
             <Suspense fallback={null}>
               <ClassicChunkPicker
                 slug={meta.slug}

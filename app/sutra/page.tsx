@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: '佛经选读 — 分品块抄写 | 字·韵',
-    description: '12 部佛经选读，带拼音与分品块，可逐品抄写或生成字帖。',
+    description: '按经名选读原文，循篇诵读，逐段抄写或生成字帖。',
     path: '/sutra',
     ogType: 'website',
   });
@@ -46,7 +46,7 @@ export default async function SutraListPage({ searchParams }: Props) {
         <Header />
         <PageContainer>
           <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
-          <SectionTitle subtitle="12 部经 · 分品块抄写">佛经选读</SectionTitle>
+          <SectionTitle subtitle="循经名选读，分段诵读与抄写。">佛经选读</SectionTitle>
           <ErrorState
             message={error instanceof Error ? error.message : '经文加载失败'}
             retryHref={buildSutraHref(query)}
@@ -62,7 +62,7 @@ export default async function SutraListPage({ searchParams }: Props) {
       <Header />
       <PageContainer>
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
-        <SectionTitle subtitle="12 部经 · 分品块抄写">佛经选读</SectionTitle>
+        <SectionTitle subtitle="循经名选读，分段诵读与抄写。">佛经选读</SectionTitle>
         <SutraSearch query={query} />
         {result.items.length === 0 ? (
           <EmptyState title="无匹配经文" />

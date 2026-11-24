@@ -12,6 +12,8 @@ const CATEGORIES: Array<{ value: string; label: string }> = [
   { value: 'mengxue', label: '蒙学' },
   { value: 'philosophy', label: '诸子' },
   { value: 'history', label: '史书' },
+  { value: 'pianwen', label: '骈文与对韵' },
+  { value: 'other', label: '其他典籍' },
 ];
 
 export function ClassicCategoryNav({ current, counts }: Props) {

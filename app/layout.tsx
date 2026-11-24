@@ -1,4 +1,5 @@
 import './globals.css';
+import { THEME_INIT } from '@/lib/site-theme';
 import type { ReactNode } from 'react';
 import { AuthSync } from './_auth-sync';
 import { ToastViewport } from '@/components/common/Toast';
@@ -24,8 +25,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     await buildWebSite(`${baseUrl}/dictionary?q={search_term_string}`),
   ];
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         {/* Body typeface — render-blocking, every glyph of every page uses it. */}
         <link rel="stylesheet" href={fontCss.sans} />
         {/*
@@ -102,7 +104,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           suppressHydrationWarning
         />
         <script dangerouslySetInnerHTML={{ __html: ASYNC_STYLESHEET_FLIP }} />
-        <meta name="theme-color" content="#5A4530" />
+        <meta name="theme-color" content="#23372e" />
         <link rel="manifest" href="/manifest.json" />
         <script
           type="application/ld+json"

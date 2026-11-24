@@ -27,14 +27,14 @@ export function PoemCard({ poem, backHref }: { poem: PoemListItem; backHref?: st
   return (
     <Link
       href={href}
-      className="card-paper p-4 flex flex-col gap-2 hover:border-seal transition-colors group"
+      className="catalog-entry group"
     >
-      <h3 className="font-kai text-lg text-ink leading-tight group-hover:text-seal transition-colors">
+      <h3 className="font-kai text-2xl text-ink leading-tight group-hover:text-seal transition-colors">
         《{poem.title}》
       </h3>
       <div className="flex items-center gap-2 text-sm text-ink-soft">
         <span className="inline-block px-1.5 py-0.5 bg-seal/10 text-seal text-xs rounded">
-          {DYNASTY_LABEL[poem.dynasty]}
+          {DYNASTY_LABEL[poem.dynasty] ?? poem.dynasty}
         </span>
         <span>{poem.author}</span>
         {poem.form && <span className="text-ink-faint text-xs">· {poem.form}</span>}

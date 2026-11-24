@@ -49,7 +49,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const sutraMtime = sutrasManifest?.generatedAt ?? manifest.updatedAt;
   const sutraEntries = (sutrasManifest?.items ?? []).map((s) => ({
-    url: `${base}/sutra/${s.slug}`,
+    // The detail route is /sutra/[id] and does Number(idStr) — a slug here
+    // produces a 404 for every sutra URL in the sitemap.
+    url: `${base}/sutra/${s.id}`,
     lastModified: sutraMtime,
   }));
 
@@ -144,6 +146,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: contentMtime,
       priority: 0.7,
       changeFrequency: 'weekly',
+    },
+    {
+      url: `${base}/prosody`,
+      lastModified: staticDate,
+      priority: 0.8,
+      changeFrequency: 'monthly',
+    },
+    {
+      url: `${base}/culture`,
+      lastModified: staticDate,
+      priority: 0.8,
+      changeFrequency: 'monthly',
+    },
+    {
+      url: `${base}/idioms`,
+      lastModified: staticDate,
+      priority: 0.7,
+      changeFrequency: 'monthly',
+    },
+    {
+      url: `${base}/calligraphy`,
+      lastModified: staticDate,
+      priority: 0.7,
+      changeFrequency: 'monthly',
     },
     { url: `${base}/sitemap/poetry.xml`, lastModified: manifest.updatedAt },
     { url: `${base}/sitemap/ancient.xml`, lastModified: classics?.updatedAt ?? staticDate },

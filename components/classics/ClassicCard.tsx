@@ -8,15 +8,16 @@ const CATEGORY_LABELS: Record<string, string> = {
   philosophy: '诸子',
   history: '史书',
   other: '其他',
+  pianwen: '骈文与对韵',
 };
 
 export function ClassicCard({ item }: { item: ClassicListItem }) {
   return (
     <Link
       href={`/ancient/${item.slug}`}
-      className="card-paper p-4 flex flex-col gap-2 hover:border-seal transition-colors group"
+      className="catalog-entry group"
     >
-      <h3 className="font-kai text-lg text-ink leading-tight group-hover:text-seal transition-colors">
+      <h3 className="font-kai text-2xl text-ink leading-tight group-hover:text-seal transition-colors">
         《{item.title}》
       </h3>
       <div className="text-xs text-ink-faint">

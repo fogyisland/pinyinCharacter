@@ -112,6 +112,13 @@ export function LiveStrokeDemo({ char, size = 220, className = '', loopIntervalM
 
   return (
     <div className={`relative ${className}`} style={{ width: size, height: size }}>
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 flex select-none items-center justify-center font-kai text-ink/15"
+        style={{ fontSize: size * 0.72 }}
+      >
+        {char}
+      </span>
       <svg
         className="absolute inset-0 pointer-events-none"
         viewBox="0 0 100 100"

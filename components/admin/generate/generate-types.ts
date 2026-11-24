@@ -42,7 +42,7 @@ export const ALL_BATCH_FIELDS = [
 
 export const LEVELS = [
   { value: 1, label: 'L1', desc: '常用字 (3500 字)' },
-  { value: 2, label: 'L2', desc: '次常用字 (2996 字)' },
+  { value: 2, label: 'L2', desc: '次常用字 (2997 字)' },
   { value: 3, label: 'L3 / 罕见字', desc: '罕见字 (1412 字)' },
 ] as const;
 

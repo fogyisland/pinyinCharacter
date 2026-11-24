@@ -7,7 +7,7 @@ type Props = {
 
 export function PageContainer({ children, className = '' }: Props) {
   return (
-    <main className={`max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 ${className}`}>
+    <main className={`max-w-7xl mx-auto px-4 sm:px-8 lg:px-12 py-6 sm:py-10 ${className}`}>
       {children}
     </main>
   );
@@ -15,10 +15,9 @@ export function PageContainer({ children, className = '' }: Props) {
 
 export function SectionTitle({ children, subtitle }: { children: ReactNode; subtitle?: string }) {
   return (
-    <div className="mb-4 sm:mb-6">
-      <h2 className="font-kai text-2xl sm:text-3xl text-ink leading-tight">{children}</h2>
-      {subtitle && <p className="text-sm text-ink-soft mt-1">{subtitle}</p>}
-      <div className="paper-rule w-16 mt-3" />
+    <div className="publication-heading">
+      <h2>{children}</h2>
+      {subtitle && <p>{subtitle}</p>}
     </div>
   );
 }

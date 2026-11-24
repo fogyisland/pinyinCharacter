@@ -91,10 +91,11 @@ export function DictationPrep({ items, onChange }: Props) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6 [&_select]:min-h-10">
       {/* Source picker */}
-      <div className="card-paper space-y-3 p-4">
-        <div className="flex gap-2">
+      <div className="worksheet-no-print card-paper space-y-5 p-5 sm:p-8">
+        <h2 className="font-kai text-2xl font-semibold">选择听写词条</h2>
+        <div className="flex flex-wrap gap-2">
           {(
             [
               ['hsk', 'HSK 字表'],
@@ -106,6 +107,7 @@ export function DictationPrep({ items, onChange }: Props) {
               key={key}
               type="button"
               onClick={() => setSource(key)}
+              aria-pressed={source === key}
               className={`rounded border px-3 py-1 text-sm ${
                 source === key ? 'border-seal bg-seal/10 text-seal' : 'border-ink/20 text-ink-soft'
               }`}
@@ -155,6 +157,7 @@ export function DictationPrep({ items, onChange }: Props) {
         ) : (
           <div className="space-y-2">
             <textarea
+              aria-label="自定义词表"
               value={customText}
               onChange={(e) => setCustomText(e.target.value)}
               rows={3}
@@ -191,9 +194,9 @@ export function DictationPrep({ items, onChange }: Props) {
 
       {/* Item list editor */}
       {items.length > 0 ? (
-        <div className="card-paper space-y-2 p-4">
+        <div className="worksheet-no-print card-paper space-y-4 p-5 sm:p-8">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-medium">
+            <h2 className="font-kai text-xl font-semibold">
               词条（{items.length} 条）
             </h2>
             <button
@@ -205,7 +208,7 @@ export function DictationPrep({ items, onChange }: Props) {
               {annotating ? '注音中…' : '自动注音（只填空白）'}
             </button>
           </div>
-          <ul className="space-y-1">
+          <ul className="divide-y divide-ink/10 border-y border-ink/10">
             {items.map((item, index) => (
               <li key={`${item.word}-${index}`} className="flex items-center gap-2 text-sm">
                 <span className="w-6 text-right tabular-nums text-ink-faint">{index + 1}</span>
@@ -215,7 +218,7 @@ export function DictationPrep({ items, onChange }: Props) {
                   onChange={(e) => updatePinyin(index, e.target.value)}
                   placeholder="拼音（可改）"
                   aria-label={`${item.word} 的拼音`}
-                  className="w-40 rounded border border-ink/20 bg-paper px-2 py-0.5 text-xs"
+                  className="my-1 min-w-0 flex-1 rounded border border-ink/20 bg-paper px-3 py-2 text-sm sm:max-w-xs"
                 />
                 <button
                   type="button"
@@ -232,8 +235,9 @@ export function DictationPrep({ items, onChange }: Props) {
       ) : null}
 
       {/* Paper options + preview */}
-      <div className="card-paper space-y-3 p-4">
-        <div className="flex flex-wrap items-center gap-4 text-sm">
+      <div className="card-paper space-y-5 p-5 sm:p-8 print:p-0">
+        <h2 className="worksheet-no-print font-kai text-2xl font-semibold">试卷预览</h2>
+        <div className="worksheet-no-print flex flex-wrap items-center gap-4 text-sm">
           <label className="flex items-center gap-2">
             格子
             <select
@@ -264,6 +268,7 @@ export function DictationPrep({ items, onChange }: Props) {
                 key={key}
                 type="button"
                 onClick={() => setPreview(key)}
+                aria-pressed={preview === key}
                 className={`rounded border px-3 py-1 text-sm ${
                   preview === key
                     ? 'border-seal bg-seal/10 text-seal'
@@ -284,8 +289,8 @@ export function DictationPrep({ items, onChange }: Props) {
           </button>
         </div>
 
-        <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
-          <div className="mx-auto max-w-3xl min-w-full sm:min-w-[640px] print:min-w-0">
+        <div className="rounded border border-ink/15 bg-paper-soft p-3 sm:p-6 print:border-0 print:p-0">
+          <div className="mx-auto max-w-3xl">
             <DictationPaper
               items={items}
               mode={preview}

@@ -145,7 +145,7 @@ export function DictationTabs() {
         </div>
       ) : null}
 
-      <div role="tablist" aria-label="听写练习" className="flex gap-2">
+      <div role="tablist" aria-label="听写练习" className="worksheet-no-print flex gap-3 border-b border-ink/15">
         {(
           [
             ['prep', '出卷'],
@@ -158,7 +158,7 @@ export function DictationTabs() {
             role="tab"
             aria-selected={tab === key}
             onClick={() => switchTab(key)}
-            className={`rounded px-3 py-1 text-sm ${
+            className={`px-5 py-2 text-base ${
               tab === key ? 'border-b-2 border-seal font-medium text-seal' : 'text-ink-faint'
             }`}
           >
@@ -170,15 +170,16 @@ export function DictationTabs() {
       {tab === 'prep' ? (
         <DictationPrep items={items} onChange={setItems} />
       ) : (
-        <div className="space-y-3">
-          <div role="group" aria-label="翻条节奏" className="flex items-center gap-2 text-sm">
+        <div className="space-y-5">
+          <div role="group" aria-label="翻条节奏" className="flex flex-wrap items-center gap-2 text-sm">
             <span className="text-ink-soft">节奏：</span>
             {INTERVALS.map(([value, label]) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => setIntervalSec(value)}
-                className={`rounded border px-2 py-1 text-xs ${
+                aria-pressed={intervalSec === value}
+                className={`rounded border px-4 py-2 text-sm ${
                   intervalSec === value
                     ? 'border-seal bg-seal/10 text-seal'
                     : 'border-ink/20 text-ink-soft'

@@ -3,9 +3,9 @@
 /* ============ Design Tokens (字·韵) ============ */
 @theme {
   /* Colors */
-  --color-paper: #f4ecd8;
-  --color-paper-soft: #fffaee;
-  --color-paper-deep: #e8dcc0;
+  --color-paper: #f3efe5;
+  --color-paper-soft: #fffcf4;
+  --color-paper-deep: #e4dcc9;
   /*
    * The warm sand between `paper` and `paper-deep`. It used to be missing
    * from the token list even though 121 call sites referenced it, so every
@@ -16,10 +16,10 @@
    * the token has to live here.
    */
   --color-paper-warm: #ecdfc2;
-  --color-ink: #3a2a14;
-  --color-ink-soft: #5a4530;
-  --color-ink-faint: #8b6f3a;
-  --color-seal: #b22b2b;
+  --color-ink: #23372e;
+  --color-ink-soft: #49554a;
+  --color-ink-faint: #6e6451;
+  --color-seal: #a43129;
   --color-success: #4a7c59;
   --color-warning: #c99a3e;
   --color-danger: #b22b2b;
@@ -56,13 +56,34 @@
 }
 
 /* ============ Base Layer ============ */
+@media screen {
+  html[data-theme='dark'] {
+    color-scheme: dark;
+    --color-paper: #19211e;
+    --color-paper-soft: #242f29;
+    --color-paper-deep: #344139;
+    --color-paper-warm: #414739;
+    --color-ink: #f2ebda;
+    --color-ink-soft: #d0d2c3;
+    --color-ink-faint: #b5b5a1;
+    --color-seal: #ffa99a;
+    --color-success: #9dd3ac;
+    --color-danger: #ffa99a;
+    --color-info: #a6c9ea;
+  }
+  html[data-theme='dark'] .stroke-scroll { filter: invert(0.92); }
+  html[data-theme='dark'] .btn-ghost:hover { background-color: var(--color-paper-deep); }
+  html[data-theme='dark'] .bg-seal.text-white { color: var(--color-paper); }
+  html[data-theme='dark'] footer.bg-ink { background-color: #131b17; color: var(--color-ink); }
+  html[data-theme='dark'] footer.bg-ink :is(p, a) { color: var(--color-ink-soft); }
+}
 @layer base {
   body {
-    background-color: #f4ecd8;
+    background-color: var(--color-paper);
     background-image:
       radial-gradient(circle at 20% 30%, rgba(178, 43, 43, 0.018) 0%, transparent 40%),
       radial-gradient(circle at 80% 70%, rgba(58, 42, 20, 0.025) 0%, transparent 50%);
-    color: #3a2a14;
+    color: var(--color-ink);
     font-family: var(--font-sans);
   }
   /* Touch target baseline (a11y): inputs/selects/textareas ≥ 44px tall.
@@ -86,6 +107,26 @@
 }
 
 /* ============ Utility Classes ============ */
+.publication-heading {
+  padding-block: clamp(.5rem, 2vw, 1.5rem) clamp(1rem, 2.5vw, 2rem);
+  margin-bottom: clamp(1.25rem, 3vw, 2.75rem);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 24%, transparent);
+}
+.publication-heading > :is(h1,h2) {
+  font-family: var(--font-kai);
+  font-size: clamp(2.25rem, 4.7vw, 4.25rem);
+  line-height: 1.24;
+  text-wrap: balance;
+}
+.publication-heading > p { margin-top: .85rem; line-height: 1.8; color: var(--color-ink-soft); }
+.catalog-entry {
+  display: grid;
+  align-content: start;
+  gap: .7rem;
+  padding: 1.5rem .5rem;
+  border-top: 1px solid color-mix(in srgb,var(--color-ink) 25%,transparent);
+}
+.catalog-entry:hover { border-color: var(--color-seal); }
 @layer utilities {
   .paper-rule {
     background-image: linear-gradient(to right, transparent, rgba(139, 111, 58, 0.4), transparent);
@@ -102,8 +143,8 @@
     background: transparent;
   }
   .btn-seal {
-    background-color: #b22b2b;
-    color: #fffaee;
+    background-color: var(--color-seal);
+    color: var(--color-paper-soft);
     padding: 8px 18px;
     font-family: var(--font-kai);
     letter-spacing: 0.1em;
@@ -116,7 +157,7 @@
   }
   .btn-ghost {
     background: transparent;
-    color: #3a2a14;
+    color: var(--color-ink);
     border: 1px solid rgba(58, 42, 20, 0.2);
     padding: 8px 18px;
     cursor: pointer;
@@ -129,15 +170,15 @@
     border-color: rgba(58, 42, 20, 0.4);
   }
   .card-paper {
-    background: transparent;
-    border: 1px solid rgba(58, 42, 20, 0.1);
+    background-color: var(--color-paper-soft);
+    border: 1px solid color-mix(in srgb, var(--color-ink) 16%, transparent);
     box-shadow: var(--shadow-paper);
     transition:
       box-shadow 200ms,
       border-color 200ms;
   }
-  .card-paper:hover {
-    border-color: #b22b2b;
+  :is(a, button).card-paper:hover {
+    border-color: var(--color-seal);
     box-shadow: var(--shadow-paper-md);
   }
 }

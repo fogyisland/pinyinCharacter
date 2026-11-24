@@ -120,7 +120,7 @@ export function ClassicReader({ chunk, book }: Props) {
           {chunk.content.map((line, lineIdx) => (
             <p key={lineIdx} className={isVertical ? 'mx-3 inline-block' : 'my-1.5'}>
               {Array.from(line).map((ch, i) => {
-                if (isPunct(ch)) return null;
+                if (isPunct(ch)) return <span key={i}>{ch}</span>;
                 const py = chunk.pinyin[lineIdx]?.[i] ?? '';
                 return (
                   <span key={i} className="classic-char inline-block px-1.5 py-0.5">

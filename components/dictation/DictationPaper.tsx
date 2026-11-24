@@ -79,7 +79,7 @@ export function DictationPaper({
             {showNameLine ? (
               <div
                 data-dictation-name-line
-                className="mb-3 flex items-end justify-between gap-6 border-b border-ink/20 pb-2 text-xs text-ink-soft"
+                className="mb-4 flex flex-wrap items-end justify-between gap-x-3 gap-y-2 border-b border-ink/20 pb-3 text-xs text-ink-soft"
               >
                 <span>姓名：____________</span>
                 <span>日期：____________</span>
@@ -104,7 +104,7 @@ export function DictationPaper({
                     >
                       {number}.
                     </span>
-                    <div className="flex flex-1 items-center gap-2">
+                    <div className="flex min-w-0 flex-1 flex-col items-start gap-2 sm:flex-row sm:items-center print:flex-row print:items-center">
                       {printPinyin && item.pinyin !== '' ? (
                         <span
                           data-dictation-pinyin

@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: '罕见字库',
-    description: '1412 个罕见汉字, 含读音、释义、字源。',
+    description: '按字形与读音查阅罕见汉字的释义与字源。',
     path: '/rare-chars',
     ogType: 'website',
   });
@@ -53,7 +53,7 @@ export default async function RareCharsPage({ searchParams }: Props) {
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">
           字 · 韵 · 千字罕见库
         </div>
-        <SectionTitle subtitle="通用规范汉字表三级 · 1450 字">罕见字库</SectionTitle>
+        <SectionTitle subtitle="查读音、辨字形，了解罕见汉字的来历。">罕见字库</SectionTitle>
 
         {daily && (
           <DailyCharBanner

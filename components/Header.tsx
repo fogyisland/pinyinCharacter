@@ -1,50 +1,90 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Menu, X } from 'lucide-react';
 import { SafeModeToggle } from './SafeModeToggle';
+import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { useAppStore } from '@/lib/store';
 import { BRAND, filterNavLinks, NAV_GROUPS, type NavGroupId, type NavLink } from '@/lib/design';
 
-const GROUP_ORDER: readonly NavGroupId[] = [
-  'dictionary',
-  'worksheet',
-  'classics',
-  'teach',
-  'game',
-  'feedback',
-];
+const GROUP_ORDER = Object.keys(NAV_GROUPS) as NavGroupId[];
 
 function DesktopNav({ links, currentPath }: { links: readonly NavLink[]; currentPath: string }) {
-  // The row is ONE line, always. The dots are gone and the group gap carries
-  // the grouping instead: at 6 groups the 9 separator dots cost ~108px of
-  // width, which was exactly what pushed 留言笔记 onto a second line even
-  // on a 1440 display. Grouping is a rhythm, not decoration.
-  let prevGroup: NavGroupId | null = null;
+  const [open, setOpen] = useState<NavGroupId | null>(null);
+  const trigger = useRef<HTMLButtonElement | null>(null);
   return (
-    <nav className="hidden lg:flex flex-1 min-w-0 items-center justify-center text-sm">
-      {links.map((item) => {
-        const isFirstInGroup = item.group !== prevGroup;
-        const groupGap = isFirstInGroup && prevGroup !== null ? 'ml-3' : '';
-        prevGroup = item.group;
-        const isActive = currentPath === item.href || currentPath.startsWith(item.href + '/');
-        return (
-          <span key={item.href} className={'inline-flex items-center shrink-0 ' + groupGap}>
+    <nav
+      aria-label="主导航"
+      className="hidden lg:flex flex-1 min-w-0 items-center justify-center gap-2 xl:gap-4 whitespace-nowrap text-sm"
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setOpen(null);
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape' && open) {
+          setOpen(null);
+          trigger.current?.focus();
+        }
+      }}
+    >
+      {GROUP_ORDER.map((id) => {
+        const items = links.filter((item) => item.group === id);
+        const first = items[0];
+        if (!first) return null;
+        const label = NAV_GROUPS[id].label;
+        if (items.length === 1 && (label === first.label || id === 'teach')) {
+          return (
             <Link
-              href={item.href}
-              aria-current={isActive ? 'page' : undefined}
-              className={
-                'px-1 py-0.5 whitespace-nowrap transition-colors hover:text-seal ' +
-                (isActive ? 'text-seal font-medium border-b-2 border-seal' : 'text-ink-soft')
-              }
+              key={id}
+              href={first.href}
+              aria-current={currentPath === first.href ? 'page' : undefined}
+              className="py-2 hover:text-seal aria-[current=page]:text-seal"
             >
-              {item.label}
+              {label}
             </Link>
-          </span>
+          );
+        }
+        return (
+          <div
+            key={id}
+            className="relative"
+            onBlur={(event) => {
+              if (!event.currentTarget.contains(event.relatedTarget)) setOpen(null);
+            }}
+          >
+            <button
+              type="button"
+              aria-expanded={open === id}
+              aria-controls={`nav-${id}`}
+              className="py-2 hover:text-seal"
+              onClick={(event) => {
+                trigger.current = event.currentTarget;
+                setOpen(open === id ? null : id);
+              }}
+            >
+              {label} <span aria-hidden="true">▾</span>
+            </button>
+            <div
+              id={`nav-${id}`}
+              hidden={open !== id}
+              className="absolute z-30 left-0 top-full min-w-32 rounded border border-ink/10 bg-paper-soft p-2 shadow-paper-lg"
+            >
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={currentPath === item.href ? 'page' : undefined}
+                  onClick={() => setOpen(null)}
+                  className="block rounded px-3 py-2 hover:bg-paper-deep aria-[current=page]:text-seal"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
         );
       })}
     </nav>
@@ -108,7 +148,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="border-b border-ink/10 bg-paper-soft/95">
+    <header className="border-t-[3px] border-t-ink border-b border-b-ink/20 bg-paper-soft">
       <div className="max-w-6xl xl:max-w-7xl mx-auto px-6 h-[72px] flex items-center gap-4">
         <Link
           href="/"
@@ -127,12 +167,8 @@ export function Header() {
           </span>
         </Link>
         <DesktopNav links={links} currentPath={currentPath} />
-        <div className="flex items-center gap-2 shrink-0">
-          {safeMode && (
-            <span className="hidden xl:inline text-xs px-2 py-0.5 rounded bg-success/15 text-success">
-              已开启儿童模式
-            </span>
-          )}
+        <div className="ml-auto flex items-center gap-1 sm:gap-2 shrink-0">
+          <ThemeToggle />
           <SafeModeToggle />
           {user ? (
             <UserMenu />

@@ -13,7 +13,7 @@ export async function HomePoemCard() {
         <div className="font-kai text-4xl sm:text-5xl">诗</div>
         <div>
           <div className="font-semibold text-lg">古诗词</div>
-          <div className="text-xs text-ink-soft">唐诗三百首 · 宋词三百首</div>
+          <div className="text-xs text-ink-soft">历代诗词 · 随取一首</div>
         </div>
       </Link>
     );
@@ -24,7 +24,7 @@ export async function HomePoemCard() {
   return (
     <Link
       href={`/poetry/${poem.id}`}
-      className="card-paper p-5 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 group relative overflow-hidden"
+      className="bg-gradient-to-br from-paper-soft to-transparent rounded-tr-[5rem] p-6 sm:p-8 flex flex-col items-start gap-4 group relative overflow-hidden"
     >
       {/* Decorative oversized char */}
       <div
@@ -34,13 +34,19 @@ export async function HomePoemCard() {
         诗
       </div>
       {/* Big char badge */}
-      <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-sm bg-paper-deep flex items-center justify-center font-kai text-3xl sm:text-4xl text-ink relative z-10">
+      <div aria-hidden="true" className="font-kai text-4xl text-seal relative z-10">
         诗
       </div>
       <div className="flex-1 min-w-0 relative z-10">
         <div className="flex items-center gap-2 mb-1.5">
           <span className="inline-block px-2 py-0.5 bg-seal/10 text-seal text-xs rounded-sm font-kai">
-            {poem.dynasty === 'tang' ? '唐诗' : '宋词'}
+            {poem.dynasty === 'tang'
+              ? '唐'
+              : poem.dynasty === 'song'
+                ? '宋'
+                : poem.dynasty === 'mixed'
+                  ? '诗文'
+                  : poem.dynasty}
           </span>
           <span className="text-xs text-ink-faint">每日一诗</span>
         </div>

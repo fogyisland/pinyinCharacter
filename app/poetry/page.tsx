@@ -22,7 +22,7 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    title: '古诗词 — 诗三百首 · 词三百首 | 字·韵',
+    title: '古诗词 — 历代诗词选 | 字·韵',
     description: '按朝代与体裁浏览古诗词，每首带拼音与注释，可一键生成字帖或抄写练习。',
     path: '/poetry',
     ogType: 'website',
@@ -60,7 +60,7 @@ export default async function PoetryListPage({ searchParams }: Props) {
         <Header />
         <PageContainer>
           <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
-          <SectionTitle subtitle="诗三百首 · 词三百首 · 打印字帖">古诗词</SectionTitle>
+          <SectionTitle subtitle="历代古诗词 · 打印字帖">古诗词</SectionTitle>
           <ErrorState
             message={error instanceof Error ? error.message : '诗词加载失败'}
             retryHref={buildPoetryHref(effectiveQuery)}
@@ -78,7 +78,7 @@ export default async function PoetryListPage({ searchParams }: Props) {
       <Header />
       <PageContainer>
         <div className="font-kai text-xs text-ink-faint tracking-[0.3em] mb-3">字 · 韵</div>
-        <SectionTitle subtitle="诗三百首 · 词三百首 · 打印字帖">古诗词</SectionTitle>
+        <SectionTitle subtitle="历代古诗词 · 打印字帖">古诗词</SectionTitle>
         <PoetryFilters query={effectiveQuery} availableForms={availableForms} />
         {result.items.length === 0 ? (
           <EmptyState title="无匹配诗作" />

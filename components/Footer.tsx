@@ -4,8 +4,8 @@ import { BRAND, FOOTER_LINKS } from '@/lib/design';
 
 export function Footer() {
   return (
-    <footer className="border-t border-ink/10 mt-16 bg-paper-soft/60">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <footer className="border-t-4 border-seal mt-16 bg-ink text-paper-soft">
+      <div className="max-w-7xl mx-auto px-5 py-10 sm:px-8 lg:px-12">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Image
@@ -16,8 +16,8 @@ export function Footer() {
               className="rounded-full"
             />
             <div>
-              <div className="font-kai text-lg text-ink">{BRAND.name}</div>
-              <p className="text-xs text-ink-soft mt-1">{BRAND.shortDesc}</p>
+              <div className="font-kai text-2xl">{BRAND.name}</div>
+              <p className="text-sm text-paper/85 mt-1">{BRAND.shortDesc}</p>
             </div>
           </div>
           <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm">
@@ -27,7 +27,7 @@ export function Footer() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className="text-ink-soft hover:text-seal transition-colors"
+                  className="inline-flex min-h-11 items-center text-paper hover:underline underline-offset-4"
                   {...(isExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
                 >
                   {link.label}
@@ -36,8 +36,8 @@ export function Footer() {
             })}
           </nav>
         </div>
-        <div className="paper-rule my-6" />
-        <p className="text-xs text-ink-faint">{BRAND.copyright}</p>
+        <div className="my-6 border-t border-paper/25" />
+        <p className="text-xs text-paper/80">{BRAND.copyright}</p>
       </div>
     </footer>
   );

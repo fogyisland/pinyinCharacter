@@ -35,8 +35,9 @@ export function ClassicChunkPicker({ slug, chunks, activeId }: Props) {
       </aside>
 
       <div className="md:hidden mb-4">
-        <label className="block text-xs text-ink-faint mb-1">章</label>
+        <label htmlFor="classic-chapter" className="block text-sm text-ink-soft mb-1">选择篇章</label>
         <select
+          id="classic-chapter"
           value={activeId}
           onChange={(e) => {
             window.location.href = `/ancient/${slug}?chunk=${Number(e.target.value) - 1}`;

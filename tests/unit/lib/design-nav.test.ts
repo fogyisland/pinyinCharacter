@@ -27,7 +27,7 @@ describe('the header navigation', () => {
     for (const link of NAV_LINKS) {
       if (seen[seen.length - 1] !== link.group) seen.push(link.group);
     }
-    expect(seen).toEqual(['dictionary', 'worksheet', 'classics', 'teach', 'game', 'feedback']);
+    expect(seen).toEqual(['dictionary', 'prosody', 'classics', 'culture', 'worksheet', 'teach', 'game', 'feedback']);
   });
 
   it('has no duplicate hrefs', () => {
@@ -35,9 +35,9 @@ describe('the header navigation', () => {
     expect(new Set(hrefs).size).toBe(hrefs.length);
   });
 
-  it('keeps the flat nav short enough to read at a glance', () => {
-    // 平铺导航超过 12 项，用户扫描的时间比点开菜单还长。
-    expect(NAV_LINKS.length).toBeLessThanOrEqual(12);
+  it('keeps eight top-level groups and exposes the new learning destinations', () => {
+    expect(Object.keys(NAV_GROUPS)).toHaveLength(8);
+    expect(NAV_LINKS.map(link => link.href)).toEqual(expect.arrayContaining(['/prosody', '/culture', '/idioms', '/calligraphy']));
   });
 
   it('offers the classroom page and the dictation tool in the header', () => {

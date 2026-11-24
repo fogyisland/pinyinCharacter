@@ -1,4 +1,5 @@
 import { Download } from 'lucide-react';
+import sutrasManifest from '@/data/sutras/manifest.json';
 import { getDownloadStats, listDownloads } from '@/lib/admin-downloads';
 import { StatCard } from '@/components/admin/StatCard';
 import { DataTable } from '@/components/admin/DataTable';
@@ -30,8 +31,11 @@ function sourceHref(sourceType: string, sourceId: string | null): string | null 
   if (sourceType === 'worksheet') return `/worksheet/${encodeURIComponent(sourceId)}`;
   if (sourceType === 'poem') return `/poetry/${encodeURIComponent(sourceId)}`;
   if (sourceType === 'sutra') {
+    // Downloads store `<slug>#<chunkId>`, but the page route is /sutra/[id]
+    // and does Number(idStr). A slug here makes every "view source" link 404.
     const slug = sourceId.split('#')[0];
-    return `/sutra/${encodeURIComponent(slug)}`;
+    const entry = sutrasManifest.items.find((s) => s.slug === slug);
+    return entry ? `/sutra/${entry.id}` : null;
   }
   if (sourceType === 'classic') {
     // The source id is `<slug>#<chapterId>`; the chapter id is 1-based, and
@@ -86,9 +90,7 @@ export default async function AdminDownloadsPage({ searchParams }: PageProps) {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / DOWNLOADS_PAGE_SIZE));
-  const topSrc = stats
-    ? Object.entries(stats.bySourceType).sort((a, b) => b[1] - a[1])[0]
-    : null;
+  const topSrc = stats ? Object.entries(stats.bySourceType).sort((a, b) => b[1] - a[1])[0] : null;
   const topUser = stats?.topUsers?.[0];
 
   return (
@@ -171,7 +173,9 @@ export default async function AdminDownloadsPage({ searchParams }: PageProps) {
                   <span className="text-ink-faint">#{r.userId}</span>
                 )}
                 <StatusBadge>{r.format}</StatusBadge>
-                <StatusBadge tone={r.status === 'ok' ? 'success' : 'danger'}>{r.status}</StatusBadge>
+                <StatusBadge tone={r.status === 'ok' ? 'success' : 'danger'}>
+                  {r.status}
+                </StatusBadge>
                 <span className="text-xs">{r.durationMs != null ? `${r.durationMs} ms` : '—'}</span>
                 <span className="text-xs text-ink-soft">{formatDateTime(r.createdAt)}</span>
               </>

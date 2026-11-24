@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import { Header } from '@/components/Header';
 import { Footer } from '@/components/Footer';
@@ -36,6 +37,7 @@ const VALID_CATS = new Set<ClassicCategory>([
   'philosophy',
   'history',
   'other',
+  'pianwen',
 ]);
 
 export default async function AncientListPage({ searchParams }: Props) {
@@ -57,14 +59,22 @@ export default async function AncientListPage({ searchParams }: Props) {
       </Suspense>
       <PageContainer>
         <div className="max-w-5xl mx-auto py-8 space-y-6">
-          <header className="space-y-2">
-            <h1 className="text-3xl font-bold text-ink font-kai">古籍 / Classical Texts</h1>
+          <header className="publication-heading">
+            <h1>古籍</h1>
             <p className="text-sm text-ink-soft">
-              四书五经、蒙学、诸子、史书 — 经典文本 + 拼音注释,可一键生成字帖。
+              按门类选书，循篇章读原文，也可将选段制成字帖。
             </p>
           </header>
 
           <ClassicCategoryNav current={category ?? 'all'} counts={counts} />
+          <nav aria-label="经史子集入门选读" className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
+            <span className="font-medium">入门选读</span>
+            <Link href="/ancient?category=mengxue" className="text-seal underline">蒙学</Link>
+            <Link href="/ancient/lunyu" className="text-seal underline">经 · 论语</Link>
+            <Link href="/ancient/sanguozhi-1" className="text-seal underline">史 · 三国志</Link>
+            <Link href="/ancient/zhuangzi-1" className="text-seal underline">子 · 庄子</Link>
+            <Link href="/ancient/chuci" className="text-seal underline">集 · 楚辞</Link>
+          </nav>
 
           <form action="/ancient" method="GET" className="flex gap-2">
             {category && <input type="hidden" name="category" value={category} />}

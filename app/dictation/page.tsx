@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { buildMetadata } from '@/lib/seo/metadata';
 import { DictationClient } from './DictationClient';
+import { Header } from '@/components/Header';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,5 +26,5 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default function DictationPage() {
-  return <DictationClient />;
+  return <><div className="worksheet-no-print print:hidden"><Header /></div><DictationClient /></>;
 }
