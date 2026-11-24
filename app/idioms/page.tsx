@@ -6,7 +6,7 @@ import idioms from '@/data/idioms.json';
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: '成语典故 · 字·韵',
-    description: '按成语或释义检索成语词目，从出处读懂一条成语怎样用到今天。',
+    description: '按成语或释义检索词目，查看拼音、释义与分类，并通读精选成语的出处与解读。',
     path: '/idioms',
     ogType: 'website',
   });

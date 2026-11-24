@@ -32,6 +32,9 @@ export function SetupRouteToggle({ initial }: Props) {
       setEnabled(next);
       setMsg(next ? '/init 路由已开启' : '/init 路由已关闭');
       router.refresh();
+    } catch (error) {
+      console.error('切换 /init 路由状态失败', error);
+      setMsg('网络请求失败，请检查连接后重试');
     } finally {
       setBusy(false);
     }
@@ -47,11 +50,7 @@ export function SetupRouteToggle({ initial }: Props) {
             {enabled ? '✓ 允许' : '✗ 锁定'}
           </p>
         </div>
-        <AdminButton
-          onClick={toggle}
-          disabled={busy}
-          variant={enabled ? 'danger' : 'primary'}
-        >
+        <AdminButton onClick={toggle} disabled={busy} variant={enabled ? 'danger' : 'primary'}>
           {busy ? '处理中…' : enabled ? '关闭路由' : '开启路由'}
         </AdminButton>
       </div>

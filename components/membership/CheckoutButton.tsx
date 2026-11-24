@@ -9,24 +9,30 @@ export function CheckoutButton({ planKey, label }: { planKey: string; label: str
   const onClick = useCallback(async () => {
     setBusy(true);
     setErr(null);
-    const res = await fetch('/api/membership/checkout', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ planKey }),
-      credentials: 'same-origin',
-    });
-    const j = await res.json();
-    setBusy(false);
-    if (!j.ok) {
-      setErr(j.error.message);
-      return;
-    }
-    if (j.data.approvalUrl) {
-      const url = new URL(j.data.approvalUrl);
-      url.searchParams.set('orderId', String(j.data.orderId));
-      window.location.href = url.toString();
-    } else {
-      setErr('PayPal 未返回 approvalUrl');
+    try {
+      const res = await fetch('/api/membership/checkout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ planKey }),
+        credentials: 'same-origin',
+      });
+      const j = await res.json();
+      if (!j.ok) {
+        setErr(j.error?.message ?? '结算失败，请稍后重试');
+        return;
+      }
+      if (j.data.approvalUrl) {
+        const url = new URL(j.data.approvalUrl);
+        url.searchParams.set('orderId', String(j.data.orderId));
+        window.location.href = url.toString();
+      } else {
+        setErr('PayPal 未返回 approvalUrl');
+      }
+    } catch (error) {
+      console.error('创建结算订单失败', error);
+      setErr('网络连接失败，请检查网络后重试');
+    } finally {
+      setBusy(false);
     }
   }, [planKey]);
   return (

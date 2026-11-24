@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Props {
   open: boolean;
@@ -26,6 +26,16 @@ export function ConfirmDialog({
   children,
 }: Props) {
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !busy) onClose();
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [open, busy, onClose]);
+
   if (!open) return null;
   async function go() {
     setBusy(true);
@@ -38,9 +48,19 @@ export function ConfirmDialog({
   }
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-paper rounded-lg shadow-lg w-full max-w-sm p-5">
-        <h3 className="text-base font-semibold mb-2">{title}</h3>
-        <p className="text-sm text-ink-soft mb-4">{description}</p>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-description"
+        className="bg-paper rounded-lg shadow-lg w-full max-w-sm p-5"
+      >
+        <h3 id="confirm-dialog-title" className="text-base font-semibold mb-2">
+          {title}
+        </h3>
+        <p id="confirm-dialog-description" className="text-sm text-ink-soft mb-4">
+          {description}
+        </p>
         {children}
         <div className="flex justify-end gap-2 mt-4">
           <button
@@ -55,7 +75,9 @@ export function ConfirmDialog({
             type="button"
             onClick={go}
             disabled={busy}
-            className={`px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 ${destructive ? 'bg-seal hover:bg-seal/80' : 'bg-seal hover:bg-seal/80'}`}
+            className={`px-3 py-1.5 text-sm text-white rounded disabled:opacity-50 ${
+              destructive ? 'bg-danger hover:bg-danger/80' : 'bg-seal hover:bg-seal/80'
+            }`}
           >
             {busy ? '处理中…' : confirmLabel}
           </button>

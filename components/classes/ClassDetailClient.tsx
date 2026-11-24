@@ -28,6 +28,8 @@ export function ClassDetailClient({ classId }: { classId: number }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [composing, setComposing] = useState(false);
+  /** 学生提交前的可选留言草稿，按作业 id 保存。 */
+  const [draftNotes, setDraftNotes] = useState<Record<number, string>>({});
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -68,16 +70,22 @@ export function ClassDetailClient({ classId }: { classId: number }) {
     await load();
   }
 
-  /** 学生勾选「我练完了」。 */
+  /** 学生勾选「我练完了」，可附一句给老师的留言。 */
   async function handleSubmit(assignmentId: number): Promise<void> {
     setBusy(true);
     setError(null);
-    const result = await submitAssignmentRequest(classId, assignmentId, '');
+    const note = (draftNotes[assignmentId] ?? '').trim();
+    const result = await submitAssignmentRequest(classId, assignmentId, note);
     setBusy(false);
     if (!result.ok) {
       setError(result.error.message);
       return;
     }
+    setDraftNotes((prev) => {
+      const next = { ...prev };
+      delete next[assignmentId];
+      return next;
+    });
     await load();
   }
 
@@ -191,11 +199,9 @@ export function ClassDetailClient({ classId }: { classId: number }) {
                     <span className="text-xs text-ink-faint">截止 {assignment.dueAt}</span>
                   ) : null}
                   {/* 完成进度：老师看全班，学生看自己。 */}
-                  <span
-                    className="text-xs text-ink-soft"
-                    data-testid={`progress-${assignment.id}`}
-                  >
-                    已完成 {(detail.progress[assignment.id] ?? []).length} / {detail.members.length} 人
+                  <span className="text-xs text-ink-soft" data-testid={`progress-${assignment.id}`}>
+                    已完成 {(detail.progress[assignment.id] ?? []).length} / {detail.members.length}{' '}
+                    人
                   </span>
                   <span className="ml-auto flex items-center gap-2 text-xs">
                     {assignment.kind === 'worksheet' ? (
@@ -252,14 +258,31 @@ export function ClassDetailClient({ classId }: { classId: number }) {
                         </button>
                       </>
                     ) : (
-                      <button
-                        type="button"
-                        onClick={() => void handleSubmit(assignment.id)}
-                        disabled={busy}
-                        className="rounded border border-seal px-2 py-0.5 text-seal hover:bg-seal/10 disabled:opacity-50"
-                      >
-                        我练完了
-                      </button>
+                      <div className="flex w-full flex-wrap items-center gap-2">
+                        <input
+                          type="text"
+                          aria-label={`给第 ${assignment.id} 项作业留言（可选）`}
+                          maxLength={512}
+                          value={draftNotes[assignment.id] ?? ''}
+                          onChange={(event) =>
+                            setDraftNotes((prev) => ({
+                              ...prev,
+                              [assignment.id]: event.target.value,
+                            }))
+                          }
+                          placeholder="给老师留言（可选）"
+                          disabled={busy}
+                          className="min-w-0 flex-1 rounded border border-ink/15 bg-paper px-2 py-1 text-xs"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => void handleSubmit(assignment.id)}
+                          disabled={busy}
+                          className="rounded border border-seal px-2 py-0.5 text-seal hover:bg-seal/10 disabled:opacity-50"
+                        >
+                          我练完了
+                        </button>
+                      </div>
                     )}
                     {detail.mySubmissions[assignment.id]?.note ? (
                       <span className="text-ink-soft">
