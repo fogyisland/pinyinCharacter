@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-24T03:32:52.874Z",
+  "updatedAt": "2026-11-24T06:02:55.087Z",
   "books": [
     {
       "slug": "chunqiu-jing",
@@ -127,6 +127,48 @@
       "jsonBytes": 182205,
       "bookId": "f726eab9800a",
       "bookTitle": "仪礼"
+    },
+    {
+      "slug": "zhouyi-shangjing",
+      "title": "周易·上经",
+      "source": "zh.wikisource.org/周易",
+      "category": "five-classics",
+      "author": "周文王（相传）",
+      "era": "西周",
+      "chapterCount": 30,
+      "charCount": 9243,
+      "jsonFile": "data/classics/zhouyi-shangjing.json.gz",
+      "jsonBytes": 27355,
+      "bookId": "zhouyi-shangjing",
+      "bookTitle": "周易"
+    },
+    {
+      "slug": "zhouyi-xiajing",
+      "title": "周易·下经",
+      "source": "zh.wikisource.org/周易",
+      "category": "five-classics",
+      "author": "周文王（相传）",
+      "era": "西周",
+      "chapterCount": 34,
+      "charCount": 9076,
+      "jsonFile": "data/classics/zhouyi-xiajing.json.gz",
+      "jsonBytes": 26545,
+      "bookId": "zhouyi-xiajing",
+      "bookTitle": "周易"
+    },
+    {
+      "slug": "zhouyi-yizhuan",
+      "title": "周易·易传（十翼）",
+      "source": "zh.wikisource.org/易传",
+      "category": "five-classics",
+      "author": "孔子（相传）",
+      "era": "春秋",
+      "chapterCount": 5,
+      "charCount": 8645,
+      "jsonFile": "data/classics/zhouyi-yizhuan.json.gz",
+      "jsonBytes": 27055,
+      "bookId": "zhouyi-yizhuan",
+      "bookTitle": "周易"
     },
     {
       "slug": "zuozhuan-1",
