@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-11-24T06:02:55.087Z",
+  "updatedAt": "2026-11-24T15:37:32.313Z",
   "books": [
     {
       "slug": "chunqiu-jing",
@@ -2840,7 +2840,7 @@
       "chapterCount": 30,
       "charCount": 6480,
       "jsonFile": "data/classics/xunmeng-pianju.json.gz",
-      "jsonBytes": 12682,
+      "jsonBytes": 29134,
       "bookId": "427c5eea5943",
       "bookTitle": "训蒙骈句"
     }
