@@ -3,7 +3,7 @@
   "title": "奉和中书舍人贾至早朝大明宫",
   "author": "岑参",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "鸡鸣紫陌曙光寒，莺啭皇州春色阑。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「莺啭皇州春色阑」，撷取春意入句，字里行间透出欢欣。动词选用尤妙，使画面顿然活化；融情入景，使寻常风物皆着情绪。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "奉和圣制从蓬莱向兴庆阁道中留春雨中春望之作应制",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "渭水自萦秦塞曲，黄山旧遶汉宫斜。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「雨中春树万人家」，撷取春意入句，字里行间透出欢欣。融情入景，使寻常风物皆着情绪；由实入虚，使情思显得深长。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "扬州慢",
   "author": "姜夔",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "淮左名都，竹西佳处，解鞍少驻初程。",
@@ -153,6 +153,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「自胡马窥江去后」，写边关苍茫之景，豪情与悲慨交织于笔端。音节随情绪起伏，摇曳生姿；以简笔勾勒，形象生动，如在目前。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

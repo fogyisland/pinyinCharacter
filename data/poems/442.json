@@ -3,7 +3,7 @@
   "title": "薄幸",
   "author": "贺铸",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "艳真多态。",
@@ -170,6 +170,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「犹有花梢日在」，撷取春意入句，字里行间透出欢欣。长短句交错，读来抑扬顿挫；以简笔勾勒，形象生动，如在目前。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

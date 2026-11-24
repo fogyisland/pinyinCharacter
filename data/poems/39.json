@@ -3,7 +3,7 @@
   "title": "楚江怀古三首 一",
   "author": "马戴",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "露气寒光集，微阳下楚丘。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「露气寒光集」，描摹夜色空明，情思于无声处流转。巧用反衬手法，突出了全篇主旨；由实入虚，使情思显得深长。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

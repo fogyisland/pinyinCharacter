@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorHandling, badRequest } from '@/lib/api-handler';
+import { checkAttemptLimit, resetAttemptLimit } from '@/lib/ratelimit';
 import { clearLock, getActivationStatus } from '@/lib/activation';
 import { writeAudit } from '@/lib/audit';
 
 const unlockSchema = z.object({
   code: z.string().min(4).max(128),
 });
+
+const MAX_ATTEMPTS = 10;
+const WINDOW_MS = 15 * 60 * 1000;
 
 /**
  * POST /api/activation/unlock — submit an activation code to clear the
@@ -18,6 +22,26 @@ const unlockSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   return withErrorHandling(async () => {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
+    const limit = checkAttemptLimit(`activation:${ip}`, MAX_ATTEMPTS, WINDOW_MS);
+    if (!limit.allowed) {
+      try {
+        await writeAudit({
+          userId: null,
+          event: 'activation_unlock',
+          metadata: { source: 'rate_limited' },
+          ip: ip === 'unknown' ? null : ip,
+          userAgent: req.headers.get('user-agent') ?? null,
+        });
+      } catch {
+        /* ignore */
+      }
+      return NextResponse.json(
+        { ok: false, error: { code: 'rate_limited', message: '尝试次数过多，请稍后再试。' } },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json();
     const parsed = unlockSchema.safeParse(body);
     if (!parsed.success) {
@@ -51,6 +75,7 @@ export async function POST(req: NextRequest) {
     }
     const before = await getActivationStatus();
     await clearLock();
+    resetAttemptLimit(`activation:${ip}`);
     try {
       await writeAudit({
         userId: null,

@@ -3,7 +3,7 @@
   "title": "闺怨",
   "author": "王昌龄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "闺中少妇不曾愁，春日凝妆上翠楼。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「春日凝妆上翠楼」，摹写幽居寂寞，语柔而意深。白描传神，不事雕琢而情态毕现；句式参差，节奏跌宕而富有张力。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

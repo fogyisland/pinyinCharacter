@@ -3,7 +3,7 @@
   "title": "哀江头",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "少陵野老吞声哭，春日潜行曲江曲。",
@@ -199,6 +199,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「春日潜行曲江曲」，写春日风物，生机盎然，明丽可喜。融情入景，使寻常风物皆着情绪；由实入虚，使情思显得深长。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

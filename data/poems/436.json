@@ -3,7 +3,7 @@
   "title": "阮郎归",
   "author": "秦观",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "湘天风雨破寒初。",
@@ -91,6 +91,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「衡阳犹有雁传书」，抒离愁别绪，语淡而情浓，余味不尽。融情入景，使寻常风物皆着情绪；以简笔勾勒，形象生动，如在目前。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

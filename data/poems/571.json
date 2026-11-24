@@ -3,7 +3,7 @@
   "title": "声声慢",
   "author": "李清照",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "寻寻觅觅，冷冷清清，凄凄惨惨戚戚。",
@@ -154,6 +154,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「三杯两盏淡酒」，借酒抒怀，情致淋漓，尽显性情。巧用反衬手法，突出了全篇主旨；情景交融，以景语作情语，含蓄蕴藉。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

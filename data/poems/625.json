@@ -3,7 +3,7 @@
   "title": "甘州・八声甘州",
   "author": "张炎",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "记玉关、踏雪事清游。",
@@ -154,6 +154,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「寒气脆貂裘」，以秋景衬离怀，萧索中自见深情。借景抒情，景中含情，意在言外；结尾点明主旨，与开篇遥相呼应。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

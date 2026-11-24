@@ -3,7 +3,7 @@
   "title": "长亭怨慢",
   "author": "姜夔",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "渐吹尽、枝头香絮。",
@@ -160,6 +160,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「难翦离愁千缕」，写羁旅之思，婉转深沉，令人低回。动静相生，画面顿然鲜活起来；白描传神，不事雕琢而情态毕现。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

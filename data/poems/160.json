@@ -3,7 +3,7 @@
   "title": "送陈章甫",
   "author": "李颀",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "四月南风大麦黄，枣花未落桐阴长。",
@@ -180,6 +180,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「嘶马出门思旧乡」，抒离愁别绪，语淡而情浓，余味不尽。长短句交错，读来抑扬顿挫；以简笔勾勒，形象生动，如在目前。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

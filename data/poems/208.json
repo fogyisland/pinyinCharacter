@@ -3,7 +3,7 @@
   "title": "春望",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "国破山河在，城春草木深。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「国破山河在」，摄取远景入诗，境界开阔而意蕴悠长。借景抒情，景中含情，意在言外；炼字精准，一字落下而全句生辉。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

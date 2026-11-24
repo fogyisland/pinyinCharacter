@@ -3,7 +3,7 @@
   "title": "玉楼春",
   "author": "刘克庄",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "年年跃马长安市。",
@@ -91,6 +91,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「红烛呼庐宵不寐」，写月夜清辉，幽寂之中透出孤怀。白描传神，不事雕琢而情态毕现；长短句交错，读来抑扬顿挫。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

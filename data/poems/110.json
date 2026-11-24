@@ -3,7 +3,7 @@
   "title": "夜归鹿门山歌",
   "author": "孟浩然",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "山寺钟鸣昼已昏，渔梁渡头争渡喧。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「渔梁渡头争渡喧」，写田园闲适，恬淡自足，气息清新。借景抒情，景中含情，意在言外；长短句交错，读来抑扬顿挫。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

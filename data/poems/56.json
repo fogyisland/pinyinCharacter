@@ -3,7 +3,7 @@
   "title": "青谿",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "言入黄花川，每逐青谿水。",
@@ -99,6 +99,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「清川澹如此」，写登高望远之所见，境界顿开，气象万千。情景交融，以景语作情语，含蓄蕴藉；音节随情绪起伏，摇曳生姿。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

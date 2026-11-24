@@ -195,7 +195,11 @@ export async function createClass(args: {
 
 /** True when the error is MySQL's duplicate-key error. */
 function isDuplicateKey(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && (error as { code?: string }).code === 'ER_DUP_ENTRY';
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: string }).code === 'ER_DUP_ENTRY'
+  );
 }
 
 /**
@@ -373,7 +377,10 @@ export async function listAssignments(classId: number): Promise<Assignment[]> {
     try {
       parsed = typeof row.payload === 'string' ? JSON.parse(row.payload) : row.payload;
     } catch (error) {
-      console.warn(`[classes-store] assignment ${String(row.id)} has an unreadable payload:`, error);
+      console.warn(
+        `[classes-store] assignment ${String(row.id)} has an unreadable payload:`,
+        error,
+      );
       continue;
     }
     const payload = parseAssignmentPayload(parsed);
@@ -396,10 +403,10 @@ export async function listAssignments(classId: number): Promise<Assignment[]> {
 /** 删一份作业。一个班不能删另一个班的作业。 */
 export async function deleteAssignment(classId: number, assignmentId: number): Promise<boolean> {
   const pool = getPool();
-  const [result] = await pool.query(
-    `DELETE FROM class_assignments WHERE id = ? AND class_id = ?`,
-    [assignmentId, classId],
-  );
+  const [result] = await pool.query(`DELETE FROM class_assignments WHERE id = ? AND class_id = ?`, [
+    assignmentId,
+    classId,
+  ]);
   return Number((result as { affectedRows?: number }).affectedRows ?? 0) > 0;
 }
 
@@ -542,6 +549,142 @@ export async function listMySubmissions(
     out[Number(row.assignment_id)] = {
       note: String(row.note ?? ''),
       completedAt: toTimestamp(row.completed_at),
+    };
+  }
+  return out;
+}
+
+/** 学生自报的听写成绩。 */
+export interface DictationResult {
+  userId: number;
+  username: string;
+  total: number;
+  correct: number;
+  wrongWords: string[];
+  submittedAt: string;
+  /** 同一份作业的学生留言（来自 class_submissions，可能为空）。 */
+  note: string;
+}
+
+/**
+ * 保存学生自报的听写成绩。与 recordSubmission 一样做班级归属 Join 校验，
+ * 防止跨班提交；重复提交按唯一索引更新为最新一次。
+ */
+export async function recordDictationResult(args: {
+  assignmentId: number;
+  classId: number;
+  userId: number;
+  total: number;
+  correct: number;
+  wrongWords: string[];
+}): Promise<boolean> {
+  const pool = getPool();
+  const [guards] = await pool.query(
+    `SELECT a.id
+       FROM class_assignments a
+       JOIN class_members m ON m.class_id = a.class_id AND m.user_id = ?
+      WHERE a.id = ? AND a.class_id = ? AND a.kind = 'dictation'
+      LIMIT 1`,
+    [args.userId, args.assignmentId, args.classId],
+  );
+  if ((guards as unknown[]).length === 0) return false;
+
+  await pool.query(
+    `INSERT INTO class_dictation_results
+       (assignment_id, user_id, total, correct, wrong_words)
+     VALUES (?, ?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE
+       total = VALUES(total), correct = VALUES(correct),
+       wrong_words = VALUES(wrong_words), submitted_at = CURRENT_TIMESTAMP`,
+    [
+      args.assignmentId,
+      args.userId,
+      args.total,
+      args.correct,
+      JSON.stringify(args.wrongWords.slice(0, 200)),
+    ],
+  );
+  return true;
+}
+
+/** 删除听写成绩（撤销提交，或作业被删时由外键级联）。 */
+export async function clearDictationResult(assignmentId: number, userId: number): Promise<boolean> {
+  const pool = getPool();
+  const [result] = await pool.query(
+    `DELETE FROM class_dictation_results WHERE assignment_id = ? AND user_id = ?`,
+    [assignmentId, userId],
+  );
+  return Number((result as { affectedRows?: number }).affectedRows ?? 0) > 0;
+}
+
+/** 某份听写作业的全部成绩（老师视图）。 */
+export async function listDictationResults(assignmentId: number): Promise<DictationResult[]> {
+  const pool = getPool();
+  const [rows] = await pool.query(
+    `SELECT r.user_id, u.username, r.total, r.correct, r.wrong_words, r.submitted_at,
+            COALESCE(s.note, '') AS note
+       FROM class_dictation_results r
+       JOIN users u ON u.id = r.user_id
+       LEFT JOIN class_submissions s
+         ON s.assignment_id = r.assignment_id AND s.user_id = r.user_id
+      WHERE r.assignment_id = ?
+      ORDER BY r.correct / GREATEST(r.total, 1) DESC, r.submitted_at ASC`,
+    [assignmentId],
+  );
+  return (rows as Array<Record<string, unknown>>).map((row) => {
+    let wrongWords: string[] = [];
+    try {
+      const parsed =
+        typeof row.wrong_words === 'string' ? JSON.parse(row.wrong_words) : row.wrong_words;
+      if (Array.isArray(parsed)) wrongWords = parsed.map(String).slice(0, 200);
+    } catch {
+      wrongWords = [];
+    }
+    return {
+      userId: Number(row.user_id),
+      username: String(row.username),
+      total: Number(row.total),
+      correct: Number(row.correct),
+      wrongWords,
+      submittedAt: toTimestamp(row.submitted_at),
+      note: String(row.note ?? ''),
+    };
+  });
+}
+
+/** 一个班中当前用户自己的全部听写成绩（学生视图）。 */
+export async function listMyDictationResults(
+  classId: number,
+  userId: number,
+): Promise<Record<number, Omit<DictationResult, 'username'>>> {
+  const pool = getPool();
+  const [rows] = await pool.query(
+    `SELECT r.assignment_id, r.total, r.correct, r.wrong_words, r.submitted_at,
+            COALESCE(s.note, '') AS note
+       FROM class_dictation_results r
+       JOIN class_assignments a ON a.id = r.assignment_id
+       LEFT JOIN class_submissions s
+         ON s.assignment_id = r.assignment_id AND s.user_id = r.user_id
+      WHERE a.class_id = ? AND r.user_id = ?`,
+    [classId, userId],
+  );
+  const out: Record<number, Omit<DictationResult, 'username'>> = {};
+  for (const row of rows as Array<Record<string, unknown>>) {
+    let wrongWords: string[] = [];
+    try {
+      const parsed =
+        typeof row.wrong_words === 'string' ? JSON.parse(row.wrong_words) : row.wrong_words;
+      if (Array.isArray(parsed)) wrongWords = parsed.map(String).slice(0, 200);
+    } catch {
+      wrongWords = [];
+    }
+    out[Number(row.assignment_id)] = {
+      userId,
+      total: Number(row.total),
+      correct: Number(row.correct),
+      wrongWords,
+      submittedAt: toTimestamp(row.submitted_at),
+      note: String(row.note ?? ''),
     };
   }
   return out;

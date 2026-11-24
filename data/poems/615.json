@@ -3,7 +3,7 @@
   "title": "天香",
   "author": "王沂孙",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "孤峤蟠烟，层涛蜕月，骊宫夜采铅水。",
@@ -152,6 +152,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「骊宫夜采铅水」，写月夜清辉，幽寂之中透出孤怀。情景交融，以景语作情语，含蓄蕴藉；结尾点明主旨，与开篇遥相呼应。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

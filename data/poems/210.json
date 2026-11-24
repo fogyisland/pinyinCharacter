@@ -3,7 +3,7 @@
   "title": "至德二载甫自京金光门出问道归凤翔乾元初从左拾遗移华州掾与亲故别因出此门有悲往事",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "此道昔归顺，西郊胡正繁。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「近得归京邑」，写羁旅之思，婉转深沉，令人低回。融情入景，使寻常风物皆着情绪；前后境况相互对照，反差强烈。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

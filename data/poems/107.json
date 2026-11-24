@@ -3,7 +3,7 @@
   "title": "秋登兰山寄张五",
   "author": "孟浩然",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "北山白云里，隐者自怡悦。",
@@ -99,6 +99,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「相望试登高」，摄取远景入诗，境界开阔而意蕴悠长。音节随情绪起伏，摇曳生姿；前后境况相互对照，反差强烈。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

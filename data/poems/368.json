@@ -3,7 +3,7 @@
   "title": "瑞鹤仙",
   "author": "陆叡",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "湿云黏雁影。",
@@ -174,6 +174,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「都不归来」，写羁旅之思，婉转深沉，令人低回。音节随情绪起伏，摇曳生姿；静景与动景交织，生气流转其间。以景收束，余情袅袅。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

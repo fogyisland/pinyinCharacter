@@ -3,7 +3,7 @@
   "title": "杂曲歌辞 行路难三首 一",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "金尊清酒斗十千，玉盘珍羞直万钱。",
@@ -120,6 +120,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「欲渡黄河冰塞川」，描绘山川形胜，景象阔大，令人神往。句式参差，节奏跌宕而富有张力；语言质朴无华，却自有一种动人力量。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

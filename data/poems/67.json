@@ -3,7 +3,7 @@
   "title": "八月十五夜赠张功曹",
   "author": "韩愈",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "纤云四卷天无河，清风吹空月舒波。",
@@ -256,6 +256,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「嗣皇继圣登夔臯」，描绘山川形胜，景象阔大，令人神往。音节随情绪起伏，摇曳生姿；前后境况相互对照，反差强烈。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

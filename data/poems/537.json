@@ -3,7 +3,7 @@
   "title": "诉衷情",
   "author": "欧阳修",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "清晨帘幕卷轻霜。",
@@ -82,6 +82,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词中以景写情，层层递进。「都缘自有离恨」，抒离愁别绪，语淡而情浓，余味不尽。以动衬静，境界愈显幽深；措辞凝练，极富表现力。声情并茂，尽显词体之美。细细品之，别有一番滋味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

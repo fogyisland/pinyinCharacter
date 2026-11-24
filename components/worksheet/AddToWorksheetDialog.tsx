@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
+import { useDialogEscape } from '@/components/common/useDialogEscape';
 import { X, FilePlus2, FolderOpen, Loader2, Check } from 'lucide-react';
 import {
   listWorksheetsLightweight,
@@ -73,6 +74,8 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
       .finally(() => setLoading(false));
   }, [open, router, pathname, onClose]);
 
+  useDialogEscape(open, onClose);
+
   if (!open) return null;
 
   const defaultHeader =
@@ -134,11 +137,16 @@ export function AddToWorksheetDialog({ open, chars, title, onClose, onAdded }: P
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-to-worksheet-title"
         className="bg-paper rounded-lg shadow-lg w-full max-w-sm p-5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between mb-3">
-          <h3 className="text-base font-semibold">{title ?? defaultHeader}</h3>
+          <h3 id="add-to-worksheet-title" className="text-base font-semibold">
+            {title ?? defaultHeader}
+          </h3>
           <button type="button" onClick={onClose} className="text-ink-faint hover:text-ink">
             <X className="h-4 w-4" />
           </button>

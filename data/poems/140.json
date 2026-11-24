@@ -3,7 +3,7 @@
   "title": "和贾舍人早朝大明宫之作",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "绛帻鸡人送晓筹，尚衣方进翠云裘。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「九天阊阖开宫殿」，摹写幽居寂寞，语柔而意深。情景交融，以景语作情语，含蓄蕴藉；对仗工整，两句相映成趣，尽显声律之美。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "三姝媚",
   "author": "史达祖",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "烟光摇缥瓦。",
@@ -161,6 +161,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「惆怅南楼遥夜」，以寻常语道尽心中怅惘，真切动人。前后境况相互对照，反差强烈；层层蓄势，至末句而情毕露。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

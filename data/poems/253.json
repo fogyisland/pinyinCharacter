@@ -3,7 +3,7 @@
   "title": "古柏行",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "孔明庙前有老柏，柯如青铜根如石。",
@@ -237,6 +237,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「忆昨路绕锦亭东」，写羁旅之思，婉转深沉，令人低回。由实入虚，使情思显得深长；对比鲜明，两相映衬而意旨愈显。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

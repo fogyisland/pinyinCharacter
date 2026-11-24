@@ -3,7 +3,7 @@
   "title": "筹笔驿",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "猿鸟犹疑畏简书，风云常为护储胥。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「梁父吟成恨有余」，写羁旅之思，婉转深沉，令人低回。动静相生，画面顿然鲜活起来；实写与想象交织，意境更为开阔。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

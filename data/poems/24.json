@@ -3,7 +3,7 @@
   "title": "为有",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "为有云屏无限娇，凤城寒尽怕春宵。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「凤城寒尽怕春宵」，以月色烘托心境，清冷而动人。实写与想象交织，意境更为开阔；借景抒情，景中含情，意在言外。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

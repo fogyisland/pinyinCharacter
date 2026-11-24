@@ -3,7 +3,7 @@
   "title": "蝶恋花",
   "author": "欧阳修",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "独倚危楼风细细。",
@@ -103,6 +103,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「也拟疏狂图一醉」，写宴饮之欢，豪气跃然纸上。由实入虚，使情思显得深长；借景抒情，景中含情，意在言外。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

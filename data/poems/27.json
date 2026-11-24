@@ -3,7 +3,7 @@
   "title": "春雨",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "怅卧新春白袷衣，白门寥落意多违。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「珠箔飘灯独自归」，写羁旅之思，婉转深沉，令人低回。以动衬静，境界愈显幽深；巧用反衬手法，突出了全篇主旨。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

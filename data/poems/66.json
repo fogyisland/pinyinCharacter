@@ -3,7 +3,7 @@
   "title": "山石",
   "author": "韩愈",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "山石荦确行径微，黄昏到寺蝙蝠飞。",
@@ -199,6 +199,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「清月出岭光入扉」，以月色烘托心境，清冷而动人。动静相生，画面顿然鲜活起来；借景抒情，景中含情，意在言外。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

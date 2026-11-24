@@ -3,7 +3,7 @@
   "title": "宿桐庐江寄广陵旧游",
   "author": "孟浩然",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "山暝闻猿愁，沧江急夜流。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「山暝闻猿愁」，写羁旅之思，婉转深沉，令人低回。对仗工整，两句相映成趣，尽显声律之美；由实入虚，使情思显得深长。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

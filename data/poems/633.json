@@ -3,7 +3,7 @@
   "title": "点绛唇",
   "author": "汪藻",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "新月娟娟，夜寒江静山衔斗。",
@@ -80,6 +80,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词中以景写情，层层递进。「归兴浓于酒」，借酒抒怀，情致淋漓，尽显性情。对比鲜明，两相映衬而意旨愈显；白描传神，不事雕琢而情态毕现。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

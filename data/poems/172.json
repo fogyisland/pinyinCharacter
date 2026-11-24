@@ -3,7 +3,7 @@
   "title": "芙蓉楼送辛渐二首 一",
   "author": "王昌龄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "寒雨连天夜入湖，平明送客楚山孤。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「寒雨连天夜入湖」，写登高望远之所见，境界顿开，气象万千。长短句交错，读来抑扬顿挫；巧用反衬手法，突出了全篇主旨。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

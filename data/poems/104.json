@@ -3,7 +3,7 @@
   "title": "赋得",
   "author": "刘长卿",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "莺啼燕语报新年，马邑龙堆路几千。",
@@ -87,6 +87,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「莺啼燕语报新年」，撷取春意入句，字里行间透出欢欣。前后境况相互对照，反差强烈；上下句两两相对，读来匀称而和谐。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

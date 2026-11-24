@@ -3,7 +3,7 @@
   "title": "桃花谿",
   "author": "张旭",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "隐隐飞桥隔野烟，石矶西畔问渔船。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「石矶西畔问渔船」，写田园闲适，恬淡自足，气息清新。虚实相映，拓展了想象的余裕；句式参差，节奏跌宕而富有张力。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

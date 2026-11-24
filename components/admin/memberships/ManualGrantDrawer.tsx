@@ -11,6 +11,7 @@ import {
 import { formatDate } from '@/lib/format';
 import { FormField } from '@/components/admin/FormField';
 import { AdminButton } from '@/components/admin/AdminButton';
+import { useDialogEscape } from '@/components/common/useDialogEscape';
 
 export function ManualGrantDrawer() {
   const router = useRouter();
@@ -22,6 +23,9 @@ export function ManualGrantDrawer() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+
+  const closeDrawer = useCallback(() => setOpen(false), []);
+  useDialogEscape(open, closeDrawer);
 
   useEffect(() => {
     if (!open) return;
@@ -83,11 +87,16 @@ export function ManualGrantDrawer() {
         <div className="fixed inset-0 z-30 bg-ink/40" onClick={() => setOpen(false)}>
           <form
             onSubmit={onGrant}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="manual-grant-title"
             className="absolute right-0 top-0 h-full w-80 bg-paper-soft p-5 shadow-paper-lg overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-5">
-              <h2 className="font-kai text-lg text-ink">手动开通会员</h2>
+              <h2 id="manual-grant-title" className="font-kai text-lg text-ink">
+                手动开通会员
+              </h2>
               <AdminButton
                 variant="ghost"
                 size="sm"

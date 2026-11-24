@@ -3,7 +3,7 @@
   "title": "虢国夫人",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "虢国夫人承主恩，平明上马入宫门。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「平明上马入宫门」，摹写幽居寂寞，语柔而意深。借景抒情，景中含情，意在言外；句式参差，节奏跌宕而富有张力。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

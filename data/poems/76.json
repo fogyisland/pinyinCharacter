@@ -3,7 +3,7 @@
   "title": "赠别二首 二",
   "author": "杜牧",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "多情却似总无情，唯觉尊前笑不成。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「蜡烛有心还惜别」，写羁旅之思，婉转深沉，令人低回。实写与想象交织，意境更为开阔；句式参差，节奏跌宕而富有张力。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

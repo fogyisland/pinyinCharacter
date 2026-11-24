@@ -3,7 +3,7 @@
   "title": "感遇十二首 二",
   "author": "张九龄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "幽林归独卧，滞虑洗孤清。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「幽林归独卧」，抒离愁别绪，语淡而情浓，余味不尽。静景与动景交织，生气流转其间；借景抒情，景中含情，意在言外。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

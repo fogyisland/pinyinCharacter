@@ -3,7 +3,7 @@
   "title": "木兰花・玉楼春",
   "author": "钱惟演",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "城上风光莺语乱。",
@@ -91,6 +91,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「城下烟波春拍岸」，撷取春意入句，字里行间透出欢欣。动静相生，画面顿然鲜活起来；层层蓄势，至末句而情毕露。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

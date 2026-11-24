@@ -3,7 +3,7 @@
   "title": "春思",
   "author": "皇甫冉",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "莺啼燕语报新年，马邑龙堆路几千。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「莺啼燕语报新年」，写春日风物，生机盎然，明丽可喜。以动衬静，境界愈显幽深；巧用反衬手法，突出了全篇主旨。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

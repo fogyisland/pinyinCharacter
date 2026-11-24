@@ -3,7 +3,7 @@
   "title": "相和歌辞 子夜四时歌四首 夏歌",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "镜湖三百里，菡萏发荷花。",
@@ -54,6 +54,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「回舟不待月」，写月夜清辉，幽寂之中透出孤怀。长短句交错，读来抑扬顿挫；实写与想象交织，意境更为开阔。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

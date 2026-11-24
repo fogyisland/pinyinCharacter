@@ -3,7 +3,7 @@
   "title": "饯别王十一南游",
   "author": "刘长卿",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "望君烟水阔，挥手泪沾巾。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「望君烟水阔」，写登高望远之所见，境界顿开，气象万千。借景抒情，景中含情，意在言外；以动衬静，境界愈显幽深。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

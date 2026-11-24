@@ -3,7 +3,7 @@
   "title": "临江仙",
   "author": "陈与义",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "忆昔午桥桥上饮，坐中多是豪英。",
@@ -97,6 +97,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「闲登小阁看新晴」，写登高望远之所见，境界顿开，气象万千。实写与想象交织，意境更为开阔；以动衬静，境界愈显幽深。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

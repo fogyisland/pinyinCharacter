@@ -3,7 +3,7 @@
   "title": "浪淘沙",
   "author": "柳永",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "梦觉、透窗风一线，寒灯吹息。",
@@ -202,6 +202,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「数寒更思忆」，写羁旅之思，婉转深沉，令人低回。语言质朴无华，却自有一种动人力量；音节随情绪起伏，摇曳生姿。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

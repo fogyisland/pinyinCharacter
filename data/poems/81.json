@@ -3,7 +3,7 @@
   "title": "早秋三首 一",
   "author": "许浑",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "遥夜泛清瑟，西风生翠萝。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「遥夜泛清瑟」，描摹夜色空明，情思于无声处流转。借景抒情，景中含情，意在言外；前后境况相互对照，反差强烈。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

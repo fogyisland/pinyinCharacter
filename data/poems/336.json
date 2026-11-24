@@ -3,7 +3,7 @@
   "title": "相和歌辞 燕歌行",
   "author": "高适",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "汉家烟尘在东北，汉将辞家破残贼。",
@@ -276,6 +276,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「君不见沙场征战苦」，写边关苍茫之景，豪情与悲慨交织于笔端。白描传神，不事雕琢而情态毕现；以动衬静，境界愈显幽深。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

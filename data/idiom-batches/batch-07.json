@@ -4,349 +4,399 @@
     "pinyin": "fēng yǔ jiāo jiā",
     "meaning": "风和雨同时到来，形容天气恶劣、处境困难而又遭遇变故。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "清·梁章钜·《浪迹丛谈·除夕元旦两诗》"
   },
   {
     "word": "碧空如洗",
     "pinyin": "bì kōng rú xǐ",
     "meaning": "青蓝色的天空像水洗过一样干净透彻，形容天气格外晴朗。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·张元干·《水调歌头》"
   },
   {
     "word": "层峦叠嶂",
     "pinyin": "céng luán dié zhàng",
     "meaning": "层层叠叠的山峦屏障般排列，形容群山连绵、峰峦雄伟峻峭。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·陆九渊·《与王谦仲书》"
   },
   {
     "word": "一泻千里",
     "pinyin": "yī xiè qiān lǐ",
     "meaning": "水流从高处急速冲下，一泻千里，形容江河流势陡急浩荡。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·李白·《赠从弟宣州长史昭》"
   },
   {
     "word": "湖光山色",
     "pinyin": "hú guāng shān sè",
     "meaning": "湖水的波光与山峦的景色交相辉映，形容自然风景优美动人。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·吴自牧《梦粱录·五代人物》"
   },
   {
     "word": "银装素裹",
     "pinyin": "yín zhuāng sù guǒ",
     "meaning": "树木房屋被白雪覆盖如同白银包裹，形容雪后天地一片洁白。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "绿树成荫",
     "pinyin": "lǜ shù chéng yīn",
     "meaning": "树木枝叶茂密遮蔽了阳光，形容绿荫覆盖地面的清凉景象。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "春意盎然",
     "pinyin": "chūn yì àng rán",
     "meaning": "形容春天处处洋溢着生机与活力，春的气息十分浓厚。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "春回大地",
     "pinyin": "chūn huí dà dì",
     "meaning": "指春天来到、万物复苏，大地重新焕发生机与活力。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·周紫芝·《太仓稊米集·岁杪雨雪连日闷题二首》"
   },
   {
     "word": "姹紫嫣红",
     "pinyin": "chà zǐ yān hóng",
     "meaning": "形容各种颜色的花朵争相开放、色彩绚丽多姿的春天景象。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·汤显祖·《牡丹亭·惊梦》"
   },
   {
     "word": "莺歌燕舞",
     "pinyin": "yīng gē yàn wǔ",
     "meaning": "黄莺歌唱、燕子飞舞，形容春天鸟儿活跃、风光明丽宜人。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·苏轼·《锦被亭》"
   },
   {
     "word": "绿草如茵",
     "pinyin": "lǜ cǎo rú yīn",
     "meaning": "绿油油的草地像铺上的毯子，形容春天满地青草的秀美景色。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "枝繁叶茂",
     "pinyin": "zhī fán yè mào",
     "meaning": "枝条繁多、叶子茂密，形容树木生长旺盛、树冠繁密。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·孙柚·《琴心记》"
   },
   {
     "word": "烈日炎炎",
     "pinyin": "liè rì yán yán",
     "meaning": "太阳炽热、阳光猛烈，形容夏日酷暑难当的天气。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "暴风骤雨",
     "pinyin": "bào fēng zhòu yǔ",
     "meaning": "猛烈的大风夹着急雨，形容天气陡然转坏、来势十分凶猛。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "《老子》第二十三章"
   },
   {
     "word": "天朗气清",
     "pinyin": "tiān lǎng qì qīng",
     "meaning": "天空明朗、空气清新，形容秋日高爽的宜人天气与开阔景象。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "晋·王羲之·《兰亭集序》"
   },
   {
     "word": "云淡风轻",
     "pinyin": "yún dàn fēng qīng",
     "meaning": "浮云稀薄、微风轻柔，形容天气晴好、轻闲自在的美好时光。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·程颢《春日偶成》"
   },
   {
     "word": "月明星稀",
     "pinyin": "yuè míng xīng xī",
     "meaning": "月亮明亮、星辰稀疏，形容秋夜晴朗静谧的夜空景象。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "三国·魏·曹操·《短歌行》"
   },
   {
     "word": "水天一色",
     "pinyin": "shuǐ tiān yī sè",
     "meaning": "水面与天空浑然一体，形容辽阔的湖海与天色相接的壮景。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·王勃·《滕王阁诗序》"
   },
   {
     "word": "千峰万壑",
     "pinyin": "qiān fēng wàn hè",
     "meaning": "形容山峰众多、沟壑纵横，呈现群山连绵、形势壮阔的景象。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "波涛汹涌",
     "pinyin": "bō tāo xiōng yǒng",
     "meaning": "水势腾涌翻腾、浪头又大又急，形容江海波涛壮阔凶猛。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "《三国志·吴书·孙策传》"
   },
   {
     "word": "风调雨顺",
     "pinyin": "fēng tiáo yǔ shùn",
     "meaning": "风雨及时适宜，形容气候温和合时、对农业生产十分有利。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "《六韬》"
   },
   {
     "word": "春花秋月",
     "pinyin": "chūn huā qiū yuè",
     "meaning": "春天的花朵、秋天的明月，泛指一年四季中美好的景色与时光。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "南唐·李煜·《虞美人》"
   },
   {
     "word": "桃红柳绿",
     "pinyin": "táo hóng liǔ lǜ",
     "meaning": "桃花嫣红、柳枝碧绿，形容春天花木繁盛、色彩鲜艳的明丽春景。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·王维·《田园》"
   },
   {
     "word": "悬崖峭壁",
     "pinyin": "xuán yá qiào bì",
     "meaning": "陡直的高崖与峭壁，形容山势极为险峻、令人望而生畏。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·施耐庵·《水浒全传》第八十六回"
   },
   {
     "word": "左右为难",
     "pinyin": "zuǒ yòu wéi nán",
     "meaning": "向左向右都难以办成，形容两边受制、处境十分尴尬为难。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·杨显之·《潇湘雨》第一折"
   },
   {
     "word": "不知所措",
     "pinyin": "bù zhī suǒ cuò",
     "meaning": "不知道该怎么办才好，形容处境突变时手忙脚乱、十分慌张。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "《论语·子路》"
   },
   {
     "word": "手足无措",
     "pinyin": "shǒu zú wú cuò",
     "meaning": "手脚不知往哪里放，形容面对突发变故时慌乱得无法应对。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "《论语·子路》"
   },
   {
     "word": "张皇失措",
     "pinyin": "zhāng huáng shī cuò",
     "meaning": "仓皇慌张而举止失去常态，形容遇事惊惶得不知怎么办才好。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "清·采蘅子·《虫鸣漫录》"
   },
   {
     "word": "手忙脚乱",
     "pinyin": "shǒu máng jiǎo luàn",
     "meaning": "做事慌张、毫无章法，形容遇到变故时忙得不知从何下手。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·释普济·《五灯会元》"
   },
   {
     "word": "仓皇失措",
     "pinyin": "cāng huáng shī cuò",
     "meaning": "匆忙慌张而不知所措，形容处境突变时惊惶失态、难以应对。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·洪迈·《夷坚志·铁塔神》"
   },
   {
     "word": "骑虎难下",
     "pinyin": "qí hǔ nán xià",
     "meaning": "骑在老虎背上难以下来，形容事情进行到中途难以抽身的处境。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《晋书·温峤传》"
   },
   {
     "word": "进退无门",
     "pinyin": "jìn tuì wú mén",
     "meaning": "前进无路、后退无门，形容处境十分困难、到处碰壁走投无路。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·朱熹·《答刘季章》"
   },
   {
     "word": "进退失所",
     "pinyin": "jìn tuì shī suǒ",
     "meaning": "前进后退都没有容身之处，形容处境窘迫、无处安身。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "啼笑皆非",
     "pinyin": "tí xiào jiē fēi",
     "meaning": "哭也不是笑也不是，形容处境尴尬得让人不知如何是好。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "沙汀·《烦恼》"
   },
   {
     "word": "山穷水尽",
     "pinyin": "shān qióng shuǐ jìn",
     "meaning": "山势和水路都到了尽头，形容走投无路、陷入绝境的处境。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·陆游·《游山西村》"
   },
   {
     "word": "日暮途穷",
     "pinyin": "rì mù tú qióng",
     "meaning": "天色已晚、路也走到尽头，形容处境十分艰难、穷困到极点。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《史记·伍子胥列传》"
   },
   {
     "word": "弹尽援绝",
     "pinyin": "dàn jìn yuán jué",
     "meaning": "弹药用尽、援兵断绝，形容处境非常困难、孤立无援。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·杨万里·《钤辖赵公墓志铭》"
   },
   {
     "word": "大敌当前",
     "pinyin": "dà dí dāng qián",
     "meaning": "面对着强大的敌人，形容形势十分严峻、压力骤然增大。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "清·刘鹗·《老残游记续集》第一回"
   },
   {
     "word": "大难不死",
     "pinyin": "dà nàn bù sǐ",
     "meaning": "遇到巨大的灾难居然活了下来，形容幸运地逃脱一场劫难。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·关汉卿·《裴度还带》第三折"
   },
   {
     "word": "大难临头",
     "pinyin": "dà nàn lín tóu",
     "meaning": "大的灾难降临到头上，形容灾祸突然而至、处境极为艰难。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "鲁迅·《彷徨·弟兄》"
   },
   {
     "word": "九死一生",
     "pinyin": "jiǔ sǐ yī shēng",
     "meaning": "经历多次生死考验才活下来，形容处境极其险恶、生死难料。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "战国·楚·屈原·《离骚》"
   },
   {
     "word": "险象环生",
     "pinyin": "xiǎn xiàng huán shēng",
     "meaning": "危险的征兆一个接一个出现，形容处境险恶、处处潜伏危机。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "危如累卵",
     "pinyin": "wēi rú lěi luǎn",
     "meaning": "危险得像堆叠的鸡蛋随时会碎，形容形势极其危险、危在旦夕。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《韩非子·十过》"
   },
   {
     "word": "危机四伏",
     "pinyin": "wēi jī sì fú",
     "meaning": "到处隐藏着危险的祸根，形容处境险恶、危机重重四伏。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "茅盾·《子夜》"
   },
   {
     "word": "大厦将倾",
     "pinyin": "dà shà jiāng qīng",
     "meaning": "高大的房屋眼看就要倒塌，比喻局势即将崩溃、危在旦夕。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《文中子·事君》"
   },
   {
     "word": "天灾人祸",
     "pinyin": "tiān zāi rén huò",
     "meaning": "自然的灾害和人为的祸患接连袭来，形容遭遇的不幸接连不断。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·无名氏·《冯玉兰》第四折"
   },
   {
     "word": "祸不单行",
     "pinyin": "huò bù dān xíng",
     "meaning": "灾祸偏偏不只一个，形容倒霉事接连不断、处境愈发困难。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "汉·刘向·《说苑·权谋》"
   },
   {
     "word": "雪上加霜",
     "pinyin": "xuě shàng jiā shuāng",
     "meaning": "在灾祸之上又添新的苦难，形容处境本已艰难更加恶化。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·释道原·《景德传灯录》卷十九"
   },
   {
     "word": "水深火热",
     "pinyin": "shuǐ shēn huǒ rè",
     "meaning": "像身处水深与火中，形容处境极为痛苦、煎熬难受。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "《孟子·梁惠王下》"
   }
 ]

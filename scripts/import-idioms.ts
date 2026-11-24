@@ -14,6 +14,11 @@
  * seeded" rule means a table with fewer rows than the file simply gets
  * topped up on the next run.
  *
+ * Each row's `source` (出处) is written alongside the other fields. A row
+ * without one is filled with `出处待考` rather than an empty string: the
+ * page always shows an attribution line, and a guessed classic attribution
+ * is worse than an honest placeholder.
+ *
  * Usage:
  *   npx tsx --env-file-if-exists=.env scripts/import-idioms.ts
  */
@@ -24,6 +29,24 @@ import { getPool, closePool } from '../lib/db';
 import { validateIdiomBatch, type IdiomRow } from '../lib/idiom-data';
 
 const IDIOMS_FILE = join(process.cwd(), 'data', 'idioms.json');
+
+/** What the site shows when no trustworthy attribution is known. */
+export const PENDING_SOURCE = '出处待考';
+
+/** An idiom row with the reviewed attribution the site displays. */
+export type IdiomRowWithSource = IdiomRow & { source: string };
+
+/**
+ * Normalise a row's source before it reaches the database.
+ *
+ * `lib/idiom-data.ts` validates the five original fields and intentionally
+ * knows nothing about `source`, so the attribution is handled here instead.
+ */
+function withSource(row: IdiomRow): IdiomRowWithSource {
+  const declared = (row as Partial<IdiomRowWithSource>).source;
+  const source = typeof declared === 'string' ? declared.trim() : '';
+  return { ...row, source: source || PENDING_SOURCE };
+}
 
 /**
  * The database URL is required — there is no safe default to fall back to.
@@ -41,7 +64,7 @@ function requireDatabaseUrl(): string {
 }
 
 /** Read the file and return the rows that pass validation. */
-export function readIdiomRows(path: string = IDIOMS_FILE): IdiomRow[] {
+export function readIdiomRows(path: string = IDIOMS_FILE): IdiomRowWithSource[] {
   const raw = readFileSync(path, 'utf8');
   const parsed = JSON.parse(raw) as unknown;
   const { valid, problems } = validateIdiomBatch(parsed);
@@ -55,7 +78,7 @@ export function readIdiomRows(path: string = IDIOMS_FILE): IdiomRow[] {
         (problems.length > 10 ? ` ... and ${problems.length - 10} more` : ''),
     );
   }
-  return valid;
+  return valid.map(withSource);
 }
 
 /**
@@ -81,6 +104,7 @@ export async function ensureIdiomsTable(): Promise<void> {
       'meaning VARCHAR(512) NOT NULL DEFAULT \'\',' +
       'level TINYINT(4) NOT NULL DEFAULT 1,' +
       'category VARCHAR(32) NOT NULL DEFAULT \'\',' +
+      'source VARCHAR(512) NOT NULL DEFAULT \'出处待考\',' +
       'created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,' +
       'updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,' +
       'PRIMARY KEY (id),' +
@@ -105,15 +129,16 @@ export async function countIdioms(): Promise<number> {
  *
  * Returns how many rows the table holds afterwards.
  */
-export async function importIdioms(rows: readonly IdiomRow[]): Promise<number> {
+export async function importIdioms(rows: readonly IdiomRowWithSource[]): Promise<number> {
   const pool = getPool();
   await ensureIdiomsTable();
   for (const row of rows) {
     await pool.query(
-      'INSERT INTO idioms (word, pinyin, meaning, level, category) VALUES (?, ?, ?, ?, ?) ' +
+      'INSERT INTO idioms (word, pinyin, meaning, level, category, source) ' +
+        'VALUES (?, ?, ?, ?, ?, ?) ' +
         'ON DUPLICATE KEY UPDATE pinyin = VALUES(pinyin), meaning = VALUES(meaning), ' +
-        'level = VALUES(level), category = VALUES(category)',
-      [row.word, row.pinyin, row.meaning, row.level, row.category],
+        'level = VALUES(level), category = VALUES(category), source = VALUES(source)',
+      [row.word, row.pinyin, row.meaning, row.level, row.category, row.source],
     );
   }
   return countIdioms();

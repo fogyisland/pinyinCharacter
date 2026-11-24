@@ -3,7 +3,7 @@
   "title": "定风波",
   "author": "柳永",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "自春来、惨绿愁红，芳心是事可可。",
@@ -170,6 +170,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「芳心是事可可」，以清新笔调描摹春景，灵动自然。动词选用尤妙，使画面顿然活化；借景抒情，景中含情，意在言外。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

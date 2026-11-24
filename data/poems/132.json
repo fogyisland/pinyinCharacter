@@ -3,7 +3,7 @@
   "title": "李端公",
   "author": "卢纶",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "故关衰草遍，离别自堪悲。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「少孤为客早」，以寻常语道尽心中怅惘，真切动人。动静相生，画面顿然鲜活起来；上下句两两相对，读来匀称而和谐。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

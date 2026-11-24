@@ -3,7 +3,7 @@
   "title": "蝶恋花",
   "author": "周邦彦",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "月皎惊乌栖不定。",
@@ -103,6 +103,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「别语愁难听」，写羁旅之思，婉转深沉，令人低回。融情入景，使寻常风物皆着情绪；句式参差，节奏跌宕而富有张力。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

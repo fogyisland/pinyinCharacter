@@ -3,7 +3,7 @@
   "title": "蝶恋花",
   "author": "晏几道",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "梦入江南烟水路。",
@@ -103,6 +103,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「梦入江南烟水路」，抒离愁别绪，语淡而情浓，余味不尽。动静相生，画面顿然鲜活起来；借景抒情，景中含情，意在言外。以景收束，余情袅袅。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

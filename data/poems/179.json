@@ -3,7 +3,7 @@
   "title": "琵琶引",
   "author": "白居易",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "浔阳江头夜送客，枫叶荻花秋索索。",
@@ -845,6 +845,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「别有幽愁暗恨生」，抒离愁别绪，语淡而情浓，余味不尽。情景交融，以景语作情语，含蓄蕴藉；白描传神，不事雕琢而情态毕现。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

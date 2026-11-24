@@ -1,6 +1,7 @@
 {
   "version": 1,
   "totalChars": 8105,
+  "importableChars": 7909,
   "byField": {
     "meaning_zh": 7909,
     "meaning_en": 7909,
@@ -10,6 +11,12 @@
     "hanzi_story": 0,
     "rare_meaning": 1412,
     "rare_story": 1412
+  },
+  "notes": {
+    "totalChars": "8105 is the full character universe tracked by the content pipeline (data/general-standard-chinese-characters.json). Only 7909 of those have an importable data/content/<char>.json file: 196 are 4-byte UTF-8 characters that mysql2's binary protocol cannot write, so the DB seed targets importableChars, not totalChars.",
+    "byField": "Each byField value counts files under data/content/ that actually carry that field, never totalChars.",
+    "rare_meaning": "byField.rare_meaning and byField.rare_story count every content file with a non-empty rare.meaning/rare.story (1412). The DB importer initRareChars() additionally requires level === 3, so it writes 1409 rows. The 3-character difference is expected, not a data loss; seed-registry expects 1409.",
+    "generatedAt": "Timestamp of the last byField recomputation (scripts/update-content-manifest.ts)."
   },
   "generatedAt": "2026-11-23T15:00:00.000Z"
 }

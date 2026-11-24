@@ -3,7 +3,7 @@
   "title": "归嵩山作",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "清川带长薄，车马去闲闲。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「荒城临古渡」，抚今追昔，兴亡之感顿生笔端。上下句两两相对，读来匀称而和谐；巧用反衬手法，突出了全篇主旨。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "杂曲歌辞 长相思三首 一",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "长相思，在长安，络纬秋啼金井栏。",
@@ -115,6 +115,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「微霜凄凄簟色寒」，以秋景衬离怀，萧索中自见深情。由实入虚，使情思显得深长；对比鲜明，两相映衬而意旨愈显。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

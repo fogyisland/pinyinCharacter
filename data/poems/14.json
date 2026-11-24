@@ -3,7 +3,7 @@
   "title": "韩碑",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "元和天子神武姿，彼何人哉轩与羲。",
@@ -505,6 +505,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「长戈利矛日可麾」，写边关苍茫之景，豪情与悲慨交织于笔端。融情入景，使寻常风物皆着情绪；音节随情绪起伏，摇曳生姿。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

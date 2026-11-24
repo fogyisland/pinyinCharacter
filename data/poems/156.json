@@ -3,7 +3,7 @@
   "title": "望蓟门",
   "author": "祖咏",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "燕台一望客心惊，箫鼓喧喧汉将营。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「箫鼓喧喧汉将营」，写边关苍茫之景，豪情与悲慨交织于笔端。静景与动景交织，生气流转其间；虚实相映，拓展了想象的余裕。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

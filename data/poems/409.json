@@ -3,7 +3,7 @@
   "title": "贺新郎",
   "author": "苏轼",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "乳燕飞华屋。",
@@ -184,6 +184,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「孤眠清熟」，抒离愁别绪，语淡而情浓，余味不尽。借景抒情，景中含情，意在言外；句式参差，节奏跌宕而富有张力。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

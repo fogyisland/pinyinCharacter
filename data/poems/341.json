@@ -3,7 +3,7 @@
   "title": "相和歌辞 子夜四时歌四首 春歌",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "秦地罗敷女，采桑绿水边。",
@@ -54,6 +54,7 @@
       "。"
     ]
   ],
-  "appreciation": null,
-  "source": "chinese-poetry/chinese-poetry@master"
+  "appreciation": "这首古风起承转合，自有章法。「秦地罗敷女」，摹写幽居寂寞，语柔而意深。句式参差，节奏跌宕而富有张力；由实入虚，使情思显得深长。语言凝练而意味深长。短章之中，意致悠然。",
+  "source": "chinese-poetry/chinese-poetry@master",
+  "variantOf": 313
 }

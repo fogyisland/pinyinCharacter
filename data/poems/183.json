@@ -3,7 +3,7 @@
   "title": "寻隐者不遇",
   "author": "贾岛",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "松下问童子，言师采药去。",
@@ -39,6 +39,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「云深不知处」，以淡笔写静景，见出悠然之心。句式参差，节奏跌宕而富有张力；白描传神，不事雕琢而情态毕现。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "水龙吟",
   "author": "苏轼",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "似花还似非花，也无人惜从教坠。",
@@ -159,6 +159,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「是离人泪」，以寻常语道尽心中怅惘，真切动人。虚实相映，拓展了想象的余裕；句式参差，节奏跌宕而富有张力。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

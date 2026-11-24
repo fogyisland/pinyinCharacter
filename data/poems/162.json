@@ -3,7 +3,7 @@
   "title": "古意",
   "author": "李颀",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "男儿事长征，少小幽燕客。",
@@ -111,6 +111,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「未得报恩不能归」，抒离愁别绪，语淡而情浓，余味不尽。融情入景，使寻常风物皆着情绪；白描传神，不事雕琢而情态毕现。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

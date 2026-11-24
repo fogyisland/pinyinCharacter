@@ -1,6 +1,7 @@
 import { pinyin } from 'pinyin-pro';
 import { toneFromPinyin, type Tone } from '@/lib/pinyin-tone';
 import { finalOf, isPing, type DuiyunPair } from '@/lib/duiyun-rules';
+import { isRusheng } from './rusheng';
 
 export interface RhymeCategory {
   /** 韵部名称，如“一东” */
@@ -207,7 +208,10 @@ export function analyzePoemLines(
     const chars: AnalyzedChar[] = cleanChars.map((ch, idx) => {
       const syllable = syllables[idx] ?? '';
       const tone = toneFromPinyin(syllable);
-      const pingZe: '平' | '仄' | '轻' = tone === null ? '轻' : isPing(tone) ? '平' : '仄';
+      // 古入声字一律算仄，即使普通话已派入平声（白、竹、石等）。
+      // 否则楹联「上仄下平」与近体诗粘对都会误判。
+      const pingZe: '平' | '仄' | '轻' =
+        tone === null ? '轻' : isRusheng(ch) || !isPing(tone) ? '仄' : '平';
       const expChar = expectedLine[idx] as '平' | '仄' | '中' | undefined;
 
       let status: 'ok' | 'flexible' | 'mismatch' = 'ok';

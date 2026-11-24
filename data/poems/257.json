@@ -3,7 +3,7 @@
   "title": "杂曲歌辞 婆罗门",
   "author": "杨敬述进",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "回乐峰前沙似雪，受降城外月如霜。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「一夜征人尽望乡」，描摹夜色空明，情思于无声处流转。情景交融，以景语作情语，含蓄蕴藉；音节随情绪起伏，摇曳生姿。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

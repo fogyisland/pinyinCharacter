@@ -3,7 +3,7 @@
   "title": "孤鴈 二",
   "author": "崔涂",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "几行归去尽，片影独何之。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「片影独何之」，以寻常语道尽心中怅惘，真切动人。对仗工整，两句相映成趣，尽显声律之美；实写与想象交织，意境更为开阔。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

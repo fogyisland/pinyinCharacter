@@ -3,7 +3,7 @@
   "title": "无题四首 二",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "飒飒东风细雨来，芙蓉塘外有轻雷。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「春心莫共花争发」，写春日风物，生机盎然，明丽可喜。对仗工整，两句相映成趣，尽显声律之美；措辞凝练，极富表现力。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

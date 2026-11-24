@@ -3,7 +3,7 @@
   "title": "杂曲歌辞 行路难三首 二",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "大道如青天，我独不得出。",
@@ -152,6 +152,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「君不见昔时燕家重郭隗」，抚今追昔，兴亡之感顿生笔端。融情入景，使寻常风物皆着情绪；用典贴切，借古人之事抒一己之怀。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

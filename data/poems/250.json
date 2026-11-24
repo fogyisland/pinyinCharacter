@@ -3,7 +3,7 @@
   "title": "韦讽录事宅观曹将军画马图",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "国初已来画鞍马，神妙独数江都王。",
@@ -335,6 +335,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「将军得名三十载」，写边关苍茫之景，豪情与悲慨交织于笔端。实写与想象交织，意境更为开阔；融情入景，使寻常风物皆着情绪。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

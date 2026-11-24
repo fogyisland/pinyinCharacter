@@ -3,7 +3,7 @@
   "title": "佳人",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "绝代有佳人，幽居在空谷。",
@@ -189,6 +189,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「在山泉水清」，描绘山川形胜，景象阔大，令人神往。借景抒情，景中含情，意在言外；以动衬静，境界愈显幽深。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

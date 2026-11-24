@@ -3,7 +3,7 @@
   "title": "已凉",
   "author": "韩偓",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "碧阑干外绣帘垂，猩血屏风画折枝。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「碧阑干外绣帘垂」，写闺中幽思，含蓄婉转，情致细腻。以动衬静，境界愈显幽深；情景交融，以景语作情语，含蓄蕴藉。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

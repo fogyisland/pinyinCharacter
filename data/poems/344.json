@@ -3,7 +3,7 @@
   "title": "相和歌辞 子夜四时歌四首 冬歌",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "明朝驿使发，一夜絮征袍。",
@@ -54,6 +54,7 @@
       "。"
     ]
   ],
-  "appreciation": null,
-  "source": "chinese-poetry/chinese-poetry@master"
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「一夜絮征袍」，以简劲之笔写征戍生活，气骨凛然。融情入景，使寻常风物皆着情绪；静景与动景交织，生气流转其间。语言凝练而意味深长。",
+  "source": "chinese-poetry/chinese-poetry@master",
+  "variantOf": 316
 }

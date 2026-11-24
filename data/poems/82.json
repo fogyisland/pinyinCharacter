@@ -3,7 +3,7 @@
   "title": "秋日赴阙题潼关驿楼",
   "author": "许浑",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "红叶晚萧萧，长亭酒一瓢。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「红叶晚萧萧」，摹写霜气林木，清冷而萧疏。融情入景，使寻常风物皆着情绪；由实入虚，使情思显得深长。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

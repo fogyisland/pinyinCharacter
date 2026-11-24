@@ -2,14 +2,17 @@
  * Reading the `idioms` table.
  *
  * The table holds one row per four-character idiom, with its reading, its
- * meaning and its difficulty. The reading is stored on the row rather than
- * joined against `chars.pinyin`, because that column was emptied by the
- * 2026-06-17 content migration and is empty for every row.
+ * meaning, its difficulty and its 出处 (source). The reading is stored on the
+ * row rather than joined against `chars.pinyin`, because that column was
+ * emptied by the 2026-06-17 content migration and is empty for every row.
  */
 import type { RowDataPacket } from 'mysql2';
 import { getPool } from './db';
 
-/** One idiom, as the game needs it. */
+/** What the site shows when the DB holds no trustworthy attribution. */
+export const PENDING_SOURCE = '出处待考';
+
+/** One idiom, as the game and the idioms page need it. */
 export interface Idiom {
   /** The four characters, e.g. "一帆风顺". */
   word: string;
@@ -21,6 +24,8 @@ export interface Idiom {
   level: number;
   /** The theme the idiom belongs to. */
   category: string;
+  /** The earliest/classical source, or `出处待考` when none is known. */
+  source: string;
 }
 
 /** A raw row of the `idioms` table. */
@@ -30,6 +35,7 @@ interface IdiomRow extends RowDataPacket {
   meaning: string;
   level: number;
   category: string;
+  source?: string | null;
 }
 
 /** What the caller wants. */
@@ -76,7 +82,7 @@ export async function listIdioms(options: ListIdiomsOptions = {}): Promise<Idiom
   if (limit) params.push(options.limit);
 
   const sql =
-    'SELECT word, pinyin, meaning, level, category FROM idioms ' +
+    'SELECT word, pinyin, meaning, level, category, source FROM idioms ' +
     `${where} ORDER BY level ASC, word ASC ${limit}`;
 
   const [rows] = await pool.query<IdiomRow[]>(sql, params);
@@ -86,6 +92,11 @@ export async function listIdioms(options: ListIdiomsOptions = {}): Promise<Idiom
     meaning: row.meaning,
     level: Number(row.level),
     category: row.category,
+    // A row written before the source column was added can hold an empty
+    // value. Never hand the client a blank attribution line.
+    source: typeof row.source === 'string' && row.source.trim()
+      ? row.source.trim()
+      : PENDING_SOURCE,
   }));
 }
 

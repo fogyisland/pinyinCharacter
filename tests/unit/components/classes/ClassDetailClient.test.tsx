@@ -20,12 +20,18 @@ const {
   withdrawSubmissionRequestMock,
   deleteAssignmentRequestMock,
   removeMemberRequestMock,
+  fetchDictationResultsRequestMock,
+  submitDictationResultRequestMock,
+  withdrawDictationResultRequestMock,
 } = vi.hoisted(() => ({
   fetchClassDetailMock: vi.fn(),
   submitAssignmentRequestMock: vi.fn(),
   withdrawSubmissionRequestMock: vi.fn(),
   deleteAssignmentRequestMock: vi.fn(),
   removeMemberRequestMock: vi.fn(),
+  fetchDictationResultsRequestMock: vi.fn(),
+  submitDictationResultRequestMock: vi.fn(),
+  withdrawDictationResultRequestMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -44,6 +50,9 @@ vi.mock('@/lib/api-classes', () => ({
   withdrawSubmissionRequest: withdrawSubmissionRequestMock,
   deleteAssignmentRequest: deleteAssignmentRequestMock,
   removeMemberRequest: removeMemberRequestMock,
+  fetchDictationResultsRequest: fetchDictationResultsRequestMock,
+  submitDictationResultRequest: submitDictationResultRequestMock,
+  withdrawDictationResultRequest: withdrawDictationResultRequestMock,
 }));
 
 vi.mock('@/components/classes/AssignmentComposer', () => ({
@@ -88,9 +97,21 @@ beforeEach(() => {
   withdrawSubmissionRequestMock.mockReset();
   deleteAssignmentRequestMock.mockReset();
   removeMemberRequestMock.mockReset();
+  fetchDictationResultsRequestMock.mockReset();
+  submitDictationResultRequestMock.mockReset();
+  withdrawDictationResultRequestMock.mockReset();
   fetchClassDetailMock.mockResolvedValue(detail());
   submitAssignmentRequestMock.mockResolvedValue({ ok: true, data: { recorded: true } });
   withdrawSubmissionRequestMock.mockResolvedValue({ ok: true, data: { cleared: true } });
+  fetchDictationResultsRequestMock.mockResolvedValue({
+    ok: true,
+    data: { resultsByAssignment: {} },
+  });
+  submitDictationResultRequestMock.mockResolvedValue({
+    ok: true,
+    data: { recorded: true, total: 10, correct: 8 },
+  });
+  withdrawDictationResultRequestMock.mockResolvedValue({ ok: true, data: { cleared: true } });
 });
 
 afterEach(() => {

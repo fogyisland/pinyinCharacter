@@ -3,7 +3,7 @@
   "title": "赠阙下裴舍人",
   "author": "钱起",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "二月黄莺飞上林，春城紫禁晓阴阴。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「春城紫禁晓阴阴」，撷取春意入句，字里行间透出欢欣。用典贴切，借古人之事抒一己之怀；情景交融，以景语作情语，含蓄蕴藉。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

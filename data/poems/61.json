@@ -3,7 +3,7 @@
   "title": "洛阳女儿行",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "洛阳女儿对门居，才可容颜十五余。",
@@ -199,6 +199,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「红桃绿柳垂簷向」，写春日风物，生机盎然，明丽可喜。巧用反衬手法，突出了全篇主旨；融情入景，使寻常风物皆着情绪。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

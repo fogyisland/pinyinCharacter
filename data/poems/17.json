@@ -3,7 +3,7 @@
   "title": "隋宫",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "乘兴南游不戒严，九重谁省谏书函。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「春风举国裁宫锦」，以景物映衬孤怀，幽怨而不直露。语言质朴无华，却自有一种动人力量；情景交融，以景语作情语，含蓄蕴藉。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

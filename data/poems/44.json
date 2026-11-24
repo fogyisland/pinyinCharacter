@@ -3,7 +3,7 @@
   "title": "遣悲怀三首 一",
   "author": "元稹",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "谢公最小偏怜女，嫁与黔娄百事乖。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「落叶添薪仰古槐」，以秋景衬离怀，萧索中自见深情。实写与想象交织，意境更为开阔；上下句两两相对，读来匀称而和谐。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

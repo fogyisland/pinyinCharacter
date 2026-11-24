@@ -4,8 +4,7 @@
 // 两者的错误形状相同（ApiResult），但不是同一个功能域。
 
 export type ClassApiResult<T> =
-  | { ok: true; data: T }
-  | { ok: false; error: { code: string; message: string } };
+  { ok: true; data: T } | { ok: false; error: { code: string; message: string } };
 
 async function call<T>(path: string, init: RequestInit = {}): Promise<ClassApiResult<T>> {
   try {
@@ -132,7 +131,9 @@ export async function fetchClassDetail(classId: number): Promise<ClassApiResult<
   return call(`/api/classes/${classId}`);
 }
 
-export async function dissolveClassRequest(classId: number): Promise<ClassApiResult<{ deleted: boolean }>> {
+export async function dissolveClassRequest(
+  classId: number,
+): Promise<ClassApiResult<{ deleted: boolean }>> {
   return call(`/api/classes/${classId}`, { method: 'DELETE' });
 }
 
@@ -192,6 +193,45 @@ export async function submitAssignmentRequest(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ note }),
   });
+}
+
+/** 学生自报的听写成绩。 */
+export interface DictationResultView {
+  userId: number;
+  username: string;
+  total: number;
+  correct: number;
+  wrongWords: string[];
+  submittedAt: string;
+  note: string;
+}
+
+/** 提交听写成绩（自报的对错条数）。 */
+export async function submitDictationResultRequest(
+  classId: number,
+  assignmentId: number,
+  result: { total: number; correct: number; wrongWords: string[] },
+): Promise<ClassApiResult<{ recorded: boolean; total: number; correct: number }>> {
+  return call(`/api/classes/${classId}/assignments/${assignmentId}/result`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(result),
+  });
+}
+
+/** 班级页一次性拉取所有听写成绩；老师看全班，学生只看自己。 */
+export async function fetchDictationResultsRequest(
+  classId: number,
+): Promise<ClassApiResult<{ resultsByAssignment: Record<number, DictationResultView[]> }>> {
+  return call(`/api/classes/${classId}/dictation-results`);
+}
+
+/** 学生撤销听写成绩。 */
+export async function withdrawDictationResultRequest(
+  classId: number,
+  assignmentId: number,
+): Promise<ClassApiResult<{ cleared: boolean }>> {
+  return call(`/api/classes/${classId}/assignments/${assignmentId}/result`, { method: 'DELETE' });
 }
 
 /** 学生撤销完成（勾错了，或者想重练）。 */

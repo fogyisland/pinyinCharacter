@@ -3,7 +3,7 @@
   "title": "解连环",
   "author": "周邦彦",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "怨怀无托。",
@@ -174,6 +174,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「水驿春回」，写春日风物，生机盎然，明丽可喜。句式参差，节奏跌宕而富有张力；语言质朴无华，却自有一种动人力量。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

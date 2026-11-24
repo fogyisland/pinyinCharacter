@@ -3,7 +3,7 @@
   "title": "夜雨寄北",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "君问归期未有期，巴山夜雨涨秋池。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「巴山夜雨涨秋池」，写月夜清辉，幽寂之中透出孤怀。借景抒情，景中含情，意在言外；静景与动景交织，生气流转其间。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

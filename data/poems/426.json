@@ -3,7 +3,7 @@
   "title": "烛影摇红",
   "author": "张抡",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "双阙中天，凤楼十二春寒浅。",
@@ -155,6 +155,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「今宵谁念泣孤臣」，描摹夜色空明，情思于无声处流转。卒章显志，收束有力，余韵悠长；句式参差，节奏跌宕而富有张力。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

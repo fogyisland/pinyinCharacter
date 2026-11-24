@@ -3,7 +3,7 @@
   "title": "和乐天春词",
   "author": "刘禹锡",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "新妆面面下朱楼，深锁春光一院愁。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「深锁春光一院愁」，写春日风物，生机盎然，明丽可喜。融情入景，使寻常风物皆着情绪；巧用反衬手法，突出了全篇主旨。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

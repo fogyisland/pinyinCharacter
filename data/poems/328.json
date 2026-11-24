@@ -3,7 +3,7 @@
   "title": "夜泊牛渚怀古",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "牛渚西江夜，青天无片云。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「登舟望秋月」，描绘山川形胜，景象阔大，令人神往。属对精切，富有形式之美与节奏之感；融情入景，使寻常风物皆着情绪。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

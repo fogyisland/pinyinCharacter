@@ -3,7 +3,7 @@
   "title": "渭城曲",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "渭城朝雨浥轻尘，客舍青青杨柳春。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「西出阳关无故人」，以简劲之笔写征戍生活，气骨凛然。白描传神，不事雕琢而情态毕现；融情入景，使寻常风物皆着情绪。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

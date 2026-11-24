@@ -19,6 +19,12 @@
  * one that must be shown, and the model's is a guess. When the two disagree
  * the row is reported, so a systematic error is visible rather than buried.
  *
+ * A row's `source` (出处) is carried through untouched. A batch that omits it
+ * falls back to the source already in `data/idioms.json` for that word, so a
+ * partial batch cannot silently erase an attribution that was reviewed. If
+ * neither has one, the row is reported and marked `出处待考` — the page must
+ * never print a guessed classic attribution.
+ *
  * Usage:
  *   npx tsx scripts/build-idioms.ts <batch.json> [<batch.json> ...]
  *
@@ -33,6 +39,42 @@ import { validateIdiomBatch, type IdiomRow } from '../lib/idiom-data';
 const DATA_DIR = join(process.cwd(), 'data');
 const BATCH_DIR = join(DATA_DIR, 'idiom-batches');
 const OUTPUT_PATH = join(DATA_DIR, 'idioms.json');
+
+/** What the site shows when no trustworthy attribution is known. */
+export const PENDING_SOURCE = '出处待考';
+
+/** An idiom row with the reviewed attribution the site displays. */
+export type IdiomRowWithSource = IdiomRow & { source: string };
+
+/**
+ * Sources already shipped in `data/idioms.json`, keyed by word.
+ *
+ * A batch is allowed to omit `source` (the original batches did). Reading the
+ * current file keeps a rebuild idempotent: reviewed attributions stay put even
+ * when the batch that first introduced them did not carry one.
+ */
+function priorSources(): Map<string, string> {
+  const found = new Map<string, string>();
+  if (!existsSync(OUTPUT_PATH)) return found;
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(OUTPUT_PATH, 'utf8'));
+    if (!Array.isArray(parsed)) return found;
+    for (const row of parsed) {
+      if (typeof row !== 'object' || row === null) continue;
+      const candidate = row as { word?: unknown; source?: unknown };
+      if (typeof candidate.word !== 'string' || typeof candidate.source !== 'string') continue;
+      const source = candidate.source.trim();
+      if (source) found.set(candidate.word, source);
+    }
+  } catch (err) {
+    // A broken output file is not an excuse to lose the batch's own sources.
+    console.warn(
+      `[build-idioms] could not read prior sources from ${OUTPUT_PATH}: ` +
+        (err instanceof Error ? err.message : String(err)),
+    );
+  }
+  return found;
+}
 
 /**
  * The reading pinyin-pro gives for a character.
@@ -141,16 +183,18 @@ function batchFiles(explicit: string[]): string[] {
  * Exported so a test can drive it with its own batch files.
  */
 export function buildIdiomFile(files: string[]): {
-  rows: IdiomRow[];
+  rows: IdiomRowWithSource[];
   problems: string[];
   duplicates: string[];
   corrected: string[];
   disagreements: string[];
+  missingSources: string[];
 } {
   const problems: string[] = [];
   const duplicates: string[] = [];
   const corrected: string[] = [];
   const disagreements: string[] = [];
+  const missingSources: string[] = [];
 
   const all: unknown[] = [];
   for (const file of files) {
@@ -173,7 +217,8 @@ export function buildIdiomFile(files: string[]): {
 
   // Reconcile every reading with pinyin-pro. The letters come from
   // pinyin-pro, the tones from the model — see `reconcileReading` for why.
-  const rows: IdiomRow[] = [];
+  const prior = priorSources();
+  const rows: IdiomRowWithSource[] = [];
   for (const row of result.valid) {
     const { reading, lettersChanged } = reconcileReading(row.pinyin, row.word);
     if (reading !== row.pinyin) {
@@ -188,14 +233,22 @@ export function buildIdiomFile(files: string[]): {
         `${row.word}: pinyin-pro says "${readingOfWord(row.word)}", the model says "${row.pinyin}"`,
       );
     }
-    rows.push({ ...row, pinyin: reading });
+
+    // Carry the attribution through. The batch wins when it has one; the
+    // currently shipped file is the fallback for older batches. A row with
+    // neither is reported rather than given a made-up classic attribution.
+    const declared = (row as IdiomRowWithSource).source;
+    const batchSource = typeof declared === 'string' ? declared.trim() : '';
+    const source = batchSource || prior.get(row.word) || PENDING_SOURCE;
+    if (!batchSource && !prior.has(row.word)) missingSources.push(row.word);
+    rows.push({ ...row, pinyin: reading, source });
   }
 
   // Sort by level, then by word, so the file is stable across runs and the
   // easier idioms come first — the game reads them in that order.
   rows.sort((a, b) => (a.level - b.level) || a.word.localeCompare(b.word, 'zh'));
 
-  return { rows, problems, duplicates, corrected, disagreements };
+  return { rows, problems, duplicates, corrected, disagreements, missingSources };
 }
 
 function main(): void {
@@ -210,7 +263,7 @@ function main(): void {
     return;
   }
 
-  const { rows, problems, duplicates, corrected, disagreements } = buildIdiomFile(files);
+  const { rows, problems, duplicates, corrected, disagreements, missingSources } = buildIdiomFile(files);
 
   console.log(`[build-idioms] read ${files.length} batch file(s)`);
   console.log(`[build-idioms] ${rows.length} valid idiom(s)`);
@@ -228,6 +281,13 @@ function main(): void {
     );
     for (const line of disagreements.slice(0, 20)) console.log(`  ${line}`);
     if (disagreements.length > 20) console.log(`  ... and ${disagreements.length - 20} more`);
+  }
+  if (missingSources.length > 0) {
+    console.log(
+      `[build-idioms] ${missingSources.length} row(s) had no source in the batch or the shipped file; using "${PENDING_SOURCE}":`,
+    );
+    for (const word of missingSources.slice(0, 20)) console.log(`  ${word}`);
+    if (missingSources.length > 20) console.log(`  ... and ${missingSources.length - 20} more`);
   }
   if (problems.length > 0) {
     console.log(`[build-idioms] ${problems.length} problem(s):`);

@@ -3,7 +3,7 @@
   "title": "永遇乐",
   "author": "刘辰翁",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "璧月初晴，黛云远澹，春事谁主。",
@@ -159,6 +159,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「璧月初晴」，描摹夜色空明，情思于无声处流转。卒章显志，收束有力，余韵悠长；动词选用尤妙，使画面顿然活化。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

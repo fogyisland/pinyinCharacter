@@ -3,7 +3,7 @@
   "title": "积雨辋川庄作",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "积雨空林烟火迟，蒸藜炊黍饷东菑。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「海鸥何事更相疑」，咏物而抒怀，借物象写胸中情怀。融情入景，使寻常风物皆着情绪；虚实相映，拓展了想象的余裕。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

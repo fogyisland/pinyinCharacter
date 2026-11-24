@@ -3,7 +3,7 @@
   "title": "曲玉管",
   "author": "柳永",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "陇首云飞，江边日晚，烟波满目凭阑久。",
@@ -164,6 +164,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「立望关河萧索」，摄取远景入诗，境界开阔而意蕴悠长。语言质朴无华，却自有一种动人力量；对比鲜明，两相映衬而意旨愈显。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

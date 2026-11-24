@@ -3,7 +3,7 @@
   "title": "金陵酒肆留别",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "风吹柳花满店香，吴姬压酒唤客尝。",
@@ -66,6 +66,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「吴姬压酒唤客尝」，写宴饮之欢，豪气跃然纸上。借景抒情，景中含情，意在言外；用典贴切，借古人之事抒一己之怀。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

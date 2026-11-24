@@ -3,7 +3,7 @@
   "title": "酬张少府",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "晚年唯好静，万事不关心。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「渔歌入浦深」，以淡笔写静景，见出悠然之心。实写与想象交织，意境更为开阔；借景抒情，景中含情，意在言外。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

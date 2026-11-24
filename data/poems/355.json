@@ -3,7 +3,7 @@
   "title": "杂曲歌辞 长干行二首 一",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "妾发初覆额，折花门前剧。",
@@ -234,6 +234,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「郎骑竹马来」，咏物而抒怀，借物象写胸中情怀。借景抒情，景中含情，意在言外；静景与动景交织，生气流转其间。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

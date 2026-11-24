@@ -3,7 +3,7 @@
   "title": "临江仙",
   "author": "晁冲之",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "忆昔西池池上饮，年年多少欢娱。",
@@ -97,6 +97,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「忆昔西池池上饮」，写羁旅之思，婉转深沉，令人低回。句式参差，节奏跌宕而富有张力；卒章显志，收束有力，余韵悠长。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

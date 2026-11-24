@@ -3,7 +3,7 @@
   "title": "唐多令",
   "author": "吴文英",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "何处合成愁。",
@@ -108,6 +108,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词中以景写情，层层递进。「何处合成愁」，抒离愁别绪，语淡而情浓，余味不尽。动词选用尤妙，使画面顿然活化；音节随情绪起伏，摇曳生姿。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

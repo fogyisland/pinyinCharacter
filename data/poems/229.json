@@ -3,7 +3,7 @@
   "title": "咏怀古迹五首 五",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "诸葛大名垂宇宙，宗臣遗像肃清高。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「诸葛大名垂宇宙」，描摹所见，灵动如画，意趣盎然。由实入虚，使情思显得深长；炼字精准，一字落下而全句生辉。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

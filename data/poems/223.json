@@ -3,7 +3,7 @@
   "title": "阁夜",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "岁暮阴阳催短景，天涯霜雪霁寒宵。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「五更鼓角声悲壮」，写边关苍茫之景，豪情与悲慨交织于笔端。句式参差，节奏跌宕而富有张力；虚实相映，拓展了想象的余裕。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

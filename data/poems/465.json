@@ -3,7 +3,7 @@
   "title": "摸鱼儿",
   "author": "朱嗣发",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "对西风、鬓摇烟碧，参差前事流水。",
@@ -191,6 +191,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「暮天修竹」，写秋气萧瑟，愁绪于字里行间暗生。融情入景，使寻常风物皆着情绪；用典贴切，借古人之事抒一己之怀。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

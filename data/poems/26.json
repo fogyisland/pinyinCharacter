@@ -3,7 +3,7 @@
   "title": "瑶池",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "瑶池阿母绮窗开，黄竹歌声动地哀。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「黄竹歌声动地哀」，托物寄意，物我交融，寄托遥深。动静相生，画面顿然鲜活起来；句式参差，节奏跌宕而富有张力。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

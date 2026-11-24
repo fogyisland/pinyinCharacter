@@ -3,7 +3,7 @@
   "title": "金陵图",
   "author": "韦庄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "谁谓伤心画不成，画人心逐世人情。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「画人心逐世人情」，以昔衬今，盛衰之变大有深意。句式参差，节奏跌宕而富有张力；实写与想象交织，意境更为开阔。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

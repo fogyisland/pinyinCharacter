@@ -3,7 +3,7 @@
   "title": "洞仙歌",
   "author": "晁补之",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "青烟幂处，碧海飞金镜。",
@@ -128,6 +128,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词中以景写情，层层递进。「永夜闲阶卧桂影」，描摹夜色空明，情思于无声处流转。融情入景，使寻常风物皆着情绪；卒章显志，收束有力，余韵悠长。以景收束，余情袅袅。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

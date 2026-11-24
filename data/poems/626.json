@@ -3,7 +3,7 @@
   "title": "渡江云",
   "author": "张炎",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "山空天入海，倚楼望极，风急暮潮初。",
@@ -159,6 +159,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「山空天入海」，写登高望远之所见，境界顿开，气象万千。长短句交错，读来抑扬顿挫；语言质朴无华，却自有一种动人力量。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

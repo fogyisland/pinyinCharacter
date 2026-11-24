@@ -3,7 +3,7 @@
   "title": "走马川行奉送出师西征",
   "author": "岑参",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "君不见走马川行雪海边，平沙莽莽黄入天。",
@@ -172,6 +172,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「君不见走马川行雪海边」，以简劲之笔写征戍生活，气骨凛然。由实入虚，使情思显得深长；音节随情绪起伏，摇曳生姿。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

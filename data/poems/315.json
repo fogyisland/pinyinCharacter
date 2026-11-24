@@ -3,7 +3,7 @@
   "title": "子夜吴歌 秋歌",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "长安一片月，万户捣衣声。",
@@ -54,6 +54,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「何日平胡虏」，以简劲之笔写征戍生活，气骨凛然。长短句交错，读来抑扬顿挫；融情入景，使寻常风物皆着情绪。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

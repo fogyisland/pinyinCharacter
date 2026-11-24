@@ -3,7 +3,7 @@
   "title": "蝶恋花",
   "author": "赵令",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "欲减罗衣寒未去。",
@@ -103,6 +103,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「飞燕又将归信误」，以清新笔调描摹春景，灵动自然。句式参差，节奏跌宕而富有张力；动静相生，画面顿然鲜活起来。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

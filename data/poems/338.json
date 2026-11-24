@@ -3,7 +3,7 @@
   "title": "相和歌辞 蜀道难",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "噫吁嚱！危乎高哉！蜀道之难难于上青天！蚕丛及鱼凫，开国何茫然。",
@@ -405,6 +405,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「下有冲波逆折之回川」，写登高望远之所见，境界顿开，气象万千。融情入景，使寻常风物皆着情绪；语言质朴无华，却自有一种动人力量。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

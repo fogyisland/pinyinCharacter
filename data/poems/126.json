@@ -3,7 +3,7 @@
   "title": "客夜与故人偶集",
   "author": "戴叔伦",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "天秋月又满，城阙夜千重。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「城阙夜千重」，写月夜清辉，幽寂之中透出孤怀。融情入景，使寻常风物皆着情绪；前后境况相互对照，反差强烈。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

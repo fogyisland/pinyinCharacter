@@ -3,7 +3,7 @@
   "title": "汉宫春",
   "author": "李邴",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "潇洒江梅，向竹梢疏处，横两三枝。",
@@ -151,6 +151,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「雪压霜欺」，摹写霜气林木，清冷而萧疏。由实入虚，使情思显得深长；前后境况相互对照，反差强烈。声情并茂，尽显词体之美。余音袅袅，不绝如缕。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

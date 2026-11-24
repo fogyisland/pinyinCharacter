@@ -3,7 +3,7 @@
   "title": "出塞二首 一",
   "author": "王昌龄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "秦时明月汉时关，万里长征人未还。",
@@ -47,6 +47,7 @@
       "。"
     ]
   ],
-  "appreciation": null,
-  "source": "chinese-poetry/chinese-poetry@master"
+  "appreciation": "这首古风起承转合，自有章法。「万里长征人未还」，写边关苍茫之景，豪情与悲慨交织于笔端。巧用反衬手法，突出了全篇主旨；句式参差，节奏跌宕而富有张力。全诗以景结情，余韵悠长。",
+  "source": "chinese-poetry/chinese-poetry@master",
+  "variantOf": 5
 }

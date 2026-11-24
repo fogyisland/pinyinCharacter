@@ -3,7 +3,7 @@
   "title": "月下独酌四首 一",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "花间一壶酒，独酌无相亲。",
@@ -114,6 +114,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「花间一壶酒」，写宴饮之欢，豪气跃然纸上。由实入虚，使情思显得深长；音节随情绪起伏，摇曳生姿。一气呵成，意境浑成。余音袅袅，不绝如缕。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

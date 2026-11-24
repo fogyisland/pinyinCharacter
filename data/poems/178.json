@@ -3,7 +3,7 @@
   "title": "长恨歌",
   "author": "白居易",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "汉皇重色思倾国，御宇多年求不得。",
@@ -1149,6 +1149,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「汉皇重色思倾国」，写羁旅之思，婉转深沉，令人低回。动静相生，画面顿然鲜活起来；虚实相映，拓展了想象的余裕。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

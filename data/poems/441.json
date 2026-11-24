@@ -3,7 +3,7 @@
   "title": "人南渡・感皇恩",
   "author": "贺铸",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "兰芷满芳洲，游思横路。",
@@ -128,6 +128,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「细风吹柳絮」，以清新笔调描摹春景，灵动自然。由实入虚，使情思显得深长；句式参差，节奏跌宕而富有张力。以景收束，余情袅袅。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "兵车行",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "车辚辚，马萧萧，行人弓箭各在腰。",
@@ -315,6 +315,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「况复秦兵耐苦战」，写边关苍茫之景，豪情与悲慨交织于笔端。融情入景，使寻常风物皆着情绪；静景与动景交织，生气流转其间。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

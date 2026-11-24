@@ -3,7 +3,7 @@
   "title": "集灵台二首 一",
   "author": "张祜",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "日光斜照集灵台，红树花迎晓露开。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「昨夜上皇新授箓」，写月夜清辉，幽寂之中透出孤怀。长短句交错，读来抑扬顿挫；以简笔勾勒，形象生动，如在目前。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

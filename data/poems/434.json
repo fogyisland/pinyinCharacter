@@ -3,7 +3,7 @@
   "title": "满庭芳",
   "author": "秦观",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "晓色云开，春随人意，骤雨才过还晴。",
@@ -154,6 +154,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「春随人意」，撷取春意入句，字里行间透出欢欣。融情入景，使寻常风物皆着情绪；以动衬静，境界愈显幽深。以景收束，余情袅袅。细细品之，别有一番滋味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

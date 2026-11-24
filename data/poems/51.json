@@ -3,7 +3,7 @@
   "title": "古意呈补阙乔知之",
   "author": "沈佺期",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "卢家少妇郁金堂，海燕双栖玳瑁梁。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「九月寒砧催木叶」，以月色烘托心境，清冷而动人。情景交融，以景语作情语，含蓄蕴藉；音节随情绪起伏，摇曳生姿。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

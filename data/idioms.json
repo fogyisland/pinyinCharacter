@@ -4,2645 +4,3023 @@
     "pinyin": "áng shǒu tǐng xiōng",
     "meaning": "抬起头挺起胸膛，形容精神振奋、意气高昂的神态。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "欧阳予倩《小英姑娘》"
   },
   {
     "word": "百发百中",
     "pinyin": "bǎi fā bǎi zhòng",
     "meaning": "每次发射都命中目标，形容射箭或办事准确无误。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "《战国策·西周策》"
   },
   {
     "word": "百里挑一",
     "pinyin": "bǎi lǐ tiǎo yī",
     "meaning": "一百个里挑出一个，形容人才优秀、难得少见。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "清·曹雪芹·《红楼梦》第一百二十回"
   },
   {
     "word": "半途而废",
     "pinyin": "bàn tú ér fèi",
     "meaning": "事情做到一半就停止，形容不能坚持到底、半途而改。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "《礼记·中庸》"
   },
   {
     "word": "冰天雪地",
     "pinyin": "bīng tiān xuě dì",
     "meaning": "到处是冰和雪；形容极为寒冷，也指严酷环境。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "清·蒋士铨·《鸡毛房》"
   },
   {
     "word": "不欢而散",
     "pinyin": "bù huān ér sàn",
     "meaning": "不愉快地分开各自散去，形容聚会不欢而别。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·冯梦龙·《醒世通言·黄秀才徼灵玉马坠》"
   },
   {
     "word": "不知所措",
     "pinyin": "bù zhī suǒ cuò",
     "meaning": "不知道该怎么办才好，形容处境突变时手忙脚乱、十分慌张。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "《论语·子路》"
   },
   {
     "word": "愁眉苦脸",
     "pinyin": "chóu méi kǔ liǎn",
     "meaning": "皱着眉头，苦着脸，形容愁苦的神情。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "垂头丧气",
     "pinyin": "chuí tóu sàng qì",
     "meaning": "低着头，没精神，形容失望沮丧的样子。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "唐·韩愈·《送穷文》"
   },
   {
     "word": "春回大地",
     "pinyin": "chūn huí dà dì",
     "meaning": "指春天来到、万物复苏，大地重新焕发生机与活力。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·周紫芝·《太仓稊米集·岁杪雨雪连日闷题二首》"
   },
   {
     "word": "春暖花开",
     "pinyin": "chūn nuǎn huā kāi",
     "meaning": "春天温暖，百花盛开；比喻形势好转或大好时机到来。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·朱国祯·《涌幢小品·南内》"
   },
   {
     "word": "春去秋来",
     "pinyin": "chūn qù qiū lái",
     "meaning": "春天过去秋天到来，形容季节更替，也暗指时光不断流逝。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "明·刘基·《大堤曲》"
   },
   {
     "word": "大敌当前",
     "pinyin": "dà dí dāng qián",
     "meaning": "面对着强大的敌人，形容形势十分严峻、压力骤然增大。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "清·刘鹗·《老残游记续集》第一回"
   },
   {
     "word": "大公无私",
     "pinyin": "dà gōng wú sī",
     "meaning": "完全为集体利益着想，没有私心，正直无私。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "汉·马融·《忠经·天地神明》"
   },
   {
     "word": "大汗淋漓",
     "pinyin": "dà hàn lín lí",
     "meaning": "浑身汗水湿透往下滴，形容天气热或运动后出汗很多。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "出处待考"
   },
   {
     "word": "大摇大摆",
     "pinyin": "dà yáo dà bǎi",
     "meaning": "走路摇摇摆摆，形容神气十足旁若无人。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·吴敬梓·《儒林外史》第五回"
   },
   {
     "word": "反目成仇",
     "pinyin": "fǎn mù chéng chóu",
     "meaning": "翻脸变成仇人，形容关系由亲密转为敌对怨恨。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "清·曹雪芹·《红楼梦》第五十七回"
   },
   {
     "word": "非亲非故",
     "pinyin": "fēi qīn fēi gù",
     "meaning": "既不是亲戚也不是旧友，形容关系疏远没有渊源。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·马戴·《寄贾岛》"
   },
   {
     "word": "风调雨顺",
     "pinyin": "fēng tiáo yǔ shùn",
     "meaning": "风雨及时适宜，形容气候温和合时、对农业生产十分有利。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "《六韬》"
   },
   {
     "word": "风和日丽",
     "pinyin": "fēng hé rì lì",
     "meaning": "微风和暖，阳光明媚；形容天气晴好宜人。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "元·李爱山·《集贤宾·春日伤别》"
   },
   {
     "word": "光阴似箭",
     "pinyin": "guāng yīn sì jiàn",
     "meaning": "时光像箭一样飞快；形容时间流逝极快。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "唐·韦庄·《关河道中》"
   },
   {
     "word": "横冲直撞",
     "pinyin": "héng chōng zhí zhuàng",
     "meaning": "横着冲直着撞，形容毫无约束地乱闯乱撞，也指蛮干。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "明·李贽·《续焚书·与友人论文》"
   },
   {
     "word": "欢天喜地",
     "pinyin": "huān tiān xǐ dì",
     "meaning": "形容非常快乐高兴，整日沉浸在欢愉气氛之中毫无愁绪。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "祸不单行",
     "pinyin": "huò bù dān xíng",
     "meaning": "灾祸偏偏不只一个，形容倒霉事接连不断、处境愈发困难。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "汉·刘向·《说苑·权谋》"
   },
   {
     "word": "坚持不懈",
     "pinyin": "jiān chí bù xiè",
     "meaning": "坚持到底，毫不松懈，形容有恒心、意志坚强。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "《清史稿·刘体重传》"
   },
   {
     "word": "见义勇为",
     "pinyin": "jiàn yì yǒng wéi",
     "meaning": "看到正义的事就勇敢去做，形容有胆识和正义感。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "《论语·为政》"
   },
   {
     "word": "脚踏实地",
     "pinyin": "jiǎo tà shí dì",
     "meaning": "做事踏实认真，不图虚名浮华。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "宋·邵伯温《邵氏闻见前录》卷十八"
   },
   {
     "word": "九牛一毛",
     "pinyin": "jiǔ niú yī máo",
     "meaning": "九头牛身上的一根毛，比喻极其微小微不足道。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "汉·司马迁·《报任少卿书》"
   },
   {
     "word": "举一反三",
     "pinyin": "jǔ yī fǎn sān",
     "meaning": "由一件事推知同类的许多事，形容善于联想、触类旁通。",
     "level": 1,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《论语·述而》"
   },
   {
     "word": "哭笑不得",
     "pinyin": "kū xiào bù dé",
     "meaning": "又想哭又想笑，没办法哭也不好笑，形容处境十分尴尬。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "元·高安道《皮匠说谎》"
   },
   {
     "word": "狂风暴雨",
     "pinyin": "kuáng fēng bào yǔ",
     "meaning": "猛烈的大风大雨；也比喻险恶的环境或激烈的事件。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "《老子》第二十三章"
   },
   {
     "word": "乐于助人",
     "pinyin": "lè yú zhù rén",
     "meaning": "乐意帮助别人，形容心地善良、主动给他人带来方便。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "泪流满面",
     "pinyin": "lèi liú mǎn miàn",
     "meaning": "眼泪流得满脸都是，形容非常悲伤或感动。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "明·罗贯中·《三国演义》第一百十回"
   },
   {
     "word": "烈日炎炎",
     "pinyin": "liè rì yán yán",
     "meaning": "太阳炽热、阳光猛烈，形容夏日酷暑难当的天气。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "绿树成荫",
     "pinyin": "lǜ shù chéng yīn",
     "meaning": "树木枝叶茂密遮蔽了阳光，形容绿荫覆盖地面的清凉景象。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "马不停蹄",
     "pinyin": "mǎ bù tíng tí",
     "meaning": "比喻一刻也不停留，形容连续不断地赶路或忙碌。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·王实甫·《丽春堂》第二折"
   },
   {
     "word": "埋头苦干",
     "pinyin": "mái tóu kǔ gàn",
     "meaning": "低着头努力工作，不声不响地辛勤付出。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "鲁迅·《且介亭杂文·中国人失掉自信力了吗》"
   },
   {
     "word": "眉开眼笑",
     "pinyin": "méi kāi yǎn xiào",
     "meaning": "眉毛舒展，眼睛含笑，形容高兴愉快的样子。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "闷闷不乐",
     "pinyin": "mèn mèn bù lè",
     "meaning": "心里闷闷的，不快乐，情绪低沉不畅快。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "明·罗贯中·《三国演义》第十八回"
   },
   {
     "word": "摩拳擦掌",
     "pinyin": "mó quán cā zhǎng",
     "meaning": "摩着拳头擦着手掌，形容战斗或行动前跃跃欲试的样子。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·康进之·《李逵负荆》第二折"
   },
   {
     "word": "鸟语花香",
     "pinyin": "niǎo yǔ huā xiāng",
     "meaning": "鸟儿鸣叫，花儿飘香；形容春天美好的景象。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·吕本中·《紫薇·庵居》"
   },
   {
     "word": "平安无事",
     "pinyin": "píng ān wú shì",
     "meaning": "平平安安没有出事，形容一切安好顺利。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·无名氏·《昊天塔孟良盗骨》第二折"
   },
   {
     "word": "七上八下",
     "pinyin": "qī shàng bā xià",
     "meaning": "心里慌乱不安，形容心情紧张、忐忑难安。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "明·施耐庵·《水浒全传》第二十六回"
   },
   {
     "word": "起早贪黑",
     "pinyin": "qǐ zǎo tān hēi",
     "meaning": "早起晚睡；形容辛苦劳作、不分昼夜。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "周立波·《暴风骤雨》第一部"
   },
   {
     "word": "千变万化",
     "pinyin": "qiān biàn wàn huà",
     "meaning": "变化极多难以预测，形容事物纷繁复杂、多种多样。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "《列子·周穆王》"
   },
   {
     "word": "千方百计",
     "pinyin": "qiān fāng bǎi jì",
     "meaning": "想尽一切办法，形容为达到目的用尽各种手段。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "《朱子语类·论语十七》"
   },
   {
     "word": "千言万语",
     "pinyin": "qiān yán wàn yǔ",
     "meaning": "话多得数不清，形容要说的话非常多、难以尽述。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "唐·郑谷·《燕》"
   },
   {
     "word": "青山绿水",
     "pinyin": "qīng shān lǜ shuǐ",
     "meaning": "青翠的山、碧绿的水；形容景色秀美自然。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·释普济·《五灯会元》"
   },
   {
     "word": "轻车熟路",
     "pinyin": "qīng chē shú lù",
     "meaning": "驾着轻车走熟路，比喻做熟悉的事轻而易举、得心应手。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "唐·韩愈·《送石处士序》"
   },
   {
     "word": "轻装上阵",
     "pinyin": "qīng zhuāng shàng zhèn",
     "meaning": "轻装快速前进，形容放下包袱、没有顾虑地投入行动。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "《文汇报》"
   },
   {
     "word": "秋高气爽",
     "pinyin": "qiū gāo qì shuǎng",
     "meaning": "秋天天空晴朗空气清新；形容秋季气候宜人。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·杜甫·《崔氏东山草堂》"
   },
   {
     "word": "秋去冬来",
     "pinyin": "qiū qù dōng lái",
     "meaning": "秋季过去冬季来临，写四时循序更替与岁月的推移。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "认真负责",
     "pinyin": "rèn zhēn fù zé",
     "meaning": "做事仔细踏实、敢于承担后果，形容对工作尽心尽力。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "任劳任怨",
     "pinyin": "rèn láo rèn yuàn",
     "meaning": "做事不怕辛苦，也不怕别人埋怨，肯担当。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "汉·桓宽·《盐铁论·刺权》"
   },
   {
     "word": "日久天长",
     "pinyin": "rì jiǔ tiān cháng",
     "meaning": "时间长久；指日子一天天过去，历程持久。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "清·曹雪芹·《红楼梦》第六十九回"
   },
   {
     "word": "三心二意",
     "pinyin": "sān xīn èr yì",
     "meaning": "心里想这样又想那样，形容主意不定、做事不专心。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "元·关汉卿·《救风尘》第一折"
   },
   {
     "word": "山清水秀",
     "pinyin": "shān qīng shuǐ xiù",
     "meaning": "山青翠、水清澈；形容风景优美宜人。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·黄庭坚·《蓦山溪·赠衡阳陈湘》"
   },
   {
     "word": "生机勃勃",
     "pinyin": "shēng jī bó bó",
     "meaning": "形容生命力旺盛、充满活力；多用于形容人或事业。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "十全十美",
     "pinyin": "shí quán shí měi",
     "meaning": "各方面都完美无缺，形容事物毫无缺陷十分理想。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "出处待考"
   },
   {
     "word": "十有八九",
     "pinyin": "shí yǒu bā jiǔ",
     "meaning": "十件事里有八九件如此，形容推断的情况大体准确可靠。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "唐·杜甫·《负薪行》"
   },
   {
     "word": "实事求是",
     "pinyin": "shí shì qiú shì",
     "meaning": "按照客观事实和客观规律办事，不凭主观臆断夸大其词。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "《汉书·河间献王刘德传》"
   },
   {
     "word": "拾金不昧",
     "pinyin": "shí jīn bù mèi",
     "meaning": "捡到钱财不占为己有，主动归还失主。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "清·吴炽昌·《客窗闲话·义丐》"
   },
   {
     "word": "手忙脚乱",
     "pinyin": "shǒu máng jiǎo luàn",
     "meaning": "做事慌张、毫无章法，形容遇到变故时忙得不知从何下手。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·释普济·《五灯会元》"
   },
   {
     "word": "手舞足蹈",
     "pinyin": "shǒu wǔ zú dǎo",
     "meaning": "两只手不停地舞动，两脚不住地跳动，形容高兴得无法自控。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "《诗经·周南·关雎·序》"
   },
   {
     "word": "熟能生巧",
     "pinyin": "shú néng shēng qiǎo",
     "meaning": "熟练了就能掌握窍门，说明反复实践能提高技能水平。",
     "level": 1,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "出处待考"
   },
   {
     "word": "水深火热",
     "pinyin": "shuǐ shēn huǒ rè",
     "meaning": "像身处水深与火中，形容处境极为痛苦、煎熬难受。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "《孟子·梁惠王下》"
   },
   {
     "word": "水天一色",
     "pinyin": "shuǐ tiān yī sè",
     "meaning": "水面与天空浑然一体，形容辽阔的湖海与天色相接的壮景。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·王勃·《滕王阁诗序》"
   },
   {
     "word": "素不相识",
     "pinyin": "sù bù xiāng shí",
     "meaning": "从来就不认识，形容双方此前毫无交情或关系。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·尚仲贤·《柳毅传书》第四折"
   },
   {
     "word": "忐忑不安",
     "pinyin": "tǎn tè bù ān",
     "meaning": "心神不定，七上八下，形容非常紧张不安。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·吴趼人·《糊涂世界》卷九"
   },
   {
     "word": "桃红柳绿",
     "pinyin": "táo hóng liǔ lǜ",
     "meaning": "桃花嫣红、柳枝碧绿，形容春天花木繁盛、色彩鲜艳的明丽春景。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·王维·《田园》"
   },
   {
     "word": "提心吊胆",
     "pinyin": "tí xīn diào dǎn",
     "meaning": "心悬着、胆也吊着，形容十分担心害怕、处处谨慎。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "明·吴承恩·《西游记》第十七回"
   },
   {
     "word": "同病相怜",
     "pinyin": "tóng bìng xiāng lián",
     "meaning": "有同样毛病的人互相同情，形容处境相同彼此体恤。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "汉·赵晔·《吴越春秋·阖闾内传》"
   },
   {
     "word": "万事如意",
     "pinyin": "wàn shì rú yì",
     "meaning": "所有事情都符合心意，形容称心满意。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "万紫千红",
     "pinyin": "wàn zǐ qiān hóng",
     "meaning": "形容百花齐放、色彩绚丽；也比喻事物丰富多彩。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·朱熹·《春日》"
   },
   {
     "word": "无精打采",
     "pinyin": "wú jīng dǎ cǎi",
     "meaning": "没有精神，萎靡不振，形容提不起劲来。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·曹雪芹·《红楼梦》第二十五回"
   },
   {
     "word": "五湖四海",
     "pinyin": "wǔ hú sì hǎi",
     "meaning": "指全国各地，形容交往范围广、来自五洲四海。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "《周礼·夏官·职方氏》"
   },
   {
     "word": "喜出望外",
     "pinyin": "xǐ chū wàng wài",
     "meaning": "遇到意外的好事而特别高兴，超出预想。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "宋·苏轼·《与李之仪书》"
   },
   {
     "word": "心花怒放",
     "pinyin": "xīn huā nù fàng",
     "meaning": "心里高兴得像花儿盛开，形容欣喜万分。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·李宝嘉·《文明小史》第六十回"
   },
   {
     "word": "心满意足",
     "pinyin": "xīn mǎn yì zú",
     "meaning": "心里十分满足，形容称心如意、十分惬意。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "宋·吕祖谦·《晋论》"
   },
   {
     "word": "心神不宁",
     "pinyin": "xīn shén bù níng",
     "meaning": "心神慌乱不定，难以平静下来。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "明·吴承恩·《西游记》第33回"
   },
   {
     "word": "心想事成",
     "pinyin": "xīn xiǎng shì chéng",
     "meaning": "心里怎样想事情就能成功，多用来祝愿。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "兴高采烈",
     "pinyin": "xìng gāo cǎi liè",
     "meaning": "兴致高昂，情绪热烈，形容非常高兴。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "南朝梁·刘勰·《文心雕龙·体性》"
   },
   {
     "word": "兴致勃勃",
     "pinyin": "xìng zhì bó bó",
     "meaning": "兴趣浓厚、劲头十足，形容十分有兴致。",
     "level": 1,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·李汝珍·《镜花缘》第五十六回"
   },
   {
     "word": "雪上加霜",
     "pinyin": "xuě shàng jiā shuāng",
     "meaning": "在灾祸之上又添新的苦难，形容处境本已艰难更加恶化。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·释道原·《景德传灯录》卷十九"
   },
   {
     "word": "夜以继日",
     "pinyin": "yè yǐ jì rì",
     "meaning": "晚上接着白天不停地干；形容日夜不停地努力。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "《庄子·至乐》"
   },
   {
     "word": "一帆风顺",
     "pinyin": "yī fān fēng shùn",
     "meaning": "船顺风行驶，比喻事情顺遂毫无阻碍。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "唐·孟郊·《送崔爽之湖南》"
   },
   {
     "word": "一见倾心",
     "pinyin": "yī jiàn qīng xīn",
     "meaning": "初次见面就产生了爱慕之情，形容一眼相悦十分喜欢。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "《资治通鉴·晋孝武帝太元九年》"
   },
   {
     "word": "一见如故",
     "pinyin": "yī jiàn rú gù",
     "meaning": "初次见面就像老朋友一样，形容初次相识就十分投缘。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "《左传·襄公二十九年》"
   },
   {
     "word": "一举两得",
     "pinyin": "yī jǔ liǎng dé",
     "meaning": "做一件事同时得到两方面的好处，形容办事效率很高。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "《晋书·束皙传》"
   },
   {
     "word": "一鸣惊人",
     "pinyin": "yī míng jīng rén",
     "meaning": "平时默默无闻，一开口做事就使众人震惊。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "《韩非子·喻老》"
   },
   {
     "word": "一丝不苟",
     "pinyin": "yī sī bù gǒu",
     "meaning": "连最细小的地方也不马虎，形容做事极为认真负责。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "清·吴敬梓《儒林外史》"
   },
   {
     "word": "一五一十",
     "pinyin": "yī wǔ yī shí",
     "meaning": "从一数到十，原指一五一十，形容叙述得清清楚楚。",
     "level": 1,
-    "category": "数量"
+    "category": "数量",
+    "source": "明·施耐庵·《水浒全传》第二十五回"
   },
   {
     "word": "以身作则",
     "pinyin": "yǐ shēn zuò zé",
     "meaning": "用自己的行动做出榜样，形容以亲身示范来带领别人。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "巴金·《家》"
   },
   {
     "word": "雨过天晴",
     "pinyin": "yǔ guò tiān qíng",
     "meaning": "雨停后天空放晴；也比喻事情出现转机。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·谢肇淛《文海披沙》"
   },
   {
     "word": "载歌载舞",
     "pinyin": "zài gē zài wǔ",
     "meaning": "一边唱歌一边跳舞，形容欢庆的场面热闹而尽兴。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "出处待考"
   },
   {
     "word": "争分夺秒",
     "pinyin": "zhēng fēn duó miǎo",
     "meaning": "一分一秒都要争取；形容抓紧时间，分秒必争。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "《晋书·陶侃传》"
   },
   {
     "word": "正大光明",
     "pinyin": "zhèng dà guāng míng",
     "meaning": "心怀坦白，行事正派，形容不搞阴谋诡计、光明磊落。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "宋·朱熹·《答吕伯恭书》"
   },
   {
     "word": "助人为乐",
     "pinyin": "zhù rén wéi lè",
     "meaning": "把帮助别人当作快乐的事，形容热心善良。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "冰心·《咱们的五个孩子》"
   },
   {
     "word": "转眼之间",
     "pinyin": "zhuǎn yǎn zhī jiān",
     "meaning": "一眨眼的时候；指时间非常短暂，变化极快。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "明·胡文焕·《群音类选·葛衣记·荐之知信》"
   },
   {
     "word": "尊老爱幼",
     "pinyin": "zūn lǎo ài yòu",
     "meaning": "尊敬老人，爱护幼小，是中华民族的传统美德。",
     "level": 1,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "昂首阔步",
     "pinyin": "áng shǒu kuò bù",
     "meaning": "抬起头迈开大步，形容气势豪迈意气昂扬。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "老舍·《鼓书艺人》"
   },
   {
     "word": "暴风骤雨",
     "pinyin": "bào fēng zhòu yǔ",
     "meaning": "猛烈的大风夹着急雨，形容天气陡然转坏、来势十分凶猛。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "《老子》第二十三章"
   },
   {
     "word": "暴跳如雷",
     "pinyin": "bào tiào rú léi",
     "meaning": "大发雷霆，像雷一样暴跳，形容愤怒到了极点。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《古诗为焦仲卿妻作》"
   },
   {
     "word": "背信弃义",
     "pinyin": "bèi xìn qì yì",
     "meaning": "违背诺言抛弃情义，指不守信用。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《北史·周纪下·高祖武帝》"
   },
   {
     "word": "笨鸟先飞",
     "pinyin": "bèn niǎo xiān fēi",
     "meaning": "能力不足者提前行动，用勤奋弥补天生的条件不够。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "元·关汉卿·《陈母教子》第一折"
   },
   {
     "word": "波澜壮阔",
     "pinyin": "bō lán zhuàng kuò",
     "meaning": "水势浩大雄壮；也比喻声势浩大、场面宏大。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "南朝·宋·鲍照·《登大雷岸与妹书》"
   },
   {
     "word": "博学多才",
     "pinyin": "bó xué duō cái",
     "meaning": "学问广博、才能丰富，形容读书多见识广，兼有多种才干。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《晋书·郤诜传》"
   },
   {
     "word": "沧海桑田",
     "pinyin": "cāng hǎi sāng tián",
     "meaning": "沧海变为桑田；比喻世事变化巨大、沧海桑田。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "晋·葛洪·《神仙传·麻姑》"
   },
   {
     "word": "朝朝暮暮",
     "pinyin": "zhāo zhāo mù mù",
     "meaning": "从早到晚；形容时间漫长或每天如此度过。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "战国·楚·宋玉·《高唐赋》"
   },
   {
     "word": "沉默寡言",
     "pinyin": "chén mò guǎ yán",
     "meaning": "性格沉静不爱说话，形容人话很少。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "《旧唐书·梁崇义传》"
   },
   {
     "word": "持之以恒",
     "pinyin": "chí zhī yǐ héng",
     "meaning": "长久坚持下去，指做事有恒心能够到底。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·曾国藩·《家训喻纪泽》"
   },
   {
     "word": "春花秋月",
     "pinyin": "chūn huā qiū yuè",
     "meaning": "春天的花朵、秋天的明月，泛指一年四季中美好的景色与时光。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "南唐·李煜·《虞美人》"
   },
   {
     "word": "春意盎然",
     "pinyin": "chūn yì àng rán",
     "meaning": "形容春天处处洋溢着生机与活力，春的气息十分浓厚。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "大发雷霆",
     "pinyin": "dà fā léi tíng",
     "meaning": "像雷霆一样大发脾气，形容因恼怒而猛烈发作、厉声呵斥。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《三国志·吴书·陆逊传》"
   },
   {
     "word": "大惊失色",
     "pinyin": "dà jīng shī sè",
     "meaning": "非常吃惊，脸色都变了，形容极为惊讶。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《汉书·霍光传》"
   },
   {
     "word": "大难不死",
     "pinyin": "dà nàn bù sǐ",
     "meaning": "遇到巨大的灾难居然活了下来，形容幸运地逃脱一场劫难。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·关汉卿·《裴度还带》第三折"
   },
   {
     "word": "大难临头",
     "pinyin": "dà nàn lín tóu",
     "meaning": "大的灾难降临到头上，形容灾祸突然而至、处境极为艰难。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "鲁迅·《彷徨·弟兄》"
   },
   {
     "word": "弹指之间",
     "pinyin": "tán zhǐ zhī jiān",
     "meaning": "弹一下手指的工夫；形容时间极短、瞬间即逝。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "唐·司空图·《偶书之四》"
   },
   {
     "word": "点石成金",
     "pinyin": "diǎn shí chéng jīn",
     "meaning": "一点石头变成金子，比喻手段高超化腐朽为神奇。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "汉·刘向·《列仙传》"
   },
   {
     "word": "电闪雷鸣",
     "pinyin": "diàn shǎn léi míng",
     "meaning": "电光闪动雷声轰鸣；形容雷雨天气或声势浩大。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "郭小川·《痛悼敬爱的周总理》"
   },
   {
     "word": "冬去春来",
     "pinyin": "dōng qù chūn lái",
     "meaning": "冬天过去春天到来；指时间推移、岁月更替。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "度日如年",
     "pinyin": "dù rì rú nián",
     "meaning": "过一天像一年那样难熬；形容日子非常难熬。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·柳永·《戚氏》"
   },
   {
     "word": "废寝忘食",
     "pinyin": "fèi qǐn wàng shí",
     "meaning": "顾不上睡觉和吃饭，形容专心勤奋、极度投入。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "《列子·天瑞篇》"
   },
   {
     "word": "分秒必争",
     "pinyin": "fēn miǎo bì zhēng",
     "meaning": "一分一秒都要争取；形容抓紧每分每秒，珍惜时间。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《晋书·陶侃传》"
   },
   {
     "word": "风雨交加",
     "pinyin": "fēng yǔ jiāo jiā",
     "meaning": "风和雨同时到来，形容天气恶劣、处境困难而又遭遇变故。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "清·梁章钜·《浪迹丛谈·除夕元旦两诗》"
   },
   {
     "word": "枫林如火",
     "pinyin": "fēng lín rú huǒ",
     "meaning": "枫树林红得像火焰；形容深秋枫叶通红的景象。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "光明磊落",
     "pinyin": "guāng míng lěi luò",
     "meaning": "心地光明，胸怀坦白，做事正大无私。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "《晋书·石勒载记下》"
   },
   {
     "word": "和风细雨",
     "pinyin": "hé fēng xì yǔ",
     "meaning": "温和的风、细密的雨；多比喻柔和细致的教育方式。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "南朝·陈·张正见·《陪衡阳王游耆阇寺》"
   },
   {
     "word": "画龙点睛",
     "pinyin": "huà lóng diǎn jīng",
     "meaning": "在关键处点明要旨，使内容更加生动传神。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "唐·张彦远·《历代名画记·张僧繇》"
   },
   {
     "word": "患难与共",
     "pinyin": "huàn nàn yǔ gòng",
     "meaning": "一同经历灾祸困难，比喻同心协力共同度过难关。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《礼记·儒行》"
   },
   {
     "word": "疾步如飞",
     "pinyin": "jí bù rú fēi",
     "meaning": "走得飞快像飞一样，形容步伐急速、行动迅捷。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "出处待考"
   },
   {
     "word": "集思广益",
     "pinyin": "jí sī guǎng yì",
     "meaning": "集中众人的智慧，广泛听取意见以取得更大收获。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "三国·蜀·诸葛亮·《教与军师长史参军掾属》"
   },
   {
     "word": "健步如飞",
     "pinyin": "jiàn bù rú fēi",
     "meaning": "走得又快又稳，像飞一样敏捷轻快。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·蒲松龄·《聊斋志异·凤阳士人》"
   },
   {
     "word": "骄阳似火",
     "pinyin": "jiāo yáng sì huǒ",
     "meaning": "太阳毒辣如同火焰；形容天气极其炎热。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "进退两难",
     "pinyin": "jìn tuì liǎng nán",
     "meaning": "前进和后退都困难，形容处境尴尬难以抉择。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "唐·李靖《卫公兵法》"
   },
   {
     "word": "惊慌失措",
     "pinyin": "jīng huāng shī cuò",
     "meaning": "慌张之中不知怎么办才好，形容非常慌乱。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《北齐书·元晖业传》"
   },
   {
     "word": "兢兢业业",
     "pinyin": "jīng jīng yè yè",
     "meaning": "做事谨慎勤恳，不敢有丝毫疏忽。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "《诗经·大雅·云汉》"
   },
   {
     "word": "精益求精",
     "pinyin": "jīng yì qiú jīng",
     "meaning": "已经很好了还追求更好，形容做事一丝不苟、追求卓越。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "宋·朱熹《论语集注·学而》"
   },
   {
     "word": "九死一生",
     "pinyin": "jiǔ sǐ yī shēng",
     "meaning": "经历多次生死考验才活下来，形容处境极其险恶、生死难料。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "战国·楚·屈原·《离骚》"
   },
   {
     "word": "久别重逢",
     "pinyin": "jiǔ bié chóng féng",
     "meaning": "分别很久之后又重新相遇，形容重逢的欣喜。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "清·曾朴·《孽海花》第三回"
   },
   {
     "word": "沮丧失望",
     "pinyin": "jǔ sàng shī wàng",
     "meaning": "情绪低落灰心，对原本指望的事情不再抱有希望和信心。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "出处待考"
   },
   {
     "word": "绝处逢生",
     "pinyin": "jué chù féng shēng",
     "meaning": "在绝望的困境中遇到转机，得到生机。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·关汉卿·《钱大尹知勘绯衣梦·正名》"
   },
   {
     "word": "口若悬河",
     "pinyin": "kǒu ruò xuán hé",
     "meaning": "说话像瀑布倾泻，形容能言善辩滔滔不绝。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "南朝·宋·刘义庆·《世说新语·赏誉》"
   },
   {
     "word": "苦尽甘来",
     "pinyin": "kǔ jìn gān lái",
     "meaning": "困难的日子过去，美好的日子终于到来。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "乐不可支",
     "pinyin": "lè bù kě zhī",
     "meaning": "快乐到了极点，形容高兴得无法再承受。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "汉·班固·《东观汉记·张堪传》"
   },
   {
     "word": "烈日当空",
     "pinyin": "liè rì dāng kōng",
     "meaning": "太阳猛烈地照在天空中，形容天气酷热，也比喻处境艰难。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "柳暗花明",
     "pinyin": "liǔ àn huā míng",
     "meaning": "柳树浓密花色明艳，比喻困境中出现转机。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·陆游《游山西村》"
   },
   {
     "word": "龙飞凤舞",
     "pinyin": "lóng fēi fèng wǔ",
     "meaning": "形容矫健活泼的舞姿，也比喻书法笔势奔放灵活、挥洒自如。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "汉·张衡·《东京赋》"
   },
   {
     "word": "埋头苦读",
     "pinyin": "mái tóu kǔ dú",
     "meaning": "一心扑在读书上，形容专心刻苦地学习。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "出处待考"
   },
   {
     "word": "梅花傲雪",
     "pinyin": "méi huā ào xuě",
     "meaning": "梅花在严寒中开放；比喻不畏严寒、坚强不屈。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "密不透风",
     "pinyin": "mì bù tòu fēng",
     "meaning": "包围得非常严密，连一丝风也透不进去。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "妙手回春",
     "pinyin": "miào shǒu huí chūn",
     "meaning": "灵巧的手能起死回生，形容医术十分高明。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·李宝嘉·《官场现形记》第二十回"
   },
   {
     "word": "目瞪口呆",
     "pinyin": "mù dèng kǒu dāi",
     "meaning": "眼睛发直、嘴巴张开，形容因惊讶或害怕而发愣。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "元·无名氏·《赚蒯通》第一折"
   },
   {
     "word": "能言善辩",
     "pinyin": "néng yán shàn biàn",
     "meaning": "善于讲话和辩论，形容口才好很会讲话。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "元·无名氏·《气英布》第一折"
   },
   {
     "word": "年年岁岁",
     "pinyin": "nián nián suì suì",
     "meaning": "一年又一年，指岁月不断流逝，日子长久而反复。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "萍水相逢",
     "pinyin": "píng shuǐ xiāng féng",
     "meaning": "比喻像浮萍漂水偶然相遇，形容相识很偶然。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·王勃·《滕王阁序》"
   },
   {
     "word": "千差万别",
     "pinyin": "qiān chā wàn bié",
     "meaning": "差别极多、多种多样，形容事物之间情况各不相同。",
     "level": 2,
-    "category": "数量"
+    "category": "数量",
+    "source": "宋·释道原·《景德传灯录》卷二十五"
   },
   {
     "word": "千钧一发",
     "pinyin": "qiān jūn yī fà",
     "meaning": "一根头发丝吊着千钧重物，形容情况危急万分。",
     "level": 2,
-    "category": "数量"
+    "category": "数量",
+    "source": "《汉书·枚乘传》"
   },
   {
     "word": "千秋万代",
     "pinyin": "qiān qiū wàn dài",
     "meaning": "千年万代；指世世代代长久的时间。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《韩非子·显学》"
   },
   {
     "word": "谦虚谨慎",
     "pinyin": "qiān xū jǐn shèn",
     "meaning": "虚心听取意见，又小心谨慎，不自满也不冒失。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "《晋书·张宾载记》"
   },
   {
     "word": "锲而不舍",
     "pinyin": "qiè ér bù shě",
     "meaning": "比喻有恒心、有毅力，坚持不懈地做下去。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "《荀子·劝学》"
   },
   {
     "word": "勤能补拙",
     "pinyin": "qín néng bǔ zhuō",
     "meaning": "勤奋能够弥补天资的不足，强调后天努力胜过聪慧天分。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "宋·邵雍·《弄笔吟》"
   },
   {
     "word": "情同手足",
     "pinyin": "qíng tóng shǒu zú",
     "meaning": "形容感情深厚亲密，像亲兄弟一样。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·李华·《吊古战场文》"
   },
   {
     "word": "群策群力",
     "pinyin": "qún cè qún lì",
     "meaning": "大家一起出主意、贡献力量，共同完成一件事。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "汉·扬雄·《法言·重黎》"
   },
   {
     "word": "日月如梭",
     "pinyin": "rì yuè rú suō",
     "meaning": "太阳和月亮像织布的梭子来回穿行，形容光阴飞快地流逝。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·赵德麟·《侯鲭录》卷二"
   },
   {
     "word": "如愿以偿",
     "pinyin": "rú yuàn yǐ cháng",
     "meaning": "依照自己的心愿实现，形容愿望终于实现。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "清·吴趼人·《二十年目睹之怪现状》第一百一回"
   },
   {
     "word": "三头六臂",
     "pinyin": "sān tóu liù bì",
     "meaning": "形容人本领极大，也形容事情面广、需要多方施展。",
     "level": 2,
-    "category": "数量"
+    "category": "数量",
+    "source": "宋·释道原《景德传灯录》卷十三"
   },
   {
     "word": "山穷水尽",
     "pinyin": "shān qióng shuǐ jìn",
     "meaning": "山势和水路都到了尽头，形容走投无路、陷入绝境的处境。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·陆游·《游山西村》"
   },
   {
     "word": "舍己为人",
     "pinyin": "shě jǐ wèi rén",
     "meaning": "牺牲自己的利益甚至生命去帮助别人，形容无私奉献。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "宋·朱熹《论语集注·先进》"
   },
   {
     "word": "十年寒窗",
     "pinyin": "shí nián hán chuāng",
     "meaning": "十年在寒窗苦读，指长期艰苦的求学生活与漫长磨砺。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "元·刘祁·《归潜志》卷七"
   },
   {
     "word": "时不我待",
     "pinyin": "shí bù wǒ dài",
     "meaning": "时间不会等待我；指时间紧迫，机会难得。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《论语·阳货》"
   },
   {
     "word": "时过境迁",
     "pinyin": "shí guò jìng qiān",
     "meaning": "时间过去环境改变；多指情况或人事发生了变化。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "蔡东藩、许廑父·《民国演义》"
   },
   {
     "word": "时来运转",
     "pinyin": "shí lái yùn zhuǎn",
     "meaning": "时运好转，处境开始变得顺利起来。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "《白雪遗音·马头调·麻衣神相》"
   },
   {
     "word": "手足无措",
     "pinyin": "shǒu zú wú cuò",
     "meaning": "手脚不知往哪里放，形容面对突发变故时慌乱得无法应对。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "《论语·子路》"
   },
   {
     "word": "守口如瓶",
     "pinyin": "shǒu kǒu rú píng",
     "meaning": "嘴像瓶子塞紧一样严，形容严守秘密不泄露。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "宋·周密·《癸辛杂识别集》"
   },
   {
     "word": "水滴石穿",
     "pinyin": "shuǐ dī shí chuān",
     "meaning": "水滴不停能穿透石头，比喻坚持不懈终能成功。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "《汉书·枚乘传》"
   },
   {
     "word": "水泄不通",
     "pinyin": "shuǐ xiè bù tōng",
     "meaning": "连水都流不出去，形容围得严密或非常拥挤。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·释道原·《景德传灯录》"
   },
   {
     "word": "死里逃生",
     "pinyin": "sǐ lǐ táo shēng",
     "meaning": "从极险的境地中保全性命，形容处境万分危险。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "四季更迭",
     "pinyin": "sì jì gēng dié",
     "meaning": "春夏秋冬不断交替，泛指一年年时光流转，季节按时循环。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "四通八达",
     "pinyin": "sì tōng bā dá",
     "meaning": "四面八方都畅通，形容道路四通八达或办事手段灵活。",
     "level": 2,
-    "category": "数量"
+    "category": "数量",
+    "source": "《子华子·晏子问党》"
   },
   {
     "word": "岁岁年年",
     "pinyin": "suì suì nián nián",
     "meaning": "一年接着一年，形容年复一年，时光循环往复地过去。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "昙花一现",
     "pinyin": "tán huā yī xiàn",
     "meaning": "昙花只开片刻；比喻美好事物出现，转瞬即逝难以长久。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《妙法莲华经·方便品》"
   },
   {
     "word": "滔滔不绝",
     "pinyin": "tāo tāo bù jué",
     "meaning": "形容话很多，说起来没有停顿。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "五代后周·王仁裕·《开元天宝遗事·走丸之辩》"
   },
   {
     "word": "腾空而起",
     "pinyin": "téng kōng ér qǐ",
     "meaning": "高高跃起升到空中，形容跳跃或升起时脱离地面的姿态。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·褚人获·《隋唐演义》第三回"
   },
   {
     "word": "啼笑皆非",
     "pinyin": "tí xiào jiē fēi",
     "meaning": "哭也不是笑也不是，形容处境尴尬得让人不知如何是好。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "沙汀·《烦恼》"
   },
   {
     "word": "天灾人祸",
     "pinyin": "tiān zāi rén huò",
     "meaning": "自然的灾害和人为的祸患接连袭来，形容遭遇的不幸接连不断。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·无名氏·《冯玉兰》第四折"
   },
   {
     "word": "天长地久",
     "pinyin": "tiān cháng dì jiǔ",
     "meaning": "像天地一样长久；指时间永远、爱情永恒。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《老子》第七章"
   },
   {
     "word": "同舟共济",
     "pinyin": "tóng zhōu gòng jì",
     "meaning": "同坐一条船过河，比喻团结互助共渡难关。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《孙子·九地》"
   },
   {
     "word": "吞吞吐吐",
     "pinyin": "tūn tūn tǔ tǔ",
     "meaning": "想说又不敢直说的样子，形容说话不干脆。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "清·文康·《儿女英雄传》第五回"
   },
   {
     "word": "万里无云",
     "pinyin": "wàn lǐ wú yún",
     "meaning": "天空晴朗，一丝云也没有；形容天气极好。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "万无一失",
     "pinyin": "wàn wú yī shī",
     "meaning": "一万件事没有一件出差错，形容办事十分可靠有把握。",
     "level": 2,
-    "category": "数量"
+    "category": "数量",
+    "source": "《史记·淮阴侯列传》"
   },
   {
     "word": "忘恩负义",
     "pinyin": "wàng ēn fù yì",
     "meaning": "忘记别人的恩情，做出对不起别人的事。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《魏书·萧宝夤传》"
   },
   {
     "word": "温故知新",
     "pinyin": "wēn gù zhī xīn",
     "meaning": "复习旧知识，从中获得新的理解与体会。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《论语·为政》"
   },
   {
     "word": "稳扎稳打",
     "pinyin": "wěn zhā wěn dǎ",
     "meaning": "扎稳了才进击，一步一步稳妥地推进。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "毛泽东·《关于情况的通报》"
   },
   {
     "word": "物是人非",
     "pinyin": "wù shì rén fēi",
     "meaning": "景物依旧人事已变；感叹时光流逝、处境变迁。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·李清照·《武陵春》"
   },
   {
     "word": "相见恨晚",
     "pinyin": "xiāng jiàn hèn wǎn",
     "meaning": "初次见面就觉得遗憾相识太晚，形容十分投缘。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《史记·平津侯主父列传》"
   },
   {
     "word": "心惊肉跳",
     "pinyin": "xīn jīng ròu tiào",
     "meaning": "心跳肉颤都害怕，形容因惊恐或担忧而浑身不自在。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "元·无名氏·《争报恩》第三折"
   },
   {
     "word": "心有余悸",
     "pinyin": "xīn yǒu yú jì",
     "meaning": "事后心里仍有余悸，想起险情就害怕不安。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "孙犁·《奋勇地前进、战斗—在一次座谈会上的发言》"
   },
   {
     "word": "欣喜若狂",
     "pinyin": "xīn xǐ ruò kuáng",
     "meaning": "高兴得像发了狂，形容极度欢喜。",
     "level": 2,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·霁园主人·《夜谭随录·护军女》"
   },
   {
     "word": "虚心求教",
     "pinyin": "xū xīn qiú jiào",
     "meaning": "怀着空手的心态向别人请教，形容不满足而谦虚求知。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "旭日东升",
     "pinyin": "xù rì dōng shēng",
     "meaning": "太阳从东方升起；比喻新事物蓬勃发展、前途光明。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "《诗经·邶风·匏有苦叶》"
   },
   {
     "word": "学而不厌",
     "pinyin": "xué ér bù yàn",
     "meaning": "学习总不满足，形容求知欲望强烈、乐于向他人请教。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《论语·述而》"
   },
   {
     "word": "循序渐进",
     "pinyin": "xún xù jiàn jìn",
     "meaning": "按一定步骤逐渐深入，指学习做事按部就班。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "《论语·宪问》"
   },
   {
     "word": "烟雨蒙蒙",
     "pinyin": "yān yǔ méng méng",
     "meaning": "细雨迷蒙笼罩大地；形容雨中景色朦胧模糊。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "言行一致",
     "pinyin": "yán xíng yī zhì",
     "meaning": "说的和做的完全相符，指办事诚实可靠。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "郭沫若·《屈原》"
   },
   {
     "word": "一表人才",
     "pinyin": "yī biǎo rén cái",
     "meaning": "外表俊秀端正，气度不凡，形容相貌出众的人。",
     "level": 2,
-    "category": "数量"
+    "category": "数量",
+    "source": "元·关汉卿·《望江亭》第一折"
   },
   {
     "word": "一朝一夕",
     "pinyin": "yī zhāo yī xī",
     "meaning": "一个早晨一个傍晚；指极短的时间之内。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《周易·坤》"
   },
   {
     "word": "一面之缘",
     "pinyin": "yī miàn zhī yuán",
     "meaning": "指只见过一面、缘分很浅的交情。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "清·曹雪芹·《红楼梦》第一回"
   },
   {
     "word": "一目十行",
     "pinyin": "yī mù shí háng",
     "meaning": "一眼能看十行字，形容阅读速度极快、聪慧敏捷。",
     "level": 2,
-    "category": "数量"
+    "category": "数量",
+    "source": "《梁书·简文帝纪》"
   },
   {
     "word": "一诺千金",
     "pinyin": "yī nuò qiān jīn",
     "meaning": "许下的诺言价值千金，形容说话极讲信用。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《史记·季布栾布列传》"
   },
   {
     "word": "一望无际",
     "pinyin": "yī wàng wú jì",
     "meaning": "一眼望去看不到边；形容辽远广阔或视野开阔。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·吴承恩·《西游记》第六十四回"
   },
   {
     "word": "一言为定",
     "pinyin": "yī yán wéi dìng",
     "meaning": "说定了就再也不更改，形容双方说定某事就此定下不再变卦。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "元·纪君祥·《赵氏孤儿》第二折"
   },
   {
     "word": "一叶知秋",
     "pinyin": "yī yè zhī qiū",
     "meaning": "看见一片落叶就知道秋天到了；比喻由小见大。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "《淮南子·说山训》"
   },
   {
     "word": "以牙还牙",
     "pinyin": "yǐ yá huán yá",
     "meaning": "比喻用对方对待自己的方法反过来对付他。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《旧约全书·申命记》"
   },
   {
     "word": "饮水思源",
     "pinyin": "yǐn shuǐ sī yuán",
     "meaning": "喝水时想到水的源头，比喻不忘别人的恩惠。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "北周·庾信·《徵调曲》"
   },
   {
     "word": "莺歌燕舞",
     "pinyin": "yīng gē yàn wǔ",
     "meaning": "黄莺歌唱、燕子飞舞，形容春天鸟儿活跃、风光明丽宜人。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·苏轼·《锦被亭》"
   },
   {
     "word": "与人为善",
     "pinyin": "yǔ rén wéi shàn",
     "meaning": "跟人交往总抱着善意，愿意帮助、成就别人。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "《孟子·公孙丑上》"
   },
   {
     "word": "语无伦次",
     "pinyin": "yǔ wú lún cì",
     "meaning": "说话没有条理次序，颠三倒四不连贯。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "宋·胡仔·《苕溪渔隐丛话前集》卷七"
   },
   {
     "word": "语重心长",
     "pinyin": "yǔ zhòng xīn cháng",
     "meaning": "言辞恳切情意深长，形容真诚耐心地劝导。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "长年累月",
     "pinyin": "cháng nián lěi yuè",
     "meaning": "形容经历很多年月；指长期、长久的时间。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "巴金·《短简·给一个孩子》"
   },
   {
     "word": "枝繁叶茂",
     "pinyin": "zhī fán yè mào",
     "meaning": "枝条繁多、叶子茂密，形容树木生长旺盛、树冠繁密。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·孙柚·《琴心记》"
   },
   {
     "word": "孜孜不倦",
     "pinyin": "zī zī bù juàn",
     "meaning": "勤勉努力不知疲倦，形容学习或工作不知疲乏、乐在其中。",
     "level": 2,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《尚书·君陈》"
   },
   {
     "word": "尊师重道",
     "pinyin": "zūn shī zhòng dào",
     "meaning": "尊敬老师，重视道理和知识，形容虚心求教。",
     "level": 2,
-    "category": "品格"
+    "category": "品格",
+    "source": "《后汉书·孔僖传》"
   },
   {
     "word": "左右为难",
     "pinyin": "zuǒ yòu wéi nán",
     "meaning": "向左向右都难以办成，形容两边受制、处境十分尴尬为难。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·杨显之·《潇湘雨》第一折"
   },
   {
     "word": "坐立不安",
     "pinyin": "zuò lì bù ān",
     "meaning": "坐着站着都不安心，形容心神不定十分焦急。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "明·施耐庵·《水浒全传》第四十回"
   },
   {
     "word": "白驹过隙",
     "pinyin": "bái jū guò xì",
     "meaning": "白色的骏马从缝隙前奔过，比喻时间过得飞快，生命短暂如白驹过隙。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "《庄子·知北游》"
   },
   {
     "word": "悲从中来",
     "pinyin": "bēi cóng zhōng lái",
     "meaning": "悲伤从内心涌出，形容因事而感到十分伤心。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "三国·魏·曹操·《短歌行》"
   },
   {
     "word": "悲痛欲绝",
     "pinyin": "bēi tòng yù jué",
     "meaning": "悲伤到了极点，形容内心极度痛苦。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "出处待考"
   },
   {
     "word": "背道而驰",
     "pinyin": "bèi dào ér chí",
     "meaning": "朝相反方向走，形容彼此的主张或行动完全相反。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·柳宗元·《〈杨评事文集〉后序》"
   },
   {
     "word": "碧空如洗",
     "pinyin": "bì kōng rú xǐ",
     "meaning": "青蓝色的天空像水洗过一样干净透彻，形容天气格外晴朗。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·张元干·《水调歌头》"
   },
   {
     "word": "表里如一",
     "pinyin": "biǎo lǐ rú yī",
     "meaning": "外表和内心完全一致，形容真诚不做作。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "南朝·梁·刘勰·《文心雕龙·附会》"
   },
   {
     "word": "秉公执法",
     "pinyin": "bǐng gōng zhí fǎ",
     "meaning": "按照公布的法令条文公正地处理案件，形容依法行事不偏袒。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "拨云见日",
     "pinyin": "bō yún jiàn rì",
     "meaning": "拨开云雾见到太阳，比喻困境中出现光明。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《晋书·乐广传》"
   },
   {
     "word": "波光粼粼",
     "pinyin": "bō guāng lín lín",
     "meaning": "水波在阳光下闪动发光；形容水光闪动的景象。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "波涛汹涌",
     "pinyin": "bō tāo xiōng yǒng",
     "meaning": "水势腾涌翻腾、浪头又大又急，形容江海波涛壮阔凶猛。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "《三国志·吴书·孙策传》"
   },
   {
     "word": "不耻下问",
     "pinyin": "bù chǐ xià wèn",
     "meaning": "向学问、地位不如自己的人请教也不觉羞耻。",
     "level": 3,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《论语·公冶长》"
   },
   {
     "word": "才高八斗",
     "pinyin": "cái gāo bā dǒu",
     "meaning": "形容文才极高，多用于称赞学识出众的文人。",
     "level": 3,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《南史·谢灵运传》"
   },
   {
     "word": "仓皇失措",
     "pinyin": "cāng huáng shī cuò",
     "meaning": "匆忙慌张而不知所措，形容处境突变时惊惶失态、难以应对。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·洪迈·《夷坚志·铁塔神》"
   },
   {
     "word": "姹紫嫣红",
     "pinyin": "chà zǐ yān hóng",
     "meaning": "形容各种颜色的花朵争相开放、色彩绚丽多姿的春天景象。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·汤显祖·《牡丹亭·惊梦》"
   },
   {
     "word": "赤胆忠心",
     "pinyin": "chì dǎn zhōng xīn",
     "meaning": "形容极其忠诚的心意，赤诚为国为民。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "明·汤显祖·《还魂记·淮警》"
   },
   {
     "word": "冲锋陷阵",
     "pinyin": "chōng fēng xiàn zhèn",
     "meaning": "冲进敌阵奋勇作战，形容在战斗中勇敢地冲在最前面。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《北齐书·崔暹传》"
   },
   {
     "word": "崇山峻岭",
     "pinyin": "chóng shān jùn lǐng",
     "meaning": "高大陡峭的山岭；形容山势险峻艰难。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "晋·王羲之·《兰亭集序》"
   },
   {
     "word": "出口成章",
     "pinyin": "chū kǒu chéng zhāng",
     "meaning": "话一说出口就像文章一样，形容文思敏捷。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《诗经·小雅·都人士》"
   },
   {
     "word": "出神入化",
     "pinyin": "chū shén rù huà",
     "meaning": "超越神妙进入化境，形容技艺精妙至极。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "唇亡齿寒",
     "pinyin": "chún wáng chǐ hán",
     "meaning": "嘴唇没了牙齿就冷，比喻关系密切利害相关。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《左传·僖公五年》"
   },
   {
     "word": "点头之交",
     "pinyin": "diǎn tóu zhī jiāo",
     "meaning": "指见了面只点点头的浅薄交情。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "周而复·《上海的早晨》第一部"
   },
   {
     "word": "斗转星移",
     "pinyin": "dǒu zhuǎn xīng yí",
     "meaning": "北斗转向，星辰移位，指季节更替与时光流逝，夜色渐深。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "元·马致远·《陈抟高卧》第三折"
   },
   {
     "word": "咄咄逼人",
     "pinyin": "duō duō bī rén",
     "meaning": "气势汹汹使人难堪，形容盛气凌人。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "晋·卫铄·《与释某书》"
   },
   {
     "word": "恩断义绝",
     "pinyin": "ēn duàn yì jué",
     "meaning": "恩情断绝义气终结，形容关系彻底破裂不再往来。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·马致远·《任风子》第三折"
   },
   {
     "word": "恩将仇报",
     "pinyin": "ēn jiāng chóu bào",
     "meaning": "把恩人当仇人加以伤害，指忘恩负义。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·吴承恩·《西游记》第三十回"
   },
   {
     "word": "恩重如山",
     "pinyin": "ēn zhòng rú shān",
     "meaning": "形容恩情深厚比山还重，多指长辈对晚辈的恩德。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "宋·陆游·《删定官供职谢启》"
   },
   {
     "word": "飞檐走壁",
     "pinyin": "fēi yán zǒu bì",
     "meaning": "跳过屋檐沿着墙壁行走，形容身法极为敏捷。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·刘唐卿·《降桑椹蔡顺奉母》第一折"
   },
   {
     "word": "风驰电掣",
     "pinyin": "fēng chí diàn chè",
     "meaning": "像疾风和闪电一样快，形容奔跑或行动的速度极快。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《六韬·龙韬·王翼》"
   },
   {
     "word": "峰回路转",
     "pinyin": "fēng huí lù zhuǎn",
     "meaning": "山势回环道路转折，比喻事情出现转机。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·欧阳修·《欧阳文忠公集·三九·醉翁亭记》"
   },
   {
     "word": "逢凶化吉",
     "pinyin": "féng xiōng huà jí",
     "meaning": "遇到凶险却能转化为吉利，指善于化解危难。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "明·施耐庵·《水浒全传》第四十二回"
   },
   {
     "word": "赴汤蹈火",
     "pinyin": "fù tāng dǎo huǒ",
     "meaning": "敢跳进沸水敢踏烈火，形容奋不顾身、不畏艰险的精神。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《荀子·议兵》"
   },
   {
     "word": "肝胆相照",
     "pinyin": "gān dǎn xiāng zhào",
     "meaning": "以真心相见，彼此忠诚坦白，毫无隐瞒。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "《史记·淮阴侯列传》"
   },
   {
     "word": "刚正不阿",
     "pinyin": "gāng zhèng bù ē",
     "meaning": "刚强正直，不逢迎讨好，不偏私徇情。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "明·余继登·《典故纪闻》卷十四"
   },
   {
     "word": "汗流浃背",
     "pinyin": "hàn liú jiā bèi",
     "meaning": "汗水流湿了整个后背，形容非常炎热或工作非常辛劳。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《史记·陈丞相世家》"
   },
   {
     "word": "呼风唤雨",
     "pinyin": "hū fēng huàn yǔ",
     "meaning": "能呼来风唤来雨，形容能够支配自然局面。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "宋·孙觌·《罨溪行》"
   },
   {
     "word": "湖光山色",
     "pinyin": "hú guāng shān sè",
     "meaning": "湖水的波光与山峦的景色交相辉映，形容自然风景优美动人。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·吴自牧《梦粱录·五代人物》"
   },
   {
     "word": "化险为夷",
     "pinyin": "huà xiǎn wéi yí",
     "meaning": "把危险的处境转变为平安的境地。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "唐·韩云卿·《平蛮颂序》"
   },
   {
     "word": "挥汗如雨",
     "pinyin": "huī hàn rú yǔ",
     "meaning": "挥洒的汗水像雨点一样多，形容劳动或运动非常辛苦。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《战国策·齐策一》"
   },
   {
     "word": "岌岌可危",
     "pinyin": "jí jí kě wēi",
     "meaning": "形容局势十分危险，随时可能出现乱子。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《孟子·万章下》"
   },
   {
     "word": "坚贞不屈",
     "pinyin": "jiān zhēn bù qū",
     "meaning": "坚定贞洁，在压力和诱惑面前决不屈服。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "《荀子·法行》"
   },
   {
     "word": "尽忠职守",
     "pinyin": "jìn zhōng zhí shǒu",
     "meaning": "竭尽全力忠于自己的职分，形容责任心强、尽职尽责。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "进退失所",
     "pinyin": "jìn tuì shī suǒ",
     "meaning": "前进后退都没有容身之处，形容处境窘迫、无处安身。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "进退无门",
     "pinyin": "jìn tuì wú mén",
     "meaning": "前进无路、后退无门，形容处境十分困难、到处碰壁走投无路。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·朱熹·《答刘季章》"
   },
   {
     "word": "克己奉公",
     "pinyin": "kè jǐ fèng gōng",
     "meaning": "严格约束自己、一心为公，形容廉洁自律不谋私利。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "《后汉书·祭遵传》"
   },
   {
     "word": "恪尽职守",
     "pinyin": "kè jǐn zhí shǒu",
     "meaning": "谨慎而勤勉地做好自己的职责，从不马虎。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "劳燕分飞",
     "pinyin": "láo yàn fēn fēi",
     "meaning": "伯劳和燕子分飞，形容夫妻或亲友离别各奔东西。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《乐府诗集·东飞伯劳歌》"
   },
   {
     "word": "廉洁奉公",
     "pinyin": "lián jié fèng gōng",
     "meaning": "为官清廉，一心为公，不贪私利。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "良辰美景",
     "pinyin": "liáng chén měi jǐng",
     "meaning": "美好的时光和宜人的景色；常用于祝福与赞叹。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "南朝·宋·谢灵运·《拟魏太子邺中集诗序》"
   },
   {
     "word": "两袖清风",
     "pinyin": "liǎng xiù qīng fēng",
     "meaning": "两袖没有灰尘，比喻为官清廉，不贪钱财。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "元·陈基·《次韵吴江道中》"
   },
   {
     "word": "炉火纯青",
     "pinyin": "lú huǒ chún qīng",
     "meaning": "炉火烧得纯青，比喻技艺达到纯熟完美的境界。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "唐·孙思邈·《四言诗》"
   },
   {
     "word": "绿草如茵",
     "pinyin": "lǜ cǎo rú yīn",
     "meaning": "绿油油的草地像铺上的毯子，形容春天满地青草的秀美景色。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "落井下石",
     "pinyin": "luò jǐng xià shí",
     "meaning": "比喻乘人危难时加以打击陷害，是极坏的行为。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·韩愈·《柳子厚墓志铭》"
   },
   {
     "word": "妙语连珠",
     "pinyin": "miào yǔ lián zhū",
     "meaning": "巧妙风趣的话一句接一句，形容语言优美机智。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "陌路相逢",
     "pinyin": "mò lù xiāng féng",
     "meaning": "在陌生的路上偶然相遇，形容毫无关系的偶然碰面。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "囊萤映雪",
     "pinyin": "náng yíng yìng xuě",
     "meaning": "用口袋装萤火虫、借雪的反光读书，形容家境贫寒仍刻苦求学。",
     "level": 3,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "元·贾仲名·《萧淑兰》第一折"
   },
   {
     "word": "年深日久",
     "pinyin": "nián shēn rì jiǔ",
     "meaning": "年头深、时间久；指经历的时间非常长久。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "元·李行道·《灰阑记》第二折"
   },
   {
     "word": "蹑手蹑脚",
     "pinyin": "niè shǒu niè jiǎo",
     "meaning": "手脚轻放脚步很轻，形容行动小心谨慎、不愿被人察觉。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·曹雪芹·《红楼梦》第五十四回"
   },
   {
     "word": "怒不可遏",
     "pinyin": "nù bù kě è",
     "meaning": "愤怒到了极点，无法抑制住。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·李宝嘉·《官场现形记》第二十七回"
   },
   {
     "word": "排除万难",
     "pinyin": "pái chú wàn nán",
     "meaning": "扫除一切困难险阻，形容克服困难继续向前迈进。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "毛泽东·《关于重庆谈判》"
   },
   {
     "word": "披荆斩棘",
     "pinyin": "pī jīng zhǎn jí",
     "meaning": "拨开荆棘砍掉拦路的草木，比喻扫除重重障碍前进。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《后汉书·冯异传》"
   },
   {
     "word": "披星戴月",
     "pinyin": "pī xīng dài yuè",
     "meaning": "头顶星星身披月色，形容赶路或劳作昼夜不停，十分辛苦。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·无名氏·《冤家债主》"
   },
   {
     "word": "破釜沉舟",
     "pinyin": "pò fǔ chén zhōu",
     "meaning": "砸锅沉船不留退路，比喻下定决心不顾一切干到底。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《史记·项羽本纪》"
   },
   {
     "word": "气味相投",
     "pinyin": "qì wèi xiāng tóu",
     "meaning": "性格或情趣彼此相合，形容双方合得来有共同语言。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·冯惟敏·《天香引·送陈震南》"
   },
   {
     "word": "泣不成声",
     "pinyin": "qì bù chéng shēng",
     "meaning": "哭得连声音都发不出来，形容非常悲痛。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《吴越春秋·越王无余外传》"
   },
   {
     "word": "巧舌如簧",
     "pinyin": "qiǎo shé rú huáng",
     "meaning": "舌头灵巧像簧片，形容花言巧语能骗人。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《诗经·小雅·巧言》"
   },
   {
     "word": "亲如手足",
     "pinyin": "qīn rú shǒu zú",
     "meaning": "亲密得如同自己的手足，形容彼此情谊深厚非常亲近。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·关汉卿·《魔合罗》第四折"
   },
   {
     "word": "情同骨肉",
     "pinyin": "qíng tóng gǔ ròu",
     "meaning": "感情像亲骨肉一样深厚，比喻关系亲密如同一家人。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·罗贯中·《三国演义》第四十七回"
   },
   {
     "word": "情投意合",
     "pinyin": "qíng tóu yì hé",
     "meaning": "双方感情心意完全一致，形容彼此十分投合。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·吴承恩·《西游记》第二十七回"
   },
   {
     "word": "穷途末路",
     "pinyin": "qióng tú mò lù",
     "meaning": "路的尽头，比喻陷入无路可走的绝境。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《吴越春秋·王僚伎公子光传》"
   },
   {
     "word": "人言可畏",
     "pinyin": "rén yán kě wèi",
     "meaning": "众人的议论压力很大，指流言的力量不可轻视。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《诗经·郑风·将仲子》"
   },
   {
     "word": "荣辱与共",
     "pinyin": "róng rǔ yǔ gòng",
     "meaning": "光荣和耻辱都共同承担，形容双方同进退共荣辱。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "融会贯通",
     "pinyin": "róng huì guàn tōng",
     "meaning": "把各方面的知识和道理联系起来，得到全面透彻的理解。",
     "level": 3,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《朱子全书·学三》"
   },
   {
     "word": "闪烁其词",
     "pinyin": "shǎn shuò qí cí",
     "meaning": "说话吞吞吐吐避开要害，有意不肯直说。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "稍纵即逝",
     "pinyin": "shāo zòng jí shì",
     "meaning": "稍微一放松就消失了；形容机会稍纵即逝。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·苏轼《文与可画筼筜谷偃竹记》"
   },
   {
     "word": "时光荏苒",
     "pinyin": "shí guāng rěn rǎn",
     "meaning": "时光不知不觉地流逝，指日子过得很快，转眼间一年年就这么过去了。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "手不释卷",
     "pinyin": "shǒu bù shì juàn",
     "meaning": "书本不离手，形容勤奋好学、酷爱读书。",
     "level": 3,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《三国志·吴书·吕蒙传》"
   },
   {
     "word": "岁月如流",
     "pinyin": "suì yuè rú liú",
     "meaning": "岁月像流水一样奔涌而过，形容时间过得飞快，毫不停留。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "南朝·陈·徐陵·《与齐尚书仆射杨遵彦书》"
   },
   {
     "word": "忐忑难安",
     "pinyin": "tǎn tè nán ān",
     "meaning": "心里七上八下难以安定，形容因忧虑挂念而无法平静。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "出处待考"
   },
   {
     "word": "腾云驾雾",
     "pinyin": "téng yún jià wù",
     "meaning": "驾着云雾飞行，形容法术高明或飘忽不定。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·郑德辉·《老君堂》第二折"
   },
   {
     "word": "铁面无私",
     "pinyin": "tiě miàn wú sī",
     "meaning": "像铁铸的面孔一样不为私情所动，形容秉公断事不徇私。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "清·曹雪芹·《红楼梦》第四十五回"
   },
   {
     "word": "同床异梦",
     "pinyin": "tóng chuáng yì mèng",
     "meaning": "同睡一张床却做着不同的梦，形容表面亲密实则各怀心事。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "宋·陈亮·《与朱元晦秘书书》"
   },
   {
     "word": "痛心疾首",
     "pinyin": "tòng xīn jí shǒu",
     "meaning": "心痛得好像头部也要疼痛，形容对错误或坏事极其悲愤痛恨。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《左传·成公十三年》"
   },
   {
     "word": "危机四伏",
     "pinyin": "wēi jī sì fú",
     "meaning": "到处隐藏着危险的祸根，形容处境险恶、危机重重四伏。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "茅盾·《子夜》"
   },
   {
     "word": "危在旦夕",
     "pinyin": "wēi zài dàn xī",
     "meaning": "危险就在眼前，形容情势极其紧迫。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《三国志·吴书·太史慈传》"
   },
   {
     "word": "闻鸡起舞",
     "pinyin": "wén jī qǐ wǔ",
     "meaning": "听到鸡鸣就起来舞剑，形容志向远大而勤奋。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《晋书·祖逖传》"
   },
   {
     "word": "喜不自胜",
     "pinyin": "xǐ bù zì shèng",
     "meaning": "高兴得自己都控制不住，形容极度喜悦。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "险象环生",
     "pinyin": "xiǎn xiàng huán shēng",
     "meaning": "危险的征兆一个接一个出现，形容处境险恶、处处潜伏危机。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "相依为命",
     "pinyin": "xiāng yī wéi mìng",
     "meaning": "指彼此依靠着过日子，谁也离不开谁。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "晋·李密·《陈情表》"
   },
   {
     "word": "心灰意冷",
     "pinyin": "xīn huī yì lěng",
     "meaning": "心气全消，意志消沉，形容彻底失望。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "明·吴承恩·《西游记》第四十回"
   },
   {
     "word": "心心相印",
     "pinyin": "xīn xīn xiāng yìn",
     "meaning": "心意完全一致像心与心相印合，形容彼此了解极深。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《六祖大师法宝坛经》"
   },
   {
     "word": "惺惺相惜",
     "pinyin": "xīng xīng xiāng xī",
     "meaning": "性格志趣相同的人互相爱惜欣赏。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "兴味索然",
     "pinyin": "xìng wèi suǒ rán",
     "meaning": "失去了兴趣，形容兴致全无、觉得没意思。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·王韬·《瀛壖杂志》"
   },
   {
     "word": "休戚与共",
     "pinyin": "xiū qī yǔ gòng",
     "meaning": "忧喜祸福彼此共同承担，形容关系亲密同甘共苦。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《晋书·王导传》"
   },
   {
     "word": "虚怀若谷",
     "pinyin": "xū huái ruò gǔ",
     "meaning": "胸怀像山谷一样宽广空旷，形容十分谦虚。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "《老子》"
   },
   {
     "word": "悬崖峭壁",
     "pinyin": "xuán yá qiào bì",
     "meaning": "陡直的高崖与峭壁，形容山势极为险峻、令人望而生畏。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·施耐庵·《水浒全传》第八十六回"
   },
   {
     "word": "学富五车",
     "pinyin": "xué fù wǔ chē",
     "meaning": "读书极多、学问渊博，用五车书之多夸耀学识丰富。",
     "level": 3,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《庄子·天下》"
   },
   {
     "word": "烟波浩渺",
     "pinyin": "yān bō hào miǎo",
     "meaning": "水汽笼罩的江面辽阔无边；形容水面广阔辽远。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·崔致远·《将归海东巉山春望》"
   },
   {
     "word": "言简意赅",
     "pinyin": "yán jiǎn yì gāi",
     "meaning": "话不多而意思完备，形容说话简洁明了。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "一泻千里",
     "pinyin": "yī xiè qiān lǐ",
     "meaning": "水流从高处急速冲下，一泻千里，形容江河流势陡急浩荡。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·李白·《赠从弟宣州长史昭》"
   },
   {
     "word": "一语道破",
     "pinyin": "yī yǔ dào pò",
     "meaning": "一句话就把关键问题说中，形容说话简练有力。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "清·戏确·《与张考夫书》"
   },
   {
     "word": "一语双关",
     "pinyin": "yī yǔ shuāng guān",
     "meaning": "一句话同时关涉两方面的意思，言语含蓄巧妙。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "浩然·《艳阳天》第86章"
   },
   {
     "word": "义愤填膺",
     "pinyin": "yì fèn tián yīng",
     "meaning": "正义的愤怒充满胸膛，形容为正义而愤慨激动。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "清·曾朴·《孽海花》第二十五回"
   },
   {
     "word": "意气相投",
     "pinyin": "yì qì xiāng tóu",
     "meaning": "彼此志趣和性格相合，形容双方意趣相投情投意合。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·宫天挺《范张鸡黍》"
   },
   {
     "word": "涌泉相报",
     "pinyin": "yǒng quán xiāng bào",
     "meaning": "指用加倍的付出来报答别人的深厚恩惠。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "忧国忧民",
     "pinyin": "yōu guó yōu mín",
     "meaning": "忧虑国家命运和百姓疾苦，形容高度的责任感。",
     "level": 3,
-    "category": "品格"
+    "category": "品格",
+    "source": "《战国策·齐策》"
   },
   {
     "word": "月明星稀",
     "pinyin": "yuè míng xīng xī",
     "meaning": "月亮明亮、星辰稀疏，形容秋夜晴朗静谧的夜空景象。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "三国·魏·曹操·《短歌行》"
   },
   {
     "word": "云淡风轻",
     "pinyin": "yún dàn fēng qīng",
     "meaning": "浮云稀薄、微风轻柔，形容天气晴好、轻闲自在的美好时光。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·程颢《春日偶成》"
   },
   {
     "word": "凿壁偷光",
     "pinyin": "záo bì tōu guāng",
     "meaning": "凿穿墙壁借邻家灯光读书，形容家境贫寒仍刻苦用功。",
     "level": 3,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《西京杂记》卷二"
   },
   {
     "word": "张皇失措",
     "pinyin": "zhāng huáng shī cuò",
     "meaning": "仓皇慌张而举止失去常态，形容遇事惊惶得不知怎么办才好。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "清·采蘅子·《虫鸣漫录》"
   },
   {
     "word": "众矢之的",
     "pinyin": "zhòng shǐ zhī dì",
     "meaning": "成为众人攻击的目标，形容遭人指责。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《鲁迅书信集·致许寿裳》"
   },
   {
     "word": "众说纷纭",
     "pinyin": "zhòng shuō fēn yún",
     "meaning": "各人说法杂乱不一致，形容议论很多。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "清·蒲松龄·《聊斋志异·阿纤》"
   },
   {
     "word": "众望所归",
     "pinyin": "zhòng wàng suǒ guī",
     "meaning": "得到大家的一致信赖和拥护。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《晋书·列传三十传论》"
   },
   {
     "word": "转危为安",
     "pinyin": "zhuǎn wēi wéi ān",
     "meaning": "把危险的局面转变为平安的局面。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《晋书·谢安传》"
   },
   {
     "word": "惴惴不安",
     "pinyin": "zhuì zhuì bù ān",
     "meaning": "心里七上八下，形容因害怕或紧张而不安。",
     "level": 3,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《诗经·秦风·黄鸟》"
   },
   {
     "word": "走投无路",
     "pinyin": "zǒu tóu wú lù",
     "meaning": "无处可投，比喻陷入绝境，没有任何出路。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·杨显之·《潇湘雨》第三折"
   },
   {
     "word": "不徇私情",
     "pinyin": "bù xùn sī qíng",
     "meaning": "办事不徇私情，不照顾关系和人情，形容坚持原则公正无私。",
     "level": 4,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "布衣之交",
     "pinyin": "bù yī zhī jiāo",
     "meaning": "平民百姓之间结成的朋友，形容关系平等而真诚的友谊。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《战国策·齐策三》"
   },
   {
     "word": "层峦叠嶂",
     "pinyin": "céng luán dié zhàng",
     "meaning": "层层叠叠的山峦屏障般排列，形容群山连绵、峰峦雄伟峻峭。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·陆九渊·《与王谦仲书》"
   },
   {
     "word": "朝不保暮",
     "pinyin": "zhāo bù bǎo mù",
     "meaning": "早晨顾不上晚上；形容生活困苦、毫无保障。",
     "level": 4,
-    "category": "时间"
+    "category": "时间",
+    "source": "晋·袁宏·《后汉纪·质帝纪》"
   },
   {
     "word": "愁肠百结",
     "pinyin": "chóu cháng bǎi jié",
     "meaning": "忧愁好像结成许多结，形容心中郁结着难以排解的愁绪。",
     "level": 4,
-    "category": "情绪"
+    "category": "情绪",
+    "source": "《敦煌变文集·王昭君变文》"
   },
   {
     "word": "大厦将倾",
     "pinyin": "dà shà jiāng qīng",
     "meaning": "高大的房屋眼看就要倒塌，比喻局势即将崩溃、危在旦夕。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《文中子·事君》"
   },
   {
     "word": "弹尽援绝",
     "pinyin": "dàn jìn yuán jué",
     "meaning": "弹药用尽、援兵断绝，形容处境非常困难、孤立无援。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·杨万里·《钤辖赵公墓志铭》"
   },
   {
     "word": "登峰造极",
     "pinyin": "dēng fēng zào jí",
     "meaning": "登上最高峰造极境，比喻技艺学问达到最高水平。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "南朝·宋·刘义庆·《世说新语·文学》"
   },
   {
     "word": "短兵相接",
     "pinyin": "duǎn bīng xiāng jiē",
     "meaning": "用短兵器贴身近战，形容双方发生面对面的激烈冲突。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "战国·楚·屈原·《九歌·国殇》"
   },
   {
     "word": "翻手为云",
     "pinyin": "fān shǒu wéi yún",
     "meaning": "翻手之间能使天起云，比喻能左右自然。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "唐·杜甫《贫交行》"
   },
   {
     "word": "分道扬镳",
     "pinyin": "fēn dào yáng biāo",
     "meaning": "各走各的路各奔前程，形容目标不同而各自分道而行。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《魏书·河间公齐传》"
   },
   {
     "word": "否极泰来",
     "pinyin": "pǐ jí tài lái",
     "meaning": "坏的境况到了尽头，好的境况就会到来。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《周易·否》"
   },
   {
     "word": "讳莫如深",
     "pinyin": "huì mò rú shēn",
     "meaning": "把事情隐瞒得很紧，一点消息也不透露。",
     "level": 4,
-    "category": "言语"
+    "category": "言语",
+    "source": "《谷梁传·庄公三十二年》"
   },
   {
     "word": "祸福与共",
     "pinyin": "huò fú yǔ gòng",
     "meaning": "灾祸和福分都一起承受，形容命运相连、同甘共苦。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "貌合神离",
     "pinyin": "mào hé shén lí",
     "meaning": "表面看起来和好内心却已分离，形容关系只是假象。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《素书·遵义》"
   },
   {
     "word": "莫逆之交",
     "pinyin": "mò nì zhī jiāo",
     "meaning": "指志趣相投、感情深厚、彼此信任至好的朋友。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《庄子·大宗师》"
   },
   {
     "word": "骑虎难下",
     "pinyin": "qí hǔ nán xià",
     "meaning": "骑在老虎背上难以下来，形容事情进行到中途难以抽身的处境。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《晋书·温峤传》"
   },
   {
     "word": "千峰万壑",
     "pinyin": "qiān fēng wàn hè",
     "meaning": "形容山峰众多、沟壑纵横，呈现群山连绵、形势壮阔的景象。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "谦恭谨慎",
     "pinyin": "qiān gōng jǐn shèn",
     "meaning": "态度谦逊有礼，做事小心谨慎。",
     "level": 4,
-    "category": "品格"
+    "category": "品格",
+    "source": "出处待考"
   },
   {
     "word": "日暮途穷",
     "pinyin": "rì mù tú qióng",
     "meaning": "天色已晚、路也走到尽头，形容处境十分艰难、穷困到极点。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《史记·伍子胥列传》"
   },
   {
     "word": "三缄其口",
     "pinyin": "sān jiān qí kǒu",
     "meaning": "紧紧闭住嘴不说话，形容保持沉默不开口。",
     "level": 4,
-    "category": "言语"
+    "category": "言语",
+    "source": "汉·刘向·《说苑·敬慎》"
   },
   {
     "word": "时移世易",
     "pinyin": "shí yí shì yì",
     "meaning": "时代推移，世间情形也随之改变，指社会人事发生了变迁。",
     "level": 4,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "夙兴夜寐",
     "pinyin": "sù xīng yè mèi",
     "meaning": "天不亮就起床、深夜才睡觉，形容勤奋工作毫不懈怠。",
     "level": 4,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《诗经·魏风·氓》"
   },
   {
     "word": "天朗气清",
     "pinyin": "tiān lǎng qì qīng",
     "meaning": "天空明朗、空气清新，形容秋日高爽的宜人天气与开阔景象。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "晋·王羲之·《兰亭集序》"
   },
   {
     "word": "同类相残",
     "pinyin": "tóng lèi xiāng cán",
     "meaning": "同类的人互相残害，形容同类之间自相争斗和伤害。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "同声相应",
     "pinyin": "tóng shēng xiāng yìng",
     "meaning": "同样的声音互相应和，形容志趣相同的人彼此呼应。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《周易·乾》"
   },
   {
     "word": "危如累卵",
     "pinyin": "wēi rú lěi luǎn",
     "meaning": "危险得像堆叠的鸡蛋随时会碎，形容形势极其危险、危在旦夕。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《韩非子·十过》"
   },
   {
     "word": "韦编三绝",
     "pinyin": "wéi biān sān jué",
     "meaning": "串联竹简的皮绳多次磨断，形容读书勤奋刻苦、卷帙厚重。",
     "level": 4,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "《史记·孔子世家》"
   },
   {
     "word": "刎颈之交",
     "pinyin": "wěn jǐng zhī jiāo",
     "meaning": "指可以同生共死、不怕砍头也不分离的生死之交。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《史记·廉颇蔺相如列传》"
   },
   {
     "word": "卧薪尝胆",
     "pinyin": "wò xīn cháng dǎn",
     "meaning": "睡柴草尝苦胆，形容刻苦自励，发愤图强以雪耻。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "《史记·越王勾践世家》"
   },
   {
     "word": "物换星移",
     "pinyin": "wù huàn xīng yí",
     "meaning": "景物改变星辰移动；形容岁月流逝、世事变迁。",
     "level": 4,
-    "category": "时间"
+    "category": "时间",
+    "source": "唐·王勃·《秋日登洪府滕王阁饯别序》"
   },
   {
     "word": "悬梁刺股",
     "pinyin": "xuán liáng cì gǔ",
     "meaning": "系发于梁、锥刺大腿，形容读书极其刻苦。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "西汉·刘向·《战国策·秦策一》"
   },
   {
     "word": "银装素裹",
     "pinyin": "yín zhuāng sù guǒ",
     "meaning": "树木房屋被白雪覆盖如同白银包裹，形容雪后天地一片洁白。",
     "level": 4,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "映雪读书",
     "pinyin": "yìng xuě dú shū",
     "meaning": "借雪地反光映照读书，形容贫寒子弟发愤苦读。",
     "level": 4,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "南朝梁·任昉《为萧扬州荐士表》"
   },
   {
     "word": "众口铄金",
     "pinyin": "zhòng kǒu shuò jīn",
     "meaning": "众人的议论能把金属熔化，比喻人嘴杂足以毁人。",
     "level": 4,
-    "category": "言语"
+    "category": "言语",
+    "source": "《国语·周语下》"
   },
   {
     "word": "昼耕夜读",
     "pinyin": "zhòu gēng yè dú",
     "meaning": "白天耕田，夜里读书，形容抓紧时间勤奋学习。",
     "level": 4,
-    "category": "勤学"
+    "category": "勤学",
+    "source": "出处待考"
   },
   {
     "word": "总角之交",
     "pinyin": "zǒng jiǎo zhī jiāo",
     "meaning": "童年时结下的朋友，形容从小一起长大的深厚情谊。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《礼记·内则》"
   },
   {
     "word": "纵横驰骋",
     "pinyin": "zòng héng chí chěng",
     "meaning": "在天地间任意驰骋，形容奔驰奔跑，也比喻施展才能。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "宋·谢尧仁·《张于湖先生集序》"
   }
 ]

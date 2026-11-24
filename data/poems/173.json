@@ -3,7 +3,7 @@
   "title": "宿王昌龄隐居",
   "author": "常建",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "清溪深不测，隐处唯孤云。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「松际露微月」，托物寄意，物我交融，寄托遥深。句式参差，节奏跌宕而富有张力；静景与动景交织，生气流转其间。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "横吹曲辞 关山月",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "明月出天山，苍茫云海间。",
@@ -99,6 +99,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「由来征战地」，以简劲之笔写征戍生活，气骨凛然。由实入虚，使情思显得深长；前后境况相互对照，反差强烈。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

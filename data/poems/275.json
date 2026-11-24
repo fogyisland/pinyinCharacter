@@ -3,7 +3,7 @@
   "title": "送僧归日本",
   "author": "钱起",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "上国随缘住，来途若梦行。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「水月通禅观」，写月夜清辉，幽寂之中透出孤怀。借景抒情，景中含情，意在言外；对仗工整，两句相映成趣，尽显声律之美。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

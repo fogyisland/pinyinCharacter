@@ -3,7 +3,7 @@
   "title": "梦游天姥吟留别",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "海客谈瀛洲，烟涛微茫信难求。",
@@ -405,6 +405,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「势拔五岳掩赤城」，写登高望远之所见，境界顿开，气象万千。音节随情绪起伏，摇曳生姿；动静相生，画面顿然鲜活起来。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

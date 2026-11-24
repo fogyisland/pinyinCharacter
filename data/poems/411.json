@@ -3,7 +3,7 @@
   "title": "江神子・江城子",
   "author": "苏轼",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "十年生死两茫茫。",
@@ -125,6 +125,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「夜来幽梦忽还乡」，以寻常语道尽心中怅惘，真切动人。句式参差，节奏跌宕而富有张力；结尾点明主旨，与开篇遥相呼应。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

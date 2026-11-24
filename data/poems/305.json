@@ -3,7 +3,7 @@
   "title": "行路难三首 三",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "有耳莫洗颍川水，有口莫食首阳蕨。",
@@ -164,6 +164,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「且乐生前一杯酒」，写宴饮之欢，豪气跃然纸上。句式参差，节奏跌宕而富有张力；巧用反衬手法，突出了全篇主旨。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

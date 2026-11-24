@@ -3,7 +3,7 @@
   "title": "留别王侍御维",
   "author": "孟浩然",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "寂寂竟何待，朝朝空自归。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「朝朝空自归」，写羁旅之思，婉转深沉，令人低回。静景与动景交织，生气流转其间；炼字精准，一字落下而全句生辉。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

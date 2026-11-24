@@ -3,7 +3,7 @@
   "title": "青玉案",
   "author": "无名氏",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "年年社日停针线。",
@@ -113,6 +113,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「落日解鞍芳草岸」，撷取春意入句，字里行间透出欢欣。由实入虚，使情思显得深长；以简笔勾勒，形象生动，如在目前。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

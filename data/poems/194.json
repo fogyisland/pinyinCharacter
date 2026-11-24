@@ -3,7 +3,7 @@
   "title": "赠内人",
   "author": "张祜",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "禁门宫树月痕过，媚眼唯看宿燕窠。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「斜拔玉钗灯影畔」，写月夜清辉，幽寂之中透出孤怀。长短句交错，读来抑扬顿挫；动静相生，画面顿然鲜活起来。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

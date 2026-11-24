@@ -4,349 +4,335 @@
     "pinyin": "jìn tuì liǎng nán",
     "meaning": "前进和后退都困难，形容处境尴尬难以抉择。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "唐·李靖《卫公兵法》"
   },
   {
     "word": "走投无路",
     "pinyin": "zǒu tóu wú lù",
     "meaning": "无处可投，比喻陷入绝境，没有任何出路。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·杨显之·《潇湘雨》第三折"
   },
   {
     "word": "绝处逢生",
     "pinyin": "jué chù féng shēng",
     "meaning": "在绝望的困境中遇到转机，得到生机。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·关汉卿·《钱大尹知勘绯衣梦·正名》"
   },
   {
     "word": "化险为夷",
     "pinyin": "huà xiǎn wéi yí",
     "meaning": "把危险的处境转变为平安的境地。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "唐·韩云卿·《平蛮颂序》"
   },
   {
     "word": "峰回路转",
     "pinyin": "fēng huí lù zhuǎn",
     "meaning": "山势回环道路转折，比喻事情出现转机。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·欧阳修·《欧阳文忠公集·三九·醉翁亭记》"
   },
   {
     "word": "柳暗花明",
     "pinyin": "liǔ àn huā míng",
     "meaning": "柳树浓密花色明艳，比喻困境中出现转机。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·陆游《游山西村》"
   },
   {
     "word": "逢凶化吉",
     "pinyin": "féng xiōng huà jí",
     "meaning": "遇到凶险却能转化为吉利，指善于化解危难。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "明·施耐庵·《水浒全传》第四十二回"
   },
   {
     "word": "死里逃生",
     "pinyin": "sǐ lǐ táo shēng",
     "meaning": "从极险的境地中保全性命，形容处境万分危险。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "否极泰来",
     "pinyin": "pǐ jí tài lái",
     "meaning": "坏的境况到了尽头，好的境况就会到来。",
     "level": 4,
-    "category": "处境"
+    "category": "处境",
+    "source": "《周易·否》"
   },
   {
     "word": "时来运转",
     "pinyin": "shí lái yùn zhuǎn",
     "meaning": "时运好转，处境开始变得顺利起来。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "《白雪遗音·马头调·麻衣神相》"
   },
   {
     "word": "苦尽甘来",
     "pinyin": "kǔ jìn gān lái",
     "meaning": "困难的日子过去，美好的日子终于到来。",
     "level": 2,
-    "category": "处境"
-  },
-  {
-    "word": "雨过天晴",
-    "pinyin": "yǔ guò tiān qíng",
-    "meaning": "雨停后天空放晴，比喻困难过去前景转好。",
-    "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "拨云见日",
     "pinyin": "bō yún jiàn rì",
     "meaning": "拨开云雾见到太阳，比喻困境中出现光明。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《晋书·乐广传》"
   },
   {
     "word": "转危为安",
     "pinyin": "zhuǎn wēi wéi ān",
     "meaning": "把危险的局面转变为平安的局面。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《晋书·谢安传》"
   },
   {
     "word": "平安无事",
     "pinyin": "píng ān wú shì",
     "meaning": "平平安安没有出事，形容一切安好顺利。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "元·无名氏·《昊天塔孟良盗骨》第二折"
   },
   {
     "word": "一帆风顺",
     "pinyin": "yī fān fēng shùn",
     "meaning": "船顺风行驶，比喻事情顺遂毫无阻碍。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "唐·孟郊·《送崔爽之湖南》"
   },
   {
     "word": "万事如意",
     "pinyin": "wàn shì rú yì",
     "meaning": "所有事情都符合心意，形容称心满意。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "心想事成",
     "pinyin": "xīn xiǎng shì chéng",
     "meaning": "心里怎样想事情就能成功，多用来祝愿。",
     "level": 1,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "如愿以偿",
     "pinyin": "rú yuàn yǐ cháng",
     "meaning": "依照自己的心愿实现，形容愿望终于实现。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "清·吴趼人·《二十年目睹之怪现状》第一百一回"
   },
   {
     "word": "穷途末路",
     "pinyin": "qióng tú mò lù",
     "meaning": "路的尽头，比喻陷入无路可走的绝境。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《吴越春秋·王僚伎公子光传》"
   },
   {
     "word": "水泄不通",
     "pinyin": "shuǐ xiè bù tōng",
     "meaning": "连水都流不出去，形容围得严密或非常拥挤。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "宋·释道原·《景德传灯录》"
   },
   {
     "word": "密不透风",
     "pinyin": "mì bù tòu fēng",
     "meaning": "包围得非常严密，连一丝风也透不进去。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "出处待考"
   },
   {
     "word": "岌岌可危",
     "pinyin": "jí jí kě wēi",
     "meaning": "形容局势十分危险，随时可能出现乱子。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《孟子·万章下》"
   },
   {
     "word": "危在旦夕",
     "pinyin": "wēi zài dàn xī",
     "meaning": "危险就在眼前，形容情势极其紧迫。",
     "level": 3,
-    "category": "处境"
+    "category": "处境",
+    "source": "《三国志·吴书·太史慈传》"
   },
   {
     "word": "坐立不安",
     "pinyin": "zuò lì bù ān",
     "meaning": "坐着站着都不安心，形容心神不定十分焦急。",
     "level": 2,
-    "category": "处境"
+    "category": "处境",
+    "source": "明·施耐庵·《水浒全传》第四十回"
   },
   {
     "word": "大摇大摆",
     "pinyin": "dà yáo dà bǎi",
     "meaning": "走路摇摇摆摆，形容神气十足旁若无人。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·吴敬梓·《儒林外史》第五回"
   },
   {
     "word": "昂首阔步",
     "pinyin": "áng shǒu kuò bù",
     "meaning": "抬起头迈开大步，形容气势豪迈意气昂扬。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "老舍·《鼓书艺人》"
   },
   {
     "word": "健步如飞",
     "pinyin": "jiàn bù rú fēi",
     "meaning": "走得又快又稳，像飞一样敏捷轻快。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·蒲松龄·《聊斋志异·凤阳士人》"
   },
   {
     "word": "飞檐走壁",
     "pinyin": "fēi yán zǒu bì",
     "meaning": "跳过屋檐沿着墙壁行走，形容身法极为敏捷。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·刘唐卿·《降桑椹蔡顺奉母》第一折"
   },
   {
     "word": "腾云驾雾",
     "pinyin": "téng yún jià wù",
     "meaning": "驾着云雾飞行，形容法术高明或飘忽不定。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·郑德辉·《老君堂》第二折"
   },
   {
     "word": "呼风唤雨",
     "pinyin": "hū fēng huàn yǔ",
     "meaning": "能呼来风唤来雨，形容能够支配自然局面。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "宋·孙觌·《罨溪行》"
   },
   {
     "word": "翻手为云",
     "pinyin": "fān shǒu wéi yún",
     "meaning": "翻手之间能使天起云，比喻能左右自然。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "唐·杜甫《贫交行》"
   },
   {
     "word": "点石成金",
     "pinyin": "diǎn shí chéng jīn",
     "meaning": "一点石头变成金子，比喻手段高超化腐朽为神奇。",
     "level": 2,
-    "category": "动作"
-  },
-  {
-    "word": "画龙点睛",
-    "pinyin": "huà lóng diǎn jīng",
-    "meaning": "点上眼睛使龙活现，比喻关键一笔使全篇生色。",
-    "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "汉·刘向·《列仙传》"
   },
   {
     "word": "妙手回春",
     "pinyin": "miào shǒu huí chūn",
     "meaning": "灵巧的手能起死回生，形容医术十分高明。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·李宝嘉·《官场现形记》第二十回"
   },
   {
     "word": "炉火纯青",
     "pinyin": "lú huǒ chún qīng",
     "meaning": "炉火烧得纯青，比喻技艺达到纯熟完美的境界。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "唐·孙思邈·《四言诗》"
   },
   {
     "word": "出神入化",
     "pinyin": "chū shén rù huà",
     "meaning": "超越神妙进入化境，形容技艺精妙至极。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "登峰造极",
     "pinyin": "dēng fēng zào jí",
     "meaning": "登上最高峰造极境，比喻技艺学问达到最高水平。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "南朝·宋·刘义庆·《世说新语·文学》"
   },
   {
     "word": "水滴石穿",
     "pinyin": "shuǐ dī shí chuān",
     "meaning": "水滴不停能穿透石头，比喻坚持不懈终能成功。",
     "level": 2,
-    "category": "动作"
-  },
-  {
-    "word": "锲而不舍",
-    "pinyin": "qiè ér bù shě",
-    "meaning": "不停地雕刻，比喻有恒心有毅力坚持到底。",
-    "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "《汉书·枚乘传》"
   },
   {
     "word": "持之以恒",
     "pinyin": "chí zhī yǐ héng",
     "meaning": "长久坚持下去，指做事有恒心能够到底。",
     "level": 2,
-    "category": "动作"
-  },
-  {
-    "word": "废寝忘食",
-    "pinyin": "fèi qǐn wàng shí",
-    "meaning": "顾不上睡觉忘记吃饭，形容专心致志非常努力。",
-    "level": 2,
-    "category": "动作"
-  },
-  {
-    "word": "争分夺秒",
-    "pinyin": "zhēng fēn duó miǎo",
-    "meaning": "一分一秒都要争取，形容抓紧时间毫不松懈。",
-    "level": 1,
-    "category": "动作"
-  },
-  {
-    "word": "分秒必争",
-    "pinyin": "fēn miǎo bì zhēng",
-    "meaning": "连一分一秒都要争取，形容抓紧一切时间。",
-    "level": 2,
-    "category": "动作"
-  },
-  {
-    "word": "夜以继日",
-    "pinyin": "yè yǐ jì rì",
-    "meaning": "夜里接着白天，不停地连续做事。",
-    "level": 2,
-    "category": "动作"
-  },
-  {
-    "word": "手不释卷",
-    "pinyin": "shǒu bù shì juàn",
-    "meaning": "书总拿在手里不放下，形容勤奋好学。",
-    "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·曾国藩·《家训喻纪泽》"
   },
   {
     "word": "悬梁刺股",
     "pinyin": "xuán liáng cì gǔ",
     "meaning": "系发于梁、锥刺大腿，形容读书极其刻苦。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "西汉·刘向·《战国策·秦策一》"
   },
   {
     "word": "闻鸡起舞",
     "pinyin": "wén jī qǐ wǔ",
     "meaning": "听到鸡鸣就起来舞剑，形容志向远大而勤奋。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《晋书·祖逖传》"
   },
   {
     "word": "循序渐进",
     "pinyin": "xún xù jiàn jìn",
     "meaning": "按一定步骤逐渐深入，指学习做事按部就班。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "《论语·宪问》"
   },
   {
     "word": "稳扎稳打",
     "pinyin": "wěn zhā wěn dǎ",
     "meaning": "扎稳了才进击，一步一步稳妥地推进。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "毛泽东·《关于情况的通报》"
   }
 ]

@@ -3,7 +3,7 @@
   "title": "杂曲歌辞 独不见",
   "author": "沈佺期",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "卢家小妇郁金堂，海燕双栖玳瑁梁。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「九月寒砧催下叶」，写月夜清辉，幽寂之中透出孤怀。以动衬静，境界愈显幽深；音节随情绪起伏，摇曳生姿。一气呵成，意境浑成。余音袅袅，不绝如缕。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -4,349 +4,95 @@
     "pinyin": "shí guāng rěn rǎn",
     "meaning": "时光不知不觉地流逝，指日子过得很快，转眼间一年年就这么过去了。",
     "level": 3,
-    "category": "时间"
-  },
-  {
-    "word": "光阴似箭",
-    "pinyin": "guāng yīn sì jiàn",
-    "meaning": "时光像射出的箭一样飞快，形容时间流逝极快，一晃多年过去。",
-    "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "日月如梭",
     "pinyin": "rì yuè rú suō",
     "meaning": "太阳和月亮像织布的梭子来回穿行，形容光阴飞快地流逝。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·赵德麟·《侯鲭录》卷二"
   },
   {
     "word": "白驹过隙",
     "pinyin": "bái jū guò xì",
     "meaning": "白色的骏马从缝隙前奔过，比喻时间过得飞快，生命短暂如白驹过隙。",
     "level": 3,
-    "category": "时间"
-  },
-  {
-    "word": "弹指之间",
-    "pinyin": "tán zhǐ zhī jiān",
-    "meaning": "手指一弹的工夫，形容时间极其短暂，事情发生得非常迅速。",
-    "level": 2,
-    "category": "时间"
-  },
-  {
-    "word": "朝朝暮暮",
-    "pinyin": "zhāo zhāo mù mù",
-    "meaning": "从早到晚都在一起，形容时光漫长而绵密，也指日子过得平淡频繁。",
-    "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《庄子·知北游》"
   },
   {
     "word": "年年岁岁",
     "pinyin": "nián nián suì suì",
     "meaning": "一年又一年，指岁月不断流逝，日子长久而反复。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "岁岁年年",
     "pinyin": "suì suì nián nián",
     "meaning": "一年接着一年，形容年复一年，时光循环往复地过去。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "四季更迭",
     "pinyin": "sì jì gēng dié",
     "meaning": "春夏秋冬不断交替，泛指一年年时光流转，季节按时循环。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "春去秋来",
     "pinyin": "chūn qù qiū lái",
     "meaning": "春天过去秋天到来，形容季节更替，也暗指时光不断流逝。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "明·刘基·《大堤曲》"
   },
   {
     "word": "秋去冬来",
     "pinyin": "qiū qù dōng lái",
     "meaning": "秋季过去冬季来临，写四时循序更替与岁月的推移。",
     "level": 1,
-    "category": "时间"
-  },
-  {
-    "word": "冬去春来",
-    "pinyin": "dōng qù chūn lái",
-    "meaning": "冬天过去春天到来，比喻时间推移，也指新的阶段重新开始。",
-    "level": 1,
-    "category": "时间"
-  },
-  {
-    "word": "时过境迁",
-    "pinyin": "shí guò jìng qiān",
-    "meaning": "时间过去，情况也跟着改变，指原来的人事物都已发生变化。",
-    "level": 2,
-    "category": "时间"
-  },
-  {
-    "word": "沧海桑田",
-    "pinyin": "cāng hǎi sāng tián",
-    "meaning": "大海变成桑田农田，形容世事变化巨大，时间流逝后物是人非。",
-    "level": 3,
-    "category": "时间"
-  },
-  {
-    "word": "昙花一现",
-    "pinyin": "tán huā yī xiàn",
-    "meaning": "昙花只开放很短时间，比喻美好事物出现得短暂，转瞬即逝。",
-    "level": 2,
-    "category": "时间"
-  },
-  {
-    "word": "稍纵即逝",
-    "pinyin": "shāo zòng jí shì",
-    "meaning": "稍微一放松就消失了，形容机会、时光或美好事物极易错过。",
-    "level": 3,
-    "category": "时间"
-  },
-  {
-    "word": "一朝一夕",
-    "pinyin": "yī zhāo yī xī",
-    "meaning": "一个早晨和一个傍晚，指极短的时间，也指一旦忽然之间。",
-    "level": 2,
-    "category": "时间"
-  },
-  {
-    "word": "千秋万代",
-    "pinyin": "qiān qiū wàn dài",
-    "meaning": "千年万年，形容时间极其久远，指世世代代长久流传。",
-    "level": 2,
-    "category": "时间"
-  },
-  {
-    "word": "日久天长",
-    "pinyin": "rì jiǔ tiān cháng",
-    "meaning": "日子长了天也就长，指时间持久，事情经过漫长岁月仍不变。",
-    "level": 2,
-    "category": "时间"
-  },
-  {
-    "word": "天长地久",
-    "pinyin": "tiān cháng dì jiǔ",
-    "meaning": "像天地一样长久，形容爱情或情谊永远不变，坚固不移。",
-    "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "岁月如流",
     "pinyin": "suì yuè rú liú",
     "meaning": "岁月像流水一样奔涌而过，形容时间过得飞快，毫不停留。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "南朝·陈·徐陵·《与齐尚书仆射杨遵彦书》"
   },
   {
     "word": "斗转星移",
     "pinyin": "dǒu zhuǎn xīng yí",
     "meaning": "北斗转向，星辰移位，指季节更替与时光流逝，夜色渐深。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "元·马致远·《陈抟高卧》第三折"
   },
   {
     "word": "时移世易",
     "pinyin": "shí yí shì yì",
     "meaning": "时代推移，世间情形也随之改变，指社会人事发生了变迁。",
     "level": 4,
-    "category": "时间"
-  },
-  {
-    "word": "夜以继日",
-    "pinyin": "yè yǐ jì rì",
-    "meaning": "晚上接着白天，日夜不停，形容抓紧时间连续不停地工作。",
-    "level": 2,
-    "category": "时间"
-  },
-  {
-    "word": "争分夺秒",
-    "pinyin": "zhēng fēn duó miǎo",
-    "meaning": "一分一秒都要争取，形容抓紧时间，分秒必争地努力做事。",
-    "level": 1,
-    "category": "时间"
-  },
-  {
-    "word": "言行一致",
-    "pinyin": "yán xíng yī zhì",
-    "meaning": "说的和做的完全吻合，指为人诚实守信，说的与做的相符。",
-    "level": 1,
-    "category": "言语"
-  },
-  {
-    "word": "表里如一",
-    "pinyin": "biǎo lǐ rú yī",
-    "meaning": "外表和内心完全一致，形容人的言行真诚，没有虚假做作。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "口若悬河",
-    "pinyin": "kǒu ruò xuán hé",
-    "meaning": "说话像瀑布倾泻，滔滔不绝，形容能言善辩，讲起话来没完。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "滔滔不绝",
-    "pinyin": "tāo tāo bù jué",
-    "meaning": "像流水一样连续不断，形容话说起来没有停顿，也指言论连绵不绝。",
-    "level": 1,
-    "category": "言语"
-  },
-  {
-    "word": "能言善辩",
-    "pinyin": "néng yán shàn biàn",
-    "meaning": "善于讲话又长于辩论，形容口才很好，很会为自己辩解。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "巧舌如簧",
-    "pinyin": "qiǎo shé rú huáng",
-    "meaning": "舌头灵巧像簧片一样，形容花言巧语，能说会道却未必可信。",
-    "level": 3,
-    "category": "言语"
-  },
-  {
-    "word": "咄咄逼人",
-    "pinyin": "duō duō bī rén",
-    "meaning": "气势汹汹地逼人，形容言语凌厉盛气凌人，令人难以招架。",
-    "level": 3,
-    "category": "言语"
-  },
-  {
-    "word": "出口成章",
-    "pinyin": "chū kǒu chéng zhāng",
-    "meaning": "话一说出来就像文章一样有条理，形容文思敏捷，口才好。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "一语道破",
-    "pinyin": "yī yǔ dào pò",
-    "meaning": "一句话就说出了要害，形容说话直截了当，切中问题的关键。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "一语双关",
-    "pinyin": "yī yǔ shuāng guān",
-    "meaning": "一句话同时含有两层意思，语意含蓄有趣，耐人寻味。",
-    "level": 3,
-    "category": "言语"
-  },
-  {
-    "word": "言简意赅",
-    "pinyin": "yán jiǎn yì gāi",
-    "meaning": "话说得简练而意思完备，形容措辞精炼，一句顶得上许多。",
-    "level": 3,
-    "category": "言语"
-  },
-  {
-    "word": "妙语连珠",
-    "pinyin": "miào yǔ lián zhū",
-    "meaning": "巧妙风趣的话一句接一句，形容口才极好，语言生动有趣。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "语重心长",
-    "pinyin": "yǔ zhòng xīn cháng",
-    "meaning": "话语情意深长，发自肺腑，形容恳切耐心地劝导别人。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "语无伦次",
-    "pinyin": "yǔ wú lún cì",
-    "meaning": "说话颠三倒四没有条理，形容语序混乱，表达不清楚。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "闪烁其词",
-    "pinyin": "shǎn shuò qí cí",
-    "meaning": "说话时吞吞吐吐不肯直说，形容故意回避要害，回避真实意图。",
-    "level": 3,
-    "category": "言语"
-  },
-  {
-    "word": "吞吞吐吐",
-    "pinyin": "tūn tūn tǔ tǔ",
-    "meaning": "想说又不痛痛快快地说，形容说话支吾，有所隐瞒。",
-    "level": 1,
-    "category": "言语"
-  },
-  {
-    "word": "守口如瓶",
-    "pinyin": "shǒu kǒu rú píng",
-    "meaning": "守住嘴巴像封住瓶口，形容对事情严格保密，不泄露消息。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "讳莫如深",
-    "pinyin": "huì mò rú shēn",
-    "meaning": "把事情隐瞒得深深的，指守口如瓶，对消息一点也不透露。",
-    "level": 4,
-    "category": "言语"
-  },
-  {
-    "word": "三缄其口",
-    "pinyin": "sān jiān qí kǒu",
-    "meaning": "三遍都闭口不言，形容坚决不开口，把话严密地藏起来。",
-    "level": 4,
-    "category": "言语"
-  },
-  {
-    "word": "沉默寡言",
-    "pinyin": "chén mò guǎ yán",
-    "meaning": "不声不响少说话，形容人性格内向，平日话不多。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "众说纷纭",
-    "pinyin": "zhòng shuō fēn yún",
-    "meaning": "各种说法纷乱不一，形容对同一件事众人的意见各不相同。",
-    "level": 2,
-    "category": "言语"
-  },
-  {
-    "word": "众口铄金",
-    "pinyin": "zhòng kǒu shuò jīn",
-    "meaning": "众人的议论能把金属熔化，形容舆论力量强大，可以毁掉一个人。",
-    "level": 4,
-    "category": "言语"
-  },
-  {
-    "word": "人言可畏",
-    "pinyin": "rén yán kě wèi",
-    "meaning": "众人的议论令人害怕，形容流言蜚语的力量不可轻视。",
-    "level": 3,
-    "category": "言语"
-  },
-  {
-    "word": "众矢之的",
-    "pinyin": "zhòng shǐ zhī dì",
-    "meaning": "成为众人攻击的目标，形容被大家群起指责批评的处境。",
-    "level": 3,
-    "category": "言语"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "一言为定",
     "pinyin": "yī yán wéi dìng",
     "meaning": "说定了就再也不更改，形容双方说定某事就此定下不再变卦。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "元·纪君祥·《赵氏孤儿》第二折"
   }
 ]

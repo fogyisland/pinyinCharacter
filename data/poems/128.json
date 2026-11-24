@@ -3,7 +3,7 @@
   "title": "和张仆射塞下曲 二",
   "author": "卢纶",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "林暗草惊风，将军夜引弓。",
@@ -39,6 +39,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「将军夜引弓」，描摹塞外风物，慷慨之中隐含几许苍凉。虚实相映，拓展了想象的余裕；白描传神，不事雕琢而情态毕现。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

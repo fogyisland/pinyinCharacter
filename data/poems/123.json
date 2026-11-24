@@ -3,7 +3,7 @@
   "title": "蜀道难",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "噫吁戏！危乎高哉！蜀道之难难于上青天！蚕丛及鱼凫，开国何茫然。",
@@ -406,6 +406,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「侧身西望长咨嗟」，描绘山川形胜，景象阔大，令人神往。前后境况相互对照，反差强烈；长短句交错，读来抑扬顿挫。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "登鹳雀楼",
   "author": "王之涣",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "白日依山尽，黄河入海流。",
@@ -39,6 +39,7 @@
       "。"
     ]
   ],
-  "appreciation": null,
-  "source": "chinese-poetry/chinese-poetry@master"
+  "appreciation": "这首古风气韵连贯，格调清远。「黄河入海流」，写登高望远之所见，境界顿开，气象万千。借景抒情，景中含情，意在言外；长短句交错，读来抑扬顿挫。章法井然，情致婉转，读之令人回味。",
+  "source": "chinese-poetry/chinese-poetry@master",
+  "variantOf": 239
 }

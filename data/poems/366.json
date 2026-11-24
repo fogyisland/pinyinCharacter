@@ -3,7 +3,7 @@
   "title": "宫词五首 二",
   "author": "顾况",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "玉楼天半起笙歌，风送宫嫔笑语和。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「月殿影开闻夜漏」，写月夜清辉，幽寂之中透出孤怀。借景抒情，景中含情，意在言外；音节随情绪起伏，摇曳生姿。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

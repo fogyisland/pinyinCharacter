@@ -3,7 +3,7 @@
   "title": "怨情",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "美人卷珠帘，深坐颦蛾眉。",
@@ -39,6 +39,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「不知心恨谁」，写羁旅之思，婉转深沉，令人低回。音节随情绪起伏，摇曳生姿；白描传神，不事雕琢而情态毕现。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

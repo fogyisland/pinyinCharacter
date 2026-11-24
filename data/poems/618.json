@@ -3,7 +3,7 @@
   "title": "高阳台",
   "author": "王沂孙",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "残雪庭阴，轻寒帘影，霏霏玉管春葭。",
@@ -155,6 +155,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「霏霏玉管春葭」，写春日风物，生机盎然，明丽可喜。动静相生，画面顿然鲜活起来；实写与想象交织，意境更为开阔。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

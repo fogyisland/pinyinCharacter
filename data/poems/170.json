@@ -3,7 +3,7 @@
   "title": "春宫曲",
   "author": "王昌龄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "昨夜风开露井桃，未央前殿月轮高。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「昨夜风开露井桃」，写月夜清辉，幽寂之中透出孤怀。动静相生，画面顿然鲜活起来；句式参差，节奏跌宕而富有张力。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

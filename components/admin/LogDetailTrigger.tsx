@@ -6,6 +6,7 @@ import { JsonPanel } from '@/components/admin/JsonPanel';
 import { AdminButton } from '@/components/admin/AdminButton';
 import { formatLogMessage } from '@/lib/audit-format';
 import { formatDateTime } from '@/lib/format';
+import { useDialogEscape } from '@/components/common/useDialogEscape';
 import type { UnifiedLogEntry } from '@/lib/admin-logs-types';
 
 /**
@@ -34,6 +35,7 @@ export function LogDetailTrigger({ entry }: { entry: UnifiedLogEntry }) {
 
 /** The row detail modal. */
 function LogDetail({ entry, onClose }: { entry: UnifiedLogEntry; onClose: () => void }) {
+  useDialogEscape(true, onClose);
   return (
     <div
       className="fixed inset-0 bg-ink/40 flex items-center justify-center z-50 p-4"

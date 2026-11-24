@@ -3,7 +3,7 @@
   "title": "眼儿媚",
   "author": "范成大",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "酣酣日脚紫烟浮。",
@@ -82,6 +82,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「东风无力」，写春日风物，生机盎然，明丽可喜。以简笔勾勒，形象生动，如在目前；由实入虚，使情思显得深长。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

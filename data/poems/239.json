@@ -3,7 +3,7 @@
   "title": "登楼",
   "author": "朱斌",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "白日依山尽，黄河入海流。",
@@ -39,6 +39,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「黄河入海流」，摄取远景入诗，境界开阔而意蕴悠长。语言质朴无华，却自有一种动人力量；句式参差，节奏跌宕而富有张力。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

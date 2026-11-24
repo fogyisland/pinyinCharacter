@@ -3,7 +3,7 @@
   "title": "塞下曲四首 一",
   "author": "王昌龄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "蝉鸣空桑林，八月萧关道。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「出塞入塞寒」，描摹塞外风物，慷慨之中隐含几许苍凉。借景抒情，景中含情，意在言外；白描传神，不事雕琢而情态毕现。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

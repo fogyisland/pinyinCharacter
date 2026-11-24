@@ -3,7 +3,7 @@
   "title": "赋得古原草送别",
   "author": "白居易",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "离离原上草，一岁一枯荣。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗气韵连贯，格调清远。「晴翠接荒城」，以昔衬今，盛衰之变大有深意。实写与想象交织，意境更为开阔；融情入景，使寻常风物皆着情绪。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

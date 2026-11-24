@@ -3,7 +3,7 @@
   "title": "鹧鸪天",
   "author": "辛弃疾",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "枕簟溪堂冷欲秋。",
@@ -91,6 +91,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「红莲相倚浑如醉」，托物寄意，物我交融，寄托遥深。由实入虚，使情思显得深长；巧用反衬手法，突出了全篇主旨。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

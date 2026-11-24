@@ -3,7 +3,7 @@
   "title": "大有",
   "author": "潘希白",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "戏马台前，采花篱下，问岁华、还是重九。",
@@ -157,6 +157,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「霜前雁后」，写秋气萧瑟，愁绪于字里行间暗生。白描传神，不事雕琢而情态毕现；长短句交错，读来抑扬顿挫。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

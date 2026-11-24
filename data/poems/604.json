@@ -3,7 +3,7 @@
   "title": "兰陵王",
   "author": "周邦彦",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "柳阴直。",
@@ -222,6 +222,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「渐别浦萦回」，写羁旅之思，婉转深沉，令人低回。语言质朴无华，却自有一种动人力量；融情入景，使寻常风物皆着情绪。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

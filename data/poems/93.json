@@ -3,7 +3,7 @@
   "title": "喜外弟卢纶见宿",
   "author": "司空曙",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "静夜四无邻，荒居旧业贫。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「静夜四无邻」，写月夜清辉，幽寂之中透出孤怀。借景抒情，景中含情，意在言外；上下句两两相对，读来匀称而和谐。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "寄左省杜拾遗",
   "author": "岑参",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "联步趋丹陛，分曹限紫微。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「暮惹御香归」，以秋景衬离怀，萧索中自见深情。措辞凝练，极富表现力；对仗工整，两句相映成趣，尽显声律之美。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

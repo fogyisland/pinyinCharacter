@@ -3,7 +3,7 @@
   "title": "黄鹤楼",
   "author": "崔颢",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "昔人已乘白云去，此地空余黄鹤楼。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「烟波江上使人愁」，摄取远景入诗，境界开阔而意蕴悠长。动词选用尤妙，使画面顿然活化；由实入虚，使情思显得深长。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

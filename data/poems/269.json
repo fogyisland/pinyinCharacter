@@ -3,7 +3,7 @@
   "title": "金陵五题 乌衣巷",
   "author": "刘禹锡",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "朱雀桥边野草花，乌衣巷口夕阳斜。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「乌衣巷口夕阳斜」，写秋气萧瑟，愁绪于字里行间暗生。前后境况相互对照，反差强烈；融情入景，使寻常风物皆着情绪。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

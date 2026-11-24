@@ -3,7 +3,7 @@
   "title": "赤壁",
   "author": "李商隐",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "折戟沈沙铁未销，自将磨洗认前朝。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风气韵连贯，格调清远。「东风不与周郎便」，撷取春意入句，字里行间透出欢欣。语言质朴无华，却自有一种动人力量；借景抒情，景中含情，意在言外。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "相思",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "红豆生南国，秋来发故枝。",
@@ -39,6 +39,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「秋来发故枝」，写秋气萧瑟，愁绪于字里行间暗生。融情入景，使寻常风物皆着情绪；动静相生，画面顿然鲜活起来。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

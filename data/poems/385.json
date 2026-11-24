@@ -3,7 +3,7 @@
   "title": "清平乐",
   "author": "王安国",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "留春不住。",
@@ -84,6 +84,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「春风自在梨花」，撷取春意入句，字里行间透出欢欣。情景交融，以景语作情语，含蓄蕴藉；音节随情绪起伏，摇曳生姿。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

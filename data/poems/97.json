@@ -3,7 +3,7 @@
   "title": "新年作",
   "author": "刘长卿",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "乡心新岁切，天畔独潸然。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「春归在客先」，以寻常语道尽心中怅惘，真切动人。对仗工整，两句相映成趣，尽显声律之美；由实入虚，使情思显得深长。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

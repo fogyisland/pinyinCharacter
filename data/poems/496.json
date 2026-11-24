@@ -3,7 +3,7 @@
   "title": "念奴娇",
   "author": "姜夔",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "闹红一舸，记来时、尝与鸳鸯为侣。",
@@ -157,6 +157,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「只恐舞衣寒易落」，写秋气萧瑟，愁绪于字里行间暗生。情景交融，以景语作情语，含蓄蕴藉；音节随情绪起伏，摇曳生姿。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

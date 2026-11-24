@@ -426,7 +426,7 @@ npm run seed:run
 | 罕用字 | 1409 | `rare_chars` | /rare-chars 显示「字库为空」 |
 | 字源字体 | 7909 | `char_etymology` | 字源页无字形 |
 | 诗词 | 1160 | `poems` | /poetry 为空 |
-| 古籍 | 196 | `classics` | /ancient 为空 |
+| 古籍 | 200 | `classics` | /ancient 为空 |
 | 经文 | 11 | `sutras` | /sutra 为空 |
 
 ⚠️ **期望行数 = 库里应该实际持有的行数，而且这个数必须可达。**

@@ -4,349 +4,399 @@
     "pinyin": "huàn nàn yǔ gòng",
     "meaning": "一同经历灾祸困难，比喻同心协力共同度过难关。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《礼记·儒行》"
   },
   {
     "word": "同舟共济",
     "pinyin": "tóng zhōu gòng jì",
     "meaning": "同坐一条船过河，比喻团结互助共渡难关。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《孙子·九地》"
   },
   {
     "word": "情同手足",
     "pinyin": "qíng tóng shǒu zú",
     "meaning": "形容感情深厚亲密，像亲兄弟一样。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·李华·《吊古战场文》"
   },
   {
     "word": "莫逆之交",
     "pinyin": "mò nì zhī jiāo",
     "meaning": "指志趣相投、感情深厚、彼此信任至好的朋友。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《庄子·大宗师》"
   },
   {
     "word": "刎颈之交",
     "pinyin": "wěn jǐng zhī jiāo",
     "meaning": "指可以同生共死、不怕砍头也不分离的生死之交。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《史记·廉颇蔺相如列传》"
   },
   {
     "word": "一面之缘",
     "pinyin": "yī miàn zhī yuán",
     "meaning": "指只见过一面、缘分很浅的交情。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "清·曹雪芹·《红楼梦》第一回"
   },
   {
     "word": "萍水相逢",
     "pinyin": "píng shuǐ xiāng féng",
     "meaning": "比喻像浮萍漂水偶然相遇，形容相识很偶然。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·王勃·《滕王阁序》"
   },
   {
     "word": "点头之交",
     "pinyin": "diǎn tóu zhī jiāo",
     "meaning": "指见了面只点点头的浅薄交情。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "周而复·《上海的早晨》第一部"
   },
   {
     "word": "久别重逢",
     "pinyin": "jiǔ bié chóng féng",
     "meaning": "分别很久之后又重新相遇，形容重逢的欣喜。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "清·曾朴·《孽海花》第三回"
   },
   {
     "word": "相依为命",
     "pinyin": "xiāng yī wéi mìng",
     "meaning": "指彼此依靠着过日子，谁也离不开谁。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "晋·李密·《陈情表》"
   },
   {
     "word": "唇亡齿寒",
     "pinyin": "chún wáng chǐ hán",
     "meaning": "嘴唇没了牙齿就冷，比喻关系密切利害相关。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《左传·僖公五年》"
   },
   {
     "word": "恩重如山",
     "pinyin": "ēn zhòng rú shān",
     "meaning": "形容恩情深厚比山还重，多指长辈对晚辈的恩德。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "宋·陆游·《删定官供职谢启》"
   },
   {
     "word": "涌泉相报",
     "pinyin": "yǒng quán xiāng bào",
     "meaning": "指用加倍的付出来报答别人的深厚恩惠。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "饮水思源",
     "pinyin": "yǐn shuǐ sī yuán",
     "meaning": "喝水时想到水的源头，比喻不忘别人的恩惠。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "北周·庾信·《徵调曲》"
   },
   {
     "word": "忘恩负义",
     "pinyin": "wàng ēn fù yì",
     "meaning": "忘记别人的恩情，做出对不起别人的事。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《魏书·萧宝夤传》"
   },
   {
     "word": "恩将仇报",
     "pinyin": "ēn jiāng chóu bào",
     "meaning": "把恩人当仇人加以伤害，指忘恩负义。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·吴承恩·《西游记》第三十回"
   },
   {
     "word": "以牙还牙",
     "pinyin": "yǐ yá huán yá",
     "meaning": "比喻用对方对待自己的方法反过来对付他。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《旧约全书·申命记》"
   },
   {
     "word": "落井下石",
     "pinyin": "luò jǐng xià shí",
     "meaning": "比喻乘人危难时加以打击陷害，是极坏的行为。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·韩愈·《柳子厚墓志铭》"
   },
   {
     "word": "背信弃义",
     "pinyin": "bèi xìn qì yì",
     "meaning": "违背诺言抛弃情义，指不守信用。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《北史·周纪下·高祖武帝》"
   },
   {
     "word": "一诺千金",
     "pinyin": "yī nuò qiān jīn",
     "meaning": "许下的诺言价值千金，形容说话极讲信用。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《史记·季布栾布列传》"
   },
   {
     "word": "情投意合",
     "pinyin": "qíng tóu yì hé",
     "meaning": "双方感情心意完全一致，形容彼此十分投合。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·吴承恩·《西游记》第二十七回"
   },
   {
     "word": "心心相印",
     "pinyin": "xīn xīn xiāng yìn",
     "meaning": "心意完全一致像心与心相印合，形容彼此了解极深。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《六祖大师法宝坛经》"
   },
   {
     "word": "相见恨晚",
     "pinyin": "xiāng jiàn hèn wǎn",
     "meaning": "初次见面就觉得遗憾相识太晚，形容十分投缘。",
     "level": 2,
-    "category": "人事"
+    "category": "人事",
+    "source": "《史记·平津侯主父列传》"
   },
   {
     "word": "惺惺相惜",
     "pinyin": "xīng xīng xiāng xī",
     "meaning": "性格志趣相同的人互相爱惜欣赏。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "众望所归",
     "pinyin": "zhòng wàng suǒ guī",
     "meaning": "得到大家的一致信赖和拥护。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《晋书·列传三十传论》"
   },
   {
     "word": "言行一致",
     "pinyin": "yán xíng yī zhì",
     "meaning": "说的和做的完全相符，指办事诚实可靠。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "郭沫若·《屈原》"
   },
   {
     "word": "表里如一",
     "pinyin": "biǎo lǐ rú yī",
     "meaning": "外表和内心完全一致，形容真诚不做作。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "南朝·梁·刘勰·《文心雕龙·附会》"
   },
   {
     "word": "口若悬河",
     "pinyin": "kǒu ruò xuán hé",
     "meaning": "说话像瀑布倾泻，形容能言善辩滔滔不绝。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "南朝·宋·刘义庆·《世说新语·赏誉》"
   },
   {
     "word": "滔滔不绝",
     "pinyin": "tāo tāo bù jué",
     "meaning": "形容话很多，说起来没有停顿。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "五代后周·王仁裕·《开元天宝遗事·走丸之辩》"
   },
   {
     "word": "能言善辩",
     "pinyin": "néng yán shàn biàn",
     "meaning": "善于讲话和辩论，形容口才好很会讲话。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "元·无名氏·《气英布》第一折"
   },
   {
     "word": "巧舌如簧",
     "pinyin": "qiǎo shé rú huáng",
     "meaning": "舌头灵巧像簧片，形容花言巧语能骗人。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《诗经·小雅·巧言》"
   },
   {
     "word": "咄咄逼人",
     "pinyin": "duō duō bī rén",
     "meaning": "气势汹汹使人难堪，形容盛气凌人。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "晋·卫铄·《与释某书》"
   },
   {
     "word": "出口成章",
     "pinyin": "chū kǒu chéng zhāng",
     "meaning": "话一说出口就像文章一样，形容文思敏捷。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《诗经·小雅·都人士》"
   },
   {
     "word": "一语道破",
     "pinyin": "yī yǔ dào pò",
     "meaning": "一句话就把关键问题说中，形容说话简练有力。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "清·戏确·《与张考夫书》"
   },
   {
     "word": "一语双关",
     "pinyin": "yī yǔ shuāng guān",
     "meaning": "一句话同时关涉两方面的意思，言语含蓄巧妙。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "浩然·《艳阳天》第86章"
   },
   {
     "word": "言简意赅",
     "pinyin": "yán jiǎn yì gāi",
     "meaning": "话不多而意思完备，形容说话简洁明了。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "画龙点睛",
     "pinyin": "huà lóng diǎn jīng",
     "meaning": "在关键处点明要旨，使内容更加生动传神。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "唐·张彦远·《历代名画记·张僧繇》"
   },
   {
     "word": "妙语连珠",
     "pinyin": "miào yǔ lián zhū",
     "meaning": "巧妙风趣的话一句接一句，形容语言优美机智。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "语重心长",
     "pinyin": "yǔ zhòng xīn cháng",
     "meaning": "言辞恳切情意深长，形容真诚耐心地劝导。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "语无伦次",
     "pinyin": "yǔ wú lún cì",
     "meaning": "说话没有条理次序，颠三倒四不连贯。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "宋·胡仔·《苕溪渔隐丛话前集》卷七"
   },
   {
     "word": "闪烁其词",
     "pinyin": "shǎn shuò qí cí",
     "meaning": "说话吞吞吐吐避开要害，有意不肯直说。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "出处待考"
   },
   {
     "word": "吞吞吐吐",
     "pinyin": "tūn tūn tǔ tǔ",
     "meaning": "想说又不敢直说的样子，形容说话不干脆。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "清·文康·《儿女英雄传》第五回"
   },
   {
     "word": "守口如瓶",
     "pinyin": "shǒu kǒu rú píng",
     "meaning": "嘴像瓶子塞紧一样严，形容严守秘密不泄露。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "宋·周密·《癸辛杂识别集》"
   },
   {
     "word": "讳莫如深",
     "pinyin": "huì mò rú shēn",
     "meaning": "把事情隐瞒得很紧，一点消息也不透露。",
     "level": 4,
-    "category": "言语"
+    "category": "言语",
+    "source": "《谷梁传·庄公三十二年》"
   },
   {
     "word": "三缄其口",
     "pinyin": "sān jiān qí kǒu",
     "meaning": "紧紧闭住嘴不说话，形容保持沉默不开口。",
     "level": 4,
-    "category": "言语"
+    "category": "言语",
+    "source": "汉·刘向·《说苑·敬慎》"
   },
   {
     "word": "沉默寡言",
     "pinyin": "chén mò guǎ yán",
     "meaning": "性格沉静不爱说话，形容人话很少。",
     "level": 2,
-    "category": "言语"
+    "category": "言语",
+    "source": "《旧唐书·梁崇义传》"
   },
   {
     "word": "众说纷纭",
     "pinyin": "zhòng shuō fēn yún",
     "meaning": "各人说法杂乱不一致，形容议论很多。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "清·蒲松龄·《聊斋志异·阿纤》"
   },
   {
     "word": "众口铄金",
     "pinyin": "zhòng kǒu shuò jīn",
     "meaning": "众人的议论能把金属熔化，比喻人嘴杂足以毁人。",
     "level": 4,
-    "category": "言语"
+    "category": "言语",
+    "source": "《国语·周语下》"
   },
   {
     "word": "人言可畏",
     "pinyin": "rén yán kě wèi",
     "meaning": "众人的议论压力很大，指流言的力量不可轻视。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《诗经·郑风·将仲子》"
   },
   {
     "word": "众矢之的",
     "pinyin": "zhòng shǐ zhī dì",
     "meaning": "成为众人攻击的目标，形容遭人指责。",
     "level": 3,
-    "category": "言语"
+    "category": "言语",
+    "source": "《鲁迅书信集·致许寿裳》"
   }
 ]

@@ -3,7 +3,7 @@
   "title": "春思",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "燕草如碧丝，秦桑低绿枝。",
@@ -54,6 +54,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「何事入罗帏」，写闺中幽思，含蓄婉转，情致细腻。句式参差，节奏跌宕而富有张力；以简笔勾勒，形象生动，如在目前。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

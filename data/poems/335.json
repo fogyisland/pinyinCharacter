@@ -3,7 +3,7 @@
   "title": "相和歌辞 江南曲",
   "author": "李益",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "嫁得瞿塘贾，朝朝误妾期。",
@@ -39,6 +39,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「朝朝误妾期」，写闺中幽思，含蓄婉转，情致细腻。静景与动景交织，生气流转其间；句式参差，节奏跌宕而富有张力。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

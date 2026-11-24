@@ -9,7 +9,11 @@ import {
   removeMemberRequest,
   submitAssignmentRequest,
   withdrawSubmissionRequest,
+  fetchDictationResultsRequest,
+  submitDictationResultRequest,
+  withdrawDictationResultRequest,
   type ClassDetail,
+  type DictationResultView,
 } from '@/lib/api-classes';
 import { AssignmentComposer } from './AssignmentComposer';
 import { buildAssignmentDictationHref } from '@/lib/dictation-url';
@@ -30,6 +34,19 @@ export function ClassDetailClient({ classId }: { classId: number }) {
   const [composing, setComposing] = useState(false);
   /** 学生提交前的可选留言草稿，按作业 id 保存。 */
   const [draftNotes, setDraftNotes] = useState<Record<number, string>>({});
+  /** assignmentId → 听写成绩列表（老师看全班，学生只看自己）。 */
+  const [dictationResults, setDictationResults] = useState<Record<number, DictationResultView[]>>(
+    {},
+  );
+  /** 学生提交成绩的草稿。 */
+  const [resultDraft, setResultDraft] = useState<
+    Record<number, { total: string; correct: string; wrong: string }>
+  >({});
+
+  const loadResults = useCallback(async () => {
+    const result = await fetchDictationResultsRequest(classId);
+    if (result.ok) setDictationResults(result.data.resultsByAssignment);
+  }, [classId]);
 
   const load = useCallback(async () => {
     setLoadError(null);
@@ -43,7 +60,8 @@ export function ClassDetailClient({ classId }: { classId: number }) {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadResults();
+  }, [load, loadResults]);
 
   async function handleRemove(userId: number): Promise<void> {
     setBusy(true);
@@ -100,6 +118,50 @@ export function ClassDetailClient({ classId }: { classId: number }) {
       return;
     }
     await load();
+  }
+
+  /** 提交听写自报成绩。 */
+  async function handleSubmitResult(assignmentId: number): Promise<void> {
+    const draft = resultDraft[assignmentId] ?? { total: '10', correct: '', wrong: '' };
+    const total = Number(draft.total);
+    const correct = Number(draft.correct);
+    if (!Number.isInteger(total) || total < 1 || total > 200) {
+      setError('总条数需为 1–200 的整数');
+      return;
+    }
+    if (!Number.isInteger(correct) || correct < 0 || correct > total) {
+      setError('答对数需在 0 与总条数之间');
+      return;
+    }
+    const wrongWords = draft.wrong
+      .split(/[,，\s]+/)
+      .map((word) => word.trim())
+      .filter(Boolean);
+    setBusy(true);
+    setError(null);
+    const result = await submitDictationResultRequest(classId, assignmentId, {
+      total,
+      correct,
+      wrongWords,
+    });
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error.message);
+      return;
+    }
+    await loadResults();
+  }
+
+  async function handleWithdrawResult(assignmentId: number): Promise<void> {
+    setBusy(true);
+    setError(null);
+    const result = await withdrawDictationResultRequest(classId, assignmentId);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error.message);
+      return;
+    }
+    await loadResults();
   }
 
   /** 老师视图：把已完成的用户 id 换成名字。 */
@@ -289,6 +351,146 @@ export function ClassDetailClient({ classId }: { classId: number }) {
                         留言：{detail.mySubmissions[assignment.id].note}
                       </span>
                     ) : null}
+                  </div>
+                ) : null}
+
+                {/* 听写成绩：学生填报，老师查看全班。 */}
+                {assignment.kind === 'dictation' ? (
+                  <div className="mt-2 border-t border-ink/10 pt-2 text-xs">
+                    {!isTeacher
+                      ? (() => {
+                          const mine = (dictationResults[assignment.id] ?? []).find(
+                            (row) => row.userId === detail.teacherId || true,
+                          );
+                          const draft = resultDraft[assignment.id] ?? {
+                            total: String(
+                              assignment.payload.kind === 'dictation'
+                                ? assignment.payload.items.length
+                                : 10,
+                            ),
+                            correct: '',
+                            wrong: '',
+                          };
+                          return mine ? (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded bg-success/15 px-2 py-0.5 text-success">
+                                听写成绩 {mine.correct}/{mine.total}
+                              </span>
+                              {mine.wrongWords.length > 0 ? (
+                                <span className="text-ink-soft">
+                                  错词：{mine.wrongWords.join('、')}
+                                </span>
+                              ) : null}
+                              <button
+                                type="button"
+                                onClick={() => void handleWithdrawResult(assignment.id)}
+                                disabled={busy}
+                                className="text-ink-faint hover:text-danger disabled:opacity-40"
+                              >
+                                撤销成绩
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap items-center gap-2">
+                              <label className="sr-only" htmlFor={`result-total-${assignment.id}`}>
+                                总条数
+                              </label>
+                              <input
+                                id={`result-total-${assignment.id}`}
+                                type="number"
+                                min={1}
+                                max={200}
+                                value={draft.total}
+                                onChange={(event) =>
+                                  setResultDraft((prev) => ({
+                                    ...prev,
+                                    [assignment.id]: { ...draft, total: event.target.value },
+                                  }))
+                                }
+                                className="w-16 rounded border border-ink/15 bg-paper px-2 py-1"
+                                aria-label="总条数"
+                              />
+                              <span className="text-ink-faint">条中答对</span>
+                              <label
+                                className="sr-only"
+                                htmlFor={`result-correct-${assignment.id}`}
+                              >
+                                答对条数
+                              </label>
+                              <input
+                                id={`result-correct-${assignment.id}`}
+                                type="number"
+                                min={0}
+                                max={200}
+                                value={draft.correct}
+                                onChange={(event) =>
+                                  setResultDraft((prev) => ({
+                                    ...prev,
+                                    [assignment.id]: { ...draft, correct: event.target.value },
+                                  }))
+                                }
+                                className="w-16 rounded border border-ink/15 bg-paper px-2 py-1"
+                                aria-label="答对条数"
+                              />
+                              <label className="sr-only" htmlFor={`result-wrong-${assignment.id}`}>
+                                错词（逗号分隔）
+                              </label>
+                              <input
+                                id={`result-wrong-${assignment.id}`}
+                                type="text"
+                                value={draft.wrong}
+                                onChange={(event) =>
+                                  setResultDraft((prev) => ({
+                                    ...prev,
+                                    [assignment.id]: { ...draft, wrong: event.target.value },
+                                  }))
+                                }
+                                placeholder="错词，逗号分隔"
+                                className="min-w-0 flex-1 rounded border border-ink/15 bg-paper px-2 py-1"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => void handleSubmitResult(assignment.id)}
+                                disabled={busy || draft.correct === ''}
+                                className="rounded border border-seal px-2 py-1 text-seal hover:bg-seal/10 disabled:opacity-50"
+                              >
+                                提交成绩
+                              </button>
+                            </div>
+                          );
+                        })()
+                      : (() => {
+                          const rows = dictationResults[assignment.id] ?? [];
+                          return (
+                            <div className="space-y-1">
+                              <p className="font-medium text-ink-soft">
+                                听写成绩 · {rows.length} 人已报
+                              </p>
+                              {rows.length === 0 ? (
+                                <p className="text-ink-faint">还没有人提交成绩。</p>
+                              ) : (
+                                <ul className="space-y-0.5">
+                                  {rows.map((row) => (
+                                    <li key={row.userId} className="flex flex-wrap gap-2">
+                                      <span className="text-ink">{row.username}</span>
+                                      <span className="font-medium text-seal">
+                                        {row.correct}/{row.total}
+                                      </span>
+                                      {row.wrongWords.length > 0 ? (
+                                        <span className="text-ink-faint">
+                                          错词：{row.wrongWords.join('、')}
+                                        </span>
+                                      ) : null}
+                                      {row.note ? (
+                                        <span className="text-ink-soft">留言：{row.note}</span>
+                                      ) : null}
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          );
+                        })()}
                   </div>
                 ) : null}
 

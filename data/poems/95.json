@@ -3,7 +3,7 @@
   "title": "送方外上人",
   "author": "刘长卿",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "孤云将野鹤，岂向人间住。",
@@ -39,6 +39,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「孤云将野鹤」，咏物而抒怀，借物象写胸中情怀。融情入景，使寻常风物皆着情绪；以简笔勾勒，形象生动，如在目前。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

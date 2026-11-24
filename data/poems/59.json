@@ -3,7 +3,7 @@
   "title": "老将行",
   "author": "王维",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "少年十五二十时，步行夺得胡马射。",
@@ -294,6 +294,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「汉兵奋迅如霹雳」，以简劲之笔写征戍生活，气骨凛然。长短句交错，读来抑扬顿挫；用典贴切，借古人之事抒一己之怀。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

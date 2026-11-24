@@ -3,7 +3,7 @@
   "title": "秋夕",
   "author": "杜牧",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "红烛秋光冷画屏，轻罗小扇扑流萤。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「红烛秋光冷画屏」，描摹夜色空明，情思于无声处流转。实写与想象交织，意境更为开阔；以动衬静，境界愈显幽深。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

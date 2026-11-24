@@ -6,7 +6,7 @@ import idioms from '@/data/idioms.json';
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
     title: '成语典故 · 字·韵',
-    description: '按成语或释义检索词目，查看拼音、释义与分类，并通读精选成语的出处与解读。',
+    description: '按成语或释义检索词目，查看拼音、释义、出处与分类，并通读精选成语的典故解读。',
     path: '/idioms',
     ogType: 'website',
   });
@@ -63,10 +63,14 @@ export default async function IdiomsPage({
         <dl>
           {(query ? matches : matches.slice(0, 8)).map((item) => (
             <div key={item.word} className="border-b border-ink/10 py-3">
-              <dt>
-                {item.word} · {item.pinyin}
+              <dt className="font-kai text-lg">
+                {item.word} <span className="text-sm text-ink-faint">· {item.pinyin}</span>
               </dt>
-              <dd className="text-ink-soft">{item.meaning}</dd>
+              <dd className="mt-1 text-ink-soft">{item.meaning}</dd>
+              <dd className="mt-1 text-sm">
+                <span className="font-kai text-seal">出处</span>
+                <span className="text-ink-faint"> · {item.source}</span>
+              </dd>
             </div>
           ))}
         </dl>

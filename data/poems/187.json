@@ -3,7 +3,7 @@
   "title": "苏武庙",
   "author": "温庭筠",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "苏武魂销汉使前，古祠高树两茫然。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「云边雁断胡天月」，以简劲之笔写征戍生活，气骨凛然。静景与动景交织，生气流转其间；属对精切，富有形式之美与节奏之感。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

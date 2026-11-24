@@ -3,7 +3,7 @@
   "title": "相和歌辞 长信怨 二",
   "author": "王昌龄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "奉帚平明金殿开，暂将团扇共裴回。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「玉颜不及寒鵶色」，以秋景衬离怀，萧索中自见深情。动静相生，画面顿然鲜活起来；巧用反衬手法，突出了全篇主旨。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

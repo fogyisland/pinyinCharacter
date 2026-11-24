@@ -3,7 +3,7 @@
   "title": "台城",
   "author": "韦庄",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "江雨霏霏江草齐，六朝如梦鸟空啼。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「无情最是台城柳」，以清新笔调描摹春景，灵动自然。实写与想象交织，意境更为开阔；长短句交错，读来抑扬顿挫。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

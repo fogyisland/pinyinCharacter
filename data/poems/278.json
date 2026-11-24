@@ -3,7 +3,7 @@
   "title": "贼退示官吏",
   "author": "元结",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五言古风",
   "content": [
     "昔岁逢太平，山林二十年。",
@@ -191,6 +191,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「归老江湖边」，描绘山川形胜，景象阔大，令人神往。借景抒情，景中含情，意在言外；句式参差，节奏跌宕而富有张力。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

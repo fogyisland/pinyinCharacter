@@ -3,7 +3,7 @@
   "title": "贺新郎",
   "author": "李玉",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "篆缕销金鼎。",
@@ -185,6 +185,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「帘外残红春已透」，写春日风物，生机盎然，明丽可喜。借景抒情，景中含情，意在言外；长短句交错，读来抑扬顿挫。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -10,6 +10,7 @@ import { LoadingState } from '@/components/admin/LoadingState';
 import { SourceBadge } from '@/components/admin/SourceBadge';
 import { AdminButton } from '@/components/admin/AdminButton';
 import { History } from 'lucide-react';
+import { useDialogEscape } from '@/components/common/useDialogEscape';
 import type { UnifiedLogEntry } from '@/lib/admin-logs-types';
 
 const PAGE_SIZE = 50;
@@ -20,6 +21,9 @@ export function UserActivityTab({ userId }: { userId: number }) {
   const [err, setErr] = useState<string | null>(null);
   const [exhausted, setExhausted] = useState(false);
   const [selected, setSelected] = useState<UnifiedLogEntry | null>(null);
+  const closeDetail = useCallback(() => setSelected(null), []);
+  useDialogEscape(selected !== null, closeDetail);
+
   const [loaded, setLoaded] = useState(false);
 
   const fetchPage = useCallback(
@@ -138,11 +142,16 @@ export function UserActivityTab({ userId }: { userId: number }) {
           onClick={() => setSelected(null)}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="user-activity-detail-title"
             className="bg-paper-soft rounded-lg shadow-paper-lg w-full max-w-2xl p-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between mb-3">
-              <h3 className="font-kai text-base text-ink">{selected.event}</h3>
+              <h3 id="user-activity-detail-title" className="font-kai text-base text-ink">
+                {selected.event}
+              </h3>
               <button
                 type="button"
                 onClick={() => setSelected(null)}
@@ -156,8 +165,7 @@ export function UserActivityTab({ userId }: { userId: number }) {
                 <span className="text-ink-soft">来源:</span> {selected.source}
               </p>
               <p>
-                <span className="text-ink-soft">时间:</span>{' '}
-                {formatDateTime(selected.createdAt)}
+                <span className="text-ink-soft">时间:</span> {formatDateTime(selected.createdAt)}
               </p>
               {selected.username && (
                 <p>

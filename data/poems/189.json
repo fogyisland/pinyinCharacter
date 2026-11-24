@@ -3,7 +3,7 @@
   "title": "贫女",
   "author": "秦韬玉",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "蓬门未识绮罗香，拟托良媒益自伤。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首律诗起承转合，自有章法。「蓬门未识绮罗香」，以景物映衬孤怀，幽怨而不直露。由实入虚，使情思显得深长；措辞凝练，极富表现力。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

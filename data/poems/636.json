@@ -3,7 +3,7 @@
   "title": "江神子慢・江城子慢",
   "author": "田为",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "玉台挂秋月。",
@@ -182,6 +182,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「恨伊不似馀香」，以寻常语道尽心中怅惘，真切动人。融情入景，使寻常风物皆着情绪；实写与想象交织，意境更为开阔。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

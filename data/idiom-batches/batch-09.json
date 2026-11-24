@@ -4,349 +4,399 @@
     "pinyin": "lóng fēi fèng wǔ",
     "meaning": "形容矫健活泼的舞姿，也比喻书法笔势奔放灵活、挥洒自如。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "汉·张衡·《东京赋》"
   },
   {
     "word": "手舞足蹈",
     "pinyin": "shǒu wǔ zú dǎo",
     "meaning": "两只手不停地舞动，两脚不住地跳动，形容高兴得无法自控。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "《诗经·周南·关雎·序》"
   },
   {
     "word": "载歌载舞",
     "pinyin": "zài gē zài wǔ",
     "meaning": "一边唱歌一边跳舞，形容欢庆的场面热闹而尽兴。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "出处待考"
   },
   {
     "word": "披星戴月",
     "pinyin": "pī xīng dài yuè",
     "meaning": "头顶星星身披月色，形容赶路或劳作昼夜不停，十分辛苦。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·无名氏·《冤家债主》"
   },
   {
     "word": "风驰电掣",
     "pinyin": "fēng chí diàn chè",
     "meaning": "像疾风和闪电一样快，形容奔跑或行动的速度极快。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《六韬·龙韬·王翼》"
   },
   {
     "word": "横冲直撞",
     "pinyin": "héng chōng zhí zhuàng",
     "meaning": "横着冲直着撞，形容毫无约束地乱闯乱撞，也指蛮干。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "明·李贽·《续焚书·与友人论文》"
   },
   {
     "word": "纵横驰骋",
     "pinyin": "zòng héng chí chěng",
     "meaning": "在天地间任意驰骋，形容奔驰奔跑，也比喻施展才能。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "宋·谢尧仁·《张于湖先生集序》"
   },
   {
     "word": "昂首挺胸",
     "pinyin": "áng shǒu tǐng xiōng",
     "meaning": "抬起头挺起胸膛，形容精神振奋、意气高昂的神态。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "欧阳予倩《小英姑娘》"
   },
   {
     "word": "疾步如飞",
     "pinyin": "jí bù rú fēi",
     "meaning": "走得飞快像飞一样，形容步伐急速、行动迅捷。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "出处待考"
   },
   {
     "word": "蹑手蹑脚",
     "pinyin": "niè shǒu niè jiǎo",
     "meaning": "手脚轻放脚步很轻，形容行动小心谨慎、不愿被人察觉。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·曹雪芹·《红楼梦》第五十四回"
   },
   {
     "word": "腾空而起",
     "pinyin": "téng kōng ér qǐ",
     "meaning": "高高跃起升到空中，形容跳跃或升起时脱离地面的姿态。",
     "level": 2,
-    "category": "动作"
+    "category": "动作",
+    "source": "清·褚人获·《隋唐演义》第三回"
   },
   {
     "word": "轻车熟路",
     "pinyin": "qīng chē shú lù",
     "meaning": "驾着轻车走熟路，比喻做熟悉的事轻而易举、得心应手。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "唐·韩愈·《送石处士序》"
   },
   {
     "word": "轻装上阵",
     "pinyin": "qīng zhuāng shàng zhèn",
     "meaning": "轻装快速前进，形容放下包袱、没有顾虑地投入行动。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "《文汇报》"
   },
   {
     "word": "挥汗如雨",
     "pinyin": "huī hàn rú yǔ",
     "meaning": "挥洒的汗水像雨点一样多，形容劳动或运动非常辛苦。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《战国策·齐策一》"
   },
   {
     "word": "大汗淋漓",
     "pinyin": "dà hàn lín lí",
     "meaning": "浑身汗水湿透往下滴，形容天气热或运动后出汗很多。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "出处待考"
   },
   {
     "word": "汗流浃背",
     "pinyin": "hàn liú jiā bèi",
     "meaning": "汗水流湿了整个后背，形容非常炎热或工作非常辛劳。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《史记·陈丞相世家》"
   },
   {
     "word": "摩拳擦掌",
     "pinyin": "mó quán cā zhǎng",
     "meaning": "摩着拳头擦着手掌，形容战斗或行动前跃跃欲试的样子。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·康进之·《李逵负荆》第二折"
   },
   {
     "word": "马不停蹄",
     "pinyin": "mǎ bù tíng tí",
     "meaning": "比喻一刻也不停留，形容连续不断地赶路或忙碌。",
     "level": 1,
-    "category": "动作"
+    "category": "动作",
+    "source": "元·王实甫·《丽春堂》第二折"
   },
   {
     "word": "短兵相接",
     "pinyin": "duǎn bīng xiāng jiē",
     "meaning": "用短兵器贴身近战，形容双方发生面对面的激烈冲突。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "战国·楚·屈原·《九歌·国殇》"
   },
   {
     "word": "破釜沉舟",
     "pinyin": "pò fǔ chén zhōu",
     "meaning": "砸锅沉船不留退路，比喻下定决心不顾一切干到底。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《史记·项羽本纪》"
   },
   {
     "word": "卧薪尝胆",
     "pinyin": "wò xīn cháng dǎn",
     "meaning": "睡柴草尝苦胆，形容刻苦自励，发愤图强以雪耻。",
     "level": 4,
-    "category": "动作"
+    "category": "动作",
+    "source": "《史记·越王勾践世家》"
   },
   {
     "word": "披荆斩棘",
     "pinyin": "pī jīng zhǎn jí",
     "meaning": "拨开荆棘砍掉拦路的草木，比喻扫除重重障碍前进。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《后汉书·冯异传》"
   },
   {
     "word": "排除万难",
     "pinyin": "pái chú wàn nán",
     "meaning": "扫除一切困难险阻，形容克服困难继续向前迈进。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "毛泽东·《关于重庆谈判》"
   },
   {
     "word": "赴汤蹈火",
     "pinyin": "fù tāng dǎo huǒ",
     "meaning": "敢跳进沸水敢踏烈火，形容奋不顾身、不畏艰险的精神。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《荀子·议兵》"
   },
   {
     "word": "冲锋陷阵",
     "pinyin": "chōng fēng xiàn zhèn",
     "meaning": "冲进敌阵奋勇作战，形容在战斗中勇敢地冲在最前面。",
     "level": 3,
-    "category": "动作"
+    "category": "动作",
+    "source": "《北齐书·崔暹传》"
   },
   {
     "word": "情同骨肉",
     "pinyin": "qíng tóng gǔ ròu",
     "meaning": "感情像亲骨肉一样深厚，比喻关系亲密如同一家人。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·罗贯中·《三国演义》第四十七回"
   },
   {
     "word": "亲如手足",
     "pinyin": "qīn rú shǒu zú",
     "meaning": "亲密得如同自己的手足，形容彼此情谊深厚非常亲近。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·关汉卿·《魔合罗》第四折"
   },
   {
     "word": "布衣之交",
     "pinyin": "bù yī zhī jiāo",
     "meaning": "平民百姓之间结成的朋友，形容关系平等而真诚的友谊。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《战国策·齐策三》"
   },
   {
     "word": "总角之交",
     "pinyin": "zǒng jiǎo zhī jiāo",
     "meaning": "童年时结下的朋友，形容从小一起长大的深厚情谊。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《礼记·内则》"
   },
   {
     "word": "素不相识",
     "pinyin": "sù bù xiāng shí",
     "meaning": "从来就不认识，形容双方此前毫无交情或关系。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·尚仲贤·《柳毅传书》第四折"
   },
   {
     "word": "非亲非故",
     "pinyin": "fēi qīn fēi gù",
     "meaning": "既不是亲戚也不是旧友，形容关系疏远没有渊源。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·马戴·《寄贾岛》"
   },
   {
     "word": "陌路相逢",
     "pinyin": "mò lù xiāng féng",
     "meaning": "在陌生的路上偶然相遇，形容毫无关系的偶然碰面。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "一见如故",
     "pinyin": "yī jiàn rú gù",
     "meaning": "初次见面就像老朋友一样，形容初次相识就十分投缘。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "《左传·襄公二十九年》"
   },
   {
     "word": "一见倾心",
     "pinyin": "yī jiàn qīng xīn",
     "meaning": "初次见面就产生了爱慕之情，形容一眼相悦十分喜欢。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "《资治通鉴·晋孝武帝太元九年》"
   },
   {
     "word": "意气相投",
     "pinyin": "yì qì xiāng tóu",
     "meaning": "彼此志趣和性格相合，形容双方意趣相投情投意合。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·宫天挺《范张鸡黍》"
   },
   {
     "word": "气味相投",
     "pinyin": "qì wèi xiāng tóu",
     "meaning": "性格或情趣彼此相合，形容双方合得来有共同语言。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·冯惟敏·《天香引·送陈震南》"
   },
   {
     "word": "同病相怜",
     "pinyin": "tóng bìng xiāng lián",
     "meaning": "有同样毛病的人互相同情，形容处境相同彼此体恤。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "汉·赵晔·《吴越春秋·阖闾内传》"
   },
   {
     "word": "同声相应",
     "pinyin": "tóng shēng xiāng yìng",
     "meaning": "同样的声音互相应和，形容志趣相同的人彼此呼应。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《周易·乾》"
   },
   {
     "word": "同类相残",
     "pinyin": "tóng lèi xiāng cán",
     "meaning": "同类的人互相残害，形容同类之间自相争斗和伤害。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "劳燕分飞",
     "pinyin": "láo yàn fēn fēi",
     "meaning": "伯劳和燕子分飞，形容夫妻或亲友离别各奔东西。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《乐府诗集·东飞伯劳歌》"
   },
   {
     "word": "反目成仇",
     "pinyin": "fǎn mù chéng chóu",
     "meaning": "翻脸变成仇人，形容关系由亲密转为敌对怨恨。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "清·曹雪芹·《红楼梦》第五十七回"
   },
   {
     "word": "分道扬镳",
     "pinyin": "fēn dào yáng biāo",
     "meaning": "各走各的路各奔前程，形容目标不同而各自分道而行。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《魏书·河间公齐传》"
   },
   {
     "word": "不欢而散",
     "pinyin": "bù huān ér sàn",
     "meaning": "不愉快地分开各自散去，形容聚会不欢而别。",
     "level": 1,
-    "category": "人事"
+    "category": "人事",
+    "source": "明·冯梦龙·《醒世通言·黄秀才徼灵玉马坠》"
   },
   {
     "word": "恩断义绝",
     "pinyin": "ēn duàn yì jué",
     "meaning": "恩情断绝义气终结，形容关系彻底破裂不再往来。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "元·马致远·《任风子》第三折"
   },
   {
     "word": "背道而驰",
     "pinyin": "bèi dào ér chí",
     "meaning": "朝相反方向走，形容彼此的主张或行动完全相反。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "唐·柳宗元·《〈杨评事文集〉后序》"
   },
   {
     "word": "貌合神离",
     "pinyin": "mào hé shén lí",
     "meaning": "表面看起来和好内心却已分离，形容关系只是假象。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "《素书·遵义》"
   },
   {
     "word": "同床异梦",
     "pinyin": "tóng chuáng yì mèng",
     "meaning": "同睡一张床却做着不同的梦，形容表面亲密实则各怀心事。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "宋·陈亮·《与朱元晦秘书书》"
   },
   {
     "word": "休戚与共",
     "pinyin": "xiū qī yǔ gòng",
     "meaning": "忧喜祸福彼此共同承担，形容关系亲密同甘共苦。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "《晋书·王导传》"
   },
   {
     "word": "荣辱与共",
     "pinyin": "róng rǔ yǔ gòng",
     "meaning": "光荣和耻辱都共同承担，形容双方同进退共荣辱。",
     "level": 3,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   },
   {
     "word": "祸福与共",
     "pinyin": "huò fú yǔ gòng",
     "meaning": "灾祸和福分都一起承受，形容命运相连、同甘共苦。",
     "level": 4,
-    "category": "人事"
+    "category": "人事",
+    "source": "出处待考"
   }
 ]

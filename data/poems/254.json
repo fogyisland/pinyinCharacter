@@ -3,7 +3,7 @@
   "title": "观公孙大娘弟子舞劒器行",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "昔有佳人公孙氏，一舞劒气动四方。",
@@ -256,6 +256,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首古风起承转合，自有章法。「罢如江海凝清光」，写登高望远之所见，境界顿开，气象万千。动静相生，画面顿然鲜活起来；巧用反衬手法，突出了全篇主旨。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

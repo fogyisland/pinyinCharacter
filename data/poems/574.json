@@ -3,7 +3,7 @@
   "title": "摸鱼儿",
   "author": "辛弃疾",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "更能消、几番风雨。",
@@ -191,6 +191,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「惜春长恨花开早」，撷取春意入句，字里行间透出欢欣。动静相生，画面顿然鲜活起来；音节随情绪起伏，摇曳生姿。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

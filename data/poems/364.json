@@ -3,7 +3,7 @@
   "title": "征怨",
   "author": "柳中庸",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "14言古风",
   "content": [
     "岁岁金河复玉关，朝朝马策与刀环。",
@@ -47,6 +47,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「万里黄河遶黑山」，写登高望远之所见，境界顿开，气象万千。音节随情绪起伏，摇曳生姿；由实入虚，使情思显得深长。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

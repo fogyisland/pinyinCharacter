@@ -3,7 +3,7 @@
   "title": "近试上张籍水部",
   "author": "朱庆余",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "杂言古风",
   "content": [
     "洞房昨夜停红烛，待晓堂前拜舅姑。",
@@ -49,6 +49,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「[妆]罢低声问夫壻」，摹写幽居寂寞，语柔而意深。句式参差，节奏跌宕而富有张力；由实入虚，使情思显得深长。全诗以景结情，余韵悠长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

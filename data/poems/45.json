@@ -3,7 +3,7 @@
   "title": "遣悲怀三首 二",
   "author": "元稹",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "昔日戏言身后意，今朝皆到眼前来。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「也曾因梦送钱财」，写羁旅之思，婉转深沉，令人低回。对仗工整，两句相映成趣，尽显声律之美；借景抒情，景中含情，意在言外。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

@@ -3,7 +3,7 @@
   "title": "秋霁",
   "author": "史达祖",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "江水苍苍，望倦柳愁荷，共感秋色。",
@@ -167,6 +167,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「夜闻秋声」，写月夜清辉，幽寂之中透出孤怀。动静相生，画面顿然鲜活起来；音节随情绪起伏，摇曳生姿。声情并茂，尽显词体之美。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

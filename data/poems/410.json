@@ -3,7 +3,7 @@
   "title": "洞仙歌",
   "author": "苏轼",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "冰肌玉骨，自清凉无汗。",
@@ -127,6 +127,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "词笔细腻，于寻常景物中见幽怀。「时见疏星渡河汉」，描摹夜色空明，情思于无声处流转。融情入景，使寻常风物皆着情绪；措辞凝练，极富表现力。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

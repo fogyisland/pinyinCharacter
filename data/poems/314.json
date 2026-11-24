@@ -3,7 +3,7 @@
   "title": "子夜吴歌 夏歌",
   "author": "李白",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "10言古风",
   "content": [
     "镜湖三百里，菡萏发荷花。",
@@ -54,6 +54,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「回舟不待月」，以月色烘托心境，清冷而动人。音节随情绪起伏，摇曳生姿；实写与想象交织，意境更为开阔。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

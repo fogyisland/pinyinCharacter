@@ -3,7 +3,7 @@
   "title": "送人东游",
   "author": "温庭筠",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "五律",
   "content": [
     "荒戍落黄叶，浩然离故关。",
@@ -69,6 +69,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "诗人以简练笔墨，写出开阔意境。「初日郢门山」，写登高望远之所见，境界顿开，气象万千。炼字精准，一字落下而全句生辉；静景与动景交织，生气流转其间。语言凝练而意味深长。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

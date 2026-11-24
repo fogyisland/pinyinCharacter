@@ -3,7 +3,7 @@
   "title": "寄韩谏议",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七言古风",
   "content": [
     "今我不乐思岳阳，身欲奋飞病在床。",
@@ -218,6 +218,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「青枫叶赤天雨霜」，以秋景衬离怀，萧索中自见深情。融情入景，使寻常风物皆着情绪；对比鲜明，两相映衬而意旨愈显。章法井然，情致婉转，读之令人回味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

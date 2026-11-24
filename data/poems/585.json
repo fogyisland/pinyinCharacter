@@ -3,7 +3,7 @@
   "title": "水龙吟",
   "author": "程垓",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "夜来风雨匆匆，故园定是花无几。",
@@ -162,6 +162,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「柳困花慵」，以清新笔调描摹春景，灵动自然。音节随情绪起伏，摇曳生姿；由实入虚，使情思显得深长。词境幽微，读之令人低回。细细品之，别有一番滋味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

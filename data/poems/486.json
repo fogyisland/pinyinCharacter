@@ -3,7 +3,7 @@
   "title": "宴山亭・燕山亭",
   "author": "张",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "幽梦初回，重阴未开，晓色吹成疏雨。",
@@ -162,6 +162,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "这首词笔致婉转，音节谐婉。「苔径追忆曾游」，写羁旅之思，婉转深沉，令人低回。动静相生，画面顿然鲜活起来；由实入虚，使情思显得深长。婉转中见沉郁，耐人寻味。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

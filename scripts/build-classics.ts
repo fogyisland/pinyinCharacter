@@ -194,7 +194,7 @@ const CLASSIC_FILES: ClassicFile[] = [
     slug: 'shijing',
     title: '诗经',
     category: 'five-classics',
-    author: null,
+    author: '佚名',
     era: '西周',
   },
   // 蒙学 (Children's classics)
@@ -227,7 +227,7 @@ const CLASSIC_FILES: ClassicFile[] = [
     slug: 'baijiaxing',
     title: '百家姓',
     category: 'mengxue',
-    author: null,
+    author: '佚名',
     era: '北宋',
   },
   {
@@ -235,7 +235,7 @@ const CLASSIC_FILES: ClassicFile[] = [
     slug: 'zengguangxianwen',
     title: '增广贤文',
     category: 'mengxue',
-    author: null,
+    author: '佚名',
     era: '明清',
   },
   {

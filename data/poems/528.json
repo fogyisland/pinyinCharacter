@@ -3,7 +3,7 @@
   "title": "清平乐",
   "author": "晏殊",
   "dynasty": "song",
-  "category": null,
+  "category": "词",
   "form": "杂言古风",
   "content": [
     "红笺小字。",
@@ -84,6 +84,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此词短章深意，读来低回。「斜阳独倚西楼」，写羁旅之思，婉转深沉，令人低回。长短句交错，读来抑扬顿挫；结尾点明主旨，与开篇遥相呼应。词境幽微，读之令人低回。",
   "source": "chinese-poetry/chinese-poetry@master"
 }

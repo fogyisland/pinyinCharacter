@@ -4,356 +4,407 @@
     "pinyin": "zhēng fēn duó miǎo",
     "meaning": "一分一秒都要争取；形容抓紧时间，分秒必争。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "《晋书·陶侃传》"
   },
   {
     "word": "光阴似箭",
     "pinyin": "guāng yīn sì jiàn",
     "meaning": "时光像箭一样飞快；形容时间流逝极快。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "唐·韦庄·《关河道中》"
   },
   {
     "word": "夜以继日",
     "pinyin": "yè yǐ jì rì",
     "meaning": "晚上接着白天不停地干；形容日夜不停地努力。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "《庄子·至乐》"
   },
   {
     "word": "日久天长",
     "pinyin": "rì jiǔ tiān cháng",
     "meaning": "时间长久；指日子一天天过去，历程持久。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "清·曹雪芹·《红楼梦》第六十九回"
   },
   {
     "word": "起早贪黑",
     "pinyin": "qǐ zǎo tān hēi",
     "meaning": "早起晚睡；形容辛苦劳作、不分昼夜。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "周立波·《暴风骤雨》第一部"
   },
   {
     "word": "转眼之间",
     "pinyin": "zhuǎn yǎn zhī jiān",
     "meaning": "一眨眼的时候；指时间非常短暂，变化极快。",
     "level": 1,
-    "category": "时间"
+    "category": "时间",
+    "source": "明·胡文焕·《群音类选·葛衣记·荐之知信》"
   },
   {
     "word": "一朝一夕",
     "pinyin": "yī zhāo yī xī",
     "meaning": "一个早晨一个傍晚；指极短的时间之内。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《周易·坤》"
   },
   {
     "word": "冬去春来",
     "pinyin": "dōng qù chūn lái",
     "meaning": "冬天过去春天到来；指时间推移、岁月更替。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "出处待考"
   },
   {
     "word": "分秒必争",
     "pinyin": "fēn miǎo bì zhēng",
     "meaning": "一分一秒都要争取；形容抓紧每分每秒，珍惜时间。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《晋书·陶侃传》"
   },
   {
     "word": "千秋万代",
     "pinyin": "qiān qiū wàn dài",
     "meaning": "千年万代；指世世代代长久的时间。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《韩非子·显学》"
   },
   {
     "word": "天长地久",
     "pinyin": "tiān cháng dì jiǔ",
     "meaning": "像天地一样长久；指时间永远、爱情永恒。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《老子》第七章"
   },
   {
     "word": "度日如年",
     "pinyin": "dù rì rú nián",
     "meaning": "过一天像一年那样难熬；形容日子非常难熬。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·柳永·《戚氏》"
   },
   {
     "word": "弹指之间",
     "pinyin": "tán zhǐ zhī jiān",
     "meaning": "弹一下手指的工夫；形容时间极短、瞬间即逝。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "唐·司空图·《偶书之四》"
   },
   {
     "word": "时不我待",
     "pinyin": "shí bù wǒ dài",
     "meaning": "时间不会等待我；指时间紧迫，机会难得。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《论语·阳货》"
   },
   {
     "word": "时过境迁",
     "pinyin": "shí guò jìng qiān",
     "meaning": "时间过去环境改变；多指情况或人事发生了变化。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "蔡东藩、许廑父·《民国演义》"
   },
   {
     "word": "昙花一现",
     "pinyin": "tán huā yī xiàn",
     "meaning": "昙花只开片刻；比喻美好事物出现，转瞬即逝难以长久。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "《妙法莲华经·方便品》"
   },
   {
     "word": "朝朝暮暮",
     "pinyin": "zhāo zhāo mù mù",
     "meaning": "从早到晚；形容时间漫长或每天如此度过。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "战国·楚·宋玉·《高唐赋》"
   },
   {
     "word": "沧海桑田",
     "pinyin": "cāng hǎi sāng tián",
     "meaning": "沧海变为桑田；比喻世事变化巨大、沧海桑田。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "晋·葛洪·《神仙传·麻姑》"
   },
   {
     "word": "物是人非",
     "pinyin": "wù shì rén fēi",
     "meaning": "景物依旧人事已变；感叹时光流逝、处境变迁。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·李清照·《武陵春》"
   },
   {
     "word": "长年累月",
     "pinyin": "cháng nián lěi yuè",
     "meaning": "形容经历很多年月；指长期、长久的时间。",
     "level": 2,
-    "category": "时间"
+    "category": "时间",
+    "source": "巴金·《短简·给一个孩子》"
   },
   {
     "word": "年深日久",
     "pinyin": "nián shēn rì jiǔ",
     "meaning": "年头深、时间久；指经历的时间非常长久。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "元·李行道·《灰阑记》第二折"
   },
   {
     "word": "稍纵即逝",
     "pinyin": "shāo zòng jí shì",
     "meaning": "稍微一放松就消失了；形容机会稍纵即逝。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "宋·苏轼《文与可画筼筜谷偃竹记》"
   },
   {
     "word": "良辰美景",
     "pinyin": "liáng chén měi jǐng",
     "meaning": "美好的时光和宜人的景色；常用于祝福与赞叹。",
     "level": 3,
-    "category": "时间"
+    "category": "时间",
+    "source": "南朝·宋·谢灵运·《拟魏太子邺中集诗序》"
   },
   {
     "word": "朝不保暮",
     "pinyin": "zhāo bù bǎo mù",
     "meaning": "早晨顾不上晚上；形容生活困苦、毫无保障。",
     "level": 4,
-    "category": "时间"
+    "category": "时间",
+    "source": "晋·袁宏·《后汉纪·质帝纪》"
   },
   {
     "word": "物换星移",
     "pinyin": "wù huàn xīng yí",
     "meaning": "景物改变星辰移动；形容岁月流逝、世事变迁。",
     "level": 4,
-    "category": "时间"
+    "category": "时间",
+    "source": "唐·王勃·《秋日登洪府滕王阁饯别序》"
   },
   {
     "word": "万紫千红",
     "pinyin": "wàn zǐ qiān hóng",
     "meaning": "形容百花齐放、色彩绚丽；也比喻事物丰富多彩。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·朱熹·《春日》"
   },
   {
     "word": "冰天雪地",
     "pinyin": "bīng tiān xuě dì",
     "meaning": "到处是冰和雪；形容极为寒冷，也指严酷环境。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "清·蒋士铨·《鸡毛房》"
   },
   {
     "word": "山清水秀",
     "pinyin": "shān qīng shuǐ xiù",
     "meaning": "山青翠、水清澈；形容风景优美宜人。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·黄庭坚·《蓦山溪·赠衡阳陈湘》"
   },
   {
     "word": "春暖花开",
     "pinyin": "chūn nuǎn huā kāi",
     "meaning": "春天温暖，百花盛开；比喻形势好转或大好时机到来。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·朱国祯·《涌幢小品·南内》"
   },
   {
     "word": "狂风暴雨",
     "pinyin": "kuáng fēng bào yǔ",
     "meaning": "猛烈的大风大雨；也比喻险恶的环境或激烈的事件。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "《老子》第二十三章"
   },
   {
     "word": "生机勃勃",
     "pinyin": "shēng jī bó bó",
     "meaning": "形容生命力旺盛、充满活力；多用于形容人或事业。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "秋高气爽",
     "pinyin": "qiū gāo qì shuǎng",
     "meaning": "秋天天空晴朗空气清新；形容秋季气候宜人。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·杜甫·《崔氏东山草堂》"
   },
   {
     "word": "雨过天晴",
     "pinyin": "yǔ guò tiān qíng",
     "meaning": "雨停后天空放晴；也比喻事情出现转机。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·谢肇淛《文海披沙》"
   },
   {
     "word": "青山绿水",
     "pinyin": "qīng shān lǜ shuǐ",
     "meaning": "青翠的山、碧绿的水；形容景色秀美自然。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·释普济·《五灯会元》"
   },
   {
     "word": "风和日丽",
     "pinyin": "fēng hé rì lì",
     "meaning": "微风和暖，阳光明媚；形容天气晴好宜人。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "元·李爱山·《集贤宾·春日伤别》"
   },
   {
     "word": "鸟语花香",
     "pinyin": "niǎo yǔ huā xiāng",
     "meaning": "鸟儿鸣叫，花儿飘香；形容春天美好的景象。",
     "level": 1,
-    "category": "自然"
+    "category": "自然",
+    "source": "宋·吕本中·《紫薇·庵居》"
   },
   {
     "word": "一叶知秋",
     "pinyin": "yī yè zhī qiū",
     "meaning": "看见一片落叶就知道秋天到了；比喻由小见大。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "《淮南子·说山训》"
   },
   {
     "word": "一望无际",
     "pinyin": "yī wàng wú jì",
     "meaning": "一眼望去看不到边；形容辽远广阔或视野开阔。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "明·吴承恩·《西游记》第六十四回"
   },
   {
     "word": "万里无云",
     "pinyin": "wàn lǐ wú yún",
     "meaning": "天空晴朗，一丝云也没有；形容天气极好。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "元·王实甫·《西厢记》"
   },
   {
     "word": "和风细雨",
     "pinyin": "hé fēng xì yǔ",
     "meaning": "温和的风、细密的雨；多比喻柔和细致的教育方式。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "南朝·陈·张正见·《陪衡阳王游耆阇寺》"
   },
   {
     "word": "旭日东升",
     "pinyin": "xù rì dōng shēng",
     "meaning": "太阳从东方升起；比喻新事物蓬勃发展、前途光明。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "《诗经·邶风·匏有苦叶》"
   },
   {
     "word": "枫林如火",
     "pinyin": "fēng lín rú huǒ",
     "meaning": "枫树林红得像火焰；形容深秋枫叶通红的景象。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "梅花傲雪",
     "pinyin": "méi huā ào xuě",
     "meaning": "梅花在严寒中开放；比喻不畏严寒、坚强不屈。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "波澜壮阔",
     "pinyin": "bō lán zhuàng kuò",
     "meaning": "水势浩大雄壮；也比喻声势浩大、场面宏大。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "南朝·宋·鲍照·《登大雷岸与妹书》"
   },
   {
     "word": "烈日当空",
     "pinyin": "liè rì dāng kōng",
     "meaning": "太阳猛烈地照在天空中，形容天气酷热，也比喻处境艰难。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "烟雨蒙蒙",
     "pinyin": "yān yǔ méng méng",
     "meaning": "细雨迷蒙笼罩大地；形容雨中景色朦胧模糊。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "电闪雷鸣",
     "pinyin": "diàn shǎn léi míng",
     "meaning": "电光闪动雷声轰鸣；形容雷雨天气或声势浩大。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "郭小川·《痛悼敬爱的周总理》"
   },
   {
     "word": "骄阳似火",
     "pinyin": "jiāo yáng sì huǒ",
     "meaning": "太阳毒辣如同火焰；形容天气极其炎热。",
     "level": 2,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "崇山峻岭",
     "pinyin": "chóng shān jùn lǐng",
     "meaning": "高大陡峭的山岭；形容山势险峻艰难。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "晋·王羲之·《兰亭集序》"
   },
   {
     "word": "波光粼粼",
     "pinyin": "bō guāng lín lín",
     "meaning": "水波在阳光下闪动发光；形容水光闪动的景象。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "出处待考"
   },
   {
     "word": "烟波浩渺",
     "pinyin": "yān bō hào miǎo",
     "meaning": "水汽笼罩的江面辽阔无边；形容水面广阔辽远。",
     "level": 3,
-    "category": "自然"
+    "category": "自然",
+    "source": "唐·崔致远·《将归海东巉山春望》"
   }
 ]

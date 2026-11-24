@@ -3,7 +3,7 @@
   "title": "登楼",
   "author": "杜甫",
   "dynasty": "tang",
-  "category": null,
+  "category": "诗",
   "form": "七律",
   "content": [
     "花近高楼伤客心，万方多难此登临。",
@@ -85,6 +85,6 @@
       "。"
     ]
   ],
-  "appreciation": null,
+  "appreciation": "此诗笔致疏朗，写景尤见功力。「万方多难此登临」，描绘山川形胜，景象阔大，令人神往。巧用反衬手法，突出了全篇主旨；属对精切，富有形式之美与节奏之感。一气呵成，意境浑成。",
   "source": "chinese-poetry/chinese-poetry@master"
 }
